@@ -1,6 +1,6 @@
 # NEW_CONFIG: `watt.config.ts` — one config model for Watt v4
 
-**Status:** Proposal, revision 4 — incorporates two adversarial review rounds; clean-cut implementation
+**Status:** Proposal — clean-cut implementation
 **Target:** v4 (breaking) — no v3 preview; feedback via v4.0 alphas/RCs
 **Author:** Platformatic team
 
@@ -203,9 +203,9 @@ Note the boundary: `workers`, `health`, `env`, `dependencies` and the other
 orchestration properties live **on the entry**; everything the capability understands
 lives **inside the factory**. The two never merge into one bag, which is what keeps
 same-named properties (`telemetry` above; `server`, `logger`, `watch`) structurally
-unambiguous — the adversarial review showed that flattening them together is unsound
-(`telemetry` means two incompatible things for service/db/gateway, and several
-capabilities collide even within themselves).
+unambiguous — flattening them together would be unsound: `telemetry` means two
+incompatible things for service/db/gateway, and several capabilities collide even
+within themselves.
 
 **Level 2b — monorepo with per-app config files.** `autoload` survives, and per-app
 configuration moves into the app's own `watt.config.ts`, which exports **the identical
@@ -829,100 +829,6 @@ Roughly ordered; steps 1–5 are the critical path.
 There is **no v3 preview**: nothing ships on the v3 branch (clean cut). Real-world
 contact for the factory API comes from v4.0 alphas and release candidates, which are
 cheap to iterate because the loader is new code with no v3 entanglement.
-
----
-
-## Resolved decisions
-
-First round (2026-07-30), amended by the adversarial review round (2026-07-31).
-
-1. **`applications`, not `apps`.** Matches v3 canonical naming, the internal model,
-   and existing docs.
-2. **Serializable-only config in v4.0.** Functions stay file paths; worker-side
-   re-evaluation kept open for 4.x, not publicly committed.
-3. **magicast + snippet fallback** for config mutators (`wattpm-utils` only).
-4. **No v3 preview** (supersedes the earlier gated-preview decision, 2026-07-31):
-   clean cut — nothing ships on the v3 branch; v4.0 alphas/RCs are the feedback loop.
-5. **Factory shape (amended by review B1):** orchestration properties live on the
-   application entry; the entry's `config` property accepts a factory result inline;
-   the factory carries only per-app capability configuration, with the capability
-   block flattened and `application` kept nested. Root `config` wins wholesale over a
-   per-app file.
-6. **Hard cliff (amended):** v4 loads only `watt.config.{ts,js,mts,mjs}`. **JSON is
-   dropped entirely** — machine writers emit dependency-free plain-object configs
-   with a mandatory stamped `$schema` property (version detection only). Any `.json`
-   config = legacy = migrate hint; detection is an extension check.
-7. **Migrate scope (amended by review B3; relocation ruling 2026-07-31):** anything
-   that boots on v3. The v3 loading/upgrade machinery (all parsers, `replaceEnv`,
-   `$schema` detection, the full `semgrator` chains) is **moved into `wattpm-utils`**
-   with its tests when it is deleted from `foundation` — no dependency on any
-   v3-versioned package, one copy in the monorepo, frozen as a legacy reader.
-   Migrate is decoupled from the v4 critical path and does not block the v4.0
-   release.
-8. **Config reload (review B2):** throwaway eval worker per load; import-graph
-   collection drives the watcher; main-process env and module cache are never touched.
-9. **Evaluation site (review M3):** single main-side pass in the eval worker; workers
-   receive `resolvedConfig` as data and never import config *files* (refined by
-   round-2 decision 17: capability transforms stay worker-side).
-10. **Env (review M1/M2):** two-valued precedence (`real env > root .env > app .env`),
-    fallback-keys machinery deleted (warning policy refined by round-2 decision 21);
-    inter-app URLs are literal `http://<id>.plt.local` in config plus injected
-    `PLT_<ID>_URL` worker env vars for application code (ladder in round-2
-    decision 22).
-11. **Patching (review M4):** `setApplicationConfigPatch` API preserved (ICC/watt-extra
-    depends on it), applied pre-transform worker-side (round-2 decision 17);
-    `patch-config` CLI removed (zero consumers found); management API `GET /config`
-    removed.
-12. **Schema audit in v4.0 (review M7):** all placeholder unions out at launch; the
-    only free moment.
-13. **Dependency resolution (review M5):** standard ESM from the importing file;
-    per-app files are the default style (v3 placement unchanged, migration never
-    edits `package.json`); root-inline is opt-in with a targeted error.
-14. **Fresh loader implementation (2026-07-31):** the v4 loader is written new, with
-    its own tests; v3's `configuration.js` is deleted in v4, never refactored. Pieces
-    worth keeping (AJV keywords, `loadEnv` walk, `transform` hooks) are carried over
-    by explicit decision.
-15. **Mechanical batch (review m1–m6):** erasable-TS constraints documented +
-    `.mts`-for-CJS rule; corrected pipeline order; shallow root-wins merge; duck-typed
-    `module` discriminator; `runtime.services` handled by migrate + v3-branch list
-    fix; `import` scaffolds a root config in configless trees.
-
-Second review round (2026-07-31).
-
-16. **Root/per-app discrimination (round-2 B1):** one filename; the export
-    discriminates via specified duck-typing precedence; the walk evaluates
-    candidates (with a classification cache) and climbs past app-defs, preserving
-    `cd web/api && wattpm dev`; no root found → auto-wrap the **topmost** app-def
-    with a loud standalone warning; the walk stops at the `.git`/workspace boundary
-    (full v3 reach only when no marker exists).
-17. **Split capability pipeline (round-2 B2):** eval worker validates capability
-    configs (schema subpath exports, app-root `resolvePath`); capability
-    `transform` + pre-transform `configPatch` stay worker-side — ICC patch
-    documents byte-compatible.
-18. **Config commands (round-2 M1):** `wattpm config` removed; `applications:add`/
-    `remove` keep the live half, drop `--save`; `GET /metadata` extended with
-    `root`/`configPath`.
-19. **Capability CLI commands (round-2 M2):** `createCommands` moves to the
-    `{ root, config }` data contract; no self-loading, no `utimesSync`; lazy
-    discovery — plain `wattpm help` never executes user code.
-20. **Eval protocol env (round-2 M3):** `{ config, importedFiles, env }` with the
-    pre-evaluation `loadEnv` snapshot; config-time `process.env` mutations are
-    diffed and warned, never propagated; `env:` property is the explicit channel.
-21. **Shadow warning (round-2 M4):** migrate-time static `.env` diff only; the
-    runtime carries zero provenance and never warns (amends the round-1 boot-warning
-    promise).
-22. **URL injection ladder (round-2 M5):** `real env > env block > injected > .env
-    files`; stale v3 `.env` lines structurally harmless; id-normalization collision
-    is a boot error.
-23. **`{PLT_ROOT}` rule (round-2 M6):** migrate emits
-    `join(import.meta.dirname, …)` expressions — correct in per-app output;
-    documented caveat for root-inline moves.
-24. **Full vendored closure (round-2 M7):** `lib/migrate/legacy/` includes
-    foundation machinery, all four upgrade chains, and frozen v3 snapshots of the
-    ~13 capability schemas/transforms, with tests; gateway's request-time
-    `replaceEnv` rewritten in the v4 gateway.
-25. **Uniform per-app discovery (round-2 M8):** explicit entries load per-app files
-    identically to autoload; inline `config` wins wholesale.
 
 ---
 
