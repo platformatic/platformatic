@@ -4,6 +4,19 @@
   "description": "Platformatic Vite Capability",
   "main": "index.js",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
+    "./skew-plugin": {
+      "types": "./skew-plugin.d.ts",
+      "import": "./skew-plugin.js",
+      "default": "./skew-plugin.js"
+    },
+    "./*": "./*"
+  },
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",

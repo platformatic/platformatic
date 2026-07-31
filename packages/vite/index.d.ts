@@ -1,3 +1,4 @@
+import type { Plugin } from 'vite'
 import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
@@ -46,3 +47,8 @@ export declare const schema: JSONSchemaType<PlatformaticViteConfig>
 export declare const schemaComponents: { vite: JSONSchemaType<object> }
 export declare const version: string
 export declare const supportedVersions: string[]
+
+export declare function addDeploymentId (url: string, deploymentId: string): string
+export declare function platformaticSkewPlugin (deploymentId?: string): Plugin | undefined
+export declare const skewPlugin: typeof platformaticSkewPlugin
+export declare const deploymentIdEnv: 'PLT_DEPLOYMENT_ID'
