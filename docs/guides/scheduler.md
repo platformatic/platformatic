@@ -168,3 +168,48 @@ enables this option for Nitro versions that scan modules later in the build life
 
 Without an external coordinator, Watt executes Nitro jobs locally. Coordinators can use Watt's pause, resume, and run
 operations described above. Scheduled execution is at least once, so Nitro task handlers should be idempotent.
+
+## Node scheduled tasks
+
+Node applications can export a `scheduledTasks` map and matching task handlers. Each cron expression can run one or
+more named tasks:
+
+```js
+export const scheduledTasks = {
+  '0 */5 * * * *': ['cleanup', 'syncUsers']
+}
+
+export const tasks = {
+  async cleanup ({ scheduledTime }) {
+    // ...
+  },
+  async syncUsers ({ scheduledTime }) {
+    // ...
+  }
+}
+```
+
+Applications using `create()` or `build()` can instead attach `scheduledTasks` and `tasks` to the returned app. These
+values take precedence over module-level exports:
+
+```js
+import Fastify from 'fastify'
+
+export async function create () {
+  const app = Fastify()
+
+  app.scheduledTasks = {
+    '0 */5 * * * *': ['cleanup']
+  }
+  app.tasks = {
+    async cleanup ({ scheduledTime }) {
+      // ...
+    }
+  }
+
+  return app
+}
+```
+
+Watt registers each schedule with its Runtime scheduler and invokes handlers with the scheduled timestamp. Task groups
+run concurrently; a failed handler marks the group as failed and lets the Runtime apply its normal retry policy.
