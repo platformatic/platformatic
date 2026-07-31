@@ -528,11 +528,15 @@ export default {
 ### `wattpm migrate`
 
 A one-shot codemod in `wattpm-utils`, and **the only code in v4 that can read legacy
-configs**. Scope: anything that boots on v3. To guarantee that without forking any
-machinery, `wattpm-utils@4` depends on **`@platformatic/foundation@3`** (and the v3
-upgrade chains) and runs the real v3 `loadConfiguration` — all formats (JSON, JSON5,
-YAML, TOML), all `$schema` URL generations, and the v1/v2→v3 `semgrator` upgrades,
-exactly as production v3 applies them in memory. Then:
+configs**. Scope: anything that boots on v3. To guarantee that, the v3 loading and
+upgrade machinery is **moved into `wattpm-utils`** (e.g. `lib/migrate/legacy/`) when
+it is deleted from `foundation` — the parsers for all formats (JSON, JSON5, YAML,
+TOML), `replaceEnv` and the YAML brace pre-pass, all `$schema` URL generations, and
+the complete `semgrator` chains including v1/v2→v3 — relocated together with their
+existing tests, not rewritten. There is no dependency on any v3-versioned package:
+the monorepo contains exactly one copy of this code, living next to its only
+consumer, frozen as a legacy reader. Migrate loads a config exactly as production v3
+would in memory, then:
 
 1. Emit per-app `watt.config.ts` files (factory expression per app; file omitted when
    it would contain only defaults) and a thin root `watt.config.ts` — unwrapping
@@ -596,9 +600,9 @@ Roughly ordered; steps 1–5 are the critical path.
    migrate-hint error, and the serializability check → validate → `kMetadata` →
    `transform` pipeline are a clean implementation with its own tests. The v3
    `configuration.js` (parsers, `replaceEnv`, YAML pre-pass, `strictEnv`, `$schema`
-   URL machinery) is **deleted wholesale in the v4 branch, not incrementally carved
-   down** — it lives on only in the v3 branch, where `wattpm migrate` consumes it via
-   the `@platformatic/foundation@3` dependency. Only deliberately-kept pieces are
+   URL machinery) is **deleted from foundation in the v4 branch, not incrementally
+   carved down** — it is moved, with its tests, into `wattpm-utils` as `migrate`'s
+   private legacy reader. Only deliberately-kept pieces are
    carried over as code (AJV custom keywords, `loadEnv`'s upward walk, `transform`
    hooks), each by explicit decision rather than by surviving a refactor.
 2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
@@ -621,10 +625,10 @@ Roughly ordered; steps 1–5 are the critical path.
 7. **wattpm-utils**: `wattpm import` via magicast with snippet fallback;
    external/install flow emits v4 per-app files; `create` templates emit
    `watt.config.ts`; remove `patch-config`. **`wattpm migrate` lives here too but is
-   decoupled from the v4 critical path**: it is the only code depending on
-   `@platformatic/foundation@3`, it shares nothing with the v4 loader, and it can be
-   developed and released on its own cadence — v4.0 of the runtime does not block on
-   it (though shipping them together remains the goal for launch messaging).
+   decoupled from the v4 critical path**: it hosts the relocated v3 loading/upgrade
+   machinery as private code, shares nothing with the v4 loader, and can be developed
+   and released on its own cadence — v4.0 of the runtime does not block on it (though
+   shipping them together remains the goal for launch messaging).
 8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
    package type); scaffolded test helpers import the config module instead of
    `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
@@ -660,11 +664,13 @@ First round (2026-07-30), amended by the adversarial review round (2026-07-31).
    dropped entirely** — machine writers emit dependency-free plain-object configs
    with a mandatory stamped `$schema` property (version detection only). Any `.json`
    config = legacy = migrate hint; detection is an extension check.
-7. **Migrate scope (amended by review B3):** anything that boots on v3, via a
-   dependency on the real v3 loader (`@platformatic/foundation@3`); the v1/v2
-   upgrade chains ride along inside the codemod only. Migrate lives in
-   `wattpm-utils` but is **decoupled from the v4 critical path** — it shares no code
-   with the v4 loader and does not block the v4.0 release.
+7. **Migrate scope (amended by review B3; relocation ruling 2026-07-31):** anything
+   that boots on v3. The v3 loading/upgrade machinery (all parsers, `replaceEnv`,
+   `$schema` detection, the full `semgrator` chains) is **moved into `wattpm-utils`**
+   with its tests when it is deleted from `foundation` — no dependency on any
+   v3-versioned package, one copy in the monorepo, frozen as a legacy reader.
+   Migrate is decoupled from the v4 critical path and does not block the v4.0
+   release.
 8. **Config reload (review B2):** throwaway eval worker per load; import-graph
    collection drives the watcher; main-process env and module cache are never touched.
 9. **Evaluation site (review M3):** single main-side pass in the eval worker; workers
