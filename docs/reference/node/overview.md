@@ -89,6 +89,29 @@ const server = createServer((_req, res) => {
 server.listen(0)
 ```
 
+### Scheduled tasks
+
+Node applications can register scheduled tasks with [Watt's scheduler](../../guides/scheduler.md) by exporting
+`scheduledTasks` and `tasks` at the top level of their entrypoint. `scheduledTasks` maps cron expressions to one or
+more task names, and `tasks` maps those names to handlers:
+
+```js
+export const scheduledTasks = {
+  '0 */5 * * * *': ['cleanup']
+}
+
+export const tasks = {
+  async cleanup ({ scheduledTime, app }) {
+    // scheduledTime is the invocation timestamp in milliseconds.
+    // app is the application returned by create() or build(), or the Node HTTP server.
+  }
+}
+```
+
+Watt registers each cron expression as an application scheduler job and invokes its handlers through the Runtime.
+Handlers in a task group run concurrently. A failed handler marks the group as failed and lets the Runtime apply its
+configured retry policy.
+
 ## Architecture
 
 If your server entrypoint exports a `create` function, then Platformatic Node will execute it and then will wait for it to return a server object. In this situation the server will be used without starting a TCP server. The TCP server is started if the application is the runtime entrypoint.

@@ -171,8 +171,8 @@ operations described above. Scheduled execution is at least once, so Nitro task 
 
 ## Node scheduled tasks
 
-Node applications can export a `scheduledTasks` map and matching task handlers. Each cron expression can run one or
-more named tasks:
+Node applications export `scheduledTasks` and matching task handlers from their entrypoint's top level. Each cron
+expression can run one or more named tasks:
 
 ```js
 export const scheduledTasks = {
@@ -180,7 +180,7 @@ export const scheduledTasks = {
 }
 
 export const tasks = {
-  async cleanup ({ scheduledTime }) {
+  async cleanup ({ scheduledTime, app }) {
     // ...
   },
   async syncUsers ({ scheduledTime }) {
@@ -189,27 +189,8 @@ export const tasks = {
 }
 ```
 
-Applications using `create()` or `build()` can instead attach `scheduledTasks` and `tasks` to the returned app. These
-values take precedence over module-level exports:
-
-```js
-import Fastify from 'fastify'
-
-export async function create () {
-  const app = Fastify()
-
-  app.scheduledTasks = {
-    '0 */5 * * * *': ['cleanup']
-  }
-  app.tasks = {
-    async cleanup ({ scheduledTime }) {
-      // ...
-    }
-  }
-
-  return app
-}
-```
-
 Watt registers each schedule with its Runtime scheduler and invokes handlers with the scheduled timestamp. Task groups
 run concurrently; a failed handler marks the group as failed and lets the Runtime apply its normal retry policy.
+
+See the [Node.js scheduled tasks reference](../reference/node/overview.md#scheduled-tasks) for the complete handler
+contract.

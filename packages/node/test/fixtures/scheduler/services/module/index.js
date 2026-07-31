@@ -5,8 +5,8 @@ export const scheduledTasks = {
 }
 
 export const tasks = {
-  moduleTask ({ scheduledTime }) {
-    getEvents().emitAndNotify('scheduled:module', scheduledTime)
+  moduleTask ({ scheduledTime, app }) {
+    getEvents().emitAndNotify('scheduled:module', scheduledTime, app.isBackgroundApplication)
   }
 }
 

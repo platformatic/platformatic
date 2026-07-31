@@ -5,6 +5,7 @@ import {
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
+  errors,
   getServerUrl,
   importFile,
   injectViaRequest
@@ -222,8 +223,6 @@ export class NodeCapability extends BaseCapability {
     if (this.#factory) {
       const application = await this.#module[this.#factory]()
       this.#app = application
-      this.#scheduledTasks = application.scheduledTasks ?? this.#scheduledTasks
-      this.#tasks = application.tasks ?? this.#tasks
 
       if (application.isBackgroundApplication === true && typeof application.close === 'function') {
         this.#appClose = function appClose () {
@@ -415,7 +414,7 @@ export class NodeCapability extends BaseCapability {
     const schedule = schedules.find(schedule => schedule.id === scheduleId)
 
     if (!schedule) {
-      throw new Error(`Scheduled task group "${scheduleId}" not found`)
+      throw new errors.ScheduledTaskGroupNotFound(scheduleId)
     }
 
     const results = await Promise.allSettled(
@@ -423,16 +422,16 @@ export class NodeCapability extends BaseCapability {
         const task = this.#tasks?.[name]
 
         if (typeof task !== 'function') {
-          throw new Error(`Scheduled task "${name}" not found`)
+          throw new errors.ScheduledTaskNotFound(name)
         }
 
-        return task({ scheduledTime })
+        return task({ scheduledTime, app: this.#app ?? this.#server })
       })
     )
 
-    const errors = results.filter(result => result.status === 'rejected').map(result => result.reason)
-    if (errors.length > 0) {
-      throw new AggregateError(errors, `Scheduled task group "${scheduleId}" failed`)
+    const taskErrors = results.filter(result => result.status === 'rejected').map(result => result.reason)
+    if (taskErrors.length > 0) {
+      throw new AggregateError(taskErrors, `Scheduled task group "${scheduleId}" failed`)
     }
 
     return results.map(result => result.value)
