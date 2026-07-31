@@ -687,14 +687,15 @@ export class ChildProcess extends ITC {
     }
 
     // Install worker extensions here, in the child process, where a
-    // child-process capability's entrypoint HTTP server runs. The worker-thread
-    // site in @platformatic/runtime does the same for in-thread capabilities.
-    // Skipped while building, matching the main-thread extensions. The promise
-    // is exposed so main() can await it before the user application runs, so the
-    // request hook is in place before the app's server accepts requests.
+    // child-process capability's server runs, for any application (not only the
+    // entrypoint). The worker-thread site in @platformatic/runtime does the same
+    // for in-thread capabilities. Skipped while building, matching the main-thread
+    // extensions. The promise is exposed so main() can await it before the user
+    // application runs, so an onEntrypointRequest hook is in place before the
+    // app's server accepts requests.
     const config = getConfig({ throwOnMissing: false }) ?? {}
     const workerExtensions = config.application?.workerExtensions
-    if (workerExtensions && isEntrypointApplication && !isBuilding({ throwOnMissing: false })) {
+    if (workerExtensions && !isBuilding({ throwOnMissing: false })) {
       this.workerExtensionsReady = installWorkerExtensions({
         applicationId: getApplicationId({ throwOnMissing: false }),
         config,

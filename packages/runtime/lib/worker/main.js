@@ -335,7 +335,7 @@ async function main () {
     }
   })
 
-  // Worker extensions for an in-thread entrypoint are installed in the ITC start
+  // Worker extensions for an in-thread application are installed in the ITC start
   // handler, once the capability has started and it is known whether it serves
   // in-thread or from a child process. A child-process capability installs them
   // in its own bootstrap (@platformatic/basic) instead.

@@ -242,15 +242,16 @@ restarted) and shipping the captured profiles — see the
 ### `workerExtensions`
 
 While `extensions` runs in the runtime main thread, `workerExtensions` runs code in the process that
-serves the runtime entrypoint — the worker thread for most applications, or the child process for an
-entrypoint started through a custom command. This is a general mechanism: it runs your code where the
-entrypoint lives and gives it a lifecycle, but it is not tied to HTTP. An extension can do whatever it
-needs there; observing or altering the entrypoint's responses is one use case, supported through an
-optional helper (below).
+serves an application — the worker thread for most applications, or the child process for one started
+through a custom command. This is a general mechanism: it runs your code where the application lives
+and gives it a lifecycle, but it is not tied to HTTP. An extension can prepare state, talk to a
+dependency, register metrics, or observe the entrypoint's responses (one use case, supported through
+an optional helper below).
 
-Worker extensions run on the entrypoint application only, since only the entrypoint serves external
-requests. Configuring them on a non-entrypoint application has no effect; use `preload` to run code
-in every application worker.
+Worker extensions run on any application that configures them, in that application's own worker. This
+differs from `preload`, which also runs in the application worker but only loads a module: a worker
+extension additionally receives a context and a `close` lifecycle, and multiple extensions run in a
+defined order. Observing HTTP requests is entrypoint-specific and covered in its own section below.
 
 `workerExtensions` is set under the `application` block. Every capability (`@platformatic/node`,
 `@platformatic/next`, `@platformatic/vite`, and so on) accepts an `application` block, so the property
@@ -279,11 +280,11 @@ application starts. TypeScript files are supported out of the box via
 
 The setup function receives a context object with the following properties:
 
-- **`applicationId`** - The id of the entrypoint application the extension runs in.
+- **`applicationId`** - The id of the application the extension runs in.
 - **`config`** - The resolved application configuration.
 - **`options`** - The `options` object specified in the configuration, if any.
 - **`logger`** - A child of the application logger.
-- **`capability`** - The capability serving the application. It is only available when the entrypoint
+- **`capability`** - The capability serving the application. It is only available when the application
   runs in the worker thread; for a capability that runs in a child process (for example one started
   through a custom command) it is `undefined`.
 
@@ -321,14 +322,16 @@ export default async function setup ({ applicationId, logger }) {
 #### Observing the entrypoint's requests
 
 To observe requests or add response headers, `@platformatic/basic` exports the `onEntrypointRequest`
-helper. The extension is installed before the runtime reports the application ready. Most capabilities
-also defer listening until then, so the handler is in place before the entrypoint serves its first
-request; a few in-thread frameworks bind their own server during startup and may accept a request or
-two before the hook is installed, so a handler should not assume it observes every request from the
-very first one. The handler must be synchronous. It receives the incoming request and an
-`addResponseHeader(name, value)` function that appends when the application flushes its own headers,
-so a header the application sets is preserved rather than replaced. It returns a function that removes
-the hook.
+helper. It acts only on the entrypoint application — the one that serves external requests. Called
+from an extension on any other application it is a no-op (that worker's server only sees internal mesh
+traffic), so an extension that needs to hook requests belongs on the entrypoint. The extension is
+installed before the runtime reports the application ready. Most capabilities also defer listening
+until then, so the handler is in place before the entrypoint serves its first request; a few in-thread
+frameworks bind their own server during startup and may accept a request or two before the hook is
+installed, so a handler should not assume it observes every request from the very first one. The
+handler must be synchronous. It receives the incoming request and an `addResponseHeader(name, value)`
+function that appends when the application flushes its own headers, so a header the application sets is
+preserved rather than replaced. It returns a function that removes the hook.
 
 The example below pins a browser session to the version that served it, by setting a cookie on the
 entrypoint's responses — useful behind a load balancer that cannot add response headers of its own.

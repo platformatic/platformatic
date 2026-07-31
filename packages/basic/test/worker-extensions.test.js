@@ -38,6 +38,10 @@ async function writeExtension (contents) {
   return path
 }
 
+// onEntrypointRequest only acts on the entrypoint; the runtime sets this global
+// in the entrypoint worker. Simulate it so the HTTP-hook tests exercise the hook.
+globalThis.platformatic = { ...globalThis.platformatic, isEntrypoint: true }
+
 test('with no extensions configured, install is a no-op', async () => {
   const logger = recordingLogger()
   const installed = await installWorkerExtensions({ logger })
@@ -248,4 +252,17 @@ test('the unsubscribe stops the hook from firing', async () => {
   unsubscribe()
   await fetch(url)
   strictEqual(fired, 1)
+})
+
+test('onEntrypointRequest is a no-op when the application is not the entrypoint', async () => {
+  globalThis.platformatic.isEntrypoint = false
+  let fired = 0
+  const unsubscribe = onEntrypointRequest(() => { fired++ })
+  const url = await startServer((req, res) => res.end('ok'))
+
+  const res = await fetch(url)
+  strictEqual(res.status, 200)
+  strictEqual(fired, 0, 'the handler must not fire off the entrypoint')
+  unsubscribe() // the returned remover is a safe no-op
+  globalThis.platformatic.isEntrypoint = true
 })

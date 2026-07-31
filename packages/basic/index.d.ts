@@ -7,7 +7,7 @@ import type { PlatformaticBasicConfig } from './config.d.ts'
 
 export type { PlatformaticBasicConfig } from './config.d.ts'
 
-// A worker extension runs in the process that serves the entrypoint, with a
+// A worker extension runs in the process that serves its application, with a
 // context and a close lifecycle, and does nothing HTTP-specific on its own. Its
 // default export, or a named `setup` export, is a WorkerExtension.
 export interface WorkerExtensionContext {
@@ -16,7 +16,7 @@ export interface WorkerExtensionContext {
   options: Record<string, unknown>
   logger: unknown
   // The capability serving the application. Present only for an in-thread
-  // entrypoint; undefined when the capability runs in a child process.
+  // application; undefined when the capability runs in a child process.
   capability?: unknown
 }
 
@@ -44,7 +44,8 @@ export declare function installWorkerExtensions (context: {
 // Optional helper for a worker extension that wants to observe the entrypoint's
 // requests or add response headers. addResponseHeader appends when the
 // application flushes its own headers, so a header it sets is not replaced.
-// Returns a function that removes the hook.
+// Returns a function that removes the hook. Only acts on the entrypoint
+// application; on any other application it is a no-op.
 export interface EntrypointRequest {
   request: IncomingMessage
   addResponseHeader (name: string, value: string): void

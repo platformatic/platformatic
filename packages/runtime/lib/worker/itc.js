@@ -160,9 +160,9 @@ export async function setupITC (controller, application, dispatcher, sharedConte
   const logger = getLogger()
   const messaging = new MessagingITC(controller.applicationConfig.id, workerData.config, logger)
 
-  // Worker extensions for an in-thread entrypoint. Installed and closed here so
+  // Worker extensions for an in-thread application. Installed and closed here so
   // they can run after the capability has started (to tell an in-thread server
-  // from a child process) and before it listens.
+  // from a child process) and, for the entrypoint, before it listens.
   let workerExtensions
 
   updateGlobals({
@@ -211,31 +211,30 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           }
         }
 
-        if (application.entrypoint) {
-          // Install before listening, but only when the entrypoint serves in
-          // this thread. A child-process capability installs in its own
-          // bootstrap, where its server runs; installing here too would run
-          // every extension's setup a second time.
-          //
-          // The controller defers the entrypoint listen to listen() below so
-          // this runs first. A capability that ignores that and binds its own
-          // server during start() (some in-thread frameworks) may accept a few
-          // requests before the hook is in place, but only within the startup
-          // window before the application is ready to receive traffic.
-          if (!workerData.build && !controller.capability.childManager) {
-            const capabilityConfig = controller.capability.config ?? {}
-            workerExtensions = await installWorkerExtensions({
-              applicationId: controller.applicationConfig.id,
-              config: capabilityConfig,
-              // Available only for an in-thread entrypoint; a child-process
-              // capability runs elsewhere, so its extensions do not get it.
-              capability: controller.capability,
-              root: workerData.applicationConfig?.path,
-              logger,
-              workerExtensions: capabilityConfig.application?.workerExtensions
-            })
-          }
+        // Install worker extensions for any application, not only the
+        // entrypoint, since the mechanism is general. Skip while building, and
+        // skip when the capability serves in a child process -- it installs them
+        // in its own bootstrap, where its server runs; installing here too would
+        // run every extension's setup a second time. For the entrypoint the
+        // controller defers listen() to below, so an onEntrypointRequest hook is
+        // in place first; a capability that binds its own server during start()
+        // (some in-thread frameworks) may accept a few requests before the hook,
+        // but only within the startup window before the application is ready.
+        if (!workerData.build && !controller.capability.childManager) {
+          const capabilityConfig = controller.capability.config ?? {}
+          workerExtensions = await installWorkerExtensions({
+            applicationId: controller.applicationConfig.id,
+            config: capabilityConfig,
+            // Available for an in-thread application; a child-process capability
+            // runs elsewhere, so its extensions do not get it.
+            capability: controller.capability,
+            root: workerData.applicationConfig?.path,
+            logger,
+            workerExtensions: capabilityConfig.application?.workerExtensions
+          })
+        }
 
+        if (application.entrypoint) {
           await controller.listen()
         }
 

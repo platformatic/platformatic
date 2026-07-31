@@ -33,7 +33,7 @@ const SERVICES = {
 // Copies the fixture to a fresh temporary directory and writes the run's
 // configuration into the copy, so the tracked fixture files are never mutated.
 // Returns the runtime config path in the copy.
-async function prepareFixture (t, entrypoint, extensions) {
+async function prepareFixture (t, entrypoint, extensions, nonEntrypointExtensions = DEFAULT_EXTENSION) {
   await mkdir(tmpBase, { recursive: true })
   const root = await mkdtemp(join(tmpBase, 'worker-ext-'))
   t.after(() => safeRemove(root))
@@ -45,17 +45,17 @@ async function prepareFixture (t, entrypoint, extensions) {
 
   for (const [name, build] of Object.entries(SERVICES)) {
     const svc = build()
-    // The entrypoint under test gets the test's extensions; the other keeps the
-    // default, so it is a valid application but its hook never fires.
-    svc.application.workerExtensions = name === entrypoint ? extensions : DEFAULT_EXTENSION
+    // The entrypoint under test gets the test's extensions; the other gets
+    // nonEntrypointExtensions, which run in its own worker as well.
+    svc.application.workerExtensions = name === entrypoint ? extensions : nonEntrypointExtensions
     await writeFile(join(root, 'services', name, 'watt.json'), JSON.stringify(svc, null, 2))
   }
 
   return join(root, 'watt.json')
 }
 
-async function start (t, { entrypoint = 'node', extensions = DEFAULT_EXTENSION } = {}) {
-  const configFile = await prepareFixture(t, entrypoint, extensions)
+async function start (t, { entrypoint = 'node', extensions = DEFAULT_EXTENSION, nonEntrypointExtensions = DEFAULT_EXTENSION } = {}) {
+  const configFile = await prepareFixture(t, entrypoint, extensions, nonEntrypointExtensions)
 
   const app = await createRuntime(configFile)
   t.after(() => app.close())
@@ -203,15 +203,40 @@ test('worker extensions are not loaded while building', async t => {
   strictEqual(existsSync(markerFile), false)
 })
 
-test('a non-entrypoint application does not fire the request hook', async t => {
-  // Make node-child the entrypoint; the node application is then not the
-  // entrypoint, and its add-header extension must not run.
-  const { url } = await start(t, { entrypoint: 'node-child' })
+test('a non-entrypoint in-thread application runs its generic extensions', async t => {
+  // node-child is the entrypoint; node is a non-entrypoint in-thread application.
+  // Its marker extension is generic (no request hook) and must still run in its
+  // own worker, proving extensions are no longer entrypoint-only.
+  const markerDir = await mkdtemp(join(tmpBase, 'worker-ext-marker-'))
+  t.after(() => safeRemove(markerDir))
+  const markerFile = join(markerDir, 'ran')
 
-  const { headers } = await request(url, { path: '/hello' })
-  // The entrypoint (node-child) header is present; the non-entrypoint (node)
-  // one never gets a public request to hook.
-  strictEqual(headers['x-worker-extension'], 'node-child')
+  const { url } = await start(t, {
+    entrypoint: 'node-child',
+    nonEntrypointExtensions: { path: '../../extensions/marker.mjs', options: { markerFile } }
+  })
+
+  const { statusCode } = await request(url, { path: '/hello' })
+  strictEqual(statusCode, 200)
+  ok(existsSync(markerFile), 'the non-entrypoint application extension setup must run')
+})
+
+test('a non-entrypoint child-process application runs its generic extensions', async t => {
+  // node is the entrypoint; node-child is a non-entrypoint child-process
+  // application. Its marker extension must run in the child, via the
+  // child-process install site.
+  const markerDir = await mkdtemp(join(tmpBase, 'worker-ext-marker-'))
+  t.after(() => safeRemove(markerDir))
+  const markerFile = join(markerDir, 'ran')
+
+  const { url } = await start(t, {
+    entrypoint: 'node',
+    nonEntrypointExtensions: { path: '../../extensions/marker.mjs', options: { markerFile } }
+  })
+
+  const { statusCode } = await request(url, { path: '/hello' })
+  strictEqual(statusCode, 200)
+  ok(existsSync(markerFile), 'the non-entrypoint child-process extension setup must run')
 })
 
 test('workerExtensions works in a wrapped single-application config', async t => {

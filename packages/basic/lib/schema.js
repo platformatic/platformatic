@@ -8,8 +8,8 @@ export const version = packageJson.version
 const application = {
   type: 'object',
   properties: {
-    // Files run in this application's worker (or child process), able to hook
-    // its entrypoint responses. The main-thread counterpart is the runtime
+    // Files run in this application's worker (or child process), with a context
+    // and close lifecycle. The main-thread counterpart is the runtime
     // `extensions` property; this is the per-application, worker-side one.
     workerExtensions: utilsSchemaComponents.extensions
   },

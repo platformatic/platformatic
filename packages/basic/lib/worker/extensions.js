@@ -1,4 +1,4 @@
-import { getLogger } from '@platformatic/globals'
+import { getLogger, isEntrypoint } from '@platformatic/globals'
 import { subscribe, unsubscribe } from 'node:diagnostics_channel'
 import { basename } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -6,16 +6,16 @@ import { FailedToLoadWorkerExtensionError, InvalidWorkerExtensionError } from '.
 
 // Loads and runs an application's worker extensions. This is a general
 // mechanism: it runs the extension's code in the process that serves the
-// entrypoint, hands it a context and a close lifecycle, and does nothing
-// HTTP-specific. An extension that wants to observe or alter requests uses
-// onEntrypointRequest (below) itself.
+// application, hands it a context and a close lifecycle, and does nothing
+// HTTP-specific. An extension that wants to observe the entrypoint's requests
+// uses onEntrypointRequest (below) itself.
 //
-// Only ever called for the entrypoint application (both call sites gate on it),
-// which is the only one that serves external requests. Installed at both
-// entrypoint sites: the worker thread for in-thread capabilities and the child
-// process for child-process ones, because that is where the entrypoint HTTP
-// server actually lives. The caller passes its own logger, since the globals
-// logger is not always available where this runs (notably the child bootstrap).
+// Called for any application, not only the entrypoint, since the mechanism is
+// general. Installed at whichever site serves the application: the worker thread
+// for in-thread capabilities and the child process for child-process ones,
+// because that is where the application's server actually lives. The caller
+// passes its own logger, since the globals logger is not always available where
+// this runs (notably the child bootstrap).
 export async function installWorkerExtensions (context) {
   const { workerExtensions, logger, ...rest } = context
 
@@ -119,7 +119,15 @@ function reportHandlerError (err) {
 // application flushes its own headers, so a header the application sets is
 // preserved rather than replaced. Returns a function that removes the hook;
 // wire it into the extension's close.
+//
+// Only the entrypoint serves external requests. On any other application the
+// worker's HTTP server sees internal mesh traffic, which is not what this helper
+// is for, so off the entrypoint it is a no-op and returns a no-op remover.
 export function onEntrypointRequest (handler) {
+  if (!isEntrypoint({ throwOnMissing: false })) {
+    return () => {}
+  }
+
   const onStart = ({ request, response }) => {
     const pending = []
     const addResponseHeader = (name, value) => pending.push([name, value])
