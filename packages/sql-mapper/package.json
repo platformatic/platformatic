@@ -14,7 +14,8 @@
     "test:mysql": "DB=mysql npm run test:runner",
     "test:mysql8": "DB=mysql8 npm run test:runner",
     "test:sqlite": "DB=sqlite npm run test:runner",
-    "test:types": "tstyche"
+    "test:types": "tstyche",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",

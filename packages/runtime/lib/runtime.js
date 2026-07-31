@@ -320,10 +320,6 @@ export class Runtime extends EventEmitter {
 
     const config = this.#config
 
-    if (config.managementApi) {
-      this.#managementApi = await startManagementApi(this, config.managementApi)
-    }
-
     if (config.metrics) {
       // Use the configured application label name for metrics (defaults to 'applicationId')
       this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
@@ -340,11 +336,16 @@ export class Runtime extends EventEmitter {
       collectProcessMetrics(this.#processMetricsRegistry)
     }
 
-    // Create the logger before extensions and health/metrics servers so that both can use it.
+    // Create the logger before the management API, the extensions and the health/metrics servers
+    // so that all of them can use it.
     const [logger, destination, context] = await createLogger(config)
     this.logger = logger
     this.#loggerDestination = destination
     this.#loggerContext = context
+
+    if (config.managementApi) {
+      this.#managementApi = await startManagementApi(this, config.managementApi)
+    }
 
     await this.#startOpenTelemetryMetricsForwarder(config.metrics?.opentelemetry)
 
@@ -2824,7 +2825,7 @@ export class Runtime extends EventEmitter {
       if (attempt === MAX_BOOTSTRAP_ATTEMPTS) {
         const error = new RuntimeAbortedError({ cause: e })
         error.message = `Unable to initialize the ${errorLabel}.`
-        throw e
+        throw error
       }
 
       if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT') {

@@ -15,7 +15,8 @@
     "test": "npm run test:unit && npm run test:cli",
     "test:cli": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/cli/*.test.js",
     "test:unit": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/unit/*.test.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "license": "Apache-2.0",
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

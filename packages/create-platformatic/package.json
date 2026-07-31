@@ -13,7 +13,8 @@
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "lint": "eslint",
-    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0;BlueOak-1.0.0'"
+    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0;BlueOak-1.0.0'",
+    "lint:fix": "eslint --fix"
   },
   "license": "Apache-2.0",
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

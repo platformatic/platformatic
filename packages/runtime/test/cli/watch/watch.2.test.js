@@ -34,7 +34,9 @@ test('do not hot reload dependencies', async t => {
     let url
     for (const message of messages) {
       if (message.msg) {
-        url = message.msg.match(/server listening at (.+)/i)?.[1]
+        url =
+          message.msg.match(/Platformatic is now listening at (https?:\/\/.+)/i)?.[1] ??
+          message.msg.match(/server listening at (https?:\/\/.+)/i)?.[1]
 
         if (url !== undefined) {
           break

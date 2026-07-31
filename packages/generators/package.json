@@ -18,7 +18,8 @@
   "scripts": {
     "lint": "eslint",
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
-    "test:types": "tstyche"
+    "test:types": "tstyche",
+    "lint:fix": "eslint --fix"
   },
   "keywords": [],
   "dependencies": {

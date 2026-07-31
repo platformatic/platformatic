@@ -3,6 +3,8 @@ title: Build Your First Watt Application
 label: Build Your First Todo API with Watt
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 import NewApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
 
 # Build Your First Watt Application
@@ -57,7 +59,7 @@ Watt acts as your **application server** that can host multiple **applications**
 
 All applications share the same configuration, logging, and deployment - giving you a unified development experience.
 
-## Step 2: Add Your First Application to Watt
+## Step 1: Add Your First Application to Watt
 
 Now we'll add our first application to the Watt application server - a database application that will automatically create REST and GraphQL APIs from our schema.
 
@@ -98,7 +100,7 @@ Open your browser to `http://localhost:3042/` (or the port shown in your termina
 
 **✓ Success Check:** You should see the Platformatic welcome page with links to OpenAPI documentation.
 
-## Step 4: Define Your Application's Data Schema
+## Step 2: Define Your Application's Data Schema
 
 Now we'll define the database structure for our Todo API application using migrations. This demonstrates how Watt applications manage their own data while staying integrated with the overall application.
 
@@ -135,25 +137,50 @@ If you prefer to use PostgreSQL from the start (recommended for enterprise devel
    docker run --name postgres-dev -e POSTGRES_PASSWORD=password -e POSTGRES_DB=todo_app -p 5432:5432 -d postgres:15
    ```
 
-2. **Update the connection string** in your project root `.env` file:
+2. **Update the connection string** in your project root `.env` file. Replace the existing
+   `PLT_DB_DATABASE_URL` line:
 
    ```bash
-   # Replace the SQLite DATABASE_URL with PostgreSQL
-   DATABASE_URL=postgres://postgres:password@localhost:5432/todo_app
+   PLT_DB_DATABASE_URL=postgres://postgres:password@localhost:5432/todo_app
    ```
 
-3. **Continue with the tutorial** - all migration commands work the same way!
+   :::caution[Edit the existing variable — do not add a new one]
+   The variable is named after your application. Because we named the application `db`, the variable
+   is `PLT_DB_DATABASE_URL`, and `web/db/watt.json` refers to it as `{PLT_DB_DATABASE_URL}`.
+
+   Adding a differently named variable such as `DATABASE_URL` **fails silently**: nothing reads it,
+   no error is raised, and your migrations quietly continue to go to the SQLite file. If you are
+   unsure which database you are actually using, check whether `web/db/db.sqlite` is being created.
+   :::
+
+3. **Use the PostgreSQL migrations** in the steps below. The SQL is not identical across databases —
+   see the tabs in each migration step.
 
 **For MySQL users:** Replace with `mysql://user:password@localhost:3306/todo_app`
 
 The beauty of this architecture is that **Watt** manages the application orchestration while each **application** (like Platformatic DB) handles its own concerns. Your application code remains identical regardless of which database the DB application connects to.
+
+:::note[Your application code is portable — your schema is not]
+Watt and Platformatic DB behave the same on every supported database, and the API they generate is
+identical. The migration SQL, however, is your own, and databases genuinely disagree about types and
+auto-increment syntax. Three differences matter for this tutorial:
+
+| SQLite | PostgreSQL | Why |
+| --- | --- | --- |
+| `INTEGER PRIMARY KEY` | `SERIAL PRIMARY KEY` | On PostgreSQL, `INTEGER PRIMARY KEY` is **not** auto-increment. The table is created successfully and then every insert fails with a not-null violation. |
+| `DATETIME` | `TIMESTAMP` | PostgreSQL has no `DATETIME` type; the migration fails with `type "datetime" does not exist`. |
+| `BOOLEAN DEFAULT 0` | `BOOLEAN DEFAULT false` | PostgreSQL will not coerce `0` to a boolean default. |
+
+The first one is the dangerous one, because it fails later than the other two — at your first
+`POST`, not at migration time.
+:::
 
 #### Architecture Overview: Watt vs Platformatic DB Application
 
 | Component                       | Role                 | Responsibilities                                                                                                                                                     | Configuration                              |
 | ------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
 | **Watt**                        | Application Server   | • Orchestrates multiple applications<br/>• Manages unified configuration<br/>• Handles application discovery<br/>• Provides unified logging<br/>• Manages deployment | `watt.json` + shared `.env`                |
-| **Platformatic DB Application** | Database Application | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation             | `web/db/platformatic.json` |
+| **Platformatic DB Application** | Database Application | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation             | `web/db/watt.json` |
 
 **Key Distinction:**
 
@@ -167,6 +194,9 @@ The wizard created a sample migration file (`001.do.sql`) with a `movies` table.
 
 Create a new file `web/db/migrations/002.do.sql`:
 
+<Tabs groupId="database">
+<TabItem value="sqlite" label="SQLite (default)">
+
 ```sql
 CREATE TABLE IF NOT EXISTS Users (
     id INTEGER PRIMARY KEY,
@@ -175,6 +205,21 @@ CREATE TABLE IF NOT EXISTS Users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
+
+</TabItem>
+<TabItem value="postgresql" label="PostgreSQL">
+
+```sql
+CREATE TABLE IF NOT EXISTS Users (
+    id SERIAL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+</TabItem>
+</Tabs>
 
 Create `web/db/migrations/002.undo.sql` to define how to reverse this migration:
 
@@ -190,6 +235,9 @@ Platformatic generates RESTful endpoints based on your table names. Using plural
 
 Create a new file `web/db/migrations/003.do.sql`:
 
+<Tabs groupId="database">
+<TabItem value="sqlite" label="SQLite (default)">
+
 ```sql
 CREATE TABLE IF NOT EXISTS Todos (
     id INTEGER PRIMARY KEY,
@@ -201,6 +249,24 @@ CREATE TABLE IF NOT EXISTS Todos (
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 ```
+
+</TabItem>
+<TabItem value="postgresql" label="PostgreSQL">
+
+```sql
+CREATE TABLE IF NOT EXISTS Todos (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    title TEXT NOT NULL,
+    description TEXT,
+    due_date DATE,
+    completed BOOLEAN DEFAULT false,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
+);
+```
+
+</TabItem>
+</Tabs>
 
 Create `web/db/migrations/003.undo.sql`:
 
@@ -229,7 +295,7 @@ The **Platformatic DB application** automatically generates TypeScript types fro
 - IntelliSense in your editor
 - Compile-time error checking across all applications
 
-## Step 5: Explore Your Application's Auto-Generated API
+## Step 3: Explore Your Application's Auto-Generated API
 
 Start your Watt application with all applications:
 
@@ -243,7 +309,7 @@ Open `http://localhost:3042/` in your browser.
 
 **✓ Success Check:** You should see the Platformatic welcome page.
 
-## Step 6: Experience Watt's Unified Development Environment
+## Step 4: Experience Watt's Unified Development Environment
 
 Before exploring the API endpoints, let's see how Watt provides a unified development experience.
 
@@ -303,7 +369,7 @@ The **Platformatic DB application** generated these REST endpoints for each tabl
 
 The same pattern applies to `/todos`. You also get GraphQL endpoints at `/graphql`!
 
-## Step 7: Prepare for Multi-Application Architecture
+## Step 5: Prepare for Multi-Application Architecture
 
 One of Watt's key benefits is supporting multiple applications in one application. Let's configure CORS so you can easily add a frontend application later.
 
@@ -317,13 +383,13 @@ Open your project root `.env` file and add:
 PLT_SERVER_CORS_ORIGIN=http://localhost:3000
 ```
 
-Now add the CORS configuration to your `watt.json` file. Add the `cors` property inside the `server` section:
+Now add the CORS configuration to your **application's** configuration file, `web/db/watt.json`, by
+adding a `server` section:
 
 ```json
 {
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/3.0.0.json",
   "server": {
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}",
     "cors": {
       "origin": "{PLT_SERVER_CORS_ORIGIN}"
     }
@@ -331,9 +397,32 @@ Now add the CORS configuration to your `watt.json` file. Add the `cors` property
 }
 ```
 
+:::caution[CORS goes in the application config, not the runtime config]
+It is tempting to put this in the root `watt.json` alongside `server.hostname` and `server.port`, but
+the runtime's `server` block does not accept a `cors` property. Doing so stops the whole runtime on
+startup with:
+
+```
+The configuration does not validate against the configuration schema:
+  - /server: must NOT have additional properties
+```
+
+CORS is answered by the application that serves the request, so it is configured there — in
+`web/db/watt.json`. The runtime `server` block only controls the public socket (`hostname`, `port`,
+`http2`, `https`).
+:::
+
 Restart your application with `npm run dev`.
 
-**✓ Success Check:** Your API responses will now include the `access-control-allow-origin` header, allowing frontend applications on `http://localhost:3000` to make requests.
+**✓ Success Check:** Your API responses will now include the `access-control-allow-origin` header, allowing frontend applications on `http://localhost:3000` to make requests. You can confirm it with:
+
+```bash
+curl -i -H "Origin: http://localhost:3000" http://localhost:3042/todos | grep -i access-control
+```
+
+```
+access-control-allow-origin: http://localhost:3000
+```
 
 ## 🎉 Congratulations!
 
