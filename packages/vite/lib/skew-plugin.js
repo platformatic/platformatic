@@ -8,16 +8,23 @@ function isAssetUrl (url) {
 }
 
 export function addDeploymentId (url, deploymentId) {
-  if (!isAssetUrl(url) || /(?:[?&])dpl(?:=|&|$)/i.test(url)) {
+  if (!isAssetUrl(url)) {
     return url
   }
 
-  const hashIndex = url.indexOf('#')
-  const hash = hashIndex === -1 ? '' : url.slice(hashIndex)
-  const withoutHash = hashIndex === -1 ? url : url.slice(0, hashIndex)
-  const separator = withoutHash.includes('?') ? (withoutHash.endsWith('?') || withoutHash.endsWith('&') ? '' : '&') : '?'
+  try {
+    const parsedUrl = new URL(url, 'http://platformatic.local')
+    if (parsedUrl.searchParams.has('dpl')) {
+      return url
+    }
 
-  return `${withoutHash}${separator}dpl=${encodeURIComponent(deploymentId)}${hash}`
+    parsedUrl.searchParams.set('dpl', deploymentId)
+    const pathEnd = url.search(/[?#]/)
+    const path = pathEnd === -1 ? url : url.slice(0, pathEnd)
+    return `${path}${parsedUrl.search}${parsedUrl.hash}`
+  } catch {
+    return url
+  }
 }
 
 function transformHtmlAssetUrls (html, deploymentId) {
