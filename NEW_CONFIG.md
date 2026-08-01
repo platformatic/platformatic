@@ -11,7 +11,7 @@ configuration format — `watt.config.ts` / `.js` / `.mts` / `.mjs` — loaded n
 Node.js via type stripping, with full TypeScript types provided by `wattpm` and by each
 capability package. **It is the only configuration format**: any `.json` configuration
 file found is, by definition, a v3-era file and is refused with an instruction to run
-`npx wattpm migrate`.
+`npx wattpm-utils migrate`.
 
 The core structural change is that **there is exactly one configuration dialect**: the
 runtime dialect. The distinction between "a single-app config with a nested `runtime`
@@ -143,7 +143,7 @@ explicit where still needed (see "Machine-generated configs").
    never relocates dependencies.
 5. Env handling becomes ordinary JavaScript (`process.env`), with `.env` loaded before
    the config file is evaluated and a simplified, documented precedence.
-6. A `wattpm migrate` codemod that converts anything that boots on v3 into v4 config
+6. A `wattpm-utils migrate` codemod that converts anything that boots on v3 into v4 config
    files automatically.
 7. ICC integration points (`setApplicationConfigPatch`, `getRuntimeConfig`) are
    preserved with identical semantics.
@@ -387,7 +387,7 @@ variants (`*.runtime.*`, `*.application.*`, `*.service.*`, `*.db.*`, `*.gateway.
 
 ```
 ✗ watt.yaml is a v3-era configuration. Watt v4 uses watt.config.ts.
-  Run:  npx wattpm migrate
+  Run:  npx wattpm-utils migrate
 ```
 
 Without this, a `watt.yaml`-only project would fall through to zero-config
@@ -651,7 +651,7 @@ mutation-diff warning.
 Per-application `env` / `envfile` config properties (the worker's runtime
 environment) are unchanged. `{PLT_X}` interpolation, `strictEnv`, root `envfile`,
 and the YAML brace-quoting pre-pass do not exist in v4; they survive only inside
-`wattpm migrate`'s legacy reader.
+`wattpm-utils migrate`'s legacy reader.
 
 ### Inter-application URLs
 
@@ -736,7 +736,7 @@ export default {
   major's migration tractable.
 - Writers converted in v4: `next pack` (bundle config; gains a test asserting the
   bundle boots), the `wattpm install`/external flow (per-app files in cloned repos),
-  `wattpm migrate` output, and the documented pattern for ICC-style platforms
+  `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
   (`'export default ' + JSON.stringify(config)`).
 - Reading configs without executing them: the plain-object form is trivially
   AST-parseable, and running systems expose the resolved config via the programmatic
@@ -803,10 +803,17 @@ export default {
 - **Temporary-config fallback** (`fallbackToTemporaryConfigFile`): removed;
   zero-config synthesizes in memory.
 
-### `wattpm migrate`
+### `wattpm-utils migrate`
 
-A one-shot codemod in `wattpm-utils`, and **the only code in v4 that can read legacy
-configs**. Scope: anything that boots on v3. To guarantee that, the **complete v3
+A one-shot codemod in `wattpm-utils`, invoked as **`npx wattpm-utils migrate`** —
+**not routed through `wattpm`**, fully decoupled from the v4 release: stable v4.0
+may ship before it. This is safe to advertise in the runtime's error message
+because `npx` resolves the package at *invocation* time — the moment migrate ships
+in any `wattpm-utils` release, the command starts working for every
+already-installed v4 runtime, with no runtime re-release.
+
+It is **the only code in v4 that can read legacy configs**. Scope: anything that
+boots on v3. To guarantee that, the **complete v3
 closure** is vendored under `lib/migrate/legacy/` when it is deleted from the live
 packages — and the closure is larger than foundation alone:
 
@@ -881,7 +888,7 @@ range bumps from step 2.
 3. **All non-code config formats removed** — JSON included. Any `.json` config file is
    refused with the migrate hint. `getParser`/`getStringifier` and the format
    machinery are deleted from the loader.
-4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`: **removed**; `wattpm migrate`
+4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`: **removed**; `wattpm-utils migrate`
    converts them.
 5. Env files: the recognized set grows to `.env`, `.env.local`, `.env.<mode>`,
    `.env.<mode>.local` (additive); precedence stays v3-compatible in effect
@@ -974,13 +981,14 @@ Roughly ordered; steps 1–5 are the critical path.
    bundle boot test.
 7. **wattpm-utils**: `wattpm import` via magicast with snippet fallback;
    external/install flow emits v4 per-app files; `create` templates emit
-   `watt.config.ts`; remove `patch-config`. **`wattpm migrate` lives here too but is
-   decoupled from the v4 critical path**: it hosts the vendored v3 closure
-   (foundation machinery, the four upgrade chains, frozen snapshots of the ~13
-   capability schemas and transforms, with their tests) as private code, shares
-   nothing with the v4 loader, and can be developed and released on its own cadence
-   — v4.0 of the runtime does not block on it (though shipping them together remains
-   the goal for launch messaging).
+   `watt.config.ts`; remove `patch-config`. **`wattpm-utils migrate` lives here,
+   under `wattpm-utils`' own binary — no `wattpm` routing — and is fully decoupled
+   from the v4 release**: it hosts the vendored v3 closure (foundation machinery,
+   the four upgrade chains, frozen snapshots of the ~13 capability schemas and
+   transforms, with their tests) as private code, shares nothing with the v4
+   loader, and releases on its own cadence. Stable v4.0 does not gate on it; the
+   `npx`-resolves-at-invocation property means the runtime's error message lights
+   up retroactively when migrate ships.
 8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
    package type); scaffolded test helpers import the config module instead of
    `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
