@@ -863,13 +863,18 @@ exactly as production v3 would in memory, then:
    real v4 loader (eval worker, validation, transform); if it fails, report and
    leave everything in place — the input files are untouched until the output
    provably works.
-4. Scan application sources for references to the config files about to be deleted
-   (v3 scaffolded test helpers do
-   `JSON.parse(await readFile(…, 'watt.json'))`): any hit downgrades that file's
-   deletion to a warning with the file/line of the reference, since the codemod
-   cannot safely rewrite user code.
-5. Delete the unreferenced old files (`--keep` to retain all) and print a diff
-   summary.
+4. Scan application sources for references to the legacy config files (v3
+   scaffolded test helpers do `JSON.parse(await readFile(…, 'watt.json'))`): any
+   hit is reported with the file/line of the reference, since the codemod cannot
+   safely rewrite user code and the renamed file will make that reference fail
+   visibly.
+5. **Rename the legacy files by default** — `watt.json` → `watt.json.v3.bak`
+   (applied across the whole candidate set) — and print a diff summary. The
+   renamed files are invisible to the runtime's legacy detection, so the migrated
+   project boots immediately; nothing is destroyed; external references fail
+   loudly instead of reading stale config. `--delete` removes the originals
+   outright; `--keep` leaves them untouched (the project then won't boot until
+   they're removed manually — the runtime's legacy error explains this).
 
 (No `.env` conflict warning is needed: app-wins layering preserves v3's observable
 env precedence.)
