@@ -482,43 +482,53 @@ If no boundary marker exists anywhere (bare container images), the walk falls ba
 to the full v3 reach. The `.env` walk uses the same boundary for consistency;
 `--config` / `--env` are the escape hatches for above-boundary layouts.
 
-### Loading mechanism: the eval worker
+### Loading mechanism: the eval workers
 
-All configuration is evaluated in a **short-lived evaluation worker thread**, spawned
-per load:
+All configuration is evaluated in **short-lived evaluation worker threads** —
+**one for the root config, and one per per-app config file, run in parallel**. The
+ESM module cache is per-worker and isolated, and that isolation is load-bearing: a
+shared helper computing values at module scope (`export const url =
+process.env.REDIS_URL`) re-evaluates in each worker under *that app's* environment,
+so cross-app contamination through the cache is structurally impossible. No env
+windows, no apply/restore choreography — each worker simply loads its own view and
+imports. Per-app files are independent by definition (cross-file coordination was
+never supported), so parallel evaluation is safe and typically *faster* than any
+serial scheme.
 
-1. The eval worker resolves the root, runs `loadEnv` (the env-file upward walk over
-   the recognized file set for the active `mode`), and applies the result to its own
-   `process.env` — the main process env is never touched. Around each per-app file
-   import it layers that application's env files (apply, evaluate, restore) per the
-   app-wins model in "Env files".
-2. It imports the root config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's
-   built-in type stripping, the same mechanism the runtime already uses for
-   `extensions`), unwraps the default export (object, function called with the context
-   above, or a bare `ApplicationDefinition` auto-wrapped per the walk rules above),
-   expands `autoload`, and loads per-app `watt.config.ts` files **uniformly for every
-   application entry that has a `path` and no inline `config`** — explicitly-listed
-   entries and autoloaded ones behave identically, as in v3. A per-app-discovered
-   file whose export classifies as a *root* config (including an accidental empty
+1. **The root worker** resolves the root, runs `loadEnv` (the env-file upward walk
+   over the recognized file set for the active `mode`), applies the result to its
+   own `process.env` — the main process env is never touched — and imports the root
+   config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's built-in type
+   stripping, the same mechanism the runtime already uses for `extensions`). It
+   unwraps the default export (object, function called with the context above, or a
+   bare `ApplicationDefinition` auto-wrapped per the walk rules above) and expands
+   `autoload` into the application list.
+2. **One worker per per-app file**, spawned in parallel, uniformly for every
+   application entry that has a `path` and no inline `config` — explicitly-listed
+   entries and autoloaded ones behave identically, as in v3. Each applies its app's
+   layered environment (app env files over the root view, per "Env files") to its
+   own `process.env`, imports the file, and unwraps the export. A per-app file
+   whose export classifies as a *root* config (including an accidental empty
    object) is an **error** naming the file and both classifications — a root config
-   cannot nest inside an application entry. It then validates each
+   cannot nest inside an application entry. The main process then validates each
    app's capability config against the capability's schema (imported via a light
    subpath export, e.g. `@platformatic/next/schema`, with `resolvePath` resolving
    against that app's root).
-3. A **`module.registerHooks`** resolve hook (the synchronous API — the async
-   `module.register` variant does not intercept `require()`, and a `watt.config.js`
-   in a `"type": "commonjs"` package is CJS) records every file the evaluation
-   transitively imported or required.
-4. The worker posts back `{ config, importedFiles, env, envFileKeys }` and exits.
-   `env` is the **pre-evaluation `loadEnv` snapshot** (real environment merged with
-   the root env files) — the runtime seeds every app worker's environment from it,
-   exactly as v3 seeded from `kMetadata.env`; `envFileKeys` records which keys came
-   from files rather than the real environment, so app-level env files can override
-   them at worker boot (v3's real rule, preserved exactly: an app env-file key
-   applies when it is absent from the environment entirely, or present but
-   file-sourced — never over a genuine environment variable). After evaluation the
-   worker diffs its live
-   `process.env` against that snapshot: mutated keys produce a boot warning naming
+3. In every eval worker, a **`module.registerHooks`** resolve hook (the synchronous
+   API — the async `module.register` variant does not intercept `require()`, and a
+   `watt.config.js` in a `"type": "commonjs"` package is CJS) records every file
+   the evaluation transitively imported or required; the main process merges the
+   per-worker lists for the watcher.
+4. Each worker posts back `{ config, importedFiles, env, envFileKeys }` and exits.
+   The root worker's `env` is the **pre-evaluation `loadEnv` snapshot** (real
+   environment merged with the root env files) — the runtime seeds every app
+   worker's environment from it, exactly as v3 seeded from `kMetadata.env`;
+   `envFileKeys` records which keys came from files rather than the real
+   environment, so app-level env files can override them at worker boot (v3's real
+   rule, preserved exactly: an app env-file key applies when it is absent from the
+   environment entirely, or present but file-sourced — never over a genuine
+   environment variable). After evaluation each worker diffs its live
+   `process.env` against its snapshot: mutated keys produce a boot warning naming
    each key, pointing at the explicit `env:` property as the sanctioned
    cross-boundary channel:
 
@@ -567,7 +577,8 @@ project/workspace-local files only:
 are recorded but never watched, so dependency churn cannot trigger reloads or
 exhaust watcher limits.
 
-The costs are real and accepted: one worker spawn + type stripping per load
+The costs are real and accepted: one worker spawn per config file (parallel) + type
+stripping per load
 (order tens of milliseconds), paid at boot and on each dev reload — and CLI
 dispatch must be careful not to evaluate config eagerly when only metadata is
 needed. Debuggability gets an explicit escape hatch, since a throwaway thread dies
@@ -675,12 +686,14 @@ provenance array in the eval-worker protocol, carrying which seeded keys came fr
 files rather than the real environment. It is load-bearing semantics, not
 diagnostics.
 
-**Per-app config files evaluate with their app's environment.** The eval worker
-imports per-app files serially, layering that app's env files over the root view
-around each import (apply, evaluate, restore) — so the colocated
-`web/frontend/watt.config.ts` reads `web/frontend/.env`'s `REDIS_URL`, exactly as a
-frontend developer expects. The loader's own layering writes are excluded from the
-mutation-diff warning.
+**Per-app config files evaluate with their app's environment — each in its own
+worker.** Every per-app file gets a dedicated eval worker whose `process.env` is
+that app's layered view (app env files over the root view), with its own isolated
+ESM cache — so the colocated `web/frontend/watt.config.ts` reads
+`web/frontend/.env`'s `REDIS_URL`, exactly as a frontend developer expects, and a
+shared helper computing values at module scope re-evaluates per worker under the
+right environment (per-worker cache isolation is what makes cross-app
+contamination impossible).
 
 Per-application `env` / `envfile` config properties (the worker's runtime
 environment) are unchanged. `{PLT_X}` interpolation, `strictEnv`, root `envfile`,
