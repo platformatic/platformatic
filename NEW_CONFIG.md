@@ -285,8 +285,12 @@ The context (Vite-parity, deliberately):
 - `command` — `'dev' | 'build' | 'start'`, which CLI verb is running.
 - `mode` — free-form variant name; defaults to `'development'` under `dev` and
   `'production'` under `build`/`start`, overridable with `--mode <name>`
-  (`wattpm build --mode staging`). Config-time only in v4.0 — it is not
-  automatically injected into worker environments.
+  (`wattpm build --mode staging`). Mode **selects env files everywhere** — it
+  travels in `workerData` and the worker-boot env reader loads the same layered
+  file set config evaluation used, so config-time and runtime env agree by
+  construction. It is *not* injected as an environment variable (no `PLT_MODE`).
+  `start` must be given the same `--mode` as `build` to reproduce the same
+  env-file view (Vite parity, documented).
 - `production` — the common-case shortcut: `true` under `start`/`--production`
   **and under `build`** (build produces production artifacts).
 - `env` — `process.env` after `.env` merging (see "Env files").
