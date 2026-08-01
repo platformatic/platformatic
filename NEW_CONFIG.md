@@ -450,12 +450,21 @@ rule applies uniformly to `dev`, `build`, and `start` — one rule, no per-comma
 exceptions. Scaffolding writes the root `package.json` script as `wattpm dev`
 (runtime, because it runs at the root) and per-app scripts as `wattpm dev` (that
 app, because they run in the app directory) — `turbo run dev` composes as N
-independent standalone apps.
+independent standalone apps, each on the port its own config declares.
 
-**Standalone boot mechanics:** the wrapped single-app runtime uses the runtime
-defaults (server port from `PORT`/3042, the app as entrypoint); the *root* config's
-settings are **not** applied — standalone means standalone. The `.env` upward walk
-is unchanged, so the root `.env` still reaches the app's environment.
+**Standalone boot mechanics and the listen rule.** The wrapped single-app runtime
+makes the app its entrypoint; the *root* config's settings are **not** applied —
+standalone means standalone. Ports follow one rule, everywhere (full runtime and
+standalone alike):
+
+- an application **listens only when it has a reason to**: its own config's
+  `server` block sets a port (the app declares its address), **or** it is the only
+  application in its runtime — then it listens on `PORT`/3042;
+- an app with no configured port that isn't alone does **not** call `listen` at
+  all (mesh-only — v3's non-entrypoint behavior, generalized);
+- there is **no port search**: a taken port is a fast `EADDRINUSE` failure. For
+  parallel multi-app dev (`turbo run dev`), apps declare distinct ports in their
+  `server` blocks — deterministic and greppable, no magic.
 
 **The walk stops after checking the repository/workspace boundary directory**: the
 first directory
