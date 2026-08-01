@@ -424,10 +424,14 @@ Classification runs the **conflict check first**, then falls through:
    root config;
 5. an empty/other object is a root config (all defaults).
 
-**The nearest config decides — commands are package-local.** The walk classifies
-the nearest `watt.config.*` at or above the current directory in the eval worker
-(classification is cached, so a file classified during the walk is not re-evaluated
-by a later discovery pass — config code still runs once per load):
+**The nearest config decides — commands are package-local.** The ordering is
+strict, so the deciding file always executes with real context: **(1)** find the
+nearest `watt.config.*` at or above the current directory **by filename alone** (no
+execution); **(2)** run `loadEnv` — the layered env-file set from that file's
+directory up to the workspace boundary; **(3)** only then execute candidates in
+their eval workers to classify them (classification is cached, so a file classified
+during the walk is not re-evaluated by a later discovery pass — config code still
+runs once per load):
 
 - **Root config nearest** → the full runtime boots. Running from the project root
   behaves exactly as v3.
@@ -689,6 +693,13 @@ root-file defaults but never genuine environment variables) — the v3
 provenance array in the eval-worker protocol, carrying which seeded keys came from
 files rather than the real environment. It is load-bearing semantics, not
 diagnostics.
+
+**Evaluation env is determined by directories, never by boot style.** A config
+file's environment is always "its own directory's env files layered over
+everything found walking up to the workspace boundary" — the identical set under a
+root boot, a standalone boot, and `--all`, because the walk's reach never depends
+on which config file won. The same expression evaluates identically everywhere;
+only *what boots* changes with location.
 
 **Per-app config files evaluate with their app's environment — each in its own
 worker.** Every per-app file gets a dedicated eval worker whose `process.env` is
