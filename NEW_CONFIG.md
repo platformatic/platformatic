@@ -249,22 +249,39 @@ When both a root inline entry and a per-app file exist for the same app id, they
 merged **shallowly, per-key, root winning** — the v3 `autoload.mappings` semantics —
 and a root-provided `config` value replaces the per-app file's export wholesale.
 
-### Functional form for environment-dependent config
+### Functional form and the config context
 
-`defineConfig` also accepts a function, sync or async:
+`defineConfig` also accepts a function, sync or async — and so do **per-app config
+files**: a function export is called once with the context and its *resolved value*
+is classified (root config or application definition) by the normal rules.
 
 ```ts
-export default defineConfig(({ env, production, root }) => ({
+export default defineConfig(({ command, mode, production, env }) => ({
   server: { port: Number(env.PORT ?? 3042) },
-  watch: !production,
+  watch: command === 'dev',
+  logger: { level: mode === 'staging' ? 'debug' : production ? 'warn' : 'info' },
   applications: [/* … */]
 }))
 ```
 
+```ts
+// web/frontend/watt.config.ts — the same functional form, per-app
+import { next } from '@platformatic/next'
+
+export default ({ mode }) =>
+  next({ cache: mode === 'test' ? undefined : { adapter: 'redis' } })
+```
+
+The context (Vite-parity, deliberately):
+
+- `command` — `'dev' | 'build' | 'start'`, which CLI verb is running.
+- `mode` — free-form variant name; defaults to `'development'` under `dev` and
+  `'production'` under `build`/`start`, overridable with `--mode <name>`
+  (`wattpm build --mode staging`). Config-time only in v4.0 — it is not
+  automatically injected into worker environments.
+- `production` — the common-case shortcut: `true` under `start`/`--production`
+  **and under `build`** (build produces production artifacts).
 - `env` — `process.env` after `.env` merging (see "Env files").
-- `production` — `true` under `wattpm start` / `--production` **and under
-  `wattpm build`** (build produces production artifacts, so the config must take
-  the production branch).
 - `root` — absolute directory of the config file.
 
 ### Capability factories
@@ -379,7 +396,8 @@ We use `watt.config.*`, not `watt.ts`, following the `vite.config.ts` /
 **Root and per-app files share the same filename; the export discriminates.**
 Classification runs the **conflict check first**, then falls through:
 
-1. a **function** export is always a root config (factories return objects);
+1. a **function** export is called once with the config context; its resolved
+   value then falls through the rules below;
 2. an object with **both** `module` and a root-only key (`applications`,
    `autoload`, `entrypoint`) is an **error** naming the clashing keys;
 3. an object with `module` is an `ApplicationDefinition` (per-app);
@@ -994,7 +1012,13 @@ export interface ApplicationEntry {
   // …
 }
 
-export type ConfigContext = { env: NodeJS.ProcessEnv, production: boolean, root: string }
+export type ConfigContext = {
+  command: 'dev' | 'build' | 'start'
+  mode: string
+  production: boolean
+  env: NodeJS.ProcessEnv
+  root: string
+}
 
 export function defineConfig (config: WattConfig): WattConfig
 export function defineConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<WattConfig>): typeof fn
