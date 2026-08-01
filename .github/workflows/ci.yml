@@ -83,6 +83,38 @@ jobs:
         if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
         run: exit 1
 
+  license-check:
+    name: 'license-check'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'license-check' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4.4.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --production --frozen-lockfile
+      - name: Generate the production dependency license list
+        run: node ./scripts/license-check.js --format=markdown --out=THIRD_PARTY_LICENSES.md --no-check
+      - name: Upload the production dependency license list
+        uses: actions/upload-artifact@v7
+        with:
+          name: third-party-licenses
+          path: THIRD_PARTY_LICENSES.md
+      # Fails when a dependency introduces a license that is not in the allow list
+      # in scripts/license-check.js, so adding a new license requires a review.
+      - name: Check that no disallowed or new licenses were added
+        run: pnpm run license-check
+
   runtime-lint:
     name: 'runtime-lint'
     needs: setup

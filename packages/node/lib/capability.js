@@ -5,6 +5,7 @@ import {
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
+  errors,
   getServerUrl,
   importFile,
   injectViaRequest
@@ -36,6 +37,22 @@ const validFields = [
 ]
 
 const validFilesBasenames = ['index', 'main', 'app', 'application', 'server', 'start', 'bundle', 'run', 'entrypoint']
+
+function normalizeScheduledTasks (scheduledTasks) {
+  let schedules = []
+
+  if (Array.isArray(scheduledTasks)) {
+    schedules = scheduledTasks
+  } else if (scheduledTasks && typeof scheduledTasks === 'object') {
+    schedules = Object.entries(scheduledTasks).map(([cron, tasks]) => ({ cron, tasks }))
+  }
+
+  return schedules.map(({ cron, tasks }, index) => ({
+    id: String(index),
+    cron,
+    tasks: Array.isArray(tasks) ? tasks : [tasks]
+  }))
+}
 
 // Paolo: This is kinda hackish but there is no better way. I apologize.
 function isFastify (app) {
@@ -112,6 +129,8 @@ export class NodeCapability extends BaseCapability {
   #appClose
   #useHttpForDispatch
   #factory
+  #scheduledTasks
+  #tasks
 
   constructor (root, config, context) {
     super('nodejs', version, root, config, context)
@@ -192,7 +211,10 @@ export class NodeCapability extends BaseCapability {
       this.#module = await importFile(finalEntrypoint)
     }
 
-    this.#module = this.#module.default || this.#module
+    const importedModule = this.#module
+    this.#module = importedModule.default || importedModule
+    this.#scheduledTasks = this.#module.scheduledTasks ?? importedModule.scheduledTasks
+    this.#tasks = this.#module.tasks ?? importedModule.tasks
 
     // Deal with application
     this.#factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
@@ -381,6 +403,38 @@ export class NodeCapability extends BaseCapability {
     const { statusCode, headers, body, payload, rawPayload } = res
 
     return { statusCode, headers, body, payload, rawPayload }
+  }
+
+  async getScheduledTasks () {
+    return normalizeScheduledTasks(this.#scheduledTasks)
+  }
+
+  async runScheduledTasks (scheduleId, scheduledTime) {
+    const schedules = await this.getScheduledTasks()
+    const schedule = schedules.find(schedule => schedule.id === scheduleId)
+
+    if (!schedule) {
+      throw new errors.ScheduledTaskGroupNotFound(scheduleId)
+    }
+
+    const results = await Promise.allSettled(
+      schedule.tasks.map(async name => {
+        const task = this.#tasks?.[name]
+
+        if (typeof task !== 'function') {
+          throw new errors.ScheduledTaskNotFound(name)
+        }
+
+        return task({ scheduledTime, app: this.#app ?? this.#server })
+      })
+    )
+
+    const taskErrors = results.filter(result => result.status === 'rejected').map(result => result.reason)
+    if (taskErrors.length > 0) {
+      throw new AggregateError(taskErrors, `Scheduled task group "${scheduleId}" failed`)
+    }
+
+    return results.map(result => result.value)
   }
 
   _getWantsAbsoluteUrls () {
