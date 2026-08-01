@@ -386,26 +386,44 @@ Classification runs the **conflict check first**, then falls through:
 4. an object with `applications`, `autoload`, or `entrypoint` is a root config;
 5. an empty/other object is a root config (all defaults).
 
-**The upward walk evaluates candidates.** v3's walk read each candidate's `$schema`
-to skip capability configs and keep climbing to the runtime root; v4 gets the same
-behavior by classifying each candidate in the eval worker: an app-def export means
-"inside an application — keep climbing". `cd web/api && wattpm dev` therefore boots
-the whole runtime, exactly as v3 did. The eval worker caches classification
-evaluations, so a per-app file classified during the walk is **not** re-evaluated by
-the root's discovery pass — config code still runs once per load.
+**The nearest config decides — commands are package-local.** The walk classifies
+the nearest `watt.config.*` at or above the current directory in the eval worker
+(classification is cached, so a file classified during the walk is not re-evaluated
+by a later discovery pass — config code still runs once per load):
 
-**When the walk finds only app-defs and no root** (a bare-export single-app repo, or
-a monorepo whose root config is missing), the **topmost** app-def is auto-wrapped as
-`{ applications: [{ config: def }] }` and booted. When that file sits at the walk
-boundary itself — the expected single-app layout — this is silent; otherwise a
-prominent warning is printed:
+- **Root config nearest** → the full runtime boots. Running from the project root
+  behaves exactly as v3.
+- **App-def nearest** → **that application boots standalone**: the definition is
+  auto-wrapped as `{ applications: [{ config: def }] }` and run as a single-app
+  runtime. `cd web/frontend && wattpm dev` — or `pnpm --filter frontend dev`, or
+  each task of `turbo run dev` — starts *only* that application, matching the
+  package-local command model frontend developers expect. This is a deliberate
+  break from v3, which booted the whole runtime from anywhere.
+
+When the standalone-booted app is part of a larger project (a root config exists
+further up), a prominent warning states the consequences and the alternative:
 
 ```
-⚠ no root configuration found above web/api — booting 'api' standalone
+⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local
+  are unavailable. Run `wattpm dev --all` (or run from the project root) for
+  the full runtime.
 ```
 
-Topmost (not nearest-cwd) so the outcome doesn't depend on which subdirectory the
-command runs from.
+In a genuinely standalone single-app repo (the app-def *is* the topmost config),
+there is nothing above to miss and no warning is printed.
+
+**`--all` boots the full runtime from anywhere**: the walk continues past the
+nearest app-def to the root config (error if none exists). The location-sensitive
+rule applies uniformly to `dev`, `build`, and `start` — one rule, no per-command
+exceptions. Scaffolding writes the root `package.json` script as `wattpm dev`
+(runtime, because it runs at the root) and per-app scripts as `wattpm dev` (that
+app, because they run in the app directory) — `turbo run dev` composes as N
+independent standalone apps.
+
+**Standalone boot mechanics:** the wrapped single-app runtime uses the runtime
+defaults (server port from `PORT`/3042, the app as entrypoint); the *root* config's
+settings are **not** applied — standalone means standalone. The `.env` upward walk
+is unchanged, so the root `.env` still reaches the app's environment.
 
 **The walk stops at the repository/workspace boundary**: the first directory
 containing `.git`, a `package.json` with `workspaces`, or `pnpm-workspace.yaml`.
@@ -844,6 +862,10 @@ range bumps from step 2.
     Capabilities frozen on the v3 contract are unsupported.
 13. Validation runs with `coerceTypes: false`: values that relied on AJV coercion
     (`"4"` as a number, `1` as a boolean) are rejected with precise errors.
+14. `wattpm dev`/`build`/`start` become **location-sensitive**: run inside an
+    application directory they act on that application standalone (with a warning
+    when a root config exists above); v3 booted the whole runtime from anywhere.
+    `--all` restores the runtime-wide behavior explicitly.
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
 error. The migration story is the codemod, not a compat layer.
