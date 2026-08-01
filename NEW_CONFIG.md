@@ -456,9 +456,11 @@ to the full v3 reach. The `.env` walk uses the same boundary for consistency;
 All configuration is evaluated in a **short-lived evaluation worker thread**, spawned
 per load:
 
-1. The eval worker resolves the root, runs `loadEnv` (the `.env` upward walk), and
-   applies the result to its own `process.env` — the main process env is never
-   touched.
+1. The eval worker resolves the root, runs `loadEnv` (the env-file upward walk over
+   the recognized file set for the active `mode`), and applies the result to its own
+   `process.env` — the main process env is never touched. Around each per-app file
+   import it layers that application's env files (apply, evaluate, restore) per the
+   app-wins model in "Env files".
 2. It imports the root config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's
    built-in type stripping, the same mechanism the runtime already uses for
    `extensions`), unwraps the default export (object, function called with the context
@@ -473,10 +475,12 @@ per load:
    `module.register` variant does not intercept `require()`, and a `watt.config.js`
    in a `"type": "commonjs"` package is CJS) records every file the evaluation
    transitively imported or required.
-4. The worker posts back `{ config, importedFiles, env }` and exits. `env` is the
-   **pre-evaluation `loadEnv` snapshot** (real environment merged with the root
-   `.env`) — the runtime seeds every app worker's environment from it, exactly as v3
-   seeded from `kMetadata.env`. After evaluation the worker diffs its live
+4. The worker posts back `{ config, importedFiles, env, envFileKeys }` and exits.
+   `env` is the **pre-evaluation `loadEnv` snapshot** (real environment merged with
+   the root env files) — the runtime seeds every app worker's environment from it,
+   exactly as v3 seeded from `kMetadata.env`; `envFileKeys` records which keys came
+   from files rather than the real environment, so app-level env files can override
+   them (and only them) at worker boot. After evaluation the worker diffs its live
    `process.env` against that snapshot: mutated keys produce a boot warning naming
    each key, pointing at the explicit `env:` property as the sanctioned
    cross-boundary channel:
@@ -553,9 +557,9 @@ but the capability pipeline is split deliberately:**
   (`telemetryConfig`, watch flags). This keeps capability imports off the eval
   worker's path and, crucially, preserves patch semantics (below).
 
-Consequence to document: per-app config files are evaluated with the *root's*
-environment. Per-application `env`/`envfile` configure the worker's runtime
-environment, never config evaluation.
+Per-app config files evaluate with **their application's layered environment** (see
+"Env files"); the per-application `env`/`envfile` config properties configure the
+worker's runtime environment, not config evaluation.
 
 **Serializability is the v4.0 contract, and it is deterministic:**
 
@@ -602,22 +606,42 @@ from the app's deps, with the runtime-bundled fallback) is unchanged.
 
 ### Env files
 
-1. Before config evaluation, the eval worker runs the `.env` upward walk and applies
-   the result to its `process.env` (file values never overriding real env). The
-   config file just reads `process.env` / the `env` context argument.
-2. **Precedence is simplified to two-valued** (a deliberate breaking change):
-   `real env > root .env > app .env`. Once loaded, the root `.env` is
-   indistinguishable from the real environment, so an application's own `.env` no
-   longer overrides root-file defaults (in v3 it could, via the `kEnvFileFallbackKeys`
-   machinery, which is deleted). The transition warning lives in **migrate only**:
-   `wattpm migrate` statically diffs the root `.env` against every application
-   `.env` and warns per conflicting key (suppressing keys whose values are equal).
-   The runtime carries zero provenance and never warns — after migration, the
-   two-valued precedence is simply the documented rule.
-3. Per-application `env` / `envfile` (the worker's runtime environment) are unchanged.
-4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`, and the YAML brace-quoting
-   pre-pass do not exist in v4; they survive only inside `wattpm migrate`'s legacy
-   reader.
+**Recognized files** (Vite parity), in both the root and each application
+directory:
+
+```
+.env  .env.local  .env.<mode>  .env.<mode>.local
+```
+
+Within one directory, mode-specific beats generic and `.local` beats committed:
+`.env.<mode>.local > .env.<mode> > .env.local > .env`. `mode` comes from the config
+context (`--mode`); scaffolding adds `.env*.local` to `.gitignore`.
+
+**Precedence is app-wins layering — more specific overrides less specific, real
+environment always wins:**
+
+```
+real environment  >  app env files  >  root env files
+```
+
+This preserves v3's observable behavior (an application's `.env` overrides
+root-file defaults but never genuine environment variables) — the v3
+`kEnvFileFallbackKeys` mechanism returns in spirit as a small `envFileKeys`
+provenance array in the eval-worker protocol, carrying which seeded keys came from
+files rather than the real environment. It is load-bearing semantics, not
+diagnostics.
+
+**Per-app config files evaluate with their app's environment.** The eval worker
+imports per-app files serially, layering that app's env files over the root view
+around each import (apply, evaluate, restore) — so the colocated
+`web/frontend/watt.config.ts` reads `web/frontend/.env`'s `REDIS_URL`, exactly as a
+frontend developer expects. The loader's own layering writes are excluded from the
+mutation-diff warning.
+
+Per-application `env` / `envfile` config properties (the worker's runtime
+environment) are unchanged. `{PLT_X}` interpolation, `strictEnv`, root `envfile`,
+and the YAML brace-quoting pre-pass do not exist in v4; they survive only inside
+`wattpm migrate`'s legacy reader.
 
 ### Inter-application URLs
 
@@ -641,11 +665,14 @@ deliberately saner:
   precedence ladder is explicit:
 
   ```
-  real environment  >  entry env block  >  root env block  >  injected  >  .env files
+  real environment  >  entry env block  >  root env block  >  injected
+                    >  app env files  >  root env files
   ```
 
   (Both `env` blocks exist — the root-level one applied to all applications and the
-  per-entry one — and the entry's wins, matching v3's application order.) The
+  per-entry one — and the entry's wins, matching v3's application order. Injected
+  URLs sit **above all env files**, including the app's own — so stale `PLT_*_URL`
+  lines in any `.env` remain structurally harmless under app-wins layering.) The
   runtime skips injection when the key exists in its **own real environment**
   (container/k8s overrides work, with zero provenance machinery — the runtime's
   `process.env` *is* the oracle); the injected mesh URL overrides anything sourced
@@ -815,19 +842,20 @@ exactly as production v3 would in memory, then:
    still never touched) and prints the package-manager install command. For
    third-party capabilities without a v4-compatible release, migrate **stops before
    modifying any file**, naming the packages that block it.
-3. Warn for every `.env` key defined in both the root and an app `.env` (the
-   two-valued precedence change).
-4. **Validate before any cleanup**: load the generated configuration through the
+3. **Validate before any cleanup**: load the generated configuration through the
    real v4 loader (eval worker, validation, transform); if it fails, report and
    leave everything in place — the input files are untouched until the output
    provably works.
-5. Scan application sources for references to the config files about to be deleted
+4. Scan application sources for references to the config files about to be deleted
    (v3 scaffolded test helpers do
    `JSON.parse(await readFile(…, 'watt.json'))`): any hit downgrades that file's
    deletion to a warning with the file/line of the reference, since the codemod
    cannot safely rewrite user code.
-6. Delete the unreferenced old files (`--keep` to retain all) and print a diff
+5. Delete the unreferenced old files (`--keep` to retain all) and print a diff
    summary.
+
+(No `.env` conflict warning is needed: app-wins layering preserves v3's observable
+env precedence.)
 
 Because migration emits the per-app style, dependency *placement* is never
 changed — the only `package.json` edits are the consented `@platformatic/*` version
@@ -845,9 +873,10 @@ range bumps from step 2.
    machinery are deleted from the loader.
 4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`: **removed**; `wattpm migrate`
    converts them.
-5. `.env` precedence simplifies to `real env > root .env > app .env`; app `.env` no
-   longer overrides root-file defaults (`kEnvFileFallbackKeys` deleted; the migrate
-   static diff is the transition warning — the runtime never warns).
+5. Env files: the recognized set grows to `.env`, `.env.local`, `.env.<mode>`,
+   `.env.<mode>.local` (additive); precedence stays v3-compatible in effect
+   (app files override root-file defaults, real environment always wins) — not a
+   breaking change, listed for visibility.
 6. `verticalScaler`, `healthChecksTimeouts`: removed from the v4 schema.
 7. Schema audit: placeholder-string unions removed from every schema (validation is
    stricter; migrate emits typed values).
