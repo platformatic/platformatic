@@ -381,11 +381,15 @@ Search order in a directory (first hit wins):
 4. `watt.config.mjs`
 
 There is no other supported format. Legacy detection covers the **complete v3
-candidate set, not just `.json`**: when no `watt.config.*` is found, the search
-checks every v3 candidate filename — `watt.*` / `platformatic.*` and the suffixed
-variants (`*.runtime.*`, `*.application.*`, `*.service.*`, `*.db.*`, `*.gateway.*`,
-`*.composer.*`) across all six v3 extensions (`json`, `json5`, `yaml`, `yml`,
-`toml`, `tml`) — and refuses if any is present, naming the file it found:
+candidate set, not just `.json`**, and it is **unconditional**: in every directory
+the loader consults (the walk, per-app discovery), the presence of any v3 candidate
+filename — `watt.*` / `platformatic.*` and the suffixed variants (`*.runtime.*`,
+`*.application.*`, `*.service.*`, `*.db.*`, `*.gateway.*`, `*.composer.*`) across
+all six v3 extensions (`json`, `json5`, `yaml`, `yml`, `toml`, `tml`) — is an
+error naming the file it found, **even next to a `watt.config.*` file**. There are
+no ignored legacy files and no coexistence states: a properly migrated tree has
+none (migrate deletes them), and a tree that has one is genuinely confusing and
+should say so:
 
 ```
 ✗ watt.yaml is a v3-era configuration. Watt v4 uses watt.config.ts.
@@ -442,7 +446,10 @@ further up), a prominent warning states the consequences and the alternative:
 ```
 
 In a genuinely standalone single-app repo (the app-def *is* the topmost config),
-there is nothing above to miss and no warning is printed.
+there is nothing above to miss and no warning is printed. Sibling-dependent
+capabilities (a gateway's config enumerates sibling applications) get the same
+warning and no special treatment: booted standalone they fail at compose time with
+their own errors — documented, not prevented.
 
 **`--all` boots the full runtime from anywhere**: the walk continues past the
 nearest app-def to the root config (error if none exists). The location-sensitive
@@ -886,22 +893,21 @@ exactly as production v3 would in memory, then:
    still never touched) and prints the package-manager install command. For
    third-party capabilities without a v4-compatible release, migrate **stops before
    modifying any file**, naming the packages that block it.
-3. **Validate before any cleanup**: load the generated configuration through the
-   real v4 loader (eval worker, validation, transform); if it fails, report and
-   leave everything in place — the input files are untouched until the output
-   provably works.
+3. **Validate the emitted files by explicit path**: migrate loads the generated
+   configuration through the real v4 loader via the `--config`-style direct-path
+   entry — which never runs discovery or legacy detection, so validation is
+   independent of what else is on disk. If it fails, report and stop; nothing has
+   been deleted yet.
 4. Scan application sources for references to the legacy config files (v3
    scaffolded test helpers do `JSON.parse(await readFile(…, 'watt.json'))`): any
    hit is reported with the file/line of the reference, since the codemod cannot
-   safely rewrite user code and the renamed file will make that reference fail
-   visibly.
-5. **Rename the legacy files by default** — `watt.json` → `watt.json.v3.bak`
-   (applied across the whole candidate set) — and print a diff summary. The
-   renamed files are invisible to the runtime's legacy detection, so the migrated
-   project boots immediately; nothing is destroyed; external references fail
-   loudly instead of reading stale config. `--delete` removes the originals
-   outright; `--keep` leaves them untouched (the project then won't boot until
-   they're removed manually — the runtime's legacy error explains this).
+   safely rewrite user code and deletion will make that reference fail visibly.
+5. **Delete the legacy files** and print a summary. There is no rename, no
+   `.v3.bak`, no `--keep` — **version control is the undo mechanism**: migrate
+   refuses to run on a dirty git tree (`--force` overrides, with a loud warning;
+   same flag for no-VCS trees), so review is `git diff` and rollback is
+   `git restore .` — atomic, complete, and familiar, where filesystem-level backup
+   schemes are neither.
 
 (No `.env` conflict warning is needed: app-wins layering preserves v3's observable
 env precedence.)
