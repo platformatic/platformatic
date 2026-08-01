@@ -328,13 +328,20 @@ interface ApplicationDefinition {
 ```
 
 The stamped `version` closes the root/app skew hole: a root-inline factory resolves
-from the root's copy of the capability, while validation and the worker
-implementation resolve from the *app's* copy — with pnpm those can be different
-versions (`next@4.1` factory, `next@4.0` runtime). The eval worker compares the
-stamp against the app-resolved package version and fails with an error naming both
-resolved paths and versions on mismatch (covered by an integration test). Same
-major+minor is required; hand-written `{ module }` objects carry no stamp and skip
-the check.
+from the root's copy of the capability, while the worker implementation may resolve
+a different copy — with pnpm's strict layout those can be different versions
+(`next@4.1` factory, `next@4.0` runtime), letting a 4.1-only option pass the editor
+and factory and be silently ignored by the 4.0 runtime. The check is defined
+against **the resolution the worker will actually perform**: at load time the main
+process replicates `importCapabilityPackage`'s real order — regular import from the
+runtime context first, app-scoped resolution as the fallback — and compares the
+stamp against the version of the copy that resolution yields (so hoisted layouts,
+where factory and worker share one copy, never false-positive, and root-only
+dependencies are well-defined). **Major mismatch is a boot error** naming both
+resolved paths and versions; **minor mismatch is a warning** (legitimate mid-upgrade
+drift); patch differences are ignored. Covered by an integration test per layout
+(npm hoisted, pnpm strict, root-only). Hand-written `{ module }` objects carry no
+stamp and skip the check.
 
 Duck-typing on `module` (rather than a symbol tag) is deliberate: dependency-free
 plain-object configs must be first-class, and symbol identity breaks across duplicated
