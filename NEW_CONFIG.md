@@ -16,8 +16,9 @@ file found is, by definition, a v3-era file and is refused with an instruction t
 The core structural change is that **there is exactly one configuration dialect**: the
 runtime dialect. The distinction between "a single-app config with a nested `runtime`
 block" and "a runtime config with nested applications" disappears. A single-app project
-and a 20-app monorepo use the same file shape; scaling from one to many is a file move,
-not a rewrite.
+and a 20-app monorepo use the same dialect; scaling from one to many means **the
+application definition moves unchanged** — the `next({ … })` expression is identical
+in a single-app root, a root-inline entry, and a per-app file.
 
 ```ts
 // watt.config.ts — a complete single-app Next.js project
@@ -27,17 +28,19 @@ import { next } from '@platformatic/next'
 export default defineConfig({
   server: { port: Number(process.env.PORT ?? 3042) },
   logger: { level: 'info' },
-  applications: [
-    {
-      workers: 2,
-      config: next({
-        trailingSlash: true,
-        cache: { adapter: 'redis', url: process.env.REDIS_URL }
-      })
-    }
-  ]
+  application: {
+    workers: 2,
+    config: next({
+      trailingSlash: true,
+      cache: { adapter: 'redis', url: process.env.REDIS_URL }
+    })
+  }
 })
 ```
+
+The singular `application` key is the single-app shorthand — the same entry shape
+as one element of `applications`, normalized internally to a one-element array
+(declaring both is an error).
 
 Be precise about what this is: **TypeScript-authored serializable data**, not
 unrestricted TypeScript. The evaluated result must be plain data (it crosses a
@@ -136,7 +139,8 @@ explicit where still needed (see "Machine-generated configs").
    type stripping is already our floor).
 3. Full typed autocomplete backed by **tightened schemas**: the placeholder-string
    unions are audited out in v4.0, so generated types are strict at launch.
-4. Single-app → multi-app is a file move; migration never edits `package.json`.
+4. Single-app → multi-app: the application definition moves unchanged; migration
+   never relocates dependencies.
 5. Env handling becomes ordinary JavaScript (`process.env`), with `.env` loaded before
    the config file is evaluated and a simplified, documented precedence.
 6. A `wattpm migrate` codemod that converts anything that boots on v3 into v4 config
@@ -154,10 +158,12 @@ explicit where still needed (see "Machine-generated configs").
 auto-detected from `package.json` dependencies, defaults apply. Nothing is written to
 disk.
 
-**Level 1 — single app.** One file at the project root (see Summary above). Every
-runtime option (`server`, `logger`, `health`, `metrics`, `telemetry`, `undici`,
-`httpCache`, `gracefulShutdown`, …) is top-level — exactly where it is in a multi-app
-config. **The `runtime` block does not exist in v4.**
+**Level 1 — single app.** One file at the project root (see Summary above), using
+the singular `application` shorthand. Every runtime option (`server`, `logger`,
+`health`, `metrics`, `telemetry`, `undici`, `httpCache`, `gracefulShutdown`, …) is
+top-level — exactly where it is in a multi-app config. **The `runtime` block does
+not exist in v4.** Scaffolding and `migrate` emit this form for single-app
+projects.
 
 **Level 2 — multi-app.** Same shape, more entries. The application entry carries the
 orchestration properties; the capability configuration attaches through the entry's
@@ -399,9 +405,13 @@ Classification runs the **conflict check first**, then falls through:
 1. a **function** export is called once with the config context; its resolved
    value then falls through the rules below;
 2. an object with **both** `module` and a root-only key (`applications`,
-   `autoload`, `entrypoint`) is an **error** naming the clashing keys;
+   `autoload`, `entrypoint`) is an **error** naming the clashing keys — note that
+   `application` is deliberately *not* in this list: an `ApplicationDefinition`
+   legitimately contains `module` plus its nested `application` (buildable) block,
+   and rule 3 firing before rule 4 classifies it correctly;
 3. an object with `module` is an `ApplicationDefinition` (per-app);
-4. an object with `applications`, `autoload`, or `entrypoint` is a root config;
+4. an object with `application`, `applications`, `autoload`, or `entrypoint` is a
+   root config;
 5. an empty/other object is a root config (all defaults).
 
 **The nearest config decides — commands are package-local.** The walk classifies
@@ -993,6 +1003,7 @@ cheap to iterate because the loader is new code with no v3 entanglement.
 export interface WattConfig {
   entrypoint?: string
   basePath?: string
+  application?: ApplicationEntry           // single-app shorthand; exclusive with:
   applications?: ApplicationEntry[]
   autoload?: { path: string, exclude?: string[], mappings?: Record<string, ApplicationEntryOverrides> }
   server?: ServerOptions
@@ -1096,15 +1107,13 @@ import { next } from '@platformatic/next'
 export default defineConfig({
   server: { port: Number(process.env.PORT ?? 3042) },
   logger: { level: 'info' },
-  applications: [
-    {
-      workers: 2,
-      config: next({
-        trailingSlash: true,
-        cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL }
-      })
-    }
-  ]
+  application: {
+    workers: 2,
+    config: next({
+      trailingSlash: true,
+      cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL }
+    })
+  }
 })
 ```
 
