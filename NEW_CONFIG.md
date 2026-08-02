@@ -440,8 +440,14 @@ their eval workers to classify them (classification is cached, so a file classif
 during the walk is not re-evaluated by a later discovery pass — config code still
 runs once per load):
 
-- **Root config nearest** → the full runtime boots. Running from the project root
-  behaves exactly as v3.
+- **Root config nearest** → one more check before booting the runtime: if cwd is
+  inside a directory that root config **claims as an application** (an entry's
+  `path`, or a non-excluded subdirectory of `autoload.path`), **that app boots
+  standalone** — a zero-config app behaves identically to a sibling that owns a
+  config file, because package-local scoping is a property of *being an app*, not
+  of owning a file. Otherwise the full runtime boots; running from the project
+  root behaves exactly as v3. (The claim check is free: the walk has already
+  evaluated the root config.)
 - **App-def nearest** → **that application boots standalone**: the definition is
   auto-wrapped as `{ application: { config: def } }` (the normalized singular
   form — the DTO shows this entry) and run as a single-app runtime; the entry's
