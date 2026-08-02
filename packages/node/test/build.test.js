@@ -171,12 +171,18 @@ for (const application of ['app-no-config', 'app-with-config']) {
 
     // reload the application
     {
-      const event = await once(runtime, 'application:worker:changed')
+      let event
+      do {
+        event = await once(runtime, 'application:worker:changed')
+      } while (event[0].application !== application)
       equal(event[0].application, application)
     }
     // restart the application
     {
-      const event = await once(runtime, 'application:worker:started')
+      let event
+      do {
+        event = await once(runtime, 'application:worker:started')
+      } while (event[0].application !== application)
       equal(event[0].application, application)
     }
   })

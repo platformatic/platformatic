@@ -9,7 +9,7 @@ export function wrapQuery (app, db, request) {
     let namePrefix
     if (connectionInfo.isPg) {
       namePrefix = 'pg.query:'
-    } else if (connectionInfo.isMySql) {
+    } else if (connectionInfo.isMySql || connectionInfo.isMariaDB) {
       namePrefix = 'mysql.query:'
     } else if (connectionInfo.isSQLite) {
       namePrefix = 'sqlite.query:'

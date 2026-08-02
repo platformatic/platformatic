@@ -192,7 +192,7 @@ export async function createConnectionPool ({
     sql = createConnectionPoolMysql.sql
     const version = (await db.query(sql`SELECT VERSION()`))[0]['VERSION()']
     db.version = version
-    db.isMariaDB = version.indexOf('maria') !== -1
+    db.isMariaDB = version.toLowerCase().indexOf('maria') !== -1
     if (!db.isMariaDB) {
       db.isMySql = true
     }
@@ -311,6 +311,26 @@ export async function connect ({
         const columns = await queries.listColumns(db, sql, table, schema)
         wrap.constraints = await queries.listConstraints(db, sql, table, schema)
         wrap.columns = columns
+
+        // MariaDB reports JSON columns as `longtext`; recover the JSON-ness
+        // from the auto-generated json_valid(...) CHECK constraint.
+        // Fail open: information_schema.CHECK_CONSTRAINTS (and its TABLE_NAME
+        // extension) is only present on MariaDB >= 10.2.1. On older MariaDB,
+        // or if permissions are restricted, just skip JSON-column detection
+        // instead of breaking introspection entirely.
+        if (db.isMariaDB && queries.listJsonColumns) {
+          try {
+            const jsonColumns = await queries.listJsonColumns(db, sql, table, schema)
+            for (const jsonColumn of jsonColumns) {
+              const column = columns.find(c => c.column_name === jsonColumn.column_name)
+              if (column) {
+                column.isJson = true
+              }
+            }
+          } catch {
+            // information_schema.CHECK_CONSTRAINTS not available/queryable; ignore.
+          }
+        }
 
         // To get enum values in pg
         /* istanbul ignore next */

@@ -5,6 +5,7 @@
     "esModuleInterop": true,
     "lib": ["es2022"],
     "target": "es2022",
+    "types": ["node"],
     "sourceMap": true,
     "pretty": true,
     "noEmitOnError": true,

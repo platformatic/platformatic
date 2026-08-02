@@ -3,7 +3,7 @@ import fastify from 'fastify'
 import { equal, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import { mapSQLEntityToJSONSchema } from '../index.js'
-import { clear, connInfo, isMariaDB, isPg, isSQLite } from './helper.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -106,11 +106,7 @@ test('simple db, simple rest API', async t => {
     same(pageJsonSchema.properties.title, { type: 'string' })
     same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
     same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
-    if (isMariaDB) {
-      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
-    } else {
-      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
-    }
+    same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     if (isPg) {
       same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
@@ -185,11 +181,7 @@ test('noRequired = true', async t => {
     same(pageJsonSchema.properties.title, { type: 'string', nullable: true })
     same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
     same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
-    if (isMariaDB) {
-      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
-    } else {
-      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
-    }
+    same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     if (isPg) {
       same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
@@ -228,11 +220,7 @@ test('ignore one field', async t => {
     same(pageJsonSchema.properties.id, { type: 'integer' })
     equal(pageJsonSchema.properties.title, undefined)
     same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
-    if (isMariaDB) {
-      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
-    } else {
-      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
-    }
+    same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     if (isPg) {
       same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
