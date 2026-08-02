@@ -456,8 +456,7 @@ further up), a prominent warning states the consequences and the alternative:
 
 ```
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local
-  are unavailable. Run `wattpm dev --all` (or run from the project root) for
-  the full runtime.
+  are unavailable. Run from the project root for the full runtime.
 ```
 
 In a genuinely standalone single-app repo (the app-def *is* the topmost config),
@@ -466,13 +465,26 @@ capabilities (a gateway's config enumerates sibling applications) get the same
 warning and no special treatment: booted standalone they fail at compose time with
 their own errors — documented, not prevented.
 
-**`--all` boots the full runtime from anywhere**: the walk continues past the
-nearest app-def to the root config (error if none exists). The location-sensitive
-rule applies uniformly to `dev`, `build`, and `start` — one rule, no per-command
-exceptions. Scaffolding writes the root `package.json` script as `wattpm dev`
-(runtime, because it runs at the root) and per-app scripts as `wattpm dev` (that
-app, because they run in the app directory) — `turbo run dev` composes as N
-independent standalone apps, each on the port its own config declares.
+**Scope is purely positional — there is no `--all` flag.** cwd is the only scope
+selector: run at the root for the runtime, in an app directory for that app;
+wanting the runtime from inside an app directory means running at the root (a
+`cd`, a subshell, or a root script). One rule, zero scope flags, applied uniformly
+to `dev`, `build`, and `start` — no per-command exceptions. Scaffolding writes the
+root `package.json` script as `wattpm dev` (runtime, because it runs at the root)
+and per-app scripts as `wattpm dev` (that app, because they run in the app
+directory) — `turbo run dev` composes as N independent standalone apps, each on
+the port its own config declares. Standalone `start` in automation gets the same
+warning as anywhere else — accepted and documented, not guarded.
+
+**Builds are environmentally deterministic.** A build always runs with the app's
+**directory-determined env** (real environment + env files, identical everywhere
+per the rule above) — never with injected `PLT_<ID>_URL` variables and never with
+config `env` blocks, *in every mode*: `turbo run build`, a standalone app-dir
+build, and a root build produce identical artifacts by construction. Mesh names
+are runtime-only values, read server-side at runtime where injection exists;
+baking them into artifacts was never meaningful. A v3 build that read an `env`
+block value breaks loudly at build time and moves that value into an env file —
+where a build input belonged all along.
 
 **Standalone boot mechanics and the listen rule.** The wrapped single-app runtime
 makes the app its entrypoint; the *root* config's settings are **not** applied —
@@ -704,7 +716,7 @@ diagnostics.
 **Evaluation env is determined by directories, never by boot style.** A config
 file's environment is always "its own directory's env files layered over
 everything found walking up to the workspace boundary" — the identical set under a
-root boot, a standalone boot, and `--all`, because the walk's reach never depends
+root boot and a standalone boot, because the walk's reach never depends
 on which config file won. The same expression evaluates identically everywhere;
 only *what boots* changes with location.
 
@@ -1006,7 +1018,9 @@ range bumps from step 2.
 17. `wattpm dev`/`build`/`start` become **location-sensitive**: run inside an
     application directory they act on that application standalone (with a warning
     when a root config exists above); v3 booted the whole runtime from anywhere.
-    `--all` restores the runtime-wide behavior explicitly.
+    Scope is purely positional — the runtime-wide behavior means running from the
+    project root; there is no scope flag. Builds are environmentally
+    deterministic (no injected URLs or `env` blocks at build time, in any mode).
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
 error. The migration story is the codemod, not a compat layer.
