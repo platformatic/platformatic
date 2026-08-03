@@ -401,3 +401,35 @@ Advanced orchestration      → root defineConfig({...})
 
 This model better delivers the proposal's “one expression moves unchanged” promise
 while minimizing concepts in the common frontend path.
+
+---
+
+## Round 5 — resolution tracking
+
+**Fixed directly in the proposal (no decision needed):**
+
+- **Medium — first monorepo example teaches the advanced form:** Level 2 now leads
+  with the thin-root + per-app-file style; root-inline composition is demoted to
+  "Level 2b (advanced)" with its pnpm root-resolvability requirement stated inline.
+- **Medium — framework-native duplication:** examples no longer showcase
+  `trailingSlash`; the factories section now states that factory options are
+  Platformatic integration/execution settings, framework-native behavior stays in
+  the framework's own config file, and mirror options (`next.trailingSlash`) are
+  reviewed for removal during the schema audit.
+- **Medium — cwd scope, partial:** every invocation prints its resolved scope
+  (winning config file + what boots) before acting; the standalone warning now
+  names the omitted root settings (server, logger, telemetry, env). The explicit
+  `--root`/`--app` selector question is D15.
+
+### Decisions needed — round 5
+
+| # | Finding | Decision | Status |
+|---|---|---|---|
+| D9 | Blocker | Gate stable v4.0 on a published migrator? Command surface (`wattpm migrate` vs `npx wattpm-utils migrate`) — challenges the round-4 decoupling ruling | **resolved**: stable v4.0 **gates** on a published, tested migrate (alphas/RCs may precede it); release cadence stays decoupled post-GA via npx-resolves-at-invocation. Command stays `npx wattpm-utils migrate` — no `wattpm` routing, no forwarder |
+| D10 | High | Canonical single-app form: bare `export default next({…})` vs `defineConfig` + singular `application`; fate of the `application` shorthand | **resolved**: bare factory export is the canonical single-app form (Level 1) — auto-wrapped, byte-identical to a per-app file, so promotion to a monorepo moves the whole file; `defineConfig` + the singular `application` shorthand is Level 1b for runtime options (shorthand kept — no one-element array ceremony). Headline example, levels, and migrate emission rules updated |
+| D11 | High | Scaffolding vs zero-config: emit no config / only-non-default config files | **resolved**: generators follow migrate's omit-defaults rule — single-app defaults produce **no** Watt config file; monorepos get the load-bearing thin root only, per-app files only for non-default options; the wizard prints the bare-factory one-liner for later customization | 
+| D12 | High | Contextual typing for per-app function exports (factory accepts callback vs typed wrapper vs documented annotation) | **resolved**: factories accept a typed callback — `next(({ mode }) => ({…}))`; `next(cb)` desugars to `ctx => next(cb(ctx))`, handled by classification rule 1, so serializability and composition are untouched; `ConfigContext` lives in `@platformatic/basic`, re-exported as a type by every capability; bare function exports stay legal but the callback form is the documented one |
+| D13 | High | `turbo run dev` port story (dev-only auto-port vs scaffolded ports vs stop advertising zero-config parallel dev) — challenges D1's no-port-search ruling | **resolved**: the turbo pitch is retired — D1 stays fully strict (no auto-assignment anywhere). Multi-app dev is the runtime's job at the root (one port, working mesh); parallel standalone processes remain possible with explicitly declared distinct ports but are not an advertised workflow. `turbo run build` remains fine (builds don't listen; determinism per D7) |
+| D14 | Medium | Root-inline `config` + app-local file for the same app: actionable error vs current silent never-loaded | **resolved**: boot error naming both sources — capability config has one owner. Orchestration-only root entries still merge over app files (v3 mappings semantics kept for orchestration keys). Rationale: a shadowed app file would still win under standalone boot, so silence = split-brain; the check is filename-presence only; migrate never emits the state |
+| D15 | Medium | Explicit scope selectors (`--root`/`--app`) — challenges D7's purely-positional ruling | **resolved**: purely positional re-affirmed — no scope flags. Observability half already landed (printed resolved scope + warning naming omitted root settings); the migration guide explicitly calls out the v3 Dockerfile/WORKDIR pattern (must point at the project root in v4) |
+| D16 | Medium | Env API consolidation / renaming (`env`→`runtimeEnv`, `envfile`→`runtimeEnvFile`) | **resolved**: keep `env`/`envfile` — v3 naming continuity wins; the evaluation-env vs worker-runtime-env split is carried by documentation, the precedence ladders, and inline comments in the type sketch (already stated at both `env`-block mentions in the proposal) |

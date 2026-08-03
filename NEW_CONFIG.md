@@ -17,11 +17,25 @@ The core structural change is that **there is exactly one configuration dialect*
 runtime dialect. The distinction between "a single-app config with a nested `runtime`
 block" and "a runtime config with nested applications" disappears. A single-app project
 and a 20-app monorepo use the same dialect; scaling from one to many means **the
-application definition moves unchanged** — the `next({ … })` expression is identical
-in a single-app root, a root-inline entry, and a per-app file.
+application definition moves unchanged** — a single app's entire `watt.config.ts`
+becomes that app's per-app file verbatim, and the `next({ … })` expression is
+identical in a single-app root, a root-inline entry, and a per-app file.
 
 ```ts
 // watt.config.ts — a complete single-app Next.js project
+import { next } from '@platformatic/next'
+
+export default next({
+  cache: { adapter: 'redis', url: process.env.REDIS_URL }
+})
+```
+
+That bare factory export is the **canonical single-app form** — the loader
+auto-wraps it as a single-app runtime, and the file is byte-identical to a monorepo
+per-app config file. Runtime orchestration options, when a project needs them, come
+from `defineConfig`:
+
+```ts
 import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
@@ -30,17 +44,15 @@ export default defineConfig({
   logger: { level: 'info' },
   application: {
     workers: 2,
-    config: next({
-      trailingSlash: true,
-      cache: { adapter: 'redis', url: process.env.REDIS_URL }
-    })
+    config: next({ cache: { adapter: 'redis', url: process.env.REDIS_URL } })
   }
 })
 ```
 
 The singular `application` key is the single-app shorthand — the same entry shape
 as one element of `applications`, normalized internally to a one-element array
-(declaring both is an error).
+(declaring both is an error). It exists so a single app with runtime options never
+needs a one-element `applications` array.
 
 Be precise about what this is: **TypeScript-authored serializable data**, not
 unrestricted TypeScript. The evaluated result must be plain data (it crosses a
@@ -159,17 +171,58 @@ explicit where still needed (see "Machine-generated configs").
 auto-detected from `package.json` dependencies, defaults apply. Nothing is written to
 disk.
 
-**Level 1 — single app.** One file at the project root (see Summary above), using
-the singular `application` shorthand. Every runtime option (`server`, `logger`,
-`health`, `metrics`, `telemetry`, `undici`, `httpCache`, `gracefulShutdown`, …) is
-top-level — exactly where it is in a multi-app config. **The `runtime` block does
-not exist in v4.** Scaffolding and `migrate` emit this form for single-app
-projects.
+**Level 1 — single app, capability options only.** One file at the project root
+whose default export is the bare factory call — `export default next({ … })` (see
+Summary above). The loader auto-wraps it as a single-app runtime with default
+orchestration, and the file is byte-identical to a monorepo per-app config file.
+This is the canonical single-app form; `migrate` emits it whenever the v3 config
+carried no runtime settings.
 
-**Level 2 — multi-app.** Same shape, more entries. The application entry carries the
-orchestration properties; the capability configuration attaches through the entry's
-`config` property, which accepts a capability factory call inline (it accepted a file
-path in v3):
+**Level 1b — single app with runtime options.** When there is orchestration to
+express, `defineConfig` with the singular `application` shorthand. Every runtime
+option (`server`, `logger`, `health`, `metrics`, `telemetry`, `undici`,
+`httpCache`, `gracefulShutdown`, …) is top-level — exactly where it is in a
+multi-app config. **The `runtime` block does not exist in v4.** `migrate` emits
+this form when the v3 config had a non-default `runtime` block.
+
+**Level 2 — multi-app monorepo.** The default multi-app style is a **thin root plus
+per-app config files**: the root owns orchestration and discovery (`autoload`
+survives), and each application's configuration lives in the app's own
+`watt.config.ts`, which exports **the identical factory expression** a single-app
+project would use:
+
+```ts
+// watt.config.ts (root)
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  entrypoint: 'gateway',
+  server: { port: 3042 },
+  autoload: { path: 'web' }
+})
+```
+
+```ts
+// web/frontend/watt.config.ts
+import { next } from '@platformatic/next'
+
+export default next({
+  cache: { adapter: 'redis', url: process.env.REDIS_URL }
+})
+```
+
+This is the unification punchline: a per-app file's default export and the value of a
+root entry's `config` (below) are the same expression. Promoting a standalone project
+into a monorepo app means moving that expression — and because the per-app file
+imports the capability from the app's own directory, where its dependency already
+lives, **no `package.json` changes are ever required** (see "Dependency resolution").
+
+**Level 2b — root-inline composition (advanced).** The whole topology can also live in
+one file: application entries carry the orchestration properties *and* attach the
+capability configuration inline through the entry's `config` property, which accepts a
+capability factory call (it accepted a file path in v3). This is the advanced form —
+it requires every capability to be resolvable from the root, which under pnpm's strict
+layout means adding it to the root `package.json` (see "Dependency resolution"):
 
 ```ts
 // watt.config.ts
@@ -205,7 +258,7 @@ export default defineConfig(({ env, production }) => ({
         telemetry: { applicationName: 'api', exporter: { type: 'otlp' } }
       })
     },
-    { id: 'frontend', path: 'web/frontend', config: next({ trailingSlash: true }) }
+    { id: 'frontend', path: 'web/frontend', config: next() }
   ]
 }))
 ```
@@ -221,41 +274,24 @@ unambiguous — flattening them together would be unsound: `telemetry` means two
 incompatible things for service/db/gateway, and several capabilities collide even
 within themselves.
 
-**Level 2b — monorepo with per-app config files.** `autoload` survives, and per-app
-configuration moves into the app's own `watt.config.ts`, which exports **the identical
-factory expression** that would appear as the entry's `config` at the root:
+When both a root entry and a per-app file exist for the same app id, the
+**orchestration** keys merge **shallowly, per-key, root winning** — the v3
+`autoload.mappings` semantics. Capability configuration, however, has exactly **one
+owner**: a root entry carrying an inline `config` while the app directory also
+contains a `watt.config.*` file is a **boot error** naming both sources —
 
-```ts
-// watt.config.ts (root)
-import { defineConfig } from 'wattpm'
-
-export default defineConfig({
-  entrypoint: 'gateway',
-  server: { port: 3042 },
-  autoload: { path: 'web' }
-})
+```
+✗ 'frontend' is configured twice: inline in watt.config.ts and in
+  web/frontend/watt.config.ts. Move the factory call into the per-app file,
+  or remove one of the two.
 ```
 
-```ts
-// web/frontend/watt.config.ts
-import { next } from '@platformatic/next'
-
-export default next({
-  trailingSlash: true,
-  cache: { adapter: 'redis', url: process.env.REDIS_URL }
-})
-```
-
-This is the unification punchline: the value of a root entry's `config` and a per-app
-file's default export are the same expression. Promoting a standalone project into a
-monorepo app means moving that expression — and because the per-app file imports the
-capability from the app's own directory, where its dependency already lives, **no
-`package.json` changes are ever required** (see "Dependency resolution").
-
-When both a root inline entry and a per-app file exist for the same app id, they are
-merged **shallowly, per-key, root winning** — the v3 `autoload.mappings` semantics —
-and when a root entry provides an inline `config`, the per-app file is **not loaded
-at all** — no evaluation, no side effects, no warnings from it.
+Silent shadowing is not an option here: package-local commands evaluate the
+nearest file, so a shadowed per-app config would still win under a standalone
+boot — the same app running two different configurations depending on where the
+command was typed. Erroring keeps root boot and standalone boot provably
+identical; the check is a filename-presence test, no evaluation needed, and
+`migrate` never emits this state.
 
 ### Functional form and the config context
 
@@ -273,12 +309,26 @@ export default defineConfig(({ command, mode, production, env }) => ({
 ```
 
 ```ts
-// web/frontend/watt.config.ts — the same functional form, per-app
+// web/frontend/watt.config.ts — per-app conditionals, typed via the factory
 import { next } from '@platformatic/next'
 
-export default ({ mode }) =>
-  next({ cache: mode === 'test' ? undefined : { adapter: 'redis' } })
+export default next(({ mode }) => ({
+  cache: mode === 'test' ? undefined : { adapter: 'redis' }
+}))
 ```
+
+Every factory's options parameter also accepts a **callback** (sync or async)
+receiving the typed `ConfigContext` — so per-app files get contextual autocomplete
+from the import they already have, without depending on `wattpm` (which is usually
+not resolvable from an app directory). The implementation reuses classification
+rule 1: `next(cb)` returns the function `ctx => next(cb(ctx))`, which the loader
+calls with the context and re-classifies — serializability is untouched (the
+callback resolves before anything crosses a worker boundary), and the form
+composes at every position, per-app export and root-inline entry `config` alike. A
+bare function export (`export default (ctx) => next(…)`) remains legal — it is
+exactly what the callback form desugars to — but the callback form is the
+documented one because it types its parameter. `ConfigContext` lives in
+`@platformatic/basic` and is re-exported as a type by every capability.
 
 The context (Vite-parity, deliberately):
 
@@ -302,7 +352,10 @@ Each capability package exports one typed factory plus its option types:
 
 ```ts
 // from @platformatic/next
-export function next (options?: NextConfigOptions): ApplicationDefinition
+export function next (
+  options?: NextConfigOptions
+    | ((ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>)
+): ApplicationDefinition
 ```
 
 Factory options are the capability's per-app configuration — what lived in the app's
@@ -312,6 +365,14 @@ level (`next.trailingSlash` → `trailingSlash`) and the shared blocks (`logger`
 `application` block deliberately stays nested: several capabilities (remix, nuxt,
 nitro, react-router) define their own `outputDirectory` alongside
 `application.outputDirectory`, and hoisting both would collide.
+
+Factory options are **Platformatic integration and execution settings** — caching,
+observability wiring, build/serve integration. Framework-native behavior stays in the
+framework's own configuration file (`next.config.ts`, `vite.config.ts`, …), which
+Watt does not replace: v3 options that merely mirror a setting the framework already
+owns (`next.trailingSlash`, conditionally forwarded today) are reviewed for removal
+during the schema audit, so the factory surface does not drift into a second copy of
+the framework config.
 
 Factories do **not** accept orchestration properties; those belong to the application
 entry. TypeScript enforces the split in both directions.
@@ -452,17 +513,21 @@ runs once per load):
   auto-wrapped as `{ application: { config: def } }` (the normalized singular
   form — the DTO shows this entry) and run as a single-app runtime; the entry's
   `id` defaults to the package name (directory name when absent) and its `path` to
-  the config file's directory. `cd web/frontend && wattpm dev` — or `pnpm --filter frontend dev`, or
-  each task of `turbo run dev` — starts *only* that application, matching the
+  the config file's directory. `cd web/frontend && wattpm dev` — or
+  `pnpm --filter frontend dev` — starts *only* that application, matching the
   package-local command model frontend developers expect. This is a deliberate
   break from v3, which booted the whole runtime from anywhere.
 
-When the standalone-booted app is part of a larger project (a root config exists
-further up), a prominent warning states the consequences and the alternative:
+Scope is positional but never silent: every `dev` / `build` / `start` invocation
+prints one line naming the config file that won the walk and what is about to boot
+(the full runtime, or one named standalone app), before doing anything else. When the
+standalone-booted app is part of a larger project (a root config exists further up),
+a prominent warning additionally states the consequences and the alternative:
 
 ```
-⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local
-  are unavailable. Run from the project root for the full runtime.
+⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
+  unavailable, and the root config's settings (server, logger, telemetry, env)
+  are not applied. Run from the project root for the full runtime.
 ```
 
 In a genuinely standalone single-app repo (the app-def *is* the topmost config),
@@ -478,9 +543,18 @@ wanting the runtime from inside an app directory means running at the root (a
 to `dev`, `build`, and `start` — no per-command exceptions. Scaffolding writes the
 root `package.json` script as `wattpm dev` (runtime, because it runs at the root)
 and per-app scripts as `wattpm dev` (that app, because they run in the app
-directory) — `turbo run dev` composes as N independent standalone apps, each on
-the port its own config declares. Standalone `start` in automation gets the same
-warning as anywhere else — accepted and documented, not guarded.
+directory). **Multi-app dev is the runtime's job**: `wattpm dev` at the root runs
+every application on one port with the mesh — strictly more useful than N
+disconnected processes. Composing N parallel *standalone* dev processes (à la
+`turbo run dev`) is deliberately not an advertised workflow: zero-config
+standalone apps all default to `PORT`/3042, so the second one fails fast on
+`EADDRINUSE`; teams that want parallel standalone processes declare a distinct
+`server.port` per app — possible and deterministic, but not the sold path.
+Standalone `start` in automation gets the same warning as anywhere else —
+accepted and documented, not guarded. The migration guide calls the deploy
+pattern out explicitly: v3 climbed to the root from anywhere, so a Dockerfile or
+deploy script whose working directory is an app directory must point at the
+project root in v4.
 
 **Builds are environmentally deterministic.** A build always runs with the app's
 **directory-determined env** (real environment + env files, identical everywhere
@@ -502,9 +576,10 @@ standalone alike):
   application in its runtime — then it listens on `PORT`/3042;
 - an app with no configured port that isn't alone does **not** call `listen` at
   all (mesh-only — v3's non-entrypoint behavior, generalized);
-- there is **no port search**: a taken port is a fast `EADDRINUSE` failure. For
-  parallel multi-app dev (`turbo run dev`), apps declare distinct ports in their
-  `server` blocks — deterministic and greppable, no magic.
+- there is **no port search**: a taken port is a fast `EADDRINUSE` failure. Running
+  several standalone apps in parallel therefore requires each to declare a distinct
+  port in its `server` block; the supported way to run many apps at once is the
+  runtime at the root — one port, working mesh, no collisions.
 
 **The walk stops after checking the repository/workspace boundary directory**: the
 first directory
@@ -538,7 +613,10 @@ serial scheme.
    `autoload` into the application list.
 2. **One worker per per-app file**, spawned in parallel, uniformly for every
    application entry that has a `path` and no inline `config` — explicitly-listed
-   entries and autoloaded ones behave identically, as in v3. Each applies its app's
+   entries and autoloaded ones behave identically, as in v3. (Entries *with* an
+   inline `config` still get a filename-presence check in their directory: a
+   `watt.config.*` file there triggers the configured-twice error — no evaluation
+   involved.) Each applies its app's
    layered environment (app env files over the root view, per "Env files") to its
    own `process.env`, imports the file, and unwraps the export. A per-app file
    whose export classifies as a *root* config (including an accidental empty
@@ -672,8 +750,9 @@ loader hooks, no magic; editor and runtime always agree:
 
 - **Per-app files** import the capability from the app directory, where its dependency
   already lives in v3. Nothing changes for any existing workflow, under any package
-  manager. This is the default style: `migrate` and scaffolding emit per-app files
-  plus a thin autoload root, so migration never touches `package.json`.
+  manager. This is the default style: `migrate` and scaffolding emit the per-app
+  style (files only where non-default settings exist) plus a thin autoload root, so
+  migration never touches `package.json`.
 - **Root-inline factories** are a new, opt-in style with one plain rule: the
   capability must be resolvable from the root (add it to the root `package.json`).
   Under pnpm's strict layout an app-local dependency is not visible from the root, so
@@ -878,9 +957,15 @@ export default {
 
 ### Config-writing tooling
 
-- **`wattpm create` / `create-wattpm`**: scaffolds `watt.config.ts` (`.mts`/`.js`
-  variants per the rules above) from templates — a thin autoload root plus per-app
-  factory files.
+- **`wattpm create` / `create-wattpm`**: scaffolds configuration **only where it
+  configures something** — the same omit-defaults rule migrate follows. A
+  single-app project with default answers gets **no Watt config file** (zero-config
+  detection covers it); a monorepo gets the thin autoload root (genuinely
+  load-bearing: autoload path, entrypoint) and per-app `watt.config.ts` files
+  (`.mts`/`.js` variants per the rules above) only for apps where the wizard set
+  non-default options. The wizard's closing output prints where `watt.config.ts`
+  goes and the one-line bare-factory form, so later customization is one
+  copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
   formatting) when the shape is statically safe — literal `defineConfig` object,
   literal `applications` array; otherwise prints a paste-ready snippet and exits 0
@@ -893,11 +978,13 @@ export default {
 ### `wattpm-utils migrate`
 
 A one-shot codemod in `wattpm-utils`, invoked as **`npx wattpm-utils migrate`** —
-**not routed through `wattpm`**, fully decoupled from the v4 release: stable v4.0
-may ship before it. This is safe to advertise in the runtime's error message
-because `npx` resolves the package at *invocation* time — the moment migrate ships
-in any `wattpm-utils` release, the command starts working for every
-already-installed v4 runtime, with no runtime re-release.
+**not routed through `wattpm`**. It is a **stable-v4.0 release gate**: v4 refuses
+every legacy configuration, so the migrator is functionally part of the breaking
+change — GA does not ship without a published, tested migrate (alphas and RCs may
+precede it; early adopters hand-convert). Release *cadence* stays decoupled after
+4.0: because `npx` resolves the package at *invocation* time, migrate fixes ship on
+`wattpm-utils`' own schedule and reach every already-installed v4 runtime with no
+runtime re-release.
 
 It is **the only code in v4 that can read legacy configs**. Scope: anything that
 boots on v3. To guarantee that, the **complete v3
@@ -1079,16 +1166,17 @@ Roughly ordered; steps 1–5 are the critical path.
 7. **wattpm-utils**: `wattpm import` via magicast with snippet fallback;
    external/install flow emits v4 per-app files; `create` templates emit
    `watt.config.ts`; remove `patch-config`. **`wattpm-utils migrate` lives here,
-   under `wattpm-utils`' own binary — no `wattpm` routing — and is fully decoupled
-   from the v4 release**: it hosts the vendored v3 closure (foundation machinery,
-   the four upgrade chains, frozen snapshots of the ~13 capability schemas and
-   transforms, with their tests) as private code, shares nothing with the v4
-   loader, and releases on its own cadence. Stable v4.0 does not gate on it; the
-   `npx`-resolves-at-invocation property means the runtime's error message lights
-   up retroactively when migrate ships.
+   under `wattpm-utils`' own binary — no `wattpm` routing**: it hosts the vendored
+   v3 closure (foundation machinery, the four upgrade chains, frozen snapshots of
+   the ~13 capability schemas and transforms, with their tests) as private code,
+   shares nothing with the v4 loader, and releases on its own cadence. **Stable
+   v4.0 gates on it** — GA requires a published, tested migrate — while post-GA
+   fixes stay decoupled: `npx` resolves at invocation time, so they reach every
+   installed v4 runtime without a runtime re-release.
 8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
-   package type); scaffolded test helpers import the config module instead of
-   `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
+   package type) and emits config only for non-default answers (single-app defaults
+   produce no config file); scaffolded test helpers import the config module instead
+   of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
 9. **cross-repo**: watt-admin migrates off `GET /config`; ICC guidance for generating
    plain-object configs.
@@ -1130,7 +1218,8 @@ export interface WattConfig {
   policies?: { deny?: Record<string, string | string[]> }
   preload?: string | string[]
   extensions?: ExtensionEntry[]
-  env?: Record<string, string>
+  env?: Record<string, string>            // workers' runtime env — never the
+                                          // config-evaluation env
   sourceMaps?: boolean
   compileCache?: boolean | CompileCacheOptions
   // …complete list generated from the audited v4 runtime schema
@@ -1144,7 +1233,7 @@ export interface ApplicationEntry {
   config?: ApplicationDefinition          // factory result, plain { module } object
   workers?: number | ApplicationWorkersOptions
   health?: ApplicationHealthOptions
-  env?: Record<string, string>
+  env?: Record<string, string>            // worker runtime env (see above)
   envfile?: string
   dependencies?: string[]
   telemetry?: ApplicationTelemetryOverrides   // full per-app telemetry override,
@@ -1172,7 +1261,8 @@ export function defineConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<W
 ```ts
 // @platformatic/next — factory options are per-app capability config ONLY
 export interface NextConfigOptions {
-  trailingSlash?: boolean          // flattened from the v3 `next` block
+  trailingSlash?: boolean          // flattened from the v3 `next` block; audit
+                                   // removal candidate (mirrors next.config.*)
   standalone?: boolean
   useExperimentalAdapter?: boolean
   imageOptimizer?: ImageOptimizerOptions
@@ -1182,7 +1272,11 @@ export interface NextConfigOptions {
   watch?: WatchOptions
   application?: BuildableApplicationOptions   // nested on purpose (outputDirectory)
 }
-export function next (options?: NextConfigOptions): ApplicationDefinition
+export function next (
+  options?: NextConfigOptions
+    | ((ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>)
+): ApplicationDefinition                      // ConfigContext re-exported from
+                                              // @platformatic/basic
 ```
 
 ## Appendix B — before/after: the wrapped single-app config
@@ -1192,7 +1286,6 @@ export function next (options?: NextConfigOptions): ApplicationDefinition
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.65.0.json",
-  "next": { "trailingSlash": true },
   "cache": { "adapter": "redis", "url": "{PLT_REDIS_URL}" },
   "runtime": {
     "server": { "hostname": "{PLT_SERVER_HOSTNAME}", "port": "{PORT}" },
@@ -1215,7 +1308,6 @@ export default defineConfig({
   application: {
     workers: 2,
     config: next({
-      trailingSlash: true,
       cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL }
     })
   }
