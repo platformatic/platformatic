@@ -40,6 +40,7 @@
     "yaml": "^2.4.1"
   },
   "devDependencies": {
+    "@types/debug": "^4.0.0",
     "c8": "^11.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
@@ -48,7 +49,7 @@
     "pino": "^9.9.0",
     "pino-test": "^1.0.1",
     "tstyche": "^6.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "~6.0.3"
   },
   "engines": {
     "node": ">=22.19.0"

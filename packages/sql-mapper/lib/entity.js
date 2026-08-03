@@ -66,7 +66,7 @@ function createMapper (
     return acc
   }, {})
 
-  const primaryKeysTypes = Array.from(primaryKeys).map(key => {
+  const primaryKeysTypes = Array.from(primaryKeys).map((key) => {
     return {
       key,
       sqlType: fields[key].sqlType
@@ -99,25 +99,50 @@ function createMapper (
     if (!output) {
       return output
     }
+
     const newOutput = {}
+
     for (const key of Object.keys(output)) {
       let value = output[key]
       const newKey = fieldMapToRetrieve[key]
-      // Do not convert Date objects: they are serialized according to the
-      // schema of the field, like other non-stringified columns
+
+      const isNativeJson =
+        fields[key]?.sqlType === 'json' || fields[key]?.sqlType === 'jsonb'
+
+      // MariaDB has no native JSON type: JSON columns are stored (and
+      // introspected) as `longtext`. We mark them at introspection time
+      // via the `isJson` flag (see index.js / lib/queries/mysql-shared.js).
+      const isJsonText = fields[key]?.isJson === true
+
+      if (isNativeJson || isJsonText) {
+        // The driver may already have deserialized the value (some MariaDB
+        // driver versions do this for longtext columns), or it may still be
+        // the raw JSON string - normalize to a parsed object either way.
+        if (typeof value === 'string') {
+          value = JSON.parse(value)
+        }
+
+        newOutput[newKey] = value
+        continue
+      }
+
       if (
         (primaryKeys.has(key) || fields[key]?.stringifyOutput) &&
         value !== null &&
         value !== undefined &&
-        !(value instanceof Date)
+        !(value instanceof Date) &&
+        typeof value !== 'object'
       ) {
         value = value.toString()
       }
+
       if (newKey && isVectorType(fields[key].sqlType)) {
         value = parseVector(value)
       }
+
       newOutput[newKey] = value
     }
+
     return newOutput
   }
 
@@ -522,7 +547,8 @@ export function buildEntity (
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES',
       isArray: column.isArray,
-      vectorDimensions: column.vectorDimensions
+      vectorDimensions: column.vectorDimensions,
+      isJson: column.isJson === true
     }
 
     // To get enum values in mysql and mariadb

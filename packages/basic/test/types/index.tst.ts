@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import type { ChildProcess } from 'node:child_process';
 import type { Server } from 'node:net';
 import { expect, test } from 'tstyche';

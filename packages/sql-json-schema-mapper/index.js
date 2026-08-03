@@ -103,7 +103,7 @@ export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = fals
           type
         }
       }
-    } else if (field.sqlType === 'json' || field.sqlType === 'jsonb') {
+    } else if (field.sqlType === 'json' || field.sqlType === 'jsonb' || field.isJson === true) {
       properties[field.camelcase] = {
         type: 'object',
         additionalProperties: true

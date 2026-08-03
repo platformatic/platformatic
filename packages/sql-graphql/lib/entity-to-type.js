@@ -11,6 +11,7 @@ import {
   GraphQLObjectType,
   GraphQLScalarType
 } from 'graphql'
+import { GraphQLJSONObject } from 'graphql-type-json'
 import { UnableToGenerateGraphQLEnumTypeError } from './errors.js'
 import { fromSelectionSet, sqlTypeToGraphQL } from './utils.js'
 
@@ -100,6 +101,12 @@ export function constructGraph (app, entity, opts, ignore) {
         app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
         throw new UnableToGenerateGraphQLEnumTypeError()
       }
+    } else if (field.isJson) {
+      // MariaDB has no native JSON type: JSON columns are introspected as
+      // `longtext` (see sql-mapper), so sqlTypeToGraphQL would otherwise
+      // fall back to GraphQLString and break serialization of the parsed
+      // JSON object returned by the resolver.
+      meta.type = GraphQLJSONObject
     } else {
       meta.type = sqlTypeToGraphQL(field.sqlType)
     }

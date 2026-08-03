@@ -3,6 +3,7 @@ import { JSONSchemaType } from 'ajv'
 import { EventEmitter } from 'node:events'
 import { ParseArgsOptionsConfig } from 'node:util'
 import { LevelWithSilentOrString, Logger } from 'pino'
+import type debug from 'debug';
 
 // Symbols
 export declare const kCanceled: unique symbol

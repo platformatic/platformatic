@@ -34,6 +34,7 @@ export async function getConnectionInfo (db, connectionString) {
     user,
     isPg: !!db.isPg,
     isMySql: !!db.isMySql,
+    isMariaDB: !!db.isMariaDB,
     isSQLite: !!db.isSQLite,
     dbSystem
   }

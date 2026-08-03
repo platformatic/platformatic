@@ -5,7 +5,7 @@ import { equal, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import { parse } from 'yaml'
 import sqlOpenAPI from '../index.js'
-import { clear, connInfo, isMariaDB, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
+import { clear, connInfo, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -852,11 +852,7 @@ test('deserialize JSON columns', { skip: isSQLite }, async t => {
     url: '/pages'
   })
   const json = res.json()
-  if (isMariaDB) {
-    same(json[0].metadata, JSON.stringify(jsonData))
-  } else {
-    same(json[0].metadata, jsonData)
-  }
+  same(json[0].metadata, jsonData)
 })
 
 test('expose the api with a prefix, if defined', async t => {
