@@ -97,6 +97,20 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
    This file serves as the SSR entrypoint for the server build and is referenced in the Vite configuration.
 
+## Skew protection
+
+React Router uses a user-provided Vite configuration. To tag assets, add the shared plugin:
+
+```ts
+import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
+
+export default defineConfig({
+  plugins: [platformaticSkewPlugin()]
+})
+```
+
+The plugin is enabled when `PLT_DEPLOYMENT_ID` is set during the build.
+
 ## Architecture
 
 When starting React Router in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.

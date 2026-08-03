@@ -44,6 +44,18 @@ Nuxt uses Vite internally, but Platformatic Nuxt is not a plain Vite application
 
 When using the `commands` property, the command is responsible for starting an HTTP server. Platformatic will integrate the external application in the runtime and select the server port used by the runtime.
 
+## Skew protection
+
+To include the deployment ID in client assets and server-rendered HTML, add the Platformatic skew module to `nuxt.config.ts`:
+
+```ts
+export default defineNuxtConfig({
+  modules: ['@platformatic/nuxt/skew']
+})
+```
+
+The module is enabled when `PLT_DEPLOYMENT_ID` is set during the build.
+
 ## Integrating with other Watt applications
 
 If the Nuxt development server needs to be reached by other applications in the Watt mesh network, configure Vite allowed hosts in `nuxt.config`:

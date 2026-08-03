@@ -1,5 +1,5 @@
 import { kMetadata } from '@platformatic/foundation'
-import { getBasePath, getConfig, getLogger, getNextVersion, getNotifyConfig } from '@platformatic/globals'
+import { getBasePath, getConfig, getLogger, getNextVersion, getNotifyConfig, isBuilding } from '@platformatic/globals'
 import { resolve as resolvePath } from 'node:path'
 import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
 import { loadConfiguration } from './lib/config.js'
@@ -80,6 +80,11 @@ export async function enhanceNextConfig (nextConfig, ...args) {
   if (config.next?.trailingSlash && typeof nextConfig.trailingSlash === 'undefined') {
     nextConfig.trailingSlash = true
     modifications.push(['trailingSlash', 'enabled'])
+  }
+
+  if (typeof nextConfig.deploymentId === 'undefined' && process.env.PLT_DEPLOYMENT_ID && isBuilding({ throwOnMissing: false }) === true) {
+    nextConfig.deploymentId = process.env.PLT_DEPLOYMENT_ID
+    modifications.push(['deploymentId', 'PLT_DEPLOYMENT_ID'])
   }
 
   if (modifications.length > 0) {
