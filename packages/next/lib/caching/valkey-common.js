@@ -122,10 +122,63 @@ export function getPlatformaticMeta () {
   }
 }
 
+// msgpackr has no wire-level distinction between a plain object and a Map (both encode
+// as the same msgpack "map" type), and it packs Map instances natively before any custom
+// extension is consulted. Next.js cache entries can carry Map fields (e.g. segmentData for
+// Cache Components / "use cache" pages), so we tag Map instances before packing and restore
+// them after unpacking to round-trip them without affecting plain objects elsewhere.
+const MAP_TYPE_TAG = 'Map'
+
+function markMaps (value) {
+  if (value instanceof Map) {
+    const entries = []
+    for (const [key, entryValue] of value) {
+      entries.push([markMaps(key), markMaps(entryValue)])
+    }
+    return { __type: MAP_TYPE_TAG, entries }
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(markMaps)
+  }
+
+  if (value !== null && typeof value === 'object' && value.constructor === Object) {
+    const result = {}
+    for (const key of Object.keys(value)) {
+      result[key] = markMaps(value[key])
+    }
+    return result
+  }
+
+  return value
+}
+
+function unmarkMaps (value) {
+  if (value !== null && typeof value === 'object') {
+    if (Array.isArray(value)) {
+      return value.map(unmarkMaps)
+    }
+
+    if (value.constructor === Object) {
+      if (value.__type === MAP_TYPE_TAG) {
+        return new Map(value.entries.map(([key, entryValue]) => [unmarkMaps(key), unmarkMaps(entryValue)]))
+      }
+
+      const result = {}
+      for (const key of Object.keys(value)) {
+        result[key] = unmarkMaps(value[key])
+      }
+      return result
+    }
+  }
+
+  return value
+}
+
 export function serialize (data) {
-  return msgpackr.pack(data).toString('base64url')
+  return msgpackr.pack(markMaps(data)).toString('base64url')
 }
 
 export function deserialize (data) {
-  return msgpackr.unpack(Buffer.from(data, 'base64url'))
+  return unmarkMaps(msgpackr.unpack(Buffer.from(data, 'base64url')))
 }
