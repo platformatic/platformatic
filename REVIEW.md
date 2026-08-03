@@ -232,3 +232,172 @@ rule must go, or app-dir detection must not depend on the config file's presence
 | D6 | M4 | Version-stamp check defined against the worker's actual resolution order; strictness level (major+minor vs major) | **resolved**: the check replicates `importCapabilityPackage`'s real resolution order (regular import from the runtime context first, app-scoped fallback) and compares the stamp against the copy the worker will actually load — hoisted layouts never false-positive; root-only deps are well-defined. Major mismatch = boot error naming both paths/versions; minor = warning; patch ignored. Integration test per layout |
 | D7 | M5 | `build`/`start` standalone semantics in CI/deploy: env parity for builds, guard rails for standalone `start` | **resolved**: **(a)** `--all` is dropped — scope is purely positional (cwd decides; the runtime means running at the root; no scope flags). **(b)** builds are environmentally deterministic: always the app's directory-determined env (real env + env files), never injected `PLT_<ID>_URL` or config `env` blocks, in every mode — `turbo`/standalone/root builds produce identical artifacts by construction; v3 builds reading `env` blocks break loudly and move the value into an env file. **(c)** standalone `start` in automation keeps the warning only — no non-TTY guard (declined); documented |
 | D8 | M6 | Config-less app dirs: autoload-claimed directories count as app dirs, and migrate always emits per-app files | **resolved**: detection by claim, not by file — when the walk reaches the root config, cwd inside a claimed application directory (entry `path` or non-excluded autoload subdir) boots that app standalone, config file or not. Package-local scoping is a property of being an app; zero-config stays first-class; siblings are uniform; the claim check reads the already-evaluated root config. Migrate's omit-default-only rule stays (D2), now harmless |
+
+---
+
+# Frontend DX simplification review — round 5
+
+The direction is strong: native TypeScript, zero-config detection, colocated app
+configuration, and removal of the wrapped `runtime` dialect all improve frontend DX.
+The main remaining opportunity is to reduce the number of concepts encountered in the
+single-app and package-local paths.
+
+## Findings
+
+### Blocker — v4 can ship before its required migration tool
+
+`NEW_CONFIG.md:895-904` and `NEW_CONFIG.md:1081-1088` allow stable v4 to ship before
+`wattpm-utils migrate`, while v4 refuses every legacy configuration. That creates a
+dead-end error message for upgrading users.
+
+**Recommendation:** gate stable v4 on a published, tested migrator. Prefer the
+user-facing command `wattpm migrate`, even if its implementation remains in
+`wattpm-utils`.
+
+### High — the canonical single-app form is unnecessarily nested
+
+The proposed default requires:
+
+```ts
+defineConfig({
+  application: {
+    config: next(/* ... */)
+  }
+})
+```
+
+See `NEW_CONFIG.md:16-43` and `NEW_CONFIG.md:162-167`. The loader already supports a
+bare application definition and automatically wraps it (`NEW_CONFIG.md:451-453`,
+`NEW_CONFIG.md:468-470`). Make this the canonical customized frontend configuration:
+
+```ts
+import { next } from '@platformatic/next'
+
+export default next({
+  cache: {
+    adapter: 'redis',
+    url: process.env.REDIS_URL
+  }
+})
+```
+
+This makes monorepo promotion move the whole file unchanged, rather than extracting
+only the `next()` expression as described at `NEW_CONFIG.md:250-253`.
+
+The progressive model should be:
+
+1. No config.
+2. Bare capability factory.
+3. `defineConfig` only when runtime orchestration is required.
+
+This may also remove the need for the singular `application` shorthand.
+
+### High — scaffolding contradicts the zero-config goal
+
+Level 0 promises no file when defaults suffice (`NEW_CONFIG.md:158-160`), but
+scaffolding emits a root plus per-app factory files (`NEW_CONFIG.md:675-676`,
+`NEW_CONFIG.md:881-883`). Migration already omits default-only app files
+(`NEW_CONFIG.md:924-925`). Generators should do the same:
+
+- Single frontend app: no Watt config by default.
+- Monorepo: thin root autoload config only.
+- App-local config: generated only for non-default Watt settings.
+
+### High — per-app functional configuration is not contextually typed
+
+This example has an implicit `any` parameter under strict TypeScript:
+
+```ts
+export default ({ mode }) => next(/* ... */)
+```
+
+See `NEW_CONFIG.md:262-280`. Only `defineConfig` provides the `ConfigContext` overload
+(`NEW_CONFIG.md:1160-1169`). Let capability factories accept callbacks:
+
+```ts
+export default next(({ mode }) => ({
+  cache: mode === 'test' ? undefined : { adapter: 'redis' }
+}))
+```
+
+This preserves the concise app-local form and provides autocomplete.
+
+### High — the advertised Turbo flow collides on port 3042
+
+The document presents `turbo run dev` as a supported package-local workflow
+(`NEW_CONFIG.md:455-481`), but every standalone zero-config app defaults to port 3042
+and no port search occurs (`NEW_CONFIG.md:496-506`). The documented flow therefore
+fails unless every application adds configuration, undermining zero-config.
+
+Choose one:
+
+- Use Vite-like automatic port selection under `dev`, while keeping `start` strict.
+- Scaffold explicit per-app ports.
+- Stop presenting parallel standalone execution as a zero-config workflow.
+
+### Medium — duplicate config ownership should be rejected, not merged
+
+Root and app-local configuration can coexist, use shallow root-winning semantics, or
+cause the app file not to be evaluated (`NEW_CONFIG.md:255-258`). An app can therefore
+behave differently under package-local and root execution without an obvious reason.
+
+Enforce one capability-config owner:
+
+- Root entries own orchestration fields.
+- App-local files own capability settings.
+- Inline root `config` plus an app-local config for the same app is an actionable
+  error.
+
+### Medium — scope determined solely by `cwd` is unsafe for automation
+
+The same `wattpm start` command can boot one app or the entire runtime, and standalone
+execution ignores all root settings (`NEW_CONFIG.md:434-497`). Package-local defaults
+are useful, but explicit selectors such as `--root` and `--app` should be available,
+and every run should print its selected scope. The standalone warning should name the
+omitted root env, telemetry, logger, and server settings.
+
+### Medium — environment configuration has too many overlapping meanings
+
+The proposal exposes `process.env`, callback `env`, root and application `env`,
+`envfile`, layered `.env` files, and injected application URLs. These also behave
+differently during build and runtime (`NEW_CONFIG.md:267-297`,
+`NEW_CONFIG.md:485-493`, `NEW_CONFIG.md:738-778`).
+
+Choose one canonical config-evaluation API. Rename runtime-only config properties to
+make their behavior explicit:
+
+```ts
+runtimeEnv
+runtimeEnvFile
+```
+
+This avoids confusion with callback `env` and frontend build-time environment
+variables.
+
+### Medium — the first monorepo example teaches the advanced form
+
+The primary multi-app example uses root-inline factories (`NEW_CONFIG.md:169-210`),
+but this requires capability dependencies at the workspace root under pnpm
+(`NEW_CONFIG.md:677-685`). Lead with the thin-root plus app-local form and move
+root-inline factories to an advanced composition section.
+
+### Medium — avoid duplicating framework-native configuration
+
+The factory includes options such as Next.js `trailingSlash`
+(`NEW_CONFIG.md:308-315`), although Next already owns that setting and the current
+integration conditionally forwards it (`packages/next/index.js:80-82`). Keep framework
+behavior in `next.config.*`, `vite.config.*`, and equivalents. Capability factories
+should contain only Platformatic-specific integration and execution settings.
+
+## Recommended frontend-facing model
+
+```text
+Single app, defaults        → no Watt config
+Single app, customized      → export default next({...})
+Monorepo                     → root autoload config
+Customized monorepo app     → app-local export default next({...})
+Advanced orchestration      → root defineConfig({...})
+```
+
+This model better delivers the proposal's “one expression moves unchanged” promise
+while minimizing concepts in the common frontend path.
