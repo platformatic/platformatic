@@ -42,6 +42,20 @@ When running in production mode, a custom Fastify server will serve the built ap
 
 In both modes if the application uses the `commands` property then it's responsible to start a HTTP server. The Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
+## Skew protection
+
+Remix uses a user-provided Vite configuration. To tag assets, add the shared plugin:
+
+```ts
+import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
+
+export default defineConfig({
+  plugins: [platformaticSkewPlugin()]
+})
+```
+
+The plugin is enabled when `PLT_DEPLOYMENT_ID` is set during the build.
+
 ## HTTPS
 
 When a Remix application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:

@@ -99,6 +99,42 @@ describe('keyFor', () => {
 })
 
 describe('enhanceNextConfig with caching', () => {
+  test('sets deploymentId from the build environment', async () => {
+    const originalDeploymentId = process.env.PLT_DEPLOYMENT_ID
+    process.env.PLT_DEPLOYMENT_ID = 'dpl-test'
+
+    try {
+      setupGlobal()
+      updateGlobals({ isBuilding: true })
+      const nextConfig = await enhanceNextConfig({})
+      strictEqual(nextConfig.deploymentId, 'dpl-test')
+    } finally {
+      if (originalDeploymentId === undefined) {
+        delete process.env.PLT_DEPLOYMENT_ID
+      } else {
+        process.env.PLT_DEPLOYMENT_ID = originalDeploymentId
+      }
+    }
+  })
+
+  test('does not override an explicitly configured deploymentId', async () => {
+    const originalDeploymentId = process.env.PLT_DEPLOYMENT_ID
+    process.env.PLT_DEPLOYMENT_ID = 'dpl-test'
+
+    try {
+      setupGlobal()
+      updateGlobals({ isBuilding: true })
+      const nextConfig = await enhanceNextConfig({ deploymentId: 'dpl-explicit' })
+      strictEqual(nextConfig.deploymentId, 'dpl-explicit')
+    } finally {
+      if (originalDeploymentId === undefined) {
+        delete process.env.PLT_DEPLOYMENT_ID
+      } else {
+        process.env.PLT_DEPLOYMENT_ID = originalDeploymentId
+      }
+    }
+  })
+
   test('adds ISR caching handler', async () => {
     setupGlobal()
     const nextConfig = await enhanceNextConfig({})

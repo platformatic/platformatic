@@ -15,6 +15,7 @@ import { ensureLoggableError, sanitizeHTTPSOptions } from '@platformatic/foundat
 import { getLogger, updateGlobals } from '@platformatic/globals'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
+import { platformaticSkewPlugin } from './skew-plugin.js'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
@@ -120,6 +121,7 @@ export class ViteCapability extends BaseCapability {
     try {
       updateGlobals({ isBuilding: true })
 
+      const skewPlugin = platformaticSkewPlugin()
       const buildOptions = {
         root: this.root,
         base: basePath,
@@ -130,6 +132,7 @@ export class ViteCapability extends BaseCapability {
           outDir: config.application.outputDirectory
         },
         plugins: [
+          skewPlugin,
           {
             name: 'platformatic-build',
             configResolved: config => {
@@ -137,7 +140,7 @@ export class ViteCapability extends BaseCapability {
               outDir = resolve(this.root, config.build.outDir)
             }
           }
-        ]
+        ].filter(Boolean)
       }
 
       // createBuilder was added in Vite 6 and might be needed for multi environment frameworks like TanStack
@@ -244,6 +247,7 @@ export class ViteCapability extends BaseCapability {
       typeof backlog === 'number' ? { backlog } : {}
     )
     const { createServer } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
+    const skewPlugin = platformaticSkewPlugin()
 
     // Create the server and listen
     this.#app = await createServer({
@@ -254,6 +258,7 @@ export class ViteCapability extends BaseCapability {
       logLevel: this.logger.level,
       clearScreen: false,
       optimizeDeps: { force: false },
+      plugins: skewPlugin ? [skewPlugin] : undefined,
       server: serverOptions
     })
 
@@ -425,6 +430,7 @@ export class ViteSSRCapability extends NodeCapability {
     try {
       updateGlobals({ isBuilding: true })
 
+      const skewPlugin = platformaticSkewPlugin()
       const buildOptions = {
         root: resolve(this.root, clientDirectory),
         base: basePath,
@@ -436,6 +442,7 @@ export class ViteSSRCapability extends NodeCapability {
           ssrManifest: true
         },
         plugins: [
+          skewPlugin,
           {
             name: 'platformatic-build',
             configResolved: config => {
@@ -443,7 +450,7 @@ export class ViteSSRCapability extends NodeCapability {
               clientOutDir = resolve(this.root, clientDirectory, config.build.outDir)
             }
           }
-        ]
+        ].filter(Boolean)
       }
 
       // createBuilder was added in Vite 6 and might be needed for multi environment frameworks like TanStack
