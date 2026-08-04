@@ -362,13 +362,13 @@ importers:
         version: 5.11.0
       neostandard:
         specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 0.12.2(@typescript-eslint/utils@8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
       semver:
         specifier: ^7.6.0
         version: 7.8.5
       typescript:
-        specifier: ~5.9.3
-        version: 5.9.3
+        specifier: ~6.0.3
+        version: 6.0.3
       yaml:
         specifier: ^2.4.1
         version: 2.9.0
@@ -20374,7 +20374,7 @@ snapshots:
       fast-json-stringify: 7.0.1
       find-my-way: 9.7.0
       light-my-request: 6.6.0
-      pino: 10.3.1
+      pino: 9.14.0
       process-warning: 5.1.0
       rfdc: 1.4.1
       secure-json-parse: 4.1.0
