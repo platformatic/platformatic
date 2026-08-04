@@ -522,28 +522,34 @@ directory.
 
 | # | Finding(s) | Decision | Status |
 |---|---|---|---|
-| D1 | B1 | Choose worker env-block precedence: v3 (`env` blocks > real env) or inversion + breaking-change entry + migrate warning | open |
-| D2 | B2 | Exempt the deciding file from the configured-twice check; define the shorthand entry's default `path` | open |
-| D3 | B3 | Entrypoint listen resolution: root `server` → own `server` block → defaults; auto-wrap hoists the definition's `server` (v3 semantics) | open |
-| D4 | B4 | Redefine upgraded-view validation (token-masked sentinel clone, `useDefaults: false`) | open |
-| D5 | B5 | Gate migrate's file omission on provable detector reconstruction; add capability deps for `$schema`-only apps | open |
-| D6 | M1 | One canonical capability resolution order (app-first + bundled fallback) for worker import, stamp check, and schema import | open |
-| D7 | M2 | Add injected-keys provenance (`injectedKeys` in `workerData`; strip from `envFileKeys`) | open |
-| D8 | M3 | Specify worker-side `kMetadata` reconstruction in the boot protocol | open |
-| D9 | M4 | Keep `useHttp` / add an ephemeral-listener class + migrate mapping | open |
-| D10 | M5 | Define `envfile` scope (evaluation too?), base (app-relative + migrate rewrite), and missing-file error | open |
-| D11 | M6 | Define intermediate-directory env layering in both ladders and the worker-boot re-walk | open |
-| D12 | M7 | Bound the walk by the topmost contiguous `package.json` chain (or downgrade the invariant) | open |
-| D13 | M8 | Define `ConfigContext`/env-file selection for capability-command evaluation | open |
-| D14 | M9 | Resolve placeholders against `env`-block/envfile layers at generation time | open |
-| D15 | M10 | Specify the equivalence-check comparand, exclusion list, and extended closure | open |
-| D16 | M11 | Make strictEnv migration runnable without a production env (warn-mode view, sentinel validation) | open |
-| D17 | M12 | Dual-run semgrator chains; flag branch divergence as requires-review | open |
-| D18 | M13 | Vendor `replaceEnvIgnore` JSON-path lists into the generation table | open |
-| D19 | M14 | Root-inline emission exception for same-directory apps | open |
-| D20 | M15 | Specify root `envfile` conversion | open |
-| D21 | M16 | Persisted manifest + `--resume` semantics for the two-phase flow | open |
-| D22 | M17 | Keep or remove `PLT_DEV`/`PLT_ENVIRONMENT` | open |
-| D23 | M18 | Build-time withheld-env warning, or delete "breaks loudly" | open |
-| D24 | M19 | Specify `POST /applications` eval pass; declare the request-payload change | open |
-| D25 | M20 | Restore the has-JS-files → `@platformatic/node` terminal detector rule | open |
+| D1 | B1 | Choose worker env-block precedence: v3 (`env` blocks > real env) or inversion + breaking-change entry + migrate warning | **resolved** — user decision: dotenv convention, real env always wins (ladder kept); "applied last" deleted; breaking change 18; migrate per-key warning |
+| D2 | B2 | Exempt the deciding file from the configured-twice check; define the shorthand entry's default `path` | **resolved** — deciding file exempt from the check; shorthand entry path defaults to the config file’s directory |
+| D3 | B3 | Entrypoint listen resolution: root `server` → own `server` block → defaults; auto-wrap hoists the definition's `server` (v3 semantics) | **resolved** — root `server` → own `server` → defaults; auto-wrap hoists the definition’s server block (wrapInRuntimeConfig semantics) |
+| D4 | B4 | Redefine upgraded-view validation (token-masked sentinel clone, `useDefaults: false`) | **resolved** — token-masked sentinel clone, `useDefaults: false`, coercion off, discarded after validation |
+| D5 | B5 | Gate migrate's file omission on provable detector reconstruction; add capability deps for `$schema`-only apps | **resolved** — omission gated on exactly-one matching capability dep; step 2 adds deps for `$schema`-only apps |
+| D6 | M1 | One canonical capability resolution order (app-first + bundled fallback) for worker import, stamp check, and schema import | **resolved** — canonical order app-scoped first + bundled fallback for worker import, stamp check, and schema import |
+| D7 | M2 | Add injected-keys provenance (`injectedKeys` in `workerData`; strip from `envFileKeys`) | **resolved** — `injectedKeys` in workerData; injected keys stripped from `envFileKeys`; three provenance classes |
+| D8 | M3 | Specify worker-side `kMetadata` reconstruction in the boot protocol | **resolved** — worker rebuilds kMetadata (root/path/module/version/env) before the capability transform |
+| D9 | M4 | Keep `useHttp` / add an ephemeral-listener class + migrate mapping | **resolved** — user decision: `useHttp` removed; `server: { port: 0 }` = ephemeral port per worker; migrate rewrites; breaking change 19 |
+| D10 | M5 | Define `envfile` scope (evaluation too?), base (app-relative + migrate rewrite), and missing-file error | **resolved** — user decision: envfile governs both views; app-relative base with migrate rewrite; missing file errors; breaking change 21 |
+| D11 | M6 | Define intermediate-directory env layering in both ladders and the worker-boot re-walk | **resolved** — user decision: env files from exactly two directories (root + app); intermediates never read |
+| D12 | M7 | Bound the walk by the topmost contiguous `package.json` chain (or downgrade the invariant) | **resolved** — ancestor dirs eligible only with package.json/workspace marker; cwd always eligible; residual case stated best-effort |
+| D13 | M8 | Define `ConfigContext`/env-file selection for capability-command evaluation | **resolved** — user decision: `command: 'exec'`, mode development/production false defaults, `--production`/`--mode` flags |
+| D14 | M9 | Resolve placeholders against `env`-block/envfile layers at generation time | **resolved** — generation-time resolution against env-block/envfile layers, value inlined with source comment |
+| D15 | M10 | Specify the equivalence-check comparand, exclusion list, and extended closure | **resolved** — pre-transform deep equality under pinned context; exclusion list; vendored runtime machinery, no project imports |
+| D16 | M11 | Make strictEnv migration runnable without a production env (warn-mode view, sentinel validation) | **resolved** — resolved view under strictEnv 'warn'; step-3 sentinels for requiredEnv keys; required-variable list reported |
+| D17 | M12 | Dual-run semgrator chains; flag branch divergence as requires-review | **resolved** — chains dual-run (token + resolved clone); branch divergence flagged requires-review |
+| D18 | M13 | Vendor `replaceEnvIgnore` JSON-path lists into the generation table | **resolved** — replaceEnvIgnore lists vendored into the generation table; ignored positions emitted verbatim |
+| D19 | M14 | Root-inline emission exception for same-directory apps | **resolved** — same-directory apps emitted root-inline as documented exception |
+| D20 | M15 | Specify root `envfile` conversion | **resolved** — root envfile merged into root .env; conflicting keys error; summary notes the merge |
+| D21 | M16 | Persisted manifest + `--resume` semantics for the two-phase flow | **resolved** — persisted `.wattpm-migrate.json` manifest; `--resume` exempts manifest entries and skips unmodified files |
+| D22 | M17 | Keep or remove `PLT_DEV`/`PLT_ENVIRONMENT` | **resolved** — user decision: PLT_DEV/PLT_ENVIRONMENT removed; breaking change 20; migrate source scan flags reads |
+| D23 | M18 | Build-time withheld-env warning, or delete "breaks loudly" | **resolved** — build warning names withheld env-block keys; "breaks loudly" claim replaced |
+| D24 | M19 | Specify `POST /applications` eval pass; declare the request-payload change | **resolved** — POST /applications runs the boot eval pass; request-payload change declared in items 11/14 |
+| D25 | M20 | Restore the has-JS-files → `@platformatic/node` terminal detector rule | **resolved** — JS-files → @platformatic/node terminal rule restored; v3 description corrected; empty dir errors |
+
+Minors m1–m14: **resolved** — all applied directly (async desugaring, four-rule count,
+inspect-mode spec, audit-before-emission, untracked-legacy dirty rule, per-property
+boolean table, *_URL strictEnv carve-out, narrower-walk breaking note, --env rung,
+self-URL injection, magicast placement, optional version, Goal 7 rewording,
+audit inventory fixes).
