@@ -30,3 +30,13 @@ export const ScheduledTaskNotFound = createError(
   `${ERROR_PREFIX}_SCHEDULED_TASK_NOT_FOUND`,
   'Scheduled task "%s" not found'
 )
+
+export const FailedToLoadWorkerExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_LOAD_WORKER_EXTENSION`,
+  'Failed to load the worker extension "%s": %s.'
+)
+
+export const InvalidWorkerExtensionError = createError(
+  `${ERROR_PREFIX}_INVALID_WORKER_EXTENSION`,
+  'The worker extension "%s" must export a setup function, as its default export or named "setup".'
+)

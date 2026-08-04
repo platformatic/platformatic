@@ -38,13 +38,17 @@ import {
   validationOptions,
   version
 } from '../../index.js';
+import { onEntrypointRequest } from '../../index.js';
 import type {
   BaseContext,
   BaseOptions,
   CancellablePromise,
   InjectViaRequestResponse,
   PlatformaticBasicConfig,
-  StartOptions
+  StartOptions,
+  WorkerExtension,
+  WorkerExtensionContext,
+  WorkerExtensionInstance
 } from '../../index.js';
 
 declare const server: Server;
@@ -319,4 +323,27 @@ test('watch config method', () => {
 test('private methods', () => {
   expect(capability._initializeLogger()).type.toBe<object>();
   expect(capability._collectMetrics()).type.toBe<Promise<void>>();
+});
+
+// Test the worker extension contract
+test('WorkerExtension contract', () => {
+  const extension: WorkerExtension = ({ applicationId, capability }: WorkerExtensionContext) => {
+    expect(applicationId).type.toBe<string>();
+    expect(capability).type.toBe<unknown>();
+    return { close () {} };
+  };
+  expect(extension).type.toBeAssignableTo<WorkerExtension>();
+
+  // Returning nothing, or a promise, is allowed.
+  expect((() => {}) as WorkerExtension).type.toBeAssignableTo<WorkerExtension>();
+  expect((async () => ({}) as WorkerExtensionInstance) as WorkerExtension).type.toBeAssignableTo<WorkerExtension>();
+});
+
+// Test the optional HTTP helper
+test('onEntrypointRequest helper', () => {
+  const unsubscribe = onEntrypointRequest(({ request, addResponseHeader }) => {
+    expect(request.headers).type.toBe<import('node:http').IncomingHttpHeaders>();
+    addResponseHeader('set-cookie', 'a=1');
+  });
+  expect(unsubscribe).type.toBe<() => void>();
 });

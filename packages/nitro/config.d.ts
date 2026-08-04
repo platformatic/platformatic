@@ -113,6 +113,23 @@ export interface PlatformaticNitroConfig {
     | boolean
     | string;
   application?: {
+    workerExtensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+        )[];
     basePath?: string;
     outputDirectory?: string;
     include?: string[];

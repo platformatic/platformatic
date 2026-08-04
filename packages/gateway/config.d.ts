@@ -450,7 +450,25 @@ export interface PlatformaticGatewayConfig {
   plugins?: {
     [k: string]: unknown;
   };
-  application?: {};
+  application?: {
+    workerExtensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+        )[];
+  };
   runtime?: {
     preload?: string | string[];
     extensions?:
