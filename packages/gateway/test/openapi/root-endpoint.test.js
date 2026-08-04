@@ -200,20 +200,27 @@ test('should have links to composed applications', async t => {
   assert.ok(content.includes('<div class="service-path">/internal/service3</div>'))
 
   assert.ok(
-    content.includes("document.getElementById('proxy-service1-external-link').href = href + '/internal/service1/'")
+    content.includes("document.getElementById('proxy-service1-external-link').href = baseUrl + '/internal/service1/'")
   )
   assert.ok(
-    content.includes("document.getElementById('proxy-service2-external-link').href = href + '/internal/service2/'")
+    content.includes("document.getElementById('proxy-service2-external-link').href = baseUrl + '/internal/service2/'")
   )
   assert.ok(
-    content.includes("document.getElementById('proxy-service3-external-link').href = href + '/internal/service3/'")
+    content.includes("document.getElementById('proxy-service3-external-link').href = baseUrl + '/internal/service3/'")
   )
 
   assert.ok(content.includes('<div class="service-path">/service1</div>'))
   assert.ok(content.includes('<div class="service-path">/service2</div>'))
   assert.ok(content.includes('<div class="service-path">/service3</div>'))
 
-  assert.ok(content.includes("const href = window.location.href.replace(/\\/$/, '')"))
+  // Links are built from origin + pathname, never from window.location.href:
+  // href carries the query string, so concatenating a service path onto it
+  // folds that path into the query (at "/?dpl=v1" the old code produced
+  // "/?dpl=v1/internal/service1/"). See packages/gateway/public/index.njk.
+  assert.ok(content.includes("const basePath = window.location.pathname.replace(/\\/$/, '')"))
+  assert.ok(content.includes('const baseUrl = window.location.origin + basePath'))
+  // The buggy form specifically: href includes the query string.
+  assert.ok(!content.includes('const href = window.location.href'))
 })
 
 test('should honour openapi.swaggerPrefix in the root page and spec routes', async t => {
