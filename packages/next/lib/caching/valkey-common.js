@@ -52,7 +52,12 @@ export function ensureRedis () {
 
 export function ensureMsgpackr () {
   if (!msgpackr) {
-    msgpackr = require('msgpackr')
+    const { Packr } = require('msgpackr')
+    // A fresh Packr instance (unlike msgpackr's default pack/unpack singleton, which hardcodes
+    // useRecords: false) uses the record extension for plain objects, which keeps them
+    // distinguishable on the wire from Map instances, preserving Map identity round-trip.
+    // moreTypes additionally preserves Set/RegExp/Error, should they ever appear in cache data.
+    msgpackr = new Packr({ moreTypes: true })
   }
 }
 

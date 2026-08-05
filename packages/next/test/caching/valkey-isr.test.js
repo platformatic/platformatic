@@ -1057,6 +1057,38 @@ test('can be used without the runtime - standalone mode', async t => {
   ])
 })
 
+test('should preserve Map identity for values like segmentData across the Valkey round trip', async t => {
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await valkey.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:segment-data`
+
+  const segmentData = new Map([
+    ['/foo', { rsc: Buffer.from('foo') }],
+    ['/bar', { rsc: Buffer.from('bar') }]
+  ])
+
+  await handler.set(key, { html: 'content', segmentData }, { revalidate: 120, tags: ['first'] })
+  const cached = await handler.get(key)
+
+  ok(cached.value.segmentData instanceof Map)
+  deepStrictEqual(Array.from(cached.value.segmentData.keys()), ['/foo', '/bar'])
+  deepStrictEqual(cached.value.segmentData.get('/foo').rsc, Buffer.from('foo'))
+  deepStrictEqual(cached.value.segmentData.get('/bar').rsc, Buffer.from('bar'))
+  deepStrictEqual(cached.value.html, 'content')
+})
+
 test('should cache static pages with revalidate: false (force-static / SSG)', async t => {
   const logs = []
   const logsPromise = Promise.withResolvers()
