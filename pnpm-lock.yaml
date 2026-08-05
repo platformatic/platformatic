@@ -1726,7 +1726,7 @@ importers:
         version: 15.0.4
       neostandard:
         specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 0.12.2(@typescript-eslint/utils@8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
       pino-abstract-transport:
         specifier: ^2.0.0
         version: 2.0.0
@@ -1738,10 +1738,10 @@ importers:
         version: 4.2.0
       tstyche:
         specifier: ^6.2.0
-        version: 6.2.0(typescript@5.9.3)
+        version: 6.2.0(typescript@6.0.3)
       typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
+        specifier: ~6.0.3
+        version: 6.0.3
       undici-oidc-interceptor:
         specifier: ^0.9.0
         version: 0.9.0
@@ -25782,10 +25782,6 @@ snapshots:
   tslib@2.8.1: {}
 
   tsscmp@1.0.6: {}
-
-  tstyche@6.2.0(typescript@5.9.3):
-    optionalDependencies:
-      typescript: 5.9.3
 
   tstyche@6.2.0(typescript@6.0.3):
     optionalDependencies:

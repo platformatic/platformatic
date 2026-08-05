@@ -64,7 +64,7 @@ my-app/
   "devDependencies": {
     "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
 ```
@@ -212,7 +212,7 @@ Update your package.json to use Watt commands:
     "@platformatic/tsconfig": "^0.1.0",
     "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
 ```
@@ -256,7 +256,7 @@ Add `"type": "module"` to tell Node.js to treat `.js` files as ESM:
     "@platformatic/tsconfig": "^0.1.0",
     "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
 ```
@@ -418,7 +418,7 @@ If your package.json referenced the `dist` folder for production builds, you can
   "devDependencies": {
     "@platformatic/tsconfig": "^0.1.0",
     "@types/node": "^22.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
 ```
@@ -522,7 +522,7 @@ Use this configuration when your project uses `"type": "module"` in package.json
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
 ```
@@ -595,7 +595,7 @@ Use this configuration when your project does **not** have `"type": "module"` in
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
 ```
