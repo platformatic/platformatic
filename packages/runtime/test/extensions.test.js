@@ -2,15 +2,131 @@ import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
+import { RuntimeExtensionBuildAlreadyCalledError } from '../lib/errors.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 function cleanExtensionGlobals () {
   globalThis.__pltExtensionEvents = []
+  globalThis.__pltExtensionFailure = undefined
   globalThis.__pltExtensionItc = undefined
   globalThis.__pltExtensionSharedContext = undefined
 }
+
+test('extensions opt into ordered build hooks', async t => {
+  cleanExtensionGlobals()
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-build.json')
+  const app = await createRuntime(configFile, undefined, { build: true })
+  await app.init()
+
+  t.after(() => app.close())
+
+  const builtApplications = []
+  app.on('application:built', id => builtApplications.push(id))
+  const result = await app.buildApplication('a')
+
+  const context = {
+    applicationId: 'a',
+    applicationPath: join(fixturesDir, 'extensions', 'services', 'a')
+  }
+  deepStrictEqual(result, { first: true, second: true })
+  deepStrictEqual(builtApplications, ['a'])
+  deepStrictEqual(globalThis.__pltExtensionEvents, [
+    { event: 'setup', extension: 'build-first' },
+    { event: 'setup', extension: 'build-second' },
+    { event: 'preBuild', extension: 'build-first', context },
+    { event: 'preBuild', extension: 'build-second', context },
+    { event: 'onBuild:before', extension: 'build-first', context },
+    { event: 'onBuild:before', extension: 'build-second', context },
+    { event: 'onBuild:after', extension: 'build-second', context },
+    { event: 'onBuild:after', extension: 'build-first', context },
+    { event: 'postBuild', extension: 'build-second', context, result },
+    { event: 'postBuild', extension: 'build-first', context, result }
+  ])
+})
+
+test('extensions remain disabled during builds unless explicitly enabled', async t => {
+  cleanExtensionGlobals()
+
+  const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
+  const app = await createRuntime(configFile, undefined, { build: true })
+  await app.init()
+
+  t.after(() => app.close())
+
+  await app.buildApplication('a')
+  deepStrictEqual(globalThis.__pltExtensionEvents, [])
+})
+
+test('an extension cannot invoke the underlying build more than once', async t => {
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-build-twice.json')
+  const app = await createRuntime(configFile, undefined, { build: true })
+  await app.init()
+
+  t.after(() => app.close())
+
+  await rejects(
+    app.buildApplication('a'),
+    new RuntimeExtensionBuildAlreadyCalledError()
+  )
+})
+
+test('build hook failures abort the remaining lifecycle', async t => {
+  const configFile = join(fixturesDir, 'extensions', 'platformatic-build-failures.json')
+  const context = {
+    applicationId: 'a',
+    applicationPath: join(fixturesDir, 'extensions', 'services', 'a')
+  }
+
+  const cases = [
+    {
+      failure: { extension: 'first', hook: 'preBuild' },
+      events: [
+        { event: 'preBuild', extension: 'first', context }
+      ]
+    },
+    {
+      failure: { extension: 'second', hook: 'onBuild' },
+      events: [
+        { event: 'preBuild', extension: 'first', context },
+        { event: 'preBuild', extension: 'second', context },
+        { event: 'onBuild:before', extension: 'first', context },
+        { event: 'onBuild:before', extension: 'second', context }
+      ]
+    },
+    {
+      failure: { extension: 'second', hook: 'postBuild' },
+      events: [
+        { event: 'preBuild', extension: 'first', context },
+        { event: 'preBuild', extension: 'second', context },
+        { event: 'onBuild:before', extension: 'first', context },
+        { event: 'onBuild:before', extension: 'second', context },
+        { event: 'onBuild:after', extension: 'second', context },
+        { event: 'onBuild:after', extension: 'first', context },
+        { event: 'postBuild', extension: 'second', context }
+      ]
+    }
+  ]
+
+  for (const testCase of cases) {
+    await t.test(`${testCase.failure.hook} failure`, async t => {
+      cleanExtensionGlobals()
+      globalThis.__pltExtensionFailure = testCase.failure
+
+      const app = await createRuntime(configFile, undefined, { build: true })
+      t.after(() => app.close())
+      await app.init()
+
+      await rejects(
+        app.buildApplication('a'),
+        new Error(`${testCase.failure.hook} failure from ${testCase.failure.extension}`)
+      )
+      deepStrictEqual(globalThis.__pltExtensionEvents, testCase.events)
+    })
+  }
+})
 
 test('extensions receive the runtime, the ITC facade, the logger, the options and the root', async t => {
   cleanExtensionGlobals()

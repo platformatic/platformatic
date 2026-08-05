@@ -13,6 +13,8 @@ import {
   type InjectParams,
   type InjectResponse,
   type RuntimeExtension,
+  type RuntimeExtensionBuild,
+  type RuntimeExtensionBuildContext,
   type RuntimeExtensionContext,
   type RuntimeExtensionInstance,
   type RuntimeExtensionMetrics,
@@ -290,6 +292,15 @@ test('RuntimeExtension', () => {
   expect(extension).type.toBe<RuntimeExtension>()
 
   const instance: RuntimeExtensionInstance = {}
+  expect(instance.preBuild).type.toBe<
+    ((context: RuntimeExtensionBuildContext) => void | Promise<void>) | undefined
+  >()
+  expect(instance.onBuild).type.toBe<
+    ((context: RuntimeExtensionBuildContext, build: RuntimeExtensionBuild) => unknown | Promise<unknown>) | undefined
+  >()
+  expect(instance.postBuild).type.toBe<
+    ((context: RuntimeExtensionBuildContext, result: unknown) => void | Promise<void>) | undefined
+  >()
   expect(instance.start).type.toBe<(() => void | Promise<void>) | undefined>()
   expect(instance.stop).type.toBe<(() => void | Promise<void>) | undefined>()
   expect(instance.close).type.toBe<(() => void | Promise<void>) | undefined>()

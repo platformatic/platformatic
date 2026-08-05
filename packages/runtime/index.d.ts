@@ -344,7 +344,20 @@ export interface RuntimeExtensionContext {
   health: RuntimeExtensionHealth
 }
 
+export interface RuntimeExtensionBuildContext {
+  applicationId: string
+  applicationPath: string
+}
+
+export type RuntimeExtensionBuild = () => Promise<unknown>
+
 export interface RuntimeExtensionInstance {
+  preBuild?: (context: RuntimeExtensionBuildContext) => void | Promise<void>
+  onBuild?: (
+    context: RuntimeExtensionBuildContext,
+    build: RuntimeExtensionBuild
+  ) => unknown | Promise<unknown>
+  postBuild?: (context: RuntimeExtensionBuildContext, result: unknown) => void | Promise<void>
   start?: () => void | Promise<void>
   stop?: () => void | Promise<void>
   close?: () => void | Promise<void>

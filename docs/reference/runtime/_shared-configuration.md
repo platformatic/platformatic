@@ -46,7 +46,7 @@ in the **runtime main thread**. Extensions can observe and control the whole run
 the `Runtime` object and an ITC (Inter-Thread Communication) facade which allows them to register
 custom commands that applications can invoke from their worker threads.
 
-`extensions` can be a path, an object with `path` and `options` properties, or an array of either:
+`extensions` can be a path, an object with `path`, `options`, and `build` properties, or an array of either:
 
 ```json
 {
@@ -211,6 +211,13 @@ The setup function receives a context object with the following properties:
 
 The setup function can optionally return an object with awaited lifecycle hooks:
 
+- **`preBuild(context)`** - Called before an application capability is built. `context` contains
+  `applicationId` and the absolute `applicationPath`.
+- **`onBuild(context, build)`** - Wraps the application capability build. Call and await `build()` to
+  continue the build. The hook may perform work immediately before and after it, or omit the call to
+  replace the capability build. Its return value becomes the build result.
+- **`postBuild(context, result)`** - Called after a successful application build with the final result
+  returned by the `onBuild` hook chain.
 - **`start()`** - Called once applications have been prepared and registered, and **before** the
   originally configured applications start accepting traffic. Runtime awaits every extension `start`
   hook. An extension may add and start dynamic applications here; those applications are excluded from
@@ -223,17 +230,32 @@ The setup function can optionally return an object with awaited lifecycle hooks:
 - **`close()`** - Called when the runtime is being closed, after applications have stopped. The
   extension metrics registry is cleared after `close`.
 
-When multiple extensions are configured, they are set up and started in registration order. `stop` and
-`close` run in reverse registration order. Each of `stop` and `close` is invoked at most once per
-Runtime life, including repeated `stop`/`close` calls and failed-start cleanup paths. Existing
-extensions that only return `close()` keep their previous behavior. Health checks and routes registered
-by an extension are cleaned up with it.
+When multiple extensions are configured, they are set up and started in registration order.
+`preBuild` runs in registration order. `onBuild` hooks are nested middleware with the first registered
+extension outermost. `postBuild`, `stop`, and `close` run in reverse registration order. Each of `stop`
+and `close` is invoked at most once per Runtime life, including repeated `stop`/`close` calls and
+failed-start cleanup paths. Existing extensions that only return `close()` keep their previous
+behavior. Health checks and routes registered by an extension are cleaned up with it.
 
 Listening to Runtime `EventEmitter` events is not a substitute for these hooks: `emit()` does not await
 asynchronous listeners. Lifecycle ordering is enforced by Runtime itself so it covers signal handling,
 internal failure cleanup, and future lifecycle entry points.
 
-Extensions are not loaded when building the applications (for example via `wattpm build`).
+Extensions are not loaded when building applications unless their object configuration explicitly
+sets `"build": true`. Build-enabled extensions are set up before application workers are created,
+receive the build hooks above for every application, and are closed when the build Runtime closes.
+Their `start` and `stop` hooks are not called during a build.
+
+```json
+{
+  "extensions": [
+    {
+      "path": "./build-extension.js",
+      "build": true
+    }
+  ]
+}
+```
 
 For a complete worked example — enabling continuous profiling on every worker when it starts (or is
 restarted) and shipping the captured profiles — see the
