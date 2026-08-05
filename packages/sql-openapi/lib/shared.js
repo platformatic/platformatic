@@ -2,6 +2,9 @@ import { mapSQLTypeToOpenAPIType } from '@platformatic/sql-json-schema-mapper'
 import { buildCursorUtils } from './cursor.js'
 import * as errors from './errors.js'
 
+// Array-to-array comparators take a comma-separated list of values
+const arrayFieldListModifiers = ['contains', 'contained', 'overlaps']
+
 export function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
 
@@ -17,7 +20,9 @@ export function generateArgs (entity, ignore) {
         const key = baseKey + modifier
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
       }
-      acc[baseKey + 'overlaps'] = { type: 'string' }
+      for (const modifier of arrayFieldListModifiers) {
+        acc[baseKey + modifier] = { type: 'string' }
+      }
     } else {
       for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike']) {
         const key = baseKey + modifier
@@ -176,7 +181,7 @@ export function rootEntityRoutes (
             where[field] ||= {}
             let value = query[key]
             const isArrayField = entity.camelCasedFields[field]?.isArray
-            if (modifier === 'in' || modifier === 'nin' || (isArrayField && modifier === 'overlaps')) {
+            if (modifier === 'in' || modifier === 'nin' || (isArrayField && arrayFieldListModifiers.includes(modifier))) {
               // TODO handle escaping of ,
               value = query[key].split(',')
               if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
@@ -334,7 +339,7 @@ export function rootEntityRoutes (
             where[field] ||= {}
             let value = query[key]
             const isArrayField = entity.camelCasedFields[field]?.isArray
-            if (modifier === 'in' || modifier === 'nin' || (isArrayField && modifier === 'overlaps')) {
+            if (modifier === 'in' || modifier === 'nin' || (isArrayField && arrayFieldListModifiers.includes(modifier))) {
               // TODO handle escaping of ,
               value = query[key].split(',')
               if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {

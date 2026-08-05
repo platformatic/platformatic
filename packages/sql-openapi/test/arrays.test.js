@@ -274,7 +274,7 @@ test('expose arrays', { skip: !isPg }, async t => {
   }
 })
 
-test('filter arrays with overlaps', { skip: !isPg }, async t => {
+test('filter arrays with contains, contained and overlaps', { skip: !isPg }, async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -300,7 +300,9 @@ test('filter arrays with overlaps', { skip: !isPg }, async t => {
       url: '/documentation/json'
     })
     const properties = res.json().paths['/pages/'].get.parameters.map(p => p.name)
-    equal(properties.includes('where.tags.overlaps'), true, 'where.tags.overlaps is documented')
+    for (const modifier of ['contains', 'contained', 'overlaps']) {
+      equal(properties.includes(`where.tags.${modifier}`), true, `where.tags.${modifier} is documented`)
+    }
   }
 
   for (const page of [
@@ -349,6 +351,58 @@ test('filter arrays with overlaps', { skip: !isPg }, async t => {
     })
     equal(res.statusCode, 200, 'GET /pages?where.tags.overlaps=nope status code')
     same(res.json(), [], 'overlaps with no matching value returns an empty list')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.contains=bar&orderby.id=asc'
+    })
+    equal(res.statusCode, 200, 'GET /pages?where.tags.contains=bar status code')
+    same(
+      res.json().map(p => p.title),
+      ['First', 'Second'],
+      'contains with a single value matches pages containing it'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.contains=foo,bar'
+    })
+    equal(res.statusCode, 200, 'GET /pages?where.tags.contains=foo,bar status code')
+    same(
+      res.json().map(p => p.title),
+      ['First'],
+      'contains with multiple values only matches pages containing all of them'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.contained=foo,bar,baz&orderby.id=asc'
+    })
+    equal(res.statusCode, 200, 'GET /pages?where.tags.contained=foo,bar,baz status code')
+    same(
+      res.json().map(p => p.title),
+      ['First', 'Second'],
+      'contained matches pages whose tags are a subset of the values'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.contained=qux'
+    })
+    equal(res.statusCode, 200, 'GET /pages?where.tags.contained=qux status code')
+    same(
+      res.json().map(p => p.title),
+      ['Third'],
+      'contained with a single value only matches pages with no other tags'
+    )
   }
 
   {
