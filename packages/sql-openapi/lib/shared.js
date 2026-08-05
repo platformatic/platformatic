@@ -17,6 +17,7 @@ export function generateArgs (entity, ignore) {
         const key = baseKey + modifier
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
       }
+      acc[baseKey + 'overlaps'] = { type: 'string' }
     } else {
       for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike']) {
         const key = baseKey + modifier
@@ -174,7 +175,8 @@ export function rootEntityRoutes (
             const [, field, modifier] = key.split('.')
             where[field] ||= {}
             let value = query[key]
-            if (modifier === 'in' || modifier === 'nin') {
+            const isArrayField = entity.camelCasedFields[field]?.isArray
+            if (modifier === 'in' || modifier === 'nin' || (isArrayField && modifier === 'overlaps')) {
               // TODO handle escaping of ,
               value = query[key].split(',')
               if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
@@ -331,7 +333,8 @@ export function rootEntityRoutes (
             const [, field, modifier] = key.split('.')
             where[field] ||= {}
             let value = query[key]
-            if (modifier === 'in' || modifier === 'nin') {
+            const isArrayField = entity.camelCasedFields[field]?.isArray
+            if (modifier === 'in' || modifier === 'nin' || (isArrayField && modifier === 'overlaps')) {
               // TODO handle escaping of ,
               value = query[key].split(',')
               if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {

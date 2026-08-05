@@ -273,3 +273,94 @@ test('expose arrays', { skip: !isPg }, async t => {
     )
   }
 })
+
+test('filter arrays with overlaps', { skip: !isPg }, async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(42) NOT NULL,
+      tags VARCHAR(42)[] NOT NULL
+    );`)
+    }
+  })
+  app.register(sqlOpenAPI)
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    const properties = res.json().paths['/pages/'].get.parameters.map(p => p.name)
+    equal(properties.includes('where.tags.overlaps'), true, 'where.tags.overlaps is documented')
+  }
+
+  for (const page of [
+    { title: 'First', tags: ['foo', 'bar'] },
+    { title: 'Second', tags: ['bar', 'baz'] },
+    { title: 'Third', tags: ['qux'] }
+  ]) {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pages',
+      body: page
+    })
+    equal(res.statusCode, 200, 'POST /pages status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.overlaps=foo'
+    })
+    equal(res.statusCode, 200, 'GET /pages?where.tags.overlaps=foo status code')
+    same(
+      res.json().map(p => p.title),
+      ['First'],
+      'overlaps with a single value only matches pages containing it'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.overlaps=foo,baz&orderby.id=asc'
+    })
+    equal(res.statusCode, 200, 'GET /pages?where.tags.overlaps=foo,baz status code')
+    same(
+      res.json().map(p => p.title),
+      ['First', 'Second'],
+      'overlaps with multiple values matches pages containing any of them'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.overlaps=nope'
+    })
+    equal(res.statusCode, 200, 'GET /pages?where.tags.overlaps=nope status code')
+    same(res.json(), [], 'overlaps with no matching value returns an empty list')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/pages?where.tags.overlaps=bar,qux&fields=title',
+      body: {
+        title: 'Updated',
+        tags: ['updated']
+      }
+    })
+    equal(res.statusCode, 200, 'PUT /pages?where.tags.overlaps=bar,qux status code')
+    equal(res.json().length, 3, 'updateMany with overlaps updates all matching pages')
+  }
+})

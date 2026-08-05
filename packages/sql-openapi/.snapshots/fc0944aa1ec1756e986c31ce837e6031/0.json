@@ -271,6 +271,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "where.tags.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.title.eq",
             "required": false
           },
@@ -639,6 +647,14 @@
             },
             "in": "query",
             "name": "where.tags.any",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.tags.overlaps",
             "required": false
           },
           {
