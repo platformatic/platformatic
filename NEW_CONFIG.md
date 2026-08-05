@@ -301,9 +301,11 @@ directory of the config file that produced it (the Level 1 auto-wrap, the
 Silent shadowing is not an option here: package-local commands evaluate the
 nearest file, so a shadowed per-app config would still win under a standalone
 boot — the same app running two different configurations depending on where the
-command was typed. Erroring keeps root boot and standalone boot provably
-identical; the check is a filename-presence test, no evaluation needed, and
-`migrate` never emits this state.
+command was typed. Erroring keeps root boot and standalone boot identical **on
+capability configuration**; the two still differ on the root-owned env layers a
+standalone boot does not apply (`envfile` and the `env` blocks — see "Env
+files"), which the standalone warning names. The check is a filename-presence
+test, no evaluation needed, and `migrate` never emits this state.
 
 ### Functional form and the config context
 
@@ -368,7 +370,9 @@ The context (Vite-parity, deliberately):
   env-file view (Vite parity, documented).
 - `production` — the common-case shortcut: `true` under `start`/`--production`
   **and under `build`** (build produces production artifacts).
-- `env` — `process.env` after `.env` merging (see "Env files").
+- `env` — a **snapshot** of `process.env` after env-file and `env`-block merging,
+  taken at the start of evaluation (see "Env files"); later `process.env` writes
+  are visible through `process.env`, not through `ctx.env`.
 - `root` — absolute directory of the config file.
 
 ### Capability factories
@@ -390,6 +394,13 @@ level (`next.trailingSlash` → `trailingSlash`) and the shared blocks (`logger`
 `application` block deliberately stays nested: several capabilities (remix, nuxt,
 nitro, react-router) define their own `outputDirectory` alongside
 `application.outputDirectory`, and hoisting both would collide.
+
+Flattening is defined over a **list** of blocks per capability, not a single one:
+react-router flattens both `vite` (`configFile`, `devServer`, `ssr`,
+`notFoundHandler`) and `reactRouter` (`outputDirectory`), and tanstack — which has
+no block of its own — flattens `vite`. `defineCapabilityFactory` takes that list,
+and a build-time assertion checks the flattened key set against the retained shared
+blocks so a future option cannot silently collide.
 
 Factory options are **Platformatic integration and execution settings** — caching,
 observability wiring, build/serve integration. Framework-native behavior stays in the
@@ -471,11 +482,18 @@ applications: [
 ]
 ```
 
-The runtime half of `wattpm resolve` (cloning, `resolvedApplicationsBasePath`) is
-unchanged. Its config-writing half changes: v3 wrote `{PLT_APPLICATION_X_PATH}`
-placeholder entries plus `.env` lines; v4 writes literal relative paths into the
-config (an env-var indirection would be a non-literal expression, outside
-magicast's safe shape, for no benefit).
+`wattpm resolve` is unchanged, and it writes **nothing** to the configuration: it
+computes `application.path` in memory from `resolvedApplicationsBasePath`, clones
+or extracts, and adds the capability dependency to the cloned app's own
+`package.json` (`wattpm-utils/lib/commands/external.js:325-336,343-490`). The
+runtime derives the same path at boot (`runtime/lib/runtime.js:2357-2361`). That
+matters in v4: `resolve` runs unattended in build and deploy pipelines, so it must
+not depend on magicast's statically-safe shapes or its snippet fallback.
+
+The `{PLT_APPLICATION_X_PATH}` placeholder entries plus `.env` lines were written
+by **`wattpm import`** (`external.js:238-268`), not `resolve`. In v4 `import`
+writes literal relative paths into the config instead — an env-var indirection
+would be a non-literal expression, outside magicast's safe shape, for no benefit.
 
 ---
 
@@ -539,21 +557,34 @@ Classification is four unconditional rules:
 **The nearest config decides — commands are package-local.** The ordering is
 strict, so the deciding file always executes with real context: **(1)** find the
 nearest `watt.config.*` at or above the current directory **by filename alone** (no
-execution); **(2)** run `loadEnv` — that file's directory's env files layered
-over the project root's (the two-directory rule, see "Env files"); **(3)** only
-then execute candidates in
+execution), continuing up to locate the topmost one — the **root config**, whose
+directory is the project root for env purposes; **(2)** run `loadEnv` — the
+deciding file's directory's env files layered over the project root's (the
+two-directory rule, see "Env files"); **(3)** only then execute candidates in
 their eval workers to classify them (classification is cached, so a file classified
 during the walk is not re-evaluated by a later discovery pass — config code still
 runs once per load):
 
 - **Root config nearest** → one more check before booting the runtime: if cwd is
-  inside a directory that root config **claims as an application** (an entry's
-  `path`, or a non-excluded subdirectory of `autoload.path`), **that app boots
-  standalone** — a zero-config app behaves identically to a sibling that owns a
-  config file, because package-local scoping is a property of *being an app*, not
-  of owning a file. Otherwise the full runtime boots; running from the project
-  root behaves exactly as v3. (The claim check is free: the walk has already
-  evaluated the root config.)
+  a **proper descendant** of the root config file's directory *and* that root
+  config **claims it as an application** (an entry's `path`, or a non-excluded
+  subdirectory of `autoload.path`), **that app boots standalone** — a zero-config
+  app behaves identically to a sibling that owns a config file, because
+  package-local scoping is a property of *being an app*, not of owning a file.
+  Otherwise the full runtime boots; running from the project root behaves exactly
+  as v3. (The claim check is free: the walk has already evaluated the root
+  config.)
+
+  Two exemptions keep the check from firing on configurations that have no
+  standalone meaning. **Standing at the root config's own directory always boots
+  the full runtime**, even when an entry claims that directory — the Level 1b
+  `application` shorthand, a machine-generated `path: '.'`, and migrate's
+  same-directory root-inline emission all put an entry there, and re-scoping would
+  discard every runtime setting in the file the user is standing next to. And an
+  entry carrying an **inline `config`** is exempt wherever it sits: its entire
+  capability configuration lives in the root file, so there is nothing to boot
+  standalone with. Running inside such an app's directory boots the full runtime
+  and prints one line saying why.
 - **App-def nearest** → **that application boots standalone**: the definition is
   auto-wrapped as `{ application: { config: def } }` (the normalized singular
   form — the DTO shows this entry) and run as a single-app runtime; the entry's
@@ -591,61 +622,111 @@ and per-app scripts as `wattpm dev` (that app, because they run in the app
 directory). **Multi-app dev is the runtime's job**: `wattpm dev` at the root runs
 every application on one port with the mesh — strictly more useful than N
 disconnected processes. Composing N parallel *standalone* dev processes (à la
-`turbo run dev`) is deliberately not an advertised workflow: zero-config
-standalone apps all default to `PORT`/3042, so the second one fails fast on
-`EADDRINUSE`; teams that want parallel standalone processes declare a distinct
-`server.port` per app — possible and deterministic, but not the sold path.
+`turbo run dev`) is deliberately not an advertised workflow — not because they
+collide (declaring no port, they take ephemeral ports and coexist fine) but
+because they have **no mesh**: `http://*.plt.local` does not resolve, so any app
+that talks to a sibling fails. Teams that want parallel standalone processes
+declare a distinct `server.port` per app and wire the URLs themselves —
+possible, but not the sold path.
 Standalone `start` in automation gets the same warning as anywhere else —
 accepted and documented, not guarded. The migration guide calls the deploy
 pattern out explicitly: v3 climbed to the root from anywhere, so a Dockerfile or
 deploy script whose working directory is an app directory must point at the
 project root in v4.
 
-**Builds are environmentally deterministic.** A build always runs with the app's
-**directory-determined env** (real environment + env files, identical everywhere
-per the rule above) — never with injected `PLT_<ID>_URL` variables and never with
-config `env` blocks, *in every mode*: `turbo run build`, a standalone app-dir
-build, and a root build produce identical artifacts by construction. Mesh names
-are runtime-only values, read server-side at runtime where injection exists;
-baking them into artifacts was never meaningful. Because nothing breaks *loudly*
-when an env var merely reads as `undefined`, every build prints a **warning
-naming the root/entry `env`-block keys being withheld** from the build
-environment — so a v3 build that read one (`NEXT_PUBLIC_*` baked into client
-bundles is the classic case) fails visibly instead of silently baking an empty
-value; the fix is moving that value into an env file —
-where a build input belonged all along.
+**Build environments.** A build runs with the app's **directory-determined env**
+(real environment + env files) — never with injected `PLT_<ID>_URL` variables and
+never with config `env` blocks in the build subprocess's environment, *in every
+mode*. Mesh names are runtime-only values, read server-side at runtime where
+injection exists; baking them into artifacts was never meaningful. The one
+deterministic injection is `NODE_ENV`, which defaults to `production` under
+`build` when nothing else set it (see "Env files").
+
+`turbo run build`, a standalone app-dir build, and a root build produce identical
+artifacts **when no application declares `envfile` and no root or entry `env`
+block feeds its config evaluation**. Outside that condition they can diverge, and
+the divergence is not detectable from inside the app directory: a standalone build
+never evaluates the root config — standalone means standalone — so it cannot see a
+root-entry `envfile` or the `env` blocks. If a build input comes from either, move
+it into the app's own env files, where a build input belonged all along; the
+migration guide calls this out next to the working-directory note below.
+
+Because nothing breaks *loudly* when an env var merely reads as `undefined`, a
+**root** build prints a warning naming the root/entry `env`-block keys being
+withheld from the build environment — so a v3 build that read one (`NEXT_PUBLIC_*`
+baked into client bundles is the classic case) fails visibly instead of silently
+baking an empty value. A standalone build cannot emit that warning: it has not
+evaluated the root config and does not know the keys.
 
 **Standalone boot mechanics and the listen rule.** The wrapped single-app runtime
 makes the app its entrypoint; the *root* config's settings are **not** applied —
-standalone means standalone. Ports follow one rule, everywhere (full runtime and
-standalone alike):
+standalone means standalone.
 
-- the runtime's **selected entrypoint always listens**, resolving its address as
-  root `server` settings → **the app definition's own `server` block** → defaults
-  (`PORT`/3042). Declaring `entrypoint` *is* the statement that this app faces
-  the world; the root `server` block is where a multi-app project sets its
-  address, and an app that declares its own port keeps it when the root is
-  silent (v3 behavior on both counts — `wrapInRuntimeConfig` hoists the app's
-  `server` block, and a root-less entrypoint falls through to the capability's
-  own server config). A standalone boot is the same rule: auto-wrap **hoists the
-  definition's `server` block** into the wrapped runtime, so
-  `next({ server: { port: 8080 } })` booted standalone listens on 8080, and
-  only a definition with no port of its own falls to `PORT`/3042;
-- any **other** application listens only when its own config's `server` block
-  sets a port — an explicit additional listener;
-- **`port: 0` means an ephemeral port per worker**: each of the app's workers
-  listens on its own OS-assigned loopback port, registered with the mesh proxy.
-  This is the v4 spelling of v3's `useHttp` (which is removed) and the supported
-  way for a multi-worker app to expose real TCP — the gateway's WebSocket
-  proxying requires it, and its diagnostics say so. A **fixed** port with
-  `workers > 1` remains a fast `EADDRINUSE` failure — `0` is the multi-worker
-  listener;
+**The entrypoint is selected first.** An explicit `entrypoint` names it;
+otherwise a single application becomes the entrypoint; otherwise exactly one
+application whose resolved `module` is `@platformatic/gateway` does; otherwise
+there is none and the runtime boots mesh-only. A *named* entrypoint that does not
+exist is an error. (v3 detected the gateway case by scanning for entries that
+carried a config file — `runtime/lib/config.js:436-463`; in v4 capability
+identity comes from the eval pass and the detector, so that file-presence guard
+is dropped.)
+
+Ports then follow one rule, everywhere (full runtime and standalone alike):
+
+- the **entrypoint always listens**, resolving its address as root `server`
+  settings → **the app definition's own `server` block** → whatever the
+  application itself asks for. Declaring `entrypoint` *is* the statement that
+  this app faces the world; the root `server` block is where a multi-app project
+  sets its address, and an app that declares its own port keeps it when the root
+  is silent. Root-wins is a **deliberate unification of two divergent v3 paths**,
+  not preserved behavior: the basic family lets the app's own block win
+  (`basic/lib/capability.js:89` — a later-wins `deepmerge`), the service family
+  lets the root win (`service/lib/capability.js:222`). A standalone boot is the
+  same rule: auto-wrap **hoists the definition's `server` block** into the
+  wrapped runtime — exactly the four keys `wrapInRuntimeConfig` hoists today
+  (`hostname`, `port`, `http2`, `https`; `runtime/lib/config.js:147-154`) — so
+  `next({ server: { port: 8080 } })` booted standalone listens on 8080;
+- **there is no port default.** When nothing declares a port, the application's
+  own `listen()` call stands — a plain Express or `http` server binds what its
+  code says — and an application that expresses no port of its own gets an
+  OS-assigned ephemeral port, which the runtime pins so restarts reuse it
+  (`runtime/lib/runtime.js:3262-3271`). This is v3 exactly: `buildListenOptions`
+  is `{ port: serverConfig?.port || 0 }` (`basic/lib/utils.js:21-29`), and the
+  same `|| 0` / `?? true` normalization holds for child processes
+  (`basic/lib/capability.js:645`) and the framework capabilities
+  (`vite/lib/capability.js:229,242`). `3042` exists nowhere in the loading path —
+  only in generator templates. In v4 that convention lives where it belongs, in
+  the scaffolded config itself:
+  `server: { port: Number(process.env.PORT ?? 3042) }`;
+- any **other** application listens when its own config's `server` block sets a
+  port — an explicit additional listener, useful for a stable internal address.
+  This is **new**: in v3 a non-entrypoint's `server.port` was inert
+  (`worker/controller.js:218` gates listening on `useHttp` alone, and `listen()`
+  no-ops for non-entrypoints at `:266-268`). Migrate therefore **strips
+  `server.port` from non-entrypoint applications** — v3 generators wrote
+  `"server": { "port": "{PORT}" }` into per-app configs, and carrying those over
+  verbatim would have every application in a migrated monorepo race for one port;
+- **`port: 0` means an ephemeral port per worker** for a non-entrypoint: each of
+  the app's workers listens on its own OS-assigned loopback port, registered with
+  the mesh proxy. This is the v4 spelling of v3's `useHttp` (which is removed)
+  and the supported way for a multi-worker app to expose real TCP — the gateway's
+  WebSocket proxying requires it, and its diagnostics say so. On the
+  **entrypoint**, `port: 0` means *one* ephemeral port, reported and pinned for
+  restarts — not one per worker;
+- a **fixed** port with `workers > 1` works through **`reuseTcpPorts`** — an
+  application- and root-level property defaulting to `true`
+  (`foundation/lib/schema.js:898`, `:1108`) — which binds every worker to the same
+  port via `SO_REUSEPORT`; where the OS lacks it the runtime warns and falls back
+  to a single worker (`runtime/lib/runtime.js:669-687`). The deterministic
+  alternative is **`server.portAssignment: 'perWorkerIncrement'`**
+  (`foundation/lib/schema.js:396`), giving worker *i* port `port + i`
+  (`runtime.js:2412-2416`). Both survive into v4 unchanged; both are inert on an
+  ephemeral (`port: 0`) entrypoint;
 - an app that is neither the entrypoint nor ported (fixed or `0`) does **not**
   call `listen` at all (mesh-only — v3's non-entrypoint behavior, kept);
-- there is **no port search**: a taken port is a fast `EADDRINUSE` failure. Running
-  several standalone apps in parallel therefore requires each to declare a distinct
-  port in its `server` block; the supported way to run many apps at once is the
-  runtime at the root — one port, working mesh, no collisions.
+- there is **no port search**: a taken port is a fast `EADDRINUSE` failure. That
+  is the outcome for a fixed port with `workers > 1` only when `reuseTcpPorts` is
+  `false` and `portAssignment` is `shared`.
 
 **The walk stops after checking the repository/workspace boundary directory**: the
 first directory containing `.git`, a `package.json` with `workspaces`, or
@@ -665,9 +746,15 @@ root by definition; the current directory itself is always eligible. This closes
 the ancestor-repository hole: a dotfiles `$HOME` git repository (`~/.git`) does
 not make a stray `~/watt.config.ts` reachable from a project below it unless `~`
 is itself a Node package — beyond that residual case the invariant is
-best-effort, and stated as such. The `.env` walk uses the same
-boundary for consistency; `--config` / `--env` are the escape hatches for
-above-boundary layouts.
+best-effort, and stated as such.
+
+**The boundary bounds the search, not the env root.** Env files come from the
+**root config file's directory** and the application directory (see "Env files");
+the boundary only limits how far the walk looks and which config files may
+execute. When no root config exists anywhere (Level 0, or a genuinely standalone
+app-def repo), the boundary directory is the project root; under `--config` it is
+the named file's directory and no walk runs. `--config` / `--env` are the escape
+hatches for above-boundary layouts.
 
 ### Loading mechanism: the eval workers
 
@@ -679,8 +766,11 @@ first, and everything it discovers then runs concurrently. The
 ESM module cache is per-worker and isolated, and that isolation is load-bearing: a
 shared helper computing values at module scope (`export const url =
 process.env.REDIS_URL`) re-evaluates in each worker under *that app's* environment,
-so cross-app contamination through the cache is structurally impossible. No env
-windows, no apply/restore choreography — each worker simply loads its own view and
+so cross-app contamination through the cache is structurally impossible. Every
+eval worker is constructed with an **explicit `env`** — the computed layered view
+— never by inheriting the main process's `process.env`, so a mutated parent
+environment can never leak in as apparent real-environment keys. No env windows,
+no apply/restore choreography — each worker simply loads its own view and
 imports. Per-app files are independent by definition (cross-file coordination was
 never supported), so parallel evaluation is safe and typically *faster* than any
 serial scheme.
@@ -698,16 +788,29 @@ serial scheme.
    root context (the resolution pass — see "Functional form"), and expands
    `autoload` into the application list. This is the **only** place autoload
    expansion runs; the runtime transform consumes the already-expanded list.
+
+   **`enabled` is resolved here, before fan-out.** It is orchestration, so its
+   value is always lexically present in the root config or in
+   `autoload.mappings`, and the root context already carries `production` — so
+   disabled entries are dropped immediately after expansion, before any per-app
+   worker is spawned, before the detector runs, and before capability validation.
+   This preserves v3, where `transform()` spliced disabled applications out ahead
+   of `prepareApplication` (`runtime/lib/config.js:412-416` then `:428`) and no
+   worker ever existed for them: a decommissioned app whose capability is absent
+   from the production image, or whose config file calls migrate's
+   `requiredEnv()`, must not be able to fail a boot that excludes it.
 2. **One worker per per-app file**, spawned in parallel once the root result is
    in, uniformly for every
    application entry that has a `path` and no inline `config` — explicitly-listed
    entries and autoloaded ones behave identically, as in v3. (Entries *with* an
    inline `config` still get a filename-presence check in their directory: a
    `watt.config.*` file there triggers the configured-twice error — no evaluation
-   involved.) Each applies its app's
-   layered environment (app env files — or the entry's `envfile` — over the root
-   view, per "Env files") to its
-   own `process.env`, imports the file, and unwraps the export. A per-app file
+   involved.) Each receives the root worker's `envFileKeys` alongside the seeded
+   snapshot and applies its app's layered environment (the root and entry `env`
+   blocks, then app env files — or the entry's `envfile` — over the root view, per
+   "Env files") to its own `process.env`, honouring the provenance classes so a
+   file-sourced key never shadows a real environment variable; then it imports the
+   file and unwraps the export. A per-app file
    whose export classifies as a *root* config (including an accidental empty
    object) is an **error** naming the file and both classifications — a root config
    cannot nest inside an application entry. The main process then validates each
@@ -717,13 +820,27 @@ serial scheme.
    order, so the schema copy that validates is the same copy whose
    implementation the worker will load — with `resolvePath` resolving
    against that app's root, after stripping the `module`/`version` envelope, see
-   "Capability factories").
+   "Capability factories"). That subpath is **part of the v4 capability contract**,
+   not an optimization, and it carries the package-level metadata main-side
+   preparation needs besides the schema: `skipTelemetryHooks` (which decides
+   whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2431`,
+   set by gateway, db, and service) and `modulesToLoad`. Both move into the
+   subpath's exports and the entry envelope, so the main process never has to
+   import the full capability package.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
    worker: its capability comes from one deterministic **detector** run against
-   the app's `package.json`. Direct `@platformatic/*` capability dependencies win
-   first — `@platformatic/node` included — and **exactly one** must match: two
-   capability dependencies produce an actionable ambiguity error naming both.
+   the app's `package.json`. Direct dependencies matching the **explicit capability
+   table** win first — `@platformatic/node` included, with `@platformatic/composer`
+   aliased to `@platformatic/gateway` — and **exactly one** must match: two
+   capability dependencies produce an actionable ambiguity error naming both. The
+   table is enumerated rather than pattern-matched on `@platformatic/*`, so
+   companion packages like `@platformatic/globals` (which `@platformatic/node`'s own
+   generator writes alongside it) cannot trip the ambiguity error, and the
+   out-of-tree capabilities already in v3's table (`php`, `ai-warp`, `pg-hooks`,
+   `rabbitmq-hooks`, `kafka-hooks`) have a defined place. A capability outside the
+   table — any third-party one — is never inferred: those apps declare an explicit
+   config file.
    Framework inference (`next`, `astro`, `vite`, …, with the existing
    Nitro-before-Vite ordering) is fallback-only, and the **terminal rule** keeps
    v3's zero-config floor: a directory containing JavaScript/TypeScript sources
@@ -759,7 +876,12 @@ serial scheme.
    environment, so app-level env files can override them at worker boot (v3's real
    rule, preserved exactly: an app env-file key applies when it is absent from the
    environment entirely, or present but file-sourced — never over a genuine
-   environment variable). Runtime injection updates that provenance: a key the
+   environment variable). **`envFileKeys` travels inbound as well**: per-app eval
+   workers receive it so they can apply the same rule during evaluation, and the
+   worker-boot reader adds the app-file keys it applies to its own file-sourced
+   set before the `env` blocks are applied. Without that, evaluation could not
+   honour `real environment > env files` and the two views would disagree.
+   Runtime injection updates that provenance: a key the
    runtime injects (`PLT_<ID>_URL`) is **removed from `envFileKeys`** and
    recorded in a separate `injectedKeys` list in `workerData` — the worker-boot
    rules are defined over the three provenance classes (real, injected,
@@ -832,9 +954,12 @@ attach: with `--inspect-brk`, evaluation runs **in-process** and is therefore
 restricted to **one config file** — the deciding file by default, or one app's
 file by path — precisely because one process has one module cache, in which only
 a single file's env view can be correct. The other files still evaluate in their
-workers (the printed output is the full resolved configuration either way), and
-the evaluation deadline is disabled for the in-process target — a paused
-breakpoint session must not be killed by the 30 s timer.
+workers (the printed output is the full resolved configuration either way) and are
+**spawned before the in-process target's environment is applied**, so the debug
+run cannot contaminate them; combined with the explicit-`env` rule above, this is
+what keeps the printed configuration equal to a real boot's. The evaluation
+deadline is disabled for the in-process target — a paused breakpoint session must
+not be killed by the 30 s timer.
 
 **Object config sources skip the eval worker.** The programmatic API
 (`create(root, configObject)`) and the zero-config in-memory synthesis pass an
@@ -853,15 +978,23 @@ but the capability pipeline is split deliberately:**
   app worker receives the **validated raw** capability config as data —
   `applicationConfig.resolvedConfig` in `workerData` replaces the `config` file
   path, and the worker controller's file-scanning and `$schema` resolution are
-  deleted. The **capability `transform`** — deterministic capability code, not user
-  config — still runs worker-side as in v3, where its context lives
-  (`telemetryConfig`, watch flags). This keeps capability imports off the eval
-  worker's path and, crucially, preserves patch semantics (below). Because the
+  deleted. At **boot**, the **capability `transform`** — deterministic capability
+  code, not user config — still runs worker-side as in v3, where its context lives
+  (`telemetryConfig`, watch flags). Outside boot it runs main-side, exactly as v3
+  already does for CLI commands (see "CLI commands over config"). This keeps the
+  *transform* — and the worker-only context it reads — off the eval worker's path
+  and, crucially, preserves patch semantics (below). It does **not** keep
+  capability *imports* off that path: a per-app file exists to call `next(…)`, so
+  every eval worker loads the capability package, `@platformatic/basic`, and their
+  transitive graph. That is the real per-file cost, and it is why the watcher
+  filters `node_modules` out of the recorded import list. Because the
   symbol-keyed `kMetadata` cannot cross structured clone, **each worker rebuilds
   it locally** before the capability transform runs — `root` = the application
   directory, `path` = `configPath` (null for inline definitions),
   `module`/`version` from the entry envelope, `env` = the worker's seeded
-  environment — so the worker-side consumers that read it today
+  environment (v3's `kMetadata` carried `{ root, env, path, module }`;
+  `version` is a v4 addition, and `PLT_ROOT` is deliberately absent from `env`
+  now that the variable is removed) — so the worker-side consumers that read it today
   (`getApplicationEnv()`, db's sqlite-path resolution, the gateway's
   request-time origin resolution) keep working unchanged.
 
@@ -933,12 +1066,30 @@ context (`--mode`); scaffolding adds `.env*.local` to `.gitignore`.
 environment always wins:**
 
 ```
-real environment  >  app env files  >  root env files
+real environment  >  entry env block  >  root env block
+                  >  app env files  >  root env files  >  NODE_ENV default
 ```
 
-(This is the **config-evaluation view**; the worker-runtime view in
-"Inter-application URLs" adds the `env` blocks and injected URLs between real env
-and the files — the two ladders agree where they overlap.)
+(This is the **config-evaluation view** for a per-app file. The worker-runtime
+view in "Inter-application URLs" is the same ladder with injected `PLT_<ID>_URL`
+values inserted below the `env` blocks — the two agree rung for rung otherwise.)
+
+The `env` blocks are visible during per-app config evaluation because they are
+knowable before fan-out: orchestration is always root-lexical — a per-app file
+exports an `ApplicationDefinition`, and factories reject orchestration properties
+— and the root worker runs first. This is what lets a migrated
+`{ "connectionString": "{DATABASE_URL}" }` become a plain
+`process.env.DATABASE_URL ?? ''` and still resolve, instead of having its value
+baked into source. Two positions are excluded, matching v3: the **root config's
+own** evaluation (its `env` block is lexically inside the file being evaluated —
+v3 applied blocks in the worker, long after `runtime/index.js` had parsed the
+root), and **root-inline entries**, which are evaluated in the root worker for the
+same reason.
+
+The bottom rung is `NODE_ENV`: when `production` is `true` and nothing else in the
+ladder supplied it, it defaults to `'production'`. This is v3
+(`worker/controller.js:126-129`, applied after all seeding and only when the key
+is absent), and it is the one injection a build is allowed to make.
 
 This preserves v3's observable behavior (an application's `.env` overrides
 root-file defaults but never genuine environment variables) — the v3
@@ -948,8 +1099,13 @@ files rather than the real environment. It is load-bearing semantics, not
 diagnostics.
 
 **Evaluation env is determined by directories, never by boot style — and env
-files load from exactly two directories: the project root (the walk's boundary
-directory) and the application directory.** Intermediate directories
+files load from exactly two directories: the project root (the **root config
+file's directory**, or the boundary directory when no root config exists) and the
+application directory.** This matches v3, where `loadEnv` walked up from
+`dirname(configFile)` (`foundation/lib/configuration.js:503,511`); binding the
+root layer to the walk boundary instead would drop the `.env` sitting beside the
+config whenever a Watt project lives below a git or workspace root. Intermediate
+directories
 (`web/.env` between root and `web/frontend`) are **never** consulted — matching
 both precedence ladders, Vite's one-envDir-per-app model, and v3 in practice
 (v3 loaded one root file plus the app's own `.env`, never a layered chain). A
@@ -973,8 +1129,10 @@ shared helper computing values at module scope re-evaluates per worker under the
 right environment (per-worker cache isolation is what makes cross-app
 contamination impossible).
 
-The per-application `env` config property configures the worker's **runtime**
-environment, never config evaluation. `envfile` is an opt-out of the convention
+The per-application `env` config property configures the worker's runtime
+environment **and, per the ladder above, its config evaluation** — with the two
+excluded positions noted there (the root config's own evaluation, and root-inline
+entries). `envfile` is an opt-out of the convention
 and governs **both views**: when an entry declares it, none of the four
 mode-aware app files are read for that application — exactly the named file
 loads, in the app's eval worker *and* at worker boot alike, occupying the same
@@ -985,10 +1143,14 @@ selection simply does not apply to that app's files; root files and every other
 rung are unaffected. The path resolves **app-relative** (v3 resolved it against
 the runtime root — migrate rewrites paths so they keep pointing at the same
 file), and a missing explicitly-named envfile is a **boot error** (v3 silently
-ignored it — defensible only for the implicit default `.env`). One documented
-asymmetry: `envfile` lives on the root entry, so a **standalone** boot — which
-applies no root orchestration — evaluates and runs under the conventional file
-set; the standalone warning's list of omitted root settings names it. The
+ignored it — defensible only for the implicit default `.env`). Declaring `envfile`
+on an entry that also carries an **inline `config`** is an **error**: such an
+entry has no per-app eval worker, so the file provably cannot govern both views
+there. One documented asymmetry: `envfile` and the `env` blocks live on the root
+entry, so a **standalone** boot — which applies no root orchestration — evaluates
+and runs under the conventional file set with no blocks applied; the standalone
+warning's list of omitted root settings names both, and the build section states
+the consequence for artifacts. The
 `--env <file>` flag is the same substitution at the **root** rung: it replaces
 the root file layer in both views, mode-exempt, for the invocation. `{PLT_X}`
 interpolation,
@@ -998,11 +1160,12 @@ v4; they survive only inside `wattpm-utils migrate`'s legacy reader.
 ### Inter-application URLs
 
 v3's behavior here was subtler than commonly understood: when a *worker* parsed its
-app's config, any unset `{FOO_URL}` placeholder — regardless of the key name —
-resolved to the URL of **the app being parsed** (`fetchApplicationUrl` ignores the
-key and returns the current app's `.plt.local` URL,
-`fetchApplicationUrl` in the v3 worker controller); in the *root* config, unset placeholders resolved to
-`''`. That machinery dies with interpolation, and its replacement is explicit and
+app's config, any unset placeholder whose key **ends in `_URL`** resolved to the URL
+of **the app being parsed**, whatever the rest of the key said — `fetchApplicationUrl`
+gates on the suffix and then ignores the key, returning the current app's
+`.plt.local` URL (`runtime/lib/worker/controller.js:31-37`); in the *root* config,
+which is loaded without `onMissingEnv`, unset placeholders resolved to `''` or
+threw under `strictEnv`. That machinery dies with interpolation, and its replacement is explicit and
 deliberately saner:
 
 - **In config**: write the literal virtual hostname — `origin: 'http://api.plt.local'`.
@@ -1018,7 +1181,7 @@ deliberately saner:
 
   ```
   real environment  >  entry env block  >  root env block  >  injected
-                    >  app env files  >  root env files
+                    >  app env files  >  root env files  >  NODE_ENV default
   ```
 
   (Both `env` blocks exist — the root-level one applied to all applications and
@@ -1028,12 +1191,16 @@ deliberately saner:
   follows the dotenv convention — **the real environment is always
   authoritative**, over blocks and files alike, so both ladders share one top
   rung and one sentence tells the whole story. This is a declared breaking
-  change, and migrate warns for every `env`-block key present in the
-  migration-time environment. An
+  change. Migrate warns for **every** `env`-block key it carries over — not only
+  those colliding with the migration-time environment, since the keys whose
+  behavior actually flips are the ones set in the *deployment* environment and
+  absent from the laptop running the codemod — and the runtime logs once at boot
+  whenever a worker's `env`-block key is suppressed by the real environment, which
+  is the only diagnostic channel machine-generated and ICC configs ever see. An
   application's `envfile` replaces the app-files rung — see "Env files". Injected
-  URLs sit **above all env files**, including the app's own — enforced through
-  the `injectedKeys`/`envFileKeys` provenance in the eval-worker protocol, so
-  stale `PLT_*_URL`
+  URLs sit **above all env files**, including the app's own — enforced through the
+  eval-worker protocol's `envFileKeys` snapshot plus the `injectedKeys` list in
+  `workerData`, so stale `PLT_*_URL`
   lines in any `.env` remain structurally harmless under app-wins layering.) The
   runtime skips injection when the key exists in its **own real environment**
   (container/k8s overrides work — the runtime's
@@ -1042,9 +1209,15 @@ deliberately saner:
   dotenv-style, the real environment outranks even it. Injection covers **every
   application, including the app's own `PLT_<SELF>_URL`** (v3's placeholder
   machinery effectively guaranteed a self URL, and generator-emitted code reads
-  it). v3's injected `PLT_DEV` and `PLT_ENVIRONMENT` are **removed** — apps
-  branch on their own variables, or the decision moves into config where the
-  typed context lives; migrate's source scan flags every occurrence.
+  it). v3's injected `PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are **removed** —
+  apps branch on their own variables, or the decision moves into config where the
+  typed context lives; migrate's source scan flags every occurrence. `PLT_ROOT`
+  existed to make `{PLT_ROOT}` placeholders resolve
+  (`foundation/lib/configuration.js:512`) and was already excluded from every
+  generated `.env` (`generators/lib/base-generator.js:243`); with interpolation
+  gone its only remaining reader would be application code, and
+  `import.meta.dirname` is the v4 answer. `NODE_ENV` is the one variable the
+  runtime still defaults, at the bottom of the ladder (see "Env files").
   Topology variables are
   deliberately not `.env`-configurable. Two application ids normalizing to the same
   variable name (`api-v2` and `api_v2` → `PLT_API_V2_URL`) is a **boot-time config
@@ -1058,11 +1231,22 @@ deliberately saner:
   union across foundation and the capability schemas (~120 sites) is classified:
   - *placeholder-only unions* (the 13 `overridableValue` call sites,
     `logger.level`'s
-    `^\{.+\}$` pattern branch, the string forms of `workers` and `watch`, …) —
-    **string branch deleted**;
-  - *genuine unions* (`managementApi`'s socket-path string, `preload`'s
-    string-or-array, `enabled`'s per-environment object) — kept;
+    `^\{.+\}$` pattern branch, the string forms of `workers` and `watch`,
+    `managementApi`'s top-level string — the socket path is the *object* property
+    `managementApi.socket`, and a bare string is merely truthy
+    (`runtime/lib/management-api.js:421`); the branch exists only to admit
+    `'{PLT_MANAGEMENT_API}'` — …) — **string branch deleted**;
+  - *genuine unions* (`preload`'s string-or-array, `extensions`'
+    string-or-object-or-array, `enabled`'s per-environment object) — kept;
   - judgment calls — decided and recorded in the schema.
+
+  `enabled`'s object form is **keyed by `mode`**, not by a separate binary
+  environment. `production`/`development` remain the default mode names under
+  `start`/`build` and `dev`, so every existing config keeps its meaning, and
+  `enabled: { staging: false }` now does what it looks like under
+  `--mode staging` — where v3 silently ignored the key
+  (`runtime/lib/config.js:298-318`). `enabled` is resolved in the root eval
+  worker, before fan-out (see "Loading mechanism").
 
   v4.0 is the only free moment for this: no v4 configs exist yet, and `migrate` emits
   correctly-typed values (its per-property target-type table is a byproduct of the
@@ -1102,8 +1286,10 @@ export default {
   **removed** in v4 (its only known consumer, watt-admin, migrates off it —
   cross-repo coordination noted in the plan).
 - **The programmatic payloads are a versioned public DTO, and they change shape.**
-  `getRuntimeConfig()` and `getApplicationDetails()` consumers observing
-  `applications[].config` received a *file path* in v3; in v4 each entry carries
+  Consumers observing `getRuntimeConfig().applications[].config` — or
+  `getApplicationDetails().config`, which is a flat object with a top-level
+  `config` (`runtime/lib/runtime.js:2076-2093`) — received a *file path* in v3; in
+  v4 each entry carries
   **both** `configPath` (the per-app file path, or absent for inline definitions)
   and `resolvedConfig` (the validated raw capability payload), plus `module` and
   `version` — the loader-metadata envelope split off the definition (see
@@ -1136,9 +1322,17 @@ export default {
   boot for each posted entry (env layering, legacy detection, classification,
   capability validation, detector), surfacing failures as HTTP errors; the
   request body's `ApplicationEntry.config` type change is part of the declared
-  DTO break (breaking change 14). The runtime root they need for path resolution
-  comes from
-  the existing `GET /metadata` endpoint (extended with `root`/`configPath`).
+  DTO break (breaking change 14). The same eval pass applies to the **ITC**
+  `management:addApplications` handler (`runtime/lib/management-handlers.js:136-146`),
+  reachable from any application with `management: true` — it is a second live
+  hot-add path with the same worker-self-loading assumption. What these commands
+  need from the running runtime comes from `GET /metadata`, extended with `root`,
+  `configPath`, and **`autoload`** — `applications:remove --save` resolves the
+  live `autoload.path` to decide whether the removed app must be appended to
+  `autoload.exclude` (`wattpm/lib/commands/applications.js:110-112`), and that is
+  the only surviving source once `GET /config` is removed. `applications:add`'s
+  on-disk JSON spec file carries **orchestration only**; capability configuration
+  comes from the app's own `watt.config.*` or the detector.
   **Requirement: `--save` is retained**, implemented on the same magicast machinery
   as `wattpm import` — the canonical scaffolded shape (literal `defineConfig`
   object, literal `applications` array; for removal, also appending to a literal
@@ -1150,16 +1344,29 @@ export default {
 - **Capability CLI commands** (`db:migrations:apply`, `db:seed`, `db:types`,
   `gateway:*`, `next:*`) move to a **data contract**: `createCommands` becomes part
   of the v4 capability contract, and each command receives `{ root, config }` — the
-  app's resolved raw config from the eval pass — instead of a config file path.
-  Commands never self-load config (db's `loadConfiguration` call and its
-  `utimesSync` restart hack are deleted; the restart signal is a management-API
-  restart when a runtime is running). These evaluations run with
+  app's config from the eval pass, **with the capability `transform` applied
+  main-side** — instead of a config file path. The transform is not optional here:
+  db's rewrites the relative sqlite path to absolute and injects the
+  `migrations.table` / `db.ignore` defaults `Migrator` requires
+  (`db/lib/config.js:6-50`), so a command handed raw config would migrate the
+  wrong database. This is what v3 already does — `loadConfiguration(configFile,
+  schema, { transform })` in the CLI process (`db/lib/commands/migrations-apply.js:11`)
+  — and the main process synthesizes the `kMetadata` the transform reads
+  (`root`, `path: configPath`, `module`, `version`, `env`). Context that only
+  exists in a worker is absent and documented as such: no `configPatch` is applied
+  and `watch.enabled` is `false`, which is exactly how `basic`'s transform already
+  behaves outside a worker (`basic/lib/config.js:57,68` optional-chain
+  `workerData`). Commands never self-load config (db's `loadConfiguration` call and
+  its `utimesSync` restart hack are deleted; the restart signal is a
+  management-API restart when a runtime is running). These evaluations run with
   **`command: 'exec'`** in the config context, defaulting to `mode:
   'development'`, `production: false` — the safe direction for a laptop
   `db:seed` — and every capability command accepts `--production` / `--mode
   <name>` to select other views (CI runs `wattpm db:migrations:apply
-  --production`); env-file selection follows mode exactly as under the boot
-  verbs. Discovery is **lazy**: config is evaluated
+  --production`). **`--production` implies `mode: 'production'`** unless `--mode`
+  is also given, matching the boot verbs; env-file selection then follows mode
+  exactly as it does there, so the CI invocation above reads the production env
+  files rather than the development ones. Discovery is **lazy**: config is evaluated
   only when the typed command actually matches `<namespace>:<command>` and isn't a
   builtin, or on per-app help — plain `wattpm help` is static and never executes
   user code.
@@ -1203,7 +1410,11 @@ closure** is vendored under `lib/migrate/legacy/` when it is deleted from the li
 packages — and the closure is larger than foundation alone:
 
 - foundation's machinery: the parsers for all formats (JSON, JSON5, YAML, TOML),
-  `replaceEnv` and the YAML brace pre-pass, all `$schema` URL generations;
+  `replaceEnv` and the YAML brace pre-pass, all `$schema` URL generations, and a
+  **v3 → v4 module rename table** (`@platformatic/composer` →
+  `@platformatic/gateway`; the identity is extracted *before* the upgrade chains
+  run, `foundation/lib/configuration.js:166-179` at `:573`, so composer-era apps
+  keep the old module name and must be renamed explicitly);
 - the four `semgrator` upgrade chains (from `runtime`, `service`, `db`, and
   `gateway` — including v1/v2→v3);
 - **frozen v3 snapshots of the ~13 capability schemas and their transforms** —
@@ -1230,7 +1441,12 @@ authored values and drop environment-disabled applications. The views:
 
 - the **lexical view** — the parsed file with `{PLT_X}` placeholder tokens
   intact and no defaults injected; every authored application is present
-  regardless of the migration-time environment;
+  regardless of the migration-time environment. Its **module list** — what the
+  third-party gate and the generation table key off — is
+  `config.module ?? extractModuleFromSchemaUrl(config)` with
+  `splitModuleFromVersion` applied, since a top-level `module` string is the
+  canonical v3 spelling for capabilities without a published `$schema` URL
+  (`foundation/lib/configuration.js:157-158`, `foundation/lib/module.js:129-140`);
 - the **upgraded view** — the lexical data run through the `semgrator` chains.
   Because the chains branch on values that may be tokens (v1's
   `if (config.hotReload)` is always truthy on a token; one service chain
@@ -1254,16 +1470,37 @@ authored values and drop environment-disabled applications. The views:
   production secrets. Used *only* for the equivalence check, never as a
   generation source.
 
-The **equivalence check** has defined semantics: per-application deep equality
-of **validated pre-transform** configs under a pinned `{ production, env }`
-context, with an explicit exclusion list — tool-injected preloads (the pprof
-capture path resolves against whatever ran the loader), watch flags (computed
-from `workerData`, absent in the migrate process), the deliberate `*_URL`
-rewrites, and `kMetadata`. A mismatch outside the exclusions is reported
-per-path and stops the run before anything is deleted; it is run twice, the
-second time with every referenced variable masked to *unset*, so the
-fallback-path emissions (`?? ''`, per-property boolean rules) are exercised
-too. Generation reads only the lexical and upgraded views. Then:
+The **equivalence check** compares **both** the root configuration and each
+application's capability configuration, **validated but pre-transform**, under a
+pinned `{ production, env }` context. Comparing only per-application configs would
+leave the entire root conversion — `runtime` unwrapping, alias merging, `autoload`,
+`entrypoint`, `useHttp` relocation — unverified. The exclusion list covers what
+cannot match by construction: `$schema`, tool-injected `preload` entries (the pprof
+capture path resolves against whatever ran the loader, and is injected by the
+*runtime transform*, `runtime/lib/config.js:502`), `watch` and `restartOnError`,
+`inspectorOptions`, properties the v4 schema removes, the deliberate `*_URL`
+rewrites, and `kMetadata`. Equality is **modulo the audit's per-property
+target-type table**, not raw: the v3 side validates with `useDefaults: true,
+coerceTypes: true` (`basic/lib/config.js:76-80`) and the v4 side against the
+audited schema with coercion off, so a raw comparison would mismatch on every
+project the audit touched. A mismatch outside the exclusions is reported per-path.
+
+The check runs **twice**: once as described, once with every referenced variable
+masked to *unset*, so the fallback-path emissions (`?? ''`, per-property boolean
+rules) are exercised too. The masked run covers only keys that are **not**
+`requiredEnv`-wrapped — executing those would throw by design — and `requiredEnv`
+keys are sentinel-injected in both runs, with the sentinel echoed into the v3
+side's pinned `env` so both sides agree. When any application declares `enabled`,
+the check additionally runs across both `production` values, since an
+environment-disabled application is otherwise absent from the resolved view and
+never compared at all.
+
+Its position in the sequence is **step 3b** — after step 2's install and step 3's
+load, because the v4 comparand does not exist until the files are written and the
+v4 packages are actually installed. A mismatch triggers the manifest rollback of
+step 5's machinery (created files removed, tracked files restored, lockfile
+restored), so the install is inside the transaction. Generation reads only the
+lexical and upgraded views. Then:
 
 1. Emit the v4 files: for a v3 **single-app** project, one root file — the bare
    factory export when the v3 config carried no runtime settings, `defineConfig`
@@ -1275,7 +1512,13 @@ too. Generation reads only the lexical and upgraded views. Then:
    equal to it; otherwise the file is emitted or the dependency added in step 2
    (v3's `$schema` + runtime-bundled fallback made app-local capability deps
    optional, so `$schema`-only apps must not lose their identity to framework
-   inference). An application whose directory coincides with the root — or with
+   inference). A **renamed** module never satisfies the gate on its old name: a
+   `@platformatic/composer` app always gets an emitted `gateway(…)` file, and the
+   superseded dependency is removed in step 2 — the one sanctioned `package.json`
+   edit beyond ranges and additions. A **`module`-identified** app never satisfies
+   it either (its capability is not `@platformatic/*`, so the detector cannot
+   reconstruct it) and always gets an emitted `{ module: '…' }` plain-object
+   config. An application whose directory coincides with the root — or with
    any directory already owning the root file — is emitted **root-inline**
    (`applications[].config: factory(…)`, resolvable by definition since its
    dependencies live at that root): the per-app style would put two v4
@@ -1291,10 +1534,16 @@ too. Generation reads only the lexical and upgraded views. Then:
    `requiredEnv('PLT_X')` helper that throws (or warns) when the variable is
    unset — a project that refused to boot without `TOKEN` still refuses after
    migration. Two carve-outs: "effective strictEnv" per app file follows v3's
-   precedence (the root config's value when the app sets none), and `*_URL`
-   placeholders **never** get `requiredEnv` even under strict mode — v3
-   resolved unset `*_URL` keys through the current-app fallback, which warns
-   and never throws — they get the literal or `?? ''` plus the review warning.
+   precedence (`strictEnvOption ?? config.strictEnv` — the *root* config's value
+   wins when defined, `foundation/lib/configuration.js:540` with
+   `runtime/lib/worker/controller.js:99,146`), and `*_URL`
+   placeholders in **application** configs never get `requiredEnv` even under
+   strict mode — v3 resolved unset `*_URL` keys through the current-app fallback,
+   which warns and never throws — they get the literal or `?? ''` plus the review
+   warning. That carve-out is application-scoped: `onMissingEnv` is supplied only
+   where a worker parses an app config (`worker/controller.js:145`), so a
+   **root**-config `*_URL` placeholder under effective `strictEnv` does throw on
+   v3 and gets `requiredEnv` like any other key.
    Embedded placeholders become template literals with the same
    per-variable wrapping
    (`` `http://127.0.0.1:${process.env.PLT_OTLP_PORT ?? ''}/v1/metrics` ``);
@@ -1307,22 +1556,39 @@ too. Generation reads only the lexical and upgraded views. Then:
    `http://<id>.plt.local` per "Inter-application URLs"; positions on a
    capability's `replaceEnvIgnore` list (vendored into the generation table —
    db's OpenAPI `ignoreRoutes`, where `/users/{id}` is placeholder-shaped but
-   must stay a literal) are emitted **verbatim**. Placeholders that v3
-   resolved from config `env` blocks or `envfile` contents — the v3 worker
-   applied both to `process.env` *before* parsing the app's config — are
-   resolved at generation time from those lexically-known layers and the value
-   is inlined with a comment naming its source, since v4 config evaluation
-   deliberately excludes both. `strictEnv` itself has
+   must stay a literal) are emitted **verbatim**. Placeholders that v3 resolved
+   from config `env` blocks or `envfile` contents — the v3 worker applied both to
+   `process.env` *before* parsing the app's config — need **no special handling**:
+   v4 makes both layers visible to per-app config evaluation (see "Env files"), so
+   the ordinary `process.env.X ?? ''` emission resolves to the same value. Nothing
+   is ever inlined; a codemod must not bake an `env`-block credential or a
+   gitignored envfile's contents into tracked source. The two positions where the
+   layers are not visible — the root config's own evaluation and root-inline
+   entries — match v3, which never resolved those from `env` blocks either.
+   Literal values in typed positions get the same treatment as placeholders: v3
+   validated with `coerceTypes: true`, so `"port": "3001"` and `"workers": "4"`
+   boot on v3 and are coerced at generation time per the target-type table rather
+   than emitted as strings the v4 loader rejects. `strictEnv` itself has
    no v4 meaning and does not survive — its effect is baked into the emitted
    expressions, which users can hand-simplify to bare references afterwards: an
    informed edit, not a silent change. Property mappings with new v4 spellings:
    `useHttp: true` becomes `server: { port: 0 }` (the ephemeral-listener
-   spelling); per-app `envfile` paths are rewritten from v3's root-relative
+   spelling) **only when the capability config declares no port of its own** —
+   in v3 the app's own `server` block overrode the `useHttp` defaults
+   (`basic/lib/capability.js:89`), so an app with both keeps its fixed port and
+   gets a requires-review note; `keepAliveTimeout: 5000` and the non-entrypoint
+   loopback `hostname: '127.0.0.1'` are carried over, and `useHttp` forces
+   per-app-file emission regardless of the omit-defaults gate. `server.port` is
+   **stripped from non-entrypoint applications**, since v4 turns it into a real
+   listener and v3 generators wrote it into every per-app config (see "the listen
+   rule"). Per-app `envfile` paths are rewritten from v3's root-relative
    base to app-relative so they keep pointing at the same file; a root
-   `envfile` is converted by **merging** the named file's entries into the root
-   `.env` (a conflicting key with a different value is an error naming both
-   files, and the summary notes the merge); and every `env`-block key present
-   in the migration-time environment gets a warning that v4's dotenv-order
+   `envfile` is converted by **promoting** the named file's contents to the root
+   `.env` and renaming any pre-existing `.env` to `.env.v3-unused`, reporting every
+   key whose v3 value differed — v3's `customEnvFile` *replaced* the whole `.env`
+   walk (`foundation/lib/configuration.js:349-356`), so merging would both fail on
+   ordinary dev/prod splits and silently activate keys v3 never read. Every
+   `env`-block key migrate carries over gets a warning that v4's dotenv-order
    precedence means the real environment now outranks it. `.env.sample` values are **suggestions, not runtime truth** — v3
    never loaded that file, so turning samples into executable `??` defaults would
    change behavior when the real variable is absent; migrate emits them as defaults
@@ -1351,15 +1617,27 @@ too. Generation reads only the lexical and upgraded views. Then:
    manifest's entries from the dirty-tree check, skips regeneration of
    unmodified emitted files, and continues at install/validation). An
    install failure aborts before anything is deleted. The third-party check —
-   capabilities without a v4-compatible release stop the run, naming the
-   packages that block it — actually executes **before step 1 writes
-   anything**: it needs only the lexical view's module list, and "stops before
-   modifying any file" must be literally true.
+   **any capability outside the vendored closure** stops the run with
+   "hand-conversion required", naming the packages that block it — actually
+   executes **before step 1 writes anything**: it needs only the lexical view's
+   module list, and "stops before modifying any file" must be literally true. The
+   gate is deliberately about closure membership, not v4 readiness: without a
+   frozen v3 schema, transform, upgrade chain, and target-type table, migrate
+   cannot build the resolved view for that app or decide whether `"{ACME_PORT}"`
+   is a number, boolean, or string position — which matches Goal 6's stated scope
+   ("anything that boots on v3 **with in-tree capabilities**"). A documented
+   contribution point — a capability shipping its own frozen
+   `{ schema, transform, upgrade, targetTypes }` bundle — is a possible post-4.0
+   addition.
 3. **Validate the emitted files by explicit path**: migrate loads the generated
    configuration through the real v4 loader via a **private, migrator-only
-   direct-path entry** that skips discovery and legacy detection, so validation
-   is independent of what else is on disk — the legacy files are still present
-   at this point by design. This bypass is *not* the public `--config` flag:
+   direct-path entry** that skips **the upward walk and the legacy-coexistence
+   guard only** — the legacy files are still present at this point by design.
+   Everything else runs: per-app discovery, `autoload` expansion, the per-app eval
+   workers, the capability detector, capability validation, and the version-stamp
+   check. (Skipping *discovery* would leave multi-app output — where migrate does
+   most of its work — validated only at the root.) This bypass is *not* the public
+   `--config` flag:
    `--config` performs the full unconditional legacy scan of the selected
    directory and every discovered app directory, so it can never be used to
    sidestep the no-coexistence guard. Validation injects recorded **sentinel
@@ -1370,8 +1648,8 @@ too. Generation reads only the lexical and upgraded views. Then:
    nothing has been deleted yet.
 4. Scan application sources for references to the legacy config files (v3
    scaffolded test helpers do `JSON.parse(await readFile(…, 'watt.json'))`) and
-   for `PLT_DEV` / `PLT_ENVIRONMENT` reads (both injected variables are removed
-   in v4): any
+   for `PLT_DEV` / `PLT_ENVIRONMENT` / `PLT_ROOT` reads (all three injected
+   variables are removed in v4): any
    hit is reported with the file/line of the reference, since the codemod cannot
    safely rewrite user code and the change will make that code fail or branch
    differently.
@@ -1421,10 +1699,14 @@ step 2: the v4 range bumps, missing app-local capability entries, and the root
    pre-existing `.env.local`/`.env.production` files written for *other* tools
    (Next.js uses exactly these names) become live in worker environments. The
    walk is also **narrower**: v3 climbed to the filesystem root with a cwd
-   fallback; v4 reads exactly two directories (project root and application
-   directory), never above the boundary — `.env` files v3 found elsewhere stop
-   loading. Precedence direction stays v3-compatible for files (app overrides
-   root-file defaults; the real environment always wins).
+   fallback; v4 reads exactly two directories (the root config file's directory
+   and the application directory), never above the boundary — `.env` files v3
+   found elsewhere stop loading. Precedence direction stays v3-compatible for
+   files (app overrides root-file defaults; the real environment always wins).
+   The root and entry `env` blocks are now also visible during **per-app config
+   evaluation**, which v3 achieved by applying them to `process.env` before the
+   worker parsed the app's config; the root config's own evaluation and
+   root-inline entries are excluded, as in v3.
 6. `verticalScaler`, `healthChecksTimeouts`: removed from the v4 schema.
 7. Schema audit: placeholder-string unions removed from every schema (validation is
    stricter; migrate emits typed values).
@@ -1464,9 +1746,13 @@ step 2: the v4 range bumps, missing app-local capability entries, and the root
     application directory they act on that application standalone (with a warning
     when a root config exists above); v3 booted the whole runtime from anywhere.
     Scope is purely positional — the runtime-wide behavior means running from the
-    project root; there is no scope flag. Builds are environmentally
-    deterministic (no injected URLs or `env` blocks at build time, in any mode,
-    with a warning naming withheld `env`-block keys).
+    project root; there is no scope flag. Build environments exclude injected URLs
+    and `env` blocks in any mode, and a **root** build warns naming the withheld
+    `env`-block keys; a standalone build cannot, and can therefore diverge from a
+    root build whenever an application declares `envfile` or an `env` block feeds
+    its config evaluation. Under `build`, `production` is `true`, so `enabled`
+    resolves against the production mode where v3's build resolved against
+    development.
 18. Worker env precedence: config `env` blocks **no longer override the real
     environment** — v4 follows the dotenv convention (the real environment is
     always authoritative; blocks beat injection and files, nothing beats the
@@ -1475,13 +1761,31 @@ step 2: the v4 range bumps, missing app-local capability entries, and the root
 19. `useHttp`: **removed** — an app's `server: { port: 0 }` is the v4 spelling
     (ephemeral port per worker); migrate rewrites it, and the gateway's
     WebSocket diagnostics now point at `server.port: 0`.
-20. Injected variables: `PLT_DEV` and `PLT_ENVIRONMENT` are **removed** (the
-    migrate source scan flags reads); `PLT_<ID>_URL` injection now covers every
-    application including the app's own self-URL.
+20. Injected variables: `PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are
+    **removed** (the migrate source scan flags reads); `PLT_<ID>_URL` injection
+    now covers every application including the app's own self-URL. `NODE_ENV`
+    remains, as the **lowest** rung of both ladders: it defaults to `production`
+    when `production` is `true` and nothing else supplied it, exactly as in v3
+    (`worker/controller.js:126-129`), under `start` and `build` alike.
 21. Per-application `envfile`: now governs **config evaluation and runtime
     alike**, resolves **app-relative** (v3 resolved against the runtime root —
     migrate rewrites paths), and naming a missing file is an error (v3
-    silently ignored it).
+    silently ignored it). Declaring it on an entry that carries an inline
+    `config` is an error — that entry has no per-app eval worker.
+22. **Listening changed in three ways.** A non-entrypoint application whose own
+    `server` block sets a port now opens a real listener; in v3 that value was
+    inert (`worker/controller.js:218`), so migrate strips it from non-entrypoint
+    apps. The entrypoint's address resolves root `server` → its own `server`
+    block, a **unification** of two divergent v3 merge orders (basic-family let
+    the app win, service-family let the root win) and a change for the former.
+    And there is **no port default**: when nothing declares a port the
+    application's own `listen()` stands, or it gets an ephemeral port —
+    unchanged from v3, but the `PORT`/3042 convention now lives visibly in
+    scaffolded config rather than implicitly in the loader. `reuseTcpPorts` and
+    `server.portAssignment` survive unchanged.
+23. `@platformatic/composer` (the deprecated `@platformatic/gateway` alias
+    package) is **removed**. Migrate renames the module and removes the
+    superseded dependency.
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
 error. The migration story is the codemod, not a compat layer.
@@ -1522,12 +1826,15 @@ Roughly ordered; steps 1–5 are the critical path.
    auto-wrap server hoisting and the `port: 0` per-worker ephemeral listener
    class; `resolvedConfig` (validated raw) through `workerData` with
    worker-side `kMetadata` reconstruction; `PLT_<ID>_URL`
-   injection (self included) with the `real env > env block > injected > .env`
-   ladder, `injectedKeys` provenance, and the
+   injection (self included) with the ladder defined in "Inter-application URLs",
+   `injectedKeys` provenance and inbound `envFileKeys`, and the
    id-normalization collision error; the `'exec'` config context for capability
-   commands; `POST /applications` running the boot-time eval pass; remove
+   commands, with the capability transform and synthesized `kMetadata` main-side;
+   `POST /applications` **and the ITC `management:addApplications` handler**
+   running the boot-time eval pass; remove
    `GET /config` and
-   `GET /applications/:id/config`, extend `GET /metadata` with `root`/`configPath`;
+   `GET /applications/:id/config`, extend `GET /metadata` with
+   `root`/`configPath`/`autoload`;
    shallow root-wins merge (v3 semantics); in-memory zero-config synthesis; lazy
    capability-command dispatch (no config evaluation on plain `wattpm help`).
 5. **wattpm**: export `defineConfig`, `WattConfig` and factory types generated from
@@ -1563,8 +1870,13 @@ Roughly ordered; steps 1–5 are the critical path.
    produce no config file); scaffolded test helpers import the config module instead
    of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
-9. **cross-repo**: watt-admin migrates off `GET /config`; ICC guidance for generating
-   plain-object configs.
+9. **cross-repo**: watt-admin migrates off `GET /config`; **`@platformatic/control`**
+   drops or re-points `getRuntimeConfig`/`getApplicationConfig`
+   (`control/lib/index.js:246,263`, both removed endpoints) — a published-package
+   API change, not an internal detail; the out-of-tree capabilities (`php`,
+   `ai-warp`, `pg-hooks`, `rabbitmq-hooks`, `kafka-hooks`) get the v4 create
+   contract, a factory, and a `/schema` subpath, or are declared unsupported;
+   ICC guidance for generating plain-object configs.
 10. **docs**: one configuration reference; migration guide; erasable-TS constraints;
     env precedence; the machine-generated config pattern.
 
@@ -1585,6 +1897,9 @@ export interface WattConfig {
                                            // with applications AND autoload
   applications?: ApplicationEntry[]
   autoload?: { path: string, exclude?: string[], mappings?: Record<string, ApplicationEntryOverrides> }
+  // ApplicationEntryOverrides = Omit<ApplicationEntry, 'config' | 'path'> —
+  // the orchestration subset: env, envfile, workers, health, enabled,
+  // dependencies, telemetry, preload, … (v3's mappings[].config is removed)
   server?: ServerOptions
   logger?: RuntimeLoggerOptions
   workers?: number | WorkersOptions
@@ -1598,17 +1913,35 @@ export interface WattConfig {
   restartOnError?: boolean | number
   startTimeout?: number
   startupConcurrency?: number
+  applicationTimeout?: number
+  messagingTimeout?: number
+  workersRestartDelay?: number
   watch?: boolean
-  managementApi?: boolean | string | ManagementApiOptions
+  managementApi?: boolean | ManagementApiOptions   // socket path is .socket
+  management?: boolean
   scheduler?: SchedulerJob[]
   policies?: { deny?: Record<string, string | string[]> }
   preload?: string | string[]
-  extensions?: ExtensionEntry[]
-  env?: Record<string, string>            // workers' runtime env — never the
-                                          // config-evaluation env
+  extensions?: string | ExtensionEntry | (string | ExtensionEntry)[]
+  env?: Record<string, string>            // workers' runtime env, and visible to
+                                          // per-app config evaluation (see
+                                          // "Env files")
+  reuseTcpPorts?: boolean                 // default true — SO_REUSEPORT
+  resolvedApplicationsBasePath?: string   // used by `wattpm resolve`
+  exitOnUnhandledErrors?: boolean
   sourceMaps?: boolean
   compileCache?: boolean | CompileCacheOptions
   // …complete list generated from the audited v4 runtime schema
+}
+
+export interface ServerOptions {
+  hostname?: string
+  port?: number                            // 0 = ephemeral
+  portAssignment?: 'shared' | 'perWorkerIncrement'
+  backlog?: number
+  http2?: boolean
+  https?: HttpsOptions
+  // …
 }
 
 export interface ApplicationEntry {
@@ -1616,13 +1949,25 @@ export interface ApplicationEntry {
   path?: string
   url?: string
   gitBranch?: string
-  config?: ApplicationDefinition          // factory result, plain { module } object
+  config?: ApplicationDefinition          // factory result, plain { module } object,
+    | DeferredApplicationDefinition       // or a callback form awaited by the
+                                          // root worker's resolution pass
+  enabled?: boolean | Record<string, boolean>   // keyed by `mode`; resolved in the
+                                                // root worker, before fan-out
   workers?: number | ApplicationWorkersOptions
   health?: ApplicationHealthOptions
-  env?: Record<string, string>            // worker runtime env (see above)
+  env?: Record<string, string>            // worker runtime env, and visible to
+                                          // this app's config evaluation
   envfile?: string                        // replaces the app's four-file env set
                                           // in BOTH views (evaluation + runtime);
-                                          // app-relative; missing file = error
+                                          // app-relative; missing file = error;
+                                          // error alongside an inline `config`
+  reuseTcpPorts?: boolean
+  restartOnError?: boolean | number
+  management?: boolean                    // gates the ITC ManagementClient
+  arguments?: string[]
+  execArgv?: string[]
+  nodeModulesSourceMaps?: boolean
   dependencies?: string[]
   telemetry?: ApplicationTelemetryOverrides   // full per-app telemetry override,
                                               // merged at spawn (not just
@@ -1661,11 +2006,13 @@ export interface NextConfigOptions {
   watch?: WatchOptions
   application?: BuildableApplicationOptions   // nested on purpose (outputDirectory)
 }
+export function next (options?: NextConfigOptions): ApplicationDefinition
 export function next (
-  options?: NextConfigOptions
-    | ((ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>)
-): ApplicationDefinition                      // ConfigContext re-exported from
-                                              // @platformatic/basic
+  cb: (ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>
+): DeferredApplicationDefinition               // resolved by the loader before
+                                               // classification; `.module` is not
+                                               // readable on it
+// ConfigContext re-exported from @platformatic/basic
 ```
 
 ## Appendix B — before/after: the wrapped single-app config
