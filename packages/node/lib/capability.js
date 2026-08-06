@@ -151,16 +151,13 @@ export class NodeCapability extends BaseCapability {
 
     this.registerGlobals({
       basePath: this.#basePath,
+      host: this.serverConfig?.hostname ?? true,
+      port: typeof this.serverConfig?.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig)
     })
 
     // Create the promise before requiring the entrypoint so we do not miss its listen event.
-    const serverOptions = this.serverConfig
-    const serverPromise = createServerListener(
-      serverOptions?.port ?? true,
-      serverOptions?.hostname ?? true,
-      await buildAdditionalServerOptions(serverOptions)
-    )
+    const serverPromise = createServerListener()
 
     try {
       const require = createRequire(dirname(finalEntrypoint))
@@ -203,9 +200,7 @@ export class NodeCapability extends BaseCapability {
           this.#dispatcher = this.#server.listeners('request')[0]
         }
 
-        if (this.applicationConfig.exposed !== false) {
-          await this._listen()
-        }
+        await this._listen()
       }
     } else if (this.#hasServer()) {
       // User blackbox function, we wait for it to listen on a port
@@ -288,6 +283,11 @@ export class NodeCapability extends BaseCapability {
 
     if (this.#isFastify && this.#app) {
       return this.#app.close()
+    }
+
+    // Calling Server[Symbol.asyncDispose]() before the server has listened never resolves.
+    if (this.#server && !this.#server.listening) {
+      return
     }
 
     if (this.#app?.[Symbol.asyncDispose]) {
@@ -392,14 +392,11 @@ export class NodeCapability extends BaseCapability {
       return this.url
     }
 
-    const serverOptions = this.serverConfig
-    const listenOptions = buildListenOptions(serverOptions)
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
 
-    createServerListener(
-      false,
-      false,
-      await buildAdditionalServerOptions(serverOptions)
-    )
+    const listenOptions = buildListenOptions(this.serverConfig)
 
     if (this.#isFastify) {
       await this.#app.listen(listenOptions)

@@ -78,7 +78,7 @@ export async function importCapabilityAndConfig (root, config, context) {
       const autodetectDescription =
         moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
 
-      const logger = pino({ level: context.serverConfig?.logger?.level ?? 'warn', name: context.applicationId })
+      const logger = pino({ level: context.loggerConfig?.level ?? 'warn', name: context.applicationId })
 
       logger.warn(`We have auto-detected that application "${context.applicationId}" ${autodetectDescription}.`)
       logger.warn(

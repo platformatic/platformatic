@@ -93,6 +93,7 @@
     "pino-opentelemetry-transport": "^4.0.2",
     "pino-pretty": "^13.0.0",
     "semgrator": "^0.3.0",
+    "semver": "^7.6.3",
     "sonic-boom": "^4.2.0",
     "systeminformation": "^5.27.11",
     "undici": "^7.27.2",

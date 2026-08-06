@@ -2,7 +2,9 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.6.0.json",
   "watch": false,
   "managementApi": true,
-  "metrics": true,
+  "metrics": {
+    "port": 0
+  },
   "restartOnError": 500,
   "autoload": {
     "path": ".",

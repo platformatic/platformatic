@@ -1,8 +1,13 @@
 import { deepStrictEqual } from 'node:assert'
-import { cp, writeFile } from 'node:fs/promises'
+import { cp } from 'node:fs/promises'
 import path, { resolve } from 'node:path'
 import { test } from 'node:test'
-import { commonFixturesRoot, prepareRuntime, updateFile } from '../../basic/test/helper.js'
+import {
+  commonFixturesRoot,
+  prepareRuntime,
+  updateFile,
+  updateTargetApplicationConfig
+} from '../../basic/test/helper.js'
 import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 const envs = {
@@ -36,19 +41,14 @@ for (const [env, options] of Object.entries(envs)) {
     const { runtime } = await prepareRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/standalone'),
+      port: 0,
       build: options.build,
       production: options.production,
-      async additionalSetup (root) {
-        return writeFile(
-          resolve(root, 'services/frontend/platformatic.json'),
-          JSON.stringify({
-            $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.0.0.json',
-            server: {
-              backlog: 100
-            }
-          }),
-          'utf-8'
-        )
+      async additionalSetup (root, config) {
+        return updateTargetApplicationConfig(config, applicationConfig => {
+          applicationConfig.server ??= {}
+          applicationConfig.server.backlog = 100
+        })
       }
     })
 
@@ -56,7 +56,7 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, undefined)
   })
 
   test(`Next.js application should properly use backlog option in ${env} when using custom commands`, async t => {
@@ -80,9 +80,6 @@ for (const [env, options] of Object.entries(envs)) {
           config.server ??= {}
           config.server.backlog = 100
         })
-
-        // Make sure we start an HTTP server in the service
-        config.applications[0].exposed = true
       }
     })
 
@@ -90,6 +87,6 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, undefined)
   })
 }

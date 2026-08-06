@@ -1,6 +1,6 @@
 import { sleepImmediate } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { getEvents, getPrometheus, updateGlobals } from '@platformatic/globals'
+import { getEvents, getPrometheus, removeGlobals, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
 import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
@@ -1816,7 +1816,10 @@ test('should proxy to a websocket application with reconnect options', async t =
   try {
     getEvents()
   } catch {
-    updateGlobals({ events: new EventEmitter() })
+    const events = new EventEmitter()
+    events.emitAndNotify = events.emit.bind(events)
+    updateGlobals({ events })
+    t.after(() => removeGlobals(['events']))
   }
 
   const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
@@ -1877,6 +1880,7 @@ test('should dynamically proxy a using custom logic', async t => {
 
   const gateway = await createFromConfig(t, {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -1974,6 +1978,7 @@ test('should support custom preRewrite hooks', async t => {
 
   const gateway = await createFromConfig(t, {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -2011,6 +2016,7 @@ test('should proxy to a remote service with external origin', async t => {
   // This tests that remote services work without being part of the runtime
   const config = {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }

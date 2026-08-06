@@ -42,7 +42,7 @@ test('can pack a Next standalone application and start it with the bundled wattp
   await writeFile(bundleConfigPath, JSON.stringify(bundleConfig, null, 2))
 
   const bundledWattpm = resolve(bundleRoot, 'node_modules/.bin', isWindows ? 'wattpm.cmd' : 'wattpm')
-  const startProcess = executeCommand(bundledWattpm, 'start', {
+  const startProcess = executeCommand(bundledWattpm, 'start', '-c', bundleConfigPath, {
     cwd: bundleRoot,
     reject: false,
     env: {
@@ -57,7 +57,7 @@ test('can pack a Next standalone application and start it with the bundled wattp
     } catch {}
   })
 
-  const { url } = await waitForStart(startProcess, 'frontend')
+  const { url } = await waitForStart(startProcess, 'next')
   ok(url)
 
   const { statusCode, body } = await request(url)

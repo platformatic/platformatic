@@ -11,8 +11,7 @@
     },
     {
       "id": "internal",
-      "path": "./services/internal",
-      "exposed": false
+      "path": "./services/internal"
     }
   ],
   "metrics": false 

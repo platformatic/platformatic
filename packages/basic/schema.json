@@ -138,14 +138,6 @@
                 "type": "string",
                 "default": "main"
               },
-              "exposed": {
-                "type": "boolean",
-                "default": true
-              },
-              "portEnv": {
-                "type": "string",
-                "default": "PORT"
-              },
               "reuseTcpPorts": {
                 "type": "boolean",
                 "default": true
@@ -2172,14 +2164,6 @@
         "application": {
           "type": "object",
           "properties": {
-            "exposed": {
-              "type": "boolean",
-              "default": true
-            },
-            "portEnv": {
-              "type": "string",
-              "default": "PORT"
-            },
             "reuseTcpPorts": {
               "type": "boolean",
               "default": true

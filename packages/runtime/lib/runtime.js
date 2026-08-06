@@ -192,7 +192,6 @@ export class Runtime extends EventEmitter {
   #restartingWorkers
   #dynamicWorkersScaler
   #nextWorkerIndex
-  #workerPortOffsets
 
   #sharedHttpCache
   #scheduler
@@ -232,7 +231,6 @@ export class Runtime extends EventEmitter {
     this.#restartingApplications = new Set()
     this.#restartingWorkers = new Map()
     this.#nextWorkerIndex = new Map()
-    this.#workerPortOffsets = new Map() // fullWorkerId => portOffset
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
 
@@ -588,24 +586,6 @@ export class Runtime extends EventEmitter {
     const setupInvocations = []
     const toStart = []
     for (const application of applications) {
-      const workers = application.workers
-      const configuredPort = Number(application.server?.port)
-      const environmentPort = Number(this.#env[application.portEnv ?? 'PORT'])
-      const effectivePort = configuredPort > 0 ? configuredPort : environmentPort
-
-      if (
-        (workers.static > 1 || workers.minimum > 1) &&
-        application.exposed !== false &&
-        !features.node.reusePort &&
-        application.server?.portAssignment !== 'perWorkerIncrement' &&
-        effectivePort > 0
-      ) {
-        this.logger.warn(
-          `"${application.id}" listens on a shared port, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
-        )
-        application.workers = { dynamic: false, static: 1 }
-      }
-
       this.#applications.set(application.id, application)
       this.#applicationRestartCounts.set(application.id, this.#applicationRestartCounts.get(application.id) ?? 0)
       setupInvocations.push([application])
@@ -2020,7 +2000,6 @@ export class Runtime extends EventEmitter {
     const setupInvocations = []
 
     for (let i = 0; i < workers; i++) {
-      this.#workerPortOffsets.set(`${id}:${i}`, i)
       setupInvocations.push([config, applicationConfig, workers, id, i])
     }
 
@@ -2124,9 +2103,7 @@ export class Runtime extends EventEmitter {
         worker: {
           id: workerId,
           index,
-          count: workersCount,
-          portOffset: this.#workerPortOffsets.get(workerId),
-          portOverride: applicationConfig.server?.portOverride
+          count: workersCount
         },
         resourceLimits: {
           maxOldGenerationSizeMb,
@@ -2166,8 +2143,6 @@ export class Runtime extends EventEmitter {
       worker[kWorkerStatus] = 'exited'
       this.emitAndNotify('application:worker:exited', eventPayload)
 
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
-      const portOverride = worker[kWorkerUrl] ? Number(new URL(worker[kWorkerUrl]).port) : undefined
       this.#cleanupWorker(worker)
 
       if (this.#status === 'stopping') {
@@ -2199,9 +2174,7 @@ export class Runtime extends EventEmitter {
               applicationId,
               index,
               false,
-              0,
-              portOffset,
-              portOverride
+              0
             ).catch(err => {
               this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
             })
@@ -2907,13 +2880,9 @@ export class Runtime extends EventEmitter {
     } catch (err) {
       let error = ensureError(err)
       worker[kITC].notify('application:worker:start:processed')
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
 
-      if (error.code === 'EADDRINUSE') {
-        const configuredPort = Number(
-          applicationConfig.server?.port ?? this.#env[applicationConfig.portEnv ?? 'PORT']
-        )
-        const port = Number(error.port ?? configuredPort + portOffset)
+      if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {
+        const port = Number(error.port)
         const owner = this.#getPortOwner(port, id)
         error = new AddressInUseError(port, owner ?? 'another process', id)
       }
@@ -2941,7 +2910,14 @@ export class Runtime extends EventEmitter {
 
       const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
-      if (disableRestartAttempts || !restartOnError || error.code === 'PLT_RUNTIME_EADDR_IN_USE') {
+      if (
+        disableRestartAttempts ||
+        !restartOnError ||
+        error.code === 'EACCES' ||
+        error.code === 'EADDRINUSE' ||
+        error.code === 'EADDRNOTAVAIL' ||
+        error.code === 'PLT_RUNTIME_EADDR_IN_USE'
+      ) {
         throw error
       }
 
@@ -2961,7 +2937,7 @@ export class Runtime extends EventEmitter {
         )
       }
 
-      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt, portOffset)
+      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt)
     }
   }
 
@@ -3031,7 +3007,6 @@ export class Runtime extends EventEmitter {
 
   #cleanupWorker (worker) {
     clearTimeout(worker[kHealthCheckTimer])
-    this.#workerPortOffsets.delete(worker[kFullId])
 
     const currentWorker = this.#workers.get(worker[kFullId])
 
@@ -3083,9 +3058,7 @@ export class Runtime extends EventEmitter {
     id,
     oldIndex,
     silent,
-    bootstrapAttempt,
-    portOffset,
-    portOverride
+    bootstrapAttempt
   ) {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
@@ -3111,22 +3084,12 @@ export class Runtime extends EventEmitter {
 
         // Get a new unique index for the restarted worker
         const newIndex = this.#getNextWorkerIndex(id)
-        const newWorkerId = `${id}:${newIndex}`
-        this.#workerPortOffsets.set(newWorkerId, portOffset)
-        let applicationConfigForNewWorker = applicationConfig
-
-        if (portOverride && applicationConfig.server?.portAssignment !== 'perWorkerIncrement') {
-          applicationConfigForNewWorker = {
-            ...applicationConfig,
-            server: { ...applicationConfig.server, portOverride }
-          }
-        }
 
         try {
-          await this.#setupWorker(config, applicationConfigForNewWorker, workersCount, id, newIndex)
+          await this.#setupWorker(config, applicationConfig, workersCount, id, newIndex)
           await this.#startWorker(
             config,
-            applicationConfigForNewWorker,
+            applicationConfig,
             workersCount,
             id,
             newIndex,
@@ -3140,8 +3103,6 @@ export class Runtime extends EventEmitter {
           )
           resolve()
         } catch (err) {
-          this.#workerPortOffsets.delete(newWorkerId)
-
           // The runtime was stopped while the restart was happening, ignore any error.
           if (!this.#status.startsWith('start')) {
             resolve()
@@ -3180,24 +3141,10 @@ export class Runtime extends EventEmitter {
     const newIndex = this.#getNextWorkerIndex(applicationId)
     const newWorkerId = `${applicationId}:${newIndex}`
     const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
-    const portOffset = this.#workerPortOffsets.get(`${applicationId}:${oldIndex}`)
-    this.#workerPortOffsets.set(newWorkerId, portOffset)
 
     const stopBeforeStart =
       Boolean(worker[kWorkerUrl]) &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
-
-    let applicationConfigForNewWorker = applicationConfig
-    if (stopBeforeStart && applicationConfig.server?.portAssignment !== 'perWorkerIncrement') {
-      const port = Number(new URL(worker[kWorkerUrl]).port)
-      if (port) {
-        applicationConfigForNewWorker = { ...applicationConfig }
-        applicationConfigForNewWorker.server = {
-          ...applicationConfig.server,
-          portOverride: port
-        }
-      }
-    }
 
     try {
       if (!silent) {
@@ -3208,10 +3155,9 @@ export class Runtime extends EventEmitter {
         await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
       }
 
-      // Create a new worker with a new index, preserving any pinned port when stopBeforeStart is required.
       newWorker = await this.#setupWorker(
         config,
-        applicationConfigForNewWorker,
+        applicationConfig,
         workersCount,
         applicationId,
         newIndex,
@@ -3231,7 +3177,7 @@ export class Runtime extends EventEmitter {
       // Add the worker to the mesh
       await this.#startWorker(
         config,
-        applicationConfigForNewWorker,
+        applicationConfig,
         workersCount,
         applicationId,
         newIndex,
@@ -3246,8 +3192,6 @@ export class Runtime extends EventEmitter {
         return this.#discardWorker(newWorker)
       }
     } catch (e) {
-      this.#workerPortOffsets.delete(newWorkerId)
-
       if (this.#workers.get(newWorkerId) === newWorker) {
         this.#workers.delete(newWorkerId)
       }
@@ -3813,25 +3757,19 @@ export class Runtime extends EventEmitter {
 
     if (currentWorkers < workers) {
       report.started = []
-      let pendingWorkerId
 
       try {
         for (let i = currentWorkers; i < workers; i++) {
           const newIndex = this.#getNextWorkerIndex(applicationId)
-          pendingWorkerId = `${applicationId}:${newIndex}`
-          this.#workerPortOffsets.set(pendingWorkerId, i)
 
           await this.#setupWorker(config, applicationConfig, workers, applicationId, newIndex)
           await this.#startWorker(config, applicationConfig, workers, applicationId, newIndex, false, 0)
 
-          pendingWorkerId = undefined
           report.started.push(newIndex)
           startedWorkersCount++
         }
         report.success = true
       } catch (err) {
-        pendingWorkerId && this.#workerPortOffsets.delete(pendingWorkerId)
-
         if (startedWorkersCount < 1) {
           this.logger.error({ err }, 'Cannot start application workers, no worker started')
         } else {
@@ -3847,22 +3785,10 @@ export class Runtime extends EventEmitter {
       report.stopped = []
       try {
         const workersToStop = currentWorkers - workers
-        const allInOnePort = applicationConfig.server?.portAssignment !== 'perWorkerIncrement'
         const workerIdsToStop = this.#workers
           .getKeys(applicationId)
           .map(key => parseInt(key.split(':')[1], 10))
-
-        if (allInOnePort) {
-          // Stop most recent workers first.
-          workerIdsToStop.sort((a, b) => b - a)
-        } else {
-          // When port increment is enabled, disable the workers with the highest ports.
-          workerIdsToStop.sort((a, b) => {
-            const offsetA = this.#workerPortOffsets.get(`${applicationId}:${a}`) ?? a
-            const offsetB = this.#workerPortOffsets.get(`${applicationId}:${b}`) ?? b
-            return offsetB - offsetA
-          })
-        }
+          .sort((a, b) => b - a)
 
         for (const workerIndex of workerIdsToStop.splice(0, workersToStop)) {
           const worker = this.#workers.get(`${applicationId}:${workerIndex}`)
@@ -4113,8 +4039,8 @@ export class Runtime extends EventEmitter {
       try {
         const url = new URL(worker[kWorkerUrl])
         const workerPort = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
-        const workerHost = worker[kConfig]?.server?.hostname ?? url.hostname
-        if (workerPort === port && this.#listenersOverlap(hostname ?? url.hostname, workerHost)) {
+        const workerHost = url.hostname
+        if (workerPort === port && this.#listenersOverlap(hostname ?? workerHost, workerHost)) {
           return worker[kApplicationId]
         }
       } catch {}
@@ -4136,13 +4062,14 @@ export class Runtime extends EventEmitter {
       return
     }
 
+    let hostname
     let port
     try {
       const url = new URL(workerUrl)
+      hostname = url.hostname
       port = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
     } catch {}
 
-    const hostname = worker[kConfig]?.server?.hostname
     const owner = this.#getPortOwner(port, applicationId, hostname)
     if (owner) {
       throw new AddressInUseError(port, owner, applicationId)

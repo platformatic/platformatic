@@ -16,20 +16,26 @@ import {
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can properly show the logs the output', async t => {
-  const { root, runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
-    await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-      const json = JSON.parse(contents)
-      json.workers = 3
-      return JSON.stringify(json, null, 2)
-    })
+  const { root, runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/composer-with-prefix'),
+    production: true,
+    port: 0,
+    additionalSetup: async root => {
+      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        const json = JSON.parse(contents)
+        json.workers = 3
+        return JSON.stringify(json, null, 2)
+      })
 
-    await cp(resolve(commonFixturesRoot, 'composer-js'), resolve(root, 'services/composer'), { recursive: true })
-    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), { recursive: true })
-    await ensureDependencies([resolve(root, 'services/composer'), resolve(root, 'services/backend')])
+      await cp(resolve(commonFixturesRoot, 'composer-js'), resolve(root, 'services/composer'), { recursive: true })
+      await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), { recursive: true })
+      await ensureDependencies([resolve(root, 'services/composer'), resolve(root, 'services/backend')])
 
-    await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
-      return contents.replace('$PREFIX', '/frontend')
-    })
+      await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
+        return contents.replace('$PREFIX', '/frontend')
+      })
+    }
   })
 
   const url = await startRuntime(t, runtime, null, ['frontend'])

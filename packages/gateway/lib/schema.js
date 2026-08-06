@@ -3,7 +3,6 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import {
   fastifyServer as server,
-  server as genericServer,
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
@@ -333,13 +332,7 @@ export const schema = {
     basePath: {
       type: 'string'
     },
-    server: {
-      ...server,
-      properties: {
-        ...server.properties,
-        portAssignment: genericServer.properties.portAssignment
-      }
-    },
+    server,
     gateway,
     types,
     plugins,

@@ -125,6 +125,10 @@ export class RemixCapability extends ViteCapability {
 
     await super._start()
 
+    if (!this._getApp()) {
+      return
+    }
+
     /* c8 ignore next 3 */
     if (!this._getApp().config.plugins.some(p => p.name === 'remix')) {
       this.logger.warn('Could not find Remix plugin in your Vite configuration. Continuing as plain Vite application.')
@@ -163,17 +167,16 @@ export class RemixCapability extends ViteCapability {
     await this.#app.ready()
     await this._collectMetrics()
 
-    if (this.applicationConfig.exposed !== false) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
     }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 
   #handleRequest (handle, req) {

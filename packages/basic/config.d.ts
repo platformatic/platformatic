@@ -578,8 +578,6 @@ export interface PlatformaticBasicConfig {
           directory?: string;
         };
     application?: {
-      exposed?: boolean;
-      portEnv?: string;
       reuseTcpPorts?: boolean;
       workers?:
         | number

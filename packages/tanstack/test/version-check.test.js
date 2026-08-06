@@ -22,7 +22,7 @@ test('TanStack version is not checked in production', async t => {
     await swapVersion(t, import.meta.dirname, '@tanstack/react-start', '../..', '0.1.0')
   })
 
-  await rejects(runtime.start())
+  await runtime.start()
   const logs = await getLogsFromFile(root)
 
   ok(!logs.some(l => l.err?.message.includes('@tanstack/react-start version 0.1.0 is not supported')))

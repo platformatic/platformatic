@@ -3,13 +3,13 @@
   "watch": false,
   "managementApi": true,
   "metrics": false,
+  "healthProbes": { "port": 0 },
   "restartOnError": 500,
   "autoload": {
     "path": ".",
     "mappings": {
       "service-2": {
-        "id": "service-2",
-        "exposed": false
+        "id": "service-2"
       }
     }
   },

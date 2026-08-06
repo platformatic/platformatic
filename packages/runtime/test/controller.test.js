@@ -3,7 +3,6 @@ import { abstractLogger } from '@platformatic/foundation'
 import { updateGlobals } from '@platformatic/globals'
 import { deepStrictEqual, notStrictEqual, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
-import { utimes } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Controller } from '../lib/worker/controller.js'
@@ -66,52 +65,6 @@ test('logs errors if an env variable is missing', async t => {
   }, /The configuration does not validate against the configuration schema/)
 })
 
-test('Uses the server config if passed', async t => {
-  const appPath = join(fixturesDir, 'server', 'runtime-server', 'services', 'echo')
-  const configFile = join(appPath, 'platformatic.service.json')
-  const config = {
-    id: 'serviceApp',
-    config: configFile,
-    path: appPath,
-    watch: true,
-    dependencies: []
-  }
-  const serverConfig = {
-    hostname: '127.0.0.1',
-    port: '14242',
-    logger: {
-      level: 'info'
-    }
-  }
-  const app = new Controller({}, config, 0, serverConfig)
-
-  t.after(async function () {
-    t.mock.restoreAll()
-    await app.stop()
-  })
-
-  const promise = new Promise((resolve, reject) => {
-    t.mock.method(process.stdout, 'write', message => {
-      try {
-        const log = JSON.parse(message)
-        if (log.msg.includes('listening')) {
-          if (log.msg.includes(serverConfig.port)) {
-            resolve()
-          } else {
-            reject(new Error('wrong port'))
-          }
-        }
-      } catch (err) {}
-    })
-  })
-
-  await app.init()
-  await app.start()
-
-  await utimes(configFile, new Date(), new Date())
-  await promise
-})
-
 test('logs errors during startup', async t => {
   const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
   const configFile = join(appPath, 'platformatic.service.json')
@@ -168,59 +121,6 @@ test('returns application statuses', async t => {
 
   strictEqual(app.getStatus(), 'stopped')
   notStrictEqual(app.capability, null)
-})
-
-test('supports configuration overrides', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
-  const config = {
-    id: 'serviceApp',
-    config: configFile,
-    path: appPath,
-    watch: true,
-    dependencies: []
-  }
-
-  const app = new Controller({}, config)
-
-  await app.init()
-
-  app.updateContext({
-    serverConfig: {
-      keepAliveTimeout: 1,
-      port: 2222
-    }
-  })
-
-  const capabilityConfig = await app.capability.getConfig()
-  strictEqual(capabilityConfig.server.keepAliveTimeout, 1)
-  strictEqual(capabilityConfig.server.port, 2222)
-})
-
-test('supports backlog configuration override', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
-  const config = {
-    id: 'serviceApp',
-    config: configFile,
-    path: appPath,
-    watch: true,
-    dependencies: []
-  }
-
-  const app = new Controller({}, config)
-
-  await app.init()
-
-  app.updateContext({
-    serverConfig: {
-      port: 0,
-      backlog: 1024
-    }
-  })
-
-  const capabilityConfig = await app.capability.getConfig()
-  strictEqual(capabilityConfig.server.backlog, 1024)
 })
 
 test('can update status of a capability with updateStatus support', async t => {

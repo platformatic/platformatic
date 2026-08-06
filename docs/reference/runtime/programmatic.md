@@ -85,7 +85,7 @@ Walks the applications declared in the nearest runtime configuration and aggrega
 
 ### Lifecycle
 
-- **`runtime.start(silent = false): Promise<Record<string, string>>`** — Starts all applications and returns exposed URLs keyed by worker ID (`applicationId:workerId`). If `init()` hasn't been called yet, `start()` calls it.
+- **`runtime.start(silent = false): Promise<Record<string, string>>`** — Starts all applications and returns observed listener URLs keyed by worker ID (`applicationId:workerId`). If `init()` hasn't been called yet, `start()` calls it.
 - **`runtime.stop(silent = false): Promise<void>`** — Stops all applications.
 - **`runtime.close(silent = false): Promise<void>`** — Stops applications and tears the runtime down completely (closes the management API, broadcast channels, dispatcher, etc.). After `close()` the runtime cannot be restarted; create a new instance.
 - **`runtime.restart(applications?: string[]): Promise<void>`** — Restarts every application (or only the IDs in `applications`).
@@ -171,12 +171,12 @@ test('handles ping messages', async t => {
 ### Introspection
 
 - **`runtime.getRuntimeStatus(): string`** — One of `starting`, `started`, `stopping`, `stopped`, `closed`.
-- **`runtime.getRuntimeMetadata(): Promise<RuntimeMetadata>`** — `pid`, `cwd`, `argv`, `uptimeSeconds`, `execPath`, `nodeVersion`, `projectDir`, `packageName`, `packageVersion`, `platformaticVersion`, and `urls`. `urls` is a map of exposed worker URLs keyed by `applicationId:workerId`.
+- **`runtime.getRuntimeMetadata(): Promise<RuntimeMetadata>`** — `pid`, `cwd`, `argv`, `uptimeSeconds`, `execPath`, `nodeVersion`, `projectDir`, `packageName`, `packageVersion`, `platformaticVersion`, and `urls`. `urls` is a map of observed worker listener URLs keyed by `applicationId:workerId`.
 - **`runtime.getRuntimeConfig(includeMeta = false): object`** — The resolved configuration. When `includeMeta` is `true` the `[kMetadata]` symbol is preserved (needed by `prepareApplication()`).
 - **`runtime.getRuntimeEnv(): Record<string, string>`** — Environment variables visible to the runtime process.
-- **`runtime.getUrls(applicationId?): Record<string, string>`** — URLs for running exposed workers, keyed by `applicationId:workerId`. Pass an application ID to select only that application's workers.
+- **`runtime.getUrls(applicationId?): Record<string, string>`** — Observed listener URLs for running workers, keyed by `applicationId:workerId`. Pass an application ID to select only that application's workers.
 - **`runtime.getApplicationsIds(): string[]`** — IDs of all configured applications.
-- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `workers`, `url`, and `urls`. `url` is the first exposed URL, or `null` when the application has no listening server; `urls` contains every exposed worker URL.
+- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `workers`, `url`, and `urls`. `url` is the first observed URL, or `null` when the application has no listening server; `urls` contains every observed worker listener URL.
 
 ### Per-application control
 

@@ -212,8 +212,12 @@ export class ViteCapability extends BaseCapability {
       return this.startWithCommand(command)
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     // Prepare options
-    const { hostname, port, https, cors, backlog } = this.serverConfig ?? {}
+    const { hostname, port, https, cors } = this.serverConfig ?? {}
     const configFile = config.vite.configFile ? resolve(this.root, config.vite.configFile) : undefined
 
     const serverOptions = {
@@ -230,11 +234,7 @@ export class ViteCapability extends BaseCapability {
     }
 
     // Require Vite
-    const serverPromise = createServerListener(
-      serverOptions.port,
-      serverOptions.host,
-      typeof backlog === 'number' ? { backlog } : {}
-    )
+    const serverPromise = createServerListener()
     const { createServer } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
 
     // Create the server and listen
@@ -292,17 +292,16 @@ export class ViteCapability extends BaseCapability {
 
     await this.#app.ready()
 
-    if (this.applicationConfig.exposed !== false) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
     }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 
   async _getBasePathFromBuildInfo () {

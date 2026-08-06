@@ -91,15 +91,11 @@ server.listen(0)
 
 ## Architecture
 
-If your server entrypoint exports a `create` function, Platformatic Node executes it and waits for it to return a server object. Runtime-managed Node.js capabilities start a TCP listener by default. Set `applications[].exposed` to `false` to keep the capability ITC-only.
+If your server entrypoint exports a `create` function, Platformatic Node executes it and waits for it to return a server object. Returning a server delegates its listener lifecycle to the Node capability. The capability calls `listen()` only when `server.port` is configured; without it, the server remains available for ITC injection without opening a TCP listener.
 
-If your server entrypoint does not export a function, then Platformatic runtime will execute the function and wait for a TCP server to be started.
+If your server entrypoint does not export a function, Platformatic executes it and observes the TCP server started by the application without changing its listener options.
 
-For a runtime-managed listener, `applications[].portEnv` provides the fallback port when this capability's `server.port` is not configured. It defaults to `PORT`.
-
-If the application uses the `commands` property then it's always responsible to start a HTTP server and the `create` functions are not supported anymore.
-
-Black-box Node.js applications that call `listen()` themselves control their own listener. The runtime cannot prevent them from opening a port when `exposed` is `false`.
+If the application uses the `commands` property, it is responsible for starting its own HTTP server and `create` functions are not supported.
 
 If your application entrypoint exports a `create` or `build` function that returns an object with `isBackgroundApplication` set to `true`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. If the returned object has a `close` function, it will be called upon application shutdown as `close(app)`, where `app` is the returned object.
 

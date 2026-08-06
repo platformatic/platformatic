@@ -187,8 +187,12 @@ export class AstroCapability extends BaseCapability {
       return this.startWithCommand(command)
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     // Prepare options
-    const { hostname, port, https, backlog } = this.serverConfig ?? {}
+    const { hostname, port, https } = this.serverConfig ?? {}
     const httpsOptions = await sanitizeHTTPSOptions(https)
     const configFile = config.astro.configFile // Note: Astro expect this to be a relative path to the root
 
@@ -199,11 +203,7 @@ export class AstroCapability extends BaseCapability {
     }
 
     // Require Astro
-    const serverPromise = createServerListener(
-      serverOptions.port,
-      serverOptions.host,
-      typeof backlog === 'number' ? { backlog } : {}
-    )
+    const serverPromise = createServerListener()
     const { dev } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
     // Create the server and listen
@@ -304,16 +304,15 @@ export class AstroCapability extends BaseCapability {
 
     await this.#app.ready()
 
-    if (this.applicationConfig.exposed !== false) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
     }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 }

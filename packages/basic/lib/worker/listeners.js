@@ -1,7 +1,7 @@
 import { getEvents } from '@platformatic/globals'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
-export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {
+export function createServerListener () {
   const { promise, resolve, reject } = Promise.withResolvers()
 
   let completed = false
@@ -12,22 +12,6 @@ export function createServerListener (overridePort = true, overrideHost = false,
         return
       }
 
-      if (typeof overridePort !== 'number' && overridePort !== false) {
-        overridePort = 0
-      }
-
-      if (typeof overrideHost === 'string') {
-        options.host = overrideHost
-      }
-
-      // Check if we need to override the port only if a static port is being requested
-      if (overridePort !== false && overridePort !== 0) {
-        if (options.port !== overridePort) {
-          options.port = overridePort
-        }
-      }
-
-      Object.assign(options, additionalOptions)
       const events = getEvents({ throwOnMissing: false })
       if (events) {
         events.emitAndNotify('serverOptions', options)

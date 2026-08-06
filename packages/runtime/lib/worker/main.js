@@ -255,16 +255,6 @@ async function main () {
 
   const { threadDispatcher } = await setDispatcher(runtimeConfig)
 
-  let serverConfig = null
-  if (applicationConfig.exposed !== false) {
-    serverConfig = {
-      port: 0,
-      hostname: '127.0.0.1',
-      keepAliveTimeout: 5000,
-      ...applicationConfig.server
-    }
-  }
-
   const inspectorOptions = workerData.inspectorOptions
 
   if (inspectorOptions) {
@@ -296,14 +286,12 @@ async function main () {
     runtimeConfig,
     applicationConfig,
     workerData.worker.index,
-    serverConfig,
     metricsConfig
   )
 
   await controller.init(cleanup)
 
-  const listen = applicationConfig.exposed !== false
-  if (listen && runtimeConfig.basePath) {
+  if (runtimeConfig.basePath) {
     const meta = await controller.capability.getMeta()
     if (!meta.gateway?.wantsAbsoluteUrls) {
       stripBasePath(runtimeConfig.basePath)

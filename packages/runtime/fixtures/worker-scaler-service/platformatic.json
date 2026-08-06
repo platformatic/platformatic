@@ -5,7 +5,9 @@
   },
   "watch": true,
   "plugins": {
-    "paths": ["./routes"]
+    "paths": [
+      "./routes"
+    ]
   },
   "runtime": {
     "workers": {
@@ -13,5 +15,9 @@
       "maximum": 2,
       "total": 10
     }
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
   }
 }

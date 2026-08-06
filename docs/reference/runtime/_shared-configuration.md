@@ -132,8 +132,6 @@ runtime. Each application object supports the following settings:
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
 - **`config`** (`string`) - The configuration file used to start
   the application.
-- **`exposed`** (`boolean`) - Controls whether a runtime-managed capability starts an HTTP listener. The default is `true`. Set it to `false` to keep the capability ITC-only; runtime injection and `.plt.local` communication remain available. This setting cannot prevent a black-box Node.js application that calls `listen()` itself from opening a port.
-- **`portEnv`** (`string`) - The environment variable that provides the fallback listening port when the capability's own `server.port` is not configured. The default is `PORT`.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
 - **`workers`** - The number of workers to start for this application. In development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
@@ -255,9 +253,9 @@ The base path, relative to the configuration file to store resolved applications
 
 ### Capability `server` configuration
 
-The Runtime and Watt root configuration no longer provide `entrypoint` or `server` settings. Configure listeners in each capability's own configuration file instead. A capability-local `server` object controls its hostname, port, HTTPS, backlog, and port assignment; it is not an `applications[]` descriptor option.
+The Runtime and Watt root configuration no longer provide `entrypoint` or `server` settings. Configure listeners in each capability's own configuration file instead. A capability-local `server` object controls its hostname, port, HTTPS, and backlog; it is not an `applications[]` descriptor option.
 
-When a capability omits `server.port`, Runtime uses the port from its `portEnv` descriptor option. `server.portAssignment` is capability-local: `shared` (the default) shares the configured port, while `perWorkerIncrement` assigns each worker a separate port through its per-worker environment. `perWorkerIncrement` requires a positive base port from `server.port` or `portEnv`; a missing or zero base port is invalid. Use it only with an external load balancer.
+Runtime does not choose ports, write port environment variables, or rewrite listener options. Managed capabilities start their own listeners only when their capability configuration defines `server.port`; a value of `0` requests an ephemeral port. Custom commands and black-box Node.js applications decide whether to call `listen()` themselves.
 
 ### `workers`
 

@@ -93,13 +93,11 @@ Create `my-runtime/watt.json`:
     },
     {
       "id": "frontend",
-      "path": "./web/frontend",
-      "exposed": false
+      "path": "./web/frontend"
     },
     {
       "id": "optimizer",
-      "path": "./web/optimizer",
-      "exposed": false
+      "path": "./web/optimizer"
     }
   ]
 }
@@ -110,7 +108,7 @@ Create `my-runtime/watt.json`:
 - Gateway's application-local `server` configuration accepts incoming traffic.
 - Gateway routes by method + path (via `proxy.methods` and `proxy.routes`).
 - `frontend` and `optimizer` are in the same runtime, so service discovery works automatically.
-- `frontend` and `optimizer` are ITC-only; Gateway is the only public listener.
+- Gateway remains the intended deployment ingress; publish only its configured listener.
 - `frontend` is reachable from `optimizer` as `http://frontend.plt.local`.
 
 ## 3) Configure Gateway with route-based proxying

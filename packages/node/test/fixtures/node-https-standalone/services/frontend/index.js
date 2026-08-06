@@ -1,4 +1,4 @@
-import { getAdditionalServerOptions, getWorkerId } from '@platformatic/globals'
+import { getAdditionalServerOptions, getHost, getPort, getWorkerId } from '@platformatic/globals'
 import { createServer } from 'node:https'
 
 const server = createServer(getAdditionalServerOptions(), (req, res) => {
@@ -18,4 +18,7 @@ const server = createServer(getAdditionalServerOptions(), (req, res) => {
   }
 })
 
-server.listen(0)
+server.listen({
+  host: getHost() === true ? '127.0.0.1' : getHost(),
+  port: getPort() === true ? 0 : getPort()
+})

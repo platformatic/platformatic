@@ -5,5 +5,8 @@
       "./routes"
     ],
     "typescript": false
+  },
+  "server": {
+    "port": 16667
   }
 }

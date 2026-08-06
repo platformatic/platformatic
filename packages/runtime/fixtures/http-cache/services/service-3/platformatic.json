@@ -8,6 +8,10 @@
     }
   },
   "plugins": {
-    "paths": [{ "path": "plugin.js" }]
+    "paths": [
+      {
+        "path": "plugin.js"
+      }
+    ]
   }
 }

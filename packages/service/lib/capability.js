@@ -2,6 +2,7 @@ import {
   BaseCapability,
   buildListenOptions,
   cleanBasePath,
+  createServerListener,
   ensureTrailingSlash,
   getServerUrl
 } from '@platformatic/basic'
@@ -41,7 +42,7 @@ export class ServiceCapability extends BaseCapability {
 
     const config = this.config
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
-    const { portAssignment: _, ...serverConfig } = this.serverConfig
+    const serverConfig = this.serverConfig
 
     // Create the application
     this.#app = fastify({
@@ -94,8 +95,6 @@ export class ServiceCapability extends BaseCapability {
   }
 
   async _start () {
-    const listen = this.applicationConfig.exposed !== false
-
     await super._start()
 
     // Create the application if needed
@@ -104,9 +103,7 @@ export class ServiceCapability extends BaseCapability {
       await this.#app.ready()
     }
 
-    if (listen) {
-      await this._listen()
-    }
+    await this._listen()
 
     await this._collectMetrics()
     return this.url
@@ -221,7 +218,7 @@ export class ServiceCapability extends BaseCapability {
     const loggerInstance = logger ?? serverConfig?.loggerInstance ?? this.serverConfig?.loggerInstance
 
     if (serverConfig) {
-      config.server = deepmerge(this.serverConfig, serverConfig ?? {})
+      config.server = deepmerge(this.serverConfig, serverConfig)
     }
 
     config.server ??= {}
@@ -299,14 +296,15 @@ export class ServiceCapability extends BaseCapability {
   }
 
   async _listen () {
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
 
-    if (typeof serverOptions?.backlog === 'number') {
-      listenOptions.backlog = serverOptions.backlog
-    }
-
-    await this.#app.listen(listenOptions)
+    const serverPromise = createServerListener()
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#app.server)
 
     if (this.serverConfig.http2 || this.serverConfig.https?.key) {

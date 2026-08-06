@@ -1,17 +1,16 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "a",
-  "preload": ["preload-1.js", "preload-2.js"],
+  "preload": [
+    "preload-1.js",
+    "preload-2.js"
+  ],
   "services": [
     {
       "id": "a",
       "path": "./services/a"
     }
   ],
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": "{{PORT}}"
-  },
   "logger": {
     "level": "error"
   }

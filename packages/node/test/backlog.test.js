@@ -34,7 +34,8 @@ for (const [env, options] of Object.entries(envs)) {
   test(`node application should properly use backlog option in ${env}`, async t => {
     const { runtime } = await prepareRuntime({
       t,
-      root: path.resolve(import.meta.dirname, './fixtures/express-no-build-standalone'),
+      root: path.resolve(import.meta.dirname, './fixtures/express-with-build-standalone'),
+      port: 0,
       build: options.build,
       production: options.production,
       async additionalSetup (root) {
@@ -70,6 +71,6 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, undefined)
   })
 }

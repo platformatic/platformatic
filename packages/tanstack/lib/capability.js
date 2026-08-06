@@ -1,5 +1,4 @@
 import {
-  buildAdditionalServerOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -59,7 +58,13 @@ export class TanstackCapability extends ViteCapability {
 
     if (command) {
       return this.startWithCommand(command)
-    } else if (!this.isProduction) {
+    }
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    if (!this.isProduction) {
       return super._start()
     }
 
@@ -73,28 +78,31 @@ export class TanstackCapability extends ViteCapability {
     this.#basePath = await this._getBasePathFromBuildInfo()
 
     const serverOptions = this.serverConfig
-    const serverPromise = createServerListener(
-      serverOptions?.port ?? true,
-      serverOptions?.hostname ?? true,
-      await buildAdditionalServerOptions(serverOptions)
-    )
+    const serverPromise = createServerListener()
 
     const httpsOptions = await sanitizeHTTPSOptions(serverOptions?.https)
+    const environment = {
+      NITRO_HOST: serverOptions?.hostname ?? '127.0.0.1',
+      NITRO_PORT: serverOptions?.port ?? 0,
+      NITRO_SSL_CERT: httpsOptions?.cert && this.#serializeCertificateValue(httpsOptions.cert),
+      NITRO_SSL_KEY: httpsOptions?.key && this.#serializeCertificateValue(httpsOptions.key)
+    }
+    const originalEnvironment = new Map()
 
-    if (!httpsOptions?.cert && !httpsOptions?.key) {
+    for (const [key, value] of Object.entries(environment)) {
+      if (typeof value === 'undefined') {
+        continue
+      }
+
+      originalEnvironment.set(key, process.env[key])
+      process.env[key] = value.toString()
+    }
+
+    try {
       await this.#importProductionNitro(outputDirectory)
-    } else {
-      const originalCert = process.env.NITRO_SSL_CERT
-      const originalKey = process.env.NITRO_SSL_KEY
-
-      process.env.NITRO_SSL_CERT = this.#serializeCertificateValue(httpsOptions.cert)
-      process.env.NITRO_SSL_KEY = this.#serializeCertificateValue(httpsOptions.key)
-
-      try {
-        await this.#importProductionNitro(outputDirectory)
-      } finally {
-        this.#restoreEnvironmentVariables('NITRO_SSL_CERT', originalCert)
-        this.#restoreEnvironmentVariables('NITRO_SSL_KEY', originalKey)
+    } finally {
+      for (const [key, value] of originalEnvironment) {
+        this.#restoreEnvironmentVariables(key, value)
       }
     }
 

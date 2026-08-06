@@ -42,7 +42,7 @@ When running in production mode, Platformatic runs the Nuxt/Nitro server output 
 
 Nuxt uses Vite internally, but Platformatic Nuxt is not a plain Vite application. Development, build, and production lifecycle are managed through Nuxt and Nitro.
 
-When using the `commands` property, the command is responsible for starting an HTTP server. Platformatic will integrate the external application in the runtime and select the server port used by the runtime.
+When using the `commands` property, the command is responsible for starting an HTTP server. Platformatic observes the selected address without rewriting it.
 
 ## Integrating with other Watt applications
 

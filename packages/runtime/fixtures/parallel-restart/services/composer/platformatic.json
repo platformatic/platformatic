@@ -1,3 +1,7 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.5.4.json"
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.5.4.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  }
 }

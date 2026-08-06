@@ -36,7 +36,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ## Architecture
 
-Runtime-managed NestJS capabilities are exposed by default. Set `applications[].exposed` to `false` to keep the capability ITC-only. `applications[].portEnv`, which defaults to `PORT`, provides the fallback port when this capability's `server.port` is not configured. An application that uses the `commands` property is responsible for starting its own server.
+The NestJS capability owns its managed listener and uses its capability-level `server` configuration. An application that uses the `commands` property is responsible for starting its own server.
 
 ## HTTPS
 

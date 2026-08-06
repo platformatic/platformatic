@@ -25,5 +25,6 @@
     }
   ],
   "messagingTimeout": 2000,
-  "workers": 3
+  "workers": 3,
+  "healthProbes": false
 }

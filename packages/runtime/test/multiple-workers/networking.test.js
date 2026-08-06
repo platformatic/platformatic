@@ -6,6 +6,7 @@ import { createRuntime, updateConfigFile } from '../helpers.js'
 import { prepareRuntime, testRoundRobin, verifyInject } from './helper.js'
 
 function addIngress (contents) {
+  contents.metrics = { port: 0 }
   contents.services.push({
     id: 'ingress',
     path: './node',
@@ -14,7 +15,7 @@ function addIngress (contents) {
   })
 }
 
-test('the mesh network works with default exposure', async t => {
+test('the mesh network works with capability-owned listeners', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   await updateConfigFile(configFile, addIngress)
@@ -37,12 +38,10 @@ test('the mesh network works with the HTTP applications when using ITC', async t
 
   await updateConfigFile(configFile, contents => {
     addIngress(contents)
-    contents.services[0].exposed = true
     contents.services.push({
       id: 'service',
       path: './service',
       config: 'platformatic.json',
-      exposed: true,
       workers: 3
     })
   })
@@ -79,12 +78,10 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
 
   await updateConfigFile(configFile, contents => {
     addIngress(contents)
-    contents.services[0].exposed = true
     contents.services.push({
       id: 'service',
       path: './service',
       config: 'platformatic.json',
-      exposed: true,
       workers: 3
     })
   })
@@ -122,6 +119,9 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
 test('can inject on a worker', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
+  await updateConfigFile(configFile, contents => {
+    contents.metrics = { port: 0 }
+  })
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {

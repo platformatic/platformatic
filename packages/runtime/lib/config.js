@@ -237,9 +237,6 @@ export async function prepareApplication (config, application, defaultWorkers) {
         pkg = await loadConfigurationModule(application.path, applicationConfig)
 
         application.type = extractModuleFromSchemaUrl(applicationConfig, true).module
-        if (applicationConfig.server) {
-          application.server = applicationConfig.server
-        }
         application.skipTelemetryHooks = pkg.skipTelemetryHooks
       } else {
         const { moduleName, capability } = await importCapabilityAndConfig(application.path)
