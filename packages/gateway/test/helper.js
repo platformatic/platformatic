@@ -145,6 +145,10 @@ export async function createPlatformaticDatabaseApplication (t, { name, jsonFile
   const application = await createDatabaseCapability(
     path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile)
   )
+  application.config.server ??= {}
+  application.config.server.hostname ??= '127.0.0.1'
+  application.config.server.port ??= 0
+  application.serverConfig = application.config.server
   await application.init()
 
   application.getApplication().get('/.well-known/graphql-composition', async function (req, reply) {
@@ -431,21 +435,21 @@ export async function createFromConfig (t, options, applicationFactory, creation
 
   const directory = await createTemporaryDirectory(t)
 
-  // Carry over just the pinned hostname when a caller overrides `server`
+  // Keep an explicit ephemeral listener when a caller overrides `server`
   // with only a few sub-fields (e.g. `server: { logger: { level: 'fatal' }}`).
-  // Without this, the shallow `Object.assign` below wipes out the default
-  // hostname and the framework binds to `::1` on dual-stack hosts.
-  // We deliberately merge only hostname to avoid accidentally carrying over
-  // other defaults like `keepAliveTimeout` that tests expect to be reset.
+  // Other defaults like `keepAliveTimeout` remain reset as expected by tests.
   const mergedConfig = Object.assign({}, defaultConfig, options)
-  if (options?.server && !options.server.hostname) {
-    mergedConfig.server = { hostname: defaultConfig.server.hostname, ...options.server }
+  if (options?.server) {
+    mergedConfig.server = {
+      hostname: defaultConfig.server.hostname,
+      port: defaultConfig.server.port,
+      ...options.server
+    }
   }
 
   const gateway = await create(directory, mergedConfig, {
     applicationFactory,
     isStandalone: true,
-    isEntrypoint: true,
     isProduction: creationOptions.production
   })
   t.after(() => gateway.stop())
@@ -479,7 +483,6 @@ export async function createGatewayInRuntime (
     runtimeConfigPath,
     JSON.stringify({
       $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
-      entrypoint: 'composer',
       watch: false,
       services: (applications ?? []).concat([
         {
@@ -512,7 +515,12 @@ export async function createGatewayInRuntime (
           }
         ]
       },
-      ...gatewayConfig
+      ...gatewayConfig,
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        ...gatewayConfig.server
+      }
     }),
     'utf-8'
   )
@@ -568,8 +576,8 @@ export async function waitForRestart (runtime) {
     return Promise.reject(new Error('Timeout while waiting for application to restart'))
   }
 
-  const entrypoint = await runtime.getEntrypointDetails()
-  return entrypoint.url
+  const application = await runtime.getApplicationDetails('composer')
+  return application.url
 }
 
 export async function checkSchema (runtime, schema) {

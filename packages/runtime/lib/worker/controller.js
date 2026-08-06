@@ -59,13 +59,12 @@ function handleUnhandled (app, event, listeners, timeout, err, ...args) {
 export class Controller extends EventEmitter {
   #starting
   #started
-  #listening
   #watch
   #fileWatcher
   #debouncedRestart
   #context
 
-  constructor (runtimeConfig, applicationConfig, workerId, serverConfig, metricsConfig) {
+  constructor (runtimeConfig, applicationConfig, workerId, metricsConfig) {
     super()
     this.runtimeConfig = runtimeConfig
     this.applicationConfig = applicationConfig
@@ -74,7 +73,6 @@ export class Controller extends EventEmitter {
     this.#watch = !!runtimeConfig.watch
     this.#starting = false
     this.#started = false
-    this.#listening = false
     this.capability = null
     this.#fileWatcher = null
 
@@ -86,12 +84,10 @@ export class Controller extends EventEmitter {
       workerId: this.workerId,
       directory: this.applicationConfig.path,
       dependencies: this.applicationConfig.dependencies,
-      isEntrypoint: this.applicationConfig.entrypoint,
       isProduction: this.applicationConfig.isProduction,
       telemetryConfig: this.applicationConfig.telemetry,
       loggerConfig: runtimeConfig.logger,
       metricsConfig,
-      serverConfig,
       worker: workerData?.worker,
       resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
@@ -189,6 +185,7 @@ export class Controller extends EventEmitter {
 
     try {
       await this.capability.init?.()
+
       this.emit('init')
     } catch (err) {
       this.#logAndThrow(err)
@@ -198,7 +195,6 @@ export class Controller extends EventEmitter {
       return
     }
 
-    this.#updateCapabilityStatus('starting')
     this.emit('starting')
 
     if (this.#watch) {
@@ -215,17 +211,13 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!this.applicationConfig.useHttp
-
     try {
-      await this.capability.start({ listen })
+      await this.capability.start()
       if (refreshGlobalDispatcher()) {
         this.#updateDispatcher()
       }
-      this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
-      this.#updateCapabilityStatus('start:error')
       this.emit('start:error', err)
 
       this.capability.log({ message: err.message, level: 'debug' })
@@ -236,8 +228,11 @@ export class Controller extends EventEmitter {
     this.#started = true
     this.#starting = false
 
-    this.#updateCapabilityStatus('started')
     this.emit('started')
+  }
+
+  getUrl () {
+    return this.capability.getUrl()
   }
 
   async stop (force = false, dependents = []) {
@@ -246,9 +241,6 @@ export class Controller extends EventEmitter {
     }
 
     this.emit('stopping')
-    // Do not update status of the capability to "stopping" here otherwise
-    // if stop is called before start is finished, the capability will not
-    // be able to wait for start to finish and it will create a race condition.
 
     await this.#stopFileWatching()
     await this.capability.waitForDependentsStop(dependents)
@@ -256,19 +248,8 @@ export class Controller extends EventEmitter {
 
     this.#started = false
     this.#starting = false
-    this.#listening = false
 
-    this.#updateCapabilityStatus('stopped')
     this.emit('stopped')
-  }
-
-  async listen () {
-    // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (!this.applicationConfig.entrypoint || this.applicationConfig.useHttp || this.#listening) {
-      return
-    }
-
-    await this.capability.start({ listen: true })
   }
 
   async getMetrics ({ format }) {
@@ -395,15 +376,5 @@ export class Controller extends EventEmitter {
         })
       }
     })
-  }
-
-  #updateCapabilityStatus (status) {
-    if (typeof this.capability.updateStatus === 'function') {
-      this.capability.updateStatus(status)
-    } else {
-      // This is horrible but needed for backward compatibility
-      this.capability.status = status
-      this.capability.emit(status)
-    }
   }
 }

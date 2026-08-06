@@ -14,8 +14,6 @@ test('metrics with applicationLabel set to serviceId uses serviceId label', asyn
       port: 0,
       applicationLabel: 'serviceId'
     }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
     return config
   })
 
@@ -49,8 +47,6 @@ test('metrics without applicationLabel uses applicationId label (default behavio
       port: 0
       // applicationLabel is not set, so it should default to 'applicationId'
     }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
     return config
   })
 
@@ -84,8 +80,6 @@ test('getFormattedMetrics handles custom applicationLabel', async t => {
       port: 0,
       applicationLabel: 'serviceId'
     }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
     return config
   })
 
@@ -117,8 +111,6 @@ test('metrics with custom applicationLabel and custom labels', async t => {
       port: 0,
       applicationLabel: 'customAppName'
     }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
     return config
   })
 

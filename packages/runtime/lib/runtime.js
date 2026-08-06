@@ -34,11 +34,11 @@ import { Agent, request, interceptors as undiciInterceptors } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
 import {
+  AddressInUseError,
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
-  CannotRemoveEntrypointError,
   DuplicateITCHandlerNameError,
   FailedToLoadExtensionError,
   InvalidArgumentError,
@@ -78,6 +78,7 @@ import {
   kStderrMarker,
   kWorkerHealthSignals,
   kWorkerId,
+  kWorkerUrl,
   kWorkersBroadcast,
   kWorkerStartTime,
   kWorkerStatus
@@ -163,9 +164,6 @@ export class Runtime extends EventEmitter {
   #sharedContext
   #isProduction
   #concurrency
-  #entrypointId
-  #url
-  #entrypointPort
 
   #healthMetricsTimer
   #healthMetricsCollectionActive
@@ -194,7 +192,6 @@ export class Runtime extends EventEmitter {
   #restartingWorkers
   #dynamicWorkersScaler
   #nextWorkerIndex
-  #workerPortOffsets
 
   #sharedHttpCache
   #scheduler
@@ -221,8 +218,6 @@ export class Runtime extends EventEmitter {
     this.#applications = new Map()
     this.#applicationRestartCounts = new Map()
     this.#workers = new RoundRobinMap()
-    this.#url = undefined
-    this.#entrypointPort = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
@@ -236,7 +231,6 @@ export class Runtime extends EventEmitter {
     this.#restartingApplications = new Set()
     this.#restartingWorkers = new Map()
     this.#nextWorkerIndex = new Map()
-    this.#workerPortOffsets = new Map() // fullWorkerId => portOffset
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
 
@@ -360,7 +354,7 @@ export class Runtime extends EventEmitter {
       if (applications.length === 0) {
         this.#updateStatus('started')
         await this.close(silent)
-        return
+        return {}
       }
 
       if (this.#config.inspectorOptions) {
@@ -407,10 +401,8 @@ export class Runtime extends EventEmitter {
     this.#startHealthMetricsCollectionIfNeeded()
 
     await this.#dynamicWorkersScaler?.start()
-    if (this.#url) {
-      this.#showUrl()
-    }
-    return this.#url
+    this.#showUrls()
+    return this.getUrls()
   }
 
   async stop (silent = false) {
@@ -429,11 +421,6 @@ export class Runtime extends EventEmitter {
     }
 
     await this.#dynamicWorkersScaler?.stop()
-
-    // Stop the entrypoint first so that no new requests are accepted
-    if (this.#entrypointId) {
-      await this.stopApplication(this.#entrypointId, silent)
-    }
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
@@ -455,8 +442,6 @@ export class Runtime extends EventEmitter {
     await this.restartApplications(toRestart)
 
     this.emitAndNotify('restarted')
-
-    return this.#url
   }
 
   async close (silent = false) {
@@ -599,25 +584,8 @@ export class Runtime extends EventEmitter {
 
   async addApplications (applications, start = false) {
     const setupInvocations = []
-    // Per-worker ports do not need SO_REUSEPORT because each worker binds a different port.
-    const usesPerWorkerPorts = this.#config.server?.portAssignment === 'perWorkerIncrement'
-
     const toStart = []
     for (const application of applications) {
-      const workers = application.workers
-
-      if (
-        (workers.static > 1 || workers.minimum > 1) &&
-        application.entrypoint &&
-        !features.node.reusePort &&
-        !usesPerWorkerPorts
-      ) {
-        this.logger.warn(
-          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
-        )
-        application.workers = { dynamic: false, static: 1 }
-      }
-
       this.#applications.set(application.id, application)
       this.#applicationRestartCounts.set(application.id, this.#applicationRestartCounts.get(application.id) ?? 0)
       setupInvocations.push([application])
@@ -627,7 +595,7 @@ export class Runtime extends EventEmitter {
     await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
 
     for (const application of applications) {
-      this.logger.debug(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
+      this.logger.debug(`Added application "${application.id}".`)
       this.emitAndNotify('application:added', application)
     }
 
@@ -645,10 +613,6 @@ export class Runtime extends EventEmitter {
   }
 
   async removeApplications (applications, silent = false) {
-    if (applications.includes(this.#entrypointId)) {
-      throw new CannotRemoveEntrypointError()
-    }
-
     const removed = []
     for (const application of applications) {
       if (!this.#applications.has(application)) {
@@ -711,16 +675,21 @@ export class Runtime extends EventEmitter {
 
     if (!skipDependencies) {
       try {
-        const { applications } = await this.getApplications(true)
-        for (const application of applications) {
-          for (const dependency of application.dependencies ?? []) {
-            let applicationDependents = dependents[dependency]
-            if (!applicationDependents) {
-              applicationDependents = new Set()
-              dependents[dependency] = applicationDependents
-            }
+        const details = await executeWithTimeout(
+          this.getApplications(true),
+          this.#config.gracefulShutdown.application
+        )
+        if (details !== kTimeout) {
+          for (const application of details.applications) {
+            for (const dependency of application.dependencies ?? []) {
+              let applicationDependents = dependents[dependency]
+              if (!applicationDependents) {
+                applicationDependents = new Set()
+                dependents[dependency] = applicationDependents
+              }
 
-            applicationDependents.add(application.id)
+              applicationDependents.add(application.id)
+            }
           }
         }
       } catch (e) {
@@ -729,11 +698,6 @@ export class Runtime extends EventEmitter {
     }
 
     for (const application of applicationsToStop) {
-      // The entrypoint has been stopped above
-      if (application === this.#entrypointId) {
-        continue
-      }
-
       stopInvocations.push([application, silent, Array.from(dependents[application] ?? [])])
     }
 
@@ -741,13 +705,39 @@ export class Runtime extends EventEmitter {
   }
 
   async restartApplications (applicationsToRestart) {
-    const restartInvocations = []
+    const restartInvocations = applicationsToRestart.map(application => [application, true])
+    const restarts = await executeInParallel(
+      this.restartApplication.bind(this),
+      restartInvocations,
+      this.#concurrency,
+      false
+    )
+    const failed = restarts.filter(result => result instanceof Error)
+    const succeeded = restarts.filter(result => result && !(result instanceof Error))
 
-    for (const application of applicationsToRestart) {
-      restartInvocations.push([application])
+    if (failed.length > 0) {
+      await Promise.allSettled(succeeded.map(restart => restart.discard()))
+      throw failed[0]
     }
 
-    return executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
+    const results = await executeInParallel(
+      retirement => retirement.retire(),
+      succeeded.flatMap(({ retirements }) => retirements.map(retirement => [retirement])),
+      this.#concurrency,
+      false
+    )
+
+    const error = results.find(result => result instanceof Error)
+    if (error) {
+      for (const restart of succeeded) {
+        restart.release()
+      }
+      throw error
+    }
+
+    for (const restart of succeeded) {
+      restart.complete()
+    }
   }
 
   async startApplication (id, silent = false) {
@@ -800,7 +790,7 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:stopped', id)
   }
 
-  async restartApplication (id) {
+  async restartApplication (id, deferOldWorkerRetirement = false) {
     const applicationConfig = this.#applications.get(id)
 
     if (!applicationConfig) {
@@ -819,6 +809,8 @@ export class Runtime extends EventEmitter {
     }
 
     this.#restartingApplications.add(id)
+    const retirements = []
+    let deferred = false
 
     try {
       const config = this.#config
@@ -836,13 +828,44 @@ export class Runtime extends EventEmitter {
           await sleep(config.workersRestartDelay)
         }
 
-        await this.#replaceWorker(config, applicationConfig, workersCount, id, workerIndex, worker, true)
+        const retirement = await this.#replaceWorker(
+          config,
+          applicationConfig,
+          workersCount,
+          id,
+          workerIndex,
+          worker,
+          true,
+          deferOldWorkerRetirement
+        )
+        if (retirement) {
+          retirements.push(retirement)
+        }
+      }
+
+      if (deferOldWorkerRetirement) {
+        deferred = true
+        return {
+          retirements,
+          release: () => this.#restartingApplications.delete(id),
+          discard: async () => {
+            await Promise.allSettled(retirements.map(retirement => retirement.discard()))
+            this.#restartingApplications.delete(id)
+          },
+          complete: () => {
+            this.#incrementApplicationRestartCount(id)
+            this.emitAndNotify('application:restarted', id)
+            this.#restartingApplications.delete(id)
+          }
+        }
       }
 
       this.#incrementApplicationRestartCount(id)
       this.emitAndNotify('application:restarted', id)
     } finally {
-      this.#restartingApplications.delete(id)
+      if (!deferred) {
+        this.#restartingApplications.delete(id)
+      }
     }
   }
 
@@ -1282,8 +1305,20 @@ export class Runtime extends EventEmitter {
     return this.#root
   }
 
-  getUrl () {
-    return this.#url
+  getUrls (applicationId) {
+    const urls = {}
+    const applicationIds = applicationId ? [applicationId] : this.#applications.keys()
+
+    for (const id of applicationIds) {
+      for (const workerId of this.#workers.getKeys(id)) {
+        const url = this.#workers.get(workerId)?.[kWorkerUrl]
+        if (url) {
+          urls[workerId] = url
+        }
+      }
+    }
+
+    return urls
   }
 
   getRuntimeStatus () {
@@ -1292,8 +1327,6 @@ export class Runtime extends EventEmitter {
 
   async getRuntimeMetadata () {
     const packageJson = await this.#getRuntimePackageJson()
-    const entrypointDetails = await this.getEntrypointDetails()
-
     return {
       pid: process.pid,
       cwd: process.cwd(),
@@ -1304,8 +1337,8 @@ export class Runtime extends EventEmitter {
       projectDir: this.#root,
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
-      url: entrypointDetails?.url ?? null,
-      platformaticVersion: version
+      platformaticVersion: version,
+      urls: this.getUrls()
     }
   }
 
@@ -1336,14 +1369,6 @@ export class Runtime extends EventEmitter {
 
   getManagementApiUrl () {
     return this.#managementApi?.server.address() ?? null
-  }
-
-  async getEntrypointDetails () {
-    if (!this.#entrypointId) {
-      return null
-    }
-
-    return this.getApplicationDetails(this.#entrypointId)
   }
 
   async getCustomHealthChecks () {
@@ -1686,12 +1711,11 @@ export class Runtime extends EventEmitter {
   }
 
   getApplicationsIds () {
-    return Array.from(this.#applications.keys())
+    return Array.from(this.#applications.keys()).sort()
   }
 
   async getApplications (allowUnloaded = false) {
     return {
-      entrypoint: this.#entrypointId,
       production: this.#isProduction,
       applications: await Promise.all(
         this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
@@ -1727,7 +1751,7 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    const { entrypoint, localUrl, config, path } = application[kConfig]
+    const { localUrl, config, path } = application[kConfig]
 
     const sourceMaps = application[kConfig].sourceMaps ?? this.#config.sourceMaps
     const status = await sendViaITC(application, 'getStatus')
@@ -1742,7 +1766,6 @@ export class Runtime extends EventEmitter {
       dependencies,
       version,
       localUrl,
-      entrypoint,
       sourceMaps
     }
 
@@ -1750,9 +1773,9 @@ export class Runtime extends EventEmitter {
       applicationDetails.workers = this.#workers.getKeys(id).length
     }
 
-    if (entrypoint) {
-      applicationDetails.url = status === 'started' ? this.#url : null
-    }
+    const urls = status === 'started' ? Object.values(this.getUrls(id)) : []
+    applicationDetails.urls = urls
+    applicationDetails.url = urls[0] ?? null
 
     return applicationDetails
   }
@@ -1796,6 +1819,7 @@ export class Runtime extends EventEmitter {
         worker: index,
         status: worker[kWorkerStatus],
         thread: worker.threadId,
+        url: worker[kWorkerUrl] ?? null,
         raw: includeRaw ? worker : undefined
       }
     }
@@ -1917,12 +1941,26 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify(status, args)
   }
 
-  #showUrl () {
-    if (!this.#url) {
-      return
-    }
+  #showUrls (workerIds) {
+    const whitelist = workerIds ? new Set(workerIds) : null
 
-    this.logger.info(`Platformatic is now listening at ${this.#url}`)
+    for (const applicationId of this.#applications.keys()) {
+      for (const workerId of this.#workers.getKeys(applicationId)) {
+        if (whitelist && !whitelist.has(workerId)) {
+          continue
+        }
+
+        const worker = this.#workers.get(workerId)
+        const url = worker?.[kWorkerUrl]
+        if (!url) {
+          continue
+        }
+
+        this.logger.info(
+          `Platformatic is now listening at ${url} for ${this.#workerExtendedLabel(applicationId, worker[kWorkerId])}`
+        )
+      }
+    }
   }
 
   async #setupApplication (applicationConfig) {
@@ -1962,7 +2000,6 @@ export class Runtime extends EventEmitter {
     const setupInvocations = []
 
     for (let i = 0; i < workers; i++) {
-      this.#workerPortOffsets.set(`${id}:${i}`, i)
       setupInvocations.push([config, applicationConfig, workers, id, i])
     }
 
@@ -1988,12 +2025,6 @@ export class Runtime extends EventEmitter {
       }
 
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
-    }
-
-    let serverConfigOverride
-    if (this.#config.server?.portAssignment === 'perWorkerIncrement') {
-      const portOffset = this.#workerPortOffsets.get(workerId)
-      serverConfigOverride = { port: Number(this.#config.server.port) + portOffset }
     }
 
     if (config.telemetry) {
@@ -2059,17 +2090,7 @@ export class Runtime extends EventEmitter {
     const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
     const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
-    const workerConfig = {
-      ...config,
-      preload
-    }
-
-    if (config.server && serverConfigOverride) {
-      workerConfig.server = {
-        ...config.server,
-        ...serverConfigOverride
-      }
-    }
+    const workerConfig = { ...config, preload }
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
@@ -2122,7 +2143,6 @@ export class Runtime extends EventEmitter {
       worker[kWorkerStatus] = 'exited'
       this.emitAndNotify('application:worker:exited', eventPayload)
 
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
       this.#cleanupWorker(worker)
 
       if (this.#status === 'stopping') {
@@ -2147,11 +2167,17 @@ export class Runtime extends EventEmitter {
               this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms ...`)
             }
 
-            this.#restartCrashedWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, portOffset).catch(
-              err => {
-                this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
-              }
-            )
+            this.#restartCrashedWorker(
+              config,
+              applicationConfig,
+              workersCount,
+              applicationId,
+              index,
+              false,
+              0
+            ).catch(err => {
+              this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
+            })
           } else {
             this.emitAndNotify('application:worker:unvailable', eventPayload)
             this.logger.warn(`The ${errorLabel} is no longer available.`)
@@ -2372,9 +2398,7 @@ export class Runtime extends EventEmitter {
           this.logger.info(`The application "${applicationId}" has been successfully reloaded.`)
           this.emitAndNotify('application:worker:reloaded', eventPayload)
 
-          if (applicationConfig.entrypoint) {
-            this.#showUrl()
-          }
+          this.#showUrls(this.#workers.getKeys(applicationId))
         } catch (e) {
           this.logger.error(e)
         }
@@ -2410,10 +2434,6 @@ export class Runtime extends EventEmitter {
 
       this.#workers.delete(workerId)
       return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled, attempt + 1)
-    }
-
-    if (applicationConfig.entrypoint) {
-      this.#entrypointId = applicationId
     }
 
     worker[kConfig] = { ...applicationConfig, health, workers: workersCount }
@@ -2828,23 +2848,7 @@ export class Runtime extends EventEmitter {
 
       await this.#avoidOutOfOrderThreadLogs()
 
-      if (workerUrl) {
-        this.#url = workerUrl
-
-        // Pin the entrypoint port so that subsequent restarts (especially with
-        // stopBeforeStart when reuseTcpPorts is false) bind to the same port
-        // instead of getting a new random one.
-        if (applicationConfig.entrypoint) {
-          try {
-            const boundPort = Number(new URL(workerUrl).port)
-            if (boundPort) {
-              this.#entrypointPort = boundPort
-            }
-          } catch {
-            // URL parsing failed, leave unchanged
-          }
-        }
-      }
+      this.#recordWorkerUrl(worker, id, workerUrl)
 
       // Wait for the interceptor to be ready
       const interceptorResult = await executeWithTimeout(worker[kInterceptorReadyPromise], config.startTimeout)
@@ -2874,12 +2878,15 @@ export class Runtime extends EventEmitter {
         ).unref()
       }
     } catch (err) {
-      const error = ensureError(err)
+      let error = ensureError(err)
       worker[kITC].notify('application:worker:start:processed')
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
 
-      // TODO: handle port allocation error here
-      if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
+      if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {
+        const port = Number(error.port)
+        const owner = this.#getPortOwner(port, id)
+        error = new AddressInUseError(port, owner ?? 'another process', id)
+      }
+      if (error.code === 'EACCES') throw error
 
       this.#cleanupWorker(worker)
 
@@ -2903,7 +2910,14 @@ export class Runtime extends EventEmitter {
 
       const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
-      if (disableRestartAttempts || !restartOnError) {
+      if (
+        disableRestartAttempts ||
+        !restartOnError ||
+        error.code === 'EACCES' ||
+        error.code === 'EADDRINUSE' ||
+        error.code === 'EADDRNOTAVAIL' ||
+        error.code === 'PLT_RUNTIME_EADDR_IN_USE'
+      ) {
         throw error
       }
 
@@ -2923,7 +2937,7 @@ export class Runtime extends EventEmitter {
         )
       }
 
-      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt, portOffset)
+      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt)
     }
   }
 
@@ -2986,13 +3000,13 @@ export class Runtime extends EventEmitter {
     await this.#avoidOutOfOrderThreadLogs()
 
     worker[kWorkerStatus] = 'stopped'
+    worker[kWorkerUrl] = undefined
     this.emitAndNotify('application:worker:stopped', eventPayload)
     this.#broadcastWorkers()
   }
 
   #cleanupWorker (worker) {
     clearTimeout(worker[kHealthCheckTimer])
-    this.#workerPortOffsets.delete(worker[kFullId])
 
     const currentWorker = this.#workers.get(worker[kFullId])
 
@@ -3037,7 +3051,15 @@ export class Runtime extends EventEmitter {
     return restartOnError
   }
 
-  async #restartCrashedWorker (config, applicationConfig, workersCount, id, oldIndex, silent, bootstrapAttempt, portOffset) {
+  async #restartCrashedWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    id,
+    oldIndex,
+    silent,
+    bootstrapAttempt
+  ) {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
     // Use oldIndex for tracking to prevent duplicate restarts of the same crashed worker
@@ -3056,17 +3078,24 @@ export class Runtime extends EventEmitter {
         // If some processes were scheduled to restart
         // but the runtime is stopped, ignore it
         if (!this.#status.startsWith('start')) {
+          resolve()
           return
         }
 
         // Get a new unique index for the restarted worker
         const newIndex = this.#getNextWorkerIndex(id)
-        const newWorkerId = `${id}:${newIndex}`
-        this.#workerPortOffsets.set(newWorkerId, portOffset)
 
         try {
           await this.#setupWorker(config, applicationConfig, workersCount, id, newIndex)
-          await this.#startWorker(config, applicationConfig, workersCount, id, newIndex, silent, bootstrapAttempt)
+          await this.#startWorker(
+            config,
+            applicationConfig,
+            workersCount,
+            id,
+            newIndex,
+            silent,
+            bootstrapAttempt
+          )
           this.#incrementApplicationRestartCount(id)
 
           this.logger.info(
@@ -3074,11 +3103,10 @@ export class Runtime extends EventEmitter {
           )
           resolve()
         } catch (err) {
-          this.#workerPortOffsets.delete(newWorkerId)
-
           // The runtime was stopped while the restart was happening, ignore any error.
           if (!this.#status.startsWith('start')) {
             resolve()
+            return
           }
 
           reject(err)
@@ -3096,7 +3124,16 @@ export class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, applicationConfig, workersCount, applicationId, oldIndex, worker, silent) {
+  async #replaceWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    applicationId,
+    oldIndex,
+    worker,
+    silent,
+    deferOldWorkerRetirement = false
+  ) {
     const oldLabel = this.#workerExtendedLabel(applicationId, oldIndex, workersCount)
     let newWorker
 
@@ -3104,22 +3141,10 @@ export class Runtime extends EventEmitter {
     const newIndex = this.#getNextWorkerIndex(applicationId)
     const newWorkerId = `${applicationId}:${newIndex}`
     const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
-    const portOffset = this.#workerPortOffsets.get(`${applicationId}:${oldIndex}`)
-    this.#workerPortOffsets.set(newWorkerId, portOffset)
 
     const stopBeforeStart =
-      applicationConfig.entrypoint &&
+      Boolean(worker[kWorkerUrl]) &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
-
-    // When we must stop before start (no reusePort available), pin the entrypoint
-    // port in the config so the replacement worker binds to the same port.
-    // We only do this for stopBeforeStart because when reusePort is available
-    // the new worker starts alongside the old one and must use port 0 to avoid
-    // SO_REUSEPORT routing requests to the stale old worker.
-    let configForNewWorker = config
-    if (stopBeforeStart && this.#entrypointPort && config.server) {
-      configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
-    }
 
     try {
       if (!silent) {
@@ -3130,8 +3155,14 @@ export class Runtime extends EventEmitter {
         await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
       }
 
-      // Create a new worker with a new index, preserving any pinned port when stopBeforeStart is required.
-      newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false)
+      newWorker = await this.#setupWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        newIndex,
+        false
+      )
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -3144,15 +3175,23 @@ export class Runtime extends EventEmitter {
       this.#workers.set(newWorkerId, newWorker)
 
       // Add the worker to the mesh
-      await this.#startWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false, 0, newWorker, true)
+      await this.#startWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        newIndex,
+        false,
+        0,
+        newWorker,
+        true
+      )
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
         return this.#discardWorker(newWorker)
       }
     } catch (e) {
-      this.#workerPortOffsets.delete(newWorkerId)
-
       if (this.#workers.get(newWorkerId) === newWorker) {
         this.#workers.delete(newWorkerId)
       }
@@ -3162,6 +3201,13 @@ export class Runtime extends EventEmitter {
     }
 
     if (!stopBeforeStart) {
+      if (deferOldWorkerRetirement) {
+        return {
+          discard: () => this.#discardWorker(newWorker),
+          retire: () => this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
+        }
+      }
+
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
   }
@@ -3711,25 +3757,19 @@ export class Runtime extends EventEmitter {
 
     if (currentWorkers < workers) {
       report.started = []
-      let pendingWorkerId
 
       try {
         for (let i = currentWorkers; i < workers; i++) {
           const newIndex = this.#getNextWorkerIndex(applicationId)
-          pendingWorkerId = `${applicationId}:${newIndex}`
-          this.#workerPortOffsets.set(pendingWorkerId, i)
 
           await this.#setupWorker(config, applicationConfig, workers, applicationId, newIndex)
           await this.#startWorker(config, applicationConfig, workers, applicationId, newIndex, false, 0)
 
-          pendingWorkerId = undefined
           report.started.push(newIndex)
           startedWorkersCount++
         }
         report.success = true
       } catch (err) {
-        pendingWorkerId && this.#workerPortOffsets.delete(pendingWorkerId)
-
         if (startedWorkersCount < 1) {
           this.logger.error({ err }, 'Cannot start application workers, no worker started')
         } else {
@@ -3745,22 +3785,10 @@ export class Runtime extends EventEmitter {
       report.stopped = []
       try {
         const workersToStop = currentWorkers - workers
-        const allInOnePort = this.#config.server?.portAssignment !== 'perWorkerIncrement'
         const workerIdsToStop = this.#workers
           .getKeys(applicationId)
           .map(key => parseInt(key.split(':')[1], 10))
-
-        if (allInOnePort) {
-          // Stop most recent workers first.
-          workerIdsToStop.sort((a, b) => b - a)
-        } else {
-          // When port increment is enabled, disable the workers with the highest ports.
-          workerIdsToStop.sort((a, b) => {
-            const offsetA = this.#workerPortOffsets.get(`${applicationId}:${a}`) ?? a
-            const offsetB = this.#workerPortOffsets.get(`${applicationId}:${b}`) ?? b
-            return offsetB - offsetA
-          })
-        }
+          .sort((a, b) => b - a)
 
         for (const workerIndex of workerIdsToStop.splice(0, workersToStop)) {
           const worker = this.#workers.get(`${applicationId}:${workerIndex}`)
@@ -3996,5 +4024,57 @@ export class Runtime extends EventEmitter {
 
     this.emit('application:worker:init:failed', { application: worker[kApplicationId], worker: worker[kWorkerId] })
     worker.terminate()
+  }
+
+  #getPortOwner (port, applicationId, hostname) {
+    if (!Number.isInteger(port) || port <= 0) {
+      return null
+    }
+
+    for (const worker of this.#workers.values()) {
+      if (!worker[kWorkerUrl] || worker[kApplicationId] === applicationId) {
+        continue
+      }
+
+      try {
+        const url = new URL(worker[kWorkerUrl])
+        const workerPort = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
+        const workerHost = url.hostname
+        if (workerPort === port && this.#listenersOverlap(hostname ?? workerHost, workerHost)) {
+          return worker[kApplicationId]
+        }
+      } catch {}
+    }
+
+    return null
+  }
+
+  #listenersOverlap (host, otherHost) {
+    host = host.toLowerCase()
+    const wildcards = new Set(['0.0.0.0', '::', '[::]'])
+    otherHost = otherHost.toLowerCase()
+    return host === otherHost || wildcards.has(host) || wildcards.has(otherHost)
+  }
+
+  #recordWorkerUrl (worker, applicationId, workerUrl) {
+    if (!workerUrl) {
+      worker[kWorkerUrl] = undefined
+      return
+    }
+
+    let hostname
+    let port
+    try {
+      const url = new URL(workerUrl)
+      hostname = url.hostname
+      port = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
+    } catch {}
+
+    const owner = this.#getPortOwner(port, applicationId, hostname)
+    if (owner) {
+      throw new AddressInUseError(port, owner, applicationId)
+    }
+
+    worker[kWorkerUrl] = workerUrl
   }
 }

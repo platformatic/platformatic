@@ -23,7 +23,7 @@ test('propagate the traceId correctly to runtime applications', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'echo:0': entryUrl } = await app.start()
 
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
   const spanId = '166f3ab30f21800b'
@@ -49,7 +49,7 @@ test('attach x-plt-telemetry-id header', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'echo:0': entryUrl } = await app.start()
 
   const res = await request(entryUrl, {
     method: 'GET',
@@ -72,7 +72,7 @@ test('disabled telemetry', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'echo:0': entryUrl } = await app.start()
 
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
   const spanId = '166f3ab30f21800b'
@@ -109,7 +109,7 @@ test('propagate telemetry over messaging to pure ITC applications', async t => {
   let response
 
   try {
-    const entryUrl = await app.start()
+    const { 'entrypoint:0': entryUrl } = await app.start()
     const res = await request(entryUrl, {
       method: 'GET',
       path: '/send/abcde'
@@ -174,7 +174,7 @@ test('allow custom telemetry metadata for ITC messaging', async t => {
   let response
 
   try {
-    const entryUrl = await app.start()
+    const { 'entrypoint:0': entryUrl } = await app.start()
     const res = await request(entryUrl, {
       method: 'GET',
       path: '/send-manual/abcde',
@@ -224,7 +224,7 @@ test('mark messaging spans as errors when pure ITC handlers fail', async t => {
   const app = await createRuntime(configFile)
 
   try {
-    const entryUrl = await app.start()
+    const { 'entrypoint:0': entryUrl } = await app.start()
     const res = await request(entryUrl, {
       method: 'GET',
       path: '/fail'

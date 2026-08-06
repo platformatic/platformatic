@@ -75,13 +75,8 @@ export class NextCapability extends BaseCapability {
     }
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     this.on('config', config => {
       this.#configModified = true
@@ -89,9 +84,9 @@ export class NextCapability extends BaseCapability {
     })
 
     if (this.isProduction) {
-      await this.#startProduction(listen)
+      await this.#startProduction()
     } else {
-      await this.#startDevelopment(listen)
+      await this.#startDevelopment()
     }
 
     await this._collectMetrics()
@@ -109,8 +104,8 @@ export class NextCapability extends BaseCapability {
     }
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.subprocess) {
       return this.stopCommand()
@@ -211,7 +206,11 @@ export class NextCapability extends BaseCapability {
       return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
     }
 
-    const { hostname, port } = this.serverConfig ?? {}
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const { hostname, port } = this.serverConfig
     const serverOptions = {
       host: hostname || '127.0.0.1',
       port: port || 0
@@ -324,6 +323,10 @@ export class NextCapability extends BaseCapability {
       return this.startWithCommand(command, loaderUrl, childManagerScripts)
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     this.childManager = this.#createChildManager(
       loaderUrl,
       await this.getChildManagerContext(this.#basePath),
@@ -344,7 +347,7 @@ export class NextCapability extends BaseCapability {
       await this.childManager.inject()
       const { nextStart } = await importFile(resolvePath(this.#next, './dist/cli/next-start.js'))
 
-      const { hostname, port, backlog } = this.serverConfig ?? {}
+      const { hostname, port } = this.serverConfig ?? {}
       const serverOptions = {
         hostname: hostname || '127.0.0.1',
         port: port || 0
@@ -352,15 +355,11 @@ export class NextCapability extends BaseCapability {
 
       await this.childManager.register()
 
-      const serverPromise = createServerListener(
-        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-        typeof backlog === 'number' ? { backlog } : {}
-      )
+      const serverPromise = createServerListener()
 
       if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
         await nextStart({
-          '--hostname': serverOptions.host,
+          '--hostname': serverOptions.hostname,
           '--port': serverOptions.port,
           _: [this.root]
         })
@@ -403,17 +402,13 @@ export class NextCapability extends BaseCapability {
       await this.childManager.inject()
       await this.childManager.register()
 
-      const { hostname, port, backlog } = this.serverConfig ?? {}
+      const { hostname, port } = this.serverConfig ?? {}
       const serverOptions = {
         hostname: hostname || '127.0.0.1',
         port: port || 0
       }
 
-      const serverPromise = createServerListener(
-        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-        typeof backlog === 'number' ? { backlog } : {}
-      )
+      const serverPromise = createServerListener()
 
       let keepAliveTimeout = parseInt(process.env.KEEP_ALIVE_TIMEOUT, 10)
       if (Number.isNaN(keepAliveTimeout) || !Number.isFinite(keepAliveTimeout) || keepAliveTimeout < 0) {

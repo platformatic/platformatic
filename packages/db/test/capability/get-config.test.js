@@ -46,7 +46,8 @@ test('get application config via capability api', async t => {
       logger: {
         level: 'fatal'
       },
-      pluginTimeout: 60000
+      pluginTimeout: 60000,
+      trustProxy: true
     },
     watch: {
       enabled: false

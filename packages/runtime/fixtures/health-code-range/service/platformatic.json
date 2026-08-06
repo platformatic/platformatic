@@ -1,11 +1,15 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.6.0.json",
   "plugins": {
-    "paths": ["./plugin.js"]
+    "paths": [
+      "./plugin.js"
+    ]
   },
   "server": {
     "logger": {
       "level": "error"
-    }
+    },
+    "hostname": "127.0.0.1",
+    "port": 0
   }
 }

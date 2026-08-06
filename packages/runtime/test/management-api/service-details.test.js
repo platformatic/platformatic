@@ -37,15 +37,14 @@ test('should get application details', async t => {
 
   strictEqual(statusCode, 200)
 
-  const entrypointDetails = await app.getEntrypointDetails()
-  const applicationDetails = await body.json()
+  const { url, urls, ...applicationDetails } = await body.json()
+  deepStrictEqual(urls, [url])
+  strictEqual(new URL(url).protocol, 'http:')
   deepStrictEqual(applicationDetails, {
     id: 'service-1',
     type: 'service',
     status: 'started',
     version,
-    entrypoint: true,
-    url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',
     config: resolve(configFile, '../../management-api/services/service-1/platformatic.json'),
     path: resolve(configFile, '../../management-api/services/service-1'),

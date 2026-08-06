@@ -24,7 +24,7 @@ test('should be able to add and remove applications with auto restart of compose
     })
   }
 
-  let url = await runtime.start()
+  let { 'composer:0': url } = await runtime.start()
 
   ok(!events.find(e => e.payload.id === 'application-2'))
 
@@ -60,7 +60,7 @@ test('should be able to add and remove applications with auto restart of compose
     ok(events.find(e => e.event === 'application:added' && e.payload.id === 'application-2'))
     ok(events.find(e => e.event === 'application:started' && e.payload === 'application-2'))
 
-    url = runtime.getUrl()
+    url = (await runtime.getApplicationDetails('composer')).url
 
     {
       const res = await request(url + '/application-1/hello')
@@ -89,7 +89,7 @@ test('should be able to add and remove applications with auto restart of compose
     ok(events.find(e => e.event === 'application:stopped' && e.payload === 'application-1'))
     ok(events.find(e => e.event === 'application:removed' && e.payload === 'application-1'))
 
-    url = runtime.getUrl()
+    url = (await runtime.getApplicationDetails('composer')).url
 
     {
       const res = await request(url + '/application-1/hello')
@@ -102,18 +102,6 @@ test('should be able to add and remove applications with auto restart of compose
       deepStrictEqual(await res.body.json(), { from: 'application-2' })
     }
   }
-})
-
-test('should not allow to remove the entrypoint', async t => {
-  const configFile = join(fixturesDir, 'dynamic-applications')
-  const runtime = await createRuntime(configFile, null)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.start()
-  await rejects(() => runtime.removeApplications(['composer']), /Cannot remove the entrypoint application./)
 })
 
 test('mesh network should work properly when adding and removing applications', async t => {
@@ -132,7 +120,7 @@ test('mesh network should work properly when adding and removing applications', 
     })
   }
 
-  let url = await runtime.start()
+  let { 'composer:0': url } = await runtime.start()
 
   ok(!events.find(e => e.payload.id === 'application-2'))
 
@@ -165,7 +153,7 @@ test('mesh network should work properly when adding and removing applications', 
 
     await addPromise
     await restartPromise
-    url = runtime.getUrl()
+    url = (await runtime.getApplicationDetails('composer')).url
 
     {
       const res = await request(url + '/application-1/from-application-2')
@@ -194,7 +182,7 @@ test('mesh network should work properly when adding and removing applications', 
     ok(events.find(e => e.event === 'application:stopped' && e.payload === 'application-1'))
     ok(events.find(e => e.event === 'application:removed' && e.payload === 'application-1'))
 
-    url = runtime.getUrl()
+    url = (await runtime.getApplicationDetails('composer')).url
 
     {
       const res = await request(url + '/application-2/from-application-1')
@@ -330,7 +318,7 @@ test('vertical autoscaler should work properly when adding and removing applicat
   // Stress applications and wait for both of them to be upscaled
   {
     // Add load on both application-1 and application-2
-    const url = runtime.getUrl()
+    const { url } = await runtime.getApplicationDetails('composer')
 
     const promise = Promise.withResolvers()
 
@@ -414,7 +402,7 @@ test('should be able to remove an application whose worker crashed and was not r
   )
   await restartPromise
 
-  const url = runtime.getUrl()
+  const { url } = await runtime.getApplicationDetails('composer')
 
   // Crash the application and wait for the runtime to mark it as unavailable
   const unavailablePromise = once(runtime, 'application:worker:unvailable')

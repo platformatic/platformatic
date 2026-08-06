@@ -9,15 +9,15 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 test('do not reach for dns if plt.local fail to resolve', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'serviceApp:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()
   })
 
   {
-    // Basic URL on the entrypoint.
-    const res = await request(entryUrl + '/unknown')
+    // Basic URL on the application.
+    const res = await request(url + '/unknown')
 
     strictEqual(res.statusCode, 200)
     const body = await res.body.json()

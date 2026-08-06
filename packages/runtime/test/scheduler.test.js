@@ -255,7 +255,7 @@ test('Works with the mesh network', async t => {
   ])
   t.after(() => app.close())
 
-  const entryUrl = await app.start()
+  const { 'service:0': entryUrl } = await app.start()
   await sleep(1500)
   const res = await request(`${entryUrl}/counter`)
 

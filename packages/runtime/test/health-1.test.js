@@ -41,7 +41,7 @@ test('should not lose any connection when restarting the process', { skip: isWin
     application: 'service',
     worker: 0
   })
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   // Start hammering the application with autocannon
   const results = await autocannon({ url: `${url}/service/`, connections: 10, duration: 10 })
@@ -62,7 +62,7 @@ test('set the spaces memory correctly', { skip: isWindows && 'Skipping on Window
   const configFile = join(fixturesDir, 'health-spaces', 'platformatic.json')
   const server = await createRuntime(configFile)
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
 
   t.after(() => {
     return server.close()
@@ -81,7 +81,7 @@ test('set the spaces memory correctly when maxHeapTotal is a string', { skip: is
   const configFile = join(fixturesDir, 'health-spaces-heap-string', 'platformatic.json')
   const server = await createRuntime(configFile)
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
 
   t.after(() => {
     return server.close()
@@ -100,7 +100,7 @@ test('set the code range size correctly', { skip: isWindows && 'Skipping on Wind
   const configFile = join(fixturesDir, 'health-code-range', 'platformatic.json')
   const server = await createRuntime(configFile)
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
 
   t.after(() => {
     return server.close()
@@ -121,7 +121,7 @@ test(
     const configFile = join(fixturesDir, 'health-buffer-pool', 'platformatic.json')
     const server = await createRuntime(configFile)
 
-    const url = await server.start()
+    const { 'service:0': url } = await server.start()
 
     t.after(() => {
       return server.close()

@@ -231,7 +231,6 @@ Using existing configuration ...
 ? Do you want to create default migrations? no
 ? Do you want to use TypeScript? no
 ? Do you want to create another application? no
-? Which application should be exposed? books-application
 ```
 
 Once the command has finished running, we should see that a Platformatic DB application has been created for us in the `web/books-application/` directory.
@@ -331,14 +330,16 @@ Created book: {
 
 ### Test the Books application API
 
-To publicly expose the Books application so that we can test it, we need to change the `entrypoint` in `watt.json` to `books-application` (if you follow the settings above, you will not have to change anything):
+To expose the Books application for testing, configure its application-local server on port `3043`:
 
 ```json
-// watt.json
+// web/books-application/platformatic.json
 
 {
   ...
-  "entrypoint": "books-application",
+  "server": {
+    "port": 3043
+  },
   ...
 }
 ```
@@ -352,7 +353,7 @@ npm start
 Now we can test our Books application API by making a request to it:
 
 ```bash
-curl localhost:3042/books/
+curl localhost:3043/books/
 ```
 
 The response should look like this:
@@ -386,7 +387,7 @@ The response should look like this:
 ]
 ```
 
-If we open up the API documentation for our Books application at http://127.0.0.1:3042/documentation/, we can see all of its routes:
+If we open up the API documentation for our Books application at http://127.0.0.1:3043/documentation/, we can see all of its routes:
 
 <!-- SCREENSHOT: test-the-books-service-api-01.png -->
 
@@ -517,14 +518,16 @@ Created movie: {
 
 ### Test the Movies application API
 
-To publicly expose the Movies application so that we can test it, we need to change the `entrypoint` in `watt.json` to `movies-application`:
+To expose the Movies application for testing, configure its application-local server on port `3044`:
 
 ```json
-// watt.json
+// web/movies-application/platformatic.json
 
 {
   ...
-  "entrypoint": "movies-application",
+  "server": {
+    "port": 3044
+  },
   ...
 }
 ```
@@ -538,7 +541,7 @@ npm start
 We can now test our Movies application API by making a request to it:
 
 ```bash
-curl localhost:3042/movies/
+curl localhost:3044/movies/
 ```
 
 And we should then receive a response like this:
@@ -575,7 +578,7 @@ And we should then receive a response like this:
 ]
 ```
 
-If we open up the Swagger UI documentation at http://127.0.0.1:3042/documentation/, we can see all of our Movie application's API routes:
+If we open up the Swagger UI documentation at http://127.0.0.1:3044/documentation/, we can see all of our Movie application's API routes:
 
 <!-- SCREENSHOT: test-the-movies-service-api-01.png -->
 
@@ -614,8 +617,11 @@ Let's open up `web/media-application/platformatic.json` and replace the `service
 // web/media-application/platformatic.json
 
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   ...,
+  "server": {
+    "port": 3045
+  },
   "gateway": {
     "applications": [
       {
@@ -645,17 +651,7 @@ Let's take a look at the settings we've added here:
 
 ### Test the composed Media application API
 
-To expose our Media application, we need to change the `entrypoint` in `watt.json` to `media-application`:
-
-```json
-// watt.json
-
-{
-  ...
-  "entrypoint": "media-application",
-  ...
-}
-```
+The application-local `server` configuration above exposes the Media application on port `3045`.
 
 We now have to remove sample route in the books and media services to make sure they don't conflict.
 
@@ -669,7 +665,7 @@ And then stop (`CTRL+C`) and start our Library app:
 npm start
 ```
 
-Now let's open up the Media application's API documentation at http://127.0.0.1:3042/documentation/. Here we can see that our Media application is composing all of our Books and Movie applications' API routes into a single REST API:
+Now let's open up the Media application's API documentation at http://127.0.0.1:3045/documentation/. Here we can see that our Media application is composing all of our Books and Movie applications' API routes into a single REST API:
 
 <!-- SCREENSHOT: test-the-composed-media-service-api-01.png -->
 
@@ -678,7 +674,7 @@ Now let's open up the Media application's API documentation at http://127.0.0.1:
 Now let's test our composed Media application API by making a request to retrieve books:
 
 ```bash
-curl localhost:3042/books/
+curl localhost:3045/books/
 ```
 
 We should receive a response like this:
@@ -715,7 +711,7 @@ We should receive a response like this:
 And then we can make a request to retrieve movies through the Media application API:
 
 ```bash
-curl localhost:3042/movies/
+curl localhost:3045/movies/
 ```
 
 We should receive a response like this:
@@ -834,7 +830,7 @@ Now let's open up `web/media-application/platformatic.json` and configure the Me
   }
 ```
 
-If we open up the API documentation for our Media application at http://127.0.0.1:3042/documentation/, we should now see that only the composed `GET` routes are available:
+If we open up the API documentation for our Media application at http://127.0.0.1:3045/documentation/, we should now see that only the composed `GET` routes are available:
 
 <!-- SCREENSHOT: make-the-composed-media-service-api-read-only-01.png -->
 
@@ -983,7 +979,7 @@ Now we can configure the Media application to load our new plugin. Let's open up
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   ...,
   "plugins": {
     "paths": [
@@ -996,7 +992,7 @@ Now we can configure the Media application to load our new plugin. Let's open up
 Now let's test our `/books/` routes to see if the people data is being added to the responses:
 
 ```bash
-curl localhost:3042/books/ | grep 'authorName'
+curl localhost:3045/books/ | grep 'authorName'
 ```
 
 We should see that each book in the JSON response now contains an `authorName`.
@@ -1004,7 +1000,7 @@ We should see that each book in the JSON response now contains an `authorName`.
 If we make a request to retrieve the book with the ID `1`, we should see that response also now contains an `authorName`:
 
 ```bash
-curl localhost:3042/books/1 | grep 'authorName'
+curl localhost:3045/books/1 | grep 'authorName'
 ```
 
 We're now going to add `onRoute` hooks for our composed `/movies/` routes. These hooks will add the names for the director and producer of each movie.
@@ -1043,7 +1039,7 @@ app.platformatic.addGatewayOnRouteHook('/movies/{id}', ['GET'], moviesOnRouteHoo
 Now we can test our `/movies/` routes to confirm that the people data is being added to the responses:
 
 ```bash
-curl localhost:3042/movies/ | grep 'Name'
+curl localhost:3045/movies/ | grep 'Name'
 ```
 
 Each movie in the JSON response should now contains a `directorName` and a `producerName`.
@@ -1051,7 +1047,7 @@ Each movie in the JSON response should now contains a `directorName` and a `prod
 If we make a request to retrieve the movie with the ID `3`, we should see that response also now contains a `directorName` and a `producerName`:
 
 ```bash
-curl localhost:3042/movies/3 | grep 'Name'
+curl localhost:3045/movies/3 | grep 'Name'
 ```
 
 ### Configure a service proxy to debug the People application API
@@ -1064,7 +1060,7 @@ Let's try this out by adding another application to the `applications` in `platf
 // platformatic.json
 
   {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
     ...,
     "gateway": {
       "applications": [
@@ -1095,7 +1091,7 @@ Now the People application API will be made available as part of the composed Me
 Let's test it now by making a request to one of the People application routes, via the composed Media application API:
 
 ```bash
-curl localhost:3042/people-application/people/
+curl localhost:3045/people-application/people/
 ```
 
 We should receive a response like this from the People application's `/people` route:
@@ -1117,7 +1113,7 @@ Although the Gateway service proxy is a helpful feature, we don't want to use th
 // platformatic.json
 
   {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
     ...,
     "gateway": {
       "applications": [

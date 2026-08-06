@@ -151,8 +151,8 @@ test('should get runtime metrics in a text format', async t => {
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
-  // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
+  const { 'service-1:0': url } = await app.start()
+  // We call service-1 and service-2 indirectly, so we expect metrics from both
   await request(url + '/hello')
   await request(url + '/service-2/hello')
 
@@ -319,7 +319,7 @@ test('should get formatted runtime metrics multiple times', async t => {
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const appUrl = await app.start()
+  const { 'service-1:0': appUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -401,8 +401,8 @@ test('should get runtime metrics in a json format without a application call', a
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
-  // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
+  const { 'service-1:0': url } = await app.start()
+  // We call service-1 and service-2 indirectly, so we expect metrics from both
   await request(url + '/hello')
   await request(url + '/service-2/hello')
 

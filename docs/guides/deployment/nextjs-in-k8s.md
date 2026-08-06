@@ -135,18 +135,17 @@ npx wattpm-utils import
 
 The command will create a `watt.json` for you and also install `@platformatic/next` as part of your dependencies.
 
-By default, Watt will run on random port. If you want to choose a specific port, add an entry in the `watt.json` file
-with a `runtime` block. In the same block, we also need to add the configuration to support multithreading. Add it like
-following:
+By default, Watt will run on a random port. To choose a specific port, configure the Next.js capability's `server`
+property. Configure multithreading in the `runtime` block:
 
 ```json
 {
   ...
+  "server": {
+    "hostname": "0.0.0.0",
+    "port": "{PORT}"
+  },
   "runtime": {
-    "server": {
-      "host": "0.0.0.0",
-      "port": "{PORT}" 
-    },
     "workers": {
       "static": "{PLT_NEXT_WORKERS}"
     }
@@ -174,11 +173,11 @@ At the end, your `watt.json` should match:
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.8.0.json",
+  "server": {
+    "hostname": "0.0.0.0",
+    "port": "{PORT}"
+  },
   "runtime": {
-    "server": {
-      "host": "0.0.0.0",
-      "port": "{PORT}" 
-    },
     "workers": {
       "static": "{PLT_NEXT_WORKERS}"
     }
@@ -286,11 +285,9 @@ And a minimal `watt.json`:
   "next": {
     "standalone": true
   },
-  "runtime": {
-    "server": {
-      "hostname": "{PLT_SERVER_HOSTNAME}",
-      "port": "{PORT}"
-    }
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}"
   }
 }
 ```

@@ -289,7 +289,8 @@ export class Generator extends BaseGenerator {
     return {
       ...defaultBaseConfig,
       plugin: true,
-      tests: true
+      tests: true,
+      portEnv: 'PORT'
     }
   }
 
@@ -315,16 +316,14 @@ export class Generator extends BaseGenerator {
       return
     }
 
-    if (!this.config.isRuntimeContext) {
-      this.addEnvVars(
-        {
-          PLT_SERVER_HOSTNAME: this.config.hostname,
-          PLT_SERVER_LOGGER_LEVEL: 'info',
-          PORT: 3042
-        },
-        { overwrite: false }
-      )
-    }
+    this.addEnvVars(
+      {
+        PLT_SERVER_HOSTNAME: this.config.hostname,
+        PLT_SERVER_LOGGER_LEVEL: 'info',
+        [this.config.portEnv]: this.config.port
+      },
+      { overwrite: false }
+    )
 
     this.config.dependencies = {
       '@platformatic/service': `^${this.platformaticVersion}`
@@ -411,13 +410,11 @@ export class Generator extends BaseGenerator {
       }
     }
 
-    if (!this.config.isRuntimeContext) {
-      config.server = {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}',
-        logger: {
-          level: '{PLT_SERVER_LOGGER_LEVEL}'
-        }
+    config.server = {
+      hostname: `{${this.getEnvVarName('PLT_SERVER_HOSTNAME')}}`,
+      port: `{${this.getEnvVarName(this.config.portEnv)}}`,
+      logger: {
+        level: `{${this.getEnvVarName('PLT_SERVER_LOGGER_LEVEL')}}`
       }
     }
 

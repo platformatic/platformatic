@@ -200,7 +200,7 @@ Open `web/main/platformatic.json` and change it to the following:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   "gateway": {
     "applications": [
       {

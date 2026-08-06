@@ -136,9 +136,8 @@ test('should get matching runtime', async t => {
   })
 
   const runtimeClient = new RuntimeApiClient()
-  const { pid, url } = await runtimeClient.getMatchingRuntime()
+  const { pid } = await runtimeClient.getMatchingRuntime()
   assert.strictEqual(typeof pid, 'number')
-  assert.strictEqual(typeof url, 'string')
 })
 
 test('should get runtime OpenAPI definition', async t => {
@@ -256,10 +255,12 @@ test('should be able to add and remove applications', async t => {
     }
   ])
 
-  assert.deepStrictEqual(added, [
+  const [{ url: addedUrl, urls: addedUrls, ...addedDetails }] = added
+  assert.deepStrictEqual(addedUrls, [addedUrl])
+  assert.ok(addedUrl)
+  assert.deepStrictEqual([addedDetails], [
     {
       dependencies: [],
-      entrypoint: false,
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),
@@ -271,10 +272,12 @@ test('should be able to add and remove applications', async t => {
   ])
 
   const removed = await runtimeClient.removeApplications(runtime.pid, ['service-2'])
-  assert.deepStrictEqual(removed, [
+  const [{ url: removedUrl, urls: removedUrls, ...removedDetails }] = removed
+  assert.deepStrictEqual(removedUrls, [removedUrl])
+  assert.ok(removedUrl)
+  assert.deepStrictEqual([removedDetails], [
     {
       dependencies: [],
-      entrypoint: false,
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),

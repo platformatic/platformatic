@@ -28,16 +28,22 @@ function decodeHtmlEntities (str) {
 }
 
 test('fetch() should work with string URL and Request object in Nuxt app', async t => {
-  const { runtime, root } = await prepareRuntime(t, 'fetch-test', true, null, async root => {
-    for (const type of ['backend', 'composer']) {
-      await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-        recursive: true
+  const { runtime, root } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/fetch-test'),
+    production: true,
+    port: 0,
+    additionalSetup: async root => {
+      for (const type of ['backend', 'composer']) {
+        await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
+          recursive: true
+        })
+      }
+
+      await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
+        return contents.replace('$PREFIX', '/frontend')
       })
     }
-
-    await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
-      return contents.replace('$PREFIX', '/frontend')
-    })
   })
 
   await buildRuntime(root)

@@ -82,7 +82,7 @@ app.listen(3000)
 ```json
 // Wrap existing Express app in Watt
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
   "application": {
     "main": "app.js"
   }
@@ -267,7 +267,6 @@ Hello YOURNAME, welcome to Watt Utils 3.0.0!
 ? Where is your application located? web/frontend
 ? Do you want to import or copy your application? import
 ? Do you want to create another application? no
-? Which application should be exposed? frontend
 ? What port do you want to use? 3042
 ```
 

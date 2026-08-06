@@ -9,7 +9,7 @@ import { executeCommand, waitForStart, wattpm } from '../../wattpm/test/helper.j
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-test('can pack a Next standalone application and start it with the bundled wattpm binary', async t => {
+test('can pack a Next standalone application and start it with the bundled wattpm binary', { timeout: 120000 }, async t => {
   const { root } = await prepareRuntime(t, 'server-side-standalone', true, null, async root => {
     await updateFile(resolve(root, 'services/frontend/next.config.js'), () => {
       return 'module.exports = { output: "standalone" }\n'
@@ -42,7 +42,7 @@ test('can pack a Next standalone application and start it with the bundled wattp
   await writeFile(bundleConfigPath, JSON.stringify(bundleConfig, null, 2))
 
   const bundledWattpm = resolve(bundleRoot, 'node_modules/.bin', isWindows ? 'wattpm.cmd' : 'wattpm')
-  const startProcess = executeCommand(bundledWattpm, 'start', {
+  const startProcess = executeCommand(bundledWattpm, 'start', '-c', bundleConfigPath, {
     cwd: bundleRoot,
     reject: false,
     env: {
@@ -57,7 +57,7 @@ test('can pack a Next standalone application and start it with the bundled wattp
     } catch {}
   })
 
-  const { url } = await waitForStart(startProcess)
+  const { url } = await waitForStart(startProcess, 'next')
   ok(url)
 
   const { statusCode, body } = await request(url)

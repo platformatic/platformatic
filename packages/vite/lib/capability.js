@@ -54,25 +54,20 @@ export class ViteCapability extends BaseCapability {
     }
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     if (this.isProduction) {
-      await this.#startProduction(listen)
+      await this.#startProduction()
     } else {
-      await this.#startDevelopment(listen)
+      await this.#startDevelopment()
     }
 
     await this._collectMetrics()
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.childManager) {
       return this.stopCommand()
@@ -217,8 +212,12 @@ export class ViteCapability extends BaseCapability {
       return this.startWithCommand(command)
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     // Prepare options
-    const { hostname, port, https, cors, backlog } = this.serverConfig ?? {}
+    const { hostname, port, https, cors } = this.serverConfig ?? {}
     const configFile = config.vite.configFile ? resolve(this.root, config.vite.configFile) : undefined
 
     const serverOptions = {
@@ -235,11 +234,7 @@ export class ViteCapability extends BaseCapability {
     }
 
     // Require Vite
-    const serverPromise = createServerListener(
-      (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-      typeof backlog === 'number' ? { backlog } : {}
-    )
+    const serverPromise = createServerListener()
     const { createServer } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
 
     // Create the server and listen
@@ -259,7 +254,7 @@ export class ViteCapability extends BaseCapability {
     this.url = getServerUrl(this.#server)
   }
 
-  async #startProduction (listen) {
+  async #startProduction () {
     const config = this.config
     const command = this.config.application.commands.production
 
@@ -271,19 +266,6 @@ export class ViteCapability extends BaseCapability {
 
     if (command) {
       return this.startWithCommand(command)
-    }
-
-    if (this.#app && listen) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
-      return this.url
     }
 
     this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
@@ -309,6 +291,17 @@ export class ViteCapability extends BaseCapability {
     }
 
     await this.#app.ready()
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 
   async _getBasePathFromBuildInfo () {
@@ -354,15 +347,7 @@ export class ViteSSRCapability extends NodeCapability {
     this.registerGlobals({ basePath: this.#basePath })
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    /* c8 ignore next 3 */
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
-
+  async _start () {
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
 
@@ -388,7 +373,7 @@ export class ViteSSRCapability extends NodeCapability {
       }
     }
 
-    await super.start({ listen })
+    await super._start()
     await super._listen()
   }
 

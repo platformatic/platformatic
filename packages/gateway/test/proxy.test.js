@@ -1,6 +1,6 @@
 import { sleepImmediate } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { getEvents, getPrometheus, updateGlobals } from '@platformatic/globals'
+import { getEvents, getPrometheus, removeGlobals, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
 import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
@@ -262,7 +262,7 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -315,7 +315,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -353,7 +353,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -403,7 +403,7 @@ test('should proxy all applications if none are defined', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -459,7 +459,6 @@ test('should fail with actionable error when a gateway application is missing fr
     runtimeConfigPath,
     JSON.stringify({
       $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
-      entrypoint: 'composer',
       watch: false,
       services: [
         {
@@ -558,7 +557,7 @@ test('should fix the path using the referer only if asked to', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -624,7 +623,7 @@ test('should rewrite Location headers for proxied applications', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const {
@@ -894,7 +893,7 @@ test('should rewrite Location headers that include full url of the running appli
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const {
@@ -966,7 +965,7 @@ test('should properly configure the frontends on their paths if no gateway confi
     resolve(import.meta.dirname, './proxy/fixtures/')
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1053,7 +1052,7 @@ test('should properly match applications by their hostname', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // Hostname based access work without prefix
   {
@@ -1265,7 +1264,7 @@ test('should properly allow all domains when a application is the only one with 
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1385,7 +1384,7 @@ test('should properly generate OpenAPI routes when a frontend is exposed on /', 
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1490,7 +1489,7 @@ test('adds x-forwarded-proto', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body } = await request(address, {
@@ -1572,7 +1571,7 @@ test('should rewrite Location headers for proxied applications https', async t =
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const {
@@ -1632,7 +1631,7 @@ test('should properly strip runtime basePath from proxied applications', async t
     }
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   const { statusCode, body: rawBody } = await request(address, {
     method: 'GET',
@@ -1704,7 +1703,7 @@ test('should properly handle basePath root for generic applications', async t =>
     true
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1817,7 +1816,10 @@ test('should proxy to a websocket application with reconnect options', async t =
   try {
     getEvents()
   } catch {
-    updateGlobals({ events: new EventEmitter() })
+    const events = new EventEmitter()
+    events.emitAndNotify = events.emit.bind(events)
+    updateGlobals({ events })
+    t.after(() => removeGlobals(['events']))
   }
 
   const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
@@ -1878,6 +1880,7 @@ test('should dynamically proxy a using custom logic', async t => {
 
   const gateway = await createFromConfig(t, {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -1975,6 +1978,7 @@ test('should support custom preRewrite hooks', async t => {
 
   const gateway = await createFromConfig(t, {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -2012,6 +2016,7 @@ test('should proxy to a remote service with external origin', async t => {
   // This tests that remote services work without being part of the runtime
   const config = {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -2084,7 +2089,7 @@ test('should proxy to a remote service from gateway in runtime', async t => {
     [] // No local services - only remote external service
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // Test that requests are proxied to the remote external service
   await testEntityRoutes(address, ['/api/products/products'])
@@ -2134,7 +2139,7 @@ test('should proxy both local and remote services in same runtime', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // Test local service works (uses ITC for metadata)
   {
@@ -2212,7 +2217,7 @@ test('should handle methods and routes options', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, { method: 'POST', path: '/first/abc/cde' })

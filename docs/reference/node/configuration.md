@@ -1,5 +1,6 @@
 import Issues from '../../getting-started/issues.md';
 import RuntimeInCapabilities from '../\_runtime-in-capabilities.md';
+import ServerConfiguration from '../_server-in-capabilities.md';
 
 # Configuration
 
@@ -47,7 +48,7 @@ Configures the `logger`, see the [runtime](../runtime/configuration.md#logger) d
 
 ## `server`
 
-Configures the HTTP server, see the [runtime](../runtime/configuration.md#server) documentation.
+<ServerConfiguration />
 
 ## `watch`
 

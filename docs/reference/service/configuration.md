@@ -31,6 +31,7 @@ An object with the following settings:
 
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
 - **`port`** — Port where Platformatic Service server will listen for connections.
+- **`backlog`** (`number`) — Maximum length of the pending connection queue.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)

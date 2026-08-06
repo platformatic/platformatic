@@ -109,23 +109,24 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
   await promise
 })
 
-test('ChildProcess - should notify listen error', async t => {
+test('ChildProcess - should not modify application-owned listen options', async t => {
   const capability = await create(t, {
-    isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
       port: 1000
+    },
+    runtimeConfig: {
+      gracefulShutdown: {
+        application: 1000
+      }
     }
   })
 
   const executablePath = fileURLToPath(new URL('../fixtures/server.js', import.meta.url))
-  const promise = capability.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(capability)
+  await capability.startWithCommand(`node ${executablePath}`)
 
-  const [error] = await once(childManager, 'error')
-
-  deepStrictEqual(error.code, 'EADDRNOTAVAIL')
-  await rejects(() => promise)
+  ok(capability.url.startsWith('http://127.0.0.1:'))
+  await capability.stopCommand()
 })
 
 test('ChildProcess - should intercept fetch calls', async t => {
@@ -144,7 +145,6 @@ test('ChildProcess - should intercept fetch calls', async t => {
   setGlobalDispatcher(new Agent().compose(interceptor))
 
   const capability = await create(t, {
-    isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
       port: 1000
@@ -191,7 +191,6 @@ test('ChildProcess - should change directory before command execution when reque
       },
       exitOnUnhandledErrors: false,
       host: true,
-      isEntrypoint: false,
       logLevel: capability.logger.level,
       port: true,
       reuseTcpPorts: false,

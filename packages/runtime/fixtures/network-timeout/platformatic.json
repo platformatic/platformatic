@@ -3,10 +3,15 @@
   "watch": false,
   "managementApi": true,
   "metrics": false,
+  "healthProbes": { "port": 0 },
   "restartOnError": 500,
-  "entrypoint": "service-1",
   "autoload": {
-    "path": "."
+    "path": ".",
+    "mappings": {
+      "service-2": {
+        "id": "service-2"
+      }
+    }
   },
   "logger": {
     "level": "info"

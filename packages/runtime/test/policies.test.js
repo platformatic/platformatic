@@ -14,7 +14,7 @@ test('should restrict access via interceptor', async t => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'gateway:0': url } = await server.start()
 
   // These requests also go between applications. Calls from application-1 to application-2 (or reverse) are blocked
   {
@@ -63,7 +63,7 @@ test('should restrict access via messaging API', async t => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'gateway:0': url } = await server.start()
 
   // These requests also go between applications. Calls from application-1 to application-2 (or reverse) are blocked
   {

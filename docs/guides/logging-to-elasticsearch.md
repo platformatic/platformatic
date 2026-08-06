@@ -56,27 +56,25 @@ you just have to configure it like the following:
   ...
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}",
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}",
-      "transport": {
-        "targets": [{
-          "target": "pino-elasticsearch",
-          "options": {
-            "node": "http://127.0.0.1:9200"
-          }
-        }, {
-          "target": "pino-pretty"
-        }]
-      }
+    "port": "{PORT}"
+  },
+  "logger": {
+    "level": "{PLT_SERVER_LOGGER_LEVEL}",
+    "transport": {
+      "targets": [{
+        "target": "pino-elasticsearch",
+        "options": {
+          "node": "http://127.0.0.1:9200"
+        }
+      }, {
+        "target": "pino-pretty"
+      }]
     }
   }
 }
 ```
 
-This snippet can be applied either to the `watt.json` config
-for Platformatic Runtime applications, or as part of the application configuration
-for any other application.
+Add this snippet to the configuration for the capability that serves your application.
 
 This setup will allow you to log both to the terminal (TTY)
 and to ElasticSearch at the same time.

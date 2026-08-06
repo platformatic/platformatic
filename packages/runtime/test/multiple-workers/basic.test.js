@@ -1,4 +1,3 @@
-import { features } from '@platformatic/foundation'
 import { ok, strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -14,7 +13,7 @@ test('applications are started with multiple workers according to the configurat
     await app.close()
   })
 
-  const expectedEvents = getExpectedEvents('composer', { composer: 3, service: 3, node: 5 })
+  const expectedEvents = getExpectedEvents({ composer: 3, service: 3, node: 5 })
   const startEventsPromise = waitForEvents(app, expectedEvents.start)
 
   await app.start()
@@ -122,11 +121,7 @@ test('can collect metrics with worker label', async t => {
       received.add(`${applicationId}:${workerId}`)
       switch (applicationId) {
         case 'composer':
-          if (features.node.reusePort) {
-            return typeof workerId === 'number' && workerId >= 0 && workerId < 3
-          } else {
-            return workerId === 0 || typeof workerId === 'undefined'
-          }
+          return typeof workerId === 'number' && workerId >= 0 && workerId < 3
 
         case 'application':
           return typeof workerId === 'number' && workerId >= 0 && workerId < 3

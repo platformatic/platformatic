@@ -460,7 +460,7 @@ wattpm inject [id] [application]
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
-- `application` - Application name (optional, uses the entrypoint if omitted and one exists)
+- `application` - Application name (optional when the runtime has a single application)
 
 **Options:**
 
@@ -475,8 +475,8 @@ wattpm inject [id] [application]
 **Examples:**
 
 ```bash
-wattpm inject --path /api/health
-wattpm inject --method POST --header "Content-Type: application/json" --data '{"name": "test"}'
+wattpm inject my-app api-application --path /api/health
+wattpm inject my-app api-application --method POST --header "Content-Type: application/json" --data '{"name": "test"}'
 wattpm inject my-app api-application --path /users --output response.json
 ```
 

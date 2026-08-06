@@ -708,7 +708,7 @@ test('should export logs to OpenTelemetry', async t => {
   })
   t.after(() => app.close())
 
-  const entryUrl = await app.start()
+  const { 'node:0': entryUrl } = await app.start()
 
   {
     const { statusCode, body } = await request(entryUrl, { path: '/' })

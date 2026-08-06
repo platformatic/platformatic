@@ -7,7 +7,7 @@
       "path": "./service",
       "config": "platformatic.json",
       "health": {
-        "maxELU": 0.3
+        "maxELU": 0.001
       }
     },
     {

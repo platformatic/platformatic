@@ -17,7 +17,7 @@ Add OpenTelemetry log export to your `watt.json`:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "logger": {
     "level": "info",
     "openTelemetryExporter": {
@@ -491,8 +491,7 @@ When using multiple applications in a Watt runtime, each inherits the logger con
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "entrypoint": "gateway",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "autoload": {
     "path": "services"
   },

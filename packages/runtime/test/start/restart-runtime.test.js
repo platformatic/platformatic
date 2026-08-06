@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
+import { features } from '@platformatic/foundation'
 import { transform } from '../../lib/config.js'
 import { createRuntime, getTempDir } from '../helpers.js'
 import { prepareRuntime } from '../multiple-workers/helper.js'
@@ -12,23 +13,24 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 test('can restart the runtime apps', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await createRuntime(configFile)
-  let entryUrl = await app.start()
+  let { 'serviceApp:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()
   })
 
   {
-    const res = await request(entryUrl + '/upstream')
+    const res = await request(url + '/upstream')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { hello: 'world' })
   }
 
-  entryUrl = await app.restart()
+  await app.restart()
+  url = (await app.getApplicationDetails('serviceApp')).url
 
   {
-    const res = await request(entryUrl + '/upstream')
+    const res = await request(url + '/upstream')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { hello: 'world' })
@@ -82,23 +84,24 @@ test('do not restart if application is not started', async t => {
 test('will restart applications in parallel', async t => {
   const configFile = join(fixturesDir, 'parallel-restart', 'platformatic.json')
   const app = await createRuntime(configFile)
-  let entryUrl = await app.start()
+  let { 'composer:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()
   })
 
   const events = []
+  const workerEvents = []
 
   {
-    const res = await request(entryUrl + '/application-1')
+    const res = await request(url + '/application-1')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { ok: true })
   }
 
   {
-    const res = await request(entryUrl + '/application-2')
+    const res = await request(url + '/application-2')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { ok: true })
@@ -110,17 +113,29 @@ test('will restart applications in parallel', async t => {
     })
   }
 
-  entryUrl = await app.restart()
+  app.on('application:worker:started', ({ worker }) => {
+    if (worker >= 3) {
+      workerEvents.push('started')
+    }
+  })
+  app.on('application:worker:stopped', ({ worker }) => {
+    if (worker < 3) {
+      workerEvents.push('stopped')
+    }
+  })
+
+  await app.restart()
+  url = (await app.getApplicationDetails('composer')).url
 
   {
-    const res = await request(entryUrl + '/application-1')
+    const res = await request(url + '/application-1')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { ok: true })
   }
 
   {
-    const res = await request(entryUrl + '/application-2')
+    const res = await request(url + '/application-2')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { ok: true })
@@ -136,6 +151,12 @@ test('will restart applications in parallel', async t => {
     events.findLastIndex(e => e[0] === 'application:restarting') <
       events.findIndex(e => e[0] === 'application:restarted')
   )
+
+  if (features.node.reusePort) {
+    strictEqual(workerEvents.filter(event => event === 'started').length, 9)
+    strictEqual(workerEvents.filter(event => event === 'stopped').length, 9)
+    strictEqual(workerEvents.lastIndexOf('started') < workerEvents.indexOf('stopped'), true)
+  }
 })
 
 test('restartApplication restarts each original worker exactly once', async t => {

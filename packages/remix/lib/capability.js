@@ -56,14 +56,7 @@ export class RemixCapability extends ViteCapability {
     this.subprocessTerminationSignal = 'SIGKILL'
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await this._start({ listen })
-
+  async _start () {
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
 
@@ -71,7 +64,7 @@ export class RemixCapability extends ViteCapability {
       return this.startWithCommand(command)
     }
 
-    return this.isProduction ? this.#startProduction(listen) : this.#startDevelopment(listen)
+    return this.isProduction ? this.#startProduction() : this.#startDevelopment()
   }
 
   async build () {
@@ -118,7 +111,7 @@ export class RemixCapability extends ViteCapability {
     }
   }
 
-  async #startDevelopment (listen) {
+  async #startDevelopment () {
     const preloadViteEsmPath = resolve(this.#remix, './dist/vite/import-vite-esm-sync.js')
 
     // Older versions
@@ -130,7 +123,11 @@ export class RemixCapability extends ViteCapability {
       await preloadVite()
     }
 
-    await super.start({ listen })
+    await super._start()
+
+    if (!this._getApp()) {
+      return
+    }
 
     /* c8 ignore next 3 */
     if (!this._getApp().config.plugins.some(p => p.name === 'remix')) {
@@ -138,21 +135,7 @@ export class RemixCapability extends ViteCapability {
     }
   }
 
-  async #startProduction (listen) {
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
-      return this.url
-    }
-
+  async #startProduction () {
     const outputDirectory = this.config.remix.outputDirectory
     this.verifyOutputDirectory(resolve(this.root, outputDirectory))
 
@@ -183,6 +166,17 @@ export class RemixCapability extends ViteCapability {
 
     await this.#app.ready()
     await this._collectMetrics()
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 
   #handleRequest (handle, req) {

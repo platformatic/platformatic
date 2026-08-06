@@ -163,11 +163,10 @@ test('applications wait for dependant applications before stopping', async t => 
   ok(service1Stopped !== -1)
 
   ok(composerStopping < composerStopped)
-  ok(composerStopped < service2Stopping)
-  ok(composerStopped < service1Stopping)
   ok(service1Stopping < waitingForDependents)
   ok(waitingForDependents < service1Stopped)
   ok(service2Stopping < service2Stopped)
+  ok(composerStopped < service2Stopped)
   ok(service2Stopped < service1Stopped)
 })
 

@@ -107,10 +107,6 @@ export function getRoot (options) {
   return getField('root', options)
 }
 
-export function isEntrypoint (options) {
-  return getField('isEntrypoint', options)
-}
-
 export function getBasePath (options) {
   return getField('basePath', options)
 }

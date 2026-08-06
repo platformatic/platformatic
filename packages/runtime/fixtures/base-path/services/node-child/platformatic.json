@@ -5,5 +5,9 @@
       "production": "node plugin.js",
       "development": "node plugin.js"
     }
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
   }
 }

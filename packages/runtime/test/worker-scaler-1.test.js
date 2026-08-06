@@ -1,4 +1,4 @@
-import { features, safeRemove } from '@platformatic/foundation'
+import { safeRemove } from '@platformatic/foundation'
 import assert, { deepStrictEqual } from 'node:assert'
 import { cp, mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -35,10 +35,10 @@ async function waitForWorkers (app, applicationId, expectedCount, { timeoutMs = 
   return workers
 }
 
-async function driveLoad (entryUrl, signal) {
+async function driveLoad (serviceUrl, signal) {
   while (!signal.aborted) {
     try {
-      await request(entryUrl + '/service-2/cpu-intensive', {
+      await request(serviceUrl + '/cpu-intensive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ timeout: 500 })
@@ -53,7 +53,7 @@ for (const [name, file] of Object.entries(configurations)) {
   test(`should scale an application if elu is higher than treshold (configuration ${name})`, async t => {
     const configFile = join(fixturesDir, 'worker-scaler', file)
     const app = await createRuntime(configFile)
-    const entryUrl = await app.start()
+    const { 'service-2:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
@@ -61,7 +61,7 @@ for (const [name, file] of Object.entries(configurations)) {
     // worker instead of sleeping a fixed amount of time: a single burst can
     // be missed by the ELU sampling window on slow CI runners.
     const ac = new AbortController()
-    const load = driveLoad(entryUrl, ac.signal)
+    const load = driveLoad(serviceUrl, ac.signal)
     t.after(async () => {
       ac.abort()
       await load
@@ -86,12 +86,12 @@ for (const [name, file] of Object.entries(configurations)) {
       }
     })
 
-    const entryUrl = await app.start()
+    const { 'service-2:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
     const ac = new AbortController()
-    const load = driveLoad(entryUrl, ac.signal)
+    const load = driveLoad(serviceUrl, ac.signal)
     t.after(async () => {
       ac.abort()
       await load
@@ -117,11 +117,11 @@ for (const [name, file] of Object.entries(configurations)) {
       }
     })
 
-    const entryUrl = await app.start()
+    const { 'service-2:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
-    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -160,11 +160,11 @@ for (const [name, file] of Object.entries(configurations)) {
       }
     })
 
-    const entryUrl = await app.start()
+    const { 'service-2:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
-    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -206,11 +206,11 @@ for (const [name, file] of Object.entries(configurations)) {
       }
     })
 
-    const entryUrl = await app.start()
+    const { 'service-2:0': serviceUrl } = await app.start()
 
     t.after(() => app.close())
 
-    const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -261,7 +261,7 @@ test('should properly apply runtime workers configuration to the applications (n
 
   const config = await app.getRuntimeConfig()
 
-  deepStrictEqual(config.applications[0].workers, { dynamic: false, static: features.node.reusePort ? 3 : 1 }) // Entrypoint
+  deepStrictEqual(config.applications[0].workers, { dynamic: false, static: 3 })
   deepStrictEqual(config.applications[1].workers, { dynamic: false, static: 3 })
 })
 
@@ -291,11 +291,7 @@ test('should properly apply runtime workers configuration to the applications (o
 
   const config = await app.getRuntimeConfig()
 
-  // Entrypoint
-  deepStrictEqual(
-    config.applications[0].workers,
-    features.node.reusePort ? { dynamic: true, static: 2, minimum: 2, maximum: 3 } : { dynamic: false, static: 1 }
-  )
+  deepStrictEqual(config.applications[0].workers, { dynamic: true, static: 2, minimum: 2, maximum: 3 })
   deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 2, minimum: 2, maximum: 3 })
 })
 
@@ -325,11 +321,7 @@ test('should ensure the right order for minimum and maximum', async t => {
 
   const config = await app.getRuntimeConfig()
 
-  // Entrypoint
-  deepStrictEqual(
-    config.applications[0].workers,
-    features.node.reusePort ? { dynamic: true, static: 3, minimum: 3, maximum: 4 } : { dynamic: false, static: 1 }
-  )
+  deepStrictEqual(config.applications[0].workers, { dynamic: true, static: 3, minimum: 3, maximum: 4 })
   deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 3, minimum: 3, maximum: 4 })
 })
 
@@ -355,11 +347,11 @@ test('should apply application scaleUpELU and scaleDownELU', async t => {
     }
   })
 
-  const entryUrl = await app.start()
+  const { 'service-2:0': serviceUrl } = await app.start()
 
   t.after(() => app.close())
 
-  const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+  const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -407,11 +399,11 @@ test('should apply application scaleUpELU and scaleDownELU (vertical scaler))', 
     }
   })
 
-  const entryUrl = await app.start()
+  const { 'service-2:0': serviceUrl } = await app.start()
 
   t.after(() => app.close())
 
-  const { statusCode } = await request(entryUrl + '/service-2/cpu-intensive', {
+  const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

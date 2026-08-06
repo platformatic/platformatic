@@ -458,32 +458,8 @@ export async function createApplication (
     }
   }
 
-  let entrypoint = ''
-  const chooseEntrypoint = names.length > 1 && (!generator.existingConfigRaw || !generator.existingConfigRaw.entrypoint)
-
-  if (chooseEntrypoint) {
-    const results = await inquirer.prompt([
-      {
-        type: 'select',
-        name: 'entrypoint',
-        message: 'Which application should be exposed?',
-        choices: names.map(name => ({ name, value: name }))
-      }
-    ])
-    entrypoint = results.entrypoint
-  } else {
-    entrypoint = names[0]
-  }
-
-  generator.setEntryPoint(entrypoint)
-
   await generator.ask()
   await generator.prepare()
-
-  if (chooseEntrypoint) {
-    await generator.updateConfigEntryPoint(entrypoint)
-  }
-
   await generator.writeFiles()
 
   // Create project here

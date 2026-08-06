@@ -151,10 +151,6 @@ api-service> capability.type
 api-service> capability.root
 '/path/to/my-app/services/api-service'
 
-// Check if this is the entrypoint
-api-service> capability.isEntrypoint
-true
-
 // Access runtime configuration
 api-service> capability.runtimeConfig
 { ... }

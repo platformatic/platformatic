@@ -30,6 +30,8 @@ export class NestCapability extends BaseCapability {
   #app
   #server
   #dispatcher
+  #managedDevelopment
+  #originalDevelopmentEnvironment
 
   constructor (root, config, context) {
     super('nest', version, root, config, context)
@@ -60,13 +62,8 @@ export class NestCapability extends BaseCapability {
     this.subprocessForceClose = true
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
@@ -77,7 +74,19 @@ export class NestCapability extends BaseCapability {
     })
 
     if (command || !this.isProduction) {
-      await this.startWithCommand(command || `node ${this.#nestjsCli} start --watch --preserveWatchOutput`)
+      this.#managedDevelopment = !command && !this.isProduction
+
+      if (this.#managedDevelopment && typeof this.serverConfig?.port === 'undefined') {
+        this.#managedDevelopment = false
+        return
+      }
+
+      try {
+        await this.startWithCommand(command || `node ${this.#nestjsCli} start --watch --preserveWatchOutput`)
+      } finally {
+        this.#restoreDevelopmentEnvironment()
+        this.#managedDevelopment = false
+      }
 
       // We use url changing as a way to notify restarts
       this.childManager.on('url', () => {
@@ -85,12 +94,12 @@ export class NestCapability extends BaseCapability {
         events.emitAndNotify('url', this.url)
       })
     } else {
-      return this.#startProduction(listen)
+      return this.#startProduction()
     }
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.childManager) {
       return this.stopCommand()
@@ -188,22 +197,42 @@ export class NestCapability extends BaseCapability {
   async getChildManagerContext (basePath) {
     const context = await super.getChildManagerContext(basePath)
 
-    // In development mode we need to choose the random port in advance as the Nest CLI will start a new process
-    // every time the code changes and thus we need to ensure that the port is always the same.
-    if (!this.isProduction && (context.port === true || context.port === 0)) {
-      context.port = await getPort()
+    // In managed development mode the Nest CLI starts the application in another process. Choose an ephemeral
+    // port once when needed and pass capability-owned listener settings through the environment inherited by
+    // that process. Applications started with custom commands remain responsible for their own listener.
+    if (this.#managedDevelopment) {
+      if (context.port === true || context.port === 0) {
+        const environmentPort = Number(process.env.PORT)
+        context.port = Number.isInteger(environmentPort) && environmentPort > 0 ? environmentPort : await getPort()
+      }
+
+      this.#originalDevelopmentEnvironment = new Map([
+        ['PORT', process.env.PORT],
+        ['HOST', process.env.HOST]
+      ])
+      process.env.PORT = context.port.toString()
+
+      if (typeof context.host === 'string') {
+        process.env.HOST = context.host
+      }
     }
 
     return context
   }
 
-  async #startProduction (listen) {
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      await this.#listen()
-      return this.url
+  #restoreDevelopmentEnvironment () {
+    for (const [key, value] of this.#originalDevelopmentEnvironment ?? []) {
+      if (typeof value === 'undefined') {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
     }
 
+    this.#originalDevelopmentEnvironment = null
+  }
+
+  async #startProduction () {
     const outputDirectory = this.config.application.outputDirectory
     const { path, name } = this.config.nest.appModule
     this.verifyOutputDirectory(resolve(this.root, outputDirectory))
@@ -241,23 +270,22 @@ export class NestCapability extends BaseCapability {
       this.#dispatcher = this.#server.listeners('request')[0]
     }
 
-    if (listen) {
-      await this.#listen()
-    }
+    await this.#listen()
 
     await this._collectMetrics()
     return this.url
   }
 
   async #listen () {
-    const serverOptions = this.serverConfig
-    const listenOptions = buildListenOptions(serverOptions)
-
-    if (typeof serverOptions?.backlog === 'number') {
-      createServerListener(false, false, { backlog: serverOptions.backlog })
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
     }
 
-    await this.#app.listen(listenOptions)
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#isFastify ? this.#server.server : this.#server)
 
     return this.url

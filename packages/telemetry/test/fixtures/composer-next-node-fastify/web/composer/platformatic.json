@@ -1,23 +1,31 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/2.0.0-alpha.23.json",
   "gateway": {
-    "services": [{
-      "id": "next",
-      "proxy": {
-        "prefix": "/next"
+    "services": [
+      {
+        "id": "next",
+        "proxy": {
+          "prefix": "/next"
+        }
+      },
+      {
+        "id": "node",
+        "proxy": {
+          "prefix": "/node"
+        }
+      },
+      {
+        "id": "fastify",
+        "proxy": {
+          "prefix": "/fastify"
+        }
       }
-    }, {
-      "id": "node",
-      "proxy": {
-        "prefix": "/node"
-      }
-    }, {
-      "id": "fastify",
-      "proxy": {
-        "prefix": "/fastify"
-      }
-    }],
+    ],
     "refreshTimeout": 1000
   },
-  "watch": true
+  "watch": true,
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 23042
+  }
 }

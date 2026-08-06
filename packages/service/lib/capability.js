@@ -1,4 +1,11 @@
-import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import {
+  BaseCapability,
+  buildListenOptions,
+  cleanBasePath,
+  createServerListener,
+  ensureTrailingSlash,
+  getServerUrl
+} from '@platformatic/basic'
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
@@ -35,10 +42,11 @@ export class ServiceCapability extends BaseCapability {
 
     const config = this.config
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
+    const serverConfig = this.serverConfig
 
     // Create the application
     this.#app = fastify({
-      ...this.serverConfig,
+      ...serverConfig,
       ...this.fastifyOptions,
       genReqId () {
         return randomUUID()
@@ -86,16 +94,8 @@ export class ServiceCapability extends BaseCapability {
     }
   }
 
-  async start (startOptions) {
-    // Compatibility with v2 service
-    const { listen } = startOptions ?? { listen: true }
-
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     // Create the application if needed
     if (!this.#app) {
@@ -103,16 +103,14 @@ export class ServiceCapability extends BaseCapability {
       await this.#app.ready()
     }
 
-    if (listen) {
-      await this._listen()
-    }
+    await this._listen()
 
     await this._collectMetrics()
     return this.url
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
     await this.#app?.close()
   }
 
@@ -209,7 +207,7 @@ export class ServiceCapability extends BaseCapability {
       return
     }
 
-    const { telemetryConfig, serverConfig, isEntrypoint, isProduction, logger } = this.context
+    const { telemetryConfig, serverConfig, isProduction, logger } = this.context
 
     const config = { ...this.config }
 
@@ -220,7 +218,7 @@ export class ServiceCapability extends BaseCapability {
     const loggerInstance = logger ?? serverConfig?.loggerInstance ?? this.serverConfig?.loggerInstance
 
     if (serverConfig) {
-      config.server = deepmerge(this.serverConfig, serverConfig ?? {})
+      config.server = deepmerge(this.serverConfig, serverConfig)
     }
 
     config.server ??= {}
@@ -232,10 +230,7 @@ export class ServiceCapability extends BaseCapability {
       config.watch = { enabled: false }
     }
 
-    // Adjust server options
-    if (!isEntrypoint) {
-      config.server.trustProxy = true
-    }
+    config.server.trustProxy ??= true
 
     if (config.server.https) {
       config.server.https = await sanitizeHTTPSOptions(config.server.https)
@@ -301,14 +296,15 @@ export class ServiceCapability extends BaseCapability {
   }
 
   async _listen () {
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
 
-    if (typeof serverOptions?.backlog === 'number') {
-      listenOptions.backlog = serverOptions.backlog
-    }
-
-    await this.#app.listen(listenOptions)
+    const serverPromise = createServerListener()
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#app.server)
 
     if (this.serverConfig.http2 || this.serverConfig.https?.key) {

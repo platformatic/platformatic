@@ -131,16 +131,14 @@ export class Generator extends ServiceGenerator {
       '@platformatic/db': `^${this.platformaticVersion}`
     }
 
-    if (!this.config.isRuntimeContext) {
-      this.addEnvVars(
-        {
-          PLT_SERVER_HOSTNAME: this.config.hostname,
-          PLT_SERVER_LOGGER_LEVEL: 'info',
-          PORT: 3042
-        },
-        { overwrite: false, default: true }
-      )
-    }
+    this.addEnvVars(
+      {
+        PLT_SERVER_HOSTNAME: this.config.hostname,
+        PLT_SERVER_LOGGER_LEVEL: 'info',
+        [this.config.portEnv]: this.config.port
+      },
+      { overwrite: false, default: true }
+    )
 
     this.addEnvVars(
       {

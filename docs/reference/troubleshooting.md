@@ -287,12 +287,10 @@ For a complete list of error codes, see the [Error Reference](./errors.md).
 # Enable debug logs
 DEBUG=platformatic:* wattpm dev
 
-# Or set log level in configuration
+# Or set the capability log level in its configuration
 {
-  "server": {
-    "logger": {
-      "level": "debug"
-    }
+  "logger": {
+    "level": "debug"
   }
 }
 ```

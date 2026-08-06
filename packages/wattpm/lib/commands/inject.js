@@ -77,8 +77,14 @@ export async function injectCommand (logger, args) {
     let application = positionals[0]
 
     if (!application) {
-      const applicationsInfo = await client.getRuntimeApplications(runtime.pid)
-      application = applicationsInfo.entrypoint
+      const { applications } = await client.getRuntimeApplications(runtime.pid)
+      if (applications.length === 1) {
+        application = applications[0].id
+      } else {
+        const error = new Error('An application name is required when the runtime has multiple applications.')
+        error.code = 'PLT_CTR_APPLICATION_NOT_FOUND'
+        throw error
+      }
     }
 
     let body
@@ -158,8 +164,8 @@ export const help = {
     description: 'Injects a request to a running application',
     footer: `
 The command sends a request to the runtime application and prints the
-response to the standard output. If the application is not specified the
-request is sent to the runtime entrypoint.
+response to the standard output. The application can be omitted only when the
+runtime has a single application.
     `,
     options: [
       { usage: '-m, --method <value>', description: 'The request method (the default is GET)' },
@@ -178,7 +184,7 @@ request is sent to the runtime entrypoint.
       },
       {
         name: 'application',
-        description: 'The application name (the default is the entrypoint)'
+        description: 'The application name (optional when the runtime has a single application)'
       }
     ]
   }

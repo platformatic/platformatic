@@ -17,8 +17,8 @@ test('can start with a custom environment', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
-  const res = await request(entryUrl + '/env')
+  const { 'serviceApp:0': url } = await app.start()
+  const res = await request(url + '/env')
 
   strictEqual(res.statusCode, 200)
   deepStrictEqual(await res.body.json(), {
@@ -92,7 +92,6 @@ test('should load custom env file when envfile is configured on the runtime conf
 
   const envFile = join(root, 'custom.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
   })
 
@@ -124,7 +123,6 @@ test('should prefer the config envfile over the envFile option', async t => {
   const envFile = join(root, 'custom.env')
   const overrideEnvFile = join(root, 'override.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
   })
 

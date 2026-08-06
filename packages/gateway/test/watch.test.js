@@ -49,7 +49,7 @@ test('gateway should restart when graphql changes', async t => {
     }
   })
 
-  let gatewayOrigin = await runtime.start()
+  let { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const res = await request(gatewayOrigin, {
@@ -112,7 +112,7 @@ test('gateway should restart when openapi changes', async t => {
     }
   })
 
-  let gatewayOrigin = await runtime.start()
+  let { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const res = await request(gatewayOrigin, {

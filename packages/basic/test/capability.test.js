@@ -39,6 +39,15 @@ test('BaseCapability - should properly initialize', async t => {
   deepStrictEqual(capability.logger.level, 'trace')
 })
 
+test('BaseCapability - should honor application reuseTcpPorts configuration', async t => {
+  const capability = await create(t, {
+    applicationConfig: { reuseTcpPorts: false },
+    runtimeConfig: { reuseTcpPorts: true }
+  })
+
+  deepStrictEqual(capability.reuseTcpPorts, false)
+})
+
 test('BaseCapability - should properly setup globals', async t => {
   const capability = await create(
     t,
@@ -60,8 +69,7 @@ test('BaseCapability - should properly setup globals', async t => {
   deepStrictEqual(await capability.getGraphqlSchema(), 'graphql')
   deepStrictEqual(capability.logger.level, 'info')
   deepStrictEqual(capability.basePath, 'basePath')
-  deepStrictEqual(platformatic.isEntrypoint, undefined)
-  deepStrictEqual(platformatic.reuseTcpPorts, undefined)
+  deepStrictEqual(platformatic.reuseTcpPorts, capability.reuseTcpPorts)
 })
 
 test('BaseCapability - startCommand - should expose the configured entrypoint port as url', async t => {
@@ -69,7 +77,6 @@ test('BaseCapability - startCommand - should expose the configured entrypoint po
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -280,7 +287,6 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -334,13 +340,12 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -358,7 +363,6 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -413,13 +417,12 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -430,13 +433,12 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
   await capability.stopCommand()
 })
 
-test('BaseCapability - startCommand - should override the port set for the entrypoint', async t => {
+test('BaseCapability - startCommand - should not override an application-owned listener port', async t => {
   const port = await getPort()
   const capability = await create(
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port
@@ -458,7 +460,7 @@ test('BaseCapability - startCommand - should override the port set for the entry
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
   await capability.startWithCommand(`node ${executablePath}`)
 
-  ok(capability.url.startsWith(`http://127.0.0.1:${port}`))
+  ok(capability.url.startsWith('http://127.0.0.1:'))
   deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
@@ -490,13 +492,12 @@ test('BaseCapability - startCommand - should override the port set for the entry
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -512,7 +513,6 @@ test('BaseCapability - startCommand - should not override the port when unset fo
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1'
       },
@@ -565,13 +565,12 @@ test('BaseCapability - startCommand - should not override the port when unset fo
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -587,7 +586,6 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
     t,
     {
       applicationId: 'test-application-id',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -649,9 +647,9 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
       applicationId: 'test-application-id',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {
@@ -663,7 +661,6 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
           }
         }
       },
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -805,7 +802,6 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
@@ -860,13 +856,12 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
       basePath: '/whatever',
       applicationId: 'application',
       workerId: 0,
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       events: undefined,
@@ -883,7 +878,6 @@ test('BaseCapability - stopCommand - should not throw if subprocess was never as
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0

@@ -99,7 +99,7 @@ export async function waitForStart (startProcess) {
       continue
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "[^"]+"/)
     if (mo) {
       url = mo[1]
       break

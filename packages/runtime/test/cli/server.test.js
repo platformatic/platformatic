@@ -7,14 +7,17 @@ import { test } from 'node:test'
 import { request } from 'undici'
 import { start, startPath } from './helper.js'
 
-test('autostart', async () => {
+test('autostart', async t => {
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  const { child, url } = await start(config, { applicationId: 'serviceApp', env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  t.after(async () => {
+    child.kill('SIGKILL')
+    await child.catch(() => {})
+  })
   const res = await request(url)
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
-  child.kill('SIGKILL')
 })
 
 test('handles startup errors', async t => {

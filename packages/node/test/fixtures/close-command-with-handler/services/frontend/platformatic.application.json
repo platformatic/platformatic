@@ -4,5 +4,8 @@
     "commands": {
       "development": "node index.js"
     }
+  },
+  "server": {
+    "port": 0
   }
 }

@@ -12,8 +12,7 @@
         "instrumentations": [
           "@opentelemetry/instrumentation-express"
         ]
-      },
-      "useHttp": true
+      }
     }
   ],
   "telemetry": {

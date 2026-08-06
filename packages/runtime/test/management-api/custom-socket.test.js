@@ -1,7 +1,8 @@
 import { equal, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { platform } from 'node:os'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { transform } from '../../index.js'
@@ -16,8 +17,8 @@ test('should use custom socket path when specified', async t => {
     return
   }
 
-  const tempDir = await createTemporaryDirectory(t, 'custom-socket')
-  const customSocketPath = join(tempDir, 'custom.sock')
+  await createTemporaryDirectory(t, 'custom-socket')
+  const customSocketPath = join(tmpdir(), `platformatic-${randomUUID()}.sock`)
 
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
   const configFile = join(projectDir, 'platformatic.json')

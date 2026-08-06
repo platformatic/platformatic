@@ -20,7 +20,6 @@ test('getters should return global fields', () => {
     applicationId: 'application',
     workerId: 1,
     root: '/tmp/application',
-    isEntrypoint: true,
     basePath: '/base',
     runtimeBasePath: '/runtime',
     wantsAbsoluteUrls: false,
@@ -79,7 +78,6 @@ test('getters should return global fields', () => {
   strictEqual(globals.getApplicationId(), values.applicationId)
   strictEqual(globals.getWorkerId(), values.workerId)
   strictEqual(globals.getRoot(), values.root)
-  strictEqual(globals.isEntrypoint(), values.isEntrypoint)
   strictEqual(globals.getBasePath(), values.basePath)
   strictEqual(globals.getRuntimeBasePath(), values.runtimeBasePath)
   strictEqual(globals.getWantsAbsoluteUrls(), values.wantsAbsoluteUrls)

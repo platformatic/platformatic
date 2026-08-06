@@ -4,9 +4,6 @@
   "logger": {
     "level": "error"
   },
-  "server": {
-    "port": 0
-  },
   "services": [
     {
       "id": "api",
@@ -14,8 +11,7 @@
     },
     {
       "id": "internal",
-      "path": "./services/internal",
-      "useHttp": false
+      "path": "./services/internal"
     }
   ]
 }

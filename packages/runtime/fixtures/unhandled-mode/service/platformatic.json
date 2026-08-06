@@ -1,6 +1,12 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.66.0.json",
   "plugins": {
-    "paths": ["./index.js"]
+    "paths": [
+      "./index.js"
+    ]
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
   }
 }

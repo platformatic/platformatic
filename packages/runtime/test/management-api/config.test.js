@@ -37,7 +37,6 @@ test('should get runtime config', async t => {
   strictEqual(statusCode, 200)
 
   const runtimeConfig = await body.json()
-  strictEqual(runtimeConfig.entrypoint, 'service-1')
   strictEqual(runtimeConfig.watch, false)
   deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),

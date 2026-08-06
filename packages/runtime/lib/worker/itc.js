@@ -190,12 +190,8 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           }
         }
 
-        if (application.entrypoint) {
-          await controller.listen()
-        }
-
         dispatcher.replaceServer(await controller.capability.getDispatchTarget())
-        return application.entrypoint ? controller.capability.getUrl() : null
+        return controller.getUrl()
       },
 
       async stop ({ force, dependents }) {

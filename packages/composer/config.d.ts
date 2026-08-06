@@ -10,6 +10,10 @@ export interface PlatformaticComposerConfig {
   server?: {
     hostname?: string;
     port?: number | string;
+    /**
+     * The maximum length of the queue of pending connections
+     */
+    backlog?: number;
     pluginTimeout?: number;
     healthCheck?:
       | boolean
@@ -269,46 +273,6 @@ export interface PlatformaticComposerConfig {
         url: string;
       };
       [k: string]: unknown;
-    };
-    server?: {
-      hostname?: string;
-      port?: number | string;
-      /**
-       * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
-       */
-      portAssignment?: "shared" | "perWorkerIncrement";
-      /**
-       * The maximum length of the queue of pending connections
-       */
-      backlog?: number;
-      http2?: boolean;
-      https?: {
-        allowHTTP1?: boolean;
-        key:
-          | string
-          | {
-              path?: string;
-            }
-          | (
-              | string
-              | {
-                  path?: string;
-                }
-            )[];
-        cert:
-          | string
-          | {
-              path?: string;
-            }
-          | (
-              | string
-              | {
-                  path?: string;
-                }
-            )[];
-        requestCert?: boolean;
-        rejectUnauthorized?: boolean;
-      };
     };
     reuseTcpPorts?: boolean;
     startTimeout?: number;

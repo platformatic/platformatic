@@ -14,7 +14,11 @@
       "id": "restricted",
       "path": "restricted",
       "management": {
-        "operations": ["getRuntimeStatus", "getApplicationsIds", "getApplicationDetails"]
+        "operations": [
+          "getRuntimeStatus",
+          "getApplicationsIds",
+          "getApplicationDetails"
+        ]
       }
     },
     {
@@ -24,9 +28,5 @@
   ],
   "logger": {
     "level": "warn"
-  },
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 0
   }
 }

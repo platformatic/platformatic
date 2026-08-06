@@ -27,7 +27,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
   "application": {
     "basePath": "/frontend"
   }
@@ -91,15 +91,11 @@ server.listen(0)
 
 ## Architecture
 
-If your server entrypoint exports a `create` function, then Platformatic Node will execute it and then will wait for it to return a server object. In this situation the server will be used without starting a TCP server. The TCP server is started if the application is the runtime entrypoint.
+If your server entrypoint exports a `create` function, Platformatic Node executes it and waits for it to return a server object. Returning a server delegates its listener lifecycle to the Node capability. The capability calls `listen()` only when `server.port` is configured; without it, the server remains available for ITC injection without opening a TCP listener.
 
-If your server entrypoint does not export a function, then Platformatic runtime will execute the function and wait for a TCP server to be started.
+If your server entrypoint does not export a function, Platformatic executes it and observes the TCP server started by the application without changing its listener options.
 
-In both cases, the listening port is always modified and chosen randomly, overriding any user or application setting.
-
-If the application uses the `commands` property then it's always responsible to start a HTTP server and the `create` functions are not supported anymore.
-
-In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
+If the application uses the `commands` property, it is responsible for starting its own HTTP server and `create` functions are not supported.
 
 If your application entrypoint exports a `create` or `build` function that returns an object with `isBackgroundApplication` set to `true`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. If the returned object has a `close` function, it will be called upon application shutdown as `close(app)`, where `app` is the returned object.
 
@@ -107,12 +103,10 @@ Alternatively, your application entrypoint can export a `hasServer` variable set
 
 ## HTTPS
 
-When a `@platformatic/node` application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+Configure HTTPS in this Node.js capability's `server.https` object. The `server` object belongs in the capability's own `watt.json`, not in the Runtime or Watt root configuration:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "entrypoint": "api",
   "server": {
     "hostname": "127.0.0.1",
     "port": 3042,
@@ -120,13 +114,7 @@ When a `@platformatic/node` application is the Watt entrypoint, configure HTTPS 
       "key": { "path": "./certs/server.key" },
       "cert": { "path": "./certs/server.crt" }
     }
-  },
-  "applications": [
-    {
-      "id": "api",
-      "path": "./services/api"
-    }
-  ]
+  }
 }
 ```
 
@@ -143,7 +131,7 @@ const server = createServer(getAdditionalServerOptions(), (req, res) => {
 server.listen(0)
 ```
 
-Watt reads `key` and `cert` file paths before loading the application, so `getAdditionalServerOptions()` returns the sanitized TLS options that `node:https` expects. `reuseTcpPorts` remains enabled by default and HTTPS servers use `SO_REUSEPORT` when the current Node.js version and operating system support it.
+Watt reads `key` and `cert` file paths before loading the application, so `getAdditionalServerOptions()` returns the sanitized TLS options that `node:https` expects.
 
 ## Example applications entrypoints
 
