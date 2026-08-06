@@ -55,7 +55,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/dynamic-buffer": "^0.4.0",
     "@platformatic/fastify-openapi-glue": "^5.1.0",
-    "@platformatic/foundation": "workspace:^",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "@platformatic/graphql-composer": "^0.11.0",
     "@platformatic/openapi-schema-validator": "^3.0.0",
