@@ -46,6 +46,7 @@ export class ChildManager extends ITC {
   #loader
   #context
   #scripts
+  #urlFromScript
   #logger
   #server
   #websocketServer
@@ -59,10 +60,11 @@ export class ChildManager extends ITC {
   #dataPath
 
   constructor (opts) {
-    let { loader, context, scripts, handlers, ...itcOpts } = opts
+    let { loader, context, scripts, urlFromScript, handlers, ...itcOpts } = opts
 
     context ??= {}
     scripts ??= []
+    urlFromScript ??= false
 
     super({
       ...itcOpts,
@@ -73,6 +75,7 @@ export class ChildManager extends ITC {
     this.#loader = loader
     this.#context = context
     this.#scripts = scripts
+    this.#urlFromScript = urlFromScript
     this.#originalNodeOptions = process.env.NODE_OPTIONS
     this.#logger = getLogger()
     this.#server = createServer(this.#childProcessFetchHandler.bind(this))
@@ -154,7 +157,8 @@ export class ChildManager extends ITC {
         {
           data: this.#context,
           loader: ensureFileUrl(this.#loader),
-          scripts: this.#scripts.map(s => ensureFileUrl(s))
+          scripts: this.#scripts.map(s => ensureFileUrl(s)),
+          urlFromScript: this.#urlFromScript
         },
         null,
         2

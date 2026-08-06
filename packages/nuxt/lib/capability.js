@@ -17,6 +17,7 @@ import {
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { satisfies } from 'semver'
 import { readSchedulerManifest } from './scheduled-tasks.js'
 import { version } from './schema.js'
@@ -222,7 +223,10 @@ export class NuxtCapability extends BaseCapability {
     }
 
     await this.startWithCommand(
-      `node ${resolve(this.#nuxt)}/bin/nuxt.mjs dev --host ${hostname} --port ${port} --no-open${httpsArgs}`
+      `node ${resolve(this.#nuxt)}/bin/nuxt.mjs dev --host ${hostname} --port ${port} --no-open --no-fork${httpsArgs}`,
+      null,
+      [fileURLToPath(new URL('./dev-ready.js', import.meta.url))],
+      { urlFromScript: true }
     )
 
     if (https) {
