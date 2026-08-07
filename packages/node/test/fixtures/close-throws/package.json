@@ -1,0 +1,7 @@
+{
+  "name": "close-throws",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ]
+}

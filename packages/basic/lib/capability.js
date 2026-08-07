@@ -336,14 +336,13 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
-    const pending = new Set(dependents)
-
-    // Ask the runtime the status of the dependencies and don't wait if they are already stopped
+    // Ask the runtime the status of the dependents and wait only for those that are not stopped
     const workers = await itc.send('getWorkers')
+    const pending = new Set()
 
     for (const worker of Object.values(workers)) {
-      if (pending.has(worker.application) && (worker.status === 'stopped' || worker.status === 'exited')) {
-        pending.delete(worker.application)
+      if (dependents.includes(worker.application) && worker.status !== 'stopped' && worker.status !== 'exited') {
+        pending.add(worker.application)
       }
     }
 
@@ -514,12 +513,9 @@ export class BaseCapability extends EventEmitter {
 
   async buildWithCommand (command, basePath, opts = {}) {
     const { loader, scripts, context, disableChildManager } = opts
+    const displayCommand = Array.isArray(command) ? command.join(' ') : command
 
-    if (Array.isArray(command)) {
-      command = command.join(' ')
-    }
-
-    this.logger.debug(`Executing "${command}" ...`)
+    this.logger.debug(`Executing "${displayCommand}" ...`)
 
     const baseContext = await this.getChildManagerContext(basePath)
     this.childManager = disableChildManager
@@ -577,7 +573,8 @@ export class BaseCapability extends EventEmitter {
       this.childManager.close()
 
       if (e.code === 'ENOENT') {
-        throw new Error(`Cannot execute command "${command}": executable not found`)
+        const displayCommand = Array.isArray(command) ? command.join(' ') : command
+        throw new Error(`Cannot execute command "${displayCommand}": executable not found`)
       } else {
         throw e
       }
@@ -739,8 +736,10 @@ export class BaseCapability extends EventEmitter {
   }
 
   async spawn (command) {
-    let [executable, ...args] = parseCommandString(command)
-    const hasChainedCommands = command.includes('&&') || command.includes('||') || command.includes(';')
+    const isArrayCommand = Array.isArray(command)
+    let [executable, ...args] = isArrayCommand ? command : parseCommandString(command)
+    const hasChainedCommands = !isArrayCommand &&
+      (command.includes('&&') || command.includes('||') || command.includes(';'))
 
     // Use the current Node.js executable instead of relying on PATH lookup
     // This ensures subprocess uses the same Node.js version as the parent
@@ -760,13 +759,13 @@ export class BaseCapability extends EventEmitter {
 
     const spawnOptions = { cwd: this.root }
 
-    if (platform() === 'win32') {
+    if (platform() === 'win32' && !isArrayCommand) {
       executable = command.replace(/^node\b/, process.execPath)
       args = []
 
       spawnOptions.shell = true
       spawnOptions.windowsVerbatimArguments = true
-    } else {
+    } else if (!isArrayCommand) {
       spawnOptions.shell = hasChainedCommands
     }
 
@@ -929,7 +928,8 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Use thread-specific metrics collection - process-level metrics are collected
-    // by the main runtime thread and duplicated with worker labels
+    // and reported only once by the main runtime thread, without application labels.
+    // See https://github.com/platformatic/platformatic/issues/3332.
     await collectThreadMetrics(this.applicationId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 

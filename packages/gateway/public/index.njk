@@ -68,13 +68,23 @@
     </div>
 
     <script>
-      let currentPath = window.location.pathname
-      const href = window.location.href.replace(/\/$/, '')
+      // Build URLs from origin + pathname, never from window.location.href.
+      // href carries the query string and fragment, so concatenating a service
+      // path onto it folds that path INTO the query instead of appending to it:
+      // at "/?dpl=v1" the old `href + '/next/'` produced "/?dpl=v1/next/", which
+      // requests the root again with a mangled query. Any URL with a query hits
+      // this; skew protection puts `?dpl=<version>` on the URL routinely.
+      const basePath = window.location.pathname.replace(/\/$/, '')
+      const baseUrl = window.location.origin + basePath
+      // Trailing slash restored so relative asset paths resolve under the mount
+      // point: "" -> "/", "/my-app" -> "/my-app/". Concatenating a bare pathname
+      // produced "/my-appimages/..." when the gateway was mounted on a prefix.
+      const currentPath = basePath + '/'
       {% for key, value in services %}
         {% if key === 'proxy' %}
           {% if value.services.length %}
             {% for svc in value.services %}
-        document.getElementById('{{ key }}-{{ svc.id}}-external-link').href = href + '{{ svc.externalLink }}'
+        document.getElementById('{{ key }}-{{ svc.id}}-external-link').href = baseUrl + '{{ svc.externalLink }}'
             {% endfor %}
           {% endif %}
         {% endif %}

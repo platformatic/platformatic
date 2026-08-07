@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/node",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Node.js Capability",
   "main": "index.js",
   "type": "module",
@@ -11,7 +11,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -38,13 +39,13 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "express": "^4.19.2",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "tstyche": "^6.2.0",
     "json-schema-to-typescript": "^15.0.1",
     "koa": "^2.15.3",
     "neostandard": "^0.12.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "undici-8": "npm:undici@^8.3.0"
   },
   "engines": {

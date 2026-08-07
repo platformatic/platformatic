@@ -107,6 +107,16 @@ Configures Next.js. Supported object properties:
   - **`timeout`** (`number` or `string`): Timeout in milliseconds used for image fetch/optimization operations. Default: `30000`.
   - **`maxAttempts`** (`number` or `string`): Maximum retry attempts for optimization jobs. Default: `3`.
 
+## Skew protection
+
+When `PLT_DEPLOYMENT_ID` is set during the build, Platformatic sets Next.js `deploymentId` automatically unless it is already configured. You can also configure it directly in `next.config.js`:
+
+```js
+module.exports = {
+  deploymentId: process.env.PLT_DEPLOYMENT_ID
+}
+```
+
 <RuntimeInCapabilities />
 
 <Issues />

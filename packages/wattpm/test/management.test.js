@@ -329,7 +329,7 @@ test('config - should list configuration for the runtime', async t => {
     workersRestartDelay: 0,
     watch: false,
     gracefulShutdown: {
-      runtime: 10000,
+      runtime: 30000,
       application: 10000,
       closeConnections: true
     },

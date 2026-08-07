@@ -60,6 +60,11 @@ export interface DBEntityField {
    */
   foreignKey?: boolean,
   /**
+   * An option that is true if a foreign key field is stringified in mapper output
+   * because it references a primary key.
+   */
+  stringifyOutput?: boolean,
+  /**
    * An option that is true if field is nullable.
    */
   isNullable: boolean,

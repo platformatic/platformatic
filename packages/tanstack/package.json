@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/tanstack",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic TanStack Capability",
   "main": "index.js",
   "type": "module",
@@ -11,7 +11,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -38,14 +39,14 @@
     "@vitejs/plugin-react": "^5.1.1",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
     "nitro": "3.0.1-alpha.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tstyche": "^6.2.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "vite": "^7.2.4",
     "vite-plugin-solid": "^2.11.10",
     "vite-tsconfig-paths": "^5.1.4",

@@ -49,5 +49,5 @@ It will generate do and undo sql files in the migrations folder. The name of the
 The migration files are named \`001.<do|undo>.sql\`, \`002.<do|undo>.sql\` etc...
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 `

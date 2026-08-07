@@ -34,6 +34,20 @@ export async function listColumns (db, sql, table, schema) {
   return db.query(query)
 }
 
+// MariaDB has no native JSON type: a `JSON` column is really a LONGTEXT
+// column with an automatically-generated CHECK (json_valid(`col`)) constraint.
+// We use that constraint to recognize which longtext columns are actually JSON.
+export async function listJsonColumns (db, sql, table, schema) {
+  const query = sql`
+    SELECT CONSTRAINT_NAME as column_name
+    FROM information_schema.CHECK_CONSTRAINTS
+    WHERE TABLE_NAME = ${table}
+    AND CONSTRAINT_SCHEMA = ${schema}
+    AND CHECK_CLAUSE LIKE 'json_valid(%'
+  `
+  return db.query(query)
+}
+
 export async function listConstraints (db, sql, table, schema) {
   const query = sql`
     SELECT TABLE_NAME as table_name, TABLE_SCHEMA as table_schema, COLUMN_NAME as column_name, CONSTRAINT_TYPE as constraint_type, referenced_table_name AS foreign_table_name, referenced_table_schema AS foreign_table_schema, referenced_column_name AS foreign_column_name

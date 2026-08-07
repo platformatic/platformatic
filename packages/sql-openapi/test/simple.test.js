@@ -5,7 +5,7 @@ import { equal, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import { parse } from 'yaml'
 import sqlOpenAPI from '../index.js'
-import { clear, connInfo, isMariaDB, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
+import { clear, connInfo, isMysql, isMysql8, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -65,7 +65,7 @@ test('simple db, simple rest API', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'POST /pages response'
@@ -81,7 +81,7 @@ test('simple db, simple rest API', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'GET /pages/1 response'
@@ -100,7 +100,7 @@ test('simple db, simple rest API', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello World'
       },
       'PUT /pages/1 response'
@@ -116,7 +116,7 @@ test('simple db, simple rest API', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello World'
       },
       'GET /pages/1 response'
@@ -195,7 +195,7 @@ test('simple db, simple rest API', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello fields'
       },
       'GET /pages/1?fields=title&fields=id response'
@@ -211,7 +211,7 @@ test('simple db, simple rest API', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello fields'
       },
       'GET /pages/1?fields=title,id response'
@@ -229,7 +229,7 @@ test('simple db, simple rest API', async t => {
     equal(res.statusCode, 200, 'POST /pages?fields=id status code')
     equal(res.headers.location, '/pages/2', 'POST /pages?fields=id location')
     same(res.json(), {
-      id: 2,
+      id: '2',
     }, 'POST /pages?fields=id response')
   }
 
@@ -322,7 +322,7 @@ test('nullable fields', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: null
       },
       'POST /pages response'
@@ -675,7 +675,7 @@ test('PUT with an Id', async t => {
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
-      id: 1,
+      id: '1',
       title: 'Hello World'
     })
   }
@@ -719,7 +719,7 @@ test('delete', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'POST /pages response'
@@ -735,7 +735,7 @@ test('delete', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'DELETE /pages response'
@@ -852,11 +852,7 @@ test('deserialize JSON columns', { skip: isSQLite }, async t => {
     url: '/pages'
   })
   const json = res.json()
-  if (isMariaDB) {
-    same(json[0].metadata, JSON.stringify(jsonData))
-  } else {
-    same(json[0].metadata, jsonData)
-  }
+  same(json[0].metadata, jsonData)
 })
 
 test('expose the api with a prefix, if defined', async t => {
@@ -906,7 +902,7 @@ test('expose the api with a prefix, if defined', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'POST /pages response'
@@ -967,7 +963,7 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         config: {
           foo: 'bar'
         }
@@ -991,7 +987,7 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         config: {
           foo: 'bar',
           bar: 'foo'
@@ -1039,7 +1035,7 @@ test('BIGINT', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         counter: counter.toString()
       },
       'POST /simpleTypes response'
@@ -1055,7 +1051,7 @@ test('BIGINT', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         counter: counter.toString()
       },
       'GET /simpleTypes response'

@@ -1,11 +1,14 @@
-import { equal, ok, strictEqual } from 'node:assert'
-import { existsSync } from 'node:fs'
+import { equal, ok, rejects, strictEqual } from 'node:assert'
 import { randomUUID } from 'node:crypto'
+import { EventEmitter, once } from 'node:events'
+import { existsSync } from 'node:fs'
+import { createServer } from 'node:net'
 import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { transform } from '../../index.js'
+import { startManagementApi } from '../../lib/management-api.js'
 import { createRuntime, createTemporaryDirectory } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
@@ -71,6 +74,29 @@ test('should use custom socket path when specified', async t => {
 
   const metadata = await body.json()
   equal(metadata.pid, process.pid)
+})
+
+test('should throw when the custom socket remains in use after retries', async t => {
+  const tempDir = await createTemporaryDirectory(t, 'custom-socket-in-use')
+  const customSocketPath =
+    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : join(tempDir, 'custom.sock')
+  const server = createServer()
+  server.listen(customSocketPath)
+  await once(server, 'listening')
+
+  t.after(async () => {
+    await new Promise((resolve, reject) => {
+      server.close(error => error ? reject(error) : resolve())
+    })
+  })
+
+  const runtime = new EventEmitter()
+  t.after(async () => {
+    const closeManagementApi = runtime.listeners('closed')[0]
+    await closeManagementApi?.()
+  })
+
+  await rejects(startManagementApi(runtime, { socket: customSocketPath }), { code: 'EADDRINUSE' })
 })
 
 test('should use default socket path when managementApi is true', async t => {

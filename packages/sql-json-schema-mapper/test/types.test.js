@@ -255,6 +255,12 @@ test('numeric primary keys are mapped to string type', async t => {
       age: {
         type: 'integer'
       },
+      contactId: {
+        type: 'integer'
+      },
+      externalCode: {
+        type: 'integer'
+      },
       name: {
         type: 'string'
       }
@@ -265,12 +271,16 @@ test('numeric primary keys are mapped to string type', async t => {
   const fieldDefinitions = {
     id: { primaryKey: true, sqlType: 'integer' },
     age: { sqlType: 'integer' },
+    contactId: { foreignKey: true, stringifyOutput: true, sqlType: 'integer' },
+    externalCode: { foreignKey: true, sqlType: 'integer' },
     name: { sqlType: 'varchar' }
   }
 
   const result = mapOpenAPItoTypes(schema, fieldDefinitions)
 
   same(result.includes('id: string;'), true, 'the primary key is typed as string, like the mapper returns it')
+  same(result.includes('contactId?: string;'), true, 'a foreign key to a primary key is typed as string')
+  same(result.includes('externalCode?: number;'), true, 'other foreign keys keep the number type')
   same(result.includes('age?: number;'), true, 'other numeric fields keep the number type')
   same(result.includes('name?: string;'), true, 'string fields keep the string type')
 })

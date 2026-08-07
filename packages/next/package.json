@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/next",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Next.js Capability",
   "main": "index.js",
   "type": "module",
@@ -15,7 +15,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -57,7 +58,7 @@
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
     "next": "^16.1.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "ws": "^8.18.0"
   },
   "engines": {

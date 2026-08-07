@@ -123,6 +123,14 @@ export interface PlatformaticDatabaseConfig {
       largeArrayMechanism?: "default" | "json-stringify";
       [k: string]: unknown;
     };
+    /**
+     * Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.
+     */
+    ajv?: {
+      customOptions?: {
+        [k: string]: unknown;
+      };
+    };
     caseSensitive?: boolean;
     requestIdHeader?: string | false;
     requestIdLogLabel?: string;
@@ -196,7 +204,7 @@ export interface PlatformaticDatabaseConfig {
           /**
            * Never write the schema lock file at runtime, only read it.
            */
-          readOnly?: boolean;
+          readOnly?: boolean | string;
           [k: string]: unknown;
         };
     poolSize?: number;
@@ -386,6 +394,9 @@ export interface PlatformaticDatabaseConfig {
      * Table created to track schema version.
      */
     table?: string;
+    /**
+     * Validate the checksums of already-applied migrations before running new ones. Matches the default of the underlying Postgrator library.
+     */
     validateChecksums?: boolean;
     /**
      * Whether to automatically apply migrations when running the migrate command.
@@ -519,6 +530,7 @@ export interface PlatformaticDatabaseConfig {
           options?: {
             [k: string]: unknown;
           };
+          build?: boolean;
         }
       | (
           | string
@@ -527,6 +539,7 @@ export interface PlatformaticDatabaseConfig {
               options?: {
                 [k: string]: unknown;
               };
+              build?: boolean;
             }
         )[];
     basePath?: string;

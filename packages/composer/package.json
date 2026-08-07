@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Composer",
   "main": "index.js",
   "types": "index.d.ts",
@@ -12,7 +12,8 @@
     "prepublishOnly": "npm run build",
     "lint": "eslint",
     "gen-schema": "node scripts/schema.js > schema.json",
-    "gen-types": "json2ts > config.d.ts < schema.json"
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "lint:fix": "eslint --fix"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {

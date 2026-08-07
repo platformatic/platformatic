@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/composer/3.62.2.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/composer/3.66.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Composer Config",
   "type": "object",
@@ -320,6 +320,17 @@
               "default": "default"
             }
           }
+        },
+        "ajv": {
+          "type": "object",
+          "description": "Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.",
+          "properties": {
+            "customOptions": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
         },
         "caseSensitive": {
           "type": "boolean"
@@ -725,6 +736,10 @@
                 "options": {
                   "type": "object",
                   "additionalProperties": true
+                },
+                "build": {
+                  "type": "boolean",
+                  "default": false
                 }
               }
             },
@@ -750,6 +765,10 @@
                       "options": {
                         "type": "object",
                         "additionalProperties": true
+                      },
+                      "build": {
+                        "type": "boolean",
+                        "default": false
                       }
                     }
                   }
@@ -1473,7 +1492,7 @@
                   "type": "string"
                 }
               ],
-              "default": 10000
+              "default": 30000
             },
             "application": {
               "anyOf": [

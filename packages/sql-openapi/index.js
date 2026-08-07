@@ -74,7 +74,7 @@ async function setupOpenAPI (app, opts) {
         ignore[entity.singularName] = true
       }
     }
-    const entitySchema = mapSQLEntityToJSONSchema(entity, ignore[entity.singularName], true)
+    const entitySchema = mapSQLEntityToJSONSchema(entity, ignore[entity.singularName], true, { output: true })
     // TODO remove reverseRelationships from the entity
     /* istanbul ignore next */
     entity.reverseRelationships = entity.reverseRelationships || []

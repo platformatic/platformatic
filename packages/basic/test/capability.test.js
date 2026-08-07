@@ -1,6 +1,7 @@
 /* globals platformatic */
 
 import { kMetadata } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { EventEmitter } from 'node:events'
@@ -8,6 +9,7 @@ import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { ensureTrailingSlash } from '../lib/utils.js'
@@ -141,6 +143,24 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(await capability.getDispatchFunc(), capability)
 })
 
+test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {
+  const itc = new EventEmitter()
+  itc.send = async () => ({
+    'dependency:0': { application: 'dependency', status: 'started' }
+  })
+
+  updateGlobals({ itc })
+  t.after(() => updateGlobals({ itc: undefined }))
+
+  const capability = await create(t, { dependencies: ['dependency'] })
+  const result = await Promise.race([
+    capability.waitForDependentsStop(['dependent']).then(() => 'resolved'),
+    sleep(50, 'timeout')
+  ])
+
+  deepStrictEqual(result, 'resolved')
+})
+
 test('BaseCapability - getWatchConfig - disabled', async t => {
   const capability = await create(t, {}, { watch: { enabled: false } })
 
@@ -198,6 +218,19 @@ test('BaseCapability - buildWithCommand - should execute the requested command',
 
   ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(capability.stderr.messages[0], temporaryFolder)
+})
+
+test('BaseCapability - buildWithCommand - should preserve command array arguments without a shell', async t => {
+  const capability = await create(t, { isProduction: true })
+  const argument = 'value with spaces && shell syntax'
+
+  await capability.buildWithCommand(
+    ['node', '--input-type=module', '--eval', 'process.stdout.write(process.argv[1])', argument],
+    import.meta.dirname,
+    { disableChildManager: true }
+  )
+
+  deepStrictEqual(capability.stdout.messages[1], argument)
 })
 
 test('BaseCapability - buildWithCommand - should handle exceptions', async t => {

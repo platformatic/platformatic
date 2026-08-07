@@ -19,4 +19,8 @@ test('errors', () => {
   expect(errors.InspectorHostError()).type.toBe<FastifyError>()
   expect(errors.CannotMapSpecifierToAbsolutePathError('specifier')).type.toBe<FastifyError>()
   expect(errors.NodeInspectorFlagsNotSupportedError()).type.toBe<FastifyError>()
+  expect(errors.MetricFamilyCollisionError('ext.js', 'metric', 'runtime process metrics')).type.toBe<FastifyError>()
+  expect(errors.DuplicateExtensionHealthCheckError('readiness', 'name', 'ext.js')).type.toBe<FastifyError>()
+  expect(errors.DuplicateExtensionHealthRouteError('ext.js', 'GET', '/inventory', 'dup')).type.toBe<FastifyError>()
+  expect(errors.ExtensionHealthRoutesUnavailableError()).type.toBe<FastifyError>()
 })

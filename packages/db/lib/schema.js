@@ -42,7 +42,7 @@ export const db = {
               resolvePath: true
             },
             readOnly: {
-              type: 'boolean',
+              anyOf: [{ type: 'boolean' }, { type: 'string' }],
               default: false,
               description: 'Never write the schema lock file at runtime, only read it.'
             }
@@ -400,7 +400,10 @@ export const migrations = {
       default: 'versions'
     },
     validateChecksums: {
-      type: 'boolean'
+      type: 'boolean',
+      default: true,
+      description:
+        'Validate the checksums of already-applied migrations before running new ones. Matches the default of the underlying Postgrator library.'
     },
     autoApply: {
       description: 'Whether to automatically apply migrations when running the migrate command.',

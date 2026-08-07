@@ -1,16 +1,22 @@
+import type { JSONSchemaType } from 'ajv'
 import type { ParseArgsOptionsConfig } from 'node:util'
 import type { Logger } from 'pino'
 import { describe, expect, test } from 'tstyche'
 import {
   applicationToEnvVariable,
+  applications,
   createCLIContext,
   createCliLogger,
   fallbackToTemporaryConfigFile,
   findRuntimeConfigurationFile,
   getRoot,
+  loadConfigurationModule,
   logFatalError,
   logo,
-  parseArgs
+  parseArgs,
+  validate,
+  type ConfigurationModule,
+  type ConfigurationOptions
 } from '../../index.js'
 
 describe('createCLIContext', () => {
@@ -254,5 +260,59 @@ describe('fallbackToTemporaryConfigFile', () => {
     const logger: Logger = {} as Logger
     const result = await fallbackToTemporaryConfigFile(logger, '/root', false)
     expect(result).type.toBe<string | false | undefined>()
+  })
+})
+
+describe('validate', () => {
+  test('with a single object config', () => {
+    const schema = {} as JSONSchemaType<any>
+    expect(validate(schema, { foo: 'bar' })).type.toBe<void>()
+    expect(validate(schema, { foo: 'bar' }, {}, true, '/root')).type.toBe<void>()
+  })
+
+  test('with an array config (the exported `applications` schema)', () => {
+    // Cast needed purely due to an unrelated ajv `exactOptionalPropertyTypes`
+    // strictness gap between `JSONSchemaType<object[]>` and `JSONSchemaType<any>`
+    // - orthogonal to the array-vs-object `config` fix under test here.
+    const schema = applications as JSONSchemaType<any>
+    expect(validate(schema, [{ id: 'api' }])).type.toBe<void>()
+    expect(validate(schema, [{ id: 'api' }], {}, true, '/root')).type.toBe<void>()
+  })
+})
+
+describe('loadConfigurationModule', () => {
+  test('with required arguments', async () => {
+    const result = await loadConfigurationModule('/root', { module: '@platformatic/service' })
+    expect(result).type.toBe<ConfigurationModule>()
+    expect(result.loadConfiguration).type.toBe<((configPath: string) => Promise<unknown>) | undefined>()
+  })
+
+  test('with an explicit pkg override', async () => {
+    const result = await loadConfigurationModule('/root', {}, '@platformatic/basic')
+    expect(result).type.toBe<ConfigurationModule>()
+  })
+})
+
+describe('ConfigurationOptions', () => {
+  test('transform is invoked with three arguments', () => {
+    const options: ConfigurationOptions = {
+      isProduction: true,
+      transform: async (config, schema, transformOptions) => {
+        expect(config).type.toBe<typeof config>()
+        expect(schema).type.toBe<object>()
+        expect(transformOptions).type.toBe<ConfigurationOptions>()
+        return config
+      }
+    }
+
+    expect(options.isProduction).type.toBe<boolean | undefined>()
+  })
+
+  test('a one-argument transform hook remains assignable', () => {
+    const options: ConfigurationOptions = {
+      transform: async config => config
+    }
+
+    expect(options.transform).type.not.toBe<undefined>()
   })
 })

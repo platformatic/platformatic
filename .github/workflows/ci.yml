@@ -40,7 +40,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -64,7 +64,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -83,6 +83,38 @@ jobs:
         if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
         run: exit 1
 
+  license-check:
+    name: 'license-check'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'license-check' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4.4.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --production --frozen-lockfile
+      - name: Generate the production dependency license list
+        run: node ./scripts/license-check.js --format=markdown --out=THIRD_PARTY_LICENSES.md --no-check
+      - name: Upload the production dependency license list
+        uses: actions/upload-artifact@v7
+        with:
+          name: third-party-licenses
+          path: THIRD_PARTY_LICENSES.md
+      # Fails when a dependency introduces a license that is not in the allow list
+      # in scripts/license-check.js, so adding a new license requires a review.
+      - name: Check that no disallowed or new licenses were added
+        run: pnpm run license-check
+
   runtime-lint:
     name: 'runtime-lint'
     needs: setup
@@ -90,7 +122,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -113,7 +145,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -159,7 +191,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -189,7 +221,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -216,7 +248,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -243,7 +275,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -270,7 +302,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -302,7 +334,7 @@ jobs:
         node: [22, 24, 26]
         suite: [main, api, cli, start, multiple-workers]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -329,7 +361,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -360,7 +392,7 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -388,7 +420,7 @@ jobs:
       matrix:
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -415,7 +447,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v6
@@ -446,7 +478,7 @@ jobs:
       matrix:
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -475,7 +507,7 @@ jobs:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -514,7 +546,7 @@ jobs:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -549,7 +581,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -576,7 +608,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -603,7 +635,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -630,7 +662,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -663,7 +695,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -696,7 +728,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -723,7 +755,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -748,7 +780,7 @@ jobs:
       matrix:
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v6
@@ -775,7 +807,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -802,7 +834,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -832,7 +864,7 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -861,7 +893,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -888,7 +920,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -915,7 +947,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -942,7 +974,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -969,7 +1001,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:
@@ -985,6 +1017,60 @@ jobs:
       - name: Run nest package test suite
         run: cd packages/nest && pnpm test && pnpm run lint
 
+  nitro:
+    name: 'nitro - ${{ matrix.os }} - ${{ matrix.node }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'nitro' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4.4.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run nitro package test suite
+        run: cd packages/nitro && pnpm test && pnpm run lint
+
+  nuxt:
+    name: 'nuxt - ${{ matrix.os }} - ${{ matrix.node }}'
+    needs: setup
+    if: ${{ !inputs.job || inputs.job == 'nuxt' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4.4.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: pnpm install
+        uses: nick-fields/retry@v3.0.2
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run nuxt package test suite
+        run: cd packages/nuxt && pnpm test && pnpm run lint
+
   tanstack:
     name: 'tanstack - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
@@ -996,7 +1082,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4.4.0
       - uses: actions/setup-node@v6
         with:

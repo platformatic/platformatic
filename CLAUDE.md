@@ -17,6 +17,7 @@ pnpm run global-links  # Link CLI tools globally for development
 pnpm test              # Run all tests (uses Docker for databases)
 pnpm run build         # Build all packages
 pnpm run lint          # Lint all packages
+pnpm run lint:fix      # Auto-fix lint issues across all packages (runs eslint --fix)
 pnpm run gen-schema    # Generate JSON schemas
 pnpm run gen-types     # Generate TypeScript types
 
@@ -39,7 +40,7 @@ npm test               # Run tests for specific package
 - **wattpm**: Node.js application server (`watt` command) 
 - **db**: Database service with auto-generated APIs
 - **service**: HTTP service based on Fastify
-- **composer**: API gateway for aggregating services
+- **gateway**: API gateway for aggregating applications (formerly `composer`, deprecated alias kept until v4)
 - **runtime**: Microservice orchestration environment
 
 ### Capabilities (Frontend Framework Integration)

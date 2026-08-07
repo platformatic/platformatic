@@ -88,6 +88,10 @@ test('should configure metrics correctly with both node and http metrics', async
   const labels = []
   for (const line of lines) {
     if (!line || line.startsWith('#')) continue
+    // Process-level metrics (e.g. process_resident_memory_bytes) are reported once
+    // for the whole runtime, without labels, so their lines have no `{...}` block.
+    // See https://github.com/platformatic/platformatic/issues/3332.
+    if (!line.includes('{')) continue
     labels.push(line.split('{')[1].split('}')[0].split(','))
   }
   const applications = labels

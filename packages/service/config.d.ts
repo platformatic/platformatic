@@ -106,6 +106,14 @@ export interface PlatformaticServiceConfig {
       largeArrayMechanism?: "default" | "json-stringify";
       [k: string]: unknown;
     };
+    /**
+     * Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.
+     */
+    ajv?: {
+      customOptions?: {
+        [k: string]: unknown;
+      };
+    };
     caseSensitive?: boolean;
     requestIdHeader?: string | false;
     requestIdLogLabel?: string;
@@ -344,6 +352,7 @@ export interface PlatformaticServiceConfig {
           options?: {
             [k: string]: unknown;
           };
+          build?: boolean;
         }
       | (
           | string
@@ -352,6 +361,7 @@ export interface PlatformaticServiceConfig {
               options?: {
                 [k: string]: unknown;
               };
+              build?: boolean;
             }
         )[];
     basePath?: string;

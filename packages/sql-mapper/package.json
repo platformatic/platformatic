@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "A data mapper utility for SQL databases",
   "main": "index.js",
   "type": "module",
@@ -14,7 +14,8 @@
     "test:mysql": "DB=mysql npm run test:runner",
     "test:mysql8": "DB=mysql8 npm run test:runner",
     "test:sqlite": "DB=sqlite npm run test:runner",
-    "test:types": "tstyche"
+    "test:types": "tstyche",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -30,10 +31,10 @@
     "@opentelemetry/api": "^1.9.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
     "tstyche": "^6.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "~6.0.3"
   },
   "dependencies": {
     "@databases/mysql": "^7.0.0",
@@ -46,7 +47,7 @@
     "@platformatic/telemetry": "workspace:*",
     "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",
-    "fastify-plugin": "^5.0.0",
+    "fastify-plugin": "^6.0.0",
     "inflected": "^2.1.0"
   },
   "engines": {

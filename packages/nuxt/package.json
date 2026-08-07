@@ -1,9 +1,22 @@
 {
   "name": "@platformatic/nuxt",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Nuxt Capability",
   "main": "index.js",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
+    "./scheduler": {
+      "types": "./lib/scheduler/module.d.ts",
+      "import": "./lib/scheduler/module.js",
+      "default": "./lib/scheduler/module.js"
+    },
+    "./*": "./*"
+  },
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",
@@ -11,7 +24,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -24,8 +38,10 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@fastify/error": "^4.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "light-my-request": "^6.6.0",
     "semver": "^7.6.3"
@@ -40,7 +56,7 @@
     "neostandard": "^0.12.0",
     "nuxt": "^4.4.8",
     "tstyche": "^6.2.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "vite": "^7.2.4",
     "vue": "^3.5.22",
     "ws": "^8.18.0"

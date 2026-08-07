@@ -50,9 +50,9 @@ test('one-level order by', async t => {
       { title: 'Page 3', counter: 1 }
     ]
     const expected = [
-      { id: 1, title: 'Page 1', counter: 3 },
-      { id: 2, title: 'Page 2', counter: 2 },
-      { id: 3, title: 'Page 3', counter: 1 }
+      { id: '1', title: 'Page 1', counter: 3 },
+      { id: '2', title: 'Page 2', counter: 2 },
+      { id: '3', title: 'Page 3', counter: 1 }
     ]
 
     for (const body of pages) {
@@ -75,9 +75,9 @@ test('one-level order by', async t => {
     same(
       res.json(),
       [
-        { id: 3, title: 'Page 3', counter: 1 },
-        { id: 2, title: 'Page 2', counter: 2 },
-        { id: 1, title: 'Page 1', counter: 3 }
+        { id: '3', title: 'Page 3', counter: 1 },
+        { id: '2', title: 'Page 2', counter: 2 },
+        { id: '1', title: 'Page 1', counter: 3 }
       ],
       'GET /pages?orderby.counter=asc response'
     )
@@ -92,9 +92,9 @@ test('one-level order by', async t => {
     same(
       res.json(),
       [
-        { id: 1, title: 'Page 1', counter: 3 },
-        { id: 2, title: 'Page 2', counter: 2 },
-        { id: 3, title: 'Page 3', counter: 1 }
+        { id: '1', title: 'Page 1', counter: 3 },
+        { id: '2', title: 'Page 2', counter: 2 },
+        { id: '3', title: 'Page 3', counter: 1 }
       ],
       'GET /pages?orderby.counter=desc response'
     )
@@ -182,9 +182,9 @@ test('list order by', async t => {
     same(
       res.json(),
       [
-        { id: 3, counter: 1, counter2: 1 },
-        { id: 1, counter: 3, counter2: 3 },
-        { id: 2, counter: 3, counter2: 2 }
+        { id: '3', counter: 1, counter2: 1 },
+        { id: '1', counter: 3, counter2: 3 },
+        { id: '2', counter: 3, counter2: 2 }
       ],
       'GET /pages?orderby.counter=asc&orderby.counter2=desc response'
     )

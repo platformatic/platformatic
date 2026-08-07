@@ -87,6 +87,21 @@ function getProfiler (type) {
   return type === 'heap' ? heap : time
 }
 
+function serializeProfile (profile, options) {
+  // Return the latest profile if available, otherwise return an empty profile
+  // (e.g., when profiler never started due to ELU threshold not being exceeded)
+  const encodedProfile = profile ? profile.encode() : new Uint8Array(0)
+
+  if (options.includeSampleCount) {
+    return {
+      profile: encodedProfile,
+      sampleCount: profile?.sample.length ?? 0
+    }
+  }
+
+  return encodedProfile
+}
+
 function scheduleLastProfileCleanup (state) {
   unscheduleLastProfileCleanup(state)
 
@@ -218,7 +233,11 @@ function notifyMainThread (name, payload) {
 // there might be no consumer: interested code can retrieve it on demand via
 // the getLastProfile command.
 function notifyProfileCaptured (type, state) {
-  notifyMainThread('profile:captured', { type, timestamp: state.latestProfileTimestamp })
+  notifyMainThread('profile:captured', {
+    type,
+    timestamp: state.latestProfileTimestamp,
+    sampleCount: state.latestProfile.sample.length
+  })
 }
 
 function maybeStartProfiler (type, state) {
@@ -251,7 +270,8 @@ function handleOverloadPause (type, state) {
     notifyMainThread('profile:overload', {
       type,
       timestamp: state.latestProfileTimestamp,
-      profile: state.latestProfile.encode()
+      profile: state.latestProfile.encode(),
+      sampleCount: state.latestProfile.sample.length
     })
   } catch (err) {
     getLogger({ throwOnMissing: false })?.error({ err, type }, 'Failed to preserve the overload profile')
@@ -468,13 +488,7 @@ export function stopProfiling (options = {}) {
 
   notifyMainThread('profiling:stopped', { type })
 
-  // Return the latest profile if available, otherwise return an empty profile
-  // (e.g., when profiler never started due to ELU threshold not being exceeded)
-  if (state.latestProfile) {
-    return state.latestProfile.encode()
-  } else {
-    return new Uint8Array(0)
-  }
+  return serializeProfile(state.latestProfile, options)
 }
 
 export function getLastProfile (options = {}) {
@@ -507,17 +521,20 @@ export function getLastProfile (options = {}) {
     }
   }
 
-  const profile = state.latestProfile.encode()
+  const result = serializeProfile(state.latestProfile, options)
 
-  // Return the timestamp alongside the profile when requested: pairing them
-  // in a single command avoids the race of combining getProfilingState with
-  // a separate getLastProfile call across a rotation. The raw profile remains
-  // the default for backward compatibility with direct ITC callers.
+  // Return metadata alongside the profile when requested. Pairing the
+  // timestamp with the profile avoids a race across rotations, while the
+  // sample count lets callers reject metadata-only protobufs without decoding
+  // them. The raw profile remains the default for backward compatibility.
   if (options.includeTimestamp) {
-    return { profile, timestamp: state.latestProfileTimestamp }
+    return {
+      ...(options.includeSampleCount ? result : { profile: result }),
+      timestamp: state.latestProfileTimestamp
+    }
   }
 
-  return profile
+  return result
 }
 
 export function getProfilingState (options = {}) {

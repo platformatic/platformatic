@@ -1,0 +1,7 @@
+{
+  "name": "close-non-listening-server",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ]
+}

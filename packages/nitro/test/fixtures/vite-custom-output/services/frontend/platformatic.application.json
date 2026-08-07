@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/nitro/3.61.1.json",
+  "application": {
+    "outputDirectory": "dist"
+  },
+  "nitro": {
+    "outputDirectory": "custom"
+  }
+}

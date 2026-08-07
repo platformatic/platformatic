@@ -96,7 +96,7 @@ test('expose vector columns as arrays of numbers', { skip: !isPg }, async t => {
 
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1,
+      id: '1',
       embedding: [1, 2.5, 3]
     })
   }
@@ -121,7 +121,7 @@ test('expose vector columns as arrays of numbers', { skip: !isPg }, async t => {
 
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1,
+      id: '1',
       embedding: [1, 2.5, 3]
     })
   }

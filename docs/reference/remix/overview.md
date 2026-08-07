@@ -42,6 +42,20 @@ When running in production mode, a custom Fastify server serves the built applic
 
 In both modes, an application that uses the `commands` property is responsible for starting its HTTP server.
 
+## Skew protection
+
+Remix uses a user-provided Vite configuration. To tag assets, add the shared plugin:
+
+```ts
+import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
+
+export default defineConfig({
+  plugins: [platformaticSkewPlugin()]
+})
+```
+
+The plugin is enabled when `PLT_DEPLOYMENT_ID` is set during the build.
+
 ## HTTPS
 
 Configure HTTPS in this Remix capability's `server.https` object. The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.

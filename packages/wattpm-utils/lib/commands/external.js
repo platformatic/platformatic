@@ -765,8 +765,8 @@ If not specified, the configuration will be loaded from any of the following, in
 * \`platformatic.tml\`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
-* [Platformatic Application Configuration](https://docs.platformatic.dev/docs/application/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic Application Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
     `
     }
   }

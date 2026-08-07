@@ -10,7 +10,10 @@ export class Migrator {
     this.coreConfig = coreConfig
     this.migrationDir = migrationConfig.dir
     this.migrationsTable = migrationConfig.table
-    this.validateChecksums = migrationConfig.validateChecksums
+    // Default to true when unset, matching Postgrator's own default. Passing an
+    // explicit `undefined` here would override that default in Postgrator's
+    // `Object.assign` merge and silently disable checksum validation.
+    this.validateChecksums = migrationConfig.validateChecksums ?? true
     this.newline = migrationConfig.newline
     this.currentSchema = migrationConfig.currentSchema
 

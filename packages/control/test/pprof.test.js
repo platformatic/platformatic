@@ -72,6 +72,43 @@ test('should stop profiling and return profile data via RuntimeApiClient', async
   assert.ok(profileData.byteLength > 0, 'Profile data should not be empty')
 })
 
+test('should start and stop profiling on all workers via RuntimeApiClient', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await safeRemove(runtimeTmpDir)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+    await safeRemove(runtimeTmpDir)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+
+  const started = await runtimeClient.startApplicationProfiling(runtime.pid, 'service-1', {
+    intervalMicros: 1000,
+    allWorkers: true
+  })
+  assert.ok(Array.isArray(started.workers), 'Should return the list of profiled workers')
+  assert.ok(started.workers.length > 0, 'Should profile at least one worker')
+
+  // Wait a bit for some profile data
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  const profiles = await runtimeClient.stopApplicationProfiling(runtime.pid, 'service-1', { allWorkers: true })
+
+  assert.ok(Array.isArray(profiles), 'Should return an array of profiles')
+  assert.strictEqual(profiles.length, started.workers.length, 'Should return one profile per worker')
+
+  for (const { workerIndex, profile } of profiles) {
+    assert.strictEqual(typeof workerIndex, 'number', 'Each profile should carry its worker index')
+    assert.ok(Buffer.isBuffer(profile), 'Each profile should be a Buffer')
+    assert.ok(profile.length > 0, `Worker ${workerIndex} profile should not be empty`)
+  }
+})
+
 test('should handle service not found error in RuntimeApiClient for start profiling', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')

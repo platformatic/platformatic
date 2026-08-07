@@ -1,6 +1,6 @@
 import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
 import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
-import { initializeITCTelemetry, ITC } from '@platformatic/itc'
+import { ITC, initializeITCTelemetry } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
 import { createRequire } from 'node:module'
@@ -112,9 +112,14 @@ async function safeHandleInITC (worker, fn) {
 }
 
 async function closeITC (dispatcher, itc, messaging) {
-  await dispatcher.interceptor.close()
-  itc.close()
-  messaging.close()
+  try {
+    await dispatcher.interceptor.close()
+    itc.close()
+    messaging.close()
+  } finally {
+    const events = getEvents()
+    events.emit('exit')
+  }
 }
 
 export async function sendViaITC (worker, name, message, transferList) {
@@ -162,6 +167,10 @@ export async function setupITC (controller, application, dispatcher, sharedConte
     }
   })
 
+  // ITC handlers run concurrently, so later start/stop requests must wait for
+  // the actual in-flight start operation rather than a controller event.
+  let controllerStartPromise
+
   const itc = new ITC({
     name: controller.applicationConfig.id + '-worker',
     port: parentPort,
@@ -170,20 +179,26 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         const status = controller.getStatus()
 
         if (status === 'starting') {
-          await once(controller, 'start')
+          await controllerStartPromise
         } else {
           // This gives a chance to a capability to perform custom logic
           const events = getEvents()
           events.emit('start')
 
           try {
-            await controller.start()
+            controllerStartPromise = controller.start()
+            await controllerStartPromise
           } catch (e) {
             await controller.stop(true)
 
             // Reply to the runtime that the start failed, so it can cleanup
             once(itc, 'application:worker:start:processed').then(() => {
-              closeITC(dispatcher, itc, messaging).catch(() => {})
+              closeITC(dispatcher, itc, messaging).catch(err => {
+                logger.error(
+                  { err: ensureLoggableError(err) },
+                  'Failed to close the worker ITC after a failed start.'
+                )
+              })
             })
 
             throw ensureLoggableError(e)
@@ -191,27 +206,45 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         }
 
         dispatcher.replaceServer(await controller.capability.getDispatchTarget())
-        return controller.getUrl()
+
+        const scheduledTasks =
+          typeof controller.capability.getScheduledTasks === 'function'
+            ? await controller.capability.getScheduledTasks()
+            : []
+
+        return {
+          url: controller.getUrl(),
+          scheduledTasks
+        }
       },
 
       async stop ({ force, dependents }) {
-        const status = controller.getStatus()
+        try {
+          const status = controller.getStatus()
 
-        if (!force && status === 'starting') {
-          await once(controller, 'start')
+          if (!force && status === 'starting') {
+            await controllerStartPromise
+          }
+
+          if (force || status.startsWith('start')) {
+            // This gives a chance to a capability to perform custom logic
+            const events = getEvents()
+            events.emit('stop')
+
+            await controller.stop(force, dependents)
+          }
+        } finally {
+          // Always schedule cleanup, even when stop throws. Otherwise the worker
+          // keeps open handles and runtime shutdown hangs until the grace timeout.
+          once(itc, 'application:worker:stop:processed').then(() => {
+            closeITC(dispatcher, itc, messaging).catch(err => {
+              logger.error(
+                { err: ensureLoggableError(err) },
+                'Failed to close the worker ITC after stop.'
+              )
+            })
+          })
         }
-
-        if (force || status.startsWith('start')) {
-          // This gives a chance to a capability to perform custom logic
-          const events = getEvents()
-          events.emit('stop')
-
-          await controller.stop(force, dependents)
-        }
-
-        once(itc, 'application:worker:stop:processed').then(() => {
-          closeITC(dispatcher, itc, messaging).catch(() => {})
-        })
       },
 
       async getDependencies () {
@@ -280,6 +313,22 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         } catch (err) {
           throw new FailedToRetrieveGraphQLSchemaError(application.id, err.message)
         }
+      },
+
+      async getApplicationScheduledTasks () {
+        if (typeof controller.capability.getScheduledTasks !== 'function') {
+          return []
+        }
+
+        return controller.capability.getScheduledTasks()
+      },
+
+      async runApplicationScheduledTasks ({ scheduleId, scheduledTime }) {
+        if (typeof controller.capability.runScheduledTasks !== 'function') {
+          throw new Error(`Application "${application.id}" does not support scheduled task execution`)
+        }
+
+        return controller.capability.runScheduledTasks(scheduleId, scheduledTime)
       },
 
       async getApplicationMeta () {

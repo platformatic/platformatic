@@ -34,6 +34,7 @@ test('Node types', () => {
 
   expect(new NodeCapability('/tmp', config)).type.toBe<NodeCapability>()
   expect(new NodeCapability('/tmp', config, context)).type.toBe<NodeCapability>()
+  expect(new NodeCapability('/tmp', config).closeServer()).type.toBe<Promise<void> | undefined>()
   expect(new Generator()).type.toBe<Generator>()
 
   expect(packageJson).type.toBe<Record<string, unknown>>()

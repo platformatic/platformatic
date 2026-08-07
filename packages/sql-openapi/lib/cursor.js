@@ -1,3 +1,4 @@
+import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import Ajv from 'ajv'
 import camelCase from 'camelcase'
 import fjs from 'fast-json-stringify'
@@ -20,13 +21,17 @@ const ajvOptions = {
 const ajv = new Ajv(ajvOptions)
 
 export function buildCursorUtils (app, entity) {
-  const entitySchema = app.getSchema(entity.name)
+  const responseSchema = app.getSchema(entity.name)
+  const nativeSchema = mapSQLEntityToJSONSchema(entity, {}, true)
+  const properties = Object.fromEntries(
+    Object.keys(responseSchema.properties).map(name => [name, nativeSchema.properties[name]])
+  )
   const cursorSchema = {
     $id: entity.name + 'Cursor',
-    title: entitySchema.title + ' Cursor',
-    description: entitySchema.description + ' cursor',
+    title: responseSchema.title + ' Cursor',
+    description: responseSchema.description + ' cursor',
     type: 'object',
-    properties: entitySchema.properties,
+    properties,
     additionalProperties: false
   }
   const validateCursor = ajv.compile(cursorSchema)

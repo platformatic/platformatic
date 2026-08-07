@@ -1,12 +1,13 @@
 {
   "name": "@platformatic/telemetry",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
@@ -20,10 +21,10 @@
     "@opentelemetry/instrumentation-pg": "0.71.0",
     "cleaner-spec-reporter": "^0.5.0",
     "express": "^5.1.0",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "neostandard": "^0.12.2",
     "protobufjs": "^8.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "~6.0.3"
   },
   "dependencies": {
     "@fastify/swagger": "^9.5.1",
@@ -41,7 +42,7 @@
     "@opentelemetry/semantic-conventions": "1.41.1",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
-    "fast-uri": "^3.0.6",
+    "fast-uri": "^4.0.0",
     "fastify-plugin": "^5.0.1"
   },
   "engines": {

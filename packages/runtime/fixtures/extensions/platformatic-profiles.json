@@ -3,7 +3,11 @@
   "entrypoint": "a",
   "extensions": "extension-profiles.js",
   "autoload": {
-    "path": "./services"
+    "path": "./services",
+    "exclude": [
+      "b",
+      "crash-on-start"
+    ]
   },
   "logger": {
     "level": "error"

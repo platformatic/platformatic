@@ -2,6 +2,9 @@ import { mapSQLTypeToOpenAPIType } from '@platformatic/sql-json-schema-mapper'
 import { buildCursorUtils } from './cursor.js'
 import * as errors from './errors.js'
 
+// Array-to-array comparators take a comma-separated list of values
+const arrayFieldListModifiers = ['contains', 'contained', 'overlaps']
+
 export function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
 
@@ -16,6 +19,9 @@ export function generateArgs (entity, ignore) {
       for (const modifier of ['all', 'any']) {
         const key = baseKey + modifier
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
+      }
+      for (const modifier of arrayFieldListModifiers) {
+        acc[baseKey + modifier] = { type: 'string' }
       }
     } else {
       for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike']) {
@@ -174,7 +180,8 @@ export function rootEntityRoutes (
             const [, field, modifier] = key.split('.')
             where[field] ||= {}
             let value = query[key]
-            if (modifier === 'in' || modifier === 'nin') {
+            const isArrayField = entity.camelCasedFields[field]?.isArray
+            if (modifier === 'in' || modifier === 'nin' || (isArrayField && arrayFieldListModifiers.includes(modifier))) {
               // TODO handle escaping of ,
               value = query[key].split(',')
               if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
@@ -331,7 +338,8 @@ export function rootEntityRoutes (
             const [, field, modifier] = key.split('.')
             where[field] ||= {}
             let value = query[key]
-            if (modifier === 'in' || modifier === 'nin') {
+            const isArrayField = entity.camelCasedFields[field]?.isArray
+            if (modifier === 'in' || modifier === 'nin' || (isArrayField && arrayFieldListModifiers.includes(modifier))) {
               // TODO handle escaping of ,
               value = query[key].split(',')
               if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {

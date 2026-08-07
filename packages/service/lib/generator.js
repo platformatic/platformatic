@@ -181,6 +181,7 @@ const TS_CONFIG = `
     "incremental": true,
     "strict": true,
     "outDir": "dist",
+    "rootDir": "./src",
     "skipLibCheck": true
   },
   "watchOptions": {
@@ -207,7 +208,7 @@ declare module 'fastify' {
 const README = `
 # Platformatic Service API
 
-This is a generated [Platformatic Service](https://docs.platformatic.dev/docs/service/overview) application.
+This is a generated [Platformatic Service](https://docs.platformatic.dev/docs/reference/service/overview) application.
 
 ## Requirements
 

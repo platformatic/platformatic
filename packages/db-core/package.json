@@ -1,12 +1,13 @@
 {
   "name": "@platformatic/db-core",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic DB core",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -21,9 +22,9 @@
   "devDependencies": {
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {

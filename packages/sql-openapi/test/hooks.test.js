@@ -97,7 +97,7 @@ test('basic hooks', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello from hook'
       },
       'POST /pages response'
@@ -124,7 +124,7 @@ test('basic hooks', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello from hook 2'
       },
       'PUT /pages/1 response'
@@ -183,7 +183,7 @@ test('delete hook', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'POST /pages response'
@@ -199,7 +199,7 @@ test('delete hook', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'DELETE /pages response'

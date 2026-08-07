@@ -1,12 +1,13 @@
 {
   "name": "@platformatic/metrics",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Capability Metrics",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",

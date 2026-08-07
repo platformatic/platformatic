@@ -4,6 +4,7 @@ import { loadModule, sanitizeHTTPSOptions } from '@platformatic/foundation'
 import fastify from 'fastify'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
+import { DuplicateExtensionHealthRouteError } from './errors.js'
 
 const DEFAULT_HOSTNAME = '0.0.0.0'
 const DEFAULT_PORT = 9090
@@ -19,7 +20,7 @@ const DEFAULT_LIVENESS_SUCCESS_BODY = 'OK'
 const DEFAULT_LIVENESS_FAIL_STATUS_CODE = 500
 const DEFAULT_LIVENESS_FAIL_BODY = 'ERR'
 
-async function checkReadiness (runtime) {
+async function checkWorkerReadiness (runtime) {
   const workers = await runtime.getWorkers()
   const applications = await runtime.getApplicationsIds()
 
@@ -52,18 +53,39 @@ async function checkReadiness (runtime) {
   return { response, status }
 }
 
-async function checkLiveness (runtime) {
-  const { status: ready, response: readinessResponse } = await checkReadiness(runtime)
-  if (!ready) {
-    return { status: false, readiness: readinessResponse }
+async function checkReadiness (runtime) {
+  const workerResult = await checkWorkerReadiness(runtime)
+  if (!workerResult.status) {
+    return workerResult
   }
-  // TODO test, doc
-  // in case of readiness check failure, if custom readiness response is set, we return the readiness check response on health check endpoint
+
+  // Extension readiness checks participate in /ready only.
+  const extensionResult = await runtime.runExtensionReadinessChecks()
+  if (!extensionResult.status) {
+    return {
+      status: false,
+      response: extensionResult.response ?? workerResult.response
+    }
+  }
+
+  return {
+    status: true,
+    response: extensionResult.response ?? workerResult.response
+  }
+}
+
+async function checkLiveness (runtime) {
+  // Worker readiness still gates liveness (existing semantics), but extension
+  // readiness-only failures must not fail /status and cause restart loops.
+  const workerReadiness = await checkWorkerReadiness(runtime)
+  if (!workerReadiness.status) {
+    return { status: false, readiness: workerReadiness.response }
+  }
 
   const checks = await runtime.getCustomHealthChecks()
 
   let response
-  const status = Object.values(checks).every(check => {
+  const workerStatus = Object.values(checks).every(check => {
     if (typeof check === 'boolean') {
       return check
     } else if (typeof check === 'object') {
@@ -73,7 +95,22 @@ async function checkLiveness (runtime) {
     return false
   })
 
-  return { response, status }
+  if (!workerStatus) {
+    return { response, status: false }
+  }
+
+  const extensionResult = await runtime.runExtensionLivenessChecks()
+  if (!extensionResult.status) {
+    return {
+      status: false,
+      response: extensionResult.response ?? response
+    }
+  }
+
+  return {
+    status: true,
+    response: extensionResult.response ?? response
+  }
 }
 
 function isHealthProbesServerEnabled (healthProbes) {
@@ -119,6 +156,37 @@ function resolveHealthProbesOptions (metricsOpts, healthProbes) {
     port,
     readiness: healthProbes.readiness ?? metricsOpts.readiness,
     liveness: healthProbes.liveness ?? metricsOpts.liveness
+  }
+}
+
+async function registerExtensionHealthRoutes (promServer, runtime) {
+  const routes = runtime.getExtensionHealthRoutes?.() ?? []
+
+  for (const entry of routes) {
+    if (!entry.active) {
+      continue
+    }
+
+    try {
+      await promServer.register(async function extensionHealthRoutes (app) {
+        app.addHook('onRequest', async (_req, reply) => {
+          if (!entry.active) {
+            return reply.code(404).send({ message: 'Not Found' })
+          }
+        })
+
+        await app.register(entry.plugin)
+      })
+      entry.applied = true
+    } catch (err) {
+      const routeMatch = typeof err.message === 'string'
+        ? err.message.match(/Method '([^']+)' already declared for route '([^']+)'/i)
+        : null
+      const method = routeMatch?.[1] ?? 'UNKNOWN'
+      const url = routeMatch?.[2] ?? 'unknown'
+
+      throw new DuplicateExtensionHealthRouteError(entry.extensionPath, method, url, err.message, { cause: err })
+    }
   }
 }
 
@@ -279,6 +347,11 @@ async function startServer (runtime, opts, metricsEnabled, healthProbesEnabled) 
   for (const pluginPath of opts.plugins ?? []) {
     const plugin = await loadModule(require, pluginPath)
     await promServer.register(plugin)
+  }
+
+  // Extension routes must be registered before the server starts listening.
+  if (healthProbesEnabled) {
+    await registerExtensionHealthRoutes(promServer, runtime)
   }
 
   await promServer.listen({ port, host })

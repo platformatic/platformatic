@@ -19,6 +19,8 @@ CREATE TABLE pages (
 - `[PRIMARY_KEY]` is `id`
 - `fields` are `id`, `title`, `body`
 
+Numeric primary keys and foreign keys that reference them are serialized as strings in response bodies. Request bodies, path parameters, and query filters retain their native numeric types.
+
 ## GET and POST parameters
 
 Some APIs need the `GET` method, where parameters must be defined in the URL, or `POST/PUT` methods, where parameters can be defined in the `HTTP` request payload.
@@ -119,7 +121,7 @@ $ curl -v -X 'GET' \
 > x-total-count: 18
  (...)
 
-[{"id":1,"title":"Movie1"},{"id":2,"title":"Movie2"}]%
+[{"id":"1","title":"Movie1"},{"id":"2","title":"Movie2"}]%
 ```
 
 
@@ -140,7 +142,7 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 1,
+  "id": "1",
   "title": "Hello World",
   "body": "Welcome to Platformatic"
 }
@@ -178,7 +180,7 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 1,
+  "id": "1",
   "title": "Hello Platformatic!",
   "body": "Welcome to Platformatic"
 }
@@ -206,11 +208,11 @@ $ curl -X 'PUT' \
 }'
 
 [{
-  "id": 1,
+  "id": "1",
   "title": "Updated title!",
   "body": "Updated body!"
 },{
-  "id": 2,
+  "id": "2",
   "title": "Updated title!",
   "body": "Updated body!"
 }]
@@ -341,7 +343,7 @@ $ curl -X 'POST' \
   -H 'Content-Type: application/json' \
   -d '{ "role": "admin" }'
 
-{ "pageId": 1, "userId": 1, "role": "admin" }
+{ "pageId": "1", "userId": "1", "role": "admin" }
 ```
 
 `PUT` accepts the same body.
@@ -431,12 +433,12 @@ $ curl -X 'GET' 'http://localhost:3042/movies?limit=5&cursor=true&orderby.id=asc
 [
   {
     "title": "Terminator",
-    "id": 1
+    "id": "1"
   },
   ...
   {
     "title": "Star Trek",
-    "id": 5
+    "id": "5"
   }
 ]
 ```
@@ -452,7 +454,7 @@ $ curl -X 'GET' 'http://localhost:3042/movies?limit=5&startAfter=eyJpZCI6NX0=&or
 [
   {
     "title": "Star Wars",
-    "id": 6
+    "id": "6"
   },
   ...
 ]
@@ -519,7 +521,7 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 1,
+  "id": "1",
   "title": "Hello Platformatic!",
   "body": "Welcome to Platformatic"
   "statusCode": 400,
@@ -543,7 +545,7 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 42,
+  "id": "42",
   "title": "Hello Platformatic!",
   "body": "Welcome to Platformatic"
 }

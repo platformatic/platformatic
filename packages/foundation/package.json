@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/foundation",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Foundation",
   "main": "index.js",
   "types": "index.d.ts",
@@ -8,7 +8,8 @@
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -39,15 +40,16 @@
     "yaml": "^2.4.1"
   },
   "devDependencies": {
+    "@types/debug": "^4.0.0",
     "c8": "^11.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
     "pino": "^9.9.0",
     "pino-test": "^1.0.1",
     "tstyche": "^6.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "~6.0.3"
   },
   "engines": {
     "node": ">=22.19.0"

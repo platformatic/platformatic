@@ -1,0 +1,11 @@
+{
+  "name": "multi-zones",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "dependencies": {
+    "@platformatic/runtime": ">=3.0.0",
+    "wattpm": ">=3.0.0"
+  }
+}

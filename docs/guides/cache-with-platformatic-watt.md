@@ -27,8 +27,90 @@ This guide shows you how to:
 3. Invalidate cache by specific routes or tags
 4. Test your caching implementation
 
-MISSING CONTENT: this guide should explain why we have implemented CLIENT based caching and how it works underneath.
-The content for this is provided in blog posts, so we can fetch it from there.
+## Why the cache lives on the client side
+
+Most HTTP caches are **server-side**: a reverse proxy, a CDN, or middleware sitting in front of your
+application, caching what the outside world asks for. Watt caches on the **client** side instead —
+the cache intercepts outgoing requests, not incoming ones. That choice follows directly from how
+applications talk to each other inside Watt.
+
+In a Watt application, the applications call each other over the internal mesh, using ordinary
+`fetch()` against `*.plt.local` addresses. A single external request often fans out into several
+internal hops:
+
+```
+External request → gateway → api.plt.local → data-service.plt.local
+```
+
+A server-side cache placed in front of the entrypoint can only cache the outermost response. It sees
+nothing of the hops behind it, so if two different endpoints both call `data-service.plt.local`, that
+work is repeated every time. Worse, the entrypoint's response is often the *least* cacheable thing in
+the chain — it is personalised, or aggregates several upstreams with different lifetimes — while the
+inner calls it depends on are highly cacheable.
+
+Caching on the client side inverts this. Because the cache sits on the request path of every
+application, it works at **every hop**, and gives you three properties that a reverse proxy in front
+of the entrypoint cannot:
+
+- **Internal calls are cached.** `api` calling `data-service` is a cache lookup, not a repeated
+  computation, even when the outer response cannot be cached at all.
+- **External APIs are cached too.** The same interceptor covers calls leaving your application to
+  third-party services, with no extra setup.
+- **It is framework-agnostic.** The cache sits below `fetch()`, so Express, Fastify, Koa, Next.js and
+  plain `node:http` all get it without changing application code. You control it with standard
+  response headers — `Cache-Control`, `Age` — rather than a proprietary caching API.
+
+## How it works underneath
+
+Watt's HTTP cache is an [undici](https://undici.nodejs.org/) dispatcher interceptor, built on
+undici's built-in `interceptors.cache()`. When a worker thread starts, Watt composes the interceptor
+into that thread's global undici dispatcher, and mirrors it onto the global dispatcher used by
+built-in `fetch()`. From that point every outgoing HTTP request made by the application — whatever
+library or framework issued it — passes through the cache.
+
+The part specific to Watt is **where the cached data lives**. The cache store inside a worker thread
+holds no data of its own. It is a proxy that forwards every read, write and delete over Watt's
+inter-thread communication channel (ITC) to the **main runtime thread**, which owns the single real
+store:
+
+```
+worker thread (api)      worker thread (data-service)
+   undici dispatcher         undici dispatcher
+   └─ cache interceptor      └─ cache interceptor
+      └─ proxy store            └─ proxy store
+            │                         │
+            └─────────ITC─────────────┘
+                       │
+             main thread: shared store
+```
+
+This is why the cache is genuinely unified rather than merely present everywhere. Watt runs your
+applications across multiple worker threads, and each application can run several workers. With a
+per-thread cache, every thread would keep its own copy of the same entry and every new thread would
+start cold. Because the store is shared, a response cached by one thread is immediately served to all
+of them, and memory is not multiplied by the worker count.
+
+The shared store defaults to an in-memory implementation
+(`@platformatic/undici-cache-memory`) bounded by the `maxSize`, `maxEntrySize` and `maxCount` options.
+Setting `httpCache.store` to a module path swaps in your own implementation — for example one backed
+by Redis or Valkey when you need the cache to survive restarts or be shared across containers.
+
+A few consequences worth knowing:
+
+- **Freshness is standard HTTP.** Entries are stored and revalidated according to the response's
+  `Cache-Control` directives. `cacheByDefault` supplies a fallback lifetime, in seconds, for
+  upstreams that send no expiration headers at all.
+- **`GET` and `HEAD` are cached by default**, configurable through `methods`. The `origins` option
+  restricts caching to a whitelist of upstreams, and accepts regular expressions.
+- **`type` selects the HTTP cache semantics**: `shared` behaves like a proxy cache and will not store
+  responses marked `private`; `private` behaves like a browser cache.
+- **Invalidation is exact, not time-based.** Because the main thread owns the store, it can delete
+  entries directly, either by cache key or by the tags parsed from the header named in
+  `cacheTagsHeader`. There is no default tag header — this guide configures `X-Cache-Tags` in
+  [Step 5](#step-5-enable-http-cache-in-watt) and uses it in [Step 6](#step-6-implement-cache-invalidation).
+- **Cache activity is observable.** Every cached response carries an `x-plt-http-cache-id` header, and
+  when telemetry is enabled the client span records `http.cache.id` and `http.cache.hit`, so a cache
+  hit is visible in a distributed trace rather than being an invisible absence of work.
 
 ## Prerequisites
 
@@ -99,20 +181,20 @@ This created a Fastify app that will autoload the routes.
 
 ## Step 2: Add Multiple Services for Demonstration
 
-Let's create a more realistic example with multiple services to show how caching works with Watt's internal service mesh. Add a composer and a data service:
+Let's create a more realistic example with multiple services to show how caching works with Watt's internal service mesh. Add a gateway and a data service:
 
 ```bash
 npx create wattpm
 ```
 
-Choose `@platformatic/composer` to create an API gateway, and then create another `@platformatic/node` service for your data backend. Your structure should look like:
+Choose `@platformatic/gateway` to create an API gateway, and then create another `@platformatic/node` service for your data backend. Your structure should look like:
 
 ```
 my-cache-app/
 ├── watt.json
 ├── package.json
 └── web/
-    ├── composer/           # Public API gateway
+    ├── gateway/            # Public API gateway
     ├── api/                # Your main API service
     └── data-service/       # Backend data service
 ```
@@ -125,7 +207,7 @@ By default, this setup will expose the `api` service as `/api` and `data-service
 
 - Internal Service Mesh: Services communicate using `.plt.local` domains (e.g., `http://api.plt.local`, `http://data-service.plt.local`)
 - Zero Network Overhead: Internal calls don't go through the network stack
-- Reverse-Proxy: the `@platformatic/composer` provide a reverse proxy layer that can enable caching, load-balancing, OpenAPI and GraphQL Composition.
+- Reverse-Proxy: the `@platformatic/gateway` provide a reverse proxy layer that can enable caching, load-balancing, OpenAPI and GraphQL Composition.
 
 ## Step 3: Add Cache Headers to Your Responses
 
@@ -227,23 +309,27 @@ Cache tags are unique identifiers that let you invalidate related cache entries:
 - Tag by both specific resource and category
 - Consider using UUIDs for guaranteed uniqueness
 
-## Step 4: Configure Composer Gateway
+## Step 4: Configure the Gateway
 
-The composer acts as your API gateway, routing external requests to internal services and managing the unified cache layer:
+The gateway acts as your API gateway, routing external requests to internal services and managing the unified cache layer:
 
 ```js
-// web/composer/watt.json
+// web/gateway/watt.json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/4.0.0.json",
-  "composer": {
-    "services": [
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
+  "gateway": {
+    "applications": [
       {
         "id": "api",
-        "prefix": "/api"
+        "proxy": {
+          "prefix": "/api"
+        }
       },
       {
         "id": "data-service",
-        "prefix": "/data"
+        "proxy": {
+          "prefix": "/data"
+        }
       }
     ]
   },
@@ -253,16 +339,16 @@ The composer acts as your API gateway, routing external requests to internal ser
 }
 ```
 
-**How Composer + Caching Works:**
+**How Gateway + Caching Works:**
 
-- External requests go to composer (e.g., `GET /api/cached-counter`)
-- Composer forwards to internal service (`http://api.plt.local/cached-counter`)
+- External requests go to gateway (e.g., `GET /api/cached-counter`)
+- Gateway forwards to internal service (`http://api.plt.local/cached-counter`)
 - API service calls data service (`http://data-service.plt.local/counter`)
-- Watt caches the entire response chain at the composer level
+- Watt caches the entire response chain at the gateway level
 - Subsequent requests return cached data without hitting any services
 - **Unified Caching**: All services share the same HTTP cache layer
 
-## Step 4: Enable HTTP Cache in Watt
+## Step 5: Enable HTTP Cache in Watt
 
 Add HTTP caching configuration to your root-level `watt.json` file:
 
@@ -283,7 +369,7 @@ Add HTTP caching configuration to your root-level `watt.json` file:
 - `httpCache`: Enables Watt's built-in HTTP caching layer
 - `cacheTagsHeader`: Defines the header name for cache tags (used for targeted invalidation)
 - `autoload`: Directory containing the applications that Watt loads and manages
-- The composer's application-local `server` configuration exposes the gateway on port `3042`
+- The gateway's application-local `server` configuration exposes it on port `3042`
 
 **What this does:**
 
@@ -327,7 +413,7 @@ You can fine-tune the cache behavior with additional options:
 - **`maxEntrySize`**: Maximum size of a single cache entry in bytes (default: 5MB)
 - **`maxCount`**: Maximum number of cache entries (default: 1024)
 
-## Step 5: Implement Cache Invalidation
+## Step 6: Implement Cache Invalidation
 
 ### Method 1: Invalidate by Specific Route
 
@@ -346,7 +432,7 @@ export default async function  (fastify) {
     await invalidateHttpCache({
       keys: [
         {
-          origin: 'http://composer.plt.local',
+          origin: 'http://gateway.plt.local',
           path: '/api/cached-counter',
           method: 'GET'
         }
@@ -447,7 +533,7 @@ export default async function  (fastify) {
 }
 ```
 
-## Step 6: Verification and Testing
+## Step 7: Verification and Testing
 
 ### Test Cache Behavior
 
@@ -457,9 +543,9 @@ export default async function  (fastify) {
 npm run dev
 ```
 
-This starts all services (composer, api, data-service) with Watt handling the service mesh and caching.
+This starts all services (gateway, api, data-service) with Watt handling the service mesh and caching.
 
-**2. Test cached responses through the composer gateway:**
+**2. Test cached responses through the gateway gateway:**
 
 ```bash
 # First request - cache miss (hits data-service)
@@ -468,7 +554,7 @@ curl -i http://localhost:3042/api/cached-counter
 # Second request - cache hit (returns cached data, no service calls)
 curl -i http://localhost:3042/api/cached-counter
 
-# Test direct access to data service through composer
+# Test direct access to data service through gateway
 curl -i http://localhost:3042/data/counter
 ```
 
@@ -657,7 +743,7 @@ When service A calls service B, cache headers from B are automatically preserved
 
 ### 4. **Service Mesh + Caching Integration**
 
-The composer automatically handles routing and caching for complex multi-service requests without additional configuration.
+The gateway automatically handles routing and caching for complex multi-service requests without additional configuration.
 
 ### 5. **Framework Agnostic**
 
@@ -666,7 +752,7 @@ The same caching APIs work whether you're using Fastify, Express, Koa, or any ot
 **Real-world Example:**
 
 ```
-External Request → Composer → API Service → Data Service
+External Request → Gateway → API Service → Data Service
                      ↓
                  Single Cache Entry
 ```
@@ -677,7 +763,7 @@ Instead of 3 separate cache layers, you get 1 unified cache that handles the ent
 
 Now that you have HTTP caching working with Watt's service mesh:
 
-- **[Monitor your cache](/docs/guides/monitoring)** - Track cache hit rates and performance
-- **[Deploy with caching](/docs/guides/deployment/)** - Production considerations for cached applications
-- **[Database optimization](/docs/guides/databases/)** - Combine caching with database best practices
-- **[Load testing](/docs/guides/performance/)** - Verify cache performance under load
+- **[Monitor your cache](/docs/guides/metrics)** - Track cache hit rates and performance
+- **[Deploy with caching](/docs/guides/deployment/dockerize-a-watt-app)** - Production considerations for cached applications
+- **[Database optimization](/docs/reference/db/overview)** - Combine caching with database best practices
+- **[Load testing](/docs/guides/profiling-with-watt)** - Verify cache performance under load

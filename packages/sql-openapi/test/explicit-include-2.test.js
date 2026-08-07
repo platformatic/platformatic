@@ -153,7 +153,7 @@ test('entity responds to traffic an entity in OpenAPI', async t => {
     deepEqual(
       res.json(),
       {
-        id: 123
+        id: '123'
       },
       'POST /categories response'
     )
@@ -172,6 +172,6 @@ test('entity responds to traffic an entity in OpenAPI', async t => {
       method: 'GET',
       url: '/categories/123'
     })
-    deepEqual(res.json(), { id: 123 })
+    deepEqual(res.json(), { id: '123' })
   }
 })

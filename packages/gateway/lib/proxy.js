@@ -7,6 +7,7 @@ import { resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { createDeduplicationHandler } from './deduplication/index.js'
+import { WsNoTcpUpstreamError } from './errors.js'
 import { initMetrics } from './metrics.js'
 
 const kProxyRoute = Symbol('plt.gateway.proxy.route')
@@ -212,6 +213,34 @@ async function proxyPlugin (app, opts) {
     // When getUpstream is provided, upstream ust be undefined, otherwise the getUpstream will be ignored
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
 
+    // A WebSocket upgrade to this application can never succeed: the resolved WS upstream
+    // (see wsUpstream below) would be the virtual mesh origin, which the raw WebSocket
+    // client used by @fastify/http-proxy cannot resolve, so the upgrade would hang.
+    // The absence checks deliberately mirror the nullish semantics of the wsUpstream expression.
+    const wsMeshOnly = isLocalApplication(application) && url == null && ws?.upstream == null && getUpstream == null
+
+    let wsGuardPreHandler
+    if (wsMeshOnly) {
+      if (ws) {
+        // The user explicitly configured proxy.ws for an application which cannot accept
+        // WebSocket connections: warn at boot instead of letting the first upgrade fail.
+        app.log.warn(
+          `The "${application.id}" application has WebSocket options configured in "proxy.ws" but it does not expose a TCP server. WebSocket upgrades to this application will fail. Make the application listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".`
+        )
+      }
+
+      // @fastify/http-proxy dispatches WebSocket upgrades through the regular Fastify
+      // router, so a route-level preHandler rejects the upgrade before any dial attempt.
+      wsGuardPreHandler = function wsMeshOnlyGuard (request, reply, done) {
+        if (typeof request.headers.upgrade === 'string' && request.headers.upgrade.toLowerCase() === 'websocket') {
+          done(new WsNoTcpUpstreamError(application.id))
+          return
+        }
+
+        done()
+      }
+    }
+
     let proxyHandler = handler
     if (opts.deduplication?.enabled === true || application.proxy?.deduplication?.enabled === true) {
       proxyHandler = await createDeduplicationHandler({
@@ -232,6 +261,7 @@ async function proxyPlugin (app, opts) {
       handler: proxyHandler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
+      preHandler: wsGuardPreHandler,
 
       websocket: true,
       // When getUpstream is provided and no explicit WebSocket upstream is configured,

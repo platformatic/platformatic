@@ -5,6 +5,7 @@ import {
   executeInParallel,
   executeWithTimeout,
   features,
+  kEnvFileFallbackKeys,
   kMetadata,
   kTimeout,
   parseMemorySize
@@ -39,15 +40,21 @@ import {
   ApplicationNotFoundError,
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
+  DuplicateExtensionHealthCheckError,
   DuplicateITCHandlerNameError,
+  ExtensionHealthRoutesUnavailableError,
   FailedToLoadExtensionError,
+  FailedToStartExtensionError,
+  FailedToStopExtensionError,
   InvalidArgumentError,
   InvalidExtensionError,
   LastProfileTimeoutError,
   MessagingError,
+  MetricFamilyCollisionError,
   MissingPprofCapture,
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
+  RuntimeExtensionBuildAlreadyCalledError,
   WorkerInterceptorJoinTimeoutError,
   WorkerNotFoundError
 } from './errors.js'
@@ -89,6 +96,7 @@ const kInspectorOptions = Symbol('plt.runtime.worker.inspectorOptions')
 const kHeapCheckCounter = Symbol('plt.runtime.worker.heapCheckCounter')
 const kLastHeapStats = Symbol('plt.runtime.worker.lastHeapStats')
 const kProfilingELUGates = Symbol('plt.runtime.worker.profilingELUGates')
+const kWorkerScheduledTasks = Symbol('plt.runtime.worker.scheduledTasks')
 const kHealthITCTimeoutMs = 5000
 const kProfilingELUHysteresis = 0.1
 const kLastProfileTimeoutMs = 10000
@@ -111,6 +119,10 @@ const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
 
 const MAX_LISTENERS_COUNT = 100
+
+function hasWorkerIndex (applicationId) {
+  return /^.+:\d+$/.test(applicationId)
+}
 
 function parseOrigins (origins) {
   if (!origins) return undefined
@@ -135,6 +147,24 @@ function formatMetricValue (value) {
   }
 
   return `${value}`
+}
+
+// Resolves the setup function of a runtime extension out of its module namespace.
+//
+// The canonical form is a default export, but transpilers and bundlers emit
+// faux ESM modules, in which the real exports are properties of `module.exports`
+// and therefore only reachable via an additional `default` hop. The setup
+// function can also be exported as a named `setup` export, at both levels.
+function resolveExtensionSetup (imported) {
+  const candidates = [imported?.default, imported?.setup, imported?.default?.default, imported?.default?.setup]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'function') {
+      return candidate
+    }
+  }
+
+  return null
 }
 
 // Always run operations in parallel to avoid deadlocks when services have dependencies
@@ -187,6 +217,9 @@ export class Runtime extends EventEmitter {
   #reservedITCHandlerNames
   #extensions
   #extensionsWantHealthMetrics
+  #extensionReadinessChecks
+  #extensionLivenessChecks
+  #extensionHealthRoutes
   #lastOverloadProfiles
   #restartingApplications
   #restartingWorkers
@@ -260,6 +293,9 @@ export class Runtime extends EventEmitter {
     this.#reservedITCHandlerNames.add('profiling:started')
     this.#extensions = []
     this.#extensionsWantHealthMetrics = false
+    this.#extensionReadinessChecks = new Map()
+    this.#extensionLivenessChecks = new Map()
+    this.#extensionHealthRoutes = []
     this.#lastOverloadProfiles = new Map()
     this.#sharedContext = {}
 
@@ -279,10 +315,6 @@ export class Runtime extends EventEmitter {
 
     const config = this.#config
 
-    if (config.managementApi) {
-      this.#managementApi = await startManagementApi(this, config.managementApi)
-    }
-
     if (config.metrics) {
       // Use the configured application label name for metrics (defaults to 'applicationId')
       this.#metricsLabelName = config.metrics.applicationLabel || 'applicationId'
@@ -290,12 +322,6 @@ export class Runtime extends EventEmitter {
       // Default to applicationId if metrics are not configured
       this.#metricsLabelName = 'applicationId'
     }
-
-    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
-    }
-
-    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
 
     // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
     // These metrics are the same across all workers and only need to be collected once
@@ -305,11 +331,16 @@ export class Runtime extends EventEmitter {
       collectProcessMetrics(this.#processMetricsRegistry)
     }
 
-    // Create the logger
+    // Create the logger before the management API, the extensions and the health/metrics servers
+    // so that all of them can use it.
     const [logger, destination, context] = await createLogger(config)
     this.logger = logger
     this.#loggerDestination = destination
     this.#loggerContext = context
+
+    if (config.managementApi) {
+      this.#managementApi = await startManagementApi(this, config.managementApi)
+    }
 
     await this.#startOpenTelemetryMetricsForwarder(config.metrics?.opentelemetry)
 
@@ -326,14 +357,23 @@ export class Runtime extends EventEmitter {
     }
 
     // Load extensions before creating any worker so that custom ITC handlers
-    // registered by the extensions are available to all workers.
+    // registered by the extensions are available to all workers. Also load them
+    // before starting the health/metrics servers so extensions can register
+    // readiness/liveness checks and probe routes before Fastify starts listening.
     await this.#loadExtensions()
+
+    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
+      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+    }
+
+    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
+    this.#assertExtensionHealthRoutesApplied()
 
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
 
-    if (config.scheduler && !this.#context.build) {
-      this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
+    if (!this.#context.build) {
+      this.#scheduler = startScheduler(config.scheduler ?? [], this.#dispatcher, logger)
     }
 
     this.#updateStatus('init')
@@ -348,10 +388,16 @@ export class Runtime extends EventEmitter {
     this.#createWorkersBroadcastChannel()
 
     try {
-      const applications = this.getApplicationsIds()
-      await this.startApplications(applications, silent)
+      // Snapshot originally configured application IDs before extension start hooks.
+      // Dynamic applications started by an extension are excluded from the normal startup pass.
+      const configuredApplications = this.getApplicationsIds()
 
-      if (applications.length === 0) {
+      await this.#startExtensions()
+
+      const applicationsToStart = configuredApplications.filter(id => !this.#isApplicationStarted(id))
+      await this.startApplications(applicationsToStart, silent)
+
+      if (this.getApplicationsIds().length === 0) {
         this.#updateStatus('started')
         await this.close(silent)
         return {}
@@ -410,6 +456,15 @@ export class Runtime extends EventEmitter {
       await once(this, 'started')
     }
 
+    if (this.#status === 'stopping') {
+      await once(this, 'stopped')
+      return
+    }
+
+    if (this.#status === 'stopped' || this.#status === 'closing' || this.#status === 'closed') {
+      return
+    }
+
     this.#updateStatus('stopping')
 
     if (this.#scheduler) {
@@ -421,6 +476,10 @@ export class Runtime extends EventEmitter {
     }
 
     await this.#dynamicWorkersScaler?.stop()
+
+    // Await extension stop hooks before stopping remaining applications so that
+    // control-plane extensions can settle work and hand off state first.
+    await this.#stopExtensions()
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
@@ -445,6 +504,15 @@ export class Runtime extends EventEmitter {
   }
 
   async close (silent = false) {
+    if (this.#status === 'closing') {
+      await once(this, 'closed')
+      return
+    }
+
+    if (this.#status === 'closed') {
+      return
+    }
+
     clearTimeout(this.#healthMetricsTimer)
     this.#healthMetricsCollectionActive = false
     this.#lastOverloadProfiles.clear()
@@ -630,6 +698,7 @@ export class Runtime extends EventEmitter {
 
     for (const application of applications) {
       this.#dynamicWorkersScaler?.remove(application)
+      await this.#scheduler?.removeApplicationJobs(application)
       this.#applications.delete(application)
       this.#applicationRestartCounts.delete(application)
     }
@@ -764,7 +833,10 @@ export class Runtime extends EventEmitter {
       await this.#startWorker(config, applicationConfig, workers, id, i, silent)
     }
 
+    await this.#registerApplicationSchedulerJobs(id)
+
     this.emitAndNotify('application:started', id)
+    await this.#dynamicWorkersScaler?.applyPendingUpdate(id)
   }
 
   async stopApplication (id, silent = false, dependents = []) {
@@ -776,6 +848,7 @@ export class Runtime extends EventEmitter {
     const workersCount = workersIds.length
 
     this.emitAndNotify('application:stopping', id)
+    await this.#scheduler?.stopApplicationJobs(id)
 
     if (typeof workersCount === 'number') {
       const stopInvocations = []
@@ -860,6 +933,7 @@ export class Runtime extends EventEmitter {
         }
       }
 
+      await this.#registerApplicationSchedulerJobs(id)
       this.#incrementApplicationRestartCount(id)
       this.emitAndNotify('application:restarted', id)
     } finally {
@@ -871,33 +945,128 @@ export class Runtime extends EventEmitter {
 
   async buildApplication (id) {
     const application = await this.#getApplicationById(id)
+    const applicationConfig = this.#applications.get(id)
+    const context = Object.freeze({
+      applicationId: id,
+      applicationPath: applicationConfig.path
+    })
 
     this.emitAndNotify('application:building', id)
-    try {
-      await sendViaITC(application, 'build')
-      this.emitAndNotify('application:built', id)
-    } catch (e) {
-      // The application exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
+    for (const extension of this.#extensions) {
+      await extension.instance?.preBuild?.(context)
     }
+
+    let buildHandlerMissing = false
+    const build = this.#extensions.reduceRight(
+      (next, extension) => {
+        if (typeof extension.instance?.onBuild !== 'function') {
+          return next
+        }
+
+        return () => {
+          let called = false
+          const build = () => {
+            if (called) {
+              throw new RuntimeExtensionBuildAlreadyCalledError()
+            }
+
+            called = true
+            return next()
+          }
+
+          return extension.instance.onBuild(context, build)
+        }
+      },
+      async () => {
+        try {
+          return await sendViaITC(application, 'build')
+        } catch (e) {
+          // The application exports no meta, return an empty object
+          if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+            buildHandlerMissing = true
+            return {}
+          }
+
+          throw e
+        }
+      }
+    )
+
+    const result = await build()
+
+    for (const extension of [...this.#extensions].reverse()) {
+      await extension.instance?.postBuild?.(context, result)
+    }
+
+    if (!buildHandlerMissing) {
+      this.emitAndNotify('application:built', id)
+    }
+    return result
   }
 
   async startApplicationProfiling (id, options = {}, ensureStarted = true) {
-    const service = await this.#getApplicationById(id, ensureStarted)
     this.#validatePprofCapturePreload()
 
-    return sendViaITC(service, 'startProfiling', options)
+    const { allWorkers, ...profilingOptions } = options
+
+    if (!allWorkers || hasWorkerIndex(id)) {
+      const service = await this.#getApplicationWorkerForProfiling(id, ensureStarted)
+      return sendViaITC(service, 'startProfiling', profilingOptions)
+    }
+
+    const started = []
+    const alreadyProfiling = []
+    let firstError
+
+    for (const { workerIndex, worker } of await this.#getApplicationWorkersForProfiling(id, ensureStarted)) {
+      try {
+        await sendViaITC(worker, 'startProfiling', profilingOptions)
+        started.push(workerIndex)
+      } catch (error) {
+        // A worker which is already being profiled is considered covered, but
+        // if no other worker could be started the error is still reported.
+        if (error.code === 'PLT_PPROF_PROFILING_ALREADY_STARTED') {
+          alreadyProfiling.push(workerIndex)
+        }
+
+        firstError ??= error
+      }
+    }
+
+    if (started.length === 0 && firstError) {
+      throw firstError
+    }
+
+    return { workers: started.concat(alreadyProfiling).sort((a, b) => a - b) }
   }
 
   async stopApplicationProfiling (id, options = {}, ensureStarted = true) {
-    const service = await this.#getApplicationById(id, ensureStarted)
     this.#validatePprofCapturePreload()
 
-    return sendViaITC(service, 'stopProfiling', options)
+    const { allWorkers, ...profilingOptions } = options
+
+    if (!allWorkers || hasWorkerIndex(id)) {
+      const service = await this.#getApplicationWorkerForProfiling(id, ensureStarted)
+      return sendViaITC(service, 'stopProfiling', profilingOptions)
+    }
+
+    const profiles = []
+    let firstError
+
+    for (const { workerIndex, worker } of await this.#getApplicationWorkersForProfiling(id, ensureStarted)) {
+      try {
+        const profile = await sendViaITC(worker, 'stopProfiling', profilingOptions)
+        profiles.push({ workerIndex, profile })
+      } catch (error) {
+        firstError ??= error
+      }
+    }
+
+    if (profiles.length === 0 && firstError) {
+      throw firstError
+    }
+
+    return profiles
   }
 
   async getApplicationLastProfile (id, options = {}, ensureStarted = true) {
@@ -909,39 +1078,45 @@ export class Runtime extends EventEmitter {
 
     try {
       // Bound the whole retrieval with a single timeout budget: resolving the
-      // worker round-trips to it when ensureStarted is set, and the profile
-      // pull does too — both hang if the worker event loop is blocked. Attach
+      // workers round-trips to them when ensureStarted is set, and the profile
+      // pulls do too — both hang if a worker event loop is blocked. Attach
       // a noop handler so that a late settlement after the timeout does not
       // surface as an unhandled rejection.
-      const pull = (async () => {
-        const service = await this.#getApplicationById(id, ensureStarted)
-        const result = await sendViaITC(service, 'getLastProfile', { ...options, includeTimestamp: true })
-        return { service, result }
-      })()
+      const pull = this.#pullLastProfiles(id, options, ensureStarted)
       pull.catch(() => {})
 
       const outcome = await executeWithTimeout(pull, timeout, kTimeout)
 
       if (outcome !== kTimeout) {
-        const { service, result } = outcome
+        let best = null
 
-        // An older capture module which does not support includeTimestamp
-        // returns the raw profile.
-        const value = result instanceof Uint8Array ? { profile: result, timestamp: null } : result
+        for (const { service, result } of outcome) {
+          // An older capture module which does not support includeTimestamp
+          // returns the raw profile.
+          const value = result instanceof Uint8Array
+            ? { profile: result, timestamp: null, sampleCount: null }
+            : { sampleCount: null, ...result }
 
-        // A strictly newer live window supersedes the preserved overload
-        // profile: prune it so the preserved copy naturally expires once the
-        // worker is healthy again and its profiles are being consumed.
-        if (value.timestamp != null) {
-          const key = `${service[kApplicationId]}:${service[kWorkerId]}:${type}`
-          const preserved = this.#lastOverloadProfiles.get(key)
+          // A strictly newer live window supersedes the preserved overload
+          // profile: prune it so the preserved copy naturally expires once the
+          // worker is healthy again and its profiles are being consumed.
+          if (value.timestamp != null) {
+            const key = `${service[kApplicationId]}:${service[kWorkerId]}:${type}`
+            const preserved = this.#lastOverloadProfiles.get(key)
 
-          if (preserved && preserved.timestamp < value.timestamp) {
-            this.#lastOverloadProfiles.delete(key)
+            if (preserved && preserved.timestamp < value.timestamp) {
+              this.#lastOverloadProfiles.delete(key)
+            }
+          }
+
+          // For an application-level id the newest window across the workers
+          // wins, mirroring the preserved overload profile fallback below.
+          if (!best || (value.timestamp != null && (best.timestamp == null || value.timestamp > best.timestamp))) {
+            best = value
           }
         }
 
-        return { ...value, preserved: false }
+        return { ...best, preserved: false }
       }
 
       // The worker event loop is not responding (e.g. it is hard-blocked).
@@ -959,10 +1134,71 @@ export class Runtime extends EventEmitter {
     if (preserved) {
       // The preserved flag lets consumers distinguish post-mortem evidence
       // from a live window and judge it together with the timestamp.
-      return { profile: preserved.profile, timestamp: preserved.timestamp, preserved: true }
+      return {
+        profile: preserved.profile,
+        timestamp: preserved.timestamp,
+        sampleCount: preserved.sampleCount,
+        preserved: true
+      }
     }
 
     throw error
+  }
+
+  // Pulls the last profile from the addressed worker, or from every worker of
+  // the application when no explicit worker index is given: the application
+  // "last profile" is the newest window among its workers, so one arbitrary
+  // worker cannot answer for all of them. Per-worker failures with fallback
+  // codes are ignored as long as at least one worker yields a profile.
+  async #pullLastProfiles (id, options, ensureStarted) {
+    const pullOptions = { ...options, includeTimestamp: true, includeSampleCount: true }
+
+    const pullWorker = async service => {
+      const result = await sendViaITC(service, 'getLastProfile', pullOptions)
+      return { service, result }
+    }
+
+    if (/^.+:\d+$/.test(id)) {
+      return [await pullWorker(await this.#getApplicationById(id, ensureStarted))]
+    }
+
+    if (!this.#applications.has(id)) {
+      throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
+    }
+
+    const keys = this.#workers.getKeys(id)
+
+    // No worker is currently registered: resolve the id as usual so that the
+    // canonical error is raised.
+    if (keys.length === 0) {
+      return [await pullWorker(await this.#getApplicationById(id, ensureStarted))]
+    }
+
+    const settled = await Promise.allSettled(
+      keys.map(async key => {
+        const service = await this.#getWorkerByIdOrNext(id, key.split(':')[1], ensureStarted)
+        return pullWorker(service)
+      })
+    )
+
+    const profiles = []
+    let firstError
+
+    for (const outcome of settled) {
+      if (outcome.status === 'fulfilled') {
+        profiles.push(outcome.value)
+      } else if (!kLastProfileFallbackCodes.has(outcome.reason?.code)) {
+        throw outcome.reason
+      } else {
+        firstError ??= outcome.reason
+      }
+    }
+
+    if (profiles.length === 0) {
+      throw firstError
+    }
+
+    return profiles
   }
 
   // The final profile of an overload pause is pushed by the worker and
@@ -1076,9 +1312,15 @@ export class Runtime extends EventEmitter {
     this.#config.metrics = metricsConfig
     this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
 
+    // Allow extension health routes to be re-applied on the restarted servers.
+    for (const entry of this.#extensionHealthRoutes) {
+      entry.applied = false
+    }
+
     this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
 
     this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
+    this.#assertExtensionHealthRoutesApplied()
 
     await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
 
@@ -1387,7 +1629,7 @@ export class Runtime extends EventEmitter {
       undefined,
       [],
       this.#concurrency,
-      this.#config.metrics.healthChecksTimeout,
+      this.#getHealthChecksTimeout(),
       {}
     )
   }
@@ -1408,9 +1650,21 @@ export class Runtime extends EventEmitter {
       undefined,
       [],
       this.#concurrency,
-      this.#config.metrics.healthChecksTimeout,
+      this.#getHealthChecksTimeout(),
       {}
     )
+  }
+
+  getExtensionHealthRoutes () {
+    return this.#extensionHealthRoutes
+  }
+
+  async runExtensionReadinessChecks () {
+    return this.#runExtensionHealthChecks(this.#extensionReadinessChecks, 'readiness')
+  }
+
+  async runExtensionLivenessChecks () {
+    return this.#runExtensionHealthChecks(this.#extensionLivenessChecks, 'liveness')
   }
 
   async getMetrics (format = 'json') {
@@ -1427,6 +1681,15 @@ export class Runtime extends EventEmitter {
     if (this.#processMetricsRegistry) {
       processMetricsJson = await this.#processMetricsRegistry.getMetricsAsJSON()
     }
+
+    // Collect main-thread extension metrics once. Each extension has its own
+    // registry so metric registration and cleanup stay isolated. Collisions
+    // with other extensions, process metrics, restart metrics, or worker
+    // metrics fail with a coded error identifying the extension and family.
+    const extensionMetrics = await this.#getExtensionMetricsJson({
+      processMetricsJson,
+      applicationRestartMetrics
+    })
 
     for (const worker of this.#workers.values()) {
       try {
@@ -1446,20 +1709,6 @@ export class Runtime extends EventEmitter {
         if (applicationMetrics && applicationMetrics !== kTimeout) {
           metrics ??= []
 
-          // Build worker labels including custom labels from metrics config
-          const workerLabels = {
-            ...this.#config.metrics?.labels,
-            [this.#metricsLabelName]: worker[kApplicationId]
-          }
-          const workerId = worker[kWorkerId]
-          if (workerId >= 0) {
-            workerLabels.workerId = workerId
-          }
-
-          // Duplicate process metrics with worker labels and add to output
-          if (processMetricsJson) {
-            this.#applyLabelsToMetrics(processMetricsJson, workerLabels, metrics)
-          }
           // Add worker's thread-specific metrics
           for (let i = 0; i < applicationMetrics.length; i++) {
             metrics.push(applicationMetrics[i])
@@ -1479,6 +1728,49 @@ export class Runtime extends EventEmitter {
       }
     }
 
+    // Extension metrics must not share a family name with any worker metric.
+    if (metrics !== null && extensionMetrics.length > 0) {
+      const workerMetricNames = new Set()
+      for (let i = 0; i < metrics.length; i++) {
+        workerMetricNames.add(metrics[i].name)
+      }
+
+      for (const { path, metricNames } of extensionMetrics) {
+        for (const name of metricNames) {
+          if (workerMetricNames.has(name)) {
+            throw new MetricFamilyCollisionError(path, name, 'application worker metrics')
+          }
+        }
+      }
+    }
+
+    if (extensionMetrics.length > 0) {
+      metrics ??= []
+      const extensionMetricsJson = []
+      for (const { metrics: extensionMetricList } of extensionMetrics) {
+        extensionMetricsJson.push(...extensionMetricList)
+      }
+      metrics = [...extensionMetricsJson, ...metrics]
+    }
+
+    // Report process-level metrics (e.g. process_resident_memory_bytes) only once:
+    // they describe the whole runtime process, so replicating them for each
+    // application running in a worker thread would just duplicate the same value.
+    // Applications running as separate OS processes report their own process-level
+    // metrics, with their own labels, as part of their thread metrics above.
+    // See https://github.com/platformatic/platformatic/issues/3332.
+    if (metrics !== null && processMetricsJson) {
+      const processMetrics = []
+      // Drop any configured custom label that shares the name of the application
+      // label (a config can set both `applicationLabel: 'serviceId'` and a static
+      // `serviceId` label): keeping it would make these runtime-wide metrics look
+      // like they belong to an application, both here and in getFormattedMetrics().
+      const processLabels = { ...this.#config.metrics?.labels }
+      delete processLabels[this.#metricsLabelName]
+      this.#applyLabelsToMetrics(processMetricsJson, processLabels, processMetrics)
+      metrics = [...processMetrics, ...metrics]
+    }
+
     if (metrics !== null && applicationRestartMetrics.length > 0) {
       metrics = [...applicationRestartMetrics, ...metrics]
     }
@@ -1488,6 +1780,57 @@ export class Runtime extends EventEmitter {
     }
 
     return { metrics }
+  }
+
+  async #getExtensionMetricsJson ({ processMetricsJson, applicationRestartMetrics }) {
+    const results = []
+    const metricSources = new Map()
+
+    // Static labels from metrics config apply, but Runtime never invents a
+    // worker ID or application ID for main-thread extension metrics.
+    const extensionLabels = typeof this.#config.metrics === 'object' && this.#config.metrics
+      ? { ...this.#config.metrics.labels }
+      : {}
+    delete extensionLabels[this.#metricsLabelName]
+
+    const processMetricNames = new Set((processMetricsJson ?? []).map(metric => metric.name))
+    const restartMetricNames = new Set((applicationRestartMetrics ?? []).map(metric => metric.name))
+
+    for (const { path, registry } of this.#extensions) {
+      if (!registry) {
+        continue
+      }
+
+      const registryMetrics = await registry.getMetricsAsJSON()
+      if (!registryMetrics || registryMetrics.length === 0) {
+        continue
+      }
+
+      const metricNames = []
+      for (const metric of registryMetrics) {
+        const existing = metricSources.get(metric.name)
+        if (existing) {
+          throw new MetricFamilyCollisionError(path, metric.name, `extension "${existing}"`)
+        }
+
+        if (processMetricNames.has(metric.name)) {
+          throw new MetricFamilyCollisionError(path, metric.name, 'runtime process metrics')
+        }
+
+        if (restartMetricNames.has(metric.name)) {
+          throw new MetricFamilyCollisionError(path, metric.name, 'runtime restart metrics')
+        }
+
+        metricSources.set(metric.name, path)
+        metricNames.push(metric.name)
+      }
+
+      const labeledMetrics = []
+      this.#applyLabelsToMetrics(registryMetrics, extensionLabels, labeledMetrics)
+      results.push({ path, metrics: labeledMetrics, metricNames })
+    }
+
+    return results
   }
 
   #incrementApplicationRestartCount (applicationId) {
@@ -1606,6 +1949,13 @@ export class Runtime extends EventEmitter {
 
       const applicationsMetrics = {}
 
+      // Process-level metrics are reported only once for the whole runtime, without
+      // an application label, since they are shared by all the applications running
+      // in worker threads (see issue #3332). Applications running as separate OS
+      // processes report their own labeled values, which take precedence below.
+      const runtimeProcessMetrics = {}
+      const applicationProcessMetrics = new Set()
+
       for (const metric of metrics) {
         const { name, values } = metric
 
@@ -1617,7 +1967,20 @@ export class Runtime extends EventEmitter {
         const applicationId = labels?.[this.#metricsLabelName]
 
         if (!applicationId) {
+          if (name === 'process_cpu_percent_usage') {
+            runtimeProcessMetrics.cpu = values[0].value
+            continue
+          }
+          if (name === 'process_resident_memory_bytes') {
+            runtimeProcessMetrics.rss = values[0].value
+            continue
+          }
+
           throw new Error(`Missing ${this.#metricsLabelName} label in metrics`)
+        }
+
+        if (name === 'process_cpu_percent_usage' || name === 'process_resident_memory_bytes') {
+          applicationProcessMetrics.add(`${applicationId}:${name}`)
         }
 
         let applicationMetrics = applicationsMetrics[applicationId]
@@ -1641,6 +2004,24 @@ export class Runtime extends EventEmitter {
         }
 
         parsePromMetric(applicationMetrics, metric)
+      }
+
+      // Apply the runtime-wide process-level values to every application that did
+      // not report its own (i.e. every application running in a worker thread).
+      for (const [applicationId, applicationMetrics] of Object.entries(applicationsMetrics)) {
+        if (
+          runtimeProcessMetrics.cpu !== undefined &&
+          !applicationProcessMetrics.has(`${applicationId}:process_cpu_percent_usage`)
+        ) {
+          applicationMetrics.cpu = runtimeProcessMetrics.cpu
+        }
+
+        if (
+          runtimeProcessMetrics.rss !== undefined &&
+          !applicationProcessMetrics.has(`${applicationId}:process_resident_memory_bytes`)
+        ) {
+          applicationMetrics.rss = runtimeProcessMetrics.rss
+        }
       }
 
       function parsePromMetric (applicationMetrics, promMetric) {
@@ -1724,17 +2105,27 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplicationMeta (id) {
-    const application = await this.#getApplicationById(id)
+    const hasWorkerId = /^.+:\d+$/.test(id)
+    const attempts = hasWorkerId ? 1 : Math.max(1, this.#workers.getKeys(id).length)
 
-    try {
-      return await sendViaITC(application, 'getApplicationMeta')
-    } catch (e) {
-      // The application exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      const application = await this.#getApplicationById(id)
+
+      try {
+        return await sendViaITC(application, 'getApplicationMeta')
+      } catch (e) {
+        // The application exports no meta, return an empty object
+        if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+          return {}
+        }
+
+        // A parallel restart can stop the selected worker while metadata is
+        // being retrieved. Retry another worker unless one was requested
+        // explicitly or every worker available at the start has been tried.
+        if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT' || attempt === attempts - 1) {
+          throw e
+        }
       }
-
-      throw e
     }
   }
 
@@ -1806,6 +2197,79 @@ export class Runtime extends EventEmitter {
     const application = await this.#getApplicationById(id, true)
 
     return sendViaITC(application, 'getApplicationGraphQLSchema')
+  }
+
+  async getApplicationScheduledTasks (id) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'getApplicationScheduledTasks')
+  }
+
+  async runApplicationScheduledTasks (id, scheduleId, scheduledTime) {
+    const application = await this.#getApplicationById(id, true)
+
+    return sendViaITC(application, 'runApplicationScheduledTasks', { scheduleId, scheduledTime })
+  }
+
+  getSchedulerJobs () {
+    return this.#scheduler?.getJobs() ?? []
+  }
+
+  pauseSchedulerJob (name) {
+    return this.#schedulerOrThrow().pauseJob(name)
+  }
+
+  resumeSchedulerJob (name) {
+    return this.#schedulerOrThrow().resumeJob(name)
+  }
+
+  runSchedulerJob (name) {
+    return this.#schedulerOrThrow().runJob(name)
+  }
+
+  #schedulerOrThrow () {
+    if (!this.#scheduler) {
+      throw new Error('The scheduler is not configured')
+    }
+
+    return this.#scheduler
+  }
+
+  async #registerApplicationSchedulerJobs (id) {
+    if (!this.#scheduler) {
+      return
+    }
+
+    const pausedJobs = new Set(
+      this.#scheduler
+        .getJobs()
+        .filter(job => job.applicationId === id && job.paused)
+        .map(job => job.name)
+    )
+
+    await this.#scheduler.removeApplicationJobs(id)
+
+    const workerId = this.#workers.getKeys(id)[0]
+    const schedules = this.#workers.get(workerId)?.[kWorkerScheduledTasks] ?? []
+    for (const schedule of schedules) {
+      const name = `${id}:${schedule.id}`
+      this.#scheduler.addJob(
+        {
+          name,
+          cron: schedule.cron,
+          source: 'application',
+          applicationId: id,
+          scheduleId: schedule.id,
+          tasks: schedule.tasks,
+          maxRetries: 3
+        },
+        ({ scheduledTime }) => this.runApplicationScheduledTasks(id, schedule.id, scheduledTime)
+      )
+
+      if (pausedJobs.has(name)) {
+        await this.#scheduler.pauseJob(name)
+      }
+    }
   }
 
   async getWorkers (includeRaw = false) {
@@ -2111,7 +2575,10 @@ export class Runtime extends EventEmitter {
           codeRangeSizeMb
         },
         inspectorOptions,
-        dirname: this.#root
+        dirname: this.#root,
+        // Keys of the worker environment which only come from an env file of the runtime:
+        // the env file of the application is allowed to override those.
+        envFileFallbackKeys: this.#env[kEnvFileFallbackKeys] ?? []
       },
       argv: applicationConfig.arguments,
       execArgv,
@@ -2252,7 +2719,7 @@ export class Runtime extends EventEmitter {
     // The event only carries metadata: the profile can be retrieved on demand
     // via getApplicationLastProfile. We use emit instead of emitAndNotify since
     // other workers are not interested in this event.
-    worker[kITC].on('profile:captured', ({ type, timestamp }) => {
+    worker[kITC].on('profile:captured', ({ type, timestamp, sampleCount }) => {
       // A strictly newer completed window supersedes the preserved overload
       // profile: once the worker is past the overload and producing windows
       // again, its old evidence must not be served anymore.
@@ -2268,7 +2735,8 @@ export class Runtime extends EventEmitter {
         application: applicationId,
         worker: index,
         type,
-        timestamp
+        timestamp,
+        sampleCount: sampleCount ?? null
       })
     })
 
@@ -2330,8 +2798,12 @@ export class Runtime extends EventEmitter {
     // the worker can be retrieved (see getApplicationLastProfile) even while
     // the worker event loop is blocked, and it survives the worker being
     // replaced by the health checks.
-    worker[kITC].on('profile:overload', ({ type, timestamp, profile }) => {
-      this.#lastOverloadProfiles.set(`${workerId}:${type}`, { profile, timestamp })
+    worker[kITC].on('profile:overload', ({ type, timestamp, profile, sampleCount }) => {
+      this.#lastOverloadProfiles.set(`${workerId}:${type}`, {
+        profile,
+        timestamp,
+        sampleCount: sampleCount ?? null
+      })
     })
 
     // Preserved overload profiles outlive their worker only for a grace
@@ -2422,7 +2894,7 @@ export class Runtime extends EventEmitter {
       if (attempt === MAX_BOOTSTRAP_ATTEMPTS) {
         const error = new RuntimeAbortedError({ cause: e })
         error.message = `Unable to initialize the ${errorLabel}.`
-        throw e
+        throw error
       }
 
       if (e.code !== 'PLT_RUNTIME_APPLICATION_WORKER_EXIT') {
@@ -2832,21 +3304,24 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:worker:starting', eventPayload)
 
     try {
-      let workerUrl
+      let workerStartResult
       if (config.startTimeout > 0) {
-        workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
+        workerStartResult = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
 
-        if (workerUrl === kTimeout) {
+        if (workerStartResult === kTimeout) {
           this.emitAndNotify('application:worker:startTimeout', eventPayload)
           this.logger.error(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
           throw new ApplicationStartTimeoutError(id, config.startTimeout)
         }
       } else {
-        workerUrl = await sendViaITC(worker, 'start')
+        workerStartResult = await sendViaITC(worker, 'start')
       }
 
       await this.#avoidOutOfOrderThreadLogs()
+
+      const { url: workerUrl, scheduledTasks } = workerStartResult
+      worker[kWorkerScheduledTasks] = scheduledTasks
 
       this.#recordWorkerUrl(worker, id, workerUrl)
 
@@ -2972,10 +3447,15 @@ export class Runtime extends EventEmitter {
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
+      const res = await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
+
+      if (res === kTimeout) {
+        this.emitAndNotify('application:worker:stop:timeout', eventPayload)
+        this.logger.error(`Timeout while stopping ${label}. Killing a worker thread.`)
+      }
     } catch (error) {
       this.emitAndNotify('application:worker:stop:error', eventPayload)
-      this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
+      this.logger.error({ err: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
       worker[kITC].notify('application:worker:stop:processed')
       // Wait for the processed message to be received
@@ -2994,6 +3474,7 @@ export class Runtime extends EventEmitter {
     // If the worker didn't exit in time, kill it
     if (res === kTimeout) {
       this.emitAndNotify('application:worker:exit:timeout', eventPayload)
+      this.logger.error(`Timeout while waiting for ${label} to exit. Killing a worker thread.`)
       await worker.terminate()
     }
 
@@ -3238,6 +3719,37 @@ export class Runtime extends EventEmitter {
     }
 
     return this.#getWorkerByIdOrNext(applicationId, workerId, ensureStarted, mustExist)
+  }
+
+  // Profiling start and stop must address the same worker: resolve an id
+  // without an explicit worker index to the first worker deterministically,
+  // as the round-robin used by #getApplicationById would rotate to a
+  // different worker between the two calls.
+  async #getApplicationWorkerForProfiling (applicationId, ensureStarted) {
+    if (hasWorkerIndex(applicationId)) {
+      return this.#getApplicationById(applicationId, ensureStarted)
+    }
+
+    if (!this.#applications.has(applicationId)) {
+      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
+    }
+
+    const [firstWorker] = this.#workers.getKeys(applicationId)
+    return this.#getWorkerByIdOrNext(applicationId, firstWorker?.split(':')[1], ensureStarted)
+  }
+
+  async #getApplicationWorkersForProfiling (applicationId, ensureStarted) {
+    if (!this.#applications.has(applicationId)) {
+      throw new ApplicationNotFoundError(applicationId, this.getApplicationsIds().join(', '))
+    }
+
+    const workers = []
+    for (const key of this.#workers.getKeys(applicationId)) {
+      const workerIndex = parseInt(key.split(':')[1], 10)
+      workers.push({ workerIndex, worker: await this.#getWorkerByIdOrNext(applicationId, workerIndex, ensureStarted) })
+    }
+
+    return workers
   }
 
   // This method can work in two modes: when workerId is provided, it will return the specific worker
@@ -3895,8 +4407,7 @@ export class Runtime extends EventEmitter {
   async #loadExtensions () {
     let extensions = this.#config.extensions
 
-    // Do not load extensions when building applications
-    if (!extensions || this.#context.build) {
+    if (!extensions) {
       return
     }
 
@@ -3905,32 +4416,53 @@ export class Runtime extends EventEmitter {
     }
 
     for (const extension of extensions) {
-      const { path, options } = typeof extension === 'string' ? { path: extension } : extension
+      const { path, options, build } = typeof extension === 'string' ? { path: extension } : extension
 
-      let setup
+      // Runtime extensions historically were not loaded by `wattpm build`.
+      // Preserve that behavior unless an extension explicitly opts into the
+      // build lifecycle.
+      if (this.#context.build && !build) {
+        continue
+      }
+
+      let imported
       try {
-        setup = (await import(pathToFileURL(path))).default
+        imported = await import(pathToFileURL(path))
       } catch (e) {
         throw new FailedToLoadExtensionError(path, e.message, { cause: e })
       }
+
+      const setup = resolveExtensionSetup(imported)
 
       if (typeof setup !== 'function') {
         throw new InvalidExtensionError(path)
       }
 
       const logger = this.logger.child({ name: `extension:${basename(path)}` })
+      const health = this.#createExtensionHealth(path, logger)
+
+      // One registry per extension so metric conflicts and cleanup are isolated.
+      // Extension metrics are main-thread only: Runtime never invents a worker ID.
+      const registry = new metricsClient.Registry()
+      const metrics = { client: metricsClient, registry }
 
       try {
         const instance = await setup({
           runtime: this,
           itc: this.#createExtensionITC(),
+          sharedContext: this.#createExtensionSharedContext(),
           logger,
           options: options ?? {},
-          root: this.#root
+          root: this.#root,
+          metrics,
+          health
         })
 
-        this.#extensions.push({ path, instance })
+        this.#extensions.push({ path, instance, registry, health, started: false, stopped: false, closed: false })
       } catch (e) {
+        registry.clear()
+        // Drop any health contributions from a failed extension setup.
+        health.cleanup()
         throw new FailedToLoadExtensionError(path, e.message, { cause: e })
       }
     }
@@ -3942,18 +4474,301 @@ export class Runtime extends EventEmitter {
     this.#extensionsWantHealthMetrics = this.listenerCount('application:worker:health:metrics') > 0
   }
 
-  async #closeExtensions () {
-    // Close in reverse order, so that extensions loaded later, which might depend
-    // on earlier ones, are closed first.
-    const extensions = this.#extensions.splice(0).reverse()
+  #isApplicationStarted (id) {
+    const applicationConfig = this.#applications.get(id)
+    if (!applicationConfig) {
+      return false
+    }
 
-    for (const { path, instance } of extensions) {
-      try {
-        await instance?.close?.()
-      } catch (e) {
-        this.logger.error({ err: ensureLoggableError(e) }, `Failed to close the extension "${path}".`)
+    const workers = applicationConfig.workers.static
+    for (let i = 0; i < workers; i++) {
+      const worker = this.#workers.get(`${id}:${i}`)
+      const status = worker?.[kWorkerStatus]
+
+      // Match startApplication(): anything past boot/init means already started.
+      if (status && status !== 'boot' && status !== 'init') {
+        return true
       }
     }
+
+    return false
+  }
+
+  async #startExtensions () {
+    for (const extension of this.#extensions) {
+      if (extension.started) {
+        continue
+      }
+
+      try {
+        await extension.instance?.start?.()
+        extension.started = true
+      } catch (e) {
+        throw new FailedToStartExtensionError(extension.path, e.message, { cause: e })
+      }
+    }
+  }
+
+  async #stopExtensions () {
+    // Stop in reverse order, so that extensions loaded later, which might depend
+    // on earlier ones, are stopped first. Only extensions that completed start
+    // (including those without a start hook) are stopped, and at most once.
+    for (const extension of [...this.#extensions].reverse()) {
+      if (!extension.started || extension.stopped) {
+        continue
+      }
+
+      // Mark before invoking so repeated stop is idempotent even if stop throws.
+      extension.stopped = true
+
+      try {
+        await extension.instance?.stop?.()
+      } catch (e) {
+        const err = new FailedToStopExtensionError(extension.path, e.message, { cause: e })
+        this.logger.error({ err: ensureLoggableError(err) }, `Failed to stop the extension "${extension.path}".`)
+      }
+    }
+  }
+
+  async #closeExtensions () {
+    // Close in reverse order, so that extensions loaded later, which might depend
+    // on earlier ones, are closed first. Close is invoked at most once per extension.
+    const extensions = this.#extensions.splice(0).reverse()
+
+    for (const extension of extensions) {
+      if (extension.closed) {
+        continue
+      }
+
+      extension.closed = true
+
+      try {
+        await extension.instance?.close?.()
+      } catch (e) {
+        this.logger.error(
+          { err: ensureLoggableError(e) },
+          `Failed to close the extension "${extension.path}".`
+        )
+      } finally {
+        // Always drop health contributions with the extension, even if close fails.
+        extension.health?.cleanup?.()
+      }
+
+      // Drop the extension registry after close so its metrics stop appearing in
+      // getMetrics()/exporters and collectors cannot keep running in the background.
+      try {
+        extension.registry?.clear()
+      } catch (e) {
+        this.logger.error(
+          { err: ensureLoggableError(e) },
+          `Failed to clear metrics registry for extension "${extension.path}".`
+        )
+      }
+    }
+  }
+
+  #createExtensionSharedContext () {
+    return {
+      // Synchronous on the main thread. Return an isolated snapshot so an
+      // extension cannot mutate the store without going through update(),
+      // which broadcasts changes to workers.
+      get: () => structuredClone(this.getSharedContext()),
+      update: async (update, options = {}) => {
+        // Keep the positional update authoritative, matching the worker API.
+        await this.updateSharedContext({ ...options, context: update })
+      }
+    }
+  }
+
+  #getHealthChecksTimeout () {
+    const metrics = this.#config.metrics
+    if (typeof metrics !== 'object' || metrics === null) {
+      return 5000
+    }
+
+    // Prefer the schema property; keep the historical misspelled key as a fallback.
+    return metrics.healthChecksTimeouts ?? metrics.healthChecksTimeout ?? 5000
+  }
+
+  #assertExtensionHealthRoutesApplied () {
+    const pending = this.#extensionHealthRoutes.filter(entry => entry.active && !entry.applied)
+    if (pending.length > 0) {
+      throw new ExtensionHealthRoutesUnavailableError()
+    }
+  }
+
+  async #runExtensionHealthChecks (checks, kind) {
+    if (checks.size === 0) {
+      return { status: true }
+    }
+
+    const timeout = this.#getHealthChecksTimeout()
+    let response
+
+    for (const [name, entry] of checks) {
+      const result = await this.#runExtensionHealthCheck(name, entry, kind, timeout)
+
+      if (typeof result === 'object' && result !== null) {
+        response = result
+      }
+
+      if (!this.#isExtensionHealthCheckSuccessful(result)) {
+        this.logger.error(
+          { extension: entry.extensionPath, check: name, kind },
+          `Extension ${kind} check "${name}" failed.`
+        )
+        return { status: false, response }
+      }
+    }
+
+    return { status: true, response }
+  }
+
+  async #runExtensionHealthCheck (name, entry, kind, timeout) {
+    try {
+      const result = await executeWithTimeout(
+        Promise.resolve().then(() => entry.check()),
+        timeout,
+        kTimeout
+      )
+
+      if (result === kTimeout) {
+        this.logger.error(
+          { extension: entry.extensionPath, check: name, kind, timeout },
+          `Extension ${kind} check "${name}" timed out.`
+        )
+        return false
+      }
+
+      if (typeof result === 'boolean') {
+        return result
+      }
+
+      if (typeof result === 'object' && result !== null && typeof result.status === 'boolean') {
+        return result
+      }
+
+      this.logger.error(
+        { extension: entry.extensionPath, check: name, kind, result },
+        `Extension ${kind} check "${name}" returned a malformed result.`
+      )
+      return false
+    } catch (err) {
+      this.logger.error(
+        { err: ensureLoggableError(err), extension: entry.extensionPath, check: name, kind },
+        `Extension ${kind} check "${name}" rejected.`
+      )
+      return false
+    }
+  }
+
+  #isExtensionHealthCheckSuccessful (result) {
+    if (typeof result === 'boolean') {
+      return result
+    }
+
+    if (typeof result === 'object' && result !== null) {
+      return !!result.status
+    }
+
+    return false
+  }
+
+  #createExtensionHealth (extensionPath, logger) {
+    const readinessNames = new Set()
+    const livenessNames = new Set()
+    const routeEntries = []
+
+    const registerCheck = (map, names, kind, name, check) => {
+      if (typeof name !== 'string' || name.length === 0) {
+        throw new InvalidArgumentError(`${kind} check name must be a non-empty string`)
+      }
+
+      if (typeof check !== 'function') {
+        throw new InvalidArgumentError(`${kind} check "${name}" must be a function`)
+      }
+
+      const existing = map.get(name)
+      if (existing) {
+        throw new DuplicateExtensionHealthCheckError(kind, name, existing.extensionPath)
+      }
+
+      const entry = { extensionPath, check }
+      map.set(name, entry)
+      names.add(name)
+
+      logger.debug({ check: name, kind }, `Registered extension ${kind} check "${name}"`)
+
+      return () => {
+        const current = map.get(name)
+        if (current === entry) {
+          map.delete(name)
+        }
+        names.delete(name)
+      }
+    }
+
+    const api = {
+      registerReadinessCheck: (name, check) => {
+        return registerCheck(this.#extensionReadinessChecks, readinessNames, 'readiness', name, check)
+      },
+      registerLivenessCheck: (name, check) => {
+        return registerCheck(this.#extensionLivenessChecks, livenessNames, 'liveness', name, check)
+      },
+      registerRoutes: plugin => {
+        if (typeof plugin !== 'function') {
+          throw new InvalidArgumentError('health route plugin must be a function')
+        }
+
+        const entry = {
+          extensionPath,
+          plugin,
+          active: true,
+          applied: false
+        }
+
+        this.#extensionHealthRoutes.push(entry)
+        routeEntries.push(entry)
+
+        logger.debug('Registered extension health routes plugin')
+
+        return () => {
+          entry.active = false
+          const index = this.#extensionHealthRoutes.indexOf(entry)
+          if (index !== -1) {
+            this.#extensionHealthRoutes.splice(index, 1)
+          }
+        }
+      },
+      cleanup: () => {
+        for (const name of readinessNames) {
+          const current = this.#extensionReadinessChecks.get(name)
+          if (current?.extensionPath === extensionPath) {
+            this.#extensionReadinessChecks.delete(name)
+          }
+        }
+        readinessNames.clear()
+
+        for (const name of livenessNames) {
+          const current = this.#extensionLivenessChecks.get(name)
+          if (current?.extensionPath === extensionPath) {
+            this.#extensionLivenessChecks.delete(name)
+          }
+        }
+        livenessNames.clear()
+
+        for (const entry of routeEntries) {
+          entry.active = false
+          const index = this.#extensionHealthRoutes.indexOf(entry)
+          if (index !== -1) {
+            this.#extensionHealthRoutes.splice(index, 1)
+          }
+        }
+        routeEntries.length = 0
+      }
+    }
+
+    return api
   }
 
   #createExtensionITC () {

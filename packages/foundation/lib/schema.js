@@ -111,6 +111,10 @@ const extension = {
         options: {
           type: 'object',
           additionalProperties: true
+        },
+        build: {
+          type: 'boolean',
+          default: false
         }
       }
     }
@@ -591,6 +595,18 @@ export const fastifyServer = {
         }
       }
     },
+    ajv: {
+      type: 'object',
+      description:
+        'Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.',
+      properties: {
+        customOptions: {
+          type: 'object',
+          additionalProperties: true
+        }
+      },
+      additionalProperties: false
+    },
     caseSensitive: {
       type: 'boolean'
     },
@@ -787,7 +803,8 @@ export const telemetry = {
           type: 'string'
         }
       ],
-      description: 'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
+      description:
+        'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
     }
   },
   required: ['applicationName'],
@@ -1114,7 +1131,7 @@ export const runtimeProperties = {
           },
           { type: 'string' }
         ],
-        default: 10000
+        default: 30000
       },
       application: {
         anyOf: [

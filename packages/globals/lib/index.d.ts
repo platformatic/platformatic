@@ -165,6 +165,15 @@ export interface PlatformaticGlobal {
 /** @deprecated Use `PlatformaticGlobal` instead. */
 export type PlatformaticGlobalInterface = PlatformaticGlobal
 
+// updateGlobals() (see lib/index.js) assigns a real, shared
+// `globalThis.platformatic` object at worker/main-thread startup. Consumers
+// that read the global directly (rather than via the getters below) need an
+// ambient declaration to type it.
+declare global {
+  // eslint-disable-next-line no-var
+  var platformatic: PlatformaticGlobal | undefined
+}
+
 export declare function getGlobal<T extends {}> (): (PlatformaticGlobal & T) | undefined
 export declare function updateGlobals (updates: Partial<PlatformaticGlobal>): PlatformaticGlobal
 export declare function removeGlobals (fields: string[]): PlatformaticGlobal | undefined

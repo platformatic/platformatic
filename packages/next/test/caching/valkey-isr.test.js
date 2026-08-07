@@ -4,6 +4,7 @@ import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { once } from 'node:events'
 import { resolve } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { test } from 'node:test'
 import { parse } from 'semver'
 import { fixturesDir, getLogsFromFile, setFixturesDir, updateFile } from '../../../basic/test/helper.js'
@@ -596,12 +597,11 @@ test('should extend TTL when our limit is smaller than the user one', async t =>
     deepStrictEqual(mo[2], time)
   }
 
-  const key = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
+  // The exact hash Next.js uses to derive the cache key is an internal
+  // implementation detail that can change between Next.js versions, so we
+  // match its shape instead of a hardcoded value.
+  const key = new RegExp(
+    `^${keyFor(valkeyPrefix, 'development', 'values')}:[A-Za-z0-9_-]+$`
   )
   verifyValkeySequence(valkeyCalls, [
     ['get', key],
@@ -670,12 +670,11 @@ test('should not extend the TTL over the original intended one', async t => {
     deepStrictEqual(data.time, time)
   }
 
-  const key = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    'd6b87585b19fac215038c88425d68b057920faf4585fa91a7058ae1ce5d70d8f'
+  // The exact hash Next.js uses to derive the cache key is an internal
+  // implementation detail that can change between Next.js versions, so we
+  // match its shape instead of a hardcoded value.
+  const key = new RegExp(
+    `^${keyFor(valkeyPrefix, 'development', 'values')}:[A-Za-z0-9_-]+$`
   )
 
   const baseTTL = 11 - delay
@@ -743,22 +742,33 @@ test('should handle read error', async t => {
 test('should handle deserialization error', async t => {
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration)
 
-  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-
-  const fetchKey = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    'd6b87585b19fac215038c88425d68b057920faf4585fa91a7058ae1ce5d70d8f'
+  const valkey = new Redis(
+    await getValkeyUrl(resolve(fixturesDir, configuration))
   )
 
   await cleanupCache(valkey)
-  await valkey.set(fetchKey, 'invalid')
 
   t.after(async () => {
     await valkey.disconnect()
   })
+
+  // The exact hash Next.js uses to derive the cache key is an internal
+  // implementation detail that can change between Next.js versions. Rather
+  // than hardcoding it, warm the cache with a real request and then discover
+  // the key that was actually used, so we can corrupt the right entry.
+  await fetch(url + '/route')
+
+  const keyPattern = `${keyFor(valkeyPrefix, 'development', 'values')}:*`
+  let fetchKey
+  for (let attempt = 0; attempt < 20 && !fetchKey; attempt++) {
+    [fetchKey] = await valkey.keys(keyPattern)
+    if (!fetchKey) {
+      await sleep(250)
+    }
+  }
+  ok(fetchKey, 'expected the route to have populated a cache entry in Valkey')
+
+  await valkey.set(fetchKey, 'invalid')
 
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
@@ -1045,6 +1055,38 @@ test('can be used without the runtime - standalone mode', async t => {
     { msg: 'cache get', key, value: undefined },
     { msg: 'cache remove', key, value: undefined }
   ])
+})
+
+test('should preserve Map identity for values like segmentData across the Valkey round trip', async t => {
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await valkey.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:segment-data`
+
+  const segmentData = new Map([
+    ['/foo', { rsc: Buffer.from('foo') }],
+    ['/bar', { rsc: Buffer.from('bar') }]
+  ])
+
+  await handler.set(key, { html: 'content', segmentData }, { revalidate: 120, tags: ['first'] })
+  const cached = await handler.get(key)
+
+  ok(cached.value.segmentData instanceof Map)
+  deepStrictEqual(Array.from(cached.value.segmentData.keys()), ['/foo', '/bar'])
+  deepStrictEqual(cached.value.segmentData.get('/foo').rsc, Buffer.from('foo'))
+  deepStrictEqual(cached.value.segmentData.get('/bar').rsc, Buffer.from('bar'))
+  deepStrictEqual(cached.value.html, 'content')
 })
 
 test('should cache static pages with revalidate: false (force-static / SSG)', async t => {

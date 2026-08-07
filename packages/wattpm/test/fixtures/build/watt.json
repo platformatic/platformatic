@@ -4,6 +4,12 @@
     "level": "info"
   },
   "entrypoint": "main",
+  "extensions": [
+    {
+      "path": "build-extension.js",
+      "build": true
+    }
+  ],
   "autoload": {
     "path": "web"
   }

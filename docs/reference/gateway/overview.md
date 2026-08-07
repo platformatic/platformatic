@@ -1,12 +1,28 @@
 import Issues from '../../getting-started/issues.md';
 
-# API Gateway (Gateway Service)
+# API Gateway
 
-The Gateway Service is an API Gateway that runs within Watt (the Node.js Application Server). It automatically integrates multiple microservices into a unified API ecosystem, providing a single public endpoint for clients while managing routing, composition, and conflict resolution behind the scenes.
+The Gateway is an API Gateway application that runs within Watt (the Node.js Application Server). It automatically integrates multiple microservices into a unified API ecosystem, providing a single public endpoint for clients while managing routing, composition, and conflict resolution behind the scenes.
 
-The Gateway Service aggregates APIs from multiple sources - whether they're other applications in your Watt application, external APIs, or legacy systems - presenting them as a cohesive, well-documented API to your clients.
+The Gateway aggregates APIs from multiple sources - whether they're other applications in your Watt application, external APIs, or legacy systems - presenting them as a cohesive, well-documented API to your clients.
 
 For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
+
+:::info[Previously called Composer]
+
+Gateway was named **Composer** throughout the v1 and v2 lines, and was distributed as `@platformatic/composer`. It was renamed to Gateway in **v3.0.0**; the documentation, the package name, and the configuration key all use `gateway` from that release onward.
+
+`@platformatic/composer` still exists in v3 as a deprecated alias that re-exports Gateway, so existing applications keep working, but it logs a deprecation warning on startup and **will be removed in v4.0.0**.
+
+To migrate:
+
+- Replace the `@platformatic/composer` dependency with `@platformatic/gateway`
+- Point `$schema` at `https://schemas.platformatic.dev/@platformatic/gateway/<version>.json`
+- Rename the top-level `composer` configuration key to `gateway`
+
+The properties nested under that key are unchanged, so no other edits are needed.
+
+:::
 
 ## Features
 
@@ -20,9 +36,9 @@ For a high level overview of how Watt and its applications work, please referenc
 - **Dynamic Updates**: Real-time schema updates when underlying applications change (in development mode)
 - **Custom Logic**: Extend with Fastify plugins for authentication, rate limiting, or request transformation
 
-## When to Use Gateway Service
+## When to Use the Gateway
 
-Gateway Service is ideal for:
+The Gateway is ideal for:
 
 - **Microservices Architecture**: Present a unified API from multiple independent services
 - **API Aggregation**: Combine internal and external APIs into a single public interface
@@ -33,7 +49,7 @@ Gateway Service is ideal for:
 
 ## Quick Start
 
-Create a Gateway Service within a Watt application:
+Create a Gateway within a Watt application:
 
 ```bash
 # Create a new Watt application
@@ -47,13 +63,13 @@ cd my-gateway
 wattpm dev
 ```
 
-Your Gateway Service will automatically discover other applications in your Watt application and create a unified API. Visit `http://localhost:3042/documentation` to see the composed API documentation.
+Your Gateway will automatically discover other applications in your Watt application and create a unified API. Visit `http://localhost:3042/documentation` to see the composed API documentation.
 
 For application-specific configuration and advanced usage, see the [Configuration](./configuration.md) guide.
 
 ## Command Line usage (CLI)
 
-When using [Watt](../watt/overview.md), `@platformatic/gateway` applications will make some additional commands available on the terminal.
+When using [Watt](../wattpm/overview.md), `@platformatic/gateway` applications will make some additional commands available on the terminal.
 
 All the commands will be prefixed by the application id. For instance, if your application id is `main`, then you will have the following commands available:
 

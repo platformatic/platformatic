@@ -3,6 +3,7 @@ import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
+import { exitCodes } from '../lib/errors.js'
 import { createRuntime, readLogs } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -121,4 +122,25 @@ test('should invoke tracked unhandledRejection listeners when exitOnUnhandledErr
       )
     )
   )
+})
+
+test('should exit with the PROCESS_UNHANDLED_ERROR code on uncaught exceptions raised after initialization', async t => {
+  const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
+  const server = await createRuntime(configFile)
+  const url = await server.start()
+
+  t.after(() => {
+    return server.close()
+  })
+
+  // Listen before triggering, the worker exits about 100ms after the error is raised
+  const errored = once(server, 'application:worker:error')
+
+  const res = await request(url + '/service/trigger')
+  strictEqual(res.statusCode, 200)
+
+  const [payload] = await errored
+
+  strictEqual(payload.application, 'service')
+  strictEqual(payload.code, exitCodes.PROCESS_UNHANDLED_ERROR)
 })

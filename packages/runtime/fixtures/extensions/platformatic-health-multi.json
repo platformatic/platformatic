@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "entrypoint": "a",
+  "extensions": [
+    {
+      "path": "./extension-health-api.js",
+      "options": {
+        "id": "primary",
+        "registerRoutes": false
+      }
+    },
+    {
+      "path": "./extension-health-second.js",
+      "options": {
+        "registerRoutes": false
+      }
+    }
+  ],
+  "autoload": {
+    "path": "./services",
+    "exclude": ["crash-on-start"]
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "{{PORT}}"
+  },
+  "metrics": {
+    "hostname": "127.0.0.1",
+    "port": "{{METRICS_PORT}}"
+  },
+  "logger": {
+    "level": "error"
+  }
+}

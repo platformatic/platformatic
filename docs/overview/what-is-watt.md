@@ -47,7 +47,7 @@ npm start                  # Everything runs together
 
 **🎨 Framework Integration**
 
-- Native support for Next.js, Astro, Remix, Vite, NestJS applications
+- Native support for Astro, Next.js, Nitro, Nuxt, React Router, Remix, TanStack Start, Vite and NestJS applications
 - Integrates any existing Express, Fastify, or Node.js application
 - Unified routing and middleware across all applications
 
@@ -87,7 +87,7 @@ Watt fundamentally reimagines Node.js application architecture by providing a **
 
 **Worker Thread Applications** (Fast startup, low overhead):
 
-- **Next.js/Astro/Remix applications** - Frontend frameworks with SSR
+- **Frontend framework applications** - Next.js, Astro, Nuxt, Remix, React Router, TanStack Start and more, with SSR
 - **HTTP Applications** - Custom APIs built on Fastify
 - **Database Applications** - Auto-generated APIs from SQL schemas via Platformatic DB
 
@@ -102,14 +102,14 @@ Watt fundamentally reimagines Node.js application architecture by providing a **
 // Internal application-to-application communication
 const response = await fetch('http://api.plt.local/users')
 
-// External API exposure through Composer
+// External API exposure through the Gateway
 GET /users -> routes to -> http://api.plt.local/users
 ```
 
 Watt provides:
 
 - **Internal DNS resolution** (`application.plt.local`) for inter-application communication
-- **Unified external routing** through Platformatic Composer
+- **Unified external routing** through Platformatic Gateway
 - **Automatic load balancing** and health checking
 - **Request/response transformation** and API aggregation
 
@@ -362,7 +362,7 @@ Now that you understand what Watt is and how it works, choose your next step:
 
 ### 🚀 **Get Started Immediately**
 
-- [5-Minute Quick Start](/docs/getting-started/quick-start-watt) - Get a running application
+- [5-Minute Quick Start](/docs/getting-started/quick-start) - Get a running application
 - [Step-by-Step Tutorial](/docs/learn/beginner/crud-application) - Build a complete app
 
 ### 🔍 **Learn More About Watt**
@@ -374,13 +374,13 @@ Now that you understand what Watt is and how it works, choose your next step:
 ### 🛠️ **Start Building**
 
 - [Migration Guide](/docs/getting-started/port-your-app) - Port existing applications
-- [Database Integration](/docs/guides/databases/) - Add persistent data storage
-- [Framework Integration](/docs/guides/frameworks/) - Add React, Vue, or other frameworks
+- [Database Integration](/docs/reference/db/overview) - Add persistent data storage
+- [Framework Integration](/docs/guides/frameworks) - Add React, Vue, or other frameworks
 
 ### 📖 **Deep Understanding**
 
-- [Watt Reference](/docs/reference/watt/) - Complete configuration options
-- [Application Types](/docs/reference/) - Database, HTTP, Composer applications
-- [Production Deployment](/docs/guides/deployment/) - Kubernetes, Docker, monitoring
+- [Watt Reference](/docs/reference/wattpm/overview) - Complete configuration options
+- [Application Types](/docs/reference) - Database, HTTP, and Gateway applications
+- [Production Deployment](/docs/guides/deployment/dockerize-a-watt-app) - Kubernetes, Docker, monitoring
 
 **Questions?** Join our [Discord community](https://discord.gg/platformatic) or check [GitHub Discussions](https://github.com/platformatic/platformatic/discussions) for real-time help from the Watt team and community.

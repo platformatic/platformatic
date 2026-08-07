@@ -1,0 +1,7 @@
+{
+  "name": "multi-zones-gateway",
+  "private": true,
+  "dependencies": {
+    "@platformatic/gateway": ">=3.0.0"
+  }
+}

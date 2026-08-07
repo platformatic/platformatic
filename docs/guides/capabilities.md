@@ -9,7 +9,7 @@ A capability is essentially a Node.js package that implements the Platformatic c
 - **Single Capability Applications**: Simple applications with one primary function (e.g., a Next.js frontend or a database API)
 - **Multi-Capability Applications**: Complex applications that combine multiple capabilities (e.g., a database backend with a React frontend and an API gateway)
 
-Each Watt project can define a set of application, each using its own capability by defining them in the main `watt.json` file via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](reference/runtime/configuration.md#application) properties.
+Each Watt project can define a set of application, each using its own capability by defining them in the main `watt.json` file via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#application) properties.
 
 Each application gets its own folder and the capability is determined by looking at the `$schema` property of the application `watt.json`.
 
@@ -90,6 +90,12 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 - **Use Case**: Full-stack Vue applications with server-side rendering and static generation
 - **Features**: Nuxt development server, Nitro production output, Vite-powered development
 
+##### [`@platformatic/nitro`](../reference/nitro/overview.md)
+
+- **Description**: Nitro application integration
+- **Use Case**: Standalone Nitro applications and Vite applications using the Nitro plugin
+- **Features**: Nitro development server, Vite-powered development, Nitro production output
+
 ##### [`@platformatic/vite`](../reference/vite/overview.md)
 
 - **Description**: Vite-based application support
@@ -107,6 +113,18 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 - **Description**: Remix framework integration
 - **Use Case**: Full-stack web applications with focus on web standards
 - **Features**: Nested routing, data loading, form handling, progressive enhancement
+
+##### [`@platformatic/react-router`](../reference/react-router/overview.md)
+
+- **Description**: React Router application integration
+- **Use Case**: React applications built on React Router, run unmodified as a Watt application
+- **Features**: Nested routing, data loading, server-side rendering, Vite-powered development
+
+##### [`@platformatic/tanstack`](../reference/tanstack/overview.md)
+
+- **Description**: TanStack Start application integration
+- **Use Case**: Full-stack React applications built with TanStack Start, run unmodified as a Watt application
+- **Features**: Type-safe routing, server functions, streaming SSR, Vite-powered development
 
 ##### [`@platformatic/nest`](../reference/nest/overview.md)
 
@@ -241,6 +259,7 @@ The tool can automatically detect and wrap:
 
 - React applications
 - Next.js applications
+- Nitro applications using `nitro` or `nitropack`
 - Vite-based projects
 - Other JavaScript/TypeScript applications
 

@@ -46,7 +46,7 @@ in the **runtime main thread**. Extensions can observe and control the whole run
 the `Runtime` object and an ITC (Inter-Thread Communication) facade which allows them to register
 custom commands that applications can invoke from their worker threads.
 
-`extensions` can be a path, an object with `path` and `options` properties, or an array of either:
+`extensions` can be a path, an object with `path`, `options`, and `build` properties, or an array of either:
 
 ```json
 {
@@ -61,16 +61,19 @@ custom commands that applications can invoke from their worker threads.
 }
 ```
 
-Each file must default-export a setup function, which is invoked during the runtime initialization,
+Each file must export a setup function, which is invoked during the runtime initialization,
 before any application is started. TypeScript files are supported out of the box via
 [Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
 
 ```js
-export default async function setup ({ runtime, itc, logger, options, root }) {
+export default async function setup ({ runtime, itc, sharedContext, logger, options, root, metrics, health }) {
   // React to runtime events
   runtime.on('application:worker:started', payload => {
     logger.info({ payload }, 'worker started')
   })
+
+  // Publish state to every application worker
+  await sharedContext.update({ reconciler: { ready: true } })
 
   // Register a custom command that applications can invoke via
   // getITC().send('acme:hello', payload)
@@ -78,18 +81,85 @@ export default async function setup ({ runtime, itc, logger, options, root }) {
     return { hello: payload.name }
   })
 
+  // Register main-thread metrics with the shared Runtime metrics pipeline
+  const { client, registry } = metrics
+  const jobs = new client.Gauge({
+    name: 'acme_extension_jobs',
+    help: 'Number of jobs tracked by the extension',
+    registers: [registry]
+  })
+  jobs.set(0)
+
+  // Contribute readiness/liveness checks and diagnostic routes on the health probes server
+  health.registerReadinessCheck('dispatchable', async () => {
+    return { status: true }
+  })
+
+  health.registerLivenessCheck('control-plane', async () => true)
+
+  health.registerRoutes(async app => {
+    app.get('/inventory', async () => ({ ok: true }))
+  })
+
   return {
+    async start () {
+      // Invoked after applications are prepared, before they accept traffic.
+      // Can add/start dynamic applications; Runtime will not start them again.
+    },
+    async stop () {
+      // Invoked during shutdown after the entrypoint stops and before remaining
+      // applications stop. Useful for control-plane handoff.
+    },
     async close () {
-      // Invoked when the runtime is closed
+      // Invoked when the runtime is closed, after all applications have stopped.
     }
   }
 }
 ```
 
+#### How the setup function is resolved
+
+The setup function can be exported either as the default export or as a named `setup` export, so
+both of the following are valid:
+
+```js
+// Default export
+export default async function setup (context) {}
+```
+
+```js
+// Named export
+export async function setup (context) {}
+```
+
+Extensions are also commonly shipped as CommonJS or as "faux ESM" modules, in which a transpiler or a
+bundler puts the real exports on `module.exports` together with an `__esModule` marker. In those
+modules Node.js exposes the whole `module.exports` object as the ESM default export, so the setup
+function ends up one level deeper. Runtime transparently unwraps that extra level, which means all of
+these work as well:
+
+```js
+// CommonJS, transpiled default export: module.exports.default is the setup function
+exports.__esModule = true
+exports.default = async function setup (context) {}
+```
+
+```js
+// CommonJS, named setup export: module.exports.setup is the setup function
+exports.setup = async function setup (context) {}
+```
+
+The resolution order is: the default export, the named `setup` export, then the same two properties
+of the default export. The first one that is a function wins, so a module exporting both a default
+function and a named `setup` function uses the default export. If none of them is a function, the
+runtime fails to start with `PLT_RUNTIME_INVALID_EXTENSION`.
+
 The setup function receives a context object with the following properties:
 
 - **`runtime`** - The [Runtime](./programmatic.md) instance. It is an `EventEmitter`, so extensions can
-  subscribe to all [runtime events](./programmatic.md#events) and invoke any public method.
+  subscribe to all [runtime events](./programmatic.md#events) and invoke any public method, including
+  application and worker introspection (`getApplications()`, `getWorkers()`), application configuration and
+  environment (`getApplicationConfig(id)`, `getApplicationEnv(id)`), and metrics (`getMetrics()`).
 - **`itc`** - A facade over the runtime ITC:
   - **`handle(name, handler)`** - Registers a custom command invocable from any application via
     the [ITC API](./globals.md#communicating-with-runtime-extensions) returned by `getITC()` from
@@ -100,15 +170,92 @@ The setup function receives a context object with the following properties:
   - **`notify(target, name, payload)`** - Sends a fire-and-forget notification. When `target` is an
     application ID, all its running workers are notified; use `application:worker-index` to target a
     specific worker. Workers receive notifications via `getITC().on(name, handler)`.
+- **`sharedContext`** - The shared context API used by application workers. `get()` synchronously returns a
+  snapshot of the current context in main-thread extensions. `update(update, options?)` merges `update` into
+  the context and broadcasts the result to every running worker; pass `{ overwrite: true }` to replace the
+  context instead. Newly started workers receive the latest context. Use `update()` rather than mutating the
+  object returned by `get()`.
 - **`logger`** - A child of the runtime logger.
 - **`options`** - The `options` object specified in the configuration, if any.
 - **`root`** - The runtime project root directory.
+- **`metrics`** - A per-extension Prometheus client and registry:
+  - **`client`** - The `@platformatic/prom-client` module (same client used by application workers).
+  - **`registry`** - A dedicated `Registry` for this extension. Metrics registered here appear once in
+    `Runtime.getMetrics()`, the management metrics API, and the existing `/metrics` endpoint. They are
+    **not** duplicated per application worker.
 
-The setup function can optionally return an object with a `close` method, which is invoked when the
-runtime is being closed. When multiple extensions are configured, they are loaded in order and closed
-in reverse order.
+  **Label behavior:** extension metrics are main-thread metrics. Runtime never invents a `workerId` or
+  application ID label for them. Only static labels from the runtime `metrics.labels` configuration are
+  applied (the configured application label name is omitted, same as process-level metrics). Extensions
+  that need application- or worker-specific labels must set them explicitly when creating metrics.
 
-Extensions are not loaded when building the applications (for example via `wattpm build`).
+  Metric family names must be unique across extensions and must not collide with runtime process metrics,
+  restart metrics, or application worker metrics. Collisions fail with
+  `PLT_RUNTIME_METRIC_FAMILY_COLLISION`, identifying the extension and metric family. The registry is
+  cleared when the extension closes (including partial startup failures).
+- **`health`** - API for contributing readiness/liveness checks and diagnostic routes on Watt's health
+  probes server (the metrics server when probes are shared with it, or the dedicated health probes
+  server when configured separately):
+  - **`registerReadinessCheck(name, check)`** - Registers a named check that participates in `/ready`.
+    Check names must be unique across extensions. The check may return a boolean or
+    `{ status, statusCode?, body? }`. Rejected, timed-out, or malformed checks fail closed. Timeouts
+    use the configured health checks timeout. **Readiness-only failures do not fail `/status`**
+    (liveness), so a temporary control-plane condition can stop traffic without triggering a pod
+    restart loop. Returns an unregister function.
+  - **`registerLivenessCheck(name, check)`** - Same contract as readiness, but the check participates
+    in `/status`. Returns an unregister function.
+  - **`registerRoutes(plugin)`** - Registers a Fastify plugin on the health probes server before it
+    starts listening. Works for shared and separate probe servers. Route collisions fail startup with
+    a coded error identifying the extension and route. Returns an unregister function that disables
+    the routes. Closing the extension removes its checks and routes.
+
+The setup function can optionally return an object with awaited lifecycle hooks:
+
+- **`preBuild(context)`** - Called before an application capability is built. `context` contains
+  `applicationId` and the absolute `applicationPath`.
+- **`onBuild(context, build)`** - Wraps the application capability build. Call and await `build()` to
+  continue the build. The hook may perform work immediately before and after it, or omit the call to
+  replace the capability build. Its return value becomes the build result.
+- **`postBuild(context, result)`** - Called after a successful application build with the final result
+  returned by the `onBuild` hook chain.
+- **`start()`** - Called once applications have been prepared and registered, and **before** the
+  originally configured applications start accepting traffic. Runtime awaits every extension `start`
+  hook. An extension may add and start dynamic applications here; those applications are excluded from
+  the normal startup pass so they are not started twice. Runtime does not report `started` until
+  extension and application startup complete. If a later extension or application fails, Runtime stops
+  and closes already-started extensions during cleanup.
+- **`stop()`** - Called during shutdown **after** the entrypoint has been stopped and **before** the
+  remaining applications stop. Runtime awaits every extension `stop` hook so control-plane extensions
+  can settle work and hand off state.
+- **`close()`** - Called when the runtime is being closed, after applications have stopped. The
+  extension metrics registry is cleared after `close`.
+
+When multiple extensions are configured, they are set up and started in registration order.
+`preBuild` runs in registration order. `onBuild` hooks are nested middleware with the first registered
+extension outermost. `postBuild`, `stop`, and `close` run in reverse registration order. Each of `stop`
+and `close` is invoked at most once per Runtime life, including repeated `stop`/`close` calls and
+failed-start cleanup paths. Existing extensions that only return `close()` keep their previous
+behavior. Health checks and routes registered by an extension are cleaned up with it.
+
+Listening to Runtime `EventEmitter` events is not a substitute for these hooks: `emit()` does not await
+asynchronous listeners. Lifecycle ordering is enforced by Runtime itself so it covers signal handling,
+internal failure cleanup, and future lifecycle entry points.
+
+Extensions are not loaded when building applications unless their object configuration explicitly
+sets `"build": true`. Build-enabled extensions are set up before application workers are created,
+receive the build hooks above for every application, and are closed when the build Runtime closes.
+Their `start` and `stop` hooks are not called during a build.
+
+```json
+{
+  "extensions": [
+    {
+      "path": "./build-extension.js",
+      "build": true
+    }
+  ]
+}
+```
 
 For a complete worked example — enabling continuous profiling on every worker when it starts (or is
 restarted) and shipping the captured profiles — see the
@@ -235,6 +382,12 @@ Controls what happens when a `{PLT_*}` environment variable placeholder referenc
 - `true`: loading the configuration fails at startup with an error listing all the missing variables.
 - `"warn"`: a warning listing the missing variables is logged, but the placeholders are still replaced with an empty string.
 
+Not every unset variable is reported as missing. When loading the configuration of an application, the
+runtime resolves any variable whose name ends in `_URL` to the internal URL of that application, so such
+a variable gets a value even when it is not set. When `strictEnv` is enabled, these variables are listed
+in a separate warning. They are never turned into an error, not even when `strictEnv` is `true`, because
+they do resolve to a value and failing on them would change which configurations are able to boot.
+
 The value is also applied when loading the configuration files of the applications in the runtime.
 
 ```json
@@ -286,10 +439,8 @@ Configures the amount of milliseconds to wait before forcefully killing an appli
 
 The object supports the following settings:
 
-- **`application`** (`number`) - The graceful shutdown timeout for an application.
-- **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime.
-
-For both the settings the default is `10000` (ten seconds).
+- **`application`** (`number`) - The graceful shutdown timeout for an application. Default: `10000` (ten seconds).
+- **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime. Default: `30000` (thirty seconds).
 
 ### `watch`
 

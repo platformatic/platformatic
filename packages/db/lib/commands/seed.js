@@ -70,5 +70,5 @@ module.exports = async function ({ entities, db, sql }) {
 \`\`\`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 `

@@ -1,13 +1,14 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic DB authorization",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "types": "index.d.ts",
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
@@ -24,18 +25,18 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "fast-jwt": "^6.0.0",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "get-jwks": "^11.0.0",
     "neostandard": "^0.12.0",
     "tstyche": "^6.0.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "why-is-node-running": "^2.2.2",
     "ws": "^8.16.0"
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@fastify/jwt": "^10.0.0",
-    "fastify-plugin": "^5.0.0",
+    "fastify-plugin": "^6.0.0",
     "fastify-user": "^1.0.2",
     "leven": "~3.1.0",
     "undici": "^7.27.2"

@@ -42,6 +42,18 @@ When running in production mode, a custom Fastify server serves the built applic
 
 In both modes, an application that uses the `commands` property is responsible for starting its HTTP server.
 
+## Skew protection
+
+When `PLT_DEPLOYMENT_ID` is set during a build, Platformatic automatically adds `?dpl=` to client asset URLs and dynamic imports. The same Vite plugin is available for custom build commands and other Vite-based integrations:
+
+```js
+import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
+
+export default {
+  plugins: [platformaticSkewPlugin()]
+}
+```
+
 ## HTTPS
 
 Configure HTTPS in this Vite capability's `server.https` object. The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.

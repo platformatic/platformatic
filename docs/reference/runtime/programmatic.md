@@ -4,7 +4,9 @@ import Issues from '../../getting-started/issues.md';
 
 The `@platformatic/runtime` package can be used to start, control, and inspect a Platformatic application from Node.js code, without going through the CLI. This is useful for tests, custom tooling, and embedding Platformatic in another application.
 
-The API works with all Platformatic application types — `service`, `db`, `gateway`, `composer`, and `runtime` itself. Configurations that are not already a `runtime` configuration are automatically wrapped in one.
+The API works with all Platformatic application types — `service`, `db`, `gateway`, and `runtime` itself. Configurations that are not already a `runtime` configuration are automatically wrapped in one.
+
+The legacy `composer` type is still accepted as a deprecated alias for `gateway`, and will be removed in v4. See [Gateway](../gateway/overview.md) for details.
 
 ## Getting started
 
@@ -48,7 +50,7 @@ https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json
 https://schemas.platformatic.dev/@platformatic/service/4.0.0.json
 https://schemas.platformatic.dev/@platformatic/db/4.0.0.json
 https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json
-https://schemas.platformatic.dev/@platformatic/composer/4.0.0.json
+https://schemas.platformatic.dev/@platformatic/composer/4.0.0.json  # deprecated alias for gateway
 ```
 
 By default `create()` installs signal handlers (`SIGTERM`/`SIGINT` via `close-with-grace`, and `SIGUSR2` to trigger `runtime.restart()`). Pass `context: { setupSignals: false }` to opt out — recommended when embedding the runtime in tests or another process that owns its own signal handling.
@@ -73,7 +75,7 @@ You must call `prepareApplication()` before adding an application at runtime —
 
 ### `wrapInRuntimeConfig(config, context?)`
 
-Wraps a single-application configuration (service, db, gateway, composer) into a synthetic one-application runtime configuration. Called automatically by `create()` and `loadConfiguration()`; exported for advanced use cases.
+Wraps a single-application configuration (service, db, gateway, or the deprecated composer alias) into a synthetic one-application runtime configuration. Called automatically by `create()` and `loadConfiguration()`; exported for advanced use cases.
 
 ### `loadApplicationsCommands(executableName?)`
 
@@ -176,7 +178,15 @@ test('handles ping messages', async t => {
 - **`runtime.getRuntimeEnv(): Record<string, string>`** — Environment variables visible to the runtime process.
 - **`runtime.getUrls(applicationId?): Record<string, string>`** — Observed listener URLs for running workers, keyed by `applicationId:workerId`. Pass an application ID to select only that application's workers.
 - **`runtime.getApplicationsIds(): string[]`** — IDs of all configured applications.
-- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `workers`, `url`, and `urls`. `url` is the first observed URL, or `null` when the application has no listening server; `urls` contains every observed worker listener URL.
+- **`runtime.getApplications(allowUnloaded = false): Promise<{ production, applications }>`** — Runtime topology and per-application details. With `allowUnloaded: true`, applications without a worker are returned as `{ id, status: 'stopped' }`.
+- **`runtime.getWorkers(includeRaw = false): Promise<Record<string, WorkerDetails>>`** — Status, worker index and thread ID for each worker. `includeRaw` is for internal diagnostics and exposes the underlying worker in the direct Runtime API only.
+- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `workers`, `url`, and `urls`. `url` is the first observed URL, or `null` when the application has no listening server; `urls` contains every observed worker listener URL. With `allowUnloaded: true`, returns `{ id, status: 'stopped' }` when no worker is loaded.
+- **`runtime.getApplicationConfig(id, ensureStarted = true): Promise<object>`** — The resolved application configuration.
+- **`runtime.getApplicationEnv(id, ensureStarted = true): Promise<Record<string, string>>`** — The effective worker environment, including capability-provided variables. It requires a loaded worker: it throws `PLT_RUNTIME_APPLICATION_NOT_STARTED` if the worker exists but is stopped, `PLT_RUNTIME_WORKER_NOT_FOUND` after an application has been unloaded/stopped, and `PLT_RUNTIME_APPLICATION_NOT_FOUND` for an unknown ID.
+- **`runtime.getApplicationOpenapiSchema(id): Promise<unknown>`** and **`runtime.getApplicationGraphqlSchema(id): Promise<unknown>`** — The application's generated API schemas.
+- **`runtime.getMetrics(format = 'json'): Promise<{ metrics }>`** — Runtime metrics in JSON or the requested text format.
+- **`runtime.getSharedContext(): object`** — The current main-thread shared context. Do not mutate it directly; use `updateSharedContext()` so workers are notified.
+- **`runtime.updateSharedContext({ context, overwrite = false }): Promise<object>`** — Merges `context` into the shared context and broadcasts the new state to all running workers. Set `overwrite` to replace it instead. Broadcast failures are logged without rejecting the update.
 
 ### Per-application control
 
@@ -188,11 +198,11 @@ These act on a single application by `id`.
 
 ### Profiling
 
-These methods require [`@platformatic/wattpm-pprof-capture`](../../guides/profiling-with-watt.md) to be installed. The `id` can be an application ID (a worker is chosen in round-robin) or `application:worker-index` for a specific worker.
+These methods require [`@platformatic/wattpm-pprof-capture`](../../guides/profiling-with-watt.md) to be installed. The `id` can be an application ID or `application:worker-index` for a specific worker. When only the application ID is given, the first worker is used, so that start and stop address the same worker; pass `options.allWorkers: true` to profile every worker of the application instead.
 
 - **`runtime.startApplicationProfiling(id, options?): Promise<void>`** — Starts profiling a worker. `options.type` is `cpu` (default) or `heap`. Passing `options.durationMillis` enables continuous profiling: the profile window is rotated at that interval and each completed window emits the [`application:worker:profile:captured`](#applicationworkerprofilecaptured) event. Passing `options.eluThreshold` gates the profiler on event loop utilization: the runtime measures each worker's ELU from the main thread as part of its health metrics cycle and resumes or pauses the in-worker profiler with hysteresis. Continuous profiling is also paused while the worker ELU is above the worker's `health.maxELU`, so that profiling does not add overhead to an already overloaded worker: the in-progress window completes its full `durationMillis`, is captured and announced like any other rotation, and then profiling pauses until the worker recovers (if the ELU drops back before the window ends, the pending pause is simply cancelled). The final profile does not expire while paused, so it can be retrieved at any point during the overload. Pass `options.maxELU` to override this cutoff, or set it to `false` to disable it.
-- **`runtime.stopApplicationProfiling(id, options?): Promise<Buffer>`** — Stops profiling and returns the last captured profile in pprof format.
-- **`runtime.getApplicationLastProfile(id, options?): Promise<{ profile, timestamp, preserved }>`** — Returns the last profile window captured by the continuous profiler without stopping it, along with the timestamp of when the window was captured (paired atomically, so the timestamp always matches the returned profile). The pull is bounded by `options.timeout` (10s by default). When the worker cannot currently provide a profile — its event loop is blocked, it crashed, profiling was not (re)started after a replacement, no window has completed yet, or the profiler is paused below the ELU threshold — the method falls back to the most recent overload profile preserved in the main thread, if one exists: the result then has `preserved: true`, and the `timestamp` tells how old the evidence is. Preserved profiles are dropped as soon as the worker completes a newer window, and survive the worker itself only for a grace period of twice the `gracefulShutdown.runtime` timeout (20s by default), giving alert-driven collectors time to fetch the evidence of a replaced worker without stale profiles being served indefinitely.
+- **`runtime.stopApplicationProfiling(id, options?): Promise<Buffer>`** — Stops profiling and returns the last captured profile in pprof format. With `options.allWorkers: true` it returns an array of `{ workerIndex, profile }` objects, one per worker that was being profiled (`startApplicationProfiling` similarly returns `{ workers }` with the profiled worker indexes).
+- **`runtime.getApplicationLastProfile(id, options?): Promise<{ profile, timestamp, preserved }>`** — Returns the last profile window captured by the continuous profiler without stopping it, along with the timestamp of when the window was captured (paired atomically, so the timestamp always matches the returned profile). For an application-level `id`, every worker of the application is queried and the newest window among them is returned, consistent with the preserved overload profile fallback described below. The pull is bounded by `options.timeout` (10s by default), which covers all the workers together. When the worker cannot currently provide a profile — its event loop is blocked, it crashed, profiling was not (re)started after a replacement, no window has completed yet, or the profiler is paused below the ELU threshold — the method falls back to the most recent overload profile preserved in the main thread, if one exists: the result then has `preserved: true`, and the `timestamp` tells how old the evidence is. Preserved profiles are dropped as soon as the worker completes a newer window, and survive the worker itself only for a grace period of twice the `gracefulShutdown.runtime` timeout (20s by default), giving alert-driven collectors time to fetch the evidence of a replaced worker without stale profiles being served indefinitely.
 
 ### Events
 

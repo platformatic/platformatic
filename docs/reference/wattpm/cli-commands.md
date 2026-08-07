@@ -384,7 +384,7 @@ When manually editing your configuration file to add applications with git URLs,
 
 ```json
 {
-  "web": [
+  "applications": [
     {
       "id": "my-app",
       "url": "https://github.com/user/repo.git#develop"
@@ -405,7 +405,7 @@ You can specify npm packages, including version, by using the `npm:` protocol in
 
 ```json
 {
-  "web": [
+  "applications": [
     {
       "id": "my-app",
       "url": "npm:myapp"
@@ -418,7 +418,7 @@ The example above will install the latest version. But you can provide a version
 
 ```json
 {
-  "web": [
+  "applications": [
     {
       "id": "my-app",
       "url": "npm:myapp@0.2.0"
@@ -426,6 +426,49 @@ The example above will install the latest version. But you can provide a version
   ]
 }
 ```
+
+## Scheduler Commands
+
+Scheduler commands inspect and control jobs in a running Watt runtime. The optional `runtime` argument is the runtime
+process ID or name. It can be omitted when only one runtime is available.
+
+### `wattpm scheduler`
+
+Lists the scheduler jobs registered by the runtime and its applications.
+
+```bash
+wattpm scheduler [runtime]
+```
+
+The output includes the job name, cron expression, source, paused state, and next scheduled run.
+
+### `wattpm scheduler:pause`
+
+Pauses a scheduler job. This stops future local triggers but does not cancel an execution already in progress.
+
+```bash
+wattpm scheduler:pause [runtime] <name>
+```
+
+### `wattpm scheduler:resume`
+
+Resumes a paused scheduler job so that its local cron trigger can run again.
+
+```bash
+wattpm scheduler:resume [runtime] <name>
+```
+
+### `wattpm scheduler:run`
+
+Runs a scheduler job immediately. The job can be run while paused, which allows an external coordinator to trigger a
+job without returning local ownership to the runtime.
+
+```bash
+wattpm scheduler:run [runtime] <name>
+```
+
+The `name` argument is the unique scheduler job name from the runtime `scheduler` configuration or an application
+scheduled-task group.
 
 ## Debugging and Inspection Commands
 
@@ -607,6 +650,10 @@ wattpm pprof start [id] [application]
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Application name (optional, profiles all applications if omitted)
 
+**Options:**
+
+- `--all-workers, -a` - Profile every worker of each application. By default only one worker per application is profiled to keep the overhead low.
+
 **Example:**
 
 ```bash
@@ -615,6 +662,7 @@ wattpm pprof start api-application          # Start profiling specific applicati
 wattpm pprof start my-app               # Start profiling all applications in specific app
 wattpm pprof start my-app api-application   # Start profiling specific application in specific app
 wattpm pprof start 12345 api-application    # Start profiling specific application using PID
+wattpm pprof start --all-workers api-application # Start profiling all workers of an application
 ```
 
 ### `wattpm pprof stop`
@@ -630,6 +678,11 @@ wattpm pprof stop [id] [application]
 - `id` - Process ID or application name (optional if only one app is running)
 - `application` - Application name (optional, stops profiling all applications if omitted)
 
+**Options:**
+
+- `--all-workers, -a` - Stop profiling on every worker of each application and save one profile file per worker, named `pprof-{type}-{application}-{workerIndex}-{timestamp}.pb`.
+- `--dir, -d` - Directory to save the profile data to (default: current working directory).
+
 **Example:**
 
 ```bash
@@ -638,6 +691,7 @@ wattpm pprof stop api-application          # Stop profiling specific application
 wattpm pprof stop my-app               # Stop profiling all applications in specific app
 wattpm pprof stop my-app api-application   # Stop profiling specific application in specific app
 wattpm pprof stop 12345 api-application    # Stop profiling specific application using PID
+wattpm pprof stop --all-workers api-application  # Save one profile per worker
 ```
 
 ### `wattpm heap-snapshot`

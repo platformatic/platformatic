@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/runtime/3.62.2.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/runtime/3.66.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Runtime Config",
   "type": "object",
@@ -42,6 +42,10 @@
             "options": {
               "type": "object",
               "additionalProperties": true
+            },
+            "build": {
+              "type": "boolean",
+              "default": false
             }
           }
         },
@@ -67,6 +71,10 @@
                   "options": {
                     "type": "object",
                     "additionalProperties": true
+                  },
+                  "build": {
+                    "type": "boolean",
+                    "default": false
                   }
                 }
               }
@@ -2092,7 +2100,7 @@
               "type": "string"
             }
           ],
-          "default": 10000
+          "default": 30000
         },
         "application": {
           "anyOf": [

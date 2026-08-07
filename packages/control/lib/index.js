@@ -20,6 +20,7 @@ import {
   FailedToGetRuntimeMetadata,
   FailedToGetRuntimeMetrics,
   FailedToGetRuntimeOpenapi,
+  FailedToGetRuntimeScheduler,
   FailedToReloadRuntime,
   FailedToRemoveApplications,
   FailedToStartProfiling,
@@ -27,6 +28,7 @@ import {
   FailedToStopRuntime,
   FailedToStreamRuntimeLogs,
   FailedToTakeHeapSnapshot,
+  FailedToUpdateRuntimeScheduler,
   ProfilingAlreadyStarted,
   ProfilingNotStarted,
   RuntimeNotFound
@@ -193,6 +195,50 @@ export class RuntimeApiClient {
     return runtimeApplications
   }
 
+  async getRuntimeSchedulerJobs (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/scheduler',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToGetRuntimeScheduler(error)
+    }
+
+    return body.json()
+  }
+
+  async pauseRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'pause')
+  }
+
+  async resumeRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'resume')
+  }
+
+  async runRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'run')
+  }
+
+  async #updateRuntimeSchedulerJob (pid, name, action) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/scheduler/${encodeURIComponent(name)}/${action}`,
+      method: 'POST'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToUpdateRuntimeScheduler(error)
+    }
+
+    return body.json()
+  }
+
   async getRuntimeConfig (pid, metadata = false) {
     const client = this.#getUndiciClient(pid)
 
@@ -347,7 +393,7 @@ export class RuntimeApiClient {
   async stopApplicationProfiling (pid, applicationId, options = {}) {
     const client = this.#getUndiciClient(pid)
 
-    const { statusCode, body } = await client.request({
+    const { statusCode, headers, body } = await client.request({
       path: `/api/v1/applications/${applicationId}/pprof/stop`,
       method: 'POST',
       headers: {
@@ -377,6 +423,21 @@ export class RuntimeApiClient {
       }
 
       throw new FailedToStopProfiling(applicationId, message)
+    }
+
+    if (options.allWorkers) {
+      // One profile per worker, JSON encoded with base64 payloads
+      if (headers['content-type']?.includes('application/json')) {
+        const { profiles } = await body.json()
+        return profiles.map(({ workerIndex, profile }) => ({
+          workerIndex,
+          profile: Buffer.from(profile, 'base64')
+        }))
+      }
+
+      // Older runtimes ignore the allWorkers option and return a single
+      // binary profile from one of the workers.
+      return [{ workerIndex: null, profile: Buffer.from(await body.arrayBuffer()) }]
     }
 
     // Return the binary profile data as ArrayBuffer

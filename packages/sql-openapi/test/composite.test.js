@@ -92,7 +92,7 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         theTitle: 'foobar'
       },
       'POST /pages response'
@@ -111,7 +111,7 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         username: 'mcollina'
       },
       'POST /users response'
@@ -130,7 +130,7 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        id: 2,
+        id: '2',
         username: 'lucamaraschi'
       },
       'POST /users response'
@@ -149,8 +149,8 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        userId: 1,
-        pageId: 1,
+        userId: '1',
+        pageId: '1',
         role: 'admin'
       },
       'POST /editors/page/1/user/1 response'
@@ -169,8 +169,8 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        userId: 2,
-        pageId: 1,
+        userId: '2',
+        pageId: '1',
         role: 'author'
       },
       'POST /editors/page/1/user/2 response'
@@ -187,8 +187,8 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        userId: 2,
-        pageId: 1,
+        userId: '2',
+        pageId: '1',
         role: 'author'
       },
       'GET /editors/page/1/user/2 response'
@@ -215,8 +215,8 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        userId: 1,
-        pageId: 1,
+        userId: '1',
+        pageId: '1',
         role: 'captain'
       },
       'POST /editors/page/1/user/1 response'
@@ -233,13 +233,13 @@ test('composite primary keys', async t => {
       res.json(),
       [
         {
-          userId: 1,
-          pageId: 1,
+          userId: '1',
+          pageId: '1',
           role: 'captain'
         },
         {
-          userId: 2,
-          pageId: 1,
+          userId: '2',
+          pageId: '1',
           role: 'author'
         }
       ],
@@ -257,8 +257,8 @@ test('composite primary keys', async t => {
       res.json(),
       [
         {
-          userId: 2,
-          pageId: 1,
+          userId: '2',
+          pageId: '1',
           role: 'author'
         }
       ],
@@ -275,8 +275,8 @@ test('composite primary keys', async t => {
     same(
       res.json(),
       {
-        userId: 2,
-        pageId: 1,
+        userId: '2',
+        pageId: '1',
         role: 'author'
       },
       'DELETE /editors/page/1/user/2 response'
@@ -351,8 +351,8 @@ test('composite primary keys withour relations', async t => {
     same(
       res.json(),
       {
-        userId: 1,
-        pageId: 1,
+        userId: '1',
+        pageId: '1',
         role: 'admin'
       },
       'POST /editors/pageId/1/userId/1 response'
@@ -371,8 +371,8 @@ test('composite primary keys withour relations', async t => {
     same(
       res.json(),
       {
-        userId: 2,
-        pageId: 1,
+        userId: '2',
+        pageId: '1',
         role: 'author'
       },
       'POST /editors/pageId/1/userId/2 response'
@@ -389,8 +389,8 @@ test('composite primary keys withour relations', async t => {
     same(
       res.json(),
       {
-        userId: 2,
-        pageId: 1,
+        userId: '2',
+        pageId: '1',
         role: 'author'
       },
       'GET /editors/pageId/1/userId/2 response'
@@ -417,8 +417,8 @@ test('composite primary keys withour relations', async t => {
     same(
       res.json(),
       {
-        userId: 1,
-        pageId: 1,
+        userId: '1',
+        pageId: '1',
         role: 'captain'
       },
       'POST /editors/pageId/1/userId/1 response'
@@ -435,13 +435,13 @@ test('composite primary keys withour relations', async t => {
       res.json(),
       [
         {
-          userId: 1,
-          pageId: 1,
+          userId: '1',
+          pageId: '1',
           role: 'captain'
         },
         {
-          userId: 2,
-          pageId: 1,
+          userId: '2',
+          pageId: '1',
           role: 'author'
         }
       ],
@@ -459,8 +459,8 @@ test('composite primary keys withour relations', async t => {
       res.json(),
       [
         {
-          userId: 2,
-          pageId: 1,
+          userId: '2',
+          pageId: '1',
           role: 'author'
         }
       ],
@@ -477,8 +477,8 @@ test('composite primary keys withour relations', async t => {
     same(
       res.json(),
       {
-        userId: 2,
-        pageId: 1,
+        userId: '2',
+        pageId: '1',
         role: 'author'
       },
       'DELETE /editors/pageId/1/userId/2 response'

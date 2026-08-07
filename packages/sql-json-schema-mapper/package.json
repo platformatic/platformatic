@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-json-schema-mapper",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Map SQL entity to JSON schema",
   "main": "index.js",
   "type": "module",
@@ -11,7 +11,8 @@
     "test:mariadb": "DB=mariadb node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
     "test:mysql": "DB=mysql node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
     "test:mysql8": "DB=mysql8 node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
-    "test:sqlite": "DB=sqlite node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js"
+    "test:sqlite": "DB=sqlite node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000--timeout=1200000 test/*.test.js",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -28,9 +29,9 @@
     "cleaner-spec-reporter": "^0.5.0",
     "dtsgenerator": "^3.19.1",
     "eslint": "9",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {

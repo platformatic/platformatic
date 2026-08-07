@@ -89,6 +89,29 @@ const server = createServer((_req, res) => {
 server.listen(0)
 ```
 
+### Scheduled tasks
+
+Node applications can register scheduled tasks with [Watt's scheduler](../../guides/scheduler.md) by exporting
+`scheduledTasks` and `tasks` at the top level of their entrypoint. `scheduledTasks` maps cron expressions to one or
+more task names, and `tasks` maps those names to handlers:
+
+```js
+export const scheduledTasks = {
+  '0 */5 * * * *': ['cleanup']
+}
+
+export const tasks = {
+  async cleanup ({ scheduledTime, app }) {
+    // scheduledTime is the invocation timestamp in milliseconds.
+    // app is the application returned by create() or build(), or the Node HTTP server.
+  }
+}
+```
+
+Watt registers each cron expression as an application scheduler job and invokes its handlers through the Runtime.
+Handlers in a task group run concurrently. A failed handler marks the group as failed and lets the Runtime apply its
+configured retry policy.
+
 ## Architecture
 
 If your server entrypoint exports a `create` function, Platformatic Node executes it and waits for it to return a server object. Returning a server delegates its listener lifecycle to the Node capability. The capability calls `listen()` only when `server.port` is configured; without it, the server remains available for ITC injection without opening a TCP listener.
@@ -249,6 +272,10 @@ events.on('close', () => {
   // Perform your cleanup operations
 })
 ```
+
+### `closeServer`
+
+When using `NodeCapability` programmatically, call `closeServer()` to close the application's listening HTTP server without stopping the capability. It returns `undefined` when no server is listening, otherwise it returns a promise that resolves when the server is closed.
 
 ### `Symbol.asyncDispose`
 

@@ -10,6 +10,14 @@
 
 **Message:** %s version %s is not supported. Please use version %s.
 
+### PLT_BASIC_SCHEDULED_TASK_GROUP_NOT_FOUND
+
+**Message:** Scheduled task group "%s" not found
+
+### PLT_BASIC_SCHEDULED_TASK_NOT_FOUND
+
+**Message:** Scheduled task "%s" not found
+
 ## @platformatic/gateway
 
 ### PLT_GATEWAY_COULD_NOT_READ_OPENAPI_CONFIG
@@ -24,6 +32,10 @@
 
 **Message:** Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"!
 
+### PLT_GATEWAY_INVALID_OPENAPI_SCHEMA
+
+**Message:** Failed to compose OpenAPI schemas: %s
+
 ### PLT_GATEWAY_PATH_ALREADY_EXISTS
 
 **Message:** Path "%s" already exists
@@ -31,6 +43,10 @@
 ### PLT_GATEWAY_VALIDATION_ERRORS
 
 **Message:** Validation errors: %s
+
+### PLT_GATEWAY_WS_NO_TCP_UPSTREAM
+
+**Message:** Cannot proxy a WebSocket connection to the "%s" application because it does not expose a TCP server. Make the application listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".
 
 ## @platformatic/control
 

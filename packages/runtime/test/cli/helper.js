@@ -49,11 +49,15 @@ export async function start (...args) {
 
           const message = JSON.parse(line)
 
+          // Ignore internal sockets (e.g. management API); only HTTP(S) app URLs count.
           const mo = applicationId
             ? message.msg?.match(
-              new RegExp(`Platformatic is now listening at (.+) for worker \\d+ of the application "${applicationId}"`)
+              new RegExp(
+                `Platformatic is now listening at (https?://\\S+) for worker \\d+ of the application "${applicationId}"`
+              )
             )
-            : message.msg?.match(/server listening at (.+)/i)
+            : (message.msg?.match(/Platformatic is now listening at (https?:\/\/\S+) for /i) ??
+              message.msg?.match(/server listening at (https?:\/\/.+)/i))
 
           if (!serverStarted && mo) {
             clearTimeout(errorTimeout)

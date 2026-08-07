@@ -137,5 +137,7 @@ By default, Watt will run on random port. If you want to choose a specific port,
 
 ## Learn More
 
+- [Migrate from Express](../learn/migrations/from-express.md) - a staged migration, from zero-change wrapping to splitting into multiple applications
+- [Migrate from Fastify](../learn/migrations/from-fastify.md) - the same, with Fastify specifics
 - [Watt Quick Start](/docs/getting-started/quick-start/)
 - [Framework Integration Guides](/docs/guides/frameworks) - Setup guides for Next.js, Astro, Remix, Vite, and more

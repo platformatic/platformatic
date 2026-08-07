@@ -1,7 +1,7 @@
 {
   "name": "service",
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@platformatic/service": ">=3.0.0"

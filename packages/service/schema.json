@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.62.2.json",
-  "version": "3.62.2",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.66.0.json",
+  "version": "3.66.0",
   "title": "Platformatic Service Config",
   "type": "object",
   "properties": {
@@ -320,6 +320,17 @@
               "default": "default"
             }
           }
+        },
+        "ajv": {
+          "type": "object",
+          "description": "Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.",
+          "properties": {
+            "customOptions": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
         },
         "caseSensitive": {
           "type": "boolean"
@@ -1094,6 +1105,10 @@
                 "options": {
                   "type": "object",
                   "additionalProperties": true
+                },
+                "build": {
+                  "type": "boolean",
+                  "default": false
                 }
               }
             },
@@ -1119,6 +1134,10 @@
                       "options": {
                         "type": "object",
                         "additionalProperties": true
+                      },
+                      "build": {
+                        "type": "boolean",
+                        "default": false
                       }
                     }
                   }
@@ -1842,7 +1861,7 @@
                   "type": "string"
                 }
               ],
-              "default": 10000
+              "default": 30000
             },
             "application": {
               "anyOf": [

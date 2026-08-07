@@ -80,16 +80,34 @@ export async function listColumns (db, sql, table, schema) {
 
 export async function listConstraints (db, sql, table, schema) {
   const query = sql`
-    SELECT constraints.*, usage.*, usage2.table_name AS foreign_table_name, usage2.column_name AS foreign_column_name, usage2.table_schema AS foreign_table_schema
+    SELECT constraints.*, usage.*, foreign_table.relname AS foreign_table_name,
+      foreign_column.attname AS foreign_column_name, foreign_namespace.nspname AS foreign_table_schema
     FROM information_schema.table_constraints constraints
       JOIN information_schema.key_column_usage usage
-        ON constraints.constraint_name = usage.constraint_name
-        AND constraints.table_name = ${table}
-      JOIN information_schema.constraint_column_usage usage2
-        ON usage.constraint_name = usage2.constraint_name
-        AND ( usage.table_name = ${table}
-        AND usage.table_schema = ${schema} )
-    ORDER BY usage.constraint_name, usage.ordinal_position, usage2.table_name, usage2.column_name
+        ON constraints.constraint_catalog = usage.constraint_catalog
+        AND constraints.constraint_schema = usage.constraint_schema
+        AND constraints.constraint_name = usage.constraint_name
+        AND constraints.table_schema = usage.table_schema
+        AND constraints.table_name = usage.table_name
+      LEFT JOIN pg_catalog.pg_namespace local_namespace
+        ON local_namespace.nspname = constraints.table_schema
+      LEFT JOIN pg_catalog.pg_class local_table
+        ON local_table.relname = constraints.table_name
+        AND local_table.relnamespace = local_namespace.oid
+      LEFT JOIN pg_catalog.pg_constraint foreign_constraint
+        ON foreign_constraint.conrelid = local_table.oid
+        AND foreign_constraint.conname = constraints.constraint_name
+        AND foreign_constraint.contype = 'f'
+      LEFT JOIN pg_catalog.pg_class foreign_table
+        ON foreign_table.oid = foreign_constraint.confrelid
+      LEFT JOIN pg_catalog.pg_namespace foreign_namespace
+        ON foreign_namespace.oid = foreign_table.relnamespace
+      LEFT JOIN pg_catalog.pg_attribute foreign_column
+        ON foreign_column.attrelid = foreign_constraint.confrelid
+        AND foreign_column.attnum = foreign_constraint.confkey[usage.ordinal_position]
+    WHERE constraints.table_name = ${table}
+      AND constraints.table_schema = ${schema}
+    ORDER BY usage.constraint_name, usage.ordinal_position
   `
   const constraintsList = await db.query(query)
   return constraintsList

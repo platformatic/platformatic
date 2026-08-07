@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import type { EventEmitter } from 'node:events'
 import type { MessagePort } from 'node:worker_threads'
 import { expect, test } from 'tstyche'
@@ -39,6 +41,7 @@ test('ITC', () => {
 
   expect(itc.send('message', { key: 'value' })).type.toBe<Promise<any>>()
   expect(itc.send('message', { key: 'value' }, { timeout: 1000 })).type.toBe<Promise<any>>()
+  expect(itc.send('message', { key: 'value' }, { signal: new AbortController().signal })).type.toBe<Promise<any>>()
   expect(itc.send).type.not.toBeCallableWith(123, { key: 'value' })
 
   expect(itc.notify('message', { key: 'value' })).type.toBe<void>()

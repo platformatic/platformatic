@@ -33,7 +33,7 @@ The Watt boundary contains the public application and all downstream application
 outside Watt and reach the application through the public application.
 
 In this pattern, the top application is the public boundary. It can be a frontend, an
-API gateway, a composer, or another HTTP application. The downstream applications own
+API gateway, or another HTTP application. The downstream applications own
 separate domains or tasks.
 
 ### When to Use Pyramid Architecture
@@ -155,6 +155,8 @@ use metrics, tracing, and profiling to tune worker counts.
 
 ## Related Guides
 
+- [Watt Architecture](../concepts/watt-architecture.md) — the reasoning behind the runtime design
+- [The Modular Monolith](../concepts/modular-monolith.md) — when to keep applications together, and when to split them out
 - [Build and deploy a modular monolith](./build-modular-monolith.md)
 - [Use Watt with multiple repository applications](./use-watt-multiple-repository.md)
 - [Dynamic Workers](./dynamic-workers.md)

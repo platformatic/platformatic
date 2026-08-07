@@ -45,7 +45,12 @@ export async function startRuntime (configPath, env = {}, additionalArgs = []) {
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
       if (message.msg) {
-        const url = message.msg.match(/listening at (\S+) for worker/i)?.[1]
+        // Prefer the runtime ready message; fall back to HTTP(S) listen URLs only.
+        // Internal sockets (management API) also log "listening at" and must be ignored.
+        const url =
+          message.url ??
+          message.msg.match(/Platformatic is now listening at (\S+) for /i)?.[1] ??
+          message.msg.match(/listening at (https?:\/\/\S+)/i)?.[1]
 
         if (url !== undefined) {
           clearTimeout(errorTimeout)

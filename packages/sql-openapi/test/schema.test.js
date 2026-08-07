@@ -75,7 +75,7 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'POST /test1Pages response'
@@ -91,7 +91,7 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello'
       },
       'GET /test1Pages/1 response'
@@ -110,7 +110,7 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello World'
       },
       'POST /test1Pages/1 response'
@@ -130,9 +130,9 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         username: 'user1',
-        pageId: 1
+        pageId: '1'
       },
       'POST /test2Users response'
     )
@@ -151,9 +151,9 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 2,
+        id: '2',
         username: 'user2',
-        pageId: 1
+        pageId: '1'
       },
       'POST /test2Users response'
     )
@@ -170,14 +170,14 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           username: 'user1',
-          pageId: 1
+          pageId: '1'
         },
         {
-          id: 2,
+          id: '2',
           username: 'user2',
-          pageId: 1
+          pageId: '1'
         }
       ],
       'GET /test1Pages/1 response'
@@ -193,7 +193,7 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         title: 'Hello World'
       },
       'GET /test2Users/2/page response'
@@ -272,7 +272,7 @@ test('composite primary keys with schema', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         theTitle: 'foobar'
       },
       'POST /test1Pages response'
@@ -291,7 +291,7 @@ test('composite primary keys with schema', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 1,
+        id: '1',
         username: 'mcollina'
       },
       'POST /test2users response'
@@ -310,7 +310,7 @@ test('composite primary keys with schema', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        id: 2,
+        id: '2',
         username: 'lucamaraschi'
       },
       'POST /test2Users response'
@@ -329,8 +329,8 @@ test('composite primary keys with schema', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        userId: 1,
-        pageId: 1,
+        userId: '1',
+        pageId: '1',
         role: 'admin'
       },
       'POST /test1Editors/test1Page/1/test2User/1 response'
@@ -349,8 +349,8 @@ test('composite primary keys with schema', { skip: isSQLite }, async t => {
     same(
       res.json(),
       {
-        userId: 2,
-        pageId: 1,
+        userId: '2',
+        pageId: '1',
         role: 'author'
       },
       'POST /test1Editors/test1page/1/test2User/2 response'

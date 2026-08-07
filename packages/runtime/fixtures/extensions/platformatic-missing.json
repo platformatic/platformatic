@@ -3,7 +3,11 @@
   "entrypoint": "a",
   "extensions": "missing.js",
   "autoload": {
-    "path": "./services"
+    "path": "./services",
+    "exclude": [
+      "b",
+      "crash-on-start"
+    ]
   },
   "logger": {
     "level": "error"

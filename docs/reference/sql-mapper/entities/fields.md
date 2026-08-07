@@ -15,6 +15,8 @@ These objects contain the following properties:
 - `sqlType`: The original field type. It may vary depending on the underlying DB Engine
 - `isNullable`: Whether the field can be `null` or not
 - `primaryKey`: Whether the field is the primary key or not
+- `foreignKey`: Whether the field is a foreign key or not
+- `stringifyOutput`: Whether the field is converted to a string in mapper output because it references a primary key
 - `camelcase`: The _camel cased_ value of the field
 
 ## Example

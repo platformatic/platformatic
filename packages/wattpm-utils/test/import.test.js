@@ -19,7 +19,11 @@ const autodetect = {
   node: null,
   next: 'next',
   nest: '@nestjs/core',
+  nitro: 'nitro',
+  nuxt: 'nuxt',
+  'react-router': '@react-router/dev',
   remix: '@remix-run/dev',
+  tanstack: '@tanstack/react-start',
   vite: 'vite'
 }
 

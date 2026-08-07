@@ -307,24 +307,53 @@ export class ITC extends EventEmitter {
     }
 
     let reqId
+    let abortHandler
+    const signal = options?.signal
+
     try {
       this._enableKeepAlive()
+      signal?.throwIfAborted()
 
       const request = generateRequest(name, message, options?.meta)
-      this._send(request, options)
-
       const promiseWithResolvers = Promise.withResolvers()
       reqId = request.reqId
       this.#waitingRequests.set(request.reqId, promiseWithResolvers)
 
-      const { error, data } = await Unpromise.race([promiseWithResolvers.promise, this.#closePromise])
+      const responses = [promiseWithResolvers.promise, this.#closePromise]
+      if (signal) {
+        const aborted = Promise.withResolvers()
+        abortHandler = () => {
+          const error = signal.reason ?? new DOMException('This operation was aborted', 'AbortError')
+          aborted.resolve({ error, data: null })
+        }
+
+        if (signal.aborted) {
+          abortHandler()
+        } else {
+          signal.addEventListener('abort', abortHandler, { once: true })
+        }
+
+        responses.push(aborted.promise)
+      }
+
+      this._send(request, options)
+
+      const { error, data } = await Unpromise.race(responses)
 
       if (error !== null) throw error
       return data
     } finally {
+      if (abortHandler) {
+        signal.removeEventListener('abort', abortHandler)
+      }
+
       // Clean up the waiting requests map even if an error occurred
       this.#waitingRequests.delete(reqId)
       this._manageKeepAlive()
+
+      if (reqId) {
+        this._onRequestSettled?.(reqId, options)
+      }
     }
   }
 

@@ -25,7 +25,8 @@ export function locateSchemaLock (config) {
 }
 
 export function isSchemaLockReadOnly (config) {
-  return config.db.schemalock?.readOnly === true
+  const { readOnly } = config.db.schemalock ?? {}
+  return readOnly === true || readOnly === 'true'
 }
 
 // The information_schema queries used for introspection include *_catalog
@@ -53,7 +54,12 @@ export function validateSchemaLockFormat (schemaLock) {
   if (!isBoolean && !isObject) {
     throw new InvalidSchemaLockError()
   }
-  if (isObject && typeof schemaLock.path !== 'string' && typeof schemaLock.readOnly !== 'boolean') {
+  if (
+    isObject &&
+    typeof schemaLock.path !== 'string' &&
+    typeof schemaLock.readOnly !== 'boolean' &&
+    typeof schemaLock.readOnly !== 'string'
+  ) {
     throw new InvalidSchemaLockError()
   }
   if (isObject && schemaLock.path !== undefined && typeof schemaLock.path !== 'string') {

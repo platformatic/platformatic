@@ -17,6 +17,7 @@ export interface PlatformaticBasicConfig {
           options?: {
             [k: string]: unknown;
           };
+          build?: boolean;
         }
       | (
           | string
@@ -25,6 +26,7 @@ export interface PlatformaticBasicConfig {
               options?: {
                 [k: string]: unknown;
               };
+              build?: boolean;
             }
         )[];
     basePath?: string;

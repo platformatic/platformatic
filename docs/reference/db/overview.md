@@ -1,9 +1,9 @@
 ---
 title: Overview
-label: Database Service
+label: Database Application
 ---
 
-# Database Service
+# Database Application
 
 The Database Service is a core application type that runs within Watt (the Node.js Application Server). It automatically generates GraphQL and REST APIs from your database schema, eliminating the need to write boilerplate CRUD operations.
 
@@ -74,7 +74,7 @@ The easiest way to create a Database Service is within a Watt application:
 # Create a new Watt application
 wattpm create my-app
 
-# This will prompt you to add a Database Service
+# This will prompt you to add a Database Application
 cd my-app
 
 # Start in development mode

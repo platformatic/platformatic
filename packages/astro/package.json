@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/astro",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Astro Capability",
   "main": "index.js",
   "type": "module",
@@ -11,7 +11,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -25,15 +26,15 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@fastify/middie": "^9.0.0",
-    "@fastify/static": "^9.0.0",
+    "@fastify/static": "^10.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@astrojs/node": "^10.0.0",
+    "@astrojs/node": "^11.0.0",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/react": "^19.1.11",
@@ -43,7 +44,7 @@
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "tstyche": "^6.2.0",
     "vite": "^7.0.0",
     "ws": "^8.18.0"

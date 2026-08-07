@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Platformatic Service",
   "main": "index.js",
   "types": "index.d.ts",
@@ -11,7 +11,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
@@ -35,7 +36,7 @@
     "pino-abstract-transport": "^2.0.0",
     "self-cert": "^2.0.0",
     "split2": "^4.2.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "undici": "7.28.0",
     "vscode-json-languageservice": "^5.3.9",
     "why-is-node-running": "^2.2.2",
@@ -47,7 +48,7 @@
     "@fastify/cors": "^11.0.0",
     "@fastify/deepmerge": "^3.0.0",
     "@fastify/error": "^4.0.0",
-    "@fastify/static": "^9.0.0",
+    "@fastify/static": "^10.0.0",
     "@fastify/swagger": "^9.0.0",
     "@fastify/under-pressure": "^9.0.0",
     "@platformatic/basic": "workspace:*",
@@ -69,8 +70,8 @@
     "env-schema": "^7.0.0",
     "execa": "^9.0.0",
     "fast-json-patch": "^3.1.1",
-    "fastify": "^5.7.0",
-    "fastify-plugin": "^5.0.0",
+    "fastify": "^5.0.0",
+    "fastify-plugin": "^6.0.0",
     "graphql": "^16.9.0",
     "help-me": "^5.0.0",
     "mercurius": "^16.0.0",

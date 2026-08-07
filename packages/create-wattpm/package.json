@@ -1,6 +1,6 @@
 {
   "name": "create-wattpm",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "Create platformatic application interactive tool",
   "repository": {
     "type": "git",
@@ -15,7 +15,8 @@
     "test": "npm run test:unit && npm run test:cli",
     "test:cli": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/cli/*.test.js",
     "test:unit": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/unit/*.test.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "license": "Apache-2.0",
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
@@ -44,10 +45,10 @@
     "cross-env": "^7.0.3",
     "eslint": "9",
     "esmock": "^2.6.4",
-    "fastify": "^5.7.0",
+    "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
     "semver": "^7.6.0",
-    "typescript": "~5.9.3",
+    "typescript": "~6.0.3",
     "yaml": "^2.4.1"
   },
   "engines": {

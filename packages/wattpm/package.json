@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "3.62.2",
+  "version": "3.66.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -20,7 +20,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "bin": {
     "watt": "./bin/cli.js",
@@ -48,11 +49,11 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "execa": "^9.4.0",
-    "fastify": "5.8.5",
+    "fastify": "^5.0.0",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.12.0",
-    "typescript": "^5.9.3",
+    "typescript": "~6.0.3",
     "undici": "^7.27.2"
   },
   "engines": {

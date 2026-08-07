@@ -6,7 +6,7 @@ This guide will help you set up and run an application composed of the following
 - [Next.js](https://nextjs.org/) frontend, to render our frontend
 - Generic `node:http` [`createServer`](https://nodejs.org/docs/latest/api/http.html#httpcreateserveroptions-requestlistener),
   to showcase how to add an existing Node.js app
-- [Platformatic Gateway](/docs/reference/gateway/introduction), to coordinate/expose them all.
+- [Platformatic Gateway](/docs/reference/gateway/overview), to coordinate/expose them all.
 
 :::note
 In this guide, we will use `Next.js` as our frontend framework, but Watt supports many more frameworks including Astro, Remix, Vite, and NestJS. See our [Framework Integration Guides](/docs/guides/frameworks) for complete details and setup instructions for all supported frameworks.
@@ -33,15 +33,16 @@ npx wattpm create
 Which will output:
 
 ```
-Hello YOURNAME, welcome to Watt 3.0.0!
+Hello YOURNAME, welcome to Watt!
 ? Where would you like to create your project? .
 ? Which package manager do you want to use? npm
 ? Which kind of application do you want to create? @platformatic/node
-✔ Installing @platformatic/node@^3.0.0 using npm ...
+✔ Installing @platformatic/node using npm ...
 ? What is the name of the application? node
 ? Do you want to use TypeScript? no
 ? Do you want to create another application? no
 ? What port do you want to use? 3042
+? Do you want to init the git repository? no
 ```
 
 Dependencies are going to be installed. Your application is located in `web/node`.
@@ -122,10 +123,11 @@ npx wattpm create
 This will output:
 
 ```
-Hello YOURNAME, welcome to Watt 3.0.0!
+Hello YOURNAME, welcome to Watt!
 Using existing configuration ...
+? Which package manager do you want to use? npm
 ? Which kind of application do you want to create? @platformatic/gateway
-✔ Installing @platformatic/gateway@^3.0.0 using npm ...
+✔ Installing @platformatic/gateway using npm ...
 ? What is the name of the application? gateway
 ? Do you want to use TypeScript? no
 ? Do you want to create another application? no
@@ -197,6 +199,67 @@ Which will output:
 ✔ Would you like to use App Router? (recommended) … Yes
 ✔ Would you like to customize the import alias (`@/*` by default)? … No
 ```
+
+:::caution[Two adjustments are needed for npm workspaces]
+
+A Watt project declares `"workspaces": ["web/*"]`, and that hoists dependencies to the project root.
+Two things need adjusting before the Next.js application will start.
+
+**1. Rename the workspace package.** `create-next-app web/next` names the generated package after its
+directory, so `web/next/package.json` gets `"name": "next"`. npm then links `node_modules/next` to
+`web/next`, and that symlink **shadows the Next.js framework itself** — resolving `next` from the
+project root returns your application instead of Next.js. The dev server fails with a cascade of
+`Module not found: Can't resolve 'react'` and `Can't resolve '@swc/helpers/...'` errors.
+
+Open `web/next/package.json` and change the `name` field to something that is not a package you depend
+on:
+
+```json
+{
+  "name": "frontend"
+}
+```
+
+The directory can stay `web/next` — Watt derives the application id from the directory, so the `/next`
+prefix used below is unaffected. Only the package `name` needs to change.
+
+**2. Set `turbopack.root`.** Next.js 16 builds with Turbopack by default. Turbopack infers a workspace
+root, and because npm hoisted `next` to the Watt project root it cannot resolve `next/package.json`
+from the application directory. It fails with:
+
+```
+Next.js inferred your workspace root, but it may not be correct.
+We couldn't find the Next.js package (next/package.json) from the project directory
+```
+
+Inside Watt this surfaces as the worker exiting during startup:
+
+```
+Failed to start worker 0 of the application "next": The worker 0 of the
+application "next" exited prematurely with error code 1
+```
+
+Point Turbopack at the Watt project root in `web/next/next.config.mjs`:
+
+```js
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  turbopack: {
+    // The Watt project root, where npm workspaces hoists the `next` package.
+    root: resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+  }
+}
+
+export default nextConfig
+```
+
+Both issues are npm workspace resolution problems rather than Watt runtime bugs — the Turbopack one
+reproduces with plain `next dev`, outside Watt entirely.
+
+:::
 
 Then, let's import it to our Watt server:
 
