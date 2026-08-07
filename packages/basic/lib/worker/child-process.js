@@ -109,8 +109,9 @@ export class ChildProcess extends ITC {
   #otlpBridge
   #pendingMessages
   #replStream
+  #urlFromScript
 
-  constructor (executable) {
+  constructor (executable, { urlFromScript = false } = {}) {
     const events = getEvents()
 
     super({
@@ -176,6 +177,7 @@ export class ChildProcess extends ITC {
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
     this.#socket = new WebSocket(`${protocol}${getSocketPath(process.env.PLT_MANAGER_ID)}`)
     this.#pendingMessages = []
+    this.#urlFromScript = urlFromScript
     this.#metricsRegistry = new client.Registry()
 
     this.listen()
@@ -644,6 +646,14 @@ export class ChildProcess extends ITC {
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
 
+        // When a script reports the app URL itself (urlFromScript), ignore the
+        // tracing-channel listen here (which fires for listhen/get-port-please's
+        // throwaway probe) to avoid reporting a stale URL that races the real
+        // server's startup.
+        if (this.#urlFromScript) {
+          return
+        }
+
         const address = server.address()
 
         // Unix socket, do nothing
@@ -840,7 +850,7 @@ async function main () {
   const executable = basename(process.argv[1] ?? '')
 
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
-  const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
+  const { data, loader, scripts, urlFromScript } = JSON.parse(await readFile(dataPath))
 
   // Enable compile cache early before loading user modules
   await setupCompileCache(data)
@@ -866,7 +876,7 @@ async function main () {
     process.chdir(root)
   }
 
-  const childProcess = new ChildProcess(executable)
+  const childProcess = new ChildProcess(executable, { urlFromScript })
   updateGlobals({ itc: childProcess })
   events.target = childProcess
 }
