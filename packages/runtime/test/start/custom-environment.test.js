@@ -156,7 +156,6 @@ test('should prefer the envfile of an application over a discovered .env file', 
   // The .env file of the runtime already defines FROM_ENV_FILE
   await writeFile(join(root, 'services/hello/custom.env'), 'FROM_ENV_FILE=application-envfile', 'utf8')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.services[0].envfile = 'services/hello/custom.env'
   })
 
@@ -185,10 +184,6 @@ test('should prefer the .env file of an application over a discovered .env file'
 
   // The .env file of the runtime already defines FROM_ENV_FILE
   await writeFile(join(root, 'services/hello/.env'), 'FROM_ENV_FILE=application-env-file', 'utf8')
-  await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
-  })
-
   const app = await createRuntime(root)
 
   t.after(async () => {
@@ -215,7 +210,6 @@ test('should prefer the .env file of an application over the envfile of the runt
   await writeFile(join(root, 'custom.env'), 'FROM_ENV_FILE=runtime-envfile', 'utf8')
   await writeFile(join(root, 'services/hello/.env'), 'FROM_ENV_FILE=application-env-file', 'utf8')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = 'custom.env'
   })
 
@@ -243,10 +237,6 @@ test('should prefer real environment variables over the .env file of an applicat
   await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
 
   await writeFile(join(root, 'services/hello/.env'), 'FROM_ENV_FILE=application-env-file', 'utf8')
-  await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
-  })
-
   process.env.FROM_ENV_FILE = 'process-env'
 
   const app = await createRuntime(root)
@@ -275,7 +265,6 @@ test('should not require a context when the configuration file defines envfile',
 
   const envFile = join(root, 'custom.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
     config.logger = { level: 'fatal' }
   })

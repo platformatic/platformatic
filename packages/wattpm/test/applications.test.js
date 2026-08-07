@@ -1,7 +1,6 @@
 import { loadConfigurationFile } from '@platformatic/foundation'
 import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
-import { on } from 'node:events'
 import { writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
