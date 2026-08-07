@@ -755,8 +755,8 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0
       '@platformatic/fastify-openapi-glue':
-        specifier: ^5.1.0
-        version: 5.1.0
+        specifier: ^5.2.0
+        version: 5.2.0
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
@@ -5386,8 +5386,8 @@ packages:
     resolution: {integrity: sha512-eCL++LyBjSsqalm4I67dl+gVqLSKd6gPYCieD72S5KqqAkmSAgAYNHt+lL+iVXssWPSfbuIJ5PEwpn5JVD73Xw==}
     engines: {node: '>= 22.19.0'}
 
-  '@platformatic/fastify-openapi-glue@5.1.0':
-    resolution: {integrity: sha512-R5bHPQast/w5p+I+/Y5X1r+A8Fxqn7z0etWeaSYrFkbLvvGTEFGvldu0QGXnKjHo6XQo0P2o6D6gNr5uc36ZEA==}
+  '@platformatic/fastify-openapi-glue@5.2.0':
+    resolution: {integrity: sha512-5Syxh9EHCcxwrTvqRm2jv9Lpw7AUni3EWK95/5aFtIFAtz+POxlCbMaHcz3rdAD+D44nd1ZGqWa6wZ6dKNTqlg==}
 
   '@platformatic/graphql-composer@0.11.0':
     resolution: {integrity: sha512-e3EZH1okfdQPkhTNPrijgGQrlETFVO1V5WOjxN4EJFYRlurZdmqSuJw56JgvD08TMhdRXgwQK9bAbn1ZY2YzHg==}
@@ -16525,7 +16525,7 @@ snapshots:
 
   '@platformatic/dynamic-buffer@0.4.0': {}
 
-  '@platformatic/fastify-openapi-glue@5.1.0':
+  '@platformatic/fastify-openapi-glue@5.2.0':
     dependencies:
       '@platformatic/openapi-schema-validator': 3.0.0
       fastify-plugin: 5.1.0
