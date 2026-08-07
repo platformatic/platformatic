@@ -694,7 +694,7 @@ importers:
         specifier: ^7.6.3
         version: 7.8.5
       undici:
-        specifier: 7.28.0
+        specifier: ^7.28.0
         version: 7.28.0
       yaml:
         specifier: ^2.4.1
