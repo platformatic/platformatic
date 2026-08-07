@@ -51,6 +51,7 @@ export const httpsFixtureRoot = fileURLToPath(
 function getTargetApplication (applications) {
   return applications.find(application => application.id === 'external-proxy') ??
     applications.find(application => application.id === 'composer') ??
+    applications.find(application => application.id === 'gateway') ??
     applications.find(application => application.id === 'frontend') ??
     applications[0]
 }
