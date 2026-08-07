@@ -1,4 +1,3 @@
-import { sleepImmediate } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { getEvents, getPrometheus, removeGlobals, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
@@ -7,6 +6,7 @@ import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import openAPISchemaValidator from 'openapi-schema-validator'
 import client from 'prom-client'
 import selfCert from 'self-cert'
@@ -85,6 +85,22 @@ test('should increment and decrement activeWsConnections metric', async t => {
     return match ? parseInt(match[1]) : 0
   }
 
+  // The gauge is updated when the upstream socket closes, which happens after the
+  // client observes its own 'close' event, so poll instead of sampling once.
+  async function waitForActiveConnections (expected) {
+    for (let i = 0; i < 100; i++) {
+      const current = await getActiveConnections()
+
+      if (current === expected) {
+        return current
+      }
+
+      await sleep(50)
+    }
+
+    return getActiveConnections()
+  }
+
   // Test: Start with 0 connections
   assert.equal(await getActiveConnections(), 0)
 
@@ -107,14 +123,12 @@ test('should increment and decrement activeWsConnections metric', async t => {
   // Test: Close first connection, should decrement to 1
   client1.close()
   await once(client1, 'close')
-  await sleepImmediate()
-  assert.equal(await getActiveConnections(), 1)
+  assert.equal(await waitForActiveConnections(1), 1)
 
   // Test: Close second connection, should decrement to 0
   client2.close()
   await once(client2, 'close')
-  await sleepImmediate()
-  assert.equal(await getActiveConnections(), 0)
+  assert.equal(await waitForActiveConnections(0), 0)
 
   await gateway.close()
   updateGlobals({ prometheus: initPromClient })

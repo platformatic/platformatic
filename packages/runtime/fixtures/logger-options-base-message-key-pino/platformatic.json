@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.63.0.json",
-  "entrypoint": "composer",
   "autoload": {
     "path": "../logger-options-base-message-key/services"
   },

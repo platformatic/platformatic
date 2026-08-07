@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
-  "entrypoint": "main",
   "services": [
     {
       "id": "main",

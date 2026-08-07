@@ -4,7 +4,6 @@
   "managementApi": true,
   "metrics": false,
   "restartOnError": 500,
-  "entrypoint": "composer",
   "services": [
     {
       "id": "first",

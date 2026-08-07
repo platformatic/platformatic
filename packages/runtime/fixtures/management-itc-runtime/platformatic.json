@@ -4,7 +4,6 @@
   "managementApi": false,
   "metrics": false,
   "management": true,
-  "entrypoint": "app1",
   "services": [
     {
       "id": "app1",

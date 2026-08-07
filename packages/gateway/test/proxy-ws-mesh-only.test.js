@@ -9,6 +9,7 @@ import { WebSocket } from 'ws'
 import { createFromConfig, createGatewayInRuntime, createWebsocketApplication, REFRESH_TIMEOUT } from './helper.js'
 
 const echoWsModulesRoot = resolve(import.meta.dirname, './ws/fixtures/echo-ws/node_modules')
+const echoWsTcpModulesRoot = resolve(import.meta.dirname, './ws/fixtures/echo-ws-tcp/node_modules')
 
 function ensureCleanup (t, folders) {
   function cleanup () {
@@ -19,13 +20,13 @@ function ensureCleanup (t, folders) {
   return cleanup()
 }
 
-async function prepareEchoWsFixture (t) {
-  await ensureCleanup(t, [echoWsModulesRoot])
+async function prepareEchoWsFixture (t, modulesRoot = echoWsModulesRoot) {
+  await ensureCleanup(t, [modulesRoot])
 
   // Make sure there is @platformatic/node available in the echo-ws application.
   // We can't simply specify it in the package.json due to circular dependencies.
-  await createDirectory(resolve(echoWsModulesRoot, '@platformatic'))
-  await symlink(resolve(import.meta.dirname, '../../node'), resolve(echoWsModulesRoot, '@platformatic/node'), 'dir')
+  await createDirectory(resolve(modulesRoot, '@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(modulesRoot, '@platformatic/node'), 'dir')
 }
 
 async function assertGuardRejection (url, applicationId) {
@@ -77,7 +78,7 @@ test('should reject a WebSocket upgrade to a mesh-only application with a coded 
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // HTTP requests to the mesh-only application must keep working, including raw body passthrough
   {
@@ -111,7 +112,7 @@ test('should reject a WebSocket upgrade to a mesh-only application with a coded 
 })
 
 test('should proxy WebSocket connections when the application exposes a TCP server', async t => {
-  await prepareEchoWsFixture(t)
+  await prepareEchoWsFixture(t, echoWsTcpModulesRoot)
 
   const runtime = await createGatewayInRuntime(
     t,
@@ -132,13 +133,12 @@ test('should proxy WebSocket connections when the application exposes a TCP serv
     [
       {
         id: 'echo',
-        path: resolve(import.meta.dirname, './ws/fixtures/echo-ws'),
-        useHttp: true
+        path: resolve(import.meta.dirname, './ws/fixtures/echo-ws-tcp')
       }
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   const client = new WebSocket(`${address.replace('http://', 'ws://')}/echo/`)
   await once(client, 'open')
@@ -272,7 +272,7 @@ test('should compose the guard with a user configured custom preValidation hook'
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // The user configured preValidation hook must keep running for HTTP requests
   {

@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
-  "entrypoint": "a",
   "extensions": [
     "extension-metrics-1.js",
     "extension-metrics-2.js"

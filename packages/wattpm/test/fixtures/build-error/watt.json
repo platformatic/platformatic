@@ -3,7 +3,6 @@
   "logger": {
     "level": "info"
   },
-  "entrypoint": "main",
   "autoload": {
     "path": "web"
   }

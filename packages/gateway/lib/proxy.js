@@ -225,7 +225,7 @@ async function proxyPlugin (app, opts) {
         // The user explicitly configured proxy.ws for an application which cannot accept
         // WebSocket connections: warn at boot instead of letting the first upgrade fail.
         app.log.warn(
-          `The "${application.id}" application has WebSocket options configured in "proxy.ws" but it does not expose a TCP server. WebSocket upgrades to this application will fail. Make the application listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".`
+          `The "${application.id}" application has WebSocket options configured in "proxy.ws" but it does not expose a TCP server. WebSocket upgrades to this application will fail. Make the application listen on a TCP port (by setting "server.port" in its configuration), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".`
         )
       }
 

@@ -4,7 +4,6 @@
   "managementApi": true,
   "metrics": true,
   "restartOnError": 500,
-  "entrypoint": "internal",
   "autoload": {
     "path": "."
   },

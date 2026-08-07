@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
-  "entrypoint": "service-1",
   "watch": true,
   "autoload": {
     "path": "services",

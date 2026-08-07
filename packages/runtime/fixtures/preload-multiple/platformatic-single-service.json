@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-  "entrypoint": "a",
   "preload": [
     "preload-1.js",
     "preload-2.js"

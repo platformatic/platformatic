@@ -1,9 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.62.2.json",
-  "entrypoint": "frontend",
-  "server": {
-    "port": 0
-  },
   "gracefulShutdown": {
     "runtime": 2000,
     "application": 1000

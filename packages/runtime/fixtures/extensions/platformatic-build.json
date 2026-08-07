@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.65.0.json",
-  "entrypoint": "a",
   "extensions": [
     {
       "path": "extension-build-1.js",

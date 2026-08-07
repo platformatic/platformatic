@@ -6,6 +6,5 @@
   "basePath": "{PLT_BASE_PATH}",
   "autoload": {
     "path": "services"
-  },
-  "entrypoint": "composer"
+  }
 }

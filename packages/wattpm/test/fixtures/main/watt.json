@@ -3,7 +3,6 @@
   "logger": {
     "level": "trace"
   },
-  "entrypoint": "main",
   "autoload": {
     "path": "web"
   },

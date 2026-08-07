@@ -3,7 +3,6 @@
   "watch": false,
   "managementApi": false,
   "metrics": false,
-  "entrypoint": "privileged",
   "services": [
     {
       "id": "privileged",

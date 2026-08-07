@@ -5,7 +5,6 @@
   "metrics": true,
   "restartOnError": 250,
   "startTimeout": 1000,
-  "entrypoint": "composer",
   "services": [
     {
       "id": "node",

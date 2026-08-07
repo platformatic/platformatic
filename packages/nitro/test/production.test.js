@@ -1,6 +1,7 @@
 import { deepStrictEqual, strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 import {
   buildRuntime,
   prepareRuntime,
@@ -18,6 +19,14 @@ import {
 
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
+
+// An application only starts its server when a port is configured.
+function exposeApplication (root) {
+  return updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), config => {
+    config.server ??= {}
+    config.server.port ??= 0
+  })
+}
 setAdditionalDependencies(['nitro', 'nitropack', 'vite'])
 
 const environmentKeys = [
@@ -140,7 +149,7 @@ for (const fixture of ['standalone', 'standalone-nitro']) {
       }
     })
 
-    const { runtime, root } = await prepareRuntime(t, fixture, true)
+    const { runtime, root } = await prepareRuntime(t, fixture, true, null, exposeApplication)
     await buildRuntime(root)
     await startRuntime(t, runtime)
     const payload = { hello: 'injected Nitro' }

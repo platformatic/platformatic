@@ -3,7 +3,6 @@
   "logger": {
     "level": "info"
   },
-  "entrypoint": "composer",
   "autoload": {
     "path": "web"
   },

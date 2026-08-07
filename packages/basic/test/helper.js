@@ -62,6 +62,7 @@ const capabilities = new Set([
   '@platformatic/gateway',
   '@platformatic/nest',
   '@platformatic/next',
+  '@platformatic/nitro',
   '@platformatic/node',
   '@platformatic/nuxt',
   '@platformatic/react-router',

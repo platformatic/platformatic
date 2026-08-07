@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-  "entrypoint": "main",
   "watch": true,
   "autoload": {
     "path": "../monorepo-with-dependencies"
