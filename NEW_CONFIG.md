@@ -42,14 +42,20 @@ import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
 export default defineConfig({
-  server: { port: Number(process.env.PORT ?? 3042) },
   logger: { level: 'info' },
   application: {
     workers: 2,
-    config: next({ cache: { adapter: 'redis', url: process.env.REDIS_URL } })
+    config: next({
+      server: { port: Number(process.env.PORT ?? 3042) },
+      cache: { adapter: 'redis', url: process.env.REDIS_URL }
+    })
   }
 })
 ```
+
+Note where the port is: **inside the factory**. v4 has no runtime-level listener —
+each application exposes itself through its own capability configuration (see "How
+applications are exposed").
 
 The singular `application` key is the single-app shorthand — the same entry shape
 as one element of `applications`, normalized internally to a one-element array. It
@@ -116,7 +122,7 @@ This is the single worst piece of DX in the platform:
   top-level in the capability config as the per-app logger.
 - Growing from one app to two forces a full config rewrite: unwrap the `runtime` block,
   invert the nesting, create a new root file. The runtime performs the same inversion
-  at boot (`wrapInRuntimeConfig`, `packages/runtime/lib/config.js:131`) — machinery
+  at boot (`wrapInRuntimeConfig`, `packages/runtime/lib/config.js:130`) — machinery
   that exists only to bridge the two dialects.
 
 ### Problem 2 — JSON + `{PLT_X}` interpolation is a poor programming language
@@ -145,7 +151,8 @@ explicit where still needed (see "Machine-generated configs").
   file keeps working via the deterministic v4 capability detector (direct capability
   dependencies first — see "Loading mechanism"), and v4 stops writing an
   auto-generated `watt.json` into the user's tree — the synthesized config lives only
-  in memory.
+  in memory. What port such a boot binds is an open question the entrypoint
+  removal creates — see "How applications are exposed".
 
 ---
 
@@ -189,7 +196,7 @@ carried no runtime settings.
 
 **Level 1b — single app with runtime options.** When there is orchestration to
 express, `defineConfig` with the singular `application` shorthand. Every runtime
-option (`server`, `logger`, `health`, `metrics`, `telemetry`, `undici`,
+option (`logger`, `health`, `metrics`, `telemetry`, `undici`,
 `httpCache`, `gracefulShutdown`, …) is top-level — exactly where it is in a
 multi-app config. **The `runtime` block does not exist in v4.** `migrate` emits
 this form when the v3 config had a non-default `runtime` block.
@@ -205,8 +212,6 @@ project would use:
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
-  entrypoint: 'gateway',
-  server: { port: 3042 },
   autoload: { path: 'web' }
 })
 ```
@@ -216,6 +221,7 @@ export default defineConfig({
 import { next } from '@platformatic/next'
 
 export default next({
+  server: { port: Number(process.env.PORT ?? 3042) },
   cache: { adapter: 'redis', url: process.env.REDIS_URL }
 })
 ```
@@ -241,8 +247,6 @@ import { node } from '@platformatic/node'
 import { next } from '@platformatic/next'
 
 export default defineConfig(({ env, production }) => ({
-  entrypoint: 'gateway',
-  server: { port: Number(env.PORT ?? 3042) },
   logger: { level: production ? 'warn' : 'info' },
   metrics: production ? { port: 9090 } : false,
 
@@ -251,6 +255,7 @@ export default defineConfig(({ env, production }) => ({
       id: 'gateway',
       path: 'web/gateway',
       config: gateway({
+        server: { port: Number(env.PORT ?? 3042) },
         applications: [
           { id: 'api', proxy: { prefix: '/api' } },
           { id: 'frontend', proxy: { prefix: '/' } }
@@ -267,7 +272,11 @@ export default defineConfig(({ env, production }) => ({
         telemetry: { applicationName: 'api', exporter: { type: 'otlp' } }
       })
     },
-    { id: 'frontend', path: 'web/frontend', config: next() }
+    {
+      id: 'frontend',
+      path: 'web/frontend',
+      config: next({ server: { port: 0 } })
+    }
   ]
 }))
 ```
@@ -275,10 +284,16 @@ export default defineConfig(({ env, production }) => ({
 The functional form receives the command-aware context (`production` is `true`
 under `start`/`build`); config never branches on ambient `NODE_ENV`.
 
+`api` declares no `server` block and is therefore reachable only through the mesh;
+`frontend` declares `port: 0` because a framework capability does not start at all
+without one; `gateway` declares the fixed public port. That is the whole exposure
+model — see "How applications are exposed".
+
 Note the boundary: `workers`, `health`, `env`, `dependencies` and the other
 orchestration properties live **on the entry**; everything the capability understands
-lives **inside the factory**. The two never merge into one bag, which is what keeps
-same-named properties (`telemetry` above; `server`, `logger`, `watch`) structurally
+lives **inside the factory** — `server` among them, with no root or entry-level
+counterpart to merge against. The two never merge into one bag, which is what keeps
+same-named properties (`telemetry` above; `logger`, `watch`) structurally
 unambiguous — flattening them together would be unsound: `telemetry` means two
 incompatible things for service/db/gateway, and several capabilities collide even
 within themselves.
@@ -289,7 +304,7 @@ orchestration is always root-lexical, which is what lets the loader know an app'
 `env`, `envfile` and `enabled` before that app is evaluated. Where two *entries*
 describe the same app id — one discovered by `autoload`, one listed explicitly —
 their orchestration keys merge **shallowly, per-key, the explicit entry winning**
-(`runtime/lib/config.js:400-409`, v3 semantics). Capability configuration has
+(`runtime/lib/config.js:388-393`, v3 semantics). Capability configuration has
 exactly **one
 owner**: a root entry carrying an inline `config` while the app directory also
 contains a `watt.config.*` file is a **boot error** naming both sources. The
@@ -321,7 +336,6 @@ is classified (root config or application definition) by the normal rules.
 
 ```ts
 export default defineConfig(({ command, mode, production, env }) => ({
-  server: { port: Number(env.PORT ?? 3042) },
   watch: command === 'dev',
   logger: { level: mode === 'staging' ? 'debug' : production ? 'warn' : 'info' },
   applications: [/* … */]
@@ -517,15 +531,15 @@ statically-safe shapes or its snippet fallback.
 Because the path exists only in memory, **the root eval worker backfills it** —
 `join(root, resolvedApplicationsBasePath, id)` — during the same expansion step
 that runs `autoload` and resolves `enabled`, before fan-out. v3 could defer this to
-`#setupApplication` (`runtime/lib/runtime.js:2357-2361`) because per-app config was
+`#setupApplication` (`runtime/lib/runtime.js:1975-1980`) because per-app config was
 loaded worker-side; v4 needs an absolute `path` during loading to find the per-app
 file, run the detector, and validate the capability. (v3 tolerated the gap by
-marking such entries `type: 'unknown'` — `runtime/lib/config.js:243-244`.) An entry
+marking such entries `type: 'unknown'` — `runtime/lib/config.js:229-230`.) An entry
 whose derived directory does not exist yet is reported as "run `wattpm resolve`",
 never as a detector "no JavaScript sources" error.
 
 The `{PLT_APPLICATION_X_PATH}` placeholder entries plus `.env` lines were written
-by **`wattpm import`** (`external.js:238-268`), not `resolve` — as is the capability
+by **`wattpm import`** (`external.js:243-271`), not `resolve` — as is the capability
 dependency added to a cloned app's `package.json` (`external.js:322-336`, inside
 `importLocal`). `import` also writes a `watt.json` `$schema` stub today
 (`external.js:322-326`), which v4's unconditional legacy check would refuse; it
@@ -585,10 +599,10 @@ Classification is four unconditional rules:
    configs never contain `module` — the root schema has no such key. Options
    invalid for the selected capability are rejected by that capability's own
    schema with a precise error, which scales automatically as capabilities add
-   options; when the offending keys are root-only ones (`server`, top-level
-   `autoload`), the error hints "this looks like a root config — remove
-   `module`";
-3. an object with `application`, `applications`, `autoload`, or `entrypoint` is a
+   options; when the offending keys are root-only ones (top-level `autoload`,
+   `workers`, `managementApi`), the error hints "this looks like a root config —
+   remove `module`";
+3. an object with `application`, `applications` or `autoload` is a
    root config;
 4. an empty/other object is a root config (all defaults).
 
@@ -655,9 +669,10 @@ classification would require running it:
 
 ```
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
-  unavailable, and the settings in ../../watt.config.ts (server, logger,
-  telemetry, the env blocks, envfile) are not applied. Root .env files still
-  apply. Run from the project root for the full runtime.
+  unavailable, and the settings in ../../watt.config.ts (logger, telemetry, the
+  env blocks, envfile) are not applied. Root .env files still apply. This
+  application's own server settings are unchanged: it listens exactly as it does
+  under the full runtime. Run from the project root for the full runtime.
 ```
 
 In a genuinely standalone single-app repo (the app-def *is* the topmost config),
@@ -676,14 +691,15 @@ to `dev`, `build`, and `start` — no per-command exceptions. Scaffolding writes
 root `package.json` script as `wattpm dev` (runtime, because it runs at the root)
 and per-app scripts as `wattpm dev` (that app, because they run in the app
 directory). **Multi-app dev is the runtime's job**: `wattpm dev` at the root runs
-every application on one port with the mesh — strictly more useful than N
+every application in one process tree with the mesh — strictly more useful than N
 disconnected processes. Composing N parallel *standalone* dev processes (à la
-`turbo run dev`) is deliberately not an advertised workflow — not because they
-collide (declaring no port, they take ephemeral ports and coexist fine) but
-because they have **no mesh**: `http://*.plt.local` does not resolve, so any app
-that talks to a sibling fails. Teams that want parallel standalone processes
-declare a distinct `server.port` per app and wire the URLs themselves —
-possible, but not the sold path.
+`turbo run dev`) is deliberately not an advertised workflow, because they have
+**no mesh**: `http://*.plt.local` does not resolve, so any app that talks to a
+sibling fails. They also collide unless each app declares a distinct
+`server.port` — which under v4's exposure model each app does anyway, since a
+port is per-application configuration and two apps sharing one is a boot error
+(see "How applications are exposed"). Wiring the resulting URLs together by hand
+is possible, but not the sold path.
 Standalone `start` in automation gets the same warning as anywhere else —
 accepted and documented, not guarded. The migration guide calls the deploy
 pattern out explicitly: v3 climbed to the root from anywhere, so a Dockerfile or
@@ -698,8 +714,8 @@ mode*. Mesh names are runtime-only values, read server-side at runtime where
 injection exists; baking them into artifacts was never meaningful. The one
 deterministic injection is `NODE_ENV`, which defaults to `production` under
 `build` when nothing else set it (see "Env files"). That is **new**: v3's build
-created the runtime with no production flag (`wattpm/lib/commands/build.js:41-43`
-→ `runtime.js:251`), so `worker/controller.js:128-129` never fired and builds ran
+created the runtime with no production flag (`wattpm/lib/commands/build.js:43`
+→ `runtime.js:216`), so `worker/controller.js:124-125` never fired and builds ran
 with `NODE_ENV` unset. Bundlers and Babel configurations that branch on it will
 produce different — and correct — artifacts.
 
@@ -719,101 +735,132 @@ baked into client bundles is the classic case) fails visibly instead of silently
 baking an empty value. A standalone build cannot emit that warning: it has not
 evaluated the root config and does not know the keys.
 
-**Standalone boot mechanics and the listen rule.** The wrapped single-app runtime
-makes the app its entrypoint; the *root* config's settings are **not** applied —
-standalone means standalone.
+**How applications are exposed — there is no entrypoint and no runtime-level
+listener.** `entrypoint` and root
+`server` are gone from the runtime schema, `server` and `useHttp` are gone from
+application entries, and `server.portAssignment` is gone from the shared server
+schema — the v4 upgrade chain deletes all of them
+(`runtime/lib/versions/v4.0.0.js:16-27`), while explicitly preserving the
+capability-owned `server` of a standalone application config (`:10-14`). The
+runtime no longer holds a URL: `#url`, `getUrl()` and `getEntrypointDetails()` are
+gone. **Each application exposes itself through its own capability
+configuration**, and this section is the whole of the model. It applies uniformly
+to a full runtime boot and to a standalone one — the wrapped single-app runtime
+applies no *root* config settings (standalone means standalone), but there were
+never any exposure settings there to apply, so an application listens identically
+either way. `next({ server: { port: 8080 } })` listens on 8080 in a monorepo and
+listens on 8080 alone in its own directory; nothing is hoisted, merged or
+overridden on the way.
 
-**The entrypoint is selected first.** An explicit `entrypoint` names it;
-otherwise a single application becomes the entrypoint; otherwise exactly one
-application whose resolved `module` is `@platformatic/gateway` does; otherwise
-there is none and the runtime boots mesh-only. A *named* entrypoint that does not
-exist is an error. (v3 detected the gateway case by scanning for entries that
-carried a config file — `runtime/lib/config.js:445-456`, `if (!application.config)
-continue`; in v4 capability identity comes from the eval pass and the detector, so
-that file-presence guard is dropped. **This changes which application faces the
-network**: a config-file-less app carrying `@platformatic/gateway` in its
-dependencies was skipped in v3, so a root without `entrypoint` booted mesh-only,
-and in v4 that app is selected and binds the runtime's port. It is a declared
-breaking change, and migrate pins the v3-resolved `entrypoint` explicitly in the
-thin root — including its absence — so no migrated project changes which
-application is public. The programmatic `allowMissingEntrypoint` escape
-(`config.js:463`) is retained for embedders and tests.)
+The rules, in full:
 
-Ports then follow one rule, everywhere (full runtime and standalone alike):
+- **`server` is capability configuration only.** It lives inside the factory
+  (`next({ server: … })`), and every capability schema keeps its own top-level
+  `server` block — the shared five (`hostname`, `port`, `backlog`, `http2`,
+  `https`) for the framework and node capabilities, the full Fastify set for
+  service/db/gateway. `BaseCapability` builds `this.serverConfig` from
+  `config.server` alone (`basic/lib/capability.js:89`); the runtime supplies
+  nothing to merge against, so the two divergent v3 merge orders — basic-family
+  own-wins, service-family context-wins — both collapse into "the capability's
+  own block, verbatim". There is no root or entry-level counterpart, hence no
+  precedence question to answer.
+- **A managed listener opens if and only if `server.port` is defined.** Every
+  capability's `_listen` returns early on `typeof this.serverConfig?.port ===
+  'undefined'` (`service/lib/capability.js:299`, `node/lib/capability.js:395`,
+  and the same guard in `vite`, `astro`, `remix`, `nest`). No schema supplies a
+  default. So **omitting `server` is the mesh-only spelling** — the application
+  is reachable at `http://<id>.plt.local` through the in-thread dispatch target
+  (`basic/lib/capability.js:417-419`) and nowhere else — and a declared port is
+  the statement that this application faces something outside the runtime.
+- **`port: 0` is the ephemeral spelling**, one OS-assigned port per worker:
+  `buildListenOptions` is still `{ port: serverConfig?.port || 0 }`
+  (`basic/lib/utils.js:22`). This is the v4 replacement for v3's `useHttp`, and
+  it remains what the gateway's WebSocket proxying requires — real TCP, per
+  worker.
+- **A fixed port with `workers > 1` requires `SO_REUSEPORT`, and there is no
+  fallback.** The capability enables it when none of the capability config, the
+  application entry, or the runtime root says `false`, at least one says `true`,
+  and the platform supports it (`basic/lib/capability.js:105-110`); it is then
+  applied by a `net.server.listen` subscriber that sets `options.reusePort =
+  true` (`:827-841`). Both `reuseTcpPorts` properties default to `true`
+  (`foundation/lib/schema.js:877` for the entry, `:1083` for the root), and the
+  **entry-level one now reaches the decision** — the runtime passes the whole
+  application entry into the capability context (`worker/controller.js:82`), which
+  is the plumbing v3 lacked. Where the OS lacks `SO_REUSEPORT`
+  (`features.node.reusePort` is `false` on macOS and Windows,
+  `foundation/lib/node.js:77`) the second worker now fails: the guard that used to
+  warn and silently clamp a multi-worker entrypoint to `workers: 1` is deleted
+  from both `addApplications` (`runtime/lib/runtime.js:609-618` pre-`e2da15eda`)
+  and the dynamic scaler (`runtime/lib/worker-scaler.js:96-102`
+  pre-`e2da15eda`). **This is a real
+  regression for fixed-port multi-worker applications on those platforms** and is
+  listed as such; the workarounds are `port: 0`, `workers: 1`, or Linux.
+- **Custom listeners are observed, never rewritten.** `createServerListener()`
+  now takes no arguments and only reports the address a server chose
+  (`basic/lib/worker/listeners.js:4`); the child-process path likewise stopped
+  assigning `options.port` / `options.host`
+  (`basic/lib/worker/child-process.js:586-597`). A Node application without a
+  `create()`/`build()` factory, and any application started through a custom
+  command, binds exactly what its own code says, and the runtime records the
+  result.
+- **Two applications cannot share a port.** When a worker reports a URL, the
+  runtime checks the port against every *other* application's listening workers
+  and raises `AddressInUseError` — `Port %d is already in use by applications
+  "%s" and "%s"` (`runtime/lib/errors.js:14-17`, raised at
+  `runtime/lib/runtime.js:4059-4079`, ownership scan at `:4029-4050`). Workers of
+  the *same* application are exempt by construction (`:4035`), which is what makes
+  `SO_REUSEPORT` legal. An OS-level `EADDRINUSE` carrying a port is upgraded to
+  the same error (`:2884-2888`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
+  are excluded from restart-on-error (`:2913-2921`) — a port problem fails fast
+  instead of looping. There is still **no port search**.
+- **The runtime reports a map of URLs, not one URL.** `getUrls(applicationId?)`
+  returns `{ '<app>:<worker>': url }` for every listening worker
+  (`runtime/lib/runtime.js:1308-1322`); `start()` returns it (`:405`) after
+  logging one `Platformatic is now listening at <url> for <label>` line per
+  listening worker (`#showUrls`, `:1944-1964`). `getRuntimeMetadata()` carries
+  `urls` (`:1341`), `getApplicationDetails()` carries `urls` plus a first-element
+  `url` convenience (`:1776-1778`), and worker records carry their own `url`
+  (`:1822`). `wattpm ps` dropped its URL column and `wattpm applications` its
+  Entrypoint column (`wattpm/lib/commands/management.js:81`, `:102-103`); `wattpm inject` now
+  requires an application name unless the runtime has exactly one
+  (`wattpm/lib/commands/inject.js:79-88`).
+- **`basePath` now applies to every application**, not only the one facing the
+  network (`runtime/lib/worker/main.js:294-298`, where the strip is no longer
+  gated on `applicationConfig.entrypoint`).
 
-- the **entrypoint always listens**, resolving its address as root `server`
-  settings → **the app definition's own `server` block** → whatever the
-  application itself asks for. Declaring `entrypoint` *is* the statement that
-  this app faces the world; the root `server` block is where a multi-app project
-  sets its address, and an app that declares its own port keeps it when the root
-  is silent. Root-wins is a **deliberate unification of two divergent v3 paths**,
-  not preserved behavior: the basic family lets the app's own block win
-  (`basic/lib/capability.js:89` — a later-wins `deepmerge`), the service family
-  lets the root win (`service/lib/capability.js:222`). A standalone boot is the
-  same rule: auto-wrap **hoists the definition's `server` block** into the
-  wrapped runtime — exactly the four keys `wrapInRuntimeConfig` hoists today
-  (`hostname`, `port`, `http2`, `https`; `runtime/lib/config.js:147-154`) — so
-  `next({ server: { port: 8080 } })` booted standalone listens on 8080;
-- **there is no port default.** When nothing declares a port, the application's
-  own `listen()` call stands — a plain Express or `http` server binds what its
-  code says — and an application that expresses no port of its own gets an
-  OS-assigned ephemeral port, which the runtime pins so restarts reuse it
-  (`runtime/lib/runtime.js:3262-3271`). This is v3 exactly: `buildListenOptions`
-  is `{ port: serverConfig?.port || 0 }` (`basic/lib/utils.js:21-29`), and the
-  same `|| 0` / `?? true` normalization holds for child processes
-  (`basic/lib/capability.js:645`) and the framework capabilities
-  (`vite/lib/capability.js:229,242`). `3042` exists nowhere in the loading path —
-  only in generator templates. In v4 that convention lives where it belongs, in
-  the scaffolded config itself:
-  `server: { port: Number(process.env.PORT ?? 3042) }`;
-- any **other** application listens when its own config's `server` block sets a
-  port — an explicit additional listener, useful for a stable internal address.
-  This is **new**: in v3 a non-entrypoint's `server.port` was inert
-  (`worker/controller.js:218` gates listening on `useHttp` alone, and `listen()`
-  no-ops for non-entrypoints at `:266-268`). Migrate therefore **strips
-  `server.port` from non-entrypoint applications** when that port was **carried
-  over from the v3 capability config** — never a `port: 0` migrate synthesized
-  from `useHttp`, which would otherwise cancel that rewrite and leave the app with
-  no listener at all. The hazard is real but comes from `wattpm import`: a project
-  scaffolded *standalone* does get `"server": { "port": "{PORT}" }`
-  (`service/lib/generator.js:414-422`, guarded by `!isRuntimeContext`), and
-  importing it into a runtime makes it a non-entrypoint whose formerly inert port
-  would become a live listener;
-- **`port: 0` means an ephemeral port per worker** for a non-entrypoint: each of
-  the app's workers listens on its own OS-assigned loopback port, registered with
-  the mesh proxy. This is the v4 spelling of v3's `useHttp` (which is removed)
-  and the supported way for a multi-worker app to expose real TCP — the gateway's
-  WebSocket proxying requires it, and its diagnostics say so. On the
-  **entrypoint**, each worker still binds its own ephemeral port and the runtime
-  reports whichever registered last, so an ephemeral entrypoint is effectively a
-  single external listener; `workers > 1` without a declared port is therefore not
-  a supported way to scale one. (The entrypoint concept is slated for removal in a
-  later version, so this is documented rather than engineered around.);
-- a **fixed** port with `workers > 1` works through **`reuseTcpPorts`** — a
-  root-level property defaulting to `true` (`foundation/lib/schema.js:1108`) —
-  which binds every worker to the same port via `SO_REUSEPORT`. Where the OS lacks
-  it (`features.node.reusePort` is `false` on macOS and Windows,
-  `foundation/lib/node.js:77`) the runtime warns and falls back to a single worker.
-  In v4 that fallback applies to **any application with a fixed port**, not only
-  the entrypoint: the guard at `runtime/lib/runtime.js:676-686` drops its
-  `application.entrypoint` condition, since a non-entrypoint listener is now a
-  supported configuration and would otherwise fail with a bare `EADDRINUSE`. The
-  per-application `reuseTcpPorts` (`schema.js:898`) selects the restart strategy
-  (`runtime.js:3547`) and does **not** reach the `SO_REUSEPORT` decision — the
-  capability reads its own config, where the property does not exist
-  (`basic/lib/capability.js:106`); making it per-application is possible later but
-  is new plumbing, not a survival. The deterministic
-  alternative is **`server.portAssignment: 'perWorkerIncrement'`**
-  (`foundation/lib/schema.js:397`), giving worker *i* port `port + i`
-  (`runtime.js:2413-2415`) — a **root** `server` property, applied to the
-  entrypoint. Declaring it alongside `port: 0` is a configuration error: the two
-  are semantically exclusive, and `Number(0) + offset` would hand workers ports
-  `1`, `2`, `3`;
-- an app that is neither the entrypoint nor ported (fixed or `0`) does **not**
-  call `listen` at all (mesh-only — v3's non-entrypoint behavior, kept);
-- there is **no port search**: a taken port is a fast `EADDRINUSE` failure. That
-  is the outcome for a fixed port with `workers > 1` only when the root
-  `reuseTcpPorts` is `false` and `portAssignment` is `shared`.
+The consequence for scaffolding is that the `3042` convention becomes
+per-application and visible: `service`'s generator writes `server: { hostname,
+port, logger }` into every application's own config
+(`service/lib/generator.js:413-419` — the `!isRuntimeContext` guard is gone) and
+the runtime generator hands application *i* port `3042 + i`
+(`runtime/lib/generator.js:168-171`) while writing no root `server` block at all.
+v4's code-first equivalent is the same thing spelled in the factory:
+`next({ server: { port: Number(process.env.PORT ?? 3042) } })`. `3042` still
+exists nowhere in the loading path.
+
+**Framework capabilities require a port.** `@platformatic/next`, `vite`, `astro`,
+`remix` and `nest` return from their start path when `server.port` is undefined —
+in development *and* production (`next/lib/capability.js:209,326`,
+`vite/lib/capability.js:215,295`, `astro/lib/capability.js:190,307`,
+`remix/lib/capability.js:170`, `nest/lib/capability.js:79,280`) — so for those
+capabilities "no port" does not mean "mesh-only", it means "does not start". Only
+service/db/gateway and node-with-a-factory have a real mesh-only mode, because
+their dispatch target is an in-thread function rather than a socket
+(`basic/lib/capability.js:413-419`). Scaffolding and `migrate` therefore always
+emit a port for a framework application.
+
+**Two open questions the removal creates, deliberately unresolved here.** First,
+whether the loader should *reject* a framework definition that declares no port:
+the source neither errors nor warns today, it simply starts nothing. Second, and
+sharper, **what zero-config boot binds.** Level 0 — `wattpm dev` in a bare
+Next/Vite repo with no config file — is a stated non-goal to break, and on v3 it
+worked because the single application became the entrypoint and
+`buildListenOptions(undefined)` gave it `{ port: 0 }`; with the entrypoint gone,
+the synthesized config carries no `server.port` and a framework application would
+not start at all. Something must supply one — a synthesis-time default, a
+`port: 0` injected for the single-application case, or an explicit error telling
+the user to write a config file — and the source does not choose. It is a
+decision, not a detail.
 
 **The walk stops after checking the repository/workspace boundary directory**: the
 first directory containing `.git`, a `package.json` with `workspaces`, or
@@ -886,7 +933,7 @@ serial scheme.
    disabled entries are dropped immediately after expansion, before any per-app
    worker is spawned, before the detector runs, and before capability validation.
    This preserves v3, where `transform()` spliced disabled applications out ahead
-   of `prepareApplication` (`runtime/lib/config.js:413-417` then `:429`) and no
+   of `prepareApplication` (`runtime/lib/config.js:398-402` then `:412`) and no
    worker ever existed for them: a decommissioned app whose capability is absent
    from the production image, or whose config file calls migrate's
    `requiredEnv()`, must not be able to fail a boot that excludes it.
@@ -914,13 +961,13 @@ serial scheme.
    "Capability factories"). That subpath is **part of the v4 capability contract**,
    not an optimization, and it carries the package-level metadata main-side
    preparation needs besides the schema: `skipTelemetryHooks` (which decides
-   whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2431`,
+   whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2043`,
    set by gateway, db, and service) and `modulesToLoad`. Both move into the
    subpath's exports and the entry envelope, so **boot** never imports the full
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:127-130`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:125-128`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -1009,7 +1056,7 @@ depth — in both cases before metadata attachment, because `kMetadata` is
 symbol-keyed and non-JSON by design. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
-hazard in this very codebase (`runtime/lib/config.js:490` warns that `2` would be
+hazard in this very codebase (`runtime/lib/config.js:437` warns that `2` would be
 coerced to `true`). The audit also guarantees that schema-injected defaults are
 themselves serializable.
 
@@ -1053,7 +1100,7 @@ object, not a file: for those, the root pipeline runs main-side with no import
 step, and `loadEnv` builds the env map without mutating the main process's
 `process.env`. The **`root` argument is the project root** for env purposes —
 there is no config file to take a `dirname` of and no walk to produce a boundary
-(v3 required it for the same reason, `foundation/lib/configuration.js:497-499,511`).
+(v3 required it for the same reason, `foundation/lib/configuration.js:482,494-496`).
 Everything downstream is unchanged: a programmatic root listing
 `applications[].path` directories still gets per-app discovery, per-app eval
 workers, the detector, and `env`-block visibility exactly as a file-sourced boot
@@ -1180,7 +1227,7 @@ same reason.
 
 The bottom rung is `NODE_ENV`: when `production` is `true` and nothing else in the
 ladder supplied it, it defaults to `'production'`. This is v3
-(`worker/controller.js:126-129`, applied after all seeding and only when the key
+(`worker/controller.js:124-125`, applied after all seeding and only when the key
 is absent), and it is the one injection a build is allowed to make.
 
 This preserves v3's observable behavior (an application's `.env` overrides
@@ -1195,7 +1242,7 @@ under this model: provenance is simply which source won.
 from exactly two: the project root (the **topmost located config file's
 directory**, or the boundary directory when none exists) and the
 application directory.** This matches v3, where `loadEnv` walked up from
-`dirname(configFile)` (`foundation/lib/configuration.js:503,511`); binding the
+`dirname(configFile)` (`foundation/lib/configuration.js:490,498`); binding the
 root layer to the walk boundary instead would drop the `.env` sitting beside the
 config whenever a Watt project lives below a git or workspace root. The `env`
 **blocks** are the one part of the evaluation environment that *does* depend on
@@ -1314,7 +1361,7 @@ deliberately saner:
   apps branch on their own variables, or the decision moves into config where the
   typed context lives; migrate's source scan flags every occurrence. `PLT_ROOT`
   existed to make `{PLT_ROOT}` placeholders resolve
-  (`foundation/lib/configuration.js:512`) and was already excluded from every
+  (`foundation/lib/configuration.js:499`) and was already excluded from every
   generated `.env` (`generators/lib/base-generator.js:243`); with interpolation
   gone its only remaining reader would be application code, and
   `import.meta.dirname` is the v4 answer. `NODE_ENV` is the one variable the
@@ -1335,7 +1382,7 @@ deliberately saner:
     `^\{.+\}$` pattern branch, the string forms of `workers` and `watch`,
     `managementApi`'s top-level string — the socket path is the *object* property
     `managementApi.socket`, and a bare string is merely truthy
-    (`runtime/lib/management-api.js:421`); the branch exists only to admit
+    (`runtime/lib/management-api.js:344`); the branch exists only to admit
     `'{PLT_MANAGEMENT_API}'` — …) — **string branch deleted**;
   - *genuine unions* (`preload`'s string-or-array, `extensions`'
     string-or-object-or-array, `enabled`'s per-environment object) — kept;
@@ -1346,7 +1393,7 @@ deliberately saner:
   `start`/`build` and `dev`, so every existing config keeps its meaning, and
   `enabled: { staging: false }` now does what it looks like under
   `--mode staging` — where v3 silently ignored the key
-  (`runtime/lib/config.js:298-313`). `enabled` is resolved in the root eval
+  (`runtime/lib/config.js:283-299`). `enabled` is resolved in the root eval
   worker, before fan-out (see "Loading mechanism").
 
   v4.0 is the only free moment for this: no v4 configs exist yet, and `migrate` emits
@@ -1389,7 +1436,7 @@ export default {
 - **The programmatic payloads are a versioned public DTO, and they change shape.**
   Consumers observing `getRuntimeConfig().applications[].config` — or
   `getApplicationDetails().config`, which is a flat object with a top-level
-  `config` (`runtime/lib/runtime.js:2076-2093`) — received a *file path* in v3; in
+  `config` (`runtime/lib/runtime.js:1741-1781`) — received a *file path* in v3; in
   v4 each entry carries
   **both** `configPath` (the per-app file path, or absent for inline definitions)
   and `resolvedConfig` (the validated raw capability payload), plus `module` and
@@ -1424,7 +1471,7 @@ export default {
   capability validation, detector), surfacing failures as HTTP errors; the
   request body's `ApplicationEntry.config` type change is part of the declared
   DTO break (breaking change 14). The same eval pass applies to the **ITC**
-  `management:addApplications` handler (`runtime/lib/management-handlers.js:135-146`),
+  `management:addApplications` handler (`runtime/lib/management-handlers.js:116-125`),
   reachable from any application with `management: true` — it is a second live
   hot-add path with the same worker-self-loading assumption. What these commands
   need from the running runtime comes from `GET /metadata`, extended with `root`,
@@ -1449,7 +1496,7 @@ export default {
   main-side** — instead of a config file path. The transform is not optional here:
   db's rewrites the relative sqlite path to absolute and injects the
   `migrations.table` / `db.ignore` defaults `Migrator` requires
-  (`db/lib/config.js:6-50`), so a command handed raw config would migrate the
+  (`db/lib/config.js:6-52`), so a command handed raw config would migrate the
   wrong database. This is what v3 already does — `loadConfiguration(configFile,
   schema, { transform })` in the CLI process (`db/lib/commands/migrations-apply.js:11`)
   — and the main process synthesizes the `kMetadata` the transform reads
@@ -1478,12 +1525,18 @@ export default {
 - **`wattpm create` / `create-wattpm`**: scaffolds configuration **only where it
   configures something** — the same omit-defaults rule migrate follows. A
   single-app project with default answers gets **no Watt config file** (zero-config
-  detection covers it); a monorepo gets the thin autoload root (genuinely
-  load-bearing: autoload path, entrypoint) and per-app `watt.config.ts` files
-  (`.mts`/`.js` variants per the rules above) only for apps where the wizard set
-  non-default options — omission is safe because the wizard adds the chosen
-  capability to the app's dependencies, and the deterministic detector
-  reconstructs exactly that choice (see "Loading mechanism"). The wizard's closing output prints where `watt.config.ts`
+  detection covers it — subject to the open port question in "How applications are
+  exposed"); a monorepo gets the thin autoload root (genuinely load-bearing:
+  the autoload path) and per-app `watt.config.ts` files
+  (`.mts`/`.js` variants per the rules above) for apps where the wizard set
+  non-default options **and for every application that needs a port** — which
+  under v4's exposure model is every framework application, so the omit-defaults
+  gate is narrower than it was. Omission is otherwise safe because the wizard adds
+  the chosen capability to the app's dependencies, and the deterministic detector
+  reconstructs exactly that choice (see "Loading mechanism"). The v3 wizard's
+  `3042` prompt is gone from the root — ports are per-application now, and the
+  generator hands application *i* `3042 + i`
+  (`runtime/lib/generator.js:168-171`). The wizard's closing output prints where `watt.config.ts`
   goes and the one-line bare-factory form, so later customization is one
   copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
@@ -1529,7 +1582,7 @@ packages — and the closure is larger than foundation alone:
   `replaceEnv` and the YAML brace pre-pass, all `$schema` URL generations, and a
   **v3 → v4 module rename table** (`@platformatic/composer` →
   `@platformatic/gateway`; the identity is extracted *before* the upgrade chains
-  run, `foundation/lib/configuration.js:166-179` at `:573`, so composer-era apps
+  run, `foundation/lib/configuration.js:166-179` at `:540`, so composer-era apps
   keep the old module name and must be renamed explicitly);
 - the four `semgrator` upgrade chains (from `runtime`, `service`, `db`, and
   `gateway` — including v1/v2→v3);
@@ -1562,7 +1615,7 @@ authored values and drop environment-disabled applications. The views:
   `config.module ?? extractModuleFromSchemaUrl(config)` with
   `splitModuleFromVersion` applied, since a top-level `module` string is the
   canonical v3 spelling for capabilities without a published `$schema` URL
-  (`foundation/lib/configuration.js:156-157`, `foundation/lib/module.js:129-140`);
+  (`foundation/lib/configuration.js:156-157`, `foundation/lib/module.js:124-135`);
 - the **upgraded view** — the lexical data run through the `semgrator` chains.
   Because the chains branch on values that may be tokens (v1's
   `if (config.hotReload)` is always truthy on a token; one service chain
@@ -1582,8 +1635,8 @@ authored values and drop environment-disabled applications. The views:
 earlier design compared the emitted configuration against a third "resolved view"
 — the config loaded as production v3 would be — but no comparand works: comparing
 *pre-transform* leaves the two sides structurally incomparable, since v3 expands
-`autoload`, applies `enabled` and detects the entrypoint inside `transform`
-(`runtime/lib/config.js:377-431`, `:414`, `:443-465`) while v4 does all three in
+`autoload` and applies `enabled` inside `transform`
+(`runtime/lib/config.js:362-396`, `:398-402`) while v4 does both in
 the root eval worker; and comparing *post-transform* pits v3's transform output
 against v4's, which differ by design after the schema audit. Building either to a
 useful fidelity is a large amount of machinery for a one-shot codemod — the
@@ -1638,16 +1691,16 @@ Generation reads both views. Then:
    precedence (`strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv` —
    the *root* config's value wins when defined, and a per-app capability config
    carrying a `runtime` block supplies the third fallback,
-   `foundation/lib/configuration.js:540` with
-   `runtime/lib/worker/controller.js:99,146`), and `*_URL`
+   `foundation/lib/configuration.js:521` with
+   `runtime/lib/worker/controller.js:95,142`), and `*_URL`
    placeholders in **separate application config files** never get `requiredEnv`
    even under strict mode — v3 resolved unset `*_URL` keys there through the
    current-app fallback, which warns and never throws — they get the literal or
    `?? ''` plus the review warning. The carve-out is scoped by *loader pass*, not
    by position: `onMissingEnv` is supplied only where a worker parses a separate
-   app config (`worker/controller.js:145`), so both a **root** config's `*_URL`
+   app config (`worker/controller.js:141`), so both a **root** config's `*_URL`
    placeholders **and every placeholder in a wrapped single-app config** — which
-   `runtime/index.js:65-68` loads with no `onMissingEnv`, capability half included
+   `runtime/index.js:66-69` loads with no `onMissingEnv`, capability half included
    — throw on v3 under effective `strictEnv` and get `requiredEnv` like any other
    key.
    Embedded placeholders become template literals with the same
@@ -1683,24 +1736,50 @@ Generation reads both views. Then:
    than emitted as strings the v4 loader rejects. `strictEnv` itself has
    no v4 meaning and does not survive — its effect is baked into the emitted
    expressions, which users can hand-simplify to bare references afterwards: an
-   informed edit, not a silent change. Property mappings with new v4 spellings:
-   `useHttp: true` becomes `server: { port: 0 }` (the ephemeral-listener
-   spelling), and whether a declared port survives is **capability-family
-   dependent**, because v3 diverges: for the basic family the app's own `server`
-   block wins (`basic/lib/capability.js:89`, a later-wins `deepmerge`), so an app
-   with both keeps its fixed port and gets a requires-review note; for the
-   service/db/gateway family `service/lib/capability.js:222` re-applies the
-   worker's context **last**, so the `useHttp` defaults win and the declared port
-   was already dead — those apps get `port: 0` with a note recording the discarded
-   value. `keepAliveTimeout: 5000` and the non-entrypoint
-   loopback `hostname: '127.0.0.1'` are carried over, and `useHttp` forces
-   per-app-file emission regardless of the omit-defaults gate. `server.port` is
-   **stripped from non-entrypoint applications** when it was carried over from the
-   v3 capability config — never a `port: 0` synthesized from `useHttp` above, which
-   the strip would otherwise cancel, leaving the app with no listener. The hazard
-   comes from standalone-scaffolded projects pulled in by `wattpm import`
-   (`service/lib/generator.js:414-422`, guarded by `!isRuntimeContext`), whose
-   formerly inert port v4 turns into a real listener (see "the listen rule"). Per-app `envfile` paths are rewritten from v3's root-relative
+   informed edit, not a silent change. **Exposure is the one area where migrate
+   must reason about a v3 concept v4 does not have.** v4 has no `entrypoint` and
+   no root `server`, but which port was *live* on v3 depended on both, so migrate
+   resolves the v3 entrypoint from the lexical view — the explicit `entrypoint`
+   key, else the single application, else the single `@platformatic/gateway`
+   application (v3's own order, `runtime/lib/config.js:436-460` pre-`e2da15eda`;
+   a named miss threw, `:465-466`) — purely to classify each application's port.
+   Three rules follow, applied in this order:
+   - **the v3 root `server` block moves into the v3 entrypoint's capability
+     config**, verbatim. This is the conversion the runtime's own upgrade chain
+     cannot perform — it deletes root `server` and warns
+     (`runtime/lib/upgrade.js:16-19`) precisely because the destination lives in
+     another file — and it is what keeps the public address of a migrated project
+     unchanged. Where v3 merged a root block with the entrypoint's own block, the
+     merge order was **capability-family dependent**: the basic family let the
+     app's own block win (`basic/lib/capability.js:89` pre-`e2da15eda`, a
+     later-wins `deepmerge`), the service/db/gateway family let the root win
+     (`service/lib/capability.js:223` pre-`e2da15eda`, which re-applied the
+     worker's context last). Migrate reproduces the family's order and emits a
+     requires-review note whenever the two blocks disagreed on a key;
+   - **`useHttp: true` becomes `server: { port: 0, hostname: '127.0.0.1',
+     keepAliveTimeout: 5000 }`** — the exact defaults v3 synthesized
+     (`runtime/lib/worker/main.js:258-268` pre-`e2da15eda`) — and forces per-app
+     file emission regardless of the omit-defaults gate. Whether a *declared*
+     port survives alongside it is family-dependent for the same reason: the
+     basic family kept the app's fixed port (requires-review note), while for
+     service/db/gateway the `useHttp` defaults won and the declared port was
+     already dead, so those apps get `port: 0` and a note recording the
+     discarded value;
+   - **a `server.port` that was inert on v3 is stripped.** An application that
+     was neither the v3 entrypoint nor `useHttp` never listened
+     (`runtime/lib/worker/controller.js:218` pre-`e2da15eda` gated listening on
+     `useHttp` alone, and `listen()` no-opped for non-entrypoints at `:265-268`);
+     in v4 any declared port is a real listener, and two of them on the same port
+     is now a hard `AddressInUseError` rather than a dead value. The strip never
+     applies to a `port: 0` synthesized by the rule above, which would otherwise
+     cancel it and leave the application with no listener at all. The hazard is
+     concrete: `wattpm import` pulls in projects scaffolded *standalone*, which do
+     carry `"server": { "port": "{PORT}" }`
+     (`service/lib/generator.js:414` pre-`e2da15eda`, guarded by
+     `!isRuntimeContext`; the guard is gone in v4, where every scaffolded
+     application owns a port).
+
+   Per-app `envfile` paths are rewritten from v3's root-relative
    base to app-relative so they keep pointing at the same file; a **root
    `envfile` is not converted at all** — the pre-flight check stops the run and
    names it. v3's `customEnvFile` *replaced* the whole `.env` walk
@@ -1894,16 +1973,31 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     real environment). v3 applied blocks last, as pins; migrate warns for every
     carried-over block key, and the runtime logs once when a block key is
     suppressed by the real environment.
-19. `useHttp`: **removed** — an app's `server: { port: 0 }` is the v4 spelling
-    (ephemeral port per worker); migrate rewrites it, and the gateway's
-    WebSocket diagnostics now point at `server.port: 0`.
+19. **`entrypoint`, the root `server` block, the entry-level `server` block,
+    `useHttp` and `server.portAssignment` are all removed** — the runtime has no
+    listener of its own, and each application exposes itself through its own
+    capability configuration (see "How applications are exposed"). The v4 upgrade
+    chain deletes every one of them from runtime-dialect configs
+    (`runtime/lib/versions/v4.0.0.js:16-27`) while preserving a standalone
+    application config's capability-owned `server` (`:10-14`), and `upgrade()`
+    warns when a root `server` is discarded (`runtime/lib/upgrade.js:16-19`).
+    Consequences: a managed listener opens **iff** the capability's `server.port`
+    is defined, so an application with no `server` block is mesh-only and a
+    framework application with none does not start; `server: { port: 0 }` is the
+    v4 spelling of `useHttp` and what the gateway's WebSocket diagnostics now
+    point at; and entrypoint auto-detection — explicit key, single application,
+    single gateway — is gone entirely, along with `InvalidEntrypointError`,
+    `MissingEntrypointError`, `CannotRemoveEntrypointError` and the programmatic
+    `allowMissingEntrypoint` escape. Migrate carries the v3 root `server` block
+    into the v3 entrypoint's capability config and strips ports that were inert on
+    v3, so no migrated project changes which address it answers on.
 20. Injected variables: `PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are
     **removed** (the migrate source scan flags reads); `PLT_<ID>_URL` injection
     now covers every application including the app's own self-URL. `NODE_ENV`
     remains, as the **lowest** rung of both ladders: it defaults to `production`
     when `production` is `true` and nothing else supplied it. Under `start` that
-    matches v3 (`worker/controller.js:128-129`); under `build` it is **new** — v3's
-    build passed no production flag (`wattpm/lib/commands/build.js:41-43`), so
+    matches v3 (`worker/controller.js:124-125`); under `build` it is **new** — v3's
+    build passed no production flag (`wattpm/lib/commands/build.js:43`), so
     builds ran with `NODE_ENV` unset and bundlers that branch on it will now
     produce different artifacts.
 21. Per-application `envfile`: now governs **config evaluation and runtime
@@ -1911,31 +2005,29 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     migrate rewrites paths), and naming a missing file is an error (v3
     silently ignored it). Declaring it on an entry that carries an inline
     `config` is an error — that entry has no per-app eval worker.
-22. **Listening changed in three ways.** A non-entrypoint application whose own
-    `server` block sets a port now opens a real listener; in v3 that value was
-    inert (`worker/controller.js:218`), so migrate strips it from non-entrypoint
-    apps. The entrypoint's address resolves root `server` → its own `server`
-    block, a **unification** of two divergent v3 merge orders (basic-family let
-    the app win, service-family let the root win) and a change for the former.
-    And there is **no port default**: when nothing declares a port the
-    application's own `listen()` stands, or it gets an ephemeral port —
-    unchanged from v3, but the `PORT`/3042 convention now lives visibly in
-    scaffolded config rather than implicitly in the loader. `reuseTcpPorts` and
-    `server.portAssignment` keep their meanings, with two clarifications: the
-    warn-and-fall-back-to-one-worker path now covers any fixed-port application,
-    not only the entrypoint, and the per-application `reuseTcpPorts` selects the
-    restart strategy rather than the `SO_REUSEPORT` decision, which the root-level
-    property governs.
+22. **Listener mechanics and reporting.** Multi-worker on a fixed port is
+    `SO_REUSEPORT` **or nothing**: the warn-and-clamp-to-one-worker fallback is
+    deleted from both `addApplications` and the dynamic scaler, so a fixed-port
+    application with `workers > 1` on macOS or Windows
+    (`features.node.reusePort === false`, `foundation/lib/node.js:77`) now fails
+    to start its second worker instead of silently running one. The
+    **per-application `reuseTcpPorts` now reaches the `SO_REUSEPORT` decision**
+    (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:82`), where
+    in v3 it only selected the restart strategy. Two applications binding the same
+    port is a hard `AddressInUseError` naming both
+    (`runtime/lib/errors.js:14-17`); `EADDRINUSE`/`EACCES`/`EADDRNOTAVAIL` are
+    excluded from restart-on-error, so a port problem fails fast. Custom listeners
+    are **observed, not rewritten** — `createServerListener()` no longer overrides
+    port, host or server options. And the runtime reports **a map** of URLs
+    (`getUrls()`, `start()`'s return value, `getRuntimeMetadata().urls`,
+    `getApplicationDetails().urls`) where v3 reported one; `getUrl()` and
+    `getEntrypointDetails()` are gone, `wattpm ps` lost its URL column,
+    `wattpm applications` lost its Entrypoint column, and `wattpm inject` requires
+    an application name unless the runtime has exactly one. `basePath` stripping
+    now applies to every application rather than only the one facing the network.
 23. `@platformatic/composer` (the deprecated `@platformatic/gateway` alias
     package) is **removed**. Migrate renames the module and removes the
     superseded dependency.
-24. Entrypoint auto-detection no longer requires a config file. v3 skipped
-    config-file-less entries when looking for the single `@platformatic/gateway`
-    app (`runtime/lib/config.js:445-456`), so a zero-config gateway left a root
-    without `entrypoint` booting mesh-only; in v4 that app is selected and binds
-    the runtime's port. Migrate pins the v3-resolved `entrypoint` explicitly —
-    including its absence — so no migrated project changes which application is
-    public.
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
 error. The migration story is the codemod, not a compat layer.
@@ -1972,9 +2064,9 @@ Roughly ordered; steps 1–5 are the critical path.
    discovery (autoload and explicit entries alike) and walk-boundary/classification
    rules; the deterministic zero-config capability detector (capability
    dependencies first, ambiguity error on two, JS-files → node terminal rule);
-   entrypoint listen resolution (root `server` → own `server` → defaults) with
-   auto-wrap server hoisting and the `port: 0` per-worker ephemeral listener
-   class; `resolvedConfig` (validated raw) through `workerData` with
+   no listen resolution to write at all — exposure is capability-owned and
+   already lands with the entrypoint removal — beyond deciding the zero-config
+   port question in "How applications are exposed"; `resolvedConfig` (validated raw) through `workerData` with
    worker-side `kMetadata` reconstruction; `PLT_<ID>_URL`
    injection (self included) with the ladder defined in "Inter-application URLs",
    resolved main-side by the shared ladder resolver, and the
@@ -2023,7 +2115,7 @@ Roughly ordered; steps 1–5 are the critical path.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` / `getRuntimeApplicationConfig`
-   (`control/lib/index.js:246,259`, both removed endpoints) and gains a metadata
+   (`control/lib/index.js:196,213`, both removed endpoints) and gains a metadata
    accessor carrying `root`/`configPath`/`autoload`, which is what
    `applications:add`/`remove --save` actually consume
    (`wattpm/lib/commands/applications.js:31,110-112`); the out-of-tree capabilities (`php`,
@@ -2044,7 +2136,9 @@ cheap to iterate because the loader is new code with no v3 entanglement.
 ```ts
 // wattpm
 export interface WattConfig {
-  entrypoint?: string
+  // no `entrypoint` and no `server`: the runtime owns no listener, and every
+  // exposure setting lives in the capability config (see "How applications are
+  // exposed")
   basePath?: string
   application?: ApplicationEntry           // single-app shorthand; exclusive
                                            // with applications AND autoload
@@ -2056,7 +2150,6 @@ export interface WattConfig {
   // dependencies, telemetry, preload, … (v3's mappings[].config is removed;
   // url/gitBranch are excluded because an autoloaded entry always has a path,
   // and v3 requires `id` on a mapping)
-  server?: ServerOptions
   logger?: RuntimeLoggerOptions
   workers?: number | WorkersOptions
   health?: HealthOptions
@@ -2082,7 +2175,9 @@ export interface WattConfig {
   env?: Record<string, string>            // workers' runtime env, and visible to
                                           // per-app config evaluation (see
                                           // "Env files")
-  reuseTcpPorts?: boolean                 // default true — SO_REUSEPORT
+  reuseTcpPorts?: boolean                 // default true — SO_REUSEPORT; one of
+                                          // three inputs, the others being the
+                                          // entry and the capability config
   nodeModulesSourceMaps?: boolean
   resolvedApplicationsBasePath?: string   // used by `wattpm resolve`
   exitOnUnhandledErrors?: boolean
@@ -2091,15 +2186,16 @@ export interface WattConfig {
   // …complete list generated from the audited v4 runtime schema
 }
 
-export interface ServerOptions {
+// Not a root type: `server` exists only inside a capability factory's options,
+// as `AppServerOptions` below. The framework and node capabilities expose these
+// five; service/db/gateway extend them with the full Fastify set.
+export interface AppServerOptions {
   hostname?: string
-  port?: number                            // 0 = ephemeral
-  portAssignment?: 'shared' | 'perWorkerIncrement'  // root `server` only;
-                                                    // applies to the entrypoint
+  port?: number                            // undefined = no listener (mesh-only);
+                                           // 0 = ephemeral, one port per worker
   backlog?: number
   http2?: boolean
   https?: HttpsOptions
-  // …
 }
 
 export interface ApplicationEntry {
@@ -2120,8 +2216,10 @@ export interface ApplicationEntry {
                                           // in BOTH views (evaluation + runtime);
                                           // app-relative; missing file = error;
                                           // error alongside an inline `config`
-  reuseTcpPorts?: boolean
+  reuseTcpPorts?: boolean                 // default true; reaches the
+                                          // SO_REUSEPORT decision in v4
   restartOnError?: boolean | number
+  // no `server` and no `useHttp`: exposure is capability configuration
   management?: boolean | { enabled?: boolean, operations?: string[] }
                                           // gates the ITC ManagementClient; the
                                           // operations allowlist is what permits
@@ -2204,16 +2302,25 @@ import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
 export default defineConfig({
-  server: { port: Number(process.env.PORT ?? 3042) },
   logger: { level: 'info' },
   application: {
     workers: 2,
     config: next({
+      server: {
+        hostname: process.env.PLT_SERVER_HOSTNAME,
+        port: Number(process.env.PORT ?? 3042)
+      },
       cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL }
     })
   }
 })
 ```
+
+The `server` block crossed the boundary: it was a *runtime* setting in v3, hoisted
+out of the wrapped block by `wrapInRuntimeConfig`; in v4 it is capability
+configuration and moves inside the factory, which is exactly where migrate puts a
+v3 root `server` (see "`wattpm-utils migrate`"). Note also `workers: 2` with a
+fixed port: that combination now depends on `SO_REUSEPORT` with no fallback.
 
 And when this project later joins a monorepo, the `next({ … })` expression moves
 verbatim into `web/frontend/watt.config.ts` as its default export — no dependency
