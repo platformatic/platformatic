@@ -29,8 +29,8 @@ minimumReleaseAgeExclude:
   - tar@7.5.16 || 7.5.21
   # Renovate security update: vite@7.3.5
   - vite@7.3.5
-  # Renovate security update: undici@7.28.0
-  - undici@7.28.0
+  # Renovate security update: undici@7.28.0 || 7.29.0
+  - undici@7.28.0 || 7.29.0
   # Renovate security update: @astrojs/node@11.0.2
   - "@astrojs/node@11.0.2"
   # Renovate security update: find-my-way@9.7.0
