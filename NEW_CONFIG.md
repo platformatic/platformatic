@@ -528,7 +528,30 @@ applications: [
 ]
 ```
 
-`wattpm resolve` is unchanged, and it writes **nothing** to the configuration: it
+**A remote application must itself be v4.** `resolve` clones a repository the
+consuming project does not own, and legacy detection is unconditional in every
+directory the loader consults — a clone included — so a pinned revision still
+carrying `platformatic.json` is refused. Migrating locally does not fix this: the
+clone is a build artifact, so a clean CI checkout re-fetches the v3 configuration
+and fails again. Migrate therefore lists every remote entry it cannot reach and
+says what to do:
+
+```
+2 remote applications reference revisions this run cannot migrate —
+they live in other repositories:
+
+  legacy   github.com/org/legacy@main
+  billing  github.com/org/billing@v2.3.0
+
+Migrate each repository, then update the pinned revision here.
+```
+
+That is a coordination requirement, not a mechanism: a project adopting v4 needs
+the repositories it consumes to have adopted it too, or to pin a revision that
+has. The migration guide states it, because the failure otherwise appears on the
+first clean build rather than during migration.
+
+`wattpm resolve` is otherwise unchanged, and it writes **nothing** to the configuration: it
 computes `application.path` in memory from `resolvedApplicationsBasePath`, clones
 or extracts, and installs dependencies
 (`wattpm-utils/lib/commands/external.js:404-495`). That matters in v4: `resolve`
@@ -693,33 +716,37 @@ deploy script whose working directory is an app directory must either `cd` to th
 project root or pass `--config <root file>`, which names the configuration and
 suppresses the standalone re-scope.
 
-**Build environments.** A build runs with the app's **directory-determined env**
-(real environment + env files) — never with injected `PLT_<ID>_URL` variables and
-never with config `env` blocks in the build subprocess's environment, *in every
-mode*. Mesh names are runtime-only values, read server-side at runtime where
-injection exists; baking them into artifacts was never meaningful. The one
-deterministic injection is `NODE_ENV`, which defaults to `production` under
-`build` when nothing else set it (see "Env files"). That is **new**: v3's build
-created the runtime with no production flag (`wattpm/lib/commands/build.js:43`
-→ `runtime.js:216`), so `worker/controller.js:124-125` never fired and builds ran
-with `NODE_ENV` unset. Bundlers and Babel configurations that branch on it will
-produce different — and correct — artifacts.
+**Build environments.** A build runs with **the application's environment,
+resolved exactly as it is for that application's workers** — the full ladder from
+"Env files": real environment, entry `env` block, root `env` block, the app's env
+files or its `envfile`, the root's env files, then the `NODE_ENV` default. Env
+files are read and layered the same way they are at runtime; there is no reduced
+or special build environment. This is what v3 did and what the runtime does today
+— `buildApplication` sends `build` over ITC to a normally spawned worker
+(`runtime/lib/runtime.js:872-877`), which has already applied both `env` blocks
+(`worker/main.js:250,253`) — and a build that reads an author-supplied constant
+should keep reading it.
 
-`turbo run build`, a standalone app-dir build, and a root build produce identical
-artifacts **when no application declares `envfile` and no root or entry `env`
-block feeds its config evaluation**. Outside that condition they can diverge, and
-the divergence is not detectable from inside the app directory: a standalone build
-never evaluates the root config — standalone means standalone — so it cannot see a
-root-entry `envfile` or the `env` blocks. If a build input comes from either, move
-it into the app's own env files, where a build input belonged all along; the
-migration guide calls this out next to the working-directory note below.
+One rung is excluded: the **injected `PLT_<ID>_URL` topology variables**. Mesh
+names are runtime values resolved server-side by the mesh at request time; a build
+that baked one would be recording an address that only means anything inside a
+running runtime. That exclusion is about what those variables *are*, not about
+determinism in general — an `env` block is a constant the author wrote and belongs
+in the build like any other.
 
-Because nothing breaks *loudly* when an env var merely reads as `undefined`, a
-**root** build prints a warning naming the root/entry `env`-block keys being
-withheld from the build environment — so a v3 build that read one (`NEXT_PUBLIC_*`
-baked into client bundles is the classic case) fails visibly instead of silently
-baking an empty value. A standalone build cannot emit that warning: it has not
-evaluated the root config and does not know the keys.
+`NODE_ENV` defaults to `production` under `build` when nothing else supplied it
+(see "Env files"). That is **new**: v3's build created the runtime with no
+production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:216`), so
+`worker/controller.js:124-125` never fired and builds ran with `NODE_ENV` unset.
+Bundlers and Babel configurations that branch on it will produce different — and
+correct — artifacts.
+
+A **standalone** app-dir build still differs from a root build in one way, and it
+is the same asymmetry standalone boot has everywhere: it applies no root
+orchestration, so it sees neither the root `env` block nor a root-entry `envfile`
+(see "How applications are exposed"). `turbo run build` is a standalone build.
+Where a build input comes from either, the durable fix is the app's own env files,
+which every build style reads.
 
 **How applications are exposed — there is no entrypoint and no runtime-level
 listener.** `entrypoint` and root
@@ -1314,8 +1341,8 @@ config whenever a Watt project lives below a git or workspace root. The `env`
 **blocks** are the one part of the evaluation environment that *does* depend on
 boot style: they live on the root entry, so a standalone boot — which applies no
 root orchestration — sees none of them. That asymmetry is stated again below and
-in the standalone warning, and it is what the build section's determinism caveat
-turns on. Intermediate
+in the standalone warning, and it is the one way a standalone build differs from a
+root build. Intermediate
 directories
 (`web/.env` between root and `web/frontend`) are **never** consulted — matching
 both precedence ladders, Vite's one-envDir-per-app model, and v3 in practice
@@ -2049,13 +2076,13 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     application directory.
     Scope is otherwise purely positional — the runtime-wide behavior means running
     from the project root, and there is still no `--all`; `--config` is not a scope
-    selector but naming the configuration necessarily makes cwd stop being one. Build environments exclude injected URLs
-    and `env` blocks in any mode, and a **root** build warns naming the withheld
-    `env`-block keys; a standalone build cannot, and can therefore diverge from a
-    root build whenever an application declares `envfile` or an `env` block feeds
-    its config evaluation. Under `build`, `production` is `true`, so `enabled`
-    resolves against the production mode where v3's build resolved against
-    development.
+    selector but naming the configuration necessarily makes cwd stop being one. A
+    build uses the application's full resolved environment, as its workers do,
+    excluding only the injected `PLT_<ID>_URL` topology variables; a **standalone**
+    build additionally sees no root orchestration, so it applies neither the root
+    `env` block nor a root-entry `envfile`. Under `build`, `production` is `true`,
+    so `enabled` resolves against the production mode where v3's build resolved
+    against development.
 18. Worker env precedence: config `env` blocks **no longer override the real
     environment** — v4 follows the dotenv convention (the real environment is
     always authoritative; blocks beat injection and files, nothing beats the
