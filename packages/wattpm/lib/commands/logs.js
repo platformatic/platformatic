@@ -18,7 +18,7 @@ export async function logsCommand (logger, args) {
   const output = values.pretty ? pinoPretty({ colorize: true }) : process.stdout
 
   let application
-  const client = new RuntimeApiClient({ socket: this.socket })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     application = positionals[0]
