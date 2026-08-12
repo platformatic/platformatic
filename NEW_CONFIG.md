@@ -908,6 +908,39 @@ are the escape hatches for above-boundary layouts.
 
 ### Loading mechanism: the eval workers
 
+**Configuration is code, and it is trusted code.** A `watt.config.ts` runs with the
+runtime's privileges, as do the capability packages it imports and the application
+code the runtime starts — exactly as in v3, where an application's config file
+selected a module that the worker then imported and executed. This is stated once,
+here, because several mechanisms below would otherwise look like security
+boundaries and are not:
+
+- **evaluation workers isolate module caches, environments, crashes and hangs.
+  They are not a sandbox.** A config file can read any file the process can, open
+  sockets, and mutate globals within its own thread. Their isolation exists so that
+  a shared helper cannot leak one application's environment into another's
+  evaluation, and so a hanging config cannot take down the loader — not to contain
+  hostile code;
+- **the main process imports capability schema modules** resolved from the
+  application's own dependencies (below). That is application-controlled JavaScript
+  running with full privileges in the loader's process. Calling the subpath *light*
+  is a statement about its import cost, never about safety;
+- **resolved configuration contains whatever the environment contained.**
+  `--debug-config` prints it, and `getRuntimeConfig`/`getApplicationDetails` return
+  it, so both can surface secrets. They are operator tools on a trusted runtime and
+  are not redacted;
+- **hot-adding an application evaluates the configuration it discovers**, so
+  `POST /applications` and the ITC `management:addApplications` handler are
+  code-loading operations. An application granted `management: true` receives every
+  operation, `addApplications` included.
+
+The reason this is the right model rather than a concession: anything able to write
+a `watt.config.ts` into the project can already run code through an install script,
+a capability package, or the application entry point itself. A boundary here would
+protect nothing that is not already open. Deployments that need stronger
+separation put it where it works — separate runtimes, separate processes, separate
+credentials — not between a project and its own configuration.
+
 All configuration is evaluated in **short-lived evaluation worker threads** —
 one for the root config, then **one per per-app config file, run in parallel**.
 Evaluation is **phased by necessity**: the fan-out cannot exist before the root
@@ -970,7 +1003,9 @@ serial scheme.
    implementation the worker will load — with `resolvePath` resolving
    against that app's root, after stripping the `module`/`version` envelope, see
    "Capability factories"). That subpath is **part of the v4 capability contract**,
-   not an optimization, and it carries the package-level metadata main-side
+   not an optimization. It is *light* only in import cost — it executes in the main
+   process with full privileges, like any capability code (see the trust model
+   above) — and it carries the package-level metadata main-side
    preparation needs besides the schema: `skipTelemetryHooks` (which decides
    whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2043`,
    set by gateway, db, and service) and `modulesToLoad`. Both move into the
@@ -1092,8 +1127,9 @@ The costs are real and accepted: one worker spawn per config file (parallel) + t
 stripping per load
 (order tens of milliseconds), paid at boot and on each dev reload — and CLI
 dispatch must be careful not to evaluate config eagerly when only metadata is
-needed. `--debug-config` prints the fully resolved configuration using the **same
-eval-worker pipeline as a real boot** — per-file isolation included, because in a
+needed. `--debug-config` prints the fully resolved configuration — including
+whatever the environment supplied, so treat its output like the environment itself
+— using the **same eval-worker pipeline as a real boot** — per-file isolation included, because in a
 single shared process the first import would fix a shared helper's module-scope
 env values for every later file, and the diagnostic would print cross-app
 contaminated values that a real boot never uses. Breakpoint debugging gets an
@@ -1505,7 +1541,13 @@ export default {
   boot for each posted entry (env layering, legacy detection, classification,
   capability validation, detector), surfacing failures as HTTP errors; the
   request body's `ApplicationEntry.config` type change is part of the declared
-  DTO break (breaking change 14). The same eval pass applies to the **ITC**
+  DTO break (breaking change 14). Both are therefore **code-loading operations**:
+  where v3's posted worker read a JSON file, v4 evaluates whatever
+  `watt.config.*` it discovers at the posted path. That follows from the trust
+  model above rather than contradicting it — but it is worth stating, because
+  `management: true` grants an application every operation including
+  `addApplications`, and the `operations` allowlist is how a deployment narrows
+  that. The same eval pass applies to the **ITC**
   `management:addApplications` handler (`runtime/lib/management-handlers.js:116-125`),
   reachable from any application with `management: true` — it is a second live
   hot-add path with the same worker-self-loading assumption. What these commands
