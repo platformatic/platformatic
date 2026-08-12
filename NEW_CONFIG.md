@@ -28,9 +28,15 @@ file (what differs is only which directory's env files its evaluation sees — s
 import { next } from '@platformatic/next'
 
 export default next({
+  server: { port: Number(process.env.PORT ?? 3042) },
   cache: { adapter: 'redis', url: process.env.REDIS_URL }
 })
 ```
+
+The `server` block is not decoration: an application declares its own address, and
+one that declares none is mesh-only and serves no external traffic (see "How
+applications are exposed"). Every example below that is meant to be reachable
+therefore carries one.
 
 That bare factory export is the **canonical single-app form** — the loader
 auto-wraps it as a single-app runtime, and the file is byte-identical to a monorepo
@@ -1021,11 +1027,14 @@ serial scheme.
    `watt.config.js` in a `"type": "commonjs"` package is CJS) records every file
    the evaluation transitively imported or required; the main process merges the
    per-worker lists for the watcher.
-4. Each worker runs the **serializability walk in-worker, before `postMessage`**:
-   the config is about to cross Node's structured-clone boundary, where a nested
+4. Each worker **canonicalizes in-worker, before `postMessage`**, building the
+   plain-data snapshot described above: the config is about to cross Node's
+   structured-clone boundary, where a nested
    function throws an opaque `DataCloneError` and a class instance is silently
    flattened to a plain object — both before any main-side check could see the
-   original value, so a check after the boundary cannot keep its promises.
+   original value, so a check after the boundary cannot keep its promises. It is
+   the snapshot that is posted, never the evaluated object, which is what closes
+   the gap between what was checked and what was transported.
    Violations post a structured, path-aware error (`InvalidConfigValueError`
    naming the JSON path); valid results post back
    `{ config, importedFiles }` and the worker exits. The protocol carries no
@@ -1067,11 +1076,12 @@ serial scheme.
 
 The result then enters the pipeline in the main process: AJV validation
 (`useDefaults`, **`coerceTypes: false`**) → `kMetadata` attachment →
-`transform()`. The serializability check has already run in-worker (step 4); the
-main process repeats it only for **object config sources** (the programmatic API
-and zero-config synthesis, which never cross a worker boundary) and as defense in
-depth — in both cases before metadata attachment, because `kMetadata` is
-symbol-keyed and non-JSON by design. Coercion is disabled in v4: its
+`transform()`. Canonicalization has already run in-worker (step 4) and the
+main process consumes that snapshot; it canonicalizes itself only for **object
+config sources** (the programmatic API and zero-config synthesis, which never
+cross a worker boundary) — before metadata attachment, because `kMetadata` is
+symbol-keyed and non-JSON by design. Those sources need it just as much: an
+embedder can hand `create()` an object carrying getters or a Proxy. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
 hazard in this very codebase (`runtime/lib/config.js:437` warns that `2` would be
@@ -1160,12 +1170,27 @@ root and entry `env` blocks and the app's env files (or its `envfile`) over the 
 view, per the ladder in "Env files". Both the `env` blocks and `envfile` govern
 **both** views: the app's config evaluation and its workers see the same layers.
 
-**Serializability is the v4.0 contract, and it is deterministic:**
+**Serializability is the v4.0 contract, and it is enforced by canonicalization,
+not only by a check.** The evaluated export is walked once and a **canonical
+plain-data snapshot** is constructed from it; that single snapshot is what gets
+classified, expanded, validated, and `postMessage`d. Nothing downstream ever
+touches the original object again.
 
-- object properties whose value is `undefined` are **omitted** (JSON.stringify
-  semantics) — so `cache: { url: process.env.REDIS_URL }` with the variable unset
-  yields `cache: {}` and the schema's defaults/required rules speak, rather than an
-  error or a silent `undefined` crossing the boundary;
+Building it rather than merely inspecting it is what makes the contract true.
+`structuredClone` is not `JSON.stringify`: it **preserves** own properties whose
+value is `undefined`, so "omitted" has to be something the loader *does*. And a
+walk that only inspects is a time-of-check/time-of-use gap — a getter or a Proxy
+can return one shape to the check and another to the clone, so the validated
+structure and the transported structure need not be the same object graph.
+Accordingly:
+
+- **accessor properties and Proxies are rejected** wherever they appear, naming the
+  JSON path. Config is data; a property that computes on read cannot be
+  transported, and permitting it would make the snapshot unreproducible;
+- object properties whose value is `undefined` are **omitted from the snapshot**
+  (JSON.stringify semantics) — so `cache: { url: process.env.REDIS_URL }` with the
+  variable unset yields `cache: {}` and the schema's defaults/required rules speak,
+  rather than an error or a silent `undefined` crossing the boundary;
 - `undefined` inside **arrays**, non-finite numbers (`NaN`, `Infinity`), `bigint`,
   circular references, functions, symbols, and non-plain instances are **hard
   errors** naming the JSON path.
@@ -1364,10 +1389,15 @@ deliberately saner:
   URLs sit **above all env files**, including the app's own — a rung of the ladder
   the main process resolves, so stale `PLT_*_URL` lines in any `.env` are harmless
   **in the worker environment**. Injection is a runtime act and has no rung in the
-  config-evaluation ladder, so the loader **strips `PLT_*_URL` keys from every eval
-  worker's environment**: a config file reading one during evaluation would
-  otherwise bake a stale value that the worker never uses. Config authors write
-  the literal virtual hostname instead, as above.) The
+  config-evaluation ladder, so the loader **strips the exact topology keys from
+  every eval worker's environment** — precisely the `PLT_<ID>_URL` names derived
+  from the declared application ids, computed from the same normalization
+  injection uses, and nothing else. A config file reading one during evaluation
+  would otherwise bake a stale value that the worker never uses. The match is by
+  exact key, not by prefix and suffix: an unrelated `PLT_STRIPE_URL` is an
+  ordinary environment variable and survives, in evaluation and at runtime alike,
+  as does anything migrate emitted for it. Config authors write the literal
+  virtual hostname instead, as above.) The
   runtime skips injection when the key exists in its **own real environment**
   (container/k8s overrides work — the runtime's
   `process.env` *is* the oracle); the explicit `env` block
@@ -1742,7 +1772,10 @@ Generation reads both views. Then:
    source. **Root-inline entries take the deferred form**: their eager factory call
    would see pre-block env, so migrate emits
    `config: ctx => factory({ … ctx.env.X ?? '' … })` whenever such an entry
-   references a key supplied by an `env` block or an `envfile`. This is not a rare
+   references a key supplied by an `env` block. It is never an `envfile` key:
+   `envfile` alongside an inline `config` is illegal (see "Env files"), and a
+   root-directory application declaring one is a pre-flight refusal, so that
+   combination cannot reach generation. This is not a rare
    path — every wrapped single-app project migrates to a root-inline entry, and
    `runtime.env` is schema-legal there (`env` is absent from
    `runtimeUnwrappablePropertiesList`, so `wrapInRuntimeConfig` hoists it and the
@@ -2062,18 +2095,24 @@ error. The migration story is the codemod, not a compat layer.
 Roughly ordered; steps 1–5 are the critical path.
 
 1. **foundation — a fresh loader, not a refactor.** The v4 loader is written new for
-   v4: the eval-worker (fresh ESM cache per load, `.env` applied in-worker,
-   import-graph collection via `module.registerHooks`, the collected graph wired
-   into the dev watcher), filename resolution and the bounded walk, the `.json` →
-   migrate-hint error, and the in-worker serializability check (pre-`postMessage`)
-   → validate → `kMetadata` → `transform` pipeline are a
-   clean implementation with its own tests. The v3
+   v4: the **main-side ladder resolver** (one implementation, two directories, used
+   for eval workers and for seeding application workers alike), eval workers
+   constructed with an explicit `env` and a fresh ESM cache per load,
+   import-graph collection via `module.registerHooks` wired into the dev watcher,
+   filename resolution and the bounded walk, the `.json` →
+   migrate-hint error, and the canonicalization-and-serializability pass
+   (pre-`postMessage`) → validate → `kMetadata` → `transform` pipeline are a
+   clean implementation with its own tests, including one asserting that the
+   config-time and runtime views of an application's environment are identical.
+   The v3
    `configuration.js` (parsers, `replaceEnv`, YAML pre-pass, `strictEnv`, `$schema`
    URL machinery) is **deleted from foundation in the v4 branch, not incrementally
    carved down** — it is moved, with its tests, into `wattpm-utils` as `migrate`'s
-   private legacy reader. Only deliberately-kept pieces are
-   carried over as code (AJV custom keywords, `loadEnv`'s upward walk, `transform`
-   hooks), each by explicit decision rather than by surviving a refactor.
+   private legacy reader. `loadEnv`'s upward walk goes with it: v4 reads exactly two
+   directories and resolves them main-side, so the walk survives only inside
+   migrate's legacy reader. Only deliberately-kept pieces are
+   carried over as code (AJV custom keywords, `transform` hooks), each by explicit
+   decision rather than by surviving a refactor.
 2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
    placeholder-only branches, regenerate `schema.json` + types; produce the
    per-property target-type table for migrate.
