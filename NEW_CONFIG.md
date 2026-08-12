@@ -626,27 +626,16 @@ their eval workers to classify them (classification is cached, so a file classif
 during the walk is not re-evaluated by a later discovery pass — config code still
 runs once per load):
 
-- **Root config nearest** → one more check before booting the runtime: if cwd is
-  **at or below** a directory that root config **claims as an application** (an
-  entry's `path`, or a non-excluded subdirectory of `autoload.path`), **that app
-  boots standalone** — a zero-config app behaves identically to a sibling that owns
-  a config file, because package-local scoping is a property of *being an app*, not
-  of owning a file. Both cwd and every entry `path` are compared after `realpath`,
-  so the common `web/* → packages/*` symlink layout resolves correctly.
-  Otherwise the full runtime boots; running from the project root behaves exactly
-  as v3. (The claim check is free: the walk has already evaluated the root
-  config.)
-
-  Two exemptions keep the check from firing on configurations that have no
-  standalone meaning. **Standing at the root config's own directory always boots
-  the full runtime**, even when an entry claims that directory — the Level 1b
-  `application` shorthand, a machine-generated `path: '.'`, and migrate's
-  same-directory root-inline emission all put an entry there, and re-scoping would
-  discard every runtime setting in the file the user is standing next to. And an
-  entry carrying an **inline `config`** is exempt wherever it sits: its entire
-  capability configuration lives in the root file, so there is nothing to boot
-  standalone with. Running inside such an app's directory boots the full runtime
-  and prints one line saying why.
+- **Root config nearest** → **the full runtime boots**, exactly as in v3. There is
+  no further test: the loader does not inspect the root's entries or expand
+  `autoload` to work out whether the current directory happens to be one of its
+  applications. Scoping is a property of **owning a config file**, not of being
+  claimed by one — which is what makes it independent, since an application that
+  owns a file never causes the root to be evaluated at all. An application with no
+  file of its own is one the root describes entirely, and it is reachable at
+  `http://<id>.plt.local` once the runtime is up; booting it alone would produce an
+  application configured by defaults, listening on nothing, with no mesh to serve.
+  Giving it a `watt.config.*` is how you ask for it to be bootable on its own.
 - **App-def nearest** → **that application boots standalone**: the definition is
   auto-wrapped as `{ application: { config: def } }` (the normalized singular
   form — the DTO shows this entry) and run as a single-app runtime; the entry's
@@ -659,8 +648,9 @@ runs once per load):
 Scope is positional but never silent: every `dev` / `build` / `start` invocation
 prints one line naming the config file that won the walk and what is about to boot
 (the full runtime, or one named standalone app), before doing anything else. When the
-standalone-booted app is one of several in a project the command can see, a
-prominent warning additionally states the consequences and the alternative:
+deciding file is **not the topmost config within the boundary** — another
+`watt.config.*` exists above it, which is a filename test needing no evaluation —
+a prominent warning additionally states the consequences and the alternative:
 
 ```
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
@@ -677,7 +667,8 @@ warning and no special treatment: booted standalone they fail at compose time wi
 their own errors — documented, not prevented.
 
 **Scope is purely positional — there is no `--all` flag.** cwd is the scope
-selector: run at the root for the runtime, in an app directory for that app;
+selector, and the nearest config file is the whole of the rule: run at the root for
+the runtime, in an app directory that owns a config file for that app;
 wanting the runtime from inside an app directory means running at the root (a
 `cd`, a subshell, or a root script) or naming the configuration with `--config`,
 which is not a scope flag but does take cwd out of the decision. One rule, no
@@ -2007,9 +1998,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
 16. Validation runs with `coerceTypes: false`: values that relied on AJV coercion
     (`"4"` as a number, `1` as a boolean) are rejected with precise errors.
 17. `wattpm dev`/`build`/`start` become **location-sensitive**: run inside an
-    application directory they act on that application standalone (with a warning
-    when the project holds more than one); v3 booted the whole runtime from anywhere.
-    Passing `--config` suppresses the re-scope and boots the full runtime, which is
+    application directory that **owns a config file**, they act on that application
+    standalone (with a warning when the project holds more than one); v3 booted the
+    whole runtime from anywhere. A directory with no config file of its own falls
+    through to the nearest one up the tree, so it boots the runtime.
+    Passing `--config` names the configuration and boots the full runtime, which is
     the sanctioned fix for a deploy script whose working directory is an
     application directory.
     Scope is otherwise purely positional — the runtime-wide behavior means running
