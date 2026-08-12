@@ -616,25 +616,15 @@ Classification is four unconditional rules:
 **The nearest config decides — commands are package-local.** The ordering is
 strict, so the deciding file always executes with real context: **(1)** find the
 nearest `watt.config.*` at or above the current directory **by filename alone** (no
-execution), and separately locate the **topmost eligible** one, whose directory is
-the project root for env purposes; **(2)** run `loadEnv` — the deciding file's
+execution) — that is the **deciding file** — and continue, still by filename and
+still **within the boundary**, to the topmost one, whose directory is the
+**project root** for env purposes; the two are the same file in a single-config
+project; **(2)** run `loadEnv` — the deciding file's
 directory's env files layered over the project root's (the two-directory rule, see
 "Env files"); **(3)** only then execute candidates in
 their eval workers to classify them (classification is cached, so a file classified
 during the walk is not re-evaluated by a later discovery pass — config code still
 runs once per load):
-
-**Locating is not executing.** Step (1) is a filename test, so it may look past the
-directory that bounds *execution* (see the boundary rule below) — up to the
-repository/workspace marker or the filesystem root, still honouring the
-ancestor-eligibility rule. This matters in marker-less trees, the typical
-production container: every application directory has its own `package.json`, so
-an execution boundary anchored on the nearest one would collapse to the app's own
-directory and hide the project's root config — silently dropping the root `.env`
-and suppressing the standalone warning. Because the topmost file is located
-without being run, its **classification is unknown** at that point: the project
-root is its directory whatever it turns out to be, and any diagnostic naming it
-must not claim it is a root config.
 
 - **Root config nearest** → one more check before booting the runtime: if cwd is
   **at or below** a directory that root config **claims as an application** (an
@@ -669,10 +659,8 @@ must not claim it is a root config.
 Scope is positional but never silent: every `dev` / `build` / `start` invocation
 prints one line naming the config file that won the walk and what is about to boot
 (the full runtime, or one named standalone app), before doing anything else. When the
-standalone-booted app is part of a larger project — a config file exists further up,
-located but not executed — a prominent warning additionally states the consequences
-and the alternative. It names the file rather than asserting what it is, since
-classification would require running it:
+standalone-booted app is one of several in a project the command can see, a
+prominent warning additionally states the consequences and the alternative:
 
 ```
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
@@ -906,11 +894,19 @@ not make a stray `~/watt.config.ts` reachable from a project below it unless `~`
 is itself a Node package — beyond that residual case the invariant is
 best-effort, and stated as such.
 
-**The boundary bounds execution, not location.** It decides which config files may
-be *run*; the filename-level search for the project root looks past it as described
-above. Env files come from the **topmost located config file's directory** and the
-application directory (see "Env files"). When no config file exists anywhere
-(Level 0), the boundary directory is the project root.
+**The boundary bounds everything: execution, environment, and path resolution.**
+Nothing above it is read, run, or consulted. Env files come from the deciding root
+config's directory and the application directory (see "Env files"); when no config
+file exists anywhere (Level 0), the boundary directory is the project root.
+
+This is deliberately incurious about what might sit above. Running `wattpm dev`
+inside a subdirectory of some larger tree boots what that directory describes, and
+every invocation prints the config file that won and what is about to boot before
+doing anything else — so the outcome is visible, not silent. Inferring that a
+project *really* extends further up, from ancestor directories the trust boundary
+excludes, buys a warning at the cost of reading files from outside it. Where a
+deploy script or a monorepo task genuinely means the whole runtime, `--config` or
+running at the root says so explicitly.
 
 **`--config` names the configuration and suppresses the re-scope.** The flag's file
 is the deciding file *and* the root config, its directory is the project root, no
@@ -1282,8 +1278,8 @@ set — are unrepresentable. v3's `kEnvFileFallbackKeys` bookkeeping is unnecess
 under this model: provenance is simply which source won.
 
 **Env *files* are determined by directories, never by boot style — and they load
-from exactly two: the project root (the **topmost located config file's
-directory**, or the boundary directory when none exists) and the
+from exactly two: the project root (the **deciding root config's directory**, or
+the boundary directory when no config file exists) and the
 application directory.** This matches v3, where `loadEnv` walked up from
 `dirname(configFile)` (`foundation/lib/configuration.js:490,498`); binding the
 root layer to the walk boundary instead would drop the `.env` sitting beside the
@@ -2012,7 +2008,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     (`"4"` as a number, `1` as a boolean) are rejected with precise errors.
 17. `wattpm dev`/`build`/`start` become **location-sensitive**: run inside an
     application directory they act on that application standalone (with a warning
-    when a config file exists above); v3 booted the whole runtime from anywhere.
+    when the project holds more than one); v3 booted the whole runtime from anywhere.
     Passing `--config` suppresses the re-scope and boots the full runtime, which is
     the sanctioned fix for a deploy script whose working directory is an
     application directory.
