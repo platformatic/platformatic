@@ -703,8 +703,14 @@ the properties they corrected no longer exist.
 Of those, **M14 is moot after `e2da15eda`**: its subject — what `port: 0` means on
 the entrypoint, and how the pin behaves — went with the entrypoint, and E11's
 deferral note ("slated for removal in a future version") has been executed. In its
-place the removal opens two new questions, recorded in NEW_CONFIG's "How
-applications are exposed" and deliberately not resolved there: whether a framework
-definition with no `server.port` should be rejected at load time rather than
-silently starting nothing, and what port a zero-config boot binds now that nothing
-defaults one.
+place the removal opens new questions, recorded in NEW_CONFIG's "How
+applications are exposed".
+
+## Post-rebase decisions (after `e2da15eda`)
+
+| # | Question | Status |
+|---|---|---|
+| P1 | What port a zero-config boot binds | **resolved** — user decision: synthesis injects `server: { port: Number(process.env.PORT ?? 3042) }`, and **only when there is exactly one application**. The convention stays in configuration — synthesis *is* the configuration for a zero-config boot — rather than becoming a hidden loader default. The qualifier is automatically satisfied here, since `fallbackToTemporaryConfigFile` (`foundation/lib/cli.js:255-274`) detects one application type for the root directory and can never produce more, but it is stated as the general rule: **the port convention is applied only to a single-application project**, which also binds P4 |
+| P2 | Whether a portless framework definition is rejected at load time | **resolved** — user decision: **no warning class; report every application's exposure at startup instead.** `#showUrls` (`runtime/lib/runtime.js:1944-1965`) currently does `if (!url) continue`, so portless workers are skipped and a project that binds nothing produces no diagnostic at all. It prints one line per application instead — its URL, or `mesh-only` with its `.plt.local` address, which is genuinely reachable (`basic/lib/capability.js:417-419` falls back to in-thread dispatch). Turns silence into information without a warning that would fire on the N−1 legitimately mesh-only applications in a typical monorepo, and without a capability-class distinction in the loader. Not listening remains a valid state |
+| P3 | Whether the macOS/Windows fixed-port multi-worker regression is accepted | **out of scope** — user decision: a runtime regression, not a configuration-format question. Filed as platformatic/platformatic#5070 for discussion and reproduction on a Mac. The proposal now states only that a fixed port with `workers > 1` requires `SO_REUSEPORT` and defers platform degradation to the runtime; the "this is a real regression" framing and the workaround list are removed from both the exposure section and breaking change 22 |
+| P4 | How migrate places a v3 root `server` block without an entrypoint | **resolved** — user decision: **resolve the v3 public application lexically, drop the block when it does not resolve.** Apply v3's own rule over the config text (`runtime/lib/config.js:436-465` pre-removal): an explicit `entrypoint` names it; else a single application; else the single application whose module is `@platformatic/gateway`. That application's capability config receives the **whole** `server` block — `hostname`, `port`, `http2`, `https`, … — not just the port. Uses only the module list migrate already computes for the pre-flight check, so it revives nothing E6 dropped. When it does not resolve (several apps, no explicit `entrypoint`, zero or 2+ gateways), v3 booted mesh-only — `transform` left `entrypoint` undefined and threw only for a *named* missing one — so the block is dropped and the summary reports it. Per P1 the `Number(process.env.PORT ?? 3042)` convention applies only to single-application projects; multi-app ports come from the v3 config |

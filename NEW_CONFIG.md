@@ -151,8 +151,9 @@ explicit where still needed (see "Machine-generated configs").
   file keeps working via the deterministic v4 capability detector (direct capability
   dependencies first — see "Loading mechanism"), and v4 stops writing an
   auto-generated `watt.json` into the user's tree — the synthesized config lives only
-  in memory. What port such a boot binds is an open question the entrypoint
-  removal creates — see "How applications are exposed".
+  in memory. Synthesis supplies `server: { port: Number(process.env.PORT ?? 3042) }`
+  so a bare framework repo is actually reachable — see "How applications are
+  exposed".
 
 ---
 
@@ -788,13 +789,11 @@ The rules, in full:
   application entry into the capability context (`worker/controller.js:82`), which
   is the plumbing v3 lacked. Where the OS lacks `SO_REUSEPORT`
   (`features.node.reusePort` is `false` on macOS and Windows,
-  `foundation/lib/node.js:77`) the second worker now fails: the guard that used to
-  warn and silently clamp a multi-worker entrypoint to `workers: 1` is deleted
-  from both `addApplications` (`runtime/lib/runtime.js:609-618` pre-`e2da15eda`)
-  and the dynamic scaler (`runtime/lib/worker-scaler.js:96-102`
-  pre-`e2da15eda`). **This is a real
-  regression for fixed-port multi-worker applications on those platforms** and is
-  listed as such; the workarounds are `port: 0`, `workers: 1`, or Linux.
+  `foundation/lib/node.js:77`) a fixed port with `workers > 1` cannot be shared.
+  How the runtime should behave there is a **runtime concern tracked separately**
+  (platformatic/platformatic#5070), not a configuration-format question: this
+  document defines what `server.port` and `workers` mean together, and leaves
+  platform degradation to the runtime.
 - **Custom listeners are observed, never rewritten.** `createServerListener()`
   now takes no arguments and only reports the address a server chose
   (`basic/lib/worker/listeners.js:4`); the child-process path likewise stopped
@@ -849,18 +848,37 @@ their dispatch target is an in-thread function rather than a socket
 (`basic/lib/capability.js:413-419`). Scaffolding and `migrate` therefore always
 emit a port for a framework application.
 
-**Two open questions the removal creates, deliberately unresolved here.** First,
-whether the loader should *reject* a framework definition that declares no port:
-the source neither errors nor warns today, it simply starts nothing. Second, and
-sharper, **what zero-config boot binds.** Level 0 — `wattpm dev` in a bare
+**Zero-config boot supplies its own port.** Level 0 — `wattpm dev` in a bare
 Next/Vite repo with no config file — is a stated non-goal to break, and on v3 it
 worked because the single application became the entrypoint and
-`buildListenOptions(undefined)` gave it `{ port: 0 }`; with the entrypoint gone,
-the synthesized config carries no `server.port` and a framework application would
-not start at all. Something must supply one — a synthesis-time default, a
-`port: 0` injected for the single-application case, or an explicit error telling
-the user to write a config file — and the source does not choose. It is a
-decision, not a detail.
+`buildListenOptions(undefined)` gave it `{ port: 0 }`. With the entrypoint gone
+the synthesized config would carry no `server.port` and a framework application
+would start nothing, so **in-memory synthesis emits
+`server: { port: Number(process.env.PORT ?? 3042) }`** — the same expression
+scaffolding writes into a real file. The convention therefore still lives in
+configuration rather than becoming a hidden loader default; synthesis simply *is*
+the configuration for a zero-config boot. It applies **only to a
+single-application project**, which is the only shape zero-config can produce:
+detection resolves one application type for the root directory
+(`foundation/lib/cli.js:255-274`). Multi-application projects get their ports from
+their own configuration, never from a default.
+
+**Not listening is a normal state, and the startup output says so.** A portless
+application is mesh-only, not broken: `getDispatchTarget()` falls back to
+in-thread dispatch (`basic/lib/capability.js:417-419`), so `http://<id>.plt.local`
+resolves. The loader therefore does not warn — in a typical monorepo most
+applications are deliberately mesh-only, and a per-application warning would fire
+N−1 times on every boot. What changes instead is the report: `#showUrls`
+(`runtime/lib/runtime.js:1944-1965`) currently does `if (!url) continue`, so a
+project that binds nothing prints no address and no explanation. It prints **one
+line per application** — its URL, or `mesh-only` with its `.plt.local` address —
+so the set of externally reachable applications is always visible:
+
+```
+gateway    listening at http://127.0.0.1:3042
+api        mesh-only — http://api.plt.local
+frontend   mesh-only — http://frontend.plt.local
+```
 
 **The walk stops after checking the repository/workspace boundary directory**: the
 first directory containing `.git`, a `package.json` with `workspaces`, or
@@ -1743,6 +1761,13 @@ Generation reads both views. Then:
    key, else the single application, else the single `@platformatic/gateway`
    application (v3's own order, `runtime/lib/config.js:436-460` pre-`e2da15eda`;
    a named miss threw, `:465-466`) — purely to classify each application's port.
+   That is a lexical rule over data migrate already holds: it needs each entry's
+   module, which the pre-flight check computes anyway, and no part of the runtime
+   transform. When it does **not** resolve — several applications, no explicit
+   `entrypoint`, and zero or more than one gateway — v3 booted mesh-only, since
+   `transform` left `config.entrypoint` undefined and threw only for a *named*
+   missing one. Migrate then drops the root `server` block and reports it, rather
+   than guessing which application was public.
    Three rules follow, applied in this order:
    - **the v3 root `server` block moves into the v3 entrypoint's capability
      config**, verbatim. This is the conversion the runtime's own upgrade chain
@@ -2005,12 +2030,10 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     migrate rewrites paths), and naming a missing file is an error (v3
     silently ignored it). Declaring it on an entry that carries an inline
     `config` is an error — that entry has no per-app eval worker.
-22. **Listener mechanics and reporting.** Multi-worker on a fixed port is
-    `SO_REUSEPORT` **or nothing**: the warn-and-clamp-to-one-worker fallback is
-    deleted from both `addApplications` and the dynamic scaler, so a fixed-port
-    application with `workers > 1` on macOS or Windows
-    (`features.node.reusePort === false`, `foundation/lib/node.js:77`) now fails
-    to start its second worker instead of silently running one. The
+22. **Listener mechanics and reporting.** Multi-worker on a fixed port requires
+    `SO_REUSEPORT`; how the runtime behaves where the platform lacks it is tracked
+    separately (platformatic/platformatic#5070) and is not part of this format
+    change. The
     **per-application `reuseTcpPorts` now reaches the `SO_REUSEPORT` decision**
     (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:82`), where
     in v3 it only selected the restart strategy. Two applications binding the same
