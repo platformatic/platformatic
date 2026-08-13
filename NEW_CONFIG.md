@@ -398,8 +398,11 @@ The context (Vite-parity, deliberately):
   `'production'` under `build`/`start`, overridable with `--mode <name>`
   (`wattpm build --mode staging`). Mode **selects env files everywhere** — it
   travels in `workerData` and the worker-boot env reader loads the same layered
-  file set config evaluation used, so the two views' **env-file rungs** agree by
-  construction. It is *not* injected as an environment variable (no `PLT_MODE`).
+  file set config evaluation used, so for an application configured by a **per-app
+  file** the two views' env-file rungs agree by construction. (A **root-inline**
+  entry is evaluated in the root worker, which reads root files only, while its
+  workers read app files above root files — see the position asymmetry in "Env
+  files".) It is *not* injected as an environment variable (no `PLT_MODE`).
   `start` must be given the same `--mode` as `build` to reproduce the same
   env-file view (Vite parity, documented).
 - `production` — the common-case shortcut: `true` under `start`/`--production`
@@ -1404,7 +1407,7 @@ mode-aware app files are read for that application — exactly the named file
 loads, in the app's eval worker *and* at worker boot alike, occupying the same
 single rung the app file layer occupies in the ladders (v3's
 replace-the-default-path behavior, extended to the set — and extended to
-evaluation, so config-time and runtime env keep agreeing by construction). Mode
+evaluation, so the two views keep agreeing on that rung). Mode
 selection simply does not apply to that app's files; root files and every other
 rung are unaffected. The path resolves **app-relative** (v3 resolved it against
 the runtime root — migrate rewrites paths so they keep pointing at the same
@@ -1469,14 +1472,27 @@ deliberately saner:
   the main process resolves, so stale `PLT_*_URL` lines in any `.env` are harmless
   **in the worker environment**. Injection is a runtime act and has no rung in the
   config-evaluation ladder, so the loader **strips the exact topology keys from
-  every eval worker's environment** — precisely the `PLT_<ID>_URL` names derived
-  from the declared application ids, computed from the same normalization
+  every per-app eval worker's environment** — precisely the `PLT_<ID>_URL` names
+  derived from the declared application ids, computed from the same normalization
   injection uses, and nothing else. A config file reading one during evaluation
   would otherwise bake a stale value that the worker never uses. The match is by
   exact key, not by prefix and suffix: an unrelated `PLT_STRIPE_URL` is an
   ordinary environment variable and survives, in evaluation and at runtime alike,
   as does anything migrate emitted for it. Config authors write the literal
-  virtual hostname instead, as above.) The
+  virtual hostname instead, as above.
+
+  The **root** eval worker cannot be covered by the same mechanism: the ids that
+  generate those names are declared by the very file being evaluated, and by
+  `autoload` expansion that completes only after it returns, so the key set is
+  unknown when its environment is fixed. It gets a **post-unwrap check** instead —
+  once the ids are known, any `PLT_<ID>_URL` matching one of them that was present
+  in the root worker's environment is reported, naming the key and the application
+  it collides with, since a value visible there is necessarily inherited from the
+  surrounding environment rather than injected by this runtime. It is a warning
+  rather than an error because presence is not use: a nested runtime legitimately
+  passes such variables through, and only a config file that actually reads one
+  bakes a stale value. `--debug-config` marks those keys as inherited rather than
+  printing them as though a real boot had supplied them.) The
   runtime skips injection when the key exists in its **own real environment**
   (container/k8s overrides work — the runtime's
   `process.env` *is* the oracle); the explicit `env` block
@@ -2226,7 +2242,10 @@ Roughly ordered; steps 1–5 are the critical path.
    migrate-hint error, and the canonicalization-and-serializability pass
    (pre-`postMessage`) → validate → `kMetadata` → `transform` pipeline are a
    clean implementation with its own tests, including one asserting that the
-   config-time and runtime views of an application's environment are identical.
+   config-time and runtime views of an application's environment agree on their
+   **env-file rungs** for an application configured by a per-app file — the two
+   views differ by design on the `env` blocks and the injected `PLT_<ID>_URL`
+   values, and a root-inline entry additionally evaluates against root files only.
    The v3
    `configuration.js` (parsers, `replaceEnv`, YAML pre-pass, `strictEnv`, `$schema`
    URL machinery) is **deleted from foundation in the v4 branch, not incrementally

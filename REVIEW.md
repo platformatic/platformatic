@@ -365,6 +365,8 @@ injected rung, computed by the same resolver with that rung disabled, and note t
 
 ### M8. The `PLT_<ID>_URL` strip is impossible for the root eval worker, which the text claims it covers
 
+**RESOLVED** — the strip is scoped to per-app eval workers; the root worker gets a post-unwrap inherited-key warning, since its ids are declared by the file it is evaluating.
+
 `:1441-1445` says the loader strips the exact topology keys "from **every** eval
 worker's environment". The declared ids come from the root config's entries and from
 `autoload` expansion, both of which happen *inside* the root worker (`:996-999`),
@@ -377,6 +379,8 @@ it as if it were a real boot's.
 post-unwrap check that rejects or warns.
 
 ### M9. "Config-time and runtime env agree by construction" is false for root-inline entries, and the plan asserts it as a test
+
+**RESOLVED** — all three sites now claim only that the **env-file rungs** agree, and only for an application configured by a per-app file; the test is scoped the same way.
 
 `:402-404`, `:1090-1093` and implementation step 1 (`:2163-2164`) state it
 unqualified; `:1352-1359` concedes the opposite. A root-inline `node({ dsn:
