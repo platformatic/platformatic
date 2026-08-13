@@ -23,7 +23,31 @@ Four findings below were artifacts of the stale branch and are **dead**:
   detector-table objection is void; the omit-defaults argument should be re-read
   against the real table rather than merely un-flagged.
 
-Three are **resolved in the document**:
+**B2 and B3 are resolved together by one design decision**: an `env` block
+configures the *running application* and never configuration evaluation, at any
+position. "Env files" now states two views of the ladder — config evaluation
+(`real env > app env files > root env files > NODE_ENV`) and worker runtime (the
+same with the `env` blocks and injected `PLT_<ID>_URL` added). Consequences:
+
+- the per-entry resolution pass disappears, and with it the need to ship
+  provenance into the root eval worker (**B2**);
+- the three places saying root-inline entries never see the blocks become true and
+  general, since nothing sees them (**B3**);
+- the eager and deferred forms observe an identical environment, so the callback
+  form is now justified by typing and async option construction alone;
+- the cost is one narrow v3 fidelity break — a placeholder whose value came from an
+  `env` block resolved at parse time under v3 and yields `''` under v4. Migrate
+  reports every such placeholder instead of emitting a silently empty expression.
+  `envfile` keys are unaffected: a file on disk is resolvable before evaluation and
+  stays in the config-evaluation view.
+
+Rejected on the way: shipping `envFileFallbackKeys` into the eval worker (which
+`runtime/lib/runtime.js:2581` already does for application workers). It would have
+worked, but it buys position-dependent semantics — one key with different values in
+the eager and deferred forms of the same entry — and that is the complexity the
+decision removes.
+
+Three more are **resolved in the document**:
 
 - **B1** — per-app `watt.config.*` emission is now **unconditional in multi-app
   projects**, in both `create` and `migrate`; the omit-defaults rule survives only
@@ -121,6 +145,8 @@ migrate report every directory whose script now boots the runtime.
 
 ### B2. The deferred root-inline context cannot be built where the document builds it — the ladder needs provenance the protocol deliberately withholds
 
+**RESOLVED** — `env` blocks no longer feed config evaluation at any position, so the per-entry resolution pass and the provenance requirement both disappear. See STATUS.
+
 `:371-378` runs the resolution pass **inside the root eval worker**, giving each
 function-valued entry a context of "the root env view plus the root and entry `env`
 blocks". `:1089-1096` states the counter-constraint: "The protocol carries no
@@ -146,6 +172,8 @@ make the pass a second round trip — the worker posts entry ids and referenced 
 the main process replies with one resolved `env` per entry.
 
 ### B3. Three places say root-inline entries never see the `env` blocks; the mechanism migrate depends on requires that deferred ones do
+
+**RESOLVED** — nothing sees the `env` blocks during config evaluation, so the three statements are now true and general. See STATUS.
 
 `:1315-1319`, `:1371-1373` and breaking change 5 (`:2031-2033`) all state the
 exclusion unconditionally — "the root config's own evaluation and root-inline

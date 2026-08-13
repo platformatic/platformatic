@@ -368,21 +368,19 @@ promise must resolve *before* the factory sees the options), which the loader
 calls with the context and re-classifies — serializability is untouched (the
 callback resolves before anything crosses a worker boundary). As a per-app
 export the desugared function is invoked by classification rule 1; in a
-root-inline entry the root worker runs an explicit **resolution pass**: after the
-root export is unwrapped, every function-valued `application.config` /
-`applications[].config` is awaited before the serializability check, each with a
-`ConfigContext` built **for that entry** — the root env view plus the root and
-entry `env` blocks, and that entry's `envfile` when it declares one. Those layers
-are knowable here precisely because the root export has already been unwrapped,
-which is what makes the deferred form the faithful target for a v3 config whose
-placeholders resolved from an `env` block.
+root-inline entry the root worker awaits every function-valued
+`application.config` / `applications[].config` after unwrapping the root export
+and before the serializability check.
 
-The eager form cannot participate: `config: next({ url: process.env.X })` is
-evaluated while the default-export object literal is being constructed, before
-anything has unwrapped it, so it sees the **pre-block** root env. An expression
-inside an object literal cannot observe a sibling key of that same literal — a
-JavaScript constraint, not a design choice. The two forms therefore differ, and
-`migrate` emits the callback form for exactly the entries that need it. A
+**The context is the same object at every position.** `ctx.env` is the evaluating
+worker's environment view, and no `env` block ever contributes to it (see "Env
+files") — so the eager and deferred forms observe an identical environment.
+`config: next({ url: process.env.X })` and
+`config: next(ctx => ({ url: ctx.env.X }))` resolve `X` the same way. The callback
+exists to type its parameter and to allow asynchronous option construction, not to
+observe anything the eager form cannot; there is no position whose environment
+depends on the file having been unwrapped first, which is what keeps the loader
+free of a per-entry resolution pass. A
 bare function export (`export default (ctx) => next(…)`) remains legal — it is
 exactly what the callback form desugars to — but the callback form is the
 documented one because it types its parameter. The callback overload's declared
@@ -400,15 +398,16 @@ The context (Vite-parity, deliberately):
   `'production'` under `build`/`start`, overridable with `--mode <name>`
   (`wattpm build --mode staging`). Mode **selects env files everywhere** — it
   travels in `workerData` and the worker-boot env reader loads the same layered
-  file set config evaluation used, so config-time and runtime env agree by
+  file set config evaluation used, so the two views' **env-file rungs** agree by
   construction. It is *not* injected as an environment variable (no `PLT_MODE`).
   `start` must be given the same `--mode` as `build` to reproduce the same
   env-file view (Vite parity, documented).
 - `production` — the common-case shortcut: `true` under `start`/`--production`
   **and under `build`** (build produces production artifacts).
-- `env` — a **snapshot** of `process.env` after env-file and `env`-block merging,
-  taken at the start of evaluation (see "Env files"); later `process.env` writes
-  are visible through `process.env`, not through `ctx.env`.
+- `env` — a **snapshot** of `process.env` after env-file merging, taken at the start
+  of evaluation (see "Env files"); `env` blocks are not part of it, at any position.
+  Later `process.env` writes are visible through `process.env`, not through
+  `ctx.env`.
 - `root` — absolute directory of the config file.
 
 ### Capability factories
@@ -1018,10 +1017,12 @@ serial scheme.
    inline `config` still get a filename-presence check in their directory: a
    `watt.config.*` file there triggers the configured-twice error — no evaluation
    involved.) Because the root worker has now returned the configuration, the
-   main process knows the `env` blocks, so it resolves each application's
-   environment by the ladder — real environment, entry block, root block, the app's
-   env files or its `envfile`, the root's env files — and constructs that app's
-   worker with the result as an explicit `env`. The worker imports the file and
+   main process knows each application's `path` and `envfile`, so it resolves the
+   **config-evaluation** environment by that view of the ladder — real environment,
+   the app's env files or its `envfile`, the root's env files — and constructs that
+   app's worker with the result as an explicit `env`. `env` blocks are deliberately
+   not part of it (see "Env files"); they are applied when the application's own
+   workers are constructed at boot. The worker imports the file and
    unwraps the export. A per-app file
    whose export classifies as a *root* config (including an accidental empty
    object) is an **error** naming the file and both classifications — a root config
@@ -1094,8 +1095,9 @@ serial scheme.
    `{ config, importedFiles }` and the worker exits. The protocol carries no
    environment: the main process resolved that worker's `env` before constructing
    it, and resolves every application worker's the same way at boot — one
-   implementation of the ladder for both views, which is what makes config-time
-   and runtime env agree structurally rather than by convention. Provenance never
+   implementation serving both views of the ladder, which differ only by the rungs
+   that exist solely at runtime (the `env` blocks and the injected `PLT_<ID>_URL`
+   values). Provenance never
    travels either; it is a byproduct of resolution (which source won) rather than a
    set to be shipped and kept in sync, so there is no `envFileKeys` and no
    `injectedKeys` in `workerData`. Injected `PLT_<ID>_URL` values are simply a rung
@@ -1221,9 +1223,9 @@ but the capability pipeline is split deliberately:**
   request-time origin resolution) keep working unchanged.
 
 Per-app config files evaluate with **their application's layered environment** — the
-root and entry `env` blocks and the app's env files (or its `envfile`) over the root
-view, per the ladder in "Env files". Both the `env` blocks and `envfile` govern
-**both** views: the app's config evaluation and its workers see the same layers.
+app's env files (or its `envfile`) over the root view, per the config-evaluation
+ladder in "Env files". `envfile` governs **both** views; the `env` blocks govern the
+worker-runtime view only.
 
 **Serializability is the v4.0 contract, and it is enforced by canonicalization,
 not only by a check.** The evaluated export is walked once and a **canonical
@@ -1300,28 +1302,50 @@ Within one directory, mode-specific beats generic and `.local` beats committed:
 context (`--mode`); scaffolding adds `.env*.local` to `.gitignore`.
 
 **Precedence is app-wins layering — more specific overrides less specific, real
-environment always wins:**
+environment always wins.** There are two views, and they differ by exactly the
+things that only exist once the runtime is running:
 
 ```
-real environment  >  entry env block  >  root env block
-                  >  app env files  >  root env files  >  NODE_ENV default
+config evaluation:  real environment  >  app env files  >  root env files
+                                      >  NODE_ENV default
+
+worker runtime:     real environment  >  entry env block  >  root env block
+                                      >  injected PLT_<ID>_URL
+                                      >  app env files  >  root env files
+                                      >  NODE_ENV default
 ```
 
-(This is the **config-evaluation view** for a per-app file. The worker-runtime
-view in "Inter-application URLs" is the same ladder with injected `PLT_<ID>_URL`
-values inserted below the `env` blocks — the two agree rung for rung otherwise.)
+**An `env` block configures the running application; it does not configure the
+reading of configuration.** Blocks are absent from the config-evaluation view
+entirely — for every config file, at every position, with no exceptions.
 
-The `env` blocks are visible during per-app config evaluation because they are
-knowable before fan-out: orchestration is always root-lexical — a per-app file
-exports an `ApplicationDefinition`, and factories reject orchestration properties
-— and the root worker runs first. This is what lets a migrated
-`{ "connectionString": "{DATABASE_URL}" }` become a plain
-`process.env.DATABASE_URL ?? ''` and still resolve, instead of having its value
-baked into source. Two positions are excluded, matching v3: the **root config's
-own** evaluation (its `env` block is lexically inside the file being evaluated —
-v3 applied blocks in the worker, long after `runtime/index.js` had parsed the
-root), and **root-inline entries**, which are evaluated in the root worker for the
-same reason.
+The reason is that configuration is now code, and an `env` block is configuration.
+At the root the two are genuinely circular: the root file's own block — and any
+block that would feed an application configured *inside* that file — is knowable
+only once the file has been executed, so it cannot inform the environment the file
+executes in. v3 had no such circularity because its configuration was JSON and
+`{PLT_X}` substitution was a text pass over an already-parsed object, so "before"
+and "after" never arose.
+
+A separate per-app file is *not* circular — the root runs first, so its blocks are
+known by then. Making visibility depend on where a file sits is nevertheless the
+alternative worth refusing: it gives one key different values in the eager and
+deferred forms of the same entry, and it obliges the loader to ship key-by-key
+provenance into workers so that a ladder can be applied on the far side of a
+boundary that has already flattened it. A single rule holding at every position
+costs one narrow fidelity break and buys a model with no positional exceptions: the
+main process resolves the config-time environment **before any worker starts**, from
+the real environment and files on disk, and that one resolution serves every config
+file regardless of where it sits or which boot style found it.
+
+What this costs is a v3 fidelity break, in one narrow case: a v3 placeholder whose
+value came from an `env` block or an `envfile` resolved at parse time under v3 and
+does not under v4. Migrate detects exactly that case and reports it rather than
+emitting a `process.env.X ?? ''` that would silently evaluate to `''` (see
+"Migrating from v3"). A migrated `{ "connectionString": "{DATABASE_URL}" }` whose
+variable comes from the real environment or an env file — the ordinary case — still
+becomes a plain `process.env.DATABASE_URL ?? ''` and still resolves, instead of
+having its value baked into source.
 
 The bottom rung is `NODE_ENV`: when `production` is `true` and nothing else in the
 ladder supplied it, it defaults to `'production'`. This is v3
@@ -1373,9 +1397,8 @@ right environment (per-worker cache isolation is what makes cross-app
 contamination impossible).
 
 The per-application `env` config property configures the worker's runtime
-environment **and, per the ladder above, its config evaluation** — with the two
-excluded positions noted there (the root config's own evaluation, and root-inline
-entries). `envfile` is an opt-out of the convention
+environment **only** — never config evaluation, at any position (see the two views
+above). `envfile` is an opt-out of the convention
 and governs **both views**: when an entry declares it, none of the four
 mode-aware app files are read for that application — exactly the named file
 loads, in the app's eval worker *and* at worker boot alike, occupying the same
@@ -1420,7 +1443,8 @@ deliberately saner:
 - **In application code**: the runtime injects `PLT_<ID>_URL` environment variables
   into every worker (one per sibling application, uppercased id, non-alphanumerics →
   `_`). Existing app code reading `process.env.PLT_API_URL` keeps working. The
-  precedence ladder is explicit:
+  precedence ladder — the **worker-runtime view** of the two in "Env files" — is
+  explicit:
 
   ```
   real environment  >  entry env block  >  root env block  >  injected
@@ -1830,23 +1854,30 @@ Generation reads both views. Then:
    `http://<id>.plt.local` per "Inter-application URLs"; positions on a
    capability's `replaceEnvIgnore` list (vendored into the generation table —
    db's OpenAPI `ignoreRoutes`, where `/users/{id}` is placeholder-shaped but
-   must stay a literal) are emitted **verbatim**. Placeholders that v3 resolved
-   from config `env` blocks or `envfile` contents — the v3 worker applied both to
-   `process.env` *before* parsing the app's config — keep the ordinary
-   `process.env.X ?? ''` emission, because v4 makes both layers visible to per-app
-   config evaluation (see "Env files"). Nothing is ever inlined; a codemod must not
-   bake an `env`-block credential or a gitignored envfile's contents into tracked
-   source. **Root-inline entries take the deferred form**: their eager factory call
-   would see pre-block env, so migrate emits
-   `config: ctx => factory({ … ctx.env.X ?? '' … })` whenever such an entry
-   references a key supplied by an `env` block. It is never an `envfile` key:
-   `envfile` alongside an inline `config` is illegal (see "Env files"), and a
-   root-directory application declaring one is a pre-flight refusal, so that
-   combination cannot reach generation. This is not a rare
+   must stay a literal) are emitted **verbatim**. Placeholders that v3 resolved from
+   `envfile` contents keep the ordinary `process.env.X ?? ''` emission: an
+   `envfile` is a file on disk, it sits in the config-evaluation view like any other
+   app env file, and the main process resolves it before the evaluating worker
+   starts (see "Env files").
+
+   Placeholders that v3 resolved from a config **`env` block** are the one case with
+   no faithful emission. The v3 worker applied blocks to `process.env` *before*
+   parsing the app's config; v4 keeps them out of config evaluation entirely, so the
+   key is undefined when the emitted expression runs. Migrate emits the honest
+   `process.env.X ?? ''` and raises a **requires-review** note naming the key, the
+   block that supplied it and every position that referenced it — because that
+   expression yields `''` where v3 yielded a value. Nothing is inlined: a codemod
+   must not bake an `env`-block credential into tracked source, which is why this is
+   reported rather than silently repaired. The note states the two supported fixes —
+   move the value into an env file, or into the real environment — and records that
+   the block keeps working unchanged for the *running* application either way.
+   This is not a rare
    path — every wrapped single-app project migrates to a root-inline entry, and
    `runtime.env` is schema-legal there (`env` is absent from
    `runtimeUnwrappablePropertiesList`, so `wrapInRuntimeConfig` hoists it and the
-   v3 worker applied it before re-reading the same file). The root config's own
+   v3 worker applied it before re-reading the same file), so a single-app project
+   that parked a variable in `runtime.env` and read it back as `{PLT_X}` is exactly
+   the shape that gets the note. The root config's own
    keys keep the plain form: v3 never resolved those from `env` blocks either.
    Literal values in typed positions get the same treatment as placeholders: v3
    validated with `coerceTypes: true`, so `"port": "3001"` and `"workers": "4"`
@@ -2052,10 +2083,13 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    and the application directory), never above the boundary — `.env` files v3
    found elsewhere stop loading. Precedence direction stays v3-compatible for
    files (app overrides root-file defaults; the real environment always wins).
-   The root and entry `env` blocks are now also visible during **per-app config
-   evaluation**, which v3 achieved by applying them to `process.env` before the
-   worker parsed the app's config; the root config's own evaluation and
-   root-inline entries are excluded, as in v3.
+   The `env` blocks are **no longer visible during config evaluation** at any
+   position — v3 applied them to `process.env` before the worker parsed the app's
+   config, so a v3 placeholder reading a block-supplied key resolved then and
+   resolves to `''` now. Blocks continue to configure the running application
+   unchanged. Migrate reports every such placeholder rather than emitting a silently
+   empty expression (see "Migrating from v3"); a value that must be readable at
+   config time belongs in an env file or the real environment.
 6. `verticalScaler`, `healthChecksTimeouts`: removed from the v4 schema.
 7. Schema audit: placeholder-string unions removed from every schema (validation is
    stricter; migrate emits typed values).
