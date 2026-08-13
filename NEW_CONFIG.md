@@ -1910,7 +1910,36 @@ Generation reads both views. Then:
    a named miss threw, `:465-466`) — purely to classify each application's port.
    That is a lexical rule over data migrate already holds: it needs each entry's
    module, which the pre-flight check computes anyway, and no part of the runtime
-   transform. When it does **not** resolve — several applications, no explicit
+   transform.
+
+   **The count is taken after replaying v3's `enabled` splice, not over every
+   authored application.** v3 removes disabled applications *before* auto-detection
+   (`config.js:413-417`, then `:436-440`), so a two-application project with one
+   `enabled: false` had exactly one survivor, and that survivor became the
+   entrypoint and bound the root port. Counting the lexical set instead would
+   conclude "does not resolve" and drop the root `server` block from a project that
+   was publicly reachable — and since a v4 listener opens only where
+   `server.port` is defined, a framework application treated that way would not
+   start at all. Migrate therefore evaluates `isApplicationEnabled`
+   (`config.js:298-314`) over the lexical values and resolves the entrypoint
+   **twice, once for `production` and once for `development`** — the only two
+   values v3 derives (`:318`).
+
+   When both environments resolve to the same application, that is the entrypoint.
+   When they **disagree** — an `enabled` object such as
+   `{ "production": false, "development": true }` changing the survivor set — there
+   is no single faithful output, because which application owns the public address
+   is structural in v4 and cannot be made environment-dependent. Migrate stops with
+   a **pre-flight refusal** naming both applications and the deciding key, and tells
+   the user to set an explicit `entrypoint` and re-run. The same refusal covers an
+   **undecidable** `enabled`: a string that was a `{PLT_X}` placeholder is unknown at
+   migration time (v3 interpolated before testing `!== 'false'`), so when its value
+   could change which application resolves, migrate refuses rather than guessing.
+   An undecidable value that cannot change the outcome — an explicit `entrypoint` is
+   present, or the application is not the deciding one — is not a refusal.
+
+   When the entrypoint does **not** resolve in either environment — several
+   surviving applications, no explicit
    `entrypoint`, and zero or more than one gateway — v3 booted mesh-only, since
    `transform` left `config.entrypoint` undefined and threw only for a *named*
    missing one. Migrate then drops the root `server` block and reports it, rather
@@ -2004,11 +2033,15 @@ Generation reads both views. Then:
    manifest's entries from the dirty-tree check, leaves emitted files the user has since
    modified untouched, reporting them, and continues at install/validation). An
    install failure aborts before anything is deleted. The **pre-flight check** —
-   **any capability outside the vendored closure**, and any application declaring
-   `envfile` in the root config's own directory (see "Scope", above), stops the run
+   **any capability outside the vendored closure**, any application declaring
+   `envfile` in the root config's own directory (see "Scope", above), and an
+   **`enabled` value that decides the entrypoint differently for `production` and
+   `development` or cannot be decided at all** (see the exposure rules in step 1)
+   — stops the run
    with "hand-conversion required", naming what blocks it — actually
    executes **before step 1 writes anything**: it needs only the lexical view's
-   module list, normalized through the **rename table first** so a
+   module list and `enabled` values, the module list normalized through the
+   **rename table first** so a
    `@platformatic/composer` app is measured as `@platformatic/gateway` and passes.
    "Stops before modifying any file" must be literally true. The
    gate is deliberately about closure membership, not v4 readiness: without a

@@ -47,6 +47,13 @@ worked, but it buys position-dependent semantics — one key with different valu
 the eager and deferred forms of the same entry — and that is the complexity the
 decision removes.
 
+**B5** is resolved by replaying the splice: migrate evaluates `isApplicationEnabled` over
+the lexical values and resolves the entrypoint once for `production` and once for
+`development`. Agreement proceeds; disagreement — or a `{PLT_X}`-valued `enabled`
+that could change which application resolves — is a pre-flight refusal naming the
+applications and the deciding key, since which application owns the public address
+is structural in v4 and cannot be made environment-dependent.
+
 Three more are **resolved in the document**:
 
 - **B1** — per-app `watt.config.*` emission is now **unconditional in multi-app
@@ -214,6 +221,8 @@ v3's own docs recommended `useHttp` for Express-style apps, which are
 add a migrate test per capability family asserting the emitted block validates.
 
 ### B5. Lexical entrypoint resolution ignores v3's `enabled` splice, dropping the root `server` block from projects that were publicly reachable
+
+**RESOLVED** — the entrypoint count is taken after replaying v3's `enabled` splice, resolved once per environment; disagreement or an outcome-deciding undecidable value is a pre-flight refusal.
 
 v3 splices disabled applications out (`runtime/lib/config.js:413-417`) **before**
 entrypoint auto-detection (`:436-463`). Migrate resolves the entrypoint from the
