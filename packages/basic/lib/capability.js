@@ -545,7 +545,7 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  async startWithCommand (command, loader, scripts) {
+  async startWithCommand (command, loader, scripts, { urlFromScript = false } = {}) {
     const config = this.config
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
@@ -554,7 +554,8 @@ export class BaseCapability extends EventEmitter {
       logger: this.logger,
       loader,
       context,
-      scripts
+      scripts,
+      urlFromScript
     })
 
     this.setupChildManagerEventsForwarding(this.childManager)

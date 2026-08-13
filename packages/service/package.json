@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "3.66.0",
+  "version": "3.67.0",
   "description": "Platformatic Service",
   "main": "index.js",
   "types": "index.d.ts",
@@ -37,7 +37,7 @@
     "self-cert": "^2.0.0",
     "split2": "^4.2.0",
     "typescript": "~6.0.3",
-    "undici": "7.28.0",
+    "undici": "7.29.0",
     "vscode-json-languageservice": "^5.3.9",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.4.1"
