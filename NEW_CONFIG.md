@@ -1070,8 +1070,10 @@ serial scheme.
    that later added Vite as
    unrelated tooling would silently switch capability on its next boot. Because
    scaffolding always adds the chosen capability to the app's dependencies, the
-   detector provably reconstructs the wizard's choice — which is what makes
-   omit-defaults generation sound. Boot logs one line per detected app
+   detector provably reconstructs the wizard's choice — which is what makes the
+   **single-app** zero-config case sound. Multi-app projects never rely on it:
+   `create` and `migrate` both emit a file per application, with the capability
+   written explicitly. Boot logs one line per detected app
    (`web/frontend → @platformatic/next (detected)`) so the inference is never
    invisible, and there is no generic-`basic` fallback for runtime applications.
 3. In every eval worker, a **`module.registerHooks`** resolve hook (the synchronous
@@ -1629,18 +1631,21 @@ export default {
 
 ### Config-writing tooling
 
-- **`wattpm create` / `create-wattpm`**: scaffolds configuration **only where it
-  configures something** — the same omit-defaults rule migrate follows. A
-  single-app project with default answers gets **no Watt config file** (zero-config
-  detection covers it — subject to the open port question in "How applications are
-  exposed"); a monorepo gets the thin autoload root (genuinely load-bearing:
-  the autoload path) and per-app `watt.config.ts` files
-  (`.mts`/`.js` variants per the rules above) for apps where the wizard set
-  non-default options **and for every application that needs a port** — which
-  under v4's exposure model is every framework application, so the omit-defaults
-  gate is narrower than it was. Omission is otherwise safe because the wizard adds
-  the chosen capability to the app's dependencies, and the deterministic detector
-  reconstructs exactly that choice (see "Loading mechanism"). The v3 wizard's
+- **`wattpm create` / `create-wattpm`**: a **single-app** project with default
+  answers gets **no Watt config file** (zero-config detection covers it — subject to
+  the open port question in "How applications are exposed"); omission is safe there
+  because the wizard adds the chosen capability to the app's dependencies and the
+  deterministic detector reconstructs exactly that choice (see "Loading mechanism").
+  A **monorepo** gets the thin autoload root (genuinely load-bearing: the autoload
+  path) **and a `watt.config.ts` for every application** (`.mts`/`.js` variants per
+  the rules above), including applications configured entirely by defaults. The
+  omit-defaults rule is a single-app rule, because in a multi-app project a
+  defaults-only file is not redundant: **owning a file is the scope declaration**,
+  and it is what makes the scaffolded per-app `"dev": "wattpm dev"` boot *that*
+  application rather than walking up to the root and booting the whole runtime.
+  Since the generator writes those scripts into every application directory
+  unconditionally (`generators/lib/base-generator.js:343-352`), omitting the file
+  would silently redefine the script the generator just wrote. The v3 wizard's
   `3042` prompt is gone from the root — ports are per-application now, and the
   generator hands application *i* `3042 + i`
   (`runtime/lib/generator.js:168-171`). The wizard's closing output prints where `watt.config.ts`
@@ -1764,21 +1769,24 @@ Generation reads both views. Then:
 1. Emit the v4 files: for a v3 **single-app** project, one root file — the bare
    factory export when the v3 config carried no runtime settings, `defineConfig`
    with the singular `application` shorthand when it did (Levels 1/1b); for a
-   **multi-app** project, per-app `watt.config.ts` files plus a thin root
-   `watt.config.ts`. A per-app file is omitted only when it would contain
-   nothing but defaults **and** the v4 detector provably reconstructs the v3
-   `$schema` capability — exactly one app-local dependency **from the detector's
-   capability table**, equal to it — a prefix test would fail for every
-   v3-generated Node app, since `node/lib/generator.js:78-80` writes both
-   `@platformatic/node` and `@platformatic/globals`; otherwise the file is emitted or the dependency added in step 2
-   (v3's `$schema` + runtime-bundled fallback made app-local capability deps
-   optional, so `$schema`-only apps must not lose their identity to framework
-   inference). A **renamed** module never satisfies the gate on its old name: a
-   `@platformatic/composer` app always gets an emitted `gateway(…)` file, and the
-   superseded dependency is removed in step 2 — the one sanctioned `package.json`
-   edit beyond ranges and additions. A **`module`-identified** app never satisfies
-   it either (its capability is not `@platformatic/*`, so the detector cannot
-   reconstruct it) and always gets an emitted `{ module: '…' }` plain-object
+   **multi-app** project, a `watt.config.ts` for **every** application plus a thin
+   root `watt.config.ts`. Per-app files are emitted **unconditionally**, including
+   when one would contain nothing but the capability call. Two reasons: owning a
+   file is the scope declaration (see "Loading mechanism"), and migrate does not
+   touch `package.json` scripts — so an application left without one keeps a
+   `"dev": "wattpm dev"` that walks up and boots the whole runtime. Emitting always
+   also means migrate never depends on the v4 detector reconstructing the v3
+   `$schema` capability: it is written explicitly in every file, so `$schema`-only
+   apps cannot lose their identity to framework inference (v3's `$schema` +
+   runtime-bundled fallback made app-local capability dependencies optional, and
+   `node/lib/generator.js:78-80` writes both `@platformatic/node` and
+   `@platformatic/globals`, so no dependency test could have been reliable anyway).
+   Missing app-local capability dependencies are still added in step 2. A
+   **renamed** module is written under its new name — a
+   `@platformatic/composer` app gets a `gateway(…)` file, and the
+   superseded dependency is removed in step 2, the one sanctioned `package.json`
+   edit beyond ranges and additions. A **`module`-identified** app gets a
+   `{ module: '…' }` plain-object
    config. An application whose directory coincides with the root — or with
    any directory already owning the root file — is emitted **root-inline**
    (`applications[].config: factory(…)`, resolvable by definition since its
@@ -1874,8 +1882,7 @@ Generation reads both views. Then:
      worker's context last). Migrate reproduces the family's order and emits a
      requires-review note whenever the two blocks disagreed on a key;
    - **`useHttp: true` becomes a `server` block reproducing the defaults v3
-     synthesized** (`runtime/lib/worker/main.js:258-268` pre-`e2da15eda`), and
-     forces per-app file emission regardless of the omit-defaults gate. What lands
+     synthesized** (`runtime/lib/worker/main.js:258-268` pre-`e2da15eda`). What lands
      in that block is family-dependent for two independent reasons. The
      **`keepAliveTimeout: 5000`** of the v3 block is emitted only for
      service/db/gateway; the basic family gets `{ port: 0, hostname: '127.0.0.1' }`

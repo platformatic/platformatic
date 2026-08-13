@@ -23,7 +23,19 @@ Four findings below were artifacts of the stale branch and are **dead**:
   detector-table objection is void; the omit-defaults argument should be re-read
   against the real table rather than merely un-flagged.
 
-Two are **resolved in the document**:
+Three are **resolved in the document**:
+
+- **B1** — per-app `watt.config.*` emission is now **unconditional in multi-app
+  projects**, in both `create` and `migrate`; the omit-defaults rule survives only
+  for single-app projects, where a defaults-only file really is redundant. The
+  reason is stated at both sites: after round 10 a defaults-only file is the scope
+  declaration, and scaffolding writes `"dev": "wattpm dev"` into every application
+  directory unconditionally
+  (`generators/lib/base-generator.js:343-352`), so omitting the file silently
+  redefines the script the generator just wrote. Side effect: migrate no longer
+  depends on the detector reconstructing a v3 `$schema` capability, which retires
+  the remaining half of **M2** — the detector-soundness argument now covers only the
+  single-app zero-config case, and says so.
 
 - **B4** — migrate now emits `keepAliveTimeout` only for service/db/gateway; the
   basic family gets `{ port: 0, hostname: '127.0.0.1' }`. Adding the key to the six
@@ -77,6 +89,8 @@ describes even on `v4`. Only the config-evaluation half differs.)
 ## Blockers
 
 ### B1. Omitting a per-app config file now silently changes what `dev`/`build`/`start` do there — and both `create` and `migrate` are specified to omit it
+
+**RESOLVED** — per-app files are now emitted unconditionally in multi-app projects (`create` and `migrate`); omit-defaults is a single-app rule. See STATUS.
 
 Round 10 made owning a config file the *whole* of the scoping rule (`:652-661`).
 Nothing in the scaffolding or migration sections was updated, and both are
