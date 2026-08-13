@@ -79,7 +79,26 @@ Three more are **resolved in the document**:
   `delete application.useHttp` to the chain; that remains open if the team prefers
   the runtime to drop it.
 
-The rest stand and were re-verified against the merged base.
+**B6** is resolved, and it exposed a rule that was missing rather than merely two bad
+examples. Level 2b had *two* schema errors, not one: `telemetry` is not a top-level
+`node` key (only service/db/gateway have it) and `main` lives at `node.main`, with
+every capability schema `additionalProperties: false`. Making `api` a `service`
+keeps exactly what the example teaches — one key name meaning different things at
+the entry and factory levels.
+
+Appendix B's `3042` was a leak from the zero-config/scaffolding convention into
+migrate output. v3 was in fact stricter than "no default": ajv with `coerceTypes`
+**rejects** `''` for a number (verified), so `"port": "{PORT}"` with the variable
+unset failed validation and the project did not boot. The document now records that
+typed-position placeholders were implicitly required, that `?? ''` preserves the
+refusal for enum/boolean positions but **not** for numbers (`Number('')` is `0`, a
+valid "random port"), and that migrate emits a requires-review note naming the
+variable, path, target type and outcome. `managementApi` is carried over rather than
+dropped: `''` is falsy and preserves v3's **off**, where omitting the key picks up
+its schema `default: true`.
+
+All five blockers are now resolved. The rest stand and were re-verified against the
+merged base.
 
 ---
 
@@ -240,6 +259,8 @@ framework capability it now does not start at all.
 disagree, refuse and name it rather than dropping silently.
 
 ### B6. The Level 2b example and Appendix B are both invalid against the rules they illustrate
+
+**RESOLVED** — Level 2b's `api` is now a `service` (which has top-level `telemetry`); Appendix B is regenerated from the rules, and typed-position placeholders get a requires-review note. Examples become CI golden fixtures.
 
 **Level 2b** (`:272-280`) passes `telemetry` to `node()`. Verified:
 `packages/node/schema.json` has no top-level `telemetry` — only `service`, `db` and

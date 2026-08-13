@@ -250,7 +250,7 @@ layout means adding it to the root `package.json` (see "Dependency resolution"):
 // watt.config.ts
 import { defineConfig } from 'wattpm'
 import { gateway } from '@platformatic/gateway'
-import { node } from '@platformatic/node'
+import { service } from '@platformatic/service'
 import { next } from '@platformatic/next'
 
 export default defineConfig(({ env, production }) => ({
@@ -274,8 +274,7 @@ export default defineConfig(({ env, production }) => ({
       path: 'web/api',
       workers: production ? 4 : 1,
       telemetry: { instrumentations: ['pg'] },
-      config: node({
-        main: 'server.js',
+      config: service({
         telemetry: { applicationName: 'api', exporter: { type: 'otlp' } }
       })
     },
@@ -1837,12 +1836,27 @@ Generation reads both views. Then:
    aliases, and converts `{PLT_X}` placeholders into typed expressions that
    **preserve v3's unset-variable semantics** — v4 omits `undefined`-valued
    properties, so a bare `process.env.PLT_X` would silently change all three v3
-   behaviors. Under effective non-strict mode a string position becomes
+   behaviors. Under effective non-strict mode a position becomes
    `process.env.PLT_X ?? ''` (v3 replaced a missing variable with `''`); under
    effective `strictEnv: true` / `'warn'` the emitted file gets a small generated
    `requiredEnv('PLT_X')` helper that throws (or warns) when the variable is
    unset — a project that refused to boot without `TOKEN` still refuses after
-   migration. Two carve-outs: "effective strictEnv" per app file follows v3's
+   migration.
+
+   The `?? ''` emission is uniform across positions, but it is **not
+   behaviour-preserving in a non-string position**, and migrate says so. v3
+   validated after replacement with `coerceTypes: true`, and ajv does not coerce
+   `''` — it rejects it — so `"port": "{PORT}"` or `"level": "{PLT_LEVEL}"` with the
+   variable unset failed validation and the project did not boot. Those variables
+   were *implicitly required by their position's type*. After migration the two
+   cases diverge: an enum or boolean position still rejects `''` at load, so the
+   refusal survives, while a **number** position does not — `Number('')` is `0`,
+   which is a valid port meaning "choose one at random". Migrate therefore emits a
+   **requires-review** note for every placeholder in a non-string position, naming
+   the variable, the JSON path, the target type and which of the two outcomes
+   applies. It emits the note rather than a `requiredEnv` call because a value the
+   deployment always sets needs no helper, and the codemod cannot tell the two
+   apart from the laptop it runs on. Two carve-outs: "effective strictEnv" per app file follows v3's
    precedence (`strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv` —
    the *root* config's value wins when defined, and a per-app capability config
    carrying a `runtime` block supplies the third fallback,
@@ -2345,10 +2359,15 @@ Roughly ordered; steps 1–5 are the critical path.
    fixes stay decoupled: `npx` resolves at invocation time, so they reach every
    installed v4 runtime without a runtime re-release.
 8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
-   package type) and emits config only for non-default answers (single-app defaults
+   package type); a monorepo emits a config file for **every** application, while a
+   single-app project emits one only for non-default answers (single-app defaults
    produce no config file); scaffolded test helpers import the config module instead
    of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
+   The worked examples in this document — Level 2b and Appendix B's output — ship as
+   **golden fixtures** loaded through the real v4 loader and validated against the
+   shipped capability schemas, so an example that contradicts a schema fails CI
+   instead of surviving review.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` / `getRuntimeApplicationConfig`
@@ -2539,19 +2558,36 @@ import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
 export default defineConfig({
-  logger: { level: 'info' },
+  logger: { level: process.env.PLT_SERVER_LOGGER_LEVEL ?? '' },
+  managementApi: process.env.PLT_MANAGEMENT_API ?? '',
   application: {
     workers: 2,
     config: next({
       server: {
-        hostname: process.env.PLT_SERVER_HOSTNAME,
-        port: Number(process.env.PORT ?? 3042)
+        hostname: process.env.PLT_SERVER_HOSTNAME ?? '',
+        port: Number(process.env.PORT ?? '')
       },
-      cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL }
+      cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL ?? '' }
     })
   }
 })
 ```
+
+with the migration report:
+
+```
+! requires review — typed-position placeholders (2)
+  PORT → application.config.server.port (number)
+    v3 refused to boot when PORT was unset; v4 evaluates Number('') to 0 and
+    listens on a random port. Set PORT, or write a literal.
+  PLT_SERVER_LOGGER_LEVEL → logger.level (enum)
+    v3 refused to boot when it was unset; v4 rejects '' at load.
+```
+
+Every placeholder becomes `?? ''` — including `managementApi`, which must be
+carried over rather than dropped: v3 with the variable unset produced `''`, which
+is falsy, so the management API was **off**, while omitting the key entirely picks
+up its schema `default: true` and turns it **on**.
 
 The `server` block crossed the boundary: it was a *runtime* setting in v3, hoisted
 out of the wrapped block by `wrapInRuntimeConfig`; in v4 it is capability
