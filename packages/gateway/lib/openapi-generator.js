@@ -152,7 +152,7 @@ async function openApiGatewayPlugin (app, { opts, generated }) {
   const openApiGlue = await import('@platformatic/fastify-openapi-glue')
 
   try {
-    await registerOpenApiGlue(app, openApiGlue, opts, apiByApiRoutes)
+    await registerOpenApiGlue(app, openApiGlue, apiByApiRoutes)
   } catch (error) {
     // The glue rejects the whole composed specification with a generic error.
     // Re-validate each downstream schema separately so the error names the
@@ -175,10 +175,10 @@ async function openApiGatewayPlugin (app, { opts, generated }) {
   })
 }
 
-async function registerOpenApiGlue (app, openApiGlue, opts, apiByApiRoutes) {
+async function registerOpenApiGlue (app, openApiGlue, apiByApiRoutes) {
   await app.register(openApiGlue, {
     specification: app.composedOpenApiSchema,
-    addEmptySchema: opts.addEmptySchema,
+    addEmptySchema: true,
     operationResolver: (operationId, method, openApiPath) => {
       const { origin, prefix, schema } = apiByApiRoutes[openApiPath]
       const originPath = schema[originPathSymbol]

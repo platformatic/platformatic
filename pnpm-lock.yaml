@@ -122,7 +122,7 @@ importers:
         version: 4.2.0
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
       ws:
         specifier: ^8.18.0
         version: 8.21.1
@@ -233,7 +233,7 @@ importers:
         version: 6.9.0
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
       ws:
         specifier: ^8.16.0
         version: 8.21.1
@@ -322,7 +322,7 @@ importers:
         version: 1.22.12
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -537,7 +537,7 @@ importers:
         version: 6.0.3
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.7.2
@@ -567,7 +567,7 @@ importers:
         version: 3.1.0
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
     devDependencies:
       '@fastify/cookie':
         specifier: ^11.0.0
@@ -694,8 +694,8 @@ importers:
         specifier: ^7.6.3
         version: 7.8.5
       undici:
-        specifier: 7.28.0
-        version: 7.28.0
+        specifier: ^7.28.0
+        version: 7.29.0
       yaml:
         specifier: ^2.4.1
         version: 2.9.0
@@ -755,8 +755,8 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0
       '@platformatic/fastify-openapi-glue':
-        specifier: ^5.1.0
-        version: 5.1.0
+        specifier: ^5.2.0
+        version: 5.2.0
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
@@ -849,7 +849,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
     devDependencies:
       '@fastify/multipart':
         specifier: ^9.2.1
@@ -928,7 +928,7 @@ importers:
         version: 9.14.0
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1647,7 +1647,7 @@ importers:
         version: 5.33.1
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
       undici-thread-interceptor:
         specifier: ^1.3.1
         version: 1.5.0
@@ -1879,7 +1879,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^5.0.0
@@ -2501,7 +2501,7 @@ importers:
         version: 6.0.3
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
 
   packages/wattpm-pprof-capture:
     dependencies:
@@ -2516,7 +2516,7 @@ importers:
         version: link:../globals
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
     devDependencies:
       '@platformatic/foundation':
         specifier: workspace:*
@@ -2596,7 +2596,7 @@ importers:
         version: 6.0.3
       undici:
         specifier: ^7.27.2
-        version: 7.28.0
+        version: 7.29.0
 
 packages:
 
@@ -5389,8 +5389,8 @@ packages:
     resolution: {integrity: sha512-eCL++LyBjSsqalm4I67dl+gVqLSKd6gPYCieD72S5KqqAkmSAgAYNHt+lL+iVXssWPSfbuIJ5PEwpn5JVD73Xw==}
     engines: {node: '>= 22.19.0'}
 
-  '@platformatic/fastify-openapi-glue@5.1.0':
-    resolution: {integrity: sha512-R5bHPQast/w5p+I+/Y5X1r+A8Fxqn7z0etWeaSYrFkbLvvGTEFGvldu0QGXnKjHo6XQo0P2o6D6gNr5uc36ZEA==}
+  '@platformatic/fastify-openapi-glue@5.2.0':
+    resolution: {integrity: sha512-5Syxh9EHCcxwrTvqRm2jv9Lpw7AUni3EWK95/5aFtIFAtz+POxlCbMaHcz3rdAD+D44nd1ZGqWa6wZ6dKNTqlg==}
 
   '@platformatic/graphql-composer@0.11.0':
     resolution: {integrity: sha512-e3EZH1okfdQPkhTNPrijgGQrlETFVO1V5WOjxN4EJFYRlurZdmqSuJw56JgvD08TMhdRXgwQK9bAbn1ZY2YzHg==}
@@ -12619,9 +12619,13 @@ packages:
     resolution: {integrity: sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==}
     engines: {node: '>=18.17'}
 
-  undici@7.28.0:
-    resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
+  undici@7.29.0:
+    resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
     engines: {node: '>=20.18.1'}
+
+  undici@8.10.0:
+    resolution: {integrity: sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ==}
+    engines: {node: '>=22.19.0'}
 
   undici@8.9.0:
     resolution: {integrity: sha512-aWZpUj7XoGonMClx4gdDRfgBjqeA+F473aDmROQQbM9n6PRfK/u1q/a0X4wMTgcHfT8H6fpbt98PFuDUwFg2YA==}
@@ -14607,7 +14611,7 @@ snapshots:
       fast-querystring: 1.1.2
       fastify-plugin: 6.0.0
       toad-cache: 3.7.4
-      undici: 7.28.0
+      undici: 7.29.0
 
   '@fastify/send@4.1.0':
     dependencies:
@@ -15201,7 +15205,7 @@ snapshots:
       p-map: 7.0.6
       single-user-cache: 2.1.0
       tiny-lru: 11.4.7
-      undici: 7.28.0
+      undici: 7.29.0
       use-strict: 1.0.1
       ws: 8.21.1
     transitivePeerDependencies:
@@ -16528,7 +16532,7 @@ snapshots:
 
   '@platformatic/dynamic-buffer@0.4.0': {}
 
-  '@platformatic/fastify-openapi-glue@5.1.0':
+  '@platformatic/fastify-openapi-glue@5.2.0':
     dependencies:
       '@platformatic/openapi-schema-validator': 3.0.0
       fastify-plugin: 5.1.0
@@ -16542,7 +16546,7 @@ snapshots:
       mercurius: 16.10.0(graphql@16.14.2)
       metaline: 1.1.0
       pino: 9.14.0
-      undici: 7.28.0
+      undici: 7.29.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -16556,7 +16560,7 @@ snapshots:
       http-errors-enhanced: 4.0.2
       is-animated: 2.0.2
       sharp: 0.34.5
-      undici: 7.28.0
+      undici: 7.29.0
     optionalDependencies:
       '@platformatic/job-queue': 0.4.1
       iovalkey: 0.3.3
@@ -16589,7 +16593,7 @@ snapshots:
       long: 5.3.2
       prom-client: 15.1.3
       protobufjs: 8.7.1
-      undici: 7.28.0
+      undici: 7.29.0
 
   '@platformatic/undici-cache-memory@0.9.0': {}
 
@@ -21001,7 +21005,7 @@ snapshots:
 
   inspector-client@0.2.0:
     dependencies:
-      undici: 7.28.0
+      undici: 7.29.0
 
   int64-buffer@0.1.10: {}
 
@@ -22775,7 +22779,7 @@ snapshots:
       oxc-minify: 0.110.0(@emnapi/core@2.0.0-alpha.3)(@emnapi/runtime@2.0.0-alpha.3)
       oxc-transform: 0.110.0(@emnapi/core@2.0.0-alpha.3)(@emnapi/runtime@2.0.0-alpha.3)
       srvx: 0.10.1
-      undici: 7.28.0
+      undici: 7.29.0
       unenv: 2.0.0-rc.24
       unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.2(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
@@ -23306,7 +23310,7 @@ snapshots:
       ultrahtml: 1.7.0
       uncrypto: 0.1.3
       unctx: 3.0.0(magic-string@1.1.0)(oxc-parser@0.140.0)(rolldown@1.2.1)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.1)(rollup@4.62.4)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(tsx@4.23.4)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.25)))
-      undici: 8.9.0
+      undici: 8.10.0
       unhead: 3.2.3(esbuild@0.28.1)(rolldown@1.2.1)(rollup@4.62.4)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(tsx@4.23.4)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.25))
       unimport: 6.4.0(esbuild@0.28.1)(oxc-parser@0.140.0)(rolldown@1.2.1)(rollup@4.62.4)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(tsx@4.23.4)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.25))
       unplugin: 3.3.0(esbuild@0.28.1)(rolldown@1.2.1)(rollup@4.62.4)(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.49.0)(tsx@4.23.4)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.25))
@@ -25750,20 +25754,22 @@ snapshots:
     dependencies:
       async-cache-dedupe: 3.4.0
       fast-jwt: 6.3.1
-      undici: 7.28.0
+      undici: 7.29.0
 
   undici-thread-interceptor@1.5.0:
     dependencies:
       fastq: 1.20.1
       hyperid: 4.0.0
       light-my-request: 6.6.0
-      undici: 7.28.0
+      undici: 7.29.0
 
   undici-types@6.21.0: {}
 
   undici@6.28.0: {}
 
-  undici@7.28.0: {}
+  undici@7.29.0: {}
+
+  undici@8.10.0: {}
 
   undici@8.9.0: {}
 
