@@ -752,9 +752,12 @@ which every build style reads.
 listener.** `entrypoint` and root
 `server` are gone from the runtime schema, `server` and `useHttp` are gone from
 application entries, and `server.portAssignment` is gone from the shared server
-schema — the v4 upgrade chain deletes all of them
+schema — the v4 upgrade chain deletes `entrypoint`, root `server` and every
+per-application `server`, taking `portAssignment` with the latter
 (`runtime/lib/versions/v4.0.0.js:16-27`), while explicitly preserving the
-capability-owned `server` of a standalone application config (`:10-14`). The
+capability-owned `server` of a standalone application config (`:10-14`). It does
+**not** delete `useHttp`, which no longer has a reader; migrate is what converts it
+(see "Migrating from v3"). The
 runtime no longer holds a URL: `#url`, `getUrl()` and `getEntrypointDetails()` are
 gone. **Each application exposes itself through its own capability
 configuration**, and this section is the whole of the model. It applies uniformly
@@ -1870,10 +1873,25 @@ Generation reads both views. Then:
      (`service/lib/capability.js:223` pre-`e2da15eda`, which re-applied the
      worker's context last). Migrate reproduces the family's order and emits a
      requires-review note whenever the two blocks disagreed on a key;
-   - **`useHttp: true` becomes `server: { port: 0, hostname: '127.0.0.1',
-     keepAliveTimeout: 5000 }`** — the exact defaults v3 synthesized
-     (`runtime/lib/worker/main.js:258-268` pre-`e2da15eda`) — and forces per-app
-     file emission regardless of the omit-defaults gate. Whether a *declared*
+   - **`useHttp: true` becomes a `server` block reproducing the defaults v3
+     synthesized** (`runtime/lib/worker/main.js:258-268` pre-`e2da15eda`), and
+     forces per-app file emission regardless of the omit-defaults gate. What lands
+     in that block is family-dependent for two independent reasons. The
+     **`keepAliveTimeout: 5000`** of the v3 block is emitted only for
+     service/db/gateway; the basic family gets `{ port: 0, hostname: '127.0.0.1' }`
+     alone. v3 handed the synthesized block to a `deepmerge` in the capability
+     constructor rather than through a capability schema, so the key was **inert**
+     for the basic family — those capabilities run the framework's own server and
+     none of them reads `server.keepAliveTimeout` (`next` does honour a keep-alive
+     timeout, but reads it from `KEEP_ALIVE_TIMEOUT` in the environment,
+     `next/lib/capability.js:413-429`). In v4 the block is validated, and the
+     basic-family `server` is a five-key subset — `hostname, port, backlog, http2,
+     https`, `additionalProperties: false` (`node/schema.json`, `next/schema.json`)
+     — while the full Fastify option set that defines `keepAliveTimeout`
+     (`foundation/lib/schema.js:535`) belongs to service/db/gateway. Emitting it for
+     the basic family would fail step 3 on migrate's own output; adding it to those
+     schemas instead would validate a key nothing reads. Dropping it preserves v3
+     behaviour exactly, because it had none. Whether a *declared*
      port survives alongside it is family-dependent for the same reason: the
      basic family kept the app's fixed port (requires-review note), while for
      service/db/gateway the `useHttp` defaults won and the declared port was
@@ -2093,10 +2111,16 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     `useHttp` and `server.portAssignment` are all removed** — the runtime has no
     listener of its own, and each application exposes itself through its own
     capability configuration (see "How applications are exposed"). The v4 upgrade
-    chain deletes every one of them from runtime-dialect configs
-    (`runtime/lib/versions/v4.0.0.js:16-27`) while preserving a standalone
+    chain deletes `entrypoint`, the root `server` and every per-application
+    `server` from runtime-dialect configs (`runtime/lib/versions/v4.0.0.js:16-27`)
+    — which takes `server.portAssignment` with it — while preserving a standalone
     application config's capability-owned `server` (`:10-14`), and `upgrade()`
     warns when a root `server` is discarded (`runtime/lib/upgrade.js:16-19`).
+    **`useHttp` is the exception: the chain does not delete it**, and
+    `applications.items` does not set `additionalProperties: false`, so it survives
+    validation as a key nothing reads — an in-place upgrade leaves `useHttp: true`
+    silently inert. Migrate is what turns it into the v4 spelling, and the
+    requires-review note it emits is the only signal a user gets.
     Consequences: a managed listener opens **iff** the capability's `server.port`
     is defined, so an application with no `server` block is mesh-only and a
     framework application with none does not start; `server: { port: 0 }` is the

@@ -8,7 +8,42 @@ every source claim re-verified.
 
 ---
 
-## First: two reported blockers dissolve, and expose a coordination requirement
+## STATUS — updated after `v4` merged `main` (PR #5071, merge `f9accd3fc`)
+
+The branch is now rebased onto a `v4` that contains `main` through `015f11c66`.
+Four findings below were artifacts of the stale branch and are **dead**:
+
+- **R1 / the section immediately below** — `v4` now has `23215f19e` (#5035).
+  `loadEnv` returns `{ ...envFromFile, ...baseEnv, ...additionalEnv }` with
+  `kEnvFileFallbackKeys`. The document's ladder matches its target branch. No
+  coordination item remains.
+- **M1** — `packages/nitro` exists on `v4` (`@platformatic/nitro`).
+- **M2** — `applicationTypes` contains `@platformatic/tanstack` *and*
+  `@platformatic/nitro`, plus `php`, `ai-warp` and three hooks capabilities. The
+  detector-table objection is void; the omit-defaults argument should be re-read
+  against the real table rather than merely un-flagged.
+
+Two are **resolved in the document**:
+
+- **B4** — migrate now emits `keepAliveTimeout` only for service/db/gateway; the
+  basic family gets `{ port: 0, hostname: '127.0.0.1' }`. Adding the key to the six
+  basic schemas was rejected: nothing reads `server.keepAliveTimeout` there (`next`
+  honours only `KEEP_ALIVE_TIMEOUT` from the environment,
+  `next/lib/capability.js:413-429`), so it was already inert in v3 and would
+  validate a key with no effect.
+- **M3** — both sites now state that the chain does not delete `useHttp` and that
+  migrate is its only handler. Taken by narrowing the claim, not by adding
+  `delete application.useHttp` to the chain; that remains open if the team prefers
+  the runtime to drop it.
+
+The rest stand and were re-verified against the merged base.
+
+---
+
+## ~~First: two reported blockers dissolve, and expose a coordination requirement~~ (SUPERSEDED)
+
+*Kept for the record. `v4` now has #5035, so the coordination requirement below is
+discharged — see STATUS.*
 
 Two passes independently reported that the env ladder "inverts v3" — that `loadEnv`
 spreads the env file **last**, so a `.env` beats the real environment, making
@@ -118,6 +153,8 @@ entries, and state that the deferred form receives the blocks. Same edit for
 
 ### B4. Migrate's `useHttp` emission is rejected by every basic-family `server` schema — step 3 fails on migrate's own output
 
+**RESOLVED** — migrate emits `keepAliveTimeout` only for service/db/gateway; the basic family gets `{ port: 0, hostname: '127.0.0.1' }`. See STATUS.
+
 Rule 2 (`:1877-1886`) emits `{ port: 0, hostname: '127.0.0.1', keepAliveTimeout: 5000 }`
 — a faithful copy of v3's synthesized block (`worker/main.js:262-267`
 pre-`e2da15eda`). But `keepAliveTimeout` exists only in the `service`/`db`/`gateway`
@@ -176,6 +213,8 @@ schemas.
 
 ### M1. `@platformatic/nitro` does not exist; five claims rest on it, one being the justification for classification rule 2
 
+**DEAD** — `packages/nitro` exists on the merged `v4`. See STATUS.
+
 `git ls-files packages/nitro` is empty — the directory is an untracked leftover
 containing only `node_modules`. There is no nitro package, schema, or detector entry.
 Affected: `:429-432` and `:434-437` (the multi-block flattening list), `:437-439`
@@ -190,6 +229,8 @@ alone.
 
 ### M2. The specified detector table cannot reconstruct `@platformatic/tanstack`, refuting the omit-defaults soundness argument
 
+**DEAD** — `applicationTypes` contains tanstack and nitro on the merged `v4`. See STATUS.
+
 `:1064-1071` argues omit-defaults is sound because "the detector provably
 reconstructs the wizard's choice". `create-wattpm` offers `@platformatic/tanstack`
 (`packages/create-wattpm/lib/index.js:35`), and a scaffolded tanstack app declares
@@ -203,6 +244,8 @@ react-router and node; add a test asserting `detect(scaffold(c)) === c` for ever
 entry in `internalCapabilities`.
 
 ### M3. The v4 upgrade chain does not delete `useHttp`, and the document claims it does twice
+
+**RESOLVED** — both sites narrowed; migrate named as the only handler. See STATUS.
 
 `:751-756` and breaking change 19 (`:2095-2098`) both say the chain deletes
 `entrypoint`, root `server`, entry `server`, `useHttp` and `portAssignment`, citing
