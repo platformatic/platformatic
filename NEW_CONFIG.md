@@ -637,18 +637,27 @@ Classification is four unconditional rules:
    root config;
 4. an empty/other object is a root config (all defaults).
 
-**The nearest config decides — commands are package-local.** The ordering is
-strict, so the deciding file always executes with real context: **(1)** find the
-nearest `watt.config.*` at or above the current directory **by filename alone** (no
-execution) — that is the **deciding file** — and continue, still by filename and
-still **within the boundary**, to the topmost one, whose directory is the
-**project root** for env purposes; the two are the same file in a single-config
-project; **(2)** run `loadEnv` — the deciding file's
-directory's env files layered over the project root's (the two-directory rule, see
-"Env files"); **(3)** only then execute candidates in
-their eval workers to classify them (classification is cached, so a file classified
-during the walk is not re-evaluated by a later discovery pass — config code still
-runs once per load):
+**Run what is here.** The whole rule is three steps: **(1)** find the nearest
+`watt.config.*` from the current directory upward, stopping at — and including —
+the nearest ancestor containing a `package.json`, and searching the current
+directory alone when there is no such ancestor; that is the **deciding file**,
+found **by filename alone**, with no execution; **(2)** run `loadEnv` from the
+deciding file's directory, which walks up for `.env` files exactly as v3 does (see
+"Env files"); **(3)** only then execute the deciding file in its eval worker to
+classify it (classification is cached, so a file classified here is not
+re-evaluated by a later discovery pass — config code still runs once per load).
+
+The stop condition is the one thing worth stating plainly: **the search never
+leaves your package.** A directory with a `package.json` is where a Node project
+begins, so a `watt.config.*` above it belongs to something else. This is what makes
+`wattpm start` inside an application run *that application* — the application's
+directory has its own `package.json`, so the search begins and ends there — and it
+is also the whole of the trust story: a stray `~/watt.config.ts` is never found,
+because reaching it would mean walking out of the package you are standing in.
+Nothing above the stop point is executed, and nothing needs to be: env files are
+data and are found separately, by their own walk.
+
+What the deciding file *is* then decides what boots:
 
 - **Root config nearest** → **the full runtime boots**, exactly as in v3. There is
   no further test: the loader does not inspect the root's entries or expand
@@ -670,25 +679,24 @@ runs once per load):
   break from v3, which booted the whole runtime from anywhere.
 
 Scope is positional but never silent: every `dev` / `build` / `start` invocation
-prints one line naming the config file that won the walk and what is about to boot
-(the full runtime, or one named standalone app), before doing anything else. When the
-deciding file is **not the topmost config within the boundary** — another
-`watt.config.*` exists above it, which is a filename test needing no evaluation —
-a prominent warning additionally states the consequences and the alternative:
+prints one line naming the deciding file and what is about to boot (the full
+runtime, or one named standalone app), before doing anything else. Whenever an
+**app-def** is what booted — that is, whenever a single application is running
+without its runtime — a prominent warning states what is not applied:
 
 ```
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
-  unavailable, and the settings in ../../watt.config.ts (logger, telemetry, the
-  env blocks, envfile) are not applied. Root .env files still apply. This
-  application's own server settings are unchanged: it listens exactly as it does
-  under the full runtime. Run from the project root for the full runtime.
+  unavailable, and no runtime-level settings (logger, telemetry, the env blocks,
+  envfile) are applied. This application's own server settings are unchanged: it
+  listens exactly as it does under the full runtime. Run wattpm where your runtime
+  configuration lives to start everything.
 ```
 
-In a genuinely standalone single-app repo (the app-def *is* the topmost config),
-there is nothing above to miss and no warning is printed. Sibling-dependent
-capabilities (a gateway's config enumerates sibling applications) get the same
-warning and no special treatment: booted standalone they fail at compose time with
-their own errors — documented, not prevented.
+The warning depends only on what booted, never on what might exist above — a
+genuinely standalone single-app repo gets the same message, and it is equally true
+there. Sibling-dependent capabilities (a gateway's config enumerates sibling
+applications) get the same warning and no special treatment: booted standalone they
+fail at compose time with their own errors — documented, not prevented.
 
 **Scope is purely positional — there is no `--all` flag.** cwd is the scope
 selector, and the nearest config file is the whole of the rule: run at the root for
@@ -896,48 +904,46 @@ api        mesh-only — http://api.plt.local
 frontend   mesh-only — http://frontend.plt.local
 ```
 
-**The walk stops after checking the repository/workspace boundary directory**: the
-first directory containing `.git`, a `package.json` with `workspaces`, or
-`pnpm-workspace.yaml`. Because v4 walking means *executing* candidate files, a
+**The search never leaves your package**, and that single stop condition is the
+whole of the trust story. Because v4 searching means *executing* what it finds, a
 stray `~/watt.config.ts` — or a base image's `/watt.config.ts` — must be
-structurally unreachable from inside a project — no prompt, no trust store. When
-no such marker exists anywhere up the tree (the typical production container:
-`/app/package.json` without `workspaces`, no `.git`), the **nearest directory
-containing an ordinary `package.json` is the boundary** — config files above it
-are never considered, so `/app` is self-bounding. There is no fall-through to the
-filesystem root: a walk that finds neither a marker nor a `package.json` stops
-with "no watt.config.* found within a project boundary" and points at `--config`
-— a config found near `/` is never executed. Independently of the boundary,
-**an ancestor directory is eligible to provide a config file only if it contains
-a `package.json` or workspace marker** — a config file belongs to a Node project
-root by definition; the current directory itself is always eligible. This closes
-the ancestor-repository hole: a dotfiles `$HOME` git repository (`~/.git`) does
-not make a stray `~/watt.config.ts` reachable from a project below it unless `~`
-is itself a Node package — beyond that residual case the invariant is
-best-effort, and stated as such.
+structurally unreachable from inside a project. It is: the search runs from the
+current directory up to the nearest ancestor holding a `package.json` and stops
+there, so reaching `~` would mean walking out of the package you are standing in.
+A directory that is inside no package at all searches only itself, so running
+`wattpm` in some scratch directory cannot reach a config file above it either.
+No marker list, no workspace detection, no eligibility test, no trust store, no
+prompt. The one residual case is a `$HOME` that is *itself* a Node package, where
+`~/watt.config.ts` is reachable from a loose directory below it; as in v3 the
+invariant is best-effort, and stated as such. When the search finds nothing — no
+`watt.config.*` between here and your `package.json`, and no application the
+zero-config detector recognizes — it stops with an error naming the directories it
+looked in and pointing at `--config`.
 
-**The boundary bounds everything: execution, environment, and path resolution.**
-Nothing above it is read, run, or consulted. Env files come from the **project
-root** — the directory of the topmost `watt.config.*` within the boundary, a
-filename test that needs no evaluation — and the application directory (see "Env
-files"); when no config file exists anywhere (Level 0), the boundary directory is
-the project root.
+Env files are **not** subject to this. `loadEnv` walks up from the deciding file's
+directory for `.env` files, exactly as v3 does today
+(`foundation/lib/configuration.js:360-372`), and the runtime additionally reads each
+application's own directory. The asymmetry is deliberate and is the reason the rule
+can be this small: walking up for a **config file** means running code, which is
+why it stops at your package; walking up for a **`.env`** means reading data, which
+has never needed a boundary and did not have one in v3. A monorepo that keeps
+`DATABASE_URL` in its root `.env` therefore keeps working when you run
+`wattpm dev` inside `web/api`, without the loader having to infer that a project
+"really" extends further up.
 
-This is deliberately incurious about what might sit above. Running `wattpm dev`
-inside a subdirectory of some larger tree boots what that directory describes, and
-every invocation prints the config file that won and what is about to boot before
-doing anything else — so the outcome is visible, not silent. Inferring that a
-project *really* extends further up, from ancestor directories the trust boundary
-excludes, buys a warning at the cost of reading files from outside it. Where a
-deploy script or a monorepo task genuinely means the whole runtime, `--config` or
-running at the root says so explicitly.
+This is deliberately incurious about what sits above. Running `wattpm dev` inside a
+subdirectory of some larger tree boots what that directory describes, and every
+invocation prints the deciding file and what is about to boot before doing anything
+else — so the outcome is visible, not silent. Where a deploy script or a monorepo
+task genuinely means the whole runtime, `--config` or running where the runtime
+configuration lives says so explicitly.
 
-**`--config` names the configuration and suppresses the re-scope.** The flag's file
-is the deciding file *and* the root config, its directory is the project root, no
-walk runs, and cwd stops being a scope selector — so `wattpm start --config
+**`--config` names the configuration directly.** The flag's file is the deciding
+file, no search runs, and cwd stops selecting anything — so `wattpm start --config
 /app/watt.config.ts` from inside an application directory boots the full runtime,
-which is what the migration guide's deploy note recommends. `--config` / `--env`
-are the escape hatches for above-boundary layouts.
+which is what the migration guide's deploy note recommends. Env files still load by
+walking up from that file's directory. `--config` / `--env` are the escape hatches
+for anything the search deliberately will not reach.
 
 ### Loading mechanism: the eval workers
 
@@ -992,7 +998,8 @@ never supported), so parallel evaluation is safe and typically *faster* than any
 serial scheme.
 
 1. **The root worker** is constructed by the main process with an explicit
-   `env` — the real environment layered with the project root's env files for the
+   `env` — the real environment layered with the env files found from the deciding
+   file's directory for the
    active `mode`, resolved by the ladder (see "Env files"). Workers never inherit
    the main process's `process.env` and never read env files themselves. It imports
    the root config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's built-in type
@@ -1187,8 +1194,8 @@ not be killed by the 30 s timer.
 (`create(root, configObject)`) and the zero-config in-memory synthesis pass an
 object, not a file: for those, the root pipeline runs main-side with no import
 step, and `loadEnv` builds the env map without mutating the main process's
-`process.env`. The **`root` argument is the project root** for env purposes —
-there is no config file to take a `dirname` of and no walk to produce a boundary
+`process.env`. The **`root` argument is where the env walk starts** —
+there is no config file to take a `dirname` of
 (v3 required it for the same reason, `foundation/lib/configuration.js:482,494-496`).
 Everything downstream is unchanged: a programmatic root listing
 `applications[].path` directories still gets per-app discovery, per-app eval
@@ -1365,18 +1372,15 @@ set — are unrepresentable. v3's `kEnvFileFallbackKeys` bookkeeping is unnecess
 under this model: provenance is simply which source won.
 
 **Env *files* are determined by directories, never by boot style — and they load
-from exactly two: the project root — the directory of the **topmost
-`watt.config.*` within the boundary**, or the boundary directory when no config
-file exists — and the
-application directory.** Deciding it by filename matters: `loadEnv` runs at step 2
-of the walk and classification at step 3, so the project root cannot be defined in
-terms of which file turned out to be a *root config*. Under a standalone boot the
-deciding file is an app-def and there is no root config at all, yet the project
-root — and with it the root env rung the standalone warning promises — is still
-well defined. This matches v3, where `loadEnv` walked up from
-`dirname(configFile)` (`foundation/lib/configuration.js:490,498`); binding the
-root layer to the walk boundary instead would drop the `.env` sitting beside the
-config whenever a Watt project lives below a git or workspace root. The `env`
+from exactly two: the deciding file's own directory, and the application
+directory.** The first is found by **walking up** from the deciding file for the
+nearest `.env`, which is precisely what v3 does today
+(`foundation/lib/configuration.js:360-372`, climbing from `dirname(configFile)`),
+so a monorepo's root `.env` keeps applying when you run inside `web/api` even
+though the *config* search stopped at that application's `package.json`. This
+asymmetry — data walks, code does not — is what lets the search rule stay as small
+as it is; it is stated in "Scope" and repeated here because it is the one place the
+two rules deliberately disagree. The `env`
 **blocks** are the one part of the evaluation environment that *does* depend on
 boot style: they live on the root entry, so a standalone boot — which applies no
 root orchestration — sees none of them. That asymmetry is stated again below and
@@ -1385,11 +1389,9 @@ root build. Intermediate
 directories
 (`web/.env` between root and `web/frontend`) are **never** consulted — matching
 both precedence ladders, Vite's one-envDir-per-app model, and v3 in practice
-(v3 loaded one root file plus the app's own `.env`, never a layered chain). A
-config file's environment is therefore "its own directory's files over the
-project root's" — the identical set under a
-root boot and a standalone boot, because the two directories never depend
-on which config file won. A given file evaluates identically under every boot
+(v3 loaded one found file plus the app's own `.env`, never a layered chain). A
+config file's environment is therefore "its own directory's files over the nearest
+`.env` above it". A given file evaluates identically under every boot
 style; only *what boots* changes with where the command runs. File **position**
 is the one thing that does change the env view: the same factory expression
 reads the root's env files when it lives root-inline and the app's env files
@@ -2149,11 +2151,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    v3's first-hit walk read exactly one file. This is a **behavior change**:
    pre-existing `.env.local`/`.env.production` files written for *other* tools
    (Next.js uses exactly these names) become live in worker environments. The
-   walk is also **narrower**: v3 climbed to the filesystem root with a cwd
-   fallback; v4 reads exactly two directories (the root config file's directory
-   and the application directory), never above the boundary — `.env` files v3
-   found elsewhere stop loading. Precedence direction stays v3-compatible for
-   files (app overrides root-file defaults; the real environment always wins).
+   `.env` **discovery is unchanged** — v4 keeps v3's upward walk from the config
+   file's directory — but v4 layers that file with the application's own, where v3
+   read one file only. Precedence direction stays v3-compatible for
+   files (app overrides the found file's defaults; the real environment always
+   wins).
    The `env` blocks are **no longer visible during config evaluation** at any
    position — v3 applied them to `process.env` before the worker parsed the app's
    config, so a v3 placeholder reading a block-supplied key resolved then and
@@ -2320,8 +2322,9 @@ Roughly ordered; steps 1–5 are the critical path.
 4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
    accepts inline definitions; phased evaluation (root worker first, per-app
    workers in parallel) with uniform per-app file
-   discovery (autoload and explicit entries alike) and walk-boundary/classification
-   rules; the deterministic zero-config capability detector (capability
+   discovery (autoload and explicit entries alike) and the search/classification
+   rules — the search stops at the nearest `package.json`, `.env` discovery keeps
+   v3's upward walk; the deterministic zero-config capability detector (capability
    dependencies first, ambiguity error on two, JS-files → node terminal rule);
    no listen resolution to write at all — exposure is capability-owned and
    already lands with the entrypoint removal — beyond deciding the zero-config

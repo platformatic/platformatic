@@ -97,6 +97,23 @@ variable, path, target type and outcome. `managementApi` is carried over rather 
 dropped: `''` is falsy and preserves v3's **off**, where omitting the key picks up
 its schema `default: true`.
 
+**M4 and M5 are resolved by deleting the machinery rather than repairing it.** The
+scoping rule is now three sentences: the config is the nearest `watt.config.*` from
+cwd up to the nearest `package.json` (cwd alone if there is no such ancestor); what
+that file is decides what boots; env files are found by walking up from that file's
+directory, as v3 already does. Removed: the `.git`/`workspaces`/`pnpm-workspace.yaml`
+marker list, the nearest-package.json fallback, the ancestor-eligibility rule, "the
+boundary bounds everything", the nearest-to-topmost continuation, and "project root"
+as an inferred concept.
+
+The move that makes it work is separating the two walks: walking up for a **config
+file** means executing code, so it stops at your package; walking up for a **`.env`**
+means reading data, which v3 has always done unbounded. Verified against a built
+fixture — from `<app>/web/api`, the search returns the app's own config *and*
+`loadEnv` still returns `ROOT_ONLY="from-root-env"` from `<app>/.env`; a stray
+`~/watt.config.ts` is unreachable from any directory inside a package, and from one
+that is inside none.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -331,6 +348,8 @@ no `additionalProperties: false`, so a surviving `useHttp: true` is silently ign
 or narrow both sentences and state that migrate's lexical rule is the only handler.
 
 ### M4. The boundary collapse re-introduces the marker-less-container regression the deleted text named, and it is now silent
+
+**DISSOLVED** — the boundary is gone. The config search stops at the nearest `package.json`; `.env` discovery keeps v3's upward walk, so the root `.env` reaches an app-directory boot without any boundary reasoning.
 
 Round 10 removed the "Locating is not executing" paragraph — which existed to stop
 the boundary collapsing onto an app directory in marker-less trees — and replaced it
