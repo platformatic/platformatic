@@ -399,9 +399,9 @@ The context (Vite-parity, deliberately):
   travels in `workerData` and the worker-boot env reader loads the same layered
   file set config evaluation used, so for an application configured by a **per-app
   file** the two views' env-file rungs agree by construction. (A **root-inline**
-  entry is evaluated in the root worker, which reads root files only, while its
-  workers read app files above root files — see the position asymmetry in "Env
-  files".) It is *not* injected as an environment variable (no `PLT_MODE`).
+  entry is evaluated in the root worker, so it reads the root file's directory,
+  while its workers read the application's directory over the nearest files above
+  it — see the position asymmetry in "Env files".) It is *not* injected as an environment variable (no `PLT_MODE`).
   `start` must be given the same `--mode` as `build` to reproduce the same
   env-file view (Vite parity, documented).
 - `production` — the common-case shortcut: `true` under `start`/`--production`
@@ -998,9 +998,13 @@ never supported), so parallel evaluation is safe and typically *faster* than any
 serial scheme.
 
 1. **The root worker** is constructed by the main process with an explicit
-   `env` — the real environment layered with the env files found from the deciding
-   file's directory for the
-   active `mode`, resolved by the ladder (see "Env files"). Workers never inherit
+   `env` — the real environment layered with the deciding file's **own directory's**
+   env files over the **nearest env files above** it, for the
+   active `mode`, resolved by the ladder (see "Env files"). That is the same two
+   layers every other worker gets, applied to the deciding file's directory: under a
+   standalone boot the deciding file *is* the application's, so its own directory is
+   the application's directory and `web/frontend/.env` is read, not skipped. Workers
+   never inherit
    the main process's `process.env` and never read env files themselves. It imports
    the root config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's built-in type
    stripping, the same mechanism the runtime already uses for `extensions`). It
@@ -1234,7 +1238,8 @@ but the capability pipeline is split deliberately:**
   request-time origin resolution) keep working unchanged.
 
 Per-app config files evaluate with **their application's layered environment** — the
-app's env files (or its `envfile`) over the root view, per the config-evaluation
+app's own env files (or its `envfile`) over the nearest env files above them, per
+the config-evaluation
 ladder in "Env files". `envfile` governs **both** views; the `env` blocks govern the
 worker-runtime view only.
 
@@ -1317,13 +1322,13 @@ environment always wins.** There are two views, and they differ by exactly the
 things that only exist once the runtime is running:
 
 ```
-config evaluation:  real environment  >  app env files  >  root env files
-                                      >  NODE_ENV default
+config evaluation:  real environment  >  own-directory env files
+                                      >  nearest env files above  >  NODE_ENV default
 
 worker runtime:     real environment  >  entry env block  >  root env block
                                       >  injected PLT_<ID>_URL
-                                      >  app env files  >  root env files
-                                      >  NODE_ENV default
+                                      >  own-directory env files
+                                      >  nearest env files above  >  NODE_ENV default
 ```
 
 **An `env` block configures the running application; it does not configure the
@@ -1371,28 +1376,39 @@ ordering bugs they invite — an app env file clobbering a value an `env` block 
 set — are unrepresentable. v3's `kEnvFileFallbackKeys` bookkeeping is unnecessary
 under this model: provenance is simply which source won.
 
-**Env *files* are determined by directories, never by boot style — and they load
-from exactly two: the deciding file's own directory, and the application
-directory.** The first is found by **walking up** from the deciding file for the
-nearest `.env`, which is precisely what v3 does today
-(`foundation/lib/configuration.js:360-372`, climbing from `dirname(configFile)`),
-so a monorepo's root `.env` keeps applying when you run inside `web/api` even
-though the *config* search stopped at that application's `package.json`. This
-asymmetry — data walks, code does not — is what lets the search rule stay as small
-as it is; it is stated in "Scope" and repeated here because it is the one place the
-two rules deliberately disagree. The `env`
+**Env *files* are determined by directories, never by boot style. One rule covers
+every config file, wherever it sits:**
+
+> its **own directory's** env files, layered over the **nearest env files found
+> strictly above** that directory.
+
+Two layers, both directory-determined. The upward search is v3's
+(`foundation/lib/configuration.js:360-372`, climbing from `dirname(configFile)` and
+taking the first hit), which is why a monorepo's root `.env` keeps applying when you
+run inside `web/api` even though the *config* search stopped at that application's
+`package.json`. That asymmetry — data walks, code does not — is what lets the search
+rule stay as small as it is; it is stated in "Scope" and repeated here because it is
+the one place the two rules deliberately disagree.
+
+The rule is **boot-style independent by construction**: `web/frontend/watt.config.ts`
+gets `web/frontend/.env` over the nearest `.env` above it whether the runtime
+started it or it was started standalone from its own directory. Nothing depends on
+which file won the search, so a given file evaluates identically under every boot
+style; only *what boots* changes with where the command runs. It also needs no
+notion of a project root — "above" is a directory relation, not a claim about how
+far the project extends.
+
+An intermediate `web/.env` **is** consulted when it is the nearest one above the
+application — nearest wins, with no special case for it. This differs from v3, which
+read exactly one file plus the app's own; the layering is the deliberate change, and
+a `.env` placed in an intermediate directory now does what its placement suggests.
+
+The `env`
 **blocks** are the one part of the evaluation environment that *does* depend on
 boot style: they live on the root entry, so a standalone boot — which applies no
 root orchestration — sees none of them. That asymmetry is stated again below and
 in the standalone warning, and it is the one way a standalone build differs from a
-root build. Intermediate
-directories
-(`web/.env` between root and `web/frontend`) are **never** consulted — matching
-both precedence ladders, Vite's one-envDir-per-app model, and v3 in practice
-(v3 loaded one found file plus the app's own `.env`, never a layered chain). A
-config file's environment is therefore "its own directory's files over the nearest
-`.env` above it". A given file evaluates identically under every boot
-style; only *what boots* changes with where the command runs. File **position**
+root build. File **position**
 is the one thing that does change the env view: the same factory expression
 reads the root's env files when it lives root-inline and the app's env files
 when it lives in the per-app file — directory-determined, with no pretense
@@ -1401,7 +1417,8 @@ home for capability configuration.
 
 **Per-app config files evaluate with their app's environment — each in its own
 worker.** Every per-app file gets a dedicated eval worker whose `process.env` is
-that app's layered view (app env files over the root view), with its own isolated
+that app's layered view (its own directory's files over the nearest files above),
+with its own isolated
 ESM cache — so the colocated `web/frontend/watt.config.ts` reads
 `web/frontend/.env`'s `REDIS_URL`, exactly as a frontend developer expects, and a
 shared helper computing values at module scope re-evaluates per worker under the
@@ -1417,8 +1434,8 @@ loads, in the app's eval worker *and* at worker boot alike, occupying the same
 single rung the app file layer occupies in the ladders (v3's
 replace-the-default-path behavior, extended to the set — and extended to
 evaluation, so the two views keep agreeing on that rung). Mode
-selection simply does not apply to that app's files; root files and every other
-rung are unaffected. The path resolves **app-relative** (v3 resolved it against
+selection simply does not apply to that app's files; every other rung is
+unaffected. The path resolves **app-relative** (v3 resolved it against
 the runtime root — migrate rewrites paths so they keep pointing at the same
 file), and a missing explicitly-named envfile is a **boot error** (v3 silently
 ignored it — defensible only for the implicit default `.env`). Declaring `envfile`
@@ -1460,7 +1477,8 @@ deliberately saner:
 
   ```
   real environment  >  entry env block  >  root env block  >  injected
-                    >  app env files  >  root env files  >  NODE_ENV default
+                    >  own-directory env files  >  nearest env files above
+                    >  NODE_ENV default
   ```
 
   (Both `env` blocks exist — the root-level one applied to all applications and
@@ -2302,7 +2320,8 @@ Roughly ordered; steps 1–5 are the critical path.
    config-time and runtime views of an application's environment agree on their
    **env-file rungs** for an application configured by a per-app file — the two
    views differ by design on the `env` blocks and the injected `PLT_<ID>_URL`
-   values, and a root-inline entry additionally evaluates against root files only.
+   values, and a root-inline entry additionally evaluates against the root file's
+   directory rather than the application's.
    The v3
    `configuration.js` (parsers, `replaceEnv`, YAML pre-pass, `strictEnv`, `$schema`
    URL machinery) is **deleted from foundation in the v4 branch, not incrementally

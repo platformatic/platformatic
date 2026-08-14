@@ -114,6 +114,21 @@ fixture — from `<app>/web/api`, the search returns the app's own config *and*
 `~/watt.config.ts` is unreachable from any directory inside a package, and from one
 that is inside none.
 
+**M6** is resolved, and fixing it exposed that the post-simplification env paragraph
+contradicted itself. Env files now follow one rule for every config file, wherever it
+sits: **its own directory's env files, layered over the nearest env files found
+strictly above that directory.** Two layers, both directory-determined, needing no
+notion of a project root — "above" is a directory relation, not a claim about how far
+the project extends. It is boot-style independent by construction, which is the
+property the document wanted all along: `web/frontend/watt.config.ts` reads
+`web/frontend/.env` over the nearest `.env` above it whether the runtime started it
+or it booted standalone.
+
+One deliberate change fell out: an intermediate `web/.env` **is** consulted when it is
+the nearest one above the application. The old text promised intermediates were never
+consulted, which was only expressible while a "project root" existed to skip to.
+Nearest-wins is stated plainly instead.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -386,6 +401,8 @@ guard that made this safe — that the topmost file's classification is unknown 
 and stop calling it a root config.
 
 ### M6. The root worker's env is specified as the project root's files only, dropping the deciding file's own directory
+
+**RESOLVED** — the root worker gets the deciding file's own directory layered over the nearest files above it, the same two layers every worker gets. Under a standalone boot that directory *is* the application's.
 
 `:988-990` builds the root worker's env from "the project root's env files". Under a
 standalone boot the app's own file *is* the root worker's file, so
