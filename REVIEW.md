@@ -129,6 +129,18 @@ the nearest one above the application. The old text promised intermediates were 
 consulted, which was only expressible while a "project root" existed to skip to.
 Nearest-wins is stated plainly instead.
 
+**M7** is resolved by deleting the exception rather than describing it. The build
+section claimed "no reduced or special build environment" and then excluded the
+injected `PLT_<ID>_URL` rung, which is a special build environment and a third
+variant against the one-ladder claim. Two facts settled it: the injected value is
+`http://<id>.plt.local`, a pure function of the application id
+(`runtime/lib/utils.js:12-14`) that is identical at build and run time and needs no
+sibling running to compute; and `PLT_<ID>_URL` injection is *proposed*, not shipped
+— what exists today is v3's `onMissingEnv` hook (`worker/controller.js:31-37`) — so
+there was no legacy behaviour the exclusion preserved. Including the rung is also
+the safer direction: a bundler inlining `process.env.PLT_API_URL` would otherwise
+bake `undefined` into the artifact. The `dev`/`build` divergence goes with it.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -414,6 +426,8 @@ reads `web/frontend/.env`.
 project root's — the same two-directory ladder every worker uses".
 
 ### M7. The corrected build rule contradicts itself in adjacent paragraphs
+
+**RESOLVED** — the exclusion is dropped. A build uses the worker-runtime ladder with no rung excluded, injected `PLT_<ID>_URL` included.
 
 `:719-724` says a build resolves the environment "exactly as it is for that
 application's workers… there is no reduced or special build environment", citing

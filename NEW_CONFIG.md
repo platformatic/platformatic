@@ -726,22 +726,29 @@ project root or pass `--config <root file>`, which names the configuration and
 suppresses the standalone re-scope.
 
 **Build environments.** A build runs with **the application's environment,
-resolved exactly as it is for that application's workers** — the full ladder from
-"Env files": real environment, entry `env` block, root `env` block, the app's env
-files or its `envfile`, the root's env files, then the `NODE_ENV` default. Env
-files are read and layered the same way they are at runtime; there is no reduced
-or special build environment. This is what v3 did and what the runtime does today
+resolved exactly as it is for that application's workers** — the full worker-runtime
+ladder from "Env files": real environment, entry `env` block, root `env` block,
+injected `PLT_<ID>_URL`, the application's own env files or its `envfile`, the
+nearest env files above them, then the `NODE_ENV` default. Env
+files are read and layered the same way they are at runtime; **there is no reduced
+or special build environment, and no rung is excluded**. This is what v3 did and
+what the runtime does today
 — `buildApplication` sends `build` over ITC to a normally spawned worker
 (`runtime/lib/runtime.js:872-877`), which has already applied both `env` blocks
 (`worker/main.js:250,253`) — and a build that reads an author-supplied constant
 should keep reading it.
 
-One rung is excluded: the **injected `PLT_<ID>_URL` topology variables**. Mesh
-names are runtime values resolved server-side by the mesh at request time; a build
-that baked one would be recording an address that only means anything inside a
-running runtime. That exclusion is about what those variables *are*, not about
-determinism in general — an `env` block is a constant the author wrote and belongs
-in the build like any other.
+The injected `PLT_<ID>_URL` values are included, and they are the case that most
+needs to be: a bundler inlines `process.env.PLT_API_URL` at build time, so omitting
+the rung would bake `undefined` into the artifact. Including it is safe because the
+injected value is a **stable virtual hostname** — `http://<id>.plt.local`, a pure
+function of the application id (`runtime/lib/utils.js:12-14`), identical at build
+time and at run time, and resolved by the mesh at request time. It requires no
+sibling to be running to compute, and baking it records exactly the address the
+application would have used anyway. Excluding it would create a third environment
+variant against the "one implementation of the ladder" claim, and would make `build`
+differ from `dev`, where compilation happens inside a serving worker that does see
+them.
 
 `NODE_ENV` defaults to `production` under `build` when nothing else supplied it
 (see "Env files"). That is **new**: v3's build created the runtime with no
@@ -2227,9 +2234,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     Scope is otherwise purely positional — the runtime-wide behavior means running
     from the project root, and there is still no `--all`; `--config` is not a scope
     selector but naming the configuration necessarily makes cwd stop being one. A
-    build uses the application's full resolved environment, as its workers do,
-    excluding only the injected `PLT_<ID>_URL` topology variables; a **standalone**
-    build additionally sees no root orchestration, so it applies neither the root
+    build uses the application's full resolved environment, as its workers do, with
+    no rung excluded — injected `PLT_<ID>_URL` values included, since a bundler
+    inlining `process.env.PLT_API_URL` would otherwise bake `undefined`; a
+    **standalone**
+    build sees no root orchestration, so it applies neither the root
     `env` block nor a root-entry `envfile`. Under `build`, `production` is `true`,
     so `enabled` resolves against the production mode where v3's build resolved
     against development.
