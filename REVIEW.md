@@ -141,6 +141,22 @@ there was no legacy behaviour the exclusion preserved. Including the rung is als
 the safer direction: a bundler inlining `process.env.PLT_API_URL` would otherwise
 bake `undefined` into the artifact. The `dev`/`build` divergence goes with it.
 
+**M10** is resolved, and it caught a regression in my own simplification. Round 10's
+trigger ("deciding file is not the topmost config within the boundary") had no
+standalone condition, so a nested *root* config warned that the mesh was unavailable
+while a full runtime booted. The rewrite in `013a8a7bf` fixed that by triggering on
+"an app-def booted" — but overshot: Level 1, the canonical single-app form, is a bare
+factory call that classifies as an app-def, so the warning would have fired on every
+boot of the commonest project shape, announcing missing siblings to a project that
+has none.
+
+The trigger is now **both**: the deciding file classified as an app-def, **and** a
+`watt.config.*` exists in some ancestor. Verified on all four shapes — monorepo app
+(warns), standalone single-app repo (silent), nested root config (silent), monorepo
+root (silent). The ancestor test is the one thing that looks above the search stop
+point; it executes nothing and cannot change what boots, only whether a warning
+prints.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -474,6 +490,8 @@ emits for every wrapped single-app project.
 file", and scope the test the same way.
 
 ### M10. The standalone warning's new trigger fires on full-runtime boots
+
+**RESOLVED** — the trigger is now app-def **and** an ancestor `watt.config.*` exists. Both halves are load-bearing; verified on all four project shapes.
 
 Round 10 replaced the trigger with "the deciding file is not the topmost config
 within the boundary" (`:673-676`) — which has no standalone condition. A nested

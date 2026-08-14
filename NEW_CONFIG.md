@@ -680,9 +680,10 @@ What the deciding file *is* then decides what boots:
 
 Scope is positional but never silent: every `dev` / `build` / `start` invocation
 prints one line naming the deciding file and what is about to boot (the full
-runtime, or one named standalone app), before doing anything else. Whenever an
-**app-def** is what booted — that is, whenever a single application is running
-without its runtime — a prominent warning states what is not applied:
+runtime, or one named standalone app), before doing anything else. A prominent
+warning is added when **both** conditions hold: the deciding file classified as an
+**app-def**, *and* a `watt.config.*` exists in some ancestor directory. It then
+states what is not applied:
 
 ```
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
@@ -692,11 +693,21 @@ without its runtime — a prominent warning states what is not applied:
   configuration lives to start everything.
 ```
 
-The warning depends only on what booted, never on what might exist above — a
-genuinely standalone single-app repo gets the same message, and it is equally true
-there. Sibling-dependent capabilities (a gateway's config enumerates sibling
-applications) get the same warning and no special treatment: booted standalone they
-fail at compose time with their own errors — documented, not prevented.
+Both conditions earn their place. Without the **app-def** half, a nested *root*
+config — a second runtime under `tools/sandbox` — would trigger it, telling the user
+the mesh is unavailable while a full runtime with a working mesh boots. Without the
+**ancestor** half, the canonical single-app project (Level 1 is a bare factory call,
+which classifies as an app-def) would print it on every boot, announcing missing
+siblings to a project that has none.
+
+The ancestor test is **the one thing that looks above the search stop point**, and
+it is deliberate: a warning about what you are missing has to know whether you are
+missing anything. It is a filename check that executes nothing, it cannot change
+what boots — only whether a warning prints — and it needs no notion of how far the
+project extends. Sibling-dependent capabilities (a gateway's config enumerates
+sibling applications) get the same warning and no special treatment: booted
+standalone they fail at compose time with their own errors — documented, not
+prevented.
 
 **Scope is purely positional — there is no `--all` flag.** cwd is the scope
 selector, and the nearest config file is the whole of the rule: run at the root for
