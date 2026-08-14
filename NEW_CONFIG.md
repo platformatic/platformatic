@@ -917,9 +917,11 @@ is itself a Node package — beyond that residual case the invariant is
 best-effort, and stated as such.
 
 **The boundary bounds everything: execution, environment, and path resolution.**
-Nothing above it is read, run, or consulted. Env files come from the deciding root
-config's directory and the application directory (see "Env files"); when no config
-file exists anywhere (Level 0), the boundary directory is the project root.
+Nothing above it is read, run, or consulted. Env files come from the **project
+root** — the directory of the topmost `watt.config.*` within the boundary, a
+filename test that needs no evaluation — and the application directory (see "Env
+files"); when no config file exists anywhere (Level 0), the boundary directory is
+the project root.
 
 This is deliberately incurious about what might sit above. Running `wattpm dev`
 inside a subdirectory of some larger tree boots what that directory describes, and
@@ -1363,9 +1365,15 @@ set — are unrepresentable. v3's `kEnvFileFallbackKeys` bookkeeping is unnecess
 under this model: provenance is simply which source won.
 
 **Env *files* are determined by directories, never by boot style — and they load
-from exactly two: the project root (the **deciding root config's directory**, or
-the boundary directory when no config file exists) and the
-application directory.** This matches v3, where `loadEnv` walked up from
+from exactly two: the project root — the directory of the **topmost
+`watt.config.*` within the boundary**, or the boundary directory when no config
+file exists — and the
+application directory.** Deciding it by filename matters: `loadEnv` runs at step 2
+of the walk and classification at step 3, so the project root cannot be defined in
+terms of which file turned out to be a *root config*. Under a standalone boot the
+deciding file is an app-def and there is no root config at all, yet the project
+root — and with it the root env rung the standalone warning promises — is still
+well defined. This matches v3, where `loadEnv` walked up from
 `dirname(configFile)` (`foundation/lib/configuration.js:490,498`); binding the
 root layer to the walk boundary instead would drop the `.env` sitting beside the
 config whenever a Watt project lives below a git or workspace root. The `env`

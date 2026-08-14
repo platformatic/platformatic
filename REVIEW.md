@@ -351,6 +351,8 @@ the migration guide.
 
 ### M5. "Project root" is defined twice, incompatibly, and one definition deletes the root `.env` the standalone warning promises
 
+**RESOLVED** — the project root is now "the directory of the topmost `watt.config.*` within the boundary" at all three sites, decided by filename because `loadEnv` runs before classification.
+
 The walk (`:642-645`) says the project root is the **topmost config within the
 boundary**. The boundary section (`:916-917`) and "Env files" (`:1334-1336`) say the
 **deciding root config's directory**. These differ for every standalone boot, where
