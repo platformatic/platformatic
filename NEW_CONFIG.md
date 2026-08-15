@@ -985,13 +985,17 @@ carries a URL per worker.
 **The search never leaves your package**, and that single stop condition is the
 whole of the trust story. Because v4 searching means *executing* what it finds, a
 stray `~/watt.config.ts` — or a base image's `/watt.config.ts` — must be
-structurally unreachable from inside a project. It is: the search runs from the
+structurally unreachable **from the search**. It is: the search runs from the
 current directory up to the nearest ancestor holding a `package.json` and stops
 there, so reaching `~` would mean walking out of the package you are standing in.
 A directory that is inside no package at all searches only itself, so running
 `wattpm` in some scratch directory cannot reach a config file above it either.
 No marker list, no workspace detection, no eligibility test, no trust store, no
-prompt. The one residual case is a `$HOME` that is *itself* a Node package, where
+prompt. A path someone **names** is a different act and is not governed by this
+rule: `--config`, and hot-add's `POST /applications` naming an absolute path, are
+deliberate requests from someone who already has runtime privileges — the search is
+what must not wander, not the operator. The one residual case is a `$HOME` that is
+*itself* a Node package, where
 `~/watt.config.ts` is reachable from a loose directory below it; as in v3 the
 invariant is best-effort, and stated as such. When the search finds nothing — no
 `watt.config.*` between here and your `package.json`, and no application the
@@ -1241,8 +1245,11 @@ serial scheme.
    targeted timeout error instead of hanging boot forever.
 
 The result then enters the pipeline in the main process: AJV validation
-(`useDefaults`, **`coerceTypes: false`**) → `kMetadata` attachment →
-`transform()`. Canonicalization has already run in-worker (step 4) and the
+(`useDefaults`, **`coerceTypes: false`**) → `kMetadata` attachment → the **runtime**
+`transform()` (`runtime/lib/config.js`, which normalizes entries and expands the
+application list). The **capability** `transform` is a different function and is not
+part of this pipeline: it runs worker-side at boot, where its context lives — see
+"Config code runs exactly once per load" below. Canonicalization has already run in-worker (step 4) and the
 main process consumes that snapshot; it canonicalizes itself only for **object
 config sources** (the programmatic API and zero-config synthesis, which never
 cross a worker boundary) — before metadata attachment, because `kMetadata` is
@@ -1977,9 +1984,14 @@ Generation reads both views. Then:
    **renamed** module is written under its new name — a
    `@platformatic/composer` app gets a `gateway(…)` file, and the
    superseded dependency is removed in step 2, the one sanctioned `package.json`
-   edit beyond ranges and additions. A **`module`-identified** app gets a
-   `{ module: '…' }` plain-object
-   config. An application whose directory coincides with the root — or with
+   edit beyond ranges and additions. A **`module`-identified** app — the canonical
+   v3 spelling for a capability with no published `$schema` URL — gets the ordinary
+   factory emission, since the module string names which factory to call. Migrate
+   never emits a plain `{ module: '…' }` object: one naming an in-closure capability
+   has a factory, and one naming anything else cannot reach generation, because the
+   pre-flight check refuses every capability outside the vendored closure. The plain
+   form remains part of the *format* for v4-contract capabilities that ship no
+   factory (BC 15); it is simply not something a migration produces. An application whose directory coincides with the root — or with
    any directory already owning the root file — is emitted **root-inline**
    (`applications[].config: factory(…)`, resolvable by definition since its
    dependencies live at that root): the per-app style would put two v4
@@ -2292,9 +2304,13 @@ Generation reads both views. Then:
    sidestep the no-coexistence guard. Validation injects recorded **sentinel
    values** for `requiredEnv`-wrapped keys — executing the emitted helpers
    would otherwise throw on any machine missing the production secrets — and
-   the summary reports the required-variable list instead. If validation
-   fails, report and stop;
-   nothing has been deleted yet.
+   the summary reports the required-variable list instead. A validation failure is
+   the **one failure that does not roll back**: its whole value is the emitted
+   output, so migrate keeps the files, reports what failed, and stops. It says
+   plainly that the tree is now in the coexistence state — v3 and v4 configs side by
+   side, which the loader refuses — and prints both ways out: the path-scoped undo
+   from the manifest, or fix the reported problem and run `migrate --resume`.
+   Nothing has been deleted, so neither direction loses anything.
 4. Scan application sources for references to the legacy config files (v3
    scaffolded test helpers do `JSON.parse(await readFile(…, 'watt.json'))`) and
    for `PLT_DEV` / `PLT_ENVIRONMENT` / `PLT_ROOT` reads (all three injected
@@ -2302,7 +2318,11 @@ Generation reads both views. Then:
    hit is reported with the file/line of the reference, since the codemod cannot
    safely rewrite user code and the change will make that code fail or branch
    differently.
-5. **Delete the legacy files** and print a summary. There is no rename, no
+5. **Delete every legacy file migrate read** — not only the recognized
+   `platformatic.json`/`watt.json` names but each custom filename a v3
+   `applications[].config` pointed at, recorded during the lexical pass, since v3
+   accepted any name there and leaving one behind preserves exactly the coexistence
+   state this step exists to end — and print a summary. There is no rename, no
    `.v3.bak`, no `--keep` — **version control is the undo mechanism**: migrate
    refuses to run on a dirty git tree (`--force` overrides, with a loud warning;
    same flag for no-VCS trees), so review is `git diff`. The dirty check counts
@@ -2317,7 +2337,7 @@ Generation reads both views. Then:
    a **manifest of every file it created or modified — plus, under `--no-install`,
    the `package.json` and lockfile the deferred install will touch**, persisted as
    `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads,
-   and it is deleted on completion): on any mid-run failure
+   and it is deleted on completion): on a mid-run failure **other than validation**
    it removes its own creations automatically, and on success the summary prints
    the exact path-scoped undo (`git restore <tracked…> && rm <created…>`) — never
    a bare `git restore .`, and never any form of `git clean`. A failure *after*
@@ -2502,7 +2522,16 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
 23. `@platformatic/composer` (the deprecated `@platformatic/gateway` alias
     package) is **removed**. Migrate renames the module and removes the
     superseded dependency.
-24. **The default application id changes for a nameless package.** v3's wrapped
+24. **`wattpm import` writes different output.** It emits the v4 per-app config
+    form instead of a `watt.json` `$schema` stub (`external.js:322-326`, which v4's
+    unconditional legacy check would refuse), and writes **literal relative paths**
+    into the root config rather than the `{PLT_APPLICATION_<ID>_PATH}` placeholder
+    plus `.env` line it wrote in v3 (`external.js:243-271`) — an env-var indirection
+    is a non-literal expression, outside magicast's safe shape, for no benefit.
+    Existing v3 placeholder entries keep working: migrate resolves them (see the
+    structural path positions in step 1), and the runtime still backfills a
+    `url`-bearing entry from `resolvedApplicationsBasePath`.
+25. **The default application id changes for a nameless package.** v3's wrapped
     single-app path derived the id from `package.json` `name` with its scope
     stripped and fell back to **`'main'`** (`runtime/lib/config.js:132-142`
     pre-`e2da15eda`); v4 keeps the scope-stripping and falls back to the **directory
