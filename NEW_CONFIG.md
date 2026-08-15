@@ -708,11 +708,18 @@ states what is not applied:
 
 ```
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
-  unavailable, and no runtime-level settings (logger, telemetry, the env blocks,
-  envfile) are applied. This application's own server settings are unchanged: it
-  listens exactly as it does under the full runtime. Run wattpm where your runtime
-  configuration lives to start everything.
+  unavailable. Nothing the runtime configuration says is applied: neither its own
+  settings (logger, telemetry, the env blocks, envfile) nor this application's
+  entry (workers, health, dependencies, enabled). Its own server settings are
+  unchanged: it listens exactly as it does under the full runtime. Run wattpm where
+  your runtime configuration lives to start everything.
 ```
+
+`enabled` has no meaning in a standalone boot, which is why the warning lists it: it
+lives on the *entry*, and a standalone boot has no entry to read. Asking for an
+application directly is the explicit request `enabled: false` exists to override, so
+an application disabled in the runtime still boots when you stand in its directory
+and run `wattpm`.
 
 Both conditions earn their place. Without the **app-def** half, a nested *root*
 config — a second runtime under `tools/sandbox` — would trigger it, telling the user
@@ -905,8 +912,9 @@ The rules, in full:
 - **The runtime reports a map of URLs, not one URL.** `getUrls(applicationId?)`
   returns `{ '<app>:<worker>': url }` for every listening worker
   (`runtime/lib/runtime.js:1308-1322`); `start()` returns it (`:405`) after
-  logging one `Platformatic is now listening at <url> for <label>` line per
-  listening worker (`#showUrls`, `:1944-1964`). `getRuntimeMetadata()` carries
+  logging one line per **application** rather than one per listening worker
+  (`#showUrls`, `:1944-1964`) — an application with several workers on distinct
+  ports lists them together rather than N times over. `getRuntimeMetadata()` carries
   `urls` (`:1341`), `getApplicationDetails()` carries `urls` plus a first-element
   `url` convenience (`:1776-1778`), and worker records carry their own `url`
   (`:1822`). `wattpm ps` dropped its URL column and `wattpm applications` its
@@ -967,8 +975,12 @@ so the set of externally reachable applications is always visible:
 ```
 gateway    listening at http://127.0.0.1:3042
 api        mesh-only — http://api.plt.local
-frontend   mesh-only — http://frontend.plt.local
+frontend   listening at http://127.0.0.1:52418        (port: 0 — ephemeral)
 ```
+
+An application with `workers` and `portAssignment: 'perWorkerIncrement'` lists its
+whole range on that one line (`http://127.0.0.1:3000-3002`), since `getUrls()`
+carries a URL per worker.
 
 **The search never leaves your package**, and that single stop condition is the
 whole of the trust story. Because v4 searching means *executing* what it finds, a
@@ -1110,7 +1122,11 @@ serial scheme.
    entries and autoloaded ones behave identically, as in v3. (Entries *with* an
    inline `config` still get a filename-presence check in their directory: a
    `watt.config.*` file there triggers the configured-twice error — no evaluation
-   involved.) Because the root worker has now returned the configuration, the
+   involved. This is a **root-boot** check: running from the application's own
+   directory never evaluates the root, so the app's file simply decides, per the
+   scoping rule, and the standalone warning names what is not applied. The error
+   exists to stop a *root* boot from having two sources for one application, not to
+   police which file wins when you stand in the application.) Because the root worker has now returned the configuration, the
    main process knows each application's `path` and `envfile`, so it resolves the
    **config-evaluation** environment by that view of the ladder — real environment,
    the app's env files or its `envfile`, the root's env files — and constructs that
@@ -1281,10 +1297,14 @@ step, and `loadEnv` builds the env map without mutating the main process's
 `process.env`. The **`root` argument is where the env walk starts** —
 there is no config file to take a `dirname` of
 (v3 required it for the same reason, `foundation/lib/configuration.js:482,494-496`).
-Everything downstream is unchanged: a programmatic root listing
+Function-valued `application.config` / `applications[].config` entries are
+**awaited main-side** here, exactly where the root worker would have awaited them:
+the callback form is legal in a programmatic object, and canonicalization rejects
+functions, so skipping the await would turn a supported shape into a hard error.
+Everything else downstream is unchanged: a programmatic root listing
 `applications[].path` directories still gets per-app discovery, per-app eval
-workers, the detector, and `env`-block visibility exactly as a file-sourced boot
-would — which is what keeps the ICC and embedder paths equivalent to a normal one.
+workers and the detector exactly as a file-sourced boot would — which is what keeps
+the ICC and embedder paths equivalent to a normal one.
 
 **Config code runs exactly once per load, and workers never import config *files* —
 but the capability pipeline is split deliberately:**
@@ -1443,8 +1463,11 @@ variable comes from the real environment or an env file — the ordinary case �
 becomes a plain `process.env.DATABASE_URL ?? ''` and still resolves, instead of
 having its value baked into source.
 
-The bottom rung is `NODE_ENV`: when `production` is `true` and nothing else in the
-ladder supplied it, it defaults to `'production'`. This is v3
+The bottom rung is `NODE_ENV`, and it belongs to **both** views: when `production`
+is `true` and nothing else in the
+ladder supplied it, it defaults to `'production'` — in eval workers as well as
+application workers, so a config file branching on `NODE_ENV` sees under `build`
+and `start` what its application will see. This is v3
 (`worker/controller.js:124-125`, applied after all seeding and only when the key
 is absent), and it is the one injection a build is allowed to make.
 
