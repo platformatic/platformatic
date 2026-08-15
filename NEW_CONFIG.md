@@ -396,8 +396,9 @@ The context (Vite-parity, deliberately):
 - `mode` — free-form variant name; defaults to `'development'` under `dev` and
   `'production'` under `build`/`start`, overridable with `--mode <name>`
   (`wattpm build --mode staging`). Mode **selects env files everywhere** — it
-  travels in `workerData` and the worker-boot env reader loads the same layered
-  file set config evaluation used, so for an application configured by a **per-app
+  travels in `workerData`, and the **main process** resolves each worker's env from
+  the same layered file set config evaluation used — workers never read env files
+  themselves — so for an application configured by a **per-app
   file** the two views' env-file rungs agree by construction. (A **root-inline**
   entry is evaluated in the root worker, so it reads the root file's directory,
   while its workers read the application's directory over the nearest files above
@@ -791,7 +792,7 @@ correct — artifacts.
 A **standalone** app-dir build still differs from a root build in one way, and it
 is the same asymmetry standalone boot has everywhere: it applies no root
 orchestration, so it sees neither the root `env` block nor a root-entry `envfile`
-(see "How applications are exposed"). `turbo run build` is a standalone build.
+(see "Env files"). `turbo run build` is a standalone build.
 Where a build input comes from either, the durable fix is the app's own env files,
 which every build style reads.
 
@@ -1088,7 +1089,8 @@ serial scheme.
    unwraps the default export (object, function called with the context above, or a
    bare `ApplicationDefinition` auto-wrapped per the walk rules above), awaits
    every function-valued `application.config` / `applications[].config` with the
-   root context (the resolution pass — see "Functional form"), and expands
+   same context it was itself called with (see "Functional form" — the context is
+   uniform, so this is an `await`, not a per-entry resolution step), and expands
    `autoload` into the application list. This is the **only** place autoload
    expansion runs; the runtime transform consumes the already-expanded list.
 
@@ -1264,10 +1266,11 @@ attach: with `--inspect-brk`, evaluation runs **in-process** and is therefore
 restricted to **one config file** — the deciding file by default, or one app's
 file by path — precisely because one process has one module cache, in which only
 a single file's env view can be correct. The other files still evaluate in their
-workers (the printed output is the full resolved configuration either way) and are
-**spawned before the in-process target's environment is applied**, so the debug
-run cannot contaminate them; combined with the explicit-`env` rule above, this is
-what keeps the printed configuration equal to a real boot's. The evaluation
+workers (the printed output is the full resolved configuration either way) and
+**cannot be contaminated by the in-process target regardless of ordering**: the
+main process constructs each worker with an explicit `env`, and workers never
+inherit `process.env` — which is what keeps the printed configuration equal to a
+real boot's. The evaluation
 deadline is disabled for the in-process target — a paused breakpoint session must
 not be killed by the 30 s timer.
 
@@ -1727,8 +1730,9 @@ export default {
   `management:addApplications` handler (`runtime/lib/management-handlers.js:116-125`),
   reachable from any application with `management: true` — it is a second live
   hot-add path with the same worker-self-loading assumption. What these commands
-  need from the running runtime comes from `GET /metadata`, extended with `root`,
-  `configPath`, and **`autoload`** — `applications:remove --save` resolves the
+  need from the running runtime comes from `GET /metadata`, which already carries the
+  project directory as `projectDir` (`runtime/lib/runtime.js:1579`) and is extended
+  with `configPath` and **`autoload`** — `applications:remove --save` resolves the
   live `autoload.path` to decide whether the removed app must be appended to
   `autoload.exclude` (`wattpm/lib/commands/applications.js:110-112`), and that is
   the only surviving source once `GET /config` is removed. `applications:add`'s
@@ -2365,7 +2369,9 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     standalone (with a warning when the project holds more than one); v3 booted the
     whole runtime from anywhere. A directory with no config file of its own falls
     through to the nearest one up the tree, so it boots the runtime.
-    Passing `--config` names the configuration and boots the full runtime, which is
+    Passing `--config` names the configuration and boots **whatever that file
+    describes** — the full runtime for a root config, one application for an
+    app-def — which is
     the sanctioned fix for a deploy script whose working directory is an
     application directory.
     Scope is otherwise purely positional — the runtime-wide behavior means running
@@ -2531,7 +2537,7 @@ Roughly ordered; steps 1–5 are the critical path.
    running the boot-time eval pass; remove
    `GET /config` and
    `GET /applications/:id/config`, extend `GET /metadata` with
-   `root`/`configPath`/`autoload`;
+   `configPath`/`autoload` (`projectDir` is already there);
    shallow explicit-wins entry merge (v3 semantics); in-memory zero-config synthesis; lazy
    capability-command dispatch (no config evaluation on plain `wattpm help`).
 5. **wattpm**: export `defineConfig`, `WattConfig` and factory types generated from
@@ -2707,6 +2713,14 @@ export interface ApplicationEntry {
   // …
 }
 
+export function defineConfig (config: WattConfig): WattConfig
+export function defineConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<WattConfig>): typeof fn
+// ConfigContext and the definition types are declared in @platformatic/basic
+// (below) and re-exported here, so a root config needs one import
+```
+
+```ts
+// @platformatic/basic — the shared vocabulary every capability re-exports
 export type ConfigContext = {
   command: 'dev' | 'build' | 'start' | 'exec'   // 'exec' = capability commands
                                                 // and other non-boot evaluation
@@ -2716,8 +2730,16 @@ export type ConfigContext = {
   root: string
 }
 
-export function defineConfig (config: WattConfig): WattConfig
-export function defineConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<WattConfig>): typeof fn
+export interface ApplicationDefinition {
+  module: string                  // the duck-typing key: `module` present = per-app
+  version: string                 // stamped by the factory; the root/app skew check
+  [option: string]: unknown       // the capability's own validated options
+}
+
+// A callback form that has not run yet. Deliberately NOT an ApplicationDefinition:
+// `.module` is absent until the loader awaits it, so reading it is a type error.
+export type DeferredApplicationDefinition =
+  (ctx: ConfigContext) => ApplicationDefinition | Promise<ApplicationDefinition>
 ```
 
 ```ts
@@ -2739,10 +2761,10 @@ export interface NextConfigOptions {
 export function next (options?: NextConfigOptions): ApplicationDefinition
 export function next (
   cb: (ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>
-): DeferredApplicationDefinition               // resolved by the loader before
+): DeferredApplicationDefinition               // awaited by the loader before
                                                // classification; `.module` is not
                                                // readable on it
-// ConfigContext re-exported from @platformatic/basic
+// ConfigContext and the definition types re-exported from @platformatic/basic
 ```
 
 ## Appendix B — before/after: the wrapped single-app config
