@@ -209,6 +209,20 @@ codebase sets it outside its own two tests. `_getEntrypointUrl` keeps only the
 `[::]`/`0.0.0.0` → `localhost` normalization, so the reported URL is always the bound
 one.
 
+**M15** is resolved, and checking it found the divergence was worse than a rename.
+v4's stated default ("the package name") applied to a scoped package would produce
+`http://@acme/frontend.plt.local` — `getApplicationUrl` does no sanitization
+(`runtime/lib/utils.js:12-14`) and the schema puts no `pattern` on `id` — so `@acme`
+parses as userinfo and the mesh address is malformed, not merely different. v3
+stripped the scope for exactly this reason. The default now strips it too, falls back
+to the directory name, and an id that still cannot be a DNS label is a configuration
+error rather than an address that silently fails to resolve.
+
+Migrate pins the resolved v3 id explicitly on every entry, so no migrated project's
+mesh hostname, `PLT_<ID>_URL`, metrics label or `wattpm inject` argument moves. The
+remaining difference — v3's `'main'` fallback for a nameless package versus v4's
+directory name — is recorded as **BC 24**.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -610,6 +624,8 @@ on distinct ports both setting `entrypointPort: 3000` raise a spurious
 vocabulary for a removed concept — and state how the collision scan treats it.
 
 ### M15. Migrate never pins the application id, and v4's default differs from v3's in two ways
+
+**RESOLVED** — migrate pins the resolved v3 id on every entry; v4's default now strips the scope like v3's, and BC 24 records the nameless-package fallback change.
 
 v3 derives the id from `package.json` `name`, **strips the scope**, and falls back to
 `'main'` (`runtime/lib/config.js:132-142` pre-`e2da15eda`). v4's default is "the

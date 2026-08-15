@@ -683,8 +683,17 @@ What the deciding file *is* then decides what boots:
 - **App-def nearest** → **that application boots standalone**: the definition is
   auto-wrapped as `{ application: { config: def } }` (the normalized singular
   form — the DTO shows this entry) and run as a single-app runtime; the entry's
-  `id` defaults to the package name (directory name when absent) and its `path` to
-  the config file's directory. `cd web/frontend && wattpm dev` — or
+  `id` defaults to the package name **with any scope stripped** — `@acme/frontend`
+  is `frontend` — falling back to the directory name when `package.json` has no
+  `name` or does not exist, and its `path` to
+  the config file's directory. Stripping the scope is not cosmetic: the id becomes a
+  DNS label in `http://<id>.plt.local` (`runtime/lib/utils.js:12-14`, no
+  sanitization), so keeping `@acme/frontend` would emit
+  `http://@acme/frontend.plt.local`, where `@acme` parses as userinfo. v3 stripped it
+  for the same reason (`runtime/lib/config.js:132-139` pre-`e2da15eda`). An id that
+  still cannot be a DNS label — one containing `@`, `/`, `:` or whitespace — is a
+  configuration error naming the entry and asking for an explicit `id`, rather than a
+  mesh address that silently does not resolve. `cd web/frontend && wattpm dev` — or
   `pnpm --filter frontend dev` — starts *only* that application, matching the
   package-local command model frontend developers expect. This is a deliberate
   break from v3, which booted the whole runtime from anywhere.
@@ -1892,7 +1901,19 @@ Generation reads both views. Then:
    factory export when the v3 config carried no runtime settings, `defineConfig`
    with the singular `application` shorthand when it did (Levels 1/1b); for a
    **multi-app** project, a `watt.config.ts` for **every** application plus a thin
-   root `watt.config.ts`. Per-app files are emitted **unconditionally**, including
+   root `watt.config.ts`.
+
+   **Every entry gets an explicit `id`**, resolved the way v3 resolved it and written
+   as a literal, so no migrated project depends on either version's default. An id is
+   the mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label and the
+   argument `wattpm inject` now requires — silently re-deriving it would move all
+   four at once. For a wrapped single-app project the v3 value is the package name
+   with its scope stripped, falling back to **`'main'`**
+   (`runtime/lib/config.js:132-142` pre-`e2da15eda`); v4's fallback is the directory
+   name instead, so pinning is what keeps a nameless package addressable at
+   `http://main.plt.local` after migration rather than at its directory name.
+
+   Per-app files are emitted **unconditionally**, including
    when one would contain nothing but the capability call. Two reasons: owning a
    file is the scope declaration (see "Loading mechanism"), and migrate does not
    touch `package.json` scripts — so an application left without one keeps a
@@ -2394,6 +2415,16 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
 23. `@platformatic/composer` (the deprecated `@platformatic/gateway` alias
     package) is **removed**. Migrate renames the module and removes the
     superseded dependency.
+24. **The default application id changes for a nameless package.** v3's wrapped
+    single-app path derived the id from `package.json` `name` with its scope
+    stripped and fell back to **`'main'`** (`runtime/lib/config.js:132-142`
+    pre-`e2da15eda`); v4 keeps the scope-stripping and falls back to the **directory
+    name**. Since the id is the mesh hostname, the injected `PLT_<ID>_URL` name, the
+    metrics label and `wattpm inject`'s argument, a package without a `name` changes
+    all four. Migrate pins the resolved v3 id explicitly on every entry, so this
+    affects hand-written v4 configs and newly created projects rather than migrated
+    ones. An id that cannot be a DNS label — containing `@`, `/`, `:` or whitespace —
+    is now a configuration error instead of an unresolvable `.plt.local` address.
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
 error. The migration story is the codemod, not a compat layer.
