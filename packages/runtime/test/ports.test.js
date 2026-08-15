@@ -88,7 +88,10 @@ test('runtime stops when applications listen on the same port', async t => {
   await rejects(
     () => runtime.start(true),
     error => {
-      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE')
+      // When reusePort is available both applications can bind the port and the runtime detects the conflict when
+      // recording the URLs. Otherwise the second application fails to bind: the runtime can name the owner only if the
+      // first application already reported its URL, so the raw EADDRINUSE error is also acceptable.
+      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE', error.message)
       match(error.message, new RegExp(`${port}`))
       return true
     }

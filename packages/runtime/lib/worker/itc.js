@@ -201,7 +201,10 @@ export async function setupITC (controller, application, dispatcher, sharedConte
               })
             })
 
-            throw ensureLoggableError(e)
+            // Errors are structured cloned when sent to the runtime, which drops all their custom properties (like the
+            // port and the address of listen errors): send a plain object instead so that the runtime can inspect them.
+            // eslint-disable-next-line no-throw-literal
+            throw { name: e.name, ...ensureLoggableError(e) }
           }
         }
 

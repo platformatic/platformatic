@@ -158,7 +158,11 @@
 
 ### PLT_RUNTIME_EADDR_IN_USE
 
-**Message:** The current port is in use by another application
+**Message:** Port %d is already in use by applications "%s" and "%s"
+
+### PLT_RUNTIME_WORKER_EADDR_IN_USE
+
+**Message:** Port %d is already in use by another worker of the application "%s". Multiple workers can share a port only when the reusePort feature is available in your OS, otherwise set "server.portAssignment" to "perWorkerIncrement" in the application configuration or use a single worker.
 
 ### PLT_RUNTIME_RUNTIME_EXIT
 

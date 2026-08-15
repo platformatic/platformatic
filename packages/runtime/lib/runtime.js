@@ -36,6 +36,7 @@ import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
 import {
   AddressInUseError,
+  WorkerAddressInUseError,
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
   ApplicationNotStartedError,
@@ -2463,7 +2464,7 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    const workers = applicationConfig.workers.static
+    let workers = applicationConfig.workers.static
     const setupInvocations = []
 
     // All the workers of the application are (re)created, so their port offsets match their indexes
@@ -2473,7 +2474,27 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    for (let i = 0; i < workers; i++) {
+    let firstIndex = 0
+
+    // On platforms where reusePort is not available, multiple workers cannot listen on the same fixed port.
+    // The listener configuration is owned by the capability, so it can only be inspected after setting up the first
+    // worker: if the application would try to share a fixed port between workers, clamp it to a single worker.
+    if (!features.node.reusePort && (workers > 1 || applicationConfig.workers.dynamic)) {
+      const worker = await this.#setupWorker(config, applicationConfig, workers, id, 0)
+      firstIndex = 1
+
+      if (await this.#usesSharedFixedPort(worker)) {
+        this.logger.warn(
+          `The application "${id}" is configured to listen on a fixed port with multiple workers, but reusePort is not available in your OS. ${workers > 1 ? `Setting workers to 1 instead of ${workers}` : 'Disabling dynamic workers scaling'}. To run multiple workers, set "server.portAssignment" to "perWorkerIncrement" in the application configuration.`
+        )
+
+        applicationConfig.workers = { dynamic: false, static: 1 }
+        workers = 1
+        await sendViaITC(worker, 'updateWorkersCount', { applicationId: id, workers })
+      }
+    }
+
+    for (let i = firstIndex; i < workers; i++) {
       setupInvocations.push([config, applicationConfig, workers, id, i])
     }
 
@@ -3379,7 +3400,13 @@ export class Runtime extends EventEmitter {
       if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {
         const port = Number(error.port)
         const owner = this.#getPortOwner(port, id)
-        error = new AddressInUseError(port, owner ?? 'another process', id)
+
+        if (owner) {
+          error = new AddressInUseError(port, owner, id)
+        } else if (this.#getPortOwner(port, id, undefined, true)) {
+          error = new WorkerAddressInUseError(port, id)
+        }
+        // Otherwise the port is used by an external process: keep the original error, which already describes it
       }
       if (error.code === 'EACCES') throw error
 
@@ -3411,7 +3438,8 @@ export class Runtime extends EventEmitter {
         error.code === 'EACCES' ||
         error.code === 'EADDRINUSE' ||
         error.code === 'EADDRNOTAVAIL' ||
-        error.code === 'PLT_RUNTIME_EADDR_IN_USE'
+        error.code === 'PLT_RUNTIME_EADDR_IN_USE' ||
+        error.code === 'PLT_RUNTIME_WORKER_EADDR_IN_USE'
       ) {
         throw error
       }
@@ -3564,6 +3592,24 @@ export class Runtime extends EventEmitter {
     }
 
     return offset
+  }
+
+  // Returns true if the application of the worker is configured to listen on a fixed port shared by all its workers
+  async #usesSharedFixedPort (worker) {
+    let server
+
+    try {
+      server = (await sendViaITC(worker, 'getApplicationConfig'))?.server
+    } catch {
+      return false
+    }
+
+    if (!server || server.portAssignment === 'perWorkerIncrement') {
+      return false
+    }
+
+    const port = Number(server.port)
+    return Number.isInteger(port) && port > 0
   }
 
   // Returns the effective restartOnError value for an application: the application-level
@@ -4915,13 +4961,13 @@ export class Runtime extends EventEmitter {
     worker.terminate()
   }
 
-  #getPortOwner (port, applicationId, hostname) {
+  #getPortOwner (port, applicationId, hostname, includeSameApplication = false) {
     if (!Number.isInteger(port) || port <= 0) {
       return null
     }
 
     for (const worker of this.#workers.values()) {
-      if (!worker[kWorkerUrl] || worker[kApplicationId] === applicationId) {
+      if (!worker[kWorkerUrl] || (!includeSameApplication && worker[kApplicationId] === applicationId)) {
         continue
       }
 
