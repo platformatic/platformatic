@@ -2064,7 +2064,21 @@ Generation reads both views. Then:
    than guessing which application was public.
    Three rules follow, applied in this order:
    - **the v3 root `server` block moves into the v3 entrypoint's capability
-     config**, verbatim. This is the conversion the runtime's own upgrade chain
+     config.** "Verbatim" means the **five keys the v3 root block and every v4
+     capability `server` share** — `hostname`, `port`, `backlog`, `http2`, `https`.
+     That is the v3 root block exactly minus one key: `portAssignment`, which no v4
+     capability schema admits, so copying it literally would fail step 3 on
+     migrate's own output. It is **dropped with a requires-review note**, and the
+     note explains the consequence rather than just the omission: v3's
+     `perWorkerIncrement` gave each worker its own port starting from `port`, while
+     `shared` put every worker on one port. v4 has no equivalent — an application's
+     `server.port` is one port — so a project that used `perWorkerIncrement`
+     specifically to run multiple workers *without* `SO_REUSEPORT` loses that escape
+     hatch, and `workers > 1` on a fixed port now depends on the platform having it
+     (see BC 22 and platformatic/platformatic#5070). The note names `port: 0` and
+     reducing to one worker as the supported alternatives.
+
+     This is the conversion the runtime's own upgrade chain
      cannot perform — it deletes root `server` and warns
      (`runtime/lib/upgrade.js:16-19`) precisely because the destination lives in
      another file — and it is what keeps the public address of a migrated project
@@ -2363,6 +2377,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     (`basic/lib/schema.js:61-63`); migrate emits a requires-review note naming each
     entry that carried one, because a project relying on it to advertise a proxied
     port now reports the port it actually binds.
+    Removing `portAssignment` also removes a **capability**, not just a key:
+    `perWorkerIncrement` gave each worker its own port starting from `port`, which
+    was the way to run multiple workers on fixed ports without `SO_REUSEPORT`. v4
+    has no equivalent — an application's `server.port` is one port — so `workers > 1`
+    on a fixed port now depends on the platform providing `SO_REUSEPORT` (BC 22).
     **`useHttp` is the exception: the chain does not delete it**, and
     `applications.items` does not set `additionalProperties: false`, so it survives
     validation as a key nothing reads — an in-place upgrade leaves `useHttp: true`

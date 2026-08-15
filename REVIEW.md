@@ -223,6 +223,19 @@ mesh hostname, `PLT_<ID>_URL`, metrics label or `wattpm inject` argument moves. 
 remaining difference — v3's `'main'` fallback for a nameless package versus v4's
 directory name — is recorded as **BC 24**.
 
+**M16** is resolved. The arithmetic is exact: the v3 root `server` block is
+`hostname, port, portAssignment, backlog, http2, https`, and no v4 capability schema
+admits `portAssignment` (checked across all nine), so "verbatim" is precisely the
+other five — the same set the basic family already exposes. Copying the sixth would
+have failed step 3 on migrate's own output, the same failure mode as B4.
+
+Dropping it removes a *capability*, not just a key, which the note now says:
+`perWorkerIncrement` gave each worker its own port starting from `port`, and was the
+way to run multiple workers on fixed ports **without** `SO_REUSEPORT`. v4 has no
+equivalent, so `workers > 1` on a fixed port now depends on the platform having it
+(BC 22, #5070). Recorded in BC 19 as well, since that entry listed the removal
+without stating what was lost.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -637,6 +650,8 @@ mesh hostname, the injected `PLT_<ID>_URL`, the metrics label, and the argument
 **Fix direction:** have migrate emit the resolved `id` explicitly on every entry.
 
 ### M16. Rule 1 moves the root `server` block "verbatim", but `portAssignment` exists in no v4 capability schema
+
+**RESOLVED** — "verbatim" is now defined as the five shared keys (`hostname`, `port`, `backlog`, `http2`, `https`); `portAssignment` is dropped with a requires-review note explaining the lost capability.
 
 The v3 root `server` includes `portAssignment`; no capability `server` block admits
 it. "Verbatim" therefore emits a config that fails step 3.
