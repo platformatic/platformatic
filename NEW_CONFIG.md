@@ -564,10 +564,21 @@ Because the path exists only in memory, **the root eval worker backfills it** �
 that runs `autoload` and resolves `enabled`, before fan-out. v3 could defer this to
 `#setupApplication` (`runtime/lib/runtime.js:1975-1980`) because per-app config was
 loaded worker-side; v4 needs an absolute `path` during loading to find the per-app
-file, run the detector, and validate the capability. (v3 tolerated the gap by
-marking such entries `type: 'unknown'` — `runtime/lib/config.js:229-230`.) An entry
-whose derived directory does not exist yet is reported as "run `wattpm resolve`",
-never as a detector "no JavaScript sources" error.
+file, run the detector, and validate the capability. An entry with a `url` whose directory — backfilled or declared — **does not exist
+yet** is recorded **unresolved** and skipped by per-app discovery entirely: no
+per-app file lookup, no detector, no capability validation. This is v3's
+`type: 'unknown'` (`runtime/lib/config.js:229-231`, whose comment gives the same
+reason: detection on a missing directory would glob the cwd), adapted to the fact
+that v4 always has a `path` and only the directory may be absent.
+
+**Loading must succeed in that state, because it is the only state `resolve` ever
+runs in.** `resolveApplications` calls `loadConfiguration` first and *then* selects
+the applications whose path is missing (`wattpm-utils/lib/commands/external.js:412-421`),
+so a load-time failure would make `wattpm resolve` fail on a clean checkout telling
+you to run `wattpm resolve`. Migrate's step 3 has the same shape over its own
+emitted output. Only `dev`, `start` and `build` — the commands that need the code to
+be present — promote an unresolved entry to an error, and it reads "run `wattpm
+resolve`", never as a detector "no JavaScript sources" error.
 
 The `{PLT_APPLICATION_X_PATH}` placeholder entries plus `.env` lines were written
 by **`wattpm import`** (`external.js:243-271`), not `resolve` — as is the capability
@@ -2118,7 +2129,11 @@ Generation reads both views. Then:
    Everything else runs: per-app discovery, `autoload` expansion, the per-app eval
    workers, the capability detector, capability validation, and the version-stamp
    check. (Skipping *discovery* would leave multi-app output — where migrate does
-   most of its work — validated only at the root.) This bypass is *not* the public
+   most of its work — validated only at the root.) Entries whose directory is not
+   present — a `url`-bearing application on a checkout that has never been
+   resolved — validate as **unresolved** and are skipped, exactly as they are at
+   load time; migrate must not require `wattpm resolve` to have been run first, and
+   reports the unresolved list in its summary. This bypass is *not* the public
    `--config` flag:
    `--config` performs the full unconditional legacy scan of the selected
    directory and every discovered app directory, so it can never be used to

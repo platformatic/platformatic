@@ -157,6 +157,18 @@ root (silent). The ancestor test is the one thing that looks above the search st
 point; it executes nothing and cannot change what boots, only whether a warning
 prints.
 
+**M11** is resolved. `resolveApplications` calls `loadConfiguration` and *then*
+selects the applications whose path is missing
+(`wattpm-utils/lib/commands/external.js:412-421`), so making an absent directory a
+load-time failure meant `wattpm resolve` failed on a clean checkout telling the user
+to run `wattpm resolve`. An entry with a `url` whose directory does not exist is now
+recorded **unresolved** and skipped by per-app discovery — no file lookup, no
+detector, no capability validation — which is v3's `type: 'unknown'`
+(`runtime/lib/config.js:229-231`) adapted to the fact that v4 always backfills a
+`path` and only the directory may be absent. Only `dev`, `start` and `build` promote
+it to an error. Migrate's step 3 had the identical deadlock over its own output and
+now skips the same entries.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -503,6 +515,8 @@ runtime with a working mesh boots.
 app-def **and** a config exists above it.
 
 ### M11. `wattpm resolve` cannot load a configuration whose remote applications are unresolved — the only state in which it runs
+
+**RESOLVED** — a `url` entry whose directory is absent is recorded unresolved and skipped by discovery; only `dev`/`start`/`build` promote it to an error. Migrate's step 3 does the same.
 
 `:562-569` makes a missing backfilled directory a load-time failure ("run `wattpm
 resolve`"). `resolveApplications` loads the configuration first
