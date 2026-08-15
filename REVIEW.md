@@ -180,6 +180,22 @@ directories: `resolveApplications` refuses to clone outside the project root and
 skips the entry with a warning (`external.js:444-452`), while an existing directory
 is used as-is whatever its location.
 
+**M13** is resolved. Migrate now distinguishes values it *converts* from positions it
+must *resolve*: an entry's `path`, `autoload.path`, `envfile` and
+`resolvedApplicationsBasePath` are structural — migrate needs real directories to
+place per-app files, run the detector, rebase `envfile` and evaluate the
+root-directory `envfile` refusal — so their placeholders are evaluated against the
+migration-time environment layered with the root `.env` and written as literals. It
+is the one place migrate reads the ambient environment to decide structure, and the
+report names the variable behind each.
+
+The shape that forced it is `wattpm import --useEnv`, which writes
+`path: '{PLT_APPLICATION_<ID>_PATH}'` and appends an **empty** value for a remote
+application (`external.js:243-271`). Converting it naively gives `path: ''` → the
+project root → "configured twice". A `url`-bearing entry whose path resolves empty
+now drops the path and keeps `{ id, url, gitBranch? }`, which is the unresolved shape
+M11 already made loadable; a non-`url` entry resolving empty is a pre-flight stop.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -552,6 +568,8 @@ against a *different* anchor (`external.js:446-451`, `startsWith(root)`).
 config names are trusted wherever they resolve.
 
 ### M13. Migrate has no rule for `{PLT_APPLICATION_<ID>_PATH}` entries — the shape `wattpm import` writes
+
+**RESOLVED** — the four structural path positions are resolved against the migration-time environment plus the root `.env` before emission; a `url` entry whose path resolves empty drops the path and keeps the `url`, a non-`url` one is a pre-flight stop.
 
 `import` writes `path: '{PLT_APPLICATION_X_PATH}'` plus an empty `.env` line
 (`external.js:243-271`). Naive conversion yields `path: ''`, which resolves to the

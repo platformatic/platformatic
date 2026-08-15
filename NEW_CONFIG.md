@@ -1830,7 +1830,10 @@ authored values and drop environment-disabled applications. The views:
 
 - the **lexical view** — the parsed file with `{PLT_X}` placeholder tokens
   intact and no defaults injected; every authored application is present
-  regardless of the migration-time environment. Its **module list** — what the
+  regardless of the migration-time environment. *Which applications exist* is
+  lexical; the four **structural path positions** are the documented exception and
+  are resolved against that environment before emission (see step 1). Its
+  **module list** — what the
   pre-flight check and the generation table key off — is
   `config.module ?? extractModuleFromSchemaUrl(config)` with
   `splitModuleFromVersion` applied, since a top-level `module` string is the
@@ -2097,6 +2100,32 @@ Generation reads both views. Then:
    migrate's per-app output, where `import.meta.dirname` *is* the app root; the docs
    flag that the expression must be rewritten if later moved into a root-inline
    entry.
+
+   **Four positions are *structural* and must be concrete before anything is
+   emitted**: an entry's `path`, `autoload.path`, `envfile`, and
+   `resolvedApplicationsBasePath`. Migrate needs real directories at generation time
+   — to decide where each per-app file goes, to run the detector, to rebase `envfile`
+   app-relative, and to evaluate the root-directory `envfile` refusal — and none of
+   that is expressible over an unresolved token. So these four are **resolved, not
+   converted**: migrate evaluates their placeholders against the migration-time
+   environment layered with the root `.env`, and writes the resulting literal path.
+   This is the one place migrate reads the ambient environment to decide *structure*
+   rather than to preserve a value, and the report says which variable supplied each
+   one.
+
+   That matters most for the shape **`wattpm import` writes**: with `--useEnv` it
+   emits `{ id, path: '{PLT_APPLICATION_<ID>_PATH}', url }` and appends
+   `PLT_APPLICATION_<ID>_PATH=` to `.env` — **empty** for a remote application that
+   has not been resolved (`wattpm-utils/lib/commands/external.js:243-271`, the
+   variable named by `applicationToEnvVariable`, `foundation/lib/cli.js:211-213`).
+   Converting that naively yields `path: ''`, which resolves to the project root,
+   where per-app discovery finds the root config and raises "configured twice".
+   Instead: a **`url`-bearing entry whose path resolves empty keeps its `url` and
+   loses the path entirely** — `{ id, url, gitBranch? }` — which is exactly the
+   unresolved shape v4 backfills from `resolvedApplicationsBasePath` and which
+   discovery already skips (see "`wattpm resolve`"). A **non-`url`** entry whose path
+   resolves empty is a pre-flight stop naming the entry and the variable, because an
+   empty path there silently means the project root.
 2. **Audit and install v4 dependencies before validating anything.** The emitted
    per-app files import v4 factories and the thin root imports `defineConfig`
    from `wattpm` — and validation must run against what those imports will
