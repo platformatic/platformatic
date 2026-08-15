@@ -797,10 +797,9 @@ which every build style reads.
 
 **How applications are exposed — there is no entrypoint and no runtime-level
 listener.** `entrypoint` and root
-`server` are gone from the runtime schema, `server` and `useHttp` are gone from
-application entries, and `server.portAssignment` is gone from the shared server
-schema — the v4 upgrade chain deletes `entrypoint`, root `server` and every
-per-application `server`, taking `portAssignment` with the latter
+`server` are gone from the runtime schema, and `server` and `useHttp` are gone from
+application entries — the v4 upgrade chain deletes `entrypoint`, root `server` and
+every per-application `server`
 (`runtime/lib/versions/v4.0.0.js:16-27`), while explicitly preserving the
 capability-owned `server` of a standalone application config (`:10-14`). It does
 **not** delete `useHttp`, which no longer has a reader; migrate is what converts it
@@ -863,7 +862,24 @@ The rules, in full:
   (`basic/lib/worker/child-process.js:586-597`). A Node application without a
   `create()`/`build()` factory, and any application started through a custom
   command, binds exactly what its own code says, and the runtime records the
-  result. **`application.entrypointPort` is removed** for the same reason: it
+  result.
+- **`server.portAssignment` moves into the capability block and stays.** v3 had it
+  on the *runtime* `server` because ports were entrypoint-wide; v4 ports are
+  per-application, so it belongs where the port does:
+  `node({ server: { port: 3000, portAssignment: 'perWorkerIncrement' } })`. `shared`
+  (the default) puts every worker on one port and therefore needs `SO_REUSEPORT`;
+  `perWorkerIncrement` binds worker *i* at `port + i` and needs nothing. It is
+  **required**, not optional: `features.node.reusePort` is `false` on macOS and
+  Windows (`foundation/lib/node.js:77`), so without it "fixed port + `workers > 1`"
+  has no working configuration on either platform. `e2da15eda` removed the key and
+  its implementation along with the entrypoint; restoring it is tracked as
+  platformatic/platformatic#5074, and this format assumes it. Two consequences the
+  runtime owns: an application with N workers from `port` occupies `port … port+N-1`,
+  so the collision scan must reject a sibling declaring any port in that range —
+  at load, not when the second worker starts — and `getUrls()` reports N distinct
+  URLs for that application.
+- **`application.entrypointPort` is removed** for the same reason as custom
+  listeners: it
   overwrote the port of an *observed* URL
   (`basic/lib/capability.js:906-910`) so the runtime would report a port other than
   the bound one — meaningful only while an entrypoint proxied the application, and
@@ -2064,19 +2080,9 @@ Generation reads both views. Then:
    than guessing which application was public.
    Three rules follow, applied in this order:
    - **the v3 root `server` block moves into the v3 entrypoint's capability
-     config.** "Verbatim" means the **five keys the v3 root block and every v4
-     capability `server` share** — `hostname`, `port`, `backlog`, `http2`, `https`.
-     That is the v3 root block exactly minus one key: `portAssignment`, which no v4
-     capability schema admits, so copying it literally would fail step 3 on
-     migrate's own output. It is **dropped with a requires-review note**, and the
-     note explains the consequence rather than just the omission: v3's
-     `perWorkerIncrement` gave each worker its own port starting from `port`, while
-     `shared` put every worker on one port. v4 has no equivalent — an application's
-     `server.port` is one port — so a project that used `perWorkerIncrement`
-     specifically to run multiple workers *without* `SO_REUSEPORT` loses that escape
-     hatch, and `workers > 1` on a fixed port now depends on the platform having it
-     (see BC 22 and platformatic/platformatic#5070). The note names `port: 0` and
-     reducing to one worker as the supported alternatives.
+     config**, `portAssignment` included — it is carried across as a capability
+     `server` key, not dropped (see "How applications are exposed"). The move is
+     otherwise verbatim.
 
      This is the conversion the runtime's own upgrade chain
      cannot perform — it deletes root `server` and warns
@@ -2362,13 +2368,12 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     carried-over block key, and the runtime logs once when a block key is
     suppressed by the real environment.
 19. **`entrypoint`, the root `server` block, the entry-level `server` block,
-    `useHttp`, `server.portAssignment` and `application.entrypointPort` are all
+    `useHttp` and `application.entrypointPort` are all
     removed** — the runtime has no
     listener of its own, and each application exposes itself through its own
     capability configuration (see "How applications are exposed"). The v4 upgrade
     chain deletes `entrypoint`, the root `server`, every per-application
-    `server` (`runtime/lib/versions/v4.0.0.js:16-27`)
-    — which takes `server.portAssignment` with it — and
+    `server` (`runtime/lib/versions/v4.0.0.js:16-27`) and
     `application.entrypointPort` from every capability config, while preserving a
     standalone
     application config's capability-owned `server` (`:10-14`), and `upgrade()`
@@ -2377,11 +2382,12 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     (`basic/lib/schema.js:61-63`); migrate emits a requires-review note naming each
     entry that carried one, because a project relying on it to advertise a proxied
     port now reports the port it actually binds.
-    Removing `portAssignment` also removes a **capability**, not just a key:
-    `perWorkerIncrement` gave each worker its own port starting from `port`, which
-    was the way to run multiple workers on fixed ports without `SO_REUSEPORT`. v4
-    has no equivalent — an application's `server.port` is one port — so `workers > 1`
-    on a fixed port now depends on the platform providing `SO_REUSEPORT` (BC 22).
+    **`server.portAssignment` is not removed — it relocates.** `e2da15eda` deleted
+    it with the root `server` block, but `perWorkerIncrement` is the only way to run
+    `workers > 1` on a fixed port without `SO_REUSEPORT`, which macOS and Windows
+    lack entirely. It returns as a **capability** `server` key, where the port now
+    lives (platformatic/platformatic#5074). Migrate carries a v3 value across
+    unchanged.
     **`useHttp` is the exception: the chain does not delete it**, and
     `applications.items` does not set `additionalProperties: false`, so it survives
     validation as a key nothing reads — an in-place upgrade leaves `useHttp: true`

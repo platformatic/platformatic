@@ -223,18 +223,22 @@ mesh hostname, `PLT_<ID>_URL`, metrics label or `wattpm inject` argument moves. 
 remaining difference — v3's `'main'` fallback for a nameless package versus v4's
 directory name — is recorded as **BC 24**.
 
-**M16** is resolved. The arithmetic is exact: the v3 root `server` block is
-`hostname, port, portAssignment, backlog, http2, https`, and no v4 capability schema
-admits `portAssignment` (checked across all nine), so "verbatim" is precisely the
-other five — the same set the basic family already exposes. Copying the sixth would
-have failed step 3 on migrate's own output, the same failure mode as B4.
+**M16** is resolved, but not the way it was first written. The v3 root `server` block
+is `hostname, port, portAssignment, backlog, http2, https` and no v4 capability schema
+admits `portAssignment`, so a verbatim move fails step 3 — that much held. Dropping
+the key did not: `e2da15eda` had already removed the feature from the *code* (zero
+occurrences of `portAssignment` or `perWorkerIncrement` in the tree), and
+`perWorkerIncrement` is the only way to run `workers > 1` on a fixed port without
+`SO_REUSEPORT`, which `foundation/lib/node.js:77` disables outright on macOS and
+Windows. That combination therefore has no working configuration on either platform,
+and #5070 covers only the missing *clamp*, so fixing it would still leave these
+projects on one worker.
 
-Dropping it removes a *capability*, not just a key, which the note now says:
-`perWorkerIncrement` gave each worker its own port starting from `port`, and was the
-way to run multiple workers on fixed ports **without** `SO_REUSEPORT`. v4 has no
-equivalent, so `workers > 1` on a fixed port now depends on the platform having it
-(BC 22, #5070). Recorded in BC 19 as well, since that entry listed the removal
-without stating what was lost.
+Restoration is tracked as **platformatic/platformatic#5074** and this format assumes
+it: `portAssignment` returns as a **capability** `server` key, where the port now
+lives, and migrate carries a v3 value across unchanged. The runtime owes two things
+the document now names — the collision scan must treat an N-worker application as
+occupying `port … port+N-1` at load time, and `getUrls()` reports N distinct URLs.
 
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
