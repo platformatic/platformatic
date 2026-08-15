@@ -66,6 +66,10 @@ export interface PlatformaticRemixConfig {
     hostname?: string;
     port?: number | string;
     /**
+     * Configures how the port is assigned when the application runs multiple workers. When set to shared (the default), all workers listen on the same port (which requires SO_REUSEPORT support). When set to perWorkerIncrement, each worker listens on its own port, starting from port (worker 0) and incrementing by one for each additional worker.
+     */
+    portAssignment?: "shared" | "perWorkerIncrement";
+    /**
      * The maximum length of the queue of pending connections
      */
     backlog?: number;

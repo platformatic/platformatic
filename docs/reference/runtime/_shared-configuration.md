@@ -603,6 +603,8 @@ It can be a boolean or an object with the following settings:
 
 Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. This setting can be overridden at the application level.
 
+`reusePort` is what allows multiple workers of the same application to listen on the same port. It is not available on macOS and Windows: on those platforms, an application with a fixed `server.port` and multiple workers should set `server.portAssignment` to `perWorkerIncrement` in its capability configuration, so that each worker listens on its own port (`port`, `port + 1`, and so on).
+
 ### `logger`
 
 This configures the Platformatic Runtime `logger`, based on [pino](https://getpino.io).

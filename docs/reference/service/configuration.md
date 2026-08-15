@@ -30,7 +30,8 @@ If not specified, the application will be exposed on the application or a value 
 An object with the following settings:
 
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
-- **`port`** — Port where Platformatic Service server will listen for connections.
+- **`port`** — Port where Platformatic Service server will listen for connections. When `portAssignment` is set to `perWorkerIncrement`, this is the port assigned to worker 0.
+- **`portAssignment`** (`string`) — Sets how the port is assigned when the application runs multiple workers. Default: `shared`. Set it to `shared` or leave it unset to make all workers listen on the same `port`, which requires `SO_REUSEPORT` support (available on Linux with Node.js 22.12+ or 23.1+; not available on macOS and Windows). Set it to `perWorkerIncrement` to give each worker its own port, starting from `port` (worker 0) and incrementing by one for each additional worker: use it when `SO_REUSEPORT` is not available or when you want to address each worker individually, typically behind an external load balancer.
 - **`backlog`** (`number`) — Maximum length of the pending connection queue.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
