@@ -949,6 +949,18 @@ invariant is best-effort, and stated as such. When the search finds nothing — 
 zero-config detector recognizes — it stops with an error naming the directories it
 looked in and pointing at `--config`.
 
+**Naming a directory is not searching for one.** The stop condition governs the
+*search* for a config file and nothing else. An application entry's `path` is
+trusted wherever it resolves, `../` included: pointing at a directory beside the
+runtime rather than beneath it is an ordinary layout, and 39 in-tree configurations
+already do it. The same holds for `resolvePath` keywords and every other path a
+configuration names — a configuration is trusted code, and a directory it names is
+part of what it describes. The one containment rule lives in `resolve`, and it
+governs *creating* directories rather than reading them: `resolveApplications`
+refuses to clone into a path outside the project root, skipping that entry with a
+warning (`wattpm-utils/lib/commands/external.js:444-452`), while a directory that
+already exists is used as-is whatever its location.
+
 Env files are **not** subject to this. `loadEnv` walks up from the deciding file's
 directory for `.env` files, exactly as v3 does today
 (`foundation/lib/configuration.js:360-372`), and the runtime additionally reads each

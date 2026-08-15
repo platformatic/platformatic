@@ -169,6 +169,17 @@ detector, no capability validation — which is v3's `type: 'unknown'`
 it to an error. Migrate's step 3 had the identical deadlock over its own output and
 now skips the same entries.
 
+**M12** is resolved. The sentence that caused it ("the boundary bounds … path
+resolution … nothing above it is read, run, or consulted") was deleted with the
+boundary itself, so the prohibition is gone — but the document now says the positive
+thing rather than leaving the question unasked: **naming a directory is not searching
+for one.** The stop condition governs the config *search* and nothing else; an
+entry's `path` is trusted wherever it resolves, `../` included, as 39 in-tree
+configurations already rely on. The only containment rule is about *creating*
+directories: `resolveApplications` refuses to clone outside the project root and
+skips the entry with a warning (`external.js:444-452`), while an existing directory
+is used as-is whatever its location.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -529,6 +540,8 @@ yet, recording them unresolved (v3's `type: 'unknown'`); only `dev`/`start`/`bui
 promote that to an error.
 
 ### M12. "The boundary bounds … path resolution" silently outlaws `path: '../…'`
+
+**RESOLVED** — the offending sentence went with the boundary; the document now states positively that a config-named `path` is trusted wherever it resolves, and that the only containment rule is `resolve` refusing to *create* outside the root.
 
 `:915-916` says nothing above the boundary is "read, run, or consulted". 50 in-tree
 configs carry `"path": "../…"`. Nothing states whether such an entry is refused,
