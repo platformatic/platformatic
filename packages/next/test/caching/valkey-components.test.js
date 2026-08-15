@@ -102,7 +102,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
 })
 
 test('should properly use the Valkey cache handler in production to cache route handlers', async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
@@ -124,6 +124,10 @@ test('should properly use the Valkey cache handler in production to cache route 
   {
     const response = await fetch(url + '/route')
     const data = await response.json()
+    // The cache write happens after the response has already been sent to
+    // the client (background work on the worker), so we must wait for the
+    // worker to finish before relying on the value being in Valkey.
+    await once(runtime, 'application:worker:event:completed')
 
     version = data.version
     time = data.time
@@ -134,6 +138,7 @@ test('should properly use the Valkey cache handler in production to cache route 
   {
     const response = await fetch(url + '/route')
     const data = await response.json()
+    await once(runtime, 'application:worker:event:completed')
 
     deepStrictEqual(data.version, version)
     deepStrictEqual(data.time, time)
@@ -352,6 +357,10 @@ test('should handle deserialization error', async t => {
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    // The cache write happens after the response has already been sent to
+    // the client (background work on the worker), so we must wait for the
+    // worker to finish before the value is actually written to Valkey.
+    await once(runtime, 'application:worker:event:completed')
   }
 
   // Wait until the cache value has actually been corrupted (with a bounded
@@ -365,19 +374,24 @@ test('should handle deserialization error', async t => {
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await once(runtime, 'application:worker:event:completed')
   }
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
 
-  ok(
-    logs.find(l => {
-      return (
-        l.msg === 'Cannot deserialize cache value from Valkey' &&
-        l.err?.message === 'Unexpected end of buffer reading string'
-      )
-    })
-  )
+  const found = logs.find(l => {
+    return (
+      l.msg === 'Cannot deserialize cache value from Valkey' &&
+      l.err?.message === 'Unexpected end of buffer reading string'
+    )
+  })
+
+  if (!found) {
+    console.error('Deserialization error log entry not found. Captured error logs:', JSON.stringify(logs.filter(l => l.err), null, 2))
+  }
+
+  ok(found)
 })
 
 test('should handle read error', async t => {
@@ -446,6 +460,12 @@ test('should handle refresh error', async t => {
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    // The cache write for the first request happens after the response has
+    // already been sent (background work on the worker). We must wait for
+    // it to actually land in Valkey before swapping the ACL, otherwise the
+    // second request may see a cache MISS (no refresh attempted at all)
+    // instead of a HIT that needs its expiration refreshed.
+    await once(runtime, 'application:worker:event:completed')
   }
 
   await valkey.acl('deluser', valkeyUser)
@@ -454,19 +474,24 @@ test('should handle refresh error', async t => {
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await once(runtime, 'application:worker:event:completed')
   }
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
 
-  ok(
-    logs.find(l => {
-      return (
-        l.msg === 'Cannot refresh cache key expiration in Valkey' &&
-        l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'expire' command"
-      )
-    })
-  )
+  const found = logs.find(l => {
+    return (
+      l.msg === 'Cannot refresh cache key expiration in Valkey' &&
+      l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'expire' command"
+    )
+  })
+
+  if (!found) {
+    console.error('Refresh error log entry not found. Captured error logs:', JSON.stringify(logs.filter(l => l.err), null, 2))
+  }
+
+  ok(found)
 })
 
 test('should handle write error', async t => {

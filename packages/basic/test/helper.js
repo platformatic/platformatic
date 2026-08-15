@@ -583,6 +583,19 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
 
   const webSocket = new WebSocket(url.replace('http:', 'ws:') + path, protocol)
 
+  // Turbopack's HMR protocol (Next.js 16.2+, path contains "_next/hmr") no
+  // longer sends an explicit "sync" message to confirm the connection is
+  // ready - the connection is simply considered ready once the WebSocket
+  // handshake completes. Other frameworks (e.g. Vite, which sends an
+  // explicit { type: 'connected' } message) keep relying on their own
+  // message-based signal via the handler below, so this is scoped to
+  // Next.js only to avoid resolving the connection too early for them.
+  if (path.includes('_next/hmr')) {
+    webSocket.on('open', () => {
+      connection.resolve()
+    })
+  }
+
   webSocket.on('error', err => {
     process._rawDebug('WebSocket error:', err)
     clearTimeout(timeout)

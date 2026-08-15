@@ -849,18 +849,27 @@ test('should handle write error', async t => {
 
   const response = await fetch(url + '/route')
   notDeepStrictEqual((await response.json()).time, 0)
+  // The cache write happens after the response has already been sent to the
+  // client (background work on the worker). We must wait for the worker to
+  // finish before closing the runtime, otherwise the write attempt (and its
+  // error log) may never happen at all.
+  await once(runtime, 'application:worker:event:completed')
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
 
-  ok(
-    logs.find(l => {
-      return (
-        l.msg === 'Cannot write cache value in Valkey' &&
-        l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'set' command"
-      )
-    })
-  )
+  const found = logs.find(l => {
+    return (
+      l.msg === 'Cannot write cache value in Valkey' &&
+      l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'set' command"
+    )
+  })
+
+  if (!found) {
+    console.error('Write error log entry not found. Captured error logs:', JSON.stringify(logs.filter(l => l.err), null, 2))
+  }
+
+  ok(found)
 })
 
 test('should handle refresh error', async t => {
