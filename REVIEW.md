@@ -240,6 +240,19 @@ lives, and migrate carries a v3 value across unchanged. The runtime owes two thi
 the document now names — the collision scan must treat an N-worker application as
 occupying `port … port+N-1` at load time, and `getUrls()` reports N distinct URLs.
 
+**M17** is resolved. The pause was a trap: migrate's step-2 edit puts `package.json`
+in the manifest, but the lockfile is written by the *user's* install afterwards, so it
+appeared as an unexplained modification and `--resume`'s dirty check refused the run
+migrate had just told the user to prepare for. `--no-install` now pre-records both
+files as expected to change — honest bookkeeping rather than an exemption, since both
+are already part of the migration transaction and rollback restores them.
+
+The second half was unstated: `--resume` now **runs the install itself**, so the
+transaction completes identically whether or not the user ran the printed command (a
+package manager against an already-installed tree is a no-op). `--resume
+--no-install` opts out for offline or vendored setups, and validation then fails
+naming the missing dependency instead of surfacing a schema error.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -664,6 +677,8 @@ it. "Verbatim" therefore emits a config that fails step 3.
 note, and that "verbatim" means the five shared keys.
 
 ### M17. `--no-install` tells the user to run the install; `--resume`'s dirty check then blocks on the lockfile that install writes
+
+**RESOLVED** — `--no-install` pre-records `package.json` and the lockfile in the manifest before pausing, and `--resume` runs the install itself (`--resume --no-install` opts out).
 
 The manifest holds files migrate created or modified (`:1983-1985`); the lockfile is
 modified by the user's install and is not exempt, so `--resume` refuses.

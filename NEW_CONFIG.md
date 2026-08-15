@@ -2195,7 +2195,24 @@ Generation reads both views. Then:
    after emitting files and manifests, prints the install command, and defers
    the rest to **`migrate --resume`** — which exempts exactly the persisted
    manifest's entries from the dirty-tree check, leaves emitted files the user has since
-   modified untouched, reporting them, and continues at install/validation). An
+   modified untouched, reporting them, and continues at install/validation).
+
+   `--no-install` **pre-records `package.json` and the lockfile** in the manifest,
+   before pausing, as entries expected to change. Without that the pause is a trap:
+   migrate's own step-2 edit puts `package.json` in the manifest, but the lockfile is
+   written by the *user's* install afterwards, so it would be an unexplained
+   modification and `--resume`'s dirty check would refuse the run it just told the
+   user to prepare for. Pre-recording is honest bookkeeping rather than an
+   exemption — those two files are part of the migration transaction either way, and
+   rollback already restores both.
+
+   **`--resume` runs the install itself**, so the transaction completes identically
+   whether or not the user ran the printed command; a package manager invoked against
+   an already-installed tree is a no-op, so doing it twice costs nothing and skipping
+   it silently would leave validation to fail on missing dependencies.
+   `--resume --no-install` opts out for users who manage installs themselves —
+   offline, a private registry, a vendored `node_modules` — and validation then fails
+   with a message naming the missing dependency rather than a schema error. An
    install failure aborts before anything is deleted. The **pre-flight check** —
    **any capability outside the vendored closure**, any application declaring
    `envfile` in the root config's own directory (see "Scope", above), and an
@@ -2255,7 +2272,8 @@ Generation reads both views. Then:
    not blanket: `git restore .` alone would resurrect the legacy files while
    leaving the newly created — untracked — `watt.config.ts` files in place,
    reproducing exactly the forbidden coexistence state. Migrate therefore keeps
-   a **manifest of every file it created or modified**, persisted as
+   a **manifest of every file it created or modified — plus, under `--no-install`,
+   the `package.json` and lockfile the deferred install will touch**, persisted as
    `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads,
    and it is deleted on completion): on any mid-run failure
    it removes its own creations automatically, and on success the summary prints
