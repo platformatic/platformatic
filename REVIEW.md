@@ -196,6 +196,19 @@ project root → "configured twice". A `url`-bearing entry whose path resolves e
 now drops the path and keeps `{ id, url, gitBranch? }`, which is the unresolved shape
 M11 already made loadable; a non-`url` entry resolving empty is a pre-flight stop.
 
+**M14** is resolved by removing `application.entrypointPort`. It existed to report a
+port other than the bound one, which was meaningful only while an entrypoint proxied
+the application and has had no referent since `e2da15eda` — the same family as
+`entrypoint`, root `server`, `useHttp` and `portAssignment`, and simply missed by
+#5014. It was also load-bearing where it was never meant to reach: the *reported* URL
+is the only input to the collision scan (`capability.js:906-910` →
+`runtime.js:4875-4890` → `:4855-4860`), so two applications on distinct real ports
+both setting `entrypointPort: 3000` raised a spurious `AddressInUseError`, while two
+sharing a real port with different values escaped detection entirely. Nothing in the
+codebase sets it outside its own two tests. `_getEntrypointUrl` keeps only the
+`[::]`/`0.0.0.0` → `localhost` normalization, so the reported URL is always the bound
+one.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -584,6 +597,8 @@ refusal — none of which is expressible over a token.
 path that resolves empty.
 
 ### M14. `application.entrypointPort` survives and rewrites the reported port, contradicting "custom listeners are observed, never rewritten"
+
+**RESOLVED** — removed. It leaves the capability schema, the upgrade chain deletes it, migrate reports each occurrence, and `_getEntrypointUrl` keeps only its hostname normalization.
 
 `packages/basic/lib/schema.js:61-63` still carries it, and
 `basic/lib/capability.js:899-912` overwrites the reported URL's port. That URL is the

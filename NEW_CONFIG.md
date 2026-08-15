@@ -854,7 +854,18 @@ The rules, in full:
   (`basic/lib/worker/child-process.js:586-597`). A Node application without a
   `create()`/`build()` factory, and any application started through a custom
   command, binds exactly what its own code says, and the runtime records the
-  result.
+  result. **`application.entrypointPort` is removed** for the same reason: it
+  overwrote the port of an *observed* URL
+  (`basic/lib/capability.js:906-910`) so the runtime would report a port other than
+  the bound one — meaningful only while an entrypoint proxied the application, and
+  without a referent since `e2da15eda`. It was also load-bearing in a place it was
+  never meant to reach: the reported URL is the only input to the collision scan
+  (`runtime.js:4875-4890` → `:4855-4860`), so two applications on genuinely distinct
+  ports that both set `entrypointPort: 3000` raised a spurious `AddressInUseError`,
+  while two sharing a real port with different values escaped detection. Nothing in
+  the codebase sets it outside its own two tests. `_getEntrypointUrl` keeps only its
+  `[::]`/`0.0.0.0` → `localhost` normalization, so the reported URL is always the
+  bound one and the collision scan always compares real ports.
 - **Two applications cannot share a port.** When a worker reports a URL, the
   runtime checks the port against every *other* application's listening workers
   and raises `AddressInUseError` — `Port %d is already in use by applications
@@ -2316,14 +2327,21 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     carried-over block key, and the runtime logs once when a block key is
     suppressed by the real environment.
 19. **`entrypoint`, the root `server` block, the entry-level `server` block,
-    `useHttp` and `server.portAssignment` are all removed** — the runtime has no
+    `useHttp`, `server.portAssignment` and `application.entrypointPort` are all
+    removed** — the runtime has no
     listener of its own, and each application exposes itself through its own
     capability configuration (see "How applications are exposed"). The v4 upgrade
-    chain deletes `entrypoint`, the root `server` and every per-application
-    `server` from runtime-dialect configs (`runtime/lib/versions/v4.0.0.js:16-27`)
-    — which takes `server.portAssignment` with it — while preserving a standalone
+    chain deletes `entrypoint`, the root `server`, every per-application
+    `server` (`runtime/lib/versions/v4.0.0.js:16-27`)
+    — which takes `server.portAssignment` with it — and
+    `application.entrypointPort` from every capability config, while preserving a
+    standalone
     application config's capability-owned `server` (`:10-14`), and `upgrade()`
     warns when a root `server` is discarded (`runtime/lib/upgrade.js:16-19`).
+    `entrypointPort` leaves the **capability** schema
+    (`basic/lib/schema.js:61-63`); migrate emits a requires-review note naming each
+    entry that carried one, because a project relying on it to advertise a proxied
+    port now reports the port it actually binds.
     **`useHttp` is the exception: the chain does not delete it**, and
     `applications.items` does not set `additionalProperties: false`, so it survives
     validation as a key nothing reads — an in-place upgrade leaves `useHttp: true`
@@ -2364,7 +2382,9 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     (`runtime/lib/errors.js:14-17`); `EADDRINUSE`/`EACCES`/`EADDRNOTAVAIL` are
     excluded from restart-on-error, so a port problem fails fast. Custom listeners
     are **observed, not rewritten** — `createServerListener()` no longer overrides
-    port, host or server options. And the runtime reports **a map** of URLs
+    port, host or server options, and `application.entrypointPort` is removed
+    (see BC 19), so the URL the collision scan compares is always the bound one
+    rather than a display value. And the runtime reports **a map** of URLs
     (`getUrls()`, `start()`'s return value, `getRuntimeMetadata().urls`,
     `getApplicationDetails().urls`) where v3 reported one; `getUrl()` and
     `getEntrypointDetails()` are gone, `wattpm ps` lost its URL column,
@@ -2413,7 +2433,11 @@ Roughly ordered; steps 1–5 are the critical path.
 3. **basic**: `defineCapabilityFactory`; duck-typed `ApplicationDefinition`
    (`module` property, no symbols); capability-block flattening with `application`
    kept nested; delete worker-side config *file* resolution (the capability
-   `transform` + pre-transform `configPatch` application stay worker-side).
+   `transform` + pre-transform `configPatch` application stay worker-side); remove
+   `application.entrypointPort` from the schema (`lib/schema.js:61-63`) and its
+   rewrite from `_getEntrypointUrl` (`lib/capability.js:906-910`), keeping the
+   `[::]`/`0.0.0.0` → `localhost` normalization, and drop the two tests that assert
+   the override (`test/capability.test.js:96,114`).
 4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
    accepts inline definitions; phased evaluation (root worker first, per-app
    workers in parallel) with uniform per-app file
