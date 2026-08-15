@@ -1868,9 +1868,15 @@ fallback, and an embedded placeholder
 expression boundaries are gone; capability and runtime transforms then rewrite
 authored values and drop environment-disabled applications. The views:
 
-- the **lexical view** — the parsed file with `{PLT_X}` placeholder tokens
+- the **lexical view** — the parsed file with placeholder tokens
   intact and no defaults injected; every authored application is present
-  regardless of the migration-time environment. *Which applications exist* is
+  regardless of the migration-time environment. A token is **not** required to
+  carry a `PLT_` prefix, and may use one or two braces: v3's grammar is
+  `/(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/i`
+  (`foundation/lib/configuration.js:28`), so `{PORT}`, `{{DATABASE_URL}}` and
+  `{plt_x}` are all placeholders. Migrate matches that grammar exactly — writing it
+  narrower would silently leave un-converted tokens as literal text in the emitted
+  configuration, where v3 had substituted them. *Which applications exist* is
   lexical; the four **structural path positions** are the documented exception and
   are resolved against that environment before emission (see step 1). Its
   **module list** — what the
@@ -2001,8 +2007,17 @@ Generation reads both views. Then:
    (`` `http://127.0.0.1:${process.env.PLT_OTLP_PORT ?? ''}/v1/metrics` ``);
    typed positions get the explicit coercion the audit's target-type table
    prescribes — and for booleans that table records **each property's exact v3
-   rule**, because they differ by site (`enabled` is `!== 'false'`, so unset
-   keeps the app; `watch` is `=== 'true'`, so unset is false) — or are flagged
+   rule**, because they differ by site and sometimes contradict each other across
+   dialects. `enabled` is `!== 'false'`, so unset keeps the application. `watch`
+   has **two opposite rules**: at runtime level
+   `config.watch = config.watch === 'true'` (`runtime/lib/config.js:323`
+   pre-`e2da15eda`), so unset is `false` and any non-`'true'` string is `false`;
+   inside a capability's `watch` block it is `config.watch?.enabled !== false`
+   (`basic/lib/capability.js:394`), so unset is **`true`** and the *string*
+   `'false'` leaves watching **on**, since only the boolean disables it. A
+   placeholder resolving to `'false'` therefore meant opposite things in the two
+   positions, and the table is keyed by position for exactly this reason —
+   or values are flagged
    for review when no
    faithful expression exists; app-id URL placeholders become the literal
    `http://<id>.plt.local` per "Inter-application URLs"; positions on a
