@@ -253,6 +253,22 @@ package manager against an already-installed tree is a no-op). `--resume
 --no-install` opts out for offline or vendored setups, and validation then fails
 naming the missing dependency instead of surfacing a schema error.
 
+**M18** is resolved and the sketch was checked mechanically rather than by eye, which
+is the only way this stays true. Diffing all 33 root keys against
+`packages/runtime/schema.json` confirmed the three reported errors —
+`nodeModulesSourceMaps` is `string[]` not `boolean`, `exitOnUnhandledErrors` is
+`boolean | number` (the number an exit delay), `policies.deny` is required — and
+found no others; the one remaining "mismatch", `application`, is the proposed v4
+singular shorthand and is correctly absent from today's schema. Both errors also
+appeared a second time at entry level, where the review had only reported the root.
+
+The pass additionally caught two comments left stale by **B2**: `env` was still
+documented as "visible to per-app config evaluation" at both levels, and the
+deferred-config comment still referenced the "root worker's resolution pass" that
+decision deleted. The sketch is now labelled illustrative, with the shipped types
+generated from the audited schemas and CI diffing this block — the same treatment
+B6's examples got.
+
 All five blockers are now resolved. The rest stand and were re-verified against the
 merged base.
 
@@ -687,6 +703,8 @@ modified by the user's install and is not exempt, so `--resume` refuses.
 `--no-install` time, and say whether `--resume` runs the install itself.
 
 ### M18. Appendix A type errors against the shipped schemas
+
+**RESOLVED** — all three corrected, plus two comments left stale by B2; the sketch now re-checks clean against `runtime/schema.json` (33 keys, 0 mismatches) and CI will diff it.
 
 `nodeModulesSourceMaps` is declared `boolean` at both levels (`:2301`, `:2349`);
 verified `array of string` (`foundation/lib/schema.js:933-936`, `:1534-1538`).

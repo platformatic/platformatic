@@ -2593,6 +2593,13 @@ cheap to iterate because the loader is new code with no v3 entanglement.
 
 ## Appendix A — type sketch
 
+*Illustrative, not authoritative.* The shipped types are **generated from the
+audited schemas** by the existing `gen-types` pipeline (see the implementation
+plan), which is what keeps them correct; a sketch maintained by hand drifts, and
+this one had. The same CI check that validates the worked examples (see B6's golden
+fixtures) diffs this block against `packages/runtime/schema.json` so a divergence
+fails the build rather than surviving review.
+
 ```ts
 // wattpm
 export interface WattConfig {
@@ -2629,18 +2636,18 @@ export interface WattConfig {
   managementApi?: boolean | ManagementApiOptions   // socket path is .socket
   management?: boolean | { enabled?: boolean, operations?: string[] }
   scheduler?: SchedulerJob[]
-  policies?: { deny?: Record<string, string | string[]> }
+  policies?: { deny: Record<string, string | string[]> }   // `deny` is required
   preload?: string | string[]
   extensions?: string | ExtensionEntry | (string | ExtensionEntry)[]
-  env?: Record<string, string>            // workers' runtime env, and visible to
-                                          // per-app config evaluation (see
-                                          // "Env files")
+  env?: Record<string, string>            // workers' runtime env only; never
+                                          // visible to config evaluation
+                                          // (see "Env files")
   reuseTcpPorts?: boolean                 // default true — SO_REUSEPORT; one of
                                           // three inputs, the others being the
                                           // entry and the capability config
-  nodeModulesSourceMaps?: boolean
+  nodeModulesSourceMaps?: string[]        // package names, not a flag
   resolvedApplicationsBasePath?: string   // used by `wattpm resolve`
-  exitOnUnhandledErrors?: boolean
+  exitOnUnhandledErrors?: boolean | number // number = exit delay in ms
   sourceMaps?: boolean
   compileCache?: boolean | CompileCacheOptions
   // …complete list generated from the audited v4 runtime schema
@@ -2664,14 +2671,14 @@ export interface ApplicationEntry {
   url?: string
   gitBranch?: string
   config?: ApplicationDefinition          // factory result, plain { module } object,
-    | DeferredApplicationDefinition       // or a callback form awaited by the
-                                          // root worker's resolution pass
+    | DeferredApplicationDefinition       // or a callback form, awaited by the
+                                          // root worker before serialization
   enabled?: boolean | Record<string, boolean>   // keyed by `mode`; resolved in the
                                                 // root worker, before fan-out
   workers?: number | ApplicationWorkersOptions
   health?: ApplicationHealthOptions
-  env?: Record<string, string>            // worker runtime env, and visible to
-                                          // this app's config evaluation
+  env?: Record<string, string>            // worker runtime env only; never
+                                          // visible to config evaluation
   envfile?: string                        // replaces the app's four-file env set
                                           // in BOTH views (evaluation + runtime);
                                           // app-relative; missing file = error;
@@ -2686,7 +2693,7 @@ export interface ApplicationEntry {
                                           // or denies addApplications
   arguments?: string[]
   execArgv?: string[]
-  nodeModulesSourceMaps?: boolean
+  nodeModulesSourceMaps?: string[]        // package names, not a flag
   sourceMaps?: boolean
   compileCache?: boolean | CompileCacheOptions
   dependencies?: string[]
