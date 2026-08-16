@@ -2256,7 +2256,7 @@ Generation reads both views. Then:
      none of them reads `server.keepAliveTimeout` (`next` does honour a keep-alive
      timeout, but reads it from `KEEP_ALIVE_TIMEOUT` in the environment,
      `next/lib/capability.js:413-429`). In v4 the block is validated, and the
-     basic-family `server` is a five-key subset — `hostname, port, backlog, http2,
+     basic-family `server` is a small subset — the five Fastify-derived keys — `hostname, port, backlog, http2,
      https`, `additionalProperties: false` (`node/schema.json`, `next/schema.json`)
      — while the full Fastify option set that defines `keepAliveTimeout`
      (`foundation/lib/schema.js:535`) belongs to service/db/gateway. Emitting it for
@@ -2705,8 +2705,17 @@ error. The migration story is the codemod, not a compat layer.
 
 Roughly ordered; steps 1–5 are the critical path.
 
+**One external prerequisite.** This format specifies `server.portAssignment` as a
+capability key (see "How applications are exposed"), and `e2da15eda` removed it —
+schema, implementation and the `#workerPortOffsets` bookkeeping alike. Restoring it
+is tracked as platformatic/platformatic#5074 and **must land before migrate can ship
+green**: a v3 configuration using `perWorkerIncrement` has no faithful target until
+it does, and on macOS and Windows no other configuration runs multiple workers on a
+fixed port at all.
+
 1. **foundation — a fresh loader, not a refactor.** The v4 loader is written new for
-   v4: the **main-side ladder resolver** (one implementation, two directories, used
+   v4: the **main-side ladder resolver** (one implementation, walking a config file's
+   own directory up to the env root, used
    for eval workers and for seeding application workers alike), eval workers
    constructed with an explicit `env` and a fresh ESM cache per load,
    import-graph collection via `module.registerHooks` wired into the dev watcher,
@@ -2730,7 +2739,10 @@ Roughly ordered; steps 1–5 are the critical path.
    decision rather than by surviving a refactor.
 2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
    placeholder-only branches, regenerate `schema.json` + types; produce the
-   per-property target-type table for migrate.
+   per-property target-type table for migrate. Two schema *changes* rather than
+   classifications: **add `portAssignment` to the shared `server` block** (the
+   prerequisite above), and **remove `application.entrypointPort`**, which lives in
+   `basic/lib/schema.js:61-63` and every capability's generated `schema.json`.
 3. **basic**: `defineCapabilityFactory`; duck-typed `ApplicationDefinition`
    (`module` property, no symbols); capability-block flattening with `application`
    kept nested; delete worker-side config *file* resolution (the capability
@@ -2882,11 +2894,14 @@ export interface WattConfig {
 
 // Not a root type: `server` exists only inside a capability factory's options,
 // as `AppServerOptions` below. The framework and node capabilities expose these
-// five; service/db/gateway extend them with the full Fastify set.
+// six; service/db/gateway extend them with the full Fastify set.
 export interface AppServerOptions {
   hostname?: string
   port?: number                            // undefined = no listener (mesh-only);
                                            // 0 = ephemeral, one port per worker
+  portAssignment?: 'shared' | 'perWorkerIncrement'  // see #5074; 'shared' needs
+                                           // SO_REUSEPORT, 'perWorkerIncrement'
+                                           // binds worker i at port + i
   backlog?: number
   http2?: boolean
   https?: HttpsOptions
