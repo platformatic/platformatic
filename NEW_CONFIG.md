@@ -375,7 +375,9 @@ and before the serializability check.
 worker's environment view, and no `env` block ever contributes to it (see "Env
 files") — so the eager and deferred forms observe an identical environment.
 `config: next({ url: process.env.X })` and
-`config: next(ctx => ({ url: ctx.env.X }))` resolve `X` the same way. The callback
+`config: next(ctx => ({ url: ctx.env.X }))` resolve `X` the same way — absent
+mutation during evaluation, since `ctx.env` is a snapshot taken at the start and
+`process.env` stays live (the diff-and-warn below exists for exactly that case). The callback
 exists to type its parameter and to allow asynchronous option construction, not to
 observe anything the eager form cannot; there is no position whose environment
 depends on the file having been unwrapped first, which is what keeps the loader
@@ -742,9 +744,14 @@ siblings to a project that has none.
 
 The ancestor test is **the one thing that looks above the search stop point**, and
 it is deliberate: a warning about what you are missing has to know whether you are
-missing anything. It is a filename check that executes nothing, it cannot change
-what boots — only whether a warning prints — and it needs no notion of how far the
-project extends. Sibling-dependent capabilities (a gateway's config enumerates
+missing anything. It is a filename check that executes nothing and cannot change what
+boots — only whether a warning prints. It is the **same walk that finds the env
+root** (see "Env files"), so it inherits the same bound and the same residual: it
+stops at the outermost `watt.config.*`, and a stray config in an unrelated ancestor
+is the one case where it can mislead. Because it is a filename check it cannot know
+whether that ancestor is a *root* config, so the warning names the file it found and
+says what a runtime configuration would have applied, rather than asserting that one
+did. Sibling-dependent capabilities (a gateway's config enumerates
 sibling applications) get the same warning and no special treatment: booted
 standalone they fail at compose time with their own errors — documented, not
 prevented.
@@ -808,10 +815,16 @@ production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:216`), so
 Bundlers and Babel configurations that branch on it will produce different — and
 correct — artifacts.
 
-A **standalone** app-dir build still differs from a root build in one way, and it
-is the same asymmetry standalone boot has everywhere: it applies no root
-orchestration, so it sees neither the root `env` block nor a root-entry `envfile`
-(see "Env files"). `turbo run build` is a standalone build.
+A **standalone** app-dir build differs from a root build in two ways, both following
+from the same fact — it applies no root orchestration. It sees neither the root `env`
+block nor a root-entry `envfile` (see "Env files"); and, because injection is one
+variable per *sibling* application and a standalone boot declares exactly one, **no
+sibling `PLT_<ID>_URL` exists**. A bundler inlining `process.env.PLT_API_URL` bakes
+`undefined` where a root build would bake `http://api.plt.local`. `turbo run build`
+is a standalone build, so this is the shape most likely to hit it: migrate's source
+scan already computes which `PLT_*_URL` names an application reads, and a standalone
+build **warns naming each one**, rather than shipping an artifact that differs
+silently from the root build's.
 Where a build input comes from either, the durable fix is the app's own env files,
 which every build style reads.
 
@@ -1170,7 +1183,9 @@ serial scheme.
    entries and autoloaded ones behave identically, as in v3. (Entries *with* an
    inline `config` still get a filename-presence check in their directory: a
    `watt.config.*` file there triggers the configured-twice error — no evaluation
-   involved. This is a **root-boot** check: running from the application's own
+   involved, and the **deciding file itself is exempt**, so a Level 1 auto-wrap or
+   the singular `application` shorthand never trips it (see "One dialect, three
+   levels of ceremony"). This is a **root-boot** check: running from the application's own
    directory never evaluates the root, so the app's file simply decides, per the
    scoping rule, and the standalone warning names what is not applied. The error
    exists to stop a *root* boot from having two sources for one application, not to
@@ -1576,12 +1591,20 @@ residual is a stray `watt.config.*` in an ancestor that is not really a parent o
 this project — a `$HOME` config, say — which would make `$HOME` the env root; this is
 the same best-effort caveat the search states for `$HOME`, not a second one.
 
-The `env`
-**blocks** are the one part of the evaluation environment that *does* depend on
-boot style: they live on the root entry, so a standalone boot — which applies no
-root orchestration — sees none of them. That asymmetry is stated again below and
+Two things *do* depend on boot style, and both live on the **root entry**, which a
+standalone boot does not read: the `env` **blocks**, and an entry's **`envfile`**.
+An application whose entry declares `envfile: './deploy.env'` evaluates against that
+file under a root boot and against its own directory's chain when started
+standalone — the one case where the same file gets two environments, and the reason
+the sentence above says *boot-style independent* of the directory rule rather than of
+everything. That asymmetry is stated again below and
 in the standalone warning, and it is the one way a standalone build differs from a
-root build. File **position** also
+root build. **Topology-key stripping** is positional in the same way: a per-app eval
+worker has the declared `PLT_<ID>_URL` names removed from its environment, while the
+root eval worker cannot have them removed (its ids are not known yet) and instead
+warns after unwrapping — so a root-inline entry can read an *inherited* topology
+variable that the byte-identical expression in a per-app file cannot. File
+**position** also
 changes the env view: the same factory expression evaluates against the root
 config's directory chain when it lives root-inline and the application's chain when
 it lives in the per-app file — both bounded by the same env root, both
@@ -1610,11 +1633,19 @@ evaluation, so the two views keep agreeing on that rung). Mode
 selection simply does not apply to that app's files; every other rung is
 unaffected. The path resolves **app-relative** (v3 resolved it against
 the runtime root — migrate rewrites paths so they keep pointing at the same
-file), and a missing explicitly-named envfile is a **boot error** (v3 silently
-ignored it — defensible only for the implicit default `.env`). Declaring `envfile`
-on an entry that also carries an **inline `config`** is an **error**: such an
-entry has no per-app eval worker, so the file provably cannot govern both views
-there. One documented asymmetry: `envfile` and the `env` blocks live on the root
+file), and a missing explicitly-named envfile is a **configuration-load error** — it is the
+main process that resolves it, before any worker starts, so it surfaces under
+`--debug-config` and `command: 'exec'` too, neither of which boots anything (v3
+silently ignored it — defensible only for the implicit default `.env`). Declaring `envfile`
+on an entry that also carries an **inline `config`** is an **error**. The honest
+reason is that it would govern the worker-runtime view only — the entry has no
+per-app eval worker for it to reach — and a key that silently covers one view and not
+the other is the ambiguity this document spends its length removing. It is a
+deliberate simplification rather than an impossibility: v3 did exactly that
+(`worker/main.js:236-237`), and root-inline entries already tolerate a comparable
+asymmetry. The cost is real and bounded — a v3 wrapped single-app project with an
+`envfile` migrates to a root-inline entry, so it lands on the pre-flight
+hand-conversion list — and it is listed there for that reason. One documented asymmetry: `envfile` and the `env` blocks live on the root
 entry, so a **standalone** boot — which applies no root orchestration — evaluates
 and runs under the conventional file set with no blocks applied; the standalone
 warning's list of omitted root settings names both, and the build section states
@@ -2882,8 +2913,8 @@ cheap to iterate because the loader is new code with no v3 entanglement.
 *Illustrative, not authoritative.* The shipped types are **generated from the
 audited schemas** by the existing `gen-types` pipeline (see the implementation
 plan), which is what keeps them correct; a sketch maintained by hand drifts, and
-this one had. The same CI check that validates the worked examples (see B6's golden
-fixtures) diffs this block against `packages/runtime/schema.json` so a divergence
+this one had. The same CI check that validates every `ts` block (see implementation plan
+step 8) diffs this block against `packages/runtime/schema.json` so a divergence
 fails the build rather than surviving review.
 
 ```ts
