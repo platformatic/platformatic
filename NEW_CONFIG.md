@@ -684,10 +684,16 @@ What the deciding file *is* then decides what boots:
 - **App-def nearest** → **that application boots standalone**: the definition is
   auto-wrapped as `{ application: { config: def } }` (the normalized singular
   form — the DTO shows this entry) and run as a single-app runtime; the entry's
-  `id` defaults to the package name **with any scope stripped** — `@acme/frontend`
-  is `frontend` — falling back to the directory name when `package.json` has no
-  `name` or does not exist, and its `path` to
-  the config file's directory. Stripping the scope is not cosmetic: the id becomes a
+  `id` follows **one rule, used at every position and under every boot style**: an
+  explicit `id` in configuration wins; failing that, the `package.json` `name` **with
+  any scope stripped** — `@acme/frontend` is `frontend`; failing that, the directory
+  name. Its `path` defaults to
+  the config file's directory. One rule matters because the id is not cosmetic
+  either: it is the mesh hostname, the injected `PLT_<ID>_URL` name, the metrics
+  label, `wattpm inject`'s argument and how siblings name each other in
+  `dependencies`. A default that varied by boot style would move all five at once —
+  so **`autoload` uses the same rule**, where v3 used the directory name alone
+  (`runtime/lib/config.js:377`, `mapping.id ?? entry.name`). Stripping the scope is not cosmetic: the id becomes a
   DNS label in `http://<id>.plt.local` (`runtime/lib/utils.js:12-14`, no
   sanitization), so keeping `@acme/frontend` would emit
   `http://@acme/frontend.plt.local`, where `@acme` parses as userinfo. v3 stripped it
@@ -1983,11 +1989,19 @@ Generation reads both views. Then:
 
    **Every *explicit* entry gets an explicit `id`**, resolved the way v3 resolved it
    and written as a literal, so no migrated project depends on either version's
-   default. `autoload`-discovered applications are left alone: both versions derive
-   their id from the directory name (`runtime/lib/config.js:377`, `mapping.id ??
-   entry.name`), so nothing moves — and pinning them would mean synthesising an
-   `autoload.mappings` entry per directory, turning the thin autoload root into a
-   directory listing. An id is
+   default.
+
+   `autoload`-discovered applications need the same protection, but only where the
+   id would actually move. v3 derived their id from the **directory name** alone
+   (`runtime/lib/config.js:377`, `mapping.id ?? entry.name`); v4 prefers the
+   `package.json` `name` (see "How applications are exposed"), so an application in
+   `web/composer/` whose package is named `gateway-service` would be renamed — and
+   with it the mesh hostname, the injected variable, the metrics label and any
+   sibling's `dependencies` entry. Migrate therefore emits an `autoload.mappings`
+   entry pinning `id` **only for directories whose package name differs from the
+   directory name**, and nothing for the rest. In the common case — an application
+   package with no `name`, or one named after its directory — the thin autoload root
+   stays thin. An id is
    the mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label and the
    argument `wattpm inject` now requires — silently re-deriving it would move all
    four at once. For a wrapped single-app project the v3 value is the package name
@@ -2626,16 +2640,28 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     Existing v3 placeholder entries keep working: migrate resolves them (see the
     structural path positions in step 1), and the runtime still backfills a
     `url`-bearing entry from `resolvedApplicationsBasePath`.
-25. **The default application id changes for a nameless package.** v3's wrapped
-    single-app path derived the id from `package.json` `name` with its scope
-    stripped and fell back to **`'main'`** (`runtime/lib/config.js:131-142`
-    pre-`e2da15eda`); v4 keeps the scope-stripping and falls back to the **directory
-    name**. Since the id is the mesh hostname, the injected `PLT_<ID>_URL` name, the
-    metrics label and `wattpm inject`'s argument, a package without a `name` changes
-    all four. Migrate pins the resolved v3 id explicitly on every entry, so this
-    affects hand-written v4 configs and newly created projects rather than migrated
-    ones. An id that cannot be a DNS label — containing `@`, `/`, `:` or whitespace —
-    is now a configuration error instead of an unresolvable `.plt.local` address.
+25. **One id rule everywhere: explicit `id`, else `package.json` `name` with the
+    scope stripped, else the directory name.** v3 had two rules that never met,
+    because it had no standalone boot: the wrapped single-app path used the package
+    name with the scope stripped, falling back to `'main'`
+    (`runtime/lib/config.js:131-142`, still present at HEAD), while `autoload` used
+    the **directory name** alone (`:377`). v4 needs one rule, because the id is the
+    mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label, `wattpm
+    inject`'s argument and how siblings name each other in `dependencies` — a default
+    that varied by boot style would move all five at once for the same application.
+
+    The consequence is real: **an autoloaded application whose package `name` differs
+    from its directory name is renamed.** In this repository's own fixtures that is
+    10 of the 13 application packages that declare a name — `web/composer/` is named
+    `gateway-service`, `web/backend/` is named `service`. Applications with no `name`
+    (7 of 20 here) are unaffected, as are those named after their directory.
+
+    Migrate protects migrated projects: it pins the resolved v3 id on every explicit
+    entry, and emits an `autoload.mappings` entry pinning `id` for exactly those
+    directories where the two rules disagree. So this reaches **hand-written v4
+    configs and newly created projects**, not migrated ones. An id that cannot be a
+    DNS label — containing `@`, `/`, `:` or whitespace — is now a configuration error
+    instead of an unresolvable `.plt.local` address.
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
 error. The migration story is the codemod, not a compat layer.
@@ -2834,7 +2860,8 @@ export interface AppServerOptions {
 }
 
 export interface ApplicationEntry {
-  id?: string
+  id?: string                             // else package.json name (scope stripped),
+                                          // else directory name
   path?: string
   url?: string
   gitBranch?: string

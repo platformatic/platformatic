@@ -212,7 +212,15 @@ the identical argument applies one paragraph earlier. #5074 is not listed as a p
 prerequisite. **Fix:** add it to `AppServerOptions`, make "five" six, and name #5074
 as a prerequisite migrate cannot ship green without.
 
-**M2. The same application gets two different ids depending on boot style.** *(verified)*
+**M2. ~~The same application gets two different ids depending on boot style~~
+RESOLVED (R5)** — one rule everywhere: explicit `id`, else `package.json` `name` with
+the scope stripped, else the directory name. `autoload` adopts it too, where v3 used
+the directory name alone. That renames autoloaded applications whose package name
+differs from their directory — 10 of the 13 named application packages in this repo —
+so migrate pins an `autoload.mappings` id for exactly those directories, leaving the
+thin root thin everywhere else. BC 25 rewritten. This also reverses half of M12's
+resolution, which assumed autoload ids agreed across versions; they no longer do.
+*(original)* *(verified)*
 Autoload uses the **directory name** (`runtime/lib/config.js:377`); round 11's M15
 specified the standalone default as the *package name*. `web/dashboard` named
 `@acme/admin-ui` is `dashboard` at root boot and `admin-ui` standalone — different
@@ -281,7 +289,7 @@ the manifest.
 directory to write into, v3 marked them `type: 'unknown'`, and the closure gate has
 nothing to measure. **Fix:** state the carve-out where the rule is stated.
 
-**M12. ~~Autoload ids cannot be pinned~~ RESOLVED (R3)** — pinning is scoped to explicit entries; autoload ids already agree across versions. *(original)* *(verified)*
+**M12. ~~Autoload ids cannot be pinned~~ RESOLVED (R3, amended by R5)** — pinning is scoped to explicit entries, **plus** an `autoload.mappings` id for directories where the package name differs from the directory name, which is exactly where R5's rule moves the id. *(original)* *(verified)*
 Pinning would require synthesising a `mappings` entry per directory. **Fix:** scope
 the rule to explicit entries; autoload ids already match on both versions.
 
