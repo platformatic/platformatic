@@ -208,7 +208,13 @@ standalone-build difference list names only the root `env` block and `envfile`.
 a silently different artifact. **Fix:** add it to both difference lists, and warn when
 a standalone build's entry has `dependencies`.
 
-**M6. Every `runtime.js` citation is stale.** *(convergent, three passes)* The file grew
+**M6. ~~Every `runtime.js` citation is stale.~~ RESOLVED — all 116 citations
+re-derived against HEAD; 0 out of range, corrected ones spot-checked against the
+claimed code. Also corrected: the `wrapInRuntimeConfig` scope strip is *still on
+HEAD* (`config.js:131-142`), not removed by `e2da15eda` as three places claimed.
+The three `config.js` citations flagged as "v4 lines presented as v3" are HEAD-valid
+and describe code unchanged since v3, so they are left as HEAD citations.**
+*(original finding)* *(convergent, three passes)* The file grew
 4000 → 4895 lines in `ca87e5feb`. `buildApplication` 849 → 946, `#showUrls` → 2408,
 `getUrls` → 1550, the collision scan → 4845/4874. The document cites the *same*
 collision scan correctly at `:896` and wrongly at `:905-907`. Semantics all still
