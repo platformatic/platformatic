@@ -29,7 +29,7 @@ import { next } from '@platformatic/next'
 
 export default next({
   server: { port: Number(process.env.PORT ?? 3042) },
-  cache: { adapter: 'redis', url: process.env.REDIS_URL }
+  cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 })
 ```
 
@@ -53,7 +53,7 @@ export default defineConfig({
     workers: 2,
     config: next({
       server: { port: Number(process.env.PORT ?? 3042) },
-      cache: { adapter: 'redis', url: process.env.REDIS_URL }
+      cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
     })
   }
 })
@@ -229,7 +229,7 @@ import { next } from '@platformatic/next'
 
 export default next({
   server: { port: Number(process.env.PORT ?? 3042) },
-  cache: { adapter: 'redis', url: process.env.REDIS_URL }
+  cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 })
 ```
 
@@ -353,7 +353,7 @@ export default defineConfig(({ command, mode, production, env }) => ({
 import { next } from '@platformatic/next'
 
 export default next(({ mode }) => ({
-  cache: mode === 'test' ? undefined : { adapter: 'redis' }
+  cache: mode === 'test' ? undefined : { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 }))
 ```
 
@@ -419,11 +419,17 @@ Each capability package exports one typed factory plus its option types:
 
 ```ts
 // from @platformatic/next
+export function next (options?: NextConfigOptions): ApplicationDefinition
 export function next (
-  options?: NextConfigOptions
-    | ((ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>)
-): ApplicationDefinition
+  cb: (ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>
+): DeferredApplicationDefinition
 ```
+
+**Two overloads, not a union parameter.** The callback form returns a
+`DeferredApplicationDefinition` — a function the loader awaits — so reading `.module`
+on it is a type error until it has run. A single signature returning
+`ApplicationDefinition` for both forms would typecheck `next(cb).module`, which is
+exactly the mistake the deferred type exists to prevent.
 
 Factory options are the capability's per-app configuration — what lived in the app's
 own config file in v3 — with the capability's namespaced block flattened into the top
@@ -1755,16 +1761,25 @@ export default {
 }
 ```
 
-- The stamped `$schema` **property** is mandatory for machine writers. The loader
+- The stamped `$schema` **property** is mandatory for machine writers of
+**plain-object** configurations. The loader
   reads it for version detection only (never module selection) and **strips it
   before AJV validation** — the v4 root schema does not admit it, and without the
   strip every machine-generated config would fail validation. A stale v3 URL
   refuses with the migrate hint. This is the version marker that keeps the next
   major's migration tractable.
+  **Factory-authored files carry no marker and are not expected to.** `migrate`,
+  `wattpm import` and scaffolding emit `defineConfig(…)` and bare factory calls;
+  `WattConfig` declares no `$schema` and the root schema does not admit it, so
+  writing one would be a type error. Those files are already version-identified by
+  the `version` each factory stamps into its `ApplicationDefinition` — which is what
+  the root/app skew check reads, and what the next major keys off. The `$schema`
+  requirement therefore binds exactly the writers that emit plain objects.
 - Writers converted in v4: `next pack` (bundle config; gains a test asserting the
   bundle boots), the `wattpm install`/external flow (per-app files in cloned repos),
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
-  (`'export default ' + JSON.stringify(config)`).
+  (`'export default ' + JSON.stringify(config)`) — the last of which is the
+  plain-object case the `$schema` rule governs.
 - Reading configs without executing them: the plain-object form is trivially
   AST-parseable, and running systems expose the resolved config via the programmatic
   `runtime.getRuntimeConfig()`. The management API's HTTP `GET /config` endpoint is
@@ -1868,7 +1883,7 @@ export default {
 
 - **`wattpm create` / `create-wattpm`**: a **single-app** project with default
   answers gets **no Watt config file** (zero-config detection covers it — subject to
-  the open port question in "How applications are exposed"); omission is safe there
+  the zero-config synthesis rule in "How applications are exposed"); omission is safe there
   because the wizard adds the chosen capability to the app's dependencies and the
   deterministic detector reconstructs exactly that choice (see "Loading mechanism").
   A **monorepo** gets the thin autoload root (genuinely load-bearing: the autoload
@@ -2807,10 +2822,13 @@ fixed port at all.
    produce no config file); scaffolded test helpers import the config module instead
    of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
-   The worked examples in this document — Level 2b and Appendix B's output — ship as
-   **golden fixtures** loaded through the real v4 loader and validated against the
-   shipped capability schemas, so an example that contradicts a schema fails CI
-   instead of surviving review.
+   **Every `ts` code block in this document** ships as a golden fixture — not just
+   Level 2b and Appendix B — loaded through the real v4 loader and validated against
+   the shipped capability schemas, so an example that contradicts a schema fails CI
+   instead of surviving review. Two rounds of review found invalid examples by hand,
+   including the sole illustration of the callback form; the fixture set is scoped to
+   every block precisely because the ones that were missed were the ones nobody
+   thought to check.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` / `getRuntimeApplicationConfig`
@@ -2889,7 +2907,11 @@ export interface WattConfig {
   exitOnUnhandledErrors?: boolean | number // number = exit delay in ms
   sourceMaps?: boolean
   compileCache?: boolean | CompileCacheOptions
-  // …complete list generated from the audited v4 runtime schema
+  inspectorOptions?: { host?: string, port?: number, breakFirstLine?: boolean,
+                       watchDisabled?: boolean }
+  // …complete list generated from the audited v4 runtime schema.
+  // `application` is a v4 addition the CI diff must allow; everything else here
+  // exists in packages/runtime/schema.json.
 }
 
 // Not a root type: `server` exists only inside a capability factory's options,
@@ -2969,7 +2991,8 @@ export type ConfigContext = {
 
 export interface ApplicationDefinition {
   module: string                  // the duck-typing key: `module` present = per-app
-  version: string                 // stamped by the factory; the root/app skew check
+  version?: string                // stamped by the factory; absent on hand-written
+                                  // { module } definitions (see BC 15)
   [option: string]: unknown       // the capability's own validated options
 }
 
