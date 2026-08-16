@@ -1981,8 +1981,13 @@ Generation reads both views. Then:
    **multi-app** project, a `watt.config.ts` for **every** application plus a thin
    root `watt.config.ts`.
 
-   **Every entry gets an explicit `id`**, resolved the way v3 resolved it and written
-   as a literal, so no migrated project depends on either version's default. An id is
+   **Every *explicit* entry gets an explicit `id`**, resolved the way v3 resolved it
+   and written as a literal, so no migrated project depends on either version's
+   default. `autoload`-discovered applications are left alone: both versions derive
+   their id from the directory name (`runtime/lib/config.js:377`, `mapping.id ??
+   entry.name`), so nothing moves — and pinning them would mean synthesising an
+   `autoload.mappings` entry per directory, turning the thin autoload root into a
+   directory listing. An id is
    the mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label and the
    argument `wattpm inject` now requires — silently re-deriving it would move all
    four at once. For a wrapped single-app project the v3 value is the package name
@@ -1991,7 +1996,12 @@ Generation reads both views. Then:
    name instead, so pinning is what keeps a nameless package addressable at
    `http://main.plt.local` after migration rather than at its directory name.
 
-   Per-app files are emitted **unconditionally**, including
+   One carve-out: an entry that is **orchestration only** — a `url` with no
+   resolvable directory — gets no per-app file, because there is no directory to
+   write one into. It is exempt from the closure gate too (v3 could not even
+   determine its capability, marking it `type: 'unknown'`,
+   `runtime/lib/config.js:229-231`), and appears on the migrate-the-other-repository
+   list instead. Otherwise per-app files are emitted **unconditionally**, including
    when one would contain nothing but the capability call. Two reasons: owning a
    file is the scope declaration (see "Loading mechanism"), and migrate does not
    touch `package.json` scripts — so an application left without one keeps a
@@ -2002,7 +2012,10 @@ Generation reads both views. Then:
    runtime-bundled fallback made app-local capability dependencies optional, and
    `node/lib/generator.js:78-80` writes both `@platformatic/node` and
    `@platformatic/globals`, so no dependency test could have been reliable anyway).
-   Missing app-local capability dependencies are still added in step 2. A
+   Missing app-local capability dependencies are still added in step 2. Emission
+   also **drops keys the v4 schemas no longer admit** and that no upgrade chain
+   removes — today that is `application.entrypointPort` (see BC 19) — each with a
+   requires-review note; leaving one in would fail step 3 on migrate's own output. A
    **renamed** module is written under its new name — a
    `@platformatic/composer` app gets a `gateway(…)` file, and the
    superseded dependency is removed in step 2, the one sanctioned `package.json`
@@ -2030,18 +2043,28 @@ Generation reads both views. Then:
    unset — a project that refused to boot without `TOKEN` still refuses after
    migration.
 
-   The `?? ''` emission is uniform across positions, but it is **not
-   behaviour-preserving in a non-string position**, and migrate says so. v3
-   validated after replacement with `coerceTypes: true`, and ajv does not coerce
-   `''` — it rejects it — so `"port": "{PORT}"` or `"level": "{PLT_LEVEL}"` with the
-   variable unset failed validation and the project did not boot. Those variables
-   were *implicitly required by their position's type*. After migration the two
-   cases diverge: an enum or boolean position still rejects `''` at load, so the
-   refusal survives, while a **number** position does not — `Number('')` is `0`,
-   which is a valid port meaning "choose one at random". Migrate therefore emits a
-   **requires-review** note for every placeholder in a non-string position, naming
-   the variable, the JSON path, the target type and which of the two outcomes
-   applies. It emits the note rather than a `requiredEnv` call because a value the
+   `?? ''` is the **string-position** emission. It is not behaviour-preserving
+   anywhere else, and migrate says so. v3 validated after replacement with
+   `coerceTypes: true`, and ajv does not coerce `''` — it rejects it — so
+   `"port": "{PORT}"` or `"level": "{PLT_LEVEL}"` with the variable unset failed
+   validation and the project did not boot. Those variables were *implicitly required
+   by their position's type*. What migrate emits therefore depends on the target
+   type, and the three cases behave differently:
+
+   | position | emitted | unset behaviour |
+   | --- | --- | --- |
+   | string | `process.env.X ?? ''` | `''`, as v3 |
+   | boolean | the audit's per-property rule — `!== 'false'`, `=== 'true'` | a real boolean; `''` never reaches the schema |
+   | number, enum | `Number(process.env.X ?? '')` / `?? ''` | **diverges from v3** |
+
+   The last row is the one that needs the note. An **enum** position rejects `''` at
+   load, so v3's refusal survives — loudly, in the right place. A **number** position
+   does not: `Number('')` is `0`, a valid port meaning "choose one at random", so a
+   project that refused to boot silently starts listening somewhere. Migrate emits a
+   **requires-review** note for every placeholder in a number or enum position,
+   naming the variable, the JSON path, the target type and which of the two outcomes
+   applies. Boolean positions get no note, because the table's rule makes them
+   faithful. It emits the note rather than a `requiredEnv` call because a value the
    deployment always sets needs no helper, and the codemod cannot tell the two
    apart from the laptop it runs on. Two carve-outs: "effective strictEnv" per app file follows v3's
    precedence (`strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv` —
@@ -2154,7 +2177,7 @@ Generation reads both views. Then:
    `transform` left `config.entrypoint` undefined and threw only for a *named*
    missing one. Migrate then drops the root `server` block and reports it, rather
    than guessing which application was public.
-   Three rules follow, applied in this order:
+   Four rules follow, applied in this order:
    - **the v3 root `server` block moves into the v3 entrypoint's capability
      config**, `portAssignment` included — it is carried across as a capability
      `server` key, not dropped (see "How applications are exposed"). The move is
@@ -2172,7 +2195,15 @@ Generation reads both views. Then:
      worker's context last). Migrate reproduces the family's order and emits a
      requires-review note whenever the two blocks disagreed on a key;
    - **`useHttp: true` becomes a `server` block reproducing the defaults v3
-     synthesized** (`runtime/lib/worker/main.js:258-268` pre-`e2da15eda`). What lands
+     synthesized** — **but only for applications rule 1 did not touch.** v3's two
+     branches are mutually exclusive: `if (runtimeConfig.server &&
+     applicationConfig.entrypoint) { … } else if (applicationConfig.useHttp) { … }`
+     (`runtime/lib/worker/main.js:258-268` pre-`e2da15eda`), so an entrypoint with a
+     root `server` block ignored its own `useHttp` entirely. Applying rule 2
+     unconditionally would overwrite the public port rule 1 just carried across with
+     `port: 0`, and rule 3's carve-out would then protect that `0` from being
+     stripped — a project answering on 3000 would migrate to answering on a random
+     port, with nothing in the report saying the address moved. What lands
      in that block is family-dependent for two independent reasons. The
      **`keepAliveTimeout: 5000`** of the v3 block is emitted only for
      service/db/gateway; the basic family gets `{ port: 0, hostname: '127.0.0.1' }`
@@ -2194,14 +2225,26 @@ Generation reads both views. Then:
      service/db/gateway the `useHttp` defaults won and the declared port was
      already dead, so those apps get `port: 0` and a note recording the
      discarded value;
+   - **an entrypoint that still has no `server` block gets `server: { port: 0 }`.**
+     v3's `_listen` had no undefined-port guard, so an entrypoint with no `server`
+     anywhere — no root block, no `useHttp`, no declared port — still bound an
+     ephemeral port through `buildListenOptions`'s `{ port: serverConfig?.port || 0 }`
+     (`basic/lib/utils.js:22`), and the runtime advertised it. v4 returns early on
+     `typeof this.serverConfig?.port === 'undefined'`
+     (`service/lib/capability.js:298-300`), so without this rule the application
+     silently stops listening — and a framework application does not start at all.
+     The emitted `port: 0` reproduces what v3 bound; a requires-review note records
+     that the address was never stable and is no longer runtime-advertised, since
+     `getUrl()` is gone.
    - **a `server.port` that was inert on v3 is stripped.** An application that
      was neither the v3 entrypoint nor `useHttp` never listened
      (`runtime/lib/worker/controller.js:218` pre-`e2da15eda` gated listening on
      `useHttp` alone, and `listen()` no-opped for non-entrypoints at `:265-268`);
      in v4 any declared port is a real listener, and two of them on the same port
      is now a hard `AddressInUseError` rather than a dead value. The strip never
-     applies to a `port: 0` synthesized by the rule above, which would otherwise
-     cancel it and leave the application with no listener at all. The hazard is
+     applies to a `port: 0` **synthesized by rules 2 or 3**, which would otherwise
+     cancel it and leave the application with no listener at all — the carve-out is
+     about the port having been *authored* on v3, not about its value. The hazard is
      concrete: `wattpm import` pulls in projects scaffolded *standalone*, which do
      carry `"server": { "port": "{PORT}" }`
      (`service/lib/generator.js:414` pre-`e2da15eda`, guarded by
@@ -2323,10 +2366,28 @@ Generation reads both views. Then:
    `--config` flag:
    `--config` performs the full unconditional legacy scan of the selected
    directory and every discovered app directory, so it can never be used to
-   sidestep the no-coexistence guard. Validation injects recorded **sentinel
-   values** for `requiredEnv`-wrapped keys — executing the emitted helpers
-   would otherwise throw on any machine missing the production secrets — and
-   the summary reports the required-variable list instead. A validation failure is
+   sidestep the no-coexistence guard.
+
+   **Validation seeds the environment for every variable the emitted files
+   reference**, not only `requiredEnv`-wrapped ones. Migrate already records each
+   placeholder-derived position for its requires-review notes, so it seeds a
+   type-appropriate **sentinel** from the audit's target-type table for each — a
+   member of the enum for an enum position, a number for a number position, the
+   secret's placeholder for a `requiredEnv` key whose helper would otherwise throw.
+   This is the third documented deviation of the migrator-only entry, alongside the
+   skipped walk and coexistence guard.
+
+   Without it step 3 fails on migrate's *own* correct output. The variables in
+   question are deployment variables, absent from the laptop running the codemod —
+   the document says so where it explains why every `env`-block key is warned about.
+   A v3 project whose generator wrote `logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' }`
+   (the default — `service/lib/generator.js:414` pre-`e2da15eda`) emits
+   `process.env.PLT_SERVER_LOGGER_LEVEL ?? ''`, and `''` is not a member of
+   `logger.level`'s enum once the audit drops its placeholder pattern branch. Step 3
+   would reject it, and a validation failure does not roll back — stranding the tree
+   in the coexistence state with nothing actually wrong. The summary reports the
+   seeded variables so the user knows which values were assumed rather than checked.
+   A validation failure is
    the **one failure that does not roll back**: its whole value is the emitted
    output, so migrate keeps the files, reports what failed, and stops. It says
    plainly that the tree is now in the coexistence state — v3 and v4 configs side by
@@ -2483,16 +2544,21 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     removed** — the runtime has no
     listener of its own, and each application exposes itself through its own
     capability configuration (see "How applications are exposed"). The v4 upgrade
-    chain deletes `entrypoint`, the root `server`, every per-application
-    `server` (`runtime/lib/versions/v4.0.0.js:16-27`) and
-    `application.entrypointPort` from every capability config, while preserving a
+    chain deletes `entrypoint`, the root `server` and every per-application
+    `server` (`runtime/lib/versions/v4.0.0.js:16-27`), while preserving a
     standalone
     application config's capability-owned `server` (`:10-14`), and `upgrade()`
     warns when a root `server` is discarded (`runtime/lib/upgrade.js:16-19`).
     `entrypointPort` leaves the **capability** schema
-    (`basic/lib/schema.js:61-63`); migrate emits a requires-review note naming each
-    entry that carried one, because a project relying on it to advertise a proxied
-    port now reports the port it actually binds.
+    (`basic/lib/schema.js:61-63`), and **no upgrade chain removes it**: `v4.0.0.js`
+    returns early for a non-runtime `$schema` (`:12-14`) — exactly the capability
+    configs the key lives in — and the basic-family capabilities have no `versions/`
+    directory at all. So **migrate strips it** while emitting a requires-review note
+    naming each entry that carried one, because a project relying on it to advertise
+    a proxied port now reports the port it actually binds. An **in-place** v3→v4
+    upgrade that does not run migrate has nothing to strip it, and fails validation
+    on `additionalProperties` — which is the intended loud failure, not a silent
+    one.
     **`server.portAssignment` is not removed — it relocates.** `e2da15eda` deleted
     it with the root `server` block, but `perWorkerIncrement` is the only way to run
     `workers > 1` on a fixed port without `SO_REUSEPORT`, which macOS and Windows
@@ -2888,7 +2954,7 @@ import { next } from '@platformatic/next'
 
 export default defineConfig({
   logger: { level: process.env.PLT_SERVER_LOGGER_LEVEL ?? '' },
-  managementApi: process.env.PLT_MANAGEMENT_API ?? '',
+  managementApi: (process.env.PLT_MANAGEMENT_API ?? '') !== '',
   application: {
     workers: 2,
     config: next({
@@ -2913,10 +2979,15 @@ with the migration report:
     v3 refused to boot when it was unset; v4 rejects '' at load.
 ```
 
-Every placeholder becomes `?? ''` — including `managementApi`, which must be
-carried over rather than dropped: v3 with the variable unset produced `''`, which
-is falsy, so the management API was **off**, while omitting the key entirely picks
-up its schema `default: true` and turns it **on**.
+`managementApi` must be carried over rather than dropped — omitting it picks up its
+schema `default: true` and turns the API **on**, where v3 with the variable unset had
+it **off**. It cannot keep the `?? ''` form, though: the audit deletes
+`managementApi`'s top-level string branch (see "Validation, types, and the schema
+audit"), so `''` would be a validation failure rather than "off". The emitted
+expression reproduces v3's gate exactly — v3 tested the *replaced string* for
+truthiness (`runtime/lib/runtime.js:341`), so `''` is off and **any** non-empty
+string is on, including `'false'`. `(… ?? '') !== ''` is that test, written in a
+boolean position.
 
 The `server` block crossed the boundary: it was a *runtime* setting in v3, hoisted
 out of the wrapped block by `wrapInRuntimeConfig`; in v4 it is capability

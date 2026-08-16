@@ -21,7 +21,14 @@ now internally inconsistent in more places than it is wrong about the source.
 
 ## Blockers
 
-### B1. Step 3 rejects migrate's own output — the `?? ''` rule collides with the audit
+### B1. ~~Step 3 rejects migrate's own output~~ — **RESOLVED (R2)**
+
+Validation now seeds a type-appropriate sentinel for **every** variable the emitted
+files reference, from the audit's target-type table — not only `requiredEnv` sites —
+and names it as the third documented deviation of the migrator-only entry. The
+summary reports which values were assumed.
+
+*(original finding)*
 *Convergent: migration + coherence passes.*
 
 `:2011-2034` emits `process.env.X ?? ''` for non-strict projects. `:2289-2296`
@@ -92,7 +99,14 @@ outermost ancestor containing a `package.json`, nearest winning* — no shadowin
 bounded by the same residual case as the config search, and no "project root"
 concept.
 
-### B3. Nothing strips `application.entrypointPort`, and BC 19 credits a chain that cannot
+### B3. ~~Nothing strips `application.entrypointPort`~~ — **RESOLVED (R3)**
+
+Migrate strips it while noting it. BC 19 no longer credits the upgrade chain, and
+states that an in-place upgrade has nothing to strip it and fails loudly on
+`additionalProperties`. Step 1 states the general rule: emission drops keys the v4
+schemas no longer admit and no chain removes.
+
+*(original finding)*
 *Convergent: migration + coherence passes.*
 
 BC 19 (`:2458`) says the upgrade chain deletes `entrypointPort` "from every
@@ -140,7 +154,15 @@ condition ("when the project holds more than one"), where `:705` defines two.
 
 **Fix:** rewrite BC 17 against the current rule, after deciding B4.
 
-### B6. `managementApi: ''` is invalid once the audit deletes the string branch
+### B6. ~~`managementApi: ''` is invalid~~ — **RESOLVED (R2)**
+
+Appendix B emits `(process.env.PLT_MANAGEMENT_API ?? '') !== ''`. v3's gate is a
+truthy test on the *replaced string* (`runtime/lib/runtime.js:341`), so `''` is off
+and any non-empty string — including `'false'` — is on; that expression is exactly
+that test in a boolean position. The report stays at two notes, because a boolean
+position is now faithful and needs none.
+
+*(original finding)*
 *Coherence pass.*
 
 `:1663-1666` lists `managementApi`'s top-level string under "**string branch
@@ -200,14 +222,14 @@ the scope strip is also wrong: `wrapInRuntimeConfig` is still on HEAD at `:130-1
 **Fix:** default to the directory name, matching autoload; migrate already pins
 explicit ids so nothing migrated moves.
 
-**M3. Exposure rule 2 overwrites the public port rule 1 just set.** *(verified)* v3's
+**M3. ~~Exposure rule 2 overwrites the public port~~ RESOLVED (R3)** — rule 2 now applies only where rule 1 did not, mirroring v3's `else if`. *(original)* *(verified)* v3's
 branches are mutually exclusive — `if (runtimeConfig.server && applicationConfig.entrypoint)
 … else if (applicationConfig.useHttp)` (`worker/main.js:258-268` pre-`e2da15eda`). The
 document applies rule 2 unconditionally, so an entrypoint with both a root `server`
 and a stale `useHttp: true` migrates from port 3000 to `port: 0`, protected from
 rule 3's strip. **Fix:** gate rule 2 on rule 1 not having fired.
 
-**M4. No rule covers a v3 entrypoint with no `server` block anywhere.** *(verified)*
+**M4. ~~No rule covers a v3 entrypoint with no `server` block~~ RESOLVED (R3)** — a fourth rule emits `server: { port: 0 }` with a note; rule 4's carve-out now names rules 2 and 3. *(original)* *(verified)*
 v3's `_listen` had no port guard, so it bound an ephemeral port; v4 returns early on
 `typeof this.serverConfig?.port === 'undefined'` (`service/lib/capability.js:298-300`).
 All three exposure rules are conditional and none fires. **Fix:** a fourth rule
@@ -255,11 +277,11 @@ plain-object machine-generated roots and say what the next major keys off instea
 while `--force` explicitly covers no-VCS trees. **Fix:** store pre-edit *contents* in
 the manifest.
 
-**M11. "Per-app files unconditionally" contradicts url-only entries.** There is no
+**M11. ~~"Per-app files unconditionally" contradicts url-only entries~~ RESOLVED (R3)** — orchestration-only entries are carved out where the rule is stated. *(original)* There is no
 directory to write into, v3 marked them `type: 'unknown'`, and the closure gate has
 nothing to measure. **Fix:** state the carve-out where the rule is stated.
 
-**M12. Autoload ids cannot be pinned without destroying the thin root.** *(verified)*
+**M12. ~~Autoload ids cannot be pinned~~ RESOLVED (R3)** — pinning is scoped to explicit entries; autoload ids already agree across versions. *(original)* *(verified)*
 Pinning would require synthesising a `mappings` entry per directory. **Fix:** scope
 the rule to explicit entries; autoload ids already match on both versions.
 
@@ -314,7 +336,7 @@ turns a v3-supported shape into a hand-conversion refusal.
   loader, never present in the environment or `.env`. v3 supported placeholder paths.
 - **m7.** The dev watcher's env-file set is "root and app", missing the intermediate
   directory the current rule makes live.
-- **m8.** The boolean-position rule contradicts the typed-coercion rule: `''` cannot
+- **m8.** ~~RESOLVED (R2)~~ — a three-row table now splits string / boolean / number-enum emission; booleans get the table's rule and no note. Originally: the boolean-position rule contradicted the typed-coercion rule: `''` cannot
   both survive as a rejection and be coerced by the target-type table.
 - **m9.** Two more paths leave the coexistence state undocumented: `--no-install`, and
   a declined install consent.
