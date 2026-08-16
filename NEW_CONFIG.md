@@ -768,7 +768,7 @@ suppresses the standalone re-scope.
 resolved exactly as it is for that application's workers** — the full worker-runtime
 ladder from "Env files": real environment, entry `env` block, root `env` block,
 injected `PLT_<ID>_URL`, the application's own env files or its `envfile`, the
-nearest env files above them, then the `NODE_ENV` default. Env
+the rest of its chain up to the env root, then the `NODE_ENV` default. Env
 files are read and layered the same way they are at runtime; **there is no reduced
 or special build environment, and no rung is excluded**. This is what v3 did and
 what the runtime does today
@@ -1014,13 +1014,16 @@ refuses to clone into a path outside the project root, skipping that entry with 
 warning (`wattpm-utils/lib/commands/external.js:444-452`), while a directory that
 already exists is used as-is whatever its location.
 
-Env files are **not** subject to this. `loadEnv` walks up from the deciding file's
-directory for `.env` files, exactly as v3 does today
-(`foundation/lib/configuration.js:360-372`), and the runtime additionally reads each
-application's own directory. The asymmetry is deliberate and is the reason the rule
-can be this small: walking up for a **config file** means running code, which is
-why it stops at your package; walking up for a **`.env`** means reading data, which
-has never needed a boundary and did not have one in v3. A monorepo that keeps
+Env files are **not** subject to this. They layer from a config file's own directory
+up to the **env root** — the outermost `watt.config.*` above it — so a monorepo's
+root `.env` keeps applying when you run inside `web/api`, even though the *config*
+search stopped at that application's `package.json` (see "Env files"). The two rules
+use different delimiters on purpose: the search stops at your package because it
+**executes** what it finds, while env files are data and are bounded by the Watt
+project itself. The asymmetry is deliberate and is the reason the rule
+can be this small: walking up for a **config file** means running code, which is why
+it stops at your package; walking up for a **`.env`** means reading data, which is
+bounded by the project rather than the package. A monorepo that keeps
 `DATABASE_URL` in its root `.env` therefore keeps working when you run
 `wattpm dev` inside `web/api`, without the loader having to infer that a project
 "really" extends further up.
@@ -1093,7 +1096,7 @@ serial scheme.
 
 1. **The root worker** is constructed by the main process with an explicit
    `env` — the real environment layered with the deciding file's **own directory's**
-   env files over the **nearest env files above** it, for the
+   env files layered over the rest of its chain **up to the env root**, for the
    active `mode`, resolved by the ladder (see "Env files"). That is the same two
    layers every other worker gets, applied to the deciding file's directory: under a
    standalone boot the deciding file *is* the application's, so its own directory is
@@ -1133,7 +1136,8 @@ serial scheme.
    police which file wins when you stand in the application.) Because the root worker has now returned the configuration, the
    main process knows each application's `path` and `envfile`, so it resolves the
    **config-evaluation** environment by that view of the ladder — real environment,
-   the app's env files or its `envfile`, the root's env files — and constructs that
+   then the env files from the application's own directory up to the env root (the
+   outermost `watt.config.*`), or its `envfile` in place of them — and constructs that
    app's worker with the result as an explicit `env`. `env` blocks are deliberately
    not part of it (see "Env files"); they are applied when the application's own
    workers are constructed at boot. The worker imports the file and
@@ -1267,8 +1271,9 @@ stale config on every dev reload — and the recorded import list is what lets t
 watcher cover helper files (`./config/shared.ts`), not just the root file. It also
 isolates `.env` mutation and config crashes/hangs from the main process. The
 watcher consumes a **filtered** import list — plus the enumerable env-file set
-(root and app `.env*` files for the active mode), since env files are read, not
-imported, and editing them changes both evaluation and worker env —
+(every `.env*` file for the active mode in each directory that contributes a rung,
+from the config file's own directory through to the env root), since env files are
+read, not imported, and editing them changes both evaluation and worker env —
 project/workspace-local files only:
 `node_modules` paths (Watt itself, capability packages, transitive dependencies)
 are recorded but never watched, so dependency churn cannot trigger reloads or
@@ -1345,7 +1350,8 @@ but the capability pipeline is split deliberately:**
   request-time origin resolution) keep working unchanged.
 
 Per-app config files evaluate with **their application's layered environment** — the
-app's own env files (or its `envfile`) over the nearest env files above them, per
+app's own env files (or its `envfile`) layered over the rest of the chain up to the
+env root, per
 the config-evaluation
 ladder in "Env files". `envfile` governs **both** views; the `env` blocks govern the
 worker-runtime view only.
@@ -1429,13 +1435,15 @@ environment always wins.** There are two views, and they differ by exactly the
 things that only exist once the runtime is running:
 
 ```
-config evaluation:  real environment  >  own-directory env files
-                                      >  nearest env files above  >  NODE_ENV default
+config evaluation:  real environment  >  env files, own directory first,
+                                         layered up to the env root
+                                      >  NODE_ENV default
 
 worker runtime:     real environment  >  entry env block  >  root env block
                                       >  injected PLT_<ID>_URL
-                                      >  own-directory env files
-                                      >  nearest env files above  >  NODE_ENV default
+                                      >  env files, own directory first,
+                                         layered up to the env root
+                                      >  NODE_ENV default
 ```
 
 **An `env` block configures the running application; it does not configure the
@@ -1489,40 +1497,54 @@ under this model: provenance is simply which source won.
 **Env *files* are determined by directories, never by boot style. One rule covers
 every config file, wherever it sits:**
 
-> its **own directory's** env files, layered over the **nearest env files found
-> strictly above** that directory.
+> every directory's env files from its **own directory** up to and including the
+> directory of the **outermost `watt.config.*` above it** — nearest winning.
 
-Two layers, both directory-determined. The upward search is v3's
-(`foundation/lib/configuration.js:360-372`, climbing from `dirname(configFile)` and
-taking the first hit), which is why a monorepo's root `.env` keeps applying when you
-run inside `web/api` even though the *config* search stopped at that application's
-`package.json`. That asymmetry — data walks, code does not — is what lets the search
-rule stay as small as it is; it is stated in "Scope" and repeated here because it is
-the one place the two rules deliberately disagree.
+**The Watt project's own configuration delimits the search, not `package.json`.**
+The config search stops at your `package.json` because it *executes* what it finds,
+and a config file above your package belongs to something else. Env files are data,
+not code, so that reasoning does not transfer — and the thing that actually says how
+far a Watt project extends is its outermost Watt configuration. Locating it is the
+**same ancestor filename check** the standalone warning already performs (see
+"Scope"): no evaluation, no new machinery.
 
-The rule is **boot-style independent by construction**: `web/frontend/watt.config.ts`
-gets `web/frontend/.env` over the nearest `.env` above it whether the runtime
-started it or it was started standalone from its own directory. Nothing depends on
-which file won the search, so a given file evaluates identically under every boot
-style; only *what boots* changes with where the command runs. It also needs no
-notion of a project root — "above" is a directory relation, not a claim about how
-far the project extends.
+That makes the rule **boot-style independent because of what it measures**, not by
+assertion. `web/frontend/watt.config.ts` gets the same environment whether the
+runtime started it or you ran `wattpm dev` in its directory, because the env root is
+a property of the project's shape rather than of where the command was typed:
 
-An intermediate `web/.env` **is** consulted when it is the nearest one above the
-application — nearest wins, with no special case for it. This differs from v3, which
-read exactly one file plus the app's own; the layering is the deliberate change, and
-a `.env` placed in an intermediate directory now does what its placement suggests.
+```
+proj/watt.config.ts   proj/.env          ← env root: the outermost watt.config.*
+proj/web/             proj/web/.env
+proj/web/api/         proj/web/api/.env  ← the application
+
+either boot style →   web/api/.env  >  web/.env  >  proj/.env
+```
+
+**Intermediate directories layer** — `web/.env` participates because it is between
+the two ends, nearest winning. This differs from v3, which read exactly one found
+file plus the app's own, and the layering is the deliberate change: a `.env` does
+what its placement suggests, and no file can shadow the ones above it. (The earlier
+"intermediates are never consulted" rule only made sense while a project-root concept
+existed to skip to.)
+
+In a genuinely standalone single-app repository the outermost `watt.config.*` **is**
+the app's own, so the search terminates there and only its own directory
+contributes — correct, because nothing above it belongs to the project. The one
+residual is a stray `watt.config.*` in an ancestor that is not really a parent of
+this project — a `$HOME` config, say — which would make `$HOME` the env root; this is
+the same best-effort caveat the search states for `$HOME`, not a second one.
 
 The `env`
 **blocks** are the one part of the evaluation environment that *does* depend on
 boot style: they live on the root entry, so a standalone boot — which applies no
 root orchestration — sees none of them. That asymmetry is stated again below and
 in the standalone warning, and it is the one way a standalone build differs from a
-root build. File **position**
-is the one thing that does change the env view: the same factory expression
-reads the root's env files when it lives root-inline and the app's env files
-when it lives in the per-app file — directory-determined, with no pretense
-otherwise. That asymmetry is one more reason the per-app file is the canonical
+root build. File **position** also
+changes the env view: the same factory expression evaluates against the root
+config's directory chain when it lives root-inline and the application's chain when
+it lives in the per-app file — both bounded by the same env root, both
+directory-determined, with no pretense otherwise. That asymmetry is one more reason the per-app file is the canonical
 home for capability configuration.
 
 **Per-app config files evaluate with their app's environment — each in its own
@@ -1587,7 +1609,7 @@ deliberately saner:
 
   ```
   real environment  >  entry env block  >  root env block  >  injected
-                    >  own-directory env files  >  nearest env files above
+                    >  env files, own directory first, layered up to the env root
                     >  NODE_ENV default
   ```
 
@@ -2375,11 +2397,18 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    v3's first-hit walk read exactly one file. This is a **behavior change**:
    pre-existing `.env.local`/`.env.production` files written for *other* tools
    (Next.js uses exactly these names) become live in worker environments. The
-   `.env` **discovery is unchanged** — v4 keeps v3's upward walk from the config
-   file's directory — but v4 layers that file with the application's own, where v3
-   read one file only. Precedence direction stays v3-compatible for
-   files (app overrides the found file's defaults; the real environment always
-   wins).
+   `.env` **discovery changes in four ways**, and this is the item to read if you
+   keep environment in files. v3 took the **first** `.env` found walking up from the
+   config file's directory (`foundation/lib/configuration.js:362-371` — it `break`s),
+   plus the application's own applied worker-side with no walk
+   (`runtime/lib/worker/main.js:239`), plus a `process.cwd()` fallback when the walk
+   found nothing (`:373-380`). v4 instead **layers every** `.env` from a config
+   file's own directory up to the **env root** — the outermost `watt.config.*` above
+   it — so (1) intermediate directories now participate, (2) no file shadows the ones
+   above it, (3) the mode variants above multiply each directory's set, and (4) the
+   cwd fallback is gone. Precedence direction stays v3-compatible (nearer overrides
+   further; the real environment always wins), and a project with a single root
+   `.env` sees no change at all.
    The `env` blocks are **no longer visible during config evaluation** at any
    position — v3 applied them to `process.env` before the worker parsed the app's
    config, so a v3 placeholder reading a block-supplied key resolved then and

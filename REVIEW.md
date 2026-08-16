@@ -44,7 +44,19 @@ coexistence state the loader refuses, with nothing actually wrong.
 **Fix:** extend sentinel injection to every recorded placeholder-derived position,
 typed from the audit's target-type table — not just `requiredEnv` sites.
 
-### B2. The env-file rule regresses the root `.env`, and the document states it three incompatible ways
+### B2. ~~The env-file rule regresses the root `.env`~~ — **RESOLVED (R1)**
+
+The env root is now **the outermost `watt.config.*` above the config file**, not a
+`package.json` and not "nearest above". Every `.env` from the file's own directory up
+to that root layers, nearest winning: no shadowing, bounded by the project rather
+than the package, and boot-style independent because the env root is a property of
+the project's shape. Intermediate directories participate. The config search keeps
+its `package.json` stop — it executes what it finds, which env files do not. All
+three contradicting statements (`:1136`, `:1492`, `:1017`) now state this rule, the
+ladder rungs are renamed, the dev watcher's set is corrected (m7), and BC 5 states
+the four real changes instead of claiming discovery is unchanged (M17).
+
+*(original finding)*
 *Environment pass; reproduced on a fixture.*
 
 Round 11's M6 replaced the two-directory rule with "own directory, layered over the
