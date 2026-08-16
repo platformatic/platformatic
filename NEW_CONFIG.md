@@ -2070,6 +2070,18 @@ Generation reads both views. Then:
    runtime-bundled fallback made app-local capability dependencies optional, and
    `node/lib/generator.js:78-80` writes both `@platformatic/node` and
    `@platformatic/globals`, so no dependency test could have been reliable anyway).
+   **The `resolvedApplicationsBasePath` subtree is excluded from every step** — the
+   lexical pass, the dirty check, emission, the source scan and the deletion set.
+   `wattpm resolve` clones remote applications into it (`external.js:441`), so it
+   holds *other repositories'* v3 configurations, untracked. Without the exclusion a
+   project with one resolved remote app cannot migrate at all: step 5 refuses to run
+   on an untracked legacy config it can never restore, naming a file inside a clone,
+   and `--force` then lets migrate write into the clone and delete its
+   `platformatic.json` — which the next `wattpm resolve` re-fetches, undoing both.
+   Every `url`-bearing entry goes on the migrate-the-other-repository list whether or
+   not its directory happens to exist locally, which is what "Remote apps" already
+   says.
+
    Missing app-local capability dependencies are still added in step 2. Emission
    also **drops keys the v4 schemas no longer admit** and that no upgrade chain
    removes — today that is `application.entrypointPort` (see BC 19) — each with a
@@ -2374,6 +2386,10 @@ Generation reads both views. Then:
    manifest's entries from the dirty-tree check, leaves emitted files the user has since
    modified untouched, reporting them, and continues at install/validation).
 
+   `--no-install` leaves the tree in the **coexistence state** while it waits — v3
+   and v4 configs side by side, which the loader refuses — and says so, with the same
+   two ways out a validation failure prints: the path-scoped undo, or `--resume`. A
+   **declined install consent** ends the run the same way and prints the same pair.
    `--no-install` **pre-records `package.json` and the lockfile** in the manifest,
    before pausing, as entries expected to change. Without that the pause is a trap:
    migrate's own step-2 edit puts `package.json` in the manifest, but the lockfile is
@@ -2390,15 +2406,17 @@ Generation reads both views. Then:
    `--resume --no-install` opts out for users who manage installs themselves —
    offline, a private registry, a vendored `node_modules` — and validation then fails
    with a message naming the missing dependency rather than a schema error. An
-   install failure aborts before anything is deleted. The **pre-flight check** —
-   **any capability outside the vendored closure**, any application declaring
-   `envfile` in the root config's own directory (see "Scope", above), and an
-   **`enabled` value that decides the entrypoint differently for `production` and
-   `development` or cannot be decided at all** (see the exposure rules in step 1)
-   — stops the run
-   with "hand-conversion required", naming what blocks it — actually
-   executes **before step 1 writes anything**: it needs only the lexical view's
-   module list and `enabled` values, the module list normalized through the
+   install failure aborts before anything is deleted. The **pre-flight check** stops
+   the run with "hand-conversion required", naming what blocks it. It has five
+   triggers: **any capability outside the vendored closure**; a **root `envfile`**,
+   which has no faithful conversion; any application declaring `envfile` **in the
+   root config's own directory** (see "Scope"); an **`enabled` value that decides the
+   entrypoint differently for `production` and `development` or cannot be decided at
+   all** (see the exposure rules in step 1); and a **structural path that resolves to
+   nothing** after the fallbacks above. It
+   executes **before step 1 writes anything**: it needs only read-only analysis —
+   the lexical view's module list and `enabled` values, plus the resolved structural
+   paths — with the module list normalized through the
    **rename table first** so a
    `@platformatic/composer` app is measured as `@platformatic/gateway` and passes.
    "Stops before modifying any file" must be literally true. The
@@ -2475,13 +2493,24 @@ Generation reads both views. Then:
    not blanket: `git restore .` alone would resurrect the legacy files while
    leaving the newly created — untracked — `watt.config.ts` files in place,
    reproducing exactly the forbidden coexistence state. Migrate therefore keeps
-   a **manifest of every file it created or modified — plus, under `--no-install`,
+   a **manifest of every file it created or modified, storing the pre-edit
+   *contents* of everything it modifies — plus, under `--no-install`,
    the `package.json` and lockfile the deferred install will touch**, persisted as
-   `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads,
-   and it is deleted on completion): on a mid-run failure **other than validation**
+   `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads, it
+   exempts *itself* from the dirty check, and it is deleted on completion). It also
+   records the **legacy-deletion set** — including custom filenames a v3
+   `applications[].config` pointed at — because that set is computed during the
+   lexical pass, which `--resume` skips; without it a resumed run could not complete
+   step 5: on a mid-run failure **other than validation**
    it removes its own creations automatically, and on success the summary prints
    the exact path-scoped undo (`git restore <tracked…> && rm <created…>`) — never
-   a bare `git restore .`, and never any form of `git clean`. A failure *after*
+   a bare `git restore .`, and never any form of `git clean`. Storing contents rather
+   than leaning on git is what makes `--force` and no-VCS trees recoverable at all:
+   step 2 **modifies** `package.json` and the lockfile, and on a tree with no version
+   control there is nothing for `git restore` to restore. Migrate can always delete
+   what it created; without stored contents it could not undo what it edited, leaving
+   exactly the "v3 configs and an installed v4 runtime that refuses them" state this
+   step exists to prevent. A failure *after*
    step 2 also **re-runs the package manager against the restored lockfile**,
    reporting the exact command if that fails: restoring `package.json` and the
    lockfile does not undo what the install wrote to `node_modules`, and a tree left
@@ -3054,6 +3083,7 @@ export default defineConfig({
   logger: { level: process.env.PLT_SERVER_LOGGER_LEVEL ?? '' },
   managementApi: (process.env.PLT_MANAGEMENT_API ?? '') !== '',
   application: {
+    id: 'main',
     workers: 2,
     config: next({
       server: {
@@ -3076,6 +3106,13 @@ with the migration report:
   PLT_SERVER_LOGGER_LEVEL → logger.level (enum)
     v3 refused to boot when it was unset; v4 rejects '' at load.
 ```
+
+The `id` is pinned even though this project has one application: v3 derived it from
+`package.json` `name` with the scope stripped, falling back to `'main'`
+(`runtime/lib/config.js:131-142`), and it is the mesh hostname, the injected
+`PLT_<ID>_URL` name, the metrics label and `wattpm inject`'s argument. Writing it
+literally is what keeps those four fixed across the migration — the rule step 1
+states for every explicit entry.
 
 `managementApi` must be carried over rather than dropped — omitting it picks up its
 schema `default: true` and turns the API **on**, where v3 with the variable unset had
