@@ -967,6 +967,12 @@ detection resolves one application type for the root directory
 (`foundation/lib/cli.js:255-274`). Multi-application projects get their ports from
 their own configuration, never from a default.
 
+Synthesis is also **gated on nothing above describing this directory** (see
+"Scope"). Running in an application directory of a larger project does not
+synthesize — the root configuration already says what that application is, and
+`3042` would contradict the port it assigns. Zero-config is for a project that has no
+configuration, not for a directory that has none.
+
 **Not listening is a normal state, and the startup output says so.** A portless
 application is mesh-only, not broken: `getDispatchTarget()` falls back to
 in-thread dispatch (`basic/lib/capability.js:417-419`), so `http://<id>.plt.local`
@@ -1003,10 +1009,33 @@ deliberate requests from someone who already has runtime privileges — the sear
 what must not wander, not the operator. The one residual case is a `$HOME` that is
 *itself* a Node package, where
 `~/watt.config.ts` is reachable from a loose directory below it; as in v3 the
-invariant is best-effort, and stated as such. When the search finds nothing — no
-`watt.config.*` between here and your `package.json`, and no application the
-zero-config detector recognizes — it stops with an error naming the directories it
-looked in and pointing at `--config`.
+invariant is best-effort, and stated as such. When the search finds nothing, what happens next depends on whether anything
+**above** describes this directory — the same ancestor filename check the standalone
+warning uses, and the same one that bounds the env root:
+
+- **No `watt.config.*` in any ancestor** → this is a project of its own, and
+  zero-config synthesis applies (see "How applications are exposed"). A bare
+  Next/Vite repository boots with no configuration at all, which is Level 0.
+- **A `watt.config.*` exists above** → the directory is one that configuration
+  describes, and synthesis is **refused**:
+
+  ```
+  ✗ web/api has no watt.config.* and is described by ../../watt.config.ts.
+    Run wattpm at the project root to start it with the runtime, or add
+    web/api/watt.config.ts to make this application bootable on its own.
+  ```
+
+  Booting it anyway is the one outcome that must not happen. Synthesis would supply
+  `port: 3042` and default everything else, silently discarding the `workers`,
+  `health`, `env`, `telemetry` and declared port the root assigns this application —
+  the "silently ignoring its real configuration, worse than any hard failure" hazard
+  named above, and the exact state "an application with no file of its own is one the
+  root describes entirely" exists to prevent. The refusal is also what makes that
+  sentence's converse true: giving the directory a `watt.config.*` is how you ask for
+  it to be bootable alone, and until you do, the answer is where to run instead.
+
+- Neither, and nothing recognizable → an error naming the directories searched and
+  pointing at `--config`.
 
 **Naming a directory is not searching for one.** The stop condition governs the
 *search* for a config file and nothing else. An application entry's `path` is
@@ -1405,7 +1434,7 @@ loader hooks, no magic; editor and runtime always agree:
 - **Per-app files** import the capability from the app directory, where its dependency
   already lives in v3. Nothing changes for any existing workflow, under any package
   manager. This is the default style: `migrate` and scaffolding emit the per-app
-  style (files only where non-default settings exist) plus a thin autoload root, so
+  style (a file per application, plus a thin autoload root), so
   migration never *relocates* a dependency — its only `package.json` edits are the
   consented v4 range bumps and the root `wattpm` dependency (see
   "`wattpm-utils migrate`").
@@ -2528,9 +2557,13 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     (`"4"` as a number, `1` as a boolean) are rejected with precise errors.
 17. `wattpm dev`/`build`/`start` become **location-sensitive**: run inside an
     application directory that **owns a config file**, they act on that application
-    standalone (with a warning when the project holds more than one); v3 booted the
-    whole runtime from anywhere. A directory with no config file of its own falls
-    through to the nearest one up the tree, so it boots the runtime.
+    standalone — with a warning whenever a `watt.config.*` exists in an ancestor,
+    naming what is not applied; v3 booted the whole runtime from anywhere. The search
+    runs from the current directory up to the nearest ancestor holding a
+    `package.json` and stops there, so it does **not** fall through to a config
+    higher up the tree. A directory with no config file of its own is refused with a
+    message naming the configuration above that describes it, rather than booted with
+    inferred defaults.
     Passing `--config` names the configuration and boots **whatever that file
     describes** — the full runtime for a root config, one application for an
     app-def — which is

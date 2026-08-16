@@ -124,7 +124,16 @@ own output (again without rollback, per B1).
 **Fix:** migrate **strips** the key while noting it; BC 19 says the audit removes it
 from the schema, and states that an in-place upgrade has no chain to strip it.
 
-### B4. An application directory with no config file silently zero-config boots
+### B4. ~~An application directory with no config file silently zero-config boots~~ — **RESOLVED (R4)**
+
+Synthesis is gated on the ancestor check: no `watt.config.*` above → it is a project
+of its own and Level 0 applies; one above → refused with a message naming the
+configuration that describes the directory and the two ways forward. This makes the
+document's own sentence true in both directions — "an application with no file of its
+own is one the root describes entirely", and "giving it a `watt.config.*` is how you
+ask for it to be bootable on its own".
+
+*(original finding)*
 *Loading pass.*
 
 The search stops at `web/api`'s own `package.json` and finds nothing; the zero-config
@@ -144,7 +153,12 @@ non-default settings exist", contradicting `:1959` and `:2639`.
 ancestor check already exists for the warning) and error naming the ancestor. Fix the
 stale `:1396`.
 
-### B5. BC 17 describes the pre-round-11 model
+### B5. ~~BC 17 describes the pre-round-11 model~~ — **RESOLVED (R4)**
+
+BC 17 now states the search rule (stops at the nearest `package.json`, no
+fall-through), the two-condition warning, and the refusal for a described directory.
+
+*(original finding)*
 *Loading pass.*
 
 `:2428` — "A directory with no config file of its own **falls through to the nearest
@@ -331,8 +345,7 @@ turns a v3-supported shape into a hand-conversion refusal.
 
 - **m1.** `:1126` restates the configured-twice check without the deciding-file
   exemption `:316-320` grants, so read alone it fires on every Level 1 project.
-- **m2.** `:1396` still says per-app files are emitted "only where non-default settings
-  exist" — contradicts `:1190`, `:1959`, `:2639` and is what makes B4 common.
+- **m2.** ~~RESOLVED (R4)~~ — the stale "files only where non-default settings exist" now reads "a file per application, plus a thin autoload root", matching the other three statements.
 - **m3.** Step 2's pre-flight list omits two of the five stops, and its "needs only the
   lexical view" justification is false for the ones that need resolved paths.
 - **m4.** Step 3 says it skips two things "only", then adds sentinel injection as a
