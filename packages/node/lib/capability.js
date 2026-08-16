@@ -177,6 +177,9 @@ export class NodeCapability extends BaseCapability {
 
     // Create the promise before requiring the entrypoint so we do not miss its listen event.
     const serverPromise = createServerListener()
+    // The promise is only awaited when the application does not export a factory: make sure that a listen error
+    // (like EADDRINUSE) is not reported as unhandled rejection in the other case, since it is thrown by _listen anyway.
+    serverPromise.catch(() => {})
 
     try {
       const require = createRequire(dirname(finalEntrypoint))
