@@ -176,10 +176,14 @@ explicit where still needed (see "Machine-generated configs").
    never relocates dependencies.
 5. Env handling becomes ordinary JavaScript (`process.env`), with `.env` loaded before
    the config file is evaluated and a fully documented precedence.
-6. A `wattpm-utils migrate` codemod that automatically converts anything that boots
-   on v3 with in-tree capabilities, with two documented `envfile` exceptions.
-   Anything it cannot convert faithfully — an out-of-closure capability, either
-   `envfile` exception — stops the run before any writes rather than guessing.
+6. A `wattpm-utils migrate` codemod that automatically converts v3 projects built on
+   in-tree capabilities. Anything it cannot convert **faithfully** stops the run
+   before any writes rather than guessing — and "faithfully" is the whole of the
+   promise: the refusals are enumerated in one place, the pre-flight gate (see
+   "`wattpm-utils migrate`"), and every one of them exists because the v3 input has
+   no single correct v4 form rather than because conversion is hard. There are more
+   than two; a codemod that silently picked one reading would be worse than one that
+   names the file and stops.
 7. ICC integration points are preserved: `setApplicationConfigPatch` keeps
    byte-compatible patch semantics; `getRuntimeConfig` survives with its payload
    shape changed as a versioned DTO (see "Machine-generated configs").
@@ -1634,11 +1638,17 @@ what its placement suggests, and no file can shadow the ones above it. (The earl
 "intermediates are never consulted" rule only made sense while a project-root concept
 existed to skip to.)
 
-**A root config terminates the walk at itself when it says so.** `envRoot: true` on
-a root configuration stops the search there, which a nested runtime needs: without it
-`proj/tools/sandbox/watt.config.ts` inherits `proj/.env` with no way to declare a
-boundary, and so does every fixture runtime in a repository that later grows a root
-`.env`. In a genuinely standalone single-app repository the outermost `watt.config.*` **is**
+**A nested runtime inherits the chain above it, and there is no marker to opt out.**
+`proj/tools/sandbox/watt.config.ts` reads `proj/.env`, and so does every fixture
+runtime in a repository that later grows a root `.env`. A declared boundary was
+considered and rejected as unimplementable at this layer: env files are resolved at
+step 2 of the walk and the deciding file is executed at step 3, so a marker *inside*
+the configuration cannot be read before the walk it governs has already finished —
+and evaluating twice would mean the first evaluation ran under the environment the
+marker was meant to change. Where a nested runtime genuinely needs a different
+environment, `--env <file>` replaces the whole env-files rung for that invocation, and
+its own `.env` still wins over anything above it. In a genuinely standalone
+single-app repository the outermost `watt.config.*` **is**
 the app's own, so the search terminates there anyway and only its own directory
 contributes — correct, because nothing above it belongs to the project. The one
 residual is a stray `watt.config.*` in an ancestor that is not really a parent of
@@ -2024,10 +2034,12 @@ precede it; early adopters hand-convert). Release *cadence* stays decoupled afte
 `wattpm-utils`' own schedule and reach every already-installed v4 runtime with no
 runtime re-release.
 
-It is **the only code in v4 that can read legacy configs**. Scope: anything that
-boots on v3, with **two documented exceptions**, both involving `envfile` and both
-detected by the pre-flight check from the lexical view — before anything is
-written — and both reported with their supported manual fixes rather than guessed:
+It is **the only code in v4 that can read legacy configs**. Scope: v3 projects built
+on in-tree capabilities. Everything it refuses is enumerated by the pre-flight check
+(step 2 below), detected from the lexical view before anything is written, and
+reported with the supported manual fixes rather than guessed. **Two of those refusals
+involve `envfile`** and are worth stating here because they are the ones a
+well-formed, ordinary v3 project can hit:
 
 - **an application in the root config's own directory that declares `envfile`.**
   Such an app must be emitted root-inline (the per-app style would put two v4
@@ -2582,13 +2594,20 @@ Generation reads both views. Then:
    offline, a private registry, a vendored `node_modules` — and validation then fails
    with a message naming the missing dependency rather than a schema error. An
    install failure aborts before anything is deleted. The **pre-flight check** stops
-   the run with "hand-conversion required", naming what blocks it. It has five
-   triggers: **any capability outside the vendored closure**; a **root `envfile`**,
+   the run with "hand-conversion required", naming what blocks it. This is the **one
+   enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
+   anywhere else in this document without appearing here is a bug in the document.
+   Six triggers: **any capability outside the vendored closure**; a **root `envfile`**,
    which has no faithful conversion; any application declaring `envfile` **in the
    root config's own directory** (see "Scope"); an **`enabled` value that decides the
    entrypoint differently for `production` and `development` or cannot be decided at
-   all** (see the exposure rules in step 1); and a **structural path that resolves to
-   nothing** after the fallbacks above. It
+   all** (see the exposure rules in step 1); a **structural path that resolves to
+   nothing** after the fallbacks above; and **one variable occupying two positions
+   whose target types are incompatible** — `{PLT_X}` in both `server.port` and
+   `logger.level` admits no sentinel that satisfies both, so step 3 could not
+   validate its own output. That last one is computed from the lexical view like the
+   rest, which is what lets it stop the run *before* any file is written rather than
+   surfacing at validation. It
    executes **before step 1 writes anything**: it needs only read-only analysis —
    the lexical view's module list and `enabled` values, plus the resolved structural
    paths — with the module list normalized through the
@@ -2743,9 +2762,8 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    refused with the migrate hint. `getParser`/`getStringifier` and the format
    machinery are deleted from the loader.
 4. `{PLT_X}` interpolation, `strictEnv`, root `envfile`: **removed**. Migrate
-   converts the first two; a root `envfile` is one of its two documented
-   hand-conversion exceptions. `wattpm-utils migrate`
-   converts them.
+   converts the first two; a root `envfile` has no faithful conversion and is one of
+   the refusals its pre-flight check enumerates.
 5. Env files: the recognized set grows to `.env`, `.env.local`, `.env.<mode>`,
    `.env.<mode>.local`, and layering reads **root and app files together** where
    v3's first-hit walk read exactly one file. This is a **behavior change**:
