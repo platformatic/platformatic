@@ -1834,14 +1834,25 @@ deliberately saner:
   machinery effectively guaranteed a self URL, and generator-emitted code reads
   it). v3's injected `PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are **removed** —
   apps branch on their own variables, or the decision moves into config where the
-  typed context lives; migrate's source scan flags every occurrence. `PLT_ROOT` was
-  never a *worker* variable: the loader assigned it per config parse
-  (`foundation/lib/configuration.js:512`), which is why migrate seeds it when
-  resolving structural paths rather than reading it from the environment. It
-  existed to make `{PLT_ROOT}` placeholders resolve and was already excluded from every
-  generated `.env` (`generators/lib/base-generator.js:243`); with interpolation
-  gone its only remaining reader would be application code, and
-  `import.meta.dirname` is the v4 answer. `NODE_ENV` is the one variable the
+  typed context lives; migrate's source scan flags every occurrence.
+
+  **`PLT_ROOT` carries two different values in v3, and removing it breaks both.** The
+  loader assigns it per config parse — `env.PLT_ROOT = root` after `loadEnv`
+  (`foundation/lib/configuration.js:512`) — so inside a configuration `{PLT_ROOT}`
+  resolves to *that config file's own directory*, which is why migrate can seed it
+  when resolving structural paths instead of reading it from the environment. But the
+  runtime's own parse also puts it in `#env`, which is `structuredClone`d into every
+  worker (`runtime/lib/runtime.js:2534`, `:2585`), so **application code reading
+  `process.env.PLT_ROOT` gets the runtime root** — a different directory from the one
+  the same name means in a per-app config, and a value
+  `packages/runtime/test/start/custom-environment.test.js:21-30` asserts application
+  code receives. Removing it is therefore a **worker-environment breaking change**,
+  not merely the retirement of an interpolation helper. It was already excluded from
+  every generated `.env` (`generators/lib/base-generator.js:243`), so no scaffolded
+  project declares it, but any application reading it does lose it. The v4 answer for
+  application code is `import.meta.dirname`, which is **not** an equivalent: it is the
+  reading module's directory, where `PLT_ROOT` was the runtime root. Migrate's source
+  scan reports every read with its file and line for exactly that reason. `NODE_ENV` is the one variable the
   runtime still defaults, at the bottom of the ladder (see "Env files").
   Topology variables are
   deliberately not `.env`-configurable. Two application ids normalizing to the same
@@ -2530,10 +2541,14 @@ Generation reads both views. Then:
    change behavior when the real variable is absent; migrate emits them as defaults
    only under an explicit `--use-sample-defaults` flag, and otherwise notes them as
    comments. `{PLT_ROOT}` gets its own rule: `{PLT_ROOT}/x` becomes
-   `join(import.meta.dirname, 'x')` (adding the `node:path` import) — correct in
-   migrate's per-app output, where `import.meta.dirname` *is* the app root; the docs
-   flag that the expression must be rewritten if later moved into a root-inline
-   entry.
+   `join(import.meta.dirname, 'x')` (adding the `node:path` import). That is exact in
+   migrate's per-app output because v3 resolved `{PLT_ROOT}` against the directory of
+   the config file being parsed, which for a per-app config *is* the app root — the
+   same directory `import.meta.dirname` gives. It is **not** a general substitution:
+   in a root-inline entry the expression must be rewritten, and in *application code*
+   `process.env.PLT_ROOT` was the runtime root rather than the reading module's
+   directory, which is why that case is reported by the source scan instead of
+   converted.
 
    **Four positions are *structural* and must be concrete before anything is
    emitted**: an entry's `path`, `autoload.path`, `envfile`, and
@@ -2545,7 +2560,9 @@ Generation reads both views. Then:
    path. The resolution chain is, in order: **`PLT_ROOT`**, seeded to the directory of
    the config file being read — v3's loader assigned it *after* `loadEnv`
    (`foundation/lib/configuration.js:512`), so it was defined in every config parse
-   and never came from the ambient environment; then the **migration-time
+   and is not something migrate can read from the environment it runs in — the
+   worker-environment copy is the *runtime* root, a different value (see BC 20); then
+   the **migration-time
    environment**; then the **root `.env`**; then the value in **`.env.sample`** if one
    exists; then the conventional **`<autoload.path>/<id>` directory** if it exists on
    disk. This is the one place migrate reads the ambient environment to decide
@@ -2922,7 +2939,12 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     into the v3 entrypoint's capability config and strips ports that were inert on
     v3, so no migrated project changes which address it answers on.
 20. Injected variables: `PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are
-    **removed** (the migrate source scan flags reads); `PLT_<ID>_URL` injection
+    **removed from worker environments** (the migrate source scan flags reads).
+    `PLT_ROOT` is the one with two meanings: inside a configuration it was that
+    config file's own directory, while application code read the *runtime root* from
+    the worker environment — so its removal breaks reads in application code, and
+    `import.meta.dirname` is a replacement only where the reading module sits at the
+    directory the code meant; `PLT_<ID>_URL` injection
     now covers every application including the app's own self-URL. `NODE_ENV`
     remains, as the **lowest** rung of both ladders: it defaults to `production`
     when `production` is `true` and nothing else supplied it. Under `start` that
