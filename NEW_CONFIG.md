@@ -878,7 +878,7 @@ The rules, in full:
   and the platform supports it (`basic/lib/capability.js:105-110`); it is then
   applied by a `net.server.listen` subscriber that sets `options.reusePort =
   true` (`:827-841`). Both `reuseTcpPorts` properties default to `true`
-  (`foundation/lib/schema.js:894` for the entry, `:1083` for the root), and the
+  (`foundation/lib/schema.js:894` for the entry, `foundation/lib/schema.js:1100` for the root), and the
   **entry-level one now reaches the decision** — the runtime passes the whole
   application entry into the capability context (`worker/controller.js:82`), which
   is the plumbing v3 lacked. Where the OS lacks `SO_REUSEPORT`
@@ -928,21 +928,21 @@ The rules, in full:
   runtime checks the port against every *other* application's listening workers
   and raises `AddressInUseError` — `Port %d is already in use by applications
   "%s" and "%s"` (`runtime/lib/errors.js:14-17`, raised at
-  `runtime/lib/runtime.js:4874-4894`, ownership scan at `:4029-4050`). Workers of
-  the *same* application are exempt by construction (`:4035`), which is what makes
+  `runtime/lib/runtime.js:4874-4894`, ownership scan at `runtime/lib/runtime.js:4844-4865`). Workers of
+  the *same* application are exempt by construction (`runtime/lib/runtime.js:4850`), which is what makes
   `SO_REUSEPORT` legal. An OS-level `EADDRINUSE` carrying a port is upgraded to
-  the same error (`:2884-2888`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
-  are excluded from restart-on-error (`:2913-2921`) — a port problem fails fast
+  the same error (`runtime/lib/runtime.js:3359-3362`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
+  are excluded from restart-on-error (`runtime/lib/runtime.js:3391-3393`) — a port problem fails fast
   instead of looping. There is still **no port search**.
 - **The runtime reports a map of URLs, not one URL.** `getUrls(applicationId?)`
   returns `{ '<app>:<worker>': url }` for every listening worker
-  (`runtime/lib/runtime.js:1550-1564`); `start()` returns it (`:405`) after
+  (`runtime/lib/runtime.js:1550-1564`); `start()` returns it (`runtime/lib/runtime.js:451`) after
   logging one line per **application** rather than one per listening worker
-  (`#showUrls`, `:1944-1964`) — an application with several workers on distinct
+  (`#showUrls`, `runtime/lib/runtime.js:2408-2428`) — an application with several workers on distinct
   ports lists them together rather than N times over. `getRuntimeMetadata()` carries
-  `urls` (`:1341`), `getApplicationDetails()` carries `urls` plus a first-element
-  `url` convenience (`:1776-1778`), and worker records carry their own `url`
-  (`:1822`). `wattpm ps` dropped its URL column and `wattpm applications` its
+  `urls` (`runtime/lib/runtime.js:1583`), `getApplicationDetails()` carries `urls` plus a first-element
+  `url` convenience (`runtime/lib/runtime.js:2167-2169`), and worker records carry their own `url`
+  (`runtime/lib/runtime.js:2286`). `wattpm ps` dropped its URL column and `wattpm applications` its
   Entrypoint column (`wattpm/lib/commands/management.js:81`, `:102-103`); `wattpm inject` now
   requires an application name unless the runtime has exactly one
   (`wattpm/lib/commands/inject.js:79-88`).
@@ -2603,7 +2603,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    config file's directory (`foundation/lib/configuration.js:362-371` — it `break`s),
    plus the application's own applied worker-side with no walk
    (`runtime/lib/worker/main.js:239`), plus a `process.cwd()` fallback when the walk
-   found nothing (`:373-380`). v4 instead **layers every** `.env` from a config
+   found nothing (`foundation/lib/configuration.js:373-380`). v4 instead **layers every** `.env` from a config
    file's own directory up to the **env root** — the outermost `watt.config.*` above
    it — so (1) intermediate directories now participate, (2) no file shadows the ones
    above it, (3) the mode variants above multiply each directory's set, and (4) the
