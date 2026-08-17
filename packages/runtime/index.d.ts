@@ -38,6 +38,7 @@ export interface LoopbackMessagingOptions {
 
 export namespace errors {
   export const AddressInUseError: (port: number, firstApplication: string, secondApplication: string) => FastifyError
+  export const WorkerAddressInUseError: (port: number, application: string) => FastifyError
   export const RuntimeExitedError: () => FastifyError
   export const UnknownRuntimeAPICommandError: (command: string) => FastifyError
   export const ApplicationNotFoundError: (id: string) => FastifyError

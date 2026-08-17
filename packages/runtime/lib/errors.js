@@ -15,6 +15,10 @@ export const AddressInUseError = createError(
   `${ERROR_PREFIX}_EADDR_IN_USE`,
   'Port %d is already in use by applications "%s" and "%s"'
 )
+export const WorkerAddressInUseError = createError(
+  `${ERROR_PREFIX}_WORKER_EADDR_IN_USE`,
+  'Port %d is already in use by another worker of the application "%s". Multiple workers can share a port only when the reusePort feature is available in your OS, otherwise set "server.portAssignment" to "perWorkerIncrement" in the application configuration or use a single worker.'
+)
 export const RuntimeExitedError = createError(
   `${ERROR_PREFIX}_RUNTIME_EXIT`,
   'The runtime exited before the operation completed'

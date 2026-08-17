@@ -429,6 +429,8 @@ This can be specified as:
 
 This value is hardcoded to `1` if the runtime is running in development mode.
 
+Multiple workers can listen on the same port only when the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) feature is available in the OS (see [`reuseTcpPorts`](#reusetcpports)). When it is not (for instance on macOS and Windows), an application configured to listen on a fixed `server.port` is started with a single worker (and dynamic scaling is disabled for it) with a warning, unless its capability configuration sets `server.portAssignment` to `perWorkerIncrement`, in which case each worker listens on its own port.
+
 ### `workersRestartDelay`
 
 Configures the amount of milliseconds to wait before replacing another worker of an application during a restart.
@@ -602,6 +604,8 @@ It can be a boolean or an object with the following settings:
 ### `reuseTcpPorts`
 
 Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. This setting can be overridden at the application level.
+
+`reusePort` is what allows multiple workers of the same application to listen on the same port. It is not available on macOS and Windows: on those platforms, an application with a fixed `server.port` and multiple workers is clamped to a single worker with a warning, unless it sets `server.portAssignment` to `perWorkerIncrement` in its capability configuration, so that each worker listens on its own port (`port`, `port + 1`, and so on).
 
 ### `logger`
 

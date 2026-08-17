@@ -53,6 +53,11 @@ export declare function resolve (
 
 export declare function transform<Config extends Record<string, any> | undefined> (config: Config): Promise<Config>
 
+export declare function applyPortAssignment<ServerConfig extends Record<string, any> | undefined> (
+  serverConfig: ServerConfig,
+  worker?: { index?: number; portOffset?: number }
+): ServerConfig
+
 export declare const validationOptions: {
   useDefaults: true
   coerceTypes: true

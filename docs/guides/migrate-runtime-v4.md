@@ -44,7 +44,19 @@ To preserve the v3 listener in this example, configure `platformatic.service.jso
 }
 ```
 
-Do not add `server` to an `applications` entry. It belongs to the capability configuration. Settings such as HTTPS move with it; `backlog` is applied when the capability's underlying server API supports that option.
+Do not add `server` to an `applications` entry. It belongs to the capability configuration. Settings such as HTTPS and `portAssignment` move with it; `backlog` is applied when the capability's underlying server API supports that option.
+
+If the v3 entrypoint used `server.portAssignment: "perWorkerIncrement"` to run multiple workers on a fixed port without `SO_REUSEPORT` (for instance on macOS or Windows), move that setting to the capability configuration as well. The `workers` count keeps being configured in the runtime `applications` entry, and worker `N` listens on `port + N` exactly as before:
+
+```json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042,
+    "portAssignment": "perWorkerIncrement"
+  }
+}
+```
 
 The v4 configuration upgrade removes root `entrypoint` and `server` and emits a warning when a root server configuration is discarded. Runtime cannot move that configuration automatically because capability configuration is stored in a separate file.
 
