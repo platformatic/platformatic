@@ -157,9 +157,9 @@ explicit where still needed (see "Machine-generated configs").
   file keeps working via the deterministic v4 capability detector (direct capability
   dependencies first — see "Loading mechanism"), and v4 stops writing an
   auto-generated `watt.json` into the user's tree — the synthesized config lives only
-  in memory. Synthesis supplies `server: { port: Number(process.env.PORT ?? 3042) }`
-  so a bare framework repo is actually reachable — see "How applications are
-  exposed".
+  in memory. Synthesis supplies `server: { port: Number(env.PORT ?? 3042) }` from the
+  resolved env map, so a bare framework repo is actually reachable and a `PORT` in its
+  `.env` is honoured — see "How applications are exposed".
 
 ---
 
@@ -993,9 +993,17 @@ Next/Vite repo with no config file — is a stated non-goal to break, and on v3 
 worked because the single application became the entrypoint and
 `buildListenOptions(undefined)` gave it `{ port: 0 }`. With the entrypoint gone
 the synthesized config would carry no `server.port` and a framework application
-would start nothing, so **in-memory synthesis emits
-`server: { port: Number(process.env.PORT ?? 3042) }`** — the same expression
-scaffolding writes into a real file. The convention therefore still lives in
+would start nothing, so **synthesis supplies a port of `Number(env.PORT ?? 3042)`**,
+where `env` is the map `loadEnv` has already resolved for that directory — the same
+answer the expression `Number(process.env.PORT ?? 3042)` gives when scaffolding writes
+it into a real file, arrived at differently because synthesis is an object source.
+A file is evaluated in a worker whose `process.env` **is** the resolved map, so the
+expression reads env files; synthesis runs main-side and does not mutate
+`process.env` (see "Object config sources"), so it must read the resolved map
+directly. Taking the ambient `process.env` instead would ignore a `PORT=4000` sitting
+in the project's own `.env` and bind 3042 — the one file a zero-config user is most
+likely to have written. The ordering is what makes this work: `loadEnv` is step 2 of
+the walk and synthesis happens after it. The convention therefore still lives in
 configuration rather than becoming a hidden loader default; synthesis simply *is*
 the configuration for a zero-config boot. It applies **only to a
 single-application project**, which is the only shape zero-config can produce:
