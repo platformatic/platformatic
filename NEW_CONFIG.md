@@ -274,9 +274,7 @@ export default defineConfig(({ env, production }) => ({
       path: 'web/api',
       workers: production ? 4 : 1,
       telemetry: { instrumentations: ['pg'] },
-      config: service({
-        telemetry: { applicationName: 'api', exporter: { type: 'otlp' } }
-      })
+      config: service({ basePath: '/api' })
     },
     {
       id: 'frontend',
@@ -874,9 +872,12 @@ The rules, in full:
   it remains what the gateway's WebSocket proxying requires — real TCP, per
   worker.
 - **A fixed port with `workers > 1` requires `SO_REUSEPORT`, and there is no
-  fallback.** The capability enables it when none of the capability config, the
-  application entry, or the runtime root says `false`, at least one says `true`,
-  and the platform supports it (`basic/lib/capability.js:105-110`); it is then
+  fallback.** The capability enables it when none of its three inputs says `false`,
+  at least one says `true`, and the platform supports it
+  (`basic/lib/capability.js:105-110`). Only **two of those three are configurable**:
+  the application entry and the runtime root. The third is the capability's own
+  `reuseTcpPorts`, which `:105` reads but **no capability schema declares** — it is
+  reachable from capability code, not from a configuration file. It is then
   applied by a `net.server.listen` subscriber that sets `options.reusePort =
   true` (`:827-841`). Both `reuseTcpPorts` properties default to `true`
   (`foundation/lib/schema.js:894` for the entry, `foundation/lib/schema.js:1100` for the root), and the
@@ -1790,7 +1791,7 @@ deliberately saner:
 
 - **AJV stays authoritative**, but the v4 schemas are **audited, not just pruned**.
   Beyond removing `$schema`, root `module`, `runtime` (wrapped block), `web`,
-  `services`, `verticalScaler`, and `healthChecksTimeouts`, every `anyOf`/`oneOf`
+  `services` and `verticalScaler`, every `anyOf`/`oneOf`
   union across foundation and the capability schemas (~120 sites) is classified:
   - *placeholder-only unions* (the 13 `overridableValue` call sites,
     `logger.level`'s
@@ -2573,21 +2574,42 @@ Generation reads both views. Then:
    most of its work — validated only at the root.) Entries whose directory is not
    present — a `url`-bearing application on a checkout that has never been
    resolved — validate as **unresolved** and are skipped, exactly as they are at
-   load time; migrate must not require `wattpm resolve` to have been run first, and
+   load time. So are entries whose backfilled path falls inside
+   `resolvedApplicationsBasePath`: the loader computes that path itself
+   (`runtime/lib/runtime.js:2442`), so a `wattpm resolve`-d clone *does* exist on
+   disk, and discovery would walk into another repository's v3 configuration — which
+   migrate deliberately did not convert — and fail on output that is correct. That is
+   the fourth deviation of the migrator-only entry; migrate must not require `wattpm resolve` to have been run first, and
    reports the unresolved list in its summary. This bypass is *not* the public
    `--config` flag:
    `--config` performs the full unconditional legacy scan of the selected
    directory and every discovered app directory, so it can never be used to
    sidestep the no-coexistence guard.
 
-   **Validation seeds the environment for every variable the emitted files
-   reference**, not only `requiredEnv`-wrapped ones. Migrate already records each
-   placeholder-derived position for its requires-review notes, so it seeds a
-   type-appropriate **sentinel** from the audit's target-type table for each — a
-   member of the enum for an enum position, a number for a number position, the
-   secret's placeholder for a `requiredEnv` key whose helper would otherwise throw.
-   This is the third documented deviation of the migrator-only entry, alongside the
-   skipped walk and coexistence guard.
+   **Validation seeds the environment for every variable the emitted files reference
+   that is not already set**, not only `requiredEnv`-wrapped ones. Migrate records
+   each placeholder-derived position during the lexical pass — variable, JSON path and
+   target type — so it seeds a type-appropriate **sentinel** from the audit's
+   target-type table for each: a member of the enum for an enum position, a number for
+   a number position, the secret's placeholder for a `requiredEnv` key whose helper
+   would otherwise throw. This is the third documented deviation of the migrator-only
+   entry, alongside the skipped walk and coexistence guard.
+
+   Two constraints on the seeding, both of which change what it may touch. It seeds
+   only variables the environment does **not** already supply: the real environment
+   outranks env files in v4, so seeding unconditionally would validate the emitted
+   files against migrate's fabrications instead of the values the project actually
+   configures — inverting the guarantee that step 3 checks the output through the real
+   loader. And a variable occupying two positions with **incompatible target types**
+   admits no single sentinel: `{PLT_X}` in both `server.port` and `logger.level`
+   cannot be seeded to satisfy both, so that is a pre-flight refusal naming the
+   variable and both paths, not a coin toss resolved at validation time.
+
+   **The record is persisted in the manifest**, because `--resume` skips the lexical
+   pass that produced it. Without that, the documented non-interactive flow —
+   `--no-install`, then `migrate --resume` — reaches step 3 with no seeds, `''` fails
+   the audited enum, and the failure prints "run `migrate --resume`" as a remedy,
+   which fails identically forever.
 
    Without it step 3 fails on migrate's *own* correct output. The variables in
    question are deployment variables, absent from the laptop running the codemod —
@@ -2634,10 +2656,12 @@ Generation reads both views. Then:
    the `package.json` and lockfile the deferred install will touch**, persisted as
    `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads, it
    exempts *itself* from the dirty check, and it is deleted on completion). It also
-   records the **legacy-deletion set** — including custom filenames a v3
-   `applications[].config` pointed at — because that set is computed during the
-   lexical pass, which `--resume` skips; without it a resumed run could not complete
-   step 5: on a mid-run failure **other than validation**
+   records everything computed during the **lexical pass** that a later step needs,
+   because `--resume` skips that pass: the **legacy-deletion set** — including custom
+   filenames a v3 `applications[].config` pointed at, without which a resumed run
+   could not complete step 5 — and the **placeholder-position record** step 3 seeds
+   from, each entry being a variable, a JSON path and a target type. On a mid-run
+   failure **other than validation**
    it removes its own creations automatically, and on success the summary prints
    the exact path-scoped undo (`git restore <tracked…> && rm <created…>`) — never
    a bare `git restore .`, and never any form of `git clean`. Storing contents rather
@@ -2700,7 +2724,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    unchanged. Migrate reports every such placeholder rather than emitting a silently
    empty expression (see "Migrating from v3"); a value that must be readable at
    config time belongs in an env file or the real environment.
-6. `verticalScaler`, `healthChecksTimeouts`: removed from the v4 schema.
+6. `verticalScaler`: removed from the v4 schema. `metrics.healthChecksTimeouts` is
+   **kept** — it is not a top-level key and is not dead: `#getHealthChecksTimeout`
+   reads it (`runtime/lib/runtime.js:4590`, falling back to `healthChecksTimeout`
+   then 5000 ms) and extension health checks are configured through it. Its schema
+   description still says "no longer used", which the audit corrects.
 7. Schema audit: placeholder-string unions removed from every schema (validation is
    stricter; migrate emits typed values).
 8. Auto-written `watt.json` (`?autogenerated=true`): removed.
@@ -3000,13 +3028,24 @@ fixed port at all.
    produce no config file); scaffolded test helpers import the config module instead
    of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
-   **Every `ts` code block in this document** ships as a golden fixture — not just
-   Level 2b and Appendix B — loaded through the real v4 loader and validated against
-   the shipped capability schemas, so an example that contradicts a schema fails CI
-   instead of surviving review. Two rounds of review found invalid examples by hand,
-   including the sole illustration of the callback form; the fixture set is scoped to
-   every block precisely because the ones that were missed were the ones nobody
-   thought to check.
+**Every code block in this document is checked in CI**, by one of two gates — not
+   just Level 2b and Appendix B. Three rounds of review found invalid examples by
+   hand, including the sole illustration of the callback form, so the scope is every
+   block rather than the ones somebody thought to check.
+
+   - **Configuration blocks** — those with a default export, plus the ` ```js `
+     plain-object example, which is the one shape whose `$schema` strip is unique —
+     ship as **golden fixtures** loaded through the real v4 loader and validated
+     against the shipped capability schemas.
+   - **Declaration blocks** — interfaces, type aliases and the bodiless factory
+     overloads, which are a `SyntaxError` after type stripping and export nothing —
+     are typechecked with `tsc --noEmit` against the shipped `.d.ts` files, and
+     Appendix A's blocks are additionally key-diffed against `runtime/schema.json`
+     and `next/schema.json`.
+
+   Sorting the blocks by "has a default export" is what assigns them; a block that
+   is neither loadable nor a declaration is a bug in the document, and the check
+   fails on it rather than skipping it.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` / `getRuntimeApplicationConfig`
@@ -3031,9 +3070,10 @@ cheap to iterate because the loader is new code with no v3 entanglement.
 *Illustrative, not authoritative.* The shipped types are **generated from the
 audited schemas** by the existing `gen-types` pipeline (see the implementation
 plan), which is what keeps them correct; a sketch maintained by hand drifts, and
-this one had. The same CI check that validates every `ts` block (see implementation plan
-step 8) diffs this block against `packages/runtime/schema.json` so a divergence
-fails the build rather than surviving review.
+this one had. The CI check (see implementation plan step 8) diffs this block against
+`packages/runtime/schema.json`, and the `@platformatic/next` sketch below against
+`packages/next/schema.json`, so a divergence fails the build rather than surviving
+review. Both are pinned because both have drifted before.
 
 ```ts
 // wattpm
@@ -3077,9 +3117,9 @@ export interface WattConfig {
   env?: Record<string, string>            // workers' runtime env only; never
                                           // visible to config evaluation
                                           // (see "Env files")
-  reuseTcpPorts?: boolean                 // default true — SO_REUSEPORT; one of
-                                          // three inputs, the others being the
-                                          // entry and the capability config
+  reuseTcpPorts?: boolean                 // default true — SO_REUSEPORT; one of the
+                                          // two configurable inputs, the other being
+                                          // the application entry
   nodeModulesSourceMaps?: string[]        // package names, not a flag
   resolvedApplicationsBasePath?: string   // used by `wattpm resolve`
   exitOnUnhandledErrors?: boolean | number // number = exit delay in ms
