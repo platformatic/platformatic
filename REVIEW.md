@@ -27,7 +27,13 @@ defects in round-12 fixes.
 
 ## Blockers
 
-### B1. The env root is undefined wherever no `watt.config.*` exists
+### B1. ~~The env root is undefined wherever no `watt.config.*` exists~~ — **RESOLVED (S1)**
+
+A chain floors at its own directory when nothing is above it; for object sources the
+`root` argument stands in. Level 0, `create(root, configObject)` and hot-add all
+terminate.
+
+*(original finding)*
 *Environment pass.* Rule at `:1553-1558`; instances at `:1035-1037`, `:1361-1367`.
 
 The rule terminates the walk at "the outermost `watt.config.*` above it". Three
@@ -40,7 +46,15 @@ it walked to the filesystem root with a `process.cwd()` fallback
 **Fix:** state the terminator for the no-config case — the config file's own
 directory, or the `root` argument for object sources — in all three places.
 
-### B2. An application outside the runtime's directory loses the runtime's env entirely
+### B2. ~~An application outside the runtime's directory loses the runtime's env~~ — **RESOLVED (S1)**
+
+An application's environment is its own chain layered over **the deciding file's**
+chain. Inside the tree the two coincide; outside it this reconstructs v3, which
+seeded every worker from one `loadEnv` at the runtime root regardless of path.
+Verified on a fixture: `path: '../shared/worker'` gets `WORKER=yes` over
+`DATABASE_URL=from-proj`, matching v3 exactly.
+
+*(original finding)*
 *Environment pass; verified.* `:1071-1074`, `:1608-1611`.
 
 v3 seeds **every** worker from the runtime root's `loadEnv` regardless of the app's
@@ -211,7 +225,7 @@ self** (`:1731-1733`), so the warning fires on the variable generator-emitted co
 reads, on every scaffolded project. It also requires a source scan only the codemod
 has, and cannot match by exact key without the declared ids.
 
-**M15. The plan still specifies the deleted two-directory env rule.** *(convergent:
+**M15. ~~The plan still specifies the deleted two-directory env rule~~ RESOLVED (S1)** — all three sites (plan step 1, plan step 4, scope step 2) now describe the layered chain. *(original)* *(convergent:
 environment + coherence)* `:2810-2812` says "v4 reads exactly two directories" and
 "the walk survives only inside migrate"; `:2833-2834` says discovery "keeps v3's
 upward walk"; `:665` says "exactly as v3 does". All three contradict the env-root

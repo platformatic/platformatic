@@ -662,7 +662,7 @@ Classification is four unconditional rules:
 the nearest ancestor containing a `package.json`, and searching the current
 directory alone when there is no such ancestor; that is the **deciding file**,
 found **by filename alone**, with no execution; **(2)** run `loadEnv` from the
-deciding file's directory, which walks up for `.env` files exactly as v3 does (see
+deciding file's directory, resolving its layered chain (see
 "Env files"); **(3)** only then execute the deciding file in its eval worker to
 classify it (classification is cached, so a file classified here is not
 re-evaluated by a later discovery pass — config code still runs once per load).
@@ -1192,8 +1192,8 @@ serial scheme.
    police which file wins when you stand in the application.) Because the root worker has now returned the configuration, the
    main process knows each application's `path` and `envfile`, so it resolves the
    **config-evaluation** environment by that view of the ladder — real environment,
-   then the env files from the application's own directory up to the env root (the
-   outermost `watt.config.*`), or its `envfile` in place of them — and constructs that
+   then that application's chain — its own directory up to its env root — layered
+   over the deciding file's chain, or its `envfile` in place of its own chain — and constructs that
    app's worker with the result as an explicit `env`. `env` blocks are deliberately
    not part of it (see "Env files"); they are applied when the application's own
    workers are constructed at boot. The worker imports the file and
@@ -1362,8 +1362,9 @@ not be killed by the 30 s timer.
 (`create(root, configObject)`) and the zero-config in-memory synthesis pass an
 object, not a file: for those, the root pipeline runs main-side with no import
 step, and `loadEnv` builds the env map without mutating the main process's
-`process.env`. The **`root` argument is where the env walk starts** —
-there is no config file to take a `dirname` of
+`process.env`. The **`root` argument is both where the env walk starts and where it
+floors**, standing in for the deciding file's directory — there is no config file to
+take a `dirname` of
 (v3 required it for the same reason, `foundation/lib/configuration.js:482,494-496`).
 Function-valued `application.config` / `applications[].config` entries are
 **awaited main-side** here, exactly where the root worker would have awaited them:
@@ -1553,8 +1554,32 @@ under this model: provenance is simply which source won.
 **Env *files* are determined by directories, never by boot style. One rule covers
 every config file, wherever it sits:**
 
-> every directory's env files from its **own directory** up to and including the
-> directory of the **outermost `watt.config.*` above it** — nearest winning.
+> A config file's **chain** is every directory's env files from its **own
+> directory** up to and including the directory of the **outermost `watt.config.*`
+> above it** — nearest winning — or its own directory alone when there is none.
+>
+> An application's environment is **its own chain, layered over the chain of the
+> file that decided the boot.**
+
+For an application inside the project the two chains coincide and the second clause
+does nothing. It earns its place in two cases the first clause alone cannot express.
+
+**An application outside the runtime's directory still inherits it.** `path: '../shared/api'`
+is an ordinary layout — 39 in-tree configurations use parent-relative paths — and
+the runtime's directory is not an ancestor of it, so its own chain reaches nothing of
+the project's. v3 had no such gap: it seeded **every** worker from one `loadEnv` at
+the runtime root (`runtime/lib/runtime.js:242` → `:2534` → `:2585`) whatever the
+application's location. The deciding file's chain is that same base, so
+`shared/api/.env` layers over `proj/.env` exactly as v3 layered the app's own file
+over the runtime's.
+
+**Every chain terminates.** "Outermost `watt.config.*`" names nothing when there is
+no config file at all — which is precisely the Level 0 case, and also the
+programmatic `create(root, configObject)` and a hot-added absolute path. The
+own-directory floor gives those a terminator, and the deciding file's chain is always
+defined because a boot always has one (for object sources, the `root` argument).
+Without both, the walk in v3's most common shape would have run to the filesystem
+root, which v4 does not do.
 
 **The Watt project's own configuration delimits the search, not `package.json`.**
 The config search stops at your `package.json` because it *executes* what it finds,
@@ -1572,10 +1597,17 @@ a property of the project's shape rather than of where the command was typed:
 ```
 proj/watt.config.ts   proj/.env          ← env root: the outermost watt.config.*
 proj/web/             proj/web/.env
-proj/web/api/         proj/web/api/.env  ← the application
+proj/web/api/         proj/web/api/.env  ← an application, in the tree
+shared/worker/        shared/worker/.env ← an application, path: '../shared/worker'
 
-either boot style →   web/api/.env  >  web/.env  >  proj/.env
+api     either boot style →  web/api/.env  >  web/.env  >  proj/.env
+worker  root boot         →  shared/worker/.env  >  proj/.env
 ```
+
+`api`'s own chain already reaches `proj/.env`, so the deciding file's chain adds
+nothing. `worker`'s own chain is `shared/worker/.env` alone — its env root is itself,
+there being no `watt.config.*` above `shared/` — and the deciding file's chain
+supplies `proj/.env` under it.
 
 **Intermediate directories layer** — `web/.env` participates because it is between
 the two ends, nearest winning. This differs from v3, which read exactly one found
@@ -1608,8 +1640,10 @@ variable that the byte-identical expression in a per-app file cannot. File
 **position** also
 changes the env view: the same factory expression evaluates against the root
 config's directory chain when it lives root-inline and the application's chain when
-it lives in the per-app file — both bounded by the same env root, both
-directory-determined, with no pretense otherwise. That asymmetry is one more reason the per-app file is the canonical
+it lives in the per-app file — both directory-determined, with no pretense
+otherwise. (Root-inline and per-app positions share the deciding file's chain as
+their base; only the *own* chain differs, and for an application outside the
+runtime's directory that own chain may have a different env root entirely.) That asymmetry is one more reason the per-app file is the canonical
 home for capability configuration.
 
 **Per-app config files evaluate with their app's environment — each in its own
@@ -2829,8 +2863,9 @@ fixed port at all.
    `configuration.js` (parsers, `replaceEnv`, YAML pre-pass, `strictEnv`, `$schema`
    URL machinery) is **deleted from foundation in the v4 branch, not incrementally
    carved down** — it is moved, with its tests, into `wattpm-utils` as `migrate`'s
-   private legacy reader. `loadEnv`'s upward walk goes with it: v4 reads exactly two
-   directories and resolves them main-side, so the walk survives only inside
+   private legacy reader. `loadEnv`'s **first-hit** walk goes with it: v4 layers every
+   directory from a config file's own up to its env root, plus the deciding file's
+   chain beneath an application's own and resolves them main-side, so the walk survives only inside
    migrate's legacy reader. Only deliberately-kept pieces are
    carried over as code (AJV custom keywords, `transform` hooks), each by explicit
    decision rather than by surviving a refactor.
@@ -2852,8 +2887,9 @@ fixed port at all.
    accepts inline definitions; phased evaluation (root worker first, per-app
    workers in parallel) with uniform per-app file
    discovery (autoload and explicit entries alike) and the search/classification
-   rules — the search stops at the nearest `package.json`, `.env` discovery keeps
-   v3's upward walk; the deterministic zero-config capability detector (capability
+   rules — the search stops at the nearest `package.json`, `.env` discovery is the
+   env-root layering (a config file's own chain, plus the deciding file's chain
+   beneath an application's own); the deterministic zero-config capability detector (capability
    dependencies first, ambiguity error on two, JS-files → node terminal rule);
    no listen resolution to write at all — exposure is capability-owned and
    already lands with the entrypoint removal — beyond deciding the zero-config
