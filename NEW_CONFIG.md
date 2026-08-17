@@ -1598,8 +1598,9 @@ file under a root boot and against its own directory's chain when started
 standalone — the one case where the same file gets two environments, and the reason
 the sentence above says *boot-style independent* of the directory rule rather than of
 everything. That asymmetry is stated again below and
-in the standalone warning, and it is the one way a standalone build differs from a
-root build. **Topology-key stripping** is positional in the same way: a per-app eval
+in the standalone warning, and it is **one of the two ways** a standalone build
+differs from a root build — the other being the absent sibling `PLT_<ID>_URL`
+variables (see "Build environments"). **Topology-key stripping** is positional in the same way: a per-app eval
 worker has the declared `PLT_<ID>_URL` names removed from its environment, while the
 root eval worker cannot have them removed (its ids are not known yet) and instead
 warns after unwrapping — so a root-inline entry can read an *inherited* topology
@@ -2113,6 +2114,12 @@ Generation reads both views. Then:
    not its directory happens to exist locally, which is what "Remote apps" already
    says.
 
+   The summary names the **scope change migrate introduces**: every application
+   directory that gains a `watt.config.*` gets a `"dev": "wattpm dev"` that now boots
+   *that application* rather than the runtime. That is the point of emitting the
+   files (see "Scope"), but it changes what an existing per-app script does, so the
+   report lists the affected directories rather than leaving it to be discovered.
+
    Missing app-local capability dependencies are still added in step 2. Emission
    also **drops keys the v4 schemas no longer admit** and that no upgrade chain
    removes — today that is `application.entrypointPort` (see BC 19) — each with a
@@ -2379,11 +2386,22 @@ Generation reads both views. Then:
    — to decide where each per-app file goes, to run the detector, to rebase `envfile`
    app-relative, and to evaluate the root-directory `envfile` refusal — and none of
    that is expressible over an unresolved token. So these four are **resolved, not
-   converted**: migrate evaluates their placeholders against the migration-time
-   environment layered with the root `.env`, and writes the resulting literal path.
-   This is the one place migrate reads the ambient environment to decide *structure*
-   rather than to preserve a value, and the report says which variable supplied each
-   one.
+   converted**: migrate evaluates their placeholders and writes the resulting literal
+   path. The resolution chain is, in order: **`PLT_ROOT`**, seeded to the directory of
+   the config file being read — v3's loader assigned it *after* `loadEnv`
+   (`foundation/lib/configuration.js:512`), so it was defined in every config parse
+   and never came from the ambient environment; then the **migration-time
+   environment**; then the **root `.env`**; then the value in **`.env.sample`** if one
+   exists; then the conventional **`<autoload.path>/<id>` directory** if it exists on
+   disk. This is the one place migrate reads the ambient environment to decide
+   *structure* rather than to preserve a value, and the report says which link in the
+   chain supplied each one.
+
+   Seeding `PLT_ROOT` is not optional: `path: '{PLT_ROOT}/services/api'` and
+   `autoload: { path: '{PLT_ROOT}/web' }` are shapes v3 supported and its own
+   generator emitted (`generators/lib/utils.js:94,106` pre-`e2da15eda`). Without the
+   seed the first resolves empty and the second resolves to an absolute `/web`
+   outside the project.
 
    That matters most for the shape **`wattpm import` writes**: with `--useEnv` it
    emits `{ id, path: '{PLT_APPLICATION_<ID>_PATH}', url }` and appends
@@ -2396,8 +2414,12 @@ Generation reads both views. Then:
    loses the path entirely** — `{ id, url, gitBranch? }` — which is exactly the
    unresolved shape v4 backfills from `resolvedApplicationsBasePath` and which
    discovery already skips (see "`wattpm resolve`"). A **non-`url`** entry whose path
-   resolves empty is a pre-flight stop naming the entry and the variable, because an
-   empty path there silently means the project root.
+   resolves empty **after every link in the chain above** is a pre-flight stop naming
+   the entry, the variable and what was tried — because an empty path there silently
+   means the project root. The fallbacks matter because the empty case is the
+   *normal* state of a project `wattpm import --useEnv` produced: it writes the value
+   into `.env`, which the scaffolded template gitignores, so a clean clone — what CI
+   and every new contributor has — never has the variable.
 2. **Audit and install v4 dependencies before validating anything.** The emitted
    per-app files import v4 factories and the thin root imports `defineConfig`
    from `wattpm` — and validation must run against what those imports will
