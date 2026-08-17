@@ -117,7 +117,13 @@ forever.
 **Fix:** persist the placeholder/target-type record in the manifest, or state that
 `--resume` re-runs the lexical pass (safe — step 5 has deleted nothing).
 
-### B6. Normalizing composer→gateway before entrypoint classification changes which application v3 resolved
+### B6. ~~Normalizing composer→gateway before entrypoint classification~~ — **RESOLVED (S5)**
+
+The rename table is scoped to the closure gate; the exposure rules classify on the
+raw module identity, as v3 did. Stated at the entrypoint rule, at the pre-flight
+gate, and in BC 23.
+
+*(original finding)*
 *Migration pass; verified.* `:2242-2247`, `:2450-2452`.
 
 v3 tests the **raw** type: `if (application.type === '@platformatic/gateway')`
@@ -130,7 +136,13 @@ exactly one, migrate sees two and **drops the root `server` block**.
 **Fix:** classify on the pre-rename identity; apply the rename table only to the
 closure gate.
 
-### B7. v3's gateway autodetection skips entries with no `applications[].config`; migrate's does not
+### B7. ~~v3's gateway autodetection skips entries with no `applications[].config`~~ — **RESOLVED (S5)**
+
+Step 3 of the entrypoint rule now skips entries with no app-local config file, with
+the reason: `type` came from the config's `$schema` when one existed and from package
+resolution when it did not, and only the former was eligible.
+
+*(original finding)*
 *Migration pass; verified.* `config.js:447-450` pre-`e2da15eda`:
 `if (!application.config) { continue }`. `.config` is populated only for
 autoload-discovered entries or an explicit `config` filename. So

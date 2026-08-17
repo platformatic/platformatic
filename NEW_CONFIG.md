@@ -2279,13 +2279,42 @@ Generation reads both views. Then:
    informed edit, not a silent change. **Exposure is the one area where migrate
    must reason about a v3 concept v4 does not have.** v4 has no `entrypoint` and
    no root `server`, but which port was *live* on v3 depended on both, so migrate
-   resolves the v3 entrypoint from the lexical view — the explicit `entrypoint`
-   key, else the single application, else the single `@platformatic/gateway`
-   application (v3's own order, `runtime/lib/config.js:436-460` pre-`e2da15eda`;
-   a named miss threw, `:465-466`) — purely to classify each application's port.
-   That is a lexical rule over data migrate already holds: it needs each entry's
-   module, which the pre-flight check computes anyway, and no part of the runtime
-   transform.
+   resolves the v3 entrypoint from the lexical view, purely to classify each
+   application's port. It reproduces v3's rule
+   (`runtime/lib/config.js:436-460` pre-`e2da15eda`; a named miss threw, `:465-466`)
+   in three steps, and the qualifiers on the third are not incidental:
+
+   1. an explicit **`entrypoint`** key wins;
+   2. else, if exactly **one application survives** the `enabled` splice, it is the
+      entrypoint — with no type test and no other condition;
+   3. else, among surviving applications **that have an app-local config file**,
+      count those whose **`$schema` module is exactly `@platformatic/gateway`**.
+      Exactly one → entrypoint. Zero or several → none, and the project booted
+      mesh-only.
+
+   **Step 3 runs on the pre-rename identity.** The pre-flight check normalizes the
+   module list through the rename table so a `@platformatic/composer` app is measured
+   as `@platformatic/gateway` and passes the closure gate — but v3 tested the raw
+   value (`if (application.type === '@platformatic/gateway')`), so a composer app was
+   **never** a gateway candidate. Classifying on the normalized list changes the
+   answer in both directions: one composer among three applications makes migrate
+   resolve an entrypoint where v3 had none, opening a public listener on a project
+   that had none; one composer *plus* one gateway makes migrate see two where v3 saw
+   one, dropping the root `server` block and taking the public address with it. The
+   rename table applies to the closure gate only.
+
+   **Step 3 also skips entries with no app-local config file**, which v3 did
+   explicitly (`if (!application.config) { continue }`). That is not an accident of
+   implementation: `type` comes from the config file's `$schema` when one exists
+   (`:253`) and from package resolution when it does not (`:259`), and only the
+   former was eligible. So `[{ id: 'gw', path: './gw' }, …]` where `./gw` is a
+   gateway with a `platformatic.json` on disk **is** a candidate, while the same
+   entry pointing at a directory with no config file is not — and migrate can tell
+   the two apart by looking, which is all v3 did.
+
+   All of this is a lexical rule over data migrate already holds: each entry's
+   module, which the pre-flight check computes anyway, and whether a config file
+   exists at the entry's path. No part of the runtime transform is involved.
 
    **The count is taken after replaying v3's `enabled` splice, not over every
    authored application.** v3 removes disabled applications *before* auto-detection
@@ -2516,6 +2545,10 @@ Generation reads both views. Then:
    paths — with the module list normalized through the
    **rename table first** so a
    `@platformatic/composer` app is measured as `@platformatic/gateway` and passes.
+   That normalization is **scoped to this gate**: the exposure rules in step 1
+   classify on the raw module identity, because v3 did (see the entrypoint
+   resolution above), and sharing one normalized list between the two would silently
+   move a migrated project's public address.
    "Stops before modifying any file" must be literally true. The
    gate is deliberately about closure membership, not v4 readiness: without a
    frozen v3 schema, upgrade chain, and target-type table, migrate cannot upgrade
@@ -2804,7 +2837,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     now applies to every application rather than only the one facing the network.
 23. `@platformatic/composer` (the deprecated `@platformatic/gateway` alias
     package) is **removed**. Migrate renames the module and removes the
-    superseded dependency.
+    superseded dependency — but the rename is applied **after** the v3 entrypoint is
+    resolved, never before. v3's autodetection tested the raw module identity, so a
+    `@platformatic/composer` application was never a gateway candidate; renaming
+    first would change which application v3 resolved and silently relocate the
+    project's public address (see "`wattpm-utils migrate`").
 24. **`wattpm import` writes different output.** It emits the v4 per-app config
     form instead of a `watt.json` `$schema` stub (`external.js:322-326`, which v4's
     unconditional legacy check would refuse), and writes **literal relative paths**
