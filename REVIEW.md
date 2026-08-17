@@ -70,7 +70,22 @@ deciding file's** chain. Inside the tree the two coincide and collapse to today'
 rule; outside it, this reconstructs v3 exactly — and it also gives B1 its terminator,
 since the deciding file always exists.
 
-### B3. The ancestor check acquired veto power it is documented as not having, and it breaks Level 0
+### B3. ~~The ancestor check acquired veto power~~ — **RESOLVED (S2)**
+
+The veto is dropped rather than bounded. Synthesis is never refused on account of a
+configuration above; the boot proceeds and warns that nothing the ancestor says is
+applied. This restores the invariant the check was documented as having — it selects
+no file and cannot change what boots or whether a boot happens — so the trust story
+needs no exception.
+
+Tabulated across five layouts before deciding: a filename-only test refuses two
+plausible shapes wrongly (an ancestor that is a Level 1 app-def describing only
+itself, and a `$HOME` that happens to be a package), and establishing the fact
+requires evaluating a config above the search's stop point. R4's refusal is reversed;
+the cost — booting on `3042` where the runtime would assign another port — is stated
+in the warning and in the text.
+
+*(original finding)*
 *Scoping pass.* `:745-752` vs `:1031-1045`.
 
 `:747-748` says the check "**cannot change what boots** — only whether a warning
@@ -252,7 +267,7 @@ model.
 **M16. Thirteen citations were stale in the abbreviated form.** *(scoping; fixed)*
 R7 re-derived only the full `file.js:NNN` form. Fixed in `81525ad1b`.
 
-**M17. The refusal message asserts what the check cannot know.** *(scoping)* `:751-753`
+**M17. ~~The refusal message asserts what the check cannot know~~ RESOLVED (S2)** — there is no refusal message; the warning states the ancestor's existence and what would not apply *if* it describes the directory. *(original)* *(scoping)* `:751-753`
 says a filename check "cannot know whether that ancestor is a *root* config"; `:1042`
 asserts "`web/api` **is described by** `../../watt.config.ts`". If the ancestor is a
 Level 1 app-def it describes nothing of the kind.
@@ -309,7 +324,7 @@ uses precisely the inherited value while the eval worker sees it stripped.
   Node's `node_modules` walk-up resolves it from a root dependency.
 - **m11.** `--debug-config --inspect-brk` never says the in-process target's layered
   env view is applied before evaluation.
-- **m12.** BC 17 states the refusal unconditionally, dropping the Level 0 branch.
+- **m12.** ~~RESOLVED (S2)~~ — BC 17 now states that a config-less directory still boots by synthesis, warning when an ancestor config exists.
 - **m13.** "this is an `await`, not a per-entry resolution step" — a deferred
   definition is a *function*; `await fn` yields the function. The loader must **call**
   it with the context, then await.

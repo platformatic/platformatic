@@ -744,8 +744,9 @@ siblings to a project that has none.
 
 The ancestor test is **the one thing that looks above the search stop point**, and
 it is deliberate: a warning about what you are missing has to know whether you are
-missing anything. It is a filename check that executes nothing and cannot change what
-boots — only whether a warning prints. It is the **same walk that finds the env
+missing anything. It is a filename check that executes nothing and **cannot change
+what boots, or whether a boot happens** — only what is printed. That is a property
+worth keeping: it is what lets the check look above the stop point at all. It is the **same walk that finds the env
 root** (see "Env files"), so it inherits the same bound and the same residual: it
 stops at the outermost `watt.config.*`, and a stray config in an unrelated ancestor
 is the one case where it can mislead. Because it is a filename check it cannot know
@@ -986,11 +987,11 @@ detection resolves one application type for the root directory
 (`foundation/lib/cli.js:255-274`). Multi-application projects get their ports from
 their own configuration, never from a default.
 
-Synthesis is also **gated on nothing above describing this directory** (see
-"Scope"). Running in an application directory of a larger project does not
-synthesize — the root configuration already says what that application is, and
-`3042` would contradict the port it assigns. Zero-config is for a project that has no
-configuration, not for a directory that has none.
+Synthesis is **not gated on what sits above**: running in an application directory of
+a larger project still synthesizes, and warns that the configuration above is not
+applied (see "Scope"). The alternative — refusing — requires deciding that an
+ancestor config describes this directory, which a filename check cannot establish and
+an evaluation could only establish by executing a file above the search's stop point.
 
 **Not listening is a normal state, and the startup output says so.** A portless
 application is mesh-only, not broken: `getDispatchTarget()` falls back to
@@ -1028,33 +1029,38 @@ deliberate requests from someone who already has runtime privileges — the sear
 what must not wander, not the operator. The one residual case is a `$HOME` that is
 *itself* a Node package, where
 `~/watt.config.ts` is reachable from a loose directory below it; as in v3 the
-invariant is best-effort, and stated as such. When the search finds nothing, what happens next depends on whether anything
-**above** describes this directory — the same ancestor filename check the standalone
-warning uses, and the same one that bounds the env root:
+invariant is best-effort, and stated as such. When the search finds nothing,
+zero-config synthesis applies if the detector recognizes the directory (see "How
+applications are exposed"); otherwise the run stops with an error naming the
+directories searched and pointing at `--config`.
 
-- **No `watt.config.*` in any ancestor** → this is a project of its own, and
-  zero-config synthesis applies (see "How applications are exposed"). A bare
-  Next/Vite repository boots with no configuration at all, which is Level 0.
-- **A `watt.config.*` exists above** → the directory is one that configuration
-  describes, and synthesis is **refused**:
+**Synthesis is never refused on account of a configuration above.** If a
+`watt.config.*` exists in an ancestor, the boot proceeds and says so:
 
-  ```
-  ✗ web/api has no watt.config.* and is described by ../../watt.config.ts.
-    Run wattpm at the project root to start it with the runtime, or add
-    web/api/watt.config.ts to make this application bootable on its own.
-  ```
+```
+⚠ web/api has no watt.config.* of its own and is booting with inferred defaults.
+  A Watt configuration exists at ../../watt.config.ts; if it describes this
+  application, none of what it says — workers, health, env, telemetry, and the
+  port it assigns — is applied here. Run wattpm there to start it with the
+  runtime, or add web/api/watt.config.ts to configure it standalone.
+```
 
-  Booting it anyway is the one outcome that must not happen. Synthesis would supply
-  `port: 3042` and default everything else, silently discarding the `workers`,
-  `health`, `env`, `telemetry` and declared port the root assigns this application —
-  the "silently ignoring its real configuration, worse than any hard failure" hazard
-  named above, and the exact state "an application with no file of its own is one the
-  root describes entirely" exists to prevent. The refusal is also what makes that
-  sentence's converse true: giving the directory a `watt.config.*` is how you ask for
-  it to be bootable alone, and until you do, the answer is where to run instead.
+This is a deliberate choice against a stricter alternative, and the reasoning is
+worth recording because it cuts the other way at first glance. Booting on `3042`
+when the runtime would have assigned `3001` is a real hazard. But refusing means
+deciding that an ancestor config *describes* this directory, and a filename check
+cannot know that: the ancestor may be a Level 1 app-def describing only itself, in
+which case the refusal names a file that never mentions this directory and sends
+the user somewhere that boots something else. Establishing the fact requires
+evaluating a config above the point the search deliberately stopped at — buying
+strictness with the trust boundary. Running `wattpm` inside a directory is a
+request to run *that* directory; the cost of honouring it is visible in the
+warning, and the fix is one file.
 
-- Neither, and nothing recognizable → an error naming the directories searched and
-  pointing at `--config`.
+**The ancestor check therefore governs diagnostics only.** It selects no file, and
+it cannot change what boots or whether a boot happens — the property stated in
+"Scope" holds without exception, which is what keeps the search rule as small as it
+is.
 
 **Naming a directory is not searching for one.** The stop condition governs the
 *search* for a config file and nothing else. An application entry's `path` is
@@ -2735,9 +2741,10 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     naming what is not applied; v3 booted the whole runtime from anywhere. The search
     runs from the current directory up to the nearest ancestor holding a
     `package.json` and stops there, so it does **not** fall through to a config
-    higher up the tree. A directory with no config file of its own is refused with a
-    message naming the configuration above that describes it, rather than booted with
-    inferred defaults.
+    higher up the tree. A directory with no config file of its own still boots by
+    zero-config synthesis where the detector recognizes it; when a `watt.config.*`
+    exists in an ancestor, the boot warns that nothing that file says is applied
+    here.
     Passing `--config` names the configuration and boots **whatever that file
     describes** — the full runtime for a root config, one application for an
     app-def — which is
