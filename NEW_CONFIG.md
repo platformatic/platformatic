@@ -375,9 +375,15 @@ root-inline entry the root worker awaits every function-valued
 `application.config` / `applications[].config` after unwrapping the root export
 and before the serializability check.
 
-**The context is the same object at every position.** `ctx.env` is the evaluating
-worker's environment view, and no `env` block ever contributes to it (see "Env
-files") — so the eager and deferred forms observe an identical environment.
+**The context is the same object at every position a callback is legal.** `ctx.env`
+is the evaluating worker's environment view, and no `env` block ever contributes to it
+(see "Env files") — so the eager and deferred forms observe an identical environment.
+This is a property of evaluation happening *in a worker Watt constructed*, which is
+why the callback form is rejected in a programmatic object source, where there is no
+such worker (see "Object config sources"). An eager expression in a programmatic
+object is evaluated by the embedder before `create()` is called at all, so it reads
+the embedder's environment by construction — that is inherent to passing an
+already-built object, not something the loader could change.
 `config: next({ url: process.env.X })` and
 `config: next(ctx => ({ url: ctx.env.X }))` resolve `X` the same way — absent
 mutation during evaluation, since `ctx.env` is a snapshot taken at the start and
@@ -1387,11 +1393,18 @@ step, and `loadEnv` builds the env map without mutating the main process's
 `process.env`. The **`root` argument is both where the env walk starts and where it
 floors**, standing in for the deciding file's directory — there is no config file to
 take a `dirname` of
-(v3 required it for the same reason, `foundation/lib/configuration.js:482,494-496`).
-Function-valued `application.config` / `applications[].config` entries are
-**awaited main-side** here, exactly where the root worker would have awaited them:
-the callback form is legal in a programmatic object, and canonicalization rejects
-functions, so skipping the await would turn a supported shape into a hard error.
+(v3 required it for the same reason, `foundation/lib/configuration.js:495,507-509`).
+**A function-valued `application.config` / `applications[].config` is an error
+here**, naming the entry and saying to call it and pass the result. The callback form
+exists to give a *config file* typed autocomplete and asynchronous option
+construction; an embedder is already writing JavaScript and can call the function
+itself, so nothing is lost. What rejecting it avoids is a second, weaker evaluation
+contract: a callback run main-side would receive a resolved `ctx.env` while
+`process.env` around it stayed the caller's — disagreeing inside a single callback,
+which never happens in a worker — and would skip the mutation diff-and-warn, the
+evaluation deadline and the module-cache isolation, all of which are properties of
+running in a worker. The two paths that actually pass objects, zero-config synthesis
+and the documented ICC pattern, both emit plain data.
 Everything else downstream is unchanged: a programmatic root listing
 `applications[].path` directories still gets per-app discovery, per-app eval
 workers and the detector exactly as a file-sourced boot would — which is what keeps
@@ -3220,8 +3233,10 @@ export interface ApplicationEntry {
   url?: string
   gitBranch?: string
   config?: ApplicationDefinition          // factory result, plain { module } object,
-    | DeferredApplicationDefinition       // or a callback form, awaited by the
-                                          // root worker before serialization
+    | DeferredApplicationDefinition       // or a callback form — legal only in a
+                                          // config *file*, awaited by the root
+                                          // worker before serialization; an error
+                                          // in a programmatic object source
   enabled?: boolean | Record<string, boolean>   // keyed by `mode`; resolved in the
                                                 // root worker, before fan-out
   workers?: number | ApplicationWorkersOptions
