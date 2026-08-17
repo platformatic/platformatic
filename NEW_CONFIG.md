@@ -198,8 +198,10 @@ disk.
 whose default export is the bare factory call — `export default next({ … })` (see
 Summary above). The loader auto-wraps it as a single-app runtime with default
 orchestration, and the file is byte-identical to a monorepo per-app config file.
-This is the canonical single-app form; `migrate` emits it whenever the v3 config
-carried no runtime settings.
+This is the canonical single-app form. `migrate` emits it when the v3 config carried
+no runtime settings **and** the v4 default id matches the v3 one — a bare factory
+export has no entry to carry an explicit `id`, so a project whose id would move needs
+Level 1b instead (see "`wattpm-utils migrate`").
 
 **Level 1b — single app with runtime options.** When there is orchestration to
 express, `defineConfig` with the singular `application` shorthand. Every runtime
@@ -357,8 +359,8 @@ export default next(({ mode }) => ({
 
 Every factory's options parameter also accepts a **callback** (sync or async)
 receiving the typed `ConfigContext` — so per-app files get contextual autocomplete
-from the import they already have, without depending on `wattpm` (which is usually
-not resolvable from an app directory). The implementation reuses classification
+from the import they already have, without depending on `wattpm` (Node's `node_modules` walk-up
+usually does resolve it from an app directory, but the typing is the point). The implementation reuses classification
 rule 1: `next(cb)` returns the function `async ctx => next(await cb(ctx))`
 (the `await` is what makes the async half of the contract work — the callback's
 promise must resolve *before* the factory sees the options), which the loader
@@ -442,9 +444,8 @@ nitro, react-router) define their own `outputDirectory` alongside
 Flattening is defined over a **list** of blocks per capability, not a single one:
 every vite-derived capability flattens `vite` plus its own block (remix, nuxt,
 nitro, react-router), while tanstack — which has no block of its own — flattens
-`vite` alone. `nitro`'s block contributes both `outputDirectory` and `entrypoint`,
-which is exactly the kind of root-key collision classification rule 2 is written to
-tolerate. `defineCapabilityFactory` takes that list, and a build-time assertion
+`vite` alone. `nitro`'s block contributes both `outputDirectory` and `entrypoint` — the latter a
+v3-era name that is no longer a root key, so only `outputDirectory` collides today. `defineCapabilityFactory` takes that list in its options, and a build-time assertion
 checks that the flattened key set collides neither with itself nor with any
 **retained top-level key of that capability's own schema**.
 
@@ -822,8 +823,12 @@ sibling `PLT_<ID>_URL` exists**. A bundler inlining `process.env.PLT_API_URL` ba
 `undefined` where a root build would bake `http://api.plt.local`. `turbo run build`
 is a standalone build, so this is the shape most likely to hit it: migrate's source
 scan already computes which `PLT_*_URL` names an application reads, and a standalone
-build **warns naming each one**, rather than shipping an artifact that differs
-silently from the root build's.
+build **warns naming each sibling one** — the application's own `PLT_<SELF>_URL` is
+injected in both boot styles (see "Inter-application URLs") and must not be reported,
+or the warning fires on every scaffolded project, whose generator-emitted code reads
+exactly that variable. The warning is a migrate-recorded set where one exists; a
+greenfield application that was never migrated has no recorded scan, so the warning is
+best-effort and says so rather than pretending to completeness.
 Where a build input comes from either, the durable fix is the app's own env files,
 which every build style reads.
 
@@ -1170,7 +1175,7 @@ serial scheme.
    bare `ApplicationDefinition` auto-wrapped per the walk rules above), awaits
    every function-valued `application.config` / `applications[].config` with the
    same context it was itself called with (see "Functional form" — the context is
-   uniform, so this is an `await`, not a per-entry resolution step), and expands
+   uniform, so the loader **calls** each with the context and awaits the result — a deferred definition is a function, so awaiting it without calling would yield the function itself and fail canonicalization), and expands
    `autoload` into the application list. This is the **only** place autoload
    expansion runs; the runtime transform consumes the already-expanded list.
 
@@ -1187,7 +1192,13 @@ serial scheme.
 2. **One worker per per-app file**, spawned in parallel once the root result is
    in, uniformly for every
    application entry that has a `path` and no inline `config` — explicitly-listed
-   entries and autoloaded ones behave identically, as in v3. (Entries *with* an
+   entries and autoloaded ones behave identically, as in v3. **Discovery skips a
+   candidate that is the deciding file itself**, whatever the entry's shape: an entry
+   whose directory is the deciding file's own directory falls through to the detector
+   rather than re-reading the file that produced it. Without that,
+   `defineConfig({ application: { workers: 2 } })` in a bare repository — whose entry
+   has a defaulted `path` and no inline `config` — would discover its own root config
+   and fail with "a root config cannot nest inside an application entry". (Entries *with* an
    inline `config` still get a filename-presence check in their directory: a
    `watt.config.*` file there triggers the configured-twice error — no evaluation
    involved, and the **deciding file itself is exempt**, so a Level 1 auto-wrap or
@@ -1623,8 +1634,12 @@ what its placement suggests, and no file can shadow the ones above it. (The earl
 "intermediates are never consulted" rule only made sense while a project-root concept
 existed to skip to.)
 
-In a genuinely standalone single-app repository the outermost `watt.config.*` **is**
-the app's own, so the search terminates there and only its own directory
+**A root config terminates the walk at itself when it says so.** `envRoot: true` on
+a root configuration stops the search there, which a nested runtime needs: without it
+`proj/tools/sandbox/watt.config.ts` inherits `proj/.env` with no way to declare a
+boundary, and so does every fixture runtime in a repository that later grows a root
+`.env`. In a genuinely standalone single-app repository the outermost `watt.config.*` **is**
+the app's own, so the search terminates there anyway and only its own directory
 contributes — correct, because nothing above it belongs to the project. The one
 residual is a stray `watt.config.*` in an ancestor that is not really a parent of
 this project — a `$HOME` config, say — which would make `$HOME` the env root; this is
@@ -1639,11 +1654,19 @@ the sentence above says *boot-style independent* of the directory rule rather th
 everything. That asymmetry is stated again below and
 in the standalone warning, and it is **one of the two ways** a standalone build
 differs from a root build — the other being the absent sibling `PLT_<ID>_URL`
-variables (see "Build environments"). **Topology-key stripping** is positional in the same way: a per-app eval
-worker has the declared `PLT_<ID>_URL` names removed from its environment, while the
-root eval worker cannot have them removed (its ids are not known yet) and instead
-warns after unwrapping — so a root-inline entry can read an *inherited* topology
-variable that the byte-identical expression in a per-app file cannot. File
+variables (see "Build environments"). **Topology-key stripping** is the third thing that varies, and it varies by
+*position and boot style together*: a per-app eval worker has the declared
+`PLT_<ID>_URL` names removed, while the root eval worker cannot have them removed —
+its ids are not known yet — and warns after unwrapping instead. Under a **standalone**
+boot an application's own file *is* the deciding file and therefore runs in the root
+worker, so the same file is stripped under a root boot and unstripped standalone.
+
+Stripping removes only names the runtime would **inject**. A key already present in
+the runtime's own real environment is one injection skips (see "Inter-application
+URLs"), so the worker genuinely uses the inherited value — a nested runtime passing
+`PLT_API_URL` through is the case this document calls legitimate, and stripping it
+during evaluation would make the two views disagree on a live key. The strip is
+therefore scoped to keys the runtime is going to supply itself. File
 **position** also
 changes the env view: the same factory expression evaluates against the root
 config's directory chain when it lives root-inline and the application's chain when
@@ -1669,9 +1692,10 @@ above). `envfile` is an opt-out of the convention
 and governs **both views**: when an entry declares it, none of the four
 mode-aware app files are read for that application — exactly the named file
 loads, in the app's eval worker *and* at worker boot alike, occupying the same
-single rung the app file layer occupies in the ladders (v3's
-replace-the-default-path behavior, extended to the set — and extended to
-evaluation, so the two views keep agreeing on that rung). Mode
+application's **own-directory** layer of the env-files rung — the directories above
+it are unaffected and still contribute (v3's replace-the-default-path behavior,
+extended to the set — and extended to evaluation, so the two views keep agreeing on
+that layer). Mode
 selection simply does not apply to that app's files; every other rung is
 unaffected. The path resolves **app-relative** (v3 resolved it against
 the runtime root — migrate rewrites paths so they keep pointing at the same
@@ -1692,8 +1716,12 @@ entry, so a **standalone** boot — which applies no root orchestration — eval
 and runs under the conventional file set with no blocks applied; the standalone
 warning's list of omitted root settings names both, and the build section states
 the consequence for artifacts. The
-`--env <file>` flag is the same substitution at the **root** rung: it replaces
-the root file layer in both views, mode-exempt, for the invocation. `{PLT_X}`
+`--env <file>` flag replaces the **entire env-files rung** for the invocation, in
+both views and mode-exempt: no directory in any chain contributes, and the named file
+is the only file source. That matches v3, where `customEnvFile` bypassed the search
+outright (`foundation/lib/configuration.js:349-357`), and it is what makes the flag an
+escape hatch rather than the weakest layer — defining it as "the root rung" would
+leave it overridden by any application's own `.env`. `{PLT_X}`
 interpolation,
 `strictEnv`, root `envfile`, and the YAML brace-quoting pre-pass do not exist in
 v4; they survive only inside `wattpm-utils migrate`'s legacy reader.
@@ -1775,9 +1803,11 @@ deliberately saner:
   machinery effectively guaranteed a self URL, and generator-emitted code reads
   it). v3's injected `PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are **removed** —
   apps branch on their own variables, or the decision moves into config where the
-  typed context lives; migrate's source scan flags every occurrence. `PLT_ROOT`
-  existed to make `{PLT_ROOT}` placeholders resolve
-  (`foundation/lib/configuration.js:512`) and was already excluded from every
+  typed context lives; migrate's source scan flags every occurrence. `PLT_ROOT` was
+  never a *worker* variable: the loader assigned it per config parse
+  (`foundation/lib/configuration.js:512`), which is why migrate seeds it when
+  resolving structural paths rather than reading it from the environment. It
+  existed to make `{PLT_ROOT}` placeholders resolve and was already excluded from every
   generated `.env` (`generators/lib/base-generator.js:243`); with interpolation
   gone its only remaining reader would be application code, and
   `import.meta.dirname` is the v4 answer. `NODE_ENV` is the one variable the
@@ -1809,8 +1839,8 @@ deliberately saner:
   `start`/`build` and `dev`, so every existing config keeps its meaning, and
   `enabled: { staging: false }` now does what it looks like under
   `--mode staging` — where v3 silently ignored the key
-  (`runtime/lib/config.js:283-299`). `enabled` is resolved in the root eval
-  worker, before fan-out (see "Loading mechanism").
+  (`runtime/lib/config.js:283-299`). `enabled` is resolved in the root eval worker against
+  `ctx.mode`, before fan-out (see "Loading mechanism").
 
   v4.0 is the only free moment for this: no v4 configs exist yet, and `migrate` emits
   correctly-typed values (its per-property target-type table is a byproduct of the
@@ -2108,15 +2138,27 @@ Generation reads both views. Then:
    and written as a literal, so no migrated project depends on either version's
    default.
 
-   `autoload`-discovered applications need the same protection, but only where the
-   id would actually move. v3 derived their id from the **directory name** alone
+   **Two autoloaded directories that resolve to the same id are a boot error naming
+   both.** v3's ids were directory names, unique by construction; v4 prefers the
+   `package.json` `name`, which is not — two directories copied from one another
+   carry the same name, and v3's shallow merge (`runtime/lib/config.js:388-393`)
+   would silently absorb the second, so it would never boot and nothing would say so.
+   That merge remains what it was in v3: a rule for an autoloaded entry meeting an
+   *explicit* one, not for two autoloaded directories colliding.
+
+   `autoload`-discovered applications need the same protection as explicit entries,
+   but only where the id would actually move. v3 derived their id from the **directory name** alone
    (`runtime/lib/config.js:377`, `mapping.id ?? entry.name`); v4 prefers the
    `package.json` `name` (see "How applications are exposed"), so an application in
    `web/composer/` whose package is named `gateway-service` would be renamed — and
    with it the mesh hostname, the injected variable, the metrics label and any
    sibling's `dependencies` entry. Migrate therefore emits an `autoload.mappings`
-   entry pinning `id` **only for directories whose package name differs from the
-   directory name**, and nothing for the rest. In the common case — an application
+   entry pinning `id` **only where v3's id and v4's default disagree** — that is, where
+   `mappings[dir].id ?? dir` differs from the scope-stripped `package.json` name — and
+   nothing for the rest. Both halves of that comparison matter: a mapping that already
+   carries an `id` is v3's answer and must be carried through verbatim rather than
+   overwritten, and comparing the *scope-stripped* name keeps `web/frontend` holding
+   `@acme/frontend` off the list, since v4 resolves it to `frontend` either way. In the common case — an application
    package with no `name`, or one named after its directory — the thin autoload root
    stays thin. An id is
    the mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label and the
@@ -2651,8 +2693,8 @@ Generation reads both views. Then:
    not blanket: `git restore .` alone would resurrect the legacy files while
    leaving the newly created — untracked — `watt.config.ts` files in place,
    reproducing exactly the forbidden coexistence state. Migrate therefore keeps
-   a **manifest of every file it created or modified, storing the pre-edit
-   *contents* of everything it modifies — plus, under `--no-install`,
+   a **manifest of every file it created, modified or will delete, storing the pre-edit
+   *contents* of everything it modifies and everything it deletes — plus, under `--no-install`,
    the `package.json` and lockfile the deferred install will touch**, persisted as
    `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads, it
    exempts *itself* from the dirty check, and it is deleted on completion). It also
@@ -2666,8 +2708,12 @@ Generation reads both views. Then:
    the exact path-scoped undo (`git restore <tracked…> && rm <created…>`) — never
    a bare `git restore .`, and never any form of `git clean`. Storing contents rather
    than leaning on git is what makes `--force` and no-VCS trees recoverable at all:
-   step 2 **modifies** `package.json` and the lockfile, and on a tree with no version
-   control there is nothing for `git restore` to restore. Migrate can always delete
+   step 2 **modifies** `package.json` and the lockfile and step 5 **deletes** the
+   legacy configurations, and on a tree with no version control there is nothing for
+   `git restore` to restore. Deletion contents matter most in exactly the case
+   `--force` exists to override — an untracked or gitignored `platformatic.json`,
+   which git could never restore — so the printed undo is VCS-independent whenever
+   `--force` or a no-VCS tree was in play. Migrate can always delete
    what it created; without stored contents it could not undo what it edited, leaving
    exactly the "v3 configs and an installed v4 runtime that refuses them" state this
    step exists to prevent. A failure *after*
