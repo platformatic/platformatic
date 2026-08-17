@@ -345,6 +345,8 @@ files**: a function export is called once with the context and its *resolved val
 is classified (root config or application definition) by the normal rules.
 
 ```ts
+import { defineConfig } from 'wattpm'
+
 export default defineConfig(({ command, mode, production, env }) => ({
   watch: command === 'dev',
   logger: { level: mode === 'staging' ? 'debug' : production ? 'warn' : 'info' },
@@ -833,12 +835,17 @@ sibling `PLT_<ID>_URL` exists**. A bundler inlining `process.env.PLT_API_URL` ba
 `undefined` where a root build would bake `http://api.plt.local`. `turbo run build`
 is a standalone build, so this is the shape most likely to hit it: migrate's source
 scan already computes which `PLT_*_URL` names an application reads, and a standalone
-build **warns naming each sibling one** — the application's own `PLT_<SELF>_URL` is
-injected in both boot styles (see "Inter-application URLs") and must not be reported,
-or the warning fires on every scaffolded project, whose generator-emitted code reads
-exactly that variable. The warning is a migrate-recorded set where one exists; a
-greenfield application that was never migrated has no recorded scan, so the warning is
-best-effort and says so rather than pretending to completeness.
+build **states the difference without enumerating variables**: it prints that
+sibling `PLT_<ID>_URL` values are absent from this build and that a bundler inlining
+one will bake `undefined`. It does not name them, and that is deliberate — there is
+no honest source for a list. Migrate's source scan covers legacy config filenames
+and `PLT_DEV`/`PLT_ENVIRONMENT`/`PLT_ROOT`, not `PLT_*_URL`; its manifest is deleted
+on completion; and a greenfield application was never migrated at all. Matching at
+build time is no better: a standalone boot never reads the root configuration, so it
+does not know the declared ids and could only match by prefix and suffix — which
+would flag an unrelated `PLT_STRIPE_URL`, the exact false positive the exact-key
+rule elsewhere exists to prevent. The application's own `PLT_<SELF>_URL` is injected
+in both boot styles and is unaffected either way.
 Where a build input comes from either, the durable fix is the app's own env files,
 which every build style reads.
 
@@ -1017,26 +1024,53 @@ applied (see "Scope"). The alternative — refusing — requires deciding that a
 ancestor config describes this directory, which a filename check cannot establish and
 an evaluation could only establish by executing a file above the search's stop point.
 
-**Not listening is a normal state, and the startup output says so.** A portless
-application is mesh-only, not broken: `getDispatchTarget()` falls back to
-in-thread dispatch (`basic/lib/capability.js:417-419`), so `http://<id>.plt.local`
-resolves. The loader therefore does not warn — in a typical monorepo most
-applications are deliberately mesh-only, and a per-application warning would fire
-N−1 times on every boot. What changes instead is the report: `#showUrls`
-(`runtime/lib/runtime.js:2408-2428`) currently does `if (!url) continue`, so a
-project that binds nothing prints no address and no explanation. It prints **one
-line per application** — its URL, or `mesh-only` with its `.plt.local` address —
-so the set of externally reachable applications is always visible:
+**Not listening has two meanings, and the startup output must tell them apart.**
+Without a port, an application is either **mesh-only** — reachable at
+`http://<id>.plt.local` because `getDispatchTarget()` falls back to in-thread
+dispatch (`basic/lib/capability.js:417-419`) — or **inactive**, because its
+capability's start path returns early when `server.port` is undefined. The second
+is real: `next` returns at `next/lib/capability.js:209` and `:326`, and `vite`,
+`astro`, `remix` and `nest` do the same. Reporting an inactive framework
+application as "mesh-only" would be worse than printing nothing, since it names an
+address that answers nothing.
+
+Which of the two applies is a **property of the capability**, not of the
+configuration, so it belongs in capability metadata: a capability declares whether
+it can serve the mesh in-thread without a listener. `node`, `service`, `db` and
+`gateway` can; the framework capabilities cannot. Validation uses the same flag —
+it is what makes "a framework application with no port does not start" a load-time
+error rather than a silent no-op — and so does the report.
+
+The loader does not warn per application: in a typical monorepo most applications
+are deliberately mesh-only, and a warning would fire N−1 times on every boot. What
+changes is the report. `#showUrls` (`runtime/lib/runtime.js:2408-2428`) currently
+does `if (!url) continue`, so a project that binds nothing prints no address and no
+explanation. It prints **one line per application**, in one of three shapes, so the
+set of externally reachable applications is always visible:
 
 ```
 gateway    listening at http://127.0.0.1:3042
 api        mesh-only — http://api.plt.local
 frontend   listening at http://127.0.0.1:52418        (port: 0 — ephemeral)
+docs       NOT STARTED — @platformatic/astro needs server.port
 ```
+
+The third shape is the one the flag buys: a framework application left without a
+port is named as not started, rather than reported at an address that answers
+nothing.
 
 An application with `workers` and `portAssignment: 'perWorkerIncrement'` lists its
 whole range on that one line (`http://127.0.0.1:3000-3002`), since `getUrls()`
 carries a URL per worker.
+
+Two invariants come with that mode, both **load-time** errors because both are
+computable from configuration alone. `port: 0` with `perWorkerIncrement` is
+rejected: the offset is added to the declared port
+(`runtime/lib/runtime.js:1993-1997` pre-`e2da15eda`), so worker 0 would request an
+ephemeral port while workers 1 and 2 requested ports 1 and 2 — privileged, and
+unrelated to each other. And `port + workers − 1` must not exceed 65535, checked
+against the **maximum** worker count when `workers` is dynamic, since scaling up
+later must not walk off the end of the range.
 
 **The search never leaves your package**, and that single stop condition is the
 whole of the trust story. Because v4 searching means *executing* what it finds, a
@@ -2049,7 +2083,11 @@ export default {
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
   formatting) when the shape is statically safe — literal `defineConfig` object,
   literal `applications` array; otherwise prints a paste-ready snippet and exits 0
-  with a notice. magicast is a dependency of `wattpm-utils` only. In a configless
+  with a notice. magicast is a dependency of **both** `wattpm-utils` (for `import`) and
+  `wattpm` (for `applications:remove --save`, imported lazily so the cost is paid only
+  when the flag is used) — the two commands live in different packages
+  (`wattpm-utils/lib/commands/external.js` and `wattpm/lib/commands/applications.js:65`).
+  In a configless
   tree, `import` scaffolds a thin autoload root first (replacing the v3
   `?autogenerated=true` marker dance, whose producer and consumer are both gone).
 - **Temporary-config fallback** (`fallbackToTemporaryConfigFile`): removed;
@@ -3135,24 +3173,28 @@ fixed port at all.
    produce no config file); scaffolded test helpers import the config module instead
    of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
-**Every code block in this document is checked in CI**, by one of two gates — not
-   just Level 2b and Appendix B. Three rounds of review found invalid examples by
-   hand, including the sole illustration of the callback form, so the scope is every
-   block rather than the ones somebody thought to check.
+**Every code block in this document is checked in CI, or explicitly marked as
+   prose.** Three rounds of review found invalid examples by hand, including the sole
+   illustration of the callback form, so the scope is every block rather than the ones
+   somebody thought to check. Four categories, assigned by an explicit marker on the
+   fence rather than inferred:
 
-   - **Configuration blocks** — those with a default export, plus the ` ```js `
-     plain-object example, which is the one shape whose `$schema` strip is unique —
-     ship as **golden fixtures** loaded through the real v4 loader and validated
-     against the shipped capability schemas.
-   - **Declaration blocks** — interfaces, type aliases and the bodiless factory
-     overloads, which are a `SyntaxError` after type stripping and export nothing —
-     are typechecked with `tsc --noEmit` against the shipped `.d.ts` files, and
-     Appendix A's blocks are additionally key-diffed against `runtime/schema.json`
-     and `next/schema.json`.
+   - **`config`** — a complete v4 configuration with a default export. Loaded through
+     the real v4 loader and validated against the shipped capability schemas. Every
+     such block must stand alone, imports included.
+   - **`decl`** — interfaces, type aliases and the bodiless factory overloads, which
+     are a `SyntaxError` after type stripping and export nothing. Typechecked with
+     `tsc --noEmit` against the shipped `.d.ts` files; Appendix A's blocks are
+     additionally key-diffed against `runtime/schema.json` and `next/schema.json`.
+   - **`v3`** — legacy JSON input, validated against the **vendored v3** schema that
+     migrate carries, so the before/after examples are checked on both sides.
+   - **`output`** — terminal output, warnings, errors and directory trees, checked
+     only for being fenced and marked.
 
-   Sorting the blocks by "has a default export" is what assigns them; a block that
-   is neither loadable nor a declaration is a bug in the document, and the check
-   fails on it rather than skipping it.
+   The marker is required: an unmarked block fails the check rather than being
+   skipped, which is what stops the gate from quietly narrowing. This document
+   currently holds 15 `ts`, 1 `js`, 3 `json` and 45 unmarked blocks, so adopting the
+   gate is itself a task in the plan rather than an assertion about the present.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` / `getRuntimeApplicationConfig`
