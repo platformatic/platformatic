@@ -84,7 +84,13 @@ at `~`. v3 booted.
 it to lie within the same package/workspace as cwd — and correct `:747-748`, which is
 false either way.
 
-### B4. `portAssignment` is specified for a `server` block service/db/gateway do not use
+### B4. ~~`portAssignment` is specified for a `server` block service/db/gateway do not use~~ — **RESOLVED (S3)**
+
+Plan step 2 now names **both** declarations, `server` (`:391`) and `fastifyServer`
+(`:501`), and states why: they are separate object literals that overlap, so a key
+added to one does not reach the other. Issue #5074's scope corrected to match.
+
+*(original finding)*
 *Coherence pass; verified.* Plan `:2815-2820`, migrate rule 1 `:2282-2285`.
 
 `foundation/lib/schema.js` exports **two** server schemas: `server` (`:391`, the basic
@@ -167,7 +173,7 @@ audit would reject working configs and make the timeout unconfigurable.
 capability schema declares it; only the entry (`foundation/lib/schema.js:894`) and the
 root (`:1100`) do. The documented "three inputs" has an unreachable third.
 
-**M4. nitro's `server` has four keys, so rule 1's "verbatim" move breaks on it.**
+**M4. ~~nitro's `server` has four keys~~ RESOLVED (S3)** — rule 1 now moves every key *the target capability's schema admits*, dropping the rest with a note, instead of being defined as a fixed list. That covers nitro's missing `http2` and any future narrowing. *(original)*
 *(verified)* `nitro/lib/schema.js:29-30` deletes `http2`. A v3 root
 `server: { http2: true }` with a nitro entrypoint fails step 3.
 

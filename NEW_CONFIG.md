@@ -2321,9 +2321,19 @@ Generation reads both views. Then:
    than guessing which application was public.
    Four rules follow, applied in this order:
    - **the v3 root `server` block moves into the v3 entrypoint's capability
-     config**, `portAssignment` included — it is carried across as a capability
-     `server` key, not dropped (see "How applications are exposed"). The move is
-     otherwise verbatim.
+     config** — **every key that capability's `server` schema admits**, which after
+     the audit includes `portAssignment` (see "How applications are exposed"). Any
+     key the target does not admit is dropped with a requires-review note naming it,
+     the entrypoint and its capability.
+
+     The move is defined against the *target's* schema rather than as a fixed key
+     list because the capability blocks are not uniform. The v3 root block is
+     `hostname, port, portAssignment, backlog, http2, https`; `nitro` deletes `http2`
+     from its copy (`nitro/lib/schema.js:29-30`), so a v3 project with
+     `server: { http2: true }` and a nitro entrypoint would fail step 3 on migrate's
+     own output if the move were literal. A fixed list would also have to be revised
+     every time a capability narrows its block — the failure mode this rule already
+     hit twice, with `keepAliveTimeout` and `portAssignment`.
 
      This is the conversion the runtime's own upgrade chain
      cannot perform — it deletes root `server` and warns
@@ -2355,13 +2365,13 @@ Generation reads both views. Then:
      none of them reads `server.keepAliveTimeout` (`next` does honour a keep-alive
      timeout, but reads it from `KEEP_ALIVE_TIMEOUT` in the environment,
      `next/lib/capability.js:413-429`). In v4 the block is validated, and the
-     basic-family `server` is a small subset — the five Fastify-derived keys — `hostname, port, backlog, http2,
-     https`, `additionalProperties: false` (`node/schema.json`, `next/schema.json`)
-     — while the full Fastify option set that defines `keepAliveTimeout`
-     (`foundation/lib/schema.js:535`) belongs to service/db/gateway. Emitting it for
-     the basic family would fail step 3 on migrate's own output; adding it to those
-     schemas instead would validate a key nothing reads. Dropping it preserves v3
-     behaviour exactly, because it had none. Whether a *declared*
+     basic-family `server` admits `hostname, port, backlog, http2, https` (plus
+     `portAssignment`) with `additionalProperties: false`, while the full Fastify
+     option set that defines `keepAliveTimeout` (`foundation/lib/schema.js:535`)
+     belongs to service/db/gateway. So the same schema-driven rule as rule 1 applies:
+     emitting it for the basic family would fail step 3 on migrate's own output, and
+     adding it to those schemas instead would validate a key nothing reads. Dropping
+     it preserves v3 behaviour exactly, because it had none. Whether a *declared*
      port survives alongside it is family-dependent for the same reason: the
      basic family kept the app's fixed port (requires-review note), while for
      service/db/gateway the `useHttp` defaults won and the declared port was
@@ -2872,8 +2882,14 @@ fixed port at all.
 2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
    placeholder-only branches, regenerate `schema.json` + types; produce the
    per-property target-type table for migrate. Two schema *changes* rather than
-   classifications: **add `portAssignment` to the shared `server` block** (the
-   prerequisite above), and **remove `application.entrypointPort`**, which lives in
+   classifications. **Add `portAssignment` to both server declarations** — `server`
+   (`foundation/lib/schema.js:391`, the basic family) *and* `fastifyServer` (`:501`,
+   service/db/gateway). They are separate object literals that happen to overlap:
+   `fastifyServer` re-declares all five of `server`'s keys rather than composing with
+   it, so a key added to one does not reach the other. Adding it only to `server`
+   would leave gateway, service and db with no way to run `workers > 1` on a fixed
+   port — the exact hole #5074 exists to close, and the commonest v3 entrypoint is a
+   gateway. Second: **remove `application.entrypointPort`**, which lives in
    `basic/lib/schema.js:61-63` and every capability's generated `schema.json`.
 3. **basic**: `defineCapabilityFactory`; duck-typed `ApplicationDefinition`
    (`module` property, no symbols); capability-block flattening with `application`
@@ -3034,7 +3050,9 @@ export interface WattConfig {
 
 // Not a root type: `server` exists only inside a capability factory's options,
 // as `AppServerOptions` below. The framework and node capabilities expose these
-// six; service/db/gateway extend them with the full Fastify set.
+// six; service/db/gateway re-declare all of them and add the full Fastify set
+// (`foundation/lib/schema.js` `server` :391 and `fastifyServer` :501 are separate
+// literals, not composed — a key added to one must be added to the other).
 export interface AppServerOptions {
   hostname?: string
   port?: number                            // undefined = no listener (mesh-only);
