@@ -2715,7 +2715,25 @@ Generation reads both views. Then:
    the run with "hand-conversion required", naming what blocks it. This is the **one
    enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
    anywhere else in this document without appearing here is a bug in the document.
-   Six triggers: **any capability outside the vendored closure**; a **root `envfile`**,
+   Seven triggers. The first is the one every emission depends on: **a v4 target that
+   already exists**. Migrate emits a root `watt.config.*` and one per application
+   unconditionally, so before writing anything it checks every target path *and every
+   recognized sibling candidate* in those directories — a `watt.config.js` where
+   migrate would write `watt.config.ts` is not a free pass, it is two v4 candidates in
+   one directory, which the loader rejects. A stale `.wattpm-migrate.json` from an
+   abandoned run counts too. Any of them stops the run naming the file.
+
+   Without this check the failure surfaces at step 3, which does not roll back, so the
+   tree is left holding both the v3 configs and migrate's output on top of whatever
+   was there. Worse, a **gitignored** `watt.config.ts` overwritten this way is
+   unrecoverable for the same reason a deleted one is: git never had it, and the
+   manifest is gone on completion. The one exception is `--resume`, where a target
+   existing *and* recorded in the manifest as migrate's own creation is expected —
+   verified by the content hash recorded at creation, so a file the user edited in
+   between is reported and left alone rather than silently replaced, which is what
+   `--resume` already promises for emitted files.
+
+   The remaining six: **any capability outside the vendored closure**; a **root `envfile`**,
    which has no faithful conversion; any application declaring `envfile` **in the
    root config's own directory** (see "Scope"); an **`enabled` value that decides the
    entrypoint differently for `production` and `development` or cannot be decided at
@@ -2727,8 +2745,9 @@ Generation reads both views. Then:
    rest, which is what lets it stop the run *before* any file is written rather than
    surfacing at validation. It
    executes **before step 1 writes anything**: it needs only read-only analysis —
-   the lexical view's module list and `enabled` values, plus the resolved structural
-   paths — with the module list normalized through the
+   the lexical view's module list and `enabled` values, the resolved structural
+   paths, and a filename-existence check on the targets — with the module list
+   normalized through the
    **rename table first** so a
    `@platformatic/composer` app is measured as `@platformatic/gateway` and passes.
    That normalization is **scoped to this gate**: the exposure rules in step 1
@@ -2857,7 +2876,10 @@ Generation reads both views. Then:
    leaving the newly created — untracked — `watt.config.ts` files in place,
    reproducing exactly the forbidden coexistence state. Migrate therefore keeps
    a **manifest of every file it created, modified or will delete, storing the pre-edit
-   *contents* of everything it modifies and everything it deletes — plus, under `--no-install`,
+   *contents* of everything it modifies and everything it deletes, and a content hash
+   of everything it creates** (which is what lets `--resume` tell its own output from
+   a file the user has edited since, and the pre-flight tell it from an unrelated
+   pre-existing target) — plus, under `--no-install`,
    the `package.json` and lockfile the deferred install will touch**, persisted as
    `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads, it
    exempts *itself* from the dirty check, and it is deleted on completion). Because it
