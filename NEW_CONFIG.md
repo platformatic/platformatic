@@ -331,8 +331,18 @@ orchestration is always root-lexical, which is what lets the loader know an app'
 `env`, `envfile` and `enabled` before that app is evaluated. Where two *entries*
 describe the same app id — one discovered by `autoload`, one listed explicitly —
 their orchestration keys merge **shallowly, per-key, the explicit entry winning**
-(`runtime/lib/config.js:388-393`, v3 semantics). Capability configuration has
-exactly **one
+(`runtime/lib/config.js:388-393`, v3 semantics) — **but only once the two are known
+to be the same application.** v3 matched on `id` alone, which is not sufficient: an
+explicit `{ id: 'api', url: '…' }` beside an autoloaded `web/api` merges into an entry
+that keeps the local `path` *and* carries the `url`, so `wattpm resolve` skips the
+remote (its path exists) and the runtime boots local code while the configuration
+names a repository. v4 merges only when the entries identify the same application —
+equal canonical `path`, or a `url` matching what the autoloaded directory resolves
+to — and otherwise reports a **duplicate id** naming both sources. An id is the mesh
+hostname, the injected `PLT_<ID>_URL`, the metrics label and `wattpm inject`'s
+argument, so two distinct applications cannot share one. (Filed against the runtime
+as platformatic/platformatic#5079; v4 does not inherit it.) Capability configuration
+has exactly **one
 owner**: a root entry carrying an inline `config` while the app directory also
 contains a `watt.config.*` file is a **boot error** naming both sources. The
 check exempts **the deciding file itself**: an entry whose directory is the
@@ -615,8 +625,23 @@ that v4 always has a `path` and only the directory may be absent.
 **Loading must succeed in that state, because it is the only state `resolve` ever
 runs in.** `resolveApplications` calls `loadConfiguration` first and *then* selects
 the applications whose path is missing (`wattpm-utils/lib/commands/external.js:413,422-433`),
-so a load-time failure would make `wattpm resolve` fail on a clean checkout telling
-you to run `wattpm resolve`. Migrate's step 3 has the same shape over its own
+
+   **Topology must not depend on the command.** `resolve` evaluates with
+   `command: 'exec'` and development defaults, so a root config that emits a remote
+   entry only for `command === 'start'`, or only in production mode, hides that entry
+   from the very command that exists to fetch it — and `start` then fails telling the
+   user to run the command that cannot see it. `enabled`, `applications`, `autoload`
+   and every entry's `url` are therefore **command- and mode-invariant**: a config
+   whose *set of applications* varies with `ctx.command` or `ctx.mode` is a
+   configuration error naming the entry, detected by evaluating the root twice — once
+   as `exec`/development, once as `start`/production — and comparing the resulting
+   topology. Per-application *settings* may still vary; what may not vary is which
+   applications exist. `enabled: { production: false }` remains the supported way to
+   exclude one, because it is data the loader can read at either setting rather than
+   a branch that hides the entry from one of them.
+
+   Back to loading order: a load-time failure would make `wattpm resolve` fail on a
+clean checkout telling you to run `wattpm resolve`. Migrate's step 3 has the same shape over its own
 emitted output. Only `dev`, `start` and `build` — the commands that need the code to
 be present — promote an unresolved entry to an error, and it reads "run `wattpm
 resolve`", never as a detector "no JavaScript sources" error.
@@ -1164,7 +1189,11 @@ applications are exposed"); otherwise the run stops with an error naming the
 directories searched and pointing at `--config`.
 
 **Synthesis is never refused on account of a configuration above.** If a
-`watt.config.*` exists in an ancestor, the boot proceeds and says so:
+`watt.config.*` **or a v3 legacy configuration** exists in an ancestor, the boot
+proceeds and says so — the ancestor scan looks for the complete candidate set, not
+just the v4 names, because a v3 monorepo is exactly where a configless subpackage is
+most likely to be found, and synthesizing there while an ancestor `platformatic.json`
+describes the application is the same silence with an older filename:
 
 ```
 ⚠ web/api has no watt.config.* of its own and is booting with inferred defaults.
@@ -1172,6 +1201,14 @@ directories searched and pointing at `--config`.
   application, none of what it says — workers, health, env, telemetry, and the
   port it assigns — is applied here. Run wattpm there to start it with the
   runtime, or add web/api/watt.config.ts to configure it standalone.
+```
+
+and where the ancestor is a v3 file, the same warning names the upgrade instead:
+
+```
+⚠ web/api has no watt.config.* of its own and is booting with inferred defaults.
+  A v3 configuration exists at ../../platformatic.json, which this version cannot
+  read. Run npx wattpm-utils migrate there, then run wattpm from that directory.
 ```
 
 This is a deliberate choice against a stricter alternative, and the reasoning is
@@ -1259,7 +1296,12 @@ boundaries and are not:
   are not redacted;
 - **hot-adding an application evaluates the configuration it discovers**, so
   `POST /applications` and the ITC `management:addApplications` handler are
-  code-loading operations. An application granted `management: true` receives every
+  code-loading operations. The evaluation uses the **running runtime's own context** —
+  its `command`, `mode` and `production`, not a fresh `exec` context — because the
+  application is joining that runtime and must see what its siblings saw; and its
+  resulting import list and env files **join the dev watcher** as one atomic update,
+  with hot-remove releasing them by reference count, so a path two applications share
+  survives the removal of one. An application granted `management: true` receives every
   operation, `addApplications` included.
 
 The reason this is the right model rather than a concession: anything able to write
@@ -1516,11 +1558,20 @@ module cache is not invalidatable, so same-process re-import would silently retu
 stale config on every dev reload — and the recorded import list is what lets the
 watcher cover helper files (`./config/shared.ts`), not just the root file. It also
 isolates `.env` mutation and config crashes/hangs from the main process. The
-watcher consumes a **filtered** import list — plus the enumerable env-file set
-(every `.env*` file for the active mode in each directory that contributes a rung,
-from the config file's own directory through to the env root), since env files are
-read, not imported, and editing them changes both evaluation and worker env —
-project/workspace-local files only:
+watcher consumes a **filtered** import list, plus everything else a reload depends
+on that is not an import. Imports alone are not the input set: the topology is
+derived from the filesystem, so the watcher also covers the **enumerable env-file
+set** (every `.env*` file for the active mode in each directory contributing a rung,
+from the config file's own directory through to the env root — env files are read,
+not imported, and editing one changes both evaluation and worker env); each
+**`autoload` directory's membership**, since creating or removing an application
+directory changes the application list; the **recognized config-file candidates** in
+every application directory, since adding or deleting `watt.config.ts` changes which
+applications own a file — and, after the scoping rule, what `wattpm dev` does there;
+each application's **`package.json`**, which supplies the id and the dependencies the
+capability detector reads; and the config file of **every application actually in the
+topology**, including one whose `path` resolves outside the project. All are
+project-local paths:
 `node_modules` paths (Watt itself, capability packages, transitive dependencies)
 are recorded but never watched, so dependency churn cannot trigger reloads or
 exhaust watcher limits.
