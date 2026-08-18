@@ -729,9 +729,21 @@ What the deciding file *is* then decides what boots:
   sanitization), so keeping `@acme/frontend` would emit
   `http://@acme/frontend.plt.local`, where `@acme` parses as userinfo. v3 stripped it
   for the same reason (`runtime/lib/config.js:131-142`, still present at HEAD). An id that
-  still cannot be a DNS label — one containing `@`, `/`, `:` or whitespace — is a
-  configuration error naming the entry and asking for an explicit `id`, rather than a
-  mesh address that silently does not resolve. `cd web/frontend && wattpm dev` — or
+  still cannot be a DNS label is a configuration error naming the entry and asking for
+  an explicit `id`, rather than a mesh address that silently does not resolve. The
+  test is the label grammar itself, not a list of bad characters:
+  **`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`** — letters, digits and hyphens,
+  no leading or trailing hyphen, 1–63 octets. That rejects `my_app` and `api.v2` as
+  well as `@acme/frontend`, which an enumeration of `@`, `/`, `:` and whitespace would
+  have admitted. It is checked **before** the id reaches either consumer: the
+  hostname (`http://<id>.plt.local`) and the topology-variable normalization
+  (`PLT_<ID>_URL`).
+
+  This bites the *derived* id as often as an authored one — a directory named
+  `my_app`, or a package named `@acme/my.app`, produces an invalid label — which is
+  why the error names the entry and asks for an explicit `id` rather than trying to
+  sanitize. Silently rewriting `my_app` to `my-app` would move the mesh hostname, the
+  injected variable and the metrics label without the user asking. `cd web/frontend && wattpm dev` — or
   `pnpm --filter frontend dev` — starts *only* that application, matching the
   package-local command model frontend developers expect. This is a deliberate
   break from v3, which booted the whole runtime from anywhere.
@@ -1957,8 +1969,11 @@ deliberately saner:
   runtime still defaults, at the bottom of the ladder (see "Env files").
   Topology variables are
   deliberately not `.env`-configurable. Two application ids normalizing to the same
-  variable name (`api-v2` and `api_v2` → `PLT_API_V2_URL`) is a **boot-time config
-  error** naming both ids.
+  variable name is a **boot-time config error** naming both. The label grammar above
+  removes most of the ways that could happen — `api_v2` is not a legal id at all — so
+  what remains is a case difference: `api-v2` and `API-v2` both normalize to
+  `PLT_API_V2_URL`, and, DNS labels being case-insensitive, they are the same mesh
+  hostname too. The check stays because it catches both collisions at once.
 
 ### Validation, types, and the schema audit
 
@@ -2285,7 +2300,11 @@ Generation reads both views. Then:
 
    **Every *explicit* entry gets an explicit `id`**, resolved the way v3 resolved it
    and written as a literal, so no migrated project depends on either version's
-   default.
+   default. A v3 id that is not a legal v4 label — v3 imposed no grammar, so `my_app`
+   was accepted — is a **reported divergence**, not a silent rewrite: migrate emits
+   the id it must (`my-app`) and the note records both spellings and the four things
+   that move with them, because leaving the v3 spelling would emit a configuration
+   that cannot load.
 
    **Two autoloaded directories that resolve to the same id are a boot error naming
    both.** v3's ids were directory names, unique by construction; v4 prefers the
@@ -2797,6 +2816,9 @@ Generation reads both views. Then:
    - a **structural path recovered from a fallback** — `.env.sample`, or the
      `<autoload.path>/<id>` convention — rather than from a value the project
      actually supplied;
+   - a **v3 id that is not a legal v4 DNS label** (`my_app` → `my-app`): v3 imposed
+     no grammar, and keeping the v3 spelling would emit a configuration that cannot
+     load, so the id moves and the note records both spellings;
    - an **`entrypointPort`** that is dropped, and any **root `server` key the target
      capability's `server` schema does not admit** — `keepAliveTimeout` for the basic
      family, `http2` for nitro (see rule 1).
@@ -3186,7 +3208,9 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     entry, and emits an `autoload.mappings` entry pinning `id` for exactly those
     directories where the two rules disagree. So this reaches **hand-written v4
     configs and newly created projects**, not migrated ones. An id that cannot be a
-    DNS label — containing `@`, `/`, `:` or whitespace — is now a configuration error
+    DNS label — the grammar is `^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`, so
+    `my_app` and `api.v2` are rejected alongside `@acme/frontend` — is now a
+    configuration error
     instead of an unresolvable `.plt.local` address.
 
 There is no deprecation window inside v4: old shapes fail fast with an actionable
