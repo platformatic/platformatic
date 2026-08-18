@@ -1266,12 +1266,31 @@ serial scheme.
    the root config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's built-in type
    stripping, the same mechanism the runtime already uses for `extensions`). It
    unwraps the default export (object, function called with the context above, or a
-   bare `ApplicationDefinition` auto-wrapped per the walk rules above), awaits
-   every function-valued `application.config` / `applications[].config` with the
-   same context it was itself called with (see "Functional form" — the context is
-   uniform, so the loader **calls** each with the context and awaits the result — a deferred definition is a function, so awaiting it without calling would yield the function itself and fail canonicalization), and expands
-   `autoload` into the application list. This is the **only** place autoload
-   expansion runs; the runtime transform consumes the already-expanded list.
+   bare `ApplicationDefinition` auto-wrapped per the walk rules above). **Everything
+   after the unwrap happens on the canonical snapshot, in this order**, because the
+   original object is reachable exactly once:
+
+   1. **Canonicalize the unwrapped export** in a single walk (see "Serializability"),
+      rejecting accessors, Proxies and functions — with one carve-out: a
+      function-valued `application.config` / `applications[].config` is *allowed*, and
+      its position is recorded.
+   2. **Call each recorded deferred slot** with the same context the root export was
+      called with (the context is uniform — see "Functional form" — so the loader
+      **calls** and awaits, since awaiting a deferred definition without calling it
+      would yield the function itself). Each result is canonicalized under the same
+      rules with **no** carve-out — a deferred config may not itself return a
+      function — and spliced into the snapshot.
+   3. **Expand `autoload`** into the application list, reading `autoload.path`,
+      `exclude` and `mappings` from the snapshot. This is the **only** place autoload
+      expansion runs; the runtime transform consumes the already-expanded list.
+
+   The ordering is the point, not an implementation detail. Reading `applications`,
+   `autoload` or a `config` slot off the *raw* export would re-open the
+   time-of-check/time-of-use gap canonicalization exists to close: a getter can return
+   one array to the expansion and another to the walk, so the topology that drove
+   directory reads need not be the topology that was validated. Canonicalizing first
+   makes "nothing downstream ever touches the original object" literally true — after
+   step 1 there is nothing else holding a reference to it.
 
    **`enabled` is resolved here, before fan-out.** It is orchestration, so its
    value is always lexically present in the root config or in
@@ -1421,12 +1440,16 @@ The result then enters the pipeline in the main process: AJV validation
 `transform()` (`runtime/lib/config.js`, which normalizes entries and expands the
 application list). The **capability** `transform` is a different function and is not
 part of this pipeline: it runs worker-side at boot, where its context lives — see
-"Config code runs exactly once per load" below. Canonicalization has already run in-worker (step 4) and the
-main process consumes that snapshot; it canonicalizes itself only for **object
+"Config code runs exactly once per load" below. Canonicalization has already run in-worker — immediately after the unwrap, before
+expansion (see step 1) — and the main process consumes that snapshot; it canonicalizes itself only for **object
 config sources** (the programmatic API and zero-config synthesis, which never
-cross a worker boundary) — before metadata attachment, because `kMetadata` is
-symbol-keyed and non-JSON by design. Those sources need it just as much: an
-embedder can hand `create()` an object carrying getters or a Proxy. Coercion is disabled in v4: its
+cross a worker boundary) — in the same position the root worker uses, **before
+autoload expansion or any other read of the object's shape**, and before metadata
+attachment, because `kMetadata` is symbol-keyed and non-JSON by design. Those sources
+need it just as much, and for the same reason: an embedder can hand `create()` an
+object carrying getters or a Proxy, and a deferred `config` there is rejected
+outright (see "Object config sources"), so the carve-out the root worker makes for
+function slots does not apply. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
 hazard in this very codebase (`runtime/lib/config.js:437` warns that `2` would be
@@ -1534,9 +1557,11 @@ worker-runtime view only.
 
 **Serializability is the v4.0 contract, and it is enforced by canonicalization,
 not only by a check.** The evaluated export is walked once and a **canonical
-plain-data snapshot** is constructed from it; that single snapshot is what gets
-classified, expanded, validated, and `postMessage`d. Nothing downstream ever
-touches the original object again.
+plain-data snapshot** is constructed from it **before anything reads its shape**;
+that single snapshot is what gets classified, expanded, validated, and
+`postMessage`d. Nothing downstream ever touches the original object again — which is
+a statement about ordering, and is why the root worker canonicalizes immediately
+after unwrapping rather than after expansion (see "Loading mechanism", step 1).
 
 Building it rather than merely inspecting it is what makes the contract true.
 `structuredClone` is not `JSON.stringify`: it **preserves** own properties whose
