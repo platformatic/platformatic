@@ -984,12 +984,18 @@ v4's code-first equivalent is the same thing spelled in the factory:
 `next({ server: { port: Number(process.env.PORT ?? 3042) } })`. `3042` still
 exists nowhere in the loading path.
 
-**Framework capabilities require a port.** `@platformatic/next`, `vite`, `astro`,
-`remix` and `nest` return from their start path when `server.port` is undefined —
+**Framework capabilities require a port — unless they carry a custom command.**
+`@platformatic/next`, `vite`, `astro`, `remix` and `nest` return from their start
+path when `server.port` is undefined —
 in development *and* production (`next/lib/capability.js:209,326`,
 `vite/lib/capability.js:221,226`, `astro/lib/capability.js:190,307`,
 `remix/lib/capability.js:170`, `nest/lib/capability.js:79,280`) — so for those
-capabilities "no port" does not mean "mesh-only", it means "does not start". Only
+capabilities "no port" does not mean "mesh-only", it means "does not start". The
+exception is a declared `application.commands.*`, which every one of them checks
+**before** the port and which starts the application on its own terms
+(`next/lib/capability.js:198-212`, `:312-327`); the runtime then observes whatever
+that command binds. The load-time predicate in "Not listening has two meanings"
+accounts for all three inputs. Only
 service/db/gateway and node-with-a-factory have a real mesh-only mode, because
 their dispatch target is an in-thread function rather than a socket
 (`basic/lib/capability.js:413-419`). Scaffolding and `migrate` therefore always
@@ -1034,30 +1040,54 @@ is real: `next` returns at `next/lib/capability.js:209` and `:326`, and `vite`,
 application as "mesh-only" would be worse than printing nothing, since it names an
 address that answers nothing.
 
-Which of the two applies is a **property of the capability**, not of the
-configuration, so it belongs in capability metadata: a capability declares whether
-it can serve the mesh in-thread without a listener. `node`, `service`, `db` and
-`gateway` can; the framework capabilities cannot. Validation uses the same flag —
-it is what makes "a framework application with no port does not start" a load-time
-error rather than a silent no-op — and so does the report.
+Which applies is decided by a **predicate over the capability and the entry
+together**, not by a capability flag alone. An application will serve if **any** of
+three things holds:
+
+1. its capability can serve the mesh in-thread without a listener — declared in
+   capability metadata; `node`, `service`, `db` and `gateway` can, the framework
+   capabilities cannot;
+2. its `server.port` is defined;
+3. it declares a **custom command** (`application.commands.development` /
+   `.production`).
+
+The third is not a technicality. Every framework capability checks its command
+*before* the port: `if (command) return this.startWithCommand(command, …)` precedes
+`if (typeof this.serverConfig?.port === 'undefined') return` on both paths
+(`next/lib/capability.js:198-212` and `:312-327`; `vite`, `astro`, `remix` and `nest`
+are the same shape). A framework application with a custom command and no
+`server.port` is therefore **valid and starts** — its command binds whatever it
+binds, and the runtime observes the address, which is exactly the "custom listeners
+are observed, never rewritten" rule. A predicate that looked only at the capability
+would reject that configuration at load.
+
+All three inputs are configuration, so the predicate is decidable **before boot**.
+An application satisfying none of them is a **load-time error** naming it and its
+capability — fail fast, rather than booting a runtime with one application silently
+missing.
 
 The loader does not warn per application: in a typical monorepo most applications
 are deliberately mesh-only, and a warning would fire N−1 times on every boot. What
 changes is the report. `#showUrls` (`runtime/lib/runtime.js:2408-2428`) currently
 does `if (!url) continue`, so a project that binds nothing prints no address and no
-explanation. It prints **one line per application**, in one of three shapes, so the
+explanation. It prints **one line per application**, in one of two shapes, so the
 set of externally reachable applications is always visible:
 
 ```
 gateway    listening at http://127.0.0.1:3042
 api        mesh-only — http://api.plt.local
 frontend   listening at http://127.0.0.1:52418        (port: 0 — ephemeral)
-docs       NOT STARTED — @platformatic/astro needs server.port
 ```
 
-The third shape is the one the flag buys: a framework application left without a
-port is named as not started, rather than reported at an address that answers
-nothing.
+There is deliberately no third "did not start" shape. The predicate above is
+decidable from configuration, so that case never reaches the report — it is refused
+at load, where the message can name the entry, its capability and the three ways to
+satisfy it. A status row would be the same information delivered after the runtime
+had already booted around the hole.
+
+A custom-command application appears as `listening`, at whatever address its command
+chose: the runtime observes it rather than assigning it, so the report shows what it
+actually bound.
 
 An application with `workers` and `portAssignment: 'perWorkerIncrement'` lists its
 whole range on that one line (`http://127.0.0.1:3000-3002`), since `getUrls()`
@@ -2966,9 +2996,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     validation as a key nothing reads — an in-place upgrade leaves `useHttp: true`
     silently inert. Migrate is what turns it into the v4 spelling, and the
     requires-review note it emits is the only signal a user gets.
-    Consequences: a managed listener opens **iff** the capability's `server.port`
-    is defined, so an application with no `server` block is mesh-only and a
-    framework application with none does not start; `server: { port: 0 }` is the
+    Consequences: a **managed** listener opens iff the capability's `server.port`
+    is defined, so an application with no `server` block is mesh-only, and a
+    framework application with neither a port nor a custom command is refused at
+    load rather than booted into silence (a custom command starts the application
+    itself, and the runtime observes what it binds); `server: { port: 0 }` is the
     v4 spelling of `useHttp` and what the gateway's WebSocket diagnostics now
     point at; and entrypoint auto-detection — explicit key, single application,
     single gateway — is gone entirely, along with `InvalidEntrypointError`,
