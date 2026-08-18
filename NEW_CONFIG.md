@@ -78,10 +78,13 @@ worker boundary — see the serializability contract), and files load through No
 native type stripping: erasable syntax only, no enums/namespaces, no `tsconfig`
 `paths`, no `.ts` presets from `node_modules`.
 
-Everything the JSON system can express remains expressible. The runtime's internal
-config model — the normalized object that `transform()` produces and workers consume —
+Everything the JSON system can express remains expressible. The **capability payload**
+— the normalized per-application configuration a capability receives and validates —
 is unchanged; what changes is how it is authored, where it is evaluated, and how it
-reaches the workers.
+reaches the workers. The runtime's own model does move in two stated ways: workers
+receive `resolvedConfig` as data rather than a file path to re-read (BC 14), and
+`autoload` expansion happens in the root eval worker ahead of `transform()` rather
+than inside it.
 
 ---
 
@@ -151,7 +154,9 @@ explicit where still needed (see "Machine-generated configs").
 
 ### Non-goals
 
-- **The runtime's internal config model** stays. `transform()` output is unchanged.
+- **The capability payload stays.** What a capability receives and validates is the
+  same normalized object, so capabilities need no change on that axis. The runtime's
+  own model is not wholly unchanged — see the Summary for the two places it moves.
 - **AJV validation** stays authoritative; TypeScript types are an authoring aid.
 - **Zero-config boot** stays: `wattpm dev` in a bare Next/Vite/Node repo with no config
   file keeps working via the deterministic v4 capability detector (direct capability
@@ -528,7 +533,11 @@ stamp against the version of the copy it yields (so hoisted layouts,
 where factory and worker share one copy, never false-positive, and root-only
 dependencies are well-defined). **Major mismatch is a boot error** naming both
 resolved paths and versions; **minor mismatch is a warning** (legitimate mid-upgrade
-drift); patch differences are ignored. Covered by an integration test per layout
+drift); patch differences are ignored. **A prerelease component on either side
+demands exact identity**: `4.0.0-alpha.1`, `4.0.0-rc.2` and `4.0.0` agree on major,
+minor and patch while differing in schema and factory shape, so the relaxed policy
+would pair incompatible halves precisely during the alpha/RC period, when they move
+fastest and the project explicitly expects users to be on them. Covered by an integration test per layout
 (npm hoisted, pnpm strict, root-only). Hand-written `{ module }` objects carry no
 stamp and skip the check.
 
@@ -678,7 +687,15 @@ Classification is four unconditional rules:
    remove `module`";
 3. an object with `application`, `applications` or `autoload` is a
    root config;
-4. an empty/other object is a root config (all defaults).
+4. an empty/other object is a root config — *classified* as one, which is not the
+   same as valid. The runtime schema requires one of `autoload` or `applications`
+   (today an `anyOf` over `autoload`/`applications`/`services`/`web`,
+   `runtime/lib/schema.js:64-68`; the audit narrows it to the two v4 spellings plus
+   the singular `application` shorthand), so `{}` classifies here and is then rejected
+   by validation with an actionable message rather than booting an empty runtime.
+   Classification answers "what kind of file is this", not "is it usable". An **empty
+   config file is a statement, not an absence**: it does not fall through to
+   zero-config detection, which is for a project that has no configuration at all.
 
 **Run what is here.** The whole rule is three steps: **(1)** find the nearest
 `watt.config.*` from the current directory upward, stopping at — and including —
@@ -1295,9 +1312,16 @@ serial scheme.
       would yield the function itself). Each result is canonicalized under the same
       rules with **no** carve-out — a deferred config may not itself return a
       function — and spliced into the snapshot.
-   3. **Expand `autoload`** into the application list, reading `autoload.path`,
-      `exclude` and `mappings` from the snapshot. This is the **only** place autoload
-      expansion runs; the runtime transform consumes the already-expanded list.
+   3. **Validate the unexpanded root shape**, then **expand `autoload`** into the
+      application list, reading `autoload.path`, `exclude` and `mappings` from the
+      snapshot. Orchestration drives filesystem access — `autoload.path` decides which
+      directories are read, `mappings` and `enabled` decide which applications are
+      evaluated at all — so it is checked before it is acted on, which is what v3 did
+      (`foundation/lib/configuration.js:587-606`, validate then transform). Only the
+      *root* shape is validated here; capability configuration is validated later,
+      main-side, against each capability's own schema. This is the **only** place
+      autoload expansion runs; the runtime transform consumes the already-expanded
+      list.
 
    The ordering is the point, not an implementation detail. Reading `applications`,
    `autoload` or a `config` slot off the *raw* export would re-open the
@@ -1317,6 +1341,22 @@ serial scheme.
    worker ever existed for them: a decommissioned app whose capability is absent
    from the production image, or whose config file calls migrate's
    `requiredEnv()`, must not be able to fail a boot that excludes it.
+
+   **The guarantee is exact for per-app files and partial for root-inline entries**,
+   and the difference is not fixable by ordering. `enabled` is read from the
+   canonical snapshot, so a **deferred** inline `config` is only invoked for entries
+   that survive the filter — that much is ordering, and step 1 does the filter before
+   the deferred pass. But an **eager** inline `config` has already run: it is an
+   expression in the root file's object literal, evaluated while the export was being
+   constructed, before the loader saw anything. Its capability `import` is earlier
+   still, at module load. So `applications: [{ id: 'legacy', enabled: false, config:
+   legacyCapability({ … }) }]` fails a boot that excludes it if
+   `@platformatic/legacy-capability` is missing from the image — and no loader
+   ordering can prevent that, because both happened before the loader was given the
+   object. The deferred form is the escape: `config: ctx => legacyCapability({ … })`
+   defers the call, though not the static import. Migrate emits the deferred form for
+   any entry it converts with `enabled: false`, and the per-app style avoids the
+   question entirely, which is a further reason it is the canonical shape.
 2. **One worker per per-app file**, spawned in parallel once the root result is
    in, uniformly for every
    application entry that has a `path` and no inline `config` — explicitly-listed
@@ -1512,10 +1552,21 @@ not be killed by the 30 s timer.
 (`create(root, configObject)`) and the zero-config in-memory synthesis pass an
 object, not a file: for those, the root pipeline runs main-side with no import
 step, and `loadEnv` builds the env map without mutating the main process's
-`process.env`. The **`root` argument is both where the env walk starts and where it
-floors**, standing in for the deciding file's directory — there is no config file to
-take a `dirname` of
+`process.env`. The **`root` argument stands in for the deciding file's directory** —
+there is no config file to take a `dirname` of
 (v3 required it for the same reason, `foundation/lib/configuration.js:495,507-509`).
+
+Where the walk *floors* differs between the two object sources, because they arrive
+differently. For the **programmatic API** the caller declared its root, so that root
+is authoritative and the walk floors there: an embedder saying `create('/app', …)`
+does not mean "and also whatever `.env` sits above `/app`". **Zero-config synthesis**
+is the opposite — nobody declared anything, the user ran `wattpm` in a directory —
+so it resolves its env root the same way a config file would, by the filename-only
+ancestor scan (see "Scope"), and floors at its own directory only when that finds
+nothing. Without that, running in `web/api` of a monorepo would synthesize an
+application that cannot see the root `.env` the Scope section promises it, which is
+now a reachable case: an ancestor configuration no longer prevents synthesis, it only
+warns.
 **A function-valued `application.config` / `applications[].config` is an error
 here**, naming the entry and saying to call it and pass the result. The callback form
 exists to give a *config file* typed autocomplete and asynchronous option
@@ -2043,7 +2094,12 @@ export default {
   bundle boots), the `wattpm install`/external flow (per-app files in cloned repos),
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
   (`'export default ' + JSON.stringify(config)`) — the last of which is the
-  plain-object case the `$schema` rule governs.
+  plain-object case the `$schema` rule governs. A machine writer emitting **`.js`
+  into a `"type": "commonjs"` package must write `.mjs` or `.mts` instead**: `.js` is
+  CJS there (see "One dialect"), and `export default` is a syntax error in it. This is
+  the same rule scaffolding follows when it picks a suffix, and it is stated here
+  because a generator choosing `watt.config.js` unconditionally is the natural
+  mistake.
 - Reading configs without executing them: the plain-object form is trivially
   AST-parseable, and running systems expose the resolved config via the programmatic
   `runtime.getRuntimeConfig()`. The management API's HTTP `GET /config` endpoint is
