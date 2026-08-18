@@ -1178,7 +1178,10 @@ is.
 *search* for a config file and nothing else. An application entry's `path` is
 trusted wherever it resolves, `../` included: pointing at a directory beside the
 runtime rather than beneath it is an ordinary layout, and 39 in-tree configurations
-already do it. The same holds for `resolvePath` keywords and every other path a
+already do it. (The **runtime** trusts it; `migrate` is stricter, and refuses to
+mutate a tree outside its transaction root — see "`wattpm-utils migrate`". Reading a
+directory a configuration names and rewriting another project's files are different
+acts.) The same holds for `resolvePath` keywords and every other path a
 configuration names — a configuration is trusted code, and a directory it names is
 part of what it describes. The one containment rule lives in `resolve`, and it
 governs *creating* directories rather than reading them: `resolveApplications`
@@ -2363,7 +2366,9 @@ Generation reads both views. Then:
    `platformatic.json` — which the next `wattpm resolve` re-fetches, undoing both.
    Every `url`-bearing entry goes on the migrate-the-other-repository list whether or
    not its directory happens to exist locally, which is what "Remote apps" already
-   says.
+   says — and so does every **local** application resolving outside the transaction
+   root, for the same reason: it is another project's tree, and one run cannot
+   transact two of them (see the pre-flight).
 
    The summary names the **scope change migrate introduces**: every application
    directory that gains a `watt.config.*` gets a `"dev": "wattpm dev"` that now boots
@@ -2759,7 +2764,25 @@ Generation reads both views. Then:
    the run with "hand-conversion required", naming what blocks it. This is the **one
    enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
    anywhere else in this document without appearing here is a bug in the document.
-   Seven triggers. The first is the one every emission depends on: **a v4 target that
+   Eight triggers. Two of them bound what migrate may touch at all.
+
+   **An application whose directory lies outside the migration transaction root**
+   stops the run. The transaction root is the workspace containing the root config —
+   the tree covered by one lockfile, one dirty-tree check and one install — and an
+   application at `path: '../shared/api'` may sit in a different workspace, a
+   different git repository, or neither. Migrate would have to write a per-app config
+   there, edit its `package.json`, and install into it, while its own dirty check
+   never protected that tree and its rollback could not reach it. That is the same
+   situation a `url` entry is in, and it gets the same answer: named, listed as a
+   project to migrate on its own, and re-run here afterwards. The format supports the
+   layout; the codemod declines to mutate two independent trees in one transaction.
+
+   ```
+   ✗ cannot migrate: 'api' resolves to ../shared/api, outside this project.
+     Migrate that project on its own, then re-run here.
+   ```
+
+   The second is the one every emission depends on: **a v4 target that
    already exists**. Migrate emits a root `watt.config.*` and one per application
    unconditionally, so before writing anything it checks every target path *and every
    recognized sibling candidate* in those directories — a `watt.config.js` where
@@ -2795,7 +2818,8 @@ Generation reads both views. Then:
    surfacing at validation. It
    executes **before step 1 writes anything**: it needs only read-only analysis —
    the lexical view's module list and `enabled` values, the resolved structural
-   paths, and a filename-existence check on the targets — with the module list
+   paths, a filename-existence check on the targets, and where each resolved path
+   sits relative to the transaction root — with the module list
    normalized through the
    **rename table first** so a
    `@platformatic/composer` app is measured as `@platformatic/gateway` and passes.
