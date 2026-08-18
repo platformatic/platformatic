@@ -102,6 +102,10 @@ export const InvalidEntrypointError = createError(
   `${ERROR_PREFIX}_INVALID_ENTRYPOINT`,
   "Invalid entrypoint: '%s' does not exist"
 )
+export const ApplicationIdCollisionError = createError(
+  `${ERROR_PREFIX}_APPLICATION_ID_COLLISION`,
+  'The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.'
+)
 export const MissingEntrypointError = createError(
   `${ERROR_PREFIX}_MISSING_ENTRYPOINT`,
   'Missing application entrypoint.'
