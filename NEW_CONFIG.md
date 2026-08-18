@@ -2860,7 +2860,11 @@ Generation reads both views. Then:
    *contents* of everything it modifies and everything it deletes — plus, under `--no-install`,
    the `package.json` and lockfile the deferred install will touch**, persisted as
    `.wattpm-migrate.json` for the life of the run (it is what `--resume` reads, it
-   exempts *itself* from the dirty check, and it is deleted on completion). It also
+   exempts *itself* from the dirty check, and it is deleted on completion). Because it
+   holds verbatim legacy configuration — including any credentials those files carry —
+   it is written **atomically, owner-only, without following symlinks**, and added to
+   `.gitignore` if one exists; its lifetime is the run, and nothing reads it
+   afterwards. It also
    records everything computed during the **lexical pass** that a later step needs,
    because `--resume` skips that pass: the **legacy-deletion set** — including custom
    filenames a v3 `applications[].config` pointed at, without which a resumed run
@@ -2869,17 +2873,31 @@ Generation reads both views. Then:
    failure **other than validation**
    it removes its own creations automatically, and on success the summary prints
    the exact path-scoped undo (`git restore <tracked…> && rm <created…>`) — never
-   a bare `git restore .`, and never any form of `git clean`. Storing contents rather
-   than leaning on git is what makes `--force` and no-VCS trees recoverable at all:
-   step 2 **modifies** `package.json` and the lockfile and step 5 **deletes** the
-   legacy configurations, and on a tree with no version control there is nothing for
-   `git restore` to restore. Deletion contents matter most in exactly the case
-   `--force` exists to override — an untracked or gitignored `platformatic.json`,
-   which git could never restore — so the printed undo is VCS-independent whenever
-   `--force` or a no-VCS tree was in play. Migrate can always delete
-   what it created; without stored contents it could not undo what it edited, leaving
-   exactly the "v3 configs and an installed v4 runtime that refuses them" state this
-   step exists to prevent. A failure *after*
+   a bare `git restore .`, and never any form of `git clean`. Stored contents make **mid-run** rollback work without git: step 2 modifies
+   `package.json` and the lockfile and step 5 deletes the legacy configurations, so
+   on a tree with no version control there is nothing for `git restore` to restore,
+   and migrate could otherwise delete what it created but not undo what it edited —
+   leaving exactly the "v3 configs and an installed v4 runtime that refuses them"
+   state this step exists to prevent.
+
+   **After a successful run there is no undo outside version control, and the summary
+   says so.** The manifest is deleted on completion, so the stored contents go with
+   it. That is deliberate rather than an oversight: the manifest holds the verbatim
+   contents of legacy configurations, which is precisely where credentials live, and
+   leaving a plaintext copy on disk indefinitely to enable a rarely-used undo is the
+   worse trade. On a tracked tree the printed
+   `git restore <tracked…> && rm <created…>` is complete. On a `--force` or no-VCS
+   tree it is not, and the summary names what is unrecoverable:
+
+   ```
+   ✔ migrated 3 applications
+   ! web/api/platformatic.json was untracked and has been deleted; --force means
+     this cannot be undone. git restore <tracked…> && rm <created…> covers the rest.
+   ```
+
+   This is what `--force` already signified. The dirty-tree check refuses an
+   untracked or gitignored legacy file *specifically* so the user has to confront
+   that it cannot be restored, and overriding it is the acknowledgement. A failure *after*
    step 2 also **re-runs the package manager against the restored lockfile**,
    reporting the exact command if that fails: restoring `package.json` and the
    lockfile does not undo what the install wrote to `node_modules`, and a tree left
