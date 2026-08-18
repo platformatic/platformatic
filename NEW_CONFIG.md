@@ -177,13 +177,25 @@ explicit where still needed (see "Machine-generated configs").
 5. Env handling becomes ordinary JavaScript (`process.env`), with `.env` loaded before
    the config file is evaluated and a fully documented precedence.
 6. A `wattpm-utils migrate` codemod that automatically converts v3 projects built on
-   in-tree capabilities. Anything it cannot convert **faithfully** stops the run
-   before any writes rather than guessing — and "faithfully" is the whole of the
-   promise: the refusals are enumerated in one place, the pre-flight gate (see
-   "`wattpm-utils migrate`"), and every one of them exists because the v3 input has
-   no single correct v4 form rather than because conversion is hard. There are more
-   than two; a codemod that silently picked one reading would be worse than one that
-   names the file and stops.
+   in-tree capabilities. The promise is **never silently**, not "always faithfully":
+   where v3 and v4 cannot agree, migrate either stops or tells you, and both sets are
+   enumerated in one place (see "`wattpm-utils migrate`").
+
+   - **Refusals** — the pre-flight gate, before any write. These are inputs with no
+     single correct v4 form, where picking one reading would be worse than naming the
+     file and stopping.
+   - **Reported divergences** — conversions that are emitted but change behaviour,
+     each carrying a *requires-review* note that names the file, the position and
+     what changed. A number-position placeholder that v3 refused to boot without now
+     yields `0`; a placeholder whose value came from an `env` block now yields `''`;
+     a structural path may be recovered from `.env.sample` or the `web/<id>`
+     convention rather than from a value v3 actually had.
+
+   The second class exists because the alternative is worse: refusing them would
+   reject the shape v3's own generator emitted (`"port": "{PORT}"`), and silently
+   emitting a `requiredEnv` guard would turn a project that boots on a configured
+   machine into one that throws. What migrate must never do is convert and say
+   nothing.
 7. ICC integration points are preserved: `setApplicationConfigPatch` keeps
    byte-compatible patch semantics; `getRuntimeConfig` survives with its payload
    shape changed as a versioned DTO (see "Machine-generated configs").
@@ -2135,11 +2147,11 @@ precede it; early adopters hand-convert). Release *cadence* stays decoupled afte
 runtime re-release.
 
 It is **the only code in v4 that can read legacy configs**. Scope: v3 projects built
-on in-tree capabilities. Everything it refuses is enumerated by the pre-flight check
-(step 2 below), detected from the lexical view before anything is written, and
-reported with the supported manual fixes rather than guessed. **Two of those refusals
-involve `envfile`** and are worth stating here because they are the ones a
-well-formed, ordinary v3 project can hit:
+on in-tree capabilities. Where v3 and v4 cannot agree, migrate either **refuses** or
+**reports** — both sets enumerated in step 2 below, both derived from the lexical
+view, and neither ever silent. Refusals are detected before anything is written and
+come with the supported manual fixes. **Two of them involve `envfile`** and are worth
+stating here because they are the ones a well-formed, ordinary v3 project can hit:
 
 - **an application in the root config's own directory that declares `envfile`.**
   Such an app must be emitted root-inline (the per-app style would put two v4
@@ -2723,7 +2735,33 @@ Generation reads both views. Then:
    classify on the raw module identity, because v3 did (see the entrypoint
    resolution above), and sharing one normalized list between the two would silently
    move a migrated project's public address.
-   "Stops before modifying any file" must be literally true. The
+   "Stops before modifying any file" must be literally true.
+
+   **The refusals have a companion set: the reported divergences.** These are
+   conversions migrate performs even though the result behaves differently from v3,
+   each carrying a *requires-review* note. They are enumerated here for the same
+   reason the refusals are — a divergence introduced elsewhere without appearing in
+   this list is a bug in the document:
+
+   - a **number-position placeholder** whose variable is unset: v3 refused to boot,
+     `Number('')` is `0`, and the application listens on a random port;
+   - an **enum-position placeholder** whose variable is unset: v3 refused to boot and
+     so does v4, but at load rather than at parse — same outcome, different message;
+   - a placeholder whose value came from an **`env` block**: v4 keeps blocks out of
+     config evaluation, so the expression yields `''` where v3 yielded the block's
+     value;
+   - a **structural path recovered from a fallback** — `.env.sample`, or the
+     `<autoload.path>/<id>` convention — rather than from a value the project
+     actually supplied;
+   - an **`entrypointPort`** that is dropped, and any **root `server` key the target
+     capability's `server` schema does not admit** — `keepAliveTimeout` for the basic
+     family, `http2` for nitro (see rule 1).
+
+   Refusal is not the better answer for any of them. A number-position placeholder is
+   the shape v3's own generator emitted (`"port": "{PORT}"`), so refusing would reject
+   most real projects; and emitting a `requiredEnv` guard instead would convert a
+   project that boots on a configured machine into one that throws on it. The line
+   this document holds is narrower and keepable: **migrate never converts silently.** The
    gate is deliberately about closure membership, not v4 readiness: without a
    frozen v3 schema, upgrade chain, and target-type table, migrate cannot upgrade
    that app's config or decide whether `"{ACME_PORT}"` is a number, boolean, or
