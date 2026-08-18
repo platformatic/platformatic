@@ -2783,9 +2783,14 @@ Generation reads both views. Then:
    entrypoint differently for `production` and `development` or cannot be decided at
    all** (see the exposure rules in step 1); a **structural path that resolves to
    nothing** after the fallbacks above; and **one variable occupying two positions
-   whose target types are incompatible** — `{PLT_X}` in both `server.port` and
-   `logger.level` admits no sentinel that satisfies both, so step 3 could not
-   validate its own output. That last one is computed from the lexical view like the
+   whose schema constraints do not intersect**. The test is a **non-empty
+   intersection of every applicable constraint**, not equality of primitive types —
+   matching types are not sufficient, and the shipped schemas prove it: `packageManager`
+   (`["npm","pnpm","yarn"]`) and `logger.level` (`["fatal"…"silent"]`) are both
+   `string` with **no** member in common, and `managementApi.logs.maxSize`
+   (`minimum: 5`) and `workers.scaleUpELU` (`0…1`) are both `number` with an empty
+   range intersection. A `{PLT_X}` used at either pair admits no value that validates
+   at both, so step 3 could not validate its own output. That last one is computed from the lexical view like the
    rest, which is what lets it stop the run *before* any file is written rather than
    surfacing at validation. It
    executes **before step 1 writes anything**: it needs only read-only analysis —
@@ -2860,10 +2865,13 @@ Generation reads both views. Then:
    **Validation seeds the environment for every variable the emitted files reference
    that is not already set**, not only `requiredEnv`-wrapped ones. Migrate records
    each placeholder-derived position during the lexical pass — variable, JSON path and
-   target type — so it seeds a type-appropriate **sentinel** from the audit's
-   target-type table for each: a member of the enum for an enum position, a number for
-   a number position, the secret's placeholder for a `requiredEnv` key whose helper
-   would otherwise throw. This is the third documented deviation of the migrator-only
+   target type — so it seeds each variable with a sentinel drawn from the
+   **intersection of the constraints at every position that variable occupies**, not
+   from any one of them: a member common to all enums, a number inside every range and
+   satisfying every `multipleOf`/integer constraint, the secret's placeholder for a
+   `requiredEnv` key whose helper would otherwise throw. The intersection is what the
+   pre-flight already computed to decide the variable was usable at all, so the two
+   steps agree by construction rather than by coincidence. This is the third documented deviation of the migrator-only
    entry, alongside the skipped walk and coexistence guard.
 
    Two constraints on the seeding, both of which change what it may touch. It seeds
@@ -2871,9 +2879,10 @@ Generation reads both views. Then:
    outranks env files in v4, so seeding unconditionally would validate the emitted
    files against migrate's fabrications instead of the values the project actually
    configures — inverting the guarantee that step 3 checks the output through the real
-   loader. And a variable occupying two positions with **incompatible target types**
-   admits no single sentinel: `{PLT_X}` in both `server.port` and `logger.level`
-   cannot be seeded to satisfy both, so that is a pre-flight refusal naming the
+   loader. And a variable whose positions have **no common value** admits no single
+   sentinel — the constraints are intersected, not the primitive types, since two
+   `string` enums can be disjoint and two `number` ranges can fail to overlap — so
+   that is a pre-flight refusal naming the
    variable and both paths, not a coin toss resolved at validation time.
 
    **The record is persisted in the manifest**, because `--resume` skips the lexical
@@ -3257,7 +3266,12 @@ fixed port at all.
    decision rather than by surviving a refactor.
 2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
    placeholder-only branches, regenerate `schema.json` + types; produce the
-   per-property target-type table for migrate. Two schema *changes* rather than
+   per-property target-type table for migrate. The table carries each property's full
+   **constraint set** — enum members, numeric bounds, `multipleOf`, integer-ness,
+   string patterns and lengths — not just its primitive type, because migrate
+   intersects those constraints across every position a variable occupies (see step
+   2 of the migrate section) and a type alone cannot decide whether a shared value
+   exists. Two schema *changes* rather than
    classifications. **Add `portAssignment` to both server declarations** — `server`
    (`foundation/lib/schema.js:391`, the basic family) *and* `fastifyServer` (`:501`,
    service/db/gateway). They are separate object literals that happen to overlap:
