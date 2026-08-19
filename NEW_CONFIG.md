@@ -2136,15 +2136,30 @@ export default {
   reads it for version detection only (never module selection) and **strips it
   before AJV validation** — the v4 root schema does not admit it, and without the
   strip every machine-generated config would fail validation. A stale v3 URL
-  refuses with the migrate hint. This is the version marker that keeps the next
-  major's migration tractable.
-  **Factory-authored files carry no marker and are not expected to.** `migrate`,
-  `wattpm import` and scaffolding emit `defineConfig(…)` and bare factory calls;
-  `WattConfig` declares no `$schema` and the root schema does not admit it, so
-  writing one would be a type error. Those files are already version-identified by
-  the `version` each factory stamps into its `ApplicationDefinition` — which is what
-  the root/app skew check reads, and what the next major keys off. The `$schema`
-  requirement therefore binds exactly the writers that emit plain objects.
+  refuses with the migrate hint. This is what keeps the next major's migration
+  tractable **for that class of file**.
+  **Files that import their dependencies need no marker; files that do not, do.**
+  That is the whole of the rule, and it is why the requirement lands where it does.
+
+  A `watt.config.ts` naming `defineConfig` from `wattpm` and `next` from
+  `@platformatic/next` **states its version through those imports**: whichever
+  `wattpm` is installed supplies `defineConfig`, so a v5 loader reading a v4-shaped
+  file fails its own validation with an actionable error, exactly as v4 refuses a v3
+  JSON file. There is nothing for a marker to add. `migrate`, `wattpm import` and
+  scaffolding all emit that shape, and `WattConfig` declares no `$schema` — writing
+  one would be a type error.
+
+  A plain object emitted as `'export default ' + JSON.stringify(config)` imports
+  nothing. It is data in a `.js` wrapper, with no resolved package behind it and no
+  capability call to carry a stamp, so it needs `$schema` for the same reason v3's
+  JSON did.
+
+  **The `ApplicationDefinition.version` stamp is not this mechanism** and should not
+  be read as it: it exists for the root/app skew check (see "Capability factories"),
+  it is absent from hand-written `{ module }` objects by design, and a root whose
+  applications are all remote or all autoload-detected carries no factory result at
+  all. It identifies which copy of a capability produced an entry — not what shape
+  the file is.
 - Writers converted in v4: `next pack` (bundle config; gains a test asserting the
   bundle boots), the `wattpm install`/external flow (per-app files in cloned repos),
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
@@ -3673,8 +3688,9 @@ export type ConfigContext = {
 
 export interface ApplicationDefinition {
   module: string                  // the duck-typing key: `module` present = per-app
-  version?: string                // stamped by the factory; absent on hand-written
-                                  // { module } definitions (see BC 15)
+  version?: string                // stamped by the factory, for the root/app skew
+                                  // check only — not a file-format marker; absent
+                                  // on hand-written { module } definitions (BC 15)
   [option: string]: unknown       // the capability's own validated options
 }
 
