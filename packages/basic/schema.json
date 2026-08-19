@@ -149,6 +149,9 @@
               "useHttp": {
                 "type": "boolean"
               },
+              "websocket": {
+                "type": "boolean"
+              },
               "reuseTcpPorts": {
                 "type": "boolean",
                 "default": true
