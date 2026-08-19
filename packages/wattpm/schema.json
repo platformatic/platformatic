@@ -142,6 +142,9 @@
               "useHttp": {
                 "type": "boolean"
               },
+              "websocket": {
+                "type": "boolean"
+              },
               "reuseTcpPorts": {
                 "type": "boolean",
                 "default": true
@@ -574,6 +577,9 @@
           "useHttp": {
             "type": "boolean"
           },
+          "websocket": {
+            "type": "boolean"
+          },
           "reuseTcpPorts": {
             "type": "boolean",
             "default": true
@@ -1004,6 +1010,9 @@
           "useHttp": {
             "type": "boolean"
           },
+          "websocket": {
+            "type": "boolean"
+          },
           "reuseTcpPorts": {
             "type": "boolean",
             "default": true
@@ -1432,6 +1441,9 @@
             "default": "main"
           },
           "useHttp": {
+            "type": "boolean"
+          },
+          "websocket": {
             "type": "boolean"
           },
           "reuseTcpPorts": {

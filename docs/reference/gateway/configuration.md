@@ -49,7 +49,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     - **`hostname`** (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header. When a hostname is specified, the service is accessible without the prefix when the Host header matches.
     - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
     - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
-      - **`upstream`** (`string`, **required**) - The WebSocket upstream URL (e.g., `ws://localhost:3000`).
+      - **`upstream`** (`string`) - The WebSocket upstream URL (e.g., `ws://localhost:3000`). Required for external services. Not needed for Platformatic Runtime applications exposing a TCP server (started with the `useHttp` or `websocket` flags): the gateway resolves their WebSocket upstream automatically, re-resolving it on every new connection so that new connections keep working across application restarts. Note that a connection arriving in the short window between a worker going away and the gateway observing its replacement can still be dialed against the previous port; the next connection succeeds.
       - **`reconnect`** (`object`) - WebSocket reconnection settings:
         - **`pingInterval`** (`number`) - Interval in milliseconds between ping messages to keep the connection alive.
         - **`maxReconnectionRetries`** (`number`) - Maximum number of reconnection attempts.

@@ -382,6 +382,22 @@ export class BaseCapability extends EventEmitter {
   }
 
   async getDispatchTarget () {
+    // When an application binds a TCP server only for WebSocket handoff purposes
+    // ("websocket" flag without "useHttp"), mesh HTTP traffic keeps being served
+    // in-thread: the TCP port is only advertised to the gateway via getMeta().
+    // This only applies to capabilities providing a real in-thread dispatch target
+    // (getDispatchFunc returning something other than the capability itself, whose
+    // inject is not implemented): the others dispatch via the bound TCP address,
+    // as under "useHttp".
+    const applicationConfig = this.context.applicationConfig
+    if (applicationConfig?.websocket && !applicationConfig.useHttp && !this.isEntrypoint) {
+      const dispatchFunc = await this.getDispatchFunc()
+
+      if (dispatchFunc !== this) {
+        return dispatchFunc
+      }
+    }
+
     return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
