@@ -1245,7 +1245,13 @@ part of what it describes. The one containment rule lives in `resolve`, and it
 governs *creating* directories rather than reading them: `resolveApplications`
 refuses to clone into a path outside the project root, skipping that entry with a
 warning (`wattpm-utils/lib/commands/external.js:444-452`), while a directory that
-already exists is used as-is whatever its location.
+already exists is used as-is whatever its location. That rule is stated as v4 keeps
+it, not as the current code implements it: the check is a string prefix match, so
+`/tmp/app-evil` passes as contained by `/tmp/app` and a symlinked ancestor inside
+the root redirects the write outside it. Filed as
+[#5078](https://github.com/platformatic/platformatic/issues/5078) — a boundary test
+on canonical paths, not a prefix comparison. The format inherits neither the bug nor
+its fix; it inherits the rule.
 
 Env files are **not** subject to this. They layer from a config file's own directory
 up to the **env root** — the outermost `watt.config.*` above it — so a monorepo's
