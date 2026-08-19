@@ -451,7 +451,11 @@ The context (Vite-parity, deliberately):
 - `env` — a **snapshot** of `process.env` after env-file merging, taken at the start
   of evaluation (see "Env files"); `env` blocks are not part of it, at any position.
   Later `process.env` writes are visible through `process.env`, not through
-  `ctx.env`.
+  `ctx.env`. The context and its `env` are **frozen**, not merely typed
+  `Readonly<…>`: one context object is handed to every callback in a file, so a
+  config that wrote to `ctx.env` would change what later deferred entries observe,
+  make the result depend on evaluation order, and do it without tripping the
+  `process.env` mutation warning — which watches a different object.
 - `root` — absolute directory of the config file.
 
 ### Capability factories
@@ -3496,9 +3500,11 @@ fixed port at all.
      only for being fenced and marked.
 
    The marker is required: an unmarked block fails the check rather than being
-   skipped, which is what stops the gate from quietly narrowing. This document
-   currently holds 15 `ts`, 1 `js`, 3 `json` and 45 unmarked blocks, so adopting the
-   gate is itself a task in the plan rather than an assertion about the present.
+   skipped, which is what stops the gate from quietly narrowing. No block in this
+   document carries a marker yet, so **adopting the gate is a task in the plan rather
+   than a property of the present** — and the inventory is deliberately not quoted
+   here, because a hard-coded count is stale the next time a block is added, which is
+   exactly how the previous count came to be wrong.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` / `getRuntimeApplicationConfig`
@@ -3660,7 +3666,8 @@ export type ConfigContext = {
                                                 // and other non-boot evaluation
   mode: string
   production: boolean
-  env: Readonly<Record<string, string | undefined>>  // snapshot, not live process.env
+  env: Readonly<Record<string, string | undefined>>  // snapshot, not live process.env;
+                                                    // frozen at runtime, and so is ctx
   root: string
 }
 
