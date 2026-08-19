@@ -2858,15 +2858,32 @@ Generation reads both views. Then:
    factory's app-local `@platformatic/*` dependency to the current major —
    including dependencies previously satisfied only by the runtime's bundled
    fallback (range and dependency-list edits only; dependency *placement* is
-   still never changed); asks for consent once and **runs the install itself**,
-   with the lockfile joining the migration transaction
+   still never changed); asks for consent once and **runs the install itself with
+   lifecycle scripts suppressed** (`--ignore-scripts` or the package manager's
+   equivalent), with the lockfile joining the migration transaction
    (`--install`/`--no-install` for non-interactive runs; `--no-install` stops
    after emitting files and manifests, prints the install command, and defers
    the rest to **`migrate --resume`** — which exempts exactly the persisted
    manifest's entries from the dirty-tree check, leaves emitted files the user has since
    modified untouched, reporting them, and continues at install/validation).
 
-   `--no-install` leaves the tree in the **coexistence state** while it waits — v3
+   **Nothing user-authored may execute between step 1 and step 5.** From the moment
+   the first v4 file is written until the legacy files are deleted, the tree holds
+   both dialects, which the loader refuses by design — so a `preinstall`,
+   `postinstall` or `prepare` script that invokes `wattpm` (a build, a smoke test, a
+   codegen step) would fail on a state migrate created and is about to resolve. That
+   is why the install suppresses scripts rather than racing them. Migrate runs the
+   package manager a **second time after step 5**, once the tree is valid v4, to
+   execute exactly what it deferred — the native rebuilds and `prepare` steps a
+   suppressed install skips — and reports it as a distinct step so a failure there is
+   not mistaken for a migration failure. Deleting the legacy files earlier would empty
+   the window instead, but at a worse cost: a validation failure would then leave a
+   tree that boots on neither version, and validation failure is the one path that
+   does not roll back.
+
+   `--no-install` inherits the same rule: the command it prints carries
+   `--ignore-scripts`, and `migrate --resume` runs the deferred pass after deletion.
+   It leaves the tree in the **coexistence state** while it waits — v3
    and v4 configs side by side, which the loader refuses — and says so, with the same
    two ways out a validation failure prints: the path-scoped undo, or `--resume`. A
    **declined install consent** ends the run the same way and prints the same pair.
@@ -3069,7 +3086,11 @@ Generation reads both views. Then:
    `platformatic.json`/`watt.json` names but each custom filename a v3
    `applications[].config` pointed at, recorded during the lexical pass, since v3
    accepted any name there and leaving one behind preserves exactly the coexistence
-   state this step exists to end — and print a summary. There is no rename, no
+   state this step exists to end. **Then run the deferred lifecycle scripts** (step 2
+   suppressed them): the tree is now valid v4, so a `postinstall` or `prepare` that
+   invokes `wattpm` sees a state it can load. This is reported as its own step, and a
+   failure in it leaves the migration itself complete — the configuration is
+   converted; what failed is the project's own build. Finally, print a summary. There is no rename, no
    `.v3.bak`, no `--keep` — **version control is the undo mechanism**: migrate
    refuses to run on a dirty git tree (`--force` overrides, with a loud warning;
    same flag for no-VCS trees), so review is `git diff`. The dirty check counts
@@ -3130,7 +3151,9 @@ Generation reads both views. Then:
    reporting the exact command if that fails: restoring `package.json` and the
    lockfile does not undo what the install wrote to `node_modules`, and a tree left
    with v3 configs and an installed v4 runtime that refuses them boots on neither
-   version.
+   version. That restoring run executes lifecycle scripts normally — the legacy
+   configuration is back in place by then, so a script invoking `wattpm` sees the v3
+   tree it was written for.
 
 (No `.env` *file* conflict warning is needed — app-wins layering preserves v3's
 observable file precedence; the `env`-block precedence change has its own
