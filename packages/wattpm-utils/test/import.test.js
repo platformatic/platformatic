@@ -224,7 +224,7 @@ test('import - should not do anything when the local folder is already a defined
   const configurationFile = resolve(rootDir, 'watt.json')
 
   const contents = await loadRawConfigurationFile(configurationFile)
-  contents.web = [{ id: 'main', path: 'main' }]
+  contents.web = [{ id: 'other', path: 'main' }]
   await saveConfigurationFile(configurationFile, contents)
   await createDirectory(resolve(rootDir, 'main'))
   await writeFile(resolve(rootDir, 'main/index.js'), '', 'utf-8')

@@ -563,7 +563,7 @@ test('autoload - throws when the id of an autoloaded directory is used by an ext
 test('autoload - throws when the id of an autoloaded directory is used by another local application', async t => {
   await rejects(
     () => loadConfiguration(join(fixturesDir, 'autoload-collision', 'path-collision.json')),
-    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the path ".+\/elsewhere\/api"./
+    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the path ".+[\\/]elsewhere[\\/]api"./
   )
 })
 
