@@ -140,10 +140,14 @@ export class Controller extends EventEmitter {
       }
 
       if (appConfig.config) {
-        // Parse the configuration file the first time to obtain the schema
+        // Parse the configuration file the first time to obtain the schema. This load is thrown away:
+        // the capability loads the configuration again below and that is the configuration the
+        // application actually runs on. This one only has to yield $schema and module, so it must not
+        // diverge from the second load in any way the user can observe: it deliberately applies no
+        // onMissingEnv fallback and emits no strictEnv report, both of which are left to the load the
+        // application is built from.
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.fetchApplicationUrl,
-          strictEnv: this.#context.strictEnv
+          strictEnv: false
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
