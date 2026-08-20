@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto'
 import { hostname } from 'node:os'
 import pino from 'pino'
 import { platformaticService } from './application.js'
+import { loadErrorHandler } from './error-handler.js'
 import { setupRoot } from './plugins/root.js'
 import { version } from './schema.js'
 
@@ -37,13 +38,23 @@ export class ServiceCapability extends BaseCapability {
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
 
     // Create the application
+    const { errorHandler, ...serverOptions } = this.serverConfig ?? {}
+
     this.#app = fastify({
-      ...this.serverConfig,
+      ...serverOptions,
       ...this.fastifyOptions,
       genReqId () {
         return randomUUID()
       }
     })
+
+    // The error handler is installed on the root instance before anything else is registered so that
+    // every route inherits it, including the ones registered by the capability itself, like the
+    // auto-generated CRUD routes of @platformatic/db. Plugins can still override it in their own
+    // encapsulation context.
+    if (errorHandler) {
+      this.#app.setErrorHandler(await loadErrorHandler(errorHandler))
+    }
 
     // Add hook to set Connection: close during graceful shutdown.
     // This must be added BEFORE plugins are registered, because if a plugin

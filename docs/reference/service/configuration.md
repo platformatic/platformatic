@@ -75,6 +75,44 @@ An object with the following settings:
 - **`requestIdLogLabel`** (`string`) -- Defines the label used for the request identifier when logging the request. default: `'reqId'`
 - **`jsonShorthand`** (`boolean`) -- default: `true` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#jsonshorthand) for more details
 - **`trustProxy`** (`boolean` or `integer` or `string` or `String[]`) -- default: `false` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details
+- **`errorHandler`** (`string`) -- path to a file (relative to the configuration file) or the name of an installed package whose default export is a [Fastify error handler](https://fastify.dev/docs/latest/Reference/Server/#seterrorhandler).
+
+  The handler is installed on the root instance before any route is registered, so it applies to every
+  route of the application, including the ones registered by the capability itself: the auto-generated
+  CRUD routes of [Platformatic DB](../db/configuration.md), the GraphQL endpoint and the health check.
+  Plugins can still call `setErrorHandler` to override it inside their own encapsulation context.
+
+  This is the supported way to enforce a single error envelope and to sanitize `5xx` bodies, which
+  otherwise expose the original `error.message` (including database driver messages) of the routes the
+  application did not write.
+
+  _Example_
+
+  ```json
+  {
+    "server": {
+      ...
+      "errorHandler": "./lib/error-handler.js"
+    }
+  }
+  ```
+
+  ```js
+  // lib/error-handler.js
+  export default function errorHandler (error, request, reply) {
+    const statusCode = error.statusCode ?? 500
+
+    request.log.error({ err: error }, 'request errored')
+
+    reply.status(statusCode).send({
+      statusCode,
+      code: error.code,
+      message: statusCode >= 500 ? 'Internal Server Error' : error.message
+    })
+  }
+  ```
+
+  A module exporting the handler as a named `errorHandler` export is supported as well.
 
 :::tip
 

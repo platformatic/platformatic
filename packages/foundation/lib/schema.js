@@ -639,7 +639,15 @@ export const fastifyServer = {
     },
     http2: server.properties.http2,
     https: server.properties.https,
-    cors
+    cors,
+    errorHandler: {
+      description:
+        'Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.',
+      anyOf: [
+        { type: 'string', resolveModule: true },
+        { type: 'string', resolvePath: true }
+      ]
+    }
   },
   additionalProperties: false
 }
