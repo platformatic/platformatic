@@ -18,7 +18,7 @@ async function setupRootPlugin (app) {
       if (uaString) {
         const parsed = userAgentParser(uaString)
         if (parsed.browser.name !== undefined) {
-          return reply.sendFile('./index.html')
+          return reply.sendFile('index.html')
         }
       }
       return { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }
