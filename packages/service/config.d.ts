@@ -172,6 +172,10 @@ export interface PlatformaticServiceConfig {
       strictPreflight?: boolean;
       hideOptionsRoute?: boolean;
     };
+    /**
+     * Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.
+     */
+    errorHandler?: string;
   };
   plugins?: {
     [k: string]: unknown;

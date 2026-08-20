@@ -296,6 +296,12 @@
 
 **Message:** Cannot send a message to service "%s": %s
 
+## @platformatic/service
+
+### PLT_SERVICE_INVALID_ERROR_HANDLER
+
+**Message:** The module %s configured as server.errorHandler does not export a function.
+
 ## @platformatic/sql-events
 
 ### PLT_SQL_EVENTS_OBJECT_IS_REQUIRED_UNDER_THE_DATA_PROPERTY
