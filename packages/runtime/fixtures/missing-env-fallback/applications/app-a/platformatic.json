@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/3.0.0.json",
+  "plugins": {
+    "paths": [
+      {
+        "path": "plugin.js",
+        "options": {
+          "resolvedBaseUrl": "{PLT_SOME_BASE_URL}",
+          "resolvedClientId": "{PLT_SOME_CLIENT_ID}",
+          "cacheUrl": "valkey://{VALKEY_URL}"
+        }
+      }
+    ]
+  }
+}
