@@ -1172,11 +1172,13 @@ capabilities "no port" does not mean "mesh-only", it means "does not start". The
 exception is a declared `application.commands.*`, which every one of them checks
 **before** the port and which starts the application on its own terms
 (`next/lib/capability.js:198-212`, `:312-327`); the runtime then observes whatever
-that command binds. The load-time predicate in "Not listening has two meanings"
+that command binds. The load-time predicate in "Not listening has three meanings"
 accounts for all three inputs. Only
-service/db/gateway and node-with-a-factory have a real mesh-only mode, because
-their dispatch target is an in-thread function rather than a socket
-(`basic/lib/capability.js:413-419`). Scaffolding and `migrate` therefore always
+service/db/gateway and `node` have a real mesh-only mode, because their dispatch
+target can be an in-thread function rather than a socket
+(`basic/lib/capability.js:416-418`) — and for `node` it is *conditional*, on the
+application having a server at all, which is settled after its code runs (see the
+predicate below). Scaffolding and `migrate` therefore always
 emit a port for a framework application.
 
 **Zero-config boot supplies its own port.** Level 0 — `wattpm dev` in a bare
@@ -1208,11 +1210,14 @@ applied (see "Scope"). The alternative — refusing — requires deciding that a
 ancestor config describes this directory, which a filename check cannot establish and
 an evaluation could only establish by executing a file above the search's stop point.
 
-**Not listening has two meanings, and the startup output must tell them apart.**
-Without a port, an application is either **mesh-only** — reachable at
+**Not listening has three meanings, and the startup output must tell them apart.**
+Without a port, an application is **mesh-only** — reachable at
 `http://<id>.plt.local` because `getDispatchTarget()` falls back to in-thread
 dispatch (`basic/lib/capability.js:416-418`) — or **inactive**, because its
-capability's start path returns early when `server.port` is undefined. The second
+capability's start path returns early when `server.port` is undefined, or
+**background**, a `node` application that declares it has no server and is not
+supposed to be reachable at all (see the predicate below, where the third case earns
+its place). The second
 is real: `next` returns at `next/lib/capability.js:209` and `:326`, and `vite`,
 `astro`, `remix` and `nest` do the same. Reporting an inactive framework
 application as "mesh-only" would be worse than printing nothing, since it names an
@@ -1222,9 +1227,10 @@ Which applies is decided by a **predicate over the capability and the entry
 together**, not by a capability flag alone. An application will serve if **any** of
 three things holds:
 
-1. its capability can serve the mesh in-thread without a listener — declared in
-   capability metadata; `node`, `service`, `db` and `gateway` can, the framework
-   capabilities cannot;
+1. its capability can serve without a listener — declared in capability metadata.
+   `service`, `db` and `gateway` serve the mesh in-thread; `node` may do that or may
+   legitimately serve nothing at all, which is why it is in this rule for a different
+   reason than the other three (below); the framework capabilities can do neither;
 2. its `server.port` is defined;
 3. it declares a **custom command for the mode this boot will use** —
    `application.commands.development` under `dev`, `application.commands.production`
@@ -1255,6 +1261,31 @@ All three inputs are configuration, so the predicate is decidable **before boot*
 An application satisfying none of them is a **load-time error** naming it and its
 capability — fail fast, rather than booting a runtime with one application silently
 missing.
+
+**The error belongs to the framework capabilities, and only to them.** Theirs are the
+start paths that return early on a missing port, so "no port, no command" provably
+starts nothing. `service`, `db`, `gateway` and `node` never reach it — but `node` is
+exempt for a different reason than the other three, and collapsing the two is what
+makes rule 1 look like it decides more than it can. A `node` application serves the
+mesh in-thread **when it has a server**, and `#hasServer()` reads three things
+(`node/lib/capability.js:245-250`): `config.node.hasServer`, which is configuration;
+`module.hasServer`, a module-level export; and `isBackgroundApplication` on the
+factory's result. The last two are known only once the application's own code has
+been imported and its factory called. Whether a given `node` application will serve
+is therefore **not a load-time fact**, and the honest consequence is that it can
+never be a load-time error: a background worker that serves nothing is a supported
+thing to write, not a misconfiguration to reject.
+
+**Which makes a third state, and the startup report needs it.** A background `node`
+application is neither mesh-only nor inactive-because-misconfigured:
+`getDispatchFunc()` hands back `#backgroundServiceInject`, which destroys any request
+that arrives — "Background services cannot receive HTTP requests via the mesh
+network" (`node/lib/capability.js:449-451`, `:559-560`). Printing
+`http://<id>.plt.local` for it would name an address that answers by hanging up,
+which is the failure the mesh-only/inactive distinction exists to prevent, one
+capability further along. So the report carries **background** beside the other two,
+and it comes from the started worker, which is the first thing in the system that
+knows.
 
 The loader does not warn per application: in a typical monorepo most applications
 are deliberately mesh-only, and a warning would fire N−1 times on every boot. What

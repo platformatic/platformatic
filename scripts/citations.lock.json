@@ -345,11 +345,6 @@
       "head": "const loaderUrl = new URL('./loader.js', import.meta.url)",
       "lines": 16
     },
-    "packages/basic/lib/capability.js:413-419": {
-      "sha": "ec5652d7b1e18ee3",
-      "head": "return this",
-      "lines": 7
-    },
     "packages/foundation/lib/cli.js:255-274": {
       "sha": "a82961d969a7a84a",
       "head": "export async function fallbackToTemporaryConfigFile (logger, root, verifyPackages) {",
@@ -368,6 +363,21 @@
     "packages/next/lib/capability.js:198,310": {
       "sha": "9fad8fbfbdedd9d0",
       "head": "async #startDevelopment () {",
+      "lines": 2
+    },
+    "packages/node/lib/capability.js:245-250": {
+      "sha": "2d0ae5511c291bfb",
+      "head": "#hasServer () {",
+      "lines": 6
+    },
+    "packages/node/lib/capability.js:449-451": {
+      "sha": "28e04b3fae8acea8",
+      "head": "async getDispatchFunc () {",
+      "lines": 3
+    },
+    "packages/node/lib/capability.js:559-560": {
+      "sha": "18ef9b27f1b663a6",
+      "head": "#backgroundServiceInject (_, res) {",
       "lines": 2
     },
     "packages/runtime/lib/runtime.js:2408-2428": {
