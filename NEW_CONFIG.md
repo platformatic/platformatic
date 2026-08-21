@@ -4017,7 +4017,19 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     Migrate protects migrated projects: it pins the resolved v3 id on every explicit
     entry, and emits an `autoload.mappings` entry pinning `id` for exactly those
     directories where the two rules disagree. So this reaches **hand-written v4
-    configs and newly created projects**, not migrated ones. An id that cannot be a
+    configs and newly created projects**, not migrated ones.
+
+    **The comparison is against the legal v4 id, not the raw one**, or the rename path
+    leaks. A directory named `my_app` whose package declares no name has the same id
+    under both rules — v3's directory name and v4's directory-name fallback — so a
+    comparison of raw values finds nothing to pin, emits no mapping, and leaves
+    `my_app` in a configuration the label grammar rejects. Migrate therefore resolves
+    every v3 autoload id first, normalizes it the way an explicit id is normalized,
+    and emits a mapping whenever the **legal** v4 id differs from what v3 used —
+    which covers the renamed-by-package case and the illegal-label case with one
+    rule. Collision detection and reference rewriting then run over that complete
+    normalized set, explicit and autoloaded together, since a directory rename can
+    collide with an explicit entry just as easily as with another directory. An id that cannot be a
     DNS label — the grammar is `^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`, so
     `my_app` and `api.v2` are rejected alongside `@acme/frontend` — is now a
     configuration error
