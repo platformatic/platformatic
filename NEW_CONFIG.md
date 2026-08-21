@@ -629,26 +629,58 @@ that v4 always has a `path` and only the directory may be absent.
 **Loading must succeed in that state, because it is the only state `resolve` ever
 runs in.** `resolveApplications` calls `loadConfiguration` first and *then* selects
 the applications whose path is missing (`wattpm-utils/lib/commands/external.js:413,422-433`),
+so a configuration that refuses to load without its clones could never produce them.
 
-   **Topology must not depend on the command.** `resolve` evaluates with
-   `command: 'exec'` and development defaults, so a root config that emits a remote
-   entry only for `command === 'start'`, or only in production mode, hides that entry
-   from the very command that exists to fetch it — and `start` then fails telling the
-   user to run the command that cannot see it. `enabled`, `applications`, `autoload`
-   and every entry's `url` are therefore **command- and mode-invariant**: a config
-   whose *set of applications* varies with `ctx.command` or `ctx.mode` is a
-   configuration error naming the entry, detected by evaluating the root twice — once
-   as `exec`/development, once as `start`/production — and comparing the resulting
-   topology. Per-application *settings* may still vary; what may not vary is which
-   applications exist. `enabled: { production: false }` remains the supported way to
-   exclude one, because it is data the loader can read at either setting rather than
-   a branch that hides the entry from one of them.
+**`resolve` must see every entry a later boot will need**, and what makes that hard
+is the loader, not the user: `resolve` is not a boot, so it evaluates with
+`command: 'exec'` and development defaults, while the boot it prepares for evaluates
+as `dev`/`start`/`build`, often `--production`. If an entry exists in the second
+context and not the first, `start` fails telling you to run the command that cannot
+see it. Three different things follow from that, and they are not one rule:
 
-   Back to loading order: a load-time failure would make `wattpm resolve` fail on a
-clean checkout telling you to run `wattpm resolve`. Migrate's step 3 has the same shape over its own
-emitted output. Only `dev`, `start` and `build` — the commands that need the code to
-be present — promote an unresolved entry to an error, and it reads "run `wattpm
-resolve`", never as a detector "no JavaScript sources" error.
+- **The set of applications may not vary with `ctx.command`.** This one is a stated
+  requirement rather than a checked one. `ctx.command` says what Watt is *doing*, not
+  what environment this *is*, so "an application that exists only while starting" is
+  not a configuration anyone means to write; and the only way to check it is to
+  evaluate the root once per command and compare, which costs every load an extra
+  evaluation — the thing "Config code runs exactly once" exists to prevent — to catch
+  a mistake nobody makes. It sits with determinism and the `process.env` rule: stated,
+  unenforced, and named by the error when it bites (below). Per-application
+  *settings* may branch on `command` freely; `watch: command === 'dev'` is the
+  canonical example and stays legal.
+- **The set of applications *may* vary with `ctx.mode`, and `resolve` takes the
+  mode.** A staging deployment that runs one extra application is coherent, and
+  forbidding it was overreach. `resolve` accepts the same `--production` / `--mode
+  <name>` flags every other `exec`-context command already takes (see "CLI commands
+  over config"), defaulting to development as they do, so the operator who boots with
+  `--production` resolves with `--production` and the two topologies agree by
+  construction rather than by rule.
+- **`enabled` must not hide an entry from `resolve`.** It is the supported way to
+  exclude an application, so it cannot also be the thing that prevents the exclusion
+  from ever being undone. `resolve` collects entries with a `url` and a missing
+  directory **before** the `enabled` filter, and clones them all: fetching a
+  repository you will not boot costs disk, and disk is cheaper than a topology that
+  cannot be resolved from the context you are in. (v3 filtered first — `transform()`
+  spliced disabled applications out ahead of resolve — so a v3 project with
+  `enabled: false` on a remote entry has always had this hole. v4 closes it.)
+
+  Nothing else changes: `enabled` is still resolved before fan-out, disabled entries
+  still spawn no worker, and the collection above is a second read of the same
+  canonical snapshot, not a second evaluation.
+
+When a boot does find an unresolved entry, the error names the possibility rather
+than repeating the instruction that failed: it reports the missing directory, prints
+the `resolve` invocation **matching the current context** (`wattpm resolve
+--production`, not a bare `wattpm resolve`), and adds that an entry invisible to
+that command means the root config varies its application list by `ctx.command`.
+That turns the one unrecoverable loop into a message that either fixes itself or
+names the rule it broke.
+
+Back to loading order: a load-time failure would make `wattpm resolve` fail on a
+clean checkout telling you to run `wattpm resolve`. Migrate's step 3 has the same
+shape over its own emitted output. Only `dev`, `start` and `build` — the commands
+that need the code to be present — promote an unresolved entry to an error, and it
+is the message above, never a detector "no JavaScript sources" error.
 
 The `{PLT_APPLICATION_X_PATH}` placeholder entries plus `.env` lines were written
 by **`wattpm import`** (`external.js:243-271`), not `resolve` — as is the capability
@@ -1402,7 +1434,10 @@ serial scheme.
    of `prepareApplication` (`runtime/lib/config.js:398-402` then `:412`) and no
    worker ever existed for them: a decommissioned app whose capability is absent
    from the production image, or whose config file calls migrate's
-   `requiredEnv()`, must not be able to fail a boot that excludes it.
+   `requiredEnv()`, must not be able to fail a boot that excludes it. The one
+   consumer that reads the list *before* this filter is `resolve`, which needs the
+   entries it is expected to fetch rather than the entries this boot would run — a
+   second read of the same snapshot, not a second evaluation (see "Remote apps").
 
    **The guarantee is exact for per-app files and partial for root-inline entries**,
    and the difference is not fixable by ordering. `enabled` is read from the
@@ -3519,7 +3554,11 @@ runs multiple workers on a fixed port at all.
    bundle boot test.
 7. **wattpm-utils**: `wattpm import` via magicast with snippet fallback;
    external/install flow emits v4 per-app files; `create` templates emit
-   `watt.config.ts`; remove `patch-config`. **`wattpm-utils migrate` lives here,
+   `watt.config.ts`; remove `patch-config`. **`resolve` gains the `exec`-context
+   flags** (`--production` / `--mode <name>`) and collects its candidates from the
+   application list *before* the `enabled` filter rather than from the filtered one
+   (`external.js:422-433` today), so a remote entry excluded in the current mode is
+   still fetched. **`wattpm-utils migrate` lives here,
    under `wattpm-utils`' own binary — no `wattpm` routing**: it hosts the vendored
    v3 closure (foundation machinery, the four upgrade chains — dual-run against
    token and resolved clones — frozen snapshots of the ~13 capability schemas and
