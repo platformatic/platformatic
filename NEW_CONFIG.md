@@ -3489,6 +3489,30 @@ Generation reads both views. Then:
    audit deletes the placeholder-only unions first: what a `{PLT_X}` can still land in
    after that is a much smaller schema surface than v3's.
 
+   **An embedded placeholder is one witness, not several.** `"{PREFIX}{LEVEL}"` in an
+   enum position becomes a template literal, and two separately valid sentinels need
+   not concatenate to a member of that enum — nor does a per-variable record
+   (variable, JSON path, target type) hold enough to notice, since it has thrown away
+   the fact that the two share a position. So the record keeps the **whole
+   interpolation** wherever a position has one, and the test is a **joint** witness:
+   the concatenated result must validate there. Where the position is a free-form
+   string with nothing beyond `type`, any witness works and there is nothing to prove.
+   Where it is constrained — an enum, a pattern, a length — and no joint witness can be
+   produced from the values the project supplies, that is a pre-flight refusal naming
+   the position and the expression, on the same ground as everything else here: better
+   than a sentinel step 3 rejects once every file is written.
+
+   **The guard applies to the interpolated result, not to each component.** Per-variable
+   `requiredEnv` would reject an empty `{PREFIX}` that v3 was perfectly happy with —
+   v3 interpolated `''` and the surrounding string still had to validate, so a
+   component may legitimately be empty while the whole value is not. Migrate therefore
+   emits the components with the plain `?? ''` fallback and wraps the interpolation
+   once, with a `requiredValue(expression, names)` helper that throws naming **every**
+   variable in it. Two helpers rather than one, and only in projects that have an
+   embedded placeholder in a typed position — the single-position case keeps
+   `requiredEnv` unchanged, and a diagnostic that names one of two variables when
+   either could be the empty one is not worth the saving.
+
    That constraint test is computed from the lexical view like the
    rest, which is what lets it stop the run *before* any file is written rather than
    surfacing at validation. It
