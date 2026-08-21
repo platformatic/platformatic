@@ -45,6 +45,11 @@
       "head": "const config = await loadConfiguration(configurationFile)",
       "lines": 1
     },
+    "packages/wattpm-utils/lib/commands/external.js:376": {
+      "sha": "b4684192235ac8fb",
+      "head": "const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch",
+      "lines": 1
+    },
     "packages/wattpm-utils/lib/commands/external.js:422-433": {
       "sha": "88af00f6406e4eb7",
       "head": "const resolvableApplications = config.applications.filter(application => {",

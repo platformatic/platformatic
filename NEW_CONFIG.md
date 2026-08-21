@@ -691,10 +691,31 @@ see it. Three different things follow from that, and they are not one rule:
   entries and exits; by the time `resolveApplications` has called `loadConfiguration`
   (`external.js:413`) nothing is left holding the pre-filter list, and re-deriving it
   would mean evaluating the root a second time. So the worker records it on the way
-  past — every entry carrying a `url`, projected to `{ id, url, path }` — and posts
-  it beside the config as `resolveCandidates` (see "Loading mechanism", step 4).
-  `resolve` reads that field instead of filtering the returned application list as it
-  does today (`external.js:422-433`).
+  past — every entry carrying a `url`, projected to `{ id, url, path, gitBranch }` —
+  and posts it beside the config as `resolveCandidates` (see "Loading mechanism",
+  step 4). **`gitBranch` is in the projection because dropping it changes which
+  revision lands on disk.** `resolveGitApplication` selects with
+  `application.gitBranch ?? parsedGitUrl.branch` (`external.js:376`), so a disabled
+  remote pinned to `release` would otherwise be cloned from the URL's branch. It
+  travels **as authored**: the projection is taken in the worker, ahead of the
+  main-side schema pass, so an undeclared `gitBranch` stays undeclared rather than
+  arriving as the schema's `'main'` default and shadowing a `#branch` fragment the
+  URL carried. A disabled remote pinned to a non-default branch is an integration
+  test.
+
+  **Main-side, the candidates ride on `kMetadata`.** `loadConfiguration` keeps
+  returning the configuration object, so every caller keeps working; the list is
+  attached to the symbol-keyed metadata envelope beside `root`, `path`, `env` and
+  `module`, and `resolve` reads `config[kMetadata].resolveCandidates` rather than
+  filtering the returned application list as it does today (`external.js:422-433`).
+  That envelope is the right home rather than a convenient one: it already exists to
+  carry facts *about* a load that are not part of the configuration, it is already
+  stripped from the public payloads by the shallow spread in `getRuntimeConfig()`,
+  and being symbol-keyed it cannot reach a schema, a DTO or a JSON round-trip. The
+  alternatives both cost more than they buy — putting the list in validated
+  configuration data would put it in the schema and the DTO, and a second entry point
+  returning `{ config, candidates }` would have to be adopted by every caller to serve
+  one.
 
   Nothing else changes: `enabled` is still resolved before fan-out, disabled entries
   still spawn no worker, and the candidate list is a projection of the same canonical
@@ -1541,10 +1562,13 @@ serial scheme.
    3. **Validate the unexpanded root shape.** Orchestration keys only — ids, `path`,
       `url`, `enabled`, `autoload`, `workers` — since a pending `config` slot has
       nothing to validate yet and capability configuration is validated later,
-      main-side, against each capability's own schema.
+      main-side, against each capability's own schema. This is a **shape** check and
+      injects no defaults; the `useDefaults` pass runs main-side on the returned
+      snapshot, which is what keeps step 4's projection carrying authored values
+      rather than schema-supplied ones.
    4. **Expand `autoload`** into the application list, reading `autoload.path`,
       `exclude` and `mappings` from the snapshot; then **record every entry carrying a
-      `url`** as `{ id, url, path }` — the projection the worker posts beside the
+      `url`** as `{ id, url, path, gitBranch }` — the projection the worker posts beside the
       config; then **resolve `enabled`**, dropping disabled entries. The recording
       sits between the two because that is the only moment both lists exist: after
       expansion, so autoloaded and backfilled entries are in it, and before the
@@ -1709,7 +1733,8 @@ serial scheme.
    applied, in step 4, and no second list of entries carrying capability
    configuration crosses the boundary. `resolveCandidates` is the third field and it
    exists because of what step 4 destroys — the entries that carried a `url`,
-   captured **before** the filter, each projected to `{ id, url, path }`. `resolve`
+   captured **before** the filter, each projected to `{ id, url, path, gitBranch }`.
+   `resolve`
    is owed those (see "Remote apps") and this worker is the only place they are ever
    visible; it exits immediately after posting, so a list not carried across the
    boundary is simply gone. Projecting rather than shipping the unfiltered entries is
@@ -4003,7 +4028,7 @@ runs multiple workers on a fixed port at all.
    external/install flow emits v4 per-app files; `create` templates emit
    `watt.config.ts`; remove `patch-config`. **`resolve` gains the `exec`-context
    flags** (`--production` / `--mode <name>`) and takes its candidates from the
-   loader's `resolveCandidates` field, recorded before the `enabled` filter, rather
+   loader's `kMetadata` `resolveCandidates` list, recorded before the `enabled` filter, rather
    than by filtering the returned application list as it does today
    (`external.js:422-433`) — the pre-filter list does not survive the eval worker, so
    this is a protocol change before it is a command change. A remote entry excluded
