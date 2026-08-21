@@ -3004,6 +3004,18 @@ Generation reads both views. Then:
    nothing and buys back the one conversion that could otherwise turn a project that
    refused to start into one that starts on a port nobody chose.
 
+   **An enum position gets a guard that returns the enum**, not a `string`. Migrate
+   emits TypeScript that the user opens in an editor, and a `string`-returning helper
+   assigned to a field typed as a literal union is an error there even though the
+   loader would accept the value at runtime — a migration that leaves the project red
+   in its editor has not finished. So enum positions get `requiredEnum(name, allowed)`,
+   which narrows to `allowed[number]` and checks membership, and the check is worth
+   more than the type: a value outside the set now fails **at the config file, naming
+   the allowed members**, instead of at AJV two steps later with a schema path. That
+   is three emitted helpers at most — `requiredEnv` for plain typed positions,
+   `requiredEnum` for enums, `requiredValue` for an interpolation (see step 2) — each
+   written into the file only when the project has a position needing it.
+
    The guard for a typed position **throws when the variable is unset or empty**, and
    throws even under `strictEnv: 'warn'`: v3's ajv rejected `''` in these positions
    with `coerceTypes` on, and warning would leave `Number('')` — that is, `0` — to
@@ -4253,8 +4265,13 @@ runs multiple workers on a fixed port at all.
    fence rather than inferred:
 
    - **`config`** — a complete v4 configuration with a default export. Loaded through
-     the real v4 loader and validated against the shipped capability schemas. Every
-     such block must stand alone, imports included.
+     the real v4 loader and validated against the shipped capability schemas, **and
+     typechecked with `tsc --noEmit`** against the shipped `.d.ts` files. Loader
+     validation alone is not enough: it accepts a `string` where the generated types
+     declare a literal union, so a block can pass every runtime check and still be
+     wrong in the editor the format exists to serve. The same pass covers every
+     configuration fixture `migrate` and the generators emit, for the same reason.
+     Every such block must stand alone, imports included.
    - **`decl`** — interfaces, type aliases and the bodiless factory overloads, which
      are a `SyntaxError` after type stripping and export nothing. Typechecked with
      `tsc --noEmit` against the shipped `.d.ts` files; Appendix A's blocks are
@@ -4538,8 +4555,19 @@ function requiredEnv (name: string): string {
   return value
 }
 
+function requiredEnum <const T extends readonly string[]> (name: string, allowed: T): T[number] {
+  const value = requiredEnv(name)
+  if (!allowed.includes(value)) {
+    throw new Error(`${name} must be one of: ${allowed.join(', ')}`)
+  }
+  return value as T[number]
+}
+
 export default defineConfig({
-  logger: { level: requiredEnv('PLT_SERVER_LOGGER_LEVEL') },
+  logger: {
+    level: requiredEnum('PLT_SERVER_LOGGER_LEVEL',
+      ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+  },
   managementApi: (process.env.PLT_MANAGEMENT_API ?? '') !== '',
   application: {
     id: 'main',
