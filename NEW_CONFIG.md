@@ -775,6 +775,18 @@ export — after the walk, not before it (see "Loading mechanism", step 2):
    config file is a statement, not an absence**: it does not fall through to
    zero-config detection, which is for a project that has no configuration at all.
 
+**The rules are total over objects, and everything else is refused ahead of them.**
+Canonical data is not only objects: `null`, arrays, strings, numbers and booleans all
+survive the walk — arrays legitimately, since configuration values contain them — and
+none of them is a configuration. So the step that ends the unwrap is a plain-object
+test, and a top-level export that fails it is refused naming the file and the type
+received. `null` is the one worth spelling out, because it is the one that would
+otherwise get further: `typeof null === 'object'`, so it reaches rule 2 as a property
+read on nothing, and the difference between a `TypeError` from one implementation and
+an AJV error from another is exactly the divergence the four rules exist to prevent.
+Rule 4's "empty/other object" means an object. It is not a resting place for values
+that are not.
+
 **Run what is here.** The whole rule is three steps: **(1)** find the nearest
 `watt.config.*` from the current directory upward, stopping at — and including —
 the nearest ancestor containing a `package.json`, and searching the current
