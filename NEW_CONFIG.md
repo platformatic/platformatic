@@ -662,9 +662,19 @@ see it. Three different things follow from that, and they are not one rule:
   spliced disabled applications out ahead of resolve — so a v3 project with
   `enabled: false` on a remote entry has always had this hole. v4 closes it.)
 
+  **Where that list comes from is the load-bearing part**, because `resolve` cannot
+  produce it. The filter runs inside the root eval worker, which drops the disabled
+  entries and exits; by the time `resolveApplications` has called `loadConfiguration`
+  (`external.js:413`) nothing is left holding the pre-filter list, and re-deriving it
+  would mean evaluating the root a second time. So the worker records it on the way
+  past — every entry carrying a `url`, projected to `{ id, url, path }` — and posts
+  it beside the config as `resolveCandidates` (see "Loading mechanism", step 4).
+  `resolve` reads that field instead of filtering the returned application list as it
+  does today (`external.js:422-433`).
+
   Nothing else changes: `enabled` is still resolved before fan-out, disabled entries
-  still spawn no worker, and the collection above is a second read of the same
-  canonical snapshot, not a second evaluation.
+  still spawn no worker, and the candidate list is a projection of the same canonical
+  snapshot, recorded during the same evaluation rather than produced by a second one.
 
 When a boot does find an unresolved entry, the error names the possibility rather
 than repeating the instruction that failed: it reports the missing directory, prints
@@ -1446,8 +1456,12 @@ serial scheme.
       nothing to validate yet and capability configuration is validated later,
       main-side, against each capability's own schema.
    4. **Expand `autoload`** into the application list, reading `autoload.path`,
-      `exclude` and `mappings` from the snapshot, and **resolve `enabled`**, dropping
-      disabled entries. Orchestration drives filesystem access — `autoload.path`
+      `exclude` and `mappings` from the snapshot; then **record every entry carrying a
+      `url`** as `{ id, url, path }` — the projection the worker posts beside the
+      config; then **resolve `enabled`**, dropping disabled entries. The recording
+      sits between the two because that is the only moment both lists exist: after
+      expansion, so autoloaded and backfilled entries are in it, and before the
+      filter, which is what lets `resolve` fetch an application this boot excludes. Orchestration drives filesystem access — `autoload.path`
       decides which directories are read, `mappings` and `enabled` decide which
       applications are evaluated at all — so it is checked before it is acted on,
       which is what v3 did (`foundation/lib/configuration.js:587-606`, validate then
@@ -1486,9 +1500,12 @@ serial scheme.
    worker ever existed for them: a decommissioned app whose capability is absent
    from the production image, or whose config file calls migrate's
    `requiredEnv()`, must not be able to fail a boot that excludes it. The one
-   consumer that reads the list *before* this filter is `resolve`, which needs the
-   entries it is expected to fetch rather than the entries this boot would run — a
-   second read of the same snapshot, not a second evaluation (see "Remote apps").
+   consumer that needs the list *before* this filter is `resolve`, which is owed the
+   entries it is expected to fetch rather than the entries this boot would run. That
+   is not a read it can perform for itself, because the filter runs here, in the
+   worker, and the worker exits: it is served by the projection step 4 records on the
+   way past and the protocol carries back (see "Remote apps") — the same evaluation,
+   not a second one.
 
    **The guarantee is exact for per-app files and partial for root-inline entries**,
    and the difference is not fixable by ordering. `enabled` is read from the
@@ -1600,7 +1617,20 @@ serial scheme.
    the gap between what was checked and what was transported.
    Violations post a structured, path-aware error (`InvalidConfigValueError`
    naming the JSON path); valid results post back
-   `{ config, importedFiles }` and the worker exits. The protocol carries no
+   `{ config, importedFiles, resolveCandidates }` and the worker exits. `config`
+   holds the applications this boot runs: the `enabled` filter has already been
+   applied, in step 4, and no second list of entries carrying capability
+   configuration crosses the boundary. `resolveCandidates` is the third field and it
+   exists because of what step 4 destroys — the entries that carried a `url`,
+   captured **before** the filter, each projected to `{ id, url, path }`. `resolve`
+   is owed those (see "Remote apps") and this worker is the only place they are ever
+   visible; it exits immediately after posting, so a list not carried across the
+   boundary is simply gone. Projecting rather than shipping the unfiltered entries is
+   deliberate: a disabled entry's deferred `config` slot is never called, so an
+   unfiltered list would put entries with an unfilled slot into the main process, one
+   forgotten drop away from the runtime. A projection carrying no capability
+   configuration cannot be booted by accident, whatever downstream code does with it.
+   The protocol carries no
    environment: the main process resolved that worker's `env` before constructing
    it, and resolves every application worker's the same way at boot — one
    implementation serving both views of the ladder, which differ only by the rungs
@@ -3697,10 +3727,12 @@ runs multiple workers on a fixed port at all.
 7. **wattpm-utils**: `wattpm import` via magicast with snippet fallback;
    external/install flow emits v4 per-app files; `create` templates emit
    `watt.config.ts`; remove `patch-config`. **`resolve` gains the `exec`-context
-   flags** (`--production` / `--mode <name>`) and collects its candidates from the
-   application list *before* the `enabled` filter rather than from the filtered one
-   (`external.js:422-433` today), so a remote entry excluded in the current mode is
-   still fetched. **`wattpm-utils migrate` lives here,
+   flags** (`--production` / `--mode <name>`) and takes its candidates from the
+   loader's `resolveCandidates` field, recorded before the `enabled` filter, rather
+   than by filtering the returned application list as it does today
+   (`external.js:422-433`) — the pre-filter list does not survive the eval worker, so
+   this is a protocol change before it is a command change. A remote entry excluded
+   in the current mode is fetched all the same. **`wattpm-utils migrate` lives here,
    under `wattpm-utils`' own binary — no `wattpm` routing**: it hosts the vendored
    v3 closure (foundation machinery, the four upgrade chains — dual-run against
    token and resolved clones — frozen snapshots of the ~13 capability schemas and
