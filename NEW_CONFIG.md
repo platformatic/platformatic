@@ -2768,7 +2768,7 @@ authored values and drop environment-disabled applications. The views:
   `{plt_x}` are all placeholders. Migrate matches that grammar exactly — writing it
   narrower would silently leave un-converted tokens as literal text in the emitted
   configuration, where v3 had substituted them. *Which applications exist* is
-  lexical; the four **structural path positions** are the documented exception and
+  lexical; the six **structural path positions** are the documented exception and
   are resolved against that environment before emission (see step 1). Its
   **module list** — what the
   pre-flight check and the generation table key off — is
@@ -3377,6 +3377,24 @@ Generation reads both views. Then:
    ✗ cannot migrate: 'api' resolves to ../shared/api, outside this project.
      Migrate that project on its own, then re-run here.
    ```
+
+   **The bound is every path migrate touches, not only application directories.** An
+   entry's `config` is a structural position (see step 1) and v3 resolved it against
+   the application's own path (`runtime/lib/config.js:222-223`), so an application
+   *inside* the root may legally point at `../../shared/platformatic.json` — a file
+   migrate would **read** to classify the application and **delete** in step 5, on a
+   tree its dirty check never covered and its rollback cannot reach. That is worse
+   than writing into another project, because a write at least leaves the original
+   behind. So containment is tested over the whole set migrate touches: every
+   application directory, every resolved `applications[].config` and
+   `autoload.mappings[].config`, every `envfile`, and `resolvedApplicationsBasePath`.
+   Each is canonicalized through `realpath` first and compared as a path rather than
+   a string — the same distinction this document is careful about for `resolve`'s
+   containment rule (see "Scope"), where a prefix match admits `/tmp/app-evil` as
+   contained by `/tmp/app` and follows a symlinked ancestor straight out of the tree.
+   Here it is a refusal rather than a skip: an external legacy config is not an entry
+   migrate can quietly leave alone, because the application that names it still has
+   to be converted.
 
    The second is the one every emission depends on: **a v4 target that
    already exists**. Migrate emits a root `watt.config.*` and one per application
