@@ -550,6 +550,11 @@
       "head": "const { localUrl, config, path } = application[kConfig]",
       "lines": 17
     },
+    "packages/runtime/lib/runtime.js:2153": {
+      "sha": "3878307d4f94d23e",
+      "head": "const { type, version, dependencies } = await sendViaITC(application, 'getApplicationInfo')",
+      "lines": 1
+    },
     "packages/runtime/lib/runtime.js:1595-1601": {
       "sha": "83d88efe24ee3c97",
       "head": "getRuntimeConfig (includeMeta = false) {",
@@ -559,6 +564,31 @@
       "sha": "9e20be24bbae588a",
       "head": "const { localUrl, config, path } = application[kConfig]",
       "lines": 1
+    },
+    "packages/runtime/index.d.ts:382": {
+      "sha": "56f48c49d9e6c982",
+      "head": "getRuntimeConfig (includeMeta: true): RuntimeConfiguration",
+      "lines": 1
+    },
+    "packages/runtime/lib/management-handlers.js:136": {
+      "sha": "8b2ee4fe86e2a3d8",
+      "head": "register('addApplications', async ({ applications, start }) => {",
+      "lines": 1
+    },
+    "packages/runtime/lib/management-api.js:157": {
+      "sha": "76de52d3cb03bc70",
+      "head": "const config = runtime.getRuntimeConfig(true)",
+      "lines": 1
+    },
+    "packages/runtime/lib/management-api.js:104": {
+      "sha": "2e5f5ec301fe7118",
+      "head": "const rawConfig = await runtime.getRuntimeConfig(metadata)",
+      "lines": 1
+    },
+    "packages/wattpm/lib/commands/applications.js:31,110-112": {
+      "sha": "b3c6c604e9cd2f5e",
+      "head": "const config = await client.getRuntimeConfig(runtime.pid, true)",
+      "lines": 4
     },
     "packages/runtime/lib/management-handlers.js:30,136-146": {
       "sha": "88e8e75e96a1b96e",
@@ -864,11 +894,6 @@
       "sha": "8c2087c418e605ac",
       "head": "async getRuntimeApplicationConfig (pid, applicationId) {",
       "lines": 1
-    },
-    "packages/wattpm/lib/commands/applications.js:31,110-112": {
-      "sha": "b3c6c604e9cd2f5e",
-      "head": "const config = await client.getRuntimeConfig(runtime.pid, true)",
-      "lines": 4
     },
     "packages/runtime/lib/runtime.js:345": {
       "sha": "7b3a045b17f63162",

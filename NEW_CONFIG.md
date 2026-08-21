@@ -543,8 +543,10 @@ the capability's AJV validation and transform run, the loader strips them into
 the application entry's envelope — capability schemas keep
 `additionalProperties: false` and gain no reserved properties, so a stamped
 factory result validates cleanly. In the programmatic DTO they surface as
-`applications[].module` and `applications[].version`, next to `resolvedConfig`,
-which carries only the capability payload.
+`applications[].module` and `applications[].definitionVersion` — renamed on the way
+out because `getApplicationDetails().version` already means the capability version
+the *running worker* loaded (see "Machine-generated configs") — next to
+`resolvedConfig`, which carries only the capability payload.
 
 The stamped `version` closes the root/app skew hole: a root-inline factory resolves
 from the root's copy of the capability, while the worker implementation may resolve
@@ -2562,8 +2564,14 @@ export default {
   v4 each entry carries
   **both** `configPath` (the per-app file path, or absent for inline definitions)
   and `resolvedConfig` (the validated raw capability payload), plus `module` and
-  `version` — the loader-metadata envelope split off the definition (see
-  "Capability factories"). Payload compatibility and patch-
+  `definitionVersion` — the loader-metadata envelope split off the definition (see
+  "Capability factories"). **Not `version`**: `getApplicationDetails().version`
+  already means the version of the capability the *running worker* loaded, answered
+  over ITC by `getApplicationInfo` (`runtime/lib/runtime.js:2153`). The two are
+  different facts, and under the minor skew this document permits they hold different
+  values — which is the exact condition the stamp exists to surface, so a shared name
+  would hide it precisely when it matters. `details.version` keeps its meaning
+  untouched. Payload compatibility and patch-
   document compatibility are **separate contracts**: patch documents stay
   byte-compatible (below), while the payload change is a declared breaking change
   coordinated with every consumer (watt-extra reads `applications[].type`, which is
@@ -2582,7 +2590,21 @@ export default {
   exists precisely so that changing a running application's configuration is explicit,
   patch-shaped and visible. So both getters construct a DTO from the snapshot and
   freeze it through, with tests that mutate every returned payload and assert runtime
-  state is untouched. `getApplicationConfig()` needs none of this: it crosses ITC and
+  state is untouched.
+
+  **`getRuntimeConfig(true)` leaves the public surface**, or the promise above has a
+  hole with a typed overload pointing straight at it: `includeMeta: true` is declared
+  in `runtime/index.d.ts:382` and returns live `#config`, symbol key and all. Its
+  in-tree uses do not need a public API. Two are internal — `addApplications` reading
+  `config[kMetadata].root` to validate against
+  (`runtime/lib/management-handlers.js:136`, `runtime/lib/management-api.js:157`) —
+  and stay inside the runtime, off the DTO contract. One is `GET /config?metadata=true`
+  (`runtime/lib/management-api.js:104`), which goes with that endpoint. The published
+  consumer is `@platformatic/control`'s `getRuntimeConfig(pid, true)`, which
+  `applications:add`/`remove --save` calls for `root` and `configPath`
+  (`wattpm/lib/commands/applications.js:31,110-112`) — and the plan already replaces
+  that with a metadata accessor over `GET /metadata`, which is the shape those callers
+  actually wanted. `getApplicationConfig()` needs none of this: it crosses ITC and
   JSON round-trips on the way back, so what it returns was never shared to begin
   with.
 
