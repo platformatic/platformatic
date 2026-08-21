@@ -3445,6 +3445,23 @@ Generation reads both views. Then:
    range intersection. A `{PLT_X}` used at either pair admits no value that validates
    at both, so step 3 could not validate its own output.
 
+   **Positions are grouped by the environment that supplies them, not by variable
+   name.** v3 read env files relative to each config file — `loadEnv` walks up from
+   that file's own directory and stops at the first `.env`
+   (`foundation/lib/configuration.js:361-371`) — so `web/a/.env` and `web/b/.env` can
+   legitimately give one key two meanings, and v4's per-app eval workers keep exactly
+   that separation. Intersecting every `{SETTING}` in the project would refuse a
+   correct one for a collision that was never a collision: `SETTING` in `web/a` under
+   an enum and `SETTING` in `web/b` under a numeric range are two variables that
+   happen to be spelled alike. So migrate resolves, per position, **which file would
+   have supplied that variable for that config file** — the vendored `loadEnv` answers
+   this already, and it is the same walk the structural paths use — and intersects
+   only within a supplier. A variable coming from the real environment, or from a file
+   both positions reach, *is* intersected across all of them, because there the one
+   value is real and every position genuinely sees it. Seeding follows the same
+   grouping: a sentinel is only ever needed for a position no file supplies, and a
+   supplier-scoped conflict is reported with the files, not just the paths.
+
    **The intersection is computed over a named, closed subset of JSON Schema, and a
    combination outside it refuses rather than being guessed at.** AJV validates a
    candidate; it does not intersect constraints or produce a witness, so this is
