@@ -2997,14 +2997,34 @@ Generation reads both views. Then:
    directory, which is why that case is reported by the source scan instead of
    converted.
 
-   **Four positions are *structural* and must be concrete before anything is
-   emitted**: an entry's `path`, `autoload.path`, `envfile`, and
-   `resolvedApplicationsBasePath`. Migrate needs real directories at generation time
-   — to decide where each per-app file goes, to run the detector, to rebase `envfile`
-   app-relative, and to evaluate the root-directory `envfile` refusal — and none of
-   that is expressible over an unresolved token. So these four are **resolved, not
-   converted**: migrate evaluates their placeholders and writes the resulting literal
-   path. The resolution chain is, in order: **`PLT_ROOT`**, seeded to the directory of
+   **Six positions are *structural* and must be concrete before anything is
+   emitted**: an entry's `path`, an entry's `config`, `autoload.mappings[].config`,
+   `autoload.path`, `envfile`, and `resolvedApplicationsBasePath`. Migrate needs real
+   directories and real filenames at generation time — to decide where each per-app
+   file goes, to open the legacy config each entry points at, to run the detector, to
+   rebase `envfile` app-relative, and to evaluate the root-directory `envfile` refusal
+   — and none of that is expressible over an unresolved token. So these six are
+   **resolved, not converted**: migrate evaluates their placeholders and writes the
+   resulting literal path.
+
+   **The two config positions are the easiest to leave off a list like this**, because
+   they name files rather than directories, and because v4 has no equivalent of
+   either. v3 accepted a path in an entry's `config` and resolved it against that
+   application's own `path` (`runtime/lib/config.js:222-223`), and accepted a filename
+   in `autoload.mappings[].config`, joined to the discovered entry directory
+   (`runtime/lib/config.js:381-384`) — so `config: '{APP_CONFIG}'` is a legal v3
+   project, and one that names a file no rule of migrate's own could guess. Every
+   later step is downstream of that value being real: the lexical pass reads that file
+   to learn the application's module, step 1 classifies and emits from it, step 3
+   validates the result against it, and **step 5 deletes it by name** — the custom
+   filenames the deletion set is built from are exactly these. An unresolved token
+   here does not degrade the run; it makes each of those steps operate on a file
+   migrate cannot open, with the deletion the worst of them, since a legacy config
+   left behind is the coexistence state step 5 exists to end. The last rung of the
+   chain below — the `<autoload.path>/<id>` convention — is directory-shaped and does
+   not apply to these two: a config filename still unresolved at the end of the chain
+   refuses rather than falling back to name discovery, because discovery is exactly
+   what an entry naming its own file declined. The resolution chain is, in order: **`PLT_ROOT`**, seeded to the directory of
    the config file being read — v3's loader assigned it *after* `loadEnv`
    (`foundation/lib/configuration.js:512`), so it was defined in every config parse
    and is not something migrate can read from the environment it runs in — the
@@ -3294,9 +3314,10 @@ Generation reads both views. Then:
    differently.
 5. **Delete every legacy file migrate read** — not only the recognized
    `platformatic.json`/`watt.json` names but each custom filename a v3
-   `applications[].config` pointed at, recorded during the lexical pass, since v3
-   accepted any name there and leaving one behind preserves exactly the coexistence
-   state this step exists to end.
+   `applications[].config` or `autoload.mappings[].config` pointed at, recorded during
+   the lexical pass from the resolved structural positions, since v3 accepted any name
+   in either and leaving one behind preserves exactly the coexistence state this step
+   exists to end.
 
    **The transaction commits here** — when the last legacy file is gone and before
    anything else runs. That is the point where the tree is a valid v4 project and
