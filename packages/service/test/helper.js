@@ -4,6 +4,7 @@ import { createTemporaryDirectory } from '../../basic/test/helper.js'
 import { loadConfiguration, ServiceCapability } from '../index.js'
 
 const agent = new Agent({
+  allowH2: false,
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {

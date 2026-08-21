@@ -1,4 +1,4 @@
-import { deepStrictEqual, notEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, notEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
@@ -92,7 +92,8 @@ test('mesh network works from external processes via ChildManager', async t => {
     })
 
     deepStrictEqual(body.responses[2].statusCode, 502)
-    deepStrictEqual(Object.keys(body.responses[2].body).sort(), ['message', 'stack'])
+    ok(body.responses[2].body.message)
+    ok(body.responses[2].body.stack)
 
     deepStrictEqual(body.responses[3], {
       body: `application/octet-stream:123:${'echo'.repeat(10)}`,
@@ -170,7 +171,7 @@ test('interceptor readiness timeout handling', async t => {
   try {
     await app.start()
   } catch (err) {
-    strictEqual(err.message, 'The worker 0 of the application "main" failed to join the mesh network in 3000ms.')
+    strictEqual(err.message, "Application with id 'main' failed to start in 3000ms.")
   }
 
   t.after(() => app.close())

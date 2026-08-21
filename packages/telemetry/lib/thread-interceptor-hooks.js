@@ -16,7 +16,10 @@ function getTracer () {
 }
 
 export function createTelemetryThreadInterceptorHooks () {
-  const onServerRequest = (req, cb) => {
+  const serverSpans = new WeakMap()
+  const serverContexts = new WeakMap()
+
+  const onServerRequest = req => {
     const activeContext = propagation.extract(context.active(), req.headers)
 
     const route = req.routeOptions?.url ?? null
@@ -31,22 +34,27 @@ export function createTelemetryThreadInterceptorHooks () {
     )
     const ctx = trace.setSpan(activeContext, span)
 
-    context.with(ctx, cb)
+    serverSpans.set(req, span)
+    serverContexts.set(req, ctx)
+    return ctx
   }
 
-  const onServerResponse = (_req, _res) => {
-    const activeContext = context.active()
-    const span = trace.getSpan(activeContext)
+  const onServerResponse = req => {
+    const span = serverSpans.get(req)
     if (span) {
       span.end()
+      serverSpans.delete(req)
+      serverContexts.delete(req)
     }
   }
 
-  const onServerError = (_req, _res, error) => {
-    const activeContext = context.active()
-    const span = trace.getSpan(activeContext)
+  const onServerError = (req, _res, error) => {
+    const span = serverSpans.get(req)
     if (span) {
       span.setAttributes(formatSpanAttributes.error(error))
+      span.end()
+      serverSpans.delete(req)
+      serverContexts.delete(req)
     }
   }
 
@@ -139,11 +147,14 @@ export function createTelemetryThreadInterceptorHooks () {
   }
 
   return {
-    onServerRequest,
-    onServerResponse,
-    onServerError,
-    onClientRequest,
-    onClientResponseEnd,
-    onClientError
+    onRequest: onClientRequest,
+    onResponseEnd: onClientResponseEnd,
+    onError: onClientError,
+    serverHooks: {
+      onRequest: onServerRequest,
+      onResponse: onServerResponse,
+      onError: onServerError,
+      run: (req, fn) => context.with(serverContexts.get(req) ?? context.active(), fn)
+    }
   }
 }

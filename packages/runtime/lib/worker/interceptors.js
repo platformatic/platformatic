@@ -10,10 +10,10 @@ import { createTelemetryThreadInterceptorHooks } from '@platformatic/telemetry'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { parentPort, workerData } from 'node:worker_threads'
-import { Agent, Client, Pool } from 'undici'
-import { wire } from 'undici-thread-interceptor'
-import { createChannelCreationHook } from '../policies.js'
+import { workerData } from 'node:worker_threads'
+import { Agent, Client, Pool, setGlobalDispatcher } from 'undici'
+import { createInterceptor } from 'undici-thread-interceptor'
+import { createTargetPermissionHook } from '../policies.js'
 import { RemoteCacheStore, httpCacheInterceptor } from './http-cache.js'
 
 const kPlatformaticGlobalDispatcher = Symbol.for('platformatic.undici.globalDispatcher')
@@ -43,8 +43,11 @@ export function refreshGlobalDispatcher () {
 }
 
 export async function setDispatcher (runtimeConfig) {
-  const threadDispatcher = createThreadInterceptor(runtimeConfig)
-  const threadInterceptor = threadDispatcher.interceptor
+  const telemetryHooks = runtimeConfig.telemetry ? createTelemetryThreadInterceptorHooks() : {}
+  const threadDispatcher = createThreadInterceptor(runtimeConfig, telemetryHooks)
+  const threadInterceptor = threadDispatcher
+
+  await threadDispatcher.ready
 
   let cacheInterceptor = null
   if (runtimeConfig.httpCache) {
@@ -65,30 +68,29 @@ export async function setDispatcher (runtimeConfig) {
       [threadInterceptor, ...userInterceptors, cacheInterceptor].filter(Boolean)
     )
 
-    markAsPlatformaticDispatcher(dispatcher)
-    mirrorGlobalDispatcherForBuiltinFetch(dispatcher, createLegacyDispatcher(dispatcher))
+    installGlobalDispatcher(dispatcher)
     return dispatcher
   }
 
   composeRuntimeDispatcher = installDispatcher
   installDispatcher(new Agent(dispatcherOpts))
 
-  return { threadDispatcher }
-}
-
-function createLegacyDispatcher (dispatcher) {
-  const legacyDispatcher = globalThis[Symbol.for('undici.globalDispatcher.1')]
-  const currentDispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
-
-  if (legacyDispatcher && legacyDispatcher !== currentDispatcher && legacyDispatcher.constructor?.name === 'Dispatcher1Wrapper') {
-    try {
-      return new legacyDispatcher.constructor(dispatcher)
-    } catch {
-      return dispatcher
+  return {
+    threadDispatcher: {
+      interceptor: threadDispatcher,
+      server: null,
+      serverHooks: telemetryHooks.serverHooks
     }
   }
+}
 
-  return dispatcher
+export function installGlobalDispatcher (dispatcher) {
+  markAsPlatformaticDispatcher(dispatcher)
+  setGlobalDispatcher(dispatcher)
+  mirrorGlobalDispatcherForBuiltinFetch(
+    dispatcher,
+    globalThis[Symbol.for('undici.globalDispatcher.1')]
+  )
 }
 
 export async function updateUndiciInterceptors (undiciConfig) {
@@ -215,18 +217,15 @@ async function getDispatcherOpts (undiciConfig) {
   return dispatcherOpts
 }
 
-function createThreadInterceptor (runtimeConfig) {
-  const telemetry = runtimeConfig.telemetry
-
-  const telemetryHooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
-
-  const threadDispatcher = wire({
-    // Specifying the domain is critical to avoid flooding the DNS
-    // with requests for a domain that's never going to exist.
+function createThreadInterceptor (runtimeConfig, telemetryHooks) {
+  const threadDispatcher = createInterceptor({
+    meshId: workerData.meshId,
     domain: '.plt.local',
-    port: parentPort,
-    timeout: runtimeConfig.applicationTimeout,
-    onChannelCreation: createChannelCreationHook(runtimeConfig),
+    connectTimeout: runtimeConfig.applicationTimeout,
+    allowTarget: createTargetPermissionHook({
+      ...runtimeConfig,
+      applicationId: workerData.applicationConfig.id
+    }),
     ...telemetryHooks
   })
   return threadDispatcher
