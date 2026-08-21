@@ -729,7 +729,9 @@ We use `watt.config.*`, not `watt.ts`, following the `vite.config.ts` /
 `next.config.ts` convention and avoiding collisions with app source files.
 
 **Root and per-app files share the same filename; the export discriminates.**
-Classification is four unconditional rules:
+Classification is four unconditional rules. Rule 1 is the unwrap itself; rules 2–4
+read keys, and they read them off the **canonical snapshot**, never off the raw
+export — after the walk, not before it (see "Loading mechanism", step 2):
 
 1. a **function** export is called once with the config context; its resolved
    value then falls through the rules below — a value that is *itself* a
@@ -1391,43 +1393,70 @@ serial scheme.
    the main process's `process.env` and never read env files themselves. It imports
    the root config (`import(pathToFileURL(path))` — `.ts`/`.mts` via Node's built-in type
    stripping, the same mechanism the runtime already uses for `extensions`). It
-   unwraps the default export (object, function called with the context above, or a
-   bare `ApplicationDefinition` auto-wrapped per the walk rules above). **Everything
-   after the unwrap happens on the canonical snapshot, in this order**, because the
-   original object is reachable exactly once:
+   **unwraps** the default export — and unwrapping is *only* the function call: if
+   the export is a function it is called with the context above and awaited, and a
+   result that is itself a function is an error naming the file. Nothing is
+   classified, auto-wrapped or read for its shape yet. **Everything after that
+   happens on the canonical snapshot, in this order**, because the original object is
+   reachable exactly once:
 
-   1. **Canonicalize the unwrapped export** in a single walk (see "Serializability"),
+   1. **Canonicalize the unwrapped value** in a single walk (see "Serializability"),
       rejecting accessors, Proxies and functions — with one carve-out: a
       function-valued `application.config` / `applications[].config` is *allowed*, and
-      its position is recorded.
-   2. **Call each recorded deferred slot** with the same context the root export was
-      called with (the context is uniform — see "Functional form" — so the loader
+      its position is recorded, the slot left pending in the snapshot. The carve-out
+      is a **structural path test**, not a semantic one, which is why it can run
+      before classification: those two paths are the only places a function survives
+      the walk, whatever the file turns out to be. After this step nothing else holds
+      a reference to the original object.
+   2. **Classify the snapshot** by the four rules (see "Root and per-app files share
+      the same filename"), and **auto-wrap** a bare `ApplicationDefinition` into a
+      root shape here — reading `module`, `application`, `applications` or `autoload`
+      off the *raw* export to decide that would be the first read of the object's
+      shape, and the whole point of the ordering is that there is no such read. A
+      recorded slot in a file that classifies as an `ApplicationDefinition` is an
+      **error**, not a deferred call: a per-app file has no `config` slots, so the
+      only thing that path can hold there is a capability option that happens to be
+      named `config`, and calling it would be the loader inventing a callback the
+      author never declared. (The per-app deferred form is the factory callback —
+      `next(ctx => …)` — which is rule 1's function export, not a slot.)
+   3. **Validate the unexpanded root shape.** Orchestration keys only — ids, `path`,
+      `url`, `enabled`, `autoload`, `workers` — since a pending `config` slot has
+      nothing to validate yet and capability configuration is validated later,
+      main-side, against each capability's own schema.
+   4. **Expand `autoload`** into the application list, reading `autoload.path`,
+      `exclude` and `mappings` from the snapshot, and **resolve `enabled`**, dropping
+      disabled entries. Orchestration drives filesystem access — `autoload.path`
+      decides which directories are read, `mappings` and `enabled` decide which
+      applications are evaluated at all — so it is checked before it is acted on,
+      which is what v3 did (`foundation/lib/configuration.js:587-606`, validate then
+      transform). This is the **only** place autoload expansion runs; the runtime
+      transform consumes the already-expanded list.
+   5. **Call the deferred slots that survived**, with the same context the root export
+      was called with (the context is uniform — see "Functional form" — so the loader
       **calls** and awaits, since awaiting a deferred definition without calling it
       would yield the function itself). Each result is canonicalized under the same
       rules with **no** carve-out — a deferred config may not itself return a
-      function — and spliced into the snapshot.
-   3. **Validate the unexpanded root shape**, then **expand `autoload`** into the
-      application list, reading `autoload.path`, `exclude` and `mappings` from the
-      snapshot. Orchestration drives filesystem access — `autoload.path` decides which
-      directories are read, `mappings` and `enabled` decide which applications are
-      evaluated at all — so it is checked before it is acted on, which is what v3 did
-      (`foundation/lib/configuration.js:587-606`, validate then transform). Only the
-      *root* shape is validated here; capability configuration is validated later,
-      main-side, against each capability's own schema. This is the **only** place
-      autoload expansion runs; the runtime transform consumes the already-expanded
-      list.
+      function — and spliced into its slot.
 
-   The ordering is the point, not an implementation detail. Reading `applications`,
-   `autoload` or a `config` slot off the *raw* export would re-open the
+   **Steps 3–5 are in that order for one reason: a disabled entry's `config` callback
+   must never run.** An entry excluded from this boot may name a capability the
+   production image does not ship, or call `requiredEnv()` for a variable that was
+   decommissioned with it; invoking it to find out would fail a boot that excludes it.
+   A pending slot is still *visible* to step 4 — an entry whose slot was recorded
+   counts as having an inline `config`, which is what decides that it gets no per-app
+   eval worker — so deferring the call costs the expansion nothing.
+
+   The ordering is the point, not an implementation detail. Reading `module`,
+   `applications`, `autoload` or a `config` slot off the *raw* export would re-open the
    time-of-check/time-of-use gap canonicalization exists to close: a getter can return
    one array to the expansion and another to the walk, so the topology that drove
    directory reads need not be the topology that was validated. Canonicalizing first
    makes "nothing downstream ever touches the original object" literally true — after
    step 1 there is nothing else holding a reference to it.
 
-   **`enabled` is resolved here, before fan-out.** It is orchestration, so its
-   value is always lexically present in the root config or in
-   `autoload.mappings`, and the root context already carries `production` — so
+   **`enabled` is resolved in step 4, before fan-out and before the deferred pass.**
+   It is orchestration, so its value is always lexically present in the root config or
+   in `autoload.mappings`, and the root context already carries `production` — so
    disabled entries are dropped immediately after expansion, before any per-app
    worker is spawned, before the detector runs, and before capability validation.
    This preserves v3, where `transform()` spliced disabled applications out ahead
@@ -1441,9 +1470,9 @@ serial scheme.
 
    **The guarantee is exact for per-app files and partial for root-inline entries**,
    and the difference is not fixable by ordering. `enabled` is read from the
-   canonical snapshot, so a **deferred** inline `config` is only invoked for entries
-   that survive the filter — that much is ordering, and step 1 does the filter before
-   the deferred pass. But an **eager** inline `config` has already run: it is an
+   canonical snapshot in step 4, and step 5 calls only the slots that survived it, so
+   a **deferred** inline `config` is never invoked for an entry this boot excludes —
+   that much is ordering, and the ordering above is chosen for it. But an **eager** inline `config` has already run: it is an
    expression in the root file's object literal, evaluated while the export was being
    constructed, before the loader saw anything. Its capability `import` is earlier
    still, at module load. So `applications: [{ id: 'legacy', enabled: false, config:
