@@ -2234,13 +2234,25 @@ file), and a missing explicitly-named envfile is a **configuration-load error** 
 main process that resolves it, before any worker starts, so it surfaces under
 `--debug-config` and `command: 'exec'` too, neither of which boots anything (v3
 silently ignored it — defensible only for the implicit default `.env`). Declaring `envfile`
-on an entry that also carries an **inline `config`** is an **error**. The honest
-reason is that it would govern the worker-runtime view only — the entry has no
-per-app eval worker for it to reach — and a key that silently covers one view and not
-the other is the ambiguity this document spends its length removing. It is a
-deliberate simplification rather than an impossibility: v3 did exactly that
-(`worker/main.js:236-237`), and root-inline entries already tolerate a comparable
-asymmetry. The cost is real and bounded — a v3 wrapped single-app project with an
+on an entry that **has no per-app eval worker** is an **error**, and two entry shapes
+have none. The first carries an **inline `config`**: no file is read for it, so the
+`envfile` would govern the worker-runtime view alone, and a key that silently covers
+one view and not the other is the ambiguity this document spends its length removing.
+That one is a deliberate simplification rather than an impossibility — v3 did exactly
+that (`worker/main.js:236-237`), and root-inline entries already tolerate a comparable
+asymmetry.
+
+The second is the entry whose directory **is the deciding file's own directory** —
+`defineConfig({ application: { workers: 2, envfile: 'deploy.env' } })` in a bare
+repository, where discovery skips the candidate that produced the configuration and
+falls through to the detector (see "Loading mechanism", step 2). That one is not a
+simplification but an ordering impossibility: the root worker's environment is
+resolved by the main process from the deciding file's own directory chain **before**
+that file is evaluated, and the entry's `envfile` does not exist until after. Applying
+it would mean reading the configuration in order to build the environment that
+produces the configuration. Both are refused for their own reason, which is the point
+of naming them separately — the first could be lifted by a later version, the second
+cannot. The cost is real and bounded — a v3 wrapped single-app project with an
 `envfile` migrates to a root-inline entry, so it lands on the pre-flight
 hand-conversion list — and it is listed there for that reason. One documented asymmetry: `envfile` and the `env` blocks live on the root
 entry, so a **standalone** boot — which applies no root orchestration — evaluates
@@ -4239,7 +4251,9 @@ export interface ApplicationEntryOptions {
   envfile?: string                        // replaces the app's four-file env set
                                           // in BOTH views (evaluation + runtime);
                                           // app-relative; missing file = error;
-                                          // error alongside an inline `config`
+                                          // error on any entry with no per-app eval
+                                          // worker — inline `config`, or an entry in
+                                          // the deciding file's own directory
   reuseTcpPorts?: boolean                 // default true; reaches the
                                           // SO_REUSEPORT decision in v4
   restartOnError?: boolean | number
