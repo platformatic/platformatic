@@ -3188,15 +3188,44 @@ Generation reads both views. Then:
    entrypoint differently for `production` and `development` or cannot be decided at
    all** (see the exposure rules in step 1); a **structural path that resolves to
    nothing** after the fallbacks above; **two application ids that collide once
-   renamed**; and **one variable occupying two positions
-   whose schema constraints do not intersect**. The test is a **non-empty
+   renamed**; and **one variable occupying two positions whose schema constraints do
+   not intersect, or whose combination migrate cannot decide**. The test is a **non-empty
    intersection of every applicable constraint**, not equality of primitive types —
    matching types are not sufficient, and the shipped schemas prove it: `packageManager`
    (`["npm","pnpm","yarn"]`) and `logger.level` (`["fatal"…"silent"]`) are both
    `string` with **no** member in common, and `managementApi.logs.maxSize`
    (`minimum: 5`) and `workers.scaleUpELU` (`0…1`) are both `number` with an empty
    range intersection. A `{PLT_X}` used at either pair admits no value that validates
-   at both, so step 3 could not validate its own output. That last one is computed from the lexical view like the
+   at both, so step 3 could not validate its own output.
+
+   **The intersection is computed over a named, closed subset of JSON Schema, and a
+   combination outside it refuses rather than being guessed at.** AJV validates a
+   candidate; it does not intersect constraints or produce a witness, so this is
+   migrate's own arithmetic and its reach has to be stated rather than assumed.
+   Inside the subset: `type`, `enum` and `const`, the numeric bounds with
+   `multipleOf` and integer-ness, `minLength` / `maxLength`, and `pattern` **only
+   while at most one position constrains it** — one pattern is a filter a witness can
+   be tested against, two are a question about regular-language intersection that a
+   migrator has no business answering. Outside it, and refusing:
+   `anyOf`, `oneOf`, `not`, `format`, and any keyword a later audit adds without
+   extending this list, the message naming the variable, both positions and the
+   keyword that stopped it. The refusal is deliberately wider than the impossibility —
+   it fires when migrate cannot *prove* a shared value exists, not only when none
+   does — because the alternative is a sentinel that step 3 rejects after every file
+   has been written, which is the one failure that does not roll back.
+
+   **The witness is preferably found, not invented.** Where the variable already has a
+   value — in the migration-time environment, or in `.env.sample` — that value is
+   tested against every position it occupies, which is cheaper than synthesis and
+   answers the question the project actually has. Synthesis runs only when no value is
+   supplied, and only over the part of the subset that can be enumerated: a member of
+   the surviving `enum`/`const` set, or a number satisfying the bounds and
+   `multipleOf`. A position carrying a `pattern` with no supplied value refuses rather
+   than having a string invented for it. The subset is affordable to close because the
+   audit deletes the placeholder-only unions first: what a `{PLT_X}` can still land in
+   after that is a much smaller schema surface than v3's.
+
+   That constraint test is computed from the lexical view like the
    rest, which is what lets it stop the run *before* any file is written rather than
    surfacing at validation. It
    executes **before step 1 writes anything**: it needs only read-only analysis —
@@ -3753,7 +3782,11 @@ runs multiple workers on a fixed port at all.
    string patterns and lengths — not just its primitive type, because migrate
    intersects those constraints across every position a variable occupies (see step
    2 of the migrate section) and a type alone cannot decide whether a shared value
-   exists. Two schema *changes* rather than
+   exists. Those keywords are exactly migrate's supported subset, so the table also
+   **flags any property whose constraints fall outside it** (`anyOf`, `oneOf`, `not`,
+   `format`): the pre-flight refusal reads that flag rather than rediscovering the
+   limit per run, which keeps the audit and the migrator from drifting apart as
+   schemas gain keywords. Two schema *changes* rather than
    classifications. **Add `portAssignment` to both server declarations** — `server`
    (`foundation/lib/schema.js:391`, the basic family) *and* `fastifyServer` (`:501`,
    service/db/gateway). They are separate object literals that happen to overlap:
