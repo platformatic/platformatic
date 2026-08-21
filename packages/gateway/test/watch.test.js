@@ -17,7 +17,8 @@ test('gateway should restart when graphql changes', async t => {
     schema: schema1,
     resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } }
   })
-  const graphql1Origin = await graphql1.listen()
+  await graphql1.listen()
+  const graphql1Origin = 'http://127.0.0.1:' + graphql1.server.address().port
   const port = graphql1.server.address().port
 
   const graphql1a = await createGraphqlApplication(t, {
@@ -60,10 +61,11 @@ test('gateway should restart when graphql changes', async t => {
   }
   await testEntityRoutes(gatewayOrigin, ['/api1/users'])
 
+  const restart = waitForRestart(runtime)
   await graphql1.close()
   await graphql1a.listen({ port })
 
-  gatewayOrigin = await waitForRestart(runtime)
+  gatewayOrigin = await restart
 
   {
     const res = await request(gatewayOrigin, {
@@ -83,7 +85,8 @@ test('gateway should restart when openapi changes', async t => {
     schema,
     resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } }
   })
-  const graphql1Origin = await graphql1.listen()
+  await graphql1.listen()
+  const graphql1Origin = 'http://127.0.0.1:' + graphql1.server.address().port
 
   const openapi1 = await createOpenApiApplication(t, ['users'])
   const openapi1Origin = await openapi1.listen()
@@ -123,10 +126,11 @@ test('gateway should restart when openapi changes', async t => {
   }
   await testEntityRoutes(gatewayOrigin, ['/api1/users'])
 
+  const restart = waitForRestart(runtime)
   await openapi1.close()
   await openapi1a.listen({ port })
 
-  gatewayOrigin = await waitForRestart(runtime)
+  gatewayOrigin = await restart
 
   {
     const res = await request(gatewayOrigin, {

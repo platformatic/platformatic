@@ -666,6 +666,10 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
 }
 ```
 
+Custom interceptors must implement the Undici 8 dispatcher handler lifecycle. Interceptors using the legacy
+`onConnect`, `onHeaders`, `onData`, `onComplete`, or `onError` callbacks must be updated before upgrading to Runtime
+v4. See [Update custom Undici interceptors](../../guides/migrate-runtime-v4.md#update-custom-undici-interceptors).
+
 It's important to note that `IDP` stands for Identity Provider, and its token `url` is the URL that will be called to generate a new token.
 
 ### `applicationTimeout`
