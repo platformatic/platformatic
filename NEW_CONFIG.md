@@ -964,12 +964,25 @@ siblings to a project that has none.
 
 The ancestor test is **the one thing that looks above the search stop point**, and
 it is deliberate: a warning about what you are missing has to know whether you are
-missing anything. It is a filename check that executes nothing and **cannot change
-what boots, or whether a boot happens** — only what is printed. That is a property
-worth keeping: it is what lets the check look above the stop point at all. It is the **same walk that finds the env
-root** (see "Env files"), so it inherits the same bound and the same residual: it
-stops at the outermost `watt.config.*`, and a stray config in an unrelated ancestor
-is the one case where it can mislead. Because it is a filename check it cannot know
+missing anything. It is a filename check that **executes nothing**, and it never
+decides *which* configuration boots — the deciding file was already chosen, below the
+stop point, before this walk runs.
+
+**It is not, however, behaviour-free, and calling it diagnostics-only would be
+wrong.** It is the **same walk that finds the env root** (see "Env files"), and the
+env root decides how far up `.env` layering reaches. So a stray `watt.config.*` in an
+unrelated ancestor does more than mislead a warning: it extends the env chain, and
+files that were inert become live — which can change what a callback computes, which
+port is chosen, which variables `requiredEnv` finds, or whether evaluation throws at
+all. That is the honest scope of the residual, and it is why the trust warning
+matters rather than being boilerplate: a directory you did not write is contributing
+to your environment.
+
+The bound keeps it small and the direction of travel shrinks it further. Under
+**root-directed fan-out** there is no ambiguity at all — the root knows its own env
+root and passes it to each per-app worker explicitly, so no worker re-derives one by
+walking. The residual is **standalone discovery**, where there is nothing above to
+ask. Because it is a filename check it also cannot know
 whether that ancestor is a *root* config, so the warning names the file it found and
 says what a runtime configuration would have applied, rather than asserting that one
 did. Sibling-dependent capabilities (a gateway's config enumerates
