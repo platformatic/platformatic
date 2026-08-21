@@ -1,5 +1,10 @@
 {
   "citations": {
+    "packages/generators/lib/base-generator.js:98-106": {
+      "sha": "2ec0698c73e7baed",
+      "head": "getEnvVarName (envVarName) {",
+      "lines": 9
+    },
     "packages/runtime/lib/config.js:130": {
       "sha": "e4d5f9238d2a9c56",
       "head": "export async function wrapInRuntimeConfig (config, context) {",
@@ -299,6 +304,11 @@
       "sha": "8c75bbe7a87ccb10",
       "head": "setApplicationPort (application, ordinal) {",
       "lines": 4
+    },
+    "packages/generators/lib/base-generator.js:156-157": {
+      "sha": "bf35ca8d2b293c27",
+      "head": "if (this.config.applicationName && !this.config.envPrefix) {",
+      "lines": 2
     },
     "packages/next/lib/capability.js:209,326": {
       "sha": "dc1a6108efebaaf6",

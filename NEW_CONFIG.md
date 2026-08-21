@@ -40,7 +40,24 @@ therefore carries one.
 
 That bare factory export is the **canonical single-app form** — the loader
 auto-wraps it as a single-app runtime, and the file is byte-identical to a monorepo
-per-app config file. Runtime orchestration options, when a project needs them, come
+per-app config file.
+
+**One expression in it does not travel, and it is the port.** `process.env.PORT` is
+right for a single application, because that is the variable every platform sets and
+there is one application to give it to. Put the same file in a monorepo beside three
+siblings and all four read it: an operator setting `PORT=8080` hands 8080 to every
+application, the real environment outranks every app-local `.env` that might have
+said otherwise, and no file below can repair it. Dropping the port is not the way
+out either — a framework application with no port does not start (see "How
+applications are exposed"). So an application that joins a monorepo **scopes its port
+variable** — `process.env.PLT_FRONTEND_PORT`, the `PLT_<ID>_` spelling the mesh
+already uses for `PLT_<ID>_URL`, and the one v3's generators switched to the moment
+an application was in runtime context rather than standalone
+(`generators/lib/base-generator.js:98-106`). The file's *shape* is portable. A
+variable that means "the port" to the whole machine is not, and byte-identical is a
+claim about the first.
+
+Runtime orchestration options, when a project needs them, come
 from `defineConfig`:
 
 ```ts
@@ -1099,6 +1116,16 @@ The rules, in full:
   the same error (`runtime/lib/runtime.js:3400-3410`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
   are excluded from restart-on-error (`runtime/lib/runtime.js:3438-3442`) — a port problem fails fast
   instead of looping. There is still **no port search**.
+
+  **A declared duplicate is caught at load, before any worker starts.** Every
+  `server.port` is a concrete number once the root worker returns — the expressions
+  have already run — so two enabled applications declaring the same port on
+  overlapping hostnames is decidable then, and the loader says so, naming both
+  entries and the port. The runtime scan stays: a capability that binds a port nobody
+  declared is visible only once it has bound it, which is what that scan is for. But
+  the case worth catching earlier is precisely the one above — several applications
+  reading one variable — and there the load-time error can name the variable, where
+  `AddressInUseError` can only name a socket and the worker that lost the race.
 - **The runtime reports a map of URLs, not one URL.** `getUrls(applicationId?)`
   returns `{ '<app>:<worker>': url }` for every listening worker
   (`runtime/lib/runtime.js:1554-1568`); `start()` returns it (`runtime/lib/runtime.js:455`) after
@@ -1121,8 +1148,18 @@ port, logger }` into every application's own config
 (`service/lib/generator.js:414-420` — the `!isRuntimeContext` guard is gone) and
 the runtime generator hands application *i* port `3042 + i`
 (`runtime/lib/generator.js:168-171`) while writing no root `server` block at all.
-v4's code-first equivalent is the same thing spelled in the factory:
-`next({ server: { port: Number(process.env.PORT ?? 3042) } })`. `3042` still
+v4's code-first equivalent is the same thing spelled in the factory, with the
+variable scoped as v3 scoped it: `next({ server: { port:
+Number(process.env.PLT_API_PORT ?? 3043) } })`. v3's `getEnvVarName` returned a bare
+`PORT` only for a standalone project and `PLT_<PREFIX>_PORT` for anything in runtime
+context, the prefix derived from the application name
+(`generators/lib/base-generator.js:98-106`, `:156-157`), so the scoping is not new —
+it is the part the code-first translation must not lose. **Multi-application
+scaffolding therefore never emits a global `PORT`**: one variable every application
+reads is one port every application binds. Single-app scaffolding keeps
+`process.env.PORT`, which is correct there and is what the platform expects, and
+`migrate` carries across whatever v3 had — already the scoped name for any
+runtime-context project. `3042` still
 exists nowhere in the loading path.
 
 **Framework capabilities require a port — unless they carry a custom command.**
