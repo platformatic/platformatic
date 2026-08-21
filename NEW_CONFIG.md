@@ -2381,7 +2381,7 @@ export default {
 - **The programmatic payloads are a versioned public DTO, and they change shape.**
   Consumers observing `getRuntimeConfig().applications[].config` — or
   `getApplicationDetails().config`, which is a flat object with a top-level
-  `config` (`runtime/lib/runtime.js:1741-1781`) — received a *file path* in v3; in
+  `config` (`runtime/lib/runtime.js:2149-2165`) — received a *file path* in v3; in
   v4 each entry carries
   **both** `configPath` (the per-app file path, or absent for inline definitions)
   and `resolvedConfig` (the validated raw capability payload), plus `module` and
@@ -2391,6 +2391,23 @@ export default {
   byte-compatible (below), while the payload change is a declared breaking change
   coordinated with every consumer (watt-extra reads `applications[].type`, which is
   unchanged).
+
+  **Both payloads are independently built and deeply frozen**, which they did not
+  have to be in v3. What a consumer could observe there was scalars and a file path,
+  so handing out interior state was harmless in practice; v4 nests `resolvedConfig` —
+  an entire capability payload — inside every entry, and the current getters hand
+  back live state: `getRuntimeConfig()` strips `kMetadata` with a shallow spread
+  (`runtime/lib/runtime.js:1595-1601`), so every value under it is shared, and
+  `getApplicationDetails()` reads `config` straight off `application[kConfig]`
+  (`:2149`). A consumer mutating what it received would be editing the configuration
+  that later restarts and scale-up workers read, silently, and would make worker
+  generations disagree about what they are running — while `setApplicationConfigPatch()`
+  exists precisely so that changing a running application's configuration is explicit,
+  patch-shaped and visible. So both getters construct a DTO from the snapshot and
+  freeze it through, with tests that mutate every returned payload and assert runtime
+  state is untouched. `getApplicationConfig()` needs none of this: it crosses ITC and
+  JSON round-trips on the way back, so what it returns was never shared to begin
+  with.
 
 ### Config patching (ICC integration)
 
