@@ -3443,9 +3443,13 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     contract changes from config-file-path to `{ root, config }` data; commands no
     longer self-load config, and the `utimesSync` restart trick is replaced by a
     management-API restart.
-13. Management API `GET /config` and `GET /api/v1/applications/:id/config`
-    endpoints: removed (watt-admin coordination required; the `wattpm` commands
-    built on them are handled per items 10–12).
+13. Management API `GET /config`: removed (watt-admin coordination required; the
+    `wattpm` commands built on it are handled per items 10–12).
+    `GET /api/v1/applications/:id/config` **stays.** It is the HTTP surface of
+    `getApplicationConfig()` — a worker's post-`transform` view, which nothing in the
+    new payload replaces and which the runtime itself calls (see "Machine-generated
+    configs" and item 14). Its one departing caller, `patch-config`, goes for the
+    unrelated reason in item 9.
 14. Worker boot protocol: workers receive `resolvedConfig` (data) instead of a config
     file path; per-worker config parsing is deleted. Everything typed as
     "config file path" changes accordingly: the application entry's `config`
@@ -3705,8 +3709,8 @@ runs multiple workers on a fixed port at all.
    commands, with the capability transform and synthesized `kMetadata` main-side;
    `POST /applications` **and the ITC `management:addApplications` handler**
    running the boot-time eval pass; remove
-   `GET /config` and
-   `GET /applications/:id/config`, extend `GET /metadata` with
+   `GET /config` — but **not** `GET /applications/:id/config`, which keeps its
+   post-`transform` view (item 13) — extend `GET /metadata` with
    `configPath`/`autoload` (`projectDir` is already there);
    shallow explicit-wins entry merge (v3 semantics); in-memory zero-config synthesis; lazy
    capability-command dispatch (no config evaluation on plain `wattpm help`).
@@ -3780,8 +3784,9 @@ runs multiple workers on a fixed port at all.
    exactly how the previous count came to be wrong.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
-   `getRuntimeConfig` / `getRuntimeApplicationConfig`
-   (`control/lib/index.js:242,259`, both removed endpoints) and gains a metadata
+   `getRuntimeConfig` (`control/lib/index.js:242`, the removed `GET /config`) while
+   `getRuntimeApplicationConfig` (`:259`) is untouched — it calls
+   `/api/v1/applications/:id/config`, which stays — and gains a metadata
    accessor carrying `root`/`configPath`/`autoload`, which is what
    `applications:add`/`remove --save` actually consume
    (`wattpm/lib/commands/applications.js:31,110-112`); the out-of-tree capabilities (`php`,
