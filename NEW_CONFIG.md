@@ -3130,7 +3130,7 @@ Generation reads both views. Then:
    the run with "hand-conversion required", naming what blocks it. This is the **one
    enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
    anywhere else in this document without appearing here is a bug in the document.
-   Eight triggers. Two of them bound what migrate may touch at all.
+   Nine triggers. Two of them bound what migrate may touch at all.
 
    **An application whose directory lies outside the migration transaction root**
    stops the run. The transaction root is the workspace containing the root config —
@@ -3166,12 +3166,13 @@ Generation reads both views. Then:
    between is reported and left alone rather than silently replaced, which is what
    `--resume` already promises for emitted files.
 
-   The remaining six: **any capability outside the vendored closure**; a **root `envfile`**,
+   The remaining seven: **any capability outside the vendored closure**; a **root `envfile`**,
    which has no faithful conversion; any application declaring `envfile` **in the
    root config's own directory** (see "Scope"); an **`enabled` value that decides the
    entrypoint differently for `production` and `development` or cannot be decided at
    all** (see the exposure rules in step 1); a **structural path that resolves to
-   nothing** after the fallbacks above; and **one variable occupying two positions
+   nothing** after the fallbacks above; **two application ids that collide once
+   renamed**; and **one variable occupying two positions
    whose schema constraints do not intersect**. The test is a **non-empty
    intersection of every applicable constraint**, not equality of primitive types —
    matching types are not sufficient, and the shipped schemas prove it: `packageManager`
@@ -3194,6 +3195,17 @@ Generation reads both views. Then:
    resolution above), and sharing one normalized list between the two would silently
    move a migrated project's public address.
    "Stops before modifying any file" must be literally true.
+
+   **The rename collision earns its own note**, because it is the only refusal that
+   fires on a project no v3 rule ever declared invalid. Migrate rewrites an id that is
+   not a legal v4 label — `my_app` becomes `my-app` — and a project already holding a
+   `my-app` then has two entries under one id: a configuration the emitted form cannot
+   express, which step 3 would catch only after every file was written. The rename is
+   mechanical, so the collision is too, and it is computable from the ids alone in the
+   lexical pass, which is what puts it here rather than at validation. The message
+   names both entries and asks for an explicit `id` on one of them — the fix in every
+   case, and the one thing migrate must not choose on the user's behalf, since the id
+   it picked would become a hostname somebody has to know.
 
    **The refusals have a companion set: the reported divergences.** These are
    conversions migrate performs even though the result behaves differently from v3,
@@ -3218,7 +3230,20 @@ Generation reads both views. Then:
      actually supplied;
    - a **v3 id that is not a legal v4 DNS label** (`my_app` → `my-app`): v3 imposed
      no grammar, and keeping the v3 spelling would emit a configuration that cannot
-     load, so the id moves and the note records both spellings;
+     load, so the id moves and the note records both spellings. **References move with
+     it where migrate owns them, and are reported where it does not.** Inside the
+     configuration migrate rewrites every occurrence — sibling `dependencies` entries
+     and any capability option naming an application, the gateway's
+     `applications[].id` being the one that matters in practice — because a renamed id
+     with a stale reference beside it emits a configuration that validates and then
+     routes nowhere, which is worse than the id it replaced. Outside it an id is a
+     mesh hostname (`http://my_app.plt.local`), a metrics label and the argument
+     `wattpm inject` takes, so the step 4 source scan looks for the old spelling and
+     reports each hit with file and line, on the same ground as the other identifiers
+     it will not rewrite in user code. The injected `PLT_<ID>_URL` name is the one
+     thing that does *not* move: normalization uppercases and folds every
+     non-alphanumeric run to `_`, so `my_app` and `my-app` were always both
+     `PLT_MY_APP_URL`;
    - an **`entrypointPort`** that is dropped, and any **root `server` key the target
      capability's `server` schema does not admit** — `keepAliveTimeout` for the basic
      family, `http2` for nitro (see rule 1).
