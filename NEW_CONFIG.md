@@ -869,7 +869,8 @@ What the deciding file *is* then decides what boots:
 - **App-def nearest** → **that application boots standalone**: the definition is
   auto-wrapped as `{ application: { config: def } }` (the normalized singular
   form — the DTO shows this entry) and run as a single-app runtime; the entry's
-  `id` follows **one rule, used at every position and under every boot style**: an
+  `id` follows **one derivation, used at every position and under every boot style**
+  (though not always over the same inputs — see below): an
   explicit `id` in configuration wins; failing that, the `package.json` `name` **with
   any scope stripped** — `@acme/frontend` is `frontend`; failing that, the directory
   name. Its `path` defaults to
@@ -897,7 +898,35 @@ What the deciding file *is* then decides what boots:
   `my_app`, or a package named `@acme/my.app`, produces an invalid label — which is
   why the error names the entry and asks for an explicit `id` rather than trying to
   sanitize. Silently rewriting `my_app` to `my-app` would move the mesh hostname, the
-  injected variable and the metrics label without the user asking. `cd web/frontend && wattpm dev` — or
+  injected variable and the metrics label without the user asking.
+
+  **One rule is not one answer, and the gap is the explicit `id` itself.** The rule
+  takes a configured `id` first — and a configured `id` lives on a root *entry*:
+  orchestration, root-lexical by design, invisible to a standalone boot of that
+  directory, which never evaluates the root. That is not an oversight in the rule, it
+  is what makes standalone independent. So a root entry
+  `{ id: 'api', path: 'web/frontend' }` is `api` under the root and `frontend` on its
+  own, and the five things an id decides move with it. The derivation is identical in
+  both boots; the *inputs* are not, because one of them is a fact only the root holds.
+
+  **The root boot is the one that can see it, so that is where it is reported.** It
+  has the explicit `id` and can derive what the application would call itself alone —
+  same `package.json` name, same directory — so a mismatch is a load-time warning
+  naming both spellings, once per entry. The standalone "what is not applied" warning
+  names the id in use, which is the other half of the same fact. Neither is an error:
+  calling an entry `api` while its directory is `web/backend` is ordinary, and
+  `migrate` emits exactly that shape whenever it pins a v3 id.
+
+  Making the answer invariant instead costs more than the divergence does, in both
+  available directions. Putting `id` in the per-app file takes identity out of
+  root-lexical orchestration, and the root needs every id **before** per-app
+  evaluation — to merge an autoloaded entry with an explicit one, to key the fan-out,
+  to compute the injected variable names — so a file able to rename itself while being
+  evaluated would have to be read before the topology it belongs to exists. Rejecting
+  an explicit `id` that differs from the derived one forbids the ordinary case above,
+  and would refuse most migrated projects on sight.
+
+  `cd web/frontend && wattpm dev` — or
   `pnpm --filter frontend dev` — starts *only* that application, matching the
   package-local command model frontend developers expect. This is a deliberate
   break from v3, which booted the whole runtime from anywhere.
@@ -3902,6 +3931,8 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label, `wattpm
     inject`'s argument and how siblings name each other in `dependencies` — a default
     that varied by boot style would move all five at once for the same application.
+    One *derivation*, that is: an explicit entry `id` is root-lexical and a standalone
+    boot cannot see it, so the root warns when the two spellings differ (see "Scope").
 
     The consequence is real: **an autoloaded application whose package `name` differs
     from its directory name is renamed.** In this repository's own fixtures that is
