@@ -2318,10 +2318,15 @@ export default {
   That is the whole of the rule, and it is why the requirement lands where it does.
 
   A `watt.config.ts` naming `defineConfig` from `wattpm` and `next` from
-  `@platformatic/next` **states its version through those imports**: whichever
-  `wattpm` is installed supplies `defineConfig`, so a v5 loader reading a v4-shaped
-  file fails its own validation with an actionable error, exactly as v4 refuses a v3
-  JSON file. There is nothing for a marker to add. `migrate`, `wattpm import` and
+  `@platformatic/next` **is read by the major that is installed**: whichever `wattpm`
+  is installed supplies `defineConfig`, so a v5 loader reading a v4-shaped file fails
+  v5's own validation with an actionable error, exactly as v4 refuses a v3 JSON file.
+  What the imports establish is the *installed* major, not the authored one, and the
+  guarantee that makes that enough is a constraint on v5 rather than a property of the
+  file: **a shape v4 accepted must not come to mean something else in v5.** It either
+  still means what it meant, or v5 refuses it. A major that quietly reassigned meaning
+  to a valid v4 configuration would defeat any marker the loader could not require,
+  and v5 is the only party in a position to honor that. `migrate`, `wattpm import` and
   scaffolding all emit that shape, and `WattConfig` declares no `$schema` — writing
   one would be a type error.
 
@@ -2335,10 +2340,17 @@ export default {
   there is no runtime test that distinguishes "machine-generated plain object missing
   its marker" from "config that legitimately needs none". A hand-written markerless
   plain object is therefore possible, and v5 would have to identify it by its content.
-  This is stated rather than closed because the alternatives are worse: requiring
-  `$schema` everywhere would put a stale-URL failure mode into files that already
-  identify themselves, and branding `defineConfig`'s return value would put a
-  non-serializable marker in the one object the whole design keeps plain. The shape
+  This is stated rather than closed, and the reason is narrower than "the
+  alternatives are inconvenient". **Only a literal in the file can name the major it
+  was authored against.** A stamp applied by `defineConfig` or by a capability factory
+  is applied by *installed* code — under a v5 install it is v5's `defineConfig`
+  running, so a file authored for v4 would be stamped 5. That is the same fact the
+  imports already carry, which packages are installed now, rewritten into the object
+  as a claim about the past; a marker that is wrong in exactly the case it exists for
+  is worse than none. Serializability is not the objection — a version string is plain
+  data and would clone fine. What is left is requiring a literal in every file, which
+  puts a stale-marker failure mode into files that identify themselves adequately
+  already, to close a case every emitter in this repository already stamps. The shape
   exists because machines emit it, every emitter is in this repository, and that is
   where the rule is enforced (see the CI gate in the plan).
 
