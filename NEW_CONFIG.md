@@ -3360,7 +3360,7 @@ Generation reads both views. Then:
    the run with "hand-conversion required", naming what blocks it. This is the **one
    enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
    anywhere else in this document without appearing here is a bug in the document.
-   Nine triggers. Two of them bound what migrate may touch at all.
+   Ten triggers. Two of them bound what migrate may touch at all.
 
    **An application whose directory lies outside the migration transaction root**
    stops the run. The transaction root is the workspace containing the root config —
@@ -3414,7 +3414,22 @@ Generation reads both views. Then:
    between is reported and left alone rather than silently replaced, which is what
    `--resume` already promises for emitted files.
 
-   The remaining seven: **any capability outside the vendored closure**; a **root `envfile`**,
+   **Two producers for one target** stops the run for the same reason, one step
+   earlier. v3 let two entries with distinct ids share an application directory,
+   because each named its own config file: `{ id: 'a', path: 'web/svc', config:
+   'a.json' }` beside `{ id: 'b', path: 'web/svc', config: 'b.json' }` is a legal v3
+   project. v4 has one configuration file per directory, so both entries emit
+   `web/svc/watt.config.ts` — the second write replaces the first, or step 3 fails
+   with every file already on disk. The existing check cannot see it: it asks whether
+   a target *already exists*, and neither of these does until migrate creates it. So
+   emission builds a **canonical target-to-producers map before writing anything**,
+   and refuses any target claimed by more than one entry, naming both and the file
+   they would share. Refusal rather than a merge, because two v3 applications in one
+   directory are two applications: the faithful v4 spelling puts their capability
+   configuration inline on two root entries, which is a different project shape than
+   the one the user has and not a rewrite migrate should pick unasked.
+
+   The remaining eight: **any capability outside the vendored closure**; a **root `envfile`**,
    which has no faithful conversion; any application declaring `envfile` **in the
    root config's own directory** (see "Scope"); an **`enabled` value that decides the
    entrypoint differently for `production` and `development` or cannot be decided at
