@@ -622,7 +622,7 @@ statically-safe shapes or its snippet fallback.
 Because the path exists only in memory, **the root eval worker backfills it** —
 `join(root, resolvedApplicationsBasePath, id)` — during the same expansion step
 that runs `autoload` and resolves `enabled`, before fan-out. v3 could defer this to
-`#setupApplication` (`runtime/lib/runtime.js:2430,2442`) because per-app config was
+`#setupApplication` (`runtime/lib/runtime.js:2434,2446`) because per-app config was
 loaded worker-side; v4 needs an absolute `path` during loading to find the per-app
 file, run the detector, and validate the capability. An entry with a `url` whose directory — backfilled or declared — **does not exist
 yet** is recorded **unresolved** and skipped by per-app discovery entirely: no
@@ -935,7 +935,7 @@ files are read and layered the same way they are at runtime; **there is no reduc
 or special build environment, and no rung is excluded**. This is what v3 did and
 what the runtime does today
 — `buildApplication` sends `build` over ITC to a normally spawned worker
-(`runtime/lib/runtime.js:946,982`), which has already applied both `env` blocks
+(`runtime/lib/runtime.js:950,985`), which has already applied both `env` blocks
 (`worker/main.js:265,268`) — and a build that reads an author-supplied constant
 should keep reading it.
 
@@ -953,7 +953,7 @@ them.
 
 `NODE_ENV` defaults to `production` under `build` when nothing else supplied it
 (see "Env files"). That is **new**: v3's build created the runtime with no
-production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:216`), so
+production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:252`), so
 `worker/controller.js:124-125` never fired and builds ran with `NODE_ENV` unset.
 Bundlers and Babel configurations that branch on it will produce different — and
 correct — artifacts.
@@ -1083,7 +1083,7 @@ The rules, in full:
   the bound one — meaningful only while an entrypoint proxied the application, and
   without a referent since `e2da15eda`. It was also load-bearing in a place it was
   never meant to reach: the reported URL is the only input to the collision scan
-  (`runtime.js:4874-4894` → `:4855-4860`), so two applications on genuinely distinct
+  (`runtime.js:4994-5010` → `:4964-4985`), so two applications on genuinely distinct
   ports that both set `entrypointPort: 3000` raised a spurious `AddressInUseError`,
   while two sharing a real port with different values escaped detection. Nothing in
   the codebase sets it outside its own two tests. `_getEntrypointUrl` keeps only its
@@ -1093,21 +1093,21 @@ The rules, in full:
   runtime checks the port against every *other* application's listening workers
   and raises `AddressInUseError` — `Port %d is already in use by applications
   "%s" and "%s"` (`runtime/lib/errors.js:14-17`, raised at
-  `runtime/lib/runtime.js:4874-4894`, ownership scan at `runtime/lib/runtime.js:4844-4865`). Workers of
-  the *same* application are exempt by construction (`runtime/lib/runtime.js:4850`), which is what makes
+  `runtime/lib/runtime.js:5008-5010`, ownership scan at `runtime/lib/runtime.js:4964-4985`). Workers of
+  the *same* application are exempt by construction (`runtime/lib/runtime.js:4970`), which is what makes
   `SO_REUSEPORT` legal. An OS-level `EADDRINUSE` carrying a port is upgraded to
-  the same error (`runtime/lib/runtime.js:3359-3362`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
-  are excluded from restart-on-error (`runtime/lib/runtime.js:3391-3393`) — a port problem fails fast
+  the same error (`runtime/lib/runtime.js:3400-3410`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
+  are excluded from restart-on-error (`runtime/lib/runtime.js:3438-3442`) — a port problem fails fast
   instead of looping. There is still **no port search**.
 - **The runtime reports a map of URLs, not one URL.** `getUrls(applicationId?)`
   returns `{ '<app>:<worker>': url }` for every listening worker
-  (`runtime/lib/runtime.js:1550-1564`); `start()` returns it (`runtime/lib/runtime.js:451`) after
+  (`runtime/lib/runtime.js:1554-1568`); `start()` returns it (`runtime/lib/runtime.js:455`) after
   logging one line per **application** rather than one per listening worker
-  (`#showUrls`, `runtime/lib/runtime.js:2408-2428`) — an application with several workers on distinct
+  (`#showUrls`, `runtime/lib/runtime.js:2412-2432`) — an application with several workers on distinct
   ports lists them together rather than N times over. `getRuntimeMetadata()` carries
-  `urls` (`runtime/lib/runtime.js:1583`), `getApplicationDetails()` carries `urls` plus a first-element
-  `url` convenience (`runtime/lib/runtime.js:2167-2169`), and worker records carry their own `url`
-  (`runtime/lib/runtime.js:2286`). `wattpm ps` dropped its URL column and `wattpm applications` its
+  `urls` (`runtime/lib/runtime.js:1587`), `getApplicationDetails()` carries `urls` plus a first-element
+  `url` convenience (`runtime/lib/runtime.js:2171-2173`), and worker records carry their own `url`
+  (`runtime/lib/runtime.js:2290`). `wattpm ps` dropped its URL column and `wattpm applications` its
   Entrypoint column (`wattpm/lib/commands/management.js:81`, `:102-103`); `wattpm inject` now
   requires an application name unless the runtime has exactly one
   (`wattpm/lib/commands/inject.js:79-88`).
@@ -1582,7 +1582,7 @@ serial scheme.
    process with full privileges, like any capability code (see the trust model
    above) — and it carries the package-level metadata main-side
    preparation needs besides the schema: `skipTelemetryHooks` (which decides
-   whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2507`,
+   whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2543`,
    set by gateway, db, and service) and `modulesToLoad`. Both move into the
    subpath's exports and the entry envelope, so **boot** never imports the full
    capability package into the main process. Non-boot paths do, and deliberately:
@@ -2009,7 +2009,7 @@ does nothing. It earns its place in two cases the first clause alone cannot expr
 is an ordinary layout — 39 in-tree configurations use parent-relative paths — and
 the runtime's directory is not an ancestor of it, so its own chain reaches nothing of
 the project's. v3 had no such gap: it seeded **every** worker from one `loadEnv` at
-the runtime root (`runtime/lib/runtime.js:242` → `:2534` → `:2585`) whatever the
+the runtime root (`runtime/lib/runtime.js:245` → `:2570` → `:2622`) whatever the
 application's location. The deciding file's chain is that same base, so
 `shared/api/.env` layers over `proj/.env` exactly as v3 layered the app's own file
 over the runtime's.
@@ -2240,7 +2240,7 @@ deliberately saner:
   resolves to *that config file's own directory*, which is why migrate can seed it
   when resolving structural paths instead of reading it from the environment. But the
   runtime's own parse also puts it in `#env`, which is `structuredClone`d into every
-  worker (`runtime/lib/runtime.js:2534`, `:2585`), so **application code reading
+  worker (`runtime/lib/runtime.js:2570`, `:2622`), so **application code reading
   `process.env.PLT_ROOT` gets the runtime root** — a different directory from the one
   the same name means in a per-app config, and a value
   `packages/runtime/test/start/custom-environment.test.js:21-30` asserts application
@@ -2464,7 +2464,7 @@ export default {
   reachable from any application with `management: true` — it is a second live
   hot-add path with the same worker-self-loading assumption. What these commands
   need from the running runtime comes from `GET /metadata`, which already carries the
-  project directory as `projectDir` (`runtime/lib/runtime.js:1579`) and is extended
+  project directory as `projectDir` (`runtime/lib/runtime.js:1583`) and is extended
   with `configPath` and **`autoload`** — `applications:remove --save` resolves the
   live `autoload.path` to decide whether the removed app must be appended to
   `autoload.exclude` (`wattpm/lib/commands/applications.js:110-112`), and that is
@@ -3006,7 +3006,7 @@ Generation reads both views. Then:
      `next/lib/capability.js:413-429`). In v4 the block is validated, and the
      basic-family `server` admits `hostname, port, backlog, http2, https` (plus
      `portAssignment`) with `additionalProperties: false`, while the full Fastify
-     option set that defines `keepAliveTimeout` (`foundation/lib/schema.js:535`)
+     option set that defines `keepAliveTimeout` (`foundation/lib/schema.js:542`)
      belongs to service/db/gateway. So the same schema-driven rule as rule 1 applies:
      emitting it for the basic family would fail step 3 on migrate's own output, and
      adding it to those schemas instead would validate a key nothing reads. Dropping
@@ -3604,7 +3604,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    config time belongs in an env file or the real environment.
 6. `verticalScaler`: removed from the v4 schema. `metrics.healthChecksTimeouts` is
    **kept** — it is not a top-level key and is not dead: `#getHealthChecksTimeout`
-   reads it (`runtime/lib/runtime.js:4590`, falling back to `healthChecksTimeout`
+   reads it (`runtime/lib/runtime.js:4703-4710`, falling back to `healthChecksTimeout`
    then 5000 ms) and extension health checks are configured through it. Its schema
    description still says "no longer used", which the audit corrects.
 7. Schema audit: placeholder-string unions removed from every schema (validation is
@@ -3870,7 +3870,7 @@ runs multiple workers on a fixed port at all.
    limit per run, which keeps the audit and the migrator from drifting apart as
    schemas gain keywords. Two schema *changes* rather than
    classifications. **Add `portAssignment` to both server declarations** — `server`
-   (`foundation/lib/schema.js:391`, the basic family) *and* `fastifyServer` (`:501`,
+   (`foundation/lib/schema.js:391`, the basic family) *and* `fastifyServer` (`:507`,
    service/db/gateway). They are separate object literals that happen to overlap:
    `fastifyServer` re-declares all five of `server`'s keys rather than composing with
    it, so a key added to one does not reach the other. Adding it only to `server`
@@ -4267,7 +4267,7 @@ it **off**. It cannot keep the `?? ''` form, though: the audit deletes
 `managementApi`'s top-level string branch (see "Validation, types, and the schema
 audit"), so `''` would be a validation failure rather than "off". The emitted
 expression reproduces v3's gate exactly — v3 tested the *replaced string* for
-truthiness (`runtime/lib/runtime.js:341`), so `''` is off and **any** non-empty
+truthiness (`runtime/lib/runtime.js:345`), so `''` is off and **any** non-empty
 string is on, including `'false'`. `(… ?? '') !== ''` is that test, written in a
 boolean position.
 
