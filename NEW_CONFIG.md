@@ -3095,11 +3095,25 @@ Generation reads both views. Then:
    both dialects, which the loader refuses by design — so a `preinstall`,
    `postinstall` or `prepare` script that invokes `wattpm` (a build, a smoke test, a
    codegen step) would fail on a state migrate created and is about to resolve. That
-   is why the install suppresses scripts rather than racing them. Migrate runs the
-   package manager a **second time after step 5**, once the tree is valid v4, to
-   execute exactly what it deferred — the native rebuilds and `prepare` steps a
-   suppressed install skips — and reports it as a distinct step so a failure there is
-   not mistaken for a migration failure. Deleting the legacy files earlier would empty
+   is why the install suppresses scripts rather than racing them. Once the tree is
+   valid v4, **after step 5**, migrate runs a **deferred lifecycle pass** to execute
+   what the suppressed install skipped — the native rebuilds and `prepare` steps —
+   and reports it as a distinct step so a failure there is not mistaken for a
+   migration failure.
+
+   **That pass is not a second ordinary install**, and the difference is the whole
+   reason it is named separately. An install run against a tree whose dependencies
+   are already placed has nothing to place, and a package it did not place is a
+   package whose lifecycle scripts it does not run — which is precisely why npm
+   documents `npm rebuild` as the recovery from an install with `--ignore-scripts`
+   rather than "install again". So the deferred pass is a **per-package-manager
+   command**, pinned by a test per manager rather than assumed: the managers spell it
+   differently, pnpm additionally gates dependency builds behind its own approval
+   list, and yarn's spelling differs between its majors. The project's **own root
+   lifecycle scripts** run alongside it, because they belong to the workspace rather
+   than to any dependency and no dependency rebuild covers them — and they are the
+   scripts most likely to invoke `wattpm`, which is what the suppression existed to
+   protect in the first place. Deleting the legacy files earlier would empty
    the window instead, but at a worse cost: a validation failure would then leave a
    tree that boots on neither version, and validation failure is the one path that
    does not roll back.
@@ -3120,9 +3134,11 @@ Generation reads both views. Then:
    rollback already restores both.
 
    **`--resume` runs the install itself**, so the transaction completes identically
-   whether or not the user ran the printed command; a package manager invoked against
-   an already-installed tree is a no-op, so doing it twice costs nothing and skipping
-   it silently would leave validation to fail on missing dependencies.
+   whether or not the user ran the printed command; an install against an
+   already-installed tree places nothing, so doing it twice costs nothing and skipping
+   it silently would leave validation to fail on missing dependencies. That is a
+   statement about *installation* only, and it is the same property that makes the
+   deferred lifecycle pass a different command rather than a repeat of this one.
    `--resume --no-install` opts out for users who manage installs themselves —
    offline, a private registry, a vendored `node_modules` — and validation then fails
    with a message naming the missing dependency rather than a schema error. An
