@@ -191,16 +191,14 @@ explicit where still needed (see "Machine-generated configs").
      file and stopping.
    - **Reported divergences** — conversions that are emitted but change behaviour,
      each carrying a *requires-review* note that names the file, the position and
-     what changed. A number-position placeholder that v3 refused to boot without now
-     yields `0`; a placeholder whose value came from an `env` block now yields `''`;
-     a structural path may be recovered from `.env.sample` or the `web/<id>`
+     what changed. A placeholder whose value came from an `env` block now yields
+     `''`; every carried `env` key is now outranked by the real environment; a
+     structural path may be recovered from `.env.sample` or the `web/<id>`
      convention rather than from a value v3 actually had.
 
    The second class exists because the alternative is worse: refusing them would
-   reject the shape v3's own generator emitted (`"port": "{PORT}"`), and silently
-   emitting a `requiredEnv` guard would turn a project that boots on a configured
-   machine into one that throws. What migrate must never do is convert and say
-   nothing.
+   reject shapes ordinary v3 projects have. What migrate must never do is convert and
+   say nothing.
 7. ICC integration points are preserved: `setApplicationConfigPatch` keeps
    byte-compatible patch semantics; `getRuntimeConfig` survives with its payload
    shape changed as a versioned DTO (see "Machine-generated configs").
@@ -1872,8 +1870,11 @@ the real environment and files on disk, and that one resolution serves every con
 file regardless of where it sits or which boot style found it.
 
 What this costs is a v3 fidelity break, in one narrow case: a v3 placeholder whose
-value came from an `env` block or an `envfile` resolved at parse time under v3 and
-does not under v4. Migrate detects exactly that case and reports it rather than
+value came from an **`env` block** resolved at parse time under v3 and does not under
+v4. It is `env` blocks only, not `envfile` — a per-app `envfile` governs *both* views
+in v4 (see the ladder above), so its values still resolve during evaluation, and the
+two positions where it could not be carried faithfully are refused by migrate rather
+than converted. Migrate detects exactly that case and reports it rather than
 emitting a `process.env.X ?? ''` that would silently evaluate to `''` (see
 "Migrating from v3"). A migrated `{ "connectionString": "{DATABASE_URL}" }` whose
 variable comes from the real environment or an env file — the ordinary case — still
@@ -2242,6 +2243,11 @@ export default {
   the file is.
 - Writers converted in v4: `next pack` (bundle config; gains a test asserting the
   bundle boots), the `wattpm install`/external flow (per-app files in cloned repos),
+  **`ImportGenerator`** — which writes a `watt.json` carrying either a `$schema` URL
+  or a bare `{ module }` for an imported application whose capability ships no
+  generator (`generators/lib/import-generator.js:126-150`, reached from
+  `create-wattpm/lib/index.js:424`), and is the one JSON writer that is easy to miss
+  because it is not a generator itself —
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
   (`'export default ' + JSON.stringify(config)`) — the last of which is the
   plain-object case the `$schema` rule governs. A machine writer emitting **`.js`
@@ -2396,7 +2402,15 @@ precede it; early adopters hand-convert). Release *cadence* stays decoupled afte
 runtime re-release.
 
 It is **the only code in v4 that can read legacy configs**. Scope: v3 projects built
-on in-tree capabilities. Where v3 and v4 cannot agree, migrate either **refuses** or
+on in-tree capabilities. It finds its input the way v3 found it, escape hatch
+included: the recognized v3 candidates from the directory it runs in, or the file
+named by **`migrate --config <path>`**, which accepts any filename. v3's `-c` did the
+same — `findConfigurationFileRecursive` runs its search loop only
+`while (!configurationFile)` (`foundation/lib/configuration.js:196-225`) — so a
+project whose scripts say `platformatic start -c config.production.yaml` has a real
+v3 configuration that a candidates-only migrator would never see, and would report as
+"nothing to migrate". (The loader's own `--config` accepts only the four v4 names;
+migrate's accepts only legacy ones. Each command reads the dialect it is for.) Where v3 and v4 cannot agree, migrate either **refuses** or
 **reports** — both sets enumerated in step 2 below, both derived from the lexical
 view, and neither ever silent. Refusals are detected before anything is written and
 come with the supported manual fixes. **Two of them involve `envfile`** and are worth
@@ -2606,37 +2620,50 @@ Generation reads both views. Then:
    aliases, and converts `{PLT_X}` placeholders into typed expressions that
    **preserve v3's unset-variable semantics** — v4 omits `undefined`-valued
    properties, so a bare `process.env.PLT_X` would silently change all three v3
-   behaviors. Under effective non-strict mode a position becomes
+   behaviors. Under effective non-strict mode a **string** position becomes
    `process.env.PLT_X ?? ''` (v3 replaced a missing variable with `''`); under
-   effective `strictEnv: true` / `'warn'` the emitted file gets a small generated
-   `requiredEnv('PLT_X')` helper that throws (or warns) when the variable is
+   effective `strictEnv: true` / `'warn'` every position instead gets a small
+   generated `requiredEnv('PLT_X')` helper that throws (or warns) when the variable is
    unset — a project that refused to boot without `TOKEN` still refuses after
-   migration.
+   migration. **Typed positions get that helper either way**, for the reason below.
 
-   `?? ''` is the **string-position** emission. It is not behaviour-preserving
-   anywhere else, and migrate says so. v3 validated after replacement with
+   `?? ''` is therefore the emission for a string position in a non-strict project,
+   and nothing else.
+
+   It is not behaviour-preserving anywhere else. v3 validated after replacement with
    `coerceTypes: true`, and ajv does not coerce `''` — it rejects it — so
    `"port": "{PORT}"` or `"level": "{PLT_LEVEL}"` with the variable unset failed
    validation and the project did not boot. Those variables were *implicitly required
    by their position's type*. What migrate emits therefore depends on the target
-   type, and the three cases behave differently:
+   type, and all three emissions preserve what v3 did:
 
    | position | emitted | unset behaviour |
    | --- | --- | --- |
    | string | `process.env.X ?? ''` | `''`, as v3 |
    | boolean | the audit's per-property rule — `!== 'false'`, `=== 'true'` | a real boolean; `''` never reaches the schema |
-   | number, enum | `Number(process.env.X ?? '')` / `?? ''` | **diverges from v3** |
+   | number, enum | `Number(requiredEnv('X'))` / `requiredEnv('X')` | refuses to boot, as v3 |
 
-   The last row is the one that needs the note. An **enum** position rejects `''` at
-   load, so v3's refusal survives — loudly, in the right place. A **number** position
-   does not: `Number('')` is `0`, a valid port meaning "choose one at random", so a
-   project that refused to boot silently starts listening somewhere. Migrate emits a
-   **requires-review** note for every placeholder in a number or enum position,
-   naming the variable, the JSON path, the target type and which of the two outcomes
-   applies. Boolean positions get no note, because the table's rule makes them
-   faithful. It emits the note rather than a `requiredEnv` call because a value the
-   deployment always sets needs no helper, and the codemod cannot tell the two
-   apart from the laptop it runs on. Two carve-outs: "effective strictEnv" per app file follows v3's
+   **A typed position gets the guard whether or not the project set `strictEnv`**,
+   because the requirement is not the project's — it is the position's. `strictEnv`
+   made *every* variable required; the schema made *these* ones required, and it did
+   so under v3.
+
+   The alternative is to emit `Number(process.env.X ?? '')` and warn, on the reasoning
+   that a value the deployment always sets needs no helper. That reasoning confuses
+   *needs no helper* with *is harmed by one*. `requiredEnv` returns the value when the
+   variable is set, so the deployment that sets `PORT` is untouched; it throws only
+   when the variable is missing, which is precisely the case where v3 refused to boot.
+   There is no third case — the variable is set or it is not — so the guard costs
+   nothing and buys back the one conversion that could otherwise turn a project that
+   refused to start into one that starts on a port nobody chose.
+
+   The guard for a typed position **throws when the variable is unset or empty**, and
+   throws even under `strictEnv: 'warn'`: v3's ajv rejected `''` in these positions
+   with `coerceTypes` on, and warning would leave `Number('')` — that is, `0` — to
+   reach the schema, which is exactly the silent listener the guard exists to
+   prevent. That non-empty rule is the one place the guard is stricter than v3, and
+   only for string positions under `strictEnv`, where v3 accepted a deliberately
+   empty value; it is reported (see the divergence list in step 2). Two carve-outs: "effective strictEnv" per app file follows v3's
    precedence (`strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv` —
    the *root* config's value wins when defined, and a per-app capability config
    carrying a `runtime` block supplies the third fallback,
@@ -2897,10 +2924,21 @@ Generation reads both views. Then:
    (`foundation/lib/configuration.js:512`), so it was defined in every config parse
    and is not something migrate can read from the environment it runs in — the
    worker-environment copy is the *runtime* root, a different value (see BC 20); then
-   the **migration-time
-   environment**; then the **root `.env`**; then the value in **`.env.sample`** if one
-   exists; then the conventional **`<autoload.path>/<id>` directory** if it exists on
-   disk. This is the one place migrate reads the ambient environment to decide
+   the **migration-time environment**; then **the env file v3 itself would have read
+   for that config file**; then the value in **`.env.sample`** if one exists; then the
+   conventional **`<autoload.path>/<id>` directory** if it exists on disk.
+
+   That third rung is per-file, not per-project, and it is the vendored `loadEnv` that
+   decides it rather than a rule of migrate's own. v3 skips the search entirely when
+   the config declared an `envfile` (`foundation/lib/configuration.js:349-357`);
+   otherwise it walks up from **that config file's own directory** and stops at the
+   **first** `.env` it finds (`:361-371`), falling back to `process.cwd()/.env` when
+   the walk finds none (`:373-380`). Calling that "the root `.env`" — as an earlier
+   draft did — is wrong twice over: it reads the wrong file whenever an intermediate
+   directory has one, and it has no answer at all for a project whose only `.env`
+   sits in neither place. Reusing the closure also gets the precedence right for
+   free, since v3 layers the real environment *over* the file rather than under it
+   (`:383-393`), which is the order the two rungs above already have. This is the one place migrate reads the ambient environment to decide
    *structure* rather than to preserve a value, and the report says which link in the
    chain supplied each one.
 
@@ -3058,13 +3096,18 @@ Generation reads both views. Then:
    reason the refusals are — a divergence introduced elsewhere without appearing in
    this list is a bug in the document:
 
-   - a **number-position placeholder** whose variable is unset: v3 refused to boot,
-     `Number('')` is `0`, and the application listens on a random port;
-   - an **enum-position placeholder** whose variable is unset: v3 refused to boot and
-     so does v4, but at load rather than at parse — same outcome, different message;
    - a placeholder whose value came from an **`env` block**: v4 keeps blocks out of
      config evaluation, so the expression yields `''` where v3 yielded the block's
      value;
+   - **every `env` block key migrate carries over**, whose precedence inverts: v3
+     applied blocks over the environment, v4 applies dotenv order, so the real
+     environment now outranks the block. Nothing about the key changes — same name,
+     same value, same place — which is why it is easy to omit from a list like this
+     one, and why every carried key gets the warning (BC 18);
+   - a **string position under effective `strictEnv` whose variable is set to the
+     empty string**: v3 replaced it with `''` and let the schema accept it, while
+     `requiredEnv` treats empty as missing and throws. This is the only position
+     where the guard is stricter than v3;
    - a **structural path recovered from a fallback** — `.env.sample`, or the
      `<autoload.path>/<id>` convention — rather than from a value the project
      actually supplied;
@@ -3075,11 +3118,13 @@ Generation reads both views. Then:
      capability's `server` schema does not admit** — `keepAliveTimeout` for the basic
      family, `http2` for nitro (see rule 1).
 
-   Refusal is not the better answer for any of them. A number-position placeholder is
-   the shape v3's own generator emitted (`"port": "{PORT}"`), so refusing would reject
-   most real projects; and emitting a `requiredEnv` guard instead would convert a
-   project that boots on a configured machine into one that throws on it. The line
-   this document holds is narrower and keepable: **migrate never converts silently.** The
+   Refusal is not the better answer for any of them: each is a conversion an ordinary
+   v3 project needs, and each has an outcome the project can live with once it is
+   told. The line this document holds is therefore narrower than "always faithful"
+   and keepable: **migrate never converts silently.** Two conversions that used to sit
+   in this list — the number- and enum-position placeholders — left it by becoming
+   faithful rather than by being excused, which is the better way for an entry to
+   leave. The
    gate is deliberately about closure membership, not v4 readiness: without a
    frozen v3 schema, upgrade chain, and target-type table, migrate cannot upgrade
    that app's config or decide whether `"{ACME_PORT}"` is a number, boolean, or
@@ -3103,11 +3148,11 @@ Generation reads both views. Then:
    disk, and discovery would walk into another repository's v3 configuration — which
    migrate deliberately did not convert — and fail on output that is correct. That is
    the fourth deviation of the migrator-only entry; migrate must not require `wattpm resolve` to have been run first, and
-   reports the unresolved list in its summary. This bypass is *not* the public
-   `--config` flag:
-   `--config` performs the full unconditional legacy scan of the selected
-   directory and every discovered app directory, so it can never be used to
-   sidestep the no-coexistence guard.
+   reports the unresolved list in its summary. This bypass is *not* the **loader's**
+   public `--config` flag: that one performs the full unconditional legacy scan of
+   the selected directory and every discovered app directory, so it can never be used
+   to sidestep the no-coexistence guard. (Nor is it `migrate --config`, which selects
+   migrate's *input* and reads legacy names only.)
 
    **Validation seeds the environment for every variable the emitted files reference
    that is not already set**, not only `requiredEnv`-wrapped ones. Migrate records
@@ -3166,11 +3211,22 @@ Generation reads both views. Then:
    `platformatic.json`/`watt.json` names but each custom filename a v3
    `applications[].config` pointed at, recorded during the lexical pass, since v3
    accepted any name there and leaving one behind preserves exactly the coexistence
-   state this step exists to end. **Then run the deferred lifecycle scripts** (step 2
-   suppressed them): the tree is now valid v4, so a `postinstall` or `prepare` that
-   invokes `wattpm` sees a state it can load. This is reported as its own step, and a
-   failure in it leaves the migration itself complete — the configuration is
-   converted; what failed is the project's own build. Finally, print a summary. There is no rename, no
+   state this step exists to end.
+
+   **The transaction commits here** — when the last legacy file is gone and before
+   anything else runs. That is the point where the tree is a valid v4 project and
+   every file migrate meant to write or delete is written or deleted; nothing after
+   it can make the conversion less true. Naming it matters because the next thing
+   that happens is user code, and without a commit point two rules would both claim
+   it (see the rollback rule below): a failing `postinstall` would be a mid-run
+   failure *and* a completed migration at the same time.
+
+   **Then run the deferred lifecycle scripts** (step 2 suppressed them): the tree is
+   now valid v4, so a `postinstall` or `prepare` that invokes `wattpm` sees a state it
+   can load. This runs **after the commit**, is reported as its own step, and a
+   failure in it rolls nothing back — the configuration is converted; what failed is
+   the project's own build, and the summary says which of the two it was. Finally,
+   print a summary. There is no rename, no
    `.v3.bak`, no `--keep` — **version control is the undo mechanism**: migrate
    refuses to run on a dirty git tree (`--force` overrides, with a loud warning;
    same flag for no-VCS trees), so review is `git diff`. The dirty check counts
@@ -3198,8 +3254,8 @@ Generation reads both views. Then:
    because `--resume` skips that pass: the **legacy-deletion set** — including custom
    filenames a v3 `applications[].config` pointed at, without which a resumed run
    could not complete step 5 — and the **placeholder-position record** step 3 seeds
-   from, each entry being a variable, a JSON path and a target type. On a mid-run
-   failure **other than validation**
+   from, each entry being a variable, a JSON path and a target type. On a failure
+   **before the commit point** and **other than validation**
    it removes its own creations automatically, and on success the summary prints
    the exact path-scoped undo (`git restore <tracked…> && rm <created…>`) — never
    a bare `git restore .`, and never any form of `git clean`. Stored contents make **mid-run** rollback work without git: step 2 modifies
@@ -3602,7 +3658,11 @@ runs multiple workers on a fixed port at all.
 8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
    package type); a monorepo emits a config file for **every** application, while a
    single-app project emits one only for non-default answers (single-app defaults
-   produce no config file); scaffolded test helpers import the config module instead
+   produce no config file); **`ImportGenerator` emits the v4 per-app form** instead of
+   a `watt.json` stub (`generators/lib/import-generator.js:126-150`) — it is the path
+   taken for capabilities without a generator, so leaving it would let the wizard
+   still write JSON for exactly the applications least likely to be tested;
+   scaffolded test helpers import the config module instead
    of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
 **Every code block in this document is checked in CI, or explicitly marked as
@@ -3857,8 +3917,17 @@ export function next (
 import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
+// emitted by migrate: these positions were implicitly required by their type in v3
+function requiredEnv (name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`${name} is required but is not set`)
+  }
+  return value
+}
+
 export default defineConfig({
-  logger: { level: process.env.PLT_SERVER_LOGGER_LEVEL ?? '' },
+  logger: { level: requiredEnv('PLT_SERVER_LOGGER_LEVEL') },
   managementApi: (process.env.PLT_MANAGEMENT_API ?? '') !== '',
   application: {
     id: 'main',
@@ -3866,7 +3935,7 @@ export default defineConfig({
     config: next({
       server: {
         hostname: process.env.PLT_SERVER_HOSTNAME ?? '',
-        port: Number(process.env.PORT ?? '')
+        port: Number(requiredEnv('PORT'))
       },
       cache: { adapter: 'redis', url: process.env.PLT_REDIS_URL ?? '' }
     })
@@ -3877,13 +3946,17 @@ export default defineConfig({
 with the migration report:
 
 ```
-! requires review — typed-position placeholders (2)
+i typed-position placeholders guarded (2)
   PORT → application.config.server.port (number)
-    v3 refused to boot when PORT was unset; v4 evaluates Number('') to 0 and
-    listens on a random port. Set PORT, or write a literal.
   PLT_SERVER_LOGGER_LEVEL → logger.level (enum)
-    v3 refused to boot when it was unset; v4 rejects '' at load.
+    Both were implicitly required by their position's type under v3, which refused
+    to boot when they were unset. requiredEnv() keeps that, and names the variable
+    when it happens. Set them, or write a literal.
 ```
+
+The two guarded positions are reported, not flagged for review: a converted project
+behaves as it did, so there is nothing for the author to decide. The generated
+`requiredEnv` helper is emitted into the file alongside them.
 
 The `id` is pinned even though this project has one application: v3 derived it from
 `package.json` `name` with the scope stripped, falling back to `'main'`
