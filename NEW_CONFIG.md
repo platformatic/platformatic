@@ -3985,6 +3985,16 @@ runs multiple workers on a fixed port at all.
    than a property of the present** — and the inventory is deliberately not quoted
    here, because a hard-coded count is stale the next time a block is added, which is
    exactly how the previous count came to be wrong.
+
+   **The source citations are already gated**, by `scripts/check-citations.mjs` and
+   the workflow beside it. Every `file.js:line-range` reference in this document is
+   anchored to a hash of the lines it was written against, so a change under a citation fails the
+   check rather than passing quietly: verifying that a range is *in bounds* catches
+   nothing, since code that moves leaves the range valid and the reference pointing
+   at something else. Thirty-six citations here were wrong that way before the
+   anchoring existed. Content that merely moved is repaired by `--fix`; content that
+   changed is reported for a human, because a citation whose code no longer says what
+   the sentence claims is a statement to re-read, not a line number to update.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` (`control/lib/index.js:242`, the removed `GET /config`) while

@@ -108,7 +108,19 @@ function fileLines (path, ref) {
   let text
   if (ref) {
     const rel = path.slice(ROOT.length + 1)
-    text = execFileSync('git', ['show', `${ref}:${rel}`], { cwd: ROOT, maxBuffer: 1 << 28 }).toString()
+    try {
+      text = execFileSync('git', ['show', `${ref}:${rel}`], {
+        cwd: ROOT,
+        maxBuffer: 1 << 28,
+        stdio: ['ignore', 'pipe', 'ignore']
+      }).toString()
+    } catch {
+      // A shallow clone does not have the commit. Say so rather than failing:
+      // the citation is deliberately historical and cannot be re-read here.
+      const err = new Error(`unreachable commit ${ref}`)
+      err.unreachable = true
+      throw err
+    }
   } else {
     text = readFileSync(path, 'utf8')
   }
@@ -163,10 +175,17 @@ const shift = (spec, start) => {
 
 // ---------------------------------------------------------------------- main
 
+// The document may not exist on every branch this runs from. That is not a
+// failure — there is simply nothing to check.
+if (!existsSync(docPath)) {
+  console.log(`${docPath.slice(ROOT.length + 1)}: not present, nothing to check`)
+  process.exit(0)
+}
+
 let doc = readFileSync(docPath, 'utf8')
 const lock = existsSync(LOCK) ? JSON.parse(readFileSync(LOCK, 'utf8')) : { citations: {} }
 const seen = new Set()
-const problems = { unresolved: [], outOfRange: [], drifted: [], moved: [], unblessed: [] }
+const problems = { unresolved: [], outOfRange: [], drifted: [], moved: [], unblessed: [], unavailable: [] }
 const nextLock = {}
 const rewrites = []
 
@@ -193,7 +212,16 @@ for (const cite of extract(doc)) {
 
   const rel = path.slice(ROOT.length + 1)
   const key = `${rel}:${cite.spec}${cite.ref ? `@${cite.ref}` : ''}`
-  const picked = contentOf(path, cite.spec, cite.ref)
+  let picked
+  try {
+    picked = contentOf(path, cite.spec, cite.ref)
+  } catch (error) {
+    if (!error.unreachable) throw error
+    problems.unavailable.push({ ...cite, rel })
+    if (lock.citations[key]) nextLock[key] = lock.citations[key]
+    seen.add(key)
+    continue
+  }
 
   if (picked === null) {
     problems.outOfRange.push({ ...cite, rel })
@@ -330,6 +358,8 @@ report('drifted — cited lines hold different code now', problems.drifted,
 report(mode === 'fix' ? 'moved — rewritten' : 'moved — content found elsewhere (run --fix)', problems.moved,
   c => `${c.rel}: ${c.from} -> ${c.to}`)
 report('not in the lockfile (run --update to bless)', problems.unblessed, c => `${c.rel}:${c.spec}`)
+report('not verifiable here — historical commit absent (shallow clone?)', problems.unavailable,
+  c => `${c.rel}:${c.spec} @ ${c.ref}`)
 
 const stale = Object.keys(lock.citations).filter(k => !seen.has(k))
 if (stale.length && mode === 'verify') {
@@ -340,6 +370,12 @@ const failed = problems.unresolved.length + problems.outOfRange.length +
   problems.drifted.length + (mode === 'verify' ? problems.moved.length : 0)
 if (mode === 'verify' && failed) {
   console.log(`\nFAIL: ${failed}`)
+  if (problems.moved.length) {
+    console.log('Cited code moved. Run: node scripts/check-citations.mjs --fix')
+  }
+  if (problems.drifted.length) {
+    console.log('Cited code changed. Re-read the document around each citation, then --update.')
+  }
   process.exit(1)
 }
 console.log(`\nOK${mode === 'verify' ? '' : ` (${mode})`}`)

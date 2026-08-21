@@ -1,0 +1,46 @@
+name: Citation Check
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+    paths:
+      - 'NEW_CONFIG.md'
+      - 'scripts/check-citations.mjs'
+      - 'scripts/citations.lock.json'
+      - 'packages/**'
+  pull_request:
+    paths:
+      - 'NEW_CONFIG.md'
+      - 'scripts/check-citations.mjs'
+      - 'scripts/citations.lock.json'
+      - 'packages/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  citations:
+    name: Verify document citations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          # Citations marked pre-<sha> are read from that commit with `git show`,
+          # so the whole history has to be here. Without this the check reports
+          # them as unverifiable and still passes, which is worse than failing.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+
+      # No install: the checker uses Node built-ins only.
+      - name: Verify citations
+        run: node scripts/check-citations.mjs
