@@ -35,6 +35,11 @@
       "head": "if (application.url && !application.path) {",
       "lines": 3
     },
+    "packages/foundation/lib/schema.js:869": {
+      "sha": "c7b1965b654e187a",
+      "head": "anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],",
+      "lines": 1
+    },
     "packages/wattpm-utils/lib/commands/external.js:413,422-433": {
       "sha": "6288a0aef0323f60",
       "head": "const config = await loadConfiguration(configurationFile)",

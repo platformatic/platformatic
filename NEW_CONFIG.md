@@ -648,6 +648,15 @@ per-app file lookup, no detector, no capability validation. This is v3's
 reason: detection on a missing directory would glob the cwd), adapted to the fact
 that v4 always has a `path` and only the directory may be absent.
 
+**Which is why a `url` entry must declare an `id`.** Everywhere else the id is
+derivable — the `package.json` `name`, the directory — and v4 derives it. A remote
+entry has neither until the clone exists, and the clone's location is
+`<resolvedApplicationsBasePath>/<id>`, so the one input the backfill needs is the one
+thing that would have to come from the thing it is computing. v3's schema required
+`id` for both entry shapes (`foundation/lib/schema.js:869`); v4 relaxes it for local
+entries, where there is something to derive from, and keeps it for remote ones. The
+type sketch in Appendix A models the two as a union for the same reason.
+
 **Loading must succeed in that state, because it is the only state `resolve` ever
 runs in.** `resolveApplications` calls `loadConfiguration` first and *then* selects
 the applications whose path is missing (`wattpm-utils/lib/commands/external.js:413,422-433`),
@@ -4192,12 +4201,30 @@ export interface AppServerOptions {
   https?: HttpsOptions
 }
 
-export interface ApplicationEntry {
+// Local and remote entries are two shapes, and `id` is what separates them: a
+// local entry can derive one from its package or directory, a remote entry has
+// neither until it has been cloned — and its path is computed from the id before
+// that happens (see "Remote apps"). The schema says the same thing.
+export type ApplicationEntry = LocalApplicationEntry | RemoteApplicationEntry
+
+export interface LocalApplicationEntry extends ApplicationEntryOptions {
   id?: string                             // else package.json name (scope stripped),
                                           // else directory name
-  path?: string
-  url?: string
-  gitBranch?: string
+  path?: string                           // defaults to the config file's directory
+  url?: never
+}
+
+export interface RemoteApplicationEntry extends ApplicationEntryOptions {
+  id: string                              // required: nothing exists yet to derive
+                                          // it from, and the loader backfills
+                                          // `<resolvedApplicationsBasePath>/<id>`
+  url: string
+  path?: string                           // normally absent — the loader computes it
+  gitBranch?: string                      // as authored; absent lets a `#branch`
+                                          // fragment in the URL decide
+}
+
+export interface ApplicationEntryOptions {
   config?: ApplicationDefinition          // factory result, plain { module } object,
     | DeferredApplicationDefinition       // or a callback form — legal only in a
                                           // config *file*, awaited by the root
