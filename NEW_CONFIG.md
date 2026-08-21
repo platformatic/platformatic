@@ -3801,14 +3801,20 @@ Generation reads both views. Then:
    it. That is deliberate rather than an oversight: the manifest holds the verbatim
    contents of legacy configurations, which is precisely where credentials live, and
    leaving a plaintext copy on disk indefinitely to enable a rarely-used undo is the
-   worse trade. On a tracked tree the printed
-   `git restore <tracked…> && rm <created…>` is complete. On a `--force` or no-VCS
-   tree it is not, and the summary names what is unrecoverable:
+   worse trade. **The printed undo ends with the package manager**, because restoring
+   files does not restore `node_modules`: step 2 installed the v4 dependency tree, and
+   a tree with v3 configurations restored under an installed v4 runtime boots on
+   neither version. This is the same reason failure rollback re-runs the package
+   manager (below), and it applies identically to a successful run undone by hand. So
+   the summary prints the detected manager's command as the last step and does not
+   describe the undo as complete without it. On a `--force` or no-VCS tree it is not
+   complete even then, and the summary names what is unrecoverable:
 
    ```
    ✔ migrated 3 applications
+     to undo: git restore <tracked…> && rm <created…> && pnpm install
    ! web/api/platformatic.json was untracked and has been deleted; --force means
-     this cannot be undone. git restore <tracked…> && rm <created…> covers the rest.
+     this cannot be undone. The command above covers the rest.
    ```
 
    This is what `--force` already signified. The dirty-tree check refuses an
