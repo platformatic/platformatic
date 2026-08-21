@@ -1756,6 +1756,19 @@ serial scheme.
    `watt.config.js` in a `"type": "commonjs"` package is CJS) records every file
    the evaluation transitively imported or required; the main process merges the
    per-worker lists for the watcher.
+
+   **That list has to survive a failed evaluation, which is exactly when it matters.**
+   Add an `import` of a helper to a config file, have the helper throw, and there is
+   no valid result for `importedFiles` to ride back on; let the evaluation hit the
+   `--config-timeout` and the worker is terminated before it could post anything. A
+   watcher holding only the last good set is then not watching the helper, so fixing
+   the helper triggers no reload and `wattpm dev` looks hung on a file the user is
+   actively editing. So the hook **streams** each resolved path to the parent as it
+   records it rather than accumulating a list to post at the end, structured error
+   results carry the same paths, and the main process keeps the **union of the last
+   good set and whatever the failed load reported** until an evaluation succeeds.
+   Streaming is what covers termination, where nothing can be posted; the union is
+   what covers a broken config that currently imports less than it did.
 4. Each worker **canonicalizes in-worker, before `postMessage`**, building the
    plain-data snapshot described above: the config is about to cross Node's
    structured-clone boundary, where a nested
