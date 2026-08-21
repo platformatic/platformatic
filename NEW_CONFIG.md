@@ -3226,8 +3226,8 @@ Generation reads both views. Then:
    **The refusals have a companion set: the reported divergences.** These are
    conversions migrate performs even though the result behaves differently from v3,
    each carrying a *requires-review* note. They are enumerated here for the same
-   reason the refusals are — a divergence introduced elsewhere without appearing in
-   this list is a bug in the document:
+   reason the refusals are — a *conversion* that diverges without appearing in this
+   list is a bug in the document:
 
    - a placeholder whose value came from an **`env` block**: v4 keeps blocks out of
      config evaluation, so the expression yields `''` where v3 yielded the block's
@@ -3264,9 +3264,25 @@ Generation reads both views. Then:
      capability's `server` schema does not admit** — `keepAliveTimeout` for the basic
      family, `http2` for nitro (see rule 1).
 
-   Refusal is not the better answer for any of them: each is a conversion an ordinary
-   v3 project needs, and each has an outcome the project can live with once it is
-   told. The line this document holds is therefore narrower than "always faithful"
+   **The list is scoped to conversions, and the scope is the distinction it turns
+   on.** v4 also changes behavior for projects that were never migrated at all —
+   `build` resolving `enabled` against production (BC 17), `NODE_ENV` defaulting to
+   `production` under `build` (BC 20), the env-file discovery rewrite that makes a
+   pre-existing `.env.local` live (BC 5) — and those belong to the breaking-change
+   list, because migrate neither chose them nor could decline them, and a
+   per-project note would imply otherwise. What migrate owes for them is **evidence,
+   not enumeration**: the run ends by naming the breaking changes its own scan found
+   this tree standing in front of — an `.env.local` or mode file sitting in a
+   directory the new layering now reads, an `enabled` object that `build` will resolve
+   differently, a `process.env.NODE_ENV` read in a build script that the step 4 source
+   scan already walks the sources for — each with the file and the BC number. A
+   project with none of them reads a shorter report, which is the point: the BC list
+   is exhaustive and therefore unreadable, and the run is the only thing that knows
+   which of its entries apply here.
+
+   Refusal is not the better answer for any of the divergences: each is a conversion an
+   ordinary v3 project needs, and each has an outcome the project can live with once it
+   is told. The line this document holds is therefore narrower than "always faithful"
    and keepable: **migrate never converts silently.** Two conversions that used to sit
    in this list — the number- and enum-position placeholders — left it by becoming
    faithful rather than by being excused, which is the better way for an entry to
@@ -3346,13 +3362,16 @@ Generation reads both views. Then:
    side, which the loader refuses — and prints both ways out: the path-scoped undo
    from the manifest, or fix the reported problem and run `migrate --resume`.
    Nothing has been deleted, so neither direction loses anything.
-4. Scan application sources for references to the legacy config files (v3
-   scaffolded test helpers do `JSON.parse(await readFile(…, 'watt.json'))`) and
-   for `PLT_DEV` / `PLT_ENVIRONMENT` / `PLT_ROOT` reads (all three injected
-   variables are removed in v4): any
-   hit is reported with the file/line of the reference, since the codemod cannot
+4. Scan application sources — one walk, four things it is looking for: references
+   to the legacy config files (v3 scaffolded test helpers do `JSON.parse(await
+   readFile(…, 'watt.json'))`); `PLT_DEV` / `PLT_ENVIRONMENT` / `PLT_ROOT` reads (all
+   three injected variables are removed in v4); the **old spelling of any id migrate
+   renamed**, which is a mesh hostname and a metrics label out here; and
+   `process.env.NODE_ENV` reads in build scripts, which BC 20 changes under `build`.
+   Every hit is reported with the file/line of the reference, since the codemod cannot
    safely rewrite user code and the change will make that code fail or branch
-   differently.
+   differently. The first two are divergences of migrate's own making; the last two
+   are the evidence half of the breaking-change report below.
 5. **Delete every legacy file migrate read** — not only the recognized
    `platformatic.json`/`watt.json` names but each custom filename a v3
    `applications[].config` or `autoload.mappings[].config` pointed at, recorded during
