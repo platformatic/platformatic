@@ -1017,7 +1017,7 @@ The rules, in full:
   and the same guard in `vite`, `astro`, `remix`, `nest`). No schema supplies a
   default. So **omitting `server` is the mesh-only spelling** — the application
   is reachable at `http://<id>.plt.local` through the in-thread dispatch target
-  (`basic/lib/capability.js:417-419`) and nowhere else — and a declared port is
+  (`basic/lib/capability.js:416-418`) and nowhere else — and a declared port is
   the statement that this application faces something outside the runtime.
 - **`port: 0` is the ephemeral spelling**, one OS-assigned port per worker:
   `buildListenOptions` is still `{ port: serverConfig?.port || 0 }`
@@ -1033,7 +1033,7 @@ The rules, in full:
   reachable from capability code, not from a configuration file. It is then
   applied by a `net.server.listen` subscriber that sets `options.reusePort =
   true` (`:827-841`). Both `reuseTcpPorts` properties default to `true`
-  (`foundation/lib/schema.js:894` for the entry, `foundation/lib/schema.js:1100` for the root), and the
+  (`foundation/lib/schema.js:901-904` for the entry, `foundation/lib/schema.js:1107-1110` for the root), and the
   **entry-level one now reaches the decision** — the runtime passes the whole
   application entry into the capability context (`worker/controller.js:82`), which
   is the plumbing v3 lacked. Where the OS lacks `SO_REUSEPORT`
@@ -1174,7 +1174,7 @@ an evaluation could only establish by executing a file above the search's stop p
 **Not listening has two meanings, and the startup output must tell them apart.**
 Without a port, an application is either **mesh-only** — reachable at
 `http://<id>.plt.local` because `getDispatchTarget()` falls back to in-thread
-dispatch (`basic/lib/capability.js:417-419`) — or **inactive**, because its
+dispatch (`basic/lib/capability.js:416-418`) — or **inactive**, because its
 capability's start path returns early when `server.port` is undefined. The second
 is real: `next` returns at `next/lib/capability.js:209` and `:326`, and `vite`,
 `astro`, `remix` and `nest` do the same. Reporting an inactive framework
@@ -1588,7 +1588,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:125-128`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:126-130`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -2589,7 +2589,8 @@ packages — and the closure is larger than foundation alone:
   `replaceEnv` and the YAML brace pre-pass, all `$schema` URL generations, and a
   **v3 → v4 module rename table** (`@platformatic/composer` →
   `@platformatic/gateway`; the identity is extracted *before* the upgrade chains
-  run, `foundation/lib/configuration.js:166-179` at `:540`, so composer-era apps
+  run, `foundation/lib/configuration.js:166-179` called at `:573`, ahead of `upgrade()`
+  at `:583`, so composer-era apps
   keep the old module name and must be renamed explicitly);
 - the four `semgrator` upgrade chains (from `runtime`, `service`, `db`, and
   `gateway` — including v1/v2→v3);
@@ -2822,7 +2823,7 @@ Generation reads both views. Then:
    precedence (`strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv` —
    the *root* config's value wins when defined, and a per-app capability config
    carrying a `runtime` block supplies the third fallback,
-   `foundation/lib/configuration.js:480` with
+   `foundation/lib/configuration.js:540` with
    `runtime/lib/worker/controller.js:95,142`), and `*_URL`
    placeholders in **separate application config files** never get `requiredEnv`
    even under strict mode — v3 resolved unset `*_URL` keys there through the
@@ -2928,16 +2929,16 @@ Generation reads both views. Then:
 
    **The count is taken after replaying v3's `enabled` splice, not over every
    authored application.** v3 removes disabled applications *before* auto-detection
-   (`config.js:413-417`, then `:436-440`), so a two-application project with one
+   (`config.js:398-402`, then `:410-412`), so a two-application project with one
    `enabled: false` had exactly one survivor, and that survivor became the
    entrypoint and bound the root port. Counting the lexical set instead would
    conclude "does not resolve" and drop the root `server` block from a project that
    was publicly reachable — and since a v4 listener opens only where
    `server.port` is defined, a framework application treated that way would not
    start at all. Migrate therefore evaluates `isApplicationEnabled`
-   (`config.js:298-314`) over the lexical values and resolves the entrypoint
+   (`config.js:283-299`) over the lexical values and resolves the entrypoint
    **twice, once for `production` and once for `development`** — the only two
-   values v3 derives (`:318`).
+   values v3 derives (`:303`).
 
    When both environments resolve to the same application, that is the entrypoint.
    When they **disagree** — an `enabled` object such as
@@ -3038,7 +3039,7 @@ Generation reads both views. Then:
      about the port having been *authored* on v3, not about its value. The hazard is
      concrete: `wattpm import` pulls in projects scaffolded *standalone*, which do
      carry `"server": { "port": "{PORT}" }`
-     (`service/lib/generator.js:414` pre-`e2da15eda`, guarded by
+     (`service/lib/generator.js:414-422` pre-`e2da15eda`, guarded by
      `!isRuntimeContext`; the guard is gone in v4, where every scaffolded
      application owns a port).
 
@@ -3405,7 +3406,7 @@ Generation reads both views. Then:
    resolved — validate as **unresolved** and are skipped, exactly as they are at
    load time. So are entries whose backfilled path falls inside
    `resolvedApplicationsBasePath`: the loader computes that path itself
-   (`runtime/lib/runtime.js:2442`), so a `wattpm resolve`-d clone *does* exist on
+   (`runtime/lib/runtime.js:2446`), so a `wattpm resolve`-d clone *does* exist on
    disk, and discovery would walk into another repository's v3 configuration — which
    migrate deliberately did not convert — and fail on output that is correct. That is
    the fourth deviation of the migrator-only entry; migrate must not require `wattpm resolve` to have been run first, and
@@ -3448,7 +3449,7 @@ Generation reads both views. Then:
    question are deployment variables, absent from the laptop running the codemod —
    the document says so where it explains why every `env`-block key is warned about.
    A v3 project whose generator wrote `logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' }`
-   (the default — `service/lib/generator.js:414` pre-`e2da15eda`) emits
+   (the default — `service/lib/generator.js:418-420` pre-`e2da15eda`) emits
    `process.env.PLT_SERVER_LOGGER_LEVEL ?? ''`, and `''` is not a member of
    `logger.level`'s enum once the audit drops its placeholder pattern branch. Step 3
    would reject it, and a validation failure does not roll back — stranding the tree
@@ -3691,7 +3692,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     warns when a root `server` is discarded (`runtime/lib/upgrade.js:16-19`).
     `entrypointPort` leaves the **capability** schema
     (`basic/lib/schema.js:61-63`), and **no upgrade chain removes it**: `v4.0.0.js`
-    returns early for a non-runtime `$schema` (`:12-14`) — exactly the capability
+    returns early for a non-runtime `$schema` (`runtime/lib/versions/v4.0.0.js:12-14`) — exactly the capability
     configs the key lives in — and the basic-family capabilities have no `versions/`
     directory at all. So **migrate strips it** while emitting a requires-review note
     naming each entry that carried one, because a project relying on it to advertise

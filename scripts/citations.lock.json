@@ -130,9 +130,9 @@
       "head": "return super.getDispatchFunc()",
       "lines": 6
     },
-    "packages/basic/lib/capability.js:417-419": {
-      "sha": "d608c03189ab457b",
-      "head": "return this.getUrl() ?? (await this.getDispatchFunc())",
+    "packages/basic/lib/capability.js:416-418": {
+      "sha": "550d1f7e163a858d",
+      "head": "async getDispatchTarget () {",
       "lines": 3
     },
     "packages/basic/lib/utils.js:22": {
@@ -155,15 +155,15 @@
       "head": "#setupSharedStartResources () {",
       "lines": 15
     },
-    "packages/foundation/lib/schema.js:894": {
-      "sha": "95cad8daba89fe04",
-      "head": "url: {",
-      "lines": 1
+    "packages/foundation/lib/schema.js:901-904": {
+      "sha": "7857da3e36eabe4b",
+      "head": "reuseTcpPorts: {",
+      "lines": 4
     },
-    "packages/foundation/lib/schema.js:1100": {
-      "sha": "e024f2960f693139",
-      "head": "minimum: 0",
-      "lines": 1
+    "packages/foundation/lib/schema.js:1107-1110": {
+      "sha": "7857da3e36eabe4b",
+      "head": "reuseTcpPorts: {",
+      "lines": 4
     },
     "packages/runtime/lib/worker/controller.js:82": {
       "sha": "e4a960560cf0426e",
@@ -410,10 +410,10 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:125-128": {
-      "sha": "d63e5e7d29c32c2a",
-      "head": "try {",
-      "lines": 4
+    "packages/runtime/index.js:126-130": {
+      "sha": "162312aac6a90f78",
+      "head": "const applicationConfig = await utilsLoadConfiguration(application.config)",
+      "lines": 5
     },
     "packages/runtime/lib/config.js:362-396": {
       "sha": "0640a25e34ebc3fa",
@@ -580,9 +580,14 @@
       "head": "const matching = knownConfigurationFilesSchemas.map(matcher => config.$schema.match(matcher)).find(m => m)",
       "lines": 14
     },
-    "packages/foundation/lib/configuration.js:540": {
-      "sha": "99ff4a93c4d1ac02",
-      "head": "const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)",
+    "packages/foundation/lib/configuration.js:573": {
+      "sha": "48406bf2f9bdc71f",
+      "head": "const moduleInfo = extractModuleFromSchemaUrl(config)",
+      "lines": 1
+    },
+    "packages/foundation/lib/configuration.js:583": {
+      "sha": "45788695c5808b17",
+      "head": "config = await upgrade(logger, config, version)",
       "lines": 1
     },
     "packages/foundation/lib/configuration.js:28": {
@@ -610,9 +615,9 @@
       "head": "application.path = resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)",
       "lines": 1
     },
-    "packages/foundation/lib/configuration.js:480": {
-      "sha": "e5018dd4bebd174f",
-      "head": "strictEnv: strictEnvOption,",
+    "packages/foundation/lib/configuration.js:540": {
+      "sha": "99ff4a93c4d1ac02",
+      "head": "const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)",
       "lines": 1
     },
     "packages/runtime/lib/worker/controller.js:95,142": {
@@ -660,24 +665,14 @@
       "head": "application.type = moduleName",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:413-417": {
-      "sha": "dc3e17ee96d47bd0",
-      "head": "}",
-      "lines": 5
+    "packages/runtime/lib/config.js:410-412": {
+      "sha": "5a5db1c820c06e8b",
+      "head": "",
+      "lines": 3
     },
-    "packages/runtime/lib/config.js:436-440": {
-      "sha": "6062ee99f5d87a06",
-      "head": "// Any value below 10 is considered as \"immediate restart\" and won't be processed via setTimeout or similar",
-      "lines": 5
-    },
-    "packages/runtime/lib/config.js:298-314": {
-      "sha": "735e5b8ca358be54",
-      "head": "return enabled",
-      "lines": 17
-    },
-    "packages/runtime/lib/config.js:318": {
-      "sha": "bdf11fe289c736b1",
-      "head": "config.workers.dynamic ??= config.verticalScaler.enabled",
+    "packages/runtime/lib/config.js:303": {
+      "sha": "04398a437454d1ad",
+      "head": "const environment = production ? 'production' : 'development'",
       "lines": 1
     },
     "packages/nitro/lib/schema.js:29-30": {
@@ -730,10 +725,10 @@
       "head": "async listen () {",
       "lines": 4
     },
-    "packages/service/lib/generator.js:414@e2da15eda^": {
-      "sha": "bf9646532d804842",
+    "packages/service/lib/generator.js:414-422@e2da15eda^": {
+      "sha": "474a6bb3e6597b39",
       "head": "if (!this.config.isRuntimeContext) {",
-      "lines": 1
+      "lines": 9
     },
     "packages/runtime/lib/config.js:222-223": {
       "sha": "c410aebf0f15de2a",
@@ -770,10 +765,15 @@
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
     },
-    "packages/runtime/lib/runtime.js:2442": {
-      "sha": "192f81b3ffd1b28a",
-      "head": "if (!applicationConfig.path) {",
+    "packages/runtime/lib/runtime.js:2446": {
+      "sha": "4b6f5ec3a0f8edda",
+      "head": "applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)",
       "lines": 1
+    },
+    "packages/service/lib/generator.js:418-420@e2da15eda^": {
+      "sha": "8de98df57ce1999d",
+      "head": "logger: {",
+      "lines": 3
     },
     "packages/foundation/lib/configuration.js:362-371": {
       "sha": "98175f5fac1d89d6",
@@ -795,9 +795,9 @@
       "head": "entrypointPort: {",
       "lines": 3
     },
-    "packages/basic/lib/schema.js:12-14": {
-      "sha": "e870cecbd04dc06f",
-      "head": "required: [],",
+    "packages/runtime/lib/versions/v4.0.0.js:12-14": {
+      "sha": "b54741e63a5dd48b",
+      "head": "if (!isRuntimeSchema) {",
       "lines": 3
     },
     "packages/foundation/lib/schema.js:391": {
