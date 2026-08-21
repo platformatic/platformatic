@@ -1160,8 +1160,9 @@ three things holds:
    capability metadata; `node`, `service`, `db` and `gateway` can, the framework
    capabilities cannot;
 2. its `server.port` is defined;
-3. it declares a **custom command** (`application.commands.development` /
-   `.production`).
+3. it declares a **custom command for the mode this boot will use** —
+   `application.commands.development` under `dev`, `application.commands.production`
+   under `start`.
 
 The third is not a technicality. Every framework capability checks its command
 *before* the port: `if (command) return this.startWithCommand(command, …)` precedes
@@ -1172,6 +1173,17 @@ are the same shape). A framework application with a custom command and no
 binds, and the runtime observes the address, which is exactly the "custom listeners
 are observed, never rewritten" rule. A predicate that looked only at the capability
 would reject that configuration at load.
+
+**Which command counts is decided by the mode, not by either command existing.**
+`#startDevelopment` reads `commands.development` and `#startProduction` reads
+`commands.production` (`next/lib/capability.js:198,310`); neither falls back to the
+other. An application declaring only a development command and booted with `start`
+has no command *and* no port, and would start nothing — so the predicate asks about
+the command that will actually run. The root context already carries `production`
+when the predicate is evaluated, so this stays a load-time decision; it is the same
+kind of mode-dependence `enabled` already has, and unlike the `SO_REUSEPORT` case it
+depends on what the operator asked for rather than on the machine they asked for it
+on.
 
 All three inputs are configuration, so the predicate is decidable **before boot**.
 An application satisfying none of them is a **load-time error** naming it and its
@@ -1200,6 +1212,18 @@ had already booted around the hole.
 A custom-command application appears as `listening`, at whatever address its command
 chose: the runtime observes it rather than assigning it, so the report shows what it
 actually bound.
+
+The predicate proves *intent*, not *outcome* — a declared command is a statement that
+something will bind, and no configuration check can promise that an arbitrary command
+does. `startWithCommand` waits for the child to report a URL
+(`basic/lib/capability.js:604`), and a command that never reports one is bounded from
+outside rather than left hanging: the runtime runs `sendViaITC(worker, 'start')` under
+`executeWithTimeout` and raises `ApplicationStartTimeoutError` after `startTimeout`
+milliseconds — 30 s by default (`foundation/lib/schema.js:1111-1115`), the worker
+terminated and the application named
+(`runtime/lib/runtime.js:3349-3356`). That is why the report still needs no third
+shape: an application that never bound anything never reaches the report, because the
+boot failed first and said which application and how long it waited.
 
 An application with `workers` and `portAssignment: 'perWorkerIncrement'` lists its
 whole range on that one line (`http://127.0.0.1:3000-3002`), since `getUrls()`
@@ -2235,6 +2259,18 @@ export default {
   capability call to carry a stamp, so it needs `$schema` for the same reason v3's
   JSON did.
 
+  That requirement binds **writers**, and the loader cannot police it: an evaluated
+  export looks the same whether the object came from imports or from a string, so
+  there is no runtime test that distinguishes "machine-generated plain object missing
+  its marker" from "config that legitimately needs none". A hand-written markerless
+  plain object is therefore possible, and v5 would have to identify it by its content.
+  This is stated rather than closed because the alternatives are worse: requiring
+  `$schema` everywhere would put a stale-URL failure mode into files that already
+  identify themselves, and branding `defineConfig`'s return value would put a
+  non-serializable marker in the one object the whole design keeps plain. The shape
+  exists because machines emit it, every emitter is in this repository, and that is
+  where the rule is enforced (see the CI gate in the plan).
+
   **The `ApplicationDefinition.version` stamp is not this mechanism** and should not
   be read as it: it exists for the root/app skew check (see "Capability factories"),
   it is absent from hand-written `{ module }` objects by design, and a root whose
@@ -2256,6 +2292,25 @@ export default {
   the same rule scaffolding follows when it picks a suffix, and it is stated here
   because a generator choosing `watt.config.js` unconditionally is the natural
   mistake.
+- **`getApplicationConfig()` is a different API with a different view, and it
+  survives unchanged.** `runtime.getApplicationConfig(id)` is not part of the payload
+  below: it asks a *running worker* for `capability.getConfig()` over ITC
+  (`runtime/lib/runtime.js:2182-2186` through `runtime/lib/worker/itc.js:294-298`), so
+  what comes back is the configuration **after the capability's `transform`** — what
+  that worker is actually running, its `configPatch` applied and its
+  `perWorkerIncrement` offset resolved. `resolvedConfig` in the payload below is the
+  view *before* the transform. Both survive v4 and neither subsumes the other: one
+  answers "what was configured", the other "what is this worker running". Three
+  consequences. It still needs a started worker, and still cannot be answered from the
+  main process, because the transform runs where the worker is — the runtime's own
+  `SO_REUSEPORT` clamp uses this exact call to learn a worker's real `server` block
+  (`runtime/lib/runtime.js:3602`), which is the same reason. It is already a copy —
+  ITC structured-clones on the way back and the handler JSON round-trips to drop
+  `undefined` keys — so the mutability question the payload below raises does not
+  arise here. And its HTTP surface, `GET /applications/:id/config`
+  (`runtime/lib/management-api.js:204-208`), is **not** the removed `GET /config`; it
+  stays. Of its two in-tree callers one is `patch-config`, removed for unrelated
+  reasons (BC 9).
 - Reading configs without executing them: the plain-object form is trivially
   AST-parseable, and running systems expose the resolved config via the programmatic
   `runtime.getRuntimeConfig()`. The management API's HTTP `GET /config` endpoint is
@@ -3369,7 +3424,9 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     `getRuntimeConfig`/`getApplicationDetails` payloads carry `configPath` +
     `resolvedConfig` as a versioned DTO instead of a bare path — a declared type
     change for every management-API consumer, separate from patch-document
-    compatibility (which is preserved).
+    compatibility (which is preserved). `getApplicationConfig()` is **not** in this
+    change: it returns a worker's post-`transform` view over ITC and keeps its shape
+    (see "Machine-generated configs").
 15. Capability packages must implement the v4 create contract (resolved config as
     data) and should export a factory (all in-tree capabilities get both); plain
     `{ module }` objects cover v4-contract capabilities without factories.
