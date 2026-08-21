@@ -978,10 +978,17 @@ The rules, in full:
   is the plumbing v3 lacked. Where the OS lacks `SO_REUSEPORT`
   (`features.node.reusePort` is `false` on macOS and Windows,
   `foundation/lib/node.js:77`) a fixed port with `workers > 1` cannot be shared.
-  How the runtime should behave there is a **runtime concern tracked separately**
-  (platformatic/platformatic#5070), not a configuration-format question: this
-  document defines what `server.port` and `workers` mean together, and leaves
-  platform degradation to the runtime.
+  How the runtime behaves there was a **runtime concern, and the runtime has now
+  answered it**: it sets up the first worker, asks whether that worker's listener
+  ended up on a shared fixed port, and if so warns and clamps the application to a
+  single worker, disabling dynamic scaling with it
+  (`runtime/lib/runtime.js:2479-2495`, `edf83931d`, closing
+  platformatic/platformatic#5070). That the check runs *after* the first worker
+  exists is the point, and it is why this never belonged in the format: the listener
+  is owned by the capability, so whether a fixed port is really shared is not
+  decidable from the configuration file. A config naming `port` and `workers` stays
+  platform-independent and valid everywhere; what varies by platform is how many
+  workers it gets, reported at start rather than refused at load.
 - **Custom listeners are observed, never rewritten.** `createServerListener()`
   now takes no arguments and only reports the address a server chose
   (`basic/lib/worker/listeners.js:4`); the child-process path likewise stopped
@@ -999,8 +1006,11 @@ The rules, in full:
   **required**, not optional: `features.node.reusePort` is `false` on macOS and
   Windows (`foundation/lib/node.js:77`), so without it "fixed port + `workers > 1`"
   has no working configuration on either platform. `e2da15eda` removed the key and
-  its implementation along with the entrypoint; restoring it is tracked as
-  platformatic/platformatic#5074, and this format assumes it. Two consequences the
+  its implementation along with the entrypoint; `468c64604` restored both on `v4`,
+  in the capability `server` block exactly as this format assumed
+  (`foundation/lib/schema.js:400` for the basic family, `:515` re-exporting it to
+  `fastifyServer`, so both server literals carry it), with the runtime tracking each
+  worker's port offset so restarts, scale-up and scale-down keep their ports. Two consequences the
   runtime owns: an application with N workers from `port` occupies `port … port+N-1`,
   so the collision scan must reject a sibling declaring any port in that range —
   at load, not when the second worker starts — and `getUrls()` reports N distinct
@@ -3302,7 +3312,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     it with the root `server` block, but `perWorkerIncrement` is the only way to run
     `workers > 1` on a fixed port without `SO_REUSEPORT`, which macOS and Windows
     lack entirely. It returns as a **capability** `server` key, where the port now
-    lives (platformatic/platformatic#5074). Migrate carries a v3 value across
+    lives — restored on `v4` by `468c64604`. Migrate carries a v3 value across
     unchanged.
     **`useHttp` is the exception: the chain does not delete it**, and
     `applications.items` does not set `additionalProperties: false`, so it survives
@@ -3341,9 +3351,10 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     silently ignored it). Declaring it on an entry that carries an inline
     `config` is an error — that entry has no per-app eval worker.
 22. **Listener mechanics and reporting.** Multi-worker on a fixed port requires
-    `SO_REUSEPORT`; how the runtime behaves where the platform lacks it is tracked
-    separately (platformatic/platformatic#5070) and is not part of this format
-    change. The
+    `SO_REUSEPORT`; where the platform lacks it the runtime warns and clamps the
+    application to one worker after inspecting the first worker's listener
+    (`runtime/lib/runtime.js:2479-2495`) — a start-time decision, not a
+    configuration-format one. The
     **per-application `reuseTcpPorts` now reaches the `SO_REUSEPORT` decision**
     (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:82`), where
     in v3 it only selected the restart strategy. Two applications binding the same
@@ -3410,13 +3421,13 @@ error. The migration story is the codemod, not a compat layer.
 
 Roughly ordered; steps 1–5 are the critical path.
 
-**One external prerequisite.** This format specifies `server.portAssignment` as a
-capability key (see "How applications are exposed"), and `e2da15eda` removed it —
-schema, implementation and the `#workerPortOffsets` bookkeeping alike. Restoring it
-is tracked as platformatic/platformatic#5074 and **must land before migrate can ship
-green**: a v3 configuration using `perWorkerIncrement` has no faithful target until
-it does, and on macOS and Windows no other configuration runs multiple workers on a
-fixed port at all.
+**The one external prerequisite has landed.** This format specifies
+`server.portAssignment` as a capability key (see "How applications are exposed"), and
+`e2da15eda` had removed it — schema, implementation and the worker port-offset
+bookkeeping alike. `468c64604` restored all three on `v4`, so a v3 configuration
+using `perWorkerIncrement` now has a faithful target and migrate can ship green. It
+was a prerequisite rather than a nicety: on macOS and Windows no other configuration
+runs multiple workers on a fixed port at all.
 
 1. **foundation — a fresh loader, not a refactor.** The v4 loader is written new for
    v4: the **main-side ladder resolver** (one implementation, walking a config file's
@@ -3457,8 +3468,9 @@ fixed port at all.
    `fastifyServer` re-declares all five of `server`'s keys rather than composing with
    it, so a key added to one does not reach the other. Adding it only to `server`
    would leave gateway, service and db with no way to run `workers > 1` on a fixed
-   port — the exact hole #5074 exists to close, and the commonest v3 entrypoint is a
-   gateway. Second: **remove `application.entrypointPort`**, which lives in
+   port — the exact hole #5074 closed, and the commonest v3 entrypoint is a gateway.
+   `468c64604` did add it to both (`foundation/lib/schema.js:400,515`); the audit
+   item is to keep them from drifting apart again. Second: **remove `application.entrypointPort`**, which lives in
    `basic/lib/schema.js:61-63` and every capability's generated `schema.json`.
 3. **basic**: `defineCapabilityFactory`; duck-typed `ApplicationDefinition`
    (`module` property, no symbols); capability-block flattening with `application`
@@ -3644,7 +3656,7 @@ export interface AppServerOptions {
   hostname?: string
   port?: number                            // undefined = no listener (mesh-only);
                                            // 0 = ephemeral, one port per worker
-  portAssignment?: 'shared' | 'perWorkerIncrement'  // see #5074; 'shared' needs
+  portAssignment?: 'shared' | 'perWorkerIncrement'  // 'shared' needs
                                            // SO_REUSEPORT, 'perWorkerIncrement'
                                            // binds worker i at port + i
   backlog?: number
