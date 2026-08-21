@@ -52,7 +52,7 @@
     "@types/react-dom": "^19.1.7",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
-    "tstyche": "^6.2.0",
+    "tstyche": "^7.0.0",
     "execa": "^9.5.1",
     "fastify": "^5.7.3",
     "json-schema-to-typescript": "^15.0.1",

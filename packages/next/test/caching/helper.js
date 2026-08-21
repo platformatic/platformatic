@@ -2,8 +2,12 @@ import { loadConfiguration, saveConfigurationFile } from '@platformatic/foundati
 import { deepStrictEqual, ok } from 'node:assert'
 import { cp } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { commonFixturesRoot, prepareRuntime, startRuntime } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
+
+const VALKEY_SEQUENCE_TIMEOUT = 15000
+const VALKEY_SEQUENCE_POLL_INTERVAL = 25
 
 export const base64ValueMatcher = /^[a-z0-9-_]+$/i
 export const valkeyUser = 'plt-caching-test'
@@ -66,8 +70,19 @@ export async function getValkeyUrl (root) {
   return (await getCacheSettings(root)).url
 }
 
-export function verifyValkeySequence (actual, expected) {
-  actual = actual.filter(c => c[0] !== 'info')
+export async function verifyValkeySequence (
+  rawActual,
+  expected,
+  { timeout = VALKEY_SEQUENCE_TIMEOUT, interval = VALKEY_SEQUENCE_POLL_INTERVAL } = {}
+) {
+  const filterInfo = arr => arr.filter(c => c[0] !== 'info')
+
+  const start = Date.now()
+  let actual = filterInfo(rawActual)
+  while (actual.length < expected.length && Date.now() - start < timeout) {
+    await sleep(interval)
+    actual = filterInfo(rawActual)
+  }
 
   const values = []
 
@@ -75,7 +90,7 @@ export function verifyValkeySequence (actual, expected) {
   for (let i = 0; i < expected.length; i++) {
     for (let j = 0; j < expected[i].length; j++) {
       if (expected[i][j] instanceof RegExp) {
-        ok(expected[i][j].test(actual[i][j]), `Expected command ${i} to match ${expected[i][j]}, got ${actual[i][j]}`)
+        ok(actual[i] && expected[i][j].test(actual[i][j]), `Expected command ${i} to match ${expected[i][j]}, got ${actual[i]?.[j]}`)
       }
     }
 
@@ -85,7 +100,7 @@ export function verifyValkeySequence (actual, expected) {
       }
     }
 
-    if (actual[i][0] === 'set') {
+    if (actual[i] && actual[i][0] === 'set') {
       values.push(actual[i][2])
     }
   }

@@ -60,7 +60,7 @@ test('should properly instrument the application when using the adapter', async 
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, 'development', 'values'))
 
-  const storedValues = verifyValkeySequence(valkeyCalls, [
+  const storedValues = await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],

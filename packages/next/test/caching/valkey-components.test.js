@@ -28,7 +28,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
 
@@ -66,7 +66,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
 
-  const storedValues = verifyValkeySequence(valkeyCalls, [
+  const storedValues = await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
@@ -102,11 +102,11 @@ test('should properly use the Valkey cache handler in production to cache pages'
 })
 
 test('should properly use the Valkey cache handler in production to cache route handlers', async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
 
@@ -124,6 +124,10 @@ test('should properly use the Valkey cache handler in production to cache route 
   {
     const response = await fetch(url + '/route')
     const data = await response.json()
+    // The cache write happens after the response has already been sent to
+    // the client (background work on the worker), so we must wait for the
+    // worker to finish before relying on the value being in Valkey.
+    await once(runtime, 'application:worker:event:completed')
 
     version = data.version
     time = data.time
@@ -134,6 +138,7 @@ test('should properly use the Valkey cache handler in production to cache route 
   {
     const response = await fetch(url + '/route')
     const data = await response.json()
+    await once(runtime, 'application:worker:event:completed')
 
     deepStrictEqual(data.version, version)
     deepStrictEqual(data.time, time)
@@ -141,7 +146,7 @@ test('should properly use the Valkey cache handler in production to cache route 
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
 
-  const storedValues = verifyValkeySequence(valkeyCalls, [
+  const storedValues = await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
@@ -182,7 +187,7 @@ test('should extend TTL when our limit is smaller than the user one', async t =>
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
 
@@ -219,7 +224,7 @@ test('should extend TTL when our limit is smaller than the user one', async t =>
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
 
-  verifyValkeySequence(valkeyCalls, [
+  await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '20'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
@@ -259,7 +264,7 @@ test('should not extend the TTL over the original intended one', async t => {
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
 
@@ -296,7 +301,7 @@ test('should not extend the TTL over the original intended one', async t => {
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
 
-  verifyValkeySequence(valkeyCalls, [
+  await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '10'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
@@ -321,7 +326,7 @@ test('should handle deserialization error', async t => {
   const valkey2 = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   const monitor = await valkey2.monitor()
 
-  await cleanupCache(valkey1)
+  await cleanupCache(valkey1, valkeyUser)
 
   t.after(async () => {
     await monitor.disconnect()
@@ -329,9 +334,21 @@ test('should handle deserialization error', async t => {
     await valkey2.disconnect()
   })
 
+  // The corruption write below is triggered off the MONITOR stream, which is
+  // a side-channel connection with its own latency independent from the
+  // connection the application uses. Track completion explicitly so we can
+  // wait for the corruption to actually be applied before issuing the second
+  // request, instead of racing it (which was the source of the flakiness).
+  let resolveCorrupted
+  let rejectCorrupted
+  const corrupted = new Promise((resolve, reject) => {
+    resolveCorrupted = resolve
+    rejectCorrupted = reject
+  })
+
   monitor.on('monitor', (_, args) => {
     if (args[0] === 'set' && args[2] !== 'invalid') {
-      valkey1.set(args[1], 'invalid')
+      valkey1.set(args[1], 'invalid').then(resolveCorrupted, rejectCorrupted)
     }
   })
 
@@ -340,29 +357,46 @@ test('should handle deserialization error', async t => {
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    // The cache write happens after the response has already been sent to
+    // the client (background work on the worker), so we must wait for the
+    // worker to finish before the value is actually written to Valkey.
+    await once(runtime, 'application:worker:event:completed')
   }
+
+  // Wait until the cache value has actually been corrupted (with a bounded
+  // timeout so a genuine regression fails fast instead of hanging) before
+  // issuing the second request.
+  await Promise.race([
+    corrupted,
+    new Promise((resolve, reject) => setTimeout(() => reject(new Error('Timed out waiting for cache value to be corrupted')), 15000))
+  ])
 
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await once(runtime, 'application:worker:event:completed')
   }
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
 
-  ok(
-    logs.find(l => {
-      return (
-        l.msg === 'Cannot deserialize cache value from Valkey' &&
-        l.err?.message === 'Unexpected end of buffer reading string'
-      )
-    })
-  )
+  const found = logs.find(l => {
+    return (
+      l.msg === 'Cannot deserialize cache value from Valkey' &&
+      l.err?.message === 'Unexpected end of buffer reading string'
+    )
+  })
+
+  if (!found) {
+    console.error('Deserialization error log entry not found. Captured error logs:', JSON.stringify(logs.filter(l => l.err), null, 2))
+  }
+
+  ok(found)
 })
 
 test('should handle read error', async t => {
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(
@@ -401,7 +435,7 @@ test('should handle read error', async t => {
 
 test('should handle refresh error', async t => {
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '+SET', '+SADD', '+EXPIRE')
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(
@@ -426,6 +460,12 @@ test('should handle refresh error', async t => {
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    // The cache write for the first request happens after the response has
+    // already been sent (background work on the worker). We must wait for
+    // it to actually land in Valkey before swapping the ACL, otherwise the
+    // second request may see a cache MISS (no refresh attempted at all)
+    // instead of a HIT that needs its expiration refreshed.
+    await once(runtime, 'application:worker:event:completed')
   }
 
   await valkey.acl('deluser', valkeyUser)
@@ -434,24 +474,29 @@ test('should handle refresh error', async t => {
   {
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await once(runtime, 'application:worker:event:completed')
   }
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
 
-  ok(
-    logs.find(l => {
-      return (
-        l.msg === 'Cannot refresh cache key expiration in Valkey' &&
-        l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'expire' command"
-      )
-    })
-  )
+  const found = logs.find(l => {
+    return (
+      l.msg === 'Cannot refresh cache key expiration in Valkey' &&
+      l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'expire' command"
+    )
+  })
+
+  if (!found) {
+    console.error('Refresh error log entry not found. Captured error logs:', JSON.stringify(logs.filter(l => l.err), null, 2))
+  }
+
+  ok(found)
 })
 
 test('should handle write error', async t => {
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '-SET')
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(
@@ -492,7 +537,7 @@ test('should track Next.js cache hit and miss ratio in Prometheus', async t => {
   const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
 
   t.after(async () => {
     await valkey.disconnect()
@@ -536,7 +581,7 @@ test('should properly use the Valkey cache handler in production when using next
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
 
@@ -574,7 +619,7 @@ test('should properly use the Valkey cache handler in production when using next
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
 
-  const storedValues = verifyValkeySequence(valkeyCalls, [
+  const storedValues = await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
@@ -618,7 +663,7 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
 
@@ -656,7 +701,7 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
 
-  const storedValues = verifyValkeySequence(valkeyCalls, [
+  const storedValues = await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
@@ -696,7 +741,7 @@ test('should properly revalidate tags in Valkey', async t => {
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
+  await cleanupCache(valkey, valkeyUser)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
 
@@ -740,7 +785,7 @@ test('should properly revalidate tags in Valkey', async t => {
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'components:values'))
 
-  verifyValkeySequence(valkeyCalls, [
+  await verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['set', key, base64ValueMatcher, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
