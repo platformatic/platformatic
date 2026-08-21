@@ -536,10 +536,17 @@ a different copy — with pnpm's strict layout those can be different versions
 and factory only to be rejected by the 4.0 schema at boot — or silently misapplied
 where the schemas differ more subtly. The check is defined
 against **the canonical capability resolution order** (see "Dependency
-resolution"): **app-scoped first, runtime-bundled fallback** — the order v3's
-configured-app workers actually use — applied identically by the worker's
-implementation import, this version-stamp check, and the main process's schema
-import. At load time the main process performs that resolution from the app's
+resolution"): **app-scoped first, runtime-bundled fallback**, applied identically by
+the worker's implementation import, this version-stamp check, and the main process's
+schema import. **That order is v4's, and it inverts v3's.** v3's worker tries a bare
+`import(pkg)` first — resolved lexically from `@platformatic/basic`, which is to say
+from the runtime's own position — and only falls back to a `createRequire` scoped to
+the application directory when that throws (`basic/lib/modules.js:24-36`, BC 26).
+Keeping v3's order would leave this check unimplementable rather than merely
+different: the stamp compares the factory's copy against the copy the worker will
+run, so a check resolving app-first against a worker resolving lexically would
+compare a copy nobody executes — reporting skew where there is none, and missing it
+where there is. At load time the main process performs that resolution from the app's
 root and compares the
 stamp against the version of the copy it yields (so hoisted layouts,
 where factory and worker share one copy, never false-positive, and root-only
@@ -1868,8 +1875,21 @@ loader hooks, no magic; editor and runtime always agree:
     web/frontend/watt.config.ts instead.
   ```
 
-Runtime resolution of capability *implementations* (workers loading the capability
-from the app's deps, with the runtime-bundled fallback) is unchanged.
+Runtime resolution of capability *implementations* — workers loading the capability
+from the app's deps, with the runtime-bundled fallback — **changes order to match**
+(BC 26). v3 tried a bare `import(pkg)` first and reached the application directory
+only as a fallback (`basic/lib/modules.js:24-36`); v4 asks the application first and
+keeps the bundled copy as the fallback, so all three resolutions — implementation
+import, schema import, version stamp — name the same copy by construction rather
+than by coincidence of layout.
+
+Nothing that resolved in v3 stops resolving: an application with no local dependency
+still reaches the bundled copy, and under pnpm's strict layout the two orders already
+agree in effect, since `basic` depends on no capability and its bare import always
+throws. The answer moves in one layout — a hoisted tree where an application carries
+a nested copy of a capability the root also has — and there v4 gives the application
+the copy it declared. The per-layout tests the version stamp already requires (npm
+hoisted, pnpm strict, root-only) cover it.
 
 ### Env files
 
@@ -3733,6 +3753,18 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     configuration error
     instead of an unresolvable `.plt.local` address.
 
+26. **Capability resolution asks the application first.** v3's worker resolved a
+    capability with a bare `import(pkg)` — lexical, from `@platformatic/basic`'s own
+    position — and fell back to a `createRequire` scoped to the application directory
+    (`basic/lib/modules.js:24-36`). v4 inverts the two, because the version stamp,
+    the main-side schema import and the worker's implementation import must all name
+    one copy, and only the application-first order makes that true independently of
+    layout (see "Capability factories"). Under pnpm's strict layout nothing changes —
+    the bare import already always threw — and an application with no local
+    dependency still reaches the bundled copy. The one layout where the answer moves
+    is a hoisted tree in which an application carries a nested copy of a capability
+    the root also has: v3 loaded the root's, v4 loads the application's.
+
 There is no deprecation window inside v4: old shapes fail fast with an actionable
 error. The migration story is the codemod, not a compat layer.
 
@@ -3798,7 +3830,10 @@ runs multiple workers on a fixed port at all.
    item is to keep them from drifting apart again. Second: **remove `application.entrypointPort`**, which lives in
    `basic/lib/schema.js:61-63` and every capability's generated `schema.json`.
 3. **basic**: `defineCapabilityFactory`; duck-typed `ApplicationDefinition`
-   (`module` property, no symbols); capability-block flattening with `application`
+   (`module` property, no symbols); **invert `importCapabilityPackage`'s order** to
+   application-scoped first with the bundled fallback (`lib/modules.js:24-36`,
+   BC 26) — the same resolver the main process uses for schemas and the version
+   stamp, so the three cannot disagree; capability-block flattening with `application`
    kept nested; delete worker-side config *file* resolution (the capability
    `transform` + pre-transform `configPatch` application stay worker-side); remove
    `application.entrypointPort` from the schema (`lib/schema.js:61-63`) and its
