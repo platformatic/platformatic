@@ -1689,8 +1689,17 @@ serial scheme.
 
 The result then enters the pipeline in the main process: AJV validation
 (`useDefaults`, **`coerceTypes: false`**) → `kMetadata` attachment → the **runtime**
-`transform()` (`runtime/lib/config.js`, which normalizes entries and expands the
-application list). The **capability** `transform` is a different function and is not
+`transform()` (`runtime/lib/config.js`, which normalizes and prepares the entries it
+is handed). **In v4 that transform no longer expands `autoload` and no longer filters
+on `enabled`**: both moved to the root eval worker's step 4, which is the only place
+either runs. v3 did both here (`runtime/lib/config.js:362-396` then `:398-402`), and
+leaving that code reachable would let a second expansion re-merge entries and read
+the filesystem after the authoritative snapshot already exists. The `autoload`
+**declaration** survives expansion untouched, as data beside the expanded list —
+`GET /metadata` reports it, and `applications:add --save` needs it to decide whether
+a new application belongs in a mapping or as an explicit entry. It is carried, never
+re-executed; everything downstream reads the expanded list.
+The **capability** `transform` is a different function and is not
 part of this pipeline: it runs worker-side at boot, where its context lives — see
 "Config code runs exactly once per load" below. Canonicalization has already run in-worker — immediately after the unwrap, before
 expansion (see step 1) — and the main process consumes that snapshot; it canonicalizes itself only for **object
@@ -3870,7 +3879,10 @@ runs multiple workers on a fixed port at all.
    `[::]`/`0.0.0.0` → `localhost` normalization, and drop the two tests that assert
    the override (`test/capability.test.js:96,114`).
 4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
-   accepts inline definitions; phased evaluation (root worker first, per-app
+   accepts inline definitions; **`autoload` expansion and `enabled` filtering leave
+   the runtime transform** (`runtime/lib/config.js:362-396`, `:398-402`) for the root
+   eval worker, with the `autoload` declaration carried through as data for
+   `GET /metadata` and `--save`; phased evaluation (root worker first, per-app
    workers in parallel) with uniform per-app file
    discovery (autoload and explicit entries alike) and the search/classification
    rules — the search stops at the nearest `package.json`, `.env` discovery is the
