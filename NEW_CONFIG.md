@@ -29,7 +29,7 @@ which has to be scoped when siblings appear beside it (see the Summary).
 import { next } from '@platformatic/next'
 
 export default next({
-  server: { port: Number(process.env.PORT ?? 3042) },
+  server: { port: Number(process.env.PORT || 3042) },
   cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 })
 ```
@@ -70,7 +70,7 @@ export default defineConfig({
   application: {
     workers: 2,
     config: next({
-      server: { port: Number(process.env.PORT ?? 3042) },
+      server: { port: Number(process.env.PORT || 3042) },
       cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
     })
   }
@@ -180,7 +180,7 @@ explicit where still needed (see "Machine-generated configs").
   file keeps working via the deterministic v4 capability detector (direct capability
   dependencies first — see "Loading mechanism"), and v4 stops writing an
   auto-generated `watt.json` into the user's tree — the synthesized config lives only
-  in memory. Synthesis supplies `server: { port: Number(env.PORT ?? 3042) }` from the
+  in memory. Synthesis supplies `server: { port: Number(env.PORT || 3042) }` from the
   resolved env map, so a bare framework repo is actually reachable and a `PORT` in its
   `.env` is honoured — see "How applications are exposed".
 
@@ -269,7 +269,7 @@ export default defineConfig({
 import { next } from '@platformatic/next'
 
 export default next({
-  server: { port: Number(process.env.PLT_FRONTEND_PORT ?? 3042) },
+  server: { port: Number(process.env.PLT_FRONTEND_PORT || 3042) },
   cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 })
 ```
@@ -303,7 +303,7 @@ export default defineConfig(({ env, production }) => ({
       id: 'gateway',
       path: 'web/gateway',
       config: gateway({
-        server: { port: Number(env.PLT_GATEWAY_PORT ?? 3042) },
+        server: { port: Number(env.PLT_GATEWAY_PORT || 3042) },
         applications: [
           { id: 'api', proxy: { prefix: '/api' } },
           { id: 'frontend', proxy: { prefix: '/' } }
@@ -1295,6 +1295,18 @@ reads is one port every application binds. Single-app scaffolding keeps
 runtime-context project. `3042` still
 exists nowhere in the loading path.
 
+**`||`, not `??`, and the difference is a real port.** An env file containing the
+ordinary empty assignment `PORT=` supplies `''`, which is *present*, so `??` does not
+fall back and `Number('')` is `0` — an OS-assigned ephemeral port where the reader of
+that line expects 3042. `||` treats the empty string as absent and gives 3042, while
+still honouring a deliberate `PORT=0`, since `'0'` is a non-empty string. Every port
+expression in this document uses it, and scaffolding emits it. Zero-config
+**synthesis** goes further, because it is loader-owned rather than user code and can
+say what went wrong: an unset or empty `PORT` is 3042, a canonical integer in
+0–65535 is used as written, and anything else — `PORT=abc`, `PORT=8080x`, a float —
+is a load error naming `PORT` and the value it found, instead of a `NaN` that fails
+later as a schema type error about a port the user never typed.
+
 **Framework capabilities require a port — unless they carry a custom command.**
 `@platformatic/next`, `vite`, `astro`, `remix` and `nest` return from their start
 path when `server.port` is undefined —
@@ -1319,9 +1331,9 @@ Next/Vite repo with no config file — is a stated non-goal to break, and on v3 
 worked because the single application became the entrypoint and
 `buildListenOptions(undefined)` gave it `{ port: 0 }`. With the entrypoint gone
 the synthesized config would carry no `server.port` and a framework application
-would start nothing, so **synthesis supplies a port of `Number(env.PORT ?? 3042)`**,
+would start nothing, so **synthesis supplies a port of `Number(env.PORT || 3042)`**,
 where `env` is the map `loadEnv` has already resolved for that directory — the same
-answer the expression `Number(process.env.PORT ?? 3042)` gives when scaffolding writes
+answer the expression `Number(process.env.PORT || 3042)` gives when scaffolding writes
 it into a real file, arrived at differently because synthesis is an object source.
 A file is evaluated in a worker whose `process.env` **is** the resolved map, so the
 expression reads env files; synthesis runs main-side and does not mutate
