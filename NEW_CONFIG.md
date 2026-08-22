@@ -3190,10 +3190,28 @@ Generation reads both views. Then:
    runtime-bundled fallback made app-local capability dependencies optional, and
    `node/lib/generator.js:78-80` writes both `@platformatic/node` and
    `@platformatic/globals`, so no dependency test could have been reliable anyway).
-   **The `resolvedApplicationsBasePath` subtree is excluded from every step** — the
+   **The directories `resolve` cloned into are excluded from every step** — the
    lexical pass, the dirty check, emission, the source scan and the deletion set.
-   `wattpm resolve` clones remote applications into it (`external.js:441`), so it
-   holds *other repositories'* v3 configurations, untracked. Without the exclusion a
+   `wattpm resolve` clones remote applications into `resolvedApplicationsBasePath`
+   (`external.js:441`), so those directories hold *other repositories'* v3
+   configurations, untracked.
+
+   **The exclusion is that set of directories, not the configured base wholesale**,
+   and the difference is load-bearing because the base is an ordinary string with no
+   dedicated-directory rule (`foundation/lib/schema.js:1541-1544`). A project may set
+   it to `applications` and keep local applications at `applications/api`, or to `.`
+   so clones land at the root. Excluding the base itself would then hide a local
+   application's legacy config from the lexical pass and skip the per-app file it must
+   be given — silently, since the exclusion is a scope rule and not a refusal — and
+   with `.` it would swallow the transaction root and migrate nothing at all. So what
+   is excluded is the canonical directory of each `url`-bearing entry, computed from
+   the effective destination the same way `resolve` computes it (see "Remote apps"),
+   and nothing else. Migrate additionally **refuses** before writing when one of those
+   directories contains a local application, a file it must read, or a path it plans
+   to emit: that is a project whose remote checkouts and own sources share a
+   directory, which no scope rule can separate and no run should guess at. The
+   containment check answers a different question — whether a path escapes the
+   transaction — and would not notice an exclusion eating the run from the inside. Without the exclusion a
    project with one resolved remote app cannot migrate at all: step 5 refuses to run
    on an untracked legacy config it can never restore, naming a file inside a clone,
    and `--force` then lets migrate write into the clone and delete its
