@@ -2341,8 +2341,9 @@ file), and a missing explicitly-named envfile is a **configuration-load error** 
 main process that resolves it, before any worker starts, so it surfaces under
 `--debug-config` and `command: 'exec'` too, neither of which boots anything (v3
 silently ignored it — defensible only for the implicit default `.env`). Declaring `envfile`
-on an entry that **has no per-app eval worker** is an **error**, and two entry shapes
-have none. The first carries an **inline `config`**: no file is read for it, so the
+on an entry whose **configuration is evaluated somewhere the file cannot reach** is
+an **error**. Two entry shapes are in that position. The first carries an **inline
+`config`**: no file is read for it, so the
 `envfile` would govern the worker-runtime view alone, and a key that silently covers
 one view and not the other is the ambiguity this document spends its length removing.
 That one is a deliberate simplification rather than an impossibility — v3 did exactly
@@ -2359,7 +2360,21 @@ that file is evaluated, and the entry's `envfile` does not exist until after. Ap
 it would mean reading the configuration in order to build the environment that
 produces the configuration. Both are refused for their own reason, which is the point
 of naming them separately — the first could be lifted by a later version, the second
-cannot. The cost is real and bounded — a v3 wrapped single-app project with an
+cannot.
+
+**A third shape has no eval worker either and is *not* refused**, because the reason
+does not reach it: an entry with a `path`, no inline `config` and no per-app file at
+all, whose capability comes from the detector (see "Loading mechanism"). Nothing is
+evaluated for it — there is no configuration file to evaluate — so there is no
+evaluation view for the `envfile` to be absent from, and the "governs both views"
+promise is satisfied by there being one view. The file loads into the worker
+environment at boot, where the capability's own `transform` and the application code
+read it, which is everything this entry has. Adding a `watt.config.ts` to that
+directory later gives the entry an eval worker and the same `envfile` starts
+governing evaluation too — the correct reach in both states, reached without the
+declaration changing. The missing-file check is unconditional and applies here as
+everywhere: the main process resolves the path before any worker starts, so naming a
+file that does not exist is a load error regardless of what evaluates. The cost is real and bounded — a v3 wrapped single-app project with an
 `envfile` migrates to a root-inline entry, so it lands on the pre-flight
 hand-conversion list — and it is listed there for that reason. One documented asymmetry: `envfile` and the `env` blocks live on the root
 entry, so a **standalone** boot — which applies no root orchestration — evaluates
@@ -4489,9 +4504,11 @@ export interface ApplicationEntryOptions {
   envfile?: string                        // replaces the app's four-file env set
                                           // in BOTH views (evaluation + runtime);
                                           // app-relative; missing file = error;
-                                          // error on any entry with no per-app eval
-                                          // worker — inline `config`, or an entry in
-                                          // the deciding file's own directory
+                                          // error where the entry's config is
+                                          // evaluated out of reach — inline `config`,
+                                          // or an entry in the deciding file's own
+                                          // directory. A detector-only entry (no
+                                          // file to evaluate) is legal.
   reuseTcpPorts?: boolean                 // default true; reaches the
                                           // SO_REUSEPORT decision in v4
   restartOnError?: boolean | number
