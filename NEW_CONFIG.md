@@ -3837,8 +3837,10 @@ Generation reads both views. Then:
 
    **Validation seeds the environment for every variable the emitted files reference
    that is not already set**, not only `requiredEnv`-wrapped ones. Migrate records
-   each placeholder-derived position during the lexical pass — variable, JSON path and
-   target type — so it seeds each variable with a sentinel drawn from the
+   each placeholder-derived position during the lexical pass — variable, JSON path,
+   target type, **the supplier that would have fed it, and the whole interpolation
+   where the position has one** — so it seeds each variable with a sentinel drawn from
+   the
    **intersection of the constraints at every position that variable occupies**, not
    from any one of them: a member common to all enums, a number inside every range and
    satisfying every `multipleOf`/integer constraint, the secret's placeholder for a
@@ -3939,7 +3941,22 @@ Generation reads both views. Then:
    because `--resume` skips that pass: the **legacy-deletion set** — including custom
    filenames a v3 `applications[].config` pointed at, without which a resumed run
    could not complete step 5 — and the **placeholder-position record** step 3 seeds
-   from, each entry being a variable, a JSON path and a target type. On a failure
+   from. **That record is the analysis, not a summary of it**, because `--resume`
+   skips the lexical pass that produced it and step 3 must reach the same verdict the
+   pre-flight did. Four things go in per position, and each corresponds to a rule
+   above that a thinner record would silently undo: the **supplier** — which env file,
+   or the real environment — since constraints intersect within a supplier and not
+   across the project, and a record keyed on variable name alone would re-merge two
+   app-local `SETTING`s a resumed run had no business merging; the **whole
+   interpolation** and its component variables, since an embedded placeholder is one
+   joint witness and per-component seeds need not concatenate into a legal value; the
+   **constraint set and the witness or sentinel actually chosen**, so a resumed run
+   validates against the value the pre-flight accepted rather than re-deriving one;
+   and whether that value was **supplied or synthesized**, since seeding must still
+   skip variables the environment already provides. The manifest schema is versioned
+   and round-tripped in tests, with two cases named because they are the ones a
+   thinner record passes: two app-local values sharing a key under disjoint schemas,
+   and a multi-variable interpolation in an enum position. On a failure
    **before the commit point** and **other than validation**
    it removes its own creations automatically, and on success the summary prints
    the exact path-scoped undo (`git restore <tracked…> && rm <created…>`) — never
