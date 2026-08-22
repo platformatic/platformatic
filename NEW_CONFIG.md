@@ -674,23 +674,41 @@ as `dev`/`start`/`build`, often `--production`. If an entry exists in the second
 context and not the first, `start` fails telling you to run the command that cannot
 see it. Three different things follow from that, and they are not one rule:
 
-- **The set of applications may not vary with `ctx.command`.** This one is a stated
-  requirement rather than a checked one. `ctx.command` says what Watt is *doing*, not
-  what environment this *is*, so "an application that exists only while starting" is
-  not a configuration anyone means to write; and the only way to check it is to
-  evaluate the root once per command and compare, which costs every load an extra
-  evaluation — the thing "Config code runs exactly once" exists to prevent — to catch
-  a mistake nobody makes. It sits with determinism and the `process.env` rule: stated,
-  unenforced, and named by the error when it bites (below). Per-application
-  *settings* may branch on `command` freely; `watch: command === 'dev'` is the
-  canonical example and stays legal.
+- **`resolve` evaluates the root once per boot command and fetches the union.** The
+  earlier version of this document made command-invariant topology a *stated rule*
+  and declined to check it, on the grounds that checking costs an extra evaluation
+  per load. That reasoning was right about boots and wrong about `resolve`, which is
+  not a boot: it is a command whose next act is to clone git repositories over a
+  network. Four short-lived root evaluations — `exec`, `dev`, `start`, `build`, each
+  under the `--production` / `--mode` the operator passed — cost nothing measurable
+  there, and they replace an unenforced rule and a diagnostic with actual coverage.
+  Whatever command boots later, `resolve` has already seen the candidates that
+  command produces. No new flag, and nothing for a user to get right.
+
+  The union is keyed by id, and it is where the *other* half of this problem
+  surfaces. It was never only the application **set** that can vary with
+  `ctx.command`: an entry's `url` and `gitBranch` can too, and a `billing` pinned to
+  `release` under `start` and to the URL's default branch under `dev` is exactly as
+  unbootable as one that does not exist. Two evaluations now disagree in front of
+  `resolve` rather than months later at a boot, so it **refuses**, naming the id, both
+  revisions and the two commands that produced them — one directory cannot hold two
+  checkouts, and picking one silently is how a deploy ships the wrong code. An id
+  present in some contexts and absent from others needs no such treatment: the union
+  fetches it, and a clone nobody boots costs disk.
+
+  Per-application *settings* may still branch on `command` freely; `watch: command
+  === 'dev'` is the canonical example and stays legal. Topology that branches on it is
+  not forbidden either, now that `resolve` covers it — it is merely unusual, and the
+  determinism note below still asks you not to.
 - **The set of applications *may* vary with `ctx.mode`, and `resolve` takes the
   mode.** A staging deployment that runs one extra application is coherent, and
   forbidding it was overreach. `resolve` accepts the same `--production` / `--mode
   <name>` flags every other `exec`-context command already takes (see "CLI commands
   over config"), defaulting to development as they do, so the operator who boots with
   `--production` resolves with `--production` and the two topologies agree by
-  construction rather than by rule.
+  construction rather than by rule. Those flags carry into all four evaluations
+  above: `mode` and `production` describe the deployment and are the operator's to
+  state, while `command` describes the invocation and is not.
 - **`enabled` must not hide an entry from `resolve`.** It is the supported way to
   exclude an application, so it cannot also be the thing that prevents the exclusion
   from ever being undone. `resolve` collects entries with a `url` and a missing
@@ -736,12 +754,14 @@ see it. Three different things follow from that, and they are not one rule:
   snapshot, recorded during the same evaluation rather than produced by a second one.
 
 When a boot does find an unresolved entry, the error names the possibility rather
-than repeating the instruction that failed: it reports the missing directory, prints
-the `resolve` invocation **matching the current context** (`wattpm resolve
---production`, not a bare `wattpm resolve`), and adds that an entry invisible to
-that command means the root config varies its application list by `ctx.command`.
-That turns the one unrecoverable loop into a message that either fixes itself or
-names the rule it broke.
+than repeating the instruction that failed: it reports the missing directory and
+prints the `resolve` invocation **matching the current context** (`wattpm resolve
+--production`, not a bare `wattpm resolve`). Because `resolve` now covers every
+command, an entry it did not fetch is one that did not exist in **any** of the four
+evaluations — so the message says that, and points at the remaining way to produce
+one: an expression that depends on something the resolving environment did not have,
+a variable set only in the deployment. That is a real situation with a real fix, and
+it is a better thing to print than a rule the user has to be told they broke.
 
 Back to loading order: a load-time failure would make `wattpm resolve` fail on a
 clean checkout telling you to run `wattpm resolve`. Migrate's step 3 has the same
