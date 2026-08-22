@@ -720,13 +720,19 @@ see it. Three different things follow from that, and they are not one rule:
   is the canonical example and stays legal. Topology that branches on it is legal too,
   and now has a supported way to be resolved — one `--for` per target, or `--for all`
   — which is what the earlier stated-but-unchecked rule was standing in for.
-- **The set of applications *may* vary with `ctx.mode`, and `resolve` takes the
-  mode.** A staging deployment that runs one extra application is coherent, and
-  forbidding it was overreach. `resolve` accepts the same `--production` / `--mode
-  <name>` flags every other `exec`-context command already takes (see "CLI commands
-  over config"), defaulting to development as they do, so the operator who boots with
-  `--production` resolves with `--production` and the two topologies agree by
-  construction rather than by rule.
+- **The set of applications *may* vary with `ctx.mode`, and `resolve` takes its mode
+  from its target.** A staging deployment that runs one extra application is coherent,
+  and forbidding it was overreach. `resolve` accepts `--production` and `--mode
+  <name>`, but **it does not default them the way other `exec`-context commands do**
+  (see "CLI commands over config"): the target chosen by `--for` supplies them, so
+  `--for start` and `--for build` evaluate with `production: true` and
+  `mode: 'production'`, `--for dev` with development, and `--for all` gives each
+  target its own. Naming a target is what makes that coherent — a bare `wattpm
+  resolve` prepares for `start`, which is what a default deployment boots, and would
+  fetch a different topology from a root that branches on `mode` if it evaluated a
+  development context instead. The flags override where a deployment is neither:
+  `--for start --mode staging` resolves what `wattpm start --mode staging` will
+  boot.
 - **`enabled` must not hide an entry from `resolve`.** It is the supported way to
   exclude an application, so it cannot also be the thing that prevents the exclusion
   from ever being undone. `resolve` collects entries with a `url` and a missing
