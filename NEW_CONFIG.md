@@ -1283,6 +1283,22 @@ The rules, in full:
   does not exist until every per-app evaluation has returned. The check sits at the
   end of the loading pipeline, main-side, over the resolved entries.
 
+  **The set is built from listeners the boot will actually create, not from every
+  declared `server.port`.** A framework capability checks its custom command for the
+  active mode *before* its server configuration and returns through
+  `startWithCommand` (`next/lib/capability.js:198-212`, `:312-327`; the others are the
+  same shape), so an application with a command for the mode this boot will use never
+  binds the port its configuration declares — the command picks an address and the
+  runtime observes it. Claiming that range would reject two `next` applications
+  carrying the same harmless default port while their production commands bind
+  different addresses, and the omitted-`hostname` rule below makes that the *likely*
+  outcome rather than a corner: same capability, both hosts omitted, treated as
+  overlapping. So an application whose active-mode command takes precedence
+  contributes **nothing** to the preflight set, and its collisions belong to the
+  runtime scan, which sees what the command actually bound. Because the command is
+  mode-specific, so is the set: `dev` and `start` are separate cases and separate
+  tests.
+
   **It compares ranges, not points, and skips the two spellings that mean "no fixed
   port".** An application with no `server.port` is mesh-only and binds nothing. An
   application with `port: 0` is asking the OS for a port per worker, so two of them
