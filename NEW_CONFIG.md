@@ -1277,6 +1277,21 @@ The rules, in full:
   runtime scan, which sees addresses that are actually bound. A static check that
   guessed at resolution would refuse valid configurations on the strength of a guess.
 
+  **An omitted `hostname` is the common case and needs its own rule.** `server.hostname`
+  is optional with no schema default (`foundation/lib/schema.js:394`), and the listener
+  leaves `host` unset on purpose so the framework picks its own — `buildListenOptions`
+  is `{ port: serverConfig?.port || 0 }` and adds `host` only when one was configured
+  (`basic/lib/utils.js:21-26`). So for most applications there is no host string to put
+  in the table at all, and the two tempting answers are both wrong: treating absence as
+  a wildcard refuses configurations whose listeners would never have met, and skipping
+  every omission drops the single most common collision — two applications on 3042
+  with no hostname between them. The rule is therefore: two entries that **both** omit
+  `hostname` are compared **only when they resolve to the same capability**, since that
+  is the one case where the unknown default is the *same* unknown; an omission compared
+  against a declared host, or against a different capability's omission, is not decided
+  here. That keeps the check on the collision it exists for and off the ones it cannot
+  see, and it is why the runtime scan is not optional.
+
   **The error names the applications, the host and the port, and nothing else.** It
   cannot name the environment variable behind a collision, and this document should
   not have said it could: by the time a port is a number, arbitrary JavaScript has
