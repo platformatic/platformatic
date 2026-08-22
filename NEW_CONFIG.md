@@ -4004,9 +4004,33 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     `getRuntimeConfig`/`getApplicationDetails` payloads carry `configPath` +
     `resolvedConfig` as a versioned DTO instead of a bare path — a declared type
     change for every management-API consumer, separate from patch-document
-    compatibility (which is preserved). `getApplicationConfig()` is **not** in this
+    compatibility (which is preserved). The DTO stamp is `definitionVersion`, not
+    `version`, which `getApplicationDetails()` already uses for the capability version
+    the running worker loaded. `getApplicationConfig()` is **not** in this
     change: it returns a worker's post-`transform` view over ITC and keeps its shape
     (see "Machine-generated configs").
+
+    **`getRuntimeConfig(includeMeta: true)` is removed**, which is a separate breaking
+    change from the payload above and is listed here because a legal call disappears:
+    it is a declared public overload today (`runtime/index.d.ts:382`) returning live
+    `#config` with its `kMetadata` symbol attached, which the frozen-copy contract
+    cannot honour (see "Machine-generated configs"). Its replacement is a metadata
+    accessor rather than a flag — `runtime.getRuntimeMetadata()` extended with
+    `configPath` and `autoload` beside the `projectDir` it already returns, and
+    `@platformatic/control` gaining the matching client method over `GET /metadata`:
+
+    ```ts
+    interface RuntimeMetadata {                 // additions to the existing shape
+      projectDir: string
+      configPath: string | null                 // null for object config sources
+      autoload?: { path: string, exclude?: string[], mappings?: Record<string, unknown> }
+    }
+    ```
+
+    That is what the callers actually consumed: `applications:add`/`remove --save`
+    read `root` and `configPath` out of `kMetadata`
+    (`wattpm/lib/commands/applications.js:31,110-112`), never the configuration the
+    overload wrapped them in.
 15. Capability packages must implement the v4 create contract (resolved config as
     data) and should export a factory (all in-tree capabilities get both); plain
     `{ module }` objects cover v4-contract capabilities without factories.
