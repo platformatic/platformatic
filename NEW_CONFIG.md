@@ -789,6 +789,24 @@ see it. Three different things follow from that, and they are not one rule:
   which is why the comparison is on the resulting destination rather than on the
   entry's own `path` field.
 
+  **The map runs the other way as well: one destination, one producer.** Matching by
+  id answers "is this the same application under two commands" and says nothing about
+  two *different* ids naming one directory. `{ id: 'api', path: 'external/shared' }`
+  beside `{ id: 'billing', path: 'external/shared' }` passes every id-keyed check and
+  is incoherent on disk: `resolveApplications` gathers both into `toResolve` and
+  clones them in sequence (`external.js:455-478`), so the first creates the directory
+  and the second fails into it — and on the next run the existing-path check skips
+  both (`external.js:427-429`), so nothing repairs it and one application boots the
+  other's checkout. That is the same local-path/URL incoherence the duplicate-id merge
+  rule already refuses at load, arriving through a door id-matching does not watch.
+  So `resolve` builds a **canonical destination → producers** map over every candidate
+  it is about to fetch — not only across commands, but across the whole candidate set
+  in a single context — and refuses a destination claimed by more than one
+  repository/revision pair, naming both ids and the path. The one coherent case is two
+  entries resolving to the *same* repository at the same revision, a deliberately
+  shared checkout: that is fetched **once** rather than refused, and once rather than
+  twice.
+
   Nothing else changes: `enabled` is still resolved before fan-out, disabled entries
   still spawn no worker, and the candidate list is a projection of the same canonical
   snapshot, recorded during the same evaluation rather than produced by a second one.
@@ -4529,7 +4547,9 @@ runs multiple workers on a fixed port at all.
    with that command's own defaults; under `--for all` it evaluates each boot command,
    unions the candidates by id, and **refuses an id whose `url`, `gitBranch` or
    canonical effective destination differs between commands**, naming both values and
-   both commands. It takes those candidates from the
+   both commands. In every mode it also maps **destination → producers** across the
+   whole candidate set and refuses one destination claimed by two repository/revision
+   pairs, fetching a deliberately shared checkout once. It takes those candidates from the
    loader's `kMetadata` `resolveCandidates` list, recorded before the `enabled` filter, rather
    than by filtering the returned application list as it does today
    (`external.js:422-433`) — the pre-filter list does not survive the eval worker, so

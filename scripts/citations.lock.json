@@ -65,6 +65,16 @@
       "head": "const resolvableApplications = config.applications.filter(application => {",
       "lines": 31
     },
+    "packages/wattpm-utils/lib/commands/external.js:455-478": {
+      "sha": "726a75f10b2e1056",
+      "head": "// This repository must be resolved",
+      "lines": 24
+    },
+    "packages/wattpm-utils/lib/commands/external.js:427-429": {
+      "sha": "75554d4f2b3e51a8",
+      "head": "if (application.path && existsSync(application.path)) {",
+      "lines": 3
+    },
     "packages/wattpm-utils/lib/commands/external.js:243-271": {
       "sha": "cb349c6ef66adab2",
       "head": "if (useEnv) {",
