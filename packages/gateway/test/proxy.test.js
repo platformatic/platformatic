@@ -1021,6 +1021,8 @@ test('should properly configure the frontends on their paths if no gateway confi
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { from: 'service' })
   }
+
+  await runtime.close()
 })
 
 test('should properly match applications by their hostname', async t => {
