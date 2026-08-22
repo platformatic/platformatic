@@ -685,41 +685,48 @@ as `dev`/`start`/`build`, often `--production`. If an entry exists in the second
 context and not the first, `start` fails telling you to run the command that cannot
 see it. Three different things follow from that, and they are not one rule:
 
-- **`resolve` evaluates the root once per boot command and fetches the union.** The
-  earlier version of this document made command-invariant topology a *stated rule*
-  and declined to check it, on the grounds that checking costs an extra evaluation
-  per load. That reasoning was right about boots and wrong about `resolve`, which is
-  not a boot: it is a command whose next act is to clone git repositories over a
-  network. Four short-lived root evaluations — `exec`, `dev`, `start`, `build`, each
-  under the `--production` / `--mode` the operator passed — cost nothing measurable
-  there, and they replace an unenforced rule and a diagnostic with actual coverage.
-  Whatever command boots later, `resolve` has already seen the candidates that
-  command produces. No new flag, and nothing for a user to get right.
+- **`resolve` prepares for a command you name: `--for <command>`, defaulting to
+  `start`.** The context it evaluates is that command's, with that command's own
+  defaults — `--for build` is `production: true` and `mode: 'production'` unless
+  `--mode` says otherwise, exactly as `wattpm build` would be — so what runs is a
+  context some boot actually produces rather than a synthetic one. `--production` and
+  `--mode <name>` still override, because those describe the deployment and are the
+  operator's to state, where `command` describes the invocation.
 
-  The union is keyed by id, and it is where the *other* half of this problem
-  surfaces. It was never only the application **set** that can vary with
-  `ctx.command`: an entry's `url` and `gitBranch` can too, and a `billing` pinned to
-  `release` under `start` and to the URL's default branch under `dev` is exactly as
-  unbootable as one that does not exist. Two evaluations now disagree in front of
-  `resolve` rather than months later at a boot, so it **refuses**, naming the id, both
-  revisions and the two commands that produced them — one directory cannot hold two
-  checkouts, and picking one silently is how a deploy ships the wrong code. An id
-  present in some contexts and absent from others needs no such treatment: the union
-  fetches it, and a clone nobody boots costs disk.
+  **This replaces an earlier design in which `resolve` evaluated all four contexts
+  and unioned them, and the reason it was wrong is worth keeping.** Topology is not
+  separable from the rest of the root callback: the same function that returns the
+  application list also throws on a missing dev certificate, awaits a service
+  discovery lookup, or branches its logger on `command`. Evaluating it under a
+  command nobody asked for runs all of that. `resolve --production` failing because
+  the `dev` branch wants a local-only variable is a worse failure than the one the
+  union existed to prevent, and "four evaluations cost nothing" was a claim about one
+  example rather than about arbitrary trusted code — an async root pays it four times
+  in network calls or four times in `--config-timeout`.
 
-  Per-application *settings* may still branch on `command` freely; `watch: command
-  === 'dev'` is the canonical example and stays legal. Topology that branches on it is
-  not forbidden either, now that `resolve` covers it — it is merely unusual, and the
-  determinism note below still asks you not to.
+  **The union survives as `--for all`**, for a project that genuinely branches
+  topology on `command` and wants one command to cover every boot. It evaluates each
+  boot command under its own defaults and fetches the union of the candidates, and
+  because the operator asked for those evaluations, a failure in any of them is a
+  failure of the run rather than something to swallow. Under `--for all` the
+  candidates are matched by id, and **an id that resolves to two different clones is
+  refused** — differing `url`, `gitBranch` or destination path (see below) — naming
+  the id, both values and the commands that produced them. One directory cannot hold
+  two checkouts, and choosing silently is how a deploy ships the wrong code. An id
+  present under some commands and absent under others needs no such treatment: it is
+  fetched, and a clone nobody boots costs disk.
+
+  Per-application *settings* may branch on `command` freely; `watch: command === 'dev'`
+  is the canonical example and stays legal. Topology that branches on it is legal too,
+  and now has a supported way to be resolved — one `--for` per target, or `--for all`
+  — which is what the earlier stated-but-unchecked rule was standing in for.
 - **The set of applications *may* vary with `ctx.mode`, and `resolve` takes the
   mode.** A staging deployment that runs one extra application is coherent, and
   forbidding it was overreach. `resolve` accepts the same `--production` / `--mode
   <name>` flags every other `exec`-context command already takes (see "CLI commands
   over config"), defaulting to development as they do, so the operator who boots with
   `--production` resolves with `--production` and the two topologies agree by
-  construction rather than by rule. Those flags carry into all four evaluations
-  above: `mode` and `production` describe the deployment and are the operator's to
-  state, while `command` describes the invocation and is not.
+  construction rather than by rule.
 - **`enabled` must not hide an entry from `resolve`.** It is the supported way to
   exclude an application, so it cannot also be the thing that prevents the exclusion
   from ever being undone. `resolve` collects entries with a `url` and a missing
@@ -766,13 +773,14 @@ see it. Three different things follow from that, and they are not one rule:
 
 When a boot does find an unresolved entry, the error names the possibility rather
 than repeating the instruction that failed: it reports the missing directory and
-prints the `resolve` invocation **matching the current context** (`wattpm resolve
---production`, not a bare `wattpm resolve`). Because `resolve` now covers every
-command, an entry it did not fetch is one that did not exist in **any** of the four
-evaluations — so the message says that, and points at the remaining way to produce
-one: an expression that depends on something the resolving environment did not have,
-a variable set only in the deployment. That is a real situation with a real fix, and
-it is a better thing to print than a rule the user has to be told they broke.
+prints the `resolve` invocation **matching the context this boot is in** — `wattpm
+resolve --for dev`, or `--for start --production`, never a bare `wattpm resolve`. That
+is the whole recovery, and it is what the earlier unenforced rule was missing: an
+entry visible under `dev` and not under `start` is no longer a loop with nothing to
+turn, because the command that would fetch it is printable and the operator can run
+it. Where the entry exists under no command at all, the remaining explanation is an
+expression depending on something the resolving environment did not have — a variable
+set only in the deployment — and the message says so.
 
 Back to loading order: a load-time failure would make `wattpm resolve` fail on a
 clean checkout telling you to run `wattpm resolve`. Migrate's step 3 has the same
