@@ -1313,7 +1313,7 @@ the runtime generator hands application *i* port `3042 + i`
 (`runtime/lib/generator.js:168-171`) while writing no root `server` block at all.
 v4's code-first equivalent is the same thing spelled in the factory, with the
 variable scoped as v3 scoped it: `next({ server: { port:
-Number(process.env.PLT_API_PORT ?? 3043) } })`. v3's `getEnvVarName` returned a bare
+Number(process.env.PLT_API_PORT || 3043) } })`. v3's `getEnvVarName` returned a bare
 `PORT` only for a standalone project and `PLT_<PREFIX>_PORT` for anything in runtime
 context, the prefix derived from the application name
 (`generators/lib/base-generator.js:98-106`, `:156-157`), so the scoping is not new —
@@ -2026,14 +2026,23 @@ an env file, a config candidate and an autoload directory each change the answer
 and no hook can fix that: `readFile('./ports.json')` is an ordinary call, indistinct
 from any other I/O. The context carries **`ctx.addWatchFile(path)`** for it, streamed
 back on the same channel as the recorded imports (see step 3), so a configuration
-that reads its own data can say so in one line. Nothing enforces the call — a config
-that reads a file and does not declare it needs a restart to pick up a change, which
-is stated here rather than discovered.
+that reads its own data can say so in one line. A relative path resolves against
+**`ctx.root`** — the config file's own directory, the only stable referent, since a
+helper that calls it may live anywhere and `process.cwd()` is wherever the command
+was typed — and the path is canonicalized before it reaches the watcher. Nothing
+enforces the call: a config that reads a file and does not declare it needs a restart
+to pick up a change, which is stated here rather than discovered.
 
-All watched paths are
-project-local: `node_modules` paths (Watt itself, capability packages, transitive
-dependencies) are recorded but never watched, so dependency churn cannot trigger
-reloads or exhaust watcher limits.
+**The one filter is `node_modules`, and it is not a project boundary.** Watt itself,
+capability packages and their transitive dependencies are recorded and never watched,
+so dependency churn cannot trigger reloads or exhaust watcher limits. Everything else
+is watched **wherever it lives**, including outside the runtime root: an application
+at `path: '../shared/api'` is a supported layout, its config file is in the set, and
+an entry's `envfile`, the `--env` file and an `addWatchFile` path are all explicitly
+named by a configuration and are trusted wherever they resolve — the same rule paths
+follow everywhere else in this document (see "Scope"). A project-local filter would
+drop exactly the external application config the previous paragraph promises to
+watch, which is the kind of bound that reads as tidy and behaves as a bug.
 
 The costs are real and accepted: one worker spawn per config file (parallel) + type
 stripping per load
@@ -4722,7 +4731,8 @@ export type ConfigContext = {
                                                     // frozen at runtime, and so is ctx
   root: string
   addWatchFile (path: string): void   // declare a file the config reads but does not
-                                      // import, so `wattpm dev` watches it; a no-op
+                                      // import, so `wattpm dev` watches it; relative
+                                      // paths resolve against `root`; a no-op
                                       // outside a watching command
 }
 
