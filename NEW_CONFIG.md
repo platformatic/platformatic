@@ -11,7 +11,7 @@ configuration format — `watt.config.ts` / `.js` / `.mts` / `.mjs` — loaded n
 Node.js via type stripping, with full TypeScript types provided by `wattpm` and by each
 capability package. **It is the only configuration format**: any `.json` configuration
 file found is, by definition, a v3-era file and is refused with an instruction to run
-`npx wattpm-utils migrate`.
+`npx wattpm-utils@4 migrate`.
 
 The core structural change is that **there is exactly one configuration dialect**: the
 runtime dialect. The distinction between "a single-app config with a nested `runtime`
@@ -862,7 +862,7 @@ should say so:
 
 ```
 ✗ watt.yaml is a v3-era configuration. Watt v4 uses watt.config.ts.
-  Run:  npx wattpm-utils migrate
+  Run:  npx wattpm-utils@4 migrate
 ```
 
 Without this, a `watt.yaml`-only project would fall through to zero-config
@@ -1603,7 +1603,7 @@ and where the ancestor is a v3 file, the same warning names the upgrade instead:
 ```
 ⚠ web/api has no watt.config.* of its own and is booting with inferred defaults.
   A v3 configuration exists at ../../platformatic.json, which this version cannot
-  read. Run npx wattpm-utils migrate there, then run wattpm from that directory.
+  read. Run npx wattpm-utils@4 migrate there, then run wattpm from that directory.
 ```
 
 This is a deliberate choice against a stricter alternative, and the reasoning is
@@ -2960,7 +2960,7 @@ export default {
 
 ### `wattpm-utils migrate`
 
-A one-shot codemod in `wattpm-utils`, invoked as **`npx wattpm-utils migrate`** —
+A one-shot codemod in `wattpm-utils`, invoked as **`npx wattpm-utils@4 migrate`** —
 **not routed through `wattpm`**. It is a **stable-v4.0 release gate**: v4 refuses
 every legacy configuration, so the migrator is functionally part of the breaking
 change — GA does not ship without a published, tested migrate (alphas and RCs may
@@ -2968,6 +2968,18 @@ precede it; early adopters hand-convert). Release *cadence* stays decoupled afte
 4.0: because `npx` resolves the package at *invocation* time, migrate fixes ship on
 `wattpm-utils`' own schedule and reach every already-installed v4 runtime with no
 runtime re-release.
+
+**The major is pinned in every invocation this document prints**, because
+invocation-time resolution selects a *version* and not a *line*. Bare `npx
+wattpm-utils` resolves a locally installed copy first, and in the project most likely
+to need migrating that copy is v3 — `wattpm-utils` at v3 has no `migrate` command at
+all, so the instruction a v4 error prints would answer "unknown command" in exactly
+the projects the error is for. In a project with no local copy it fetches the latest
+published major, which is v4 today and will not stay v4. `npx wattpm-utils@4 migrate`
+is the whole fix: still the newest v4 migrator at invocation time, which is the
+property the decoupled cadence needs, and never a v3 binary or a v5 one. `--resume`
+and every command the reports print carry the same pin, since a resumed run must be
+the migrator that wrote the manifest.
 
 It is **the only code in v4 that can read legacy configs**. Scope: v3 projects built
 on in-tree capabilities. It finds its input the way v3 found it, escape hatch
