@@ -1,5 +1,5 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { getEvents, getPrometheus, removeGlobals, updateGlobals } from '@platformatic/globals'
+import { getEvents, getPrometheus, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
 import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
@@ -45,7 +45,6 @@ test('should increment and decrement activeWsConnections metric', async t => {
   const { application, wsServer } = await createWebsocketApplication(t)
   const events = new EventEmitter()
   updateGlobals({ events })
-  t.after(() => removeGlobals(['events']))
   wsServer.on('connection', socket => {
     socket.on('message', message => {
       setTimeout(() => {
