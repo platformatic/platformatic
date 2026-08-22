@@ -1848,9 +1848,9 @@ test('should proxy to a websocket application with reconnect options', async t =
   await once(getEvents(), 'onReconnect')
   await once(getEvents(), 'onPong')
 
+  const disconnected = once(getEvents(), 'onDisconnect')
   client.close()
-
-  await once(getEvents(), 'onDisconnect')
+  await disconnected
 })
 
 test('should dynamically proxy a using custom logic', async t => {
