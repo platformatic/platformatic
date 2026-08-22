@@ -845,6 +845,11 @@
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
     },
+    "packages/foundation/lib/schema.js:1541-1544": {
+      "sha": "e861080de667a0a3",
+      "head": "resolvedApplicationsBasePath: {",
+      "lines": 4
+    },
     "packages/runtime/lib/runtime.js:2446": {
       "sha": "4b6f5ec3a0f8edda",
       "head": "applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)",

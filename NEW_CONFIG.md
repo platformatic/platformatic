@@ -3663,13 +3663,27 @@ Generation reads both views. Then:
    behind. So containment is tested over the whole set migrate touches: every
    application directory, every resolved `applications[].config` and
    `autoload.mappings[].config`, every `envfile`, and `resolvedApplicationsBasePath`.
-   Each is canonicalized through `realpath` first and compared as a path rather than
+   Each is canonicalized first and compared as a path rather than
    a string — the same distinction this document is careful about for `resolve`'s
    containment rule (see "Scope"), where a prefix match admits `/tmp/app-evil` as
    contained by `/tmp/app` and follows a symlinked ancestor straight out of the tree.
    Here it is a refusal rather than a skip: an external legacy config is not an entry
    migrate can quietly leave alone, because the application that names it still has
    to be converted.
+
+   **Canonicalizing means the nearest existing ancestor, not the path itself**, because
+   several of these legitimately do not exist yet. `resolvedApplicationsBasePath`
+   defaults to `external` (`foundation/lib/schema.js:1541-1544`) and that directory is
+   absent in every project that has never resolved a remote — which is most of them,
+   and exactly the clean tree a migration runs on. Node's `realpath` throws on a
+   missing path, so requiring it of the path itself would abort an ordinary migration
+   with a filesystem error, or push migrate into creating a directory it promises not
+   to touch (the resolution subtree is excluded from every step; see above). So the
+   check walks up to the nearest ancestor that exists, canonicalizes **that**, and
+   re-appends the remaining segments before comparing. Where the path does exist it is
+   canonicalized directly, which is what catches a symlink pointing out of the tree —
+   the case the canonicalization was introduced for. Both are preflight tests: an
+   absent `external`, and a symlinked one.
 
    The second is the one every emission depends on: **a v4 target that
    already exists**. Migrate emits a root `watt.config.*` and one per application
