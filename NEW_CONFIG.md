@@ -377,10 +377,15 @@ directory of the config file that produced it (the Level 1 auto-wrap, the
 Silent shadowing is not an option here: package-local commands evaluate the
 nearest file, so a shadowed per-app config would still win under a standalone
 boot — the same app running two different configurations depending on where the
-command was typed. Erroring keeps root boot and standalone boot identical **on
-capability configuration**; the two still differ on the root-owned env layers a
-standalone boot does not apply (`envfile` and the `env` blocks — see "Env
-files"), which the standalone warning names. The check is a filename-presence
+command was typed. Erroring removes the *shadowing*; it does not make the two boots
+identical, and this document should not claim it does. **Three things differ**, all
+of them environmental rather than structural: the root-owned `envfile` and `env`
+blocks a standalone boot does not apply, the sibling `PLT_<ID>_URL` values that only
+exist inside a mesh, and **topology-key stripping** — a per-app worker has the
+injected names removed from its environment and the root worker cannot, so a file
+that reads one gets a different answer depending on which worker runs it (see "Env
+files"). What erroring buys is that the same *file* is used either way; the
+standalone warning names all three. The check is a filename-presence
 test, no evaluation needed, and `migrate` never emits this state.
 
 ### Functional form and the config context
@@ -2310,14 +2315,27 @@ file under a root boot and against its own directory's chain when started
 standalone — the one case where the same file gets two environments, and the reason
 the sentence above says *boot-style independent* of the directory rule rather than of
 everything. That asymmetry is stated again below and
-in the standalone warning, and it is **one of the two ways** a standalone build
-differs from a root build — the other being the absent sibling `PLT_<ID>_URL`
-variables (see "Build environments"). **Topology-key stripping** is the third thing that varies, and it varies by
-*position and boot style together*: a per-app eval worker has the declared
+in the standalone warning, and it is **one of the three ways** a standalone build
+differs from a root build. The second is the absent sibling `PLT_<ID>_URL`
+variables (see "Build environments"). The third is **topology-key stripping**, which
+varies by *position and boot style together*: a per-app eval worker has the declared
 `PLT_<ID>_URL` names removed, while the root eval worker cannot have them removed —
 its ids are not known yet — and warns after unwrapping instead. Under a **standalone**
 boot an application's own file *is* the deciding file and therefore runs in the root
 worker, so the same file is stripped under a root boot and unstripped standalone.
+
+**Not stripping at all was the alternative, and it is worse.** Leaving the names in
+place would make evaluation identical across boot styles, which is the property this
+divergence costs — but it would do it by letting a per-app file read a stale
+`PLT_API_URL` out of an env file and bake that value **into `resolvedConfig`**, where
+runtime injection can no longer reach it: injection outranks env files in the
+*environment*, and this value has left the environment and become capability
+configuration. A boot-style difference is visible in a warning; a stale sibling URL
+compiled into a cache endpoint or a build artefact is visible when something calls
+the wrong host. So the divergence is kept and named rather than traded for a silent
+one. It is also not fixable by knowing more: standalone has no siblings to inject,
+so there is no correct value to strip *toward* — the question the root boot answers
+does not exist there.
 
 Stripping removes only names the runtime would **inject**. A key already present in
 the runtime's own real environment is one injection skips (see "Inter-application
