@@ -1399,20 +1399,34 @@ The loader does not warn per application: in a typical monorepo most application
 are deliberately mesh-only, and a warning would fire N−1 times on every boot. What
 changes is the report. `#showUrls` (`runtime/lib/runtime.js:2408-2428`) currently
 does `if (!url) continue`, so a project that binds nothing prints no address and no
-explanation. It prints **one line per application**, in one of two shapes, so the
+explanation. It prints **one line per application**, in one of three shapes, so the
 set of externally reachable applications is always visible:
 
 ```
 gateway    listening at http://127.0.0.1:3042
 api        mesh-only — http://api.plt.local
 frontend   listening at http://127.0.0.1:52418        (port: 0 — ephemeral)
+jobs       background — no HTTP dispatch target
 ```
 
-There is deliberately no third "did not start" shape. The predicate above is
-decidable from configuration, so that case never reaches the report — it is refused
-at load, where the message can name the entry, its capability and the three ways to
-satisfy it. A status row would be the same information delivered after the runtime
-had already booted around the hole.
+**The third shape is reported by the worker, not derived by the report.** A
+`background` line is printed for an application whose started worker says it has no
+server — `#hasServer()` false, from `config.node.hasServer`, a module-level
+`hasServer` export, or `isBackgroundApplication` on the factory result
+(`node/lib/capability.js:245-250`). Two of those three are only knowable after the
+application's code has run, so the classification travels with the started worker's
+existing status reply rather than being computed main-side, and the same
+`listening` / `mesh-only` / `background` value appears in
+`getApplicationDetails()` — a report shape the programmatic API cannot answer is a
+shape that exists only in a terminal.
+
+There is deliberately no *fourth* "did not start" shape. That case is decidable from
+configuration for the capabilities it can happen to, so it never reaches the report —
+it is refused at load, where the message can name the entry, its capability and the
+three ways to satisfy it. A status row would be the same information delivered after
+the runtime had already booted around the hole. `background` is the opposite
+situation and that is why it earns a row: nothing is wrong, and the thing that knows
+is the worker.
 
 A custom-command application appears as `listening`, at whatever address its command
 chose: the runtime observes it rather than assigning it, so the report shows what it
@@ -1498,10 +1512,12 @@ strictness with the trust boundary. Running `wattpm` inside a directory is a
 request to run *that* directory; the cost of honouring it is visible in the
 warning, and the fix is one file.
 
-**The ancestor check therefore governs diagnostics only.** It selects no file, and
-it cannot change what boots or whether a boot happens — the property stated in
-"Scope" holds without exception, which is what keeps the search rule as small as it
-is.
+**The ancestor check selects no configuration file**, and that is the property this
+paragraph rests on: nothing above the stop point can decide which config boots. It
+is *not* inert, and "Scope" says why — the same walk picks the env root, so an
+ancestor `watt.config.*` extends `.env` layering upward and can change what an
+expression computes. The warning above is diagnostics; the walk that produced it is
+not.
 
 **Naming a directory is not searching for one.** The stop condition governs the
 *search* for a config file and nothing else. An application entry's `path` is
