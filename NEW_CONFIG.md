@@ -3635,7 +3635,7 @@ Generation reads both views. Then:
    the run with "hand-conversion required", naming what blocks it. This is the **one
    enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
    anywhere else in this document without appearing here is a bug in the document.
-   Ten triggers. Two of them bound what migrate may touch at all.
+   Eleven triggers. Two of them bound what migrate may touch at all.
 
    **An application whose directory lies outside the migration transaction root**
    stops the run. The transaction root is the workspace containing the root config —
@@ -3718,9 +3718,10 @@ Generation reads both views. Then:
    configuration inline on two root entries, which is a different project shape than
    the one the user has and not a rewrite migrate should pick unasked.
 
-   The remaining eight: **any capability outside the vendored closure**; a **root `envfile`**,
+   The remaining nine: **any capability outside the vendored closure**; a **root `envfile`**,
    which has no faithful conversion; any application declaring `envfile` **in the
-   root config's own directory** (see "Scope"); an **`enabled` value that decides the
+   root config's own directory** (see "Scope"); an application whose **`envfile` names
+   a file that does not exist**; an **`enabled` value that decides the
    entrypoint differently for `production` and `development` or cannot be decided at
    all** (see the exposure rules in step 1); a **structural path that resolves to
    nothing** after the fallbacks above; **two application ids that collide once
@@ -3817,6 +3818,22 @@ Generation reads both views. Then:
    resolution above), and sharing one normalized list between the two would silently
    move a migrated project's public address.
    "Stops before modifying any file" must be literally true.
+
+   **The missing `envfile` is a refusal because v3 tolerated it and v4 will not.**
+   v3 read an application's env file inside a `try`/`catch` and carried on when it was
+   not there — the comment says "Ignore if the file doesn't exist, similar to dotenv
+   behavior" (`runtime/lib/worker/main.js:252-262`) — and that applied to a *declared*
+   `envfile` exactly as it did to the conventional `.env`. v4 makes an explicitly named
+   missing file a load error (see "Env files"), on the grounds that naming a file you
+   do not have is a mistake worth hearing about. Both positions are defensible; the
+   combination is not, because it means a working v3 project converts into a
+   configuration that refuses to load. Detecting it needs one `existsSync` per declared
+   `envfile` against the resolved path, so it belongs here rather than at step 3, where
+   the failure would arrive after every file was written and does not roll back. The
+   message gives the two fixes the user has to choose between — create the file the
+   declaration meant, or drop the declaration — and, for the second, names the
+   conventional `.env*` files v4 would then activate in that directory, since removing
+   a declaration is not a no-op when the four-file convention takes over from it.
 
    **The rename collision earns its own note**, because it is the only refusal that
    fires on a project no v3 rule ever declared invalid. Migrate rewrites an id that is

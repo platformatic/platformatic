@@ -850,6 +850,11 @@
       "head": "resolvedApplicationsBasePath: {",
       "lines": 4
     },
+    "packages/runtime/lib/worker/main.js:252-262": {
+      "sha": "3cbf4b65e9c2c27c",
+      "head": "try {",
+      "lines": 11
+    },
     "packages/runtime/lib/runtime.js:2446": {
       "sha": "4b6f5ec3a0f8edda",
       "head": "applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)",
