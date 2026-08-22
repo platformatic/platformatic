@@ -480,6 +480,12 @@ The context (Vite-parity, deliberately):
   make the result depend on evaluation order, and do it without tripping the
   `process.env` mutation warning — which watches a different object.
 - `root` — absolute directory of the config file.
+- `addWatchFile(path)` — declares a file the configuration **reads** rather than
+  imports, so `wattpm dev` watches it (see "Loading mechanism"). It is the one member
+  that is a function rather than data, and it does not make the context mutable: it
+  reports a path outward and returns nothing, so two callbacks in one file cannot
+  observe each other through it. Outside a watching command it is a no-op, which keeps
+  a config that calls it from behaving differently under `start`.
 
 ### Capability factories
 
@@ -1980,11 +1986,30 @@ every application directory, since adding or deleting `watt.config.ts` changes w
 applications own a file — and, after the scoping rule, what `wattpm dev` does there;
 each application's **`package.json`**, which supplies the id and the dependencies the
 capability detector reads; and the config file of **every application actually in the
-topology**, including one whose `path` resolves outside the project. All are
-project-local paths:
-`node_modules` paths (Watt itself, capability packages, transitive dependencies)
-are recorded but never watched, so dependency churn cannot trigger reloads or
-exhaust watcher limits.
+topology**, including one whose `path` resolves outside the project.
+
+**The two explicitly-named env files are in the set as well**, and they are the ones
+easiest to leave out of it, because neither is discovered by enumerating a directory:
+an entry's **`envfile`**, which replaces that application's whole four-file set in
+both views, and the invocation-wide **`--env <file>`**, which replaces the env-files
+rung entirely. Editing either changes what the configuration evaluates to and what
+the worker runs under, so leaving them unwatched makes `wattpm dev` serve a stale
+answer to a file the user just saved. Every path in the set is watched for
+**creation and deletion**, not only modification — appearing and disappearing is how
+an env file, a config candidate and an autoload directory each change the answer.
+
+**A config file that reads data without importing it is invisible to all of this**,
+and no hook can fix that: `readFile('./ports.json')` is an ordinary call, indistinct
+from any other I/O. The context carries **`ctx.addWatchFile(path)`** for it, streamed
+back on the same channel as the recorded imports (see step 3), so a configuration
+that reads its own data can say so in one line. Nothing enforces the call — a config
+that reads a file and does not declare it needs a restart to pick up a change, which
+is stated here rather than discovered.
+
+All watched paths are
+project-local: `node_modules` paths (Watt itself, capability packages, transitive
+dependencies) are recorded but never watched, so dependency churn cannot trigger
+reloads or exhaust watcher limits.
 
 The costs are real and accepted: one worker spawn per config file (parallel) + type
 stripping per load
@@ -4667,6 +4692,9 @@ export type ConfigContext = {
   env: Readonly<Record<string, string | undefined>>  // snapshot, not live process.env;
                                                     // frozen at runtime, and so is ctx
   root: string
+  addWatchFile (path: string): void   // declare a file the config reads but does not
+                                      // import, so `wattpm dev` watches it; a no-op
+                                      // outside a watching command
 }
 
 export interface ApplicationDefinition {
