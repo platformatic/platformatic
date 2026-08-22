@@ -1191,15 +1191,46 @@ The rules, in full:
   are excluded from restart-on-error (`runtime/lib/runtime.js:3438-3442`) — a port problem fails fast
   instead of looping. There is still **no port search**.
 
-  **A declared duplicate is caught at load, before any worker starts.** Every
-  `server.port` is a concrete number once the root worker returns — the expressions
-  have already run — so two enabled applications declaring the same port on
-  overlapping hostnames is decidable then, and the loader says so, naming both
-  entries and the port. The runtime scan stays: a capability that binds a port nobody
-  declared is visible only once it has bound it, which is what that scan is for. But
-  the case worth catching earlier is precisely the one above — several applications
-  reading one variable — and there the load-time error can name the variable, where
-  `AddressInUseError` can only name a socket and the worker that lost the race.
+  **A declared duplicate is caught at load, before any worker starts** — with a
+  narrower reach than that sentence on its own suggests, and the narrowing is the
+  substance.
+
+  **It runs after the per-app workers, not after the root worker.** A `server.port`
+  may be declared in an application's own file, and those are evaluated in the
+  fan-out (see "Loading mechanism", step 2), so the complete set of declared ports
+  does not exist until every per-app evaluation has returned. The check sits at the
+  end of the loading pipeline, main-side, over the resolved entries.
+
+  **It compares ranges, not points, and skips the two spellings that mean "no fixed
+  port".** An application with no `server.port` is mesh-only and binds nothing. An
+  application with `port: 0` is asking the OS for a port per worker, so two of them
+  are not a conflict — that is the entire point of the ephemeral spelling, and the
+  only mode that rejects it is `perWorkerIncrement` (below). Everything else occupies
+  a range rather than a point: under `perWorkerIncrement` an entry claims `port …
+  port + workers − 1`, computed against the **maximum** worker count for the same
+  reason the 65535 bound is, since scaling up later must not walk into a sibling.
+
+  **Host overlap is a table, deliberately a small one.** Two ranges conflict only if
+  their hosts overlap, and the loader decides that the way the runtime already does:
+  a wildcard (`0.0.0.0`, `::`, `[::]`) overlaps everything, and otherwise the hosts
+  must be equal, case-insensitively (`runtime/lib/runtime.js:4987-4992`). Anything
+  that would need name resolution — two DNS names for one address, a name pointing at
+  an interface something else has bound — is **not** compared here and is left to the
+  runtime scan, which sees addresses that are actually bound. A static check that
+  guessed at resolution would refuse valid configurations on the strength of a guess.
+
+  **The error names the applications, the host and the port, and nothing else.** It
+  cannot name the environment variable behind a collision, and this document should
+  not have said it could: by the time a port is a number, arbitrary JavaScript has
+  run, and the worker protocol carries no provenance by design (see "Loading
+  mechanism") — a value from `process.env.PORT`, from a helper, or from an awaited
+  lookup is indistinguishable afterwards. What the check buys is not a better message
+  than `AddressInUseError` but an earlier one: nothing has started, so no application
+  is half-up, and both configurations are named rather than whichever worker lost the
+  race.
+
+  The runtime scan stays regardless — a capability that binds a port nobody declared
+  is visible only once it has bound it, which is what that scan is for.
 - **The runtime reports a map of URLs, not one URL.** `getUrls(applicationId?)`
   returns `{ '<app>:<worker>': url }` for every listening worker
   (`runtime/lib/runtime.js:1554-1568`); `start()` returns it (`runtime/lib/runtime.js:455`) after

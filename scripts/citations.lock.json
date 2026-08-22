@@ -255,6 +255,11 @@
       "head": "error.code === 'EACCES' ||",
       "lines": 5
     },
+    "packages/runtime/lib/runtime.js:4987-4992": {
+      "sha": "aea3da1dcb6d1cb8",
+      "head": "#listenersOverlap (host, otherHost) {",
+      "lines": 6
+    },
     "packages/runtime/lib/runtime.js:1554-1568": {
       "sha": "fb3cd0d685051d04",
       "head": "getUrls (applicationId) {",
