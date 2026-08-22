@@ -767,6 +767,22 @@ see it. Three different things follow from that, and they are not one rule:
   returning `{ config, candidates }` would have to be adopted by every caller to serve
   one.
 
+  **`path` is the fourth field for the same reason `gitBranch` is the third**: it is
+  where the clone lands. `resolveApplications` clones into `application.path`,
+  defaulting it from `resolvedApplicationsBasePath` when the entry declares none
+  (`external.js:422-452`), so a candidate is identified by its **effective
+  destination** — the declared path if there is one, otherwise
+  `join(root, resolvedApplicationsBasePath, id)` — canonicalized before comparison,
+  since `./external/api` and `external/api` are one directory. Under `--for all` a
+  destination that differs between commands is refused with the rest: `path:
+  'external/api-dev'` under `dev` and `'external/api'` under `start` is the same
+  repository fetched to two places, and a union keyed on id alone would keep one and
+  leave the other boot looking at an empty directory, printing a resolve command that
+  makes the identical choice again. `resolvedApplicationsBasePath` varying by command
+  produces the same conflict through the backfill and is caught by the same test,
+  which is why the comparison is on the resulting destination rather than on the
+  entry's own `path` field.
+
   Nothing else changes: `enabled` is still resolved before fan-out, disabled entries
   still spawn no worker, and the candidate list is a projection of the same canonical
   snapshot, recorded during the same evaluation rather than produced by a second one.
@@ -4446,8 +4462,13 @@ runs multiple workers on a fixed port at all.
    bundle boot test.
 7. **wattpm-utils**: `wattpm import` via magicast with snippet fallback;
    external/install flow emits v4 per-app files; `create` templates emit
-   `watt.config.ts`; remove `patch-config`. **`resolve` gains the `exec`-context
-   flags** (`--production` / `--mode <name>`) and takes its candidates from the
+   `watt.config.ts`; remove `patch-config`. **`resolve` gains `--for <command>`**
+   (default `start`, plus `--for all`) alongside the `exec`-context
+   flags (`--production` / `--mode <name>`), evaluating the target command's context
+   with that command's own defaults; under `--for all` it evaluates each boot command,
+   unions the candidates by id, and **refuses an id whose `url`, `gitBranch` or
+   canonical effective destination differs between commands**, naming both values and
+   both commands. It takes those candidates from the
    loader's `kMetadata` `resolveCandidates` list, recorded before the `enabled` filter, rather
    than by filtering the returned application list as it does today
    (`external.js:422-433`) — the pre-filter list does not survive the eval worker, so
