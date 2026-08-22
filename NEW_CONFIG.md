@@ -1131,27 +1131,46 @@ production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:252`), so
 Bundlers and Babel configurations that branch on it will produce different — and
 correct — artifacts.
 
-A **standalone** app-dir build differs from a root build in two ways, both following
+A **standalone** app-dir build differs from a root build in three ways, all following
 from the same fact — it applies no root orchestration. It sees neither the root `env`
-block nor a root-entry `envfile` (see "Env files"); and, because injection is one
-variable per *sibling* application and a standalone boot declares exactly one, **no
-sibling `PLT_<ID>_URL` exists**. A bundler inlining `process.env.PLT_API_URL` bakes
-`undefined` where a root build would bake `http://api.plt.local`. `turbo run build`
-is a standalone build, so this is the shape most likely to hit it: migrate's source
-scan already computes which `PLT_*_URL` names an application reads, and a standalone
-build **states the difference without enumerating variables**: it prints that
-sibling `PLT_<ID>_URL` values are absent from this build and that a bundler inlining
-one will bake `undefined`. It does not name them, and that is deliberate — there is
-no honest source for a list. Migrate's source scan covers legacy config filenames
-and `PLT_DEV`/`PLT_ENVIRONMENT`/`PLT_ROOT`, not `PLT_*_URL`; its manifest is deleted
-on completion; and a greenfield application was never migrated at all. Matching at
+block nor a root-entry `envfile` (see "Env files"); **no sibling `PLT_<ID>_URL`
+exists**, because injection is one variable per *sibling* application and a standalone
+boot declares exactly one; and **topology-key stripping does not happen**, because the
+application's own file is the deciding file and runs in the root worker, which cannot
+strip names it does not yet know (see "Env files").
+
+The last two combine into two outcomes, and only one of them is `undefined`. Where
+**nothing supplies** `PLT_API_URL`, standalone code reads `undefined`, and a bundler
+inlining it bakes `undefined` where a root build would have baked
+`http://api.plt.local`. Where an **app env file carries a stale** `PLT_API_URL`, the
+root build never sees that value — injection outranks env files at runtime, and
+stripping removes the key during evaluation — while the standalone build has nothing
+to override it and keeps the file's value in both views. The artifact, and
+`resolvedConfig` with it, then carries a stale URL rather than an obviously absent
+one, which is the worse of the two because it looks like it worked. `turbo run build`
+is a standalone build, so this is the shape most likely to meet either.
+
+A standalone build **states the difference without enumerating variables**: it prints
+that sibling `PLT_<ID>_URL` values are absent from this build, that a bundler inlining
+one will bake `undefined`, and that an app env file supplying one is used as written
+rather than replaced. It does not name them, and that is deliberate — there is no
+honest source for a list. Migrate's source scan covers what step 4 enumerates, not
+`PLT_*_URL`; its manifest is deleted on completion; and a greenfield application was
+never migrated at all. Matching at
 build time is no better: a standalone boot never reads the root configuration, so it
 does not know the declared ids and could only match by prefix and suffix — which
 would flag an unrelated `PLT_STRIPE_URL`, the exact false positive the exact-key
 rule elsewhere exists to prevent. The application's own `PLT_<SELF>_URL` is injected
 in both boot styles and is unaffected either way.
-Where a build input comes from either, the durable fix is the app's own env files,
-which every build style reads.
+
+**Where a build needs a sibling's URL, the fix is a root-directed build**, not an env
+file. Putting the value in the application's own `.env` is the durable answer for
+ordinary build inputs and the wrong one for a topology key: under a root build,
+injection outranks that file and stripping removes it, so the two builds agree only
+where the file happens to hold exactly the mesh URL — by coincidence, maintained by
+hand. A genuinely standalone build that must have a URL should take it from the real
+environment, which outranks everything in both styles, or use a setting that is not a
+topology key at all.
 
 **How applications are exposed — there is no entrypoint and no runtime-level
 listener.** `entrypoint` and root
