@@ -2223,12 +2223,22 @@ becomes a plain `process.env.DATABASE_URL ?? ''` and still resolves, instead of
 having its value baked into source.
 
 The bottom rung is `NODE_ENV`, and it belongs to **both** views: when `production`
-is `true` and nothing else in the
-ladder supplied it, it defaults to `'production'` — in eval workers as well as
-application workers, so a config file branching on `NODE_ENV` sees under `build`
-and `start` what its application will see. This is v3
-(`worker/controller.js:124-125`, applied after all seeding and only when the key
-is absent), and it is the one injection a build is allowed to make.
+is `true` and nothing above it supplied a **non-empty** value, it defaults to
+`'production'` — in eval workers as well as application workers, so a config file
+branching on `NODE_ENV` sees under `build` and `start` what its application will see.
+It is the one injection a build is allowed to make.
+
+**Non-empty, not merely absent, because that is what v3 tested.** v3's rule is
+`if (appConfig.isProduction && !process.env.NODE_ENV)`
+(`worker/controller.js:124-125`, applied after all seeding), a truthiness test — so
+`NODE_ENV=` in an env file became `production` there, and would stay empty under a
+ladder that only asks whether some rung supplied the key. This is the **one** place
+where the ladder treats an empty string as missing, and it is deliberately not
+generalized: everywhere else `''` is a value somebody wrote, which is exactly why the
+`requiredEnv` guard exists. Matching v3 wins here because the alternative is a
+production build running with `NODE_ENV=''`, which every bundler in the ecosystem
+reads as "not production" — a silent switch from optimized to development output,
+found in production.
 
 This preserves v3's observable behavior (an application's `.env` overrides
 root-file defaults but never genuine environment variables), and it is resolved
