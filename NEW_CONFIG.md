@@ -2956,14 +2956,31 @@ Generation reads both views. Then:
    `web/composer/` whose package is named `gateway-service` would be renamed — and
    with it the mesh hostname, the injected variable, the metrics label and any
    sibling's `dependencies` entry. Migrate therefore emits an `autoload.mappings`
-   entry pinning `id` **only where v3's id and v4's default disagree** — that is, where
-   `mappings[dir].id ?? dir` differs from the scope-stripped `package.json` name — and
-   nothing for the rest. Both halves of that comparison matter: a mapping that already
-   carries an `id` is v3's answer and must be carried through verbatim rather than
-   overwritten, and comparing the *scope-stripped* name keeps `web/frontend` holding
-   `@acme/frontend` off the list, since v4 resolves it to `frontend` either way. In the common case — an application
-   package with no `name`, or one named after its directory — the thin autoload root
-   stays thin. An id is
+   entry pinning `id` **wherever the legal v4 id differs from the id v3 used** — not
+   wherever the raw values differ, which is the comparison that leaks. Both sides are
+   normalized before they are compared: v3's id for a directory is
+   `mappings[dir].id ?? dir`, v4's is the scope-stripped `package.json` name falling
+   back to the directory, and each is then put through the label rule
+   (`my_app` → `my-app`). Three cases fall out of the one comparison. A package named
+   differently from its directory is pinned, because the id would move. `web/frontend`
+   holding `@acme/frontend` is not, since both sides resolve to `frontend`. And a
+   directory or mapping named `my_app` **is** pinned even though v3 and v4 derive the
+   same raw value from it, because the legal v4 id is `my-app` and keeping the v3
+   spelling would emit a configuration the label grammar rejects — precisely the case a
+   raw comparison passes over in silence. A mapping that already carries an `id` is
+   still v3's answer and is carried through, normalized, rather than re-derived. In the
+   common case — a package with no `name`, or one named after its directory, sitting in
+   a directory that is already a legal label — the thin autoload root stays thin.
+
+   **One final-id table serves everything downstream.** Explicit entries and autoloaded
+   directories resolve into the same `{ v3 id → v4 id }` table, computed once before
+   anything is emitted; mapping emission, the collision refusal and every reference
+   rewrite read that table rather than each recomputing a normalization and disagreeing
+   at the margins. Two rules it applies that a per-site derivation gets inconsistently:
+   DNS labels are **case-insensitive**, so `API` and `api` are one id and collide; and
+   `PLT_<ID>_URL` normalization folds every non-alphanumeric run to `_`, so two ids that
+   differ only in separator style collide in the injected variable namespace even where
+   they are distinct hostnames (see "Inter-application URLs"). An id is
    the mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label and the
    argument `wattpm inject` now requires — silently re-deriving it would move all
    four at once. For a wrapped single-app project the v3 value is the package name
