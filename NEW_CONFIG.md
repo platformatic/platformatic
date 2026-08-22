@@ -18,10 +18,11 @@ runtime dialect. The distinction between "a single-app config with a nested `run
 block" and "a runtime config with nested applications" disappears. A single-app project
 and a 20-app monorepo use the same dialect; scaling from one to many means **the
 application definition moves unchanged** — a single app's entire `watt.config.ts`
-becomes that app's per-app file verbatim, and the `next({ … })` expression is
+becomes that app's per-app file, and the `next({ … })` expression is
 syntactically identical in a single-app root, a root-inline entry, and a per-app
-file (what differs is only which directory's env files its evaluation sees — see
-"Env files").
+file. Two things differ and neither is the shape: which directory's env files the
+evaluation sees (see "Env files"), and a port expression naming the global `PORT`,
+which has to be scoped when siblings appear beside it (see the Summary).
 
 ```ts
 // watt.config.ts — a complete single-app Next.js project
@@ -194,8 +195,9 @@ explicit where still needed (see "Machine-generated configs").
    type stripping is already our floor).
 3. Full typed autocomplete backed by **tightened schemas**: the placeholder-string
    unions are audited out in v4.0, so generated types are strict at launch.
-4. Single-app → multi-app: the application definition moves unchanged; migration
-   never relocates dependencies.
+4. Single-app → multi-app: the application definition moves unchanged apart from a
+   global `PORT` expression, which scopes to `PLT_<ID>_PORT`; migration never
+   relocates dependencies.
 5. Env handling becomes ordinary JavaScript (`process.env`), with `.env` loaded before
    the config file is evaluated and a fully documented precedence.
 6. A `wattpm-utils migrate` codemod that automatically converts v3 projects built on
@@ -233,7 +235,8 @@ disk.
 **Level 1 — single app, capability options only.** One file at the project root
 whose default export is the bare factory call — `export default next({ … })` (see
 Summary above). The loader auto-wraps it as a single-app runtime with default
-orchestration, and the file is byte-identical to a monorepo per-app config file.
+orchestration, and the file is byte-identical to a monorepo per-app config file
+except for the port variable, which scopes when siblings exist (see the Summary).
 This is the canonical single-app form. `migrate` emits it when the v3 config carried
 no runtime settings **and** the v4 default id matches the v3 one — a bare factory
 export has no entry to carry an explicit `id`, so a project whose id would move needs
@@ -249,8 +252,8 @@ this form when the v3 config had a non-default `runtime` block.
 **Level 2 — multi-app monorepo.** The default multi-app style is a **thin root plus
 per-app config files**: the root owns orchestration and discovery (`autoload`
 survives), and each application's configuration lives in the app's own
-`watt.config.ts`, which exports **the identical factory expression** a single-app
-project would use:
+`watt.config.ts`, which exports **the same factory expression** a single-app
+project would use, with the port variable scoped to the application:
 
 ```ts
 // watt.config.ts (root)
@@ -266,7 +269,7 @@ export default defineConfig({
 import { next } from '@platformatic/next'
 
 export default next({
-  server: { port: Number(process.env.PORT ?? 3042) },
+  server: { port: Number(process.env.PLT_FRONTEND_PORT ?? 3042) },
   cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 })
 ```
@@ -300,7 +303,7 @@ export default defineConfig(({ env, production }) => ({
       id: 'gateway',
       path: 'web/gateway',
       config: gateway({
-        server: { port: Number(env.PORT ?? 3042) },
+        server: { port: Number(env.PLT_GATEWAY_PORT ?? 3042) },
         applications: [
           { id: 'api', proxy: { prefix: '/api' } },
           { id: 'frontend', proxy: { prefix: '/' } }
@@ -4653,5 +4656,9 @@ v3 root `server` (see "`wattpm-utils migrate`"). Note also `workers: 2` with a
 fixed port: that combination now depends on `SO_REUSEPORT` with no fallback.
 
 And when this project later joins a monorepo, the `next({ … })` expression moves
-verbatim into `web/frontend/watt.config.ts` as its default export — no dependency
-moves, no dialect change.
+into `web/frontend/watt.config.ts` as its default export — no dependency moves, no
+dialect change, and one edit: `process.env.PORT` becomes
+`process.env.PLT_FRONTEND_PORT`, because a global `PORT` read by every application
+in the project is one port every application binds (see the Summary). That edit is
+the whole of the difference, and stating it is cheaper than a boot failure an
+operator produces by setting the variable their platform always sets.
