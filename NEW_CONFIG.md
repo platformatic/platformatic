@@ -2083,8 +2083,21 @@ directory changes the application list; the **recognized config-file candidates*
 every application directory, since adding or deleting `watt.config.ts` changes which
 applications own a file — and, after the scoping rule, what `wattpm dev` does there;
 each application's **`package.json`**, which supplies the id and the dependencies the
-capability detector reads; and the config file of **every application actually in the
-topology**, including one whose `path` resolves outside the project.
+capability detector reads; the config file of **every application actually in the
+topology**, including one whose `path` resolves outside the project; and the
+**recognized candidate paths on the ancestor walk**, up to and including the env root.
+
+That last one is not an application's config and is never imported, which is exactly
+why it was missing: it is watched because the ancestor scan *selects the env root*
+(see "Scope"), so creating `../watt.config.ts` moves the env root outward and makes
+`../.env` live, and deleting the outermost one moves it back. Neither path is in the
+active env-file set beforehand — that set is the consequence, not the input — so
+nothing else in this list would notice. Because the trigger is a file **appearing**,
+those candidates are watched at paths that do not exist yet, which is the same
+creation-and-deletion rule the rest of the set follows, applied one directory at a
+time up the walk. When one fires, the env root, the env-file set and the watch set
+are recomputed **together** before the reload evaluates anything: a reload that used
+the new env root with the old file set would be a third state neither boot produces.
 
 **The two explicitly-named env files are in the set as well**, and they are the ones
 easiest to leave out of it, because neither is discovered by enumerating a directory:
