@@ -160,6 +160,10 @@
 
 **Message:** Port %d is already in use by applications "%s" and "%s"
 
+### PLT_RUNTIME_APPLICATIONS_PORTS_OVERLAP
+
+**Message:** The applications "%s" (%s) and "%s" (%s) are both configured to listen on port %d. Applications cannot share a port: change one of the ports or make them listen on different hostnames.
+
 ### PLT_RUNTIME_WORKER_EADDR_IN_USE
 
 **Message:** Port %d is already in use by another worker of the application "%s". Multiple workers can share a port only when the reusePort feature is available in your OS, otherwise set "server.portAssignment" to "perWorkerIncrement" in the application configuration or use a single worker.
