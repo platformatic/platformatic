@@ -9,12 +9,14 @@ on:
       - 'NEW_CONFIG.md'
       - 'scripts/check-citations.mjs'
       - 'scripts/citations.lock.json'
+      - 'scripts/test/**'
       - 'packages/**'
   pull_request:
     paths:
       - 'NEW_CONFIG.md'
       - 'scripts/check-citations.mjs'
       - 'scripts/citations.lock.json'
+      - 'scripts/test/**'
       - 'packages/**'
   workflow_dispatch:
 
@@ -41,6 +43,9 @@ jobs:
         with:
           node-version: 'lts/*'
 
-      # No install: the checker uses Node built-ins only.
+      # No install: the checker and its tests use Node built-ins only.
+      - name: Test the checker
+        run: node --test "scripts/test/*.test.mjs"
+
       - name: Verify citations
         run: node scripts/check-citations.mjs

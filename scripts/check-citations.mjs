@@ -13,6 +13,8 @@
 //   node scripts/check-citations.mjs [doc] --fix      follow moved content, rewriting doc + lock
 //   node scripts/check-citations.mjs [doc] --audit    flag citations the prose does not corroborate
 //
+// Tests: node --test "scripts/test/*.test.mjs" (CITATIONS_LOCK overrides the lockfile).
+//
 // A citation followed by "pre-`<sha>`" in the prose is read from that commit's
 // parent instead of the working tree, so deliberately historical references stay
 // checkable.
@@ -23,7 +25,8 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from '
 import { dirname, join, resolve } from 'node:path'
 
 const ROOT = resolve(import.meta.dirname, '..')
-const LOCK = join(ROOT, 'scripts', 'citations.lock.json')
+// Overridable so the test can point at a scratch lockfile instead of the real one.
+const LOCK = process.env.CITATIONS_LOCK ?? join(ROOT, 'scripts', 'citations.lock.json')
 const PACKAGES = join(ROOT, 'packages')
 
 const args = process.argv.slice(2)
@@ -366,8 +369,14 @@ if (stale.length && mode === 'verify') {
   console.log(`\nlockfile entries no longer cited (${stale.length}): run --update to prune`)
 }
 
+// An unblessed citation fails. It is a citation nobody has checked against the code
+// it points at, which is the whole thing this script exists to prevent — reporting it
+// and exiting 0 let a new citation stay unverified forever while CI stayed green.
+// Stale lock entries are only a note: a citation removed from the document leaves an
+// orphan that harms nothing, and failing on it would break every edit that deletes one.
 const failed = problems.unresolved.length + problems.outOfRange.length +
-  problems.drifted.length + (mode === 'verify' ? problems.moved.length : 0)
+  problems.drifted.length + problems.unblessed.length +
+  (mode === 'verify' ? problems.moved.length : 0)
 if (mode === 'verify' && failed) {
   console.log(`\nFAIL: ${failed}`)
   if (problems.moved.length) {
@@ -375,6 +384,10 @@ if (mode === 'verify' && failed) {
   }
   if (problems.drifted.length) {
     console.log('Cited code changed. Re-read the document around each citation, then --update.')
+  }
+  if (problems.unblessed.length) {
+    console.log('New citation. Read the cited lines, confirm they say what the prose claims,')
+    console.log('then run: node scripts/check-citations.mjs --update')
   }
   process.exit(1)
 }
