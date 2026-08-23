@@ -10,6 +10,7 @@ import {
 } from './env.js'
 import {
   ApplicationConfiguredTwiceError,
+  CapabilityVersionSkewError,
   EnvFileOnDecidingDirectoryError,
   EnvFileOnInlineConfigError,
   InvalidApplicationIdError,
@@ -23,6 +24,7 @@ import {
   findTopologyVariableCollisions,
   topologyVariableName
 } from './identifiers.js'
+import { checkCapabilityVersionSkew } from './capability-resolution.js'
 import { runRootPipeline } from './pipeline.js'
 import {
   findAncestorConfiguration,
@@ -558,6 +560,7 @@ async function prepareApplication ({
       throw new EnvFileOnInlineConfigError(id)
     }
 
+    applyDefinition(prepared, entry.config, { directory, report })
     return prepared
   }
 
@@ -583,7 +586,8 @@ async function prepareApplication ({
       message: `${id} → ${capability} (detected)`
     })
 
-    prepared.config = { module: capability }
+    prepared.module = capability
+    prepared.config = {}
     prepared.detected = true
 
     if (entry.envfile) {
@@ -632,8 +636,48 @@ async function prepareApplication ({
 
   reportMutatedEnv(report, configurationFile, evaluated.mutatedEnvKeys)
 
-  prepared.config = evaluated.config
+  applyDefinition(prepared, evaluated.config, { directory, report })
   prepared.configPath = configurationFile
 
   return prepared
+}
+
+/*
+  module and version are loader metadata, not capability options. They are stripped into the entry's
+  envelope before the capability's AJV validation and transform run, so capability schemas keep
+  additionalProperties: false and gain no reserved properties — a stamped factory result validates
+  as cleanly as a hand-written one. They surface on the entry as module and definitionVersion, the
+  latter renamed on the way out because getApplicationDetails().version already means the capability
+  version the running worker loaded.
+*/
+function applyDefinition (prepared, definition, { directory, report }) {
+  const { module, version, ...payload } = definition
+
+  prepared.config = payload
+
+  if (module) {
+    prepared.module = module
+  }
+
+  if (version) {
+    prepared.definitionVersion = version
+  }
+
+  const skew = checkCapabilityVersionSkew({
+    id: prepared.id,
+    module,
+    stamped: version,
+    applicationRoot: directory
+  })
+
+  if (!skew) {
+    return
+  }
+
+  if (skew.level === 'error') {
+    throw new CapabilityVersionSkewError(skew.message)
+  }
+
+  // Minor drift is legitimate mid-upgrade, so it warns rather than failing the boot.
+  report.onWarning?.({ type: 'capability-version-skew', ...skew })
 }

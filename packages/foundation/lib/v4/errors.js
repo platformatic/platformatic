@@ -55,6 +55,16 @@ export const ApplicationConfiguredTwiceError = createError(
   'Application %s has an inline config in the root configuration and a configuration file at %s. Remove one of them.'
 )
 
+export const CapabilityNotResolvableError = createError(
+  `${ERROR_PREFIX}_CAPABILITY_NOT_RESOLVABLE`,
+  'Cannot resolve %s from %s, nor from the copy bundled with the runtime.'
+)
+
+export const CapabilityVersionSkewError = createError(
+  `${ERROR_PREFIX}_CAPABILITY_VERSION_SKEW`,
+  '%s'
+)
+
 export const AmbiguousCapabilityError = createError(
   `${ERROR_PREFIX}_AMBIGUOUS_CAPABILITY`,
   'Application %s declares more than one capability dependency: %s. Add a configuration file naming the one it uses.'

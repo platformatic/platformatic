@@ -35,7 +35,8 @@ test('a bare framework repository synthesizes in memory and writes nothing', asy
     {
       id: 'shop',
       path: root,
-      config: { module: '@platformatic/next', server: { port: 3042 } }
+      module: '@platformatic/next',
+      config: { server: { port: 3042 } }
     }
   ])
 
@@ -53,7 +54,7 @@ test('the synthesized port reads the resolved env map, not the ambient process.e
   // Taking the ambient process.env instead would ignore a PORT sitting in the project's own .env —
   // the one file a zero-config user is most likely to have written.
   strictEqual(config.applications[0].config.server.port, 4000)
-  strictEqual(config.applications[0].config.module, '@platformatic/vite')
+  strictEqual(config.applications[0].module, '@platformatic/vite')
 })
 
 test('the real environment still outranks the env file for the synthesized port', async t => {
@@ -77,7 +78,7 @@ test('synthesis is never refused on account of a v4 configuration above, but it 
   const report = collector()
   const { config } = await load(join(root, 'web/api'), report)
 
-  strictEqual(config.applications[0].config.module, '@platformatic/node')
+  strictEqual(config.applications[0].module, '@platformatic/node')
 
   const [warning] = report.warnings
   strictEqual(warning.type, 'synthesized-under-ancestor')
@@ -143,7 +144,7 @@ test('a programmatic object source runs the same pipeline with no import step', 
 
   // Everything downstream is unchanged: a programmatic root listing paths still gets per-app
   // discovery, per-app eval workers and the detector exactly as a file-sourced boot would.
-  deepStrictEqual(config.applications[0].config, { module: '@platformatic/service' })
+  strictEqual(config.applications[0].module, '@platformatic/service')
 })
 
 test('an object source is canonicalized before anything reads its shape', async t => {

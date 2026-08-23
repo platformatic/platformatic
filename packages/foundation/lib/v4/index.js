@@ -3,6 +3,7 @@
 // pre-pass, strictEnv and the $schema URL machinery move into wattpm-utils as migrate's private
 // legacy reader. Only deliberately-kept pieces are carried over, each by explicit decision.
 export * from './canonicalize.js'
+export * from './capability-resolution.js'
 export * from './classify.js'
 export * from './context.js'
 export * from './detect.js'

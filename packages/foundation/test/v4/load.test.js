@@ -37,9 +37,11 @@ test('a root config boots the full runtime and evaluates each per-app file in it
 
   // Per-worker cache isolation is what makes cross-app contamination impossible: each file reads
   // its own directory's env.
-  deepStrictEqual(config.applications.map(entry => entry.config), [
-    { module: '@platformatic/service', from: 'api' },
-    { module: '@platformatic/next', from: 'frontend' }
+  // module is stripped into the entry envelope, so the payload the capability validates carries
+  // no reserved properties and its schema keeps additionalProperties: false.
+  deepStrictEqual(config.applications.map(entry => [entry.module, entry.config]), [
+    ['@platformatic/service', { from: 'api' }],
+    ['@platformatic/next', { from: 'frontend' }]
   ])
 })
 
@@ -52,15 +54,18 @@ test('an application directory boots standalone, and says what is not applied', 
   })
 
   const report = collector()
-  const { config, standalone, root: decidedRoot } = await load(join(root, 'web/api'), report)
+  const { config, standalone, configPath, root: decidedRoot } = await load(join(root, 'web/api'), report)
 
   strictEqual(standalone, true)
   strictEqual(decidedRoot, join(root, 'web/api'))
 
   // A configured id lives on a root entry, which a standalone boot never reads: the derivation is
   // identical in both boots, the inputs are not.
+  // The entry carries no configPath of its own: the deciding file is the application's own file,
+  // so auto-wrap made it an inline config and the path is reported at the top level.
+  strictEqual(configPath, join(root, 'web/api/watt.config.js'))
   deepStrictEqual(config.applications, [
-    { config: { module: '@platformatic/service' }, id: 'api', path: join(root, 'web/api') }
+    { id: 'api', path: join(root, 'web/api'), module: '@platformatic/service', config: {} }
   ])
 
   const [warning] = report.warnings
@@ -93,7 +98,8 @@ test('an entry with no file and no inline config is resolved by the detector', a
   const report = collector()
   const { config } = await load(root, report)
 
-  deepStrictEqual(config.applications[0].config, { module: '@platformatic/next' })
+  strictEqual(config.applications[0].module, '@platformatic/next')
+  deepStrictEqual(config.applications[0].config, {})
   strictEqual(config.applications[0].detected, true)
 
   // Boot logs one line per detected application, so the inference is never invisible.
@@ -111,7 +117,7 @@ test('a capability dependency wins over an unrelated framework dependency', asyn
 
   const { config } = await load(root)
 
-  deepStrictEqual(config.applications[0].config, { module: '@platformatic/node' })
+  strictEqual(config.applications[0].module, '@platformatic/node')
 })
 
 test('two capability dependencies are an actionable ambiguity error naming both', async t => {
@@ -139,7 +145,7 @@ test('a companion package does not trip the ambiguity error', async t => {
 
   const { config } = await load(root)
 
-  deepStrictEqual(config.applications[0].config, { module: '@platformatic/node' })
+  strictEqual(config.applications[0].module, '@platformatic/node')
 })
 
 test('composer is an alias of gateway rather than a second capability', async t => {
@@ -151,7 +157,7 @@ test('composer is an alias of gateway rather than a second capability', async t 
 
   const { config } = await load(root)
 
-  deepStrictEqual(config.applications[0].config, { module: '@platformatic/gateway' })
+  strictEqual(config.applications[0].module, '@platformatic/gateway')
 })
 
 test('a directory with nothing to go on is an error naming the application', async t => {
@@ -194,7 +200,7 @@ test('the deciding file is exempt from the configured-twice check', async t => {
   const { config } = await load(root)
 
   deepStrictEqual(config.applications, [
-    { workers: 2, path: root, id: 'solo', config: { module: '@platformatic/node' }, detected: true }
+    { workers: 2, path: root, id: 'solo', module: '@platformatic/node', config: {}, detected: true }
   ])
 })
 
@@ -213,7 +219,6 @@ test('a per-app worker cannot read a topology variable an env file supplies', as
   // Leaving the name in place would let the file's stale value be baked into resolvedConfig, where
   // runtime injection can no longer reach it. The match is by exact key, not prefix and suffix.
   deepStrictEqual(config.applications[1].config, {
-    module: '@platformatic/next',
     sibling: 'stripped',
     unrelated: 'http://stripe.example'
   })
@@ -281,7 +286,7 @@ test('an entry resolved by the detector may declare an envfile', async t => {
 
   const { config } = await load(root)
 
-  strictEqual(config.applications[0].config.module, '@platformatic/node')
+  strictEqual(config.applications[0].module, '@platformatic/node')
 })
 
 test('an id that cannot be a DNS label is refused rather than sanitized', async t => {
@@ -336,5 +341,5 @@ test('--config names the configuration and takes cwd out of the decision', async
   const { standalone, config } = await load(join(root, 'web/api'), { configPath: join(root, 'watt.config.js') })
 
   strictEqual(standalone, false)
-  strictEqual(config.applications[0].config.module, '@platformatic/service')
+  strictEqual(config.applications[0].module, '@platformatic/service')
 })
