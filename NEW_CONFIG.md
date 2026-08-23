@@ -3956,9 +3956,18 @@ Generation reads both views. Then:
    `resolve` cloned into that also holds a local application, a file migrate must
    read, or a path it plans to emit** — a project whose remote checkouts and own
    sources share a directory, where the exclusion that protects the clone would
-   otherwise swallow work the run has to do (see step 1). Its manual fixes are the two
-   that separate them: move the local application out of the resolution base, or point
-   `resolvedApplicationsBasePath` at a directory of its own. The test is a **non-empty
+   otherwise swallow work the run has to do (see step 1). **Its message is built from
+   the two paths involved, not from a fixed pair of suggestions**, because the
+   destination has two possible producers and the overlap has several possible shapes.
+   Where the destination was **backfilled**, `resolvedApplicationsBasePath` is what put
+   it there and changing it is the fix. Where the entry **declares a `path`** —
+   `{ id: 'remote', url, path: 'vendor/shared' }` — the base is irrelevant and changing
+   it accomplishes nothing; the fix is that entry's `path`. And the thing being
+   swallowed is named as what it is: a local application to move, an `envfile` or
+   legacy config to relocate, or a planned output whose directory has to differ.
+   Offering "move the local application" for a swallowed `envfile` under a declared
+   path would send the user through the identical refusal twice, which is the failure
+   mode a fixed suggestion has and a derived one does not. The test is a **non-empty
    intersection of every applicable constraint**, not equality of primitive types —
    matching types are not sufficient, and the shipped schemas prove it: `packageManager`
    (`["npm","pnpm","yarn"]`) and `logger.level` (`["fatal"…"silent"]`) are both
