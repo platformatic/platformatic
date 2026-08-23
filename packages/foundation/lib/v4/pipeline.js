@@ -133,7 +133,7 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
 
   const resolveCandidates = recordResolveCandidates(snapshot.applications)
 
-  snapshot.applications = filterEnabledApplications(snapshot.applications, production ? 'production' : 'development')
+  snapshot.applications = filterEnabledApplications(snapshot.applications, context.mode)
 
   const warnings = checkInheritedTopologyKeys(snapshot.applications, env)
 

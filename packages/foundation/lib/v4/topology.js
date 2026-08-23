@@ -100,7 +100,14 @@ export function recordResolveCandidates (applications) {
     .map(({ id, url, path, gitBranch }) => ({ id, url, path, gitBranch }))
 }
 
-export function isApplicationEnabled (entry, environment) {
+/*
+  The object form is keyed by mode, not by a separate binary environment. production and
+  development remain the default mode names under start/build and dev, so every v3 configuration
+  keeps its meaning — and enabled: { staging: false } now does what it looks like under
+  --mode staging, where v3 silently ignored the key because it only ever compared against those
+  two names.
+*/
+export function isApplicationEnabled (entry, mode) {
   const { enabled } = entry
 
   if (typeof enabled === 'undefined') {
@@ -112,7 +119,7 @@ export function isApplicationEnabled (entry, environment) {
   }
 
   if (typeof enabled === 'object' && enabled !== null) {
-    return enabled[environment] ?? true
+    return enabled[mode] ?? true
   }
 
   return enabled
@@ -120,11 +127,11 @@ export function isApplicationEnabled (entry, environment) {
 
 /*
   enabled is orchestration, so its value is always lexically present in the root config or in
-  autoload.mappings, and the root context already carries production — so disabled entries are
+  autoload.mappings, and the root context already carries the mode — so disabled entries are
   dropped immediately after expansion, before any per-app worker is spawned, before the detector
   runs, and before capability validation. A decommissioned app whose capability is absent from the
   production image must not be able to fail a boot that excludes it.
 */
-export function filterEnabledApplications (applications, environment) {
-  return applications.filter(entry => isApplicationEnabled(entry, environment))
+export function filterEnabledApplications (applications, mode) {
+  return applications.filter(entry => isApplicationEnabled(entry, mode))
 }

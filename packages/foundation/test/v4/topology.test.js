@@ -75,7 +75,7 @@ test('an explicit entry wins over the autoloaded one and keeps its position', as
   ])
 })
 
-test('disabled entries are dropped, keyed on production rather than on mode', async t => {
+test('disabled entries are dropped, and the object form is keyed by mode', async t => {
   const root = await createTree(t, {
     'watt.config.js': `
       export default {
@@ -83,17 +83,25 @@ test('disabled entries are dropped, keyed on production rather than on mode', as
           { id: 'always', path: '.' },
           { id: 'never', path: '.', enabled: false },
           { id: 'stringly', path: '.', enabled: 'false' },
-          { id: 'byenv', path: '.', enabled: { production: false, development: true } }
+          { id: 'bymode', path: '.', enabled: { production: false, development: true } },
+          { id: 'staged', path: '.', enabled: { staging: false } }
         ]
       }
     `
   })
 
-  const { config: inProduction } = await evaluate(root, { production: true })
-  deepStrictEqual(inProduction.applications.map(entry => entry.id), ['always'])
+  // production and development remain the default mode names under start/build and dev, so every
+  // v3 configuration keeps its meaning.
+  const { config: inProduction } = await evaluate(root, { production: true, mode: 'production' })
+  deepStrictEqual(inProduction.applications.map(entry => entry.id), ['always', 'staged'])
 
   const { config: inDevelopment } = await evaluate(root, { production: false, command: 'dev', mode: 'development' })
-  deepStrictEqual(inDevelopment.applications.map(entry => entry.id), ['always', 'byenv'])
+  deepStrictEqual(inDevelopment.applications.map(entry => entry.id), ['always', 'bymode', 'staged'])
+
+  // And enabled: { staging: false } now does what it looks like, where v3 silently ignored the key
+  // because it only ever compared against the two default names.
+  const { config: inStaging } = await evaluate(root, { production: true, mode: 'staging' })
+  deepStrictEqual(inStaging.applications.map(entry => entry.id), ['always', 'bymode'])
 })
 
 test('resolve candidates are recorded after expansion and before the enabled filter', async t => {

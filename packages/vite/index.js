@@ -67,3 +67,5 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 export * from './lib/capability.js'
 export { addDeploymentId, deploymentIdEnv, platformaticSkewPlugin, skewPlugin } from './lib/skew-plugin.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+
+export * from './lib/factory.js'
