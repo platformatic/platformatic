@@ -799,10 +799,19 @@ see it. Three different things follow from that, and they are not one rule:
   both (`external.js:427-429`), so nothing repairs it and one application boots the
   other's checkout. That is the same local-path/URL incoherence the duplicate-id merge
   rule already refuses at load, arriving through a door id-matching does not watch.
-  So `resolve` builds a **canonical destination → producers** map over every candidate
-  it is about to fetch — not only across commands, but across the whole candidate set
-  in a single context — and refuses a destination claimed by more than one
-  repository/revision pair, naming both ids and the path. The one coherent case is two
+  So `resolve` builds a **canonical destination → producers** map over every
+  `url`-bearing candidate — not only across commands, but across the whole candidate
+  set in a single context — and refuses a destination claimed by more than one
+  repository/revision pair, naming both ids and the path. **Over every candidate, not
+  every candidate it is about to fetch**: existence filtering runs first today, dropping
+  any entry whose path already exists (`external.js:422-429`), and that is exactly the
+  state this refusal exists for — a directory left holding one of the two clones, from
+  a previous run or a failed one, is the case where the conflict is already doing
+  damage and the filter would hide it. Existence decides whether a *coherent* producer
+  still needs fetching; it never decides whether conflicting producers get validated.
+  Nothing on disk is consulted to find the conflict: `{ destination, url, gitBranch }`
+  is already in the projection, so the check is a comparison of declarations and runs
+  before the filter. The one coherent case is two
   entries resolving to the *same* repository at the same revision, a deliberately
   shared checkout: that is fetched **once** rather than refused, and once rather than
   twice.
@@ -4666,8 +4675,10 @@ runs multiple workers on a fixed port at all.
    unions the candidates by id, and **refuses an id whose `url`, `gitBranch` or
    canonical effective destination differs between commands**, naming both values and
    both commands. In every mode it also maps **destination → producers** across the
-   whole candidate set and refuses one destination claimed by two repository/revision
-   pairs, fetching a deliberately shared checkout once. It takes those candidates from the
+   whole candidate set — before any existence filtering, since a destination that
+   already holds one of the two clones is the case the refusal is for — and refuses one
+   destination claimed by two repository/revision pairs, fetching a deliberately shared
+   checkout once. It takes those candidates from the
    loader's `kMetadata` `resolveCandidates` list, recorded before the `enabled` filter, rather
    than by filtering the returned application list as it does today
    (`external.js:422-433`) — the pre-filter list does not survive the eval worker, so
