@@ -410,6 +410,26 @@
       "head": "if (typeof this.serverConfig?.port === 'undefined') {",
       "lines": 3
     },
+    "packages/nitro/lib/capability.js:184-186": {
+      "sha": "94acc2cf1e75d63e",
+      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
+      "lines": 3
+    },
+    "packages/nitro/lib/capability.js:582-584": {
+      "sha": "94acc2cf1e75d63e",
+      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
+      "lines": 3
+    },
+    "packages/nuxt/lib/capability.js:81-83": {
+      "sha": "94acc2cf1e75d63e",
+      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
+      "lines": 3
+    },
+    "packages/tanstack/lib/capability.js:63-65": {
+      "sha": "94acc2cf1e75d63e",
+      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
+      "lines": 3
+    },
     "packages/react-router/lib/capability.js:58-77": {
       "sha": "c0c1655ed0d9af5e",
       "head": "async _start () {",
@@ -419,6 +439,11 @@
       "sha": "ef5356d8465edaa1",
       "head": "async #startSSRProduction () {",
       "lines": 14
+    },
+    "packages/service/lib/capability.js:299-301": {
+      "sha": "94acc2cf1e75d63e",
+      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
+      "lines": 3
     },
     "packages/foundation/lib/cli.js:255-274": {
       "sha": "a82961d969a7a84a",

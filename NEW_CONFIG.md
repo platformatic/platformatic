@@ -1216,10 +1216,14 @@ The rules, in full:
   capability's `_listen` returns early on `typeof this.serverConfig?.port ===
   'undefined'` (`service/lib/capability.js:299`, `node/lib/capability.js:454-459`,
   and the same guard in `vite`, `astro`, `remix`, `nest`). No schema supplies a
-  default. So **omitting `server` is the mesh-only spelling** — the application
-  is reachable at `http://<id>.plt.local` through the in-thread dispatch target
-  (`basic/lib/capability.js:416-418`) and nowhere else — and a declared port is
-  the statement that this application faces something outside the runtime.
+  default. So **omitting `server` means no managed listener** — nothing binds a
+  socket — and a declared port is the statement that this application faces something
+  outside the runtime. Whether the application is then *reachable* at
+  `http://<id>.plt.local` through the in-thread dispatch target
+  (`basic/lib/capability.js:416-418`) is capability- and mode-specific, and the matrix
+  below is the answer: for `service`/`db`/`gateway` always, for the Vite family in
+  production, for `next`/`nitro`/`nuxt`/`tanstack` never, and for `node` when its
+  code says so. "No listener" and "mesh-only" are not the same statement.
 - **`port: 0` is the ephemeral spelling**, one OS-assigned port per worker:
   `buildListenOptions` is still `{ port: serverConfig?.port || 0 }`
   (`basic/lib/utils.js:22`). This is the v4 replacement for v3's `useHttp`, and
@@ -1328,7 +1332,9 @@ The rules, in full:
   tests.
 
   **It compares ranges, not points, and skips the two spellings that mean "no fixed
-  port".** An application with no `server.port` is mesh-only and binds nothing. An
+  port".** An application with no `server.port` binds nothing — whether it *serves*
+  the mesh is a separate question the matrix answers, and irrelevant here, since this
+  check is only about sockets. An
   application with `port: 0` is asking the OS for a port per worker, so two of them
   are not a conflict — that is the entire point of the ephemeral spelling, and the
   only mode that rejects it is `perWorkerIncrement` (below). Everything else occupies
@@ -1440,15 +1446,55 @@ ones, and the citations that supported it were the development returns.
   (`basic/lib/capability.js:416-418`), through which `inject()` reaches the
   initialized instance (`vite/lib/capability.js:163-166`). That is a **working
   mesh-only application serving built artifacts**, not an inactive one.
-- **`next` is the exception**: its production path returns before creating the child
-  manager (`next/lib/capability.js:326-328`), so for `next` alone "no port" really
-  does mean "does not start" in both modes.
+- **Four capabilities return before building in production too**: `next`
+  (`next/lib/capability.js:326-328`, before creating the child manager), `nitro`
+  (`nitro/lib/capability.js:184-186`, and `:582-584` in the second capability class the package ships, `NitroViteCapability`), `nuxt` (`nuxt/lib/capability.js:81-83`) and
+  `tanstack` (`tanstack/lib/capability.js:63-65`), each of which checks the port
+  before selecting a startup path at all. For these, "no port" means "does not
+  start" in both modes.
 
 `react-router` extends `ViteCapability` and additionally selects an SSR production
 path from `react-router.config.*`, read at worker startup
 (`react-router/lib/capability.js:58-77`, `:118-131`). Which in-thread application it
 builds is therefore not visible to the loader — but it builds one either way, so
 *that it serves* stays decidable even though *what it serves* is not.
+
+**The matrix is exhaustive over the shipped capabilities, because a partial one is
+what produced this error twice.** Columns are the two boot modes; the value is what
+happens with **no port and no command for that mode**:
+
+| capability | `dev` | `start` |
+| --- | --- | --- |
+| `service`, `db`, `gateway` | mesh-only | mesh-only |
+| `vite`, `astro`, `remix`, `nest`, `react-router` | inactive | mesh-only |
+| `next`, `nitro`, `nuxt`, `tanstack` | inactive | inactive |
+| `node` | worker-classified | worker-classified |
+
+`service`, `db` and `gateway` build their application before `_listen`, which is the
+only thing the port guards (`service/lib/capability.js:299-301`), so the dispatch
+fallback always has something to reach. `node` is the one row the loader cannot fill
+in: two of `#hasServer()`'s three inputs come from the application's own code, so it
+is classified by the started worker (see the predicate below).
+
+**That column is capability metadata, and it needs somewhere to live.** The
+schema subpath (`@platformatic/<x>/schema`) currently exports the schema,
+`skipTelemetryHooks` and `modulesToLoad`; it gains `servesWithoutPort`, a per-mode
+declaration read main-side with the schema, before any worker exists:
+
+```ts
+export const servesWithoutPort = { development: false, production: true }  // vite & co
+export const servesWithoutPort = { development: true, production: true }   // service, db, gateway
+export const servesWithoutPort = { development: false, production: false } // next, nitro, nuxt, tanstack
+export const servesWithoutPort = 'worker'                                  // node
+```
+
+**Absent means `'worker'`, not `false`.** A third-party capability that does not
+declare this is one the loader knows nothing about, and the two wrong answers are
+opposite: `false` rejects at load a capability that would have served the mesh
+perfectly well, and `true` prints a mesh URL that answers nothing. Deferring to the
+started worker does neither — it costs the fail-fast only for capabilities outside
+this repository, which is exactly where the certainty is missing. The in-tree
+capabilities all declare it, and the plan's capability item covers adding it.
 
 The command exception is unchanged and applies in both modes: a declared
 `application.commands.*` is checked **before** the port and starts the application on
@@ -1507,13 +1553,10 @@ together**, not by a capability flag alone. An application will serve if **any**
 three things holds:
 
 1. its capability can serve without a listener **in the mode this boot will use** —
-   declared in capability metadata, per mode rather than per capability, because that
-   is how the capabilities actually behave. `service`, `db` and `gateway` serve the
-   mesh in-thread in both modes. `vite`, `astro`, `remix`, `nest` and `react-router`
-   serve it **in production only**, having built an in-thread application before their
-   port check, and serve nothing under `dev`. `next` serves neither. `node` may serve
-   or may legitimately serve nothing, which is why it is in this rule for a different
-   reason than the rest (below);
+   read from `servesWithoutPort` in the capability's schema subpath, per mode rather
+   than per capability, because that is how the capabilities actually behave. The
+   matrix in "How applications are exposed" is the authority; an absent declaration
+   means `'worker'`, which never produces this error;
 2. its `server.port` is defined;
 3. it declares a **custom command for the mode this boot will use** —
    `application.commands.development` under `dev`, `application.commands.production`
@@ -1548,7 +1591,9 @@ missing.
 **The error belongs to a framework capability under `dev`, and to `next` in both
 modes.** Those are the
 start paths that return early on a missing port before building anything, so "no
-port, no command" provably starts nothing there. A production `vite`, `astro`,
+port, no command" provably starts nothing there — which by the matrix means a
+framework capability under `dev`, and `next`, `nitro`, `nuxt` and `tanstack` under
+either. A production `vite`, `astro`,
 `remix`, `nest` or `react-router` never reaches it, because that boot has an
 in-thread application to dispatch to — the mode is part of the predicate's input,
 not a detail of it. `service`, `db`, `gateway` and `node` never reach it either, but
@@ -1957,7 +2002,9 @@ serial scheme.
    above) — and it carries the package-level metadata main-side
    preparation needs besides the schema: `skipTelemetryHooks` (which decides
    whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2543`,
-   set by gateway, db, and service) and `modulesToLoad`. Both move into the
+   set by gateway, db, and service), `modulesToLoad`, and **`servesWithoutPort`**,
+   the per-mode declaration the serving predicate reads (see "How applications are
+   exposed"; absent means `'worker'`). All three move into the
    subpath's exports and the entry envelope, so **boot** never imports the full
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
@@ -4444,10 +4491,15 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     silently inert. Migrate is what turns it into the v4 spelling, and the
     requires-review note it emits is the only signal a user gets.
     Consequences: a **managed** listener opens iff the capability's `server.port`
-    is defined, so an application with no `server` block is mesh-only, and a
-    framework application with neither a port nor a custom command is refused at
-    load rather than booted into silence (a custom command starts the application
-    itself, and the runtime observes what it binds); `server: { port: 0 }` is the
+    is defined, so an application with no `server` block opens no socket — whether it
+    still serves the mesh is capability- and mode-specific (see the matrix in "How
+    applications are exposed"). An application that would serve **nothing** is refused
+    at load rather than booted into silence: that is a framework capability under
+    `dev`, and `next`/`nitro`/`nuxt`/`tanstack` under `dev` or `start`, in each case
+    with neither a port nor a command for that mode (a custom command starts the
+    application itself, and the runtime observes what it binds). The check is a
+    `dev`/`start` startup rule; `build`, `exec`, migration validation and inspection
+    impose no such requirement; `server: { port: 0 }` is the
     v4 spelling of `useHttp` and what the gateway's WebSocket diagnostics now
     point at; and entrypoint auto-detection — explicit key, single application,
     single gateway — is gone entirely, along with `InvalidEntrypointError`,
@@ -4670,7 +4722,9 @@ runs multiple workers on a fixed port at all.
    with `production: true`.
 6. **capabilities** (next, node, vite, astro, remix, nest, nitro, react-router,
    tanstack, nuxt, service, db, gateway): factory + option types (~20 lines each via
-   the helper); light schema subpath exports (`@platformatic/<x>/schema`) for
+   the helper); **`servesWithoutPort` declared per capability** against the exposure
+   matrix, with a no-port test per mode for every row — including both capability
+   classes `nitro` ships; light schema subpath exports (`@platformatic/<x>/schema`) for
    eval-worker validation; `createCommands` moves to the `{ root, config }` data
    contract (db drops its self-loading and `utimesSync`; `db:print-schema`'s
    `create(root, configFile, …)` — `db/lib/commands/print-schema.js:18` — becomes
@@ -4849,7 +4903,10 @@ export interface WattConfig {
 // literals, not composed — a key added to one must be added to the other).
 export interface AppServerOptions {
   hostname?: string
-  port?: number                            // undefined = no listener (mesh-only);
+  port?: number                            // undefined = no managed listener; whether
+                                           // the app still serves the mesh is
+                                           // capability- and mode-specific (see the
+                                           // exposure matrix)
                                            // 0 = ephemeral, one port per worker
   portAssignment?: 'shared' | 'perWorkerIncrement'  // 'shared' needs
                                            // SO_REUSEPORT, 'perWorkerIncrement'
