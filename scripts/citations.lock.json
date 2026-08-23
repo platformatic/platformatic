@@ -270,6 +270,16 @@
       "head": "error.code === 'EACCES' ||",
       "lines": 5
     },
+    "packages/next/lib/capability.js:198-212": {
+      "sha": "d0cf382a01fe0247",
+      "head": "async #startDevelopment () {",
+      "lines": 15
+    },
+    "packages/next/lib/capability.js:312-327": {
+      "sha": "461e477d006ae203",
+      "head": "const loaderUrl = new URL('./loader.js', import.meta.url)",
+      "lines": 16
+    },
     "packages/runtime/lib/runtime.js:4987-4992": {
       "sha": "aea3da1dcb6d1cb8",
       "head": "#listenersOverlap (host, otherHost) {",
@@ -350,40 +360,60 @@
       "head": "if (this.config.applicationName && !this.config.envPrefix) {",
       "lines": 2
     },
-    "packages/next/lib/capability.js:209,326": {
-      "sha": "dc1a6108efebaaf6",
+    "packages/vite/lib/capability.js:221-223": {
+      "sha": "94acc2cf1e75d63e",
       "head": "if (typeof this.serverConfig?.port === 'undefined') {",
-      "lines": 2
+      "lines": 3
     },
-    "packages/vite/lib/capability.js:221,226": {
-      "sha": "c182eaf976ecbb15",
-      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
-      "lines": 2
-    },
-    "packages/astro/lib/capability.js:190,307": {
-      "sha": "dc1a6108efebaaf6",
-      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
-      "lines": 2
-    },
-    "packages/remix/lib/capability.js:170": {
+    "packages/astro/lib/capability.js:190": {
       "sha": "7c0fa99627d96f2a",
       "head": "if (typeof this.serverConfig?.port === 'undefined') {",
       "lines": 1
     },
-    "packages/nest/lib/capability.js:79,280": {
-      "sha": "f1f915cb553b70e5",
+    "packages/nest/lib/capability.js:79-82": {
+      "sha": "5f3b4780167961a3",
       "head": "if (this.#managedDevelopment && typeof this.serverConfig?.port === 'undefined') {",
-      "lines": 2
+      "lines": 4
     },
-    "packages/next/lib/capability.js:198-212": {
-      "sha": "d0cf382a01fe0247",
-      "head": "async #startDevelopment () {",
-      "lines": 15
+    "packages/vite/lib/capability.js:279-303": {
+      "sha": "5a2cb2a3066f3c06",
+      "head": "this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })",
+      "lines": 25
     },
-    "packages/next/lib/capability.js:312-327": {
-      "sha": "461e477d006ae203",
-      "head": "const loaderUrl = new URL('./loader.js', import.meta.url)",
-      "lines": 16
+    "packages/astro/lib/capability.js:305-309": {
+      "sha": "09bb4b1a67d40857",
+      "head": "await this.#app.ready()",
+      "lines": 5
+    },
+    "packages/remix/lib/capability.js:167-172": {
+      "sha": "97fd91ce14696076",
+      "head": "await this.#app.ready()",
+      "lines": 6
+    },
+    "packages/nest/lib/capability.js:262-275": {
+      "sha": "31602250e082f895",
+      "head": "const instance = this.#app.getInstance()",
+      "lines": 14
+    },
+    "packages/vite/lib/capability.js:163-166": {
+      "sha": "130f5dcc5124cc7c",
+      "head": "// This is only used in production mode",
+      "lines": 4
+    },
+    "packages/next/lib/capability.js:326-328": {
+      "sha": "94acc2cf1e75d63e",
+      "head": "if (typeof this.serverConfig?.port === 'undefined') {",
+      "lines": 3
+    },
+    "packages/react-router/lib/capability.js:58-77": {
+      "sha": "c0c1655ed0d9af5e",
+      "head": "async _start () {",
+      "lines": 20
+    },
+    "packages/react-router/lib/capability.js:118-131": {
+      "sha": "ef5356d8465edaa1",
+      "head": "async #startSSRProduction () {",
+      "lines": 14
     },
     "packages/foundation/lib/cli.js:255-274": {
       "sha": "a82961d969a7a84a",
@@ -705,6 +735,11 @@
       "head": "application.path = resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)",
       "lines": 1
     },
+    "packages/foundation/lib/schema.js:1541-1544": {
+      "sha": "e861080de667a0a3",
+      "head": "resolvedApplicationsBasePath: {",
+      "lines": 4
+    },
     "packages/foundation/lib/configuration.js:540": {
       "sha": "99ff4a93c4d1ac02",
       "head": "const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)",
@@ -854,11 +889,6 @@
       "sha": "7e406bf6fdeddfc0",
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
-    },
-    "packages/foundation/lib/schema.js:1541-1544": {
-      "sha": "e861080de667a0a3",
-      "head": "resolvedApplicationsBasePath: {",
-      "lines": 4
     },
     "packages/runtime/lib/worker/main.js:252-262": {
       "sha": "3cbf4b65e9c2c27c",

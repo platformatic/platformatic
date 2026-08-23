@@ -49,8 +49,8 @@ there is one application to give it to. Put the same file in a monorepo beside t
 siblings and all four read it: an operator setting `PORT=8080` hands 8080 to every
 application, the real environment outranks every app-local `.env` that might have
 said otherwise, and no file below can repair it. Dropping the port is not the way
-out either — a framework application with no port does not start (see "How
-applications are exposed"). So an application that joins a monorepo **scopes its port
+out either — a framework application with no port does not start under `dev` (see
+"How applications are exposed"). So an application that joins a monorepo **scopes its port
 variable** — `process.env.PLT_FRONTEND_PORT`, the `PLT_<ID>_` spelling the mesh
 already uses for `PLT_<ID>_URL`, and the one v3's generators switched to the moment
 an application was in runtime context rather than standalone
@@ -330,8 +330,8 @@ The functional form receives the command-aware context (`production` is `true`
 under `start`/`build`); config never branches on ambient `NODE_ENV`.
 
 `api` declares no `server` block and is therefore reachable only through the mesh;
-`frontend` declares `port: 0` because a framework capability does not start at all
-without one; `gateway` declares the fixed public port. That is the whole exposure
+`frontend` declares `port: 0` because a framework capability does not start under
+`dev` without one; `gateway` declares the fixed public port. That is the whole exposure
 model — see "How applications are exposed".
 
 Note the boundary: `workers`, `health`, `env`, `dependencies` and the other
@@ -1411,24 +1411,42 @@ say what went wrong: an unset or empty `PORT` is 3042, a canonical integer in
 is a load error naming `PORT` and the value it found, instead of a `NaN` that fails
 later as a schema type error about a port the user never typed.
 
-**Framework capabilities require a port — unless they carry a custom command.**
-`@platformatic/next`, `vite`, `astro`, `remix` and `nest` return from their start
-path when `server.port` is undefined —
-in development *and* production (`next/lib/capability.js:209,326`,
-`vite/lib/capability.js:221,226`, `astro/lib/capability.js:190,307`,
-`remix/lib/capability.js:170`, `nest/lib/capability.js:79,280`) — so for those
-capabilities "no port" does not mean "mesh-only", it means "does not start". The
-exception is a declared `application.commands.*`, which every one of them checks
-**before** the port and which starts the application on its own terms
-(`next/lib/capability.js:198-212`, `:312-327`); the runtime then observes whatever
-that command binds. The load-time predicate in "Not listening has three meanings"
-accounts for all three inputs. Only
-service/db/gateway and `node` have a real mesh-only mode, because their dispatch
-target can be an in-thread function rather than a socket
-(`basic/lib/capability.js:416-418`) — and for `node` it is *conditional*, on the
-application having a server at all, which is settled after its code runs (see the
-predicate below). Scaffolding and `migrate` therefore always
-emit a port for a framework application.
+**A framework capability without a port means different things in development and in
+production, and this document previously said otherwise.** The claim was that
+`@platformatic/next`, `vite`, `astro`, `remix` and `nest` all return from their start
+path when `server.port` is undefined, in both modes, so "no port" means "does not
+start". That is true of the **development** paths and false of most of the production
+ones, and the citations that supported it were the development returns.
+
+- **Development, no port, no command**: the capability returns before building
+  anything (`vite/lib/capability.js:221-223`, `astro/lib/capability.js:190`,
+  `nest/lib/capability.js:79-82`). Nothing is constructed, so there is nothing to
+  dispatch to — genuinely inactive.
+- **Production, no port, no command**: `vite`, `astro`, `remix` and `nest` construct
+  an in-thread Fastify application, register their routes and `await ready()`
+  **before** the port check (`vite/lib/capability.js:279-303`,
+  `astro/lib/capability.js:305-309`, `remix/lib/capability.js:167-172`,
+  `nest/lib/capability.js:262-275`). The port check then returns without listening,
+  and the inherited dispatch target falls back to the capability object
+  (`basic/lib/capability.js:416-418`), through which `inject()` reaches the
+  initialized instance (`vite/lib/capability.js:163-166`). That is a **working
+  mesh-only application serving built artifacts**, not an inactive one.
+- **`next` is the exception**: its production path returns before creating the child
+  manager (`next/lib/capability.js:326-328`), so for `next` alone "no port" really
+  does mean "does not start" in both modes.
+
+`react-router` extends `ViteCapability` and additionally selects an SSR production
+path from `react-router.config.*`, read at worker startup
+(`react-router/lib/capability.js:58-77`, `:118-131`). Which in-thread application it
+builds is therefore not visible to the loader — but it builds one either way, so
+*that it serves* stays decidable even though *what it serves* is not.
+
+The command exception is unchanged and applies in both modes: a declared
+`application.commands.*` is checked **before** the port and starts the application on
+its own terms (`next/lib/capability.js:198-212`, `:312-327`), with the runtime
+observing whatever it binds. Scaffolding and `migrate` still emit a port for a
+framework application — a production-only mesh-only mode is a deliberate thing to
+choose, not a default worth generating into.
 
 **Zero-config boot supplies its own port.** Level 0 — `wattpm dev` in a bare
 Next/Vite repo with no config file — is a stated non-goal to break, and on v3 it
@@ -1467,19 +1485,26 @@ capability's start path returns early when `server.port` is undefined, or
 **background**, a `node` application that declares it has no server and is not
 supposed to be reachable at all (see the predicate below, where the third case earns
 its place). The second
-is real: `next` returns at `next/lib/capability.js:209` and `:326`, and `vite`,
-`astro`, `remix` and `nest` do the same. Reporting an inactive framework
+is real, and it is **mode-specific**: `next` returns without starting in both modes
+(`next/lib/capability.js:209`, `:326`), while `vite`, `astro`, `remix` and `nest` do
+so only under `dev` — in production they build an in-thread application first and are
+mesh-only (see "How applications are exposed"). Reporting an inactive framework
 application as "mesh-only" would be worse than printing nothing, since it names an
-address that answers nothing.
+address that answers nothing; reporting a production one as inactive would be the
+same mistake pointed the other way.
 
 Which applies is decided by a **predicate over the capability and the entry
 together**, not by a capability flag alone. An application will serve if **any** of
 three things holds:
 
-1. its capability can serve without a listener — declared in capability metadata.
-   `service`, `db` and `gateway` serve the mesh in-thread; `node` may do that or may
-   legitimately serve nothing at all, which is why it is in this rule for a different
-   reason than the other three (below); the framework capabilities can do neither;
+1. its capability can serve without a listener **in the mode this boot will use** —
+   declared in capability metadata, per mode rather than per capability, because that
+   is how the capabilities actually behave. `service`, `db` and `gateway` serve the
+   mesh in-thread in both modes. `vite`, `astro`, `remix`, `nest` and `react-router`
+   serve it **in production only**, having built an in-thread application before their
+   port check, and serve nothing under `dev`. `next` serves neither. `node` may serve
+   or may legitimately serve nothing, which is why it is in this rule for a different
+   reason than the rest (below);
 2. its `server.port` is defined;
 3. it declares a **custom command for the mode this boot will use** —
    `application.commands.development` under `dev`, `application.commands.production`
@@ -1511,10 +1536,14 @@ An application satisfying none of them is a **load-time error** naming it and it
 capability — fail fast, rather than booting a runtime with one application silently
 missing.
 
-**The error belongs to the framework capabilities, and only to them.** Theirs are the
-start paths that return early on a missing port, so "no port, no command" provably
-starts nothing. `service`, `db`, `gateway` and `node` never reach it — but `node` is
-exempt for a different reason than the other three, and collapsing the two is what
+**The error belongs to a framework capability under `dev`, and to `next` in both
+modes.** Those are the
+start paths that return early on a missing port before building anything, so "no
+port, no command" provably starts nothing there. A production `vite`, `astro`,
+`remix`, `nest` or `react-router` never reaches it, because that boot has an
+in-thread application to dispatch to — the mode is part of the predicate's input,
+not a detail of it. `service`, `db`, `gateway` and `node` never reach it either, but
+`node` is exempt for a different reason, and collapsing the two is what
 makes rule 1 look like it decides more than it can. A `node` application serves the
 mesh in-thread **when it has a server**, and `#hasServer()` reads three things
 (`node/lib/capability.js:245-250`): `config.node.hasServer`, which is configuration;
@@ -3544,7 +3573,8 @@ Generation reads both views. Then:
      (`basic/lib/utils.js:22`), and the runtime advertised it. v4 returns early on
      `typeof this.serverConfig?.port === 'undefined'`
      (`service/lib/capability.js:298-300`), so without this rule the application
-     silently stops listening — and a framework application does not start at all.
+     silently stops listening — and a framework application under `dev` does not start
+     at all.
      The emitted `port: 0` reproduces what v3 bound; a requires-review note records
      that the address was never stable and is no longer runtime-advertised, since
      `getUrl()` is gone.
