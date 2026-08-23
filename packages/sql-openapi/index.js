@@ -42,22 +42,26 @@ async function setupOpenAPI (app, opts) {
   const ignoreAllReverseRoutes = opts.ignoreAllReverseRoutes || false
   const paths = opts.paths || {}
 
-  const { default: scalarTheme } = await import('@platformatic/scalar-theme')
-  const { default: scalarApiReference } = await import('@scalar/fastify-api-reference')
   const routePrefix = opts.swaggerPrefix || '/documentation'
 
   app.get(`${routePrefix}/json`, { schema: { hide: true }, logLevel: 'warn' }, async () => app.swagger())
   app.get(`${routePrefix}/yaml`, { schema: { hide: true }, logLevel: 'warn' }, async () => app.swagger({ yaml: true }))
 
-  app.register(scalarApiReference, {
-    ...opts,
-    logLevel: 'warn',
-    prefix: undefined,
-    routePrefix,
-    configuration: {
-      customCss: scalarTheme.theme
-    }
-  })
+  // Imported inside the guard on purpose: not loading the UI is what this option buys.
+  if (opts.ui !== false) {
+    const { default: scalarTheme } = await import('@platformatic/scalar-theme')
+    const { default: scalarApiReference } = await import('@scalar/fastify-api-reference')
+
+    app.register(scalarApiReference, {
+      ...opts,
+      logLevel: 'warn',
+      prefix: undefined,
+      routePrefix,
+      configuration: {
+        customCss: scalarTheme.theme
+      }
+    })
+  }
 
   app.addHook('onRoute', routeOptions => {
     if (paths[routeOptions.url]) {
