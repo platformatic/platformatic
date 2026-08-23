@@ -3036,6 +3036,29 @@ export default {
   an avoidable regression. (Placement: magicast is a dependency of
   `wattpm-utils` and — imported lazily, only when `--save` is actually used — of
   `wattpm` itself.)
+
+  **A snippet fallback assumes there is a file, and two runtimes have none.**
+  Zero-config synthesizes in memory and deliberately writes nothing (see "Levels of
+  ceremony"), and a programmatic object source never had a file; the metadata contract
+  represents both as `configPath: null`. The non-static-shape fallback does not reach
+  either — there is no shape to fall back *from*. So `--save` **checks
+  `configPath` before it mutates anything**, and the ordering is the point: a save
+  that cannot happen must not be discovered after the application is already running,
+  or `--save` reports an atomic success it did not perform.
+
+  - **Synthesized (zero-config)**: `--save` writes a complete root `watt.config.ts`
+    containing the *detected* application as an explicit entry plus the requested
+    change, then applies the live mutation. Materializing the synthesis is the whole
+    job: adding a second application turns a Level 0 project into a multi-app root,
+    and the file has to say what was previously implied or the next boot loses the
+    original application. That is the one case where `--save` creates a file, and it
+    says so in its output, because a command that writes a configuration into a
+    project that had none should not do it quietly.
+  - **Programmatic object source**: `--save` **refuses**, before mutating, naming the
+    embedder. There is no honest target — the configuration lives in the host
+    program's memory, and any file this command wrote would be shadowed by the object
+    the embedder passes on the next `create()`. The live-only form (`applications:add`
+    without `--save`) is the supported operation there, and the refusal says so.
 - **Capability CLI commands** (`db:migrations:apply`, `db:seed`, `db:types`,
   `gateway:*`, `next:*`) move to a **data contract**: `createCommands` becomes part
   of the v4 capability contract, and each command receives `{ root, config }` — the
@@ -4374,7 +4397,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     `POST /applications` now runs the full per-app eval/validation pass (posted
     workers no longer self-load config) and its request-body `config` type
     changes with item 14; `--save` is retained via magicast (snippet fallback
-    for non-static shapes).
+    for non-static shapes; for `configPath: null` it materializes a root file for a
+    synthesized runtime and refuses for a programmatic one, checked before the live
+    mutation). Tests cover add and remove against a synthesized runtime and an
+    object-backed one, including that a save which cannot happen is not reported as
+    an atomic success.
 12. Capability CLI commands (`db:*`, `gateway:*`, `next:*`): the `createCommands`
     contract changes from config-file-path to `{ root, config }` data; commands no
     longer self-load config, and the `utimesSync` restart trick is replaced by a
