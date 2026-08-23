@@ -2123,14 +2123,25 @@ applications own a file — and, after the scoping rule, what `wattpm dev` does 
 each application's **`package.json`**, which supplies the id and the dependencies the
 capability detector reads; the config file of **every application actually in the
 topology**, including one whose `path` resolves outside the project; and the
-**recognized candidate paths on the ancestor walk**, up to and including the env root.
+**recognized candidate paths across the whole ancestor horizon**, which is further up
+than the env root.
 
 That last one is not an application's config and is never imported, which is exactly
 why it was missing: it is watched because the ancestor scan *selects the env root*
 (see "Scope"), so creating `../watt.config.ts` moves the env root outward and makes
 `../.env` live, and deleting the outermost one moves it back. Neither path is in the
 active env-file set beforehand — that set is the consequence, not the input — so
-nothing else in this list would notice. Because the trigger is a file **appearing**,
+nothing else in this list would notice.
+
+**The horizon is the scan's reach, not its current answer**, and the difference is the
+whole point. The env root is the *outermost* `watt.config.*` found, so watching only
+as far as it cannot see a configuration appearing **above** it — which is the example
+this paragraph is about. If `/repo/app/watt.config.ts` is currently the outermost,
+creating `/repo/watt.config.ts` moves the root outward, and a set bounded by the old
+answer contains neither the new file nor the `.env` beside it. So the watched
+candidate names run the full distance the scan would walk, up to the same stop the
+scan uses (see "Scope", where the residual above a package boundary is stated).
+Because the trigger is a file **appearing**,
 those candidates are watched at paths that do not exist yet, which is the same
 creation-and-deletion rule the rest of the set follows, applied one directory at a
 time up the walk. When one fires, the env root, the env-file set and the watch set
