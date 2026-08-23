@@ -40,6 +40,21 @@ export const DeferredSlotInApplicationDefinitionError = createError(
   '%s exports an application definition with a function at %s. Application definitions have no config slots; use the factory callback form instead.'
 )
 
+export const ApplicationShorthandConflictError = createError(
+  `${ERROR_PREFIX}_APPLICATION_SHORTHAND_CONFLICT`,
+  '%s declares the singular application shorthand alongside %s. The shorthand is only for genuinely single-application projects.'
+)
+
+export const RootConfigurationInApplicationEntryError = createError(
+  `${ERROR_PREFIX}_ROOT_CONFIGURATION_IN_APPLICATION_ENTRY`,
+  '%s is the configuration of application %s but classifies as a root configuration. A root configuration cannot nest inside an application entry.'
+)
+
+export const ApplicationConfiguredTwiceError = createError(
+  `${ERROR_PREFIX}_APPLICATION_CONFIGURED_TWICE`,
+  'Application %s has an inline config in the root configuration and a configuration file at %s. Remove one of them.'
+)
+
 export const EnvFileNotFoundError = createError(
   `${ERROR_PREFIX}_ENV_FILE_NOT_FOUND`,
   'The env file %s does not exist.'
@@ -50,7 +65,17 @@ export const InvalidApplicationIdError = createError(
   'The application id %s (derived from %s) is not a valid DNS label, so it cannot be used as a mesh hostname. Set an explicit id on the entry.'
 )
 
+export const InvalidRootConfigurationError = createError(
+  `${ERROR_PREFIX}_INVALID_ROOT_CONFIGURATION`,
+  'The configuration %s does not validate: %s'
+)
+
 export const ConfigurationEvaluationTimeoutError = createError(
   `${ERROR_PREFIX}_CONFIGURATION_EVALUATION_TIMEOUT`,
   'Evaluating %s timed out after %dms.'
+)
+
+export const EvaluationEndedWithoutResultError = createError(
+  `${ERROR_PREFIX}_EVALUATION_ENDED_WITHOUT_RESULT`,
+  'Evaluating %s ended without a result (worker exit code %d). A configuration that never resolves, or that calls process.exit, ends this way.'
 )
