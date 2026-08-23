@@ -4845,6 +4845,13 @@ runs multiple workers on a fixed port at all.
    anchoring existed. Content that merely moved is repaired by `--fix`; content that
    changed is reported for a human, because a citation whose code no longer says what
    the sentence claims is a statement to re-read, not a line number to update.
+
+   **Every way of not knowing fails as well** — a citation absent from the lockfile, a
+   lockfile that is missing or empty, a historical commit that cannot be read. Each of
+   those once printed a warning and exited zero, which meant deleting one file turned
+   the gate off silently. A check that treats "I could not verify this" as "verified"
+   is not a check, so blessing is what `--update` does and verification never does it
+   on its own.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
    `getRuntimeConfig` (`control/lib/index.js:242`, the removed `GET /config`) while
