@@ -12,6 +12,7 @@
 //   node scripts/check-citations.mjs [doc] --update   re-bless (records current content)
 //   node scripts/check-citations.mjs [doc] --fix      follow moved content, rewriting doc + lock
 //   node scripts/check-citations.mjs [doc] --audit    flag citations the prose does not corroborate
+//   …--allow-unverifiable                              tolerate unreadable historical commits
 //
 // Tests: node --test "scripts/test/*.test.mjs" (CITATIONS_LOCK overrides the lockfile).
 //
@@ -33,6 +34,11 @@ const args = process.argv.slice(2)
 const mode = args.includes('--update')
   ? 'update'
   : args.includes('--fix') ? 'fix' : args.includes('--audit') ? 'audit' : 'verify'
+// Historical citations that cannot be read are a failure by default: the checker
+// cannot tell a shallow clone from a mistyped or rewritten SHA, and one of those is
+// a broken citation. The escape hatch is explicit and must never be used in CI,
+// which checks out full history for exactly this reason.
+const allowUnverifiable = args.includes('--allow-unverifiable')
 const docPath = resolve(ROOT, args.find(a => !a.startsWith('--')) ?? 'NEW_CONFIG.md')
 
 // ---------------------------------------------------------------- extraction
@@ -235,7 +241,10 @@ for (const cite of extract(doc)) {
   const blessed = lock.citations[key]
 
   if (mode === 'update' || !blessed) {
-    if (mode !== 'update' && blessed === undefined && Object.keys(lock.citations).length) {
+    // No exception for an empty or missing lockfile. Treating a first run as
+    // "bootstrap" made deleting scripts/citations.lock.json a way to switch the gate
+    // off silently; blessing is what --update is for, and verify never does it.
+    if (mode !== 'update' && blessed === undefined) {
       problems.unblessed.push({ ...cite, rel })
     }
     nextLock[key] = { sha, head: picked[0] ?? '', lines: picked.length }
@@ -376,6 +385,7 @@ if (stale.length && mode === 'verify') {
 // orphan that harms nothing, and failing on it would break every edit that deletes one.
 const failed = problems.unresolved.length + problems.outOfRange.length +
   problems.drifted.length + problems.unblessed.length +
+  (allowUnverifiable ? 0 : problems.unavailable.length) +
   (mode === 'verify' ? problems.moved.length : 0)
 if (mode === 'verify' && failed) {
   console.log(`\nFAIL: ${failed}`)
@@ -386,8 +396,18 @@ if (mode === 'verify' && failed) {
     console.log('Cited code changed. Re-read the document around each citation, then --update.')
   }
   if (problems.unblessed.length) {
-    console.log('New citation. Read the cited lines, confirm they say what the prose claims,')
-    console.log('then run: node scripts/check-citations.mjs --update')
+    if (!existsSync(LOCK)) {
+      const shown = LOCK.startsWith(ROOT + '/') ? LOCK.slice(ROOT.length + 1) : LOCK
+      console.log(`No lockfile at ${shown}. Bootstrap it with --update;`)
+      console.log('verification never blesses on its own.')
+    } else {
+      console.log('New citation. Read the cited lines, confirm they say what the prose claims,')
+      console.log('then run: node scripts/check-citations.mjs --update')
+    }
+  }
+  if (problems.unavailable.length && !allowUnverifiable) {
+    console.log('A historical citation could not be read. Check the SHA is real and reachable;')
+    console.log('if this is a shallow clone, pass --allow-unverifiable (CI must not).')
   }
   process.exit(1)
 }
