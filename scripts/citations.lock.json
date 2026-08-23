@@ -445,6 +445,16 @@
       "head": "if (typeof this.serverConfig?.port === 'undefined') {",
       "lines": 3
     },
+    "packages/vite/index.js:60-63": {
+      "sha": "af76493a8d93f3a9",
+      "head": "const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)",
+      "lines": 4
+    },
+    "packages/vite/lib/capability.js:334": {
+      "sha": "f8c82505d4b1c2ef",
+      "head": "export class ViteSSRCapability extends NodeCapability {",
+      "lines": 1
+    },
     "packages/foundation/lib/cli.js:255-274": {
       "sha": "a82961d969a7a84a",
       "head": "export async function fallbackToTemporaryConfigFile (logger, root, verifyPackages) {",

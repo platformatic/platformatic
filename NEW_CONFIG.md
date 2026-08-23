@@ -1466,27 +1466,46 @@ happens with **no port and no command for that mode**:
 | capability | `dev` | `start` |
 | --- | --- | --- |
 | `service`, `db`, `gateway` | mesh-only | mesh-only |
-| `vite`, `astro`, `remix`, `nest`, `react-router` | inactive | mesh-only |
+| `astro`, `remix`, `nest`, `react-router` | inactive | mesh-only |
+| `vite` without `vite.ssr.enabled` | inactive | mesh-only |
+| `vite` with `vite.ssr.enabled` | worker-classified | worker-classified |
 | `next`, `nitro`, `nuxt`, `tanstack` | inactive | inactive |
 | `node` | worker-classified | worker-classified |
 
 `service`, `db` and `gateway` build their application before `_listen`, which is the
 only thing the port guards (`service/lib/capability.js:299-301`), so the dispatch
-fallback always has something to reach. `node` is the one row the loader cannot fill
-in: two of `#hasServer()`'s three inputs come from the application's own code, so it
-is classified by the started worker (see the predicate below).
+fallback always has something to reach. `node` is classified by the started worker
+because two of `#hasServer()`'s three inputs come from the application's own code.
 
-**That column is capability metadata, and it needs somewhere to live.** The
-schema subpath (`@platformatic/<x>/schema`) currently exports the schema,
-`skipTelemetryHooks` and `modulesToLoad`; it gains `servesWithoutPort`, a per-mode
-declaration read main-side with the schema, before any worker exists:
+**`vite` has two rows because the package has two capability classes**, and which one
+runs is decided by the configuration, not by the package: `create()` selects
+`ViteSSRCapability` when `vite.ssr.enabled` and `ViteCapability` otherwise
+(`vite/index.js:60-63`). `ViteSSRCapability extends NodeCapability`
+(`vite/lib/capability.js:334`), so an SSR Vite application runs Node's startup path
+and inherits Node's uncertainty exactly — its serving state depends on the module's
+`hasServer` and its factory's `isBackgroundApplication`. A single per-package answer
+would reject a valid no-port SSR factory under `dev` and promise a mesh URL under
+`start` for a module that reports `hasServer = false`.
+
+**So the declaration is a function of the resolved capability configuration, not a
+constant.** The schema subpath (`@platformatic/<x>/schema`) currently exports the
+schema, `skipTelemetryHooks` and `modulesToLoad`; it gains `servesWithoutPort`, read
+main-side with the schema, after validation and before any worker exists — which is
+precisely when the resolved capability config is available:
 
 ```ts
-export const servesWithoutPort = { development: false, production: true }  // vite & co
-export const servesWithoutPort = { development: true, production: true }   // service, db, gateway
-export const servesWithoutPort = { development: false, production: false } // next, nitro, nuxt, tanstack
-export const servesWithoutPort = 'worker'                                  // node
+export const servesWithoutPort = { development: true, production: true }    // service, db, gateway
+export const servesWithoutPort = { development: false, production: true }   // astro, remix, nest, react-router
+export const servesWithoutPort = { development: false, production: false }  // next, nitro, nuxt, tanstack
+export const servesWithoutPort = 'worker'                                   // node
+
+export const servesWithoutPort = config =>                                  // vite
+  config.vite?.ssr?.enabled ? 'worker' : { development: false, production: true }
 ```
+
+A constant is the common case and stays legal; the callable form exists for the
+capability whose behaviour its own configuration selects, which is the shape a
+per-package constant cannot express and the shape this document got wrong.
 
 **Absent means `'worker'`, not `false`.** A third-party capability that does not
 declare this is one the loader knows nothing about, and the two wrong answers are
@@ -1532,14 +1551,15 @@ applied (see "Scope"). The alternative — refusing — requires deciding that a
 ancestor config describes this directory, which a filename check cannot establish and
 an evaluation could only establish by executing a file above the search's stop point.
 
-**Not listening has three meanings, and the startup output must tell them apart.**
+**Not listening has four meanings, and the startup output must tell them apart.**
 Without a port, an application is **mesh-only** — reachable at
 `http://<id>.plt.local` because `getDispatchTarget()` falls back to in-thread
 dispatch (`basic/lib/capability.js:416-418`) — or **inactive**, because its
 capability's start path returns early when `server.port` is undefined, or
 **background**, a `node` application that declares it has no server and is not
-supposed to be reachable at all (see the predicate below, where the third case earns
-its place). The second
+supposed to be reachable at all, or **inactive at runtime** — the fourth case, which
+exists only for a worker-classified capability, because that is the one kind nothing
+rejects at load (see the predicate below, where both earn their place). The second
 is real, and it is **mode-specific**: `next` returns without starting in both modes
 (`next/lib/capability.js:209`, `:326`), while `vite`, `astro`, `remix` and `nest` do
 so only under `dev` — in production they build an in-thread application first and are
@@ -1623,7 +1643,7 @@ The loader does not warn per application: in a typical monorepo most application
 are deliberately mesh-only, and a warning would fire N−1 times on every boot. What
 changes is the report. `#showUrls` (`runtime/lib/runtime.js:2408-2428`) currently
 does `if (!url) continue`, so a project that binds nothing prints no address and no
-explanation. It prints **one line per application**, in one of three shapes, so the
+explanation. It prints **one line per application**, in one of four shapes, so the
 set of externally reachable applications is always visible:
 
 ```
@@ -1631,22 +1651,39 @@ gateway    listening at http://127.0.0.1:3042
 api        mesh-only — http://api.plt.local
 frontend   listening at http://127.0.0.1:52418        (port: 0 — ephemeral)
 jobs       background — no HTTP dispatch target
+worker-x   inactive — capability reports no serving state
 ```
 
-**The third shape is reported by the worker, not derived by the report.** A
-`background` line is printed for an application whose started worker says it has no
-server — `#hasServer()` false, from `config.node.hasServer`, a module-level
+**Worker-classified rows are reported by the worker, not derived by the report**, and
+that needs a contract rather than an inference. `getDispatchTarget()` falling back to
+the capability object proves nothing: `basic`'s fallback returns `this` whenever there
+is no URL (`basic/lib/capability.js:416-418`), whether the start method built a
+dispatcher or returned without building anything. So the v4 capability contract adds
+**`getServingState()`**, returning `'listening' | 'mesh-only' | 'background' |
+'inactive'`, travelling with the status reply the worker already sends. `node`
+implements it from `#hasServer()` — false via `config.node.hasServer`, a module-level
 `hasServer` export, or `isBackgroundApplication` on the factory result
-(`node/lib/capability.js:245-250`). Two of those three are only knowable after the
-application's code has run, so the classification travels with the started worker's
-existing status reply rather than being computed main-side, and the same
-`listening` / `mesh-only` / `background` value appears in
-`getApplicationDetails()` — a report shape the programmatic API cannot answer is a
+(`node/lib/capability.js:245-250`), two of which are only knowable after the
+application's code has run — and `ViteSSRCapability` inherits that implementation
+along with the rest of Node's startup path. The same value appears in
+`getApplicationDetails()`: a report shape the programmatic API cannot answer is a
 shape that exists only in a terminal.
 
-There is deliberately no *fourth* "did not start" shape. That case is decidable from
-configuration for the capabilities it can happen to, so it never reaches the report —
-it is refused at load, where the message can name the entry, its capability and the
+**`BaseCapability`'s default is deliberately pessimistic**: `this.url ? 'listening' :
+'inactive'`. A third-party capability that neither declares `servesWithoutPort` nor
+overrides this method is one nothing in the system can vouch for, and of the two ways
+to be wrong, under-reporting a working application is the recoverable one —
+over-reporting prints a mesh address that answers nothing, which is the failure this
+whole section exists to prevent. The row says which it is (`inactive — capability
+reports no serving state`), so the fix is legible to the capability's author rather
+than mysterious to its user.
+
+**There is a fourth shape after all, and only for worker-classified capabilities.**
+An `inactive` row is reachable at runtime precisely because nothing rejected the
+application at load: that is the cost of `'worker'` classification, accepted
+knowingly. For every capability the matrix decides statically the old rule is intact
+— a configuration that would serve nothing is refused at load, where the message can
+name the entry, its capability and the
 three ways to satisfy it. A status row would be the same information delivered after
 the runtime had already booted around the hole. `background` is the opposite
 situation and that is why it earns a row: nothing is wrong, and the thing that knows
@@ -4759,8 +4796,11 @@ runs multiple workers on a fixed port at all.
 6. **capabilities** (next, node, vite, astro, remix, nest, nitro, react-router,
    tanstack, nuxt, service, db, gateway): factory + option types (~20 lines each via
    the helper); **`servesWithoutPort` declared per capability** against the exposure
-   matrix, with a no-port test per mode for every row — including both capability
-   classes `nitro` ships; light schema subpath exports (`@platformatic/<x>/schema`) for
+   matrix (callable where the configuration selects the class, as `vite` does), and
+   **`getServingState()`** implemented wherever the row is worker-classified, with a
+   no-port test per mode for every row — including both capability classes `nitro`
+   ships, and Vite SSR with a Fastify factory, with `hasServer = false`, and with a
+   background application; light schema subpath exports (`@platformatic/<x>/schema`) for
    eval-worker validation; `createCommands` moves to the `{ root, config }` data
    contract (db drops its self-loading and `utimesSync`; `db:print-schema`'s
    `create(root, configFile, …)` — `db/lib/commands/print-schema.js:18` — becomes
