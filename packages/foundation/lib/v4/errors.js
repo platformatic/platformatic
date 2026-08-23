@@ -55,6 +55,16 @@ export const ApplicationConfiguredTwiceError = createError(
   'Application %s has an inline config in the root configuration and a configuration file at %s. Remove one of them.'
 )
 
+export const CapabilitySchemaNotFoundError = createError(
+  `${ERROR_PREFIX}_CAPABILITY_SCHEMA_NOT_FOUND`,
+  'Cannot import the schema of %s from %s, nor from the copy bundled with the runtime. A v4 capability exports one from its /schema subpath.'
+)
+
+export const InvalidApplicationConfigurationError = createError(
+  `${ERROR_PREFIX}_INVALID_APPLICATION_CONFIGURATION`,
+  'The configuration of application %s does not validate against the %s schema:%s'
+)
+
 export const CapabilityNotResolvableError = createError(
   `${ERROR_PREFIX}_CAPABILITY_NOT_RESOLVABLE`,
   'Cannot resolve %s from %s, nor from the copy bundled with the runtime.'

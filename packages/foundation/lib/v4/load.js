@@ -26,6 +26,7 @@ import {
 } from './identifiers.js'
 import { checkCapabilityVersionSkew } from './capability-resolution.js'
 import { runRootPipeline } from './pipeline.js'
+import { importCapabilitySchema, validateCapabilityConfiguration } from './validate.js'
 import {
   findAncestorConfiguration,
   findAncestorConfigurationOfAnyKind,
@@ -178,6 +179,7 @@ export async function loadConfiguration ({
   customEnvFile,
   realEnv = process.env,
   schema,
+  validateCapabilities = false,
   timeout = defaultEvaluationTimeout,
   onImport,
   onWatchFile,
@@ -187,7 +189,15 @@ export async function loadConfiguration ({
   const resolvedProduction = production ?? isProductionCommand(command)
   const resolvedMode = mode ?? defaultMode(command, resolvedProduction)
   const report = createReport({ onImport, onWatchFile, onWarning, onInfo })
-  const shared = { command, mode: resolvedMode, production: resolvedProduction, customEnvFile, realEnv, timeout }
+  const shared = {
+    command,
+    mode: resolvedMode,
+    production: resolvedProduction,
+    customEnvFile,
+    realEnv,
+    timeout,
+    validateCapabilities
+  }
 
   // --config is not a scope flag, but it does take cwd out of the decision.
   const deciding = configPath
@@ -286,6 +296,7 @@ export async function loadObjectConfiguration ({
   customEnvFile,
   realEnv = process.env,
   schema,
+  validateCapabilities = false,
   timeout = defaultEvaluationTimeout,
   onImport,
   onWatchFile,
@@ -301,7 +312,15 @@ export async function loadObjectConfiguration ({
 
   const resolvedProduction = production ?? isProductionCommand(command)
   const resolvedMode = mode ?? defaultMode(command, resolvedProduction)
-  const shared = { command, mode: resolvedMode, production: resolvedProduction, customEnvFile, realEnv, timeout }
+  const shared = {
+    command,
+    mode: resolvedMode,
+    production: resolvedProduction,
+    customEnvFile,
+    realEnv,
+    timeout,
+    validateCapabilities
+  }
 
   report ??= createReport({ onImport, onWatchFile, onWarning, onInfo })
 
@@ -431,7 +450,8 @@ async function assemble ({
   production,
   customEnvFile,
   realEnv,
-  timeout
+  timeout,
+  validateCapabilities
 }) {
   const config = result.config
 
@@ -455,6 +475,7 @@ async function assemble ({
     customEnvFile,
     realEnv,
     timeout,
+    validateCapabilities,
     report
   })
 
@@ -531,6 +552,7 @@ async function prepareApplication ({
   customEnvFile,
   realEnv,
   timeout,
+  validateCapabilities,
   report
 }) {
   const prepared = { ...entry, id, path: directory }
@@ -560,7 +582,7 @@ async function prepareApplication ({
       throw new EnvFileOnInlineConfigError(id)
     }
 
-    applyDefinition(prepared, entry.config, { directory, report })
+    await applyDefinition(prepared, entry.config, { directory, report, validateCapabilities })
     return prepared
   }
 
@@ -589,6 +611,8 @@ async function prepareApplication ({
     prepared.module = capability
     prepared.config = {}
     prepared.detected = true
+
+    await validateApplication(prepared, { module: capability, directory, report, validateCapabilities })
 
     if (entry.envfile) {
       report.watch(isAbsolute(entry.envfile) ? entry.envfile : resolve(directory, entry.envfile))
@@ -636,7 +660,7 @@ async function prepareApplication ({
 
   reportMutatedEnv(report, configurationFile, evaluated.mutatedEnvKeys)
 
-  applyDefinition(prepared, evaluated.config, { directory, report })
+  await applyDefinition(prepared, evaluated.config, { directory, report, validateCapabilities })
   prepared.configPath = configurationFile
 
   return prepared
@@ -650,7 +674,7 @@ async function prepareApplication ({
   latter renamed on the way out because getApplicationDetails().version already means the capability
   version the running worker loaded.
 */
-function applyDefinition (prepared, definition, { directory, report }) {
+async function applyDefinition (prepared, definition, { directory, report, validateCapabilities }) {
   const { module, version, ...payload } = definition
 
   prepared.config = payload
@@ -670,14 +694,46 @@ function applyDefinition (prepared, definition, { directory, report }) {
     applicationRoot: directory
   })
 
-  if (!skew) {
+  if (skew) {
+    if (skew.level === 'error') {
+      throw new CapabilityVersionSkewError(skew.message)
+    }
+
+    // Minor drift is legitimate mid-upgrade, so it warns rather than failing the boot.
+    report.onWarning?.({ type: 'capability-version-skew', ...skew })
+  }
+
+  await validateApplication(prepared, { module, directory, report, validateCapabilities })
+}
+
+/*
+  Capability configuration is validated main-side, against the capability's own schema, after the
+  module/version envelope has been stripped — so the schema keeps additionalProperties: false and
+  needs no reserved properties. useDefaults runs here rather than in the eval worker, which is what
+  keeps the resolve projection carrying authored values rather than schema-supplied ones.
+
+  It is opt-in for now, and deliberately not defaulted on: no capability ships the light /schema
+  subpath yet, so every boot would import full capability packages into the main process — the cost
+  the subpath exists to avoid. Making it skip when the schema cannot be imported was the
+  alternative, and it is worse: a check that treats "I could not verify this" as "verified" is not
+  a check. The default flips when the subpaths land.
+*/
+async function validateApplication (prepared, { module, directory, report, validateCapabilities }) {
+  if (!validateCapabilities || !module) {
     return
   }
 
-  if (skew.level === 'error') {
-    throw new CapabilityVersionSkewError(skew.message)
+  const { schema, metadata, via, path } = await importCapabilitySchema(module, directory)
+
+  if (via === 'entry') {
+    report.onWarning?.({
+      type: 'capability-schema-fallback',
+      module,
+      path,
+      message: `${module} has no /schema subpath, so its full package was imported into the loader to validate ${prepared.id}.`
+    })
   }
 
-  // Minor drift is legitimate mid-upgrade, so it warns rather than failing the boot.
-  report.onWarning?.({ type: 'capability-version-skew', ...skew })
+  validateCapabilityConfiguration(prepared.config, schema, { id: prepared.id, module, root: directory })
+  prepared.capabilityMetadata = metadata
 }
