@@ -455,6 +455,16 @@
       "head": "export class ViteSSRCapability extends NodeCapability {",
       "lines": 1
     },
+    "packages/vite/lib/schema.js:28-44": {
+      "sha": "9bed7a721a61a1de",
+      "head": "ssr: {",
+      "lines": 17
+    },
+    "packages/vite/index.js:12-19": {
+      "sha": "c55365d18e4e8b2f",
+      "head": "if (config.vite.ssr === true) {",
+      "lines": 8
+    },
     "packages/foundation/lib/cli.js:255-274": {
       "sha": "a82961d969a7a84a",
       "head": "export async function fallbackToTemporaryConfigFile (logger, root, verifyPackages) {",

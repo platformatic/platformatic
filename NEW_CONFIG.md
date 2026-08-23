@@ -49,8 +49,9 @@ there is one application to give it to. Put the same file in a monorepo beside t
 siblings and all four read it: an operator setting `PORT=8080` hands 8080 to every
 application, the real environment outranks every app-local `.env` that might have
 said otherwise, and no file below can repair it. Dropping the port is not the way
-out either — a framework application with no port does not start under `dev` (see
-"How applications are exposed"). So an application that joins a monorepo **scopes its port
+out either — a framework application with no port does not start under `dev` (see the
+matrix in "How applications are exposed"; Vite in SSR mode is the exception, being
+classified by its worker). So an application that joins a monorepo **scopes its port
 variable** — `process.env.PLT_FRONTEND_PORT`, the `PLT_<ID>_` spelling the mesh
 already uses for `PLT_<ID>_URL`, and the one v3's generators switched to the moment
 an application was in runtime context rather than standalone
@@ -1436,7 +1437,9 @@ ones, and the citations that supported it were the development returns.
 - **Development, no port, no command**: the capability returns before building
   anything (`vite/lib/capability.js:221-223`, `astro/lib/capability.js:190`,
   `nest/lib/capability.js:79-82`). Nothing is constructed, so there is nothing to
-  dispatch to — genuinely inactive.
+  dispatch to — genuinely inactive. The `vite` citation is `ViteCapability`; an SSR
+  Vite application runs a different class entirely and is not covered by this bullet
+  (see the matrix).
 - **Production, no port, no command**: `vite`, `astro`, `remix` and `nest` construct
   an in-thread Fastify application, register their routes and `await ready()`
   **before** the port check (`vite/lib/capability.js:279-303`,
@@ -1499,13 +1502,31 @@ export const servesWithoutPort = { development: false, production: true }   // a
 export const servesWithoutPort = { development: false, production: false }  // next, nitro, nuxt, tanstack
 export const servesWithoutPort = 'worker'                                   // node
 
-export const servesWithoutPort = config =>                                  // vite
-  config.vite?.ssr?.enabled ? 'worker' : { development: false, production: true }
+export const servesWithoutPort = config => {                               // vite
+  const ssr = config.vite?.ssr                                             // `true` or { enabled }
+  return ssr === true || ssr?.enabled
+    ? 'worker'
+    : { development: false, production: true }
+}
 ```
 
 A constant is the common case and stays legal; the callable form exists for the
 capability whose behaviour its own configuration selects, which is the shape a
 per-package constant cannot express and the shape this document got wrong.
+
+**A callable receives the configuration as *authored and validated*, never as
+transformed**, and Vite is the reason to say so rather than leave it implied.
+`servesWithoutPort` is read main-side, after validation and before any worker; the
+capability `transform` runs worker-side, later. So a callable sees whatever shapes the
+*schema* admits, and Vite's `ssr` is an `anyOf` of a boolean and an object
+(`vite/lib/schema.js:28-44`) that only `transform` normalizes to the object form
+(`vite/index.js:12-19`). Testing `ssr?.enabled` alone reads `undefined` for
+`vite({ ssr: true })` — a supported spelling — and classifies an SSR application as
+ordinary Vite: rejecting a valid in-process SSR factory under `dev`, and promising
+mesh availability under `start` for a module that may report no server. Any capability
+whose schema accepts a shorthand has the same trap, so the rule is stated once here:
+**read authored shapes, not transform outputs**, and cover every spelling the schema
+admits in the tests.
 
 **Absent means `'worker'`, not `false`.** A third-party capability that does not
 declare this is one the loader knows nothing about, and the two wrong answers are
@@ -1608,12 +1629,15 @@ An application satisfying none of them is a **load-time error** naming it and it
 capability — fail fast, rather than booting a runtime with one application silently
 missing.
 
-**The error belongs to a framework capability under `dev`, and to `next` in both
-modes.** Those are the
+**The error belongs to the rows the matrix decides statically, and to nothing
+else.** Those are the
 start paths that return early on a missing port before building anything, so "no
-port, no command" provably starts nothing there — which by the matrix means a
-framework capability under `dev`, and `next`, `nitro`, `nuxt` and `tanstack` under
-either. A production `vite`, `astro`,
+port, no command" provably starts nothing there: a framework capability under `dev`,
+and `next`, `nitro`, `nuxt` and `tanstack` under either. **Worker-classified rows are
+exempt in both modes** — `node`, and `vite` with SSR enabled — because nothing
+main-side can prove they start nothing, which is what worker classification means.
+Reading "framework capability under `dev`" as covering Vite SSR would reject exactly
+the configuration the matrix exists to admit. A production `vite`, `astro`,
 `remix`, `nest` or `react-router` never reaches it, because that boot has an
 in-thread application to dispatch to — the mode is part of the predicate's input,
 not a detail of it. `service`, `db`, `gateway` and `node` never reach it either, but
@@ -1701,9 +1725,9 @@ outside rather than left hanging: the runtime runs `sendViaITC(worker, 'start')`
 `executeWithTimeout` and raises `ApplicationStartTimeoutError` after `startTimeout`
 milliseconds — 30 s by default (`foundation/lib/schema.js:1111-1115`), the worker
 terminated and the application named
-(`runtime/lib/runtime.js:3349-3356`). That is why the report still needs no third
-shape: an application that never bound anything never reaches the report, because the
-boot failed first and said which application and how long it waited.
+(`runtime/lib/runtime.js:3349-3356`). So a command that never binds does not need a
+report row of its own: it never reaches the report at all, because the boot failed
+first and said which application and how long it waited.
 
 An application with `workers` and `portAssignment: 'perWorkerIncrement'` lists its
 whole range on that one line (`http://127.0.0.1:3000-3002`), since `getUrls()`
@@ -4599,7 +4623,9 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     applications are exposed"). An application that would serve **nothing** is refused
     at load rather than booted into silence: that is a framework capability under
     `dev`, and `next`/`nitro`/`nuxt`/`tanstack` under `dev` or `start`, in each case
-    with neither a port nor a command for that mode (a custom command starts the
+    with neither a port nor a command for that mode — **excluding the
+    worker-classified rows**, `node` and Vite with SSR enabled, which are never
+    refused at load (a custom command starts the
     application itself, and the runtime observes what it binds). The check is a
     `dev`/`start` startup rule; `build`, `exec`, migration validation and inspection
     impose no such requirement; `server: { port: 0 }` is the
