@@ -3155,11 +3155,43 @@ export default {
     in. Validating before mutating is what keeps the last step from being the one that
     can fail on content.
 
-    Publication can still fail on I/O, and that is **reported, never swallowed**: the
-    application is running and the file is not written, so the output says exactly
-    that and prints the rendered configuration for the user to place. Reporting a
-    partial outcome honestly is the requirement; rolling the live change back would
-    trade a stated inconsistency for an unstated one, since the removal can fail too.
+    **Atomic is not exclusive, and publication needs both.** A rename replaces its
+    target, so if another editor created a configuration during the live startup — which
+    can take a while — an ordinary rename destroys it. And the target is one of four
+    recognized names (`watt.config.ts`, `.mts`, `.js`, `.mjs`), so a rename that
+    *succeeds* can still leave two candidates in the directory, which the loader
+    rejects and which turns the reload this sequence was ordered around into an
+    ambiguity error. So the commit **rechecks the whole candidate set immediately
+    before writing** and publishes with a **no-clobber** create rather than a
+    replacing rename. If any candidate appeared in the meantime it is left exactly as
+    it is: the application is already live, and the output says so and prints the
+    rendered configuration to merge by hand.
+
+    Publication can also fail on I/O, and either way the outcome is **reported, never
+    swallowed**: the application is running and the file is not written, so the output
+    says exactly that. Reporting a partial outcome honestly is the requirement;
+    rolling the live change back would trade a stated inconsistency for an unstated
+    one, since the removal can fail too.
+
+    **What the emitted entry contains is the whole difficulty**, because three rules
+    meet on it. Level 0 synthesized `server.port` because a detected framework
+    application starts nothing without one; a multi-app root does not rely on detector
+    inference for an application it names; and a global `PORT` expression has to become
+    `PLT_<ID>_PORT` the moment siblings exist. Emitting `{ id, path }` alone satisfies
+    none of them — the synthesized server block is gone and the application is
+    inactive under `dev`. Serializing the resolved synthetic object satisfies the
+    first two and breaks deployment, freezing today's numeric `PORT` into the file.
+
+    So the entry carries the **detected `module` and an authored expression**:
+    `config: { module: '@platformatic/next', server: { port:
+    Number(process.env.PLT_FRONTEND_PORT || 3042) } }`, with the id normalized the way
+    every other id is. This is generated **code**, not `JSON.stringify(resolvedConfig)`
+    — the stamped plain-object form means "no imported `defineConfig` or factory", not
+    "no expressions", and an object literal in a `.ts` module holds an expression
+    perfectly well. The command's output **says the variable changed**, because a
+    deployment setting `PORT` was reaching this application a moment ago and will not
+    be afterwards; scoping it is required by the multi-app rule, and doing it silently
+    would be a port change nobody asked for.
 
     **The filename and the form follow the rules the rest of the document already
     sets.** The suffix comes from the same selector scaffolding uses — `watt.config.ts`,
@@ -4523,11 +4555,14 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     changes with item 14; `--save` is retained via magicast (snippet fallback
     for non-static shapes; for `configPath: null` it materializes a root file for a
     synthesized runtime and refuses for a programmatic one, checked before the live
-    mutation, and publishes the file **after** the live change so the watcher reload it
-    triggers converges rather than races). Tests cover add and remove against a
-    synthesized runtime and an object-backed one, both watcher orderings, a failing
-    live start and a failing publish, and CommonJS and ESM materialization — including
-    that a save which cannot happen is not reported as an atomic success.
+    mutation, and publishes the file **after** the live change with a no-clobber create,
+    rechecking every recognized candidate first, so the watcher reload it triggers
+    converges rather than races and a concurrently authored config is never replaced).
+    Tests cover add and remove against a synthesized runtime and an object-backed one,
+    both watcher orderings, a failing live start and a failing publish, same-target and
+    sibling-suffix races, a changed `PLT_<ID>_PORT` after materialization and reboot,
+    and CommonJS and ESM materialization — including that a save which cannot happen is
+    not reported as an atomic success.
 12. Capability CLI commands (`db:*`, `gateway:*`, `next:*`): the `createCommands`
     contract changes from config-file-path to `{ root, config }` data; commands no
     longer self-load config, and the `utimesSync` restart trick is replaced by a
