@@ -3083,14 +3083,42 @@ export default {
   that cannot happen must not be discovered after the application is already running,
   or `--save` reports an atomic success it did not perform.
 
-  - **Synthesized (zero-config)**: `--save` writes a complete root `watt.config.ts`
-    containing the *detected* application as an explicit entry plus the requested
-    change, then applies the live mutation. Materializing the synthesis is the whole
-    job: adding a second application turns a Level 0 project into a multi-app root,
-    and the file has to say what was previously implied or the next boot loses the
-    original application. That is the one case where `--save` creates a file, and it
-    says so in its output, because a command that writes a configuration into a
-    project that had none should not do it quietly.
+  - **Synthesized (zero-config)**: `--save` materializes the synthesis — a complete
+    root config containing the *detected* application as an explicit entry plus the
+    requested change. That is the whole job: adding a second application turns a
+    Level 0 project into a multi-app root, and the file has to state what was
+    previously implied or the next boot loses the original application. It is the one
+    case where `--save` creates a file, and it says so in its output, because a
+    command that writes a configuration into a project that had none should not do it
+    quietly.
+
+    **Writing that file is itself a runtime mutation, so the order is not free.**
+    Under `wattpm dev` the watcher watches absent config candidates for creation
+    precisely so a new `watt.config.*` triggers a reload (see "Loading mechanism"), and
+    this command creates the first one. Writing before the live change lets the reload
+    apply it first, so the command's own `POST`/`DELETE` then hits a topology that
+    already has — or has already lost — the application, and answers duplicate or
+    not-found. So the sequence is **render, validate, mutate, publish**: the file
+    content is rendered and validated against the loader in memory; the live mutation
+    is applied and confirmed; then the file is published atomically, by write-and-
+    rename, so the reload it triggers converges on a topology the runtime is already
+    in. Validating before mutating is what keeps the last step from being the one that
+    can fail on content.
+
+    Publication can still fail on I/O, and that is **reported, never swallowed**: the
+    application is running and the file is not written, so the output says exactly
+    that and prints the rendered configuration for the user to place. Reporting a
+    partial outcome honestly is the requirement; rolling the live change back would
+    trade a stated inconsistency for an unstated one, since the removal can fail too.
+
+    **The filename and the form follow the rules the rest of the document already
+    sets.** The suffix comes from the same selector scaffolding uses — `watt.config.ts`,
+    or `watt.config.mts` where the package is `"type": "commonjs"`, because
+    `export default` in a CommonJS `.ts` is a syntax error (see "One dialect"). The
+    content is the **stamped plain-object form** with its `$schema` marker, not an
+    imported `defineConfig`: a zero-config project need not have `wattpm` resolvable
+    from its root, and `--save` installs nothing. That is exactly the machine-writer
+    case the marker rule exists for (see "Machine-generated configs").
   - **Programmatic object source**: `--save` **refuses**, before mutating, naming the
     embedder. There is no honest target — the configuration lives in the host
     program's memory, and any file this command wrote would be shadowed by the object
@@ -4445,9 +4473,11 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     changes with item 14; `--save` is retained via magicast (snippet fallback
     for non-static shapes; for `configPath: null` it materializes a root file for a
     synthesized runtime and refuses for a programmatic one, checked before the live
-    mutation). Tests cover add and remove against a synthesized runtime and an
-    object-backed one, including that a save which cannot happen is not reported as
-    an atomic success.
+    mutation, and publishes the file **after** the live change so the watcher reload it
+    triggers converges rather than races). Tests cover add and remove against a
+    synthesized runtime and an object-backed one, both watcher orderings, a failing
+    live start and a failing publish, and CommonJS and ESM materialization — including
+    that a save which cannot happen is not reported as an atomic success.
 12. Capability CLI commands (`db:*`, `gateway:*`, `next:*`): the `createCommands`
     contract changes from config-file-path to `{ root, config }` data; commands no
     longer self-load config, and the `utimesSync` restart trick is replaced by a
