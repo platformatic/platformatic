@@ -3767,7 +3767,11 @@ Generation reads both views. Then:
    the run with "hand-conversion required", naming what blocks it. This is the **one
    enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
    anywhere else in this document without appearing here is a bug in the document.
-   Eleven triggers. Two of them bound what migrate may touch at all.
+   Twelve triggers. The first three bound what migrate may touch, what it may
+   overwrite, and what it may produce; the rest are conversions it cannot perform
+   faithfully. The count is stated once, here, and is the length of the list below —
+   incrementing the number without adding the entry is the failure this sentence
+   exists to make visible.
 
    **An application whose directory lies outside the migration transaction root**
    stops the run. The transaction root is the workspace containing the root config —
@@ -3857,8 +3861,14 @@ Generation reads both views. Then:
    entrypoint differently for `production` and `development` or cannot be decided at
    all** (see the exposure rules in step 1); a **structural path that resolves to
    nothing** after the fallbacks above; **two application ids that collide once
-   renamed**; and **one variable occupying two positions whose schema constraints do
-   not intersect, or whose combination migrate cannot decide**. The test is a **non-empty
+   renamed**; **one variable occupying two positions whose schema constraints do
+   not intersect, or whose combination migrate cannot decide**; and a **directory
+   `resolve` cloned into that also holds a local application, a file migrate must
+   read, or a path it plans to emit** — a project whose remote checkouts and own
+   sources share a directory, where the exclusion that protects the clone would
+   otherwise swallow work the run has to do (see step 1). Its manual fixes are the two
+   that separate them: move the local application out of the resolution base, or point
+   `resolvedApplicationsBasePath` at a directory of its own. The test is a **non-empty
    intersection of every applicable constraint**, not equality of primitive types —
    matching types are not sufficient, and the shipped schemas prove it: `packageManager`
    (`["npm","pnpm","yarn"]`) and `logger.level` (`["fatal"…"silent"]`) are both
