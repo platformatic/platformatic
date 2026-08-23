@@ -25,7 +25,9 @@ export function normalizeApplications (config, { directory, onConflict }) {
   return config
 }
 
-async function readPackageName (directory) {
+// One derivation used at every position means one reader for its middle rung as well: autoload
+// expansion and the main-side driver both ask this, so they cannot drift.
+export async function readPackageName (directory) {
   try {
     const contents = await readFile(join(directory, 'package.json'), 'utf-8')
 

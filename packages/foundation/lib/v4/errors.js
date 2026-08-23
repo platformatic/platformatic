@@ -55,6 +55,26 @@ export const ApplicationConfiguredTwiceError = createError(
   'Application %s has an inline config in the root configuration and a configuration file at %s. Remove one of them.'
 )
 
+export const AmbiguousCapabilityError = createError(
+  `${ERROR_PREFIX}_AMBIGUOUS_CAPABILITY`,
+  'Application %s declares more than one capability dependency: %s. Add a configuration file naming the one it uses.'
+)
+
+export const CapabilityNotDetectedError = createError(
+  `${ERROR_PREFIX}_CAPABILITY_NOT_DETECTED`,
+  'Cannot detect the capability of application %s: %s declares no capability dependency, no known framework and no JavaScript sources.'
+)
+
+export const EnvFileOnInlineConfigError = createError(
+  `${ERROR_PREFIX}_ENV_FILE_ON_INLINE_CONFIG`,
+  'Application %s declares an envfile but carries an inline config, so no file is read for it and the envfile would govern the worker environment alone.'
+)
+
+export const EnvFileOnDecidingDirectoryError = createError(
+  `${ERROR_PREFIX}_ENV_FILE_ON_DECIDING_DIRECTORY`,
+  'Application %s declares an envfile and its directory is the directory of %s. Applying it would mean reading the configuration in order to build the environment that produces the configuration.'
+)
+
 export const EnvFileNotFoundError = createError(
   `${ERROR_PREFIX}_ENV_FILE_NOT_FOUND`,
   'The env file %s does not exist.'

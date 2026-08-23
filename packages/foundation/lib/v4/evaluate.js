@@ -131,7 +131,7 @@ export async function evaluateConfigurationFile ({
     throw outcome.error
   }
 
-  const { config, resolveCandidates, warnings, mutatedEnvKeys } = outcome.value
+  const { config, classification, resolveCandidates, warnings, mutatedEnvKeys } = outcome.value
 
-  return { config, resolveCandidates, warnings, mutatedEnvKeys, ...collected }
+  return { config, classification, resolveCandidates, warnings, mutatedEnvKeys, ...collected }
 }

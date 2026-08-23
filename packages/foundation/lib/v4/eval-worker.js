@@ -101,7 +101,7 @@ async function evaluateRoot (exported, context) {
     const config = autoWrapApplicationDefinition(snapshot)
 
     normalizeApplications(config, { directory })
-    return { config, resolveCandidates: [], warnings: [] }
+    return { config, classification, resolveCandidates: [], warnings: [] }
   }
 
   const slots = resolveSlotContainers(snapshot, deferred)
@@ -142,7 +142,7 @@ async function evaluateRoot (exported, context) {
     slot.container[slot.key] = canonicalize(resolved).config
   }
 
-  return { config: snapshot, resolveCandidates, warnings }
+  return { config: snapshot, classification, resolveCandidates, warnings }
 }
 
 /*
@@ -185,7 +185,7 @@ async function evaluateApplication (exported) {
     throw new RootConfigurationInApplicationEntryError(path, applicationId ?? directory)
   }
 
-  return { config: snapshot, resolveCandidates: [], warnings: [] }
+  return { config: snapshot, classification, resolveCandidates: [], warnings: [] }
 }
 
 async function run () {
@@ -234,9 +234,9 @@ async function run () {
 }
 
 try {
-  const { config, resolveCandidates, warnings, mutatedEnvKeys } = await run()
+  const { config, classification, resolveCandidates, warnings, mutatedEnvKeys } = await run()
 
-  parentPort.postMessage({ type: 'result', config, resolveCandidates, warnings, mutatedEnvKeys })
+  parentPort.postMessage({ type: 'result', config, classification, resolveCandidates, warnings, mutatedEnvKeys })
 } catch (error) {
   // Errors are posted as plain data rather than as Error instances: structured clone keeps name,
   // message and stack but drops the code, which is the part every caller branches on.
