@@ -505,6 +505,16 @@
       "head": "this.#status = status",
       "lines": 21
     },
+    "packages/runtime/lib/runtime.js:2171": {
+      "sha": "0f61db6851ef20cf",
+      "head": "const urls = status === 'started' ? Object.values(this.getUrls(id)) : []",
+      "lines": 1
+    },
+    "packages/runtime/index.d.ts:114-127": {
+      "sha": "efa52ab333b2527a",
+      "head": "export interface ApplicationDetails {",
+      "lines": 14
+    },
     "packages/basic/lib/capability.js:604": {
       "sha": "1a16cb24d1e8dab7",
       "head": "const [url, clientWs] = await once(this.childManager, 'url')",

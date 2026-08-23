@@ -1689,9 +1689,35 @@ implements it from `#hasServer()` — false via `config.node.hasServer`, a modul
 `hasServer` export, or `isBackgroundApplication` on the factory result
 (`node/lib/capability.js:245-250`), two of which are only knowable after the
 application's code has run — and `ViteSSRCapability` inherits that implementation
-along with the rest of Node's startup path. The same value appears in
-`getApplicationDetails()`: a report shape the programmatic API cannot answer is a
-shape that exists only in a terminal.
+along with the rest of Node's startup path.
+
+**It is a new field, `servingState`, and it does not touch `status`.** The two are
+different questions — `status` is worker lifecycle, and the runtime gates URL
+emission on `status === 'started'` (`runtime/lib/runtime.js:2171`), so overloading it
+with a serving enum would drop every URL the moment `'listening' !== 'started'`.
+`servingState: 'listening' | 'mesh-only' | 'background' | 'inactive'` is added to the
+worker info reply and surfaces beside `status` on `ApplicationDetails`
+(`runtime/index.d.ts:114-127`) and in the management payload. For an application that
+is not running it is **absent**, not `'inactive'`: a stopped application is not making
+a claim about how it would serve, and conflating "not started" with "started and
+serving nothing" is the distinction this field exists to draw. A report shape the
+programmatic API cannot answer is a shape that exists only in a terminal, which is why
+it goes in the DTO rather than only in the printed line.
+
+**Every worker answers, and they must agree.** `servingState` is computed per worker,
+and for a worker-classified capability it depends on invoking the application's
+factory *in that worker* — nothing stops arbitrary code from returning a Fastify app
+from worker 0 and a background result from worker 1. Sampling one worker, which is
+what `getApplicationDetails()` does today, would make the reported value depend on
+which worker the selector happened to pick. That is the smaller half of the problem:
+the larger one is that mesh dispatch would then route a share of requests to a worker
+that destroys them. So the runtime **collects `servingState` from every worker and
+refuses a mixed answer**, at start and again at scale-up, naming each worker and the
+state it reported. One application is one thing; workers that disagree about whether
+it serves HTTP are a bug in the application, and failing loudly beats destroying a
+fraction of mesh requests. Merely naming the sampled worker in the report would be
+the cheaper answer and the wrong one: it makes the reported value honest and leaves
+the routing hazard exactly where it was.
 
 **`BaseCapability`'s default is deliberately pessimistic**: `this.url ? 'listening' :
 'inactive'`. A third-party capability that neither declares `servesWithoutPort` nor
