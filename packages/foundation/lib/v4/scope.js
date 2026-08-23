@@ -3,6 +3,7 @@ import { isFileAccessible } from '../file-system.js'
 import { ConfigurationFileNotFoundError, LegacyConfigurationFileError } from './errors.js'
 import {
   configurationFileNames,
+  findAnyConfigurationFile,
   hasConfigurationFile,
   inspectDirectory,
   isConfigurationFileName,
@@ -144,6 +145,26 @@ export async function findAncestorConfiguration (directory) {
   const found = await scanAncestorConfigurations(parent)
 
   return found.length > 0 ? found[0] : null
+}
+
+// The same walk, over both candidate sets, for the zero-config warning. It stops at the first
+// ancestor that has anything, since that is the file the user is asked about.
+export async function findAncestorConfigurationOfAnyKind (directory) {
+  const parent = dirname(directory)
+
+  if (parent === directory) {
+    return null
+  }
+
+  for (const candidate of ancestorDirectories(parent)) {
+    const found = await findAnyConfigurationFile(candidate)
+
+    if (found) {
+      return found
+    }
+  }
+
+  return null
 }
 
 // Per-app discovery consults a directory the same way the walk does, with one exception: a

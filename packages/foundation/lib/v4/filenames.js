@@ -89,6 +89,23 @@ export async function inspectDirectory (directory) {
   return candidates.length === 1 ? join(directory, candidates[0]) : null
 }
 
+// Synthesis is never refused on account of a configuration above, but it does say so — and the
+// scan looks for the complete candidate set rather than only the v4 names, because a v3 monorepo
+// is exactly where a configless subpackage is most likely to be found. Synthesizing there while an
+// ancestor platformatic.json describes the application is the same silence with an older filename.
+export async function findAnyConfigurationFile (directory) {
+  const entries = await listDirectoryEntries(directory)
+  const candidates = selectConfigurationFileNames(entries)
+
+  if (candidates.length > 0) {
+    return { path: join(directory, candidates[0]), legacy: false }
+  }
+
+  const legacy = selectLegacyConfigurationFileNames(entries)
+
+  return legacy.length > 0 ? { path: join(directory, legacy[0]), legacy: true } : null
+}
+
 // The env-root and watch-horizon scans are filename checks that execute nothing and decide
 // nothing about which configuration boots, so they never raise the ambiguity error: a directory
 // that has two candidates still has a configuration in it.

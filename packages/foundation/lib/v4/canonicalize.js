@@ -63,6 +63,11 @@ export function isDeferredSlot (segments) {
   so omitting them is something this pass does rather than something the boundary does for it.
 */
 export function canonicalize (value, { deferred = false } = {}) {
+  // deferred: true records a function at the two carve-out paths and leaves the slot pending;
+  // 'reject' refuses one there with the object-source message; false gives it the ordinary
+  // functions-cannot-be-transported error, which is correct for a per-app file, where a property
+  // named config is a capability option rather than a slot.
+
   const slots = []
   const ancestors = new Set()
 
@@ -88,9 +93,22 @@ export function canonicalize (value, { deferred = false } = {}) {
       case 'symbol':
         throw new InvalidConfigValueError(pointer(), 'symbol values cannot be transported')
       case 'function':
-        if (deferred && isDeferredSlot(segments)) {
-          slots.push({ pointer: pointer(), path: segments.slice(), value: current })
-          return undefined
+        if (isDeferredSlot(segments)) {
+          if (deferred === true) {
+            slots.push({ pointer: pointer(), path: segments.slice(), value: current })
+            return undefined
+          }
+
+          if (deferred === 'reject') {
+            // An embedder is already writing JavaScript and can call the function itself. What
+            // rejecting it avoids is a second, weaker evaluation contract: a callback run
+            // main-side would receive a resolved ctx.env while process.env around it stayed the
+            // caller's, and would skip the mutation diff, the deadline and the cache isolation.
+            throw new InvalidConfigValueError(
+              pointer(),
+              'a function-valued config is not allowed in a programmatic configuration object; call it and pass the result'
+            )
+          }
         }
 
         throw new InvalidConfigValueError(

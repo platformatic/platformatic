@@ -65,6 +65,11 @@ export const CapabilityNotDetectedError = createError(
   'Cannot detect the capability of application %s: %s declares no capability dependency, no known framework and no JavaScript sources.'
 )
 
+export const ObjectSourceRootRequiredError = createError(
+  `${ERROR_PREFIX}_OBJECT_SOURCE_ROOT_REQUIRED`,
+  'Provide the root argument when passing a configuration object: it stands in for the directory a configuration file would have been read from.'
+)
+
 export const EnvFileOnInlineConfigError = createError(
   `${ERROR_PREFIX}_ENV_FILE_ON_INLINE_CONFIG`,
   'Application %s declares an envfile but carries an inline config, so no file is read for it and the envfile would govern the worker environment alone.'

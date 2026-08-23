@@ -2,6 +2,7 @@ import { dirname } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { ensureError } from '../errors.js'
 import { ConfigurationEvaluationTimeoutError, EvaluationEndedWithoutResultError } from './errors.js'
+import { evaluateConfiguration } from './pipeline.js'
 
 export const defaultEvaluationTimeout = 30000
 
@@ -134,4 +135,46 @@ export async function evaluateConfigurationFile ({
   const { config, classification, resolveCandidates, warnings, mutatedEnvKeys } = outcome.value
 
   return { config, classification, resolveCandidates, warnings, mutatedEnvKeys, ...collected }
+}
+
+function installEnvironment (view) {
+  const previous = { ...process.env }
+
+  for (const key of Object.keys(process.env)) {
+    delete process.env[key]
+  }
+
+  Object.assign(process.env, view)
+
+  return function restore () {
+    for (const key of Object.keys(process.env)) {
+      delete process.env[key]
+    }
+
+    Object.assign(process.env, previous)
+  }
+}
+
+/*
+  Breakpoint debugging gets an explicit escape hatch, since a throwaway thread dies before an
+  inspector can attach: with --inspect-brk, evaluation runs in-process and is therefore restricted
+  to one config file, precisely because one process has one module cache, in which only a single
+  file's env view can be correct. The other files still evaluate in their workers, and cannot be
+  contaminated by this one regardless of ordering — the main process constructs each worker with an
+  explicit env, and workers never inherit process.env.
+
+  process.env is installed and restored around the call, so the "does not propagate" statement
+  stays true in debug mode. The evaluation deadline is not applied: a paused breakpoint session
+  must not be killed by the 30 s timer.
+*/
+export async function evaluateConfigurationInProcess ({ env, ...options } = {}) {
+  const restore = installEnvironment(env ?? {})
+
+  try {
+    const result = await evaluateConfiguration({ ...options, env: process.env })
+
+    return { ...result, importedFiles: [], watchedFiles: [] }
+  } finally {
+    restore()
+  }
 }
