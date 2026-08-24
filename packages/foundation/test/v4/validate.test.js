@@ -1,5 +1,5 @@
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
-import { join } from 'node:path'
+import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createCapabilityValidator,
@@ -157,14 +157,11 @@ test('coercion is off, so a stringly number is a failure rather than a silent co
 
 test('resolvePath resolves against the application root, not the runtime root', () => {
   const config = { main: './server.js' }
+  const root = resolve('/app', 'web/api')
 
-  validateCapabilityConfiguration(config, capabilitySchema, {
-    id: 'api',
-    module: '@acme/capability',
-    root: join('/app', 'web/api')
-  })
+  validateCapabilityConfiguration(config, capabilitySchema, { id: 'api', module: '@acme/capability', root })
 
-  strictEqual(config.main, join('/app', 'web/api/server.js'))
+  strictEqual(config.main, resolve(root, './server.js'))
 })
 
 test('allowEmptyPaths is what decides whether an empty path is legal', () => {

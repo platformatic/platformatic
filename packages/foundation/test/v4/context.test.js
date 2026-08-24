@@ -1,5 +1,5 @@
 import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert'
-import { join } from 'node:path'
+import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { createConfigurationContext, defaultMode, isProductionCommand } from '../../lib/v4/index.js'
 
@@ -64,9 +64,9 @@ test('addWatchFile resolves relative paths against ctx.root and returns nothing'
   // ctx.root is the only stable referent: a helper that calls this may live anywhere, and
   // process.cwd() is wherever the command was typed.
   strictEqual(context.addWatchFile('./config/ports.json'), undefined)
-  context.addWatchFile(join('/elsewhere', 'shared.json'))
+  context.addWatchFile(resolve('/elsewhere', 'shared.json'))
 
-  deepStrictEqual(declared, [join('/proj', 'config/ports.json'), join('/elsewhere', 'shared.json')])
+  deepStrictEqual(declared, [resolve('/proj', 'config/ports.json'), resolve('/elsewhere', 'shared.json')])
 })
 
 test('addWatchFile is a no-op outside a watching command', () => {
