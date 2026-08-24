@@ -68,8 +68,10 @@ test('should list the configured scheduler jobs', async t => {
   ])
 
   const jobs = await app.getSchedulerJobs()
+  const legacyJobs = app.getScheduler()
 
   // Disabled jobs are not registered at all
+  deepStrictEqual(legacyJobs, jobs)
   equal(jobs.length, 1)
   equal(jobs[0].name, 'test')
   equal(jobs[0].cron, '*/1 * * * * *')
