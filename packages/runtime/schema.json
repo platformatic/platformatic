@@ -134,7 +134,14 @@
                 "default": true
               },
               "config": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "reuseTcpPorts": {
                 "type": "boolean",
@@ -556,7 +563,14 @@
             "resolvePath": true
           },
           "config": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
           },
           "url": {
             "type": "string"
@@ -983,7 +997,14 @@
             "resolvePath": true
           },
           "config": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
           },
           "url": {
             "type": "string"
@@ -1410,7 +1431,14 @@
             "resolvePath": true
           },
           "config": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
           },
           "url": {
             "type": "string"

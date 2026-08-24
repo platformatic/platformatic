@@ -263,6 +263,13 @@ export async function prepareApplication (config, application, defaultWorkers) {
     }
   }
 
+  return finalizeApplication(config, application, defaultWorkers)
+}
+
+// Everything an application needs regardless of how its capability was determined. v3 discovers
+// that by loading the application's config file; v4 has it from the loader's envelope before any
+// worker exists.
+export function finalizeApplication (config, application, defaultWorkers) {
   // Validate and coerce per-service workers
   parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
 
@@ -278,6 +285,39 @@ export async function prepareApplication (config, application, defaultWorkers) {
   }
 
   return application
+}
+
+/*
+  The v4 preparation. The loader resolved the path, selected the capability and imported its schema
+  subpath — which carries skipTelemetryHooks and modulesToLoad — all main-side, before any worker
+  existed. So there is nothing to discover here, and in particular no application config file to
+  re-read: that is the whole point of evaluating configuration exactly once per load.
+*/
+export async function prepareV4Application (config, application, defaultWorkers) {
+  // resolvedConfig replaces v3's config file path in workerData: the worker receives the validated
+  // capability payload as data and never re-reads a file.
+  application.resolvedConfig = application.config ?? {}
+  application.config = undefined
+  application.type = application.module ?? 'unknown'
+  application.skipTelemetryHooks = application.capabilityMetadata?.skipTelemetryHooks ?? false
+
+  // This is needed to work around a Rust bug on dylibs, as in the v3 path.
+  const modulesToLoad = application.capabilityMetadata?.modulesToLoad ?? []
+
+  if (modulesToLoad.length > 0 && application.path) {
+    const _require = createRequire(application.path)
+
+    for (const m of modulesToLoad) {
+      try {
+        loadModule(_require, _require.resolve(m)).catch(() => {})
+      } catch {
+        // A module the capability names but the application cannot resolve is not fatal here; the
+        // worker reports it with its own context when it actually needs it.
+      }
+    }
+  }
+
+  return finalizeApplication(config, application, defaultWorkers)
 }
 
 function isApplicationEnabled (application, environment) {
@@ -401,6 +441,13 @@ export async function transform (config, _, context) {
     }
   }
 
+  return finalizeConfiguration(config, applications, context, production, prepareApplication)
+}
+
+// The half of the transform the loader does not own: inspector options, worker counts, the
+// per-application preparation, and the runtime-level normalizations. v4 reaches this directly,
+// having already expanded autoload and resolved enabled in the eval worker.
+export async function finalizeConfiguration (config, applications, context, production, prepare) {
   config.inspectorOptions = undefined
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
@@ -409,7 +456,7 @@ export async function transform (config, _, context) {
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
-    await prepareApplication(config, applications[i], defaultWorkers)
+    await prepare(config, applications[i], defaultWorkers)
   }
 
   if (typeof config.metrics === 'boolean') {
@@ -448,4 +495,28 @@ export async function transform (config, _, context) {
   autoDetectPprofCapture(config)
 
   return config
+}
+
+/*
+  The v4 transform. What is absent is the point:
+
+  - no alias merging, because `services` and `web` do not exist in v4;
+  - no autoload expansion and no `enabled` filtering, because both ran in the root eval worker,
+    which is the only place either runs. Leaving them reachable here would let a second expansion
+    re-merge entries and read the filesystem after the authoritative snapshot already exists;
+  - no verticalScaler migration, which the schema audit removes.
+
+  The `autoload` declaration survives as data beside the expanded list — `GET /metadata` reports it
+  and `applications:add --save` needs it to decide whether a new application belongs in a mapping
+  or as an explicit entry. It is carried, never re-executed.
+*/
+export async function transformV4 (config, _, context) {
+  const production = context?.isProduction ?? context?.production
+  const applications = config.applications ?? []
+
+  if (typeof config.watch === 'undefined') {
+    config.watch = !production
+  }
+
+  return finalizeConfiguration(config, applications, context, production, prepareV4Application)
 }

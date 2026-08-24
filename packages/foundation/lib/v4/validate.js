@@ -86,10 +86,13 @@ export function createCapabilityValidator (schema, { root, fixPaths = true, useD
   otherwise not be able to validate at all, and a validator that skips what it cannot import is not
   a validator. Removing the fallback is part of the capability work.
 */
-export async function importCapabilitySchema (module, applicationRoot) {
+export async function importCapabilitySchema (module, applicationRoot, { runtimeScope } = {}) {
   const scopes = [
     { scope: 'application', require: createRequire(join(applicationRoot, 'noop.js')) },
-    { scope: 'runtime', require: createRequire(import.meta.filename) }
+    // The bundled fallback resolves from the caller's position, not from this module's: foundation
+    // is the lowest package in the graph and depends on no capability, so resolving from here would
+    // make "runtime-bundled" name a place no capability has ever been installed.
+    { scope: 'runtime', require: createRequire(runtimeScope ?? import.meta.filename) }
   ]
 
   for (const { scope, require } of scopes) {

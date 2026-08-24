@@ -889,7 +889,11 @@ export const application = {
       resolvePath: true
     },
     config: {
-      type: 'string'
+      // v4 entries carry an inline ApplicationDefinition here — the object a capability factory
+      // returns — where v3 carried a path to a configuration file. The union is transitional and
+      // narrows to the object alone when the v3 reader leaves foundation; it is listed for the
+      // schema audit rather than left to be rediscovered.
+      anyOf: [{ type: 'string' }, { type: 'object' }]
     },
     url: {
       type: 'string'

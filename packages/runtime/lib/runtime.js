@@ -2567,7 +2567,10 @@ export class Runtime extends EventEmitter {
       preload = preload.filter(p => p !== pprofCapturePath)
     }
 
-    const workerEnv = structuredClone(this.#env)
+    // v4 resolves each application's worker environment main-side, with its own env-file chain, the
+    // two env blocks and the injected topology URLs. v3 seeded every worker from one loadEnv at the
+    // runtime root, which is what #env still holds.
+    const workerEnv = structuredClone(applicationConfig.workerEnv ?? this.#env)
 
     if (applicationConfig.nodeOptions?.trim().length > 0) {
       const originalNodeOptions = workerEnv.NODE_OPTIONS ?? ''

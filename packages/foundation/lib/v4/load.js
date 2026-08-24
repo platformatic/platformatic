@@ -186,6 +186,7 @@ export async function loadConfiguration ({
   realEnv = process.env,
   schema,
   validateCapabilities = true,
+  runtimeScope,
   timeout = defaultEvaluationTimeout,
   onImport,
   onWatchFile,
@@ -202,7 +203,8 @@ export async function loadConfiguration ({
     customEnvFile,
     realEnv,
     timeout,
-    validateCapabilities
+    validateCapabilities,
+    runtimeScope
   }
 
   // --config is not a scope flag, but it does take cwd out of the decision.
@@ -303,6 +305,7 @@ export async function loadObjectConfiguration ({
   realEnv = process.env,
   schema,
   validateCapabilities = true,
+  runtimeScope,
   timeout = defaultEvaluationTimeout,
   onImport,
   onWatchFile,
@@ -325,7 +328,8 @@ export async function loadObjectConfiguration ({
     customEnvFile,
     realEnv,
     timeout,
-    validateCapabilities
+    validateCapabilities,
+    runtimeScope
   }
 
   report ??= createReport({ onImport, onWatchFile, onWarning, onInfo })
@@ -457,7 +461,8 @@ async function assemble ({
   customEnvFile,
   realEnv,
   timeout,
-  validateCapabilities
+  validateCapabilities,
+  runtimeScope
 }) {
   const config = result.config
 
@@ -482,6 +487,7 @@ async function assemble ({
     realEnv,
     timeout,
     validateCapabilities,
+    runtimeScope,
     report
   })
 
@@ -599,6 +605,7 @@ async function prepareApplication ({
   realEnv,
   timeout,
   validateCapabilities,
+  runtimeScope,
   report
 }) {
   const prepared = { ...entry, id, path: directory }
@@ -651,7 +658,7 @@ async function prepareApplication ({
       throw new EnvFileOnInlineConfigError(id)
     }
 
-    await applyDefinition(prepared, entry.config, { directory, report, validateCapabilities, production })
+    await applyDefinition(prepared, entry.config, { directory, report, validateCapabilities, production, runtimeScope })
     return prepared
   }
 
@@ -681,7 +688,7 @@ async function prepareApplication ({
     prepared.config = {}
     prepared.detected = true
 
-    await validateApplication(prepared, { module: capability, directory, report, validateCapabilities, production })
+    await validateApplication(prepared, { module: capability, directory, report, validateCapabilities, production, runtimeScope })
 
     if (entry.envfile) {
       report.watch(isAbsolute(entry.envfile) ? entry.envfile : resolve(directory, entry.envfile))
@@ -714,7 +721,7 @@ async function prepareApplication ({
 
   reportMutatedEnv(report, configurationFile, evaluated.mutatedEnvKeys)
 
-  await applyDefinition(prepared, evaluated.config, { directory, report, validateCapabilities, production })
+  await applyDefinition(prepared, evaluated.config, { directory, report, validateCapabilities, production, runtimeScope })
   prepared.configPath = configurationFile
 
   return prepared
@@ -728,7 +735,7 @@ async function prepareApplication ({
   latter renamed on the way out because getApplicationDetails().version already means the capability
   version the running worker loaded.
 */
-async function applyDefinition (prepared, definition, { directory, report, validateCapabilities, production }) {
+async function applyDefinition (prepared, definition, { directory, report, validateCapabilities, production, runtimeScope }) {
   const { module, version, ...payload } = definition
 
   prepared.config = payload
@@ -745,7 +752,8 @@ async function applyDefinition (prepared, definition, { directory, report, valid
     id: prepared.id,
     module,
     stamped: version,
-    applicationRoot: directory
+    applicationRoot: directory,
+    runtimeScope
   })
 
   if (skew) {
@@ -757,7 +765,7 @@ async function applyDefinition (prepared, definition, { directory, report, valid
     report.onWarning?.({ type: 'capability-version-skew', ...skew })
   }
 
-  await validateApplication(prepared, { module, directory, report, validateCapabilities, production })
+  await validateApplication(prepared, { module, directory, report, validateCapabilities, production, runtimeScope })
 }
 
 /*
@@ -772,12 +780,12 @@ async function applyDefinition (prepared, definition, { directory, report, valid
   alternative, and it is worse: a check that treats "I could not verify this" as "verified" is not
   a check. The default flips when the subpaths land.
 */
-async function validateApplication (prepared, { module, directory, report, validateCapabilities, production }) {
+async function validateApplication (prepared, { module, directory, report, validateCapabilities, production, runtimeScope }) {
   if (!validateCapabilities || !module) {
     return
   }
 
-  const { schema, metadata, via, path } = await importCapabilitySchema(module, directory)
+  const { schema, metadata, via, path } = await importCapabilitySchema(module, directory, { runtimeScope })
 
   if (via === 'entry') {
     report.onWarning?.({

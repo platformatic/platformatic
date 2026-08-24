@@ -1816,7 +1816,14 @@
                 "resolvePath": true
               },
               "config": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "url": {
                 "type": "string"

@@ -17,6 +17,7 @@ import {
   getOnHttpStatsRunning,
   getOnHttpStatsSize
 } from '@platformatic/globals'
+import { importCapabilityPackage } from '@platformatic/basic'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
 import { existsSync } from 'node:fs'
@@ -125,28 +126,52 @@ export class Controller extends EventEmitter {
         process.env.NODE_ENV = 'production'
       }
 
-      // Before returning the base application, check if there is any file we recognize
-      // and the user just forgot to specify in the configuration.
-      if (!appConfig.config) {
-        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
+      /*
+        v4: the configuration was evaluated exactly once, main-side, and this worker receives the
+        validated capability payload as data. There is no file to re-read and no schema to
+        rediscover — which is the whole point, since re-parsing per worker meant an application
+        with workers: 4 evaluated user code five times and could reach five different answers.
 
-        if (candidate) {
-          appConfig.config = resolve(appConfig.path, candidate)
-        }
-      }
+        The capability is imported through the canonical resolution order, application-scoped first,
+        so the copy that runs here is the copy whose schema validated the payload main-side.
+      */
+      /*
+        v4: the configuration was evaluated exactly once, main-side, and this worker receives the
+        validated capability payload as data. There is no file to re-read and no schema to
+        rediscover — which is the point, since re-parsing per worker meant an application with
+        workers: 4 evaluated user code five times and could reach five different answers.
 
-      if (appConfig.config) {
-        // Parse the configuration file the first time to obtain the schema
-        const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.fetchApplicationUrl,
-          strictEnv: this.#context.strictEnv
-        })
-        const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
-        this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
-        // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
+        The capability is imported through the canonical resolution order, application-scoped
+        first, so the copy that runs here is the copy whose schema validated the payload.
+      */
+      if (appConfig.resolvedConfig) {
+        const pkg = await importCapabilityPackage(appConfig.path, appConfig.module)
+
+        this.capability = await pkg.create(appConfig.path, appConfig.resolvedConfig, this.#context)
       } else {
-        const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
-        this.capability = await pkg.create(appConfig.path, {}, this.#context)
+        // Before returning the base application, check if there is any file we recognize
+        // and the user just forgot to specify in the configuration.
+        if (!appConfig.config) {
+          const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
+
+          if (candidate) {
+            appConfig.config = resolve(appConfig.path, candidate)
+          }
+        }
+
+        if (appConfig.config) {
+          // Parse the configuration file the first time to obtain the schema
+          const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
+            onMissingEnv: this.#context.fetchApplicationUrl,
+            strictEnv: this.#context.strictEnv
+          })
+          const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
+          this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
+          // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
+        } else {
+          const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
+          this.capability = await pkg.create(appConfig.path, {}, this.#context)
+        }
       }
 
       this.#updateDispatcher()

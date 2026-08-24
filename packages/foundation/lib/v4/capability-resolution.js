@@ -52,10 +52,12 @@ function findPackageJson (require, module) {
   the worker's implementation import, this check, and the main process's schema import, so the
   three cannot disagree.
 */
-export function resolveCapabilityPackage (module, applicationRoot) {
+export function resolveCapabilityPackage (module, applicationRoot, { runtimeScope } = {}) {
   const attempts = [
     { scope: 'application', require: createRequire(join(applicationRoot, 'noop.js')) },
-    { scope: 'runtime', require: createRequire(import.meta.filename) }
+    // Resolved from the caller's position for the same reason the schema import is: foundation
+    // depends on no capability, so its own position is not where a bundled copy lives.
+    { scope: 'runtime', require: createRequire(runtimeScope ?? import.meta.filename) }
   ]
 
   for (const { scope, require } of attempts) {
@@ -121,12 +123,12 @@ export function compareCapabilityVersions (stamped, resolved) {
   only to be rejected by the 4.0 schema at boot, or silently misapplied where the schemas differ
   more subtly. Hoisted layouts, where factory and worker share one copy, never false-positive.
 */
-export function checkCapabilityVersionSkew ({ id, module, stamped, applicationRoot }) {
+export function checkCapabilityVersionSkew ({ id, module, stamped, applicationRoot, runtimeScope }) {
   if (!stamped) {
     return null
   }
 
-  const resolved = resolveCapabilityPackage(module, applicationRoot)
+  const resolved = resolveCapabilityPackage(module, applicationRoot, { runtimeScope })
   const { level, reason } = compareCapabilityVersions(stamped, resolved.version)
 
   if (level === 'ok') {

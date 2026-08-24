@@ -8,9 +8,16 @@ import {
   loadConfigurationModule,
   loadConfiguration as utilsLoadConfiguration
 } from '@platformatic/foundation'
+import {
+  isConfigurationFileName,
+  findDecidingFile,
+  loadConfiguration as loadV4Configuration,
+  validateCapabilityConfiguration
+} from '@platformatic/foundation/lib/v4/index.js'
 import closeWithGrace from 'close-with-grace'
 import inspector from 'node:inspector'
-import { transform, wrapInRuntimeConfig } from './lib/config.js'
+import { basename, dirname, resolve as resolvePath } from 'node:path'
+import { transform, transformV4, wrapInRuntimeConfig } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
 import { schema } from './lib/schema.js'
@@ -59,7 +66,64 @@ function handleSignal (runtime, config) {
   })
 }
 
+/*
+  v4 configuration is code, evaluated by the loader in foundation: it walks to the deciding file,
+  resolves both views of the env ladder, evaluates the root in a worker and fans out one worker per
+  per-app file. Everything the runtime transform used to discover — the application list, each
+  application's capability, its schema and its worker environment — arrives already resolved.
+
+  Routing by filename keeps the v3 path intact while the in-tree JSON fixtures are converted; the
+  v3 half is what a later commit deletes, not something this one has to keep working around.
+*/
+async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
+  // A programmatic object source is not this path: the v4 object entry point is
+  // loadObjectConfiguration, which skips the root eval worker entirely.
+  if (sourceOrConfig && typeof sourceOrConfig !== 'string') {
+    return null
+  }
+
+  if (typeof sourceOrConfig === 'string') {
+    const named = resolvePath(configOrRoot, sourceOrConfig)
+
+    return isConfigurationFileName(basename(named)) ? named : null
+  }
+
+  if (typeof configOrRoot !== 'string') {
+    return null
+  }
+
+  if (isConfigurationFileName(basename(configOrRoot))) {
+    return configOrRoot
+  }
+
+  try {
+    const deciding = await findDecidingFile(configOrRoot, { throwOnMissing: false })
+
+    return deciding?.path ?? null
+  } catch (error) {
+    /*
+      The walk refuses a v3 configuration wherever it consults, which is right once v3 is gone and
+      wrong while it is still supported: here a v3 file means "this project is not v4", and the v3
+      loader below is the one that should answer. Deleting this catch is part of deleting the v3
+      path, and at that point the refusal becomes the correct answer again.
+    */
+    if (error.code === 'PLT_LEGACY_CONFIGURATION_FILE') {
+      return null
+    }
+
+    throw error
+  }
+}
+
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
+  // Checked before the v3 resolver, which throws when it finds no v3 file — a v4-only project has
+  // none by construction.
+  const v4ConfigurationFile = await findV4ConfigurationFile(configOrRoot, sourceOrConfig)
+
+  if (v4ConfigurationFile) {
+    return loadV4RuntimeConfiguration(v4ConfigurationFile, context)
+  }
+
   const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'runtime')
 
   // First of all, load the configuration without any validation
@@ -87,6 +151,51 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     root,
     ...context
   })
+}
+
+async function loadV4RuntimeConfiguration (configurationFile, context) {
+  const production = context?.isProduction ?? context?.production ?? false
+
+  const loaded = await loadV4Configuration({
+    cwd: dirname(configurationFile),
+    configPath: configurationFile,
+    command: context?.command ?? (production ? 'start' : 'dev'),
+    mode: context?.mode,
+    production,
+    customEnvFile: context?.envFile,
+    // The runtime is where the bundled capability copies live, so it is the fallback scope for
+    // both the schema import and the version stamp — the application's own dependencies still
+    // come first.
+    runtimeScope: import.meta.filename,
+    onWarning: warning => abstractLogger.warn(warning.message),
+    onInfo: info => abstractLogger.info(info.message)
+  })
+
+  const config = loaded.config
+
+  /*
+    The documented pipeline is validation with useDefaults, then kMetadata, then transform. The eval
+    worker's own check is a shape check that injects nothing — deliberately, so the resolve
+    projection carries authored values — so this is where the runtime schema's defaults arrive, and
+    without it the runtime reaches for settings like gracefulShutdown that nothing supplied.
+  */
+  validateCapabilityConfiguration(config, context?.schema ?? schema, {
+    id: 'runtime',
+    module: '@platformatic/runtime',
+    root: loaded.root
+  })
+
+  // kMetadata is symbol-keyed and cannot cross a worker boundary, so each worker rebuilds it; this
+  // is the main process's copy. env is the runtime's own view — every application worker gets the
+  // per-application environment the loader resolved, not this one.
+  config[kMetadata] = {
+    root: loaded.root,
+    path: loaded.configPath,
+    env: process.env,
+    module: '@platformatic/runtime'
+  }
+
+  return transformV4(config, null, context)
 }
 
 export async function loadApplicationsCommands (executableName = '', configurationFile = null) {
