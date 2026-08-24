@@ -1340,6 +1340,11 @@
               "type": "string",
               "description": "Base URL for the OpenAPI Swagger Documentation"
             },
+            "ui": {
+              "type": "boolean",
+              "default": true,
+              "description": "Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served."
+            },
             "path": {
               "type": "string",
               "description": "Path to an OpenAPI spec file",

@@ -309,6 +309,10 @@ export interface PlatformaticServiceConfig {
            */
           swaggerPrefix?: string;
           /**
+           * Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served.
+           */
+          ui?: boolean;
+          /**
            * Path to an OpenAPI spec file
            */
           path?: string;
