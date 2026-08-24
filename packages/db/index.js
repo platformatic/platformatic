@@ -24,8 +24,6 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return new DatabaseCapability(config[kMetadata].root, config, context)
 }
 
-export const skipTelemetryHooks = true
-
 export { platformaticDatabase } from './lib/application.js'
 export { DatabaseCapability } from './lib/capability.js'
 export * from './lib/commands/index.js'
@@ -33,6 +31,6 @@ export { transform } from './lib/config.js'
 export * from './lib/errors.js'
 export * as errors from './lib/errors.js'
 export { Generator } from './lib/generator.js'
-export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+export { packageJson, schema, schemaComponents, skipTelemetryHooks, version } from './lib/schema.js'
 
 export * from './lib/factory.js'

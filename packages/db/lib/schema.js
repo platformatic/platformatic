@@ -1,18 +1,23 @@
 #! /usr/bin/env node
 
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/lib/schema.js'
 import {
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
-} from '@platformatic/foundation'
-import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
+} from '@platformatic/foundation/lib/schema.js'
+import { schemaComponents as serviceSchemaComponents } from '@platformatic/service/lib/schema.js'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
+
+// Package-level metadata main-side preparation reads before any worker exists. It lives beside the
+// schema so the light /schema subpath carries it, which is what keeps boot from importing the full
+// capability package into the loader.
+export const skipTelemetryHooks = true
 
 const { plugins, openApiBase, $defs } = serviceSchemaComponents
 

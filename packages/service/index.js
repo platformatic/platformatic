@@ -55,11 +55,9 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return new ServiceCapability(config[kMetadata].root, config, context)
 }
 
-export const skipTelemetryHooks = true
-
 export { platformaticService } from './lib/application.js'
 export { ServiceCapability } from './lib/capability.js'
 export { applyTestHelperCustomizations, Generator } from './lib/generator.js'
-export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+export { packageJson, schema, schemaComponents, skipTelemetryHooks, version } from './lib/schema.js'
 
 export * from './lib/factory.js'

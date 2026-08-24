@@ -15,6 +15,7 @@
       "import": "./skew-plugin.js",
       "default": "./skew-plugin.js"
     },
+    "./schema": "./schema.js",
     "./*": "./*"
   },
   "scripts": {

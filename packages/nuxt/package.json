@@ -15,6 +15,7 @@
       "import": "./lib/scheduler/module.js",
       "default": "./lib/scheduler/module.js"
     },
+    "./schema": "./schema.js",
     "./*": "./*"
   },
   "scripts": {
