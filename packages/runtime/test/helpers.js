@@ -1,9 +1,11 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
+import { randomUUID } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { join, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { create, transform } from '../index.js'
 
@@ -62,6 +64,22 @@ export async function updateFile (path, update) {
 }
 
 export async function updateConfigFile (path, update) {
+  /*
+    A v4 configuration is code, so it is imported rather than parsed. The cache-busting query is
+    what makes a second update in the same process see the first one's result.
+
+    Writing it back as a literal loses any expression the file contained — a process.env read
+    becomes whatever it evaluated to. That is acceptable for a fixture a test is deliberately
+    rewriting, and wrong for anything else, which is why this lives in the test helpers.
+  */
+  if (path.endsWith('.js') || path.endsWith('.ts')) {
+    const { default: contents } = await import(`${pathToFileURL(path).href}?update=${randomUUID()}`)
+
+    await update(contents)
+    await writeFile(path, `export default ${JSON.stringify(contents, null, 2)}\n`, 'utf-8')
+    return
+  }
+
   const contents = JSON.parse(await readFile(path, 'utf-8'))
   await update(contents)
   await writeFile(path, JSON.stringify(contents, null, 2), 'utf-8')

@@ -163,6 +163,15 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     mode: context?.mode,
     production,
     customEnvFile: context?.envFile,
+    /*
+      Validation imports each capability's schema, so it needs the capability installed — not
+      merely declared, which is all the detector needs. That moves the moment a capability must be
+      resolvable earlier than v3 ever needed it: v3 loaded fine and failed later, in the worker.
+
+      A caller that is loading only to discover the topology — a tool about to install those
+      dependencies, for instance — can say so rather than being made to install first.
+    */
+    validateCapabilities: context?.validateCapabilities ?? true,
     // The runtime is where the bundled capability copies live, so it is the fallback scope for
     // both the schema import and the version stamp — the application's own dependencies still
     // come first.

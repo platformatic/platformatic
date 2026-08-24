@@ -406,7 +406,14 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   source ??= resolve(fixturesDir, fixturePath)
   build ??= false
   production ??= false
-  configFile ??= 'platformatic.runtime.json'
+
+  // Discover rather than assume, so a package whose fixtures have been converted to v4 and one
+  // whose fixtures are still v3 both work without every test naming its configuration. The v3
+  // fallback goes when the last fixture does.
+  configFile ??=
+    ['watt.config.js', 'watt.config.mjs', 'watt.config.ts'].find(candidate =>
+      existsSync(resolve(source, candidate))
+    ) ?? 'platformatic.runtime.json'
 
   if (port === 0) {
     port = await getPort.default()
@@ -440,9 +447,24 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   // Copy the fixtures
   await cp(source, root, { recursive: true })
 
-  const rawConfig = await loadConfiguration(root, configFile, { production, allowMissingEntrypoint: true })
-
+  /*
+    The root's dependencies are linked before the configuration is read, not after. v4 validates
+    each application's capability configuration main-side, against the schema imported from that
+    capability — so the capability has to be resolvable when the configuration is loaded, which is
+    earlier in the lifecycle than v3 ever needed it. Loading first and linking afterwards worked
+    only while nothing at load time went looking for the package.
+  */
   await ensureDependencies([root])
+
+  // This load exists to find the application paths so their dependencies can be linked, so it
+  // deliberately skips capability validation: the capabilities are precisely what is not installed
+  // yet.
+  const rawConfig = await loadConfiguration(root, configFile, {
+    production,
+    allowMissingEntrypoint: true,
+    validateCapabilities: false
+  })
+
   await ensureDependencies(rawConfig)
 
   process.chdir(root)

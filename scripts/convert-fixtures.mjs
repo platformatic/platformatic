@@ -146,6 +146,36 @@ const SUFFIX_MODULES = {
   application: '@platformatic/node'
 }
 
+/*
+  A v4 configuration is an ES module, so the extension has to agree with the package it lands in:
+  .js only where the nearest package.json says "type": "module", and .mjs everywhere else. Most of
+  this corpus is CommonJS or declares nothing at all, where export default is a syntax error.
+
+  This is the same rule scaffolding and migrate follow, one extension down: they choose between
+  .ts and .mts for the same reason.
+*/
+export function configurationFilenameFor (directory) {
+  let current = resolve(directory)
+
+  while (true) {
+    try {
+      const manifest = JSON.parse(readFileSync(join(current, 'package.json'), 'utf-8'))
+
+      return manifest.type === 'module' ? 'watt.config.js' : 'watt.config.mjs'
+    } catch {
+      // Keep walking: a fixture's own directory often has no manifest of its own.
+    }
+
+    const parent = dirname(current)
+
+    if (parent === current) {
+      return 'watt.config.mjs'
+    }
+
+    current = parent
+  }
+}
+
 function moduleFromFilename (file) {
   const match = basename(file ?? '').match(/^(?:watt|platformatic)\.([a-z]+)\.json$/)
 
@@ -341,7 +371,7 @@ function main () {
     converted++
 
     if (!dryRun) {
-      writeFileSync(join(dirname(file), 'watt.config.js'), result.source, 'utf-8')
+        writeFileSync(join(dirname(file), configurationFilenameFor(dirname(file))), result.source, 'utf-8')
 
       if (!keep) {
         unlinkSync(file)
