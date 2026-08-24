@@ -350,7 +350,7 @@ orchestration is always root-lexical, which is what lets the loader know an app'
 `env`, `envfile` and `enabled` before that app is evaluated. Where two *entries*
 describe the same app id — one discovered by `autoload`, one listed explicitly —
 their orchestration keys merge **shallowly, per-key, the explicit entry winning**
-(`runtime/lib/config.js:388-393`, v3 semantics) — **but only once the two are known
+(`runtime/lib/config.js:428-433`, v3 semantics) — **but only once the two are known
 to be the same application.** v3 matched on `id` alone, which is not sufficient: an
 explicit `{ id: 'api', url: '…' }` beside an autoloaded `web/api` merges into an entry
 that keeps the local `path` *and* carries the `url`, so `wattpm resolve` skips the
@@ -974,7 +974,7 @@ What the deciding file *is* then decides what boots:
   label, `wattpm inject`'s argument and how siblings name each other in
   `dependencies`. A default that varied by boot style would move all five at once —
   so **`autoload` uses the same rule**, where v3 used the directory name alone
-  (`runtime/lib/config.js:377`, `mapping.id ?? entry.name`). Stripping the scope is not cosmetic: the id becomes a
+  (`runtime/lib/config.js:417`, `mapping.id ?? entry.name`). Stripping the scope is not cosmetic: the id becomes a
   DNS label in `http://<id>.plt.local` (`runtime/lib/utils.js:12-14`, no
   sanitization), so keeping `@acme/frontend` would emit
   `http://@acme/frontend.plt.local`, where `@acme` parses as userinfo. v3 stripped it
@@ -1138,7 +1138,7 @@ them.
 `NODE_ENV` defaults to `production` under `build` when nothing else supplied it
 (see "Env files"). That is **new**: v3's build created the runtime with no
 production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:252`), so
-`worker/controller.js:124-125` never fired and builds ran with `NODE_ENV` unset.
+`worker/controller.js:125-126` never fired and builds ran with `NODE_ENV` unset.
 Bundlers and Babel configurations that branch on it will produce different — and
 correct — artifacts.
 
@@ -1240,9 +1240,10 @@ The rules, in full:
   reachable from capability code, not from a configuration file. It is then
   applied by a `net.server.listen` subscriber that sets `options.reusePort =
   true` (`:827-841`). Both `reuseTcpPorts` properties default to `true`
-  (`foundation/lib/schema.js:901-904` for the entry, `foundation/lib/schema.js:1107-1110` for the root), and the
+  (`foundation/lib/schema.js:905-908` for the entry, `foundation/lib/schema.js:1111-1114` for the root),
+  and the
   **entry-level one now reaches the decision** — the runtime passes the whole
-  application entry into the capability context (`worker/controller.js:82`), which
+  application entry into the capability context (`worker/controller.js:83`), which
   is the plumbing v3 lacked. Where the OS lacks `SO_REUSEPORT`
   (`features.node.reusePort` is `false` on macOS and Windows,
   `foundation/lib/node.js:77`) a fixed port with `workers > 1` cannot be shared.
@@ -1290,7 +1291,7 @@ The rules, in full:
   the bound one — meaningful only while an entrypoint proxied the application, and
   without a referent since `e2da15eda`. It was also load-bearing in a place it was
   never meant to reach: the reported URL is the only input to the collision scan
-  (`runtime.js:4994-5010` → `:4964-4985`), so two applications on genuinely distinct
+  (`runtime.js:4997-5013` → `:4967-4988`), so two applications on genuinely distinct
   ports that both set `entrypointPort: 3000` raised a spurious `AddressInUseError`,
   while two sharing a real port with different values escaped detection. Nothing in
   the codebase sets it outside its own two tests. `_getEntrypointUrl` keeps only its
@@ -1300,11 +1301,11 @@ The rules, in full:
   runtime checks the port against every *other* application's listening workers
   and raises `AddressInUseError` — `Port %d is already in use by applications
   "%s" and "%s"` (`runtime/lib/errors.js:14-17`, raised at
-  `runtime/lib/runtime.js:5008-5010`, ownership scan at `runtime/lib/runtime.js:4964-4985`). Workers of
-  the *same* application are exempt by construction (`runtime/lib/runtime.js:4970`), which is what makes
+  `runtime/lib/runtime.js:5011-5013`, ownership scan at `runtime/lib/runtime.js:4967-4988`). Workers of
+  the *same* application are exempt by construction (`runtime/lib/runtime.js:4973`), which is what makes
   `SO_REUSEPORT` legal. An OS-level `EADDRINUSE` carrying a port is upgraded to
-  the same error (`runtime/lib/runtime.js:3400-3410`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
-  are excluded from restart-on-error (`runtime/lib/runtime.js:3438-3442`) — a port problem fails fast
+  the same error (`runtime/lib/runtime.js:3403-3413`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
+  are excluded from restart-on-error (`runtime/lib/runtime.js:3441-3445`) — a port problem fails fast
   instead of looping. There is still **no port search**.
 
   **A declared duplicate is caught at load, before any worker starts** — with a
@@ -1347,7 +1348,7 @@ The rules, in full:
   **Host overlap is a table, deliberately a small one.** Two ranges conflict only if
   their hosts overlap, and the loader decides that the way the runtime already does:
   a wildcard (`0.0.0.0`, `::`, `[::]`) overlaps everything, and otherwise the hosts
-  must be equal, case-insensitively (`runtime/lib/runtime.js:4987-4992`). Anything
+  must be equal, case-insensitively (`runtime/lib/runtime.js:4990-4995`). Anything
   that would need name resolution — two DNS names for one address, a name pointing at
   an interface something else has bound — is **not** compared here and is left to the
   runtime scan, which sees addresses that are actually bound. A static check that
@@ -1750,9 +1751,9 @@ does. `startWithCommand` waits for the child to report a URL
 (`basic/lib/capability.js:604`), and a command that never reports one is bounded from
 outside rather than left hanging: the runtime runs `sendViaITC(worker, 'start')` under
 `executeWithTimeout` and raises `ApplicationStartTimeoutError` after `startTimeout`
-milliseconds — 30 s by default (`foundation/lib/schema.js:1111-1115`), the worker
+milliseconds — 30 s by default (`foundation/lib/schema.js:1115-1119`), the worker
 terminated and the application named
-(`runtime/lib/runtime.js:3349-3356`). So a command that never binds does not need a
+(`runtime/lib/runtime.js:3352-3359`). So a command that never binds does not need a
 report row of its own: it never reaches the report at all, because the boot failed
 first and said which application and how long it waited.
 
@@ -2022,7 +2023,8 @@ serial scheme.
    disabled entries are dropped immediately after expansion, before any per-app
    worker is spawned, before the detector runs, and before capability validation.
    This preserves v3, where `transform()` spliced disabled applications out ahead
-   of `prepareApplication` (`runtime/lib/config.js:398-402` then `:412`) and no
+   of `prepareApplication` (`runtime/lib/config.js:398-402` pre-`19d8fb98b` then `:412`)
+   and no
    worker ever existed for them: a decommissioned app whose capability is absent
    from the production image, or whose config file calls migrate's
    `requiredEnv()`, must not be able to fail a boot that excludes it. The one
@@ -2097,7 +2099,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:126-130`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:235-239`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -2215,7 +2217,7 @@ The result then enters the pipeline in the main process: AJV validation
 `transform()` (`runtime/lib/config.js`, which normalizes and prepares the entries it
 is handed). **In v4 that transform no longer expands `autoload` and no longer filters
 on `enabled`**: both moved to the root eval worker's step 4, which is the only place
-either runs. v3 did both here (`runtime/lib/config.js:362-396` then `:398-402`), and
+either runs. v3 did both here (`runtime/lib/config.js:402-436` then `:438-442`), and
 leaving that code reachable would let a second expansion re-merge entries and read
 the filesystem after the authoritative snapshot already exists. The `autoload`
 **declaration** survives expansion untouched, as data beside the expanded list —
@@ -2236,7 +2238,7 @@ outright (see "Object config sources"), so the carve-out the root worker makes f
 function slots does not apply. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
-hazard in this very codebase (`runtime/lib/config.js:437` warns that `2` would be
+hazard in this very codebase (`runtime/lib/config.js:484` warns that `2` would be
 coerced to `true`). The audit also guarantees that schema-injected defaults are
 themselves serializable.
 
@@ -2560,7 +2562,7 @@ It is the one injection a build is allowed to make.
 
 **Non-empty, not merely absent, because that is what v3 tested.** v3's rule is
 `if (appConfig.isProduction && !process.env.NODE_ENV)`
-(`worker/controller.js:124-125`, applied after all seeding), a truthiness test — so
+(`worker/controller.js:125-126`, applied after all seeding), a truthiness test — so
 `NODE_ENV=` in an env file became `production` there, and would stay empty under a
 ladder that only asks whether some rung supplied the key. This is the **one** place
 where the ladder treats an empty string as missing, and it is deliberately not
@@ -2595,7 +2597,8 @@ does nothing. It earns its place in two cases the first clause alone cannot expr
 is an ordinary layout — 39 in-tree configurations use parent-relative paths — and
 the runtime's directory is not an ancestor of it, so its own chain reaches nothing of
 the project's. v3 had no such gap: it seeded **every** worker from one `loadEnv` at
-the runtime root (`runtime/lib/runtime.js:245` → `:2570` → `:2622`) whatever the
+the runtime root (`runtime/lib/runtime.js:245` pre-`19d8fb98b` → `:2570` → `:2622`)
+whatever the
 application's location. The deciding file's chain is that same base, so
 `shared/api/.env` layers over `proj/.env` exactly as v3 layered the app's own file
 over the runtime's.
@@ -2787,7 +2790,7 @@ v3's behavior here was subtler than commonly understood: when a *worker* parsed 
 app's config, any unset placeholder whose key **ends in `_URL`** resolved to the URL
 of **the app being parsed**, whatever the rest of the key said — `fetchApplicationUrl`
 gates on the suffix and then ignores the key, returning the current app's
-`.plt.local` URL (`runtime/lib/worker/controller.js:31-37`); in the *root* config,
+`.plt.local` URL (`runtime/lib/worker/controller.js:32-38`); in the *root* config,
 which is loaded without `onMissingEnv`, unset placeholders resolved to `''` or
 threw under `strictEnv`. That machinery dies with interpolation, and its replacement is explicit and
 deliberately saner:
@@ -2866,7 +2869,7 @@ deliberately saner:
   resolves to *that config file's own directory*, which is why migrate can seed it
   when resolving structural paths instead of reading it from the environment. But the
   runtime's own parse also puts it in `#env`, which is `structuredClone`d into every
-  worker (`runtime/lib/runtime.js:2570`, `:2622`), so **application code reading
+  worker (`runtime/lib/runtime.js:2570` pre-`19d8fb98b`, `:2622`), so **application code reading
   `process.env.PLT_ROOT` gets the runtime root** — a different directory from the one
   the same name means in a per-app config, and a value
   `packages/runtime/test/start/custom-environment.test.js:21-30` asserts application
@@ -2908,7 +2911,7 @@ deliberately saner:
   `start`/`build` and `dev`, so every existing config keeps its meaning, and
   `enabled: { staging: false }` now does what it looks like under
   `--mode staging` — where v3 silently ignored the key
-  (`runtime/lib/config.js:283-299`). `enabled` is resolved in the root eval worker against
+  (`runtime/lib/config.js:323-339`). `enabled` is resolved in the root eval worker against
   `ctx.mode`, before fan-out (see "Loading mechanism").
 
   v4.0 is the only free moment for this: no v4 configs exist yet, and `migrate` emits
@@ -3013,7 +3016,7 @@ export default {
   consequences. It still needs a started worker, and still cannot be answered from the
   main process, because the transform runs where the worker is — the runtime's own
   `SO_REUSEPORT` clamp uses this exact call to learn a worker's real `server` block
-  (`runtime/lib/runtime.js:3602`), which is the same reason. It is already a copy —
+  (`runtime/lib/runtime.js:3605`), which is the same reason. It is already a copy —
   ITC structured-clones on the way back and the handler JSON round-trips to drop
   `undefined` keys — so the mutability question the payload below raises does not
   arise here. And its HTTP surface, `GET /applications/:id/config`
@@ -3394,7 +3397,7 @@ earlier design compared the emitted configuration against a third "resolved view
 — the config loaded as production v3 would be — but no comparand works: comparing
 *pre-transform* leaves the two sides structurally incomparable, since v3 expands
 `autoload` and applies `enabled` inside `transform`
-(`runtime/lib/config.js:362-396`, `:398-402`) while v4 does both in
+(`runtime/lib/config.js:402-436`, `:438-442`) while v4 does both in
 the root eval worker; and comparing *post-transform* pits v3's transform output
 against v4's, which differ by design after the schema audit. Building either to a
 useful fidelity is a large amount of machinery for a one-shot codemod — the
@@ -3429,14 +3432,14 @@ Generation reads both views. Then:
    **Two autoloaded directories that resolve to the same id are a boot error naming
    both.** v3's ids were directory names, unique by construction; v4 prefers the
    `package.json` `name`, which is not — two directories copied from one another
-   carry the same name, and v3's shallow merge (`runtime/lib/config.js:388-393`)
+   carry the same name, and v3's shallow merge (`runtime/lib/config.js:428-433`)
    would silently absorb the second, so it would never boot and nothing would say so.
    That merge remains what it was in v3: a rule for an autoloaded entry meeting an
    *explicit* one, not for two autoloaded directories colliding.
 
    `autoload`-discovered applications need the same protection as explicit entries,
    but only where the id would actually move. v3 derived their id from the **directory name** alone
-   (`runtime/lib/config.js:377`, `mapping.id ?? entry.name`); v4 prefers the
+   (`runtime/lib/config.js:417`, `mapping.id ?? entry.name`); v4 prefers the
    `package.json` `name` (see "How applications are exposed"), so an application in
    `web/composer/` whose package is named `gateway-service` would be renamed — and
    with it the mesh hostname, the injected variable, the metrics label and any
@@ -3498,7 +3501,7 @@ Generation reads both views. Then:
 
    **The exclusion is that set of directories, not the configured base wholesale**,
    and the difference is load-bearing because the base is an ordinary string with no
-   dedicated-directory rule (`foundation/lib/schema.js:1541-1544`). A project may set
+   dedicated-directory rule (`foundation/lib/schema.js:1545-1548`). A project may set
    it to `applications` and keep local applications at `applications/api`, or to `.`
    so clones land at the root. Excluding the base itself would then hide a local
    application's legacy config from the lexical pass and skip the per-app file it must
@@ -3612,15 +3615,15 @@ Generation reads both views. Then:
    the *root* config's value wins when defined, and a per-app capability config
    carrying a `runtime` block supplies the third fallback,
    `foundation/lib/configuration.js:540` with
-   `runtime/lib/worker/controller.js:95,142`), and `*_URL`
+   `runtime/lib/worker/controller.js:96,166`), and `*_URL`
    placeholders in **separate application config files** never get `requiredEnv`
    even under strict mode — v3 resolved unset `*_URL` keys there through the
    current-app fallback, which warns and never throws — they get the literal or
    `?? ''` plus the review warning. The carve-out is scoped by *loader pass*, not
    by position: `onMissingEnv` is supplied only where a worker parses a separate
-   app config (`worker/controller.js:141`), so both a **root** config's `*_URL`
+   app config (`worker/controller.js:165`), so both a **root** config's `*_URL`
    placeholders **and every placeholder in a wrapped single-app config** — which
-   `runtime/index.js:66-69` loads with no `onMissingEnv`, capability half included
+   `runtime/index.js:130-133` loads with no `onMissingEnv`, capability half included
    — throw on v3 under effective `strictEnv` and get `requiredEnv` like any other
    key.
    Embedded placeholders become template literals with the same
@@ -3717,16 +3720,17 @@ Generation reads both views. Then:
 
    **The count is taken after replaying v3's `enabled` splice, not over every
    authored application.** v3 removes disabled applications *before* auto-detection
-   (`config.js:398-402`, then `:410-412`), so a two-application project with one
+   (`config.js:398-402` pre-`19d8fb98b`, then `:410-412`), so a two-application project
+   with one
    `enabled: false` had exactly one survivor, and that survivor became the
    entrypoint and bound the root port. Counting the lexical set instead would
    conclude "does not resolve" and drop the root `server` block from a project that
    was publicly reachable — and since a v4 listener opens only where
    `server.port` is defined, a framework application treated that way would not
    start at all. Migrate therefore evaluates `isApplicationEnabled`
-   (`config.js:283-299`) over the lexical values and resolves the entrypoint
+   (`config.js:323-339`) over the lexical values and resolves the entrypoint
    **twice, once for `production` and once for `development`** — the only two
-   values v3 derives (`:303`).
+   values v3 derives (`:343`).
 
    When both environments resolve to the same application, that is the entrypoint.
    When they **disagree** — an `enabled` object such as
@@ -3872,7 +3876,7 @@ Generation reads both views. Then:
    either. v3 accepted a path in an entry's `config` and resolved it against that
    application's own `path` (`runtime/lib/config.js:222-223`), and accepted a filename
    in `autoload.mappings[].config`, joined to the discovered entry directory
-   (`runtime/lib/config.js:381-384`) — so `config: '{APP_CONFIG}'` is a legal v3
+   (`runtime/lib/config.js:421-424`) — so `config: '{APP_CONFIG}'` is a legal v3
    project, and one that names a file no rule of migrate's own could guess. Every
    later step is downstream of that value being real: the lexical pass reads that file
    to learn the application's module, step 1 classifies and emits from it, step 3
@@ -4048,7 +4052,7 @@ Generation reads both views. Then:
 
    **Canonicalizing means the nearest existing ancestor, not the path itself**, because
    several of these legitimately do not exist yet. `resolvedApplicationsBasePath`
-   defaults to `external` (`foundation/lib/schema.js:1541-1544`) and that directory is
+   defaults to `external` (`foundation/lib/schema.js:1545-1548`) and that directory is
    absent in every project that has never resolved a remote — which is most of them,
    and exactly the clean tree a migration runs on. Node's `realpath` throws on a
    missing path, so requiring it of the path itself would abort an ordinary migration
@@ -4541,7 +4545,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    config time belongs in an env file or the real environment.
 6. `verticalScaler`: removed from the v4 schema. `metrics.healthChecksTimeouts` is
    **kept** — it is not a top-level key and is not dead: `#getHealthChecksTimeout`
-   reads it (`runtime/lib/runtime.js:4703-4710`, falling back to `healthChecksTimeout`
+   reads it (`runtime/lib/runtime.js:4706-4713`, falling back to `healthChecksTimeout`
    then 5000 ms) and extension health checks are configured through it. Its schema
    description still says "no longer used", which the audit corrects.
 7. Schema audit: placeholder-string unions removed from every schema (validation is
@@ -4709,7 +4713,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     now covers every application including the app's own self-URL. `NODE_ENV`
     remains, as the **lowest** rung of both ladders: it defaults to `production`
     when `production` is `true` and nothing else supplied it. Under `start` that
-    matches v3 (`worker/controller.js:124-125`); under `build` it is **new** — v3's
+    matches v3 (`worker/controller.js:125-126`); under `build` it is **new** — v3's
     build passed no production flag (`wattpm/lib/commands/build.js:43`), so
     builds ran with `NODE_ENV` unset and bundlers that branch on it will now
     produce different artifacts.
@@ -4724,7 +4728,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     (`runtime/lib/runtime.js:2479-2495`) — a start-time decision, not a
     configuration-format one. The
     **per-application `reuseTcpPorts` now reaches the `SO_REUSEPORT` decision**
-    (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:82`), where
+    (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:83`), where
     in v3 it only selected the restart strategy. Two applications binding the same
     port is a hard `AddressInUseError` naming both
     (`runtime/lib/errors.js:14-17`); `EADDRINUSE`/`EACCES`/`EADDRNOTAVAIL` are
@@ -4760,7 +4764,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     because it had no standalone boot: the wrapped single-app path used the package
     name with the scope stripped, falling back to `'main'`
     (`runtime/lib/config.js:131-142`, still present at HEAD), while `autoload` used
-    the **directory name** alone (`:377`). v4 needs one rule, because the id is the
+    the **directory name** alone (`:417`). v4 needs one rule, because the id is the
     mesh hostname, the injected `PLT_<ID>_URL` name, the metrics label, `wattpm
     inject`'s argument and how siblings name each other in `dependencies` — a default
     that varied by boot style would move all five at once for the same application.
@@ -4884,7 +4888,7 @@ runs multiple workers on a fixed port at all.
    the override (`test/capability.test.js:96,114`).
 4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
    accepts inline definitions; **`autoload` expansion and `enabled` filtering leave
-   the runtime transform** (`runtime/lib/config.js:362-396`, `:398-402`) for the root
+   the runtime transform** (`runtime/lib/config.js:402-436`, `:438-442`) for the root
    eval worker, with the `autoload` declaration carried through as data for
    `GET /metadata` and `--save`; phased evaluation (root worker first, per-app
    workers in parallel) with uniform per-app file
