@@ -1,5 +1,5 @@
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createCapabilityValidator,
@@ -182,7 +182,7 @@ test('resolveModule resolves against the application root and fails when it cann
 
   const config = { plugin: '@acme/plugin' }
   validateCapabilityConfiguration(config, capabilitySchema, { id: 'api', module: '@acme/x', root })
-  ok(config.plugin.includes('@acme/plugin'))
+  ok(config.plugin.includes(join('@acme', 'plugin')))
 
   throws(
     () => validateCapabilityConfiguration({ plugin: '@acme/absent' }, capabilitySchema, { id: 'api', module: '@acme/x', root }),

@@ -1,4 +1,5 @@
 import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import {
   checkCapabilityVersionSkew,
@@ -46,7 +47,7 @@ test('a package whose exports map hides its manifest still resolves', async t =>
   const resolved = resolveCapabilityPackage('@acme/hidden', root)
 
   strictEqual(resolved.version, '2.3.4')
-  ok(resolved.path.endsWith('@acme/hidden'))
+  ok(resolved.path.endsWith(join('@acme', 'hidden')))
 })
 
 test('a module resolvable from neither scope names both the module and the root', async t => {
