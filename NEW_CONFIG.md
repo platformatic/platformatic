@@ -1519,7 +1519,7 @@ transformed**, and Vite is the reason to say so rather than leave it implied.
 `servesWithoutPort` is read main-side, after validation and before any worker; the
 capability `transform` runs worker-side, later. So a callable sees whatever shapes the
 *schema* admits, and Vite's `ssr` is an `anyOf` of a boolean and an object
-(`vite/lib/schema.js:28-44`) that only `transform` normalizes to the object form
+(`vite/lib/schema.js:47-63`) that only `transform` normalizes to the object form
 (`vite/index.js:12-19`). Testing `ssr?.enabled` alone reads `undefined` for
 `vite({ ssr: true })` — a supported spelling — and classifies an SSR application as
 ordinary Vite: rejecting a valid in-process SSR factory under `dev`, and promising
@@ -3755,7 +3755,7 @@ Generation reads both views. Then:
      The move is defined against the *target's* schema rather than as a fixed key
      list because the capability blocks are not uniform. The v3 root block is
      `hostname, port, portAssignment, backlog, http2, https`; `nitro` deletes `http2`
-     from its copy (`nitro/lib/schema.js:29-30`), so a v3 project with
+     from its copy (`nitro/lib/schema.js:33-34`), so a v3 project with
      `server: { http2: true }` and a nitro entrypoint would fail step 3 on migrate's
      own output if the move were literal. A fixed list would also have to be revised
      every time a capability narrows its block — the failure mode this rule already

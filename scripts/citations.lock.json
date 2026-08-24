@@ -455,7 +455,7 @@
       "head": "export class ViteSSRCapability extends NodeCapability {",
       "lines": 1
     },
-    "packages/vite/lib/schema.js:28-44": {
+    "packages/vite/lib/schema.js:47-63": {
       "sha": "9bed7a721a61a1de",
       "head": "ssr: {",
       "lines": 17
@@ -860,7 +860,7 @@
       "head": "const environment = production ? 'production' : 'development'",
       "lines": 1
     },
-    "packages/nitro/lib/schema.js:29-30": {
+    "packages/nitro/lib/schema.js:33-34": {
       "sha": "10615232a8e70c38",
       "head": "const server = structuredClone(utilsSchemaComponents.server)",
       "lines": 2
