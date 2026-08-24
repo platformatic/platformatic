@@ -15,7 +15,7 @@
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
     },
-    "packages/basic/lib/modules.js:24-36": {
+    "packages/basic/lib/modules.js:24-36@b7d953770^": {
       "sha": "b40a53b4822d4c88",
       "head": "try {",
       "lines": 13
