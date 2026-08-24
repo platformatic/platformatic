@@ -1,7 +1,8 @@
-import { deepStrictEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import {
+  loadConfiguration,
   resolveConfigurationEnvironment,
   resolveEnvFileSources,
   resolveWorkerEnvironment
@@ -115,4 +116,67 @@ test('envfile governs both views, at the same layer', async t => {
   deepStrictEqual(evaluation, runtime)
   strictEqual(evaluation.WHO, 'named')
   strictEqual(evaluation.BASE, 'root')
+})
+
+test('the loader resolves every application worker environment before any worker starts', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    '.env': 'SHARED=root-file\nONLY_FILE=file\n',
+    'watt.config.js': `
+      export default {
+        env: { FROM_ROOT_BLOCK: 'root', SHARED: 'root-block' },
+        applications: [
+          { id: 'api', path: './web/api', env: { FROM_ENTRY: 'entry', SHARED: 'entry' }, config: { module: '@acme/x' } },
+          { id: 'web', path: './web/frontend', config: { module: '@acme/x' } }
+        ]
+      }
+    `,
+    'web/api/index.js': '',
+    'web/frontend/index.js': ''
+  })
+
+  const { config } = await loadConfiguration({
+    cwd: root,
+    command: 'start',
+    realEnv: { REAL: 'real' },
+    validateCapabilities: false
+  })
+
+  const [api, web] = config.applications
+
+  // The entry block beats the root block, and both beat the files — but the real environment beats
+  // all of them, which is the deliberate inversion of v3, where blocks were pins.
+  strictEqual(api.workerEnv.SHARED, 'entry')
+  strictEqual(web.workerEnv.SHARED, 'root-block')
+  strictEqual(api.workerEnv.FROM_ROOT_BLOCK, 'root')
+  strictEqual(api.workerEnv.ONLY_FILE, 'file')
+  strictEqual(api.workerEnv.REAL, 'real')
+
+  // Injection covers every application, the application's own PLT_<SELF>_URL included.
+  strictEqual(api.workerEnv.PLT_API_URL, 'http://api.plt.local')
+  strictEqual(api.workerEnv.PLT_WEB_URL, 'http://web.plt.local')
+  strictEqual(web.workerEnv.PLT_WEB_URL, 'http://web.plt.local')
+
+  // And it stays out of the configuration DTO: an environment on every entry would put every
+  // secret into anything that serializes the config.
+  ok(!Object.keys(api).includes('workerEnv'))
+  ok(!JSON.stringify(config).includes('http://api.plt.local'))
+})
+
+test('a runtime that already has a topology key keeps its own value', async t => {
+  // The runtime's process.env is the oracle, so a container or k8s override wins over injection.
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js':
+      'export default { applications: [{ id: "api", path: ".", config: { module: "@acme/x" } }] }'
+  })
+
+  const { config } = await loadConfiguration({
+    cwd: root,
+    command: 'start',
+    realEnv: { PLT_API_URL: 'http://api.internal' },
+    validateCapabilities: false
+  })
+
+  strictEqual(config.applications[0].workerEnv.PLT_API_URL, 'http://api.internal')
 })

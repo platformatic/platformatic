@@ -6,6 +6,7 @@ import {
   resolveConfigurationEnvironment,
   resolveDirectoryChain,
   resolveEnvFileSources,
+  resolveWorkerEnvironment,
   stripInjectedTopologyKeys
 } from './env.js'
 import {
@@ -22,6 +23,7 @@ import {
   assertValidApplicationId,
   deriveApplicationId,
   findTopologyVariableCollisions,
+  getApplicationUrl,
   topologyVariableName
 } from './identifiers.js'
 import { checkCapabilityVersionSkew } from './capability-resolution.js'
@@ -162,7 +164,10 @@ async function resolveEnvironmentFor (
     customEnvFile
   })
 
-  return resolveConfigurationEnvironment({ realEnv, fileSources, production })
+  // Both views come from this one set. They differ only by the rungs that exist once the runtime
+  // is running — the two env blocks and the injected PLT_<ID>_URL values — which is what makes
+  // "one implementation of the ladder" true rather than asserted.
+  return { fileSources, env: resolveConfigurationEnvironment({ realEnv, fileSources, production }) }
 }
 
 /*
@@ -217,7 +222,7 @@ export async function loadConfiguration ({
   report.watch(deciding.path)
 
   const decidingEnvRoot = await findEnvRoot(deciding.directory)
-  const rootEnv = await resolveEnvironmentFor(
+  const { env: rootEnv, fileSources: rootEnvFileSources } = await resolveEnvironmentFor(
     {
       directory: deciding.directory,
       envRoot: decidingEnvRoot,
@@ -266,7 +271,7 @@ export async function loadConfiguration ({
   }
 
   return assemble({
-    result: root,
+    result: { ...root, rootEnvFileSources },
     deciding,
     decidingEnvRoot,
     rootEnv,
@@ -327,7 +332,7 @@ export async function loadObjectConfiguration ({
 
   const deciding = { path: null, directory: root, stopDirectory: root }
   const decidingEnvRoot = envRoot ?? root
-  const rootEnv = await resolveEnvironmentFor(
+  const { env: rootEnv, fileSources: rootEnvFileSources } = await resolveEnvironmentFor(
     { directory: root, envRoot: decidingEnvRoot, decidingDirectory: root, decidingEnvRoot, ...shared },
     report
   )
@@ -358,7 +363,7 @@ export async function loadObjectConfiguration ({
   }
 
   return assemble({
-    result: { ...evaluated, importedFiles: [], watchedFiles: [] },
+    result: { ...evaluated, importedFiles: [], watchedFiles: [], rootEnvFileSources },
     deciding,
     decidingEnvRoot,
     rootEnv,
@@ -385,7 +390,7 @@ async function synthesizeConfiguration ({ cwd, schema, report, ...shared }) {
   // be, flooring at the directory itself. Without that, running in web/api of a monorepo would
   // synthesize an application that cannot see the root .env.
   const envRoot = await findEnvRoot(cwd)
-  const env = await resolveEnvironmentFor(
+  const { env } = await resolveEnvironmentFor(
     { directory: cwd, envRoot, decidingDirectory: cwd, decidingEnvRoot: envRoot, ...shared },
     report
   )
@@ -480,6 +485,8 @@ async function assemble ({
     report
   })
 
+  applyWorkerEnvironments(config.applications, { rootEnv: config.env, realEnv, production })
+
   return {
     config,
     configPath: deciding.path,
@@ -490,11 +497,49 @@ async function assemble ({
     mode,
     production,
     resolveCandidates: result.resolveCandidates,
+    envFileSources: result.rootEnvFileSources ?? [],
     importedFiles: [...report.importedFiles],
     watchedFiles: [...report.watchedFiles],
     watchTargets: collectWatchTargets(report),
     context: createConfigurationContext({ command, mode, production, env: rootEnv, root: deciding.directory })
   }
+}
+
+/*
+  The worker-runtime view, resolved main-side for every application before any worker starts —
+  workers never read env files themselves. It is the config-evaluation view plus exactly the rungs
+  that exist only once the runtime is running: the entry env block, the root env block, and the
+  injected topology URLs.
+
+  Injection covers every application including the application's own PLT_<SELF>_URL, and it is
+  skipped for a key the runtime already has in its own real environment, so a container or k8s
+  override wins — the runtime's process.env is the oracle.
+*/
+export function applyWorkerEnvironments (applications, { rootEnv, realEnv = process.env, production }) {
+  const injectedUrls = {}
+
+  for (const entry of applications) {
+    const key = topologyVariableName(entry.id)
+
+    if (!(key in realEnv)) {
+      injectedUrls[key] = getApplicationUrl(entry.id)
+    }
+  }
+
+  for (const entry of applications) {
+    const workerEnv = resolveWorkerEnvironment({
+      realEnv,
+      entryEnv: entry.env,
+      rootEnv,
+      injectedUrls,
+      fileSources: entry.envFileSources ?? [],
+      production
+    })
+
+    Object.defineProperty(entry, 'workerEnv', { value: workerEnv, enumerable: false })
+  }
+
+  return applications
 }
 
 async function prepareApplications ({ entries, deciding, ...shared }) {
@@ -569,6 +614,29 @@ async function prepareApplication ({
   // re-reading the file that produced it.
   const configurationFile = await findApplicationConfigurationFile(directory, deciding.path)
 
+  // Resolved for every application, not only the ones with a file to evaluate: every application
+  // has workers, and the worker-runtime view is built from this same set.
+  const { fileSources, env } = await resolveEnvironmentFor(
+    {
+      directory,
+      envRoot: await findEnvRoot(directory),
+      decidingDirectory: deciding.directory,
+      decidingEnvRoot,
+      mode,
+      envfile: entry.envfile,
+      customEnvFile,
+      realEnv,
+      production
+    },
+    report
+  )
+
+  // Non-enumerable, as foundation already does for kEnvFileFallbackKeys: the runtime reads these
+  // main-side to build workerData, and they have no business in the configuration DTO, in
+  // --debug-config output, or in anything that structured-clones into a worker. The environment in
+  // particular would otherwise put every secret on every application entry.
+  Object.defineProperty(prepared, 'envFileSources', { value: fileSources, enumerable: false })
+
   if (entry.config !== undefined) {
     if (configurationFile) {
       // A root boot must not have two sources for one application. No evaluation is involved, and
@@ -623,21 +691,6 @@ async function prepareApplication ({
   }
 
   report.watch(configurationFile)
-
-  const env = await resolveEnvironmentFor(
-    {
-      directory,
-      envRoot: await findEnvRoot(directory),
-      decidingDirectory: deciding.directory,
-      decidingEnvRoot,
-      mode,
-      envfile: entry.envfile,
-      customEnvFile,
-      realEnv,
-      production
-    },
-    report
-  )
 
   // Injection is a runtime act with no rung in the config-evaluation ladder, so the declared
   // topology keys are stripped from every per-app worker: a config file reading one during
