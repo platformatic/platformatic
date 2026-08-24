@@ -19,21 +19,37 @@ export function isImportFailedError (error, pkg) {
   return match?.[1] === pkg || error.requireStack?.[0].endsWith(importCapabilityPackageMarker)
 }
 
+/*
+  The canonical capability resolution order: the application's own dependencies first, with the
+  runtime-bundled copy as the fallback. v3 asked the other way round — a bare import(pkg), resolved
+  lexically from this package and so from the runtime's own position — and reached the application
+  directory only when that threw.
+
+  The inversion is what makes all three resolutions name the same copy by construction rather than
+  by coincidence of layout: this implementation import, the main process's schema import, and the
+  version stamp that compares the factory's copy against the copy this function will load. Under
+  the old order the stamp could only compare a copy nobody executes.
+
+  Nothing that resolved before stops resolving: an application with no local dependency still
+  reaches the bundled copy. The answer moves in one layout — a hoisted tree where an application
+  carries a nested copy of a capability the root also has — and there it now gets the copy it
+  declared.
+*/
 export async function importCapabilityPackage (directory, pkg) {
   let imported
   try {
     try {
-      // Try regular import
-      imported = await import(pkg)
+      // Scope to the application
+      const require = createRequire(resolve(directory, importCapabilityPackageMarker))
+      const toImport = require.resolve(pkg)
+      imported = await importFile(toImport)
     } catch (e) {
       if (!isImportFailedError(e, pkg)) {
         throw e
       }
 
-      // Scope to the application
-      const require = createRequire(resolve(directory, importCapabilityPackageMarker))
-      const toImport = require.resolve(pkg)
-      imported = await importFile(toImport)
+      // Fall back to the copy bundled with the runtime
+      imported = await import(pkg)
     }
   } catch (e) {
     if (!isImportFailedError(e, pkg)) {
