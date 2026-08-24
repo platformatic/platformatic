@@ -14,6 +14,9 @@ import { resolve } from 'node:path'
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
 
+// The application is built before _listen, which is the only thing the port guards.
+export const servesWithoutPort = { development: true, production: true }
+
 // Package-level metadata main-side preparation reads before any worker exists. It lives beside the
 // schema so the light /schema subpath carries it, which is what keeps boot from importing the full
 // capability package into the loader.

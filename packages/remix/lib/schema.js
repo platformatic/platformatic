@@ -7,6 +7,9 @@ import { resolve } from 'node:path'
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
 
+// Production builds an in-thread application and awaits ready() before the port check.
+export const servesWithoutPort = { development: false, production: true }
+
 export const remix = {
   type: 'object',
   properties: {

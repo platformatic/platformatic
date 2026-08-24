@@ -26,6 +26,7 @@ import {
 } from './identifiers.js'
 import { checkCapabilityVersionSkew } from './capability-resolution.js'
 import { runRootPipeline } from './pipeline.js'
+import { assertApplicationServes } from './serving.js'
 import { importCapabilitySchema, validateCapabilityConfiguration } from './validate.js'
 import {
   findAncestorConfiguration,
@@ -582,7 +583,7 @@ async function prepareApplication ({
       throw new EnvFileOnInlineConfigError(id)
     }
 
-    await applyDefinition(prepared, entry.config, { directory, report, validateCapabilities })
+    await applyDefinition(prepared, entry.config, { directory, report, validateCapabilities, production })
     return prepared
   }
 
@@ -612,7 +613,7 @@ async function prepareApplication ({
     prepared.config = {}
     prepared.detected = true
 
-    await validateApplication(prepared, { module: capability, directory, report, validateCapabilities })
+    await validateApplication(prepared, { module: capability, directory, report, validateCapabilities, production })
 
     if (entry.envfile) {
       report.watch(isAbsolute(entry.envfile) ? entry.envfile : resolve(directory, entry.envfile))
@@ -660,7 +661,7 @@ async function prepareApplication ({
 
   reportMutatedEnv(report, configurationFile, evaluated.mutatedEnvKeys)
 
-  await applyDefinition(prepared, evaluated.config, { directory, report, validateCapabilities })
+  await applyDefinition(prepared, evaluated.config, { directory, report, validateCapabilities, production })
   prepared.configPath = configurationFile
 
   return prepared
@@ -674,7 +675,7 @@ async function prepareApplication ({
   latter renamed on the way out because getApplicationDetails().version already means the capability
   version the running worker loaded.
 */
-async function applyDefinition (prepared, definition, { directory, report, validateCapabilities }) {
+async function applyDefinition (prepared, definition, { directory, report, validateCapabilities, production }) {
   const { module, version, ...payload } = definition
 
   prepared.config = payload
@@ -703,7 +704,7 @@ async function applyDefinition (prepared, definition, { directory, report, valid
     report.onWarning?.({ type: 'capability-version-skew', ...skew })
   }
 
-  await validateApplication(prepared, { module, directory, report, validateCapabilities })
+  await validateApplication(prepared, { module, directory, report, validateCapabilities, production })
 }
 
 /*
@@ -718,7 +719,7 @@ async function applyDefinition (prepared, definition, { directory, report, valid
   alternative, and it is worse: a check that treats "I could not verify this" as "verified" is not
   a check. The default flips when the subpaths land.
 */
-async function validateApplication (prepared, { module, directory, report, validateCapabilities }) {
+async function validateApplication (prepared, { module, directory, report, validateCapabilities, production }) {
   if (!validateCapabilities || !module) {
     return
   }
@@ -736,4 +737,14 @@ async function validateApplication (prepared, { module, directory, report, valid
 
   validateCapabilityConfiguration(prepared.config, schema, { id: prepared.id, module, root: directory })
   prepared.capabilityMetadata = metadata
+
+  // Read after validation and before any worker, which is precisely when the resolved capability
+  // configuration is available and the callable form can be evaluated.
+  prepared.serving = assertApplicationServes({
+    id: prepared.id,
+    module,
+    declaration: metadata.servesWithoutPort,
+    config: prepared.config,
+    production
+  })
 }

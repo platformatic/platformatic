@@ -55,6 +55,11 @@ export const ApplicationConfiguredTwiceError = createError(
   'Application %s has an inline config in the root configuration and a configuration file at %s. Remove one of them.'
 )
 
+export const ApplicationStartsNothingError = createError(
+  `${ERROR_PREFIX}_APPLICATION_STARTS_NOTHING`,
+  'Application %s would start nothing: %s does not serve without a listener under %s, and the application declares neither server.port nor application.commands.%s.'
+)
+
 export const CapabilitySchemaNotFoundError = createError(
   `${ERROR_PREFIX}_CAPABILITY_SCHEMA_NOT_FOUND`,
   'Cannot import the schema of %s from %s, nor from the copy bundled with the runtime. A v4 capability exports one from its /schema subpath.'

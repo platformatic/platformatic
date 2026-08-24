@@ -6,6 +6,25 @@ import { resolve } from 'node:path'
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
 
+/*
+  The package ships two capability classes and the configuration decides which one runs:
+  create() selects ViteSSRCapability when SSR is enabled and ViteCapability otherwise, and
+  ViteSSRCapability extends NodeCapability — so an SSR application inherits Node's uncertainty
+  exactly. A single per-package answer would reject a valid no-port SSR factory under dev and
+  promise a mesh URL under start for a module that reports no server.
+
+  The callable receives the configuration as authored and validated, never as transformed: this is
+  read main-side, while the capability transform runs worker-side and later. The schema admits
+  ssr as either a boolean or an object, and only transform normalizes the boolean to the object
+  form — so testing ssr?.enabled alone reads undefined for the supported vite({ ssr: true })
+  spelling and classifies an SSR application as ordinary Vite.
+*/
+export const servesWithoutPort = config => {
+  const ssr = config?.vite?.ssr
+
+  return ssr === true || ssr?.enabled ? 'worker' : { development: false, production: true }
+}
+
 const vite = {
   type: 'object',
   properties: {

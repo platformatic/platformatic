@@ -6,6 +6,11 @@ import { resolve } from 'node:path'
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
 
+// Classified by the started worker: two of #hasServer()'s three inputs — the module's own
+// hasServer export and isBackgroundApplication on the factory's result — are known only once
+// the application's code has been imported and its factory called.
+export const servesWithoutPort = 'worker'
+
 const node = {
   type: 'object',
   properties: {
