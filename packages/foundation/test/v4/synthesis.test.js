@@ -12,7 +12,10 @@ function collector () {
 }
 
 async function load (cwd, overrides = {}) {
-  return loadConfiguration({ cwd, command: 'dev', realEnv: {}, ...overrides })
+  // These fixtures name capabilities that are not installed beside them, and they are exercising
+  // scope, the env ladder, the watch set and the detector rather than capability validation, which
+  // validate.test.js covers on its own fixtures.
+  return loadConfiguration({ cwd, command: 'dev', realEnv: {}, validateCapabilities: false, ...overrides })
 }
 
 test('a bare framework repository synthesizes in memory and writes nothing', async t => {
@@ -134,6 +137,7 @@ test('a programmatic object source runs the same pipeline with no import step', 
 
   const { config, configPath, standalone } = await loadObjectConfiguration({
     root,
+    validateCapabilities: false,
     source: { applications: [{ id: 'api', path: './web/api' }] },
     command: 'start',
     realEnv: {}
@@ -155,7 +159,7 @@ test('an object source is canonicalized before anything reads its shape', async 
 
   // An embedder can hand create() an object carrying getters or a Proxy just as easily as a config
   // file can build one, and the getter must never be invoked to find out.
-  await rejects(() => loadObjectConfiguration({ root, source, realEnv: {} }), error => {
+  await rejects(() => loadObjectConfiguration({ root, source, realEnv: {}, validateCapabilities: false }), error => {
     strictEqual(error.code, 'PLT_INVALID_CONFIG_VALUE')
     ok(error.message.includes('accessor'))
     return true
@@ -170,7 +174,8 @@ test('a function-valued config in an object source is refused, naming what to do
       loadObjectConfiguration({
         root,
         source: { applications: [{ id: 'api', path: '.', config: () => ({ module: '@platformatic/node' }) }] },
-        realEnv: {}
+        realEnv: {},
+        validateCapabilities: false
       }),
     error => {
       strictEqual(error.code, 'PLT_INVALID_CONFIG_VALUE')
@@ -198,6 +203,7 @@ test('a programmatic root floors the env walk where the embedder declared it', a
 
   const { context } = await loadObjectConfiguration({
     root: join(root, 'app'),
+    validateCapabilities: false,
     source: { application: { config: { module: '@platformatic/node' } } },
     realEnv: {}
   })

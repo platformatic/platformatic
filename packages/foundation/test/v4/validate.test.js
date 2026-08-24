@@ -115,6 +115,24 @@ test('validation reports every failure by path', () => {
   )
 })
 
+test('an unknown option is named, not merely counted', () => {
+  // AJV puts the property in params rather than in the message, so the commonest mistake of all —
+  // a typo in an option name — would otherwise read as "must NOT have additional properties" and
+  // leave the author to find which one.
+  throws(
+    () =>
+      validateCapabilityConfiguration({ serverr: {} }, capabilitySchema, {
+        id: 'api',
+        module: '@acme/capability',
+        root: '/app'
+      }),
+    error => {
+      ok(error.message.includes("'serverr'"), error.message)
+      return true
+    }
+  )
+})
+
 test('useDefaults runs here rather than in the eval worker', () => {
   // Which is what keeps the resolve projection carrying authored values rather than
   // schema-supplied ones.
@@ -202,12 +220,7 @@ test('the loader validates each application payload when asked to', async t => {
     'web/api/index.js': ''
   })
 
-  const { config } = await loadConfiguration({
-    cwd: root,
-    command: 'start',
-    realEnv: {},
-    validateCapabilities: true
-  })
+  const { config } = await loadConfiguration({ cwd: root, command: 'start', realEnv: {} })
 
   deepStrictEqual(config.applications[0].config, { server: { port: 8080 } })
   deepStrictEqual(config.applications[0].capabilityMetadata, {
@@ -227,7 +240,7 @@ test('a typo in a capability option fails the load rather than reaching the work
   })
 
   await rejects(
-    () => loadConfiguration({ cwd: root, command: 'start', realEnv: {}, validateCapabilities: true }),
+    () => loadConfiguration({ cwd: root, command: 'start', realEnv: {} }),
     error => {
       strictEqual(error.code, 'PLT_INVALID_APPLICATION_CONFIGURATION')
       ok(error.message.includes('api'))
@@ -246,12 +259,12 @@ test('a detected entry is validated too, so an unresolvable capability fails the
 
   // The detector answers @platformatic/node here, which has no schema resolvable from this tree —
   // so the check fails loudly rather than passing an unvalidated payload downstream.
-  await rejects(() => loadConfiguration({ cwd: root, command: 'start', realEnv: {}, validateCapabilities: true }), {
+  await rejects(() => loadConfiguration({ cwd: root, command: 'start', realEnv: {} }), {
     code: 'PLT_CAPABILITY_SCHEMA_NOT_FOUND'
   })
 })
 
-test('validation is off by default, and nothing silently half-runs', async t => {
+test('validation is on by default, so an unresolvable capability fails the load', async t => {
   const root = await createTree(t, {
     'package.json': '{ "name": "proj" }',
     'watt.config.js':
@@ -259,7 +272,28 @@ test('validation is off by default, and nothing silently half-runs', async t => 
     'web/api/index.js': ''
   })
 
-  const { config } = await loadConfiguration({ cwd: root, command: 'start', realEnv: {} })
+  await rejects(() => loadConfiguration({ cwd: root, command: 'start', realEnv: {} }), {
+    code: 'PLT_CAPABILITY_SCHEMA_NOT_FOUND'
+  })
+})
+
+test('opting out is explicit, and then nothing half-runs', async t => {
+  // The escape hatch exists for callers that genuinely have no capability to resolve — the loader's
+  // own tests for scope and the env ladder among them — and it turns the whole check off rather
+  // than degrading it, so there is no state where a payload is partly validated.
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js':
+      'export default { applications: [{ id: "api", path: "./web/api", config: { module: "@acme/absent", serverr: {} } }] }',
+    'web/api/index.js': ''
+  })
+
+  const { config } = await loadConfiguration({
+    cwd: root,
+    command: 'start',
+    realEnv: {},
+    validateCapabilities: false
+  })
 
   deepStrictEqual(config.applications[0].config, { serverr: {} })
   strictEqual(config.applications[0].capabilityMetadata, undefined)

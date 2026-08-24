@@ -1,5 +1,5 @@
 import { loadConfiguration } from '@platformatic/foundation/lib/v4/index.js'
-import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { mkdtemp, writeFile, mkdir } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
@@ -58,9 +58,14 @@ test('a Level 1 file is a bare factory call, auto-wrapped into a single-applicat
   // validates carries no reserved properties.
   strictEqual(entry.module, '@platformatic/node')
   ok(entry.definitionVersion)
-  deepStrictEqual(entry.config.node, { main: './server.js' })
-  deepStrictEqual(entry.config.server, { port: 3042 })
   strictEqual(entry.config.module, undefined)
+  strictEqual(entry.config.node.main, './server.js')
+  strictEqual(entry.config.server.port, 3042)
+
+  // Validation ran main-side against the capability's own schema, so the payload carries that
+  // schema's defaults — useDefaults runs here rather than in the eval worker.
+  strictEqual(entry.config.node.hasServer, true)
+  deepStrictEqual(entry.capabilityMetadata, { skipTelemetryHooks: false, modulesToLoad: [], servesWithoutPort: 'worker' })
 })
 
 test('a Level 1b file uses defineConfig with the singular application shorthand', async t => {
@@ -128,7 +133,7 @@ test('the factory callback form is deferred and resolved by the loader', async t
   const { config } = await loadConfiguration({ cwd: root, command: 'start', realEnv: {} })
 
   // next(cb) desugars to async ctx => next(await cb(ctx)), which classification rule 1 calls.
-  deepStrictEqual(config.applications[0].config.node, { main: './prod.js' })
+  strictEqual(config.applications[0].config.node.main, './prod.js')
 })
 
 test('a monorepo evaluates each per-app file in its own worker under its own environment', async t => {
@@ -173,7 +178,7 @@ test('a monorepo evaluates each per-app file in its own worker under its own env
   strictEqual(config.applications[0].config.server.hostname, 'root')
 })
 
-test('an option the capability schema does not have survives to be rejected by that schema', async t => {
+test('an option the capability schema does not have is rejected by that schema', async t => {
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `
@@ -183,12 +188,15 @@ test('an option the capability schema does not have survives to be rejected by t
     `
   })
 
-  const { config } = await loadConfiguration({ cwd: root, command: 'start', realEnv: {} })
-
   // The factory does not police the option set: an unknown key lands at the top level, where the
-  // capability's own AJV schema rejects it with a precise error. That scales automatically as
-  // capabilities add options, where a factory-side allowlist would drift.
-  strictEqual(config.applications[0].config.notAnOption, true)
+  // capability's own AJV schema rejects it main-side with a precise error. That scales
+  // automatically as capabilities add options, where a factory-side allowlist would drift.
+  await rejects(() => loadConfiguration({ cwd: root, command: 'start', realEnv: {} }), error => {
+    strictEqual(error.code, 'PLT_INVALID_APPLICATION_CONFIGURATION')
+    ok(error.message.includes('@platformatic/node'))
+    ok(error.message.includes('notAnOption'))
+    return true
+  })
 })
 
 test('a factory result is plain serializable data', async t => {

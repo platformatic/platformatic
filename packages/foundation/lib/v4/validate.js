@@ -128,6 +128,24 @@ export async function importCapabilitySchema (module, applicationRoot) {
   throw new CapabilitySchemaNotFoundError(module, applicationRoot)
 }
 
+/*
+  AJV puts the offending property name in params rather than in the message, so the commonest
+  mistake of all — a typo in an option name — reads as "must NOT have additional properties" and
+  leaves the author to find which one. Naming it is the difference between an error you can act on
+  and one you have to bisect.
+*/
+function describeFailure (error) {
+  if (error.params?.additionalProperty) {
+    return `must NOT have the additional property '${error.params.additionalProperty}'`
+  }
+
+  if (error.params?.allowedValues) {
+    return `${error.message} (${error.params.allowedValues.join(', ')})`
+  }
+
+  return error.message
+}
+
 export function validateCapabilityConfiguration (config, schema, { id, module, root, fixPaths = true } = {}) {
   const validator = createCapabilityValidator(schema, { root, fixPaths })
 
@@ -137,7 +155,7 @@ export function validateCapabilityConfiguration (config, schema, { id, module, r
 
   const failures = validator.errors.map(error => ({
     path: error.instancePath === '' ? '/' : error.instancePath,
-    message: error.message,
+    message: describeFailure(error),
     params: error.params
   }))
 

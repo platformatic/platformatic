@@ -17,7 +17,10 @@ function collector () {
 }
 
 async function load (cwd, overrides = {}) {
-  return loadConfiguration({ cwd, command: 'start', realEnv: {}, ...overrides })
+  // These fixtures name capabilities that are not installed beside them, and they are exercising
+  // scope, the env ladder, the watch set and the detector rather than capability validation, which
+  // validate.test.js covers on its own fixtures.
+  return loadConfiguration({ cwd, command: 'start', realEnv: {}, validateCapabilities: false, ...overrides })
 }
 
 test('a root config boots the full runtime and evaluates each per-app file in its own worker', async t => {
