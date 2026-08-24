@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.67.0.json",
-  "version": "3.67.0",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.68.0.json",
+  "version": "3.68.0",
   "title": "Platformatic Service Config",
   "type": "object",
   "properties": {
@@ -561,6 +561,19 @@
             }
           },
           "additionalProperties": false
+        },
+        "errorHandler": {
+          "description": "Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.",
+          "anyOf": [
+            {
+              "type": "string",
+              "resolveModule": true
+            },
+            {
+              "type": "string",
+              "resolvePath": true
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -959,6 +972,11 @@
                   "type": "string",
                   "description": "Base URL for the OpenAPI Swagger Documentation"
                 },
+                "ui": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served."
+                },
                 "path": {
                   "type": "string",
                   "description": "Path to an OpenAPI spec file",
@@ -1200,6 +1218,9 @@
                 "default": "main"
               },
               "useHttp": {
+                "type": "boolean"
+              },
+              "websocket": {
                 "type": "boolean"
               },
               "reuseTcpPorts": {

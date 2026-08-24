@@ -59,5 +59,7 @@ export const skipTelemetryHooks = true
 
 export { platformaticService } from './lib/application.js'
 export { ServiceCapability } from './lib/capability.js'
+export * from './lib/errors.js'
+export * as errors from './lib/errors.js'
 export { applyTestHelperCustomizations, Generator } from './lib/generator.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'

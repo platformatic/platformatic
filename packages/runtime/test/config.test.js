@@ -2,7 +2,7 @@ import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
 import { dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { wrapInRuntimeConfig } from '../index.js'
+import { loadConfiguration, wrapInRuntimeConfig } from '../index.js'
 import { parseInspectorOptions } from '../lib/config.js'
 import { createRuntime } from './helpers.js'
 
@@ -533,4 +533,42 @@ test('prepareApplication should handle multiple services with url but no path ef
   // because they should skip capability detection entirely (no file operations)
   // With the bug, each service would trigger a glob operation on the temp directory
   ok(elapsed < 50, `Processing 16 url-only services should be fast (took ${elapsed.toFixed(2)}ms, expected < 50ms)`)
+})
+
+test('autoload - merges an explicit entry which points to the autoloaded directory', async t => {
+  const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'same-path.json'))
+
+  strictEqual(config.applications.length, 1)
+  strictEqual(config.applications[0].id, 'api')
+  strictEqual(config.applications[0].path, join(fixturesDir, 'autoload-collision', 'web', 'api'))
+  strictEqual(config.applications[0].workers.static, 3)
+})
+
+test('autoload - merges an external entry when the autoloaded directory is where it is resolved', async t => {
+  const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'resolved-base-path.json'))
+
+  strictEqual(config.applications.length, 1)
+  strictEqual(config.applications[0].id, 'api')
+  strictEqual(config.applications[0].path, join(fixturesDir, 'autoload-collision', 'web', 'api'))
+  strictEqual(config.applications[0].url, 'https://github.com/org/api')
+})
+
+test('autoload - throws when the id of an autoloaded directory is used by an external application', async t => {
+  await rejects(
+    () => loadConfiguration(join(fixturesDir, 'autoload-collision', 'url-collision.json')),
+    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the URL "https:\/\/github.com\/org\/api"./
+  )
+})
+
+test('autoload - throws when the id of an autoloaded directory is used by another local application', async t => {
+  await rejects(
+    () => loadConfiguration(join(fixturesDir, 'autoload-collision', 'path-collision.json')),
+    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the path ".+[\\/]elsewhere[\\/]api"./
+  )
+})
+
+test('autoload - does not report a collision with a disabled application', async t => {
+  const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'disabled-url.json'))
+
+  strictEqual(config.applications.length, 0)
 })

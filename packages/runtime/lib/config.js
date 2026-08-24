@@ -9,11 +9,13 @@ import {
   omitProperties,
   runtimeUnwrappablePropertiesList
 } from '@platformatic/foundation'
+import { realpathSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { isAbsolute, join, resolve as resolvePath } from 'node:path'
 
 import {
+  ApplicationIdCollisionError,
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
@@ -295,6 +297,40 @@ export async function prepareApplication (config, application, defaultWorkers) {
   return application
 }
 
+function canonicalPath (path) {
+  try {
+    return realpathSync(path)
+  } catch {
+    return resolvePath(path)
+  }
+}
+
+// An autoloaded directory and an explicitly configured entry with the same id are the same application
+// only when they point to the same place: either the configured path resolves to the autoloaded
+// directory, or the entry is external and the autoloaded directory is where "resolve" would put it.
+// When they don't, returns a description of the configured entry to report in the error.
+function conflictingApplicationSource (root, resolvedApplicationsPath, existing, entryPath) {
+  if (existing.path) {
+    // The path still contains a placeholder, which means the environment variable was not replaced.
+    // There is nothing to compare in that case.
+    if (existing.path.match(/^\{.*\}$/)) {
+      return null
+    }
+
+    const existingPath = isAbsolute(existing.path) ? existing.path : resolvePath(root, existing.path)
+
+    return canonicalPath(existingPath) === canonicalPath(entryPath) ? null : `the path "${existing.path}"`
+  }
+
+  if (existing.url) {
+    const resolvedPath = join(resolvedApplicationsPath, existing.id)
+
+    return canonicalPath(resolvedPath) === canonicalPath(entryPath) ? null : `the URL "${existing.url}"`
+  }
+
+  return null
+}
+
 function isApplicationEnabled (application, environment) {
   const { enabled } = application
 
@@ -378,7 +414,11 @@ export async function transform (config, _, context) {
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
 
-    path = resolvePath(config[kMetadata].root, path)
+    // Capture these before the loop, as config is shadowed in its body
+    const root = config[kMetadata].root
+    const resolvedApplicationsPath = resolvePath(root, config.resolvedApplicationsBasePath ?? 'external')
+
+    path = resolvePath(root, path)
     const entries = await readdir(path, { withFileTypes: true })
 
     for (let i = 0; i < entries.length; ++i) {
@@ -403,7 +443,21 @@ export async function transform (config, _, context) {
       const existingApplicationId = applications.findIndex(application => application.id === id)
 
       if (existingApplicationId !== -1) {
-        applications[existingApplicationId] = { ...application, ...applications[existingApplicationId] }
+        const existing = applications[existingApplicationId]
+
+        // Merging on the id alone can boot local code where the configuration named a repository, as
+        // the autoloaded path survives next to the configured url. Reject the duplicate instead: an id
+        // is the mesh hostname, the injected PLT_<ID>_URL name, the metrics label and the argument of
+        // "wattpm inject", so two different applications cannot share one.
+        if (isApplicationEnabled(existing, environment)) {
+          const source = conflictingApplicationSource(root, resolvedApplicationsPath, existing, entryPath)
+
+          if (source) {
+            throw new ApplicationIdCollisionError(id, entryPath, source)
+          }
+        }
+
+        applications[existingApplicationId] = { ...application, ...existing }
       } else {
         applications.push(application)
       }

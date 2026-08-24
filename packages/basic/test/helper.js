@@ -28,6 +28,7 @@ let temporaryDirectoryCount = 0
 
 export const LOGS_TIMEOUT = 100
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
+export const HMR_CONNECTION_TIMEOUT = 5000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
 
 export let fixturesDir
@@ -573,10 +574,35 @@ export async function verifyHTMLViaInject (app, applicationId, url, contents) {
 }
 
 export async function verifyHMR (root, runtime, url, path, protocol, handler) {
+  const paths = Array.isArray(path)
+    ? path
+    : [
+        path.replace('/_next/webpack-hmr', '/_next/hmr'),
+        path.replace('/_next/hmr', '/_next/webpack-hmr')
+      ]
+  let lastError
+
+  for (const currentPath of paths) {
+    try {
+      await verifyHMRPath(root, runtime, url, currentPath, protocol, handler)
+      return
+    } catch (err) {
+      lastError = err
+    }
+  }
+
+  throw lastError
+}
+
+async function verifyHMRPath (root, runtime, url, path, protocol, handler) {
   const connection = Promise.withResolvers()
   const reload = Promise.withResolvers()
   const ac = new AbortController()
-  const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
+  const connectionTimeout = sleep(HMR_CONNECTION_TIMEOUT, kTimeout, { signal: ac.signal })
+  let active = true
+
+  connection.promise.catch(() => {})
+  reload.promise.catch(() => {})
 
   // Some delay to ensure the server is ready to accept WebSocket connections
   await sleep(1000)
@@ -584,8 +610,11 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
   const webSocket = new WebSocket(url.replace('http:', 'ws:') + path, protocol)
 
   webSocket.on('error', err => {
-    process._rawDebug('WebSocket error:', err)
-    clearTimeout(timeout)
+    if (!active) {
+      return
+    }
+
+    active = false
     connection.reject(err)
     reload.reject(err)
   })
@@ -597,16 +626,18 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
   const hmrTriggerFile = resolve(currentWorkingDirectory, hmrTriggerFileRelative)
   const originalContents = await readFile(hmrTriggerFile, 'utf-8')
   try {
-    if ((await Promise.race([connection.promise, timeout])) === kTimeout) {
+    if ((await Promise.race([connection.promise, connectionTimeout])) === kTimeout) {
       throw new Error('Timeout while waiting for HMR connection')
     }
 
     await writeFile(hmrTriggerFile, originalContents.replace('const version = 123', 'const version = 456'), 'utf-8')
 
-    if ((await Promise.race([reload.promise, timeout])) === kTimeout) {
+    const reloadTimeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
+    if ((await Promise.race([reload.promise, reloadTimeout])) === kTimeout) {
       throw new Error('Timeout while waiting for HMR reload')
     }
   } finally {
+    active = false
     webSocket.terminate()
     ac.abort()
     await writeFile(hmrTriggerFile, originalContents, 'utf-8')

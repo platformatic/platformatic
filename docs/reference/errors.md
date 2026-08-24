@@ -46,7 +46,7 @@
 
 ### PLT_GATEWAY_WS_NO_TCP_UPSTREAM
 
-**Message:** Cannot proxy a WebSocket connection to the "%s" application because it does not expose a TCP server. Make the application listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".
+**Message:** Cannot proxy a WebSocket connection to the "%s" application because it does not expose a TCP server. Set "websocket": true on the application, make it listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".
 
 ## @platformatic/control
 
@@ -244,6 +244,10 @@
 
 **Message:** Invalid entrypoint: '%s' does not exist
 
+### PLT_RUNTIME_APPLICATION_ID_COLLISION
+
+**Message:** The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.
+
 ### PLT_RUNTIME_MISSING_ENTRYPOINT
 
 **Message:** Missing application entrypoint.
@@ -295,6 +299,12 @@
 ### PLT_RUNTIME_MESSAGING_ERROR
 
 **Message:** Cannot send a message to service "%s": %s
+
+## @platformatic/service
+
+### PLT_SERVICE_INVALID_ERROR_HANDLER
+
+**Message:** The module %s configured as server.errorHandler does not export a function.
 
 ## @platformatic/sql-events
 

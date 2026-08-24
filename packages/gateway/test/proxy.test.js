@@ -1,4 +1,3 @@
-import { sleepImmediate } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { getEvents, getPrometheus, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
@@ -44,6 +43,8 @@ test('should increment and decrement activeWsConnections metric', async t => {
   }
 
   const { application, wsServer } = await createWebsocketApplication(t)
+  const events = new EventEmitter()
+  updateGlobals({ events })
   wsServer.on('connection', socket => {
     socket.on('message', message => {
       setTimeout(() => {
@@ -69,7 +70,12 @@ test('should increment and decrement activeWsConnections metric', async t => {
           proxy: {
             prefix: '/',
             upstream,
-            ws: { upstream: wsUpstream }
+            ws: {
+              upstream: wsUpstream,
+              hooks: {
+                path: resolve(import.meta.dirname, './proxy/fixtures/ws/hooks.js')
+              }
+            }
           }
         }
       ]
@@ -90,6 +96,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   // Test: Create first connection, should increment to 1
   const client1 = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
+  t.after(() => client1.close())
   await once(client1, 'open')
   client1.send('hello')
   const [response1] = await once(client1, 'message')
@@ -98,6 +105,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   // Test: Create second connection, should increment to 2
   const client2 = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
+  t.after(() => client2.close())
   await once(client2, 'open')
   client2.send('hello2')
   const [response2] = await once(client2, 'message')
@@ -105,15 +113,17 @@ test('should increment and decrement activeWsConnections metric', async t => {
   assert.equal(await getActiveConnections(), 2)
 
   // Test: Close first connection, should decrement to 1
+  const firstDisconnect = once(events, 'onDisconnect')
   client1.close()
   await once(client1, 'close')
-  await sleepImmediate()
+  await firstDisconnect
   assert.equal(await getActiveConnections(), 1)
 
   // Test: Close second connection, should decrement to 0
+  const secondDisconnect = once(events, 'onDisconnect')
   client2.close()
   await once(client2, 'close')
-  await sleepImmediate()
+  await secondDisconnect
   assert.equal(await getActiveConnections(), 0)
 
   await gateway.close()
@@ -1011,6 +1021,8 @@ test('should properly configure the frontends on their paths if no gateway confi
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { from: 'service' })
   }
+
+  await runtime.close()
 })
 
 test('should properly match applications by their hostname', async t => {
@@ -1838,9 +1850,9 @@ test('should proxy to a websocket application with reconnect options', async t =
   await once(getEvents(), 'onReconnect')
   await once(getEvents(), 'onPong')
 
+  const disconnected = once(getEvents(), 'onDisconnect')
   client.close()
-
-  await once(getEvents(), 'onDisconnect')
+  await disconnected
 })
 
 test('should dynamically proxy a using custom logic', async t => {

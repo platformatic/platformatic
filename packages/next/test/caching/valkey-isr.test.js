@@ -708,23 +708,25 @@ test('should not extend the TTL over the original intended one', async t => {
 })
 
 test('should handle read error', async t => {
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
+
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
   })
 
-  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
-  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
-
   t.after(async () => {
     await valkey.acl('delUser', valkeyUser)
     await valkey.disconnect()
   })
 
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
@@ -756,7 +758,9 @@ test('should handle deserialization error', async t => {
   // implementation detail that can change between Next.js versions. Rather
   // than hardcoding it, warm the cache with a real request and then discover
   // the key that was actually used, so we can corrupt the right entry.
+  const warmCompleted = once(runtime, 'application:worker:event:completed')
   await fetch(url + '/route')
+  await warmCompleted
 
   const keyPattern = `${keyFor(valkeyPrefix, 'development', 'values')}:*`
   let fetchKey
@@ -770,8 +774,10 @@ test('should handle deserialization error', async t => {
 
   await valkey.set(fetchKey, 'invalid')
 
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
@@ -806,16 +812,20 @@ test('should handle refresh error', async t => {
   })
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
   }
 
   await valkey.acl('deluser', valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '+SET', '-EXPIRE')
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
   }
 
   await runtime.close()
@@ -832,23 +842,25 @@ test('should handle refresh error', async t => {
 })
 
 test('should handle write error', async t => {
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '-SET')
+
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
   })
 
-  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
-  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '-SET')
-
   t.after(async () => {
     await valkey.acl('delUser', valkeyUser)
     await valkey.disconnect()
   })
 
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   notDeepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)

@@ -2192,6 +2192,10 @@ export class Runtime extends EventEmitter {
     return this.#scheduler?.getJobs() ?? []
   }
 
+  getScheduler () {
+    return this.getSchedulerJobs()
+  }
+
   pauseSchedulerJob (name) {
     return this.#schedulerOrThrow().pauseJob(name)
   }
