@@ -1,15 +1,13 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
-  "preload": "../../../index.js",
+  "preload": "../../../../../index.js",
   "autoload": {
-    "path": "./"
+    "path": "../../apps"
   },
   "logger": {
     "level": "error"
   },
-  "health": {
-    "enabled": true,
-    "maxELU": 0.5,
-    "interval": 60000
+  "gracefulShutdown": {
+    "runtime": 1500
   }
 }

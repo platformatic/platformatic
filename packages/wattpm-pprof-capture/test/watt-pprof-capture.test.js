@@ -4,7 +4,7 @@ import test from 'node:test'
 import { request } from 'undici'
 import { createRuntime } from '../../runtime/test/helpers.js'
 
-async function createApp (t, config = 'fixtures/runtime-test/platformatic.json') {
+async function createApp (t, config = 'fixtures/runtime-test/configs/default/platformatic.json') {
   const configFile = resolve(import.meta.dirname, config)
   const app = await createRuntime(configFile)
 
@@ -684,7 +684,7 @@ test('continuous profiling should capture a final profile and pause when ELU exc
 })
 
 test('continuous profiling should pause by default when ELU exceeds the worker health.maxELU', async t => {
-  const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-low-maxelu.json')
+  const { app, url } = await createApp(t, 'fixtures/runtime-test/configs/low-maxelu/platformatic.json')
 
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
@@ -745,7 +745,7 @@ test('the preserved overload profile should expire after the grace period once i
   // The grace period is twice the runtime graceful shutdown timeout: the
   // fixture sets it to 1500ms, so preserved profiles expire 3s after the
   // worker exits
-  const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-short-shutdown.json')
+  const { app, url } = await createApp(t, 'fixtures/runtime-test/configs/short-shutdown/platformatic.json')
 
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 1000, maxELU: 0.5 })
@@ -831,7 +831,7 @@ test('getApplicationLastProfile should fall back to the preserved profile when t
 })
 
 test('maxELU: false should disable the overload cutoff', async t => {
-  const { app, url } = await createApp(t, 'fixtures/runtime-test/platformatic-low-maxelu.json')
+  const { app, url } = await createApp(t, 'fixtures/runtime-test/configs/low-maxelu/platformatic.json')
 
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 

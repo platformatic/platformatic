@@ -7,20 +7,7 @@
   "services": [
     {
       "id": "first",
-      "path": "first",
-      "workers": 1
-    },
-    {
-      "id": "second",
-      "path": "second"
-    },
-    {
-      "id": "third",
-      "path": "third"
-    },
-    {
-      "id": "composer",
-      "path": "composer",
+      "path": "../../first",
       "workers": 1
     }
   ],
