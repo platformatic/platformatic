@@ -492,7 +492,6 @@ graph LR
 
 ### Community Resources
 
-- **Discord:** Join our [Discord server](https://discord.gg/platformatic) for real-time help
 - **GitHub Issues:** Report bugs at [github.com/platformatic/platformatic](https://github.com/platformatic/platformatic/issues)
 - **Documentation:** Search this documentation for specific topics
 
