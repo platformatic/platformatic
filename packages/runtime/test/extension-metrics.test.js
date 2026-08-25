@@ -43,7 +43,7 @@ test('extension metrics appear once in JSON and text output', async t => {
   process.env.PORT = 0
 
   const port = await getPort()
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -98,7 +98,7 @@ test('multiple extension registries contribute distinct metrics', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics-multi.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics-multi', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -124,7 +124,7 @@ test('extension metrics are not duplicated across multiple application workers',
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics-workers.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics-workers', 'platformatic.json')
   const app = await createRuntime(configFile, null, { isProduction: true })
   await app.start()
 
@@ -153,7 +153,7 @@ test('metric-family collisions between extensions fail with a coded error', asyn
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics-collision.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics-collision', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -175,7 +175,7 @@ test('metric-family collisions with process metrics fail with a coded error', as
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics-process-collision.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics-process-collision', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -197,7 +197,7 @@ test('extension metrics registries are cleared after close', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics-multi.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics-multi', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -227,7 +227,7 @@ test('extension metrics registries are cleared after partial startup failure', a
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   // Force a failure after extensions are loaded by stopping before start completes
@@ -249,7 +249,7 @@ test('disabled metrics keep getMetrics unavailable and do not expose extension s
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-metrics-disabled.json')
+  const configFile = join(fixturesDir, 'extensions', 'metrics-disabled', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -273,7 +273,7 @@ test('output is unchanged when no extension metrics exist', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)

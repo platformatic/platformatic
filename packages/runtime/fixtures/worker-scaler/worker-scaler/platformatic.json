@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "watch": true,
+  "autoload": {
+    "path": "../services",
+    "exclude": [
+      "docs"
+    ]
+  },
+  "logger": {
+    "level": "info"
+  },
+  "health": {
+    "enabled": false
+  },
+  "verticalScaler": {
+    "enabled": true,
+    "gracePeriod": 1000,
+    "maxTotalWorkers": 10
+  }
+}

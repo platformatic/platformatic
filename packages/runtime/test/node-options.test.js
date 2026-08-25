@@ -9,7 +9,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('node-options on worker threads', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
+  const configFile = join(fixturesDir, 'preload-multiple', 'multiple-service', 'platformatic.json')
   const app = await createRuntime(configFile)
   const { 'composer:0': entryUrl } = await app.start()
 
@@ -40,7 +40,7 @@ test('node-options on worker threads', async t => {
 
 test('node-options on separate processes', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
+  const configFile = join(fixturesDir, 'preload-multiple', 'multiple-service', 'platformatic.json')
   const app = await createRuntime(configFile)
   const { 'composer:0': entryUrl } = await app.start()
 

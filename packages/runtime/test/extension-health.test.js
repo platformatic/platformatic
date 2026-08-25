@@ -26,7 +26,7 @@ function resetHealthApiState (overrides = {}) {
   globalThis.__pltExtensionHealthSecond = { readiness: true, liveness: true }
 }
 
-async function startWithMetrics (t, configName, extraEnv = {}) {
+async function startWithMetrics (t, variant, extraEnv = {}) {
   process.env.PORT = '0'
   const metricsPort = await getPort()
   process.env.METRICS_PORT = String(metricsPort)
@@ -35,7 +35,7 @@ async function startWithMetrics (t, configName, extraEnv = {}) {
     process.env[key] = String(value)
   }
 
-  const configFile = join(fixturesDir, 'extensions', configName)
+  const configFile = join(fixturesDir, 'extensions', variant, 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -54,7 +54,7 @@ async function probe (port, path) {
 
 test('extension readiness and liveness success, plus custom routes on shared probe server', async t => {
   resetHealthApiState()
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-api.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-api')
 
   {
     const { statusCode, text } = await probe(metricsPort, '/ready')
@@ -77,7 +77,7 @@ test('extension readiness and liveness success, plus custom routes on shared pro
 
 test('extension readiness failure fails /ready', async t => {
   resetHealthApiState({ readiness: false })
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-api.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-api')
 
   const { statusCode, text } = await probe(metricsPort, '/ready')
   strictEqual(statusCode, 500)
@@ -86,7 +86,7 @@ test('extension readiness failure fails /ready', async t => {
 
 test('extension readiness rejection fails closed on /ready', async t => {
   resetHealthApiState({ readinessThrow: true })
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-api.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-api')
 
   const { statusCode, text } = await probe(metricsPort, '/ready')
   strictEqual(statusCode, 500)
@@ -95,7 +95,7 @@ test('extension readiness rejection fails closed on /ready', async t => {
 
 test('extension readiness malformed result fails closed on /ready', async t => {
   resetHealthApiState({ readinessMalformed: true })
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-api.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-api')
 
   const { statusCode, text } = await probe(metricsPort, '/ready')
   strictEqual(statusCode, 500)
@@ -108,7 +108,7 @@ test('extension readiness timeout fails closed on /ready', async t => {
   const metricsPort = await getPort()
   process.env.METRICS_PORT = String(metricsPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-health-api.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -134,7 +134,7 @@ test('extension readiness custom response body and status code', async t => {
   resetHealthApiState({
     readinessResult: { status: false, statusCode: 503, body: 'not-dispatchable' }
   })
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-api.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-api')
 
   const { statusCode, text } = await probe(metricsPort, '/ready')
   strictEqual(statusCode, 503)
@@ -143,7 +143,7 @@ test('extension readiness custom response body and status code', async t => {
 
 test('extension liveness failure fails /status', async t => {
   resetHealthApiState({ liveness: false })
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-api.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-api')
 
   {
     const { statusCode, text } = await probe(metricsPort, '/ready')
@@ -161,7 +161,7 @@ test('extension liveness failure fails /status', async t => {
 test('readiness-only extension failure does not fail liveness', async t => {
   resetHealthApiState()
   globalThis.__pltExtensionReadyOnly = { readiness: false }
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-ready-only.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-ready-only')
 
   {
     const { statusCode, text } = await probe(metricsPort, '/ready')
@@ -179,7 +179,7 @@ test('readiness-only extension failure does not fail liveness', async t => {
 test('multiple extension checks aggregate deterministically', async t => {
   resetHealthApiState({ readiness: true, liveness: true })
   globalThis.__pltExtensionHealthSecond = { readiness: false, liveness: true }
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-multi.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-multi')
 
   {
     const { statusCode, text } = await probe(metricsPort, '/ready')
@@ -212,7 +212,7 @@ test('extension routes work on a separate health probes server', async t => {
   process.env.METRICS_PORT = String(metricsPort)
   process.env.HEALTH_PORT = String(healthPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-health-api-separate.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api-separate', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -248,7 +248,7 @@ test('duplicate readiness check names fail startup with a coded error', async t 
   resetHealthApiState()
   process.env.PORT = '0'
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-health-duplicate-check.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-check', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -270,7 +270,7 @@ test('duplicate readiness check names across extensions fail startup', async t =
   resetHealthApiState()
   process.env.PORT = '0'
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-health-duplicate-check-multi.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-check-multi', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -291,7 +291,7 @@ test('duplicate health routes fail startup with a coded error', async t => {
   resetHealthApiState()
   process.env.PORT = '0'
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-health-duplicate-route.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-route', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -310,7 +310,7 @@ test('duplicate health routes fail startup with a coded error', async t => {
 
 test('closing an extension removes its checks and routes', async t => {
   resetHealthApiState()
-  const { metricsPort } = await startWithMetrics(t, 'platformatic-health-api.json')
+  const { metricsPort } = await startWithMetrics(t, 'health-api')
 
   {
     const { statusCode } = await request(`http://127.0.0.1:${metricsPort}/inventory`)
@@ -340,7 +340,7 @@ test('probe behavior is unchanged without extension health registrations', async
   process.env.PORT = '0'
   const metricsPort = await getPort()
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -381,7 +381,7 @@ test('registering health routes fails when health probes are disabled', async t 
   const metricsPort = await getPort()
   process.env.METRICS_PORT = String(metricsPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-health-api.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -409,7 +409,7 @@ test('partial start failure cleans up extension health contributions', async t =
   const metricsPort = await getPort()
   process.env.METRICS_PORT = String(metricsPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'platformatic-health-api.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.init()
 

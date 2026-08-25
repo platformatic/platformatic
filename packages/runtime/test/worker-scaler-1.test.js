@@ -15,8 +15,8 @@ import { createRuntime, updateConfigFile } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 const configurations = {
-  default: 'platformatic.json',
-  'worker-scaler': 'platformatic.worker-scaler.json'
+  default: 'default',
+  'worker-scaler': 'worker-scaler'
 }
 
 function countWorkers (workers, applicationId) {
@@ -54,7 +54,7 @@ async function driveLoad (serviceUrl, signal) {
 
 for (const [name, file] of Object.entries(configurations)) {
   test(`should scale an application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file, 'platformatic.json')
     const app = await createRuntime(configFile)
     const { 'service-2:0': serviceUrl } = await app.start()
 
@@ -76,7 +76,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an application when the scaler is the cooldown(configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file, 'platformatic.json')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -106,7 +106,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale applications when the elu is lower than treshold (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file, 'platformatic.json')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config.verticalScaler = {
@@ -154,7 +154,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file, 'platformatic.json')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -197,7 +197,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', file, 'platformatic.json')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config.applications = [
@@ -244,8 +244,8 @@ for (const [name, file] of Object.entries(configurations)) {
 }
 
 test('should properly apply runtime workers configuration to the applications (number)', async t => {
-  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'platformatic.json')
-  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.temp.json')
+  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'default', 'platformatic.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'default', 'platformatic.temp.json')
   await cp(originalConfigFile, configFile)
   t.after(() => safeRemove(configFile))
 
@@ -269,8 +269,8 @@ test('should properly apply runtime workers configuration to the applications (n
 })
 
 test('should properly apply runtime workers configuration to the applications (object)', async t => {
-  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'platformatic.json')
-  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.temp.json')
+  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'default', 'platformatic.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'default', 'platformatic.temp.json')
   await cp(originalConfigFile, configFile)
   t.after(() => safeRemove(configFile))
 
@@ -299,8 +299,8 @@ test('should properly apply runtime workers configuration to the applications (o
 })
 
 test('should ensure the right order for minimum and maximum', async t => {
-  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'platformatic.json')
-  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.temp.json')
+  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'default', 'platformatic.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'default', 'platformatic.temp.json')
   await cp(originalConfigFile, configFile)
   t.after(() => safeRemove(configFile))
 
@@ -329,7 +329,7 @@ test('should ensure the right order for minimum and maximum', async t => {
 })
 
 test('should apply application scaleUpELU and scaleDownELU', async t => {
-  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.worker-scaler.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'worker-scaler', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       delete config.verticalScaler
@@ -512,7 +512,7 @@ test('logs worker health errors and refreshes the health check timeout', async t
 })
 
 test('should apply application scaleUpELU and scaleDownELU (vertical scaler))', async t => {
-  const configFile = join(fixturesDir, 'worker-scaler', 'platformatic.worker-scaler.json')
+  const configFile = join(fixturesDir, 'worker-scaler', 'worker-scaler', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config.verticalScaler = {

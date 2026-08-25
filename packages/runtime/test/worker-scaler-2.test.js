@@ -17,6 +17,15 @@ const configurations = {
   'worker-scaler': 'platformatic.worker-scaler.json'
 }
 
+// The worker-scaler fixtures were split so each variant owns a directory, which v4 requires.
+// worker-scaler-service's were not: those are two alternative configurations of one application,
+// sitting beside that application's code, which needs a second application rather than a second
+// directory.
+const runtimeVariants = {
+  default: 'default',
+  'worker-scaler': 'worker-scaler'
+}
+
 test('should remove pending initial updates by application ID', async t => {
   let resourcesUpdates = 0
   const scaler = new DynamicWorkersScaler(
@@ -42,7 +51,7 @@ test('should remove pending initial updates by application ID', async t => {
 
 for (const [name, file] of Object.entries(configurations)) {
   test(`should not scale an applications when the app maxWorkers is reached (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', runtimeVariants[name], 'platformatic.json')
 
     const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
     const logsPath = join(tmpDir, 'log.txt')
@@ -156,7 +165,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should scale applications to their min workers at start (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', runtimeVariants[name], 'platformatic.json')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -189,7 +198,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an application is there is not enough memory (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = join(fixturesDir, 'worker-scaler', runtimeVariants[name], 'platformatic.json')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)

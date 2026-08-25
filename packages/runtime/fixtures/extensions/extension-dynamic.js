@@ -19,7 +19,7 @@ export default function setup ({ runtime }) {
         [
           await prepareApplication(config, {
             id: 'b',
-            path: './services/b'
+            path: '../services/b'
           })
         ],
         true
