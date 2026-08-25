@@ -48,7 +48,7 @@
     "neostandard": "^0.12.0",
     "pino": "^9.9.0",
     "pino-test": "^1.0.1",
-    "tstyche": "^6.2.0",
+    "tstyche": "^7.0.0",
     "typescript": "~6.0.3"
   },
   "engines": {

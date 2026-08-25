@@ -40,7 +40,7 @@
     "eslint": "9",
     "express": "^4.19.2",
     "fastify": "^5.0.0",
-    "tstyche": "^6.2.0",
+    "tstyche": "^7.0.0",
     "json-schema-to-typescript": "^15.0.1",
     "koa": "^2.15.3",
     "neostandard": "^0.12.0",
