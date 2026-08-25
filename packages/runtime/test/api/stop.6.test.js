@@ -20,7 +20,7 @@ async function waitForStarting (app, applicationId) {
 }
 
 test('should stop an application while it is starting', async t => {
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'runtime', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -53,7 +53,7 @@ test('should stop an application while it is starting', async t => {
 })
 
 test('should stop an application when starting fails', async t => {
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.with-failure.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'with-failure-runtime', 'platformatic.json')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -86,7 +86,7 @@ test('should stop an application when starting fails', async t => {
 })
 
 test('should handle another start command while an application is starting', async t => {
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'runtime', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.init()
