@@ -383,4 +383,4 @@ Now that you understand what Watt is and how it works, choose your next step:
 - [Application Types](/docs/reference) - Database, HTTP, and Gateway applications
 - [Production Deployment](/docs/guides/deployment/dockerize-a-watt-app) - Kubernetes, Docker, monitoring
 
-**Questions?** Join our [Discord community](https://discord.gg/platformatic) or check [GitHub Discussions](https://github.com/platformatic/platformatic/discussions) for real-time help from the Watt team and community.
+**Questions?** Check [GitHub Discussions](https://github.com/platformatic/platformatic/discussions) for real-time help from the Watt team and community.

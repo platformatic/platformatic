@@ -5,7 +5,6 @@
 [![npm](https://img.shields.io/npm/v/wattpm)](https://www.npmjs.com/package/wattpm)
 [![CI](https://github.com/platformatic/platformatic/actions/workflows/ci.yml/badge.svg)](https://github.com/platformatic/platformatic/actions/workflows/ci.yml)
 [![NPM version](https://img.shields.io/npm/v/platformatic.svg?style=flat)](https://www.npmjs.com/package/platformatic)
-[![Discord](https://img.shields.io/discord/1011258196905689118)](https://discord.gg/platformatic)
 
 Watt Utils, utilities for the Platformatic's Node.js application server.
 
@@ -29,7 +28,7 @@ Check out our full documentation at [platformatic.dev](https://platformatic.dev)
 ## Support
 
 If you run into a bug, issues or have a suggestion for improvement, please raise an
-[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
+[issue on GitHub](https://github.com/platformatic/platformatic/issues/new).
 
 ## License
 

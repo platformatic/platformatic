@@ -56,7 +56,6 @@ If you can't find what you're looking for in these guides:
 1. Check the [Reference Documentation](./reference.md) for detailed API specifications
 2. Try the [Getting Started tutorials](./getting-started/quick-start.md) for step-by-step learning
 3. Visit our [GitHub repository](https://github.com/platformatic/platformatic) for community support
-4. Join our [Discord community](https://discord.gg/platformatic) for real-time help
 
 ## Contributing
 

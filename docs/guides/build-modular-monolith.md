@@ -1184,4 +1184,3 @@ You can watch Platformatic Runtime and Gateway in action in the deep dive videos
 ### Get started with Platformatic
 
 - Build robust Node.js apps with [our open-source tools](https://docs.platformatic.dev/?utm_campaign=Blog%20post%20-%20Building%20REST%20APIs%20with%20Platformatic%20DB&utm_medium=blog&utm_source=Platformatic%20Blog?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
-- Join [our community](https://discord.gg/platformatic?utm_campaign=Blog%20post%20-%20Building%20REST%20APIs%20with%20Platformatic%20DB&utm_medium=blog&utm_source=Platformatic%20Blog?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) on Discord
