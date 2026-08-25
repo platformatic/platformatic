@@ -1653,8 +1653,8 @@ importers:
         specifier: ^8.5.0
         version: 8.10.0
       undici-thread-interceptor:
-        specifier: ^2.0.3
-        version: 2.0.3
+        specifier: ^2.1.1
+        version: 2.1.1
       ws:
         specifier: ^8.16.0
         version: 8.21.1
@@ -12613,8 +12613,8 @@ packages:
   undici-oidc-interceptor@0.9.0:
     resolution: {integrity: sha512-CK+OIoqoVXkDBTn53Az/qIDRkWuppI7wh7nsNFkPOS8gGMbyqvW0TK/MEbaywzygkMqEQ/UnW7OP4tdW03sg6g==}
 
-  undici-thread-interceptor@2.0.3:
-    resolution: {integrity: sha512-a8Sntn8k5hJQLBOWQH/n89g1Ix8nESs1J/ZR1Su+EsXD0Rx/Ss0B1TmbNNarLWH9FgGxsuhaWYkhDWcNcAndCQ==}
+  undici-thread-interceptor@2.1.1:
+    resolution: {integrity: sha512-CxR00BDcWevhaD+fP/aSflqsgPwZ+3B2Wu/vFsmTjkAFJ6IBLqnbp6UcX6n0Gj9fVPB4C8nRl6+1lwqMUspgKg==}
     engines: {node: '>= 22.22.0 || >= 24.6.0'}
 
   undici-types@6.21.0:
@@ -25757,7 +25757,7 @@ snapshots:
       fast-jwt: 6.3.1
       undici: 8.10.0
 
-  undici-thread-interceptor@2.0.3:
+  undici-thread-interceptor@2.1.1:
     dependencies:
       '@watchable/unpromise': 1.0.2
       fastq: 1.20.1

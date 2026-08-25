@@ -86,6 +86,7 @@ import {
   kWorkerHealthSignals,
   kWorkerId,
   kWorkerPortOffset,
+  kWorkerServerOptions,
   kWorkerUrl,
   kWorkersBroadcast,
   kWorkerStartTime,
@@ -2741,6 +2742,10 @@ export class Runtime extends EventEmitter {
     // Forward events from the worker
     // Do not use emitAndNotify here since we don't want to forward unknown events
     worker[kITC].on('event', ({ event, payload }) => {
+      if (event === 'serverOptions') {
+        worker[kWorkerServerOptions] = payload[0]
+      }
+
       event = `application:worker:event:${event}`
 
       this.emit(event, ...payload, workerId, applicationId, index)
@@ -3720,6 +3725,7 @@ export class Runtime extends EventEmitter {
 
     const stopBeforeStart =
       Boolean(worker[kWorkerUrl]) &&
+      worker[kWorkerServerOptions]?.port !== 0 &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
 
     try {

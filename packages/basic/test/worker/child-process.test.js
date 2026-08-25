@@ -173,7 +173,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
       '200 { ok: true }',
       '200 { ok: true }',
       '200 { ok: true }',
-      '502 getaddrinfo EAI_AGAIN service2.plt.local'
+      '502 No available target found for http:service2.plt.local.'
     ]
   )
 })

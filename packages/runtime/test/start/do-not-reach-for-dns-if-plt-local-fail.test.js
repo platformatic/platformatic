@@ -21,6 +21,6 @@ test('do not reach for dns if plt.local fail to resolve', async t => {
 
     strictEqual(res.statusCode, 200)
     const body = await res.body.json()
-    ok(body.msg.match(/No target found for unknown.plt.local in thread \d./), [body.msg])
+    ok(body.msg.match(/No available target found for http:unknown.plt.local\./), body.msg)
   }
 })

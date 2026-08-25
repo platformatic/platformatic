@@ -2,144 +2,68 @@
 
 ## Objective
 
-Complete the Watt/Runtime migration to Undici 8 and `undici-thread-interceptor` (UTI) v2, including WebSocket routing, compatibility fixes, and zero-loss worker replacement.
+Complete the Watt/Runtime migration to Undici 8 and `undici-thread-interceptor` (UTI) v2, including zero-loss worker replacement and Next.js 16 compatibility.
 
 ## Repository State
 
 - Platformatic worktree: `platformatic-v4`
 - Base version: `3.67.0`
-- Runtime dependency currently declares `undici-thread-interceptor: ^2.0.3`.
-- The installed `node_modules/undici-thread-interceptor` is a local build from the UTI `mesh-ack` branch, not the published 2.0.3 package.
-- `node_modules` is not tracked and is not part of this commit.
+- Runtime declares `undici-thread-interceptor: ^2.1.1`.
+- The dependency and lockfile resolve the published UTI 2.1.1 package.
 
-## External UTI Work
+## UTI Changes
 
-UTI repository: `platformatic/undici-thread-interceptor`
+UTI 2.1.1 includes the following changes:
 
-Branch: `mesh-ack`
+1. Cross-thread `Server.close()` and `Interceptor.close()` only bypass mesh convergence when the coordinator is in the same thread. The previous listener-count-only check caused worker servers to close before interceptors applied the removal mesh.
+2. TCP dispatches are counted per server. Removal or address changes delay `MESH_ACK` until active requests finish and Undici completes its request-queue/socket bookkeeping.
+3. Thread responses populate `controller.rawHeaders` before `onResponseStart()`, preserving response headers with Undici 8 Fetch.
+4. Requests for unknown origins inside the configured mesh domain throw `UND_TI_NO_AVAILABLE_TARGET` instead of falling through to DNS.
 
-Latest validated commit:
-
-```text
-e32f601 fix: preserve worker ids when retiring peers
-```
-
-The branch adds mesh propagation acknowledgements:
-
-- Mesh mutations carry an `operationId`.
-- Interceptors reply with `MESH_ACK` after applying routing state.
-- The coordinator replies with `MESH_APPLIED` after all relevant interceptors acknowledge.
-- Server readiness waits for its join operation to be applied.
-- Server close remains operational until its leave operation is applied, then drains requests and peers.
-- Dispatch revalidates stale TCP and thread targets before posting requests.
-
-The additional `e32f601` fix is required because Platformatic worker IDs contain colons, for example `application-1:0`. The prototype previously parsed a peer key at the first colon, incorrectly retired the peer on every mesh update, and leaked a referenced `MessagePort`. Peers now store and use `serverId` directly. The UTI test suite passes 148/148 with this fix.
-
-## Recreate Local UTI Installation
-
-Until a new UTI version containing `mesh-ack` is published:
-
-```bash
-git clone git@github.com:platformatic/undici-thread-interceptor.git
-cd undici-thread-interceptor
-git switch mesh-ack
-npm install
-npm run build
-cp -R dist/. /path/to/platformatic-v4/node_modules/undici-thread-interceptor/dist/
-cp package.json /path/to/platformatic-v4/node_modules/undici-thread-interceptor/package.json
-```
-
-Do not run `pnpm install` in Platformatic afterward without recopying the prototype, because installation restores the published 2.0.3 package.
+The zero-loss failure was caused by both sides of the convergence race: server close returned immediately in worker threads, and interceptor acknowledgement did not wait for active TCP dispatches.
 
 ## Platformatic Changes
 
-### Runtime Mesh
+### Runtime
 
-- Migrated to UTI v2 coordinator/interceptor/server roles.
-- Added `createUpgradeAgent()` WebSocket routing.
-- Added explicit per-worker UTI servers and cleanup.
-- Removed obsolete v1 ready-promise plumbing.
-- Preserved legacy global dispatcher compatibility.
-- Runtime now awaits `dispatcher.server.ready` for both thread and TCP targets. With `mesh-ack`, this means a replacement is visible to all relevant interceptors before Runtime retires the old worker.
-- `removeFromMesh()` awaits graceful server removal before stopping the application.
+- Runtime records each worker's `serverOptions` event through `kWorkerServerOptions`.
+- Workers configured with TCP port `0` start their replacement before retiring the old worker, even where `reusePort` is unavailable.
+- Runtime depends on published UTI 2.1.1.
 
-### Dispatch Semantics
+### Runtime Tests
 
-- Ordinary Node/Koa applications retain capability injection semantics.
-- Upgrade-capable Node servers expose the composite `inject`, `emit`, `listenerCount`, and `server` target.
-- Do not change ordinary Node/Koa targets to URL/TCP dispatch.
+- The unknown `.plt.local` target assertion expects UTI v2's `NoAvailableTargetError` message and uses a valid string assertion message.
+- The management API occupied-socket test uses `os.tmpdir()` and a UUID to stay below the macOS Unix-socket path limit.
+- The worker injection round-robin expectation wraps worker `4` back to worker `0`.
+- The Basic child-process fetch test expects unknown mesh targets to fail without a DNS lookup.
+- The Inquirer PTY regression tests remain enabled on Linux and skip platforms where the required PTY behavior is unavailable.
+- The Wattpm mock registry advertises the current 3.67.0 release in both its latest tag and available versions.
 
-### WebSockets and Gateway
+### Next.js
 
-- Added mesh WebSocket routing and tests.
-- Updated gateway watcher and GraphQL composition behavior for the migration.
-- Do not mask worker replacement failures with gateway retries.
+- Compatibility fixtures install version-matched local Next.js, React, React DOM, and `@next/swc` packages while retaining Turbopack.
+- Production child-manager registration and VM fetch dispatcher compatibility are fixed in the Next capability.
+- The complete Next compatibility suite previously passed 76/76.
 
-### Vite HTTP/2 Compatibility
+## Validation
 
-- Added a Platformatic-only Vite middleware that maps `:authority` to `host` and removes HTTP/2 pseudo-headers from a copied header object.
-- Preserves the original request method and URL.
-- Leaves HTTP/1 requests unchanged.
-- Added focused tests in `packages/vite/test/http2-headers-plugin.test.js`.
-- The chosen scope is Vite only. Do not add a Remix workaround or a separate UTI pseudo-header change.
+Validation covers the published UTI 2.1.1 package. The local native `better-sqlite3`
+module was rebuilt for Node 24 before rerunning the affected Runtime tests.
 
-### Package and Fixture Compatibility
-
-- Updated workspace Undici dependencies to `^8.5.0`.
-- Updated UTI dependency and release-age exclusion to 2.0.3.
-- Updated Wattpm dependency-version expectations.
-- Mocked global `fetch` in the NPM registry failure fixture.
-- Disabled npm minimum release age for the Next pack test.
-- Allowed the Next compatibility fixture to build `sharp`.
-
-## Validation Completed
-
-With the local UTI `mesh-ack` build including `e32f601`:
-
-- UTI suite: 148/148 passed.
-- Runtime focused health replacement: passed repeatedly with `errors === 0` and `non2xx === 0`.
-- Runtime `test/health-1.test.js`: 7/7 passed.
-- Runtime dynamic applications: 6/6 passed.
-- Runtime interceptor tests: 6/6 passed.
-- Runtime lint for `lib/worker/itc.js`: passed.
+- Focused zero-loss replacement: five consecutive passes with `errors === 0` and `non2xx === 0`.
+- Runtime types: 49/49 tests and 147/147 assertions passed.
+- Runtime main: 435 passed, 1 skipped.
+- Runtime API: 98/98 passed.
+- Runtime CLI: 30 passed, 1 skipped.
+- Runtime start: 23/23 passed.
+- Runtime multiple workers: 64/64 passed.
+- All 37 workspace package test scripts passed after the fixture corrections.
+- Next types, main, caching, compatibility, and integration suites passed; the aggregate package command took about 21 minutes because compatibility alone took about 16 minutes.
+- All 37 workspace package lint tasks passed.
+- Runtime lint: passed.
+- UTI patched-file syntax checks: passed.
 - `git diff --check`: passed.
 
-Earlier migration validation also passed:
+## Remaining
 
-- Node injection tests: 3/3.
-- Full Node suite: 145/145.
-- Vite focused tests and lint.
-- Wattpm-utils focused and full tests.
-- Next pack test.
-- Node and Runtime lint.
-
-## Incomplete Validation
-
-- `npm run test:main` in `packages/runtime` exceeded the required 20-minute command timeout.
-- That run initially exposed two dynamic-application failures caused by the UTI colon-delimited peer-key bug. After `e32f601`, the focused dynamic suite passes, but the full Runtime main suite has not been rerun end-to-end.
-- Next compatibility tests for Next 16.0.0 and 16.1.6 previously returned HTTP 500. Older versions passed. This remains unresolved.
-- A full Next compatibility run previously exceeded its focused timeout.
-
-## Next Steps
-
-1. Review and merge the UTI `mesh-ack` branch, including `e32f601`.
-2. Publish a new UTI patch version.
-3. Update `packages/runtime/package.json` and `pnpm-workspace.yaml` to the published version, regenerate `pnpm-lock.yaml`, and perform a clean install.
-4. Verify that no local `node_modules` copy is needed.
-5. Rerun the focused health replacement test repeatedly.
-6. Run Runtime package suites sequentially, each with a 20-minute timeout.
-7. Investigate any remaining Next 16 compatibility failures separately.
-
-Focused worker replacement command:
-
-```bash
-cd packages/runtime
-for run in 1 2 3 4 5; do
-  node --test \
-    --test-reporter=cleaner-spec-reporter \
-    --test-concurrency=1 \
-    --test-timeout=2000000 \
-    --test-name-pattern='should not lose any connection' \
-    test/health-1.test.js || exit 1
-done
-```
+- Commit and push the completed changes.
