@@ -405,6 +405,28 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 - **`file`** (`string`) - A path to the OpenAPI specification file. Use this or `url` option to specify the OpenAPI specification.
 - **`prefix`** (`string`) - A prefix for the OpenAPI specification. All application routes will be prefixed with this value.
 - **`config`** (`string`) - A path to the OpenAPI configuration file. This file is used to customize the [OpenAPI](#openapi-configuration)specification.
+- **`validation`** (`string`, default: `"full"`) - Whether the gateway validates incoming requests against the OpenAPI schema of the application before proxying them.
+  - `"full"` compiles a validator for the body, params, querystring and headers of every documented operation and answers `400` at the gateway when a request does not match.
+  - `"none"` compiles no validator. Requests that pass Fastify parsing are forwarded to the upstream application as they are, with no coercion of querystring or params values at the gateway. Use it when the upstream already validates its input: compiling a validator for every operation costs memory and boot time in every worker, which adds up in a gateway that composes many large specifications.
+
+  The composed OpenAPI specification is the same in both modes. Deferring schema compilation to the first request belongs in Fastify core; see [fastify/fastify#6977](https://github.com/fastify/fastify/pull/6977). This option covers the gateway-specific case of not validating proxied requests at all, when validation is already performed by the upstream application.
+
+  ```json
+  {
+    "gateway": {
+      "applications": [
+        {
+          "id": "api",
+          "origin": "http://127.0.0.1:3051",
+          "openapi": {
+            "url": "/documentation/json",
+            "validation": "none"
+          }
+        }
+      ]
+    }
+  }
+  ```
 
 ### OpenAPI Configuration
 
