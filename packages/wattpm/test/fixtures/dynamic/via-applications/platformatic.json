@@ -4,15 +4,15 @@
     "level": "info"
   },
   "autoload": {
-    "path": "./services",
+    "path": "../services",
     "exclude": [
       "non-existent"
     ]
   },
-  "services": [
+  "applications": [
     {
       "id": "application-2",
-      "path": "./services/application-2"
+      "path": "../services/application-2"
     }
   ]
 }

@@ -6,7 +6,7 @@
   "applications": [
     {
       "id": "composer",
-      "path": "./services/composer",
+      "path": "../services/composer",
       "config": "platformatic.json",
       "server": {
         "hostname": "127.0.0.1"
@@ -14,7 +14,11 @@
     }
   ],
   "autoload": {
-    "path": "./services",
-    "exclude": ["non-existent", "composer"]
+    "path": "../services",
+    "exclude": [
+      "application-2",
+      "application-3",
+      "composer"
+    ]
   }
 }

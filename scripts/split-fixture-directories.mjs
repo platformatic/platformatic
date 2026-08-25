@@ -24,9 +24,6 @@ import { fileURLToPath } from 'node:url'
 const ROOT = resolve(import.meta.dirname, '..')
 const V3_NAME = /^(watt|platformatic)([.-][a-z0-9.-]+)?\.json$/
 
-// Fixtures whose tests resolve sibling files against the runtime root. Splitting moves that root.
-const ROOT_RELATIVE_FIXTURES = ['packages/wattpm/test/fixtures/dynamic']
-
 /*
   Fixtures whose harness reads the directory layout: multiple-workers' helper walks every
   subdirectory holding a platformatic.json and patches it as an application, so a variant directory
@@ -225,7 +222,6 @@ function main () {
         'runtime-with-root-application': 'is one project with its application at the root; it merges on conversion',
         'applications-only': 'holds alternative application configurations; that needs a second application, not a second directory',
         'autoloads-itself': 'autoloads its own directory, so variant directories would become applications',
-        'root-relative-tests': 'its tests resolve sibling files against the runtime root, which the split would move',
         'layout-is-meaningful': 'its harness treats every subdirectory as an application, so a variant directory becomes one'
       }
 
