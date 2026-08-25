@@ -1,7 +1,7 @@
-import generateName from 'boring-name-generator'
 import { EventEmitter } from 'node:events'
 import { existsSync } from 'node:fs'
 import { access, chmod, glob, mkdir, rm, watch } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { join, matchesGlob, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -15,6 +15,8 @@ export function removeDotSlash (path) {
 }
 
 export function generateDashedName () {
+  // Loaded on first use: only generators need it
+  const generateName = createRequire(import.meta.url)('boring-name-generator')
   return generateName().dashed.replace(/\s+/g, '')
 }
 
