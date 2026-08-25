@@ -10,16 +10,16 @@
   "services": [
     {
       "id": "first",
-      "path": "../first",
+      "path": "first",
       "workers": 1
     },
     {
       "id": "second",
-      "path": "../second"
+      "path": "second"
     },
     {
       "id": "composer",
-      "path": "../composer",
+      "path": "composer",
       "workers": 1
     }
   ],

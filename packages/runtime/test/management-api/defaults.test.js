@@ -8,7 +8,7 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should enable the management API by default', async t => {
   const projectDir = join(fixturesDir, 'management-api-defaults')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -38,7 +38,7 @@ test('should enable the management API by default', async t => {
 
 test('should disable the management API if requested to', async t => {
   const projectDir = join(fixturesDir, 'management-api-defaults')
-  const configFile = join(projectDir, 'platformatic-no-api.json')
+  const configFile = join(projectDir, 'no-api', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
