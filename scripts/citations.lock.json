@@ -560,7 +560,7 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:235-239": {
+    "packages/runtime/index.js:244-248": {
       "sha": "162312aac6a90f78",
       "head": "const applicationConfig = await utilsLoadConfiguration(application.config)",
       "lines": 5
