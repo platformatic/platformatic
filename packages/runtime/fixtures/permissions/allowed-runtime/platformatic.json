@@ -3,11 +3,13 @@
   "services": [
     {
       "id": "service",
-      "path": ".",
-      "config": "platformatic.service.json",
+      "path": "../app",
       "permissions": {
         "fs": {
-          "read": ["{PLT_TESTS_TEMPLATE_FILE}", "{PLT_TESTS_PACKAGES}"]
+          "read": [
+            "{PLT_TESTS_TEMPLATE_FILE}",
+            "{PLT_TESTS_PACKAGES}"
+          ]
         }
       }
     }

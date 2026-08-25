@@ -7,8 +7,7 @@
   "services": [
     {
       "id": "node-service",
-      "path": ".",
-      "config": "platformatic.node.json"
+      "path": "./app"
     }
   ]
 }

@@ -3,11 +3,11 @@
   "applications": [
     {
       "id": "service-1",
-      "path": "./services/service-1"
+      "path": "../services/service-1"
     },
     {
       "id": "composer",
-      "path": "./services/composer"
+      "path": "../services/composer"
     }
   ],
   "restartOnError": false

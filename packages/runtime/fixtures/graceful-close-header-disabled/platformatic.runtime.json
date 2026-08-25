@@ -8,8 +8,7 @@
   "services": [
     {
       "id": "service",
-      "path": "../graceful-close-header",
-      "config": "platformatic.service.json"
+      "path": "../graceful-close-header/app"
     }
   ]
 }

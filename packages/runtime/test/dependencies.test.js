@@ -38,7 +38,7 @@ function hasLog (logs, source, msg, dependencies, dependents) {
 
 test('starts applications according to their implicit or explicit dependencies, in order', async t => {
   const context = {}
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'runtime', 'platformatic.json')
   const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
@@ -73,7 +73,7 @@ test('starts applications according to their implicit or explicit dependencies, 
 */
 test('stops startup when a dependency level fails', async t => {
   const context = {}
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.with-failure.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'with-failure-runtime', 'platformatic.json')
   const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
@@ -94,7 +94,7 @@ test('stops startup when a dependency level fails', async t => {
 */
 test('does not wait for dependencies that have already been started', async t => {
   const context = { concurrency: 1 }
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'serial-runtime', 'platformatic.json')
   const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
@@ -116,7 +116,7 @@ test('does not wait for dependencies that have already been started', async t =>
 
 test('applications wait for dependant applications before stopping', async t => {
   const context = {}
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'runtime', 'platformatic.json')
   const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
@@ -194,7 +194,7 @@ test('startupConcurrency config option takes precedence over context.concurrency
       return config
     }
   }
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'serial-runtime', 'platformatic.json')
   const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {
@@ -222,7 +222,7 @@ test('startupConcurrency has a minimum bound of 1', async t => {
       return config
     }
   }
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.serial.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'serial-runtime', 'platformatic.json')
   const runtime = await createRuntime(configFile, null, context)
 
   t.after(async () => {

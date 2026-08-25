@@ -281,7 +281,7 @@ export function convert (config, { file } = {}) {
   }
 }
 
-const V3_NAME = /^(watt|platformatic)([.-][a-z0-9-]+)?\.json$/
+const V3_NAME = /^(watt|platformatic)([.-][a-z0-9.-]+)?\.json$/
 
 function collect (target) {
   const stats = statSync(target)

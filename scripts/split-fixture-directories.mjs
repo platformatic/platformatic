@@ -22,7 +22,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(import.meta.dirname, '..')
-const V3_NAME = /^(watt|platformatic)([.-][a-z0-9-]+)?\.json$/
+const V3_NAME = /^(watt|platformatic)([.-][a-z0-9.-]+)?\.json$/
 
 // Fixtures whose tests resolve sibling files against the runtime root. Splitting moves that root.
 const ROOT_RELATIVE_FIXTURES = ['packages/wattpm/test/fixtures/dynamic']
@@ -38,7 +38,9 @@ const LAYOUT_IS_MEANINGFUL = ['packages/runtime/fixtures/messaging']
 // platformatic-build-twice.json -> build-twice; platformatic.1-to-n.json -> 1-to-n
 export function variantName (file) {
   const stem = basename(file).replace(/\.json$/, '')
-  const suffix = stem.replace(/^(watt|platformatic)[.-]?/, '')
+  // platformatic.allowed.runtime.json -> allowed-runtime: every segment after the prefix names the
+  // variant, and a dot in a directory name reads as an extension.
+  const suffix = stem.replace(/^(watt|platformatic)[.-]?/, '').replace(/\./g, '-')
 
   return suffix.length > 0 ? suffix : 'default'
 }

@@ -3,8 +3,7 @@
   "services": [
     {
       "id": "service",
-      "path": ".",
-      "config": "platformatic.service.json"
+      "path": "../app"
     }
   ]
 }
