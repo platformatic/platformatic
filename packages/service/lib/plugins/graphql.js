@@ -1,6 +1,5 @@
 import { deepmerge } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
-import mercurius from 'mercurius'
 
 // For some unknown reason, c8 is not detecting any of this
 // despite being covered by test/graphql.test.js
@@ -28,6 +27,8 @@ async function setupGraphQLPlugin (app, options) {
     }
   })
 
+  // Loaded on demand: mercurius and graphql are only needed when GraphQL is enabled
+  const { default: mercurius } = await import('mercurius')
   app.register(mercurius, graphqlOptions)
 }
 
