@@ -144,7 +144,7 @@ test('install - should install production dependencies only', async t => {
 })
 
 test('update - should update version in package.json files', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
@@ -200,7 +200,7 @@ test('update - should update version in package.json files', async t => {
 })
 
 test('update - should work when executed inside an application folder', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
@@ -245,7 +245,7 @@ test('update - should work when executed inside an application folder', async t 
 })
 
 test('update - should work when loaded from an application file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
   await safeRemove(resolve(rootDir, 'watt.json'))
@@ -301,7 +301,7 @@ test('update - should work when loaded from an application file', async t => {
 })
 
 test('update - should fail when a dependency cannot be updated', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
@@ -343,7 +343,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
 })
 
 test('update - should fail when NPM is not responsing', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry-fail.mjs')).href
 

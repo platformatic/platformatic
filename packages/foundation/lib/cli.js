@@ -222,7 +222,8 @@ async function findV4ConfigurationFile (root, configurationFile) {
   if (typeof configurationFile === 'string') {
     const named = resolve(root, configurationFile)
 
-    return isConfigurationFileName(basename(named)) ? named : null
+    // The extension decides for a name given outright: v4 configuration is code, v3 is a document.
+    return isConfigurationFileName(basename(named)) || /\.(js|mjs|ts|mts)$/.test(named) ? named : null
   }
 
   try {

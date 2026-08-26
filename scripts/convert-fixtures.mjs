@@ -290,6 +290,14 @@ export function needsExplicitPort (module, config) {
   for a released version and checking what it becomes, so converting one destroys the only thing it
   was for -- and the conversion would be to a format that version never had.
 */
+/*
+  Fixtures whose applications contribute CLI commands. A capability's createCommands still receives
+  a path and reads it with the v3 loader, so an application converted ahead of that contract makes
+  its command unrunnable -- the command moves to { root, config } with the rest of the capability
+  work.
+*/
+const COMMAND_FIXTURES = ['wattpm/test/fixtures/help/']
+
 const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-dependencies/']
 
 /*
@@ -357,7 +365,7 @@ export function isLegacyByDesign (file) {
   */
   const normalized = file.replace(/\\/g, '/')
 
-  return [...IMPORT_FIXTURES, ...FORMAT_FIXTURES].some(fixture => normalized.includes(fixture))
+  return [...IMPORT_FIXTURES, ...FORMAT_FIXTURES, ...COMMAND_FIXTURES].some(fixture => normalized.includes(fixture))
 }
 
 export function convert (config, { file } = {}) {

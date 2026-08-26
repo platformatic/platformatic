@@ -465,7 +465,7 @@
       "head": "if (config.vite.ssr === true) {",
       "lines": 8
     },
-    "packages/foundation/lib/cli.js:292-311": {
+    "packages/foundation/lib/cli.js:293-312": {
       "sha": "a82961d969a7a84a",
       "head": "export async function fallbackToTemporaryConfigFile (logger, root, verifyPackages) {",
       "lines": 20
@@ -561,8 +561,8 @@
       "lines": 1
     },
     "packages/runtime/index.js:275-279": {
-      "sha": "162312aac6a90f78",
-      "head": "const applicationConfig = await utilsLoadConfiguration(application.config)",
+      "sha": "21fa9cbf80648d56",
+      "head": "/* c8 ignore next 3 - Hard to test */",
       "lines": 5
     },
     "packages/runtime/lib/config.js:450-484": {
@@ -820,7 +820,7 @@
       "head": "onMissingEnv: this.#context.fetchApplicationUrl,",
       "lines": 1
     },
-    "packages/runtime/index.js:143-146": {
+    "packages/runtime/index.js:153-156": {
       "sha": "2098a439fe52a74f",
       "head": "const config = await utilsLoadConfiguration(source, null, {",
       "lines": 4

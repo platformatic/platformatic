@@ -1,4 +1,4 @@
-import { resolve, validationOptions } from '@platformatic/basic'
+import { importCapabilityPackage, resolve, validationOptions } from '@platformatic/basic'
 import {
   abstractLogger,
   ensureLoggableError,
@@ -76,6 +76,16 @@ function handleSignal (runtime, config) {
   Routing by filename keeps the v3 path intact while the in-tree JSON fixtures are converted; the
   v3 half is what a later commit deletes, not something this one has to keep working around.
 */
+/*
+  A configuration named outright does not have to carry one of the four discoverable names -- that
+  is what discovery is for, and --config exists precisely to point at something discovery would not
+  find. What decides the dialect is the extension: v4 configuration is code, and v3 configuration is
+  a document.
+*/
+function isV4ConfigurationPath (path) {
+  return isConfigurationFileName(basename(path)) || /\.(js|mjs|ts|mts)$/.test(path)
+}
+
 async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
   // A programmatic object source is not this path: the v4 object entry point is
   // loadObjectConfiguration, which skips the root eval worker entirely.
@@ -86,14 +96,14 @@ async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
   if (typeof sourceOrConfig === 'string') {
     const named = resolvePath(configOrRoot, sourceOrConfig)
 
-    return isConfigurationFileName(basename(named)) ? named : null
+    return isV4ConfigurationPath(named) ? named : null
   }
 
   if (typeof configOrRoot !== 'string') {
     return null
   }
 
-  if (isConfigurationFileName(basename(configOrRoot))) {
+  if (isV4ConfigurationPath(configOrRoot)) {
     return configOrRoot
   }
 
@@ -272,8 +282,16 @@ export async function loadApplicationsCommands (executableName = '', configurati
 
   for (const application of config.applications) {
     try {
-      const applicationConfig = await utilsLoadConfiguration(application.config)
-      const pkg = await loadConfigurationModule(application.path, applicationConfig)
+      /*
+        A v4 application arrives with its configuration already evaluated and its capability
+        already named, so there is nothing to read and nothing to infer. Reading application.config
+        as a path threw into the catch below, which skipped the application silently -- the command
+        it contributes then simply did not exist, and the CLI said the command was unknown.
+      */
+      const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))
+      const pkg = application.module
+        ? await importCapabilityPackage(application.path, application.module)
+        : await loadConfigurationModule(application.path, applicationConfig)
 
       if (pkg.createCommands) {
         const definition = await pkg.createCommands(application.id)

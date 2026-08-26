@@ -1565,7 +1565,7 @@ configuration rather than becoming a hidden loader default; synthesis simply *is
 the configuration for a zero-config boot. It applies **only to a
 single-application project**, which is the only shape zero-config can produce:
 detection resolves one application type for the root directory
-(`foundation/lib/cli.js:292-311`). Multi-application projects get their ports from
+(`foundation/lib/cli.js:293-312`). Multi-application projects get their ports from
 their own configuration, never from a default.
 
 Synthesis is **not gated on what sits above**: running in an application directory of
@@ -3623,7 +3623,7 @@ Generation reads both views. Then:
    by position: `onMissingEnv` is supplied only where a worker parses a separate
    app config (`worker/controller.js:165`), so both a **root** config's `*_URL`
    placeholders **and every placeholder in a wrapped single-app config** — which
-   `runtime/index.js:143-146` loads with no `onMissingEnv`, capability half included
+   `runtime/index.js:153-156` loads with no `onMissingEnv`, capability half included
    — throw on v3 under effective `strictEnv` and get `requiredEnv` like any other
    key.
    Embedded placeholders become template literals with the same

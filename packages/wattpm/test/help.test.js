@@ -79,7 +79,7 @@ test('help - should complain for invalid commands', async t => {
 })
 
 test('help - should support application commands', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'help', false, null)
   const mainProcess = await wattpm('help', { cwd: rootDir })
   const applicationHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
 

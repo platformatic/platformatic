@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
+  "logger": {
+    "level": "info"
+  },
+  "autoload": {
+    "path": "web"
+  }
+}
