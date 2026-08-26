@@ -88,7 +88,7 @@ test('configure telemetry correctly with a node app - integration test', async t
     t,
     'node-api-with-telemetry',
     true, // we are interested in telemetry only in production mode
-    'platformatic.json',
+    'watt.config.mjs',
     setupTelemetryServer
   )
 
@@ -122,7 +122,7 @@ test('configure telemetry correctly with a gateway + next - integration test', a
     t,
     'composer-next-node-fastify',
     true,
-    'platformatic.json',
+    'watt.config.mjs',
     setupTelemetryServer
   )
 
@@ -226,7 +226,7 @@ test('configure telemetry correctly with a express app and additional express in
     t,
     'express-api-with-additional-instrumenters',
     true, // we are interested in telemetry only in production mode
-    'platformatic.json',
+    'watt.config.mjs',
     setupTelemetryServer
   )
 

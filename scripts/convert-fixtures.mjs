@@ -15,9 +15,9 @@
 // shows up as a failing test rather than as a broken deployment — so it refuses less and reports
 // more, and every refusal is a fixture somebody looks at by hand.
 
-import { readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = resolve(import.meta.dirname, '..')
 
@@ -210,36 +210,42 @@ function moduleFromSchema (config, file) {
   its mind. A capability whose answer is a callable or 'worker' is not decided by configuration
   alone, and the loader defers those to the started worker, so neither needs a port written in.
 */
+/*
+  Loaded by importing each capability rather than by reading its source. servesWithoutPort is
+  sometimes a callable -- vite decides from the configuration, because an SSR application with a
+  Fastify factory serves in-process and an ordinary one does not -- and a regex over the source
+  cannot answer that. Importing gets both forms, and the callable can then be asked about the very
+  configuration being converted.
+*/
 const servingDeclarations = new Map()
 
-function servesWithoutPortFor (module) {
-  if (servingDeclarations.has(module)) {
-    return servingDeclarations.get(module)
+for (const entry of readdirSync(join(ROOT, 'packages'), { withFileTypes: true })) {
+  if (!entry.isDirectory()) {
+    continue
   }
 
-  const name = module.replace('@platformatic/', '')
-  let declaration = null
+  const schemaPath = join(ROOT, 'packages', entry.name, 'lib', 'schema.js')
+
+  if (!existsSync(schemaPath)) {
+    continue
+  }
 
   try {
-    const source = readFileSync(join(ROOT, 'packages', name, 'lib', 'schema.js'), 'utf-8')
-    const match = source.match(/export const servesWithoutPort = (\{[^}]*\})/)
+    const { servesWithoutPort } = await import(pathToFileURL(schemaPath).href)
 
-    if (match) {
-      declaration = JSON.parse(match[1].replace(/(\w+):/g, '"$1":').replace(/'/g, '"'))
+    if (servesWithoutPort !== undefined) {
+      servingDeclarations.set(`@platformatic/${entry.name}`, servesWithoutPort)
     }
   } catch {
-    // A capability outside this repository, or one that does not declare it: not this script's
-    // business to guess, and the loader's "absent means worker" rule covers it.
+    // A capability that cannot be imported here is one this script has nothing to say about.
   }
-
-  servingDeclarations.set(module, declaration)
-  return declaration
 }
 
 export function needsExplicitPort (module, config) {
-  const declaration = servesWithoutPortFor(module)
+  let declaration = servingDeclarations.get(module)
 
-  if (!declaration) {
+  // 'worker' means the loader defers to the started worker, so nothing is decided here.
+  if (declaration === undefined || declaration === 'worker') {
     return false
   }
 
@@ -248,7 +254,24 @@ export function needsExplicitPort (module, config) {
     return false
   }
 
+  if (typeof declaration === 'function') {
+    declaration = declaration(config)
+  }
+
+  if (declaration === 'worker' || typeof declaration !== 'object' || declaration === null) {
+    return false
+  }
+
   return declaration.development === false || declaration.production === false
+}
+
+/*
+  Fixtures that exist to be old. The upgrade chains are tested by loading a configuration written
+  for a released version and checking what it becomes, so converting one destroys the only thing it
+  was for -- and the conversion would be to a format that version never had.
+*/
+export function isLegacyByDesign (file) {
+  return /[\\/](fixtures[\\/])?versions[\\/]/.test(file)
 }
 
 export function convert (config, { file } = {}) {
@@ -329,6 +352,17 @@ export function convert (config, { file } = {}) {
       notes.push("gateway.services became gateway.applications")
     }
 
+    /*
+      plugins.typescript went with the ts-compiler in ae2fab511: no capability schema declares it
+      and every one of them refuses unknown properties. The v3 schema rejects it too -- it simply
+      was not validated on the path these configurations took -- so dropping it is repairing a
+      configuration that was already wrong, not translating one that was right.
+    */
+    if (converted.plugins && 'typescript' in converted.plugins) {
+      delete converted.plugins.typescript
+      notes.push('dropped plugins.typescript, which no capability schema has declared since ae2fab511')
+    }
+
     if (needsExplicitPort(module, converted)) {
       converted.server = { ...converted.server, port: 0 }
       notes.push(`${module} does not serve without a listener, so an ephemeral server.port was added`)
@@ -379,7 +413,7 @@ function collect (target) {
 
     if (entry.isDirectory()) {
       found.push(...collect(path))
-    } else if (V3_NAME.test(entry.name)) {
+    } else if (V3_NAME.test(entry.name) && !isLegacyByDesign(path)) {
       found.push(path)
     }
   }

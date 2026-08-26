@@ -1,7 +1,0 @@
-{
-  "name": "service",
-  "type": "commonjs",
-  "dependencies": {
-    "@platformatic/service": ">=3.0.0"
-  }
-}

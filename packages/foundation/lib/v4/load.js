@@ -867,14 +867,22 @@ async function validateApplication (prepared, { module, directory, report, valid
   }
 
   validateCapabilityConfiguration(prepared.config, schema, { id: prepared.id, module, root: directory })
-  prepared.capabilityMetadata = metadata
+  /*
+    The serving declaration stays main-side. It is sometimes a function -- vite decides from the
+    configuration -- and this entry is structured-cloned into the worker, where a function is a
+    DataCloneError rather than a value. The worker needs the other two; it has no use for a
+    predicate that has already been evaluated here.
+  */
+  const { servesWithoutPort, ...workerMetadata } = metadata
+
+  prepared.capabilityMetadata = workerMetadata
 
   // Read after validation and before any worker, which is precisely when the resolved capability
   // configuration is available and the callable form can be evaluated.
   prepared.serving = assertApplicationServes({
     id: prepared.id,
     module,
-    declaration: metadata.servesWithoutPort,
+    declaration: servesWithoutPort,
     config: prepared.config,
     production
   })

@@ -45,28 +45,16 @@ export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
-/*
-  The same four applications in v4 form. They are a second directory rather than a second file
-  beside the first, because v4 refuses a directory holding a legacy configuration before it looks
-  at anything else -- deliberately, so a stale platformatic.json cannot shadow a watt.config.
 
-  Two copies is what lets the eleven packages that share these applications convert one at a time
-  instead of in a single change: copyCommonApplication picks by the destination it is copying into.
-  When the last of them is v4 this collapses back to one directory.
-*/
-export const commonV4FixturesRoot = fileURLToPath(new URL('./fixtures/common-v4', import.meta.url))
-
-// A project is v4 when its own configuration is: an application copied into a v4 runtime has to be
-// v4 too, and one copied into a v3 runtime has to stay v3. Nothing else distinguishes them.
+// One directory again: every package that copies these applications is v4, so there is no longer a
+// dialect to choose between. The function stays because it is also the one place that knows an
+// application is copied to services/<type>.
 export async function copyCommonApplication (root, type, language = 'js') {
-  const v4 = ['watt.config.js', 'watt.config.mjs', 'watt.config.ts'].some(candidate =>
-    existsSync(resolve(root, candidate))
-  )
-
-  await cp(resolve(v4 ? commonV4FixturesRoot : commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
+  await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
     recursive: true
   })
 }
+
 export const httpsFixtureRoot = fileURLToPath(
   new URL('../../node/test/fixtures/node-https-standalone', import.meta.url)
 )

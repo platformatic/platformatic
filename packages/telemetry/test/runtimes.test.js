@@ -33,7 +33,7 @@ const containsAttributeWithValue = (resource, key, value) => {
 }
 
 test('configure telemetry correctly with a node app', async t => {
-  const app = await createRuntime(t, 'node-api-with-telemetry', false, false, 'platformatic.json')
+  const app = await createRuntime(t, 'node-api-with-telemetry', false, false, 'watt.config.mjs')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
 
@@ -60,7 +60,7 @@ test('configure telemetry correctly with a node app', async t => {
 })
 
 test('configure telemetry correctly with a express app', async t => {
-  const app = await createRuntime(t, 'express-api-with-telemetry', false, false, 'platformatic.json')
+  const app = await createRuntime(t, 'express-api-with-telemetry', false, false, 'watt.config.mjs')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
 
@@ -87,7 +87,7 @@ test('configure telemetry correctly with a express app', async t => {
 })
 
 test('configure telemetry correctly with a gateway + node app', async t => {
-  const app = await createRuntime(t, 'composer-node', false, false, 'platformatic.json')
+  const app = await createRuntime(t, 'composer-node', false, false, 'watt.config.mjs')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
 
@@ -137,7 +137,7 @@ test('configure telemetry correctly with a gateway + node app', async t => {
 
 test('configure telemetry correctly with a gateway + node + fastify', async t => {
   // gateway -> fastify -> node
-  const app = await createRuntime(t, 'composer-node-fastify', false, true, 'platformatic.json')
+  const app = await createRuntime(t, 'composer-node-fastify', false, true, 'watt.config.mjs')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
 
@@ -218,7 +218,7 @@ test('configure telemetry correctly with a gateway + next', async t => {
   //                  -> node (via http)
   //
   // We need to be in production mode to be in the same runtime
-  const { runtime, root } = await prepareRuntime(t, 'composer-next-node-fastify', true, 'platformatic.json')
+  const { runtime, root } = await prepareRuntime(t, 'composer-next-node-fastify', true, 'watt.config.mjs')
 
   // build next
   const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
@@ -304,7 +304,7 @@ test('configure telemetry correctly with a gateway + next', async t => {
 })
 
 test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
-  const app = await createRuntime(t, 'express-api-with-additional-instrumenters', false, true, 'platformatic.json')
+  const app = await createRuntime(t, 'express-api-with-additional-instrumenters', false, true, 'watt.config.mjs')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
 
@@ -332,7 +332,7 @@ test('configure telemetry correctly with a express app and additional express in
 })
 
 test('configure telemetry correctly with a ESM express app and additional express instrumentation', async t => {
-  const app = await createRuntime(t, 'express-api-with-additional-instrumenters-esm', false, true, 'platformatic.json')
+  const app = await createRuntime(t, 'express-api-with-additional-instrumenters-esm', false, true, 'watt.config.mjs')
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
 

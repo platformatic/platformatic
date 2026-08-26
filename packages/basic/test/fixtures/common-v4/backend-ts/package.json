@@ -1,9 +1,0 @@
-{
-  "name": "service",
-  "devDependencies": {
-    "typescript": "^6.0.3"
-  },
-  "dependencies": {
-    "@platformatic/service": ">=3.0.0"
-  }
-}

@@ -93,7 +93,7 @@ test.before(async () => {
   }
 })
 
-async function createApp (t, config = 'fixtures/sourcemap-test/platformatic.json') {
+async function createApp (t, config = 'fixtures/sourcemap-test/watt.config.js') {
   const configFile = resolve(import.meta.dirname, config)
 
   // Ensure tmp directory exists
@@ -216,7 +216,7 @@ test('sourcemaps should work with heap profiling', { skip: process.platform === 
 })
 
 test('sourcemaps should be initialized and profiling should work with TypeScript if enabled via config file', { skip: process.platform === 'win32' }, async t => {
-  const { app, url } = await createApp(t, 'fixtures/sourcemap-config-test/platformatic.json')
+  const { app, url } = await createApp(t, 'fixtures/sourcemap-config-test/watt.config.js')
 
   // Verify service is running
   const res = await request(`${url}/`)

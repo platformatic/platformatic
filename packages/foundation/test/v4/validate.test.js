@@ -22,12 +22,14 @@ const capabilitySchema = {
 }
 
 // A capability package as it appears on disk, with the light subpath the v4 contract requires.
-function capabilityPackage (name, version, { subpath = true, servesWithoutPort } = {}) {
+// servesWithoutPortSource is emitted verbatim: the declaration is allowed to be a callable, and a
+// JSON-encoded one would be a string that only looks like a function.
+function capabilityPackage (name, version, { subpath = true, servesWithoutPort, servesWithoutPortSource } = {}) {
   const exported = `export const schema = ${JSON.stringify(capabilitySchema)}
 export const version = '${version}'
 export const skipTelemetryHooks = true
 export const modulesToLoad = ['thing']
-${servesWithoutPort ? `export const servesWithoutPort = ${JSON.stringify(servesWithoutPort)}` : ''}
+${servesWithoutPortSource ? `export const servesWithoutPort = ${servesWithoutPortSource}` : servesWithoutPort ? `export const servesWithoutPort = ${JSON.stringify(servesWithoutPort)}` : ''}
 `
 
   const files = {
@@ -220,11 +222,28 @@ test('the loader validates each application payload when asked to', async t => {
   const { config } = await loadConfiguration({ cwd: root, command: 'start', realEnv: {} })
 
   deepStrictEqual(config.applications[0].config, { server: { port: 8080 } })
+
+  // The serving declaration is not here: it is evaluated main-side and can be a function, and this
+  // entry is structured-cloned into the worker.
   deepStrictEqual(config.applications[0].capabilityMetadata, {
     skipTelemetryHooks: true,
-    modulesToLoad: ['thing'],
-    servesWithoutPort: 'worker'
+    modulesToLoad: ['thing']
   })
+})
+
+test('an application entry survives the structured clone that hands it to a worker', async t => {
+  // A capability whose servesWithoutPort is callable -- vite's is -- put a function on the entry,
+  // and the runtime got a DataCloneError from new Worker rather than anything naming the cause.
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { applications: [{ id: "api", path: "./web/api" }] }',
+    ...capabilityPackage('@acme/capability', '4.0.0', { servesWithoutPortSource: 'config => ({ development: false, production: true })' }),
+    'web/api/watt.config.js': 'export default { module: "@acme/capability", server: { port: 8080 } }'
+  })
+
+  const { config } = await loadConfiguration({ cwd: root, command: 'start', realEnv: {} })
+
+  structuredClone(config.applications[0])
 })
 
 test('a typo in a capability option fails the load rather than reaching the worker', async t => {
