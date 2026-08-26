@@ -296,7 +296,32 @@ export function needsExplicitPort (module, config) {
   its command unrunnable -- the command moves to { root, config } with the rest of the capability
   work.
 */
-const COMMAND_FIXTURES = ['wattpm/test/fixtures/help/']
+const COMMAND_FIXTURES = [
+  'wattpm/test/fixtures/help/',
+  // db's type generation is a capability CLI command, and it reads its configuration with the v3
+  // loader for the same reason createCommands does.
+  'db/test/fixtures/gen-types/',
+  'db/test/fixtures/gen-types-dir/',
+  'db/test/fixtures/auto-gen-types/',
+  'db/test/fixtures/auto-gen-types-dir/',
+  'db/test/fixtures/auto-gen-types-no-plugin/',
+  'db/test/fixtures/chars-gen-types/'
+]
+
+/*
+  Fixtures a capability's own create() reads. Every capability still loads its configuration
+  through the v3 reader, which knows json, yaml and toml -- so these convert when createCommands
+  and create take { root, config } with the rest of the capability work.
+*/
+const CAPABILITY_FIXTURES = [
+  'db/test/fixtures/logger/',
+  'db/test/fixtures/sqlite/',
+  'db/test/fixtures/sqlite-basic/',
+  'service/test/fixtures/directories/',
+  'service/test/fixtures/hello/',
+  'service/test/fixtures/logger-options/',
+  'service/test/fixtures/nested-directories/'
+]
 
 const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-dependencies/']
 
@@ -365,7 +390,9 @@ export function isLegacyByDesign (file) {
   */
   const normalized = file.replace(/\\/g, '/')
 
-  return [...IMPORT_FIXTURES, ...FORMAT_FIXTURES, ...COMMAND_FIXTURES].some(fixture => normalized.includes(fixture))
+  return [...IMPORT_FIXTURES, ...FORMAT_FIXTURES, ...COMMAND_FIXTURES, ...CAPABILITY_FIXTURES].some(fixture =>
+    normalized.includes(fixture)
+  )
 }
 
 export function convert (config, { file } = {}) {
