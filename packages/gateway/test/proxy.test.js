@@ -323,8 +323,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     [
       {
         id: 'main',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic-prefix-in-conf.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service-prefix-in-conf')
       }
     ]
   )
@@ -361,8 +360,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     [
       {
         id: 'main',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic-prefix-in-code.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service-prefix-in-code')
       }
     ]
   )

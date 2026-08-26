@@ -4,12 +4,12 @@
   "managementApi": false,
   "autoload": {
     "path": "../monorepo",
-    "exclude": ["docs", "composerApp"],
+    "exclude": [
+      "docs",
+      "composerApp",
+      "serviceApp"
+    ],
     "mappings": {
-      "serviceApp": {
-        "id": "serviceApp",
-        "config": "platformatic.service-with-env-port.json"
-      },
       "serviceAppWithLogger": {
         "id": "with-logger",
         "config": "platformatic.service.json"
@@ -27,5 +27,11 @@
   "gracefulShutdown": {
     "runtime": 1000,
     "service": 1000
-  }
+  },
+  "applications": [
+    {
+      "id": "serviceApp",
+      "path": "../service-app-env-port"
+    }
+  ]
 }

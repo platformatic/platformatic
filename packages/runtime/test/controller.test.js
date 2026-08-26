@@ -10,8 +10,8 @@ import { Controller } from '../lib/worker/controller.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('errors when starting an already started application (no logging)', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.no-logging.json')
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const configFile = join(appPath, 'platformatic.json')
   const config = {
     id: 'serviceApp',
     config: configFile,
@@ -90,8 +90,8 @@ test('logs errors during startup', async t => {
 })
 
 test('returns application statuses', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.no-logging.json')
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const configFile = join(appPath, 'platformatic.json')
   const config = {
     id: 'serviceApp',
     config: configFile,

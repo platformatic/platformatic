@@ -6,7 +6,7 @@
   "watch": true,
   "plugins": {
     "paths": [
-      "./routes"
+      "../worker-scaler-service/routes"
     ]
   },
   "runtime": {

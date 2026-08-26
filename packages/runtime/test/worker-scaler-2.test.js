@@ -12,15 +12,14 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
+// Both sides of this pair are now directories, which v4 requires: the standalone application's
+// variant became an application of its own naming the shared routes, rather than a second
+// configuration sitting beside them.
 const configurations = {
-  default: 'platformatic.json',
-  'worker-scaler': 'platformatic.worker-scaler.json'
+  default: 'worker-scaler-service',
+  'worker-scaler': 'worker-scaler-service-vertical'
 }
 
-// The worker-scaler fixtures were split so each variant owns a directory, which v4 requires.
-// worker-scaler-service's were not: those are two alternative configurations of one application,
-// sitting beside that application's code, which needs a second application rather than a second
-// directory.
 const runtimeVariants = {
   default: 'default',
   'worker-scaler': 'worker-scaler'
@@ -49,7 +48,7 @@ test('should remove pending initial updates by application ID', async t => {
   assert.strictEqual(resourcesUpdates, 0)
 })
 
-for (const [name, file] of Object.entries(configurations)) {
+for (const [name, directory] of Object.entries(configurations)) {
   test(`should not scale an applications when the app maxWorkers is reached (configuration ${name})`, async t => {
     const configFile = join(fixturesDir, 'worker-scaler', runtimeVariants[name], 'platformatic.json')
 
@@ -116,7 +115,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should scale a standalone application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler-service', file)
+    const configFile = join(fixturesDir, directory, 'platformatic.json')
 
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {

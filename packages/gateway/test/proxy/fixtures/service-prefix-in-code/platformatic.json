@@ -4,7 +4,7 @@
   "plugins": {
     "paths": [
       {
-        "path": "./routes-with-prefix-in-code.js"
+        "path": "./routes.js"
       }
     ]
   }
