@@ -1,4 +1,4 @@
-import { isAbsolute, join, resolve } from 'node:path'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { createConfigurationContext, defaultMode, isProductionCommand } from './context.js'
 import { detectCapability } from './detect.js'
 import {
@@ -521,14 +521,19 @@ async function assemble ({
   skipped for a key the runtime already has in its own real environment, so a container or k8s
   override wins — the runtime's process.env is the oracle.
 */
-export function applyWorkerEnvironments (applications, { rootEnv, realEnv = process.env, production }) {
+export function applyWorkerEnvironments (
+  applications,
+  { rootEnv, realEnv = process.env, production, additionalIds = [] }
+) {
   const injectedUrls = {}
 
-  for (const entry of applications) {
-    const key = topologyVariableName(entry.id)
+  // additionalIds carries the applications already running when this set was added: they are not
+  // re-enveloped here, but the new application still has to be able to address them.
+  for (const id of [...additionalIds, ...applications.map(entry => entry.id)]) {
+    const key = topologyVariableName(id)
 
     if (!(key in realEnv)) {
-      injectedUrls[key] = getApplicationUrl(entry.id)
+      injectedUrls[key] = getApplicationUrl(id)
     }
   }
 
@@ -548,7 +553,70 @@ export function applyWorkerEnvironments (applications, { rootEnv, realEnv = proc
   return applications
 }
 
-async function prepareApplications ({ entries, deciding, ...shared }) {
+/*
+  Applications added while the runtime is running -- POST /applications and the management ITC
+  handler -- have to be evaluated the way boot evaluates them. An entry that skips this arrives
+  without resolvedConfig, and the worker then falls back to discovering a configuration file by the
+  v3 names, which v4 does not write: the application fails to initialize rather than being told
+  what is wrong.
+
+  The environment is resolved from disk again rather than reused from boot. The ladder is a
+  function of the files that are there now, and a runtime that has been up for a week should see
+  the .env it has today, not the one it started with.
+
+  rootEnvBlock is the root configuration's own env block, which the caller already holds -- passing
+  it avoids re-evaluating the root file for a value that cannot have changed without a restart.
+*/
+export async function loadAdditionalApplications ({
+  configPath,
+  entries,
+  existingIds = [],
+  rootEnvBlock,
+  command = 'start',
+  mode,
+  production,
+  customEnvFile,
+  realEnv = process.env,
+  timeout = defaultEvaluationTimeout,
+  validateCapabilities = true,
+  runtimeScope,
+  onImport,
+  onWatchFile,
+  onWarning,
+  onInfo
+} = {}) {
+  const resolvedProduction = production ?? isProductionCommand(command)
+  const resolvedMode = mode ?? defaultMode(command, resolvedProduction)
+  const report = createReport({ onImport, onWatchFile, onWarning, onInfo })
+  const deciding = { path: configPath, directory: dirname(configPath) }
+
+  const applications = await prepareApplications({
+    entries,
+    deciding,
+    decidingEnvRoot: await findEnvRoot(deciding.directory),
+    reservedIds: existingIds,
+    command,
+    mode: resolvedMode,
+    production: resolvedProduction,
+    customEnvFile,
+    realEnv,
+    timeout,
+    validateCapabilities,
+    runtimeScope,
+    report
+  })
+
+  applyWorkerEnvironments(applications, {
+    rootEnv: rootEnvBlock,
+    realEnv,
+    production: resolvedProduction,
+    additionalIds: existingIds
+  })
+
+  return { applications, watchTargets: collectWatchTargets(report) }
+}
+
+async function prepareApplications ({ entries, deciding, reservedIds = [], ...shared }) {
   // The ids have to be known before the fan-out: they name the topology variables each per-app
   // worker has stripped from its environment, and they are checked before reaching either
   // consumer — the mesh hostname and the variable normalization.
@@ -571,7 +639,9 @@ async function prepareApplications ({ entries, deciding, ...shared }) {
     })
   )
 
-  const [collision] = findTopologyVariableCollisions(identified.map(({ id }) => id))
+  // Applications already in the topology count: an application added after boot collides with the
+  // running ones, not only with the others in its own batch.
+  const [collision] = findTopologyVariableCollisions([...reservedIds, ...identified.map(({ id }) => id)])
 
   if (collision) {
     // The label grammar removes most of the ways this could happen, so what remains is a case
@@ -582,7 +652,7 @@ async function prepareApplications ({ entries, deciding, ...shared }) {
     )
   }
 
-  const injectedNames = identified.map(({ id }) => topologyVariableName(id))
+  const injectedNames = [...reservedIds, ...identified.map(({ id }) => id)].map(topologyVariableName)
 
   // Per-app files are independent by definition — cross-file coordination was never supported — so
   // parallel evaluation is safe and typically faster than any serial scheme.

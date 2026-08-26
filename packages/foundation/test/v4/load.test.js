@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadConfiguration } from '../../lib/v4/index.js'
+import { loadAdditionalApplications, loadConfiguration } from '../../lib/v4/index.js'
 import { createTree } from './helper.js'
 
 function collector () {
@@ -345,4 +345,57 @@ test('--config names the configuration and takes cwd out of the decision', async
 
   strictEqual(standalone, false)
   strictEqual(config.applications[0].module, '@platformatic/service')
+})
+
+test('an application added after boot is evaluated the way boot evaluates one', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { applications: [{ id: "api", path: "./web/api" }] }',
+    'web/api/watt.config.js': 'export default { module: "@platformatic/service" }',
+    'web/later/watt.config.js': 'export default { module: "@platformatic/service", from: process.env.WHO }',
+    'web/later/.env': 'WHO=later\n'
+  })
+
+  const { applications } = await loadAdditionalApplications({
+    configPath: join(root, 'watt.config.js'),
+    entries: [{ id: 'later', path: './web/later' }],
+    existingIds: ['api'],
+    realEnv: {},
+    validateCapabilities: false
+  })
+
+  strictEqual(applications.length, 1)
+
+  // The evaluated payload is what the worker receives instead of a file path: an entry that
+  // reached the worker without it would be told to find a configuration v4 never wrote.
+  const [added] = applications
+  strictEqual(added.module, '@platformatic/service')
+  deepStrictEqual(added.config, { from: 'later' })
+
+  // The application it was added beside is addressable from it, which is the whole point of
+  // passing the running topology in rather than only the batch.
+  strictEqual(added.workerEnv.PLT_API_URL, 'http://api.plt.local')
+  strictEqual(added.workerEnv.PLT_LATER_URL, 'http://later.plt.local')
+})
+
+test('an added application whose id collides with a running one is refused', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { applications: [{ id: "api", path: "./web/api" }] }',
+    'web/api/watt.config.js': 'export default { module: "@platformatic/service" }',
+    'web/other/watt.config.js': 'export default { module: "@platformatic/service" }'
+  })
+
+  // Case is the interesting half: DNS labels are case-insensitive, so API and api are one mesh
+  // hostname and one injected variable.
+  await rejects(
+    loadAdditionalApplications({
+      configPath: join(root, 'watt.config.js'),
+      entries: [{ id: 'API', path: './web/other' }],
+      existingIds: ['api'],
+      realEnv: {},
+      validateCapabilities: false
+    }),
+    /normalizing/
+  )
 })

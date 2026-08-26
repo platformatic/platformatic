@@ -14,7 +14,7 @@ import { platform, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createWebSocketStream } from 'ws'
-import { prepareApplication } from './config.js'
+import { prepareAddedApplications } from './config.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
@@ -169,11 +169,9 @@ export async function managementApiPlugin (app, opts) {
       }
     }
 
-    for (let i = 0; i < applications.length; i++) {
-      applications[i] = await prepareApplication(config, applications[i], config.workers)
-    }
+    const prepared = await prepareAddedApplications(config, applications, runtime.getApplicationsIds())
 
-    const created = await runtime.addApplications(applications, request.query.start !== 'false')
+    const created = await runtime.addApplications(prepared, request.query.start !== 'false')
     reply.code(201)
     return created
   })

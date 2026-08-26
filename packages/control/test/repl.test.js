@@ -10,7 +10,7 @@ const fixturesDir = join(import.meta.dirname, 'fixtures')
 
 test('should get runtime application REPL WebSocket', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
@@ -56,7 +56,7 @@ test('should get runtime application REPL WebSocket', async t => {
 
 test('should have access to platformatic in REPL context', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
@@ -93,7 +93,7 @@ test('should have access to platformatic in REPL context', async t => {
 
 test('should handle REPL exit', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {

@@ -11,7 +11,12 @@ import {
 } from '@platformatic/foundation'
 import { readdir, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
+import { loadAdditionalApplications } from '@platformatic/foundation/lib/v4/index.js'
 import { isAbsolute, join, resolve as resolvePath } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// The runtime package's own entry point, which is where the bundled capability copies live.
+const runtimeScopePath = fileURLToPath(new URL('../index.js', import.meta.url))
 
 import {
   InspectAndInspectBrkError,
@@ -210,6 +215,49 @@ export function parseInspectorOptions (config, inspect, inspectBreak) {
 
   config.inspectorOptions = { host, port, breakFirstLine: hasInspectBrk, watchDisabled: !!config.watch }
   config.watch = false
+}
+
+/*
+  The one entry point for applications added while the runtime is running, shared by the HTTP route
+  and the management ITC handler so the two cannot drift.
+
+  Under v4 an added application is evaluated exactly as boot evaluates one -- its configuration
+  file is found in its own directory, its environment is resolved main-side, and it arrives with
+  resolvedConfig. Skipping that leaves the worker to look for a v3 file name that v4 never writes,
+  which fails as an unhelpful "unable to initialize the worker".
+*/
+export async function prepareAddedApplications (config, entries, existingIds = []) {
+  const metadata = config[kMetadata]
+
+  if (!metadata?.v4) {
+    const prepared = []
+
+    for (const entry of entries) {
+      prepared.push(await prepareApplication(config, entry, config.workers))
+    }
+
+    return prepared
+  }
+
+  const { applications } = await loadAdditionalApplications({
+    configPath: metadata.path,
+    entries,
+    existingIds,
+    rootEnvBlock: config.env,
+    command: metadata.v4.command,
+    mode: metadata.v4.mode,
+    production: metadata.v4.production,
+    // The runtime is the fallback scope for capability resolution, the same as at boot.
+    runtimeScope: runtimeScopePath
+  })
+
+  const prepared = []
+
+  for (const application of applications) {
+    prepared.push(await prepareV4Application(config, application, config.workers))
+  }
+
+  return prepared
 }
 
 export async function prepareApplication (config, application, defaultWorkers) {

@@ -15,6 +15,7 @@ import {
   validateCapabilityConfiguration
 } from '@platformatic/foundation/lib/v4/index.js'
 import closeWithGrace from 'close-with-grace'
+import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { basename, dirname, resolve as resolvePath } from 'node:path'
 import { transform, transformV4, wrapInRuntimeConfig } from './lib/config.js'
@@ -94,6 +95,18 @@ async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
 
   if (isConfigurationFileName(basename(configOrRoot))) {
     return configOrRoot
+  }
+
+  /*
+    Only an actual directory is a place to search from. findDecidingFile walks toward the env root,
+    so handing it a path that does not exist would answer with whatever project sits above it: a
+    typo'd --config would boot the parent rather than failing. v3 looks in the named directory and
+    nowhere else, and a wrong path has to stay an error.
+  */
+  const stats = await stat(configOrRoot).catch(() => null)
+
+  if (!stats?.isDirectory()) {
+    return null
   }
 
   try {
@@ -201,7 +214,18 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     root: loaded.root,
     path: loaded.configPath,
     env: process.env,
-    module: '@platformatic/runtime'
+    module: '@platformatic/runtime',
+    /*
+      The evaluation context, kept beside the envelope rather than inside it: applications added
+      after boot are evaluated with the same command, mode and production flags the boot pass used,
+      and its presence is also what tells the add path this runtime is v4 at all. A v3 runtime has
+      no such context and keeps resolving configuration files worker-side.
+    */
+    v4: {
+      command: context?.command ?? (production ? 'start' : 'dev'),
+      mode: loaded.mode,
+      production: loaded.production
+    }
   }
 
   return transformV4(config, null, context)
