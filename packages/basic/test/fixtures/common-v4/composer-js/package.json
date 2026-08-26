@@ -1,0 +1,7 @@
+{
+  "name": "composer",
+  "type": "commonjs",
+  "dependencies": {
+    "@platformatic/gateway": ">=3.0.0"
+  }
+}

@@ -1,6 +1,6 @@
 import Deepmerge from '@fastify/deepmerge'
 import { bgGreen, black, bold, green, isColorSupported } from 'colorette'
-import { resolve } from 'node:path'
+import { basename, resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -8,6 +8,7 @@ import { findConfigurationFileRecursive, loadConfigurationModule, saveConfigurat
 import { hasJavascriptFiles } from './file-system.js'
 import { setPinoTimestamp } from './logger.js'
 import { detectApplicationType, getPlatformaticVersion } from './module.js'
+import { findDecidingFile, isConfigurationFileName } from './v4/index.js'
 
 /* c8 ignore next 4 - else branches */
 let verbose = false
@@ -212,6 +213,31 @@ export function applicationToEnvVariable (application) {
   return `PLT_APPLICATION_${application.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
 }
 
+/*
+  The same routing the runtime does, in the one other place a configuration is found: by an
+  explicit name, or by the walk from the directory. A legacy file found by the walk means "this
+  project is not v4", and the v3 lookups below are the ones that should answer.
+*/
+async function findV4ConfigurationFile (root, configurationFile) {
+  if (typeof configurationFile === 'string') {
+    const named = resolve(root, configurationFile)
+
+    return isConfigurationFileName(basename(named)) ? named : null
+  }
+
+  try {
+    const deciding = await findDecidingFile(root, { throwOnMissing: false })
+
+    return deciding?.path ?? null
+  } catch (error) {
+    if (error.code === 'PLT_LEGACY_CONFIGURATION_FILE') {
+      return null
+    }
+
+    throw error
+  }
+}
+
 export async function findRuntimeConfigurationFile (
   logger,
   root,
@@ -221,6 +247,17 @@ export async function findRuntimeConfigurationFile (
   verifyPackages = true,
   executableName = ''
 ) {
+  /*
+    v4 first. A v4 project has no v3 configuration file by construction, so every lookup below
+    fails and the fallback then auto-detects the directory and writes a watt.json into it -- the
+    command silently builds something other than the project it was pointed at.
+  */
+  const v4ConfigurationFile = await findV4ConfigurationFile(root, configurationFile)
+
+  if (v4ConfigurationFile) {
+    return v4ConfigurationFile
+  }
+
   let configFile = await findConfigurationFileRecursive(root, configurationFile, '@platformatic/runtime')
 
   // If a runtime was not found, search for application file that we wrap in a runtime

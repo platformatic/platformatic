@@ -1,9 +1,10 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
@@ -63,7 +64,33 @@ export async function updateFile (path, update) {
   }
 }
 
-export async function updateConfigFile (path, update) {
+/*
+  A test naming a v3 configuration file in a directory that now holds a v4 one is asking to update
+  that directory's configuration, not to create the file it named. Resolving it here keeps the
+  callers -- which say platformatic.application.json in a good many places -- from having to know
+  which dialect the fixture they were handed is written in.
+*/
+function resolveConfigurationPath (path) {
+  if (existsSync(path)) {
+    return path
+  }
+
+  const directory = dirname(path)
+
+  for (const candidate of ['watt.config.js', 'watt.config.mjs', 'watt.config.ts', 'watt.config.mts']) {
+    const resolved = join(directory, candidate)
+
+    if (existsSync(resolved)) {
+      return resolved
+    }
+  }
+
+  return path
+}
+
+export async function updateConfigFile (originalPath, update) {
+  const path = resolveConfigurationPath(originalPath)
+
   /*
     A v4 configuration is code, so it is imported rather than parsed. The cache-busting query is
     what makes a second update in the same process see the first one's result.
@@ -72,7 +99,7 @@ export async function updateConfigFile (path, update) {
     becomes whatever it evaluated to. That is acceptable for a fixture a test is deliberately
     rewriting, and wrong for anything else, which is why this lives in the test helpers.
   */
-  if (path.endsWith('.js') || path.endsWith('.ts')) {
+  if (/\.(js|mjs|ts|mts)$/.test(path)) {
     const { default: contents } = await import(`${pathToFileURL(path).href}?update=${randomUUID()}`)
 
     await update(contents)

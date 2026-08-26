@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 import { BaseCapability } from '../lib/capability.js'
 
 export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
@@ -44,9 +45,58 @@ export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
+/*
+  The same four applications in v4 form. They are a second directory rather than a second file
+  beside the first, because v4 refuses a directory holding a legacy configuration before it looks
+  at anything else -- deliberately, so a stale platformatic.json cannot shadow a watt.config.
+
+  Two copies is what lets the eleven packages that share these applications convert one at a time
+  instead of in a single change: copyCommonApplication picks by the destination it is copying into.
+  When the last of them is v4 this collapses back to one directory.
+*/
+export const commonV4FixturesRoot = fileURLToPath(new URL('./fixtures/common-v4', import.meta.url))
+
+// A project is v4 when its own configuration is: an application copied into a v4 runtime has to be
+// v4 too, and one copied into a v3 runtime has to stay v3. Nothing else distinguishes them.
+export async function copyCommonApplication (root, type, language = 'js') {
+  const v4 = ['watt.config.js', 'watt.config.mjs', 'watt.config.ts'].some(candidate =>
+    existsSync(resolve(root, candidate))
+  )
+
+  await cp(resolve(v4 ? commonV4FixturesRoot : commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
+    recursive: true
+  })
+}
 export const httpsFixtureRoot = fileURLToPath(
   new URL('../../node/test/fixtures/node-https-standalone', import.meta.url)
 )
+
+/*
+  Assigning the listeners for a v4 project happens on the loaded configuration, not by rewriting a
+  file. v4 configurations are code, so there is nothing to JSON.parse and edit -- and by the time
+  the runtime exists the applications have already been evaluated. The resolved payload is what the
+  worker receives, so setting the port there is setting the port the application binds.
+*/
+function applyListenerPorts (config, port) {
+  const applications = config.applications ?? []
+  const target = getTargetApplication(applications)
+  const listeners = new Set([
+    target,
+    applications.find(application => application.id === 'frontend'),
+    applications.find(application => application.id === 'next')
+  ])
+
+  for (const application of listeners) {
+    if (!application) {
+      continue
+    }
+
+    const applicationConfig = (application.resolvedConfig ??= {})
+    applicationConfig.server ??= {}
+    applicationConfig.server.hostname ??= '127.0.0.1'
+    applicationConfig.server.port = application === target ? port : (applicationConfig.server.port ?? 0)
+  }
+}
 
 function getTargetApplication (applications) {
   return applications.find(application => application.id === 'external-proxy') ??
@@ -79,6 +129,17 @@ async function updateApplicationConfig (application, update, required = false) {
       throw new Error('Cannot find the target application configuration.')
     }
     return
+  }
+
+  /*
+    A v4 application carries its evaluated configuration rather than a path to one, and its worker
+    is handed that payload instead of re-reading a file. Editing a file here would therefore change
+    nothing -- the runtime already holds the object the worker will receive, so the update belongs
+    to it. This runs before start, which is when workerData is built.
+  */
+  if (application.resolvedConfig) {
+    await update(application.resolvedConfig)
+    return application.resolvedConfig
   }
 
   let configFile = application.config
@@ -130,6 +191,10 @@ export async function configureHTTPS (_root, config) {
     }
   })
 }
+
+// It reads the loaded configuration rather than the directory, so it belongs after the load. The
+// update still lands before start, which is when a worker is handed its configuration.
+configureHTTPS.runAfterPrepare = true
 
 export function createHTTPSDispatcher (t) {
   const dispatcher = new Agent({
@@ -448,6 +513,19 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   await cp(source, root, { recursive: true })
 
   /*
+    Setup runs before the configuration is read, not after. v4 resolves every application when the
+    root is loaded -- its directory, its capability, its own configuration -- so a setup that
+    copies applications into the project has to have finished by then. Under v3 the same setup
+    could run afterwards, because an application was not looked at until its worker started.
+
+    A setup that needs the loaded configuration rather than the directory says so with
+    runAfterPrepare, and still runs at the end.
+  */
+  if (additionalSetup && !additionalSetup.runAfterPrepare) {
+    await additionalSetup(root)
+  }
+
+  /*
     The root's dependencies are linked before the configuration is read, not after. v4 validates
     each application's capability configuration main-side, against the schema imported from that
     capability — so the capability has to be resolvable when the configuration is loaded, which is
@@ -492,15 +570,23 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
         }
       }
 
+      // The listeners are assigned here for v4, before any worker starts: there is no configuration
+      // file to rewrite afterwards, and the resolved payload is what the worker is handed.
+      if (typeof port === 'number' && config[kMetadata]?.v4) {
+        applyListenerPorts(config, port)
+      }
+
       return config
     }
   })
 
   const config = await runtime.getRuntimeConfig(true)
 
-  await additionalSetup?.(root, config)
+  if (additionalSetup?.runAfterPrepare) {
+    await additionalSetup(root, config)
+  }
 
-  if (typeof port === 'number') {
+  if (typeof port === 'number' && !config[kMetadata]?.v4) {
     const target = getTargetApplication(config.applications ?? [])
     const listeners = new Set([
       target,
@@ -836,9 +922,7 @@ export async function prepareRuntimeWithApplications (
     port: 0,
     additionalSetup: async (root, config, _args) => {
       for (const type of ['backend', 'composer']) {
-        await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-          recursive: true
-        })
+        await copyCommonApplication(root, type, language)
       }
 
       await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
@@ -1012,9 +1096,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           port: 0,
           additionalSetup: async (root, config, _args) => {
             for (const type of ['backend', 'composer']) {
-              await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-                recursive: true
-              })
+              await copyCommonApplication(root, type, language)
             }
 
             await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
@@ -1022,10 +1104,10 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
             })
 
             if (id.endsWith('without-prefix')) {
-              await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-                const json = JSON.parse(contents)
-                json.gateway.applications[1].proxy = { prefix: '' }
-                return JSON.stringify(json, null, 2)
+              // Through updateConfigFile rather than a JSON.parse of a named file: the fixture may
+              // be written in either dialect, and only one of them is JSON.
+              await updateConfigFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+                contents.gateway.applications[1].proxy = { prefix: '' }
               })
             }
 
@@ -1065,8 +1147,8 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
   const port = await getPort.default()
   let protocol
 
-  // Create the runtime
-  const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
+  // Reads the loaded configuration, so it runs after the load and before start.
+  const setup = async (root, config) => {
     await updateTargetApplicationConfig(config, applicationConfig => {
       applicationConfig.server ??= {}
       applicationConfig.server.hostname ??= '127.0.0.1'
@@ -1077,7 +1159,12 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
 
     await additionalSetup?.(root, config)
-  })
+  }
+
+  setup.runAfterPrepare = true
+
+  // Create the runtime
+  const { runtime, root } = await prepareRuntime(t, configuration, true, null, setup)
 
   // Build
   await buildRuntime(root)

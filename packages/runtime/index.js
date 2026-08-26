@@ -18,7 +18,7 @@ import closeWithGrace from 'close-with-grace'
 import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { basename, dirname, resolve as resolvePath } from 'node:path'
-import { transform, transformV4, wrapInRuntimeConfig } from './lib/config.js'
+import { transform as v3Transform, transformV4, wrapInRuntimeConfig } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
 import { schema } from './lib/schema.js'
@@ -158,7 +158,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
   return utilsLoadConfiguration(source, context?.schema ?? schema, {
     validationOptions,
-    transform,
+    transform: v3Transform,
     upgrade,
     replaceEnv: true,
     root,
@@ -228,7 +228,14 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     }
   }
 
-  return transformV4(config, null, context)
+  /*
+    A caller-supplied transform replaces the built-in one, exactly as it does on the v3 path where
+    it arrives as part of ...context. Ignoring it here meant a test helper or an embedder that
+    customized the configuration was silently not consulted.
+  */
+  const apply = context?.transform ?? transformV4
+
+  return apply(config, null, context)
 }
 
 export async function loadApplicationsCommands (executableName = '', configurationFile = null) {
@@ -317,7 +324,17 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return runtime
 }
 
-export { prepareApplication, transform, wrapInRuntimeConfig } from './lib/config.js'
+export { prepareApplication, wrapInRuntimeConfig } from './lib/config.js'
+
+/*
+  The exported transform dispatches on the dialect. Callers wrap it -- they call it and then adjust
+  the result -- and a wrapper that reached the v3 transform with a v4 configuration would run the
+  wrong pipeline over it: autoload expansion and enabled filtering have already happened in the
+  eval worker. v4 configurations are recognizable by the evaluation context on kMetadata.
+*/
+export async function transform (config, schema, context) {
+  return config?.[kMetadata]?.v4 ? transformV4(config, schema, context) : v3Transform(config, schema, context)
+}
 export * as errors from './lib/errors.js'
 export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'
 export { setupLoopbackMessaging } from './lib/loopback-messaging.js'

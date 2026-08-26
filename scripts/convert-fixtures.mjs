@@ -204,6 +204,53 @@ function moduleFromSchema (config, file) {
   return name === 'wattpm' ? '@platformatic/runtime' : `@platformatic/${name}`
 }
 
+/*
+  Read from the capability itself rather than a table here: servesWithoutPort is declared in each
+  capability's schema, and a copy in this script would be wrong the first time one of them changed
+  its mind. A capability whose answer is a callable or 'worker' is not decided by configuration
+  alone, and the loader defers those to the started worker, so neither needs a port written in.
+*/
+const servingDeclarations = new Map()
+
+function servesWithoutPortFor (module) {
+  if (servingDeclarations.has(module)) {
+    return servingDeclarations.get(module)
+  }
+
+  const name = module.replace('@platformatic/', '')
+  let declaration = null
+
+  try {
+    const source = readFileSync(join(ROOT, 'packages', name, 'lib', 'schema.js'), 'utf-8')
+    const match = source.match(/export const servesWithoutPort = (\{[^}]*\})/)
+
+    if (match) {
+      declaration = JSON.parse(match[1].replace(/(\w+):/g, '"$1":').replace(/'/g, '"'))
+    }
+  } catch {
+    // A capability outside this repository, or one that does not declare it: not this script's
+    // business to guess, and the loader's "absent means worker" rule covers it.
+  }
+
+  servingDeclarations.set(module, declaration)
+  return declaration
+}
+
+export function needsExplicitPort (module, config) {
+  const declaration = servesWithoutPortFor(module)
+
+  if (!declaration) {
+    return false
+  }
+
+  // A declared command starts the application on its own terms and is checked before the port.
+  if (config.server?.port !== undefined || config.application?.commands) {
+    return false
+  }
+
+  return declaration.development === false || declaration.production === false
+}
+
 export function convert (config, { file } = {}) {
   const refusals = []
   const notes = []
@@ -256,6 +303,37 @@ export function convert (config, { file } = {}) {
       }
     }
   } else if (module) {
+    /*
+      A framework capability that does not serve without a listener has to be given one. v3 had a
+      runtime-level entrypoint and buildListenOptions(undefined) handing out { port: 0 }, so these
+      configurations never needed to say anything; under v4 exposure is the application's own and
+      the loader refuses one that would start nothing.
+
+      The port is 0 rather than the 3042 scaffolding writes: this is a conversion of something that
+      already worked, and what it had was an ephemeral port. A fixed port would also collide the
+      moment two of these fixtures run at once.
+    */
+    /*
+      The gateway's own list of applications was spelled services when the capability was called
+      composer, and renaming the block does not rename what is inside it. v4's gateway schema has
+      applications and refuses the old key outright, so a configuration converted without this
+      fails validation with a message about a property the author never wrote.
+    */
+    if (module === '@platformatic/gateway' && converted.gateway?.services) {
+      converted.gateway = {
+        ...converted.gateway,
+        applications: [...(converted.gateway.applications ?? []), ...converted.gateway.services]
+      }
+
+      delete converted.gateway.services
+      notes.push("gateway.services became gateway.applications")
+    }
+
+    if (needsExplicitPort(module, converted)) {
+      converted.server = { ...converted.server, port: 0 }
+      notes.push(`${module} does not serve without a listener, so an ephemeral server.port was added`)
+    }
+
     // module is the discriminator classification rule 2 reads, so it leads.
     return {
       module,

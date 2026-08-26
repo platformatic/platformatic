@@ -1,9 +1,8 @@
 import { deepStrictEqual } from 'node:assert'
-import { cp } from 'node:fs/promises'
 import path, { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
-  commonFixturesRoot,
+  copyCommonApplication,
   prepareRuntime,
   updateFile,
   updateTargetApplicationConfig
@@ -91,9 +90,7 @@ for (const [env, options] of Object.entries(envs)) {
       production: options.production,
       async additionalSetup (root, config) {
         for (const type of ['backend', 'composer']) {
-          await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-            recursive: true
-          })
+          await copyCommonApplication(root, type)
         }
 
         await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {

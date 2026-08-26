@@ -71,7 +71,11 @@ export function assertApplicationServes ({ id, module, declaration, config, prod
   const outcome = willApplicationServe({ declaration, config, production })
 
   if (!outcome.serves) {
-    throw new ApplicationStartsNothingError(id, module, servingEnvironment(production))
+    // The environment appears twice: once as the mode that refuses, and once as the key under
+    // application.commands the reader would have to add.
+    const environment = servingEnvironment(production)
+
+    throw new ApplicationStartsNothingError(id, module, environment, environment)
   }
 
   return outcome

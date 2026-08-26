@@ -465,7 +465,7 @@
       "head": "if (config.vite.ssr === true) {",
       "lines": 8
     },
-    "packages/foundation/lib/cli.js:255-274": {
+    "packages/foundation/lib/cli.js:292-311": {
       "sha": "a82961d969a7a84a",
       "head": "export async function fallbackToTemporaryConfigFile (logger, root, verifyPackages) {",
       "lines": 20
@@ -560,7 +560,7 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:268-272": {
+    "packages/runtime/index.js:275-279": {
       "sha": "162312aac6a90f78",
       "head": "const applicationConfig = await utilsLoadConfiguration(application.config)",
       "lines": 5
@@ -950,7 +950,7 @@
       "head": "value = `${join(`{${PLT_ROOT}}`, param.value)}`",
       "lines": 2
     },
-    "packages/foundation/lib/cli.js:211-213": {
+    "packages/foundation/lib/cli.js:212-214": {
       "sha": "7e406bf6fdeddfc0",
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3

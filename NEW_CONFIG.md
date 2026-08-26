@@ -1565,7 +1565,7 @@ configuration rather than becoming a hidden loader default; synthesis simply *is
 the configuration for a zero-config boot. It applies **only to a
 single-application project**, which is the only shape zero-config can produce:
 detection resolves one application type for the root directory
-(`foundation/lib/cli.js:255-274`). Multi-application projects get their ports from
+(`foundation/lib/cli.js:292-311`). Multi-application projects get their ports from
 their own configuration, never from a default.
 
 Synthesis is **not gated on what sits above**: running in an application directory of
@@ -2099,7 +2099,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:268-272`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:275-279`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -3921,7 +3921,7 @@ Generation reads both views. Then:
    emits `{ id, path: '{PLT_APPLICATION_<ID>_PATH}', url }` and appends
    `PLT_APPLICATION_<ID>_PATH=` to `.env` — **empty** for a remote application that
    has not been resolved (`wattpm-utils/lib/commands/external.js:243-271`, the
-   variable named by `applicationToEnvVariable`, `foundation/lib/cli.js:211-213`).
+   variable named by `applicationToEnvVariable`, `foundation/lib/cli.js:212-214`).
    Converting that naively yields `path: ''`, which resolves to the project root,
    where per-app discovery finds the root config and raises "configured twice".
    Instead: a **`url`-bearing entry whose path resolves empty keeps its `url` and

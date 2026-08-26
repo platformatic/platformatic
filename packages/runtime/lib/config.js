@@ -15,9 +15,6 @@ import { loadAdditionalApplications } from '@platformatic/foundation/lib/v4/inde
 import { isAbsolute, join, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// The runtime package's own entry point, which is where the bundled capability copies live.
-const runtimeScopePath = fileURLToPath(new URL('../index.js', import.meta.url))
-
 import {
   InspectAndInspectBrkError,
   InspectorHostError,
@@ -26,6 +23,9 @@ import {
 } from './errors.js'
 import { schema } from './schema.js'
 import { upgrade } from './upgrade.js'
+
+// The runtime package's own entry point, which is where the bundled capability copies live.
+const runtimeScopePath = fileURLToPath(new URL('../index.js', import.meta.url))
 
 // Validate and coerce workers values early to avoid runtime hangs when invalid
 function coercePositiveInteger (value) {

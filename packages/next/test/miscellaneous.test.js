@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import {
-  commonFixturesRoot,
+  copyCommonApplication,
   configureHTTPS,
   createHTTPSDispatcher,
   getLogsFromFile,
@@ -103,14 +103,10 @@ test('should support standalone mode with custom build command', async t => {
   // This test verifies issue #4604: build fails when using both
   // a custom build command AND standalone: true
   const { runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
-    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
-      recursive: true
-    })
+    await copyCommonApplication(root, 'backend')
 
     for (const type of ['backend', 'composer']) {
-      await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-        recursive: true
-      })
+      await copyCommonApplication(root, type)
     }
 
     await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
@@ -150,14 +146,10 @@ test('should support Next.js in standalone mode', async t => {
     production: true,
     port: 0,
     additionalSetup: async root => {
-      await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
-        recursive: true
-      })
+      await copyCommonApplication(root, 'backend')
 
       for (const type of ['backend', 'composer']) {
-        await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-          recursive: true
-        })
+        await copyCommonApplication(root, type)
       }
 
       await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {

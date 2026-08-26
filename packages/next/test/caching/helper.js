@@ -1,8 +1,7 @@
 import { loadConfiguration, saveConfigurationFile } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
-import { cp } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { commonFixturesRoot, prepareRuntime, startRuntime } from '../../../basic/test/helper.js'
+import { copyCommonApplication, prepareRuntime, startRuntime } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
 
 export const base64ValueMatcher = /^[a-z0-9-_]+$/i
@@ -23,9 +22,7 @@ export async function prepareRuntimeWithBackend (
     production,
     port: 0,
     additionalSetup: async (root, config, args) => {
-      await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
-        recursive: true
-      })
+      await copyCommonApplication(root, 'backend')
 
       await additionalSetup?.(root, config, args)
     }
