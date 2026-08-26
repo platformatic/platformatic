@@ -68,7 +68,7 @@ test('migrate and start', async t => {
 
 test('no cwd', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const config = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'watt.config.js')
+  const config = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'platformatic.db.json')
 
   const logger = createCapturingLogger()
   const context = createTestContext()

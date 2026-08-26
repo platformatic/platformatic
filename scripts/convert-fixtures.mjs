@@ -314,6 +314,8 @@ const COMMAND_FIXTURES = [
   and create take { root, config } with the rest of the capability work.
 */
 const CAPABILITY_FIXTURES = [
+  // Not under a fixtures directory, which is why the first sweep for this family missed it.
+  'gateway/test/logger/',
   'db/test/fixtures/logger/',
   'db/test/fixtures/sqlite/',
   'db/test/fixtures/sqlite-basic/',
