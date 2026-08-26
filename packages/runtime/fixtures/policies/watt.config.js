@@ -2,7 +2,7 @@
 export default {
   policies: {
     deny: {
-      "application-1": 'application-2'
+      'application-1': 'application-2'
     }
   },
   applications: [

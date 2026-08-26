@@ -10,7 +10,7 @@ export default {
   autoload: {
     path: '.',
     mappings: {
-      "service-2": {
+      'service-2': {
         id: 'service-2'
       }
     }
