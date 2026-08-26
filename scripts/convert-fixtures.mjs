@@ -293,6 +293,13 @@ export function needsExplicitPort (module, config) {
 const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-dependencies/']
 
 /*
+  Fixtures that exist to be a particular file format. auto-config keeps the same configuration as
+  json, json5, yaml, toml, yml and tml side by side, and the test asserts the v3 loader reads each
+  one. Converting the json member leaves the family testing five formats and a module.
+*/
+const FORMAT_FIXTURES = ['db/test/fixtures/auto-config/', 'service/test/fixtures/auto-config/']
+
+/*
   A configuration is recognized by what it holds, not only by what it is called. Forty-five of the
   runtime's own fixtures are named for the test that passes them -- service-with-env-port.json,
   monorepo.json -- and a filename rule skips every one of them while they are as much v3
@@ -350,7 +357,7 @@ export function isLegacyByDesign (file) {
   */
   const normalized = file.replace(/\\/g, '/')
 
-  return IMPORT_FIXTURES.some(fixture => normalized.includes(fixture))
+  return [...IMPORT_FIXTURES, ...FORMAT_FIXTURES].some(fixture => normalized.includes(fixture))
 }
 
 export function convert (config, { file } = {}) {

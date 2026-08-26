@@ -24,6 +24,7 @@ import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
 import { updateConfigFile } from '../../runtime/test/helpers.js'
 import { BaseCapability } from '../lib/capability.js'
+import { configurationFileIn } from '../../runtime/test/helpers.js'
 
 export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
 
@@ -153,7 +154,7 @@ async function updateApplicationConfig (application, update, required = false) {
       return
     }
 
-    configFile = resolve(application.path, 'platformatic.application.json')
+    configFile = configurationFileIn(application.path, 'platformatic.application.json')
     await writeFile(configFile, JSON.stringify({ $schema: `https://schemas.platformatic.dev/${capability}/3.0.0.json` }, null, 2))
   }
 
@@ -441,7 +442,12 @@ export async function buildRuntime (root) {
   process.chdir(originalCwd)
 }
 
-export async function prepareRuntime (t, fixturePath, production, configFile, additionalSetup) {
+/*
+  beforeLoad exists for the setups that need both sides of the load: a file written into an
+  application directory has to be there before v4 resolves the applications, while a change to the
+  loaded configuration can only happen once there is one. A single hook cannot do both.
+*/
+export async function prepareRuntime (t, fixturePath, production, configFile, additionalSetup, beforeLoad) {
   let source
   let port
   let build
@@ -453,6 +459,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     production = t.production ?? production
     configFile = t.configFile ?? configFile
     additionalSetup = t.additionalSetup || additionalSetup
+    beforeLoad = t.beforeLoad || beforeLoad
     t = t.t
   }
 
@@ -509,6 +516,10 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     A setup that needs the loaded configuration rather than the directory says so with
     runAfterPrepare, and still runs at the end.
   */
+  if (beforeLoad) {
+    await beforeLoad(root)
+  }
+
   if (additionalSetup && !additionalSetup.runAfterPrepare) {
     await additionalSetup(root)
   }

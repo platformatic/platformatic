@@ -10,6 +10,7 @@ import { seed as seedCommand } from '../../lib/commands/seed.js'
 import { getConnectionInfo } from '../helper.js'
 import { safeKill, start } from './helper.js'
 import { createCapturingLogger, createTestContext, createThrowingLogger } from './test-utilities.js'
+import { configurationFileIn } from '../../../runtime/test/helpers.js'
 
 test('seed and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')

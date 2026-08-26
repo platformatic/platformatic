@@ -12,7 +12,6 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
-import { version } from '../index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -76,26 +75,26 @@ test('should build the applications on start in dev', async t => {
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))
 })
 
+// Only this needs the loaded configuration; everything else the setup does is files on disk.
+const setRestartOnError = async (root, config) => {
+  config.restartOnError = 0
+}
+
+setRestartOnError.runAfterPrepare = true
+
 test('should not try to stop the application when build failed on start in dev', async t => {
   const { root, runtime } = await prepareRuntime({
     t,
     root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
     production: false,
-    async additionalSetup (root, config) {
-      config.restartOnError = 0
+    additionalSetup: setRestartOnError,
+    async beforeLoad (root) {
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), () => 'this is not valid typescript')
 
       await writeFile(
-        resolve(root, 'services/app-no-config/platformatic.json'),
-        JSON.stringify(
-          {
-            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
-            logger: { timestamp: 'isoTime' }
-          },
-          null,
-          2
-        ),
+        resolve(root, 'services/app-no-config/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { timestamp: 'isoTime' } }, null, 2)}\n`,
         'utf-8'
       )
 
@@ -126,21 +125,14 @@ test('should not hang if the runtime forcefully stops during start in case of er
     root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
     production: false,
-    async additionalSetup (root, config) {
-      config.restartOnError = 0
+    additionalSetup: setRestartOnError,
+    async beforeLoad (root) {
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), content =>
         content.replace('app.listen({ port: 1 })', 'setTimeout(() => app.listen({ port: 1 }), 2000)'))
 
       await writeFile(
-        resolve(root, 'services/app-no-config/platformatic.json'),
-        JSON.stringify(
-          {
-            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
-            logger: { timestamp: 'isoTime' }
-          },
-          null,
-          2
-        ),
+        resolve(root, 'services/app-no-config/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { timestamp: 'isoTime' } }, null, 2)}\n`,
         'utf-8'
       )
     }

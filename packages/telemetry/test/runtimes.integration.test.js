@@ -83,6 +83,10 @@ const setupTelemetryServer = (root, config, args) => {
   config.telemetry = newTelemetry
 }
 
+// It reads the loaded configuration rather than the project directory, so it runs after the load.
+// The change still lands before start, which is when a worker is handed its configuration.
+setupTelemetryServer.runAfterPrepare = true
+
 test('configure telemetry correctly with a node app - integration test', async t => {
   const { runtime } = await prepareRuntime(
     t,

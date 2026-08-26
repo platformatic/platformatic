@@ -59,7 +59,7 @@ export async function moveToTmpdir (teardown) {
   watt.config.mjs depending on what its nearest package.json says about modules, so asking the
   directory is the only spelling that keeps working.
 */
-export function configurationFileIn (directory) {
+export function configurationFileIn (directory, fallback = 'platformatic.json') {
   for (const candidate of ['watt.config.js', 'watt.config.mjs', 'watt.config.ts', 'watt.config.mts']) {
     const path = join(directory, candidate)
 
@@ -68,9 +68,12 @@ export function configurationFileIn (directory) {
     }
   }
 
-  // A directory with no v4 configuration is still a legitimate answer for the v3 fixtures that
-  // remain -- the caller gets the name it would have used.
-  return configurationFileIn(directory)
+  /*
+    A directory with no v4 configuration is a fixture deliberately left in v3 -- the format tests,
+    the upgrade chains, the ones wattpm import rewrites -- and they do not all spell it
+    platformatic.json, so the caller passes the name it was going to use.
+  */
+  return join(directory, fallback)
 }
 
 export async function updateFile (path, update) {

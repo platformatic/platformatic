@@ -1,0 +1,20 @@
+{
+  "db": {
+    "connectionString": "{DATABASE_URL}"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "table": "versions",
+    "autoApply": true
+  },
+  "plugins": {
+    "paths": ["./plugin.js"]
+  }
+}
