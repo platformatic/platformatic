@@ -379,3 +379,30 @@ PLT_SERVER_LOGGER_LEVEL=debug wattpm dev
 ### PLT_ROOT
 
 The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.
+
+### Referencing another application
+
+Inside a runtime, `{PLT_<APPLICATION>_URL}` resolves to the internal URL of the named application even
+when no environment variable defines it, so applications can reach each other without a variable per
+pair. `<APPLICATION>` is the application id uppercased with dashes turned into underscores, which is
+the same prefix its generated variables use: the application `with-logger` owns `{PLT_WITH_LOGGER_URL}`
+and resolves to `http://with-logger.plt.local`.
+
+```json
+{
+  "clients": [
+    {
+      "serviceId": "with-logger",
+      "url": "{PLT_WITH_LOGGER_URL}"
+    }
+  ]
+}
+```
+
+Only applications that actually exist in the runtime are resolved this way, and setting the variable
+yourself always wins. Any other placeholder whose name happens to end in `_URL` is left alone and
+resolves to an empty string as usual, so a connection string such as `valkey://{VALKEY_URL}` or a DSN
+such as `{PLT_DATABASE_URL}` is never rewritten into an application URL.
+
+With [`strictEnv`](../runtime/configuration.md) enabled, a placeholder resolved this way is reported
+as replaced by a fallback value rather than as missing.

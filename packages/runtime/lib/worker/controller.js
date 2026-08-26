@@ -1,4 +1,5 @@
 import {
+  convertApplicationNameToPrefix,
   ensureLoggableError,
   FileWatcher,
   kHandledError,
@@ -28,12 +29,27 @@ import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } fro
 import { getApplicationUrl } from '../utils.js'
 import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
-function fetchApplicationUrl (application, key) {
-  if (!key.endsWith('_URL') || !application.id) {
-    return null
+/**
+ * Resolves {PLT_<APPLICATION>_URL} placeholders that no environment variable defines, so that
+ * applications can reference each other without the user having to set a variable per pair.
+ *
+ * The mapping is built forwards, from the ids of the applications that actually exist in the runtime
+ * to the variable name each of them owns. Parsing the variable name instead would be ambiguous, both
+ * because the id to prefix conversion is not reversible ("with-logger" and "with_logger" share a
+ * prefix) and because plenty of _URL variables do not name an application at all: a connection string
+ * fragment like {VALKEY_URL} or a DSN like {PLT_DATABASE_URL} must keep resolving to nothing rather
+ * than silently becoming an HTTP URL.
+ */
+function buildApplicationUrlResolver (applications) {
+  const urls = new Map()
+
+  for (const { id } of applications ?? []) {
+    if (id) {
+      urls.set(`PLT_${convertApplicationNameToPrefix(id)}_URL`, getApplicationUrl(id))
+    }
   }
 
-  return getApplicationUrl(application.id)
+  return key => urls.get(key) ?? null
 }
 
 function handleUnhandled (app, event, listeners, timeout, err, ...args) {
@@ -78,6 +94,8 @@ export class Controller extends EventEmitter {
     this.capability = null
     this.#fileWatcher = null
 
+    const onMissingEnv = buildApplicationUrlResolver(runtimeConfig.applications)
+
     this.#context = {
       controller: this,
       runtimeConfig: this.runtimeConfig,
@@ -95,7 +113,10 @@ export class Controller extends EventEmitter {
       worker: workerData?.worker,
       resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
-      fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig),
+      fetchApplicationUrl: onMissingEnv,
+      // Capabilities spread the whole context into their loadConfiguration call, which is what makes
+      // the configuration they load resolve application references like the throwaway load below.
+      onMissingEnv,
       strictEnv: runtimeConfig.strictEnv
     }
   }
@@ -143,10 +164,11 @@ export class Controller extends EventEmitter {
         // Parse the configuration file the first time to obtain the schema. This load is thrown away:
         // the capability loads the configuration again below and that is the configuration the
         // application actually runs on. This one only has to yield $schema and module, so it must not
-        // diverge from the second load in any way the user can observe: it deliberately applies no
-        // onMissingEnv fallback and emits no strictEnv report, both of which are left to the load the
-        // application is built from.
+        // diverge from the second load in any way the user can observe: it resolves environment
+        // variables identically, and leaves the strictEnv report to the load the application is
+        // built from, which would otherwise be duplicated for every application.
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
+          onMissingEnv: this.#context.onMissingEnv,
           strictEnv: false
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
