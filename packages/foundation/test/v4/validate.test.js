@@ -231,6 +231,25 @@ test('the loader validates each application payload when asked to', async t => {
   })
 })
 
+test('a schema.json beside an exports-less capability is not mistaken for its subpath', async t => {
+  // Without an exports map, Node resolves <name>/schema through the filesystem and finds
+  // schema.json -- the generated JSON Schema most capabilities ship -- before anything else.
+  // Importing that as a module fails for want of an import attribute, which is how composer
+  // stopped booting.
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { applications: [{ id: "api", path: "./web/api" }] }',
+    ...capabilityPackage('@acme/plain', '4.0.0', { subpath: false }),
+    'node_modules/@acme/plain/schema.json': JSON.stringify({ title: 'not the subpath' }),
+    'web/api/watt.config.js': 'export default { module: "@acme/plain", server: { port: 8080 } }'
+  })
+
+  const { config } = await loadConfiguration({ cwd: root, command: 'start', realEnv: {} })
+
+  // Answered by the package entry, which is where an exports-less capability keeps its schema.
+  deepStrictEqual(config.applications[0].config, { server: { port: 8080 } })
+})
+
 test('an application entry survives the structured clone that hands it to a worker', async t => {
   // A capability whose servesWithoutPort is callable -- vite's is -- put a function on the entry,
   // and the runtime got a DataCloneError from new Worker rather than anything naming the cause.

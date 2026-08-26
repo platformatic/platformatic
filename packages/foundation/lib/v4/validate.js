@@ -108,6 +108,18 @@ export async function importCapabilitySchema (module, applicationRoot, { runtime
         continue
       }
 
+      /*
+        A package without an exports map resolves <name>/schema through the filesystem, and the
+        extension search finds schema.json -- the generated JSON Schema that sits at the root of
+        most capabilities -- before anything else. That file is data, not the subpath: importing it
+        as a module fails for needing an import attribute, and even with one it carries none of the
+        metadata the contract asks the subpath to export. Skipping it lets the entry fallback
+        answer, which is where an exports-less capability keeps its schema.
+      */
+      if (!/\.(js|mjs|cjs|ts|mts|cts)$/.test(resolved)) {
+        continue
+      }
+
       const loaded = await import(pathToFileURL(resolved).href)
 
       if (loaded?.schema) {
