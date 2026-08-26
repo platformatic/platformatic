@@ -199,12 +199,17 @@ test('update - should update version in package.json files', async t => {
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
 })
 
-test('update - should work when executed inside an application folder', async t => {
+test('update - scopes to the application when executed inside its folder', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
-  // Note that web/main folder contains a watt.json which will be considered as the root of the project.
+  /*
+    web/main has its own package.json, and the configuration search stops at the nearest one --
+    because it executes what it finds, and a configuration above your package belongs to something
+    else. So this updates the application rather than the runtime above it. v3 ignored package
+    boundaries and walked up, which is what this test used to assert.
+  */
   const updateProcess = await executeCommand(
     'node',
     '--import',
@@ -229,18 +234,16 @@ test('update - should work when executed inside an application folder', async t 
     '@platformatic/telemetry': '^3.55.0'
   })
 
+  // Untouched: it belongs to the runtime above the boundary, which this invocation is not
+  // scoped to.
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^3.55.0',
-    '@platformatic/db': '^1.53.4',
+    '@platformatic/service': '^3.0.0',
+    '@platformatic/db': '^1.0.0',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'
   })
 
-  ok(
-    updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.55.0 ...'
-    )
-  )
+  ok(!updateProcess.stdout.includes('of the application another'))
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
 })
 
