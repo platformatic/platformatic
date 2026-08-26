@@ -4948,7 +4948,7 @@ export class Runtime extends EventEmitter {
     this.#loggerContext.updatePrefixes(ids)
   }
 
-  #getPortOwner (port, applicationId, hostname) {
+  #getPortOwner (port, applicationId, hostname, includeSameApplication = false) {
     if (!Number.isInteger(port) || port <= 0) {
       return null
     }
