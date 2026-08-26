@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, updateConfigFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile } from '../helpers.js'
 import { findAvailablePortRange, prepareRuntime, waitForEvents } from './helper.js'
 
 const HOST = '127.0.0.1'
@@ -55,7 +55,7 @@ async function preparePerWorkerPortRuntime (
   const configFile = resolve(root, './platformatic.json')
   const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
-  await updateConfigFile(resolve(root, application, 'platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(root, application), contents => {
     contents.server = {
       ...contents.server,
       hostname: HOST,

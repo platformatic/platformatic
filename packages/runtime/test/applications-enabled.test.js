@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { loadConfiguration, schema } from '../index.js'
+import { configurationFileIn } from './helpers.js'
 
 async function writeJSON (path, data) {
   await writeFile(path, JSON.stringify(data, null, 2), 'utf8')
@@ -39,7 +40,7 @@ function withEnv (vars, fn) {
 
 test('should exclude disabled applications', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
@@ -59,7 +60,7 @@ test('should exclude disabled applications', async () => {
 
 test('should support environment variables for application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
@@ -88,7 +89,7 @@ test('should support environment variables for application enabled configuration
 
 test('should support string values for application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
@@ -108,7 +109,7 @@ test('should support string values for application enabled configuration', async
 
 test('should support production specific application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
@@ -128,7 +129,7 @@ test('should support production specific application enabled configuration', asy
 
 test('should support development specific application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
@@ -148,7 +149,7 @@ test('should support development specific application enabled configuration', as
 
 test('should enable applications when enabled configuration does not match the environment', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
@@ -165,7 +166,7 @@ test('should enable applications when enabled configuration does not match the e
 
 test('should support environment variables in application enabled environment configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
@@ -195,7 +196,7 @@ test('should support environment variables in application enabled environment co
 test('should support disabling autoloaded applications via mappings', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
   const applicationsDir = join(dir, 'applications')
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
 
   await mkdir(join(applicationsDir, 'disabled'), { recursive: true })
   await mkdir(join(applicationsDir, 'enabled'), { recursive: true })

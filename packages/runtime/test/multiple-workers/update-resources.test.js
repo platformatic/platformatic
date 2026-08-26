@@ -1,12 +1,12 @@
 import { strict as assert, deepStrictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 import { waitForEvents } from './helper.js'
 
 async function prepareRuntime (t, applicationsId, fixture) {
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', fixture)
-  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(configurationFileIn(appPath))
   t.after(async () => {
     await runtime.close()
   })
@@ -23,7 +23,7 @@ async function prepareRuntime (t, applicationsId, fixture) {
 
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
-  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(configurationFileIn(appPath))
   t.after(async () => {
     await runtime.close()
   })
@@ -39,7 +39,7 @@ test('should throw error for invalid parameters of updateApplicationsResources',
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const applicationId = 'node'
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
-  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(configurationFileIn(appPath))
   t.after(async () => {
     await runtime.close()
   })

@@ -13,7 +13,7 @@ test(
   'health metrics for a thread-only worker are read from the worker handle, not via ITC',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+    const configFile = join(fixturesDir, 'child-process-health', 'watt.config.mjs')
 
     const app = await createRuntime(configFile)
 
@@ -56,7 +56,7 @@ test(
   'health metrics keep flowing while a thread worker is blocking its event loop',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+    const configFile = join(fixturesDir, 'child-process-health', 'watt.config.mjs')
 
     const app = await createRuntime(configFile)
 
@@ -101,7 +101,7 @@ test(
   'health collection collects from multiple workers in parallel',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+    const configFile = join(fixturesDir, 'child-process-health', 'watt.config.mjs')
 
     const app = await createRuntime(configFile)
 
@@ -140,7 +140,7 @@ test(
   'worker is replaced when health collection consistently fails',
   { skip: isWindows && 'Skipping on Windows', timeout: 30_000 },
   async t => {
-    const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+    const configFile = join(fixturesDir, 'child-process-health', 'watt.config.mjs')
 
     const app = await createRuntime(configFile, undefined, {
       async transform (config, ...args) {

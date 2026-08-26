@@ -29,7 +29,7 @@ async function createContent (t) {
 
 test('should access files when access is not restricted', async t => {
   const value = await createContent(t)
-  const configFile = join(fixturesDir, 'permissions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'permissions', 'runtime', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {
@@ -44,7 +44,7 @@ test('should access files when access is not restricted', async t => {
 
 test('should access files when access is granted by permissions', async t => {
   const value = await createContent(t)
-  const configFile = join(fixturesDir, 'permissions', 'allowed-runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'permissions', 'allowed-runtime', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {
@@ -59,7 +59,7 @@ test('should access files when access is granted by permissions', async t => {
 
 test('should not access files when access is not granted by permissions', async t => {
   await createContent(t)
-  const configFile = join(fixturesDir, 'permissions', 'denied-runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'permissions', 'denied-runtime', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {

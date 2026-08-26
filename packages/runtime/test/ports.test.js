@@ -3,7 +3,7 @@ import { deepStrictEqual, match, ok, rejects, strictEqual } from 'node:assert'
 import { mkdir, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime, createTemporaryDirectory } from './helpers.js'
+import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 
 async function createApplication (root, id, server) {
   const directory = join(root, id)
@@ -12,7 +12,7 @@ async function createApplication (root, id, server) {
   await mkdir(platformaticModules, { recursive: true })
   await symlink(join(import.meta.dirname, '../../service'), join(platformaticModules, 'service'), 'dir')
   await writeFile(
-    join(directory, 'platformatic.json'),
+    configurationFileIn(directory),
     JSON.stringify({
       $schema: 'https://schemas.platformatic.dev/@platformatic/service/3.62.2.json',
       ...(server ? { server } : {})
@@ -22,13 +22,13 @@ async function createApplication (root, id, server) {
   return {
     id,
     path: directory,
-    config: join(directory, 'platformatic.json')
+    config: configurationFileIn(directory)
   }
 }
 
 async function createTestRuntime (t, applications) {
   const root = await createTemporaryDirectory(t, 'ports')
-  const config = join(root, 'watt.json')
+  const config = configurationFileIn(root)
   await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'ports-test' }))
   await writeFile(
     config,

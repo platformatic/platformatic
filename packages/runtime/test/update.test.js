@@ -125,7 +125,7 @@ test('should add a new application with new env variables', async t => {
 
   // the new application has been generated
   const applicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'foobar', 'watt.config.mjs'), 'utf-8')
   )
   assert.deepEqual(applicationConfigFile.plugins.packages[0], {
     name: '@fastify/foo-plugin',
@@ -161,7 +161,7 @@ test("should update existing application's plugin options", async t => {
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
   const oldApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   )
   // load previous application config file
   const updatedApplication = {
@@ -212,7 +212,7 @@ test("should update existing application's plugin options", async t => {
 
   // the config file should be left unchanged
   const newApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   )
   assert.deepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
@@ -249,7 +249,7 @@ test("should add new application's plugin and options", async t => {
   await writeFile(sampleRouteFilePath, samplerouteFileContents)
   await rg.loadFromDir(dir)
   const oldApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   )
   // load previous application config file
   const updatedApplication = {
@@ -317,7 +317,7 @@ test("should add new application's plugin and options", async t => {
 
   // the config file should be updated with the new plugin
   const newApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   )
   assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
   // all properties except "packages" should be the same
@@ -368,7 +368,7 @@ test('should remove a plugin from an existing application', async t => {
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
   const oldApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   )
   // load previous application config file
   const updatedApplication = {
@@ -395,7 +395,7 @@ test('should remove a plugin from an existing application', async t => {
 
   // the config file should be left unchanged
   const newApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   )
   assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
@@ -490,7 +490,7 @@ test('should remove a plugin from an application and add the same on the other',
 
   // the new application has been generated
   const applicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'foobar', 'watt.config.mjs'), 'utf-8')
   )
   assert.deepEqual(applicationConfigFile.plugins.packages[0], {
     name: '@fastify/foo-plugin',
@@ -571,7 +571,7 @@ test('should handle new fields on new application', async t => {
 
   // the new application has been generated
   const applicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
+    await readFile(join(dir, 'services', 'foobar', 'watt.config.mjs'), 'utf-8')
   )
   assert.equal(applicationConfigFile.plugins.packages, undefined)
 

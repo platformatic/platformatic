@@ -1,0 +1,14 @@
+// Converted from v3 JSON by scripts/convert-fixtures.mjs
+export default {
+  gracefulShutdown: {
+    runtime: 1000,
+    service: 1000
+  },
+  restartOnError: false,
+  applications: [
+    {
+      id: 'serviceThrowsOnStart',
+      path: '../../serviceAppThrowsOnStart'
+    }
+  ]
+}

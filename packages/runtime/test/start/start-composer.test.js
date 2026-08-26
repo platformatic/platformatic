@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('gateway', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -34,7 +34,7 @@ test('gateway', async t => {
 })
 
 test('gateway-proxy', async t => {
-  const configFile = join(fixturesDir, 'composer-proxy', 'platformatic.json')
+  const configFile = join(fixturesDir, 'composer-proxy', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {

@@ -120,7 +120,7 @@ test('should be able to add and remove applications using the management API', a
     deepStrictEqual(statusCode, 202)
     deepStrictEqual((await body.json()).map(omitUrls), [
       {
-        config: resolve(fixturesDir, 'dynamic-applications', 'application-1', 'platformatic.json'),
+        config: resolve(fixturesDir, 'dynamic-applications', 'application-1', 'watt.config.mjs'),
         dependencies: [],
         id: 'application-1',
         localUrl: 'http://application-1.plt.local',

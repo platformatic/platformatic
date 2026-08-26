@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should handle a lot of runtime api requests', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -24,7 +24,7 @@ test('should handle a lot of runtime api requests', async t => {
 })
 
 test('should handle application mesh timeouts', async t => {
-  const configFile = join(fixturesDir, 'network-timeout', 'platformatic.json')
+  const configFile = join(fixturesDir, 'network-timeout', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {

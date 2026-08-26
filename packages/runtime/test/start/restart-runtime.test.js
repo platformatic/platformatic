@@ -11,7 +11,7 @@ import { prepareRuntime } from '../multiple-workers/helper.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('can restart the runtime apps', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   let { 'serviceApp:0': url } = await app.start()
 
@@ -40,7 +40,7 @@ test('can restart the runtime apps', async t => {
 
 test('do not restart if application is not started', async t => {
   const logsPath = join(await getTempDir(), `log-${Date.now()}.txt`)
-  const configPath = join(fixturesDir, 'crash-on-bootstrap', 'platformatic.runtime.json')
+  const configPath = join(fixturesDir, 'crash-on-bootstrap', 'watt.config.mjs')
 
   const app = await createRuntime(configPath, null, {
     async transform (config, ...args) {
@@ -82,7 +82,7 @@ test('do not restart if application is not started', async t => {
 })
 
 test('will restart applications in parallel', async t => {
-  const configFile = join(fixturesDir, 'parallel-restart', 'platformatic.json')
+  const configFile = join(fixturesDir, 'parallel-restart', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   let { 'composer:0': url } = await app.start()
 

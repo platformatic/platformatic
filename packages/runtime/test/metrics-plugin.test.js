@@ -7,7 +7,7 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should allow to attach custom metrics to the prometheus server', async t => {
-  const configFile = join(fixturesDir, 'prom-server', 'custom-routes', 'platformatic.json')
+  const configFile = join(fixturesDir, 'prom-server', 'custom-routes', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {

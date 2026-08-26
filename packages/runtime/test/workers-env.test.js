@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { loadConfiguration, schema } from '../index.js'
+import { configurationFileIn } from './helpers.js'
 
 async function writeJSON (path, data) {
   const content = JSON.stringify(data, null, 2)
@@ -34,7 +35,7 @@ function withEnv (vars, fn) {
 
 test('root workers: missing PLT_WORKERS fails fast', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     workers: '{PLT_WORKERS}',
@@ -59,7 +60,7 @@ test('root workers: missing PLT_WORKERS fails fast', async () => {
 
 test('root workers: invalid PLT_WORKERS fails fast', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     workers: '{PLT_WORKERS}',
@@ -83,7 +84,7 @@ test('root workers: invalid PLT_WORKERS fails fast', async () => {
 
 test('root workers: valid PLT_WORKERS coerces to number', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     workers: '{PLT_WORKERS}',
@@ -98,7 +99,7 @@ test('root workers: valid PLT_WORKERS coerces to number', async () => {
 
 test('service workers: missing PLT_WORKERS fails fast with service context', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     services: [
@@ -117,7 +118,7 @@ test('service workers: missing PLT_WORKERS fails fast with service context', asy
 
 test('service workers: valid PLT_WORKERS coerces to number', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
+  const cfgPath = configurationFileIn(dir)
   await writeJSON(cfgPath, {
     $schema: schema.$id,
     services: [

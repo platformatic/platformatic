@@ -12,7 +12,7 @@ const isWindows = process.platform === 'win32'
 // which spawns a subprocess via startWithCommand()
 
 test('should collect health metrics for subprocess application with commands', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'custom-metrics', 'platformatic.json')
+  const configFile = join(fixturesDir, 'custom-metrics', 'watt.config.mjs')
 
   const app = await createRuntime(configFile)
 
@@ -47,7 +47,7 @@ test('should collect health metrics for subprocess application with commands', {
 })
 
 test('subprocess health metrics should have valid ELU values', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'custom-metrics', 'platformatic.json')
+  const configFile = join(fixturesDir, 'custom-metrics', 'watt.config.mjs')
 
   const app = await createRuntime(configFile)
 
@@ -78,7 +78,7 @@ test('subprocess health metrics should have valid ELU values', { skip: isWindows
 })
 
 test('subprocess health metrics heap values should be reasonable', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'custom-metrics', 'platformatic.json')
+  const configFile = join(fixturesDir, 'custom-metrics', 'watt.config.mjs')
 
   const app = await createRuntime(configFile)
 

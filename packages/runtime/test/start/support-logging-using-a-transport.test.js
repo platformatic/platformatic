@@ -11,7 +11,7 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 const temporaryDirectory = tmpdir()
 
 test('supports logging using a transport', async t => {
-  const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'server', 'logger-transport', 'watt.config.mjs')
   const dest = join(temporaryDirectory, `logger-transport-${process.pid}.log`)
 
   t.after(async function () {

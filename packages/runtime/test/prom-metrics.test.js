@@ -5,13 +5,13 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import getPort from 'get-port'
 import { Agent, request } from 'undici'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('Hello', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -149,7 +149,7 @@ The readiness endpoint is available at /ready.`
 
 test('should start a prometheus server on port 9090', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -241,7 +241,7 @@ test('should start a prometheus server on port 9090', async t => {
 
 test('should support custom metrics', async t => {
   const projectDir = join(fixturesDir, 'custom-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -285,7 +285,7 @@ test('should support custom metrics', async t => {
 
 test('should track http cache hits/misses', async t => {
   const projectDir = join(fixturesDir, 'http-cache')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
   const { 'main:0': entryUrl } = await app.start()
 
@@ -789,7 +789,7 @@ test('readiness - should get 404 if readiness is not enabled', async t => {
 
 test('readiness - should expose readiness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -811,7 +811,7 @@ test('readiness - should expose readiness by default and get a success response 
 
 test('readiness - should expose readiness and get a fail response when not all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -833,7 +833,7 @@ test('readiness - should expose readiness and get a fail response when not all a
 
 test('readiness - should expose readiness and get a success response when at least one worker per service is started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': url } = await app.start()
@@ -930,7 +930,7 @@ test('liveness - should get 404 if liveness is not enabled', async t => {
 
 test('liveness - should expose liveness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -952,7 +952,7 @@ test('liveness - should expose liveness by default and get a success response wh
 
 test('liveness - should expose liveness and get a fail response when not all applications are ready, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -974,7 +974,7 @@ test('liveness - should expose liveness and get a fail response when not all app
 
 test('liveness - should expose liveness and get a fail response when not all applications are healthy, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1036,7 +1036,7 @@ test('liveness - should expose liveness and get a fail and success responses wit
 
 test('liveness - should respond to liveness with a custom content from setCustomHealthCheck', async t => {
   const projectDir = join(fixturesDir, 'healthcheck-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1088,7 +1088,7 @@ test('liveness - should respond to liveness with a custom content from setCustom
 
 test('liveness - should respond to liveness with the response from settings when setCustomHealthCheck does not return a response', async t => {
   const projectDir = join(fixturesDir, 'healthcheck-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1140,7 +1140,7 @@ test('liveness - should respond to liveness with the response from settings when
 
 test('readiness - should respond to readiness with a custom content from setCustomReadinessCheck', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1192,7 +1192,7 @@ test('readiness - should respond to readiness with a custom content from setCust
 
 test('readiness - should respond to readiness with the response from settings when setCustomReadinessCheck does not return a response', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1244,7 +1244,7 @@ test('readiness - should respond to readiness with the response from settings wh
 
 test('liveness - should respond to liveness with the custom readiness response from setCustomHealthCheck on liveness failure consequent of readiness check failure', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1277,7 +1277,7 @@ test('liveness - should respond to liveness with the custom readiness response f
 
 test('should not wait for a blocked worker for metrics', async t => {
   const projectDir = join(fixturesDir, 'custom-metrics-blocked')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()

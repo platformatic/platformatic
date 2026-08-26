@@ -8,7 +8,7 @@ import { waitForEvents } from './multiple-workers/helper.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should restart the process if it exceeded maximum threshold', { skip: platform() === 'win32' }, async t => {
-  const configFile = join(fixturesDir, 'health-unhealthy', 'platformatic.json')
+  const configFile = join(fixturesDir, 'health-unhealthy', 'watt.config.mjs')
   const server = await createRuntime(configFile)
 
   t.after(async () => {

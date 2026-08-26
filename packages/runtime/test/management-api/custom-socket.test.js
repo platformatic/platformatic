@@ -9,7 +9,7 @@ import { test } from 'node:test'
 import { Client } from 'undici'
 import { transform } from '../../index.js'
 import { startManagementApi } from '../../lib/management-api.js'
-import { createRuntime, createTemporaryDirectory } from '../helpers.js'
+import { configurationFileIn, createRuntime, createTemporaryDirectory } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -24,7 +24,7 @@ test('should use custom socket path when specified', async t => {
   const customSocketPath = join(tmpdir(), `platformatic-${randomUUID()}.sock`)
 
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile, undefined, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -101,7 +101,7 @@ test('should throw when the custom socket remains in use after retries', async t
 
 test('should use default socket path when managementApi is true', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -121,7 +121,7 @@ test('should use default socket path when managementApi is true', async t => {
 
 test('should use default socket path when managementApi is an object without socket property', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile, undefined, {
     async transform (config, ...args) {
       config = await transform(config, ...args)

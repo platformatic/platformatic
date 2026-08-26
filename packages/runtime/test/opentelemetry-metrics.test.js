@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -33,7 +33,7 @@ async function testOpenTelemetryMetricsForwarding (t, fixture) {
   await new Promise(resolve => otlpServer.listen(0, '127.0.0.1', resolve))
   process.env.PLT_OTLP_PORT = otlpServer.address().port.toString()
 
-  const app = await createRuntime(join(fixturesDir, fixture, 'platformatic.json'))
+  const app = await createRuntime(configurationFileIn(fixturesDir, fixture))
   const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {

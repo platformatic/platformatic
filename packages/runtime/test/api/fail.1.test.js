@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should fail to get application config if application is not started', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   await app.init()
 

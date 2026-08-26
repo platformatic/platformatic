@@ -1,0 +1,30 @@
+// Converted from v3 JSON by scripts/convert-fixtures.mjs
+export default {
+  module: '@platformatic/service',
+  server: {
+    hostname: '127.0.0.1',
+    port: 0,
+    logger: {
+      level: 'info'
+    },
+    pluginTimeout: 0
+  },
+  service: {
+    openapi: true
+  },
+  clients: [
+    {
+      schema: './clients/service-2/schema.json',
+      name: 'service2',
+      type: 'openapi',
+      serviceId: 'service-2'
+    },
+    {
+      schema: './external-service.schema.json',
+      name: 'external-service-1',
+      type: 'openapi',
+      url: 'http://external-dependency-1'
+    }
+  ],
+  watch: false
+}

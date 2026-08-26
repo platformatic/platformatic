@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { loadConfiguration, wrapInRuntimeConfig } from '../index.js'
 import { parseInspectorOptions } from '../lib/config.js'
-import { createRuntime, createTemporaryDirectory } from './helpers.js'
+import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -113,7 +113,7 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
 
 test('rejects root server configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
+  const configFile = configurationFileIn(directory)
 
   await writeFile(
     configFile,
@@ -125,7 +125,7 @@ test('rejects root server configuration', async t => {
 
 test('rejects root entrypoint configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
+  const configFile = configurationFileIn(directory)
 
   await writeFile(
     configFile,
@@ -137,7 +137,7 @@ test('rejects root entrypoint configuration', async t => {
 
 test('does not use application useHttp configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
+  const configFile = configurationFileIn(directory)
 
   await writeFile(
     configFile,
@@ -150,7 +150,7 @@ test('does not use application useHttp configuration', async t => {
 
 test('does not add application listener configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
+  const configFile = configurationFileIn(directory)
 
   await writeFile(configFile, JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }] }))
 
@@ -161,21 +161,21 @@ test('does not add application listener configuration', async t => {
 })
 
 test('correctly loads the watch value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'watt.config.mjs')
   process.env.PLT_WATCH = 'true'
   const runtime = await createRuntime(configFile)
   strictEqual((await runtime.getRuntimeConfig()).watch, true)
 })
 
 test('correctly loads the watch value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'watt.config.mjs')
   process.env.PLT_WATCH = 'false'
   const runtime = await createRuntime(configFile)
   strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
 test('defaults graceful shutdown timeouts', async () => {
-  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults', 'watt.config.mjs')
   const runtime = await createRuntime(configFile)
   const { gracefulShutdown } = await runtime.getRuntimeConfig()
 
@@ -184,7 +184,7 @@ test('defaults graceful shutdown timeouts', async () => {
 })
 
 test('strictEnv should fail loading the configuration when environment variables are missing', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'watt.config.mjs')
   delete process.env.PLT_STRICT_ENV_WATCH
 
   await rejects(
@@ -200,7 +200,7 @@ test('strictEnv should fail loading the configuration when environment variables
 })
 
 test('strictEnv should not fail loading the configuration when all environment variables are set', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'watt.config.mjs')
   process.env.PLT_STRICT_ENV_WATCH = 'false'
 
   t.after(() => {
@@ -212,7 +212,7 @@ test('strictEnv should not fail loading the configuration when all environment v
 })
 
 test('defaults the application name to `main` if there is no package.json', async t => {
-  const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
+  const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'watt.config.mjs')
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
@@ -221,7 +221,7 @@ test('defaults the application name to `main` if there is no package.json', asyn
 })
 
 test('uses the name in package.json', async t => {
-  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
+  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'watt.config.mjs')
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
@@ -230,7 +230,7 @@ test('uses the name in package.json', async t => {
 })
 
 test('uses the name in package.json, removing the scope', async t => {
-  const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
+  const configFile = join(fixturesDir, 'dbApp', 'watt.config.mjs')
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
   strictEqual(runtimeConfig.applications.length, 1)
@@ -238,7 +238,7 @@ test('uses the name in package.json, removing the scope', async t => {
 })
 
 test('defaults name to `main` if package.json exists but has no name', async t => {
-  const configFile = join(fixturesDir, 'dbAppNoName', 'platformatic.db.json')
+  const configFile = join(fixturesDir, 'dbAppNoName', 'watt.config.mjs')
   const config = await databaseLoadConfiguration(configFile)
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
@@ -247,7 +247,7 @@ test('defaults name to `main` if package.json exists but has no name', async t =
 })
 
 test('wrapInRuntimeConfig does not copy server configuration to the runtime', async t => {
-  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'wrapped-runtime', 'watt.config.mjs')
 
   const config = await databaseLoadConfiguration(configFile, null, { validate: false })
   const runtimeConfig = await wrapInRuntimeConfig(config)
@@ -256,7 +256,7 @@ test('wrapInRuntimeConfig does not copy server configuration to the runtime', as
 })
 
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
-  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'wrapped-runtime', 'watt.config.mjs')
 
   const config = await databaseLoadConfiguration(configFile, null, { validate: false })
   const runtimeConfig = await wrapInRuntimeConfig(config)
@@ -304,7 +304,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
 })
 
 test('supports configurable envfile location', async t => {
-  const configFile = join(fixturesDir, 'env-config', 'platformatic.json')
+  const configFile = join(fixturesDir, 'env-config', 'watt.config.mjs')
   const runtime = await createRuntime(configFile)
 
   t.after(async () => {
@@ -329,7 +329,7 @@ test('supports configurable envfile location', async t => {
 })
 
 test('supports default envfile location', async t => {
-  const configFile = join(fixturesDir, 'env-service', 'platformatic.json')
+  const configFile = join(fixturesDir, 'env-service', 'watt.config.mjs')
   const runtime = await createRuntime(configFile)
 
   t.after(async () => {
@@ -354,7 +354,7 @@ test('supports default envfile location', async t => {
 })
 
 test('supports configurable arguments', async t => {
-  const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
+  const configFile = join(fixturesDir, 'custom-argv', 'watt.config.mjs')
   const runtime = await createRuntime(configFile)
 
   t.after(async () => {
@@ -389,7 +389,7 @@ test('supports configurable arguments', async t => {
 })
 
 test('should manage application config patch', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'watt.config.mjs')
   const runtime = await createRuntime(configFile)
 
   runtime.setApplicationConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])

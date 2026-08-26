@@ -35,6 +35,6 @@ test('fails when starting a runtime with a port already allocated', async t => {
     delete process.env.PORT
   })
 
-  const configFile = join(fixturesDir, 'configs', 'service-with-env-port', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'service-with-env-port', 'watt.config.mjs')
   await rejects(() => createRuntime(configFile, null, { start: true }), { code: 'EADDRINUSE' })
 })

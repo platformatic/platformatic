@@ -3,13 +3,13 @@ import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { version } from '../../lib/version.js'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get applications topology', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -51,7 +51,7 @@ test('should get applications topology', async t => {
         id: 'service-1',
         type: 'service',
         status: 'started',
-        config: resolve(projectDir, 'services/service-1', 'platformatic.json'),
+        config: configurationFileIn(projectDir, 'services/service-1'),
         path: resolve(projectDir, 'services/service-1'),
         version,
         localUrl: 'http://service-1.plt.local',
@@ -62,7 +62,7 @@ test('should get applications topology', async t => {
         id: 'service-2',
         type: 'service',
         status: 'started',
-        config: resolve(projectDir, 'services/service-2', 'platformatic.json'),
+        config: configurationFileIn(projectDir, 'services/service-2'),
         path: resolve(projectDir, 'services/service-2'),
         version,
         localUrl: 'http://service-2.plt.local',
@@ -73,7 +73,7 @@ test('should get applications topology', async t => {
         id: 'service-db',
         type: 'db',
         status: 'started',
-        config: resolve(projectDir, 'services/service-db', 'platformatic.db.json'),
+        config: configurationFileIn(projectDir, 'services/service-db'),
         path: resolve(projectDir, 'services/service-db'),
         version,
         localUrl: 'http://service-db.plt.local',

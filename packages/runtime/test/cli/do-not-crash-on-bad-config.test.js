@@ -14,12 +14,12 @@ try {
 test('do not crash on bad config', async t => {
   const tmpDir = await mkdtemp(join(base, 'do-not-crash-'))
   t.after(() => safeRemove(tmpDir))
-  const configFileSrc = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
-  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'watt.config.mjs')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
   const cjsPluginFilePath = join(appDst, 'serviceAppWithLogger', 'plugin.js')
-  const applicationConfigFilePath = join(appDst, 'serviceAppWithLogger', 'platformatic.service.json')
+  const applicationConfigFilePath = join(appDst, 'serviceAppWithLogger', 'watt.config.mjs')
 
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 

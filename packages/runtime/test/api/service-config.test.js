@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application config', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -37,7 +37,7 @@ test('should get application config', async t => {
 })
 
 test('do not force enable metrics without the management api', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -68,7 +68,7 @@ test('do not force enable metrics without the management api', async t => {
 })
 
 test('do not force enable metrics if they are set to false', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api-without-metrics', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api-without-metrics', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -112,7 +112,7 @@ test('do not force enable metrics if they are set to false', async t => {
 })
 
 test('set applicationId in metrics as label in all applications', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-metrics', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-metrics', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()

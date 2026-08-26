@@ -9,7 +9,7 @@ import { createRuntime, readLogs } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should allow application to self-manage uncaught exceptions', async t => {
-  const configFile = join(fixturesDir, 'unhandled-mode', 'default', 'platformatic.json')
+  const configFile = join(fixturesDir, 'unhandled-mode', 'default', 'watt.config.js')
   const server = await createRuntime(configFile)
   const { 'composer:0': url } = await server.start()
 
@@ -33,7 +33,7 @@ test('should allow application to self-manage uncaught exceptions', async t => {
 })
 
 test('should allow application to self-manage unhandled rejections', async t => {
-  const configFile = join(fixturesDir, 'unhandled-mode', 'default', 'platformatic.json')
+  const configFile = join(fixturesDir, 'unhandled-mode', 'default', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   const { 'composer:0': url } = await server.start()
@@ -59,7 +59,7 @@ test('should allow application to self-manage unhandled rejections', async t => 
 
 test('should invoke tracked uncaughtException listeners when exitOnUnhandledErrors is true', async t => {
   const context = {}
-  const configFile = join(fixturesDir, 'unhandled-mode', 'handled', 'platformatic.json')
+  const configFile = join(fixturesDir, 'unhandled-mode', 'handled', 'watt.config.js')
   const server = await createRuntime(configFile, null, context)
   const { 'composer:0': url } = await server.start()
 
@@ -92,7 +92,7 @@ test('should invoke tracked uncaughtException listeners when exitOnUnhandledErro
 
 test('should invoke tracked unhandledRejection listeners when exitOnUnhandledErrors is true', async t => {
   const context = {}
-  const configFile = join(fixturesDir, 'unhandled-mode', 'handled', 'platformatic.json')
+  const configFile = join(fixturesDir, 'unhandled-mode', 'handled', 'watt.config.js')
   const server = await createRuntime(configFile, null, context)
   const { 'composer:0': url } = await server.start()
 
@@ -125,7 +125,7 @@ test('should invoke tracked unhandledRejection listeners when exitOnUnhandledErr
 })
 
 test('should exit with the PROCESS_UNHANDLED_ERROR code on uncaught exceptions raised after initialization', async t => {
-  const configFile = join(fixturesDir, 'unhandled-mode', 'handled', 'platformatic.json')
+  const configFile = join(fixturesDir, 'unhandled-mode', 'handled', 'watt.config.js')
   const server = await createRuntime(configFile)
   const { 'composer:0': url } = await server.start()
 

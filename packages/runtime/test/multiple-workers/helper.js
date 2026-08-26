@@ -5,6 +5,7 @@ import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { join, resolve } from 'node:path'
 import { request } from 'undici'
+import { configurationFileIn } from '../helpers.js'
 
 export const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 export const tmpDir = resolve(import.meta.dirname, '../../tmp')
@@ -128,7 +129,7 @@ export async function prepareRuntime (t, name, dependencies) {
       continue
     }
 
-    const configPath = resolve(root, entry.name, 'platformatic.json')
+    const configPath = configurationFileIn(root, entry.name)
     if (!existsSync(configPath)) {
       continue
     }

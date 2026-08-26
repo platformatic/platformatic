@@ -4,13 +4,13 @@ import { platform } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import WebSocket from 'ws'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get runtime metrics via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -67,7 +67,7 @@ test('should get runtime metrics via management api', async t => {
 
 test('should only receive an error message if the metrics are disabled', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()

@@ -9,7 +9,7 @@ import { getTempDir, readLogs } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('logs errors during db migrations', async t => {
-  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
+  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'watt.config.mjs')
   const config = await loadConfiguration(configFile)
   const root = await getTempDir()
 

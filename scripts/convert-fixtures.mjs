@@ -206,7 +206,14 @@ function moduleFromSchema (config, file) {
     return moduleFromFilename(file) ?? moduleFromCapabilityBlock(config)
   }
 
-  const match = url.match(/schemas\.platformatic\.dev\/(?:@platformatic\/)?([a-z-]+)\//)
+  /*
+    Two spellings, because the schema host moved. The current one puts the capability first --
+    schemas.platformatic.dev/@platformatic/runtime/2.0.0.json -- and the older one puts it last,
+    after the version: platformatic.dev/schemas/v2.0.0/runtime.
+  */
+  const match =
+    url.match(/schemas\.platformatic\.dev\/(?:@platformatic\/)?([a-z-]+)\//) ??
+    url.match(/platformatic\.dev\/schemas\/v[\d.]+\/([a-z-]+)$/)
 
   if (!match) {
     return moduleFromFilename(file) ?? moduleFromCapabilityBlock(config)

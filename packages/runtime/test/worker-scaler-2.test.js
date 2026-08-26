@@ -8,7 +8,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { transform } from '../lib/config.js'
 import { DynamicWorkersScaler } from '../lib/worker-scaler.js'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -50,7 +50,7 @@ test('should remove pending initial updates by application ID', async t => {
 
 for (const [name, directory] of Object.entries(configurations)) {
   test(`should not scale an applications when the app maxWorkers is reached (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', runtimeVariants[name], 'platformatic.json')
+    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', runtimeVariants[name])
 
     const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
     const logsPath = join(tmpDir, 'log.txt')
@@ -115,7 +115,7 @@ for (const [name, directory] of Object.entries(configurations)) {
   })
 
   test(`should scale a standalone application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, directory, 'platformatic.json')
+    const configFile = configurationFileIn(fixturesDir, directory)
 
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
@@ -164,7 +164,7 @@ for (const [name, directory] of Object.entries(configurations)) {
   })
 
   test(`should scale applications to their min workers at start (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', runtimeVariants[name], 'platformatic.json')
+    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', runtimeVariants[name])
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -197,7 +197,7 @@ for (const [name, directory] of Object.entries(configurations)) {
   })
 
   test(`should not scale an application is there is not enough memory (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', runtimeVariants[name], 'platformatic.json')
+    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', runtimeVariants[name])
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)

@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { startPath } from '../helper.js'
 
 test('handles startup errors', async t => {
-  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'service-throws-on-start', 'platformatic.json')
+  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'service-throws-on-start', 'watt.config.mjs')
   const child = execa(process.execPath, [startPath, config], {
     encoding: 'utf8',
     env: { PLT_USE_PLAIN_CREATE: 'true' }

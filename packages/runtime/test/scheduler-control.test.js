@@ -10,7 +10,7 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function createRuntimeWithScheduler (t, scheduler, { managementApi = false } = {}) {
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
+  const configFile = join(fixturesDir, 'scheduler', 'watt.config.mjs')
 
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {

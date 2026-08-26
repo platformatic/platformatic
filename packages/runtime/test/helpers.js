@@ -53,6 +53,26 @@ export async function moveToTmpdir (teardown) {
   return dir
 }
 
+/*
+  The configuration file a directory actually holds. Tests used to name it, which was safe while
+  every project spelled it the same way; a converted project spells it watt.config.js or
+  watt.config.mjs depending on what its nearest package.json says about modules, so asking the
+  directory is the only spelling that keeps working.
+*/
+export function configurationFileIn (directory) {
+  for (const candidate of ['watt.config.js', 'watt.config.mjs', 'watt.config.ts', 'watt.config.mts']) {
+    const path = join(directory, candidate)
+
+    if (existsSync(path)) {
+      return path
+    }
+  }
+
+  // A directory with no v4 configuration is still a legitimate answer for the v3 fixtures that
+  // remain -- the caller gets the name it would have used.
+  return configurationFileIn(directory)
+}
+
 export async function updateFile (path, update) {
   const contents = await readFile(path, 'utf-8')
   await writeFile(path, await update(contents), 'utf-8')

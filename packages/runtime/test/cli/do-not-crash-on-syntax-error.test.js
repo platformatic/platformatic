@@ -35,12 +35,12 @@ async function waitForMessageAndWatch (child, expected, watchMessage = 'start wa
 test('do not crash on syntax error', async t => {
   const tmpDir = await mkdtemp(join(base, 'do-no-crash-'))
   t.after(() => safeRemove(tmpDir))
-  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch', 'platformatic.json')
-  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch', 'watt.config.mjs')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'watt.config.mjs')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
   const cjsPluginFilePath = join(appDst, 'serviceAppWithLogger', 'plugin.js')
-  const applicationConfigFilePath = join(appDst, 'serviceAppWithLogger', 'platformatic.service.json')
+  const applicationConfigFilePath = join(appDst, 'serviceAppWithLogger', 'watt.config.mjs')
 
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 

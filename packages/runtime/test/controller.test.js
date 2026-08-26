@@ -6,12 +6,13 @@ import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Controller } from '../lib/worker/controller.js'
+import { configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('errors when starting an already started application (no logging)', async t => {
   const appPath = join(fixturesDir, 'service-app-no-logging')
-  const configFile = join(appPath, 'platformatic.json')
+  const configFile = configurationFileIn(appPath)
   const config = {
     id: 'serviceApp',
     config: configFile,
@@ -31,7 +32,7 @@ test('errors when starting an already started application (no logging)', async t
 
 test('errors when stopping an already stopped application', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  const configFile = configurationFileIn(appPath)
   const config = {
     id: 'serviceApp',
     config: configFile,
@@ -67,7 +68,7 @@ test('logs errors if an env variable is missing', async t => {
 
 test('logs errors during startup', async t => {
   const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
-  const configFile = join(appPath, 'platformatic.service.json')
+  const configFile = configurationFileIn(appPath)
   const config = {
     id: 'serviceAppThrowsOnStart',
     config: configFile,
@@ -91,7 +92,7 @@ test('logs errors during startup', async t => {
 
 test('returns application statuses', async t => {
   const appPath = join(fixturesDir, 'service-app-no-logging')
-  const configFile = join(appPath, 'platformatic.json')
+  const configFile = configurationFileIn(appPath)
   const config = {
     id: 'serviceApp',
     config: configFile,
@@ -125,7 +126,7 @@ test('returns application statuses', async t => {
 
 test('can update status of a capability with updateStatus support', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  const configFile = configurationFileIn(appPath)
 
   const config = {
     id: 'serviceApp',
@@ -146,7 +147,7 @@ test('can update status of a capability with updateStatus support', async t => {
 
 test('can update status of a capability without updateStatus support', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  const configFile = configurationFileIn(appPath)
 
   const config = {
     id: 'serviceApp',

@@ -5,7 +5,7 @@ import { request } from 'undici'
 import { start } from '../helper.js'
 
 test('autostart', async t => {
-  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'monorepo', 'platformatic.json')
+  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'monorepo', 'watt.config.mjs')
   const { child, url } = await start(config, { applicationId: 'serviceApp', env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(async () => {
     child.kill('SIGKILL')

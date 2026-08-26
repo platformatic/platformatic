@@ -17,7 +17,7 @@ function cleanExtensionGlobals () {
 test('extensions opt into ordered build hooks', async t => {
   cleanExtensionGlobals()
 
-  const configFile = join(fixturesDir, 'extensions', 'build', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'build', 'watt.config.js')
   const app = await createRuntime(configFile, undefined, { build: true })
   await app.init()
 
@@ -50,7 +50,7 @@ test('extensions opt into ordered build hooks', async t => {
 test('extensions remain disabled during builds unless explicitly enabled', async t => {
   cleanExtensionGlobals()
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile, undefined, { build: true })
   await app.init()
 
@@ -61,7 +61,7 @@ test('extensions remain disabled during builds unless explicitly enabled', async
 })
 
 test('an extension cannot invoke the underlying build more than once', async t => {
-  const configFile = join(fixturesDir, 'extensions', 'build-twice', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'build-twice', 'watt.config.js')
   const app = await createRuntime(configFile, undefined, { build: true })
   await app.init()
 
@@ -74,7 +74,7 @@ test('an extension cannot invoke the underlying build more than once', async t =
 })
 
 test('build hook failures abort the remaining lifecycle', async t => {
-  const configFile = join(fixturesDir, 'extensions', 'build-failures', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'build-failures', 'watt.config.js')
   const context = {
     applicationId: 'a',
     applicationPath: join(fixturesDir, 'extensions', 'services', 'a')
@@ -132,7 +132,7 @@ test('extensions receive the runtime, the ITC facade, the logger, the options an
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile)
   const { 'a:0': url } = await app.start()
 
@@ -157,7 +157,7 @@ test('workers can invoke custom commands registered by extensions, also after a 
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile)
   const { 'a:0': url } = await app.start()
 
@@ -186,7 +186,7 @@ test('extensions can notify workers', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile)
   const { 'a:0': url } = await app.start()
 
@@ -217,7 +217,7 @@ test('extensions start, stop and close in registration and reverse order', async
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -246,7 +246,7 @@ test('close-only extensions keep their current behavior', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'close-only', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'close-only', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -266,7 +266,7 @@ test('extension stop runs before the applications are stopped', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'lifecycle', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'lifecycle', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -288,7 +288,7 @@ test('dynamic application started by an extension is not started twice', async t
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'dynamic', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'dynamic', 'watt.config.js')
   const app = await createRuntime(configFile)
   const entryUrl = await app.start()
 
@@ -310,7 +310,7 @@ test('configured application started by an extension is not started twice', asyn
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'start-configured', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'start-configured', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -327,7 +327,7 @@ test('start-hook rejection performs partial cleanup', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'start-fail', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'start-fail', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   await rejects(
@@ -355,7 +355,7 @@ test('application startup rejection performs extension cleanup', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'app-fail', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'app-fail', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   await rejects(() => app.start())
@@ -375,7 +375,7 @@ test('repeated stop and close are idempotent for extension hooks', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -401,7 +401,7 @@ test('extensions can export the setup function as a named setup export', async t
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'named-setup', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'named-setup', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {
@@ -429,7 +429,7 @@ test('extensions can expose the setup function as a faux ESM default export', as
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'faux-esm-default', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'faux-esm-default', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {
@@ -457,7 +457,7 @@ test('extensions can expose the setup function as a faux ESM setup export', asyn
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'faux-esm-setup', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'faux-esm-setup', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {
@@ -485,7 +485,7 @@ test('the default export takes precedence over the named setup export', async t 
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'both-exports', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'both-exports', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -500,7 +500,7 @@ test('extensions can be written in TypeScript', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'ts', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'ts', 'watt.config.js')
   const app = await createRuntime(configFile)
   const { 'a:0': url } = await app.start()
 
@@ -518,7 +518,7 @@ test('extensions subscribed to health metrics receive them even without health c
   globalThis.__pltExtensionHealthEvents = []
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'health', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -550,7 +550,7 @@ test('extensions receive the profiles captured by the continuous profiler, also 
 
   // The fixture extension enables continuous profiling on every worker via
   // the application:worker:started event, as shown in the documentation
-  const configFile = join(fixturesDir, 'extensions', 'profiles', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'profiles', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -616,7 +616,7 @@ test('extensions can read and update the shared context, including newly started
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile)
   const { 'a:0': entryUrl } = await app.start()
 
@@ -713,7 +713,7 @@ test('extensions cannot register reserved ITC commands', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'reserved', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'reserved', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {
@@ -735,7 +735,7 @@ test('extensions cannot register the same ITC command twice', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'duplicate', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'duplicate', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {
@@ -756,7 +756,7 @@ test('a missing extension file fails the startup', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'missing', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'missing', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {
@@ -776,7 +776,7 @@ test('an extension without a default exported function fails the startup', async
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'invalid', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'invalid', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {
@@ -796,7 +796,7 @@ test('an extension exporting an object without any setup function fails the star
   cleanExtensionGlobals()
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'extensions', 'invalid-object', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'invalid-object', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(() => {

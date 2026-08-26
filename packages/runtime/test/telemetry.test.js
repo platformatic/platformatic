@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createRuntime, createTemporaryDirectory } from './helpers.js'
+import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function readSpans (path) {
@@ -16,7 +16,7 @@ async function readSpans (path) {
 }
 
 test('propagate the traceId correctly to runtime applications', async t => {
-  const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
+  const configFile = configurationFileIn(fixturesDir, 'telemetry')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -42,7 +42,7 @@ test('propagate the traceId correctly to runtime applications', async t => {
 })
 
 test('attach x-plt-telemetry-id header', async t => {
-  const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
+  const configFile = configurationFileIn(fixturesDir, 'telemetry')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -93,7 +93,7 @@ test('disabled telemetry', async t => {
 test('propagate telemetry over messaging to pure ITC applications', async t => {
   const spansDir = await createTemporaryDirectory(t, 'telemetry-messaging')
   const spansPath = join(spansDir, 'spans.ndjson')
-  const configFile = join(fixturesDir, 'telemetry-messaging', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'telemetry-messaging', 'watt.config.mjs')
   const originalSpansPath = process.env.PLT_TELEMETRY_SPANS_PATH
   process.env.PLT_TELEMETRY_SPANS_PATH = spansPath
 
@@ -155,7 +155,7 @@ test('propagate telemetry over messaging to pure ITC applications', async t => {
 test('allow custom telemetry metadata for ITC messaging', async t => {
   const spansDir = await createTemporaryDirectory(t, 'telemetry-messaging-manual')
   const spansPath = join(spansDir, 'spans.ndjson')
-  const configFile = join(fixturesDir, 'telemetry-messaging', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'telemetry-messaging', 'watt.config.mjs')
   const originalSpansPath = process.env.PLT_TELEMETRY_SPANS_PATH
   process.env.PLT_TELEMETRY_SPANS_PATH = spansPath
 
@@ -209,7 +209,7 @@ test('allow custom telemetry metadata for ITC messaging', async t => {
 test('mark messaging spans as errors when pure ITC handlers fail', async t => {
   const spansDir = await createTemporaryDirectory(t, 'telemetry-messaging-error')
   const spansPath = join(spansDir, 'spans.ndjson')
-  const configFile = join(fixturesDir, 'telemetry-messaging', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'telemetry-messaging', 'watt.config.mjs')
   const originalSpansPath = process.env.PLT_TELEMETRY_SPANS_PATH
   process.env.PLT_TELEMETRY_SPANS_PATH = spansPath
 

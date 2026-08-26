@@ -2,12 +2,12 @@ import { deepStrictEqual, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function startApplication (t, fixture, applicationId) {
-  const configFile = join(fixturesDir, fixture, 'platformatic.json')
+  const configFile = configurationFileIn(fixturesDir, fixture)
   const app = await createRuntime(configFile)
 
   t.after(async () => {

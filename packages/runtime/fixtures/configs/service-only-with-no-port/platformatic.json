@@ -1,8 +1,0 @@
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.64.0.json",
-  "plugins": {
-    "paths": [
-      "../../monorepo/serviceApp/plugin-with-dummy-port.js"
-    ]
-  }
-}

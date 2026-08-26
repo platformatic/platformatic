@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -21,7 +21,7 @@ function findPrometheusLinesForMetric (metric, output) {
 
 test('should get runtime metrics in a json format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -129,7 +129,7 @@ test('should get runtime metrics in a json format', async t => {
 
 test('should track application restarts in runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -164,7 +164,7 @@ test('should track application restarts in runtime metrics', async t => {
 
 test('should get runtime metrics in a text format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'service-1:0': url } = await app.start()
@@ -256,7 +256,7 @@ test('should get runtime metrics in a text format', async t => {
 
 test('should report process-level metrics for applications running as separate processes', async t => {
   const projectDir = join(fixturesDir, 'metrics-command')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -301,7 +301,7 @@ function parseLabels (line) {
 
 test('should get runtime metrics in a text format with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -321,7 +321,7 @@ test('should get runtime metrics in a text format with custom labels', async t =
 
 test('should get json runtime metrics with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -341,7 +341,7 @@ test('should get json runtime metrics with custom labels', async t => {
 
 test('should get formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -368,7 +368,7 @@ test('should get formatted runtime metrics', async t => {
 
 test('should get formatted runtime metrics multiple times', async t => {
   const projectDir = join(fixturesDir, 'metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'service-1:0': appUrl } = await app.start()
@@ -410,7 +410,7 @@ test('should get formatted runtime metrics multiple times', async t => {
 
 test('should get metrics after reloading one of the applications', async t => {
   const projectDir = join(fixturesDir, 'metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -450,7 +450,7 @@ test('should get metrics after reloading one of the applications', async t => {
 
 test('should get runtime metrics in a json format without a application call', async t => {
   const projectDir = join(fixturesDir, 'metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'service-1:0': url } = await app.start()
@@ -559,7 +559,7 @@ test('should get runtime metrics in a json format without a application call', a
 
 test('should get metrics when an application registered http stats globals without fields tracking', async t => {
   const projectDir = join(fixturesDir, 'metrics-legacy-globals')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()

@@ -6,13 +6,13 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import WebSocket from 'ws'
-import { createRuntime, getTempDir } from '../helpers.js'
+import { configurationFileIn, createRuntime, getTempDir } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get runtime logs via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.init()
@@ -53,7 +53,7 @@ test('should get runtime logs via management api', async t => {
 
 test('should support custom use transport', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configPath = join(projectDir, 'platformatic.json')
+  const configPath = configurationFileIn(projectDir)
   const configFile = await readFile(configPath, 'utf8')
   const config = JSON.parse(configFile)
 
@@ -68,7 +68,7 @@ test('should support custom use transport', async t => {
     }
   }
 
-  const configWithLoggerPath = join(projectDir, 'platformatic-custom-logger.json')
+  const configWithLoggerPath = configurationFileIn(projectDir)
   await writeFile(configWithLoggerPath, JSON.stringify(config, null, 2))
 
   const app = await createRuntime(configWithLoggerPath)

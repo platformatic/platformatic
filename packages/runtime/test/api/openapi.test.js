@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get a application openapi schema', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -40,7 +40,7 @@ test('should get a application openapi schema', async t => {
 })
 
 test('should fail to get a application openapi schema if application does not expose it', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-openapi', 'platformatic.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-openapi', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()

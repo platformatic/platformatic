@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { transform } from '../lib/config.js'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -35,7 +35,7 @@ async function startWithMetrics (t, variant, extraEnv = {}) {
     process.env[key] = String(value)
   }
 
-  const configFile = join(fixturesDir, 'extensions', variant, 'platformatic.json')
+  const configFile = configurationFileIn(fixturesDir, 'extensions', variant)
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -108,7 +108,7 @@ test('extension readiness timeout fails closed on /ready', async t => {
   const metricsPort = await getPort()
   process.env.METRICS_PORT = String(metricsPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'health-api', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api', 'watt.config.js')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -212,7 +212,7 @@ test('extension routes work on a separate health probes server', async t => {
   process.env.METRICS_PORT = String(metricsPort)
   process.env.HEALTH_PORT = String(healthPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'health-api-separate', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api-separate', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -248,7 +248,7 @@ test('duplicate readiness check names fail startup with a coded error', async t 
   resetHealthApiState()
   process.env.PORT = '0'
 
-  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-check', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-check', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -270,7 +270,7 @@ test('duplicate readiness check names across extensions fail startup', async t =
   resetHealthApiState()
   process.env.PORT = '0'
 
-  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-check-multi', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-check-multi', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -291,7 +291,7 @@ test('duplicate health routes fail startup with a coded error', async t => {
   resetHealthApiState()
   process.env.PORT = '0'
 
-  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-route', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-duplicate-route', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -340,7 +340,7 @@ test('probe behavior is unchanged without extension health registrations', async
   process.env.PORT = '0'
   const metricsPort = await getPort()
 
-  const configFile = join(fixturesDir, 'extensions', 'runtime', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -381,7 +381,7 @@ test('registering health routes fails when health probes are disabled', async t 
   const metricsPort = await getPort()
   process.env.METRICS_PORT = String(metricsPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'health-api', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api', 'watt.config.js')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -409,7 +409,7 @@ test('partial start failure cleans up extension health contributions', async t =
   const metricsPort = await getPort()
   process.env.METRICS_PORT = String(metricsPort)
 
-  const configFile = join(fixturesDir, 'extensions', 'health-api', 'platformatic.json')
+  const configFile = join(fixturesDir, 'extensions', 'health-api', 'watt.config.js')
   const app = await createRuntime(configFile)
   await app.init()
 

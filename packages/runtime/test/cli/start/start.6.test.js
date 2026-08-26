@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { startPath } from '../helper.js'
 
 test('does not start if node inspector flags are provided', async t => {
-  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'monorepo', 'platformatic.json')
+  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'monorepo', 'watt.config.mjs')
   const child = execa(process.execPath, [startPath, config], {
     env: { NODE_OPTIONS: '--inspect', env: { PLT_USE_PLAIN_CREATE: 'true' } },
     encoding: 'utf8'
