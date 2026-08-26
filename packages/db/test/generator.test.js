@@ -113,6 +113,7 @@ test('have plt-env.d.ts', async t => {
   const ENVIRONMENT_TEMPLATE = `
 import { type FastifyInstance } from 'fastify'
 import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin, Entities } from '@platformatic/db'
+import { join } from 'node:path'
 
 declare module 'fastify' {
   interface FastifyInstance {

@@ -3,7 +3,6 @@ import assert from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { create } from '../../index.js'
-import { configurationFileIn } from '../../../runtime/test/helpers.js'
 
 test('get application info via capability api', async t => {
   const projectRoot = join(import.meta.dirname, '..', 'fixtures', 'sqlite-basic')

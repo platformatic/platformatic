@@ -2,7 +2,7 @@ import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { cp, readFile, symlink } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { resolve, join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
 import split from 'split2'
@@ -11,7 +11,6 @@ import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { generateTypes } from '../../lib/commands/types.js'
 import { safeKill, startPath } from './helper.js'
 import { createCapturingLogger, createTestContext, withWorkingDirectory } from './test-utilities.js'
-import { configurationFileIn } from '../../../runtime/test/helpers.js'
 
 let counter = 0
 

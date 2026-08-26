@@ -8,7 +8,6 @@ import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
 import { safeKill, start } from './helper.js'
 import { createCapturingLogger, createTestContext } from './test-utilities.js'
-import { configurationFileIn } from '../../../runtime/test/helpers.js'
 
 test('migrate and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')

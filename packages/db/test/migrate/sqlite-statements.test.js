@@ -8,7 +8,6 @@ import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { splitSQLiteStatements } from '../../lib/split-sqlite-statements.js'
 import { createCapturingLogger, createTestContext } from '../cli/test-utilities.js'
 import { createDirectory } from '@platformatic/foundation'
-import { configurationFileIn } from '../../../runtime/test/helpers.js'
 
 test('splitSQLiteStatements', () => {
   // Plain statements

@@ -22,9 +22,8 @@ import { fileURLToPath } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
-import { updateConfigFile } from '../../runtime/test/helpers.js'
+import { updateConfigFile, configurationFileIn } from '../../runtime/test/helpers.js'
 import { BaseCapability } from '../lib/capability.js'
-import { configurationFileIn } from '../../runtime/test/helpers.js'
 
 export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
 

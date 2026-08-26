@@ -14,7 +14,6 @@ import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici
 import { WebSocket } from 'ws'
 import { create as createRuntime } from '../../runtime/index.js'
 import {
-import { configurationFileIn } from '../../runtime/test/helpers.js'
   createApplication,
   createFromConfig,
   createGatewayInRuntime,
@@ -459,8 +458,8 @@ test('should fail with actionable error when a gateway application is missing fr
 
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, 'plt-gateway-missing-app-'))
   const gatewayDir = resolve(tmpDir, 'gateway')
-  const gatewayConfigPath = configurationFileIn(gatewayDir, 'platformatic.gateway.json')
-  const runtimeConfigPath = configurationFileIn(tmpDir, 'platformatic.runtime.json')
+  const gatewayConfigPath = resolve(gatewayDir, 'platformatic.gateway.json')
+  const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
 
   t.after(async () => {
     await safeRemove(tmpDir)
