@@ -20,12 +20,4 @@ export default {
       './routes'
     ]
   },
-  clients: [
-    {
-      schema: 'client/client.openapi.json',
-      name: 'client',
-      type: 'openapi',
-      serviceId: 'movies'
-    }
-  ]
 }

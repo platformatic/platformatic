@@ -49,7 +49,7 @@ async function getApplicationUrl (previousUrl) {
 }
 
 test('applications:add - should add application to an existing app', { skip: isWindows }, async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/platformatic.json')
+  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -70,7 +70,7 @@ test('applications:add - should add application to an existing app', { skip: isW
   )
 
   // Start the application
-  const startProcess = wattpm('start', '-c', '1-only/platformatic.json', rootDir)
+  const startProcess = wattpm('start', '-c', '1-only/watt.config.mjs', rootDir)
   let { url } = await waitForStart(startProcess, 'composer')
 
   // Verify that the routes work properly
@@ -105,7 +105,7 @@ test('applications:add - should add application to an existing app', { skip: isW
 })
 
 test('applications:add - should add application to an existing app and save changes to the application config', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/platformatic.json')
+  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -126,19 +126,18 @@ test('applications:add - should add application to an existing app and save chan
   )
 
   // Start the application
-  const startProcess = wattpm('start', '-c', '1-only/platformatic.json', rootDir)
+  const startProcess = wattpm('start', '-c', '1-only/watt.config.mjs', rootDir)
   await waitForStart(startProcess, 'composer')
 
   // Now add the application
   const addProcess = await wattpm('applications:add', '-s', 'add.json')
   ok(addProcess.stdout.includes('Successfully added 1 application to the application.'))
 
-  const config = await loadConfigurationFile(resolve(rootDir, '1-only/platformatic.json'))
+  const config = await loadConfigurationFile(resolve(rootDir, '1-only/watt.config.mjs'))
   deepStrictEqual(config.applications, [
     {
       id: 'composer',
       path: '../services/composer',
-      config: 'platformatic.json',
       server: {
         hostname: '127.0.0.1'
       }
@@ -151,7 +150,7 @@ test('applications:add - should add application to an existing app and save chan
 })
 
 test('applications:add - supports both JSON file and paths', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/platformatic.json')
+  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -174,19 +173,18 @@ test('applications:add - supports both JSON file and paths', async t => {
   )
 
   // Start the application
-  const startProcess = wattpm('start', '-c', '1-only/platformatic.json', rootDir)
+  const startProcess = wattpm('start', '-c', '1-only/watt.config.mjs', rootDir)
   await waitForStart(startProcess, 'composer')
 
   // Now add the application
   const addProcess = await wattpm('applications:add', '-s', 'add.json', '../services/application-3')
   ok(addProcess.stdout.includes('Successfully added 2 applications to the application.'))
 
-  const config = await loadConfigurationFile(resolve(rootDir, '1-only/platformatic.json'))
+  const config = await loadConfigurationFile(resolve(rootDir, '1-only/watt.config.mjs'))
   deepStrictEqual(config.applications, [
     {
       id: 'composer',
       path: '../services/composer',
-      config: 'platformatic.json',
       server: {
         hostname: '127.0.0.1'
       }
@@ -204,7 +202,7 @@ test('applications:add - supports both JSON file and paths', async t => {
 })
 
 test('applications:add - fails if a path is not valid', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/platformatic.json')
+  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -214,7 +212,7 @@ test('applications:add - fails if a path is not valid', async t => {
   changeWorkingDirectory(t, rootDir)
 
   // Start the application
-  const startProcess = wattpm('start', '-c', '1-only/platformatic.json', rootDir)
+  const startProcess = wattpm('start', '-c', '1-only/watt.config.mjs', rootDir)
   await waitForStart(startProcess, 'composer')
 
   // Now add the application
@@ -225,7 +223,7 @@ test('applications:add - fails if a path is not valid', async t => {
 })
 
 test('applications:add - fails if a path contains invalid JSON', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/platformatic.json')
+  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, '1-only/watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -238,7 +236,7 @@ test('applications:add - fails if a path contains invalid JSON', async t => {
   await writeFile(resolve(rootDir, ADD_FILE), 'whatever', 'utf-8')
 
   // Start the application
-  const startProcess = wattpm('start', '-c', '1-only/platformatic.json', rootDir)
+  const startProcess = wattpm('start', '-c', '1-only/watt.config.mjs', rootDir)
   await waitForStart(startProcess, 'composer')
 
   // Now add the application
@@ -256,7 +254,7 @@ test('applications:add - should complain when a runtime is not found', async t =
 })
 
 test('applications:remove - should remove applications from an existing app', { skip: isWindows }, async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, 'all/platformatic.json')
+  const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, 'all/watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -266,7 +264,7 @@ test('applications:remove - should remove applications from an existing app', { 
   changeWorkingDirectory(t, rootDir)
 
   // Start the application
-  const startProcess = wattpm('start', '-c', 'all/platformatic.json', rootDir)
+  const startProcess = wattpm('start', '-c', 'all/watt.config.mjs', rootDir)
   let { url } = await waitForStart(startProcess, 'composer')
 
   // Verify that the routes work properly
@@ -313,7 +311,7 @@ test('applications:remove - should remove applications from an existing app', { 
 
 for (const section of ['applications', 'services', 'web']) {
   test(`applications:remove - should remove application from an existing app and save changes to the application config (${section})`, async t => {
-    const configFile = `via-${section}/platformatic.json`
+    const configFile = `via-${section}/watt.config.mjs`
     const { root: rootDir } = await prepareRuntime(t, 'dynamic', false, configFile)
 
     t.after(() => {

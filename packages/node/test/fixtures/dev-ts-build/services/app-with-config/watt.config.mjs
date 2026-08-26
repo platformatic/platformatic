@@ -12,7 +12,6 @@ export default {
         encapsulate: false
       },
       './routes'
-    ],
-    typescript: true
+    ]
   }
 }

@@ -12,19 +12,5 @@ export default {
   service: {
     openapi: true
   },
-  clients: [
-    {
-      schema: './clients/service-2/schema.json',
-      name: 'service2',
-      type: 'openapi',
-      serviceId: 'service-2'
-    },
-    {
-      schema: './external-service.schema.json',
-      name: 'external-service-1',
-      type: 'openapi',
-      url: 'http://external-dependency-1'
-    }
-  ],
   watch: false
 }

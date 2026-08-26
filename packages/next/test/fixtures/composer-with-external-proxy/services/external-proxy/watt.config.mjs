@@ -5,7 +5,6 @@ export default {
   plugins: {
     paths: [
       './proxy.js'
-    ],
-    typescript: false
+    ]
   }
 }

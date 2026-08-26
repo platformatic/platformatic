@@ -468,14 +468,20 @@ export function convert (config, { file } = {}) {
     }
 
     /*
-      plugins.typescript went with the ts-compiler in ae2fab511: no capability schema declares it
-      and every one of them refuses unknown properties. The v3 schema rejects it too -- it simply
-      was not validated on the path these configurations took -- so dropping it is repairing a
-      configuration that was already wrong, not translating one that was right.
+      Keys that outlived the features they configured. plugins.typescript went with the ts-compiler
+      in ae2fab511 and clients went with client support in 0b6b448c6; no capability schema declares
+      either, and every one of them refuses unknown properties. The v3 schema rejects them too --
+      they were simply never validated on the path these configurations took -- so dropping them
+      repairs a configuration that was already wrong rather than translating one that was right.
     */
     if (converted.plugins && 'typescript' in converted.plugins) {
       delete converted.plugins.typescript
       notes.push('dropped plugins.typescript, which no capability schema has declared since ae2fab511')
+    }
+
+    if ('clients' in converted) {
+      delete converted.clients
+      notes.push('dropped clients, which @platformatic/service stopped supporting in 0b6b448c6')
     }
 
     if (needsExplicitPort(module, converted)) {

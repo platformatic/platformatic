@@ -28,20 +28,5 @@ export default {
       }
     ]
   },
-  clients: [
-    {
-      schema: './clients/service-1/schema.json',
-      serviceId: 'service-1',
-      name: 'service1',
-      type: 'openapi',
-      url: process.env.PLT_SERVICE1_URL
-    },
-    {
-      path: './clients/service-2',
-      name: 'service2',
-      type: 'openapi',
-      url: process.env.PLT_SERVICE2_URL
-    }
-  ],
   watch: false
 }

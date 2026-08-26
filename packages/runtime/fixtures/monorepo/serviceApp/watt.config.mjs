@@ -13,13 +13,6 @@ export default {
       'plugin.js'
     ]
   },
-  clients: [
-    {
-      serviceId: 'with-logger',
-      path: './with-logger',
-      url: process.env.PLT_WITH_LOGGER_URL
-    }
-  ],
   watch: {
     enabled: true
   }
