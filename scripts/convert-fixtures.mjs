@@ -182,6 +182,19 @@ function moduleFromFilename (file) {
   return match ? (SUFFIX_MODULES[match[1]] ?? null) : null
 }
 
+/*
+  A configuration that predates $schema still says what it is: a db block belongs to db, a gateway
+  block to gateway. The capability name is the block name, so this reads the same discriminator by
+  another route rather than guessing.
+*/
+function moduleFromCapabilityBlock (config) {
+  const blocks = [...servingDeclarations.keys()]
+    .map(module => [module, module.replace('@platformatic/', '')])
+    .filter(([, name]) => config[name] && typeof config[name] === 'object')
+
+  return blocks.length === 1 ? blocks[0][0] : null
+}
+
 function moduleFromSchema (config, file) {
   if (typeof config.module === 'string') {
     return config.module
@@ -190,13 +203,13 @@ function moduleFromSchema (config, file) {
   const url = config.$schema
 
   if (typeof url !== 'string') {
-    return moduleFromFilename(file)
+    return moduleFromFilename(file) ?? moduleFromCapabilityBlock(config)
   }
 
   const match = url.match(/schemas\.platformatic\.dev\/(?:@platformatic\/)?([a-z-]+)\//)
 
   if (!match) {
-    return moduleFromFilename(file)
+    return moduleFromFilename(file) ?? moduleFromCapabilityBlock(config)
   }
 
   const name = match[1]
@@ -270,8 +283,21 @@ export function needsExplicitPort (module, config) {
   for a released version and checking what it becomes, so converting one destroys the only thing it
   was for -- and the conversion would be to a format that version never had.
 */
+const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-dependencies/']
+
 export function isLegacyByDesign (file) {
-  return /[\\/](fixtures[\\/])?versions[\\/]/.test(file)
+  if (/[\\/](fixtures[\\/])?versions[\\/]/.test(file)) {
+    return true
+  }
+
+  /*
+    Input to wattpm import, whose whole job is to write configuration files. Its tests assert what
+    the command produces, so a fixture converted ahead of the command would be testing the
+    conversion rather than the import. These convert when import learns to emit the v4 form.
+  */
+  const normalized = file.replace(/\\/g, '/')
+
+  return IMPORT_FIXTURES.some(fixture => normalized.includes(fixture))
 }
 
 export function convert (config, { file } = {}) {
@@ -299,18 +325,22 @@ export function convert (config, { file } = {}) {
       converted.applications = applications
     }
 
-    if (converted.entrypoint) {
-      // No fixture in this corpus has one, but a converter that silently dropped it would be wrong
-      // the first time one appeared.
-      refusals.push('declares an entrypoint, which v4 removes: the port belongs to the application')
-      delete converted.entrypoint
+    if (converted.server) {
+      /*
+        Dropped rather than moved into an application. This looks like losing a listener, and it is
+        not: the shipped upgrade chain already deletes a runtime-level server on the way to 4.0.0
+        (runtime/lib/versions/v4.0.0.js), so the block has no effect on the runtime that reads it
+        today. Moving a port that nothing honours into an application would change behaviour rather
+        than preserve it.
+      */
+      notes.push('dropped the root server block, which the 4.0.0 upgrade already removes')
+      delete converted.server
     }
 
-    if (converted.server) {
-      // v4 has no runtime-level listener. Which application should own the port is a judgement
-      // about what the fixture is testing, so it is reported rather than guessed.
-      refusals.push('declares a root server block, which v4 removes: move the port into the application that served it')
-      delete converted.server
+    if (converted.entrypoint) {
+      // Removed by the same upgrade step, and for the same reason.
+      notes.push('dropped entrypoint, which the 4.0.0 upgrade already removes')
+      delete converted.entrypoint
     }
 
     if (converted.runtime) {

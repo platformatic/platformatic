@@ -74,25 +74,20 @@ test('an entry config path is dropped and reported, because v4 discovers by dire
   match(result.notes[0], /entry 'api' referenced platformatic\.service\.json/)
 })
 
-test('a root server block is refused rather than guessed at', () => {
-  // v4 has no runtime-level listener, and which application should own the port is a judgement
-  // about what the fixture is testing.
+test('a root server block and an entrypoint are dropped, because the upgrade chain drops them', () => {
+  // Not a judgement call about which application should own the port: the shipped upgrade to
+  // 4.0.0 already deletes both on the way in, so neither reaches the runtime that reads them.
+  // Moving a port nothing honours into an application would change behaviour, not preserve it.
   const result = convert({
     $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
-    server: { port: 3042 }
-  })
-
-  strictEqual(result.refusals.length, 1)
-  match(result.refusals[0], /root server block/)
-})
-
-test('an entrypoint is refused, even though no fixture in the corpus has one', () => {
-  const result = convert({
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+    server: { port: 3042 },
     entrypoint: 'api'
   })
 
-  match(result.refusals[0], /entrypoint/)
+  strictEqual(result.refusals.length, 0)
+  ok(!result.source.includes('server'))
+  ok(!result.source.includes('entrypoint'))
+  strictEqual(result.notes.length, 2)
 })
 
 test('a configuration whose capability cannot be determined is refused', () => {
