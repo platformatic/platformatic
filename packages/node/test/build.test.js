@@ -12,16 +12,14 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should inject Platformatic code by default when building', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
-      const json = JSON.parse(contents)
-      json.application = { commands: { build: 'node build.js' } }
-
-      return JSON.stringify(json, null, 2)
+    await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
+      contents.application = { commands: { build: 'node build.js' } }
     })
 
     return writeFile(
@@ -41,12 +39,9 @@ test('should inject Platformatic code by default when building', async t => {
 
 test('should not inject Platformatic code when building if asked to', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
-      const json = JSON.parse(contents)
-      json.application = { commands: { build: 'node build.js' } }
-      json.node = { disablePlatformaticInBuild: true }
-
-      return JSON.stringify(json, null, 2)
+    await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
+      contents.application = { commands: { build: 'node build.js' } }
+      contents.node = { disablePlatformaticInBuild: true }
     })
 
     return writeFile(

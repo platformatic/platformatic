@@ -11,16 +11,13 @@ export default {
     ],
     mappings: {
       serviceAppWithLogger: {
-        id: 'with-logger',
-        config: 'platformatic.service.json'
+        id: 'with-logger'
       },
       serviceAppWithMultiplePlugins: {
-        id: 'multi-plugin-service',
-        config: 'platformatic.service.json'
+        id: 'multi-plugin-service'
       },
       dbApp: {
-        id: 'db-app',
-        config: 'platformatic.db.json'
+        id: 'db-app'
       }
     }
   },

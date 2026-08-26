@@ -14,6 +14,7 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -23,10 +24,8 @@ test('can properly show the headers in the output', async t => {
     root: resolve(import.meta.dirname, 'fixtures/server-side-standalone'),
     port: 0,
     additionalSetup: async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const parsed = JSON.parse(contents)
-        parsed.logger.level = 'info'
-        return JSON.stringify(parsed, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.logger.level = 'info'
       })
 
       await updateFile(resolve(root, 'services/frontend/src/app/page.js'), contents => {

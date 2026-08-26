@@ -4,8 +4,7 @@ export default {
     path: './services',
     mappings: {
       a: {
-        id: 'a',
-        config: 'platformatic.service.json'
+        id: 'a'
       }
     }
   },

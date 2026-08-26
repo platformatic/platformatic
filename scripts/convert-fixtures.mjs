@@ -415,10 +415,16 @@ export function convert (config, { file } = {}) {
       refusals.push('carries a wrapped runtime block, which v4 flattens to the top level')
     }
 
-    for (const entry of converted.applications ?? []) {
+    /*
+      Both places an entry can name its configuration: the applications list and the autoload
+      mappings. v4 discovers a per-application file by directory, and config in an entry means an
+      inline definition -- so a mapping that kept its filename becomes an application configured
+      twice, which the loader refuses by name.
+    */
+    const entries = [...(converted.applications ?? []), ...Object.values(converted.autoload?.mappings ?? {})]
+
+    for (const entry of entries) {
       if (typeof entry.config === 'string') {
-        // v4 discovers a per-application file by directory rather than by a path in the entry, so
-        // the referenced file becomes that directory's own watt.config.js.
         notes.push(`entry '${entry.id ?? '?'}' referenced ${entry.config}; convert that file in place`)
         delete entry.config
       }
@@ -435,12 +441,23 @@ export function convert (config, { file } = {}) {
       moment two of these fixtures run at once.
     */
     /*
+      composer became gateway, and the capability's options block is named for the capability. A
+      configuration whose module was rewritten but whose block was not fails validation against a
+      schema that has never heard of composer.
+    */
+    if ((module === '@platformatic/gateway' || module === '@platformatic/composer') && converted.composer) {
+      converted.gateway = { ...converted.composer, ...converted.gateway }
+      delete converted.composer
+      notes.push('the composer block became the gateway block')
+    }
+
+    /*
       The gateway's own list of applications was spelled services when the capability was called
       composer, and renaming the block does not rename what is inside it. v4's gateway schema has
       applications and refuses the old key outright, so a configuration converted without this
       fails validation with a message about a property the author never wrote.
     */
-    if (module === '@platformatic/gateway' && converted.gateway?.services) {
+    if ((module === '@platformatic/gateway' || module === '@platformatic/composer') && converted.gateway?.services) {
       converted.gateway = {
         ...converted.gateway,
         applications: [...(converted.gateway.applications ?? []), ...converted.gateway.services]

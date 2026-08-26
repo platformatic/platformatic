@@ -6,9 +6,9 @@ import {
   getLogsFromFile,
   prepareRuntimeWithApplications,
   setFixturesDir,
-  updateFile,
   verifyJSONViaHTTP
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -21,10 +21,8 @@ test('should inject request via IPC even if a server is started', async t => {
     '/frontend',
     undefined,
     async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const json = JSON.parse(contents)
-        json.logger.level = 'trace'
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.logger.level = 'trace'
       })
 
       await writeFile(
@@ -62,16 +60,12 @@ test('should inject request via the HTTP port if asked to', async t => {
     '/frontend',
     undefined,
     async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const json = JSON.parse(contents)
-        json.logger.level = 'trace'
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.logger.level = 'trace'
       })
 
-      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-        const json = JSON.parse(contents)
-        json.server = { logger: { level: 'fatal' } }
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        contents.server = { logger: { level: 'fatal' } }
       })
 
       await writeFile(

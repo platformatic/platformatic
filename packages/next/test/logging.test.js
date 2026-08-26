@@ -11,6 +11,7 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -21,10 +22,8 @@ test('can properly show the logs the output', async t => {
     production: true,
     port: 0,
     additionalSetup: async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const json = JSON.parse(contents)
-        json.workers = 3
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.workers = 3
       })
 
       await copyCommonApplication(root, 'composer')

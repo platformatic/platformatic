@@ -1,5 +1,5 @@
 {
-  "name": "multi-zones-gateway",
+  "name": "gateway",
   "private": true,
   "dependencies": {
     "@platformatic/gateway": ">=3.0.0"

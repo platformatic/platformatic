@@ -7,8 +7,7 @@ export default {
     ],
     mappings: {
       serviceAppWithMultiplePlugins: {
-        id: 'multi-plugin-service',
-        config: 'platformatic.service.json'
+        id: 'multi-plugin-service'
       }
     }
   },

@@ -11,8 +11,7 @@ export default {
     ],
     mappings: {
       serviceApp: {
-        id: 'with-logger',
-        config: 'platformatic.service.json'
+        id: 'with-logger'
       }
     }
   },
