@@ -12,7 +12,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 const isWindows = process.platform === 'win32'
 
 test('should continously monitor workers health', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'configs', 'health-healthy.json')
+  const configFile = join(fixturesDir, 'configs', 'health-healthy', 'platformatic.json')
   const server = await createRuntime(configFile)
 
   await server.start()
@@ -135,7 +135,7 @@ test(
 )
 
 test('should continously monitor workers health', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'configs', 'health-grace-period.json')
+  const configFile = join(fixturesDir, 'configs', 'health-grace-period', 'platformatic.json')
   const server = await createRuntime(configFile)
 
   await server.start()

@@ -161,21 +161,21 @@ test('does not add application listener configuration', async t => {
 })
 
 test('correctly loads the watch value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'platformatic.json')
   process.env.PLT_WATCH = 'true'
   const runtime = await createRuntime(configFile)
   strictEqual((await runtime.getRuntimeConfig()).watch, true)
 })
 
 test('correctly loads the watch value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'platformatic.json')
   process.env.PLT_WATCH = 'false'
   const runtime = await createRuntime(configFile)
   strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
 test('defaults graceful shutdown timeouts', async () => {
-  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults.json')
+  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults', 'platformatic.json')
   const runtime = await createRuntime(configFile)
   const { gracefulShutdown } = await runtime.getRuntimeConfig()
 
@@ -184,7 +184,7 @@ test('defaults graceful shutdown timeouts', async () => {
 })
 
 test('strictEnv should fail loading the configuration when environment variables are missing', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'platformatic.json')
   delete process.env.PLT_STRICT_ENV_WATCH
 
   await rejects(
@@ -200,7 +200,7 @@ test('strictEnv should fail loading the configuration when environment variables
 })
 
 test('strictEnv should not fail loading the configuration when all environment variables are set', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'platformatic.json')
   process.env.PLT_STRICT_ENV_WATCH = 'false'
 
   t.after(() => {
@@ -389,7 +389,7 @@ test('supports configurable arguments', async t => {
 })
 
 test('should manage application config patch', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'platformatic.json')
   const runtime = await createRuntime(configFile)
 
   runtime.setApplicationConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])

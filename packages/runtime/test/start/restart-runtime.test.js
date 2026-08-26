@@ -11,7 +11,7 @@ import { prepareRuntime } from '../multiple-workers/helper.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('can restart the runtime apps', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
   let { 'serviceApp:0': url } = await app.start()
 

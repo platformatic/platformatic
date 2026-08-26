@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get applications topology', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const monorepo = resolve(configFile, '../../monorepo/')
   const app = await createRuntime(configFile)
 
@@ -76,7 +76,7 @@ test('should get applications topology', async t => {
 })
 
 test('should get applications topology (gateway)', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'platformatic.json')
   const monorepo = resolve(configFile, '../../monorepo/')
   const app = await createRuntime(configFile)
 

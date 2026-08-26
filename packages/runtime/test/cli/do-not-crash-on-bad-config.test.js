@@ -14,8 +14,8 @@ try {
 test('do not crash on bad config', async t => {
   const tmpDir = await mkdtemp(join(base, 'do-not-crash-'))
   t.after(() => safeRemove(tmpDir))
-  const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
-  const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'platformatic.json')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
   const cjsPluginFilePath = join(appDst, 'serviceAppWithLogger', 'plugin.js')

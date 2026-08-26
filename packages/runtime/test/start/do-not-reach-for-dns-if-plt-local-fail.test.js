@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('do not reach for dns if plt.local fail to resolve', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
   const { 'serviceApp:0': url } = await app.start()
 

@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('gateway', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   t.after(async () => {

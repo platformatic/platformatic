@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application env when started', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -22,7 +22,7 @@ test('should get application env when started', async t => {
 })
 
 test('getApplicationEnv throws ApplicationNotStarted when workers exist but are not started', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.init()
 
@@ -40,7 +40,7 @@ test('getApplicationEnv throws ApplicationNotStarted when workers exist but are 
 })
 
 test('getApplicationEnv throws WorkerNotFound after the application is stopped', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.start()
 
@@ -60,7 +60,7 @@ test('getApplicationEnv throws WorkerNotFound after the application is stopped',
 })
 
 test('getApplicationEnv throws ApplicationNotFound for unknown applications', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.init()
 

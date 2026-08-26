@@ -400,13 +400,11 @@ test('should proxy all applications if none are defined', async t => {
     [
       {
         id: 'first',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       },
       {
         id: 'second',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       },
       {
         id: 'third',
@@ -415,13 +413,15 @@ test('should proxy all applications if none are defined', async t => {
     ]
   )
 
-  const { 'composer:0': address } = await runtime.start()
+  const started = await runtime.start()
+  const { 'composer:0': address } = started
 
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
       path: '/first/hello'
     })
+    process._rawDebug('PROBE started=%s status=%s', JSON.stringify(started), statusCode)
     assert.equal(statusCode, 200)
 
     const body = await rawBody.json()
@@ -554,13 +554,11 @@ test('should fix the path using the referer only if asked to', async t => {
     [
       {
         id: 'first',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       },
       {
         id: 'astro',
-        path: resolve(import.meta.dirname, './proxy/fixtures/astro'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/astro')
       },
       {
         id: 'third',
@@ -629,8 +627,7 @@ test('should rewrite Location headers for proxied applications', async t => {
     [
       {
         id: 'main',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       }
     ]
   )
@@ -1704,8 +1701,7 @@ test('should properly handle basePath root for generic applications', async t =>
     [
       {
         id: 'node',
-        path: resolve(import.meta.dirname, './proxy/fixtures/node'),
-        config: 'platformatic.with-absolute-url.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/node-with-absolute-url')
       }
     ],
     null,

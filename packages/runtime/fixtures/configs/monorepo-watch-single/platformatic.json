@@ -1,0 +1,15 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.35.0/runtime",
+  "watch": true,
+  "services": [
+    {
+      "id": "service1",
+      "path": "../../monorepo-watch/service1",
+      "config": "platformatic.service.json"
+    }
+  ],
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  }
+}

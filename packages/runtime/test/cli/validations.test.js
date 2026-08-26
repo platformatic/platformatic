@@ -10,13 +10,13 @@ test('missing config', async () => {
 })
 
 test('allows a config with no applications', async () => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'no-services.config.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'no-services-config', 'platformatic.json')
 
   await execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 })
 
 test('no applications or autoload specified by config', async () => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'no-sources.config.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'no-sources-config', 'platformatic.json')
 
   await assert.rejects(execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } }))
 })
@@ -25,7 +25,7 @@ test('print validation errors', async () => {
   let error
 
   try {
-    const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'missing-property.config.json')
+    const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'missing-property-config', 'platformatic.json')
 
     await execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   } catch (err) {

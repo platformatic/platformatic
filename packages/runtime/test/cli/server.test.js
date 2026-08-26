@@ -8,7 +8,7 @@ import { request } from 'undici'
 import { start, startPath } from './helper.js'
 
 test('autostart', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'platformatic.json')
   const { child, url } = await start(config, { applicationId: 'serviceApp', env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(async () => {
     child.kill('SIGKILL')
@@ -21,7 +21,7 @@ test('autostart', async t => {
 })
 
 test('handles startup errors', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'service-throws-on-start', 'platformatic.json')
   const child = execa(process.execPath, [startPath, config], {
     encoding: 'utf8',
     env: { PLT_USE_PLAIN_CREATE: 'true' }
@@ -54,7 +54,7 @@ test('handles startup errors', async t => {
 })
 
 test('does not start if node inspector flags are provided', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'platformatic.json')
   const child = execa(process.execPath, [startPath, config], {
     env: { NODE_OPTIONS: '--inspect', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
@@ -87,7 +87,7 @@ test('does not start if node inspector flags are provided', async t => {
 })
 
 test('does start if node inspector flag is provided by VS Code', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'platformatic.json')
   const child = execa(process.execPath, [startPath, config], {
     env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
@@ -119,7 +119,7 @@ test('does start if node inspector flag is provided by VS Code', async t => {
 })
 
 test('starts the inspector', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'platformatic.json')
   const child = execa(process.execPath, [startPath, config, '--inspect'], {
     encoding: 'utf8',
     env: { PLT_USE_PLAIN_CREATE: 'true' }

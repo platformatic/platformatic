@@ -1,10 +1,10 @@
 // Converted from v3 JSON by scripts/convert-fixtures.mjs
 export default {
-  "module": "@platformatic/vite",
-  "application": {
-    "basePath": "/frontend"
+  module: '@platformatic/vite',
+  application: {
+    basePath: '/frontend'
   },
-  "server": {
-    "port": 0
+  server: {
+    port: 0
   }
 }

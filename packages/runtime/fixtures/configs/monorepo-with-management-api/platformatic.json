@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "watch": false,
+  "autoload": {
+    "path": "../../monorepo",
+    "exclude": [
+      "docs",
+      "composerApp"
+    ],
+    "mappings": {
+      "serviceAppWithLogger": {
+        "id": "with-logger",
+        "config": "platformatic.service.json"
+      },
+      "serviceAppWithMultiplePlugins": {
+        "id": "multi-plugin-service",
+        "config": "platformatic.service.json"
+      }
+    }
+  },
+  "managementApi": {},
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  }
+}

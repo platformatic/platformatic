@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('does not wait forever if worker exits during api operation', async t => {
-  const configFile = join(fixturesDir, 'configs', 'service-throws-on-start.json')
+  const configFile = join(fixturesDir, 'configs', 'service-throws-on-start', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   t.after(async () => {

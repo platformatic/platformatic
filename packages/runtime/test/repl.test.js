@@ -6,7 +6,7 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should start a REPL session for an application', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -49,7 +49,7 @@ test('should start a REPL session for an application', async t => {
 })
 
 test('should have access to app and platformatic in REPL context', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -88,7 +88,7 @@ test('should have access to app and platformatic in REPL context', async t => {
 })
 
 test('should throw error when starting REPL on non-existent service', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -108,7 +108,7 @@ test('should throw error when starting REPL on non-existent service', async t =>
 })
 
 test('REPL should handle .exit command', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   await app.start()

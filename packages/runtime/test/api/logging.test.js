@@ -7,7 +7,7 @@ import { createRuntime, readLogs } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('logs stdio from the application thread', async t => {
-  const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
+  const configFile = join(fixturesDir, 'configs', 'service-with-stdio', 'platformatic.json')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 
@@ -197,7 +197,7 @@ test('logs stdio from the application thread', async t => {
 })
 
 test('logs with caller info', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'platformatic.json')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 

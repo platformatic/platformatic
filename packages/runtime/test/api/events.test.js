@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('emits an exhaustive list of events', async t => {
-  const configFile = join(fixturesDir, 'configs', 'service-events.json')
+  const configFile = join(fixturesDir, 'configs', 'service-events', 'platformatic.json')
   const app = await createRuntime(configFile)
   await app.init()
 

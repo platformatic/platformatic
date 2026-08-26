@@ -285,6 +285,52 @@ export function needsExplicitPort (module, config) {
 */
 const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-dependencies/']
 
+/*
+  A configuration is recognized by what it holds, not only by what it is called. Forty-five of the
+  runtime's own fixtures are named for the test that passes them -- service-with-env-port.json,
+  monorepo.json -- and a filename rule skips every one of them while they are as much v3
+  configuration as the ones that happen to start with "platformatic".
+
+  These are the names that are certainly not configurations, and a $schema pointing at the schema
+  host or a module naming a capability is what identifies the rest.
+*/
+const NEVER_A_CONFIGURATION = new Set(['package.json', 'package-lock.json', 'tsconfig.json', 'jsconfig.json', 'schema.json'])
+
+export function isConfigurationFile (file) {
+  const name = basename(file)
+
+  if (V3_NAME.test(name)) {
+    return true
+  }
+
+  if (!name.endsWith('.json') || NEVER_A_CONFIGURATION.has(name)) {
+    return false
+  }
+
+  let parsed
+
+  try {
+    parsed = JSON.parse(readFileSync(file, 'utf-8'))
+  } catch {
+    return false
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return false
+  }
+
+  /*
+    Two hosts, because the corpus spans the move: the current schemas.platformatic.dev and the
+    older platformatic.dev/schemas/<version>/<name> that fixtures written years ago still carry.
+    Matching only the current one skipped every one of the older ones.
+  */
+  return (
+    (typeof parsed.$schema === 'string' &&
+      (parsed.$schema.includes('schemas.platformatic.dev') || /platformatic\.dev\/schemas\//.test(parsed.$schema))) ||
+    (typeof parsed.module === 'string' && parsed.module.startsWith('@platformatic/'))
+  )
+}
+
 export function isLegacyByDesign (file) {
   if (/[\\/](fixtures[\\/])?versions[\\/]/.test(file)) {
     return true
@@ -443,7 +489,7 @@ function collect (target) {
 
     if (entry.isDirectory()) {
       found.push(...collect(path))
-    } else if (V3_NAME.test(entry.name) && !isLegacyByDesign(path)) {
+    } else if (isConfigurationFile(path) && !isLegacyByDesign(path)) {
       found.push(path)
     }
   }

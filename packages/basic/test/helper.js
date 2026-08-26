@@ -642,7 +642,7 @@ export async function createRuntime (
   fixturePath,
   pauseAfterCreation = false,
   production = false,
-  configFile = 'platformatic.runtime.json',
+  configFile = undefined,
   additionalSetup = null
 ) {
   const preparationOptions = t.constructor.name === 'TestContext'
@@ -664,7 +664,7 @@ export async function createProductionRuntime (
   t,
   fixturePath,
   pauseAfterCreation = false,
-  configFile = 'platformatic.runtime.json',
+  configFile = undefined,
   additionalSetup = null
 ) {
   return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile, additionalSetup)

@@ -7,7 +7,7 @@ import { createRuntime, readLogs } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should kill the thread when it does not exit in time', async t => {
-  const configFile = join(fixturesDir, 'configs', 'no-entrypoint-single-service.json')
+  const configFile = join(fixturesDir, 'configs', 'no-entrypoint-single-service', 'platformatic.json')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 

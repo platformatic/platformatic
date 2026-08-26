@@ -11,7 +11,7 @@ import { createRuntime, createTemporaryDirectory, updateConfigFile } from '../he
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('can start with a custom environment', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const app = await createRuntime(configFile, null, { env: { A_CUSTOM_ENV_VAR: 'foobar' }, ignoreProcessEnv: true })
 
   t.after(async () => {

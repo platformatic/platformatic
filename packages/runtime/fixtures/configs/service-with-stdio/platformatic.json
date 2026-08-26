@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "managementApi": {},
+  "logger": {
+    "level": "trace"
+  },
+  "services": [
+    {
+      "id": "stdio",
+      "path": "../../stdio",
+      "config": "platformatic.service.json"
+    }
+  ],
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  },
+  "watch": false
+}

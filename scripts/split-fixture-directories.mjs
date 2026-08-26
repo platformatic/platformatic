@@ -22,7 +22,9 @@ import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(import.meta.dirname, '..')
-const V3_NAME = /^(watt|platformatic)([.-][a-z0-9.-]+)?\.json$/
+// Shared with the converter rather than restated: a rule for what counts as a configuration that
+// the two scripts disagreed about would split one set of files and convert another.
+import { isConfigurationFile } from './convert-fixtures.mjs'
 
 /*
   Fixtures whose harness reads the directory layout: multiple-workers' helper walks every
@@ -56,7 +58,7 @@ export function rewriteRelativePaths (value, oldDirectory, key) {
       return value
     }
 
-    if (value.startsWith('/') || value.startsWith('..')) {
+    if (value.startsWith('/')) {
       return value
     }
 
@@ -65,6 +67,12 @@ export function rewriteRelativePaths (value, oldDirectory, key) {
       return value
     }
 
+    /*
+      A path that already points upward moves too. The runtime's own fixtures are full of
+      ../monorepo, and a rewriter that left those alone because they start with '..' would move the
+      configuration one directory down and leave every one of them pointing at a sibling of the
+      directory it came from.
+    */
     return `../${value.replace(/^\.\//, '')}`
   }
 
@@ -83,11 +91,12 @@ export function rewriteRelativePaths (value, oldDirectory, key) {
 
 function isRuntimeConfiguration (config, file) {
   if (typeof config.$schema === 'string') {
-    return /\/(runtime|wattpm)\//.test(config.$schema)
+    // The older host puts the name last -- platformatic.dev/schemas/v2.0.0/runtime -- so the
+    // segment is not always followed by a slash.
+    return /\/(runtime|wattpm)(\/|$)/.test(config.$schema)
   }
 
-  return /^(watt|platformatic)(\.runtime)?\.json$/.test(basename(file)) &&
-    Boolean(config.applications ?? config.services ?? config.web ?? config.autoload)
+  return Boolean(config.applications ?? config.services ?? config.web ?? config.autoload)
 }
 
 /*
@@ -104,7 +113,7 @@ function isRuntimeConfiguration (config, file) {
   about what the test means.
 */
 export function classifyDirectory (directory) {
-  const configurations = readdirSync(directory).filter(entry => V3_NAME.test(entry))
+  const configurations = readdirSync(directory).filter(entry => isConfigurationFile(join(directory, entry)))
 
   if (configurations.length < 2) {
     return { kind: 'single', configurations }
@@ -126,16 +135,6 @@ export function classifyDirectory (directory) {
     applications named after the variants. The split is not available here at all: the fixture has
     to move its applications, or name them explicitly, before its configurations can move.
   */
-  /*
-    Some fixtures are driven by tests that operate on files relative to the runtime root — passing
-    a sibling data file by name, or writing one there. Moving the configuration moves that root, so
-    every such path breaks, and the fixes are not mechanical: they depend on what each test means
-    by "the project". Those are listed here rather than guessed at.
-  */
-  if (ROOT_RELATIVE_FIXTURES.some(fixture => resolve(ROOT, fixture) === resolve(directory))) {
-    return { kind: 'root-relative-tests', configurations }
-  }
-
   if (LAYOUT_IS_MEANINGFUL.some(fixture => resolve(ROOT, fixture) === resolve(directory))) {
     return { kind: 'layout-is-meaningful', configurations }
   }

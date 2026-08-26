@@ -17,8 +17,8 @@ try {
 test('should not hot reload files with `--hot-reload false', async t => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => safeRemove(tmpDir))
-  const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
-  const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'platformatic.json')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
   const cjsPluginFilePath = join(appDst, 'serviceApp', 'plugin.js')

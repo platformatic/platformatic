@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should update shared context via runtime API', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   const { 'composerApp:0': url } = await app.start()
@@ -79,7 +79,7 @@ test('should update shared context via runtime API', async t => {
 })
 
 test('should update shared context from one of the applications', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'platformatic.json')
   const app = await createRuntime(configFile)
 
   const { 'composerApp:0': url } = await app.start()

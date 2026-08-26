@@ -9,7 +9,7 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('can start applications programmatically from object', async t => {
   const root = await getTempDir()
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'platformatic.json')
   const config = await loadConfiguration(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
