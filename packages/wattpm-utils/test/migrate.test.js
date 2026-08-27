@@ -824,3 +824,64 @@ test('migrate - strips entrypointPort, which no upgrade chain removes', async t 
   ok(emitted.includes("basePath: '/api'"), emitted)
   ok(migrateProcess.stdout.includes('entrypointPort'), migrateProcess.stdout)
 })
+
+test('migrate - reports the source references it will not rewrite', async t => {
+  const root = await project(
+    t,
+    {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json'
+      }
+    },
+    // The package name is not a legal v4 id, so migrate renames it -- and out here that name is a
+    // mesh hostname and a metrics label, which is why the old spelling is looked for.
+    { name: 'my_app', type: 'module' }
+  )
+
+  await writeFile(
+    join(root, 'index.js'),
+    [
+      "import { readFile } from 'node:fs/promises'",
+      "const config = JSON.parse(await readFile('platformatic.json', 'utf-8'))",
+      'const root = process.env.PLT_ROOT',
+      "const url = 'http://my_app.plt.local'",
+      "if (process.env.NODE_ENV === 'production') { console.log(config, root, url) }"
+    ].join('\n'),
+    'utf-8'
+  )
+
+  // Not this project's code, and a scan that reported on it would bury the four things it is for.
+  await mkdir(join(root, 'node_modules/pkg'), { recursive: true })
+  await writeFile(join(root, 'node_modules/pkg/index.js'), 'process.env.PLT_ROOT\n', 'utf-8')
+
+  await linkCapability(root, 'node')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const { stdout } = migrateProcess
+
+  ok(stdout.includes('index.js:2'), stdout)
+  ok(stdout.includes('index.js:3') && stdout.includes('PLT_ROOT'), stdout)
+  ok(stdout.includes('index.js:4') && stdout.includes('my_app'), stdout)
+  ok(stdout.includes('index.js:5') && stdout.includes('NODE_ENV'), stdout)
+  ok(!stdout.includes('node_modules'), stdout)
+})
+
+test('migrate - pins the id of a package that has no name', async t => {
+  const root = await project(t, {
+    'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }
+  })
+
+  // project() writes a name, and this case is the absence of one.
+  await writeFile(join(root, 'package.json'), JSON.stringify({ type: 'commonjs' }), 'utf-8')
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v3 fell back to `main` for a nameless package and v4 falls back to the directory name, so
+    without the pin the application would answer at a different hostname after migration -- a
+    temporary directory's name, here, which is the clearest possible version of the problem.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("id: 'main'"), emitted)
+})

@@ -9,7 +9,7 @@ import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /*
@@ -419,30 +419,42 @@ function serializeString (value) {
   hostname, the injected variable, the metrics label and how siblings name it in `dependencies`.
 */
 export async function deriveLegacyId (root) {
-  let name = 'main'
+  let packageName
 
   try {
-    const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))
-
-    if (packageJson?.name) {
-      name = stripScope(packageJson.name)
-    }
+    packageName = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))?.name
   } catch {
-    // A missing or unreadable package.json is what the fallback is for.
+    // A missing or unreadable package.json is what the fallbacks below are for.
   }
 
-  const legal = legalId(name) || 'main'
+  const v3 = packageName ? stripScope(packageName) : 'main'
+  // v4's fallback is the directory name where v3's was `main`, so a nameless package is addressable
+  // at a different hostname under each version.
+  const v4 = packageName ? stripScope(packageName) : basename(root)
+  const id = legalId(v3) || 'main'
 
-  return { id: legal, renamedFrom: legal === name ? null : name }
+  /*
+    Pinned wherever the id v3 used differs from what v4 derives raw -- the same comparison autoload
+    makes, and for the same reason: v4 refuses its raw derivation outright when it is not a legal
+    label, so `my_app` compares equal to itself under a normalized comparison and emits a
+    configuration that cannot load.
+  */
+  return { id, pin: id !== v4, renamedFrom: id === v3 ? null : v3 }
 }
 
-export function emitApplicationConfiguration (config, { module, id }) {
+export function emitApplicationConfiguration (config, { module, id, pin = false }) {
   const factory = factories[module]
   const { $schema, module: _module, runtime, ...capability } = config
 
-  // Level 1: nothing but capability configuration, so the factory call is the whole file. A
-  // defineConfig wrapper around no runtime settings would be ceremony that says nothing.
-  if (!runtime) {
+  /*
+    Level 1: nothing but capability configuration, so the factory call is the whole file. A
+    defineConfig wrapper around no runtime settings would be ceremony that says nothing.
+
+    Unless the id has to be pinned, which is the one thing a bare factory call has nowhere to put:
+    v4 would re-derive it from the package name and either reach a different hostname or refuse the
+    file outright.
+  */
+  if (!runtime && !pin) {
     return `import { ${factory} } from '${module}'\n\nexport default ${factory}(${serializeValue(capability)})\n`
   }
 
@@ -453,7 +465,7 @@ export function emitApplicationConfiguration (config, { module, id }) {
     declares its own address. `application` becomes the singular shorthand, which is where a
     single-app project's orchestration settings live.
   */
-  const { server, application = {}, ...root } = runtime
+  const { server, application = {}, ...root } = runtime ?? {}
 
   if (server) {
     capability.server = { ...server, ...capability.server }
@@ -1159,6 +1171,110 @@ async function emitApplications (journal, applications) {
 }
 
 /*
+  The source scan. One walk, looking for four things migrate cannot safely rewrite and must
+  therefore report: references to the legacy configuration files it just deleted, reads of the three
+  injected variables v4 removes, the old spelling of any id it renamed, and reads of
+  `process.env.NODE_ENV`, which behaves differently under `build` in v4.
+
+  The first two are divergences of migrate's own making; the last two are evidence for breaking
+  changes it neither chose nor could decline. Nothing here is rewritten -- these are identifiers in
+  user code, and a codemod that edited them would be guessing at what they mean.
+*/
+const sourceExtensions = new Set(['.js', '.mjs', '.cjs', '.jsx', '.ts', '.mts', '.cts', '.tsx'])
+
+// Removed in v4. A read of any of them is a value that is simply not there any more.
+const injectedVariables = ['PLT_DEV', 'PLT_ENVIRONMENT', 'PLT_ROOT']
+
+// A bound rather than a promise about the tree: a scan that walked a generated output directory
+// would spend its time there. What it skips, it says.
+const scanLimit = 5000
+
+async function * walkSources (directory, budget) {
+  let entries
+
+  try {
+    entries = await readdir(directory, { withFileTypes: true })
+  } catch {
+    // An unreadable directory is not a reason to fail a migration that has already succeeded.
+    return
+  }
+
+  for (const entry of entries) {
+    if (budget.scanned >= scanLimit) {
+      return
+    }
+
+    const path = join(directory, entry.name)
+
+    if (entry.isDirectory()) {
+      // node_modules is not this project's code, and a dot-directory is a tool's rather than an
+      // author's -- .git and .next between them hold more files than everything being looked for.
+      if (entry.name === 'node_modules' || entry.name.startsWith('.')) {
+        budget.skipped.add(entry.name)
+        continue
+      }
+
+      yield * walkSources(path, budget)
+      continue
+    }
+
+    if (entry.isFile() && sourceExtensions.has(extname(entry.name))) {
+      budget.scanned++
+      yield path
+    }
+  }
+}
+
+export async function scanSources (root, { legacyNames, renamed }) {
+  const budget = { scanned: 0, skipped: new Set() }
+  const findings = []
+
+  for await (const file of walkSources(root, budget)) {
+    let contents
+
+    try {
+      contents = await readFile(file, 'utf-8')
+    } catch {
+      continue
+    }
+
+    const where = relative(root, file)
+
+    contents.split('\n').forEach((line, index) => {
+      const at = `${where}:${index + 1}`
+
+      for (const name of legacyNames) {
+        if (line.includes(name)) {
+          findings.push(`${bold(at)} names ${bold(name)}, which migrate deleted — v3 scaffolding read that file directly, and nothing does now.`)
+        }
+      }
+
+      for (const variable of injectedVariables) {
+        if (line.includes(variable)) {
+          findings.push(`${bold(at)} reads ${bold(variable)}, which v4 no longer injects.`)
+        }
+      }
+
+      for (const { from, to } of renamed) {
+        if (line.includes(from)) {
+          findings.push(`${bold(at)} names ${bold(from)}, which is now ${bold(to)} — out here an id is a mesh hostname and a metrics label.`)
+        }
+      }
+
+      if (line.includes('process.env.NODE_ENV')) {
+        findings.push(`${bold(at)} reads ${bold('NODE_ENV')}, which v4 defaults to production under ${bold('build')}.`)
+      }
+    })
+  }
+
+  if (budget.scanned >= scanLimit) {
+    findings.push(`The scan stopped at ${bold(String(scanLimit))} files and did not cover the whole project.`)
+  }
+
+  return findings
+}
+
+/*
   Every write and delete a run makes, so that a failure anywhere undoes all of them. With one file
   the rollback is obvious; with a file per application plus a root it is the difference between a
   failed migration and a tree that is neither v3 nor v4 with nothing in it saying which files moved.
@@ -1290,7 +1406,10 @@ export async function migrateCommand (logger, args) {
     // dialect's planning.
     notes.push(...stripRemovedKeys(config, derived.id))
 
-    await journal.write(target, emitApplicationConfiguration(config, { module, id: derived.id }))
+    await journal.write(
+      target,
+      emitApplicationConfiguration(config, { id: derived.id, module, pin: derived.pin })
+    )
   }
 
   await journal.remove(source)
@@ -1352,6 +1471,23 @@ export async function migrateCommand (logger, args) {
 
   for (const note of notes.concat(plan?.exposure ?? [])) {
     logger.warn(note)
+  }
+
+  /*
+    Run after the migration is complete, because it reports on the result rather than deciding it:
+    every hit is user code migrate will not rewrite, and a scan that failed would be no reason to
+    undo a conversion that succeeded.
+  */
+  const legacyNames = new Set([basename(source)])
+
+  for (const application of plan?.applications ?? []) {
+    if (application.legacy) {
+      legacyNames.add(basename(application.legacy))
+    }
+  }
+
+  for (const finding of await scanSources(root, { legacyNames, renamed })) {
+    logger.warn(finding)
   }
 
   for (const name of skipped) {
