@@ -319,7 +319,13 @@ export async function loadApplicationsCommands (executableName = '', configurati
       throw new Error('No runtime configuration file found.')
     }
 
-    config = await loadConfiguration(file)
+    /*
+      'exec' is every non-boot evaluation, and enumerating a capability's commands is one: nothing
+      starts. Without it this evaluated as a development boot — development env files, and
+      `production: false` handed to every callback — which is a context no invocation of these
+      commands actually runs in.
+    */
+    config = await loadConfiguration(file, null, { command: 'exec' })
 
     /* c8 ignore next 3 - Hard to test */
     if (!config) {
