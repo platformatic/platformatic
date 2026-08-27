@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { ViteCapability } from '@platformatic/vite'
 import { JSONSchemaType } from 'ajv'
@@ -52,3 +52,10 @@ export declare const schema: JSONSchemaType<PlatformaticNitroConfig>
 export declare const schemaComponents: { nitro: JSONSchemaType<object> }
 export declare const version: string
 export declare const supportedVersions: { nitro: string, nitropack: string }
+
+export type NitroConfigOptions = CapabilityFactoryOptions<PlatformaticNitroConfig, 'vite' | 'nitro', never>
+
+export declare function nitro (options?: NitroConfigOptions): ApplicationDefinition
+export declare function nitro (
+  callback: (context: ConfigContext) => NitroConfigOptions | Promise<NitroConfigOptions>
+): DeferredApplicationDefinition

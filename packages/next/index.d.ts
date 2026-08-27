@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError } from 'fastify'
@@ -55,3 +55,10 @@ export namespace errors {
   export const StandaloneServerNotFound: () => FastifyError
   export const CannotParseStandaloneServer: () => FastifyError
 }
+
+export type NextConfigOptions = CapabilityFactoryOptions<PlatformaticNextJsConfig, 'next', never>
+
+export declare function next (options?: NextConfigOptions): ApplicationDefinition
+export declare function next (
+  callback: (context: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>
+): DeferredApplicationDefinition
