@@ -135,14 +135,14 @@ for (const [name, files, expected] of [
     'interpolation'
   ],
   [
-    'more than one application',
+    'autoload',
     {
       'platformatic.json': {
         $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
-        applications: [{ id: 'api', path: './api' }]
+        autoload: { path: './web' }
       }
     },
-    'applications'
+    'autoload'
   ],
   [
     'an unknown capability',
@@ -301,4 +301,111 @@ test('migrate - pins the id v3 used, and says so when the label grammar changes 
   ok(emitted.includes("id: 'my-app'"), emitted)
   ok(migrateProcess.stdout.includes('my_app'), migrateProcess.stdout)
   ok(migrateProcess.stdout.includes('mesh hostname'), migrateProcess.stdout)
+})
+
+test('migrate - emits a file per application plus a thin root', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      logger: { level: 'warn' },
+      services: [
+        { id: 'api', path: './services/api', config: 'platformatic.json', workers: 2 },
+        { id: 'inferred', path: './services/inferred' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+  // A real zero-config application has sources for the detector to read; an empty directory is
+  // something v4 refuses, and rightly.
+  await mkdir(join(root, 'services/inferred'), { recursive: true })
+  await writeFile(join(root, 'services/inferred/index.js'), 'export default {}\n', 'utf-8')
+  await writeFile(
+    join(root, 'services/inferred/package.json'),
+    JSON.stringify({ name: 'inferred', type: 'module', main: 'index.js' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  // The application's own file, in its own directory.
+  const application = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
+  ok(application.includes("import { node } from '@platformatic/node'"), application)
+  strictEqual(await fileExists(join(root, 'services/api/platformatic.json')), false)
+
+  const emittedRoot = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  /*
+    `services` is spelled `applications`, and the entry's `config` is gone: it named the path to the
+    application's own configuration in v3, and in v4 that file simply is the configuration, so the
+    key has nothing left to name.
+  */
+  ok(emittedRoot.includes('applications:'), emittedRoot)
+  ok(!emittedRoot.includes('services:'), emittedRoot)
+  ok(!emittedRoot.includes("config: 'platformatic.json'"), emittedRoot)
+
+  // A directory with no configuration of its own is left alone: that is v4's zero-config case
+  // rather than an error, and saying so beats silently doing nothing.
+  ok(migrateProcess.stdout.includes('inferred'), migrateProcess.stdout)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: false,
+    onWarning () {},
+    onInfo () {}
+  })
+
+  strictEqual(loaded.config.logger.level, 'warn')
+  strictEqual(loaded.config.applications.length, 2)
+  strictEqual(loaded.config.applications.find(entry => entry.id === 'api').workers, 2)
+})
+
+test('migrate - undoes every file it touched when one application refuses', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'first', path: './services/first' },
+        { id: 'second', path: './services/second' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['first', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    // The second one interpolates, which this migrator refuses — and it is reached only after the
+    // first has already been converted on disk.
+    ['second', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { port: '{PORT}' } }]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('interpolation'), migrateProcess.stdout)
+
+  /*
+    The first application was already written and its legacy file already deleted when the second
+    was refused. Leaving that would be the worst outcome available: a tree that is neither v3 nor
+    v4, with nothing in it saying which half moved.
+  */
+  strictEqual(await fileExists(join(root, 'services/first/watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'services/first/platformatic.json')), true)
+  strictEqual(await fileExists(join(root, 'services/second/platformatic.json')), true)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'platformatic.json')), true)
 })

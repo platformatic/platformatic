@@ -133,6 +133,26 @@ export function collectRefusals (config, { module }) {
     })
   }
 
+  if (config.autoload) {
+    refusals.push({
+      reason: `the configuration declares ${bold('autoload')}`,
+      fix: 'this migrator does not yet expand autoload: v3 derived those ids from the directory name and v4 prefers the package.json name, so every one that moves needs an autoload.mappings entry pinning it'
+    })
+  }
+
+  const entries = config.applications ?? config.services ?? config.web
+
+  if (module === '@platformatic/runtime') {
+    if (!entries) {
+      refusals.push({
+        reason: 'the runtime configuration lists no applications',
+        fix: 'a runtime with nothing to run has nothing to migrate; add its applications, or migrate each one where it lives'
+      })
+    }
+
+    return refusals
+  }
+
   if (!module) {
     refusals.push({
       reason: 'the configuration names no capability',
@@ -155,17 +175,6 @@ export function collectRefusals (config, { module }) {
         .join(', ')}${placeholders.length > 3 ? ', …' : ''})`,
       fix: 'this migrator does not yet convert interpolated values: each one needs its position\'s audited target type to decide between a string fallback, a number guard and an enum guard'
     })
-  }
-
-  for (const key of ['applications', 'services', 'web', 'autoload']) {
-    if (config[key]) {
-      refusals.push({
-        reason: `the configuration declares ${bold(key)}`,
-        fix: 'this migrator handles a single-application project so far; a multi-application one needs a file per application plus a root'
-      })
-
-      break
-    }
   }
 
   return refusals
@@ -315,6 +324,114 @@ export function chooseFileName (root) {
   return 'watt.config.mjs'
 }
 
+/*
+  A v3 monorepo becomes a file per application plus a thin root. The root keeps orchestration and
+  nothing else: an entry's `config` was a path to the application's own configuration in v3, and in
+  v4 that file simply is the application's configuration, so the key has nothing left to name.
+
+  `services` and `web` are both spelled `applications`.
+*/
+export function emitRootConfiguration (config, entries) {
+  const { $schema, module: _module, applications, services, web, ...root } = config
+
+  return (
+    "import { defineConfig } from 'wattpm'\n\n" +
+    `export default defineConfig(${serializeValue({ ...root, applications: entries })})\n`
+  )
+}
+
+async function migrateApplications (logger, journal, root, source, config) {
+  const declaredEntries = config.applications ?? config.services ?? config.web ?? []
+  const emitted = []
+  const entries = []
+  const skipped = []
+
+  for (const entry of declaredEntries) {
+    const { config: _legacyPath, ...orchestration } = entry
+
+    if (!entry.path) {
+      // A remote entry has no local configuration to convert, and keeps working as it is.
+      entries.push(orchestration)
+      continue
+    }
+
+    const directory = resolve(root, entry.path)
+    const legacy = findLegacyConfiguration(directory, null)
+
+    if (!legacy) {
+      /*
+        No configuration of its own. v4's detector handles that — it is the zero-config case, not an
+        error — so the entry is carried through and the directory is left alone.
+      */
+      skipped.push(entry.id ?? entry.path)
+      entries.push(orchestration)
+      continue
+    }
+
+    const applicationConfig = await loadRawConfigurationFile(legacy)
+    const identity = extractModuleFromSchemaUrl(applicationConfig)
+    const declared = applicationConfig.module ?? identity?.module
+    const applicationModule = renamedModules[declared] ?? declared
+    const refusals = collectRefusals(applicationConfig, { module: applicationModule })
+
+    if (refusals.length > 0) {
+      return { refusals, at: legacy }
+    }
+
+    const { id } = await deriveLegacyId(directory)
+    const target = join(directory, chooseFileName(directory))
+
+    if (existsSync(target)) {
+      return { refusals: [{ reason: `${bold(target)} already exists`, fix: 'move it aside and run migrate again' }] }
+    }
+
+    await journal.write(target, emitApplicationConfiguration(applicationConfig, { module: applicationModule, id }))
+    await journal.remove(legacy)
+
+    // The id is pinned on the entry: v3 took an explicit entry's id from the entry itself, and
+    // leaving it out would let v4 derive a different one from the package name.
+    entries.push({ ...orchestration, id: entry.id ?? id })
+    emitted.push(target)
+  }
+
+  return { entries, emitted, skipped }
+}
+
+/*
+  Every write and delete a run makes, so that a failure anywhere undoes all of them. With one file
+  the rollback is obvious; with a file per application plus a root it is the difference between a
+  failed migration and a tree that is neither v3 nor v4 with nothing in it saying which files moved.
+
+  Undo runs in reverse, because a later step may depend on an earlier one — the legacy file is
+  deleted only after its replacement exists.
+*/
+function createJournal () {
+  const undo = []
+
+  return {
+    async write (path, contents) {
+      const existed = existsSync(path)
+      const previous = existed ? await readFile(path) : null
+
+      await writeFile(path, contents)
+      undo.push(() => (existed ? writeFile(path, previous) : rm(path, { force: true })))
+    },
+
+    async remove (path) {
+      const previous = await readFile(path)
+
+      await rm(path, { force: true })
+      undo.push(() => writeFile(path, previous))
+    },
+
+    async rollback () {
+      for (const step of undo.reverse()) {
+        await step()
+      }
+    }
+  }
+}
+
 export async function migrateCommand (logger, args) {
   const {
     values: { config: named },
@@ -374,11 +491,39 @@ export async function migrateCommand (logger, args) {
     nothing about the emitted file. The original is kept in memory and put back if anything goes
     wrong, which is what makes a failed migration leave the project exactly as it was.
   */
-  const original = await readFile(source)
-  const { id, renamedFrom } = await deriveLegacyId(dirname(source))
+  const journal = createJournal()
+  const directory = dirname(source)
+  let renamedFrom = null
+  let renamedTo = null
+  let skipped = []
 
-  await writeFile(target, emitApplicationConfiguration(config, { module, id }), 'utf-8')
-  await rm(source, { force: true })
+  if (module === '@platformatic/runtime') {
+    const result = await migrateApplications(logger, journal, directory, source, config)
+
+    if (result.refusals) {
+      await journal.rollback()
+      logger.error(`Cannot migrate ${bold(result.at ?? source)}:`)
+
+      for (const refusal of result.refusals) {
+        logger.error(`  ${refusal.reason}`)
+        logger.error(`    ${refusal.fix}`)
+      }
+
+      process.exitCode = 1
+      return
+    }
+
+    skipped = result.skipped
+    await journal.write(target, emitRootConfiguration(config, result.entries))
+  } else {
+    const derived = await deriveLegacyId(directory)
+    renamedFrom = derived.renamedFrom
+    renamedTo = derived.id
+
+    await journal.write(target, emitApplicationConfiguration(config, { module, id: derived.id }))
+  }
+
+  await journal.remove(source)
 
   let unresolved = null
 
@@ -405,8 +550,7 @@ export async function migrateCommand (logger, args) {
     if (error.code === 'ERR_MODULE_NOT_FOUND' || error.code === 'PLT_CAPABILITY_SCHEMA_NOT_FOUND') {
       unresolved = error.message
     } else {
-      await rm(target, { force: true })
-      await writeFile(source, original)
+      await journal.rollback()
 
       return logFatalError(
         logger,
@@ -421,8 +565,12 @@ export async function migrateCommand (logger, args) {
 
   if (renamedFrom) {
     logger.warn(
-      `The application id ${bold(renamedFrom)} is not a legal v4 id and was written as ${bold(id)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
+      `The application id ${bold(renamedFrom)} is not a legal v4 id and was written as ${bold(renamedTo)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
     )
+  }
+
+  for (const name of skipped) {
+    logger.info(`${bold(name)} has no configuration of its own and was left as it is: v4 infers one from what is in the directory.`)
   }
 
   if (unresolved) {
