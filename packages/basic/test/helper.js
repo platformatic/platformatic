@@ -502,7 +502,14 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     ].find(candidate => existsSync(resolve(source, candidate))) ?? 'platformatic.runtime.json'
 
   if (port === 0) {
-    port = await getPort.default()
+    /*
+      Below the ephemeral range, deliberately. A reserved port is chosen here, released, and bound
+      by the runtime moments later — while sibling applications configured `port: 0` are being
+      handed ports by the OS from 32768-60999. Drawing the reserved one from that same range means
+      a sibling can be given it in the gap, which surfaces as PLT_RUNTIME_EADDR_IN_USE naming two
+      applications that never shared a port in any configuration.
+    */
+    port = await getPort.default({ port: getPort.portNumbers(10000, 30000) })
   }
 
   const originalCwd = process.cwd()
@@ -1169,7 +1176,8 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
 }
 
 export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup, requestOptions = {}) {
-  const port = await getPort.default()
+  // Below the ephemeral range, for the reason given where the other reserved port is chosen.
+  const port = await getPort.default({ port: getPort.portNumbers(10000, 30000) })
   let protocol
 
   // Reads the loaded configuration, so it runs after the load and before start.
