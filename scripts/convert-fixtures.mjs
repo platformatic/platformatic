@@ -27,6 +27,29 @@ const INTERPOLATION = /\{\{?([A-Za-z0-9_]+)\}?\}/g
 // Properties whose schema type is a number, so an interpolated value has to be coerced explicitly:
 // v4 turns AJV coercion off, and a string where the schema says number is a validation failure
 // rather than a silent conversion.
+/*
+  Properties whose schema type is boolean, so an interpolated value has to be compared explicitly:
+  v4 turns AJV coercion off, and the string 'false' is not the boolean false -- it is not even
+  falsy. v3 coerced these silently, which is exactly the silence v4 removes.
+*/
+const BOOLEAN_PROPERTIES = new Set([
+  'watch',
+  'enabled',
+  'production',
+  'https',
+  'dynamic',
+  'reusePort',
+  'reuseTcpPorts',
+  'closeConnections',
+  'metrics',
+  'managementApi',
+  'openapi',
+  'graphql',
+  'absoluteUrl',
+  'skipTelemetryHooks',
+  'encapsulate'
+])
+
 const NUMERIC_PROPERTIES = new Set([
   'port',
   'timeout',
@@ -65,7 +88,15 @@ function convertString (value, key) {
   if (whole) {
     const read = `process.env.${whole[1]}`
 
-    return new Expression(NUMERIC_PROPERTIES.has(key) ? `Number(${read})` : read)
+    if (NUMERIC_PROPERTIES.has(key)) {
+      return new Expression(`Number(${read})`)
+    }
+
+    if (BOOLEAN_PROPERTIES.has(key)) {
+      return new Expression(`${read} === 'true'`)
+    }
+
+    return new Expression(read)
   }
 
   const template = value.replace(INTERPOLATION, (_, name) => `\${process.env.${name}}`)
@@ -337,6 +368,13 @@ const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-
   json, json5, yaml, toml, yml and tml side by side, and the test asserts the v3 loader reads each
   one. Converting the json member leaves the family testing five formats and a module.
 */
+/*
+  strictEnv, root envfile and the YAML brace-quoting pre-pass do not exist in v4 -- they survive
+  only inside migrate's legacy reader -- so the fixtures that exercise them stay with the v3 loader
+  that still implements them.
+*/
+const LEGACY_FEATURE_FIXTURES = ['runtime/fixtures/configs/monorepo-strict-env/']
+
 const FORMAT_FIXTURES = [
   'db/test/fixtures/auto-config/',
   'service/test/fixtures/auto-config/',
@@ -402,7 +440,7 @@ export function isLegacyByDesign (file) {
   */
   const normalized = file.replace(/\\/g, '/')
 
-  return [...IMPORT_FIXTURES, ...FORMAT_FIXTURES, ...COMMAND_FIXTURES, ...CAPABILITY_FIXTURES].some(fixture =>
+  return [...IMPORT_FIXTURES, ...FORMAT_FIXTURES, ...COMMAND_FIXTURES, ...CAPABILITY_FIXTURES, ...LEGACY_FEATURE_FIXTURES].some(fixture =>
     normalized.includes(fixture)
   )
 }
