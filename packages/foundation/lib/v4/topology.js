@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, resolve } from 'node:path'
+import { DuplicateAutoloadedApplicationIdError } from './errors.js'
 import { deriveApplicationId } from './identifiers.js'
 
 // The shorthand exists so a single app with runtime options never needs a one-element array.
@@ -57,6 +58,15 @@ export async function expandAutoload (config, { root }) {
   const entries = await readdir(path, { withFileTypes: true })
   const applications = config.applications
 
+  /*
+    v3's ids were directory names, unique by construction. v4 prefers the package.json name, which
+    is not: two directories copied from one another carry the same name. The shallow merge below is
+    a rule for an autoloaded entry meeting an *explicit* one, and applying it to two autoloaded
+    directories would silently absorb the second — an application that never boots and nothing that
+    says so.
+  */
+  const autoloaded = new Map()
+
   for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
     if (!entry.isDirectory() || exclude.includes(entry.name)) {
       continue
@@ -69,6 +79,14 @@ export async function expandAutoload (config, { root }) {
       packageName: await readPackageName(directory),
       directory
     })
+
+    const claimed = autoloaded.get(id)
+
+    if (claimed) {
+      throw new DuplicateAutoloadedApplicationIdError(claimed, directory, id)
+    }
+
+    autoloaded.set(id, directory)
 
     const expanded = { id, path: directory, ...mapping }
     const existing = applications.findIndex(application => application.id === id)

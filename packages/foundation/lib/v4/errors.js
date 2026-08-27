@@ -139,3 +139,8 @@ export const LegacySchemaStampError = createError(
   `${ERROR_PREFIX}_LEGACY_SCHEMA_STAMP`,
   '%s is stamped with %s, which is a v3 schema. Run "wattpm-utils migrate" to bring it to v4.'
 )
+
+export const DuplicateAutoloadedApplicationIdError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_AUTOLOADED_APPLICATION_ID`,
+  'The autoloaded directories %s and %s both resolve to the application id "%s". Give one of them an explicit id through autoload.mappings, or rename its package.'
+)
