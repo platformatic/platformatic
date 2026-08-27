@@ -222,6 +222,7 @@ function createThreadInterceptor (runtimeConfig, telemetryHooks) {
     meshId: workerData.meshId,
     domain: '.plt.local',
     connectTimeout: runtimeConfig.applicationTimeout,
+    bootstrapTimeout: runtimeConfig.applicationTimeout,
     allowTarget: createTargetPermissionHook({
       ...runtimeConfig,
       applicationId: workerData.applicationConfig.id

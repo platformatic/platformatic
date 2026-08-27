@@ -224,6 +224,7 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           serverId: workerData.worker.id,
           domain: `${application.id}.plt.local`,
           server: serverTarget,
+          bootstrapTimeout: workerData.config.applicationTimeout,
           metadata: {
             applicationId: application.id,
             workerId: workerData.worker.id

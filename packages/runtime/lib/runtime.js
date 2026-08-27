@@ -374,8 +374,10 @@ export class Runtime extends EventEmitter {
       meshId: this.#meshId,
       domain: '.plt.local',
       connectTimeout: this.#config.applicationTimeout,
+      bootstrapTimeout: this.#config.applicationTimeout,
       allowTarget: createTargetPermissionHook(this.#config)
     })
+    await this.#meshInterceptor.ready
 
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
@@ -491,7 +493,7 @@ export class Runtime extends EventEmitter {
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
-    this.#meshInterceptor?.close()
+    await this.#meshInterceptor?.close()
     this.#meshCoordinator?.destroy()
     this.#workersBroadcastChannel?.close()
 
@@ -740,8 +742,24 @@ export class Runtime extends EventEmitter {
     const levels = topologicalLevels(applications, dependencies)
 
     for (const level of levels) {
-      const startInvocations = level.map(app => [app, silent])
-      await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+      const applicationsWithPort = await Promise.all(
+        level.map(async applicationId => {
+          const worker = await this.#getWorkerByIdOrNext(applicationId)
+          const applicationConfig = await sendViaITC(worker, 'getApplicationConfig')
+          const port = Number(applicationConfig?.server?.port)
+          return { applicationId, hasPort: Number.isInteger(port) && port > 0 }
+        })
+      )
+
+      for (const hasPort of [true, false]) {
+        const startInvocations = applicationsWithPort
+          .filter(application => application.hasPort === hasPort)
+          .map(({ applicationId }) => [applicationId, silent])
+
+        if (startInvocations.length > 0) {
+          await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+        }
+      }
     }
   }
 
