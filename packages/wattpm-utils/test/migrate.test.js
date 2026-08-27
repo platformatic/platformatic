@@ -3,7 +3,15 @@ import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
+import { version } from '../lib/version.js'
 import { createTemporaryDirectory, wattpmUtils } from './helper.js'
+
+/*
+  What migrate requires is its own major: `npx wattpm-utils@4 migrate` emits v4 files and asks for
+  the v4 line, and the same is true of whatever line supersedes it. Asserted as the invariant rather
+  than as a literal, which would be wrong on one side of every bump.
+*/
+const requiredRange = `^${version.split('.')[0]}.0.0`
 
 const packagesDir = resolve(import.meta.dirname, '../..')
 
@@ -855,6 +863,7 @@ test('migrate - reports the source references it will not rewrite', async t => {
   await writeFile(join(root, 'node_modules/pkg/index.js'), 'process.env.PLT_ROOT\n', 'utf-8')
 
   await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
 
   const migrateProcess = await wattpmUtils('migrate', root)
   const { stdout } = migrateProcess
@@ -863,7 +872,7 @@ test('migrate - reports the source references it will not rewrite', async t => {
   ok(stdout.includes('index.js:3') && stdout.includes('PLT_ROOT'), stdout)
   ok(stdout.includes('index.js:4') && stdout.includes('my_app'), stdout)
   ok(stdout.includes('index.js:5') && stdout.includes('NODE_ENV'), stdout)
-  ok(!stdout.includes('node_modules'), stdout)
+  ok(!stdout.includes(join('node_modules', 'pkg')), stdout)
 })
 
 test('migrate - pins the id of a package that has no name', async t => {
@@ -901,4 +910,44 @@ test('migrate - refuses a stale legacy file it is not converting', async t => {
   ok(migrateProcess.stdout.includes('platformatic.service.json'), migrateProcess.stdout)
   ok(migrateProcess.stdout.includes('is not converting'), migrateProcess.stdout)
   strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+})
+
+test('migrate - requires the packages the emitted files import', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [{ id: 'api', path: './services/api' }]
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+  await writeFile(
+    join(root, 'services/api/package.json'),
+    // Already held, and as a devDependency: where a dependency lives is the project's decision, so
+    // the range is raised in place rather than a second copy added under dependencies.
+    JSON.stringify({ name: 'api', devDependencies: { '@platformatic/node': '^2.0.0' } }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const rootManifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))
+  const apiManifest = JSON.parse(await readFile(join(root, 'services/api/package.json'), 'utf-8'))
+
+  // The root file imports defineConfig from wattpm, which an umbrella-platformatic project never had.
+  strictEqual(rootManifest.dependencies.wattpm, requiredRange, JSON.stringify(rootManifest))
+
+  strictEqual(apiManifest.devDependencies['@platformatic/node'], requiredRange, JSON.stringify(apiManifest))
+  strictEqual(apiManifest.dependencies, undefined)
+
+  // A range is not an install: until one runs the emitted files still import the v3 copy on disk.
+  ok(migrateProcess.stdout.includes('install'), migrateProcess.stdout)
 })

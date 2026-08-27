@@ -1,5 +1,6 @@
 import {
   extractModuleFromSchemaUrl,
+  getPackageManager,
   loadConfigurationFile as loadRawConfigurationFile,
   logFatalError,
   parseArgs
@@ -11,6 +12,7 @@ import {
 } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
 import { bold } from 'colorette'
+import { version } from '../version.js'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
@@ -1320,6 +1322,97 @@ export async function scanSources (root, { legacyNames, renamed }) {
 }
 
 /*
+  The dependencies the emitted files import.
+
+  A per-app file calls its capability's factory and the root imports `defineConfig` from `wattpm`,
+  and neither resolves from a v3 install: the installed copy has no factory export and follows a
+  contract v4 does not. An umbrella-`platformatic` project never had `wattpm` at all.
+
+  Ranges and dependency lists only. Where a dependency already lives -- root or application -- is
+  the project's decision and migrate does not move it, so an entry already present anywhere in the
+  chain is raised in place rather than added again somewhere else.
+*/
+function requiredRange () {
+  return `^${version.split('.')[0]}.0.0`
+}
+
+async function auditDependencies (journal, root, plan, module) {
+  const range = requiredRange()
+  const edited = []
+
+  // The root file imports defineConfig, so the root needs wattpm whether or not it ever had it.
+  const needed = new Map([[canonicalize(root), new Set(plan ? ['wattpm'] : [])]])
+
+  for (const application of plan?.applications ?? []) {
+    if (!application.module) {
+      continue
+    }
+
+    // A root-inline entry's factory is called from the root file, so its dependency belongs there.
+    const directory = canonicalize(application.inline ? root : application.directory)
+
+    if (!needed.has(directory)) {
+      needed.set(directory, new Set())
+    }
+
+    needed.get(directory).add(application.module)
+  }
+
+  if (!plan && module) {
+    // The single-app dialect: one file, one factory, one package.json. The module is handed in
+    // rather than re-read, because by this point the file it came from is deleted.
+    needed.get(canonicalize(root)).add(module)
+  }
+
+  for (const [directory, modules] of needed) {
+    if (modules.size === 0) {
+      continue
+    }
+
+    const manifestPath = join(directory, 'package.json')
+
+    if (!existsSync(manifestPath)) {
+      // Nothing to edit and nothing to guess at: a directory without a package.json resolves its
+      // imports from an ancestor that has one.
+      continue
+    }
+
+    const contents = await readFile(manifestPath, 'utf-8')
+    const manifest = JSON.parse(contents)
+    const added = []
+
+    for (const module of [...modules].sort()) {
+      const held = ['dependencies', 'devDependencies', 'optionalDependencies'].find(
+        field => manifest[field]?.[module] !== undefined
+      )
+
+      if (held) {
+        if (manifest[held][module] === range) {
+          continue
+        }
+
+        manifest[held][module] = range
+      } else {
+        manifest.dependencies ??= {}
+        manifest.dependencies[module] = range
+      }
+
+      added.push(module)
+    }
+
+    if (added.length === 0) {
+      continue
+    }
+
+    // The trailing newline npm writes, so a migration does not show up as a whitespace diff.
+    await journal.write(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
+    edited.push({ modules: added, where: relative(root, manifestPath) || 'package.json' })
+  }
+
+  return edited
+}
+
+/*
   Every write and delete a run makes, so that a failure anywhere undoes all of them. With one file
   the rollback is obvious; with a file per application plus a root it is the difference between a
   failed migration and a tree that is neither v3 nor v4 with nothing in it saying which files moved.
@@ -1468,6 +1561,14 @@ export async function migrateCommand (logger, args) {
 
   await journal.remove(source)
 
+  /*
+    The dependency edit lands inside the transaction, before validation: the emitted files import v4
+    factories, and validating against a v3 install checks the wrong thing. Editing a range does not
+    itself change what resolves -- that needs an install -- which is why the run says so rather than
+    implying the work is finished.
+  */
+  const edited = await auditDependencies(journal, root, plan, module)
+
   let unresolved = null
 
   try {
@@ -1553,6 +1654,23 @@ export async function migrateCommand (logger, args) {
   }
 
   logger.done(`Migrated ${bold(basename(source))} to ${bold(basename(target))}.`)
+
+  if (edited.length > 0) {
+    const manager = await getPackageManager(root)
+
+    for (const { modules, where } of edited) {
+      logger.info(`${bold(where)} now requires ${modules.map(module => bold(module)).join(', ')}.`)
+    }
+
+    /*
+      A range is not an install. Until one runs, the emitted files still import whatever v3 copy is
+      on disk -- which has no factory export -- so this is the step that makes the migration real.
+    */
+    logger.info(
+      `Run ${bold(`${manager} install`)} before starting: the emitted files import v4 factories, and an unchanged node_modules still holds v3.`
+    )
+  }
+
   logger.info('Review the result: no automated check verifies that a converted value still resolves to what v3 resolved.')
 }
 
