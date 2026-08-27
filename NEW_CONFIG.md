@@ -24,7 +24,7 @@ file. Two things differ and neither is the shape: which directory's env files th
 evaluation sees (see "Env files"), and a port expression naming the global `PORT`,
 which has to be scoped when siblings appear beside it (see the Summary).
 
-```ts
+```ts config
 // watt.config.ts — a complete single-app Next.js project
 import { next } from '@platformatic/next'
 
@@ -62,7 +62,7 @@ claim about the first.
 Runtime orchestration options, when a project needs them, come
 from `defineConfig`:
 
-```ts
+```ts config
 import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
@@ -113,7 +113,7 @@ than inside it.
 
 Today a multi-app project has a root config in the *runtime dialect*:
 
-```json
+```json v3
 {
   "$schema": "https://schemas.platformatic.dev/wattpm/3.65.0.json",
   "server": { "hostname": "{PLT_SERVER_HOSTNAME}", "port": "{PORT}" },
@@ -126,7 +126,7 @@ Today a multi-app project has a root config in the *runtime dialect*:
 produces) has a config in the *capability dialect*, with runtime options exiled into a
 nested `runtime` property:
 
-```json
+```json v3
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.65.0.json",
   "runtime": {
@@ -256,7 +256,7 @@ survives), and each application's configuration lives in the app's own
 `watt.config.ts`, which exports **the same factory expression** a single-app
 project would use, with the port variable scoped to the application:
 
-```ts
+```ts config
 // watt.config.ts (root)
 import { defineConfig } from 'wattpm'
 
@@ -265,7 +265,7 @@ export default defineConfig({
 })
 ```
 
-```ts
+```ts config
 // web/frontend/watt.config.ts
 import { next } from '@platformatic/next'
 
@@ -288,7 +288,7 @@ capability factory call (it accepted a file path in v3). This is the advanced fo
 it requires every capability to be resolvable from the root, which under pnpm's strict
 layout means adding it to the root `package.json` (see "Dependency resolution"):
 
-```ts
+```ts config
 // watt.config.ts
 import { defineConfig } from 'wattpm'
 import { gateway } from '@platformatic/gateway'
@@ -369,7 +369,7 @@ directory of the config file that produced it (the Level 1 auto-wrap, the
 `application` shorthand, a machine-generated `path: '.'` entry) is configured
 *by* that file, not twice —
 
-```
+``` output
 ✗ 'frontend' is configured twice: inline in watt.config.ts and in
   web/frontend/watt.config.ts. Move the factory call into the per-app file,
   or remove one of the two.
@@ -395,7 +395,7 @@ test, no evaluation needed, and `migrate` never emits this state.
 files**: a function export is called once with the context and its *resolved value*
 is classified (root config or application definition) by the normal rules.
 
-```ts
+```ts config
 import { defineConfig } from 'wattpm'
 
 export default defineConfig(({ command, mode, production, env }) => ({
@@ -405,7 +405,7 @@ export default defineConfig(({ command, mode, production, env }) => ({
 }))
 ```
 
-```ts
+```ts config
 // web/frontend/watt.config.ts — per-app conditionals, typed via the factory
 import { next } from '@platformatic/next'
 
@@ -492,7 +492,7 @@ The context (Vite-parity, deliberately):
 
 Each capability package exports one typed factory plus its option types:
 
-```ts
+```ts decl
 // from @platformatic/next
 export function next (options?: NextConfigOptions): ApplicationDefinition
 export function next (
@@ -544,7 +544,7 @@ entry. TypeScript enforces the split in both directions.
 The factory returns a plain, JSON-serializable object discriminated by its `module`
 property — no symbols, no classes:
 
-```ts
+```ts decl
 interface ApplicationDefinition {
   module: string          // '@platformatic/next'
   version?: string        // stamped by factories from their own package.json;
@@ -605,10 +605,12 @@ resolved config as data). Capabilities that were never updated past the v3 contr
 (whose `create(root, configPath)` re-loads a config *file* itself) are unsupported
 in v4, factory or not:
 
-```ts
-applications: [
-  { id: 'php', path: 'web/php', config: { module: '@platformatic/php' } }
-]
+```ts config refused
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [{ id: 'php', path: 'web/php', config: { module: '@platformatic/php' } }]
+})
 ```
 
 Capabilities implement their factory with a helper from `@platformatic/basic`
@@ -618,10 +620,12 @@ Capabilities implement their factory with a helper from `@platformatic/basic`
 
 Non-capability orchestration entries keep working:
 
-```ts
-applications: [
-  { id: 'legacy', url: 'https://github.com/org/legacy.git', gitBranch: 'main' }
-]
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [{ id: 'legacy', url: 'https://github.com/org/legacy.git', gitBranch: 'main' }]
+})
 ```
 
 **A remote application must itself be v4.** `resolve` clones a repository the
@@ -632,7 +636,7 @@ clone is a build artifact, so a clean CI checkout re-fetches the v3 configuratio
 and fails again. Migrate therefore lists every remote entry it cannot reach and
 says what to do:
 
-```
+``` output
 2 remote applications reference revisions this run cannot migrate —
 they live in other repositories:
 
@@ -871,7 +875,7 @@ no ignored legacy files and no coexistence states: a properly migrated tree has
 none (migrate deletes them), and a tree that has one is genuinely confusing and
 should say so:
 
-```
+``` output
 ✗ watt.yaml is a v3-era configuration. Watt v4 uses watt.config.ts.
   Run:  npx wattpm-utils@4 migrate
 ```
@@ -1033,7 +1037,7 @@ warning is added when **both** conditions hold: the deciding file classified as 
 **app-def**, *and* a `watt.config.*` exists in some ancestor directory. It then
 states what is not applied:
 
-```
+``` output
 ⚠ booting 'frontend' standalone — sibling applications and http://*.plt.local are
   unavailable. Nothing the runtime configuration says is applied: neither its own
   settings (logger, telemetry, the env blocks, envfile) nor this application's
@@ -1498,7 +1502,7 @@ schema, `skipTelemetryHooks` and `modulesToLoad`; it gains `servesWithoutPort`, 
 main-side with the schema, after validation and before any worker exists — which is
 precisely when the resolved capability config is available:
 
-```ts
+```ts decl
 export const servesWithoutPort = { development: true, production: true }    // service, db, gateway
 export const servesWithoutPort = { development: false, production: true }   // astro, remix, nest, react-router
 export const servesWithoutPort = { development: false, production: false }  // next, nitro, nuxt, tanstack
@@ -1672,7 +1676,7 @@ does `if (!url) continue`, so a project that binds nothing prints no address and
 explanation. It prints **one line per application**, in one of four shapes, so the
 set of externally reachable applications is always visible:
 
-```
+``` output
 gateway    listening at http://127.0.0.1:3042
 api        mesh-only — http://api.plt.local
 frontend   listening at http://127.0.0.1:52418        (port: 0 — ephemeral)
@@ -1797,7 +1801,7 @@ just the v4 names, because a v3 monorepo is exactly where a configless subpackag
 most likely to be found, and synthesizing there while an ancestor `platformatic.json`
 describes the application is the same silence with an older filename:
 
-```
+``` output
 ⚠ web/api has no watt.config.* of its own and is booting with inferred defaults.
   A Watt configuration exists at ../../watt.config.ts; if it describes this
   application, none of what it says — workers, health, env, telemetry, and the
@@ -1807,7 +1811,7 @@ describes the application is the same silence with an older filename:
 
 and where the ancestor is a v3 file, the same warning names the upgrade instead:
 
-```
+``` output
 ⚠ web/api has no watt.config.* of its own and is booting with inferred defaults.
   A v3 configuration exists at ../../platformatic.json, which this version cannot
   read. Run npx wattpm-utils@4 migrate there, then run wattpm from that directory.
@@ -2495,7 +2499,7 @@ hoisted, pnpm strict, root-only) cover it.
 **Recognized files** (Vite parity), in both the root and each application
 directory:
 
-```
+``` output
 .env  .env.local  .env.<mode>  .env.<mode>.local
 ```
 
@@ -2507,7 +2511,7 @@ context (`--mode`); scaffolding adds `.env*.local` to `.gitignore`.
 environment always wins.** There are two views, and they differ by exactly the
 things that only exist once the runtime is running:
 
-```
+``` output
 config evaluation:  real environment  >  env files, own directory first,
                                          layered up to the env root
                                       >  NODE_ENV default
@@ -2624,7 +2628,7 @@ assertion. `web/frontend/watt.config.ts` gets the same environment whether the
 runtime started it or you ran `wattpm dev` in its directory, because the env root is
 a property of the project's shape rather than of where the command was typed:
 
-```
+``` output
 proj/watt.config.ts   proj/.env          ← env root: the outermost watt.config.*
 proj/web/             proj/web/.env
 proj/web/api/         proj/web/api/.env  ← an application, in the tree
@@ -2928,7 +2932,7 @@ There is no JSON config in v4, and none is needed: `defineConfig` is optional an
 loader unwraps any plain-object default export, so a dependency-free generated config
 is JSON plus a prefix:
 
-```js
+```js config
 // generated by pack / install / deployment tooling — no imports required
 export default {
   $schema: 'https://schemas.platformatic.dev/wattpm/4.0.0.json',
@@ -5047,7 +5051,7 @@ this one had. The CI check (see implementation plan step 8) diffs this block aga
 `packages/next/schema.json`, so a divergence fails the build rather than surviving
 review. Both are pinned because both have drifted before.
 
-```ts
+```ts decl
 // wattpm
 export interface WattConfig {
   // no `entrypoint` and no `server`: the runtime owns no listener, and every
@@ -5197,7 +5201,7 @@ export function defineConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<W
 // (below) and re-exported here, so a root config needs one import
 ```
 
-```ts
+```ts decl
 // @platformatic/basic — the shared vocabulary every capability re-exports
 export type ConfigContext = {
   command: 'dev' | 'build' | 'start' | 'exec'   // 'exec' = capability commands
@@ -5227,7 +5231,7 @@ export type DeferredApplicationDefinition =
   (ctx: ConfigContext) => ApplicationDefinition | Promise<ApplicationDefinition>
 ```
 
-```ts
+```ts decl
 // @platformatic/next — factory options are per-app capability config ONLY
 export interface NextConfigOptions {
   trailingSlash?: boolean          // flattened from the v3 `next` block; audit
@@ -5256,7 +5260,7 @@ export function next (
 
 **v3 (capability dialect, wrapped runtime):**
 
-```json
+```json v3
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.65.0.json",
   "cache": { "adapter": "redis", "url": "{PLT_REDIS_URL}" },
@@ -5271,7 +5275,7 @@ export function next (
 
 **v4 (one dialect, one format):**
 
-```ts
+```ts config env=PLT_SERVER_LOGGER_LEVEL=info,PORT=3042
 import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 
@@ -5314,7 +5318,7 @@ export default defineConfig({
 
 with the migration report:
 
-```
+``` output
 i typed-position placeholders guarded (2)
   PORT → application.config.server.port (number)
   PLT_SERVER_LOGGER_LEVEL → logger.level (enum)
