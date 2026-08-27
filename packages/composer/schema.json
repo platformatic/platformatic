@@ -4395,10 +4395,6 @@
           },
           "additionalProperties": false
         },
-        "addEmptySchema": {
-          "type": "boolean",
-          "default": false
-        },
         "refreshTimeout": {
           "type": "integer",
           "minimum": 0,

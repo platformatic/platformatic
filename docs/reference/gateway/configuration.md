@@ -289,7 +289,6 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the applications. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
 
-- **`addEmptySchema`** (`boolean`) - Deprecated, it no longer has any effect. Responses which declare no body - a `204`, a `304`, or any other status code whose response object has no `content` - always keep their status code in the composed OpenAPI specification, and are documented without a body.
 
 - **`handler`** (`string`) - Path to a JavaScript or TypeScript module that exports a custom proxy handler, either as `handler` or as the default export. The handler receives `(request, reply, dest, options)`, where `dest` is the rewritten proxy destination and `options` are the reply options passed to `reply.from()`. By default, proxied requests call `reply.from(dest, options)`; use this option to customize that behavior.
 

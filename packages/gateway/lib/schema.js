@@ -280,7 +280,6 @@ export const gateway = {
     deduplication,
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
-    addEmptySchema: { type: 'boolean', default: false },
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
     passthroughContentTypes: {
       type: 'array',
