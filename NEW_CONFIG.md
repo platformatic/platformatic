@@ -5111,6 +5111,13 @@ review. Both are pinned because both have drifted before.
 
 ```ts decl
 // wattpm
+import type {
+  ApplicationDefinition,
+  ConfigContext,
+  DeferredApplicationDefinition
+} from '@platformatic/basic'
+import type { SchedulerJob } from '@platformatic/runtime'
+
 export interface WattConfig {
   // no `entrypoint` and no `server`: the runtime owns no listener, and every
   // exposure setting lives in the capability config (see "How applications are
@@ -5291,6 +5298,12 @@ export type DeferredApplicationDefinition =
 
 ```ts decl
 // @platformatic/next — factory options are per-app capability config ONLY
+import type {
+  ApplicationDefinition,
+  ConfigContext,
+  DeferredApplicationDefinition
+} from '@platformatic/basic'
+
 export interface NextConfigOptions {
   trailingSlash?: boolean          // flattened from the v3 `next` block; audit
                                    // removal candidate (mirrors next.config.*)

@@ -144,6 +144,44 @@ function prepareWorkspace () {
   )
 }
 
+/*
+  The option types Appendix A's blocks name. The document says where they come from -- "complete
+  list generated from the audited v4 runtime schema" -- and the audit has not run, so a block naming
+  one is ahead of the implementation rather than wrong.
+
+  Listed by name rather than matched by shape, and reported rather than declared into existence: a
+  name that is not on this list is a typo, a type somebody forgot, or -- as four of these were --
+  one that already exists and the block simply failed to import. When the generation lands, the
+  names leave this list and the blocks typecheck against the real thing.
+*/
+const pendingGeneratedTypes = new Set([
+  'ApplicationEntryOverrides',
+  'ApplicationHealthOptions',
+  'ApplicationTelemetryOverrides',
+  'ApplicationWorkersOptions',
+  'AppLoggerOptions',
+  'AppServerOptions',
+  'BuildableApplicationOptions',
+  'CompileCacheOptions',
+  'ExtensionEntry',
+  'GracefulShutdownOptions',
+  'HealthOptions',
+  'HealthProbesOptions',
+  'HttpCacheOptions',
+  'HttpsOptions',
+  'ImageOptimizerOptions',
+  'ManagementApiOptions',
+  'MetricsOptions',
+  'NextCacheOptions',
+  'NextHttpsOptions',
+  'PermissionsOptions',
+  'RuntimeLoggerOptions',
+  'TelemetryOptions',
+  'UndiciOptions',
+  'WatchOptions',
+  'WorkersOptions'
+])
+
 function typecheck (files) {
   if (files.length === 0) {
     return []
@@ -159,7 +197,32 @@ function typecheck (files) {
     return []
   }
 
-  return (result.stdout || result.stderr || '').split('\n').filter(line => line.includes('error TS'))
+  const errors = (result.stdout || result.stderr || '').split('\n').filter(line => line.includes('error TS'))
+  const failures = []
+  const pending = new Set()
+
+  for (const error of errors) {
+    /*
+      A bodiless overload is what a `decl` block is *for* -- the marker's whole definition includes
+      them -- so reporting one contradicts the contract this gate publishes.
+    */
+    if (error.includes('error TS2391') && error.startsWith('block-')) {
+      continue
+    }
+
+    // TS2552 is the same finding with a suggestion attached -- tsc offers the nearest name it can
+    // see, which for `WorkersOptions` is Node's own `WorkerOptions` and is not what the block means.
+    const missing = error.match(/error TS(?:2304|2552): Cannot find name '([^']+)'/)
+
+    if (missing && pendingGeneratedTypes.has(missing[1])) {
+      pending.add(missing[1])
+      continue
+    }
+
+    failures.push(error)
+  }
+
+  return { failures, pending }
 }
 
 /*
@@ -298,14 +361,16 @@ async function main () {
     }
   }
 
-  for (const error of typecheck(typecheckable)) {
+  const { failures: typeErrors, pending } = typecheck(typecheckable)
+
+  for (const error of typeErrors) {
     failures.push(`typecheck: ${error}`)
   }
 
-  report(blocks, failures)
+  report(blocks, failures, pending)
 }
 
-function report (blocks, failures) {
+function report (blocks, failures, pending = new Set()) {
   const counts = {}
 
   for (const block of blocks) {
@@ -317,6 +382,14 @@ function report (blocks, failures) {
       .map(([marker, count]) => `${count} ${marker}`)
       .join(', ')}`
   )
+
+  if (pending.size > 0) {
+    // Named rather than hidden: this is the generation the blocks are waiting on, and a gate that
+    // said nothing about it would read as though the document were fully checked.
+    console.log(
+      `\npending generated types (${pending.size}): ${[...pending].sort().join(', ')}`
+    )
+  }
 
   if (failures.length === 0) {
     console.log('\nOK')
