@@ -338,7 +338,7 @@ export const schema = {
     plugins,
     application: basicSchemaComponents.application,
     runtime: wrappedRuntime,
-    telemetry: utilsSchemaComponents.telemetry,
+    tracing: utilsSchemaComponents.tracing,
     watch: {
       anyOf: [
         watch,

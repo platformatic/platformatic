@@ -311,7 +311,7 @@ runtime. Each application object supports the following settings:
 
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 - **`management`** (`boolean` or `object`): Grants the application access to runtime management operations via the ITC (Inter-Thread Communication) channel. See the [management](#management) section for details.
-- **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
+- **`tracing`** (`object`): containing an `instrumentations` array to optionally configure additional OpenTelemetry
   intrumentations per application, e.g.:
 
 ```json
@@ -319,7 +319,7 @@ runtime. Each application object supports the following settings:
     {
       "id": "api",
       "path": "./services/api",
-      "telemetry": {
+      "tracing": {
         "instrumentations": ["@opentelemetry/instrumentation-express"]
       }
     }
@@ -333,7 +333,7 @@ It's possible to specify the name of the export of the instrumentation and/or th
     {
       "id": "api",
       "path": "./services/api",
-      "telemetry": {
+      "tracing": {
         "instrumentations": [{
           "package": "@opentelemetry/instrumentation-express",
           "exportName": "ExpressInstrumentation",
@@ -353,7 +353,7 @@ It's also possible to disable the instrumentation by setting the `enabled` value
     {
       "id": "api",
       "path": "./services/api",
-      "telemetry": {
+      "tracing": {
         "enabled": "false",
         "instrumentations": [{
           "package": "@opentelemetry/instrumentation-express",
@@ -539,7 +539,7 @@ Use an object to configure the health probes server. Health probes are exposed o
 }
 ```
 
-### `telemetry`
+### `tracing`
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
@@ -573,7 +573,7 @@ For OTLP exporters:
 
 ```json title="Example JSON object"
 {
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-application",
     "diagLogger": true,
     "exporter": {
@@ -638,11 +638,11 @@ An object with the following settings:
   - **`time`** — The key that contains the log timestamp. Default: `time`.
   - **`message`** — The key that contains the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
-- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
+- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `tracing` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
 
-  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
+  When used with tracing configuration, the service name and version from `tracing.applicationName` and `tracing.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
 
 ### `undici`
 

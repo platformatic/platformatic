@@ -19,7 +19,7 @@ import { workerData } from 'node:worker_threads'
 import { getInstrumentations } from './pluggable-instrumentations.js'
 import { getSpanProcessors } from './span-processors.js'
 
-const debuglog = util.debuglog('@platformatic/telemetry')
+const debuglog = util.debuglog('@platformatic/tracing')
 
 // See: https://www.npmjs.com/package/@opentelemetry/instrumentation-http
 // When this is fixed we should set this to 'http' and fix the tests
@@ -86,8 +86,8 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir, usesPlatformaticDisp
 
 // Create a promise that will be resolved when telemetry is initialized
 // This allows other parts of the system to wait for telemetry to be ready
-const { promise: telemetryReadyPromise, resolve: resolveTelemetryReady } = Promise.withResolvers()
-updateGlobals({ telemetryReady: telemetryReadyPromise })
+const { promise: tracingReadyPromise, resolve: resolveTracingReady } = Promise.withResolvers()
+updateGlobals({ tracingReady: tracingReadyPromise })
 
 async function main () {
   let data = null
@@ -110,21 +110,21 @@ async function main () {
   if (data) {
     debuglog('Setting up telemetry %o', data)
     const applicationDir = data.applicationConfig?.path
-    const telemetryConfig = useWorkerData ? data?.applicationConfig?.telemetry : data?.telemetryConfig
-    if (telemetryConfig) {
-      debuglog('telemetryConfig %o', telemetryConfig)
-      await setupNodeHTTPTelemetry(telemetryConfig, applicationDir, data.applicationConfig?.type === '@platformatic/next')
-      resolveTelemetryReady()
+    const tracingConfig = useWorkerData ? data?.applicationConfig?.tracing : data?.tracingConfig
+    if (tracingConfig) {
+      debuglog('tracingConfig %o', tracingConfig)
+      await setupNodeHTTPTelemetry(tracingConfig, applicationDir, data.applicationConfig?.type === '@platformatic/next')
+      resolveTracingReady()
     } else {
-      resolveTelemetryReady()
+      resolveTracingReady()
     }
   } else {
-    resolveTelemetryReady()
+    resolveTracingReady()
   }
 }
 
 main().catch(e => {
   debuglog('Error in main %o', e)
   // Always resolve the promise even on error to prevent hanging
-  resolveTelemetryReady()
+  resolveTracingReady()
 })

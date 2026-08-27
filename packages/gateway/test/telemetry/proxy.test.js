@@ -26,7 +26,7 @@ test('should proxy openapi requests with telemetry span', async t => {
       ],
       refreshTimeout: 1000
     },
-    telemetry: {
+    tracing: {
       applicationName: 'test-gateway',
       version: '1.0.0',
       exporter: {
@@ -86,7 +86,7 @@ test('should proxy openapi requests with telemetry, managing errors', async t =>
       ],
       refreshTimeout: 1000
     },
-    telemetry: {
+    tracing: {
       applicationName: 'test-gateway',
       version: '1.0.0',
       exporter: {

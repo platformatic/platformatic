@@ -65,7 +65,7 @@ test('BaseContext interface', () => {
     isProduction: false,
     isStandalone: true,
     directory: '/path/to/dir',
-    telemetryConfig: { enabled: true },
+    tracingConfig: { enabled: true },
     metricsConfig: { port: 3000 },
     hasManagementApi: true
   }).type.toBeAssignableTo<BaseContext>();

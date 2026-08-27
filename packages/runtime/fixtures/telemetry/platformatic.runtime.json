@@ -5,7 +5,7 @@
     "path": "services",
     "exclude": ["docs"]
   },
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-runtime",
     "version": "1.0.0",
     "exporter": {

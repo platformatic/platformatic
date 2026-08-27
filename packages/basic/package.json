@@ -31,7 +31,7 @@
     "@platformatic/globals": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
+    "@platformatic/tracing": "workspace:*",
     "execa": "^9.3.1",
     "fast-json-patch": "^3.1.1",
     "pino": "^9.9.0",

@@ -25,7 +25,7 @@ Add OpenTelemetry log export to your `watt.json`:
       "url": "http://localhost:4318/v1/logs"
     }
   },
-  "telemetry": {
+  "tracing": {
     "enabled": true,
     "applicationName": "my-service",
     "version": "1.0.0",
@@ -46,11 +46,11 @@ This configuration:
 - Identifies the service as "my-service" v1.0.0
 - Automatically correlates logs with traces
 
-The trace exporter in the `telemetry` block also supports OTLP over gRPC:
+The trace exporter in the `tracing` block also supports OTLP over gRPC:
 
 ```json
 {
-  "telemetry": {
+  "tracing": {
     "exporter": {
       "type": "otlp",
       "options": {
@@ -145,9 +145,9 @@ The `logger.openTelemetryExporter` object configures OpenTelemetry export:
 | `protocol` | `"http" \| "grpc"` | Yes      | Transport protocol      |
 | `url`      | `string`           | Yes      | OTLP collector endpoint |
 
-### Telemetry Configuration
+### Tracing Configuration
 
-The `telemetry` object provides service identity:
+The `tracing` object provides service identity:
 
 | Property          | Type      | Required | Description                              |
 | ----------------- | --------- | -------- | ---------------------------------------- |
@@ -168,7 +168,7 @@ The `telemetry` object provides service identity:
       "url": "http://otel-collector:4318/v1/logs"
     }
   },
-  "telemetry": {
+  "tracing": {
     "enabled": true,
     "applicationName": "api-gateway",
     "version": "2.0.0",
@@ -358,7 +358,7 @@ datasources:
             "url": "http://localhost:4318/v1/logs"
         }
     },
-	"telemetry": {
+	"tracing": {
         "applicationName": "PROJECT_NAME",
         "version": "1.0.0",
         "enabled": true,
@@ -502,7 +502,7 @@ When using multiple applications in a Watt runtime, each inherits the logger con
       "url": "{OTLP_ENDPOINT}/v1/logs"
     }
   },
-  "telemetry": {
+  "tracing": {
     "enabled": true,
     "applicationName": "microservices-platform",
     "version": "1.0.0"

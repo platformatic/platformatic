@@ -1,9 +1,9 @@
 import { schemaComponents } from '@platformatic/foundation'
 
 const schema = {
-  ...schemaComponents.telemetry,
+  ...schemaComponents.tracing,
   properties: {
-    ...schemaComponents.telemetry.properties,
+    ...schemaComponents.tracing.properties,
     module: {
       type: 'string'
     }

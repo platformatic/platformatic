@@ -17,7 +17,7 @@ import {
   platformaticGateway,
   schema,
   schemaComponents,
-  skipTelemetryHooks
+  skipTracingHooks
 } from '../../index.js'
 
 test('Gateway types', () => {
@@ -41,7 +41,7 @@ test('Gateway types', () => {
 
   expect(serverInstance).type.toBe<ServerInstance>()
 
-  expect(skipTelemetryHooks).type.toBe<boolean>()
+  expect(skipTracingHooks).type.toBe<boolean>()
   expect(packageJson).type.toBe<Record<string, unknown>>()
   expect(schema).type.toBe<JSONSchemaType<PlatformaticGatewayConfig>>()
   expect(schemaComponents).type.toBe<{

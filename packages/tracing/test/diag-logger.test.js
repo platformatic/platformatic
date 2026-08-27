@@ -41,7 +41,7 @@ test('createPlatformaticDiagLogger forwards OpenTelemetry diagnostic logs to the
   diagLogger.verbose('verbose message')
 
   deepStrictEqual(calls, [
-    ['child', { name: '@platformatic/telemetry/diag' }],
+    ['child', { name: '@platformatic/tracing/diag' }],
     ['error', ['error message']],
     ['warn', ['warn message']],
     ['info', ['info message']],

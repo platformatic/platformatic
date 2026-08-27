@@ -162,7 +162,7 @@ export interface AcmeBaseConfig {
           [k: string]: string
         }
       }
-  telemetry?: OpenTelemetry
+  tracing?: OpenTelemetry
   watch?:
     | {
         enabled?: boolean | string

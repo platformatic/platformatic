@@ -752,7 +752,7 @@ export const openTelemetryExporter = {
   }
 }
 
-export const telemetry = {
+export const tracing = {
   type: 'object',
   properties: {
     enabled: {
@@ -996,7 +996,7 @@ export const application = {
       },
       additionalProperties: false
     },
-    telemetry: {
+    tracing: {
       type: 'object',
       properties: {
         instrumentations: {
@@ -1490,7 +1490,7 @@ export const runtimeProperties = {
       }
     ]
   },
-  telemetry,
+  tracing,
   verticalScaler,
   inspectorOptions: {
     type: 'object',
@@ -1667,7 +1667,7 @@ export const schemaComponents = {
   health,
   healthWithoutDefaults,
   openTelemetryExporter,
-  telemetry,
+  tracing,
   policies,
   compileCache,
   applications,

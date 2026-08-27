@@ -31,7 +31,7 @@ test('should set telemetry in config on all the node applications', async t => {
   assert.strictEqual(statusCode, 200)
 
   const applicationConfig = await body.json()
-  assert.deepEqual(applicationConfig.telemetry, {
+  assert.deepEqual(applicationConfig.tracing, {
     applicationName: 'test-application-api',
     version: '1.0.0',
     exporter: {

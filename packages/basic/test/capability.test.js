@@ -83,7 +83,7 @@ test('BaseCapability - startCommand - should expose the configured entrypoint po
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -324,7 +324,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -378,7 +378,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -400,7 +400,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -455,7 +455,7 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -476,7 +476,7 @@ test('BaseCapability - startCommand - should not override an application-owned l
         hostname: '127.0.0.1',
         port
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -530,7 +530,7 @@ test('BaseCapability - startCommand - should not override an application-owned l
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -549,7 +549,7 @@ test('BaseCapability - startCommand - should not override the port when unset fo
       serverConfig: {
         hostname: '127.0.0.1'
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -603,7 +603,7 @@ test('BaseCapability - startCommand - should not override the port when unset fo
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -623,7 +623,7 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {
+      tracingConfig: {
         applicationName: 'test-telemetry',
         exporter: {
           type: 'otlp',
@@ -685,7 +685,7 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {
+      tracingConfig: {
         applicationName: 'test-telemetry',
         exporter: {
           type: 'otlp',
@@ -839,7 +839,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 10,
@@ -894,7 +894,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       events: undefined,
@@ -915,7 +915,7 @@ test('BaseCapability - stopCommand - should not throw if subprocess was never as
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 10,

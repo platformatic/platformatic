@@ -853,7 +853,7 @@ export interface PlatformaticGatewayConfig {
             default?: string;
           }[];
         };
-    telemetry?: {
+    tracing?: {
       enabled?: boolean | string;
       /**
        * The name of the application. Defaults to the folder name if not specified.
@@ -1079,7 +1079,7 @@ export interface PlatformaticGatewayConfig {
           write?: string[];
         };
       };
-      telemetry?: {
+      tracing?: {
         /**
          * An array of instrumentations loaded if telemetry is enabled
          */
@@ -1110,7 +1110,7 @@ export interface PlatformaticGatewayConfig {
           };
     };
   };
-  telemetry?: {
+  tracing?: {
     enabled?: boolean | string;
     /**
      * The name of the application. Defaults to the folder name if not specified.

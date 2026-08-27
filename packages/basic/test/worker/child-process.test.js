@@ -197,7 +197,7 @@ test('ChildProcess - should change directory before command execution when reque
       port: true,
       reuseTcpPorts: false,
       root: pathToFileURL(root).toString(),
-      telemetryConfig: { enabled: false },
+      tracingConfig: { enabled: false },
       workerId: 0
     }
   })

@@ -10,7 +10,7 @@
     {
       "id": "express",
       "path": "./api/express",
-      "telemetry": {
+      "tracing": {
         "instrumentations": [
           "@opentelemetry/instrumentation-pg"
         ]
@@ -18,7 +18,7 @@
     }
   ],
   "basePath": "/",
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-pg",
     "version": "1.0.0",
     "exporter": {

@@ -836,7 +836,7 @@
                 },
                 "additionalProperties": false
               },
-              "telemetry": {
+              "tracing": {
                 "type": "object",
                 "properties": {
                   "instrumentations": {
@@ -2137,7 +2137,7 @@
             }
           ]
         },
-        "telemetry": {
+        "tracing": {
           "type": "object",
           "properties": {
             "enabled": {
@@ -2855,7 +2855,7 @@
               },
               "additionalProperties": false
             },
-            "telemetry": {
+            "tracing": {
               "type": "object",
               "properties": {
                 "instrumentations": {

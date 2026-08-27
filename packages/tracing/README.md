@@ -1,4 +1,4 @@
-# @platformatic/telemetry
+# @platformatic/tracing
 
 [OpenTelemetry](https://opentelemetry.io/) integration for Platformatic, providing distributed tracing and metrics collection.
 
@@ -7,7 +7,7 @@ Check out the guides on [our website](https://docs.platformatic.dev/docs/guides/
 ## Install
 
 ```sh
-npm install @platformatic/telemetry
+npm install @platformatic/tracing
 ```
 
 ## License

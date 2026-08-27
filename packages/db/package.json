@@ -64,7 +64,7 @@
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
+    "@platformatic/tracing": "workspace:*",
     "camelcase": "^6.3.0",
     "close-with-grace": "^2.0.0",
     "code-block-writer": "^13.0.1",
