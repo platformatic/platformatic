@@ -3018,6 +3018,15 @@ export default {
   the same rule scaffolding follows when it picks a suffix, and it is stated here
   because a generator choosing `watt.config.js` unconditionally is the natural
   mistake.
+
+  **Converting the writers is gated on the `4.0.0` version bump**, which is a
+  sequencing constraint rather than a preference. A writer stamps the version it
+  generated against; on a `3.x` tree that URL has a major of 3, and the loader refuses
+  a stale v3 stamp with the migrate hint — correctly, since that is the whole point of
+  reading it. So a converted writer on a `3.x` tree emits bundles and scaffolds that
+  cannot load. The alternative, emitting the plain-object form with no stamp, gives up
+  the one signal the next major's migration reads. Nothing stops the writers from being
+  *ready* before the bump; they cannot be *shipped* before it.
 - **`getApplicationConfig()` is a different API with a different view, and it
   survives unchanged.** `runtime.getApplicationConfig(id)` is not part of the payload
   below: it asks a *running worker* for `capability.getConfig()` over ITC
