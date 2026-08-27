@@ -234,6 +234,14 @@ function collectStringFormEvidence (names) {
   const evidence = new Map(names.map(name => [name, []]))
   const parserCall = /\b(parseMemorySize|parseDuration|parseTime|ms|bytes)\s*\(/
 
+  /*
+    Whole identifiers, not substrings. `port` occurs inside `export` and `reported`, so a substring
+    test reported it as having a real string branch on the strength of two lines that never mention
+    it -- and this list exists to protect the genuine counter-examples from a mechanical deletion,
+    so a false positive in it is worse than a miss.
+  */
+  const references = new Map(names.map(name => [name, new RegExp(`\\b${name.replace(/[^\w]/g, '\\$&')}\\b`)]))
+
   function scan (directory) {
     let entries
 
@@ -269,7 +277,7 @@ function collectStringFormEvidence (names) {
         }
 
         for (const name of names) {
-          if (line.includes(name) && evidence.get(name).length < 3) {
+          if (references.get(name).test(line) && evidence.get(name).length < 3) {
             evidence.get(name).push(`${path.slice(root.length + 1)}:${index + 1}`)
           }
         }

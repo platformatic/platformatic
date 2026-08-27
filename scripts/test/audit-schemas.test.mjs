@@ -87,3 +87,25 @@ test('a candidate whose string form is parsed somewhere carries that evidence', 
     `expected a runtime call site, got ${heap.stringFormEvidence.join(', ')}`
   )
 })
+
+test('the string-form evidence matches whole identifiers, not substrings', () => {
+  const { unions } = run()
+
+  /*
+    `port` occurs inside `export` and `reported`, and a substring test reported those two lines as
+    evidence that a string port is parsed somewhere. This list is what protects the genuine
+    counter-examples -- `maxHeapTotal`, whose string form really is parsed -- from a mechanical
+    deletion of the string branch, so a false entry in it is worse than a missing one: it withdraws
+    the protection from the properties that need it and grants it to one that does not.
+  */
+  const port = unions.find(union => union.pointer === '/properties/server/properties/port')
+
+  assert.ok(port, 'expected server.port to be a union site')
+  assert.deepStrictEqual(port.stringFormEvidence, [])
+
+  for (const union of unions) {
+    for (const line of union.stringFormEvidence ?? []) {
+      assert.ok(!line.includes('foundation/lib/string.js'), `parseMemorySize is not evidence about ${union.pointer}`)
+    }
+  }
+})
