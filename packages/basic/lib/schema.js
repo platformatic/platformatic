@@ -58,9 +58,6 @@ const buildableApplication = {
       default: {},
       additionalProperties: false
     },
-    entrypointPort: {
-      type: 'number'
-    },
     changeDirectoryBeforeExecution: {
       type: 'boolean',
       default: false

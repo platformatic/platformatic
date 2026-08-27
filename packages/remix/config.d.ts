@@ -123,7 +123,6 @@ export interface PlatformaticRemixConfig {
       development?: string;
       production?: string;
     };
-    entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
     processSpawner?: string;

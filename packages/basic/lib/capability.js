@@ -921,12 +921,6 @@ export class BaseCapability extends EventEmitter {
       url.hostname = 'localhost'
     }
 
-    const port = this.config.application?.entrypointPort
-
-    if (typeof port === 'number') {
-      url.port = port
-    }
-
     return url.pathname === '/' && url.search === '' && url.hash === '' ? url.origin : url.toString()
   }
 

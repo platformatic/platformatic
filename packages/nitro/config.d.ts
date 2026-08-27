@@ -122,7 +122,6 @@ export interface PlatformaticNitroConfig {
       development?: string;
       production?: string;
     };
-    entrypointPort?: number;
     changeDirectoryBeforeExecution?: boolean;
     preferLocalCommands?: boolean;
     processSpawner?: string;
