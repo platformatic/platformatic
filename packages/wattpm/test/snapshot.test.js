@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { cliPath, executeCommand, wattpm } from './helper.js'
+import { cliPath, executeCommand, parseRuntimeLog, wattpm } from './helper.js'
 
 function wattpmInDir (cwd, ...args) {
   return executeCommand(process.argv[0], cliPath, ...args, { cwd })
@@ -26,7 +26,11 @@ test('heap-snapshot - should take a heap snapshot of a specific application', as
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -67,7 +71,11 @@ test('heap-snapshot - should take heap snapshots of all applications when no app
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -101,7 +109,11 @@ test('heap-snapshot - should save to custom directory with --dir option', async 
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -134,7 +146,11 @@ test('heap-snapshot - should fail with non-existent application', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -158,7 +174,11 @@ test('heap-snapshot - should fail with non-existent worker', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break

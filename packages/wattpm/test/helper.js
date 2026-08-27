@@ -115,3 +115,17 @@ export function executeCommand (cmd, ...args) {
 export function wattpm (...args) {
   return executeCommand(process.argv[0], cliPath, ...args)
 }
+
+/*
+  `dev` and `start` share stdout between two writers: the runtime logs JSON records there, and the
+  CLI logs human-readable lines — the boot-scope announcement, the standalone warning, `logger.done`.
+  A test looking for a runtime record has to step over the CLI's, which were never JSON to begin
+  with, so this returns null instead of throwing on them.
+*/
+export function parseRuntimeLog (log) {
+  try {
+    return JSON.parse(log.toString())
+  } catch {
+    return null
+  }
+}

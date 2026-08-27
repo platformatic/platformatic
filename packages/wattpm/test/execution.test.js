@@ -4,26 +4,13 @@ import getPort from 'get-port'
 import { connect } from 'inspector-client'
 import { deepStrictEqual, ok } from 'node:assert'
 import { on } from 'node:events'
-import { readFile, writeFile } from 'node:fs/promises'
+import { cp, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
-import { prepareRuntime } from '../../basic/test/helper.js'
-import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm } from './helper.js'
-
-/*
-  `dev` and `start` share stdout between two writers: the runtime logs JSON there, and the CLI logs
-  human-readable lines — the boot-scope announcement, the standalone warning, `logger.done`. A test
-  reading the runtime's records has to step over the CLI's, which were never JSON to begin with.
-*/
-function parseRuntimeLog (log) {
-  try {
-    return JSON.parse(log.toString())
-  } catch {
-    return null
-  }
-}
+import { createTemporaryDirectory, prepareRuntime } from '../../basic/test/helper.js'
+import { changeWorkingDirectory, parseRuntimeLog, prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -715,4 +702,24 @@ test('the boot scope is announced, and a standalone boot warns about what is not
 
   const output = seen.join('\n')
   ok(output.includes('booting one application standalone'), output)
+})
+
+test('start --config-timeout - a configuration that never resolves fails the load rather than hanging', async t => {
+  /*
+    Copied rather than prepared: prepareRuntime evaluates the configuration to patch its listener
+    ports, and this one never resolves — the helper would hang in the test process instead of the
+    CLI, which is the opposite of what is under test.
+  */
+  const rootDir = await createTemporaryDirectory(t, 'slow-config')
+  await cp(resolve(import.meta.dirname, 'fixtures/slow-config'), rootDir, { recursive: true })
+
+  /*
+    The default deadline is 30s, which a test should not wait for. The flag exists precisely because
+    the right answer differs per deployment — an awaited fetch to a dead host is not the same
+    problem as a slow one.
+  */
+  const startProcess = await wattpm('start', '--config-timeout', '1500', rootDir, { reject: false })
+
+  deepStrictEqual(startProcess.exitCode, 1)
+  ok(/timed out after 1500ms/.test(startProcess.stdout + startProcess.stderr), startProcess.stdout + startProcess.stderr)
 })

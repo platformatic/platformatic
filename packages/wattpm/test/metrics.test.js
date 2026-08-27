@@ -2,7 +2,7 @@ import { on } from 'node:events'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { wattpm } from './helper.js'
+import { parseRuntimeLog, wattpm } from './helper.js'
 import { ok } from 'node:assert'
 
 test('metrics - should return runtime metrics without format opt', async t => {
@@ -16,7 +16,11 @@ test('metrics - should return runtime metrics without format opt', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -42,7 +46,11 @@ test('metrics - should return runtime metrics with text format', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break

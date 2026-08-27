@@ -105,8 +105,14 @@ test('an entry with no file and no inline config is resolved by the detector', a
   deepStrictEqual(config.applications[0].config, {})
   strictEqual(config.applications[0].detected, true)
 
-  // Boot logs one line per detected application, so the inference is never invisible.
-  strictEqual(report.info[0].message, 'api → @platformatic/next (detected)')
+  /*
+    Boot logs one line per detected application, so the inference is never invisible. Selected
+    rather than indexed: the info stream carries the boot-scope announcement too, and a test that
+    depends on the order of diagnostics breaks every time one is added.
+  */
+  const detection = report.info.find(info => info.type === 'detected-capability')
+
+  strictEqual(detection?.message, 'api → @platformatic/next (detected)')
 })
 
 test('a capability dependency wins over an unrelated framework dependency', async t => {

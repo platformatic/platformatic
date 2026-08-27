@@ -204,6 +204,12 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     mode: context?.mode,
     production,
     customEnvFile: context?.envFile,
+    /*
+      The evaluation deadline. A configuration that never resolves — an awaited fetch to a dead
+      host, a forgotten promise — otherwise hangs the boot rather than failing it, and the default
+      is a guess about how long a reasonable one takes. A deployment that knows better says so.
+    */
+    timeout: context?.configTimeout,
     // The one file --debug-config evaluates in this process when an inspector is attached, so a
     // breakpoint in it is reachable at all: a throwaway worker dies before one can attach.
     inProcessTarget: context?.inProcessTarget,

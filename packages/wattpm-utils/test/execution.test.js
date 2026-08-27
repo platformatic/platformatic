@@ -83,10 +83,19 @@ test('start - should throw an error when an application has not been resolved', 
       .trim()
       .split('\n')
       .find(l => {
-        return (
-          JSON.parse(l).msg ===
-          'The path for application "resolved" does not exist. Please run "wattpm resolve" and try again.'
-        )
+        /*
+          `start` shares stdout between the runtime's JSON records and the CLI's human-readable
+          lines — the boot-scope announcement among them — so a search for one has to step over the
+          other rather than assume every line parses.
+        */
+        try {
+          return (
+            JSON.parse(l).msg ===
+            'The path for application "resolved" does not exist. Please run "wattpm resolve" and try again.'
+          )
+        } catch {
+          return false
+        }
       }),
     startProcess.stdout
   )

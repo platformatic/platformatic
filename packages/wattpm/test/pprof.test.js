@@ -8,7 +8,7 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { cliPath, executeCommand, wattpm } from './helper.js'
+import { cliPath, executeCommand, parseRuntimeLog, wattpm } from './helper.js'
 
 // Custom wattpm function that accepts cwd option
 function wattpmInDir (cwd, ...args) {
@@ -28,7 +28,11 @@ test('pprof start - should start profiling on specific service', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -60,7 +64,11 @@ test('pprof stop - should stop profiling and create profile file', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -118,7 +126,11 @@ test('pprof start - should start profiling on all services when no service speci
   const startProcess = wattpm('start')
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -149,7 +161,11 @@ test('pprof stop - should stop profiling on all services and create multiple pro
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -186,7 +202,11 @@ test('pprof --all-workers - should create one profile file per worker', async t 
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -229,7 +249,11 @@ test('pprof - should handle service not found error', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -303,7 +327,11 @@ test('pprof start - should start profiling with explicit runtime id and service'
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -344,7 +372,11 @@ test('pprof stop - should stop profiling with explicit runtime id and service', 
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -416,7 +448,11 @@ test('pprof - should handle service not found with explicit runtime id', async t
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -460,7 +496,11 @@ test('pprof start --type=heap - should start heap profiling', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -492,7 +532,11 @@ test('pprof stop --type=heap - should stop heap profiling and create profile fil
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -544,7 +588,11 @@ test('pprof concurrent cpu and heap profiling', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -592,7 +640,11 @@ test('pprof --type with short option -t', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -628,7 +680,11 @@ test('pprof start --source-maps - should start profiling with source maps enable
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -676,7 +732,11 @@ test('pprof start --source-maps with short option -s', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -709,7 +769,11 @@ test('pprof start --type=heap --source-maps - should work with both options', as
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -754,7 +818,11 @@ test('pprof stop --dir - should save profile to specified directory', async t =>
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -809,7 +877,11 @@ test('pprof stop --dir with short option -d', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
