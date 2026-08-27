@@ -484,10 +484,22 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   // Discover rather than assume, so a package whose fixtures have been converted to v4 and one
   // whose fixtures are still v3 both work without every test naming its configuration. The v3
   // fallback goes when the last fixture does.
+  /*
+    Discovery over both dialects, v4 first. A fixed fallback only worked while every fixture was
+    v3, and it stopped working the moment some were not -- the fixtures that stay v3 are the ones
+    whose readers still are, and a test naming none of this should not have to know which is which.
+  */
   configFile ??=
-    ['watt.config.js', 'watt.config.mjs', 'watt.config.ts'].find(candidate =>
-      existsSync(resolve(source, candidate))
-    ) ?? 'platformatic.runtime.json'
+    [
+      'watt.config.js',
+      'watt.config.mjs',
+      'watt.config.ts',
+      'watt.config.mts',
+      'watt.json',
+      'platformatic.json',
+      'watt.runtime.json',
+      'platformatic.runtime.json'
+    ].find(candidate => existsSync(resolve(source, candidate))) ?? 'platformatic.runtime.json'
 
   if (port === 0) {
     port = await getPort.default()
