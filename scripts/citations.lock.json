@@ -25,7 +25,7 @@
       "head": "export async function resolveApplications (",
       "lines": 92
     },
-    "packages/runtime/lib/runtime.js:2512,2524": {
+    "packages/runtime/lib/runtime.js:2528,2540": {
       "sha": "26e04f76be072fdf",
       "head": "async #setupApplication (applicationConfig) {",
       "lines": 2
@@ -210,7 +210,7 @@
       "head": "reusePort: satisfies(process.version, '^22.12.0 || ^23.1.0 || >=24.0.0') && !['win32', 'darwin'].includes(currentPlatform),",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2557-2573": {
+    "packages/runtime/lib/runtime.js:2573-2589": {
       "sha": "af2b2c92b05d549f",
       "head": "// On platforms where reusePort is not available, multiple workers cannot listen on the same fixed port.",
       "lines": 17
@@ -240,12 +240,12 @@
       "head": "const port = this.config.application?.entrypointPort",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:5079-5095": {
+    "packages/runtime/lib/runtime.js:5095-5111": {
       "sha": "26df4937949e6472",
       "head": "#recordWorkerUrl (worker, applicationId, workerUrl) {",
       "lines": 17
     },
-    "packages/runtime/lib/runtime.js:5049-5070": {
+    "packages/runtime/lib/runtime.js:5065-5086": {
       "sha": "6eae509a726c7eba",
       "head": "#getPortOwner (port, applicationId, hostname, includeSameApplication = false) {",
       "lines": 22
@@ -255,22 +255,22 @@
       "head": "export const AddressInUseError = createError(",
       "lines": 4
     },
-    "packages/runtime/lib/runtime.js:5093-5095": {
+    "packages/runtime/lib/runtime.js:5109-5111": {
       "sha": "90db33ab09e7c6b2",
       "head": "const owner = this.#getPortOwner(port, applicationId, hostname)",
       "lines": 3
     },
-    "packages/runtime/lib/runtime.js:5055": {
+    "packages/runtime/lib/runtime.js:5071": {
       "sha": "2cd995ac0689be72",
       "head": "if (!worker[kWorkerUrl] || (!includeSameApplication && worker[kApplicationId] === applicationId)) {",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:3481-3491": {
+    "packages/runtime/lib/runtime.js:3497-3507": {
       "sha": "00b427fcb062b41c",
       "head": "if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {",
       "lines": 11
     },
-    "packages/runtime/lib/runtime.js:3519-3523": {
+    "packages/runtime/lib/runtime.js:3535-3539": {
       "sha": "7b842472ff8bfc27",
       "head": "error.code === 'EACCES' ||",
       "lines": 5
@@ -285,7 +285,7 @@
       "head": "const loaderUrl = new URL('./loader.js', import.meta.url)",
       "lines": 16
     },
-    "packages/runtime/lib/runtime.js:5072-5077": {
+    "packages/runtime/lib/runtime.js:5088-5093": {
       "sha": "aea3da1dcb6d1cb8",
       "head": "#listenersOverlap (host, otherHost) {",
       "lines": 6
@@ -310,7 +310,7 @@
       "head": "return this.getUrls()",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2490-2510": {
+    "packages/runtime/lib/runtime.js:2506-2526": {
       "sha": "ec35fac99ba0e6c8",
       "head": "#showUrls (workerIds) {",
       "lines": 21
@@ -320,12 +320,12 @@
       "head": "urls: this.getUrls()",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2249-2251": {
+    "packages/runtime/lib/runtime.js:2265-2267": {
       "sha": "5a655c18089fdfc2",
       "head": "const urls = status === 'started' ? Object.values(this.getUrls(id)) : []",
       "lines": 3
     },
-    "packages/runtime/lib/runtime.js:2368": {
+    "packages/runtime/lib/runtime.js:2384": {
       "sha": "4931eea02b7bf2a6",
       "head": "url: worker[kWorkerUrl] ?? null,",
       "lines": 1
@@ -500,12 +500,12 @@
       "head": "#backgroundServiceInject (_, res) {",
       "lines": 2
     },
-    "packages/runtime/lib/runtime.js:2486-2506": {
+    "packages/runtime/lib/runtime.js:2502-2522": {
       "sha": "e18d35659de4acaa",
       "head": "this.#status = status",
       "lines": 21
     },
-    "packages/runtime/lib/runtime.js:2249": {
+    "packages/runtime/lib/runtime.js:2265": {
       "sha": "0f61db6851ef20cf",
       "head": "const urls = status === 'started' ? Object.values(this.getUrls(id)) : []",
       "lines": 1
@@ -525,7 +525,7 @@
       "head": "startTimeout: {",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:3430-3437": {
+    "packages/runtime/lib/runtime.js:3446-3453": {
       "sha": "877f96836876a323",
       "head": "if (config.startTimeout > 0) {",
       "lines": 8
@@ -555,12 +555,12 @@
       "head": "await prepareApplication(config, applications[i], defaultWorkers)",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2621": {
+    "packages/runtime/lib/runtime.js:2637": {
       "sha": "8a3ddc1ad1e8f8be",
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:299-302": {
+    "packages/runtime/index.js:306-309": {
       "sha": "f05241a09ec2d711",
       "head": "const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))",
       "lines": 4
@@ -650,7 +650,7 @@
       "head": ": new ImportGenerator({",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2260-2264": {
+    "packages/runtime/lib/runtime.js:2276-2280": {
       "sha": "21c030b006599ba4",
       "head": "async getApplicationConfig (id, ensureStarted = true) {",
       "lines": 5
@@ -660,7 +660,7 @@
       "head": "async getApplicationConfig () {",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:3683": {
+    "packages/runtime/lib/runtime.js:3699": {
       "sha": "19c97e5fbb7578ec",
       "head": "server = (await sendViaITC(worker, 'getApplicationConfig'))?.server",
       "lines": 1
@@ -670,22 +670,22 @@
       "head": "app.get('/applications/:id/config', quiet, async request => {",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:2207-2223": {
+    "packages/runtime/lib/runtime.js:2223-2239": {
       "sha": "8ed5845a41d20965",
       "head": "const { localUrl, config, configPath, path } = application[kConfig]",
       "lines": 17
     },
-    "packages/runtime/lib/runtime.js:2211": {
+    "packages/runtime/lib/runtime.js:2227": {
       "sha": "3878307d4f94d23e",
       "head": "const { type, version, dependencies } = await sendViaITC(application, 'getApplicationInfo')",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:1618-1624": {
+    "packages/runtime/lib/runtime.js:1634-1640": {
       "sha": "83d88efe24ee3c97",
       "head": "getRuntimeConfig (includeMeta = false) {",
       "lines": 7
     },
-    "packages/runtime/lib/runtime.js:2207": {
+    "packages/runtime/lib/runtime.js:2223": {
       "sha": "72a94fd14e5a5781",
       "head": "const { localUrl, config, configPath, path } = application[kConfig]",
       "lines": 1
@@ -965,7 +965,7 @@
       "head": "try {",
       "lines": 11
     },
-    "packages/runtime/lib/runtime.js:2524": {
+    "packages/runtime/lib/runtime.js:2540": {
       "sha": "4b6f5ec3a0f8edda",
       "head": "applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)",
       "lines": 1
@@ -985,7 +985,7 @@
       "head": "envfile = resolve(workerData.applicationConfig.path, '.env')",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:4788-4795": {
+    "packages/runtime/lib/runtime.js:4804-4811": {
       "sha": "c0cc82ad34284a00",
       "head": "#getHealthChecksTimeout () {",
       "lines": 8

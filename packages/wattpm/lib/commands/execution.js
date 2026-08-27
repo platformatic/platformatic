@@ -77,17 +77,43 @@ export async function devCommand (logger, args) {
   // Handle reloading via either file changes or stdin "rs" command
   const { promise, reject } = Promise.withResolvers()
 
-  async function reloadApplication () {
-    await runtime.close()
-    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env })
+  let watchers = []
+
+  /*
+    v4 reports everything the evaluation read -- the configuration files, their import graph minus
+    node_modules, the env files consulted, and the directories whose membership decides the
+    application list. Watching only the deciding file meant a configuration split across a helper
+    module, or one reading a `.env`, reloaded for none of its own edits. v3 reports the deciding
+    file alone, which is exactly what this watched before.
+
+    They are re-armed after every reload, because the set is a property of the configuration that
+    was just evaluated: an edit can add an import, and the watcher for it has to exist before the
+    next edit rather than after.
+  */
+  function watchConfiguration () {
+    const targets = runtime.getConfigurationWatchTargets()
+
+    watchers = [...targets.files, ...targets.directories].map(path => {
+      const watcher = new FileWatcher({ path })
+      watcher.startWatching()
+
+      watcher.on('update', () => {
+        runtime.logger.info('The configuration has changed, reloading the application ...')
+        reloadApplication().catch(reject)
+      })
+
+      return watcher
+    })
   }
 
-  const watcher = new FileWatcher({ path: configurationFile })
-  watcher.startWatching()
-  watcher.on('update', () => {
-    runtime.logger.info('The configuration file has changed, reloading the application ...')
-    reloadApplication().catch(reject)
-  })
+  async function reloadApplication () {
+    await Promise.all(watchers.map(watcher => watcher.stopWatching()))
+    await runtime.close()
+    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env })
+    watchConfiguration()
+  }
+
+  watchConfiguration()
 
   const rl = createInterface({ input: process.stdin })
   rl.on('line', line => {

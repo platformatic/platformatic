@@ -242,7 +242,14 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     v4: {
       command: context?.command ?? (production ? 'start' : 'dev'),
       mode: loaded.mode,
-      production: loaded.production
+      production: loaded.production,
+      /*
+        Everything the evaluation actually read: the configuration files, their import graph minus
+        node_modules, the env files consulted, and the directories whose membership decides the
+        application list. `wattpm dev` reloads on any of it -- watching only the deciding file meant
+        a config split across a helper module reloaded for none of its own edits.
+      */
+      watchTargets: loaded.watchTargets
     }
   }
 

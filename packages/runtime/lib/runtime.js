@@ -1615,6 +1615,22 @@ export class Runtime extends EventEmitter {
     return this.#env
   }
 
+  /*
+    What a watcher has to follow to know this configuration changed. v4 reports the whole set the
+    evaluation read; v3 resolves per worker and has no such set, so it is the deciding file alone --
+    which is what dev watched before either way.
+  */
+  getConfigurationWatchTargets () {
+    const metadata = this.#config[kMetadata]
+    const targets = metadata?.v4?.watchTargets
+
+    if (targets) {
+      return { files: [...targets.files], directories: [...targets.directories] }
+    }
+
+    return { files: metadata?.path ? [metadata.path] : [], directories: [] }
+  }
+
   getRuntimeConfig (includeMeta = false) {
     if (includeMeta) {
       return this.#config

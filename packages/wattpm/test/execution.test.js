@@ -613,3 +613,37 @@ test('start --debug-config - should resolve a v4 configuration through the eval 
   ok(Array.isArray(config.applications))
   ok(config.applications.length > 0)
 })
+
+test('dev - should restart an application when a file the configuration imports is changed', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'imported-config', false, 'watt.config.mjs')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('dev', rootDir)
+  await waitForStart(startProcess)
+
+  /*
+    The deciding file is untouched: what changes is a module it imports. Watching only the
+    configuration file meant this edit reloaded nothing, which is the whole reason the loader
+    collects the import graph.
+  */
+  await writeFile(resolve(rootDir, 'logging.mjs'), "export const level = 'trace'\n", 'utf-8')
+
+  let reloaded = false
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg?.startsWith('The configuration has changed, reloading the application')) {
+      reloaded = true
+    }
+
+    if (parsed.msg?.match(/Platformatic is now listening at \S+ for worker \d+ of the application "main"/)) {
+      break
+    }
+  }
+
+  ok(reloaded)
+})
