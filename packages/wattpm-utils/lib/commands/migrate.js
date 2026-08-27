@@ -382,13 +382,18 @@ export function chooseFileName (root) {
 
   `services` and `web` are both spelled `applications`.
 */
-export function emitRootConfiguration (config, entries) {
+export function emitRootConfiguration (config, entries, inlined = []) {
   const { $schema, module: _module, applications, services, web, ...root } = config
 
-  return (
-    "import { defineConfig } from 'wattpm'\n\n" +
-    `export default defineConfig(${serializeValue({ ...root, applications: entries })})\n`
-  )
+  // A root-inline entry calls its factory in this file, so the file has to import it. Sorted and
+  // deduplicated because two inline entries may share a capability.
+  const imports = ["import { defineConfig } from 'wattpm'"]
+
+  for (const module of [...new Set(inlined)].sort()) {
+    imports.push(`import { ${factories[module]} } from '${module}'`)
+  }
+
+  return `${imports.join('\n')}\n\nexport default defineConfig(${serializeValue({ ...root, applications: entries })})\n`
 }
 
 /*
@@ -459,23 +464,21 @@ export async function planMigration (root, source, config) {
       rebased = relative(directory, declaredFile)
     }
 
-    if (canonicalize(directory) === rootDirectory) {
-      /*
-        Such an application has to be emitted root-inline — the per-app style would put two v4
-        candidates in one directory — and `envfile` beside an inline `config` is illegal, because
-        that entry has no eval worker of its own to apply it.
-      */
-      refusals.push(
-        envfile
-          ? {
-              reason: `${bold(named)} lives in the root configuration's own directory and declares ${bold('envfile')}`,
-              fix: 'move the application into a subdirectory, or fold the named file into its own .env set — an application emitted root-inline has no eval worker of its own, so an envfile beside an inline config has nothing to apply it'
-            }
-          : {
-              reason: `${bold(named)} lives in the root configuration's own directory`,
-              fix: 'this migrator does not yet emit root-inline entries; move the application into a subdirectory of its own and run migrate again'
-            }
-      )
+    /*
+      An application in the root configuration's own directory is emitted root-inline: the per-app
+      style would put two v4 candidates in one directory, which the loader rejects. Its capability
+      configuration becomes the entry's `config`, which is resolvable by definition — its
+      dependencies live at that root.
+    */
+    const inline = canonicalize(directory) === rootDirectory
+
+    if (inline && envfile) {
+      // An inline entry has no eval worker of its own, so an envfile beside it has nothing to
+      // apply it -- which is why the two cannot be spelled together.
+      refusals.push({
+        reason: `${bold(named)} lives in the root configuration's own directory and declares ${bold('envfile')}`,
+        fix: 'move the application into a subdirectory, or fold the named file into its own .env set — an application emitted root-inline has no eval worker of its own, so an envfile beside an inline config has nothing to apply it'
+      })
       continue
     }
 
@@ -510,7 +513,9 @@ export async function planMigration (root, source, config) {
         })
         continue
       }
-    } else {
+    } else if (!inline) {
+      // The root's own legacy file is the runtime configuration and not this application's, so an
+      // inline entry has a configuration only where the entry names one.
       legacy = findLegacyConfiguration(directory, null)
     }
 
@@ -536,17 +541,26 @@ export async function planMigration (root, source, config) {
     const derived = await deriveLegacyId(directory)
     const id = entry.id ? legalId(entry.id) : derived.id
 
+    // The id is pinned on the entry: v3 took an explicit entry's id from the entry itself, and
+    // leaving it out would let v4 derive a different one from the package name.
+    const settled = { ...orchestration, id, ...(envfile ? { envfile: rebased } : {}) }
+
+    if (inline) {
+      const { $schema: _schema, module: _declared, ...capability } = applicationConfig
+
+      settled.config = raw(`${factories[module]}(${serializeValue(capability, 3)})`)
+    }
+
     applications.push({
       config: applicationConfig,
       declared,
       directory,
+      inline,
       legacy,
       module,
-      // The id is pinned on the entry: v3 took an explicit entry's id from the entry itself, and
-      // leaving it out would let v4 derive a different one from the package name.
-      orchestration: { ...orchestration, id, ...(envfile ? { envfile: rebased } : {}) },
+      orchestration: settled,
       renamedFrom: entry.id && id !== entry.id ? entry.id : entry.id ? null : derived.renamedFrom,
-      target: join(directory, chooseFileName(directory))
+      target: inline ? null : join(directory, chooseFileName(directory))
     })
   }
 
@@ -612,7 +626,6 @@ function collectPlanRefusals (root, source, applications) {
     }
   }
 
-  const rootTarget = join(dirname(source), chooseFileName(dirname(source)))
   const existing = existingV4Candidate(dirname(source))
 
   if (existing) {
@@ -622,21 +635,29 @@ function collectPlanRefusals (root, source, applications) {
     })
   }
 
-  if (producers.has(canonicalize(rootTarget))) {
-    refusals.push({
-      reason: `${bold(relative(root, rootTarget))} is both the root configuration and an application's`,
-      fix: 'move that application into a subdirectory of its own — v4 keeps one configuration per directory'
-    })
-  }
-
   return refusals
 }
 
 async function emitApplications (journal, applications) {
   const entries = []
   const emitted = []
+  const inlined = []
 
   for (const application of applications) {
+    if (application.inline) {
+      /*
+        Its configuration now lives in the root file, so the file it came from goes -- leaving it
+        would put a legacy configuration beside a v4 one, which the loader refuses.
+      */
+      if (application.legacy) {
+        await journal.remove(application.legacy)
+        inlined.push(application.module)
+      }
+
+      entries.push(application.orchestration)
+      continue
+    }
+
     if (!application.target) {
       entries.push(application.orchestration)
       continue
@@ -655,7 +676,7 @@ async function emitApplications (journal, applications) {
     emitted.push(application)
   }
 
-  return { entries, emitted }
+  return { entries, emitted, inlined }
 }
 
 /*
@@ -767,7 +788,7 @@ export async function migrateCommand (logger, args) {
   let skipped = []
 
   if (runtime) {
-    const { entries, emitted } = await emitApplications(journal, plan.applications)
+    const { entries, emitted, inlined } = await emitApplications(journal, plan.applications)
 
     skipped = plan.skipped
 
@@ -777,7 +798,7 @@ export async function migrateCommand (logger, args) {
       }
     }
 
-    await journal.write(target, emitRootConfiguration(config, entries))
+    await journal.write(target, emitRootConfiguration(config, entries, inlined))
   } else {
     const derived = await deriveLegacyId(directory)
 

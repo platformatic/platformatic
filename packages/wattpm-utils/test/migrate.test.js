@@ -544,3 +544,58 @@ test('migrate - rebases an envfile the entry declared against the root', async t
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
   ok(emitted.includes("envfile: 'deploy.env'"), emitted)
 })
+
+test('migrate - emits an application in the root directory inline', async t => {
+  const root = await project(t, {
+    // Legal v3: the entry's own config file names the application, so the runtime and one of its
+    // applications shared a directory.
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'main', path: '.', config: 'platformatic.service.json' },
+        { id: 'api', path: './services/api' }
+      ]
+    },
+    'platformatic.service.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: { port: 3042 }
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    The per-app style would put a second v4 candidate in the root directory, which the loader
+    refuses -- so this application's capability configuration becomes the entry's own `config`, and
+    the file it came from goes.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("import { node } from '@platformatic/node'"), emitted)
+  ok(emitted.includes('config: node({'), emitted)
+  strictEqual(await fileExists(join(root, 'platformatic.service.json')), false)
+
+  // The sibling keeps the ordinary per-app emission: only the root directory has the collision.
+  ok(await fileExists(join(root, 'services/api/watt.config.mjs')))
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: { ...process.env },
+    validateCapabilities: false
+  })
+
+  deepStrictEqual(loaded.config.applications.map(entry => entry.id).sort(), ['api', 'main'])
+})
