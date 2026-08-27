@@ -195,6 +195,304 @@ function isEnabled (entry, environment) {
 }
 
 /*
+  The schema node governing a position, walked from a JSON pointer. Placeholder conversion needs the
+  target type of the position a `{PLT_X}` sits in, and the schema is the only thing that knows it.
+*/
+function resolveSchemaNode (schema, pointer) {
+  let node = schema
+
+  for (const segment of pointer.split('/').filter(Boolean)) {
+    if (!node || typeof node !== 'object') {
+      return null
+    }
+
+    if (node.properties?.[segment]) {
+      node = node.properties[segment]
+      continue
+    }
+
+    if (/^\d+$/.test(segment) && node.items) {
+      node = node.items
+      continue
+    }
+
+    if (node.additionalProperties && typeof node.additionalProperties === 'object') {
+      node = node.additionalProperties
+      continue
+    }
+
+    return null
+  }
+
+  return node
+}
+
+/*
+  A branch that exists only to let a `{PLT_X}` through. Two shapes: one carrying the placeholder
+  pattern outright, and a bare `{ type: 'string' }` sitting beside a typed branch -- which is how
+  every v3 schema widened a typed property to accept interpolation.
+
+  The second shape is also what a genuinely string-or-number property looks like, which is why the
+  properties whose string form is really parsed are excluded by name below rather than by shape.
+  `health.maxHeapTotal` accepts `'1 GB'` and is otherwise identical to `server.port`.
+*/
+const placeholderPatternBranch = /^\^?\\?\{/
+
+function isPlaceholderBranch (branch, siblings) {
+  if (typeof branch.pattern === 'string' && placeholderPatternBranch.test(branch.pattern)) {
+    return true
+  }
+
+  const bare = branch.type === 'string' && Object.keys(branch).length === 1
+
+  return bare && siblings.some(other => other !== branch && other.type && other.type !== 'string')
+}
+
+/*
+  Properties whose string form is read by code rather than replaced by interpolation. The audit
+  reports these from the sources; they are carried here because migrate has to refuse them, and a
+  shape test cannot tell them from a placeholder union.
+*/
+const parsedStringForms = new Set([
+  'maxHeapTotal',
+  'maxYoungGeneration',
+  'codeRangeSize',
+  'enabled',
+  'body',
+  'readOnly'
+])
+
+function classifyPosition (schema, pointer) {
+  const name = pointer.split('/').pop()
+
+  if (parsedStringForms.has(name)) {
+    return { kind: 'parsed' }
+  }
+
+  const node = resolveSchemaNode(schema, pointer)
+
+  if (!node) {
+    return { kind: 'unknown' }
+  }
+
+  const branches = node.anyOf ?? node.oneOf
+
+  if (branches) {
+    const real = branches.filter(branch => !isPlaceholderBranch(branch, branches))
+
+    if (real.length !== 1) {
+      // Either nothing was recognised as a placeholder branch, or several survive: a genuine union,
+      // which is the hand work the audit exists to narrow and not something to guess at.
+      return { kind: 'genuine' }
+    }
+
+    return classifyNode({ ...node, anyOf: undefined, oneOf: undefined, ...real[0] })
+  }
+
+  return classifyNode(node)
+}
+
+/*
+  A value for a variable the emitted file needs and this machine does not have.
+
+  Without one, step 3 fails on migrate's own correct output: these are deployment variables, absent
+  from the laptop running a codemod, and the guards that make an unset one throw are the same guards
+  that make the validation throw. Drawn from the position's own constraints so that what is
+  validated is a value the position actually admits.
+*/
+function sentinelFor (position) {
+  switch (position.kind) {
+    case 'enum':
+      return String(position.values[0])
+    case 'number': {
+      const { minimum, maximum, multipleOf } = position.constraints
+      let value = minimum ?? 1
+
+      if (multipleOf) {
+        value = Math.ceil(value / multipleOf) * multipleOf
+      }
+
+      return String(maximum !== undefined && value > maximum ? maximum : value)
+    }
+    default:
+      // Non-empty, because the guards treat empty as missing and a `?? ''` position may carry a
+      // minLength the empty string fails.
+      return 'migrate'
+  }
+}
+
+function classifyNode (node) {
+  const constraints = {
+    maximum: node.maximum,
+    minimum: node.minimum,
+    multipleOf: node.multipleOf
+  }
+
+  if (Array.isArray(node.enum)) {
+    return { constraints, kind: 'enum', values: node.enum }
+  }
+
+  switch (node.type) {
+    case 'string':
+      return { constraints, kind: 'string' }
+    case 'number':
+    case 'integer':
+      return { constraints, kind: 'number' }
+    case 'boolean':
+      // v3's per-property rules differ by site and contradict each other across dialects: `enabled`
+      // is `!== 'false'` while a capability's `watch.enabled` is `!== false`, so the same resolved
+      // string means opposite things. That is hand knowledge, not something a shape supplies.
+      return { constraints, kind: 'boolean' }
+    default:
+      return { constraints, kind: 'unknown' }
+  }
+}
+
+/*
+  Converts every `{PLT_X}` in a configuration into an expression that preserves what v3 did with it.
+
+  v3 replaced placeholders before anything read the value, so what a position meant depended on its
+  type: a missing variable became `''`, which the schema then accepted in a string position and
+  rejected in a typed one under `coerceTypes`. So a string position keeps `''` and a typed one gets
+  a guard that throws -- those variables were implicitly required by their position, and a bare
+  `process.env.X` would turn a project that refused to boot into one that boots on a value nobody
+  chose.
+
+  What cannot be decided from the schema is refused rather than guessed: a genuine union, a boolean
+  whose v3 rule differs by site, and a position whose string form is really parsed.
+*/
+function convertPlaceholders (config, schema, { where }) {
+  const refusals = []
+  const helpers = new Set()
+  const seeds = new Map()
+
+  function convert (value, pointer) {
+    if (typeof value === 'string') {
+      if (!placeholderPattern.test(value)) {
+        return value
+      }
+
+      const position = classifyPosition(schema, pointer)
+      const whole = value.match(/^\{([A-Z0-9_]+)\}$/)
+
+      if (!whole) {
+        /*
+          An embedded placeholder is one value made of several, and only a string position can hold
+          one: v3 interpolated the parts and the surrounding string still had to validate.
+        */
+        for (const [, name] of value.matchAll(/\{([A-Z0-9_]+)\}/g)) {
+          seeds.set(name, sentinelFor(position))
+        }
+
+        if (position.kind !== 'string') {
+          refusals.push({
+            reason: `${bold(where)} interpolates into ${bold(pointer)}, which is not a string position`,
+            fix: 'give that position a literal, or move the interpolation into the variable itself — the parts of an embedded placeholder cannot be guarded separately without rejecting an empty one v3 accepted'
+          })
+
+          return value
+        }
+
+        return raw(
+          '`' +
+            value.replace(/\{([A-Z0-9_]+)\}/g, (_, name) => `\${process.env.${name} ?? ''}`).replace(/`/g, '\\`') +
+            '`'
+        )
+      }
+
+      const name = whole[1]
+
+      seeds.set(name, sentinelFor(position))
+
+      switch (position.kind) {
+        case 'string':
+          // v3 replaced a missing variable with the empty string, and the schema accepted it.
+          return raw(`process.env.${name} ?? ''`)
+        case 'number':
+          helpers.add('requiredEnv')
+          return raw(`Number(requiredEnv('${name}'))`)
+        case 'enum':
+          helpers.add('requiredEnum')
+          // Serialized rather than JSON-stringified: the rest of the file is single-quoted, and a
+          // migration should not leave a seam showing where it touched.
+          return raw(`requiredEnum('${name}', [${position.values.map(value => serializeValue(value)).join(', ')}])`)
+        case 'boolean':
+          refusals.push({
+            reason: `${bold(where)} uses ${bold(`{${name}}`)} at ${bold(pointer)}, a boolean position`,
+            fix: "convert this one by hand: v3's rules for booleans differ by position and contradict each other — `enabled` treats any string but 'false' as true, while a capability's watch block is disabled only by the boolean"
+          })
+          return value
+        case 'parsed':
+          refusals.push({
+            reason: `${bold(where)} uses ${bold(`{${name}}`)} at ${bold(pointer)}, whose string form is read rather than replaced`,
+            fix: 'convert this one by hand: the position accepts a string that means something — a memory size, say — so it is not a placeholder branch and the value cannot simply be coerced'
+          })
+          return value
+        default:
+          refusals.push({
+            reason: `${bold(where)} uses ${bold(`{${name}}`)} at ${bold(pointer)}, whose target type migrate cannot determine`,
+            fix: 'convert this one by hand: the position is a union the schema audit has not classified, or one this capability does not declare'
+          })
+          return value
+      }
+    }
+
+    if (value === null || typeof value !== 'object') {
+      return value
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((entry, index) => convert(entry, `${pointer}/${index}`))
+    }
+
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, convert(entry, `${pointer}/${key}`)]))
+  }
+
+  const converted = convert(config, '')
+
+  return { converted: refusals.length > 0 ? config : converted, helpers, refusals, seeds }
+}
+
+// Emitted into a file only where that file has a position needing one.
+const helperSources = {
+  requiredEnv: `function requiredEnv (name) {
+  const value = process.env[name]
+
+  /*
+    Empty counts as missing. v3 validated after replacement with coerceTypes on, and ajv rejects the
+    empty string in a typed position -- so a project without this variable did not boot, and this
+    keeps that true rather than starting it on Number('') === 0.
+  */
+  if (!value) {
+    throw new Error(\`\${name} is required.\`)
+  }
+
+  return value
+}`,
+  requiredEnum: `function requiredEnum (name, allowed) {
+  const value = requiredEnv(name)
+
+  // Checked here, naming the allowed members, rather than at the schema two steps later.
+  if (!allowed.includes(value)) {
+    throw new Error(\`\${name} must be one of \${allowed.join(', ')}.\`)
+  }
+
+  return value
+}`
+}
+
+function emitHelpers (helpers) {
+  if (helpers.size === 0) {
+    return ''
+  }
+
+  // requiredEnum calls requiredEnv, so it comes with it.
+  const needed = helpers.has('requiredEnum') ? new Set(['requiredEnv', ...helpers]) : helpers
+
+  return `${[...needed].sort().map(name => helperSources[name]).join('\n\n')}\n\n`
+}
+
+/*
   The keys the target capability's own `server` block admits.
 
   Read from the schema rather than kept as a list, because the blocks are not uniform: nitro deletes
@@ -202,17 +500,21 @@ function isEnabled (entry, environment) {
   fail on migrate's own output if the move were literal. A fixed list would also have to be revised
   every time a capability narrows its block.
 */
-async function admittedServerKeys (module, directory) {
+async function capabilitySchema (module, directory) {
   try {
     const { schema } = await importCapabilitySchema(module, directory, { runtimeScope })
-    const properties = schema?.properties?.server?.properties
 
-    return properties ? new Set(Object.keys(properties)) : null
+    return schema ?? null
   } catch {
-    // Not installed. The move still happens -- the emitted file is reported as unverified either
-    // way -- and filtering it against a schema migrate could not read would be worse than not.
+    // Not installed. What depends on the schema says so rather than guessing at it.
     return null
   }
+}
+
+async function admittedServerKeys (module, directory) {
+  const properties = (await capabilitySchema(module, directory))?.properties?.server?.properties
+
+  return properties ? new Set(Object.keys(properties)) : null
 }
 
 /*
@@ -300,26 +602,6 @@ export function findLegacyConfiguration (root, named) {
   return null
 }
 
-function findPlaceholders (value, pointer = '', found = []) {
-  if (typeof value === 'string') {
-    if (placeholderPattern.test(value)) {
-      found.push({ pointer: pointer || '/', value })
-    }
-
-    return found
-  }
-
-  if (value === null || typeof value !== 'object') {
-    return found
-  }
-
-  for (const [key, entry] of Object.entries(value)) {
-    findPlaceholders(entry, `${pointer}/${key}`, found)
-  }
-
-  return found
-}
-
 /*
   Every reason this slice will not convert a configuration, gathered before anything is written. The
   two envfile cases are here because they are what a well-formed, ordinary v3 project hits: neither
@@ -359,18 +641,6 @@ export function collectRefusals (config, { module }) {
     refusals.push({
       reason: `${bold(module)} is not a capability this migrator knows`,
       fix: 'convert this application by hand — a capability outside the supported set has no factory to call, and emitting a plain { module } object is not something a migration should produce'
-    })
-  }
-
-  const placeholders = findPlaceholders(config)
-
-  if (placeholders.length > 0) {
-    refusals.push({
-      reason: `${placeholders.length} value${placeholders.length > 1 ? 's use' : ' uses'} {PLT_X} interpolation (${placeholders
-        .slice(0, 3)
-        .map(entry => bold(entry.pointer))
-        .join(', ')}${placeholders.length > 3 ? ', …' : ''})`,
-      fix: 'this migrator does not yet convert interpolated values: each one needs its position\'s audited target type to decide between a string fallback, a number guard and an enum guard'
     })
   }
 
@@ -465,9 +735,12 @@ export async function deriveLegacyId (root) {
   return { id, pin: id !== v4, renamedFrom: id === v3 ? null : v3 }
 }
 
-export function emitApplicationConfiguration (config, { module, id, pin = false }) {
+export function emitApplicationConfiguration (config, { module, id, pin = false, helpers = new Set() }) {
   const factory = factories[module]
   const { $schema, module: _module, runtime, ...capability } = config
+  // Written into the file only where it has a position needing one: a guard nothing calls is
+  // ceremony, and these files are read by people.
+  const preamble = emitHelpers(helpers)
 
   /*
     Level 1: nothing but capability configuration, so the factory call is the whole file. A
@@ -478,7 +751,7 @@ export function emitApplicationConfiguration (config, { module, id, pin = false 
     file outright.
   */
   if (!runtime && !pin) {
-    return `import { ${factory} } from '${module}'\n\nexport default ${factory}(${serializeValue(capability)})\n`
+    return `import { ${factory} } from '${module}'\n\n${preamble}export default ${factory}(${serializeValue(capability)})\n`
   }
 
   /*
@@ -506,6 +779,7 @@ export function emitApplicationConfiguration (config, { module, id, pin = false 
   return (
     'import { defineConfig } from \'wattpm\'\n' +
     `import { ${factory} } from '${module}'\n\n` +
+    preamble +
     `export default defineConfig(${serializeValue({ ...root, application: shorthand })})\n`
   )
 }
@@ -575,6 +849,7 @@ export function emitRootConfiguration (config, entries, inlined = [], autoload =
 export async function planMigration (root, source, config) {
   const refusals = []
   const applications = []
+  const seeds = new Map()
   const skipped = []
   const declaredEntries = config.applications ?? config.services ?? config.web ?? []
   const rootDirectory = canonicalize(dirname(source))
@@ -710,6 +985,16 @@ export async function planMigration (root, source, config) {
       refusals.push({ ...refusal, reason: `${refusal.reason} (${bold(relative(root, legacy))})` })
     }
 
+    const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, directory), {
+      where: relative(root, legacy)
+    })
+
+    refusals.push(...placeholders.refusals)
+
+    for (const [name, value] of placeholders.seeds) {
+      seeds.set(name, value)
+    }
+
     const derived = await deriveLegacyId(directory)
     const id = entry.id ? legalId(entry.id) : derived.id
 
@@ -718,10 +1003,11 @@ export async function planMigration (root, source, config) {
     const settled = { ...orchestration, id, ...(envfile ? { envfile: rebased } : {}) }
 
     applications.push({
-      config: applicationConfig,
+      config: placeholders.converted,
       declared,
       directory,
       entry,
+      helpers: placeholders.helpers,
       inline,
       legacy,
       module,
@@ -731,7 +1017,7 @@ export async function planMigration (root, source, config) {
     })
   }
 
-  const autoload = await planAutoload(root, config, applications, refusals, skipped)
+  const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds)
   const entrypoint = planExposure(config, applications, refusals)
   const exposure = refusals.length === 0 ? await applyExposure(config, applications, entrypoint) : []
 
@@ -741,6 +1027,7 @@ export async function planMigration (root, source, config) {
     entrypoint,
     exposure,
     refusals: refusals.concat(collectPlanRefusals(root, source, applications)),
+    seeds,
     skipped
   }
 }
@@ -963,7 +1250,7 @@ function planExposure (config, applications, refusals) {
   The directories themselves are converted like any other application: each one that has a
   configuration of its own gets a v4 file in its place.
 */
-async function planAutoload (root, config, applications, refusals, skipped) {
+async function planAutoload (root, config, applications, refusals, skipped, seeds) {
   if (!config.autoload) {
     return null
   }
@@ -1040,9 +1327,20 @@ async function planAutoload (root, config, applications, refusals, skipped) {
       refusals.push({ ...refusal, reason: `${refusal.reason} (${bold(relative(root, legacy))})` })
     }
 
+    const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, applicationRoot), {
+      where: relative(root, legacy)
+    })
+
+    refusals.push(...placeholders.refusals)
+
+    for (const [name, value] of placeholders.seeds) {
+      seeds.set(name, value)
+    }
+
     applications.push({
       autoloaded: true,
-      config: applicationConfig,
+      config: placeholders.converted,
+      helpers: placeholders.helpers,
       declared,
       directory: applicationRoot,
       entry: mapping,
@@ -1192,8 +1490,9 @@ async function emitApplications (journal, applications) {
       await journal.write(
         application.target,
         emitApplicationConfiguration(application.config, {
-          module: application.module,
-          id: application.orchestration.id
+          helpers: application.helpers,
+          id: application.orchestration.id,
+          module: application.module
         })
       )
       await journal.remove(application.legacy)
@@ -1204,8 +1503,9 @@ async function emitApplications (journal, applications) {
     await journal.write(
       application.target,
       emitApplicationConfiguration(application.config, {
-        module: application.module,
-        id: application.orchestration.id
+        helpers: application.helpers,
+        id: application.orchestration.id,
+        module: application.module
       })
     )
     await journal.remove(application.legacy)
@@ -1487,11 +1787,28 @@ export async function migrateCommand (logger, args) {
   */
   const refusals = collectRefusals(config, { module })
   let plan = null
+  let converted = config
+  let helpers = new Set()
+  let seeds = new Map()
 
   if (runtime && refusals.length === 0) {
     plan = await planMigration(directory, source, config)
     refusals.push(...plan.refusals)
   } else if (!runtime) {
+    /*
+      The capability dialect converts here, because it builds no plan. Before anything is written
+      either way: a position migrate cannot decide is a refusal, not a value carried through as the
+      literal text of a placeholder.
+    */
+    const placeholders = convertPlaceholders(config, await capabilitySchema(module, directory), {
+      where: basename(source)
+    })
+
+    refusals.push(...placeholders.refusals)
+    converted = placeholders.converted
+    helpers = placeholders.helpers
+    seeds = placeholders.seeds
+
     if (existsSync(target)) {
       refusals.push({
         reason: `${bold(basename(target))} already exists in ${bold(directory)}`,
@@ -1551,11 +1868,11 @@ export async function migrateCommand (logger, args) {
 
     // A wrapped single-app project carries the same removed keys, and reaches none of the runtime
     // dialect's planning.
-    notes.push(...stripRemovedKeys(config, derived.id))
+    notes.push(...stripRemovedKeys(converted, derived.id))
 
     await journal.write(
       target,
-      emitApplicationConfiguration(config, { id: derived.id, module, pin: derived.pin })
+      emitApplicationConfiguration(converted, { helpers, id: derived.id, module, pin: derived.pin })
     )
   }
 
@@ -1569,6 +1886,20 @@ export async function migrateCommand (logger, args) {
   */
   const edited = await auditDependencies(journal, root, plan, module)
 
+  /*
+    The variables the emitted files reference and this machine does not supply. Seeded only where
+    the environment has nothing, because the real environment outranks env files in v4: seeding
+    unconditionally would validate the output against migrate's fabrications rather than against the
+    values the project actually configures, which is the opposite of what this step is for.
+  */
+  const seeded = {}
+
+  for (const [name, value] of plan?.seeds ?? seeds) {
+    if (process.env[name] === undefined) {
+      seeded[name] = value
+    }
+  }
+
   let unresolved = null
 
   try {
@@ -1580,14 +1911,19 @@ export async function migrateCommand (logger, args) {
       exists to catch exactly that.
     */
     if (runtime) {
-      await loadV4Runtime(target, null, { command: 'start', production: true, validateCapabilities: true })
+      await loadV4Runtime(target, null, {
+        command: 'start',
+        env: seeded,
+        production: true,
+        validateCapabilities: true
+      })
     } else {
       await loadV4Configuration({
         cwd: dirname(target),
         configPath: target,
         command: 'start',
         production: true,
-        realEnv: { ...process.env },
+        realEnv: { ...process.env, ...seeded },
         // Validated against the capability's own schema, not merely parsed: the emitted file is
         // checked the way a boot would check it, which is the only check that means anything here.
         validateCapabilities: true,
@@ -1643,6 +1979,14 @@ export async function migrateCommand (logger, args) {
 
   for (const finding of await scanSources(root, { legacyNames, renamed })) {
     logger.warn(finding)
+  }
+
+  const assumed = Object.keys(seeded)
+
+  if (assumed.length > 0) {
+    logger.info(
+      `Validated with ${assumed.map(name => bold(name)).join(', ')} assumed: those variables are not set here, so what the emitted files do with them was checked against a value migrate chose rather than yours.`
+    )
   }
 
   for (const name of skipped) {

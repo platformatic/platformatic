@@ -133,14 +133,20 @@ for (const [name, files, expected] of [
     'envfile'
   ],
   [
-    'interpolated values',
+    /*
+      A boolean position is the one migrate will not convert: v3's rules for them differ by site and
+      contradict each other -- `enabled` treats any string but 'false' as true, while a capability's
+      watch block is disabled only by the boolean -- so the same resolved string means opposite
+      things and nothing in the shape says which.
+    */
+    'an interpolated boolean',
     {
       'platformatic.json': {
         $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
-        server: { port: '{PORT}' }
+        server: { http2: '{HTTP2}' }
       }
     },
-    'interpolation'
+    'a boolean position'
   ],
   [
     // A structural position has to be concrete before anything is emitted: migrate needs the real
@@ -395,9 +401,9 @@ test('migrate - refuses a later application before writing an earlier one', asyn
 
   for (const [name, contents] of [
     ['first', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
-    // The second one interpolates, which this migrator refuses — and it is reached only after the
-    // first has already been converted on disk.
-    ['second', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { port: '{PORT}' } }]
+    // The second interpolates into a boolean, which migrate refuses — and it is reached only after
+    // the first has already been converted on disk.
+    ['second', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { http2: '{HTTP2}' } }]
   ]) {
     await mkdir(join(root, 'services', name), { recursive: true })
     await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
@@ -406,7 +412,7 @@ test('migrate - refuses a later application before writing an earlier one', asyn
   const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
 
   strictEqual(migrateProcess.exitCode, 1)
-  ok(migrateProcess.stdout.includes('interpolation'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('a boolean position'), migrateProcess.stdout)
 
   /*
     The first application is untouched because nothing was written at all: every refusal is computed
@@ -950,4 +956,64 @@ test('migrate - requires the packages the emitted files import', async t => {
 
   // A range is not an install: until one runs the emitted files still import the v3 copy on disk.
   ok(migrateProcess.stdout.includes('install'), migrateProcess.stdout)
+})
+
+test('migrate - converts a placeholder according to the type of the position it sits in', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: {
+        // A number position: v3 validated after replacement with coerceTypes on, and ajv rejects
+        // the empty string there, so an unset PORT did not boot. The guard keeps that true.
+        port: '{PORT}',
+        // A string position: v3 replaced a missing variable with '' and the schema accepted it.
+        hostname: '{HOSTNAME}'
+      },
+      // An enum position. A string-returning guard would be wrong twice over: it would let a value
+      // outside the set through to fail at the schema two steps later.
+      logger: { level: '{LOG_LEVEL}' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("port: Number(requiredEnv('PORT'))"), emitted)
+  ok(emitted.includes("hostname: process.env.HOSTNAME ?? ''"), emitted)
+  ok(emitted.includes("level: requiredEnum('LOG_LEVEL', ["), emitted)
+  ok(emitted.includes("'silent'"), emitted)
+
+  // The helpers are written into the file only where it has a position needing one, and requiredEnum
+  // is defined in terms of requiredEnv, so it never arrives alone.
+  ok(emitted.includes('function requiredEnv (name)'), emitted)
+  ok(emitted.includes('function requiredEnum (name, allowed)'), emitted)
+})
+
+test('migrate - leaves a string position holding an interpolation as a template literal', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: { hostname: 'host-{REGION}-{ZONE}' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    Each part keeps the plain fallback rather than a guard: v3 interpolated '' for a missing one and
+    the surrounding string still had to validate, so a part may legitimately be empty while the
+    whole value is not.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // Assembled rather than written inline: the expected text is a template literal, and spelling it
+  // out here would be one in this file too.
+  const interpolation = ['host-', 'REGION', "?? ''}-", 'ZONE', "?? ''}`"]
+  ok(emitted.includes(`hostname: \`${interpolation[0]}\${process.env.${interpolation[1]} ${interpolation[2]}\${process.env.${interpolation[3]} ${interpolation[4]}`), emitted)
+  ok(!emitted.includes('requiredEnv'), emitted)
 })
