@@ -53,6 +53,12 @@ export const db = {
     poolSize: {
       type: 'integer'
     },
+    usePrimaryKeySqlType: {
+      type: 'boolean',
+      default: false,
+      description:
+        'Derive the exposed type of every column from its SQL type. When false (the default), primary keys and the foreign keys referencing them are always exposed as strings, even when their SQL type is a JSON-safe number such as int4.'
+    },
     idleTimeoutMilliseconds: {
       type: 'integer'
     },
