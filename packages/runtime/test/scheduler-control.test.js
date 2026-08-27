@@ -3,7 +3,7 @@ import { deepStrictEqual, equal, ok, strictEqual, throws } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { transform } from '../lib/config.js'
+import { transform } from '../index.js'
 import { SchedulerService } from '../lib/scheduler.js'
 import { createRuntime } from './helpers.js'
 

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { features } from '@platformatic/foundation'
-import { transform } from '../../lib/config.js'
+import { transform } from '../../index.js'
 import { createRuntime, getTempDir } from '../helpers.js'
 import { prepareRuntime } from '../multiple-workers/helper.js'
 

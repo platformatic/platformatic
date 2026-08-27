@@ -1,7 +1,7 @@
 import { equal, ok, rejects } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { transform } from '../lib/config.js'
+import { transform } from '../index.js'
 import { MissingPprofCapture } from '../lib/errors.js'
 import { createRuntime } from './helpers.js'
 
