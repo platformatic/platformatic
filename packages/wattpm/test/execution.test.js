@@ -575,3 +575,41 @@ test('dev - should load custom env file with --env flag', async t => {
   ok(parsed.some(p => p.msg?.includes('Loading envfile')))
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
 })
+
+test('start --debug-config - should print the resolved configuration without starting anything', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const debugProcess = await wattpm('start', '--debug-config', rootDir)
+  const config = JSON.parse(debugProcess.stdout)
+
+  /*
+    The point is that it resolved rather than merely parsed: the applications are the expanded list,
+    and nothing was started to produce them.
+  */
+  ok(Array.isArray(config.applications))
+  ok(config.applications.some(application => application.id === 'main'))
+  ok(config.applications.some(application => application.id === 'alternative'))
+
+  // The symbol-keyed loader envelope is bookkeeping, not configuration, and does not survive JSON.
+  deepStrictEqual(config.__metadata, undefined)
+})
+
+test('dev --debug-config - should print the resolved configuration without starting anything', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const debugProcess = await wattpm('dev', '--debug-config', rootDir)
+  const config = JSON.parse(debugProcess.stdout)
+
+  ok(config.applications.some(application => application.id === 'main'))
+})
+
+test('start --debug-config - should resolve a v4 configuration through the eval worker', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'build', false, 'watt.config.mjs')
+
+  const debugProcess = await wattpm('start', '--debug-config', rootDir)
+  const config = JSON.parse(debugProcess.stdout)
+
+  // The eval worker expanded autoload, so what is printed is the application list a boot would use.
+  ok(Array.isArray(config.applications))
+  ok(config.applications.length > 0)
+})

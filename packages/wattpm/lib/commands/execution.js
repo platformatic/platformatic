@@ -7,14 +7,33 @@ import {
   logFatalError,
   parseArgs
 } from '@platformatic/foundation'
-import { create } from '@platformatic/runtime'
+import { create, loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
 
+/*
+  --debug-config prints the fully resolved configuration and boots nothing. It goes through the
+  same loader a real boot does — eval worker, per-file isolation, the env ladder — because a
+  diagnostic that resolves configuration its own way is a diagnostic that agrees with the boot
+  right up until it matters.
+
+  The output includes whatever the environment supplied, so it is as sensitive as the environment
+  itself. kMetadata is symbol-keyed and JSON.stringify drops it, which is the intent: the envelope
+  is loader bookkeeping, not configuration.
+*/
+async function printResolvedConfiguration (logger, root, configurationFile, { production, env }) {
+  try {
+    const config = await loadConfiguration(root, configurationFile, { production, envFile: env })
+    console.log(JSON.stringify(config, null, 2))
+  } catch (err) {
+    logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot resolve the configuration: ${err.message}`)
+  }
+}
+
 export async function devCommand (logger, args) {
   const {
-    values: { config, env },
+    values: { config, env, 'debug-config': debugConfig },
     positionals
   } = parseArgs(
     args,
@@ -26,6 +45,9 @@ export async function devCommand (logger, args) {
       env: {
         type: 'string',
         short: 'e'
+      },
+      'debug-config': {
+        type: 'boolean'
       }
     },
     false
@@ -38,6 +60,10 @@ export async function devCommand (logger, args) {
   if (!configurationFile) {
     return
   }
+  if (debugConfig) {
+    return printResolvedConfiguration(logger, root, configurationFile, { production: false, env })
+  }
+
   /* c8 ignore next 15 - covered */
 
   let runtime
@@ -79,7 +105,7 @@ export async function devCommand (logger, args) {
 export async function startCommand (logger, args) {
   const {
     positionals,
-    values: { inspect, config, env }
+    values: { inspect, config, env, 'debug-config': debugConfig }
   } = parseArgs(
     args,
     {
@@ -94,6 +120,9 @@ export async function startCommand (logger, args) {
       env: {
         type: 'string',
         short: 'e'
+      },
+      'debug-config': {
+        type: 'boolean'
       }
     },
     false
@@ -105,6 +134,10 @@ export async function startCommand (logger, args) {
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
+  }
+
+  if (debugConfig) {
+    return printResolvedConfiguration(logger, root, configurationFile, { production: true, env })
   }
 
   try {
@@ -215,6 +248,10 @@ export const help = {
       {
         usage: '-e, --env <path>',
         description: 'Path to a custom .env file to load environment variables from'
+      },
+      {
+        usage: '--debug-config',
+        description: 'Prints the fully resolved configuration and exits without starting anything'
       }
     ]
   },
@@ -239,6 +276,10 @@ export const help = {
       {
         usage: '-e, --env <path>',
         description: 'Path to a custom .env file to load environment variables from'
+      },
+      {
+        usage: '--debug-config',
+        description: 'Prints the fully resolved configuration and exits without starting anything'
       }
     ]
   },
