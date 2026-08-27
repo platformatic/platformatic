@@ -23,16 +23,26 @@ export interface RuntimeApplicationBase {
   status: string
 }
 
+export type ServingState = 'listening' | 'mesh-only' | 'background' | 'inactive'
+
 export interface RuntimeApplication {
   id: string
   type: string
   status: string
+  /** How the application serves, as opposed to whether it runs. Absent when it is not started. */
+  servingState?: ServingState
   version: string
   localUrl: string
   url: string | null
   urls: string[]
   workers?: number
   dependencies: string[]
+  path?: string
+  sourceMaps?: boolean
+  /** v3 only: the path to the application's configuration file. v4 reports configPath. */
+  config?: string
+  /** v4 only: the configuration file the loader decided on, absent for an inline definition. */
+  configPath?: string
 }
 
 export interface Runtime {
@@ -43,6 +53,10 @@ export interface Runtime {
   execPath: string
   nodeVersion: string
   projectDir: string
+  /** The configuration file the loader decided on. Null when the runtime was built from an object. */
+  configPath: string | null
+  /** The autoload declaration, with its path resolved. Null when the project does not autoload. */
+  autoload: { path: string, exclude?: string[], mappings?: Record<string, unknown> } | null
   packageName: string | null
   packageVersion: string | null
   platformaticVersion: string

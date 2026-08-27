@@ -13,6 +13,7 @@ import type {
   Metric,
   ReadableBody,
   Runtime,
+  RuntimeApplication,
   RuntimeApplications,
   RuntimeSchedulerJob,
   RuntimeSchedulerRunResult
@@ -134,4 +135,18 @@ test('error factories', () => {
 
   expect(FailedToGetRuntimeHistoryLogs).type.not.toBeAssignableTo<string>();
   expect(FailedToGetRuntimeHistoryLogs).type.not.toBeAssignableTo<number>();
+});
+
+test('payload fields the CLI reads through this client', () => {
+  /*
+    `applications:add` and `remove --save` read these off GET /metadata rather than fetching the
+    whole runtime configuration. They were reaching for fields nothing declared, which typechecks
+    as `any` and stops being a contract.
+  */
+  expect<Runtime>().type.toHaveProperty('configPath');
+  expect<Runtime>().type.toHaveProperty('autoload');
+
+  // How an application serves, as opposed to whether it runs.
+  expect<RuntimeApplication>().type.toHaveProperty('servingState');
+  expect<RuntimeApplication>().type.toHaveProperty('configPath');
 });
