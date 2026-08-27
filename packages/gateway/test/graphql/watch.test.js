@@ -1,6 +1,5 @@
 import dedent from 'dedent'
 import assert from 'node:assert/strict'
-import { once } from 'node:events'
 import path from 'node:path'
 import { test } from 'node:test'
 import { checkSchema, createGatewayInRuntime, createGraphqlApplication, waitForRestart } from '../helper.js'
@@ -26,7 +25,7 @@ test('should restart gateway if a application has been changed, and update the s
 
   await graphql1.listen()
   const port = graphql1.server.address().port
-  const origin = 'http://localhost:' + port
+  const origin = 'http://127.0.0.1:' + port
 
   const runtime = await createGatewayInRuntime(t, 'graphql-watch', {
     gateway: {
@@ -50,12 +49,13 @@ test('should restart gateway if a application has been changed, and update the s
     }
   })
 
-  assert.ok(checkSchema(runtime, schema1))
+  assert.ok(await checkSchema(runtime, schema1))
 
+  const restart = waitForRestart(runtime)
   await graphql1.close()
   await graphql1a.listen({ port })
 
-  await waitForRestart(runtime)
+  await restart
 
   assert.ok(await checkSchema(runtime, schema2))
 })
@@ -122,8 +122,10 @@ test('gateway should restart and update schema if one of the applications shuts 
     name: String!
   }`
 
-  const graphql1Origin = await graphql1.listen()
-  const graphql2Origin = await graphql2.listen()
+  await graphql1.listen()
+  await graphql2.listen()
+  const graphql1Origin = 'http://127.0.0.1:' + graphql1.server.address().port
+  const graphql2Origin = 'http://127.0.0.1:' + graphql2.server.address().port
 
   const runtime = await createGatewayInRuntime(t, 'graphql-watch', {
     gateway: {
@@ -145,13 +147,14 @@ test('gateway should restart and update schema if one of the applications shuts 
 
   await runtime.start({ listen: true })
 
-  assert.ok(checkSchema(runtime, supergraph1))
+  assert.ok(await checkSchema(runtime, supergraph1))
 
+  const restart = waitForRestart(runtime)
   await graphql1.close()
 
-  await waitForRestart(runtime)
+  await restart
 
-  assert.ok(checkSchema(runtime, supergraph2))
+  assert.ok(await checkSchema(runtime, supergraph2))
 })
 
 test('should not restart if applications did not change', async t => {
@@ -184,7 +187,8 @@ test('should not restart if applications did not change', async t => {
       schema: application.schema,
       resolvers: application.resolvers
     })
-    application.origin = await application.instance.listen()
+    await application.instance.listen()
+    application.origin = 'http://127.0.0.1:' + application.instance.server.address().port
   }
 
   const runtime = await createGatewayInRuntime(t, 'graphql-watch', {
@@ -237,8 +241,10 @@ test('should not watch when refreshTimeout is 0', async t => {
     name: String!
   }`
 
-  const graphql1Origin = await graphql1.listen()
-  const graphql2Origin = await graphql2.listen()
+  await graphql1.listen()
+  await graphql2.listen()
+  const graphql1Origin = 'http://127.0.0.1:' + graphql1.server.address().port
+  const graphql2Origin = 'http://127.0.0.1:' + graphql2.server.address().port
 
   const runtime = await createGatewayInRuntime(t, 'graphql-watch', {
     gateway: {
@@ -260,13 +266,14 @@ test('should not watch when refreshTimeout is 0', async t => {
 
   await runtime.start({ listen: true })
 
-  assert.ok(checkSchema(runtime, supergraph1))
+  assert.ok(await checkSchema(runtime, supergraph1))
 
+  const restart = waitForRestart(runtime)
   await graphql1.close()
   await graphql2.close()
 
-  await assert.rejects(() => waitForRestart(runtime))
-  assert.ok(checkSchema(runtime, supergraph1))
+  await assert.rejects(() => restart)
+  assert.ok(await checkSchema(runtime, supergraph1))
 })
 
 test('should not watch if there are no fetchable applications', async t => {
@@ -291,7 +298,8 @@ test('should handle errors watching applications', async t => {
     resolvers: { Query: { cheatingDice: () => 3 } }
   })
 
-  const graphql1Origin = await graphql1.listen()
+  await graphql1.listen()
+  const graphql1Origin = 'http://127.0.0.1:' + graphql1.server.address().port
 
   const runtime = await createGatewayInRuntime(t, 'graphql-watch', {
     gateway: {
@@ -308,10 +316,9 @@ test('should handle errors watching applications', async t => {
 
   await runtime.start({ listen: true })
 
+  const restart = waitForRestart(runtime)
   await graphql1.close()
 
-  const [startingEvent] = await once(runtime, 'application:worker:starting')
-  const [startErrorEvent] = await once(runtime, 'application:worker:start:error')
-  assert.deepEqual(startingEvent.application, 'composer')
-  assert.deepEqual(startErrorEvent.application, 'composer')
+  await restart
+  assert.ok(await checkSchema(runtime, 'type Query { _info: String }'))
 })

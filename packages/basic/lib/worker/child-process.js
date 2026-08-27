@@ -669,7 +669,12 @@ export class ChildProcess extends ITC {
   #setupInterceptors () {
     const globalDispatcher = new Agent().compose(createInterceptor(this))
     setGlobalDispatcher(globalDispatcher)
-    mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher)
+    const legacyDispatcher = globalThis[Symbol.for('undici.globalDispatcher.1')]
+    const currentDispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
+    const legacyWrapper = legacyDispatcher && legacyDispatcher !== currentDispatcher && legacyDispatcher.constructor?.name === 'Dispatcher1Wrapper'
+      ? new legacyDispatcher.constructor(globalDispatcher)
+      : globalDispatcher
+    mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher, legacyWrapper)
   }
 
   #setupHandlers (timeout) {

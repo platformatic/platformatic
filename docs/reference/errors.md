@@ -44,10 +44,6 @@
 
 **Message:** Validation errors: %s
 
-### PLT_GATEWAY_WS_NO_TCP_UPSTREAM
-
-**Message:** Cannot proxy a WebSocket connection to the "%s" application because it does not expose a TCP server. Make the application listen on a TCP port (by setting "server.port" in its configuration), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".
-
 ## @platformatic/control
 
 ### PLT_CTR_RUNTIME_NOT_FOUND

@@ -2,7 +2,7 @@ import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { deepStrictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { symlink, writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { request } from 'undici'
 import {
@@ -12,7 +12,8 @@ import {
   verifyBuildAndProductionMode,
   verifyDevelopmentFrontendWithPrefix,
   verifyDevelopmentMode,
-  verifyFrontendOnPrefix
+  verifyFrontendOnPrefix,
+  ensureDependencies
 } from '../../../basic/test/helper.js'
 
 process.setMaxListeners(100)
@@ -100,16 +101,42 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
 }
 
 async function linkNext (nextVersion, reactVersion, root) {
-  for (const mod of ['next', 'react', 'react-dom']) {
-    const modulesFolder = resolve(root, `services/frontend/node_modules/${mod}`)
+  const frontendRoot = resolve(root, 'services/frontend')
+  const packagePath = resolve(frontendRoot, 'package.json')
+  const packageJson = JSON.parse(await readFile(packagePath, 'utf8'))
 
-    await safeRemove(modulesFolder)
-    await symlink(
-      resolve(temporaryFolder, `next-${nextVersion}-${reactVersion}/node_modules/${mod}`),
-      modulesFolder,
-      'dir'
+  // Turbopack requires the Next package and its native dependencies to live in
+  // the project dependency tree. Installing into the fixture also keeps the
+  // Next and @next/swc versions matched instead of linking an external tree.
+  packageJson.dependencies.next = nextVersion
+  packageJson.dependencies.react = reactVersion
+  packageJson.dependencies['react-dom'] = reactVersion
+
+  const platformaticNext = packageJson.dependencies['@platformatic/next']
+  delete packageJson.dependencies['@platformatic/next']
+  await writeFile(packagePath, JSON.stringify(packageJson, null, 2))
+
+  try {
+    await execa(
+      'pnpm',
+      [
+        'add',
+        '--ignore-workspace',
+        '--offline',
+        '--allow-build=sharp',
+        `next@${nextVersion}`,
+        `react@${reactVersion}`,
+        `react-dom@${reactVersion}`
+      ],
+      { cwd: frontendRoot }
     )
+  } finally {
+    packageJson.dependencies['@platformatic/next'] = platformaticNext
+    await writeFile(packagePath, JSON.stringify(packageJson, null, 2))
   }
+
+  await safeRemove(resolve(frontendRoot, 'node_modules/@platformatic/next'))
+  await ensureDependencies([frontendRoot])
 }
 
 async function boundLinkNext (nextVersion, reactVersion) {
@@ -128,7 +155,7 @@ async function installDependencies (nextVersion, reactVersion) {
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
   await execa(
     'pnpm',
-    ['add', '-D', '--ignore-workspace', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`],
+    ['add', '-D', '--ignore-workspace', '--allow-build=sharp', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`],
     { cwd: base }
   )
 }

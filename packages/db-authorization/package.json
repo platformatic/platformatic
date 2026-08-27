@@ -39,7 +39,7 @@
     "fastify-plugin": "^6.0.0",
     "fastify-user": "^1.0.2",
     "leven": "~3.1.0",
-    "undici": "^7.27.2"
+    "undici": "^8.5.0"
   },
   "engines": {
     "node": ">=22.19.0"

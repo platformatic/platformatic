@@ -1,6 +1,6 @@
 import { compose } from '@platformatic/graphql-composer'
 
-const placeholderSdl = 'Query { _info: String }'
+const placeholderSdl = 'type Query { _info: String }'
 const placeholderResolvers = { Query: { _info: '@platformatic/gateway' } }
 
 // TODO support subscriptions

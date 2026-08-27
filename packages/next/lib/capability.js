@@ -316,10 +316,6 @@ export class NextCapability extends BaseCapability {
 
     if (command) {
       const childManagerScripts = this.#getChildManagerScripts()
-
-      if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
-        childManagerScripts.push(new URL('./create-context-patch.js', import.meta.url))
-      }
       return this.startWithCommand(command, loaderUrl, childManagerScripts)
     }
 
@@ -345,6 +341,7 @@ export class NextCapability extends BaseCapability {
     try {
       updateGlobals({ config: this.config })
       await this.childManager.inject()
+      await this.childManager.register()
       const { nextStart } = await importFile(resolvePath(this.#next, './dist/cli/next-start.js'))
 
       const { hostname, port } = this.serverConfig ?? {}
@@ -352,8 +349,6 @@ export class NextCapability extends BaseCapability {
         hostname: hostname || '127.0.0.1',
         port: port || 0
       }
-
-      await this.childManager.register()
 
       const serverPromise = createServerListener()
 
@@ -441,6 +436,10 @@ export class NextCapability extends BaseCapability {
 
     if (this.#nextVersion.major >= 15) {
       scripts.push(new URL('./loader-next-15.cjs', import.meta.url))
+    }
+
+    if (this.#nextVersion.major < 15 || (this.#nextVersion.major === 15 && this.#nextVersion.minor < 1)) {
+      scripts.push(new URL('./create-context-patch.js', import.meta.url))
     }
 
     return scripts
