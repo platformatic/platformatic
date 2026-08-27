@@ -17,6 +17,7 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parseEnv } from 'node:util'
 
 /*
   The one-shot codemod from a v3 configuration to a v4 one, and the only code in v4 that reads a
@@ -368,6 +369,24 @@ function classifyNode (node) {
 }
 
 /*
+  What `.env.sample` says a variable should be.
+
+  v3 never loaded this file, so its values are suggestions rather than runtime truth -- turning one
+  into an executable default would change behaviour whenever the real variable is absent, which is
+  why that only happens under an explicit flag. Read here for the other use as well: a value the
+  project already supplies is a better validation witness than one migrate invents, and it answers
+  the question the project actually has.
+*/
+function readSampleEnv (directory) {
+  try {
+    return parseEnv(readFileSync(join(directory, '.env.sample'), 'utf-8'))
+  } catch {
+    // Absent or unreadable: there is simply no suggestion to take.
+    return {}
+  }
+}
+
+/*
   Converts every `{PLT_X}` in a configuration into an expression that preserves what v3 did with it.
 
   v3 replaced placeholders before anything read the value, so what a position meant depended on its
@@ -380,12 +399,13 @@ function classifyNode (node) {
   What cannot be decided from the schema is refused rather than guessed: a genuine union, a boolean
   whose v3 rule differs by site, and a position whose string form is really parsed.
 */
-function convertPlaceholders (config, schema, { module, where }) {
+function convertPlaceholders (config, schema, { module, sample = {}, useSampleDefaults = false, where }) {
   const refusals = []
   const helpers = new Set()
   const seeds = new Map()
   const referenced = new Map()
   const ignored = replaceEnvIgnore[module] ?? []
+  const suggested = new Map()
   let needsPath = false
 
   function convert (value, pointer) {
@@ -427,7 +447,7 @@ function convertPlaceholders (config, schema, { module, where }) {
           one: v3 interpolated the parts and the surrounding string still had to validate.
         */
         for (const [, name] of value.matchAll(everyPlaceholder)) {
-          seeds.set(name, sentinelFor(position))
+          seeds.set(name, sample[name] ?? sentinelFor(position))
           referenced.set(name, (referenced.get(name) ?? []).concat(pointer))
         }
 
@@ -449,13 +469,25 @@ function convertPlaceholders (config, schema, { module, where }) {
 
       const name = whole[1]
 
-      seeds.set(name, sentinelFor(position))
+      seeds.set(name, sample[name] ?? sentinelFor(position))
       referenced.set(name, (referenced.get(name) ?? []).concat(pointer))
+
+      if (sample[name] !== undefined) {
+        suggested.set(name, sample[name])
+      }
 
       switch (position.kind) {
         case 'string':
-          // v3 replaced a missing variable with the empty string, and the schema accepted it.
-          return raw(`process.env.${name} ?? ''`)
+          /*
+            v3 replaced a missing variable with the empty string, and the schema accepted it. A
+            sample value becomes the fallback only when asked for: it is a suggestion, and v3 never
+            read the file it came from.
+          */
+          return raw(
+            `process.env.${name} ?? ${
+              useSampleDefaults && sample[name] !== undefined ? serializeString(sample[name]) : "''"
+            }`
+          )
         case 'number':
           helpers.add('requiredEnv')
           return raw(`Number(requiredEnv('${name}'))`)
@@ -498,7 +530,15 @@ function convertPlaceholders (config, schema, { module, where }) {
 
   const converted = convert(config, '')
 
-  return { converted: refusals.length > 0 ? config : converted, helpers, needsPath, referenced, refusals, seeds }
+  return {
+    converted: refusals.length > 0 ? config : converted,
+    helpers,
+    needsPath,
+    referenced,
+    refusals,
+    seeds,
+    suggested
+  }
 }
 
 // Emitted into a file only where that file has a position needing one.
@@ -900,12 +940,13 @@ export function emitRootConfiguration (config, entries, inlined = [], autoload =
   It is also where the emitted root entry is assembled: an id pinned to what v3 resolved, and an
   `envfile` rebased, are decisions about output that need the same lexical view the refusals need.
 */
-export async function planMigration (root, source, config) {
+export async function planMigration (root, source, config, { useSampleDefaults = false } = {}) {
   const refusals = []
   const applications = []
   const notes = []
   const seeds = new Map()
   const skipped = []
+  const suggestions = new Map()
   const declaredEntries = config.applications ?? config.services ?? config.web ?? []
   const rootDirectory = canonicalize(dirname(source))
 
@@ -1042,6 +1083,8 @@ export async function planMigration (root, source, config) {
 
     const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, directory), {
       module,
+      sample: readSampleEnv(directory),
+      useSampleDefaults,
       where: relative(root, legacy)
     })
 
@@ -1060,6 +1103,10 @@ export async function planMigration (root, source, config) {
         placeholders.referenced
       )
     )
+
+    for (const [name, value] of placeholders.suggested) {
+      suggestions.set(name, value)
+    }
 
     const derived = await deriveLegacyId(directory)
     const id = entry.id ? legalId(entry.id) : derived.id
@@ -1084,7 +1131,7 @@ export async function planMigration (root, source, config) {
     })
   }
 
-  const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds)
+  const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds, useSampleDefaults)
   const entrypoint = planExposure(config, applications, refusals)
   const exposure = refusals.length === 0 ? await applyExposure(config, applications, entrypoint) : []
 
@@ -1093,6 +1140,7 @@ export async function planMigration (root, source, config) {
     autoload,
     entrypoint,
     exposure: notes.concat(exposure),
+    suggestions,
     refusals: refusals.concat(collectPlanRefusals(root, source, applications)),
     seeds,
     skipped
@@ -1317,7 +1365,7 @@ function planExposure (config, applications, refusals) {
   The directories themselves are converted like any other application: each one that has a
   configuration of its own gets a v4 file in its place.
 */
-async function planAutoload (root, config, applications, refusals, skipped, seeds) {
+async function planAutoload (root, config, applications, refusals, skipped, seeds, useSampleDefaults) {
   if (!config.autoload) {
     return null
   }
@@ -1396,6 +1444,8 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
 
     const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, applicationRoot), {
       module,
+      sample: readSampleEnv(applicationRoot),
+      useSampleDefaults,
       where: relative(root, legacy)
     })
 
@@ -1911,7 +1961,7 @@ function createJournal () {
 
 export async function migrateCommand (logger, args) {
   const {
-    values: { config: named },
+    values: { config: named, 'use-sample-defaults': useSampleDefaults },
     positionals
   } = parseArgs(
     args,
@@ -1919,6 +1969,14 @@ export async function migrateCommand (logger, args) {
       config: {
         type: 'string',
         short: 'c'
+      },
+      /*
+        Off by default because a sample value is a suggestion and v3 never read the file: making one
+        an executable fallback changes what the project does whenever the real variable is absent,
+        which is a decision for the person who wrote it.
+      */
+      'use-sample-defaults': {
+        type: 'boolean'
       }
     },
     false
@@ -1953,10 +2011,11 @@ export async function migrateCommand (logger, args) {
   let helpers = new Set()
   let envBlocks = []
   let needsPath = false
+  let suggested = new Map()
   let seeds = new Map()
 
   if (runtime && refusals.length === 0) {
-    plan = await planMigration(directory, source, config)
+    plan = await planMigration(directory, source, config, { useSampleDefaults })
     refusals.push(...plan.refusals)
   } else if (!runtime) {
     /*
@@ -1966,6 +2025,8 @@ export async function migrateCommand (logger, args) {
     */
     const placeholders = convertPlaceholders(config, await capabilitySchema(module, directory), {
       module,
+      sample: readSampleEnv(directory),
+      useSampleDefaults,
       where: basename(source)
     })
 
@@ -1974,6 +2035,7 @@ export async function migrateCommand (logger, args) {
     helpers = placeholders.helpers
     needsPath = placeholders.needsPath
     seeds = placeholders.seeds
+    suggested = placeholders.suggested
     envBlocks = reportEnvBlocks(
       [{ env: config.runtime?.env ?? config.env, where: basename(source) }],
       placeholders.referenced
@@ -2170,6 +2232,19 @@ export async function migrateCommand (logger, args) {
     logger.warn(note)
   }
 
+  /*
+    Noted rather than applied: v3 never read `.env.sample`, so making one of its values an executable
+    fallback would change what the project does when the real variable is absent. `--use-sample-defaults`
+    is the way to ask for that deliberately.
+  */
+  if (!useSampleDefaults) {
+    for (const [name, value] of plan?.suggestions ?? suggested) {
+      logger.info(
+        `${bold('.env.sample')} suggests ${bold(name)} is ${bold(value)}. That is a suggestion and not what the emitted file falls back to — pass ${bold('--use-sample-defaults')} to write these in.`
+      )
+    }
+  }
+
   const assumed = Object.keys(seeded)
 
   if (assumed.length > 0) {
@@ -2221,6 +2296,10 @@ export const help = {
       {
         usage: '-c, --config <config>',
         description: 'The v3 configuration file to migrate, when its name is not one migrate recognizes'
+      },
+      {
+        usage: '--use-sample-defaults',
+        description: 'Emit .env.sample values as fallbacks rather than noting them (v3 never read that file)'
       }
     ]
   }

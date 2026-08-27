@@ -1143,3 +1143,34 @@ test('migrate - names the breaking changes this tree stands in front of', async 
   ok(stdout.includes('.env.local') && stdout.includes('BC 5'), stdout)
   ok(stdout.includes('BC 17') && stdout.includes('api'), stdout)
 })
+
+test('migrate - treats .env.sample as a suggestion unless asked otherwise', async t => {
+  async function sampleProject () {
+    const root = await project(t, {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+        server: { hostname: '{HOSTNAME}' }
+      }
+    })
+
+    await writeFile(join(root, '.env.sample'), 'HOSTNAME=0.0.0.0\n', 'utf-8')
+    await linkCapability(root, 'node')
+
+    return root
+  }
+
+  const noted = await sampleProject()
+  const notedProcess = await wattpmUtils('migrate', noted)
+
+  /*
+    v3 never read .env.sample, so turning one of its values into an executable fallback would change
+    what the project does whenever the real variable is absent. The value is reported instead.
+  */
+  ok((await readFile(join(noted, 'watt.config.mjs'), 'utf-8')).includes("process.env.HOSTNAME ?? ''"))
+  ok(notedProcess.stdout.includes('suggests') && notedProcess.stdout.includes('0.0.0.0'), notedProcess.stdout)
+
+  const applied = await sampleProject()
+  await wattpmUtils('migrate', applied, '--use-sample-defaults')
+
+  ok((await readFile(join(applied, 'watt.config.mjs'), 'utf-8')).includes("process.env.HOSTNAME ?? '0.0.0.0'"))
+})
