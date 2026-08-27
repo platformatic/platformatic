@@ -1,5 +1,16 @@
 import { getEvents, isEntrypoint } from '@platformatic/globals'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
+import { Server as NetServer } from 'node:net'
+
+// Some frameworks (Vite 8 and later) look for a free port by opening and immediately closing
+// throwaway TCP servers before binding the real one. Those probes are bare net.Server instances,
+// while any application server is an http, https or http2 server, so they can be told apart by
+// their constructor. Probes must never be mistaken for the application server: they are already
+// closed by the time the capability reads their address, and the errors they raise are recovered
+// from by the framework itself.
+function isPortProbe (server) {
+  return server?.constructor === NetServer
+}
 
 export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {
   const { promise, resolve, reject } = Promise.withResolvers()
@@ -35,10 +46,20 @@ export function createServerListener (overridePort = true, overrideHost = false,
       }
     },
     asyncEnd ({ server }) {
+      // Keep listening: the server options above must still be applied to the real server.
+      if (isPortProbe(server)) {
+        return
+      }
+
       cancel()
       resolve(server)
     },
-    error ({ error }) {
+    error ({ error, server }) {
+      // The framework retries on a different port after a failed probe, so this is not fatal.
+      if (isPortProbe(server)) {
+        return
+      }
+
       cancel()
       reject(error)
     }

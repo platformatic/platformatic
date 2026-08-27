@@ -47,7 +47,7 @@
     "react-dom": "^19.1.0",
     "tstyche": "^7.0.0",
     "typescript": "~6.0.3",
-    "vite": "^7.2.4",
+    "vite": "^8.2.2",
     "vite-plugin-solid": "^2.11.10",
     "vite-tsconfig-paths": "^5.1.4",
     "ws": "^8.18.0"
