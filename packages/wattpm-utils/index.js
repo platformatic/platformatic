@@ -5,7 +5,6 @@ import { createCommand } from './lib/commands/create.js'
 import { installCommand, updateCommand } from './lib/commands/dependencies.js'
 import { importCommand, resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
-import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { version } from './lib/version.js'
 
 export async function main () {
@@ -60,9 +59,6 @@ export async function main () {
       break
     case 'resolve':
       command = resolveCommand
-      break
-    case 'patch-config':
-      command = patchConfigCommand
       break
     case 'install':
       command = installCommand
