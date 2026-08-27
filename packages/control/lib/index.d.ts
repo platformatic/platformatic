@@ -140,7 +140,6 @@ export class RuntimeApiClient {
     pid: number,
     options?: T
   ): Promise<T extends { format: 'text' } ? string : Metric[]>
-  getRuntimeLiveMetricsStream (pid: number): WebSocketStream
   getRuntimeLiveLogsStream (pid: number, startLogIndex?: number): WebSocketStream
   getRuntimeLogsStream (pid: number, logsId: string, options?: { runtimePID?: number }): Promise<ReadableBody>
   getRuntimeAllLogsStream (pid: number, options?: { runtimePID?: number }): Promise<ReadableBody>
