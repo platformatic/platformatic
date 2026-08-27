@@ -1294,7 +1294,7 @@ The rules, in full:
 - **`application.entrypointPort` is removed** for the same reason as custom
   listeners: it
   overwrote the port of an *observed* URL
-  (`basic/lib/capability.js:924-928`) so the runtime would report a port other than
+  (`basic/lib/capability.js:924-928` pre-`3c92a2a64`) so the runtime would report a port other than
   the bound one — meaningful only while an entrypoint proxied the application, and
   without a referent since `e2da15eda`. It was also load-bearing in a place it was
   never meant to reach: the reported URL is the only input to the collision scan
@@ -4679,7 +4679,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     application config's capability-owned `server` (`:10-14`), and `upgrade()`
     warns when a root `server` is discarded (`runtime/lib/upgrade.js:16-19`).
     `entrypointPort` leaves the **capability** schema
-    (`basic/lib/schema.js:61-63`), and **no upgrade chain removes it**: `v4.0.0.js`
+    (`basic/lib/schema.js:61-63` pre-`3c92a2a64`), and **no upgrade chain removes it**: `v4.0.0.js`
     returns early for a non-runtime `$schema` (`runtime/lib/versions/v4.0.0.js:12-14`) — exactly the capability
     configs the key lives in — and the basic-family capabilities have no `versions/`
     directory at all. So **migrate strips it** while emitting a requires-review note
@@ -4889,7 +4889,7 @@ runs multiple workers on a fixed port at all.
    port — the exact hole #5074 closed, and the commonest v3 entrypoint is a gateway.
    `468c64604` did add it to both (`foundation/lib/schema.js:400,515`); the audit
    item is to keep them from drifting apart again. Second: **remove `application.entrypointPort`**, which lives in
-   `basic/lib/schema.js:61-63` and every capability's generated `schema.json`.
+   `basic/lib/schema.js:61-63` pre-`3c92a2a64` and every capability's generated `schema.json`.
 3. **basic**: `defineCapabilityFactory`; duck-typed `ApplicationDefinition`
    (`module` property, no symbols); **invert `importCapabilityPackage`'s order** to
    application-scoped first with the bundled fallback
@@ -4897,10 +4897,10 @@ runs multiple workers on a fixed port at all.
    process uses for schemas and the version stamp, so the three cannot disagree; capability-block flattening with `application`
    kept nested; delete worker-side config *file* resolution (the capability
    `transform` + pre-transform `configPatch` application stay worker-side); remove
-   `application.entrypointPort` from the schema (`lib/schema.js:61-63`) and its
-   rewrite from `_getEntrypointUrl` (`basic/lib/capability.js:924-928`), keeping the
+   `application.entrypointPort` from the schema (`lib/schema.js:61-63` pre-`3c92a2a64`) and its
+   rewrite from `_getEntrypointUrl` (`basic/lib/capability.js:924-928` pre-`3c92a2a64`), keeping the
    `[::]`/`0.0.0.0` → `localhost` normalization, and drop the two tests that assert
-   the override (`test/capability.test.js:96,114`).
+   the override (`test/capability.test.js:96,114` pre-`3c92a2a64`).
 4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
    accepts inline definitions; **`autoload` expansion and `enabled` filtering leave
    the runtime transform** (`runtime/lib/config.js:450-484`, `:486-490`) for the root

@@ -235,7 +235,7 @@
       "head": "portAssignment: server.properties.portAssignment,",
       "lines": 1
     },
-    "packages/basic/lib/capability.js:924-928": {
+    "packages/basic/lib/capability.js:924-928@3c92a2a64^": {
       "sha": "d8d46c29f66296cf",
       "head": "const port = this.config.application?.entrypointPort",
       "lines": 5
@@ -985,7 +985,7 @@
       "head": "#getHealthChecksTimeout () {",
       "lines": 8
     },
-    "packages/basic/lib/schema.js:61-63": {
+    "packages/basic/lib/schema.js:61-63@3c92a2a64^": {
       "sha": "46d05e2b832ea25d",
       "head": "entrypointPort: {",
       "lines": 3
@@ -1010,7 +1010,7 @@
       "head": "portAssignment: {",
       "lines": 2
     },
-    "packages/basic/test/capability.test.js:96,114": {
+    "packages/basic/test/capability.test.js:96,114@3c92a2a64^": {
       "sha": "8950f97efb7b5302",
       "head": "entrypointPort: 3042",
       "lines": 2
