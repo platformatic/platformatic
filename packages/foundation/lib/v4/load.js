@@ -279,6 +279,22 @@ export async function loadConfiguration ({
 
   const standalone = root.classification === 'application'
 
+  /*
+    Scope is positional, and the one thing a positional rule must never be is silent: which file
+    decided, and whether that means the whole runtime or a single application, is the difference
+    between the boot you asked for and one that quietly leaves the mesh out. It is announced on
+    every load rather than only when something looks wrong, because "nothing was printed" is not a
+    signal a reader can act on.
+  */
+  report.onInfo?.({
+    type: 'boot-scope',
+    configPath: deciding.path,
+    standalone,
+    message: standalone
+      ? `${deciding.path} — booting one application standalone`
+      : `${deciding.path} — booting the full runtime`
+  })
+
   if (standalone) {
     // Both conditions earn their place. Without the app-def half, a nested root config would tell
     // the user the mesh is unavailable while a full runtime with a working mesh boots. Without the

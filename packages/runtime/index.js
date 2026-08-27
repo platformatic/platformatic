@@ -184,6 +184,7 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     development env files and gave every callback `production: false` while writing what `start`
     would later run.
   */
+  const diagnostics = context?.logger ?? abstractLogger
   const explicitProduction = context?.isProduction ?? context?.production
   const command = context?.command ?? (explicitProduction ? 'start' : 'dev')
   const production = explicitProduction ?? isProductionCommand(command)
@@ -219,8 +220,17 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     // both the schema import and the version stamp — the application's own dependencies still
     // come first.
     runtimeScope: import.meta.filename,
-    onWarning: warning => abstractLogger.warn(warning.message),
-    onInfo: info => abstractLogger.info(info.message)
+    /*
+      These are the loader's user-facing diagnostics — the standalone-boot warning, the zero-config
+      inference notice, the capability the detector chose — and they were being handed to
+      abstractLogger, which is a no-op. Every one of them was discarded, including the warning the
+      format relies on to tell someone that nothing the root says is being applied.
+
+      A caller with a real logger passes it. The default stays silent because an embedder loading a
+      configuration has not asked for anything on its stderr.
+    */
+    onWarning: warning => diagnostics.warn(warning.message),
+    onInfo: info => diagnostics.info(info.message)
   })
 
   const config = loaded.config

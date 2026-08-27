@@ -42,7 +42,7 @@ export async function buildCommand (logger, args) {
     try {
       // build produces production artifacts, so it evaluates as a production boot: the same env
       // files `start` will read, and `production: true` in every callback's context.
-      runtime = await create(configurationFile, undefined, { build: true, command: 'build', envFile: env })
+      runtime = await create(configurationFile, undefined, { build: true, command: 'build', envFile: env, logger })
       await runtime.init()
       /* c8 ignore next 4 - Hard to test */
     } catch (error) {

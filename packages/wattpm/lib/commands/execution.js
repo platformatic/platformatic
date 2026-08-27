@@ -35,6 +35,11 @@ async function printResolvedConfiguration (logger, root, configurationFile, { pr
       way.
     */
     const inProcessTarget = inspector.url() ? configurationFile : undefined
+    /*
+      No logger here on purpose: this command's output is the configuration as JSON on stdout, and
+      the CLI logger writes there too. The scope announcement belongs to a boot — this boots
+      nothing — and interleaving it would break the one consumer that output has.
+    */
     const config = await loadConfiguration(root, configurationFile, { production, envFile: env, inProcessTarget })
     console.log(JSON.stringify(config, null, 2))
   } catch (err) {
@@ -79,7 +84,7 @@ export async function devCommand (logger, args) {
 
   let runtime
   try {
-    runtime = await create(root, configurationFile, { start: true, envFile: env })
+    runtime = await create(root, configurationFile, { start: true, envFile: env, logger })
   } catch (err) {
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
     return
@@ -157,7 +162,7 @@ export async function devCommand (logger, args) {
   async function reloadApplication () {
     await Promise.all(watchers.map(watcher => watcher.stopWatching()))
     await runtime.close()
-    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env })
+    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env, logger })
     watchConfiguration()
   }
 
@@ -215,7 +220,7 @@ export async function startCommand (logger, args) {
   }
 
   try {
-    return await create(root, configurationFile, { start: true, production: true, inspect, envFile: env })
+    return await create(root, configurationFile, { start: true, production: true, inspect, envFile: env, logger })
   } catch (err) {
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
   }

@@ -12,6 +12,19 @@ import { request } from 'undici'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
+/*
+  `dev` and `start` share stdout between two writers: the runtime logs JSON there, and the CLI logs
+  human-readable lines — the boot-scope announcement, the standalone warning, `logger.done`. A test
+  reading the runtime's records has to step over the CLI's, which were never JSON to begin with.
+*/
+function parseRuntimeLog (log) {
+  try {
+    return JSON.parse(log.toString())
+  } catch {
+    return null
+  }
+}
+
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
@@ -105,7 +118,11 @@ test('dev - should restart an application if files are changed', async t => {
   // Wait for the server to restart
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('The application "main" has been successfully reloaded')) {
       reloaded = true
@@ -155,7 +172,11 @@ test('dev - should restart an application if the runtime configuration file is c
   // Wait for the server to restart
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('This is a trace')) {
       reloaded = true
@@ -206,7 +227,11 @@ test('dev - should restart an application if the application configuration file 
   // Wait for the server to restart
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('The application "main" has been successfully reloaded')) {
       reloaded = true
@@ -251,7 +276,11 @@ test('dev - should restart an application if "rs" is typed', async t => {
   // Wait for the server to restart
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('The application has been successfully reloaded')) {
       reloaded = true
@@ -297,7 +326,12 @@ test('dev - should load custom env file after runtime configuration file change 
 
   let url
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
+
     const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
     if (mo) {
       url = mo[1]
@@ -428,8 +462,10 @@ test('start - should throw an error when an application has no path and it is no
       .trim()
       .split('\n')
       .find(l => {
+        const parsed = parseRuntimeLog(l)
+
         return (
-          JSON.parse(l).msg ===
+          parsed?.msg ===
           'The application "resolved" has no path defined. Please check your configuration and try again.'
         )
       }),
@@ -634,7 +670,11 @@ test('dev - should restart an application when a file the configuration imports 
 
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg?.startsWith('The configuration has changed, reloading the application')) {
       reloaded = true
@@ -646,4 +686,33 @@ test('dev - should restart an application when a file the configuration imports 
   }
 
   ok(reloaded)
+})
+
+test('the boot scope is announced, and a standalone boot warns about what is not applied', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'imported-config', false, 'watt.config.mjs')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  /*
+    Scope is positional, and the one thing a positional rule must never be is silent. Both of these
+    were being handed to a no-op logger and discarded — including the warning the format relies on
+    to say that nothing the root config declares is in effect.
+  */
+  const startProcess = wattpm('dev', resolve(rootDir, 'web/main'))
+  const seen = []
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const line = log.toString()
+    seen.push(line)
+
+    if (line.includes('sibling applications and http://*.plt.local are unavailable')) {
+      break
+    }
+  }
+
+  const output = seen.join('\n')
+  ok(output.includes('booting one application standalone'), output)
 })
