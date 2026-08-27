@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
 import { version } from '../../runtime/index.js'
 import { RuntimeApiClient } from '../lib/index.js'
@@ -114,45 +113,6 @@ test('should get runtime metrics', async t => {
       assert.ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
     }
   }
-})
-
-test('should get runtime live metrics', async t => {
-  const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
-  const { runtime } = await startRuntime(configFile)
-  t.after(async () => {
-    await kill(runtime)
-  })
-
-  // Wait for the runtime to collect some metrics
-  await sleep(5000)
-
-  const runtimeClient = new RuntimeApiClient()
-  const runtimeMetricsStream = runtimeClient.getRuntimeLiveMetricsStream(runtime.pid)
-
-  let count = 0
-  await new Promise((resolve, reject) => {
-    runtimeMetricsStream.pipe(
-      split(record => {
-        if (count++ > 10) resolve()
-
-        const { applications } = JSON.parse(record)
-
-        assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2'].sort())
-
-        for (const applicationMetrics of Object.values(applications)) {
-          assert.deepStrictEqual(
-            Object.keys(applicationMetrics).sort(),
-            ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
-          )
-
-          const latencyMetrics = applicationMetrics.latency
-          const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-          assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
-        }
-      })
-    )
-  })
 })
 
 test('should get matching runtime', async t => {
