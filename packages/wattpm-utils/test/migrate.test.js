@@ -372,7 +372,7 @@ test('migrate - emits a file per application plus a thin root', async t => {
   strictEqual(loaded.config.applications.find(entry => entry.id === 'api').workers, 2)
 })
 
-test('migrate - undoes every file it touched when one application refuses', async t => {
+test('migrate - refuses a later application before writing an earlier one', async t => {
   const root = await project(t, {
     'platformatic.json': {
       $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
@@ -399,13 +399,148 @@ test('migrate - undoes every file it touched when one application refuses', asyn
   ok(migrateProcess.stdout.includes('interpolation'), migrateProcess.stdout)
 
   /*
-    The first application was already written and its legacy file already deleted when the second
-    was refused. Leaving that would be the worst outcome available: a tree that is neither v3 nor
-    v4, with nothing in it saying which half moved.
+    The first application is untouched because nothing was written at all: every refusal is computed
+    from the tree as it stands, before the first file is emitted. The weaker property -- writing and
+    then undoing -- is what the validation path below has to rely on, and this one does not.
   */
   strictEqual(await fileExists(join(root, 'services/first/watt.config.mjs')), false)
   strictEqual(await fileExists(join(root, 'services/first/platformatic.json')), true)
   strictEqual(await fileExists(join(root, 'services/second/platformatic.json')), true)
   strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
   strictEqual(await fileExists(join(root, 'platformatic.json')), true)
+})
+
+test('migrate - undoes every file it touched when the emitted tree does not load', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // Legal v3 and refused by the v4 runtime schema, so it survives the pre-flight and fails
+      // validation -- by which point both applications have been converted and their legacy files
+      // deleted, which is the state this exists to prove does not survive.
+      strictEnv: true,
+      applications: [
+        { id: 'first', path: './services/first' },
+        { id: 'second', path: './services/second' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['first', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    ['second', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  await linkCapability(root, 'node')
+  // The root file imports wattpm, and an unresolvable import is reported rather than treated as bad
+  // output -- so without this the run would end in a warning and validate nothing.
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('does not load'), migrateProcess.stdout)
+
+  /*
+    Every directory the run touched goes back, not only the one that failed. A tree that is neither
+    v3 nor v4, with nothing in it saying which half moved, is the worst outcome available here.
+  */
+  for (const name of ['first', 'second']) {
+    strictEqual(await fileExists(join(root, 'services', name, 'watt.config.mjs')), false)
+    strictEqual(await fileExists(join(root, 'services', name, 'platformatic.json')), true)
+  }
+
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'platformatic.json')), true)
+})
+
+test('migrate - refuses two applications that would write one file, and ids that collide once renamed', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // Legal v3: each entry named its own config file, so one directory held two applications.
+      applications: [
+        { id: 'my_api', path: './services/shared', config: 'a.json' },
+        { id: 'my-api', path: './services/shared', config: 'b.json' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'services/shared'), { recursive: true })
+
+  for (const name of ['a.json', 'b.json']) {
+    await writeFile(
+      join(root, 'services/shared', name),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+
+  // Both refusals, in one report: the shared target, and the id `my_api` becoming the `my-api` that
+  // is already taken. Neither is a state v3 ever called invalid, and both are computable by looking.
+  ok(migrateProcess.stdout.includes('would both be written to'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('resolve to the id'), migrateProcess.stdout)
+  strictEqual(await fileExists(join(root, 'services/shared/watt.config.mjs')), false)
+})
+
+test('migrate - refuses an application outside the project, and a missing envfile', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'outside', path: '../elsewhere' },
+        { id: 'inside', path: './services/inside', envfile: './services/inside/deploy.env' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'services/inside'), { recursive: true })
+  await writeFile(
+    join(root, 'services/inside/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('outside this project'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('does not exist'), migrateProcess.stdout)
+  strictEqual(await fileExists(join(root, 'services/inside/watt.config.mjs')), false)
+})
+
+test('migrate - rebases an envfile the entry declared against the root', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [{ id: 'api', path: './services/api', envfile: './services/api/deploy.env' }]
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(join(root, 'services/api/deploy.env'), 'TOKEN=secret\n', 'utf-8')
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v3 resolved an entry's envfile against the runtime root and v4 resolves it against the
+    application's directory, so carrying the string across unchanged would silently point it at a
+    file that is not there -- which v4 makes a load error.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("envfile: 'deploy.env'"), emitted)
 })

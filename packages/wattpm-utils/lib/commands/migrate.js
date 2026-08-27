@@ -5,10 +5,11 @@ import {
   parseArgs
 } from '@platformatic/foundation'
 import { loadConfiguration as loadV4Configuration } from '@platformatic/foundation/lib/v4/index.js'
+import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
 import { bold } from 'colorette'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readFile, rm, writeFile } from 'node:fs/promises'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 
 /*
   The one-shot codemod from a v3 configuration to a v4 one, and the only code in v4 that reads a
@@ -79,6 +80,56 @@ const factories = {
 // in v4, and converting one correctly needs the audited target type for its position — which is
 // what tells a number from an enum from a string, and therefore which guard to emit.
 const placeholderPattern = /\{[A-Z0-9_]+\}/
+
+/*
+  The four names v4 recognizes. A directory already holding one has a configuration, and a second
+  beside it is two candidates in one directory -- which the loader rejects. So a `watt.config.js`
+  where migrate would write `watt.config.mjs` is not a free pass; it is a reason to stop.
+*/
+const v4Candidates = ['watt.config.ts', 'watt.config.mts', 'watt.config.js', 'watt.config.mjs']
+
+/*
+  The nearest existing ancestor, canonicalized, with the missing segments put back. Several of the
+  paths this is asked about legitimately do not exist yet and `realpath` throws on a missing one, so
+  requiring it of the path itself would abort an ordinary migration with a filesystem error. Where
+  the path does exist this is a plain realpath, which is the case it was written for: a symlinked
+  directory is how a path that looks inside the tree points outside it.
+*/
+function canonicalize (path) {
+  const missing = []
+  let current = resolve(path)
+
+  while (!existsSync(current)) {
+    const parent = dirname(current)
+
+    if (parent === current) {
+      return current
+    }
+
+    missing.unshift(basename(current))
+    current = parent
+  }
+
+  return join(realpathSync(current), ...missing)
+}
+
+// Compared as paths and not as strings, because a prefix match admits `/tmp/app-evil` as contained
+// by `/tmp/app`.
+function contains (root, path) {
+  const inside = relative(canonicalize(root), canonicalize(path))
+
+  return inside === '' || (!inside.startsWith('..') && !isAbsolute(inside))
+}
+
+// v3 imposed no grammar on ids; v4 requires a DNS label. The rewrite is mechanical, which is what
+// makes the collision it can cause mechanical too -- and computable before anything is written.
+function legalId (id) {
+  return id.replace(/[^a-zA-Z0-9-]/g, '-').replace(/^-+|-+$/g, '')
+}
+
+function existingV4Candidate (directory) {
+  return v4Candidates.find(candidate => existsSync(join(directory, candidate))) ?? null
+}
 
 export function findLegacyConfiguration (root, named) {
   if (named) {
@@ -257,7 +308,7 @@ export async function deriveLegacyId (root) {
     // A missing or unreadable package.json is what the fallback is for.
   }
 
-  const legal = name.replace(/[^a-zA-Z0-9-]/g, '-').replace(/^-+|-+$/g, '') || 'main'
+  const legal = legalId(name) || 'main'
 
   return { id: legal, renamedFrom: legal === name ? null : name }
 }
@@ -340,61 +391,271 @@ export function emitRootConfiguration (config, entries) {
   )
 }
 
-async function migrateApplications (logger, journal, root, source, config) {
-  const declaredEntries = config.applications ?? config.services ?? config.web ?? []
-  const emitted = []
-  const entries = []
+/*
+  What the run would do, worked out before it does any of it. Every refusal lives here, over the
+  parsed configuration and the filesystem as it stands, so that "stops before modifying any file" is
+  a property of the shape of the code rather than a promise each new check has to remember to keep.
+
+  It is also where the emitted root entry is assembled: an id pinned to what v3 resolved, and an
+  `envfile` rebased, are decisions about output that need the same lexical view the refusals need.
+*/
+export async function planMigration (root, source, config) {
+  const refusals = []
+  const applications = []
   const skipped = []
+  const declaredEntries = config.applications ?? config.services ?? config.web ?? []
+  const rootDirectory = canonicalize(dirname(source))
 
   for (const entry of declaredEntries) {
-    const { config: _legacyPath, ...orchestration } = entry
+    const { config: _legacyPath, envfile, ...orchestration } = entry
+    const named = entry.id ?? entry.path ?? entry.url ?? 'an application'
 
     if (!entry.path) {
-      // A remote entry has no local configuration to convert, and keeps working as it is.
-      entries.push(orchestration)
+      // Orchestration only: an entry with a `url` and no resolvable directory has nothing local to
+      // convert, and is another repository's project to migrate.
+      applications.push({ orchestration: entry })
       continue
     }
 
     const directory = resolve(root, entry.path)
-    const legacy = findLegacyConfiguration(directory, null)
+
+    /*
+      The transaction root is the tree one dirty check, one lockfile and one install cover. An
+      application at `../shared/api` may sit in another workspace or another repository: migrate
+      would write a configuration there, delete its legacy file, and hold a rollback that cannot
+      reach it. The format supports the layout; one run declines to transact two trees.
+    */
+    if (!contains(root, directory)) {
+      refusals.push({
+        reason: `${bold(named)} resolves to ${bold(entry.path)}, outside this project`,
+        fix: 'migrate that project on its own, then run migrate here again — one run cannot transact two independent trees'
+      })
+      continue
+    }
+
+    /*
+      v3 resolved an entry's `envfile` against the runtime root (`runtime/lib/worker/main.js:237`)
+      and v4 resolves it against the application's own directory, so the path is rebased to keep
+      naming the same file.
+    */
+    let rebased = null
+
+    if (envfile) {
+      const declaredFile = resolve(root, envfile)
+
+      if (!existsSync(declaredFile)) {
+        /*
+          v3 read an application's env file inside a try/catch and carried on when it was not there;
+          v4 makes an explicitly named missing file a load error. Both are defensible and the
+          combination is not, because it converts a working project into one that refuses to load.
+        */
+        refusals.push({
+          reason: `${bold(named)} declares ${bold('envfile')} ${bold(envfile)}, which does not exist`,
+          fix: `create the file that declaration meant, or drop it — dropping it is not a no-op, because .env, .env.local, .env.<mode> and .env.<mode>.local in ${entry.path} then take over from it`
+        })
+        continue
+      }
+
+      rebased = relative(directory, declaredFile)
+    }
+
+    if (canonicalize(directory) === rootDirectory) {
+      /*
+        Such an application has to be emitted root-inline — the per-app style would put two v4
+        candidates in one directory — and `envfile` beside an inline `config` is illegal, because
+        that entry has no eval worker of its own to apply it.
+      */
+      refusals.push(
+        envfile
+          ? {
+              reason: `${bold(named)} lives in the root configuration's own directory and declares ${bold('envfile')}`,
+              fix: 'move the application into a subdirectory, or fold the named file into its own .env set — an application emitted root-inline has no eval worker of its own, so an envfile beside an inline config has nothing to apply it'
+            }
+          : {
+              reason: `${bold(named)} lives in the root configuration's own directory`,
+              fix: 'this migrator does not yet emit root-inline entries; move the application into a subdirectory of its own and run migrate again'
+            }
+      )
+      continue
+    }
+
+    /*
+      An entry's `config` names its own file and v3 resolved it against the application's path
+      (`runtime/lib/config.js:270-271`), which is how one directory could hold two applications.
+      Ignoring it would make migrate read the wrong file, or none.
+    */
+    let legacy = null
+
+    if (entry.config) {
+      legacy = resolve(directory, entry.config)
+
+      if (!existsSync(legacy)) {
+        refusals.push({
+          reason: `${bold(named)} names the configuration ${bold(entry.config)}, which does not exist`,
+          fix: 'point the entry at the file it means, or drop the key and let migrate find the configuration in that directory'
+        })
+        continue
+      }
+
+      /*
+        An application inside the root may legally point at `../../shared/platformatic.json` — a file
+        migrate reads to classify it and deletes once it is converted, on a tree its rollback cannot
+        reach. That is worse than writing outside the root, because a write at least leaves the
+        original behind.
+      */
+      if (!contains(root, legacy)) {
+        refusals.push({
+          reason: `${bold(named)} reads ${bold(entry.config)}, outside this project`,
+          fix: 'move that configuration into this project, or migrate the project it belongs to on its own — migrate will not delete a file its rollback cannot restore'
+        })
+        continue
+      }
+    } else {
+      legacy = findLegacyConfiguration(directory, null)
+    }
 
     if (!legacy) {
       /*
         No configuration of its own. v4's detector handles that — it is the zero-config case, not an
         error — so the entry is carried through and the directory is left alone.
       */
-      skipped.push(entry.id ?? entry.path)
-      entries.push(orchestration)
+      skipped.push(named)
+      applications.push({ orchestration: envfile ? { ...orchestration, envfile: rebased } : orchestration })
       continue
     }
 
     const applicationConfig = await loadRawConfigurationFile(legacy)
     const identity = extractModuleFromSchemaUrl(applicationConfig)
     const declared = applicationConfig.module ?? identity?.module
-    const applicationModule = renamedModules[declared] ?? declared
-    const refusals = collectRefusals(applicationConfig, { module: applicationModule })
+    const module = renamedModules[declared] ?? declared
 
-    if (refusals.length > 0) {
-      return { refusals, at: legacy }
+    for (const refusal of collectRefusals(applicationConfig, { module })) {
+      refusals.push({ ...refusal, reason: `${refusal.reason} (${bold(relative(root, legacy))})` })
     }
 
-    const { id } = await deriveLegacyId(directory)
-    const target = join(directory, chooseFileName(directory))
+    const derived = await deriveLegacyId(directory)
+    const id = entry.id ? legalId(entry.id) : derived.id
 
-    if (existsSync(target)) {
-      return { refusals: [{ reason: `${bold(target)} already exists`, fix: 'move it aside and run migrate again' }] }
-    }
-
-    await journal.write(target, emitApplicationConfiguration(applicationConfig, { module: applicationModule, id }))
-    await journal.remove(legacy)
-
-    // The id is pinned on the entry: v3 took an explicit entry's id from the entry itself, and
-    // leaving it out would let v4 derive a different one from the package name.
-    entries.push({ ...orchestration, id: entry.id ?? id })
-    emitted.push(target)
+    applications.push({
+      config: applicationConfig,
+      declared,
+      directory,
+      legacy,
+      module,
+      // The id is pinned on the entry: v3 took an explicit entry's id from the entry itself, and
+      // leaving it out would let v4 derive a different one from the package name.
+      orchestration: { ...orchestration, id, ...(envfile ? { envfile: rebased } : {}) },
+      renamedFrom: entry.id && id !== entry.id ? entry.id : entry.id ? null : derived.renamedFrom,
+      target: join(directory, chooseFileName(directory))
+    })
   }
 
-  return { entries, emitted, skipped }
+  return { applications, refusals: refusals.concat(collectPlanRefusals(root, source, applications)), skipped }
+}
+
+/*
+  The refusals that are about the plan as a whole rather than about any one entry: what the run
+  would overwrite, what it would write twice, and which ids stop being distinct once the label rule
+  has been applied to them.
+*/
+function collectPlanRefusals (root, source, applications) {
+  const refusals = []
+  const producers = new Map()
+  const ids = new Map()
+
+  for (const application of applications) {
+    if (application.target) {
+      /*
+        v3 let two entries with distinct ids share a directory, because each named its own config
+        file. v4 has one configuration per directory, so both emit the same path and the second write
+        replaces the first. Neither target exists yet, which is why this is a question about the plan
+        and not about the filesystem.
+      */
+      const claimed = producers.get(canonicalize(application.target))
+
+      if (claimed) {
+        refusals.push({
+          reason: `${bold(claimed)} and ${bold(application.orchestration.id)} would both be written to ${bold(relative(root, application.target))}`,
+          fix: 'two v3 applications sharing a directory are two applications, and v4 keeps one configuration per directory — give each its own directory'
+        })
+      } else {
+        producers.set(canonicalize(application.target), application.orchestration.id)
+      }
+
+      const existing = existingV4Candidate(application.directory)
+
+      if (existing) {
+        refusals.push({
+          reason: `${bold(join(relative(root, application.directory), existing))} already exists`,
+          fix: 'move it aside and run migrate again — migrating on top of it would overwrite a file git may never have seen, and a second candidate beside it is a directory the loader refuses'
+        })
+      }
+    }
+
+    const id = application.orchestration.id
+
+    if (!id) {
+      continue
+    }
+
+    // DNS labels are case-insensitive, so `API` and `api` are one id.
+    const key = id.toLowerCase()
+    const claimed = ids.get(key)
+
+    if (claimed && claimed !== application.orchestration) {
+      refusals.push({
+        reason: `two applications resolve to the id ${bold(id)}`,
+        fix: 'give one of them an explicit id — an id is the mesh hostname, the injected PLT_*_URL variable and the metrics label, so this is the one thing migrate must not pick on your behalf'
+      })
+    } else {
+      ids.set(key, application.orchestration)
+    }
+  }
+
+  const rootTarget = join(dirname(source), chooseFileName(dirname(source)))
+  const existing = existingV4Candidate(dirname(source))
+
+  if (existing) {
+    refusals.push({
+      reason: `${bold(existing)} already exists in ${bold(dirname(source))}`,
+      fix: 'move it aside and run migrate again — migrating would overwrite it'
+    })
+  }
+
+  if (producers.has(canonicalize(rootTarget))) {
+    refusals.push({
+      reason: `${bold(relative(root, rootTarget))} is both the root configuration and an application's`,
+      fix: 'move that application into a subdirectory of its own — v4 keeps one configuration per directory'
+    })
+  }
+
+  return refusals
+}
+
+async function emitApplications (journal, applications) {
+  const entries = []
+  const emitted = []
+
+  for (const application of applications) {
+    if (!application.target) {
+      entries.push(application.orchestration)
+      continue
+    }
+
+    await journal.write(
+      application.target,
+      emitApplicationConfiguration(application.config, {
+        module: application.module,
+        id: application.orchestration.id
+      })
+    )
+    await journal.remove(application.legacy)
+
+    entries.push(application.orchestration)
+    emitted.push(application)
+  }
+
+  return { entries, emitted }
 }
 
 /*
@@ -462,7 +723,26 @@ export async function migrateCommand (logger, args) {
   const declared = config.module ?? identity?.module
   const module = renamedModules[declared] ?? declared
 
+  const directory = dirname(source)
+  const target = join(directory, chooseFileName(directory))
+  const runtime = module === '@platformatic/runtime'
+
+  /*
+    Everything that can stop the run is worked out here, over the configuration and the tree as they
+    stand. A refused run has written nothing, so there is nothing for it to undo.
+  */
   const refusals = collectRefusals(config, { module })
+  let plan = null
+
+  if (runtime && refusals.length === 0) {
+    plan = await planMigration(directory, source, config)
+    refusals.push(...plan.refusals)
+  } else if (!runtime && existsSync(target)) {
+    refusals.push({
+      reason: `${bold(basename(target))} already exists in ${bold(directory)}`,
+      fix: 'move it aside and run migrate again — migrating would overwrite it'
+    })
+  }
 
   if (refusals.length > 0) {
     logger.error(`Cannot migrate ${bold(source)}:`)
@@ -476,15 +756,6 @@ export async function migrateCommand (logger, args) {
     return
   }
 
-  const target = join(dirname(source), chooseFileName(dirname(source)))
-
-  if (existsSync(target)) {
-    return logFatalError(
-      logger,
-      `${bold(basename(target))} already exists in ${bold(dirname(source))}. Migrating would overwrite it.`
-    )
-  }
-
   /*
     The swap happens before the validation, and it has to: v4 refuses a directory that still holds
     a legacy file, so validating with the original in place would fail for the one reason that says
@@ -492,33 +763,27 @@ export async function migrateCommand (logger, args) {
     wrong, which is what makes a failed migration leave the project exactly as it was.
   */
   const journal = createJournal()
-  const directory = dirname(source)
-  let renamedFrom = null
-  let renamedTo = null
+  const renamed = []
   let skipped = []
 
-  if (module === '@platformatic/runtime') {
-    const result = await migrateApplications(logger, journal, directory, source, config)
+  if (runtime) {
+    const { entries, emitted } = await emitApplications(journal, plan.applications)
 
-    if (result.refusals) {
-      await journal.rollback()
-      logger.error(`Cannot migrate ${bold(result.at ?? source)}:`)
+    skipped = plan.skipped
 
-      for (const refusal of result.refusals) {
-        logger.error(`  ${refusal.reason}`)
-        logger.error(`    ${refusal.fix}`)
+    for (const application of emitted) {
+      if (application.renamedFrom) {
+        renamed.push({ from: application.renamedFrom, to: application.orchestration.id })
       }
-
-      process.exitCode = 1
-      return
     }
 
-    skipped = result.skipped
-    await journal.write(target, emitRootConfiguration(config, result.entries))
+    await journal.write(target, emitRootConfiguration(config, entries))
   } else {
     const derived = await deriveLegacyId(directory)
-    renamedFrom = derived.renamedFrom
-    renamedTo = derived.id
+
+    if (derived.renamedFrom) {
+      renamed.push({ from: derived.renamedFrom, to: derived.id })
+    }
 
     await journal.write(target, emitApplicationConfiguration(config, { module, id: derived.id }))
   }
@@ -528,18 +793,29 @@ export async function migrateCommand (logger, args) {
   let unresolved = null
 
   try {
-    await loadV4Configuration({
-      cwd: dirname(target),
-      configPath: target,
-      command: 'start',
-      production: true,
-      realEnv: { ...process.env },
-      // Validated against the capability's own schema, not merely parsed: the emitted file is
-      // checked the way a boot would check it, which is the only check that means anything here.
-      validateCapabilities: true,
-      onWarning () {},
-      onInfo () {}
-    })
+    /*
+      A root file is loaded through the runtime rather than through foundation, because that is
+      where the runtime schema is applied: foundation resolves the topology and validates each
+      application against its capability's schema, and knows nothing about the root's own keys. A
+      root emitted with a key v4 removed — `strictEnv`, say — passed straight through the check that
+      exists to catch exactly that.
+    */
+    if (runtime) {
+      await loadV4Runtime(target, null, { command: 'start', production: true, validateCapabilities: true })
+    } else {
+      await loadV4Configuration({
+        cwd: dirname(target),
+        configPath: target,
+        command: 'start',
+        production: true,
+        realEnv: { ...process.env },
+        // Validated against the capability's own schema, not merely parsed: the emitted file is
+        // checked the way a boot would check it, which is the only check that means anything here.
+        validateCapabilities: true,
+        onWarning () {},
+        onInfo () {}
+      })
+    }
   } catch (error) {
     /*
       A capability that cannot be resolved is a different finding from a configuration that is
@@ -563,9 +839,9 @@ export async function migrateCommand (logger, args) {
     logger.warn(`${bold(declared)} is now ${bold(module)}; the emitted configuration imports the new name.`)
   }
 
-  if (renamedFrom) {
+  for (const { from, to } of renamed) {
     logger.warn(
-      `The application id ${bold(renamedFrom)} is not a legal v4 id and was written as ${bold(renamedTo)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
+      `The application id ${bold(from)} is not a legal v4 id and was written as ${bold(to)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
     )
   }
 
