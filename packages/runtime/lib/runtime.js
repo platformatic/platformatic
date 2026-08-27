@@ -1596,6 +1596,14 @@ export class Runtime extends EventEmitter {
       execPath: process.execPath,
       nodeVersion: process.version,
       projectDir: this.#root,
+      /*
+        What `applications:add`/`remove --save` actually consume, so they can stop reading the whole
+        runtime configuration over HTTP to get at three values. `autoload` is the declaration as
+        authored, not the expansion: v4 expands it in the eval worker, and --save has to edit what
+        the file says rather than what it produced.
+      */
+      configPath: this.#config[kMetadata]?.path ?? null,
+      autoload: this.#config.autoload ?? null,
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       platformaticVersion: version,

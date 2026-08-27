@@ -45,6 +45,12 @@ test('should get the runtime metadata', async t => {
   equal(metadata.packageName, 'test-runtime-package')
   equal(metadata.packageVersion, '1.0.42')
   equal(metadata.projectDir, projectDir)
+
+  // What `applications:add`/`remove --save` read, so they never need the whole configuration.
+  equal(metadata.configPath, configFile)
+  // v4 hands back the resolved path: the eval worker resolved it against the deciding file's
+  // directory, and a consumer computing paths from it should not have to repeat that.
+  deepStrictEqual(metadata.autoload, { path: join(projectDir, 'services'), exclude: [] })
   equal(metadata.platformaticVersion, version)
   deepStrictEqual(metadata.urls, app.getUrls())
 

@@ -2,7 +2,7 @@ import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { readFile, stat, writeFile } from 'node:fs/promises'
-import { basename, isAbsolute, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, relative, resolve } from 'node:path'
 
 async function updateConfigFile (path, update) {
   const contents = JSON.parse(await readFile(path, 'utf-8'))
@@ -28,8 +28,10 @@ export async function applicationsAddCommand (logger, args) {
   const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, allPositionals)
-    const config = await client.getRuntimeConfig(runtime.pid, true)
-    const root = config.__metadata.root
+    // The metadata endpoint carries what this needs. Reading the whole runtime configuration over
+    // HTTP to get at one path was the only reason this command wanted GET /config.
+    const metadata = await client.getRuntimeMetadata(runtime.pid)
+    const root = metadata.projectDir
 
     let toAdd = []
     let added = 0
@@ -63,7 +65,7 @@ export async function applicationsAddCommand (logger, args) {
     }
 
     if (save) {
-      await updateConfigFile(config.__metadata.path, async config => {
+      await updateConfigFile(metadata.configPath, async config => {
         config.applications = (config.applications ?? []).concat(toAdd)
       })
     }
@@ -107,10 +109,17 @@ export async function applicationsRemoveCommand (logger, args) {
     const removed = await client.removeApplications(runtime.pid, applications)
 
     if (save) {
-      const config = await client.getRuntimeConfig(runtime.pid, true)
-      const absoluteAutoloadPath = resolve(config.__metadata.path, config.autoload.path)
+      const metadata = await client.getRuntimeMetadata(runtime.pid)
+      /*
+        Against the configuration's *directory*, not the file: `resolve('/a/watt.config.mjs', '../x')`
+        is `/a/x` only by accident of the file name having no slashes in it. v4 hands this back
+        already absolute, in which case resolve returns it untouched.
+      */
+      const absoluteAutoloadPath = metadata.autoload
+        ? resolve(dirname(metadata.configPath), metadata.autoload.path)
+        : null
 
-      await updateConfigFile(config.__metadata.path, async config => {
+      await updateConfigFile(metadata.configPath, async config => {
         // Remove applications from all relevant sections
         for (const app of removed) {
           for (const section of ['applications', 'services', 'web']) {
@@ -119,7 +128,7 @@ export async function applicationsRemoveCommand (logger, args) {
             }
           }
 
-          if (config.autoload) {
+          if (config.autoload && absoluteAutoloadPath) {
             if (app.path.startsWith(absoluteAutoloadPath)) {
               config.autoload.exclude ??= []
               config.autoload.exclude.push(relative(absoluteAutoloadPath, app.path))

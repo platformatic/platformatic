@@ -201,6 +201,10 @@ export interface RuntimeMetadata {
   execPath: string
   nodeVersion: string
   projectDir: string
+  /** The configuration file the loader decided on. Null when the runtime was built from an object. */
+  configPath: string | null
+  /** The autoload declaration, with its path resolved. Null when the project does not autoload. */
+  autoload: { path: string, exclude?: string[], mappings?: Record<string, unknown> } | null
   packageName: string | null
   packageVersion: string | null
   platformaticVersion: string
