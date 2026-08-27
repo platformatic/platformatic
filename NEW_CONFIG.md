@@ -3019,14 +3019,19 @@ export default {
   because a generator choosing `watt.config.js` unconditionally is the natural
   mistake.
 
-  **Converting the writers is gated on the `4.0.0` version bump**, which is a
-  sequencing constraint rather than a preference. A writer stamps the version it
-  generated against; on a `3.x` tree that URL has a major of 3, and the loader refuses
-  a stale v3 stamp with the migrate hint — correctly, since that is the whole point of
-  reading it. So a converted writer on a `3.x` tree emits bundles and scaffolds that
-  cannot load. The alternative, emitting the plain-object form with no stamp, gives up
-  the one signal the next major's migration reads. Nothing stops the writers from being
-  *ready* before the bump; they cannot be *shipped* before it.
+  **Converting the writers of the *plain-object* form is gated on the `4.0.0` version
+  bump**, which is a sequencing constraint rather than a preference. Such a writer stamps
+  the version it generated against; on a `3.x` tree that URL has a major of 3, and the
+  loader refuses a stale v3 stamp with the migrate hint — correctly, since that is the
+  whole point of reading it. So a converted `next pack` on a `3.x` tree emits a bundle
+  that cannot load. The alternative, emitting the plain-object form with no stamp, gives
+  up the one signal the next major's migration reads. Those writers can be *ready* before
+  the bump; they cannot be *shipped* before it.
+
+  **`migrate` is not in that set**, and the difference is the point of the marker rule
+  rather than an exemption: what it emits imports what it uses — a factory call, or
+  `defineConfig` — so the file identifies itself and carries no stamp to go stale. The
+  same holds for any writer that emits the importing form.
 - **`getApplicationConfig()` is a different API with a different view, and it
   survives unchanged.** `runtime.getApplicationConfig(id)` is not part of the payload
   below: it asks a *running worker* for `capability.getConfig()` over ITC
