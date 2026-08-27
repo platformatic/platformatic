@@ -296,3 +296,23 @@ test('resolve --for all - should refuse an id that resolves to two different clo
   ok(resolveProcess.stdout.includes('resolves to two different clones'))
   ok(resolveProcess.stdout.includes('gitBranch'))
 })
+
+test('resolve - should not let enabled: false hide an application', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'resolve-disabled', false, 'watt.config.mjs')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  /*
+    The eval worker drops disabled entries before the application list leaves it, so resolve reads
+    the candidates it recorded on the way past instead. Otherwise the boot that turns this
+    application on fails on a directory nobody fetched.
+  */
+  const resolveProcess = await wattpmUtils('resolve', rootDir, '-s', {
+    env: { ...process.env, PLT_GIT_REPO_URL: repo }
+  })
+
+  ok(resolveProcess.stdout.includes('Cloning'))
+  ok(existsSync(resolve(rootDir, 'external/resolved')))
+})

@@ -6,6 +6,7 @@ import {
   findConfigurationFile,
   findRuntimeConfigurationFile,
   getRoot,
+  kMetadata,
   loadConfigurationFile as loadRawConfigurationFile,
   logFatalError,
   parseArgs,
@@ -414,7 +415,16 @@ function unionApplications (logger, evaluations, root) {
   const byId = new Map()
 
   for (const { command, config } of evaluations) {
-    for (const application of config.applications) {
+    /*
+      The candidates, not the application list: `enabled` must not hide an entry from resolve. It is
+      the supported way to keep an application out of a boot, and the eval worker drops the disabled
+      ones before the list ever leaves it — so an entry `enabled: false` hides is one whose clone
+      never arrives, and the boot that turns it on fails on a directory nobody fetched. v3 has no
+      such record and its list is the one it always was.
+    */
+    const entries = config[kMetadata]?.v4?.resolveCandidates ?? config.applications
+
+    for (const application of entries) {
       const destination = application.path
         ? resolve(root, application.path)
         : resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)

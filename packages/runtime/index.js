@@ -261,7 +261,13 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
         application list. `wattpm dev` reloads on any of it -- watching only the deciding file meant
         a config split across a helper module reloaded for none of its own edits.
       */
-      watchTargets: loaded.watchTargets
+      watchTargets: loaded.watchTargets,
+      /*
+        Every entry carrying a `url`, recorded on the way past -- before the enabled filter, which
+        is the point. `enabled` is the supported way to keep an application out of a boot, and an
+        entry it hides from `resolve` is one whose clone never arrives.
+      */
+      resolveCandidates: loaded.resolveCandidates
     }
   }
 
