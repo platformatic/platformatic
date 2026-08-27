@@ -40,7 +40,7 @@ function parseConfigTimeout (value) {
   return Number.isFinite(timeout) && timeout > 0 ? timeout : undefined
 }
 
-async function printResolvedConfiguration (logger, root, configurationFile, { production, env, configTimeout }) {
+async function printResolvedConfiguration (logger, root, configurationFile, { production, env, configTimeout, mode }) {
   try {
     /*
       Under `node --inspect-brk`, the deciding file evaluates in this process so a breakpoint in it
@@ -55,7 +55,7 @@ async function printResolvedConfiguration (logger, root, configurationFile, { pr
       the CLI logger writes there too. The scope announcement belongs to a boot — this boots
       nothing — and interleaving it would break the one consumer that output has.
     */
-    const config = await loadConfiguration(root, configurationFile, { production, envFile: env, inProcessTarget, configTimeout })
+    const config = await loadConfiguration(root, configurationFile, { production, envFile: env, inProcessTarget, configTimeout, mode })
     console.log(JSON.stringify(config, null, 2))
   } catch (err) {
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot resolve the configuration: ${err.message}`)
@@ -64,7 +64,7 @@ async function printResolvedConfiguration (logger, root, configurationFile, { pr
 
 export async function devCommand (logger, args) {
   const {
-    values: { config, env, 'debug-config': debugConfig, 'config-timeout': configTimeout },
+    values: { config, env, 'debug-config': debugConfig, 'config-timeout': configTimeout, mode },
     positionals
   } = parseArgs(
     args,
@@ -82,6 +82,9 @@ export async function devCommand (logger, args) {
       },
       'config-timeout': {
         type: 'string'
+      },
+      mode: {
+        type: 'string'
       }
     },
     false
@@ -98,6 +101,7 @@ export async function devCommand (logger, args) {
     return printResolvedConfiguration(logger, root, configurationFile, {
       production: false,
       env,
+      mode,
       configTimeout: parseConfigTimeout(configTimeout)
     })
   }
@@ -106,7 +110,7 @@ export async function devCommand (logger, args) {
 
   let runtime
   try {
-    runtime = await create(root, configurationFile, { start: true, envFile: env, logger, configTimeout: parseConfigTimeout(configTimeout) })
+    runtime = await create(root, configurationFile, { start: true, envFile: env, logger, mode, configTimeout: parseConfigTimeout(configTimeout) })
   } catch (err) {
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
     return
@@ -184,7 +188,7 @@ export async function devCommand (logger, args) {
   async function reloadApplication () {
     await Promise.all(watchers.map(watcher => watcher.stopWatching()))
     await runtime.close()
-    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env, logger, configTimeout: parseConfigTimeout(configTimeout) })
+    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env, logger, mode, configTimeout: parseConfigTimeout(configTimeout) })
     watchConfiguration()
   }
 
@@ -206,7 +210,7 @@ export async function devCommand (logger, args) {
 export async function startCommand (logger, args) {
   const {
     positionals,
-    values: { inspect, config, env, 'debug-config': debugConfig, 'config-timeout': configTimeout }
+    values: { inspect, config, env, 'debug-config': debugConfig, 'config-timeout': configTimeout, mode }
   } = parseArgs(
     args,
     {
@@ -227,6 +231,9 @@ export async function startCommand (logger, args) {
       },
       'config-timeout': {
         type: 'string'
+      },
+      mode: {
+        type: 'string'
       }
     },
     false
@@ -244,12 +251,13 @@ export async function startCommand (logger, args) {
     return printResolvedConfiguration(logger, root, configurationFile, {
       production: true,
       env,
+      mode,
       configTimeout: parseConfigTimeout(configTimeout)
     })
   }
 
   try {
-    return await create(root, configurationFile, { start: true, production: true, inspect, envFile: env, logger, configTimeout: parseConfigTimeout(configTimeout) })
+    return await create(root, configurationFile, { start: true, production: true, inspect, envFile: env, logger, mode, configTimeout: parseConfigTimeout(configTimeout) })
   } catch (err) {
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot start the application: ${err.message}`)
   }
@@ -364,6 +372,10 @@ export const help = {
       {
         usage: '--config-timeout <ms>',
         description: 'How long configuration evaluation may take before the load fails (the default is 30000)'
+      },
+      {
+        usage: '--mode <name>',
+        description: 'The mode to select environment files with (the default is development for dev, production otherwise)'
       }
     ]
   },
@@ -396,6 +408,10 @@ export const help = {
       {
         usage: '--config-timeout <ms>',
         description: 'How long configuration evaluation may take before the load fails (the default is 30000)'
+      },
+      {
+        usage: '--mode <name>',
+        description: 'The mode to select environment files with (the default is development for dev, production otherwise)'
       }
     ]
   },

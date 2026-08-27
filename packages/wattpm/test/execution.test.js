@@ -2,7 +2,7 @@ import { safeRemove } from '@platformatic/foundation'
 import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import getPort from 'get-port'
 import { connect } from 'inspector-client'
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { on } from 'node:events'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -722,4 +722,26 @@ test('start --config-timeout - a configuration that never resolves fails the loa
 
   deepStrictEqual(startProcess.exitCode, 1)
   ok(/timed out after 1500ms/.test(startProcess.stdout + startProcess.stderr), startProcess.stdout + startProcess.stderr)
+})
+
+test('start --mode - selects the environment files the named mode names', async t => {
+  const rootDir = await createTemporaryDirectory(t, 'mode-select')
+  await cp(resolve(import.meta.dirname, 'fixtures/mode-select'), rootDir, { recursive: true })
+
+  const withoutMode = await wattpm('start', '--debug-config', rootDir)
+  const defaulted = JSON.parse(withoutMode.stdout)
+
+  strictEqual(defaulted.messagingTimeout, 22222)
+  strictEqual(defaulted.startTimeout, 1000)
+
+  /*
+    Mode selects env files everywhere, so naming one has to change which files are read — not only
+    what `ctx.mode` reports. A flag that reached the context but not the file set would pass a
+    weaker test and fail every real use, so both are asserted.
+  */
+  const staging = await wattpm('start', '--debug-config', '--mode', 'staging', rootDir)
+  const selected = JSON.parse(staging.stdout)
+
+  strictEqual(selected.messagingTimeout, 11111)
+  strictEqual(selected.startTimeout, 4242)
 })
