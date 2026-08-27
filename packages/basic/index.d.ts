@@ -318,6 +318,17 @@ export declare function createServerListener (
 export declare function createChildProcessListener (): CancellablePromise<ChildProcess | null>
 
 /*
+  How a capability serves when no listener is configured, declared per capability beside its schema
+  so main-side preparation can read it before any worker exists. A constant is the common case; the
+  callable exists for the capability whose own configuration selects the class, which is the shape a
+  per-package constant cannot express.
+*/
+export type ServesWithoutPort =
+  | 'worker'
+  | { development: boolean, production: boolean }
+  | ((config: Record<string, unknown>) => 'worker' | { development: boolean, production: boolean })
+
+/*
   The configuration context a deferred definition is evaluated against: the command the boot was
   started with, the mode selected for it, whether it is a production boot, and the environment the
   loader resolved for config evaluation — which is not the worker's runtime environment.

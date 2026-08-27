@@ -494,8 +494,11 @@ Each capability package exports one typed factory plus its option types:
 
 ```ts decl
 // from @platformatic/next
-export function next (options?: NextConfigOptions): ApplicationDefinition
-export function next (
+import type { ApplicationDefinition, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
+import type { NextConfigOptions } from '@platformatic/next'
+
+export declare function next (options?: NextConfigOptions): ApplicationDefinition
+export declare function next (
   cb: (ctx: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>
 ): DeferredApplicationDefinition
 ```
@@ -1503,14 +1506,21 @@ main-side with the schema, after validation and before any worker exists — whi
 precisely when the resolved capability config is available:
 
 ```ts decl
-export const servesWithoutPort = { development: true, production: true }    // service, db, gateway
-export const servesWithoutPort = { development: false, production: true }   // astro, remix, nest, react-router
-export const servesWithoutPort = { development: false, production: false }  // next, nitro, nuxt, tanstack
-export const servesWithoutPort = 'worker'                                   // node
+import type { ServesWithoutPort } from '@platformatic/basic'
 
-export const servesWithoutPort = config => {                               // vite
-  const ssr = config.vite?.ssr                                             // `true` or { enabled }
-  return ssr === true || ssr?.enabled
+// Every capability exports this under the name `servesWithoutPort`; the five shapes are:
+export const alwaysServes: ServesWithoutPort = { development: true, production: true }
+// service, db, gateway
+export const servesInProductionOnly: ServesWithoutPort = { development: false, production: true }
+// astro, remix, nest, react-router
+export const neverServes: ServesWithoutPort = { development: false, production: false }
+// next, nitro, nuxt, tanstack
+export const onlyTheWorkerKnows: ServesWithoutPort = 'worker'
+// node
+
+export const theConfigurationDecides: ServesWithoutPort = config => {      // vite
+  const ssr = (config as { vite?: { ssr?: boolean | { enabled?: boolean } } }).vite?.ssr
+  return ssr === true || (typeof ssr === 'object' && ssr?.enabled === true)
     ? 'worker'
     : { development: false, production: true }
 }
