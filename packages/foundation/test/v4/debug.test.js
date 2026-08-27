@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { evaluateConfigurationFile, evaluateConfigurationInProcess } from '../../lib/v4/index.js'
+import { evaluateConfigurationFile, evaluateConfigurationInProcess, loadConfiguration } from '../../lib/v4/index.js'
 import { createTree } from './helper.js'
 
 test('the in-process mode produces what a worker produces', async t => {
@@ -90,4 +90,42 @@ test('the in-process mode applies no deadline', async t => {
   })
 
   ok(Array.isArray(config.applications))
+})
+
+test('loadConfiguration evaluates the named target in this process and nothing else', async t => {
+  const root = await createTree(t, {
+    'watt.config.js':
+      'export default { applications: [{ id: "api", path: "./api" }], deciding: typeof process[Symbol.for("plt.debug.here")] }',
+    'api/watt.config.js':
+      'export default { module: "@platformatic/node", server: { port: 0 }, here: typeof process[Symbol.for("plt.debug.here")] }',
+    'api/package.json': '{ "name": "api", "type": "module" }',
+    'package.json': '{ "name": "root", "type": "module" }'
+  })
+
+  const deciding = join(root, 'watt.config.js')
+
+  /*
+    The marker is only visible to code running in this process. The deciding file sees it because
+    it is the named target; the application's file evaluates in its own worker and does not, which
+    is what "restricted to one config file" has to mean to be worth anything.
+  */
+  process[Symbol.for('plt.debug.here')] = true
+  t.after(() => {
+    delete process[Symbol.for('plt.debug.here')]
+  })
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: deciding,
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: false,
+    inProcessTarget: deciding
+  })
+
+  strictEqual(loaded.config.deciding, 'boolean')
+
+  const [api] = loaded.config.applications
+  strictEqual(api.config.here, 'undefined')
 })

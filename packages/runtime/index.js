@@ -194,6 +194,9 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     mode: context?.mode,
     production,
     customEnvFile: context?.envFile,
+    // The one file --debug-config evaluates in this process when an inspector is attached, so a
+    // breakpoint in it is reachable at all: a throwaway worker dies before one can attach.
+    inProcessTarget: context?.inProcessTarget,
     /*
       Validation imports each capability's schema, so it needs the capability installed — not
       merely declared, which is all the detector needs. That moves the moment a capability must be

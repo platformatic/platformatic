@@ -10,6 +10,7 @@ import {
 import { create, loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
+import inspector from 'node:inspector'
 import { createInterface } from 'node:readline'
 
 /*
@@ -24,7 +25,15 @@ import { createInterface } from 'node:readline'
 */
 async function printResolvedConfiguration (logger, root, configurationFile, { production, env }) {
   try {
-    const config = await loadConfiguration(root, configurationFile, { production, envFile: env })
+    /*
+      Under `node --inspect-brk`, the deciding file evaluates in this process so a breakpoint in it
+      is reachable at all -- a throwaway worker dies before an inspector can attach. Exactly one
+      file, because one process has one module cache, in which only a single file's env view can be
+      correct; the rest still evaluate in their workers and the printed output is the same either
+      way.
+    */
+    const inProcessTarget = inspector.url() ? configurationFile : undefined
+    const config = await loadConfiguration(root, configurationFile, { production, envFile: env, inProcessTarget })
     console.log(JSON.stringify(config, null, 2))
   } catch (err) {
     logFatalError(logger, { error: ensureLoggableError(err) }, `Cannot resolve the configuration: ${err.message}`)

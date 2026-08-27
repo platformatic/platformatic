@@ -17,7 +17,7 @@ import {
   InvalidApplicationIdError,
   ObjectSourceRootRequiredError
 } from './errors.js'
-import { defaultEvaluationTimeout, evaluateConfigurationFile } from './evaluate.js'
+import { defaultEvaluationTimeout, evaluateConfigurationFile, evaluateConfigurationInProcess } from './evaluate.js'
 import { configurationFileNames } from './filenames.js'
 import {
   assertValidApplicationId,
@@ -96,6 +96,26 @@ function createReport ({ onImport, onWatchFile, onWarning, onInfo }) {
       watchDirectories.add(path)
     }
   }
+}
+
+/*
+  A throwaway thread dies before an inspector can attach, so breakpoint debugging gets an escape
+  hatch: one named file evaluates in this process instead of a worker. Exactly one, because one
+  process has one module cache, in which only a single file's env view can be correct. Every other
+  file still evaluates in its own worker and cannot be contaminated by this one regardless of
+  ordering -- the main process constructs each worker with an explicit env, and workers never
+  inherit process.env.
+
+  The deadline does not apply to the in-process target: a paused breakpoint session must not be
+  killed by the 30 s timer.
+*/
+function evaluateConfiguration (options, inProcessTarget) {
+  if (inProcessTarget && options.path === inProcessTarget) {
+    const { timeout, ...rest } = options
+    return evaluateConfigurationInProcess(rest)
+  }
+
+  return evaluateConfigurationFile(options)
 }
 
 const nodeModulesPattern = /[\\/]node_modules[\\/]/
@@ -188,6 +208,7 @@ export async function loadConfiguration ({
   validateCapabilities = true,
   runtimeScope,
   timeout = defaultEvaluationTimeout,
+  inProcessTarget,
   onImport,
   onWatchFile,
   onWarning,
@@ -203,6 +224,7 @@ export async function loadConfiguration ({
     customEnvFile,
     realEnv,
     timeout,
+    inProcessTarget,
     validateCapabilities,
     runtimeScope
   }
@@ -235,7 +257,7 @@ export async function loadConfiguration ({
     report
   )
 
-  const root = await evaluateConfigurationFile({
+  const root = await evaluateConfiguration({
     path: deciding.path,
     directory: deciding.directory,
     role: 'root',
@@ -247,7 +269,7 @@ export async function loadConfiguration ({
     timeout,
     onImport: report.onImport,
     onWatchFile: report.onWatchFile
-  })
+  }, inProcessTarget)
 
   for (const warning of root.warnings) {
     report.onWarning?.(warning)
@@ -674,6 +696,7 @@ async function prepareApplication ({
   customEnvFile,
   realEnv,
   timeout,
+  inProcessTarget,
   validateCapabilities,
   runtimeScope,
   report
@@ -775,7 +798,7 @@ async function prepareApplication ({
   // reach it.
   stripInjectedTopologyKeys(env, injectedNames, realEnv)
 
-  const evaluated = await evaluateConfigurationFile({
+  const evaluated = await evaluateConfiguration({
     path: configurationFile,
     directory,
     role: 'application',
@@ -787,7 +810,7 @@ async function prepareApplication ({
     timeout,
     onImport: report.onImport,
     onWatchFile: report.onWatchFile
-  })
+  }, inProcessTarget)
 
   reportMutatedEnv(report, configurationFile, evaluated.mutatedEnvKeys)
 
