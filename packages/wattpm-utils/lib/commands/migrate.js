@@ -4,7 +4,11 @@ import {
   logFatalError,
   parseArgs
 } from '@platformatic/foundation'
-import { importCapabilitySchema, loadConfiguration as loadV4Configuration } from '@platformatic/foundation/lib/v4/index.js'
+import {
+  importCapabilitySchema,
+  legacyConfigurationFileNames,
+  loadConfiguration as loadV4Configuration
+} from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
@@ -134,6 +138,23 @@ function legalId (id) {
 
 function existingV4Candidate (directory) {
   return v4Candidates.find(candidate => existsSync(join(directory, candidate))) ?? null
+}
+
+/*
+  Legacy files in a directory that are not the one migrate is converting.
+
+  v4's legacy table is wider than the candidate list above -- it covers every suffix and extension
+  combination, `.tml` included -- and it refuses a directory holding any of them, whether or not
+  migrate ever read it. So a stale `platformatic.service.json` beside the file being converted is
+  not a file to ignore: left there it makes the migrated tree refuse to load, and migrate deletes
+  only what it read.
+*/
+function strayLegacyFiles (directory, read) {
+  return legacyConfigurationFileNames.filter(name => {
+    const path = join(directory, name)
+
+    return existsSync(path) && !read.has(canonicalize(path))
+  })
 }
 
 /*
@@ -1044,8 +1065,25 @@ function collectPlanRefusals (root, source, applications) {
   const producers = new Map()
   const ids = new Map()
 
+  // Everything this run converts, so that a legacy file another entry owns is not reported as one
+  // nobody does -- a root-inline application's configuration sits in the root's own directory.
+  const read = new Set([canonicalize(source)])
+
+  for (const application of applications) {
+    if (application.legacy) {
+      read.add(canonicalize(application.legacy))
+    }
+  }
+
   for (const application of applications) {
     if (application.target) {
+      for (const stray of strayLegacyFiles(application.directory, read)) {
+        refusals.push({
+          reason: `${bold(join(relative(root, application.directory), stray))} is a v3 configuration migrate is not converting`,
+          fix: 'remove it, or point the entry at it — migrate deletes only what it reads, and v4 refuses a directory holding a legacy file, so leaving it would emit a tree that cannot load'
+        })
+      }
+
       /*
         v3 let two entries with distinct ids share a directory, because each named its own config
         file. v4 has one configuration per directory, so both emit the same path and the second write
@@ -1091,6 +1129,13 @@ function collectPlanRefusals (root, source, applications) {
     } else {
       ids.set(key, application.orchestration)
     }
+  }
+
+  for (const stray of strayLegacyFiles(dirname(source), read)) {
+    refusals.push({
+      reason: `${bold(stray)} is a v3 configuration migrate is not converting`,
+      fix: `remove it, or name it with ${bold('--config')} — migrate deletes only what it reads, and v4 refuses a directory holding a legacy file, so leaving it would emit a tree that cannot load`
+    })
   }
 
   const existing = existingV4Candidate(dirname(source))
@@ -1353,11 +1398,20 @@ export async function migrateCommand (logger, args) {
   if (runtime && refusals.length === 0) {
     plan = await planMigration(directory, source, config)
     refusals.push(...plan.refusals)
-  } else if (!runtime && existsSync(target)) {
-    refusals.push({
-      reason: `${bold(basename(target))} already exists in ${bold(directory)}`,
-      fix: 'move it aside and run migrate again — migrating would overwrite it'
-    })
+  } else if (!runtime) {
+    if (existsSync(target)) {
+      refusals.push({
+        reason: `${bold(basename(target))} already exists in ${bold(directory)}`,
+        fix: 'move it aside and run migrate again — migrating would overwrite it'
+      })
+    }
+
+    for (const stray of strayLegacyFiles(directory, new Set([canonicalize(source)]))) {
+      refusals.push({
+        reason: `${bold(stray)} is a v3 configuration migrate is not converting`,
+        fix: `remove it, or name it with ${bold('--config')} — migrate deletes only what it reads, and v4 refuses a directory holding a legacy file, so leaving it would emit a tree that cannot load`
+      })
+    }
   }
 
   if (refusals.length > 0) {

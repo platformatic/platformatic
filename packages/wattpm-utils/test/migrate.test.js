@@ -885,3 +885,20 @@ test('migrate - pins the id of a package that has no name', async t => {
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
   ok(emitted.includes("id: 'main'"), emitted)
 })
+
+test('migrate - refuses a stale legacy file it is not converting', async t => {
+  const root = await project(t, {
+    'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' },
+    // v4's legacy table is wider than the set migrate looks in, and it refuses a directory holding
+    // any of them. Migrate deletes only what it reads, so this one would survive the migration and
+    // leave a tree that cannot load.
+    'platformatic.service.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/service/3.65.0.json' }
+  })
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('platformatic.service.json'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('is not converting'), migrateProcess.stdout)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+})
