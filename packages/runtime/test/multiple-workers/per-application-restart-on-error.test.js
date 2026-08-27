@@ -1,26 +1,24 @@
 import { deepStrictEqual, ok } from 'node:assert'
-import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { Client } from 'undici'
-import { configurationFileIn, createRuntime, updateFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile, updateFile } from '../helpers.js'
 import { prepareRuntime, waitForEvents } from './helper.js'
 
 async function prepareCrashableRuntime (t, { runtimeRestartOnError, applicationRestartOnError }) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = configurationFileIn(root)
 
-  const config = JSON.parse(await readFile(configFile, 'utf-8'))
-  config.workers = 1
-  config.restartOnError = runtimeRestartOnError
-  config.applications[0].workers = 1
+  await updateConfigFile(configFile, config => {
+    config.workers = 1
+    config.restartOnError = runtimeRestartOnError
+    config.applications[0].workers = 1
 
-  if (typeof applicationRestartOnError !== 'undefined') {
-    config.applications[0].restartOnError = applicationRestartOnError
-  }
-
-  await writeFile(configFile, JSON.stringify(config, null, 2))
+    if (typeof applicationRestartOnError !== 'undefined') {
+      config.applications[0].restartOnError = applicationRestartOnError
+    }
+  })
 
   // Add a route which crashes the worker when invoked
   await updateFile(resolve(root, 'node/index.mjs'), contents => {

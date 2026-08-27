@@ -16,7 +16,7 @@ for (const env of ['development', 'production']) {
       }
     })
 
-    await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
+    await updateConfigFile(configurationFileIn(resolve(root, 'node')), contents => {
       contents.application = { commands: { production: 'node index.mjs' } }
     })
 

@@ -47,7 +47,7 @@ function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = fa
 
 test('should post updated workers list via broadcast channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/default/platformatic.json')
+  const configFile = resolve(root, 'configs/default/watt.config.mjs')
   const app = await createRuntime(configFile, null, { concurrency: 1 })
   const eventsPromise = waitBroadcastedWorkers(t)
 
@@ -100,7 +100,7 @@ test('should post updated workers list via broadcast channel', async t => {
 
 test('should post updated workers when something crashed', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/first-only/platformatic.json')
+  const configFile = resolve(root, 'configs/first-only/watt.config.mjs')
   const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
@@ -142,7 +142,7 @@ test('should post updated workers when something crashed', async t => {
 
 test('should post updated workers when the application is updated', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/first-only/platformatic.json')
+  const configFile = resolve(root, 'configs/first-only/watt.config.mjs')
   const app = await createRuntime(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
@@ -178,7 +178,7 @@ test('should post updated workers when the application is updated', async t => {
 
 test('should get information from other workers via ITC using a round robin approach', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/1-to-n/platformatic.json')
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   const threads = {}
@@ -246,7 +246,7 @@ test('should get information from other workers via ITC using a round robin appr
 
 test('should return an error if the target worker throws an error', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/1-to-n/platformatic.json')
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -270,7 +270,7 @@ test('should return an error if the target worker throws an error', async t => {
 
 test('should return an error if the target worker times out', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/1-to-n/platformatic.json')
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -303,7 +303,7 @@ test('should return an error if the target worker times out', async t => {
 
 test('should return an error if the target worker exits before returning a response', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/1-to-n/platformatic.json')
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -330,7 +330,7 @@ test('should return an error if the target worker exits before returning a respo
 
 test('should return an error if the target worker throws an error while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/1-to-n/platformatic.json')
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -365,7 +365,7 @@ test('should return an error if the target worker throws an error while saving t
 
 test('should return an error if the target worker times out while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/1-to-n/platformatic.json')
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -406,7 +406,7 @@ test('should return an error if the target worker times out while saving the cha
 
 test('should reuse channels when the worker are restarted', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/with-watch/platformatic.json')
+  const configFile = resolve(root, 'configs/with-watch/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -449,7 +449,7 @@ test('should reuse channels when the worker are restarted', async t => {
 
 test('should notify all the workers', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
-  const configFile = resolve(root, 'configs/1-to-n/platformatic.json')
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
   const app = await createRuntime(configFile)
 
   const tmpDir = await mkdtemp(resolve(tmpdir(), 'platformatic.test.'))

@@ -288,6 +288,7 @@ test('should be able to add and remove applications', async t => {
   assert.ok(addedUrl)
   assert.deepStrictEqual([addedDetails], [
     {
+      configPath: resolve(projectDir, 'services', 'service-2', 'watt.config.mjs'),
       dependencies: [],
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
@@ -305,6 +306,7 @@ test('should be able to add and remove applications', async t => {
   assert.ok(removedUrl)
   assert.deepStrictEqual([removedDetails], [
     {
+      configPath: resolve(projectDir, 'services', 'service-2', 'watt.config.mjs'),
       dependencies: [],
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',

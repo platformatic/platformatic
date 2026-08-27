@@ -62,7 +62,7 @@ test('can detect changes and restart all workers for a application', async t => 
     contents.watch = true
   })
 
-  await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(resolve(root, 'node')), contents => {
     contents.logger = { level: 'debug' }
     contents.watch = true
   })

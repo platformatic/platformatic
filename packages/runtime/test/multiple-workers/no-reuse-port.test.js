@@ -32,7 +32,7 @@ async function prepareFixedPortRuntime (
   const configFile = configurationFileIn(root)
   const port = await findAvailablePortRange({ host: HOST, size: portRangeSize })
 
-  await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(resolve(root, 'node')), contents => {
     contents.server = { ...contents.server, hostname: HOST, port, ...server }
   })
 

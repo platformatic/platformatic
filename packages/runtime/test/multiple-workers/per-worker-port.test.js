@@ -49,7 +49,13 @@ async function getOccupiedPortWithAvailablePreviousPort () {
 // The port assignment lives in the capability configuration since ports are per-application in v4.
 async function preparePerWorkerPortRuntime (
   t,
-  { application = 'node', workerCount = 5, maxWorkerCount = workerCount, additionalApplications = [] } = {}
+  {
+    application = 'node',
+    workerCount = 5,
+    maxWorkerCount = workerCount,
+    additionalApplications = [],
+    beforeCreate
+  } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = configurationFileIn(root)
@@ -67,28 +73,34 @@ async function preparePerWorkerPortRuntime (
   await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
 
-    let applicationConfig = contents.services.find(service => service.id === application)
+    let applicationConfig = contents.applications.find(service => service.id === application)
     if (!applicationConfig) {
       applicationConfig = {
         id: application,
         path: `./${application}`,
-        config: 'platformatic.json'
       }
-      contents.services.push(applicationConfig)
+      contents.applications.push(applicationConfig)
     }
 
     applicationConfig.workers = workerCount
 
     for (const additional of additionalApplications) {
-      contents.services.push(additional)
+      contents.applications.push(additional)
     }
   })
 
   if (application === 'service') {
-    await updateConfigFile(resolve(root, 'service/platformatic.json'), contents => {
+    await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
       contents.plugins.paths.push('./crash-plugin.js')
     })
   }
+
+  /*
+    v4 evaluates every configuration once, when the runtime is loaded, so a test that wants a file
+    to say something different has to say it before this point -- editing it afterwards is a change
+    to a file nothing will read again.
+  */
+  await beforeCreate?.({ root, basePort })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
 
@@ -323,14 +335,15 @@ test('preserves incremental port when restarting a crashed worker', async t => {
 })
 
 test('rejects another application listening on a port used by one of the workers', async t => {
-  const { app, basePort, root } = await preparePerWorkerPortRuntime(t, {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t, {
     workerCount: 3,
-    additionalApplications: [{ id: 'service', path: './service', config: 'platformatic.json', workers: 1 }]
-  })
-
-  // The service listens on the port assigned to the second worker of node
-  await updateConfigFile(resolve(root, 'service/platformatic.json'), contents => {
-    contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
+    additionalApplications: [{ id: 'service', path: './service', workers: 1 }],
+    // The service listens on the port assigned to the second worker of node
+    async beforeCreate ({ root, basePort }) {
+      await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
+        contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
+      })
+    }
   })
 
   await rejects(

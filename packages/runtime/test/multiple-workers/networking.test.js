@@ -7,10 +7,9 @@ import { prepareRuntime, testRoundRobin, verifyInject } from './helper.js'
 
 function addIngress (contents) {
   contents.metrics = { port: 0 }
-  contents.services.push({
+  contents.applications.push({
     id: 'ingress',
     path: './node',
-    config: 'platformatic.json',
     workers: 1
   })
 }
@@ -38,10 +37,9 @@ test('the mesh network works with the HTTP applications when using ITC', async t
 
   await updateConfigFile(configFile, contents => {
     addIngress(contents)
-    contents.services.push({
+    contents.applications.push({
       id: 'service',
       path: './service',
-      config: 'platformatic.json',
       workers: 3
     })
   })
@@ -78,15 +76,14 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
 
   await updateConfigFile(configFile, contents => {
     addIngress(contents)
-    contents.services.push({
+    contents.applications.push({
       id: 'service',
       path: './service',
-      config: 'platformatic.json',
       workers: 3
     })
   })
 
-  await updateConfigFile(resolve(root, './node/platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(resolve(root, 'node')), contents => {
     contents.node = { dispatchViaHttp: true }
   })
 

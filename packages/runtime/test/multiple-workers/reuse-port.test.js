@@ -46,7 +46,7 @@ test('applications are started with multiple workers when Node.js supports reuse
 
   await waitForPortRelease(port)
 
-  await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(resolve(root, 'node')), contents => {
     contents.server = {
       hostname: '127.0.0.1',
       port
