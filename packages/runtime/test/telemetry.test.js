@@ -16,7 +16,7 @@ async function readSpans (path) {
 }
 
 test('propagate the traceId correctly to runtime applications', async t => {
-  const configFile = configurationFileIn(fixturesDir, 'telemetry')
+  const configFile = configurationFileIn(join(fixturesDir, 'telemetry'))
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -42,7 +42,7 @@ test('propagate the traceId correctly to runtime applications', async t => {
 })
 
 test('attach x-plt-telemetry-id header', async t => {
-  const configFile = configurationFileIn(fixturesDir, 'telemetry')
+  const configFile = configurationFileIn(join(fixturesDir, 'telemetry'))
   const app = await createRuntime(configFile)
 
   t.after(async () => {

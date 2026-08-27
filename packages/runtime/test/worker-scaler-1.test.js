@@ -54,7 +54,7 @@ async function driveLoad (serviceUrl, signal) {
 
 for (const [name, file] of Object.entries(configurations)) {
   test(`should scale an application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
     const app = await createRuntime(configFile)
     const { 'service-2:0': serviceUrl } = await app.start()
 
@@ -76,7 +76,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an application when the scaler is the cooldown(configuration ${name})`, async t => {
-    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -106,7 +106,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale applications when the elu is lower than treshold (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config.verticalScaler = {
@@ -154,7 +154,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -197,7 +197,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config.applications = [

@@ -129,7 +129,7 @@ export async function prepareRuntime (t, name, dependencies) {
       continue
     }
 
-    const configPath = configurationFileIn(root, entry.name)
+    const configPath = configurationFileIn(join(root, entry.name))
     if (!existsSync(configPath)) {
       continue
     }

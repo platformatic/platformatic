@@ -8,7 +8,7 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should enable the management API by default', async t => {
   const projectDir = join(fixturesDir, 'management-api-defaults')
-  const configFile = configurationFileIn(projectDir, 'default')
+  const configFile = configurationFileIn(join(projectDir, 'default'))
   const app = await createRuntime(configFile)
 
   await app.start()

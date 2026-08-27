@@ -1,7 +1,7 @@
 import { deepStrictEqual, match, notStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
-import { resolve } from 'node:path'
+import { resolve, join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
@@ -55,7 +55,7 @@ async function preparePerWorkerPortRuntime (
   const configFile = resolve(root, './platformatic.json')
   const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
-  await updateConfigFile(configurationFileIn(root, application), contents => {
+  await updateConfigFile(configurationFileIn(join(root, application)), contents => {
     contents.server = {
       ...contents.server,
       hostname: HOST,

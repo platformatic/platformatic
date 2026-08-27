@@ -7,7 +7,7 @@ import { createRuntime, configurationFileIn } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function startApplication (t, fixture, applicationId) {
-  const configFile = configurationFileIn(fixturesDir, fixture)
+  const configFile = configurationFileIn(join(fixturesDir, fixture))
   const app = await createRuntime(configFile)
 
   t.after(async () => {

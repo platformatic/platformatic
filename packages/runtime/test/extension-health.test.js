@@ -35,7 +35,7 @@ async function startWithMetrics (t, variant, extraEnv = {}) {
     process.env[key] = String(value)
   }
 
-  const configFile = configurationFileIn(fixturesDir, 'extensions', variant)
+  const configFile = configurationFileIn(join(fixturesDir, 'extensions', variant))
   const app = await createRuntime(configFile)
   await app.start()
 
