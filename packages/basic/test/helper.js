@@ -18,11 +18,11 @@ import { basename, dirname, join, matchesGlob, resolve } from 'node:path'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
-import { updateConfigFile, configurationFileIn } from '../../runtime/test/helpers.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 import { BaseCapability } from '../lib/capability.js'
 
 export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
@@ -153,13 +153,28 @@ async function updateApplicationConfig (application, update, required = false) {
       return
     }
 
-    configFile = configurationFileIn(application.path, 'platformatic.application.json')
-    await writeFile(configFile, JSON.stringify({ $schema: `https://schemas.platformatic.dev/${capability}/3.0.0.json` }, null, 2))
+    /*
+      An application the detector resolved has no configuration file, and giving it one is how the
+      caller adjusts it. The file has to be v4: a legacy name in an application directory is
+      refused by the loader on sight, so writing one here made the project unbootable.
+    */
+    configFile = join(application.path, 'watt.config.mjs')
+    await writeFile(configFile, `export default ${JSON.stringify({ module: capability }, null, 2)}\n`, 'utf-8')
   }
 
-  const applicationConfig = JSON.parse(await readFile(configFile, 'utf-8'))
+  const applicationConfig = /\.(js|mjs|ts|mts)$/.test(configFile)
+    ? (await import(`${pathToFileURL(configFile).href}?update=${Date.now()}`)).default
+    : JSON.parse(await readFile(configFile, 'utf-8'))
   await update(applicationConfig)
-  await writeFile(configFile, JSON.stringify(applicationConfig, null, 2), 'utf-8')
+
+  // Written back in the dialect it was read in.
+  await writeFile(
+    configFile,
+    /\.(js|mjs|ts|mts)$/.test(configFile)
+      ? `export default ${JSON.stringify(applicationConfig, null, 2)}\n`
+      : JSON.stringify(applicationConfig, null, 2),
+    'utf-8'
+  )
 
   return applicationConfig
 }

@@ -25,14 +25,10 @@ test('should inject request via IPC even if a server is started', async t => {
         contents.logger.level = 'trace'
       })
 
+      // A v4 module: a legacy name in an application directory is refused by the loader on sight.
       await writeFile(
-        resolve(root, 'services/frontend/platformatic.application.json'),
-        JSON.stringify({
-          $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.0.0.json',
-          logger: {
-            level: 'trace'
-          }
-        }),
+        resolve(root, 'services/frontend/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { level: 'trace' } }, null, 2)}\n`,
         'utf-8'
       )
     }
@@ -69,16 +65,8 @@ test('should inject request via the HTTP port if asked to', async t => {
       })
 
       await writeFile(
-        resolve(root, 'services/frontend/platformatic.application.json'),
-        JSON.stringify({
-          $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.0.0.json',
-          logger: {
-            level: 'trace'
-          },
-          node: {
-            dispatchViaHttp: true
-          }
-        }),
+        resolve(root, 'services/frontend/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { level: 'trace' }, node: { dispatchViaHttp: true } }, null, 2)}\n`,
         'utf-8'
       )
     }
