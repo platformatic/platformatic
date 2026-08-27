@@ -20,10 +20,10 @@
       "head": "try {",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:460-578": {
-      "sha": "823918c8f7fb03b2",
+    "packages/wattpm-utils/lib/commands/external.js:496-624": {
+      "sha": "87d4a705cdec8be4",
       "head": "export async function resolveApplications (",
-      "lines": 119
+      "lines": 129
     },
     "packages/runtime/lib/runtime.js:2583,2595": {
       "sha": "26e04f76be072fdf",
@@ -40,12 +40,12 @@
       "head": "anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:486,505-516": {
+    "packages/wattpm-utils/lib/commands/external.js:522,541-552": {
       "sha": "7153dd7a8a5ca333",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:486": {
+    "packages/wattpm-utils/lib/commands/external.js:522": {
       "sha": "a9d0ff941726dfdd",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 1
@@ -55,27 +55,27 @@
       "head": "const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:505-516": {
+    "packages/wattpm-utils/lib/commands/external.js:541-552": {
       "sha": "4d9354cd936b48a4",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 12
     },
-    "packages/wattpm-utils/lib/commands/external.js:505-535": {
-      "sha": "3ff6fe5014621590",
+    "packages/wattpm-utils/lib/commands/external.js:541-571": {
+      "sha": "eba49f9cb8f9745b",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 31
     },
-    "packages/wattpm-utils/lib/commands/external.js:538-561": {
+    "packages/wattpm-utils/lib/commands/external.js:538-561@9b6b991b6^": {
       "sha": "726a75f10b2e1056",
       "head": "// This repository must be resolved",
       "lines": 24
     },
-    "packages/wattpm-utils/lib/commands/external.js:510-512": {
+    "packages/wattpm-utils/lib/commands/external.js:510-512@9b6b991b6^": {
       "sha": "75554d4f2b3e51a8",
       "head": "if (application.path && existsSync(application.path)) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:505-512": {
+    "packages/wattpm-utils/lib/commands/external.js:541-548": {
       "sha": "7ec3ae3f6a5f58ad",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 8
@@ -535,7 +535,7 @@
       "head": "let serverConfigOverride",
       "lines": 5
     },
-    "packages/wattpm-utils/lib/commands/external.js:527-535": {
+    "packages/wattpm-utils/lib/commands/external.js:564-572": {
       "sha": "dcb308e3c5250431",
       "head": "const directory = resolve(root, application.path)",
       "lines": 9
@@ -805,7 +805,7 @@
       "head": "const dependencies = {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:524": {
+    "packages/wattpm-utils/lib/commands/external.js:561": {
       "sha": "d0ee36b8b0f4017f",
       "head": "application.path = resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)",
       "lines": 1
