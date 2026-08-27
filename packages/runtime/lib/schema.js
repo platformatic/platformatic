@@ -79,8 +79,13 @@ export const schema = platformaticRuntimeSchema
 
   Root `envfile` is removed, not renamed — an entry may still declare one, and that property lives
   on the application schema rather than here.
+
+  `$schema` is different in kind: machine writers of the plain-object form still stamp it, and the
+  loader reads it for version detection and strips it before validation. The schema refusing it is
+  what makes the strip load-bearing rather than decorative — a stamp that reached AJV would mean the
+  loader had skipped the step that checks the file is not a v3 one.
 */
-const removedInV4 = ['envfile', 'strictEnv']
+const removedInV4 = ['envfile', 'strictEnv', '$schema']
 
 const { ...v4Properties } = platformaticRuntimeSchema.properties
 

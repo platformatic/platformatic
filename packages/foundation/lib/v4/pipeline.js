@@ -11,6 +11,7 @@ import {
   RootConfigurationInApplicationEntryError
 } from './errors.js'
 import { topologyVariableName } from './identifiers.js'
+import { readAndStripSchemaStamp } from './stamp.js'
 import { expandAutoload, filterEnabledApplications, normalizeApplications, recordResolveCandidates } from './topology.js'
 
 /*
@@ -95,6 +96,11 @@ export function checkInheritedTopologyKeys (applications, env) {
 export async function runRootPipeline (exported, { path, directory, schema, production, env, context, deferred: mode = true }) {
   // Step 1.
   const { config: snapshot, deferred } = canonicalize(exported, { deferred: mode })
+
+  // Step 1b. Read for version detection and stripped, before anything looks at the shape: the
+  // schema does not admit it, and classification selects the capability from `module` rather than
+  // from a URL that could quietly disagree with it.
+  readAndStripSchemaStamp(snapshot, path)
 
   // Step 2.
   const classification = classifyConfiguration(snapshot, path)

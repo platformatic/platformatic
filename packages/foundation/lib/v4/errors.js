@@ -129,3 +129,13 @@ export const EvaluationEndedWithoutResultError = createError(
   `${ERROR_PREFIX}_EVALUATION_ENDED_WITHOUT_RESULT`,
   'Evaluating %s ended without a result (worker exit code %d). A configuration that never resolves, or that calls process.exit, ends this way.'
 )
+
+export const InvalidSchemaStampError = createError(
+  `${ERROR_PREFIX}_INVALID_SCHEMA_STAMP`,
+  'The $schema of %s is %s. A machine-written configuration stamps it with the URL of the schema it was generated against.'
+)
+
+export const LegacySchemaStampError = createError(
+  `${ERROR_PREFIX}_LEGACY_SCHEMA_STAMP`,
+  '%s is stamped with %s, which is a v3 schema. Run "wattpm-utils migrate" to bring it to v4.'
+)
