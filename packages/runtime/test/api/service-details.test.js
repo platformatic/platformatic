@@ -23,6 +23,7 @@ test('should get application details', async t => {
     id: 'with-logger',
     type: 'service',
     status: 'started',
+    servingState: 'listening',
     version,
     localUrl: 'http://with-logger.plt.local',
     configPath: resolve(configFile, '../../../monorepo/serviceAppWithLogger/watt.config.mjs'),

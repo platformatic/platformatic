@@ -80,6 +80,7 @@ test('should be able to add and remove applications using the management API', a
         path: resolve(fixturesDir, 'dynamic-applications', 'application-2'),
         localUrl: 'http://application-2.plt.local',
         status: 'started',
+        servingState: 'listening',
         type: 'nodejs',
         version,
         sourceMaps: false

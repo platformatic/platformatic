@@ -232,3 +232,7 @@ export const WorkerInterceptorJoinTimeoutError = createError(
   `${ERROR_PREFIX}_WORKER_INTERCEPTOR_JOIN_TIMEOUT`,
   'The %s failed to join the mesh network in %dms.'
 )
+export const MixedServingStateError = createError(
+  `${ERROR_PREFIX}_MIXED_SERVING_STATE`,
+  'The workers of the application "%s" disagree about how it serves: %s. One application is one thing; workers that disagree about whether it serves HTTP would have the mesh route a share of requests to a worker that destroys them.'
+)

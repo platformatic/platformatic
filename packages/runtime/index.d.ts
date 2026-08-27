@@ -111,12 +111,19 @@ export interface InjectResponse {
   rawPayload: ArrayBuffer
 }
 
+export type ServingState = 'listening' | 'mesh-only' | 'background' | 'inactive'
+
 export interface ApplicationDetails {
   id: string
   type?: string
+  /** v3 only: the path to the application's configuration file. v4 reports configPath. */
   config?: string
+  /** v4 only: the configuration file the loader decided on, absent for an inline definition. */
+  configPath?: string
   path?: string
   status?: string
+  /** How the application serves, as opposed to whether it runs. Absent when it is not started. */
+  servingState?: ServingState
   dependencies?: string[]
   version?: string
   localUrl?: string

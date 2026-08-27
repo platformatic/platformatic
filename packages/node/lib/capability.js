@@ -242,6 +242,25 @@ export class NodeCapability extends BaseCapability {
     return this.url
   }
 
+  /*
+    Node knows three of these and two are only knowable after the application's code has run: a
+    factory that returned a background result, and a module-level hasServer export. The distinction
+    between background and mesh-only matters to the caller — a mesh-only application still answers
+    injected requests, a background one refuses them — so it is drawn here rather than collapsed
+    into the single boolean #hasServer needs.
+  */
+  getServingState () {
+    if (this.#app?.isBackgroundApplication === true) {
+      return 'background'
+    }
+
+    if (this.url) {
+      return 'listening'
+    }
+
+    return this.#app ? 'mesh-only' : 'inactive'
+  }
+
   #hasServer () {
     return (
       this.#app?.isBackgroundApplication !== true &&

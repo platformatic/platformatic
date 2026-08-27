@@ -53,6 +53,7 @@ import {
   MessagingError,
   MetricFamilyCollisionError,
   MissingPprofCapture,
+  MixedServingStateError,
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
   RuntimeExtensionBuildAlreadyCalledError,
@@ -223,6 +224,7 @@ export class Runtime extends EventEmitter {
   #extensionLivenessChecks
   #extensionHealthRoutes
   #lastOverloadProfiles
+  #servingStates
   #restartingApplications
   #restartingWorkers
   #workerPortOffsets
@@ -301,6 +303,7 @@ export class Runtime extends EventEmitter {
     this.#extensionLivenessChecks = new Map()
     this.#extensionHealthRoutes = []
     this.#lastOverloadProfiles = new Map()
+    this.#servingStates = new Map()
     this.#sharedContext = {}
 
     if (this.#isProduction) {
@@ -520,6 +523,7 @@ export class Runtime extends EventEmitter {
     clearTimeout(this.#healthMetricsTimer)
     this.#healthMetricsCollectionActive = false
     this.#lastOverloadProfiles.clear()
+    this.#servingStates.clear()
 
     await this.stop(silent)
     this.#updateStatus('closing')
@@ -695,6 +699,11 @@ export class Runtime extends EventEmitter {
       // (stopped or crashed with restartOnError: 0) can still be removed.
       const details = await this.getApplicationDetails(application, true)
       details.status = 'removed'
+
+      // The snapshot is taken while the application is still up, but what it reports is an
+      // application about to be gone: it is not making a claim about how it would serve.
+      delete details.servingState
+
       removed.push(details)
     }
 
@@ -838,6 +847,7 @@ export class Runtime extends EventEmitter {
     }
 
     await this.#registerApplicationSchedulerJobs(id)
+    await this.#collectServingState(id)
 
     this.emitAndNotify('application:started', id)
     await this.#dynamicWorkersScaler?.applyPendingUpdate(id)
@@ -863,6 +873,11 @@ export class Runtime extends EventEmitter {
 
       await executeInParallel(this.#stopWorker.bind(this), stopInvocations, this.#concurrency)
     }
+
+    // Absent rather than 'inactive': a stopped application is not making a claim about how it
+    // would serve, and conflating "not started" with "started and serving nothing" is the exact
+    // distinction this field exists to draw.
+    this.#servingStates.delete(id)
 
     this.emitAndNotify('application:stopped', id)
   }
@@ -1617,6 +1632,41 @@ export class Runtime extends EventEmitter {
     return this.#managementApi?.server.address() ?? null
   }
 
+  /*
+    servingState is computed per worker: for a worker-classified capability it depends on what the
+    application's factory returned in *that* worker, and nothing stops arbitrary code from returning
+    a server from worker 0 and a background result from worker 1. Sampling one worker -- which is
+    what getApplicationDetails does for every other field -- would make the reported value depend on
+    which worker the selector picked, and, worse, would leave mesh dispatch routing a share of
+    requests to a worker that destroys them. So every worker answers and a mixed answer is refused,
+    naming each worker and the state it reported.
+  */
+  async #collectServingState (id) {
+    const invocations = this.#workers.getKeys(id).map(workerId => [workerId, this.#workers.get(workerId)])
+
+    if (invocations.length === 0) {
+      this.#servingStates.delete(id)
+      return
+    }
+
+    const states = await sendMultipleViaITC(invocations, 'getServingState', undefined, [], this.#concurrency)
+    const reported = Object.entries(states).filter(([, state]) => typeof state === 'string')
+
+    if (reported.length === 0) {
+      this.#servingStates.delete(id)
+      return
+    }
+
+    const distinct = new Set(reported.map(([, state]) => state))
+
+    if (distinct.size > 1) {
+      this.#servingStates.delete(id)
+      throw new MixedServingStateError(id, reported.map(([worker, state]) => `${worker} reported ${state}`).join(', '))
+    }
+
+    this.#servingStates.set(id, reported[0][1])
+  }
+
   async getCustomHealthChecks () {
     const invocations = []
 
@@ -2173,6 +2223,15 @@ export class Runtime extends EventEmitter {
       applicationDetails.config = config
     } else if (configPath) {
       applicationDetails.configPath = configPath
+    }
+
+    // status is worker lifecycle; servingState is how the thing serves. They are different
+    // questions, and the runtime gates URL emission on status === 'started', so they cannot share
+    // a field.
+    const servingState = this.#servingStates.get(id)
+
+    if (servingState) {
+      applicationDetails.servingState = servingState
     }
 
     if (this.#isProduction) {
@@ -4402,6 +4461,10 @@ export class Runtime extends EventEmitter {
           report.started.push(newIndex)
           startedWorkersCount++
         }
+
+        // A worker added after boot re-runs the application's code, so it can answer differently
+        // from the workers already running. Scale-up is the second place the answers must agree.
+        await this.#collectServingState(applicationId)
         report.success = true
       } catch (err) {
         if (pendingWorkerId) {

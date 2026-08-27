@@ -294,6 +294,7 @@ test('should be able to add and remove applications', async t => {
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),
       status: 'started',
+      servingState: 'listening',
       type: 'service',
       version,
       sourceMaps: false

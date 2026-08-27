@@ -44,6 +44,7 @@ test('should get application details', async t => {
     id: 'service-1',
     type: 'service',
     status: 'started',
+    servingState: 'listening',
     version,
     localUrl: 'http://service-1.plt.local',
     configPath: resolve(configFile, '../../management-api/services/service-1/watt.config.mjs'),

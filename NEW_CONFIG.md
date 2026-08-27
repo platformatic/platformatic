@@ -657,7 +657,7 @@ statically-safe shapes or its snippet fallback.
 Because the path exists only in memory, **the root eval worker backfills it** —
 `join(root, resolvedApplicationsBasePath, id)` — during the same expansion step
 that runs `autoload` and resolves `enabled`, before fan-out. v3 could defer this to
-`#setupApplication` (`runtime/lib/runtime.js:2434,2446`) because per-app config was
+`#setupApplication` (`runtime/lib/runtime.js:2504,2516`) because per-app config was
 loaded worker-side; v4 needs an absolute `path` during loading to find the per-app
 file, run the detector, and validate the capability. An entry with a `url` whose directory — backfilled or declared — **does not exist
 yet** is recorded **unresolved** and skipped by per-app discovery entirely: no
@@ -1119,7 +1119,7 @@ files are read and layered the same way they are at runtime; **there is no reduc
 or special build environment, and no rung is excluded**. This is what v3 did and
 what the runtime does today
 — `buildApplication` sends `build` over ITC to a normally spawned worker
-(`runtime/lib/runtime.js:950,985`), which has already applied both `env` blocks
+(`runtime/lib/runtime.js:965,1001`), which has already applied both `env` blocks
 (`worker/main.js:265,268`) — and a build that reads an author-supplied constant
 should keep reading it.
 
@@ -1137,7 +1137,7 @@ them.
 
 `NODE_ENV` defaults to `production` under `build` when nothing else supplied it
 (see "Env files"). That is **new**: v3's build created the runtime with no
-production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:252`), so
+production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:254`), so
 `worker/controller.js:125-126` never fired and builds ran with `NODE_ENV` unset.
 Bundlers and Babel configurations that branch on it will produce different — and
 correct — artifacts.
@@ -1216,13 +1216,13 @@ The rules, in full:
   precedence question to answer.
 - **A managed listener opens if and only if `server.port` is defined.** Every
   capability's `_listen` returns early on `typeof this.serverConfig?.port ===
-  'undefined'` (`service/lib/capability.js:299`, `node/lib/capability.js:454-459`,
+  'undefined'` (`service/lib/capability.js:299`, `node/lib/capability.js:473-478`,
   and the same guard in `vite`, `astro`, `remix`, `nest`). No schema supplies a
   default. So **omitting `server` means no managed listener** — nothing binds a
   socket — and a declared port is the statement that this application faces something
   outside the runtime. Whether the application is then *reachable* at
   `http://<id>.plt.local` through the in-thread dispatch target
-  (`basic/lib/capability.js:416-418`) is capability- and mode-specific, and the matrix
+  (`basic/lib/capability.js:434-436`) is capability- and mode-specific, and the matrix
   below is the answer: for `service`/`db`/`gateway` always, for the Vite family in
   production, for `next`/`nitro`/`nuxt`/`tanstack` never, and for `node` when its
   code says so. "No listener" and "mesh-only" are not the same statement.
@@ -1239,7 +1239,7 @@ The rules, in full:
   `reuseTcpPorts`, which `:105` reads but **no capability schema declares** — it is
   reachable from capability code, not from a configuration file. It is then
   applied by a `net.server.listen` subscriber that sets `options.reusePort =
-  true` (`:827-841`). Both `reuseTcpPorts` properties default to `true`
+  true` (`:845-859`). Both `reuseTcpPorts` properties default to `true`
   (`foundation/lib/schema.js:905-908` for the entry, `foundation/lib/schema.js:1111-1114` for the root),
   and the
   **entry-level one now reaches the decision** — the runtime passes the whole
@@ -1251,7 +1251,7 @@ The rules, in full:
   answered it**: it sets up the first worker, asks whether that worker's listener
   ended up on a shared fixed port, and if so warns and clamps the application to a
   single worker, disabling dynamic scaling with it
-  (`runtime/lib/runtime.js:2490-2506`, `edf83931d`, closing
+  (`runtime/lib/runtime.js:2549-2565`, `edf83931d`, closing
   platformatic/platformatic#5070). That the check runs *after* the first worker
   exists is the point, and it is why this never belonged in the format: the listener
   is owned by the capability, so whether a fixed port is really shared is not
@@ -1287,11 +1287,11 @@ The rules, in full:
 - **`application.entrypointPort` is removed** for the same reason as custom
   listeners: it
   overwrote the port of an *observed* URL
-  (`basic/lib/capability.js:906-910`) so the runtime would report a port other than
+  (`basic/lib/capability.js:924-928`) so the runtime would report a port other than
   the bound one — meaningful only while an entrypoint proxied the application, and
   without a referent since `e2da15eda`. It was also load-bearing in a place it was
   never meant to reach: the reported URL is the only input to the collision scan
-  (`runtime.js:5008-5024` → `:4978-4999`), so two applications on genuinely distinct
+  (`runtime.js:5071-5087` → `:5041-5062`), so two applications on genuinely distinct
   ports that both set `entrypointPort: 3000` raised a spurious `AddressInUseError`,
   while two sharing a real port with different values escaped detection. Nothing in
   the codebase sets it outside its own two tests. `_getEntrypointUrl` keeps only its
@@ -1301,11 +1301,11 @@ The rules, in full:
   runtime checks the port against every *other* application's listening workers
   and raises `AddressInUseError` — `Port %d is already in use by applications
   "%s" and "%s"` (`runtime/lib/errors.js:14-17`, raised at
-  `runtime/lib/runtime.js:5022-5024`, ownership scan at `runtime/lib/runtime.js:4978-4999`). Workers of
-  the *same* application are exempt by construction (`runtime/lib/runtime.js:4984`), which is what makes
+  `runtime/lib/runtime.js:5085-5087`, ownership scan at `runtime/lib/runtime.js:5041-5062`). Workers of
+  the *same* application are exempt by construction (`runtime/lib/runtime.js:5047`), which is what makes
   `SO_REUSEPORT` legal. An OS-level `EADDRINUSE` carrying a port is upgraded to
-  the same error (`runtime/lib/runtime.js:3414-3424`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
-  are excluded from restart-on-error (`runtime/lib/runtime.js:3452-3456`) — a port problem fails fast
+  the same error (`runtime/lib/runtime.js:3473-3483`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
+  are excluded from restart-on-error (`runtime/lib/runtime.js:3511-3515`) — a port problem fails fast
   instead of looping. There is still **no port search**.
 
   **A declared duplicate is caught at load, before any worker starts** — with a
@@ -1348,7 +1348,7 @@ The rules, in full:
   **Host overlap is a table, deliberately a small one.** Two ranges conflict only if
   their hosts overlap, and the loader decides that the way the runtime already does:
   a wildcard (`0.0.0.0`, `::`, `[::]`) overlaps everything, and otherwise the hosts
-  must be equal, case-insensitively (`runtime/lib/runtime.js:5001-5006`). Anything
+  must be equal, case-insensitively (`runtime/lib/runtime.js:5064-5069`). Anything
   that would need name resolution — two DNS names for one address, a name pointing at
   an interface something else has bound — is **not** compared here and is left to the
   runtime scan, which sees addresses that are actually bound. A static check that
@@ -1383,13 +1383,13 @@ The rules, in full:
   is visible only once it has bound it, which is what that scan is for.
 - **The runtime reports a map of URLs, not one URL.** `getUrls(applicationId?)`
   returns `{ '<app>:<worker>': url }` for every listening worker
-  (`runtime/lib/runtime.js:1554-1568`); `start()` returns it (`runtime/lib/runtime.js:455`) after
+  (`runtime/lib/runtime.js:1569-1583`); `start()` returns it (`runtime/lib/runtime.js:458`) after
   logging one line per **application** rather than one per listening worker
-  (`#showUrls`, `runtime/lib/runtime.js:2423-2443`) — an application with several workers on distinct
+  (`#showUrls`, `runtime/lib/runtime.js:2482-2502`) — an application with several workers on distinct
   ports lists them together rather than N times over. `getRuntimeMetadata()` carries
-  `urls` (`runtime/lib/runtime.js:1587`), `getApplicationDetails()` carries `urls` plus a first-element
-  `url` convenience (`runtime/lib/runtime.js:2182-2184`), and worker records carry their own `url`
-  (`runtime/lib/runtime.js:2301`). `wattpm ps` dropped its URL column and `wattpm applications` its
+  `urls` (`runtime/lib/runtime.js:1602`), `getApplicationDetails()` carries `urls` plus a first-element
+  `url` convenience (`runtime/lib/runtime.js:2241-2243`), and worker records carry their own `url`
+  (`runtime/lib/runtime.js:2360`). `wattpm ps` dropped its URL column and `wattpm applications` its
   Entrypoint column (`wattpm/lib/commands/management.js:81`, `:102-103`); `wattpm inject` now
   requires an application name unless the runtime has exactly one
   (`wattpm/lib/commands/inject.js:79-88`).
@@ -1448,7 +1448,7 @@ ones, and the citations that supported it were the development returns.
   `astro/lib/capability.js:305-309`, `remix/lib/capability.js:167-172`,
   `nest/lib/capability.js:262-275`). The port check then returns without listening,
   and the inherited dispatch target falls back to the capability object
-  (`basic/lib/capability.js:416-418`), through which `inject()` reaches the
+  (`basic/lib/capability.js:434-436`), through which `inject()` reaches the
   initialized instance (`vite/lib/capability.js:163-166`). That is a **working
   mesh-only application serving built artifacts**, not an inactive one.
 - **Four capabilities return before building in production too**: `next`
@@ -1577,7 +1577,7 @@ an evaluation could only establish by executing a file above the search's stop p
 **Not listening has four meanings, and the startup output must tell them apart.**
 Without a port, an application is **mesh-only** — reachable at
 `http://<id>.plt.local` because `getDispatchTarget()` falls back to in-thread
-dispatch (`basic/lib/capability.js:416-418`) — or **inactive**, because its
+dispatch (`basic/lib/capability.js:434-436`) — or **inactive**, because its
 capability's start path returns early when `server.port` is undefined, or
 **background**, a `node` application that declares it has no server and is not
 supposed to be reachable at all, or **inactive at runtime** — the fourth case, which
@@ -1646,7 +1646,7 @@ not a detail of it. `service`, `db`, `gateway` and `node` never reach it either,
 `node` is exempt for a different reason, and collapsing the two is what
 makes rule 1 look like it decides more than it can. A `node` application serves the
 mesh in-thread **when it has a server**, and `#hasServer()` reads three things
-(`node/lib/capability.js:245-250`): `config.node.hasServer`, which is configuration;
+(`node/lib/capability.js:264-269`): `config.node.hasServer`, which is configuration;
 `module.hasServer`, a module-level export; and `isBackgroundApplication` on the
 factory's result. The last two are known only once the application's own code has
 been imported and its factory called. Whether a given `node` application will serve
@@ -1658,7 +1658,7 @@ thing to write, not a misconfiguration to reject.
 application is neither mesh-only nor inactive-because-misconfigured:
 `getDispatchFunc()` hands back `#backgroundServiceInject`, which destroys any request
 that arrives — "Background services cannot receive HTTP requests via the mesh
-network" (`node/lib/capability.js:449-451`, `:559-560`). Printing
+network" (`node/lib/capability.js:468-470`, `:578-579`). Printing
 `http://<id>.plt.local` for it would name an address that answers by hanging up,
 which is the failure the mesh-only/inactive distinction exists to prevent, one
 capability further along. So the report carries **background** beside the other two,
@@ -1667,7 +1667,7 @@ knows.
 
 The loader does not warn per application: in a typical monorepo most applications
 are deliberately mesh-only, and a warning would fire N−1 times on every boot. What
-changes is the report. `#showUrls` (`runtime/lib/runtime.js:2419-2439`) currently
+changes is the report. `#showUrls` (`runtime/lib/runtime.js:2478-2498`) currently
 does `if (!url) continue`, so a project that binds nothing prints no address and no
 explanation. It prints **one line per application**, in one of four shapes, so the
 set of externally reachable applications is always visible:
@@ -1683,23 +1683,23 @@ worker-x   inactive — capability reports no serving state
 **Worker-classified rows are reported by the worker, not derived by the report**, and
 that needs a contract rather than an inference. `getDispatchTarget()` falling back to
 the capability object proves nothing: `basic`'s fallback returns `this` whenever there
-is no URL (`basic/lib/capability.js:416-418`), whether the start method built a
+is no URL (`basic/lib/capability.js:434-436`), whether the start method built a
 dispatcher or returned without building anything. So the v4 capability contract adds
 **`getServingState()`**, returning `'listening' | 'mesh-only' | 'background' |
 'inactive'`, travelling with the status reply the worker already sends. `node`
 implements it from `#hasServer()` — false via `config.node.hasServer`, a module-level
 `hasServer` export, or `isBackgroundApplication` on the factory result
-(`node/lib/capability.js:245-250`), two of which are only knowable after the
+(`node/lib/capability.js:264-269`), two of which are only knowable after the
 application's code has run — and `ViteSSRCapability` inherits that implementation
 along with the rest of Node's startup path.
 
 **It is a new field, `servingState`, and it does not touch `status`.** The two are
 different questions — `status` is worker lifecycle, and the runtime gates URL
-emission on `status === 'started'` (`runtime/lib/runtime.js:2182`), so overloading it
+emission on `status === 'started'` (`runtime/lib/runtime.js:2241`), so overloading it
 with a serving enum would drop every URL the moment `'listening' !== 'started'`.
 `servingState: 'listening' | 'mesh-only' | 'background' | 'inactive'` is added to the
 worker info reply and surfaces beside `status` on `ApplicationDetails`
-(`runtime/index.d.ts:114-127`) and in the management payload. For an application that
+(`runtime/index.d.ts:116-134`) and in the management payload. For an application that
 is not running it is **absent**, not `'inactive'`: a stopped application is not making
 a claim about how it would serve, and conflating "not started" with "started and
 serving nothing" is the distinction this field exists to draw. A report shape the
@@ -1748,12 +1748,12 @@ actually bound.
 The predicate proves *intent*, not *outcome* — a declared command is a statement that
 something will bind, and no configuration check can promise that an arbitrary command
 does. `startWithCommand` waits for the child to report a URL
-(`basic/lib/capability.js:604`), and a command that never reports one is bounded from
+(`basic/lib/capability.js:622`), and a command that never reports one is bounded from
 outside rather than left hanging: the runtime runs `sendViaITC(worker, 'start')` under
 `executeWithTimeout` and raises `ApplicationStartTimeoutError` after `startTimeout`
 milliseconds — 30 s by default (`foundation/lib/schema.js:1115-1119`), the worker
 terminated and the application named
-(`runtime/lib/runtime.js:3363-3370`). So a command that never binds does not need a
+(`runtime/lib/runtime.js:3422-3429`). So a command that never binds does not need a
 report row of its own: it never reaches the report at all, because the boot failed
 first and said which application and how long it waited.
 
@@ -2091,7 +2091,7 @@ serial scheme.
    process with full privileges, like any capability code (see the trust model
    above) — and it carries the package-level metadata main-side
    preparation needs besides the schema: `skipTelemetryHooks` (which decides
-   whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2554`,
+   whether the worker gets the OpenTelemetry `--import` hook — `runtime.js:2613`,
    set by gateway, db, and service), `modulesToLoad`, and **`servesWithoutPort`**,
    the per-mode declaration the serving predicate reads (see "How applications are
    exposed"; absent means `'worker'`). All three move into the
@@ -3007,7 +3007,7 @@ export default {
 - **`getApplicationConfig()` is a different API with a different view, and it
   survives unchanged.** `runtime.getApplicationConfig(id)` is not part of the payload
   below: it asks a *running worker* for `capability.getConfig()` over ITC
-  (`runtime/lib/runtime.js:2193-2197` through `runtime/lib/worker/itc.js:294-298`), so
+  (`runtime/lib/runtime.js:2252-2256` through `runtime/lib/worker/itc.js:300-304`), so
   what comes back is the configuration **after the capability's `transform`** — what
   that worker is actually running, its `configPatch` applied and its
   `perWorkerIncrement` offset resolved. `resolvedConfig` in the payload below is the
@@ -3016,7 +3016,7 @@ export default {
   consequences. It still needs a started worker, and still cannot be answered from the
   main process, because the transform runs where the worker is — the runtime's own
   `SO_REUSEPORT` clamp uses this exact call to learn a worker's real `server` block
-  (`runtime/lib/runtime.js:3616`), which is the same reason. It is already a copy —
+  (`runtime/lib/runtime.js:3675`), which is the same reason. It is already a copy —
   ITC structured-clones on the way back and the handler JSON round-trips to drop
   `undefined` keys — so the mutability question the payload below raises does not
   arise here. And its HTTP surface, `GET /applications/:id/config`
@@ -3032,14 +3032,14 @@ export default {
   Consumers observing `getRuntimeConfig().applications[].config` — or
   `getApplicationDetails()`, a flat object which now names that path by dialect,
   `config` for a v3 application and `configPath` for a v4 one
-  (`runtime/lib/runtime.js:2149-2165`) — received a *file path* in v3; in
+  (`runtime/lib/runtime.js:2199-2215`) — received a *file path* in v3; in
   v4 each entry carries
   **both** `configPath` (the per-app file path, or absent for inline definitions)
   and `resolvedConfig` (the validated raw capability payload), plus `module` and
   `definitionVersion` — the loader-metadata envelope split off the definition (see
   "Capability factories"). **Not `version`**: `getApplicationDetails().version`
   already means the version of the capability the *running worker* loaded, answered
-  over ITC by `getApplicationInfo` (`runtime/lib/runtime.js:2153`). The two are
+  over ITC by `getApplicationInfo` (`runtime/lib/runtime.js:2203`). The two are
   different facts, and under the minor skew this document permits they hold different
   values — which is the exact condition the stamp exists to surface, so a shared name
   would hide it precisely when it matters. `details.version` keeps its meaning
@@ -3054,9 +3054,9 @@ export default {
   so handing out interior state was harmless in practice; v4 nests `resolvedConfig` —
   an entire capability payload — inside every entry, and the current getters hand
   back live state: `getRuntimeConfig()` strips `kMetadata` with a shallow spread
-  (`runtime/lib/runtime.js:1595-1601`), so every value under it is shared, and
+  (`runtime/lib/runtime.js:1610-1616`), so every value under it is shared, and
   `getApplicationDetails()` reads `config` straight off `application[kConfig]`
-  (`:2149`). A consumer mutating what it received would be editing the configuration
+  (`:2199`). A consumer mutating what it received would be editing the configuration
   that later restarts and scale-up workers read, silently, and would make worker
   generations disagree about what they are running — while `setApplicationConfigPatch()`
   exists precisely so that changing a running application's configuration is explicit,
@@ -3066,7 +3066,7 @@ export default {
 
   **`getRuntimeConfig(true)` leaves the public surface**, or the promise above has a
   hole with a typed overload pointing straight at it: `includeMeta: true` is declared
-  in `runtime/index.d.ts:382` and returns live `#config`, symbol key and all. Its
+  in `runtime/index.d.ts:389` and returns live `#config`, symbol key and all. Its
   in-tree uses do not need a public API. Two are internal — `addApplications` reading
   `config[kMetadata].root` to validate against
   (`runtime/lib/management-handlers.js:136`, `runtime/lib/management-api.js:157`) —
@@ -3114,7 +3114,7 @@ export default {
   reachable from any application with `management: true` — it is a second live
   hot-add path with the same worker-self-loading assumption. What these commands
   need from the running runtime comes from `GET /metadata`, which already carries the
-  project directory as `projectDir` (`runtime/lib/runtime.js:1583`) and is extended
+  project directory as `projectDir` (`runtime/lib/runtime.js:1598`) and is extended
   with `configPath` and **`autoload`** — `applications:remove --save` resolves the
   live `autoload.path` to decide whether the removed app must be appended to
   `autoload.exclude` (`wattpm/lib/commands/applications.js:110-112`), and that is
@@ -4324,7 +4324,7 @@ Generation reads both views. Then:
    resolved — validate as **unresolved** and are skipped, exactly as they are at
    load time. So are entries whose backfilled path falls inside
    `resolvedApplicationsBasePath`: the loader computes that path itself
-   (`runtime/lib/runtime.js:2457`), so a `wattpm resolve`-d clone *does* exist on
+   (`runtime/lib/runtime.js:2516`), so a `wattpm resolve`-d clone *does* exist on
    disk, and discovery would walk into another repository's v3 configuration — which
    migrate deliberately did not convert — and fail on output that is correct. That is
    the fourth deviation of the migrator-only entry; migrate must not require `wattpm resolve` to have been run first, and
@@ -4546,7 +4546,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    config time belongs in an env file or the real environment.
 6. `verticalScaler`: removed from the v4 schema. `metrics.healthChecksTimeouts` is
    **kept** — it is not a top-level key and is not dead: `#getHealthChecksTimeout`
-   reads it (`runtime/lib/runtime.js:4717-4724`, falling back to `healthChecksTimeout`
+   reads it (`runtime/lib/runtime.js:4780-4787`, falling back to `healthChecksTimeout`
    then 5000 ms) and extension health checks are configured through it. Its schema
    description still says "no longer used", which the audit corrects.
 7. Schema audit: placeholder-string unions removed from every schema (validation is
@@ -4597,7 +4597,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
 
     **`getRuntimeConfig(includeMeta: true)` is removed**, which is a separate breaking
     change from the payload above and is listed here because a legal call disappears:
-    it is a declared public overload today (`runtime/index.d.ts:382`) returning live
+    it is a declared public overload today (`runtime/index.d.ts:389`) returning live
     `#config` with its `kMetadata` symbol attached, which the frozen-copy contract
     cannot honour (see "Machine-generated configs"). Its replacement is a metadata
     accessor rather than a flag — `runtime.getRuntimeMetadata()` extended with
@@ -4726,7 +4726,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
 22. **Listener mechanics and reporting.** Multi-worker on a fixed port requires
     `SO_REUSEPORT`; where the platform lacks it the runtime warns and clamps the
     application to one worker after inspecting the first worker's listener
-    (`runtime/lib/runtime.js:2490-2506`) — a start-time decision, not a
+    (`runtime/lib/runtime.js:2549-2565`) — a start-time decision, not a
     configuration-format one. The
     **per-application `reuseTcpPorts` now reaches the `SO_REUSEPORT` decision**
     (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:83`), where
@@ -4884,7 +4884,7 @@ runs multiple workers on a fixed port at all.
    kept nested; delete worker-side config *file* resolution (the capability
    `transform` + pre-transform `configPatch` application stay worker-side); remove
    `application.entrypointPort` from the schema (`lib/schema.js:61-63`) and its
-   rewrite from `_getEntrypointUrl` (`basic/lib/capability.js:906-910`), keeping the
+   rewrite from `_getEntrypointUrl` (`basic/lib/capability.js:924-928`), keeping the
    `[::]`/`0.0.0.0` → `localhost` normalization, and drop the two tests that assert
    the override (`test/capability.test.js:96,114`).
 4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
@@ -5340,7 +5340,7 @@ it **off**. It cannot keep the `?? ''` form, though: the audit deletes
 `managementApi`'s top-level string branch (see "Validation, types, and the schema
 audit"), so `''` would be a validation failure rather than "off". The emitted
 expression reproduces v3's gate exactly — v3 tested the *replaced string* for
-truthiness (`runtime/lib/runtime.js:345`), so `''` is off and **any** non-empty
+truthiness (`runtime/lib/runtime.js:348`), so `''` is off and **any** non-empty
 string is on, including `'false'`. `(… ?? '') !== ''` is that test, written in a
 boolean position.
 
