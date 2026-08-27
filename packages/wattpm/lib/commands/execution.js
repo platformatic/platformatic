@@ -10,6 +10,8 @@ import {
 import { create, loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { basename, dirname } from 'node:path'
 import inspector from 'node:inspector'
 import { createInterface } from 'node:readline'
 
@@ -102,8 +104,45 @@ export async function devCommand (logger, args) {
   function watchConfiguration () {
     const targets = runtime.getConfigurationWatchTargets()
 
-    watchers = [...targets.files, ...targets.directories].map(path => {
-      const watcher = new FileWatcher({ path })
+    /*
+      Some of the set does not exist yet, and that is the point: creating a `.env` beside the
+      configuration, or a `watt.config.ts` in an ancestor, changes the answer without changing any
+      file that is there now. Those are watched through their directory, filtered to the names that
+      matter, because a watcher cannot be opened on a path that has nothing at it -- fs.watch throws
+      ENOENT rather than waiting.
+    */
+    const specs = []
+    const prospective = new Map()
+
+    for (const file of targets.files) {
+      if (existsSync(file)) {
+        specs.push({ path: file })
+        continue
+      }
+
+      const directory = dirname(file)
+
+      if (!prospective.has(directory)) {
+        prospective.set(directory, [])
+      }
+
+      prospective.get(directory).push(basename(file))
+    }
+
+    for (const [directory, names] of prospective) {
+      if (existsSync(directory)) {
+        specs.push({ path: directory, allowToWatch: names })
+      }
+    }
+
+    for (const directory of targets.directories) {
+      if (existsSync(directory)) {
+        specs.push({ path: directory })
+      }
+    }
+
+    watchers = specs.map(spec => {
+      const watcher = new FileWatcher(spec)
       watcher.startWatching()
 
       watcher.on('update', () => {
