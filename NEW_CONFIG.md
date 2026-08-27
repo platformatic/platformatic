@@ -4877,9 +4877,19 @@ runs multiple workers on a fixed port at all.
    migrate's legacy reader. Only deliberately-kept pieces are
    carried over as code (AJV custom keywords, `transform` hooks), each by explicit
    decision rather than by surviving a refactor.
-2. **Schema audit** (foundation + all capabilities): classify ~120 union sites, delete
+2. **Schema audit** (foundation + all capabilities): classify the union sites, delete
    placeholder-only branches, regenerate `schema.json` + types; produce the
-   per-property target-type table for migrate. The table carries each property's full
+   per-property target-type table for migrate. `scripts/audit-schemas.mjs` walks the
+   shipped schemas and produces both, and the count is deliberately not quoted here —
+   it is a property of the schemas, stale the next time one gains a property, and the
+   tool is the answer rather than a number in prose. It separates the two kinds of
+   work: a **placeholder-shaped** branch is a bare `{ type: 'string' }` beside a typed
+   one, mechanically identifiable and dead the moment interpolation goes; a **genuine**
+   union — `boolean | object`, where the boolean is a shorthand rather than a way to
+   smuggle a string — has to be classified by hand. Every capability schema embeds the
+   shared blocks, so it reports distinct sites as well as copies: fixing `server.port`
+   fixes it in every package, and counting the copies makes the work look an order of
+   magnitude larger than it is. The table carries each property's full
    **constraint set** — enum members, numeric bounds, `multipleOf`, integer-ness,
    string patterns and lengths — not just its primitive type, because migrate
    intersects those constraints across every position a variable occupies (see step
