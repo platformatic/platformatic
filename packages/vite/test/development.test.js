@@ -9,7 +9,6 @@ import {
 } from '../../basic/test/helper.js'
 import { copyServerEntrypoint } from './helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const htmlContentsSSR = ['<title>Vite App</title>', /Hello from v\d+ t\d+/]

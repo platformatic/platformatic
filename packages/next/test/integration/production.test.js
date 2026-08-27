@@ -15,7 +15,6 @@ import {
   verifyPlatformaticServiceWithProxy
 } from '../../../basic/test/helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 
 const files = ['services/frontend/.next/server/app/index.html']
