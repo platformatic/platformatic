@@ -401,6 +401,52 @@ async function resolveGitApplication (application, root, childLogger, username, 
   await execa('git', cloneArgs)
 }
 
+// The boot commands `--for all` covers. `exec` is every non-boot evaluation and prepares nothing.
+const BOOT_COMMANDS = ['dev', 'start', 'build']
+
+/*
+  Candidates are matched by id, and an id that resolves to two different clones is refused: one
+  directory cannot hold two checkouts, and choosing silently is how a deploy ships the wrong code.
+  An id present under some commands and absent under others needs no such treatment — it is fetched,
+  and a clone nobody boots costs disk.
+*/
+function unionApplications (logger, evaluations, root) {
+  const byId = new Map()
+
+  for (const { command, config } of evaluations) {
+    for (const application of config.applications) {
+      const destination = application.path
+        ? resolve(root, application.path)
+        : resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)
+
+      const seen = byId.get(application.id)
+
+      if (!seen) {
+        byId.set(application.id, { application, command, destination })
+        continue
+      }
+
+      for (const [label, before, after] of [
+        ['url', seen.application.url, application.url],
+        ['gitBranch', seen.application.gitBranch, application.gitBranch],
+        ['destination path', seen.destination, destination]
+      ]) {
+        if ((before ?? null) !== (after ?? null)) {
+          logFatalError(
+            logger,
+            `Application ${bold(application.id)} resolves to two different clones: ${label} is ` +
+              `${bold(before ?? 'unset')} under ${bold(seen.command)} and ${bold(after ?? 'unset')} under ${bold(command)}.`
+          )
+
+          return null
+        }
+      }
+    }
+  }
+
+  return [...byId.values()].map(entry => entry.application)
+}
+
 export async function resolveApplications (
   logger,
   root,
@@ -408,18 +454,45 @@ export async function resolveApplications (
   username,
   password,
   skipDependencies,
-  packageManager
+  packageManager,
+  target = 'start',
+  mode,
+  production
 ) {
-  const config = await loadConfiguration(configurationFile)
+  const evaluations = []
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!config) {
+  /*
+    The context resolve evaluates is the named command's, with that command's own defaults, so what
+    it prepares for is a context some boot actually produces rather than a synthetic one. An earlier
+    design evaluated all four and unioned them unconditionally; that was wrong because topology is
+    not separable from the rest of the root callback. The same function that returns the application
+    list also throws on a missing dev certificate or awaits a discovery lookup, and evaluating it
+    under a command nobody asked for runs all of that.
+
+    The union survives as `--for all`, for a project that genuinely branches topology on `command`.
+    Because the operator asked for those evaluations, a failure in any of them fails the run.
+  */
+  for (const command of target === 'all' ? BOOT_COMMANDS : [target]) {
+    const config = await loadConfiguration(configurationFile, null, { command, mode, production })
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!config) {
+      return
+    }
+
+    evaluations.push({ command, config })
+  }
+
+  const config = evaluations[0].config
+  const applications = unionApplications(logger, evaluations, root)
+
+  if (!applications) {
     return
   }
 
   // The applications which might be to be resolved are the one that have a URL and either
   // no path defined (which means no environment variable set) or a non-existing path (which means not resolved yet)
-  const resolvableApplications = config.applications.filter(application => {
+  const resolvableApplications = applications.filter(application => {
     if (!application.url) {
       return false
     }
@@ -578,7 +651,16 @@ export async function importCommand (logger, args) {
 
 export async function resolveCommand (logger, args) {
   const {
-    values: { config, username, password, 'skip-dependencies': skipDependencies, 'package-manager': packageManager },
+    values: {
+      config,
+      username,
+      password,
+      'skip-dependencies': skipDependencies,
+      'package-manager': packageManager,
+      for: target,
+      mode,
+      production
+    },
     positionals
   } = parseArgs(
     args,
@@ -586,6 +668,22 @@ export async function resolveCommand (logger, args) {
       config: {
         type: 'string',
         short: 'c'
+      },
+      /*
+        resolve does not default production and mode the way other exec-context commands do: the
+        target chosen by --for supplies them, so `--for start` evaluates what `wattpm start` boots.
+        The flags override where a deployment is neither — `--for start --mode staging` resolves
+        what `wattpm start --mode staging` will boot.
+      */
+      for: {
+        type: 'string',
+        default: 'start'
+      },
+      mode: {
+        type: 'string'
+      },
+      production: {
+        type: 'boolean'
       },
       username: {
         type: 'string',
@@ -626,6 +724,13 @@ export async function resolveCommand (logger, args) {
     return
   }
 
+  if (target !== 'all' && !BOOT_COMMANDS.includes(target)) {
+    return logFatalError(
+      logger,
+      `Invalid value ${bold(target)} for --for. Use one of ${BOOT_COMMANDS.map(c => bold(c)).join(', ')} or ${bold('all')}.`
+    )
+  }
+
   const resolved = await resolveApplications(
     logger,
     root,
@@ -633,7 +738,10 @@ export async function resolveCommand (logger, args) {
     username,
     password,
     skipDependencies,
-    packageManager
+    packageManager,
+    target,
+    mode,
+    production
   )
 
   if (resolved) {
@@ -711,6 +819,19 @@ export const help = {
       {
         usage: '-P, --package-manager <executable>',
         description: 'Use an alternative package manager (the default is to autodetect it)'
+      },
+      {
+        usage: '--for <command>',
+        description:
+          'Prepare for the given boot command — dev, start or build — or "all" to cover every one (the default is start)'
+      },
+      {
+        usage: '--mode <name>',
+        description: 'Override the mode the target command would use'
+      },
+      {
+        usage: '--production',
+        description: 'Override the production flag the target command would use'
       }
     ],
     footer () {

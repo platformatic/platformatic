@@ -265,3 +265,34 @@ test('resolve - should clone a NPM package', async t => {
   ok(existsSync(resolve(rootDir, 'external/resolved/index.js')))
   ok(existsSync(resolve(rootDir, 'external/resolved/lib/module.js')))
 })
+
+test('resolve - should refuse an invalid --for target', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const resolveProcess = await wattpmUtils('resolve', rootDir, '--for', 'deploy', { reject: false })
+
+  deepStrictEqual(resolveProcess.exitCode, 1)
+  ok(resolveProcess.stdout.includes('Invalid value deploy for --for'))
+})
+
+test('resolve --for all - should refuse an id that resolves to two different clones', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'resolve-branching', false, 'watt.config.mjs')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  /*
+    One directory cannot hold two checkouts, and choosing silently is how a deploy ships the wrong
+    code. `--for build` alone is fine — it is only the union that has to decide.
+  */
+  const resolveProcess = await wattpmUtils('resolve', rootDir, '--for', 'all', {
+    reject: false,
+    env: { ...process.env, PLT_GIT_REPO_URL: repo }
+  })
+
+  deepStrictEqual(resolveProcess.exitCode, 1)
+  ok(resolveProcess.stdout.includes('resolves to two different clones'))
+  ok(resolveProcess.stdout.includes('gitBranch'))
+})
