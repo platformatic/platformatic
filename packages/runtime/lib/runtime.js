@@ -323,10 +323,9 @@ export class Runtime extends EventEmitter {
       this.#metricsLabelName = 'applicationId'
     }
 
-    // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
+    // Initialize process-level metrics registry only when metrics are enabled.
     // These metrics are the same across all workers and only need to be collected once
-    // We need this for management API as it can request metrics even without explicit metrics config
-    if (config.metrics || config.managementApi) {
+    if (config.metrics && config.metrics.enabled !== false) {
       this.#processMetricsRegistry = new metricsClient.Registry()
       collectProcessMetrics(this.#processMetricsRegistry)
     }

@@ -1736,7 +1736,8 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "default": false
         },
         "telemetry": {
           "type": "object",
