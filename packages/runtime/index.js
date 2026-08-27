@@ -21,7 +21,7 @@ import { basename, dirname, resolve as resolvePath } from 'node:path'
 import { transform as v3Transform, transformV4, wrapInRuntimeConfig } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
-import { schema } from './lib/schema.js'
+import { schema, v4Schema } from './lib/schema.js'
 import { upgrade } from './lib/upgrade.js'
 
 async function restartRuntime (runtime) {
@@ -219,7 +219,7 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     projection carries authored values — so this is where the runtime schema's defaults arrive, and
     without it the runtime reaches for settings like gracefulShutdown that nothing supplied.
   */
-  validateCapabilityConfiguration(config, context?.schema ?? schema, {
+  validateCapabilityConfiguration(config, context?.schema ?? v4Schema, {
     id: 'runtime',
     module: '@platformatic/runtime',
     root: loaded.root

@@ -2146,7 +2146,7 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    const { localUrl, config, path } = application[kConfig]
+    const { localUrl, config, configPath, path } = application[kConfig]
 
     const sourceMaps = application[kConfig].sourceMaps ?? this.#config.sourceMaps
     const status = await sendViaITC(application, 'getStatus')
@@ -2155,13 +2155,24 @@ export class Runtime extends EventEmitter {
     const applicationDetails = {
       id,
       type,
-      config,
       path,
       status,
       dependencies,
       version,
       localUrl,
       sourceMaps
+    }
+
+    /*
+      v3's `config` was the application's configuration file path. v4 evaluates that file main-side
+      and hands the worker the payload, so the path becomes `configPath` and the entry's own
+      `config` is no longer a path to report. Emitting the key that matches the dialect keeps a
+      consumer from reading one and silently getting the other.
+    */
+    if (typeof config === 'string') {
+      applicationDetails.config = config
+    } else if (configPath) {
+      applicationDetails.configPath = configPath
     }
 
     if (this.#isProduction) {

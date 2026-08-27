@@ -71,6 +71,29 @@ const platformaticRuntimeSchema = {
 
 export const schema = platformaticRuntimeSchema
 
+/*
+  The keys v4 does not implement. Validating a v4 configuration against the v3 schema accepted them
+  and then ignored them, which is the worst of both: `envfile: './deploy.env'` at the root looked
+  like it was doing something. They survive on the v3 schema, which still serves v3 projects, and
+  inside migrate's legacy reader.
+
+  Root `envfile` is removed, not renamed — an entry may still declare one, and that property lives
+  on the application schema rather than here.
+*/
+const removedInV4 = ['envfile', 'strictEnv']
+
+const { ...v4Properties } = platformaticRuntimeSchema.properties
+
+for (const key of removedInV4) {
+  delete v4Properties[key]
+}
+
+export const v4Schema = {
+  ...platformaticRuntimeSchema,
+  $id: `https://schemas.platformatic.dev/@platformatic/runtime/${version}-v4.json`,
+  properties: v4Properties
+}
+
 if (import.meta.main) {
   console.log(JSON.stringify(platformaticRuntimeSchema, null, 2))
 }
