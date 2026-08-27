@@ -216,6 +216,76 @@ function walk (node, { pointer, packageName, findings }) {
   }
 }
 
+/*
+  The evidence a reviewer needs to classify a candidate, gathered from the code that *reads* the
+  property rather than from the schema, which carries none — `health.maxHeapTotal` has no
+  description and is shape-identical to a placeholder union.
+
+  A real string branch has code that converts the string: the `typeof x === 'string' ? parse…(x) : x`
+  guard is its signature. A placeholder branch has no such code, because interpolation replaced the
+  value before anything read it.
+
+  This reports where it looked and what it found. A distinctive name like `maxHeapTotal` gets a
+  confident answer; a generic one like `port` matches lines about other things, and finding nothing
+  is not proof of absence. Saying which of the two happened is the point — the tool narrows the
+  hand work, it does not replace it.
+*/
+function collectStringFormEvidence (names) {
+  const evidence = new Map(names.map(name => [name, []]))
+  const parserCall = /\b(parseMemorySize|parseDuration|parseTime|ms|bytes)\s*\(/
+
+  function scan (directory) {
+    let entries
+
+    try {
+      entries = readdirSync(directory, { withFileTypes: true })
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      const path = join(directory, entry.name)
+
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && entry.name !== 'fixtures') {
+          scan(path)
+        }
+
+        continue
+      }
+
+      if (!entry.name.endsWith('.js')) {
+        continue
+      }
+
+      const lines = readFileSync(path, 'utf-8').split('\n')
+
+      lines.forEach((line, index) => {
+        const guards = line.includes("'string'") && line.includes('typeof')
+        const parses = parserCall.test(line)
+
+        if (!guards && !parses) {
+          return
+        }
+
+        for (const name of names) {
+          if (line.includes(name) && evidence.get(name).length < 3) {
+            evidence.get(name).push(`${path.slice(root.length + 1)}:${index + 1}`)
+          }
+        }
+      })
+    }
+  }
+
+  for (const entry of readdirSync(join(root, 'packages'), { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      scan(join(root, 'packages', entry.name, 'lib'))
+    }
+  }
+
+  return evidence
+}
+
 function main () {
   const findings = { table: {}, unions: [], unsupported: [] }
 
@@ -223,12 +293,25 @@ function main () {
     walk(schema, { pointer: '', packageName, findings })
   }
 
+  const placeholders = findings.unions.filter(union => union.placeholderBranch)
+  const real = findings.unions.filter(union => !union.placeholderBranch)
+
+  const candidateNames = [...new Set(placeholders.map(union => union.pointer.split('/').pop()))].filter(
+    name => name && !/^\d+$/.test(name)
+  )
+
+  const evidence = collectStringFormEvidence(candidateNames)
+  const withEvidence = candidateNames.filter(name => evidence.get(name).length > 0)
+
   if (asJson) {
     console.log(
       JSON.stringify(
         {
           table: Object.values(findings.table).sort((a, b) => a.pointer.localeCompare(b.pointer)),
-          unions: findings.unions,
+          unions: findings.unions.map(union => {
+            const name = union.pointer.split('/').pop()
+            return union.placeholderBranch ? { ...union, stringFormEvidence: evidence.get(name) ?? [] } : union
+          }),
           unsupported: findings.unsupported
         },
         null,
@@ -239,8 +322,6 @@ function main () {
     return
   }
 
-  const placeholders = findings.unions.filter(union => union.placeholderBranch)
-  const real = findings.unions.filter(union => !union.placeholderBranch)
 
   /*
     Every capability schema embeds the shared blocks, so the same site appears once per package.
@@ -258,6 +339,17 @@ function main () {
     `  placeholder-shaped (a bare string branch beside a typed one): ${distinctPlaceholders.size} distinct (${placeholders.length})`
   )
   console.log(`  genuine unions to classify by hand: ${distinctReal.size} distinct (${real.length})`)
+  console.log(
+    `\ncandidates whose string form is parsed somewhere — a real branch, not a placeholder: ${withEvidence.length}`
+  )
+
+  for (const name of withEvidence.slice(0, 12)) {
+    console.log(`  ${name.padEnd(22)} ${evidence.get(name).join(', ')}`)
+  }
+
+  if (withEvidence.length > 12) {
+    console.log(`  … and ${withEvidence.length - 12} more (use --json for the full set)`)
+  }
 
   const byPackage = {}
 

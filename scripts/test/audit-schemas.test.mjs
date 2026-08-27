@@ -67,3 +67,23 @@ test('a property outside the supported keyword subset is flagged', () => {
   const flagged = table.filter(row => !row.supported)
   assert.ok(flagged.length > 0, 'expected the flag to reach the table rows')
 })
+
+test('a candidate whose string form is parsed somewhere carries that evidence', () => {
+  const { unions } = run()
+
+  /*
+    `health.maxHeapTotal` is shape-identical to a placeholder union and its string branch is real —
+    it accepts '1 GB'. The schema says nothing; the code that reads it does, through the
+    `typeof x === 'string' ? parse…(x) : x` guard that is a real branch's signature. Surfacing that
+    is what turns a blind classification into a reviewable one.
+  */
+  const heap = unions.find(union => union.pointer.endsWith('/health/properties/maxHeapTotal'))
+
+  assert.ok(heap, 'expected maxHeapTotal to be a union site')
+  assert.strictEqual(heap.placeholderBranch, true, 'it is placeholder-shaped, which is the whole problem')
+  assert.ok(heap.stringFormEvidence.length > 0, 'expected the parser call sites to be reported')
+  assert.ok(
+    heap.stringFormEvidence.some(where => where.includes('runtime.js')),
+    `expected a runtime call site, got ${heap.stringFormEvidence.join(', ')}`
+  )
+})
