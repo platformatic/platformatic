@@ -4,9 +4,6 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { createRuntime, LOGS_TIMEOUT, setFixturesDir } from '../../basic/test/helper.js'
-
-process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should configure metrics correctly with both node and http metrics', { skip: true }, async t => {

@@ -13,9 +13,6 @@ import {
   valkeyPrefix,
   verifyValkeySequence
 } from './caching/helper.js'
-
-process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 const configuration = 'caching-adapter'
 

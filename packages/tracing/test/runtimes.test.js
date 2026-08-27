@@ -7,7 +7,6 @@ import { request } from 'undici'
 import { createRuntime, prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
 import { findParentSpan, findSpanWithParentWithId, parseNDJson } from './helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 async function getSpans (spanPaths) {

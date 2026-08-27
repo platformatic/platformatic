@@ -14,7 +14,6 @@ import {
   verifyJSONViaInject
 } from '../../../basic/test/helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 
 const hmrTriggerFile = 'services/frontend/src/app/page.js'
