@@ -2,7 +2,7 @@
 export default {
   gracefulShutdown: {
     runtime: 1000,
-    service: 2000
+    application: 2000
   },
   applications: [
     {

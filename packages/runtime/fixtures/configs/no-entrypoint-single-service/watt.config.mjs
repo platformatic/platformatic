@@ -5,7 +5,7 @@ export default {
   },
   gracefulShutdown: {
     runtime: 1000,
-    service: 1000
+    application: 1000
   },
   applications: [
     {

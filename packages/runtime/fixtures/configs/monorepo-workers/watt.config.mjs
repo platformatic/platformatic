@@ -21,7 +21,7 @@ export default {
   },
   gracefulShutdown: {
     runtime: 2000,
-    service: 2000
+    application: 2000
   },
   restartOnError: 1000
 }

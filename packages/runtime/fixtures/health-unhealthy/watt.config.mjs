@@ -6,7 +6,7 @@ export default {
   restartOnError: 500,
   gracefulShutdown: {
     runtime: 500,
-    service: 500
+    application: 500
   },
   health: {
     maxUnhealthyChecks: 1,

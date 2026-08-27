@@ -298,6 +298,9 @@ export function needsExplicitPort (module, config) {
 */
 const COMMAND_FIXTURES = [
   'wattpm/test/fixtures/help/',
+  // applications:add --save rewrites the configuration with JSON.parse and JSON.stringify, which
+  // a module is not. It converts when --save moves to magicast with wattpm import.
+  'wattpm/test/fixtures/dynamic/',
   // db's type generation is a capability CLI command, and it reads its configuration with the v3
   // loader for the same reason createCommands does.
   'db/test/fixtures/gen-types/',
@@ -506,6 +509,21 @@ export function convert (config, { file } = {}) {
     if (converted.plugins && 'typescript' in converted.plugins) {
       delete converted.plugins.typescript
       notes.push('dropped plugins.typescript, which no capability schema has declared since ae2fab511')
+    }
+
+    /*
+      services became applications everywhere, including inside gracefulShutdown, where v3 spelled
+      the per-application timeout "service". The runtime schema has application and refuses the
+      old key.
+    */
+    if (converted.gracefulShutdown && 'service' in converted.gracefulShutdown) {
+      converted.gracefulShutdown = {
+        ...converted.gracefulShutdown,
+        application: converted.gracefulShutdown.application ?? converted.gracefulShutdown.service
+      }
+
+      delete converted.gracefulShutdown.service
+      notes.push('gracefulShutdown.service became gracefulShutdown.application')
     }
 
     if ('clients' in converted) {

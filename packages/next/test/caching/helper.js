@@ -1,8 +1,8 @@
-import { loadConfiguration, saveConfigurationFile } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { copyCommonApplication, prepareRuntime, startRuntime } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
+import { updateConfigFile } from '../../../runtime/test/helpers.js'
 
 export const base64ValueMatcher = /^[a-z0-9-_]+$/i
 export const valkeyUser = 'plt-caching-test'
@@ -44,25 +44,28 @@ export async function cleanupCache (valkey, valkeyUser) {
   return valkey.del(...keys)
 }
 
+/*
+  Through updateConfigFile, which reads and writes whichever dialect the fixture is in. These named
+  the v3 file, and a converted application does not have one.
+*/
 export async function getCacheSettings (root) {
-  const config = await loadConfiguration(resolve(root, 'services/frontend/platformatic.json'), null, {
-    skipMetadata: true
+  let cache
+
+  await updateConfigFile(resolve(root, 'services/frontend/platformatic.json'), config => {
+    cache = config.cache
   })
-  return config.cache
+
+  return cache
 }
 
 export async function setCacheSettings (root, settings) {
-  const config = await loadConfiguration(resolve(root, 'services/frontend/platformatic.json'), null, {
-    skipMetadata: true
+  await updateConfigFile(resolve(root, 'services/frontend/platformatic.json'), config => {
+    if (typeof settings === 'function') {
+      settings(config.cache)
+    } else {
+      Object.assign(config.cache, settings)
+    }
   })
-
-  if (typeof settings === 'function') {
-    settings(config.cache)
-  } else {
-    Object.assign(config.cache, settings)
-  }
-
-  await saveConfigurationFile(resolve(root, 'services/frontend/platformatic.json'), config)
 }
 
 export async function getValkeyUrl (root) {
