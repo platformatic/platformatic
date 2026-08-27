@@ -319,6 +319,8 @@ const COMMAND_FIXTURES = [
 const CAPABILITY_FIXTURES = [
   // Not under a fixtures directory, which is why the first sweep for this family missed it.
   'gateway/test/logger/',
+  // Reached through a start executable that calls the capability's own create().
+  'db/test/fixtures/update-schema-lock/',
   'db/test/fixtures/logger/',
   'db/test/fixtures/sqlite/',
   'db/test/fixtures/sqlite-basic/',
@@ -335,7 +337,12 @@ const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-
   json, json5, yaml, toml, yml and tml side by side, and the test asserts the v3 loader reads each
   one. Converting the json member leaves the family testing five formats and a module.
 */
-const FORMAT_FIXTURES = ['db/test/fixtures/auto-config/', 'service/test/fixtures/auto-config/']
+const FORMAT_FIXTURES = [
+  'db/test/fixtures/auto-config/',
+  'service/test/fixtures/auto-config/',
+  // The same configuration in every format the v3 loader accepts, one file each.
+  'db/test/fixtures/valid-config-files/'
+]
 
 /*
   A configuration is recognized by what it holds, not only by what it is called. Forty-five of the
