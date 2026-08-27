@@ -8,7 +8,7 @@ import { loadConfiguration as loadV4Configuration } from '@platformatic/foundati
 import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
-import { readFile, rm, writeFile } from 'node:fs/promises'
+import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 
 /*
@@ -131,6 +131,38 @@ function existingV4Candidate (directory) {
   return v4Candidates.find(candidate => existsSync(join(directory, candidate))) ?? null
 }
 
+/*
+  The id an autoloaded directory has under each version.
+
+  v3 used the directory name alone -- `mapping.id ?? entry.name` (`runtime/lib/config.js:463`) --
+  and v4 prefers the scope-stripped `package.json` name, falling back to the directory.
+
+  `v3` is put through the label rule and `v4` is not, because that is the comparison the pin has to
+  answer: v4 uses its raw derivation and refuses it outright when it is not a legal label. Comparing
+  two normalized values instead would call `legacy_api` a match -- both sides derive that same raw
+  string -- and emit a configuration whose id the label grammar rejects, which is the one case a
+  raw comparison passes over in silence.
+*/
+async function autoloadedIds (directory, mapping) {
+  const name = basename(directory)
+  let packageName
+
+  try {
+    packageName = JSON.parse(await readFile(join(directory, 'package.json'), 'utf-8'))?.name
+  } catch {
+    // A directory need not have a package.json, and the derivation falls through to its name.
+  }
+
+  return {
+    v3: legalId(mapping.id ?? name),
+    v4: mapping.id ?? (packageName ? stripScope(packageName) : name)
+  }
+}
+
+function stripScope (name) {
+  return name.startsWith('@') ? name.split('/')[1] : name
+}
+
 export function findLegacyConfiguration (root, named) {
   if (named) {
     const path = resolve(root, named)
@@ -184,17 +216,12 @@ export function collectRefusals (config, { module }) {
     })
   }
 
-  if (config.autoload) {
-    refusals.push({
-      reason: `the configuration declares ${bold('autoload')}`,
-      fix: 'this migrator does not yet expand autoload: v3 derived those ids from the directory name and v4 prefers the package.json name, so every one that moves needs an autoload.mappings entry pinning it'
-    })
-  }
-
   const entries = config.applications ?? config.services ?? config.web
 
   if (module === '@platformatic/runtime') {
-    if (!entries) {
+    // An autoload-only runtime lists nothing and still has applications: they come from the
+    // directory rather than from the file.
+    if (!entries && !config.autoload) {
       refusals.push({
         reason: 'the runtime configuration lists no applications',
         fix: 'a runtime with nothing to run has nothing to migrate; add its applications, or migrate each one where it lives'
@@ -302,7 +329,7 @@ export async function deriveLegacyId (root) {
     const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))
 
     if (packageJson?.name) {
-      name = packageJson.name.startsWith('@') ? packageJson.name.split('/')[1] : packageJson.name
+      name = stripScope(packageJson.name)
     }
   } catch {
     // A missing or unreadable package.json is what the fallback is for.
@@ -382,8 +409,13 @@ export function chooseFileName (root) {
 
   `services` and `web` are both spelled `applications`.
 */
-export function emitRootConfiguration (config, entries, inlined = []) {
+export function emitRootConfiguration (config, entries, inlined = [], autoload = null) {
   const { $schema, module: _module, applications, services, web, ...root } = config
+
+  if (autoload) {
+    // Carries the pins migrate computed, which is the whole of what autoload gains in v4.
+    root.autoload = autoload
+  }
 
   // A root-inline entry calls its factory in this file, so the file has to import it. Sorted and
   // deduplicated because two inline entries may share a capability.
@@ -564,7 +596,116 @@ export async function planMigration (root, source, config) {
     })
   }
 
-  return { applications, refusals: refusals.concat(collectPlanRefusals(root, source, applications)), skipped }
+  const autoload = await planAutoload(root, config, applications, refusals, skipped)
+
+  return {
+    applications,
+    autoload,
+    refusals: refusals.concat(collectPlanRefusals(root, source, applications)),
+    skipped
+  }
+}
+
+/*
+  Autoload survives migration as autoload: the root stays thin, and what migrate adds is a mapping
+  pinning `id` wherever the legal v4 id differs from the id v3 used. Not wherever the raw values
+  differ, which is the comparison that leaks -- a directory named `my_app` derives the same raw
+  value under both versions, and still has to be pinned, because the legal v4 id is `my-app` and
+  keeping the v3 spelling would emit a configuration the label grammar rejects.
+
+  The directories themselves are converted like any other application: each one that has a
+  configuration of its own gets a v4 file in its place.
+*/
+async function planAutoload (root, config, applications, refusals, skipped) {
+  if (!config.autoload) {
+    return null
+  }
+
+  const { exclude = [], mappings = {}, path } = config.autoload
+  const directory = resolve(root, path)
+
+  if (!contains(root, directory)) {
+    refusals.push({
+      reason: `${bold('autoload.path')} resolves to ${bold(path)}, outside this project`,
+      fix: 'migrate that project on its own, then run migrate here again — one run cannot transact two independent trees'
+    })
+
+    return null
+  }
+
+  if (!existsSync(directory)) {
+    // A structural position that resolves to nothing: v4 needs a real directory to expand, and
+    // there is nothing here to guess at.
+    refusals.push({
+      reason: `${bold('autoload.path')} names ${bold(path)}, which does not exist`,
+      fix: 'point autoload.path at the directory holding the applications, or drop it and list them explicitly'
+    })
+
+    return null
+  }
+
+  // The explicit entries win over an autoloaded directory of the same path, exactly as they did in
+  // v3 -- so a directory one of them already claims is not converted twice.
+  const claimed = new Set(applications.filter(entry => entry.directory).map(entry => canonicalize(entry.directory)))
+  const pinned = { ...mappings }
+
+  for (const entry of (await readdir(directory, { withFileTypes: true })).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (!entry.isDirectory() || exclude.includes(entry.name)) {
+      continue
+    }
+
+    const applicationRoot = join(directory, entry.name)
+
+    if (claimed.has(canonicalize(applicationRoot))) {
+      continue
+    }
+
+    const mapping = mappings[entry.name] ?? {}
+    const { v3, v4 } = await autoloadedIds(applicationRoot, mapping)
+
+    if (v3 !== v4) {
+      /*
+        The id is the mesh hostname, the injected PLT_*_URL variable, the metrics label and how
+        siblings name it in `dependencies`. Letting v4 re-derive it would move all four at once.
+
+        A mapping that already carries an id is v3's answer either way, and reaches this only when
+        the label rule had to change it.
+      */
+      pinned[entry.name] = { ...mapping, id: v3 }
+    }
+
+    const legacy = mapping.config
+      ? resolve(applicationRoot, mapping.config)
+      : findLegacyConfiguration(applicationRoot, null)
+
+    if (!legacy || !existsSync(legacy)) {
+      skipped.push(v3)
+      continue
+    }
+
+    const applicationConfig = await loadRawConfigurationFile(legacy)
+    const identity = extractModuleFromSchemaUrl(applicationConfig)
+    const declared = applicationConfig.module ?? identity?.module
+    const module = renamedModules[declared] ?? declared
+
+    for (const refusal of collectRefusals(applicationConfig, { module })) {
+      refusals.push({ ...refusal, reason: `${refusal.reason} (${bold(relative(root, legacy))})` })
+    }
+
+    applications.push({
+      autoloaded: true,
+      config: applicationConfig,
+      declared,
+      directory: applicationRoot,
+      legacy,
+      module,
+      orchestration: { id: v3 },
+      renamedFrom: null,
+      target: join(applicationRoot, chooseFileName(applicationRoot))
+    })
+  }
+
+  return { ...config.autoload, ...(Object.keys(pinned).length > 0 ? { mappings: pinned } : {}) }
 }
 
 /*
@@ -660,6 +801,23 @@ async function emitApplications (journal, applications) {
 
     if (!application.target) {
       entries.push(application.orchestration)
+      continue
+    }
+
+    if (application.autoloaded) {
+      /*
+        An autoloaded directory is not an entry and does not become one: it keeps being discovered,
+        and what it needs from migrate is its own configuration file in v4 spelling.
+      */
+      await journal.write(
+        application.target,
+        emitApplicationConfiguration(application.config, {
+          module: application.module,
+          id: application.orchestration.id
+        })
+      )
+      await journal.remove(application.legacy)
+      emitted.push(application)
       continue
     }
 
@@ -798,7 +956,7 @@ export async function migrateCommand (logger, args) {
       }
     }
 
-    await journal.write(target, emitRootConfiguration(config, entries, inlined))
+    await journal.write(target, emitRootConfiguration(config, entries, inlined, plan.autoload))
   } else {
     const derived = await deriveLegacyId(directory)
 

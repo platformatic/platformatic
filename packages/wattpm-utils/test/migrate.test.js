@@ -135,14 +135,16 @@ for (const [name, files, expected] of [
     'interpolation'
   ],
   [
-    'autoload',
+    // A structural position has to be concrete before anything is emitted: migrate needs the real
+    // directory to know which applications exist at all.
+    'an autoload path that resolves to nothing',
     {
       'platformatic.json': {
         $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
         autoload: { path: './web' }
       }
     },
-    'autoload'
+    'does not exist'
   ],
   [
     'an unknown capability',
@@ -598,4 +600,90 @@ test('migrate - emits an application in the root directory inline', async t => {
   })
 
   deepStrictEqual(loaded.config.applications.map(entry => entry.id).sort(), ['api', 'main'])
+})
+
+test('migrate - converts autoloaded applications and pins only the ids that would move', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      autoload: { path: './web', exclude: ['shared'] }
+    }
+  })
+
+  const applications = {
+    // Named after its directory once the scope is stripped, so both versions answer `frontend`.
+    frontend: '@acme/frontend',
+    // The package name differs from the directory, so v4 would rename it.
+    gateway: 'gateway-application',
+    // Neither version's raw value is a legal label, so both resolve to `legacy-api` -- the case a
+    // raw comparison passes over in silence.
+    legacy_api: 'legacy_api',
+    // No package.json at all: the directory name is the answer under both versions.
+    plain: null
+  }
+
+  for (const [directory, name] of Object.entries(applications)) {
+    await mkdir(join(root, 'web', directory), { recursive: true })
+
+    if (name) {
+      await writeFile(join(root, 'web', directory, 'package.json'), JSON.stringify({ name }), 'utf-8')
+    }
+
+    await writeFile(
+      join(root, 'web', directory, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  // Excluded, so it is neither converted nor pinned.
+  await mkdir(join(root, 'web/shared'), { recursive: true })
+  await writeFile(
+    join(root, 'web/shared/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  // Each autoloaded directory keeps being discovered; what it gains is its configuration in v4
+  // spelling, in place of the one it had.
+  for (const directory of Object.keys(applications)) {
+    ok(await fileExists(join(root, 'web', directory, 'watt.config.mjs')), directory)
+    strictEqual(await fileExists(join(root, 'web', directory, 'platformatic.json')), false, directory)
+  }
+
+  strictEqual(await fileExists(join(root, 'web/shared/watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'web/shared/platformatic.json')), true)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  /*
+    Pinned wherever the legal v4 id differs from the id v3 used, and nowhere else -- a root that
+    pinned every directory would be noise, and one that pinned none would move two hostnames.
+  */
+  ok(emitted.includes("gateway: {\n        id: 'gateway'"), emitted)
+  ok(emitted.includes("legacy_api: {\n        id: 'legacy-api'"), emitted)
+  ok(!emitted.includes('frontend:'), emitted)
+  ok(!emitted.includes('plain:'), emitted)
+  ok(!emitted.includes('shared:'), emitted)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: { ...process.env },
+    validateCapabilities: false
+  })
+
+  deepStrictEqual(loaded.config.applications.map(entry => entry.id).sort(), [
+    'frontend',
+    'gateway',
+    'legacy-api',
+    'plain'
+  ])
 })
