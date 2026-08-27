@@ -4889,7 +4889,18 @@ runs multiple workers on a fixed port at all.
    smuggle a string — has to be classified by hand. Every capability schema embeds the
    shared blocks, so it reports distinct sites as well as copies: fixing `server.port`
    fixes it in every package, and counting the copies makes the work look an order of
-   magnitude larger than it is. The table carries each property's full
+   magnitude larger than it is.
+
+   **"Placeholder-shaped" is a candidate set and not the answer, and the counter-example
+   is `health.maxHeapTotal`.** Its schema is
+   `anyOf: [{ type: 'number', minimum: 0 }, { type: 'string' }]` — byte-for-byte the
+   shape of a placeholder union — but the string branch is real: it accepts a
+   human-readable size like `'1 GB'`. `maxYoungGeneration` and `maxHeapUsed` are the
+   same. Deleting the branch mechanically was tried and it broke them, which is the
+   evidence for why this step is hand work rather than a codemod. Note also that the
+   deletion has to be applied as a **projection** over the schema objects rather than an
+   edit to them: the same objects still validate v3 configurations, where the
+   placeholder branch is load-bearing, and they do until v3 loading is deleted. The table carries each property's full
    **constraint set** — enum members, numeric bounds, `multipleOf`, integer-ness,
    string patterns and lengths — not just its primitive type, because migrate
    intersects those constraints across every position a variable occupies (see step
