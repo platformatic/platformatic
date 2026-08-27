@@ -711,6 +711,27 @@ export async function planMigration (root, source, config) {
 }
 
 /*
+  The keys a v4 capability schema no longer admits and that no upgrade chain removes. `v4.0.0.js`
+  returns early for a non-runtime `$schema` -- exactly the configurations `entrypointPort` lives in
+  -- and the basic-family capabilities have no versions directory at all, so migrate is what strips
+  it. Left in place it would fail validation on migrate's own output.
+*/
+function stripRemovedKeys (config, id) {
+  const notes = []
+
+  if (config.application?.entrypointPort !== undefined) {
+    const { entrypointPort, ...rest } = config.application
+
+    config.application = rest
+    notes.push(
+      `${bold(id)} declared ${bold(`entrypointPort: ${entrypointPort}`)}, which v4 removed along with the runtime's own listener; an application advertises its address through its own server block now.`
+    )
+  }
+
+  return notes
+}
+
+/*
   v4 has no entrypoint, no root `server` and no entry-level `server` or `useHttp`, so everything
   those said about which port was live has to be said again in the capability configurations. Four
   rules, in this order -- the order is what keeps rule 2 from overwriting the public port rule 1
@@ -737,6 +758,8 @@ async function applyExposure (config, applications, entrypoint) {
     if (!application.config) {
       continue
     }
+
+    notes.push(...stripRemovedKeys(application.config, application.orchestration.id))
 
     const admitted = await admittedServerKeys(application.module, application.directory)
     const serviceFamily = isServiceFamily(admitted)
@@ -1241,6 +1264,7 @@ export async function migrateCommand (logger, args) {
   */
   const journal = createJournal()
   const renamed = []
+  const notes = []
   let skipped = []
 
   if (runtime) {
@@ -1261,6 +1285,10 @@ export async function migrateCommand (logger, args) {
     if (derived.renamedFrom) {
       renamed.push({ from: derived.renamedFrom, to: derived.id })
     }
+
+    // A wrapped single-app project carries the same removed keys, and reaches none of the runtime
+    // dialect's planning.
+    notes.push(...stripRemovedKeys(config, derived.id))
 
     await journal.write(target, emitApplicationConfiguration(config, { module, id: derived.id }))
   }
@@ -1322,7 +1350,7 @@ export async function migrateCommand (logger, args) {
     )
   }
 
-  for (const note of plan?.exposure ?? []) {
+  for (const note of notes.concat(plan?.exposure ?? [])) {
     logger.warn(note)
   }
 

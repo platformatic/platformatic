@@ -804,3 +804,23 @@ test('migrate - refuses an entrypoint that depends on the environment', async t 
   */
   strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
 })
+
+test('migrate - strips entrypointPort, which no upgrade chain removes', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      // Left in place this fails validation on migrate's own output: it left the capability schema,
+      // and the v4 upgrade chain returns early for exactly the configurations it lives in.
+      application: { entrypointPort: 3000, basePath: '/api' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(!emitted.includes('entrypointPort'), emitted)
+  ok(emitted.includes("basePath: '/api'"), emitted)
+  ok(migrateProcess.stdout.includes('entrypointPort'), migrateProcess.stdout)
+})
