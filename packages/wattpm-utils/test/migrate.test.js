@@ -7,10 +7,10 @@ import { createTemporaryDirectory, wattpmUtils } from './helper.js'
 
 const packagesDir = resolve(import.meta.dirname, '../..')
 
-async function project (t, files, { type = 'commonjs' } = {}) {
+async function project (t, files, { type = 'commonjs', name = 'legacy' } = {}) {
   const root = await createTemporaryDirectory(t, 'migrate')
 
-  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'legacy', type }), 'utf-8')
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name, type }), 'utf-8')
 
   for (const [name, contents] of Object.entries(files)) {
     await writeFile(join(root, name), typeof contents === 'string' ? contents : JSON.stringify(contents), 'utf-8')
@@ -24,6 +24,11 @@ async function project (t, files, { type = 'commonjs' } = {}) {
 async function linkCapability (root, name) {
   await mkdir(join(root, 'node_modules/@platformatic'), { recursive: true })
   await symlink(join(packagesDir, name), join(root, 'node_modules/@platformatic', name), 'dir')
+}
+
+async function linkPackage (root, directory, name) {
+  await mkdir(join(root, 'node_modules'), { recursive: true })
+  await symlink(join(packagesDir, directory), join(root, 'node_modules', name), 'dir')
 }
 
 test('migrate - converts a single-application configuration into a file the loader accepts', async t => {
@@ -130,16 +135,6 @@ for (const [name, files, expected] of [
     'interpolation'
   ],
   [
-    'a wrapped runtime block',
-    {
-      'platformatic.json': {
-        $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
-        runtime: { logger: { level: 'info' } }
-      }
-    },
-    'runtime'
-  ],
-  [
     'more than one application',
     {
       'platformatic.json': {
@@ -231,4 +226,79 @@ test('migrate - puts the original back when the emitted configuration does not l
 
   const restored = JSON.parse(await readFile(join(root, 'platformatic.json'), 'utf-8'))
   strictEqual(restored.strictEnv, true)
+})
+
+test('migrate - unwraps a runtime block into defineConfig with the singular shorthand', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      cache: { adapter: 'redis', url: 'redis://localhost:6379' },
+      runtime: {
+        server: { hostname: '127.0.0.1', port: 3042 },
+        logger: { level: 'info' },
+        managementApi: true,
+        application: { workers: 2 }
+      }
+    }
+  })
+
+  await linkCapability(root, 'next')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // The factory call sits inside the object as a call, not as the text of one.
+  ok(emitted.includes('config: next({'), emitted)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: true,
+    onWarning () {},
+    onInfo () {}
+  })
+
+  const [application] = loaded.config.applications
+
+  // The runtime block unwraps to the root...
+  strictEqual(loaded.config.logger.level, 'info')
+  strictEqual(loaded.config.managementApi, true)
+
+  // ...except for `application`, which becomes the shorthand...
+  strictEqual(application.workers, 2)
+
+  // ...and `server`, which moves into the capability configuration, because v4 has no root server:
+  // an application declares its own address.
+  strictEqual(application.config.server.port, 3042)
+  strictEqual(application.config.cache.adapter, 'redis')
+})
+
+test('migrate - pins the id v3 used, and says so when the label grammar changes it', async t => {
+  const root = await project(
+    t,
+    {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+        runtime: { logger: { level: 'info' } }
+      }
+    },
+    { name: '@acme/my_app' }
+  )
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  /*
+    v3 stripped the scope and v4 does too, so the disagreement is only the underscore — which is a
+    legal package name and not a legal id. Rewriting it silently would move the mesh hostname, the
+    injected variable, the metrics label and every sibling's dependencies entry at once.
+  */
+  ok(emitted.includes("id: 'my-app'"), emitted)
+  ok(migrateProcess.stdout.includes('my_app'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('mesh hostname'), migrateProcess.stdout)
 })

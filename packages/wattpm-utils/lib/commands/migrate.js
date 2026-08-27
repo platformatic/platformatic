@@ -157,13 +157,6 @@ export function collectRefusals (config, { module }) {
     })
   }
 
-  if (config.runtime) {
-    refusals.push({
-      reason: `the configuration carries a ${bold('runtime')} block`,
-      fix: 'this migrator does not yet emit the defineConfig form that a wrapped single-app project needs'
-    })
-  }
-
   for (const key of ['applications', 'services', 'web', 'autoload']) {
     if (config[key]) {
       refusals.push({
@@ -178,9 +171,23 @@ export function collectRefusals (config, { module }) {
   return refusals
 }
 
+/*
+  A value that is already source. `config: next({ … })` is a call inside an object literal, and
+  quoting it would emit the text of a call rather than the call.
+*/
+const rawExpression = Symbol('raw')
+
+function raw (source) {
+  return { [rawExpression]: source }
+}
+
 function serializeValue (value, indent = 0) {
   const pad = '  '.repeat(indent)
   const inner = '  '.repeat(indent + 1)
+
+  if (value !== null && typeof value === 'object' && value[rawExpression]) {
+    return value[rawExpression]
+  }
 
   if (typeof value === 'string') {
     return serializeString(value)
@@ -221,11 +228,68 @@ function serializeString (value) {
   return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`
 }
 
-export function emitApplicationConfiguration (config, { module }) {
-  const factory = factories[module]
-  const { $schema, module: _module, ...options } = config
+/*
+  The id v3 gave a wrapped single-app project: the package.json name with any scope stripped,
+  falling back to `main` (`runtime/lib/config.js:135-142`). v4 derives it the same way, so the two
+  agree except where the label grammar rejects the name — `my_app` is a legal package name and not a
+  legal id. That case is reported rather than silently rewritten, because the id is also the mesh
+  hostname, the injected variable, the metrics label and how siblings name it in `dependencies`.
+*/
+export async function deriveLegacyId (root) {
+  let name = 'main'
 
-  return `import { ${factory} } from '${module}'\n\nexport default ${factory}(${serializeValue(options)})\n`
+  try {
+    const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))
+
+    if (packageJson?.name) {
+      name = packageJson.name.startsWith('@') ? packageJson.name.split('/')[1] : packageJson.name
+    }
+  } catch {
+    // A missing or unreadable package.json is what the fallback is for.
+  }
+
+  const legal = name.replace(/[^a-zA-Z0-9-]/g, '-').replace(/^-+|-+$/g, '') || 'main'
+
+  return { id: legal, renamedFrom: legal === name ? null : name }
+}
+
+export function emitApplicationConfiguration (config, { module, id }) {
+  const factory = factories[module]
+  const { $schema, module: _module, runtime, ...capability } = config
+
+  // Level 1: nothing but capability configuration, so the factory call is the whole file. A
+  // defineConfig wrapper around no runtime settings would be ceremony that says nothing.
+  if (!runtime) {
+    return `import { ${factory} } from '${module}'\n\nexport default ${factory}(${serializeValue(capability)})\n`
+  }
+
+  /*
+    Level 1b. The runtime block unwraps to the root, except for two keys that move:
+
+    `server` goes into the capability configuration, because v4 has no root server — an application
+    declares its own address. `application` becomes the singular shorthand, which is where a
+    single-app project's orchestration settings live.
+  */
+  const { server, application = {}, ...root } = runtime
+
+  if (server) {
+    capability.server = { ...server, ...capability.server }
+  }
+
+  const shorthand = {
+    // Written as a literal so the migrated project depends on neither version's default: v3 derived
+    // this from the package.json name and v4 prefers it too, but the two disagree on any name the
+    // label grammar rejects.
+    id,
+    ...application,
+    config: raw(`${factory}(${serializeValue(capability, 2)})`)
+  }
+
+  return (
+    'import { defineConfig } from \'wattpm\'\n' +
+    `import { ${factory} } from '${module}'\n\n` +
+    `export default defineConfig(${serializeValue({ ...root, application: shorthand })})\n`
+  )
 }
 
 /*
@@ -311,8 +375,9 @@ export async function migrateCommand (logger, args) {
     wrong, which is what makes a failed migration leave the project exactly as it was.
   */
   const original = await readFile(source)
+  const { id, renamedFrom } = await deriveLegacyId(dirname(source))
 
-  await writeFile(target, emitApplicationConfiguration(config, { module }), 'utf-8')
+  await writeFile(target, emitApplicationConfiguration(config, { module, id }), 'utf-8')
   await rm(source, { force: true })
 
   let unresolved = null
@@ -352,6 +417,12 @@ export async function migrateCommand (logger, args) {
 
   if (declared !== module) {
     logger.warn(`${bold(declared)} is now ${bold(module)}; the emitted configuration imports the new name.`)
+  }
+
+  if (renamedFrom) {
+    logger.warn(
+      `The application id ${bold(renamedFrom)} is not a legal v4 id and was written as ${bold(id)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
+    )
   }
 
   if (unresolved) {
