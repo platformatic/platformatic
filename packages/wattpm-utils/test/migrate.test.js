@@ -1101,3 +1101,45 @@ test('migrate - reports what an env block changes about a placeholder', async t 
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
   ok(emitted.includes("hostname: process.env.GREETING ?? ''"), emitted)
 })
+
+test('migrate - names the breaking changes this tree stands in front of', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // Explicit, so that the per-environment `enabled` below is only a breaking-change witness and
+      // not also an entrypoint that depends on the environment, which migrate refuses outright.
+      entrypoint: 'web',
+      applications: [
+        { id: 'web', path: './services/web' },
+        // Resolved against development by v3's build and against production by v4's, so which
+        // applications build changes without anything in the file changing.
+        { id: 'api', path: './services/api', enabled: { production: true, development: false } }
+      ]
+    }
+  })
+
+  for (const name of ['web', 'api']) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(
+      join(root, 'services', name, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  // Inert under v3, which stopped at the first .env it found, and live under v4's four-file layering.
+  await writeFile(join(root, 'services/api/.env.local'), 'TOKEN=local\n', 'utf-8')
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const { stdout } = migrateProcess
+
+  /*
+    Evidence rather than enumeration: these are not migrate's conversions, and v4 changes them for
+    projects that were never migrated at all — so the run names the ones this tree actually has.
+  */
+  ok(stdout.includes('.env.local') && stdout.includes('BC 5'), stdout)
+  ok(stdout.includes('BC 17') && stdout.includes('api'), stdout)
+})

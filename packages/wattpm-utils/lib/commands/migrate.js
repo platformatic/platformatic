@@ -1680,7 +1680,9 @@ export async function scanSources (root, { legacyNames, renamed }) {
       }
 
       if (line.includes('process.env.NODE_ENV')) {
-        findings.push(`${bold(at)} reads ${bold('NODE_ENV')}, which v4 defaults to production under ${bold('build')}.`)
+        findings.push(
+          `${bold(at)} reads ${bold('NODE_ENV')} (BC 20), which v4 defaults to production under ${bold('build')}.`
+        )
       }
     })
   }
@@ -1729,6 +1731,53 @@ function reportEnvBlocks (blocks, referenced) {
     notes.push(
       `The ${bold('env')} block in ${bold(where)} carries ${keys.map(key => bold(key)).join(', ')} across unchanged, and their precedence is inverted: v3 applied a block over the environment, and v4 applies dotenv order, so the real environment now outranks ${keys.length > 1 ? 'them' : 'it'}.`
     )
+  }
+
+  return notes
+}
+
+/*
+  The breaking changes this tree is standing in front of.
+
+  These are not migrate's conversions -- v4 changes them for projects that were never migrated at
+  all -- so what is owed for them is evidence rather than a list. The breaking-change list is
+  exhaustive and therefore unreadable; the run is the only thing that knows which of its entries
+  apply here, and a project with none of them reads a shorter report.
+*/
+async function reportBreakingChanges (root, directories, entries) {
+  const notes = []
+
+  for (const directory of directories) {
+    let names
+
+    try {
+      names = await readdir(directory)
+    } catch {
+      continue
+    }
+
+    /*
+      BC 5. v3 walked up from a config file and stopped at the first `.env`; v4 layers a four-file
+      set. A `.env.local` or mode file that was inert here is live now -- nothing about the file
+      changed, which is why it is worth naming.
+    */
+    const live = names.filter(name => name.startsWith('.env') && name !== '.env').sort()
+
+    if (live.length > 0) {
+      notes.push(
+        `${live.map(name => bold(join(relative(root, directory), name))).join(', ')} ${live.length > 1 ? 'were' : 'was'} not read by v3 and ${live.length > 1 ? 'are' : 'is'} read now (BC 5): v4 layers .env, .env.local, .env.<mode> and .env.<mode>.local rather than stopping at the first one it finds.`
+      )
+    }
+  }
+
+  for (const { entry, id } of entries) {
+    // BC 17. `build` resolved `enabled` against development on v3 and resolves it against
+    // production in v4, so an object that differs between the two changes which applications build.
+    if (entry?.enabled !== null && typeof entry?.enabled === 'object') {
+      notes.push(
+        `${bold(id)} declares ${bold('enabled')} per environment (BC 17): ${bold('wattpm build')} resolves that against production now, where v3 resolved it against development.`
+      )
+    }
   }
 
   return notes
@@ -2100,6 +2149,25 @@ export async function migrateCommand (logger, args) {
 
   for (const finding of await scanSources(root, { legacyNames, renamed })) {
     logger.warn(finding)
+  }
+
+  /*
+    The evidence half of the report. Read from the tree as it now stands, so it names what this
+    project is actually standing in front of rather than reciting a list.
+  */
+  const directories = new Set([root])
+  const entries = []
+
+  for (const application of plan?.applications ?? []) {
+    if (application.directory) {
+      directories.add(application.directory)
+    }
+
+    entries.push({ entry: application.entry, id: application.orchestration?.id ?? relative(root, application.directory ?? root) })
+  }
+
+  for (const note of await reportBreakingChanges(root, directories, entries)) {
+    logger.warn(note)
   }
 
   const assumed = Object.keys(seeded)
