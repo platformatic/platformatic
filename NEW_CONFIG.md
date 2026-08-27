@@ -1144,7 +1144,7 @@ them.
 
 `NODE_ENV` defaults to `production` under `build` when nothing else supplied it
 (see "Env files"). That is **new**: v3's build created the runtime with no
-production flag (`wattpm/lib/commands/build.js:43` → `runtime.js:254`), so
+production flag (`wattpm/lib/commands/build.js:43` pre-`b1e03a5b9` → `runtime.js:254`), so
 `worker/controller.js:125-126` never fired and builds ran with `NODE_ENV` unset.
 Bundlers and Babel configurations that branch on it will produce different — and
 correct — artifacts.
@@ -2113,7 +2113,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:309-312`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:318-321`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -3638,7 +3638,7 @@ Generation reads both views. Then:
    by position: `onMissingEnv` is supplied only where a worker parses a separate
    app config (`worker/controller.js:165`), so both a **root** config's `*_URL`
    placeholders **and every placeholder in a wrapped single-app config** — which
-   `runtime/index.js:153-156` loads with no `onMissingEnv`, capability half included
+   `runtime/index.js:154-157` loads with no `onMissingEnv`, capability half included
    — throw on v3 under effective `strictEnv` and get `requiredEnv` like any other
    key.
    Embedded placeholders become template literals with the same
@@ -4729,7 +4729,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     remains, as the **lowest** rung of both ladders: it defaults to `production`
     when `production` is `true` and nothing else supplied it. Under `start` that
     matches v3 (`worker/controller.js:125-126`); under `build` it is **new** — v3's
-    build passed no production flag (`wattpm/lib/commands/build.js:43`), so
+    build passed no production flag (`wattpm/lib/commands/build.js:43` pre-`b1e03a5b9`), so
     builds ran with `NODE_ENV` unset and bundlers that branch on it will now
     produce different artifacts.
 21. Per-application `envfile`: now governs **config evaluation and runtime

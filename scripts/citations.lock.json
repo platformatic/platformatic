@@ -125,7 +125,7 @@
       "head": "Object.assign(process.env, runtimeConfig.env)",
       "lines": 2
     },
-    "packages/wattpm/lib/commands/build.js:43": {
+    "packages/wattpm/lib/commands/build.js:43@b1e03a5b9^": {
       "sha": "e7e7e69706801bfb",
       "head": "runtime = await create(configurationFile, undefined, { build: true, envFile: env })",
       "lines": 1
@@ -560,7 +560,7 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:309-312": {
+    "packages/runtime/index.js:318-321": {
       "sha": "f05241a09ec2d711",
       "head": "const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))",
       "lines": 4
@@ -825,7 +825,7 @@
       "head": "onMissingEnv: this.#context.fetchApplicationUrl,",
       "lines": 1
     },
-    "packages/runtime/index.js:153-156": {
+    "packages/runtime/index.js:154-157": {
       "sha": "2098a439fe52a74f",
       "head": "const config = await utilsLoadConfiguration(source, null, {",
       "lines": 4
