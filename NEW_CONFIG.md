@@ -4039,7 +4039,7 @@ Generation reads both views. Then:
    the run with "hand-conversion required", naming what blocks it. This is the **one
    enumeration of every refusal** — Goal 6 defers to it, and a refusal introduced
    anywhere else in this document without appearing here is a bug in the document.
-   Twelve triggers. The first three bound what migrate may touch, what it may
+   Thirteen triggers. The first three bound what migrate may touch, what it may
    overwrite, and what it may produce; the rest are conversions it cannot perform
    faithfully. The count is stated once, here, and is the length of the list below —
    incrementing the number without adding the entry is the failure this sentence
@@ -4125,6 +4125,19 @@ Generation reads both views. Then:
    directory are two applications: the faithful v4 spelling puts their capability
    configuration inline on two root entries, which is a different project shape than
    the one the user has and not a rewrite migrate should pick unasked.
+
+   **A legacy configuration migrate is not converting** stops the run for the
+   third bound's reason, one door further along. Migrate deletes only the files it
+   read, and the loader's legacy table is wider than the candidate set migrate looks
+   in — every suffix and extension combination, `.tml` included — so a stale
+   `platformatic.service.json` beside the file being converted survives the run and
+   leaves a directory holding both dialects, which the loader refuses. It is refused
+   rather than deleted, because a file migrate never read is one it knows nothing
+   about: it may be the variant the project runs with `-c`, in which case deleting it
+   would destroy the only copy of a configuration nobody asked to migrate. The
+   exclusion is every path the run converts and not the one file each check is looking
+   at, since a root-inline application's configuration legitimately sits in the root's
+   own directory.
 
    The remaining nine: **any capability outside the vendored closure**; a **root `envfile`**,
    which has no faithful conversion; any application declaring `envfile` **in the

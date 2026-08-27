@@ -94,26 +94,42 @@ test('applications are started with multiple workers when Node.js supports reuse
   await startMessagesPromise
 
   const usedWorkers = new Set()
-  // Check that we get the response from different workers
-  const promises = Array.from(Array(workers)).map(async () => {
-    const res = await request(nodeUrl + '/hello')
-    const json = await res.body.json()
 
-    deepStrictEqual(res.statusCode, 200)
+  async function sampleWorkers () {
+    const promises = Array.from(Array(workers)).map(async () => {
+      const res = await request(nodeUrl + '/hello')
+      const json = await res.body.json()
 
-    if (workers > 1) {
-      const worker = res.headers['x-plt-worker-id']
-      ok(worker.match(/^[01234]$/))
+      deepStrictEqual(res.statusCode, 200)
 
-      usedWorkers.add(worker)
-    }
+      if (workers > 1) {
+        const worker = res.headers['x-plt-worker-id']
+        ok(worker.match(/^[01234]$/))
 
-    deepStrictEqual(json, { from: 'node' })
-  })
+        usedWorkers.add(worker)
+      }
 
-  await Promise.all(promises)
+      deepStrictEqual(json, { from: 'node' })
+    })
+
+    await Promise.all(promises)
+  }
+
+  await sampleWorkers()
 
   if (workers > 1) {
+    /*
+      Which worker accepts a connection is the kernel's decision under SO_REUSEPORT, and it is free
+      to send a whole batch to one of them. What is being tested is that more than one worker *can*
+      answer, so the batch repeats until it has seen that -- a single round asserts a distribution
+      nobody promised, and failed on a busy runner while the runtime was working exactly as intended.
+    */
+    const deadline = Date.now() + 30_000
+
+    while (usedWorkers.size < 2 && Date.now() < deadline) {
+      await sampleWorkers()
+    }
+
     ok(usedWorkers.size > 1)
   }
 

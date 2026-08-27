@@ -1068,3 +1068,36 @@ test('migrate - matches v3 grammar, and leaves the positions a capability reads 
   ok(emitted.includes("connectionString: process.env.DATABASE_URL ?? ''"), emitted)
   ok(emitted.includes("path: '/users/{id}'"), emitted)
 })
+
+test('migrate - reports what an env block changes about a placeholder', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      runtime: {
+        // v3's worker applied blocks to process.env before parsing the application's config, so
+        // this key was defined by the time the placeholder below was replaced.
+        env: { GREETING: 'hello', OTHER: 'kept' }
+      },
+      server: { hostname: '{GREETING}' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const { stdout } = migrateProcess
+
+  /*
+    Two divergences, neither of which migrate can avoid and both of which it therefore has to say.
+    v4 keeps env blocks out of configuration evaluation, so the expression yields '' where v3
+    yielded 'hello'; and every key carried across has its precedence inverted.
+  */
+  ok(stdout.includes('GREETING') && stdout.includes('/server/hostname'), stdout)
+  ok(stdout.includes('yields the empty string now'), stdout)
+  ok(stdout.includes('precedence is inverted') && stdout.includes('OTHER'), stdout)
+
+  // Nothing is inlined: a codemod must not bake a block's value into tracked source.
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("hostname: process.env.GREETING ?? ''"), emitted)
+})

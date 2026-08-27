@@ -384,6 +384,7 @@ function convertPlaceholders (config, schema, { module, where }) {
   const refusals = []
   const helpers = new Set()
   const seeds = new Map()
+  const referenced = new Map()
   const ignored = replaceEnvIgnore[module] ?? []
   let needsPath = false
 
@@ -427,6 +428,7 @@ function convertPlaceholders (config, schema, { module, where }) {
         */
         for (const [, name] of value.matchAll(everyPlaceholder)) {
           seeds.set(name, sentinelFor(position))
+          referenced.set(name, (referenced.get(name) ?? []).concat(pointer))
         }
 
         if (position.kind !== 'string') {
@@ -448,6 +450,7 @@ function convertPlaceholders (config, schema, { module, where }) {
       const name = whole[1]
 
       seeds.set(name, sentinelFor(position))
+      referenced.set(name, (referenced.get(name) ?? []).concat(pointer))
 
       switch (position.kind) {
         case 'string':
@@ -495,7 +498,7 @@ function convertPlaceholders (config, schema, { module, where }) {
 
   const converted = convert(config, '')
 
-  return { converted: refusals.length > 0 ? config : converted, helpers, needsPath, refusals, seeds }
+  return { converted: refusals.length > 0 ? config : converted, helpers, needsPath, referenced, refusals, seeds }
 }
 
 // Emitted into a file only where that file has a position needing one.
@@ -900,6 +903,7 @@ export function emitRootConfiguration (config, entries, inlined = [], autoload =
 export async function planMigration (root, source, config) {
   const refusals = []
   const applications = []
+  const notes = []
   const seeds = new Map()
   const skipped = []
   const declaredEntries = config.applications ?? config.services ?? config.web ?? []
@@ -1047,6 +1051,16 @@ export async function planMigration (root, source, config) {
       seeds.set(name, value)
     }
 
+    notes.push(
+      ...reportEnvBlocks(
+        [
+          { env: entry.env, where: `the entry for ${named}` },
+          { env: config.env, where: basename(source) }
+        ],
+        placeholders.referenced
+      )
+    )
+
     const derived = await deriveLegacyId(directory)
     const id = entry.id ? legalId(entry.id) : derived.id
 
@@ -1078,7 +1092,7 @@ export async function planMigration (root, source, config) {
     applications,
     autoload,
     entrypoint,
-    exposure,
+    exposure: notes.concat(exposure),
     refusals: refusals.concat(collectPlanRefusals(root, source, applications)),
     seeds,
     skipped
@@ -1679,6 +1693,48 @@ export async function scanSources (root, { legacyNames, renamed }) {
 }
 
 /*
+  The two things an `env` block diverges on, both of which migrate performs and neither of which it
+  can perform faithfully.
+
+  A placeholder the block supplied has no faithful emission at all: v3's worker applied blocks to
+  `process.env` before parsing the application's config, and v4 keeps them out of config evaluation
+  entirely -- so the key is undefined when the emitted expression runs and yields `''` where v3
+  yielded a value. Nothing is inlined, because a codemod must not bake a block's credential into
+  tracked source.
+
+  And every key carried over has its precedence inverted: v3 applied blocks over the environment,
+  v4 applies dotenv order, so the real environment now outranks the block. Nothing about the key
+  changes -- same name, same value, same place -- which is exactly why it is easy to miss.
+*/
+function reportEnvBlocks (blocks, referenced) {
+  const notes = []
+
+  for (const { env, where } of blocks) {
+    const keys = Object.keys(env ?? {})
+
+    if (keys.length === 0) {
+      continue
+    }
+
+    for (const key of keys) {
+      const positions = referenced.get(key)
+
+      if (positions?.length) {
+        notes.push(
+          `${bold(key)} comes from the ${bold('env')} block in ${bold(where)} and is read at ${positions.map(pointer => bold(pointer)).join(', ')}. That expression yields the empty string now: v4 keeps env blocks out of configuration evaluation, so move the value into an env file or the real environment. The block keeps working for the running application either way.`
+        )
+      }
+    }
+
+    notes.push(
+      `The ${bold('env')} block in ${bold(where)} carries ${keys.map(key => bold(key)).join(', ')} across unchanged, and their precedence is inverted: v3 applied a block over the environment, and v4 applies dotenv order, so the real environment now outranks ${keys.length > 1 ? 'them' : 'it'}.`
+    )
+  }
+
+  return notes
+}
+
+/*
   The dependencies the emitted files import.
 
   A per-app file calls its capability's factory and the root imports `defineConfig` from `wattpm`,
@@ -1846,6 +1902,7 @@ export async function migrateCommand (logger, args) {
   let plan = null
   let converted = config
   let helpers = new Set()
+  let envBlocks = []
   let needsPath = false
   let seeds = new Map()
 
@@ -1868,6 +1925,10 @@ export async function migrateCommand (logger, args) {
     helpers = placeholders.helpers
     needsPath = placeholders.needsPath
     seeds = placeholders.seeds
+    envBlocks = reportEnvBlocks(
+      [{ env: config.runtime?.env ?? config.env, where: basename(source) }],
+      placeholders.referenced
+    )
 
     if (existsSync(target)) {
       refusals.push({
@@ -2020,7 +2081,7 @@ export async function migrateCommand (logger, args) {
     )
   }
 
-  for (const note of notes.concat(plan?.exposure ?? [])) {
+  for (const note of notes.concat(envBlocks, plan?.exposure ?? [])) {
     logger.warn(note)
   }
 
