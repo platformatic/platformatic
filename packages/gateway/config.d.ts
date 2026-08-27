@@ -291,7 +291,160 @@ export interface PlatformaticGatewayConfig {
       path?: string;
       [k: string]: unknown;
     };
-    addEmptySchema?: boolean;
+    graphql?: {
+      graphiql?: boolean;
+      onSubgraphError?: {
+        [k: string]: unknown;
+      };
+      defaultArgsAdapter?:
+        | {
+            [k: string]: unknown;
+          }
+        | string;
+      entities?: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` "^.*$".
+         */
+        [k: string]: {
+          pkey?: string;
+          resolver?: {
+            name: string;
+            argsAdapter?:
+              | {
+                  [k: string]: unknown;
+                }
+              | string;
+            partialResults?:
+              | {
+                  [k: string]: unknown;
+                }
+              | string;
+          };
+          fkeys?: {
+            type: string;
+            field?: string;
+            as?: string;
+            pkey?: string;
+            subgraph?: string;
+            resolver?: {
+              name: string;
+              argsAdapter?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+              partialResults?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+            };
+            [k: string]: unknown;
+          }[];
+          many?: {
+            type: string;
+            fkey: string;
+            as?: string;
+            pkey?: string;
+            subgraph?: string;
+            resolver: {
+              name: string;
+              argsAdapter?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+              partialResults?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+            };
+            [k: string]: unknown;
+          }[];
+          [k: string]: unknown;
+        };
+      };
+      addEntitiesResolvers?: boolean;
+    };
+    graphql?: {
+      graphiql?: boolean;
+      onSubgraphError?: {
+        [k: string]: unknown;
+      };
+      defaultArgsAdapter?:
+        | {
+            [k: string]: unknown;
+          }
+        | string;
+      entities?: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` "^.*$".
+         */
+        [k: string]: {
+          pkey?: string;
+          resolver?: {
+            name: string;
+            argsAdapter?:
+              | {
+                  [k: string]: unknown;
+                }
+              | string;
+            partialResults?:
+              | {
+                  [k: string]: unknown;
+                }
+              | string;
+          };
+          fkeys?: {
+            type: string;
+            field?: string;
+            as?: string;
+            pkey?: string;
+            subgraph?: string;
+            resolver?: {
+              name: string;
+              argsAdapter?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+              partialResults?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+            };
+            [k: string]: unknown;
+          }[];
+          many?: {
+            type: string;
+            fkey: string;
+            as?: string;
+            pkey?: string;
+            subgraph?: string;
+            resolver: {
+              name: string;
+              argsAdapter?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+              partialResults?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+            };
+            [k: string]: unknown;
+          }[];
+          [k: string]: unknown;
+        };
+      };
+      addEntitiesResolvers?: boolean;
+    };
     refreshTimeout?: number;
     /**
      * Content types that should be passed through without parsing to enable proxying
