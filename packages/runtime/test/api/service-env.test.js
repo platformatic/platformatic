@@ -17,8 +17,13 @@ test('should get application env when started', async t => {
   const env = await app.getApplicationEnv('with-logger')
   ok(env)
   strictEqual(typeof env, 'object')
-  // Runtime injects PLT_ENVIRONMENT into every worker
-  ok(env.PLT_ENVIRONMENT)
+  /*
+    v3 injected PLT_ENVIRONMENT and PLT_DEV into every worker. v4 does not: a worker's environment
+    is the one the loader resolved for it, and the mode is not an environment variable. PLT_ROOT
+    still arrives, from the capability's own configuration metadata rather than from the runtime.
+  */
+  strictEqual(env.PLT_ENVIRONMENT, undefined)
+  strictEqual(env.PLT_DEV, undefined)
 })
 
 test('getApplicationEnv throws ApplicationNotStarted when workers exist but are not started', async t => {

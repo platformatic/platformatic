@@ -1,13 +1,13 @@
 import { ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime, readLogs, updateConfigFile, updateFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, readLogs, updateConfigFile, updateFile } from '../helpers.js'
 import { prepareRuntime } from './helper.js'
 
 for (const env of ['development', 'production']) {
   test(`logging properly works in ${env} mode when using separate processes`, async t => {
     const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-    const configFile = resolve(root, './platformatic.json')
+    const configFile = configurationFileIn(root)
 
     await updateConfigFile(configFile, contents => {
       contents.logger.transport = {

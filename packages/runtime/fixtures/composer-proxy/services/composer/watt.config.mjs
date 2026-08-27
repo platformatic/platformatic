@@ -20,7 +20,7 @@ export default {
               logs: true
             },
             hooks: {
-              path: `${process.env.PLT_ROOT}/hooks.js`
+              path: './hooks.js'
             }
           }
         }

@@ -2,12 +2,12 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime, updateFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateFile } from '../helpers.js'
 import { prepareRuntime, waitForEvents } from './helper.js'
 
 test('can restart only crashed workers when they throw an exception during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -51,7 +51,7 @@ test('can restart only crashed workers when they throw an exception during start
 
 test('can restart only crashed workers when they exit during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -95,7 +95,7 @@ test('can restart only crashed workers when they exit during start', async t => 
 
 test('can restart only crashed workers when they crash', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -172,7 +172,7 @@ test('can restart only crashed workers when they crash', async t => {
 
 test('can restart only crashed workers when they exit', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {

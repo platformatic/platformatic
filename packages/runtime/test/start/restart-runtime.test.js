@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import { request } from 'undici'
 import { features } from '@platformatic/foundation'
 import { transform } from '../../index.js'
-import { createRuntime, getTempDir } from '../helpers.js'
+import { configurationFileIn, createRuntime, getTempDir } from '../helpers.js'
 import { prepareRuntime } from '../multiple-workers/helper.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
@@ -161,7 +161,7 @@ test('will restart applications in parallel', async t => {
 
 test('restartApplication restarts each original worker exactly once', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = join(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {

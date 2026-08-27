@@ -46,7 +46,7 @@ test('should get application details', async t => {
     status: 'started',
     version,
     localUrl: 'http://service-1.plt.local',
-    config: resolve(configFile, '../../management-api/services/service-1/platformatic.json'),
+    configPath: resolve(configFile, '../../management-api/services/service-1/watt.config.mjs'),
     path: resolve(configFile, '../../management-api/services/service-1'),
     dependencies: [],
     sourceMaps: false

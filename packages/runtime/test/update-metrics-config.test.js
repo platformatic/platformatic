@@ -4,13 +4,13 @@ import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime, configurationFileIn } from './helpers.js'
+import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should update metrics configuration at runtime', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = configurationFileIn(projectDir)
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -68,7 +68,7 @@ test('should update metrics configuration at runtime', async t => {
 
 test('should disable metrics at runtime', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = configurationFileIn(projectDir)
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -120,7 +120,7 @@ test('should disable metrics at runtime', async t => {
 
 test('should re-enable metrics at runtime', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = configurationFileIn(projectDir)
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -178,7 +178,7 @@ test('should re-enable metrics at runtime', async t => {
 
 test('should update applicationLabel at runtime (with data loss)', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = configurationFileIn(projectDir)
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()

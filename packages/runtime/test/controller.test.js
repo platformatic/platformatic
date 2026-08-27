@@ -71,7 +71,11 @@ test('logs errors if an env variable is missing', async t => {
 })
 
 test('logs errors during startup', async t => {
-  const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
+  /*
+    Not serviceAppThrowsOnStart: that directory is referenced by v4 runtimes, and Controller reads
+    a configuration file with the v3 loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-throws-v3')
   const configFile = configurationFileIn(appPath, 'platformatic.service.json')
   const config = {
     id: 'serviceAppThrowsOnStart',

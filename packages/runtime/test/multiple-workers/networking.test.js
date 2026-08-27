@@ -2,7 +2,7 @@ import { deepStrictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime, updateConfigFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile } from '../helpers.js'
 import { prepareRuntime, testRoundRobin, verifyInject } from './helper.js'
 
 function addIngress (contents) {
@@ -17,7 +17,7 @@ function addIngress (contents) {
 
 test('the mesh network works with capability-owned listeners', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   await updateConfigFile(configFile, addIngress)
   const app = await createRuntime(configFile, null, { isProduction: true })
   const { 'ingress:0': ingressUrl } = await app.start()
@@ -34,7 +34,7 @@ test('the mesh network works with capability-owned listeners', async t => {
 
 test('the mesh network works with the HTTP applications when using ITC', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await updateConfigFile(configFile, contents => {
     addIngress(contents)
@@ -74,7 +74,7 @@ test('the mesh network works with the HTTP applications when using ITC', async t
 
 test('the mesh network works with the HTTP applications when using HTTP', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await updateConfigFile(configFile, contents => {
     addIngress(contents)
@@ -118,7 +118,7 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
 
 test('can inject on a worker', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   await updateConfigFile(configFile, contents => {
     contents.metrics = { port: 0 }
   })

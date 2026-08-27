@@ -1,11 +1,11 @@
 import { createDirectory, features, safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
+import { cp, readdir, symlink } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { join, resolve } from 'node:path'
 import { request } from 'undici'
-import { configurationFileIn } from '../helpers.js'
+import { configurationFileIn, updateConfigFile } from '../helpers.js'
 
 export const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 export const tmpDir = resolve(import.meta.dirname, '../../tmp')
@@ -134,11 +134,12 @@ export async function prepareRuntime (t, name, dependencies) {
       continue
     }
 
-    const config = JSON.parse(await readFile(configPath, 'utf8'))
-    config.server ??= {}
-    config.server.hostname ??= '127.0.0.1'
-    config.server.port ??= 0
-    await writeFile(configPath, JSON.stringify(config, null, 2))
+    // The fixtures come in both dialects, so the edit goes through the dialect-aware helper.
+    await updateConfigFile(configPath, config => {
+      config.server ??= {}
+      config.server.hostname ??= '127.0.0.1'
+      config.server.port ??= 0
+    })
   }
 
   for (const [application, deps] of Object.entries(dependencies)) {

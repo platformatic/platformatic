@@ -1,12 +1,12 @@
 import { ok, strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime, updateConfigFile, updateFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile, updateFile } from '../helpers.js'
 import { getExpectedEvents, prepareRuntime, waitForEvents } from './helper.js'
 
 test('applications are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -29,11 +29,11 @@ test('applications are started with multiple workers according to the configurat
 
 test('applications are started with a single workers when no workers information is specified in the files', async t => {
   const root = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await updateConfigFile(configFile, contents => {
     delete contents.workers
-    delete contents.services[0].workers
+    delete contents.applications[0].workers
   })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
@@ -56,7 +56,7 @@ test('applications are started with a single workers when no workers information
 // Note: this cannot be tested in production mode as watching is always disabled
 test('can detect changes and restart all workers for a application', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await updateConfigFile(configFile, contents => {
     contents.watch = true
@@ -90,7 +90,7 @@ test('can detect changes and restart all workers for a application', async t => 
 
 test('can collect metrics with worker label', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -149,7 +149,7 @@ test('can collect metrics with worker label', async t => {
 
 test('text metrics contain a single HELP/TYPE block per metric family across all workers', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -186,7 +186,7 @@ test('text metrics contain a single HELP/TYPE block per metric family across all
 
 test('worker threads have correct threadName property set', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {

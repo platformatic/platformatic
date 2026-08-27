@@ -52,7 +52,7 @@ async function preparePerWorkerPortRuntime (
   { application = 'node', workerCount = 5, maxWorkerCount = workerCount, additionalApplications = [] } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
   await updateConfigFile(configurationFileIn(join(root, application)), contents => {

@@ -25,8 +25,8 @@ test('should get application details', async t => {
     status: 'started',
     version,
     localUrl: 'http://with-logger.plt.local',
-    config: resolve(configFile, '../../monorepo/serviceAppWithLogger/platformatic.service.json'),
-    path: resolve(configFile, '../../monorepo/serviceAppWithLogger'),
+    configPath: resolve(configFile, '../../../monorepo/serviceAppWithLogger/watt.config.mjs'),
+    path: resolve(configFile, '../../../monorepo/serviceAppWithLogger'),
     dependencies: [],
     sourceMaps: false
   })

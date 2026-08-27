@@ -8,7 +8,7 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get applications topology', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
-  const monorepo = resolve(configFile, '../../monorepo/')
+  const monorepo = resolve(configFile, '../../../monorepo/')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -31,7 +31,7 @@ test('should get applications topology', async t => {
         id: 'db-app',
         type: 'db',
         status: 'started',
-        config: resolve(monorepo, 'dbApp', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'dbApp', 'watt.config.mjs'),
         path: resolve(monorepo, 'dbApp'),
         version,
         localUrl: 'http://db-app.plt.local',
@@ -42,7 +42,7 @@ test('should get applications topology', async t => {
         id: 'multi-plugin-service',
         type: 'service',
         status: 'started',
-        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'watt.config.mjs'),
         path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
         version,
         localUrl: 'http://multi-plugin-service.plt.local',
@@ -53,7 +53,7 @@ test('should get applications topology', async t => {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
-        config: resolve(monorepo, 'serviceApp', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'serviceApp', 'watt.config.mjs'),
         path: resolve(monorepo, 'serviceApp'),
         version,
         localUrl: 'http://serviceApp.plt.local',
@@ -64,7 +64,7 @@ test('should get applications topology', async t => {
         id: 'with-logger',
         type: 'service',
         status: 'started',
-        config: resolve(monorepo, 'serviceAppWithLogger', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'serviceAppWithLogger', 'watt.config.mjs'),
         path: resolve(monorepo, 'serviceAppWithLogger'),
         version,
         localUrl: 'http://with-logger.plt.local',
@@ -77,7 +77,7 @@ test('should get applications topology', async t => {
 
 test('should get applications topology (gateway)', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'watt.config.mjs')
-  const monorepo = resolve(configFile, '../../monorepo/')
+  const monorepo = resolve(configFile, '../../../monorepo/')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -100,7 +100,7 @@ test('should get applications topology (gateway)', async t => {
         id: 'composerApp',
         type: 'gateway',
         status: 'started',
-        config: resolve(monorepo, 'composerApp', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'composerApp', 'watt.config.mjs'),
         path: resolve(monorepo, 'composerApp'),
         version,
         localUrl: 'http://composerApp.plt.local',
@@ -111,7 +111,7 @@ test('should get applications topology (gateway)', async t => {
         id: 'dbApp',
         type: 'db',
         status: 'started',
-        config: resolve(monorepo, 'dbApp', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'dbApp', 'watt.config.mjs'),
         path: resolve(monorepo, 'dbApp'),
         version,
         localUrl: 'http://dbApp.plt.local',
@@ -122,7 +122,7 @@ test('should get applications topology (gateway)', async t => {
         id: 'multi-plugin-service',
         type: 'service',
         status: 'started',
-        config: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'serviceAppWithMultiplePlugins', 'watt.config.mjs'),
         path: resolve(monorepo, 'serviceAppWithMultiplePlugins'),
         version,
         localUrl: 'http://multi-plugin-service.plt.local',
@@ -133,7 +133,7 @@ test('should get applications topology (gateway)', async t => {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
-        config: resolve(monorepo, 'serviceApp', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'serviceApp', 'watt.config.mjs'),
         path: resolve(monorepo, 'serviceApp'),
         version,
         localUrl: 'http://serviceApp.plt.local',
@@ -144,7 +144,7 @@ test('should get applications topology (gateway)', async t => {
         id: 'with-logger',
         type: 'service',
         status: 'started',
-        config: resolve(monorepo, 'serviceAppWithLogger', 'watt.config.mjs'),
+        configPath: resolve(monorepo, 'serviceAppWithLogger', 'watt.config.mjs'),
         path: resolve(monorepo, 'serviceAppWithLogger'),
         version,
         localUrl: 'http://with-logger.plt.local',

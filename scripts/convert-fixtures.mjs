@@ -574,6 +574,16 @@ export function convert (config, { file } = {}) {
       notes.push('gracefulShutdown.service became gracefulShutdown.application')
     }
 
+    /*
+      The same rename one level up: v3 called the mesh timeout serviceTimeout, and the v3.0.0
+      upgrade rewrote it. v4 has no upgrade chain, so a converted fixture has to carry the new name.
+    */
+    if ('serviceTimeout' in converted) {
+      converted.applicationTimeout = converted.applicationTimeout ?? converted.serviceTimeout
+      delete converted.serviceTimeout
+      notes.push('serviceTimeout became applicationTimeout')
+    }
+
     if ('clients' in converted) {
       delete converted.clients
       notes.push('dropped clients, which @platformatic/service stopped supporting in 0b6b448c6')

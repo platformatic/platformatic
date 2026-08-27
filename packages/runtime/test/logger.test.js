@@ -7,7 +7,7 @@ import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { transform } from '../index.js'
 import { startPath } from './cli/helper.js'
-import { createRuntime, execRuntime, isWindows, requestAndDump, stdioOutputToLogs, updateFile } from './helpers.js'
+import { configurationFileIn, createRuntime, execRuntime, isWindows, requestAndDump, stdioOutputToLogs, updateFile } from './helpers.js'
 import { prepareRuntime } from './multiple-workers/helper.js'
 
 setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
@@ -471,7 +471,7 @@ test('should use custom config', async t => {
 
 test('should use colors when printing applications logs', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await updateFile(configFile, data => {
     const config = JSON.parse(data)
@@ -508,7 +508,7 @@ test('should use colors when printing applications logs', async t => {
 
 test('should use pretty logs when FORCE_TTY is set in .env', { skip: isWindows }, async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await writeFile(resolve(root, '.env'), 'FORCE_TTY=true', 'utf-8')
 
@@ -540,7 +540,7 @@ test('should use pretty logs when FORCE_TTY is set in .env', { skip: isWindows }
 
 test('should use colors when FORCE_COLOR is set in .env', { skip: isWindows }, async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await updateFile(configFile, data => {
     const config = JSON.parse(data)

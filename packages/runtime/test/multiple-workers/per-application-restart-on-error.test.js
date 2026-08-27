@@ -4,20 +4,20 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { Client } from 'undici'
-import { createRuntime, updateFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateFile } from '../helpers.js'
 import { prepareRuntime, waitForEvents } from './helper.js'
 
 async function prepareCrashableRuntime (t, { runtimeRestartOnError, applicationRestartOnError }) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   const config = JSON.parse(await readFile(configFile, 'utf-8'))
   config.workers = 1
   config.restartOnError = runtimeRestartOnError
-  config.services[0].workers = 1
+  config.applications[0].workers = 1
 
   if (typeof applicationRestartOnError !== 'undefined') {
-    config.services[0].restartOnError = applicationRestartOnError
+    config.applications[0].restartOnError = applicationRestartOnError
   }
 
   await writeFile(configFile, JSON.stringify(config, null, 2))

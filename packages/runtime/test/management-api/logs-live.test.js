@@ -1,12 +1,12 @@
 import { safeRemove } from '@platformatic/foundation'
 import { ok } from 'node:assert'
-import { readFile, writeFile } from 'node:fs/promises'
+import { cp, readFile, symlink } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import WebSocket from 'ws'
-import { configurationFileIn, createRuntime, getTempDir } from '../helpers.js'
+import { configurationFileIn, createRuntime, createTemporaryDirectory, getTempDir, updateConfigFile } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -52,31 +52,35 @@ test('should get runtime logs via management api', async t => {
 })
 
 test('should support custom use transport', async t => {
-  const projectDir = join(fixturesDir, 'management-api')
-  const configPath = configurationFileIn(projectDir)
-  const configFile = await readFile(configPath, 'utf8')
-  const config = JSON.parse(configFile)
+  /*
+    v4 allows exactly one configuration per directory, so this variant cannot be the sibling file
+    it used to be. The fixture is copied and the copy is what gets the transport.
+  */
+  const root = await createTemporaryDirectory(t, 'management-api')
+  await cp(join(fixturesDir, 'management-api'), root, { recursive: true })
+  // In place the fixture resolves its capabilities from the package's node_modules; the copy is
+  // outside that tree, so it is given the same directory rather than a hand-picked subset.
+  await symlink(join(import.meta.dirname, '../../node_modules'), join(root, 'node_modules'), 'dir')
 
   const logsPath = join(await getTempDir(), 'platformatic-management-api-logs.txt')
   await safeRemove(logsPath)
 
-  config.logger = {
-    level: 'trace',
-    transport: {
-      target: 'pino/file',
-      options: { destination: logsPath }
+  const configWithLoggerPath = configurationFileIn(root)
+  await updateConfigFile(configWithLoggerPath, config => {
+    config.logger = {
+      level: 'trace',
+      transport: {
+        target: 'pino/file',
+        options: { destination: logsPath }
+      }
     }
-  }
-
-  const configWithLoggerPath = configurationFileIn(projectDir)
-  await writeFile(configWithLoggerPath, JSON.stringify(config, null, 2))
+  })
 
   const app = await createRuntime(configWithLoggerPath)
   await app.init()
 
   t.after(async () => {
     await app.close()
-    await safeRemove(configWithLoggerPath)
     await safeRemove(logsPath)
   })
 

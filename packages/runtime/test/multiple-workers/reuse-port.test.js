@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, updateConfigFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile } from '../helpers.js'
 import { prepareRuntime, waitForEvents } from './helper.js'
 
 async function waitForPortRelease (port, attempts = 50, interval = 100) {
@@ -41,7 +41,7 @@ async function waitForPortRelease (port, attempts = 50, interval = 100) {
 test('applications are started with multiple workers when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const port = await getPort.default({ host: '127.0.0.1' })
 
   await waitForPortRelease(port)
@@ -55,7 +55,7 @@ test('applications are started with multiple workers when Node.js supports reuse
   await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
     contents.metrics = { port: 0 }
-    contents.services[0].workers = features.node.reusePort ? 5 : 1
+    contents.applications[0].workers = features.node.reusePort ? 5 : 1
   })
 
   const app = await createRuntime(configFile, null, { isProduction: true })

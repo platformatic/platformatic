@@ -55,7 +55,7 @@ const expectedMetricNames = [
 
 test('should get prom metrics from the management api', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = configurationFileIn(projectDir)
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -96,7 +96,7 @@ test('should get prom metrics from the management api', async t => {
 
 test('should get prom metrics from the management api in the json format', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = configurationFileIn(projectDir)
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()

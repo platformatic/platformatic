@@ -1,11 +1,10 @@
 import { createDirectory } from '@platformatic/foundation'
-import { deepStrictEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, rejects, strictEqual } from 'node:assert'
 import { cp, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { create } from '../../index.js'
 import { configurationFileIn, createRuntime, createTemporaryDirectory, updateConfigFile } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
@@ -93,78 +92,17 @@ test('should load custom env file when envFile option is provided', async t => {
   strictEqual(data.OVERRIDE_TEST, 'service-override')
 })
 
-test('should load custom env file when envfile is configured on the runtime configuration file', async t => {
-  const root = await createTemporaryDirectory(t, 'custom-env')
-  await cp(join(fixturesDir, 'env'), root, { recursive: true })
-  await createDirectory(join(root, 'node_modules/@platformatic'))
-  await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
-
-  const envFile = join(root, 'custom.env')
-  await updateConfigFile(configurationFileIn(root), config => {
-    config.envfile = envFile
-  })
-
-  await writeFile(envFile, 'FROM_ENV_FILE=custom', 'utf8')
-
-  const app = await createRuntime(root)
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  await app.start()
-
-  const { payload } = await app.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  strictEqual(data.FROM_ENV_FILE, 'custom')
-})
-
-test('should prefer the config envfile over the envFile option', async t => {
-  const root = await createTemporaryDirectory(t, 'custom-env')
-  await cp(join(fixturesDir, 'env'), root, { recursive: true })
-  await createDirectory(join(root, 'node_modules/@platformatic'))
-  await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
-
-  const envFile = join(root, 'custom.env')
-  const overrideEnvFile = join(root, 'override.env')
-  await updateConfigFile(configurationFileIn(root), config => {
-    config.envfile = envFile
-  })
-
-  await writeFile(envFile, 'FROM_ENV_FILE=custom', 'utf8')
-  await writeFile(overrideEnvFile, 'FROM_ENV_FILE=override', 'utf8')
-
-  const app = await createRuntime(root, null, { envFile: overrideEnvFile, ignoreProcessEnv: true })
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  await app.start()
-
-  const { payload } = await app.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  strictEqual(data.FROM_ENV_FILE, 'custom')
-})
-
 test('should prefer the envfile of an application over a discovered .env file', async t => {
   const root = await createTemporaryDirectory(t, 'custom-env')
   await cp(join(fixturesDir, 'env'), root, { recursive: true })
   await createDirectory(join(root, 'node_modules/@platformatic'))
   await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
 
-  // The .env file of the runtime already defines FROM_ENV_FILE
+  // The .env file of the runtime already defines FROM_ENV_FILE. The path is app-relative in
+  // v4; v3 resolved it against the runtime root.
   await writeFile(join(root, 'services/hello/custom.env'), 'FROM_ENV_FILE=application-envfile', 'utf8')
   await updateConfigFile(configurationFileIn(root), config => {
-    config.services[0].envfile = 'services/hello/custom.env'
+    config.applications[0].envfile = 'custom.env'
   })
 
   const app = await createRuntime(root)
@@ -209,35 +147,6 @@ test('should prefer the .env file of an application over a discovered .env file'
   strictEqual(data.FROM_ENV_FILE, 'application-env-file')
 })
 
-test('should prefer the .env file of an application over the envfile of the runtime', async t => {
-  const root = await createTemporaryDirectory(t, 'custom-env')
-  await cp(join(fixturesDir, 'env'), root, { recursive: true })
-  await createDirectory(join(root, 'node_modules/@platformatic'))
-  await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
-
-  await writeFile(join(root, 'custom.env'), 'FROM_ENV_FILE=runtime-envfile', 'utf8')
-  await writeFile(join(root, 'services/hello/.env'), 'FROM_ENV_FILE=application-env-file', 'utf8')
-  await updateConfigFile(configurationFileIn(root), config => {
-    config.envfile = 'custom.env'
-  })
-
-  const app = await createRuntime(root)
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  await app.start()
-
-  const { payload } = await app.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  strictEqual(data.FROM_ENV_FILE, 'application-env-file')
-})
-
 test('should prefer real environment variables over the .env file of an application', async t => {
   const root = await createTemporaryDirectory(t, 'custom-env')
   await cp(join(fixturesDir, 'env'), root, { recursive: true })
@@ -265,34 +174,18 @@ test('should prefer real environment variables over the .env file of an applicat
   strictEqual(data.FROM_ENV_FILE, 'process-env')
 })
 
-test('should not require a context when the configuration file defines envfile', async t => {
+test('refuses a root envfile, which v4 does not implement', async t => {
   const root = await createTemporaryDirectory(t, 'custom-env')
   await cp(join(fixturesDir, 'env'), root, { recursive: true })
-  await createDirectory(join(root, 'node_modules/@platformatic'))
-  await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
 
-  const envFile = join(root, 'custom.env')
   await updateConfigFile(configurationFileIn(root), config => {
-    config.envfile = envFile
-    config.logger = { level: 'fatal' }
+    config.envfile = 'custom.env'
   })
 
-  await writeFile(envFile, 'FROM_ENV_FILE=custom', 'utf8')
-
-  // create is invoked without any context at all
-  const app = await create(root)
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  await app.start()
-
-  const { payload } = await app.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  strictEqual(data.FROM_ENV_FILE, 'custom')
+  /*
+    Accepting the key and ignoring it is what v3 validation would have done here, and it is the one
+    outcome a project migrating cannot detect: the file simply never loads. An entry may still
+    declare an envfile -- it is only the root-level key that is gone.
+  */
+  await rejects(() => createRuntime(root), /must NOT have the additional property 'envfile'/)
 })

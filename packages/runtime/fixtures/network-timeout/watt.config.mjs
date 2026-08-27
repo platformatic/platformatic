@@ -18,5 +18,5 @@ export default {
   logger: {
     level: 'info'
   },
-  serviceTimeout: 100
+  applicationTimeout: 100
 }
