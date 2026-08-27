@@ -83,10 +83,29 @@ const factories = {
   '@platformatic/vite': 'vite'
 }
 
-// Everything v3 could put in a value that is not a literal. `{PLT_X}` interpolation does not exist
-// in v4, and converting one correctly needs the audited target type for its position — which is
-// what tells a number from an enum from a string, and therefore which guard to emit.
-const placeholderPattern = /\{[A-Z0-9_]+\}/
+/*
+  v3's grammar exactly (`foundation/lib/configuration.js:28`): one or two braces, case-insensitive.
+  Writing it narrower would leave `{{DATABASE_URL}}` and `{plt_x}` as literal text in the emitted
+  configuration, where v3 substituted them -- a silent change rather than a refusal.
+*/
+const placeholderPattern = /(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/i
+const wholePlaceholderPattern = /^(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})$/i
+const everyPlaceholder = /(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/gi
+
+/*
+  The positions a capability reads literally, where a placeholder-shaped value is not a placeholder.
+  db's OpenAPI `ignoreRoutes` holds paths like `/users/{id}`, which v3 excluded from replacement by
+  passing this list to its loader (`db/index.js:16`) -- it is an argument there rather than an
+  export, so it is vendored here, which is what the wider grammar above makes necessary.
+*/
+const replaceEnvIgnore = {
+  '@platformatic/db': ['/db/openapi/ignoreRoutes']
+}
+
+// v4 injects no PLT_ROOT. v3 resolved it against the directory of the config file being parsed,
+// which for a per-app configuration is the application root -- the directory import.meta.dirname
+// gives, so the conversion is exact rather than approximate.
+const rootPlaceholder = /^\{{1,2}plt_root\}{1,2}/i
 
 // The runtime is where the bundled capability copies live, so it is the fallback scope for the
 // schema import -- the application's own dependencies still come first.
@@ -361,10 +380,12 @@ function classifyNode (node) {
   What cannot be decided from the schema is refused rather than guessed: a genuine union, a boolean
   whose v3 rule differs by site, and a position whose string form is really parsed.
 */
-function convertPlaceholders (config, schema, { where }) {
+function convertPlaceholders (config, schema, { module, where }) {
   const refusals = []
   const helpers = new Set()
   const seeds = new Map()
+  const ignored = replaceEnvIgnore[module] ?? []
+  let needsPath = false
 
   function convert (value, pointer) {
     if (typeof value === 'string') {
@@ -372,15 +393,39 @@ function convertPlaceholders (config, schema, { where }) {
         return value
       }
 
+      if (ignored.some(prefix => pointer.startsWith(prefix))) {
+        // Read literally by the capability, so what looks like a placeholder here is a path segment.
+        return value
+      }
+
+      if (rootPlaceholder.test(value)) {
+        needsPath = true
+
+        const rest = value.replace(rootPlaceholder, '')
+
+        if (rest === '') {
+          return raw('import.meta.dirname')
+        }
+
+        // The documented form is `{PLT_ROOT}/x`, which is a join.
+        if (rest.startsWith('/') && !placeholderPattern.test(rest)) {
+          return raw(`join(import.meta.dirname, ${serializeString(rest.slice(1))})`)
+        }
+
+        // Anything else keeps the value's own shape and substitutes in place. The opening is split
+        // so this literal never holds an interpolation of its own, which is not what it means.
+        return raw('`' + '$' + `{import.meta.dirname}${rest.replace(/`/g, '\\`')}\``)
+      }
+
       const position = classifyPosition(schema, pointer)
-      const whole = value.match(/^\{([A-Z0-9_]+)\}$/)
+      const whole = value.match(wholePlaceholderPattern)
 
       if (!whole) {
         /*
           An embedded placeholder is one value made of several, and only a string position can hold
           one: v3 interpolated the parts and the surrounding string still had to validate.
         */
-        for (const [, name] of value.matchAll(/\{([A-Z0-9_]+)\}/g)) {
+        for (const [, name] of value.matchAll(everyPlaceholder)) {
           seeds.set(name, sentinelFor(position))
         }
 
@@ -395,7 +440,7 @@ function convertPlaceholders (config, schema, { where }) {
 
         return raw(
           '`' +
-            value.replace(/\{([A-Z0-9_]+)\}/g, (_, name) => `\${process.env.${name} ?? ''}`).replace(/`/g, '\\`') +
+            value.replace(/`/g, '\\`').replace(everyPlaceholder, (_, name) => `\${process.env.${name} ?? ''}`) +
             '`'
         )
       }
@@ -450,7 +495,7 @@ function convertPlaceholders (config, schema, { where }) {
 
   const converted = convert(config, '')
 
-  return { converted: refusals.length > 0 ? config : converted, helpers, refusals, seeds }
+  return { converted: refusals.length > 0 ? config : converted, helpers, needsPath, refusals, seeds }
 }
 
 // Emitted into a file only where that file has a position needing one.
@@ -735,9 +780,14 @@ export async function deriveLegacyId (root) {
   return { id, pin: id !== v4, renamedFrom: id === v3 ? null : v3 }
 }
 
-export function emitApplicationConfiguration (config, { module, id, pin = false, helpers = new Set() }) {
+export function emitApplicationConfiguration (
+  config,
+  { module, id, pin = false, helpers = new Set(), needsPath = false }
+) {
   const factory = factories[module]
   const { $schema, module: _module, runtime, ...capability } = config
+  // `{PLT_ROOT}/x` becomes a join, which the file has to import.
+  const pathImport = needsPath ? "import { join } from 'node:path'\n" : ''
   // Written into the file only where it has a position needing one: a guard nothing calls is
   // ceremony, and these files are read by people.
   const preamble = emitHelpers(helpers)
@@ -751,7 +801,7 @@ export function emitApplicationConfiguration (config, { module, id, pin = false,
     file outright.
   */
   if (!runtime && !pin) {
-    return `import { ${factory} } from '${module}'\n\n${preamble}export default ${factory}(${serializeValue(capability)})\n`
+    return `${pathImport}import { ${factory} } from '${module}'\n\n${preamble}export default ${factory}(${serializeValue(capability)})\n`
   }
 
   /*
@@ -777,6 +827,7 @@ export function emitApplicationConfiguration (config, { module, id, pin = false,
   }
 
   return (
+    pathImport +
     'import { defineConfig } from \'wattpm\'\n' +
     `import { ${factory} } from '${module}'\n\n` +
     preamble +
@@ -986,6 +1037,7 @@ export async function planMigration (root, source, config) {
     }
 
     const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, directory), {
+      module,
       where: relative(root, legacy)
     })
 
@@ -1008,6 +1060,7 @@ export async function planMigration (root, source, config) {
       directory,
       entry,
       helpers: placeholders.helpers,
+      needsPath: placeholders.needsPath,
       inline,
       legacy,
       module,
@@ -1328,6 +1381,7 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
     }
 
     const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, applicationRoot), {
+      module,
       where: relative(root, legacy)
     })
 
@@ -1341,6 +1395,7 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
       autoloaded: true,
       config: placeholders.converted,
       helpers: placeholders.helpers,
+      needsPath: placeholders.needsPath,
       declared,
       directory: applicationRoot,
       entry: mapping,
@@ -1492,7 +1547,8 @@ async function emitApplications (journal, applications) {
         emitApplicationConfiguration(application.config, {
           helpers: application.helpers,
           id: application.orchestration.id,
-          module: application.module
+          module: application.module,
+          needsPath: application.needsPath
         })
       )
       await journal.remove(application.legacy)
@@ -1505,7 +1561,8 @@ async function emitApplications (journal, applications) {
       emitApplicationConfiguration(application.config, {
         helpers: application.helpers,
         id: application.orchestration.id,
-        module: application.module
+        module: application.module,
+        needsPath: application.needsPath
       })
     )
     await journal.remove(application.legacy)
@@ -1789,6 +1846,7 @@ export async function migrateCommand (logger, args) {
   let plan = null
   let converted = config
   let helpers = new Set()
+  let needsPath = false
   let seeds = new Map()
 
   if (runtime && refusals.length === 0) {
@@ -1801,12 +1859,14 @@ export async function migrateCommand (logger, args) {
       literal text of a placeholder.
     */
     const placeholders = convertPlaceholders(config, await capabilitySchema(module, directory), {
+      module,
       where: basename(source)
     })
 
     refusals.push(...placeholders.refusals)
     converted = placeholders.converted
     helpers = placeholders.helpers
+    needsPath = placeholders.needsPath
     seeds = placeholders.seeds
 
     if (existsSync(target)) {
@@ -1872,7 +1932,7 @@ export async function migrateCommand (logger, args) {
 
     await journal.write(
       target,
-      emitApplicationConfiguration(converted, { helpers, id: derived.id, module, pin: derived.pin })
+      emitApplicationConfiguration(converted, { helpers, id: derived.id, module, needsPath, pin: derived.pin })
     )
   }
 

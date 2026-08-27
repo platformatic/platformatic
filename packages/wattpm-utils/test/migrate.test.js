@@ -1017,3 +1017,54 @@ test('migrate - leaves a string position holding an interpolation as a template 
   ok(emitted.includes(`hostname: \`${interpolation[0]}\${process.env.${interpolation[1]} ${interpolation[2]}\${process.env.${interpolation[3]} ${interpolation[4]}`), emitted)
   ok(!emitted.includes('requiredEnv'), emitted)
 })
+
+test('migrate - resolves PLT_ROOT against the file rather than reading a variable v4 removed', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      application: { outputDirectory: '{PLT_ROOT}/dist' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v4 injects no PLT_ROOT, so the ordinary emission would read a variable nothing sets. v3 resolved
+    it against the directory of the config file being parsed, which for a per-app configuration is
+    the application root — the directory import.meta.dirname gives, so this is exact.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("outputDirectory: join(import.meta.dirname, 'dist')"), emitted)
+  ok(emitted.includes("import { join } from 'node:path'"), emitted)
+  ok(!emitted.includes('PLT_ROOT'), emitted)
+})
+
+test('migrate - matches v3 grammar, and leaves the positions a capability reads literally', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/db/3.65.0.json',
+      db: {
+        // Two braces and a lowercase name are both v3 placeholders. A narrower grammar would leave
+        // them as literal text where v3 substituted them, which is a silent change.
+        connectionString: '{{DATABASE_URL}}',
+        openapi: {
+          // Not a placeholder: db excludes this position from replacement, because a route path
+          // holds parameters that look exactly like one.
+          ignoreRoutes: [{ method: 'GET', path: '/users/{id}' }]
+        }
+      }
+    }
+  })
+
+  await linkCapability(root, 'db')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("connectionString: process.env.DATABASE_URL ?? ''"), emitted)
+  ok(emitted.includes("path: '/users/{id}'"), emitted)
+})
