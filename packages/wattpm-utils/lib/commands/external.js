@@ -414,6 +414,18 @@ const BOOT_COMMANDS = ['dev', 'start', 'build']
 function unionApplications (logger, evaluations, root) {
   const byId = new Map()
 
+  /*
+    The second question the candidate set answers: which repository each destination is claimed by.
+    Two ids may share a checkout deliberately -- the same repository at the same revision, fetched
+    once -- and two repository/revision pairs landing in one directory is a project where the second
+    clone overwrites the first, or the first is silently kept and the second application runs code
+    from another repository.
+
+    Mapped before any existence filtering, because a destination that already holds one of the two
+    clones is exactly the case this refusal is for: filtering first would drop the evidence.
+  */
+  const byDestination = new Map()
+
   for (const { command, config } of evaluations) {
     /*
       The candidates, not the application list: `enabled` must not hide an entry from resolve. It is
@@ -428,6 +440,30 @@ function unionApplications (logger, evaluations, root) {
       const destination = application.path
         ? resolve(root, application.path)
         : resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)
+
+      if (application.url) {
+        const pair = `${application.url}@${application.gitBranch ?? ''}`
+        const claimed = byDestination.get(destination)
+
+        /*
+          Between distinct applications only. One id evaluated under two commands can disagree with
+          itself about which revision to fetch, and that is the check below -- reporting it here
+          would name the same application twice and describe a collision it does not have.
+        */
+        if (claimed && claimed.id !== application.id && claimed.pair !== pair) {
+          logFatalError(
+            logger,
+            `Applications ${bold(claimed.id)} and ${bold(application.id)} both resolve into ${bold(destination)}, ` +
+              `from ${bold(claimed.pair)} and ${bold(pair)}. Give one of them its own path.`
+          )
+
+          return null
+        }
+
+        if (!claimed) {
+          byDestination.set(destination, { id: application.id, pair })
+        }
+      }
 
       const seen = byId.get(application.id)
 
@@ -517,6 +553,7 @@ export async function resolveApplications (
 
   // Iterate the applications a first time to verify the environment files configuration and which applications must be resolved
   const toResolve = []
+  const fetching = new Map()
 
   // Simply use application.path here
   for (const application of resolvableApplications) {
@@ -534,8 +571,18 @@ export async function resolveApplications (
             application.path
           )} is outside the project directory.`
         )
+      } else if (fetching.has(directory)) {
+        /*
+          A destination two applications share deliberately -- same repository, same revision, which
+          the union check above already confirmed. Cloning it twice would have the second clone write
+          over the first while the first is still being used.
+        */
+        logger.info(
+          `Application ${bold(application.id)} shares the checkout at ${bold(application.path)} with ${bold(fetching.get(directory))}, which is fetched once.`
+        )
       } else {
         // This repository must be resolved
+        fetching.set(directory, application.id)
         toResolve.push(application)
       }
     } else {

@@ -316,3 +316,25 @@ test('resolve - should not let enabled: false hide an application', async t => {
   ok(resolveProcess.stdout.includes('Cloning'))
   ok(existsSync(resolve(rootDir, 'external/resolved')))
 })
+
+test('resolve - should refuse one destination claimed by two repositories', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'resolve-shared-destination', false, 'watt.config.mjs')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  /*
+    The ids differ, so nothing keyed by id sees this: it is the destination that is claimed twice.
+    Whichever clone lands second either overwrites the first or is silently skipped, and in both
+    cases one of the two applications runs code from the other's repository.
+  */
+  const resolveProcess = await wattpmUtils('resolve', rootDir, {
+    reject: false,
+    env: { ...process.env, PLT_GIT_REPO_URL: repo }
+  })
+
+  deepStrictEqual(resolveProcess.exitCode, 1)
+  ok(resolveProcess.stdout.includes('both resolve into'), resolveProcess.stdout)
+  ok(resolveProcess.stdout.includes('somewhere-else'), resolveProcess.stdout)
+})
