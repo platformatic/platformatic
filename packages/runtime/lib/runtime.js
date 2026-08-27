@@ -177,6 +177,55 @@ const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
 const DEFAULT_RESTART_ON_ERROR_DELAY = 5000
 
+/*
+  Both public payloads are built from a snapshot and frozen through. What a consumer could observe
+  in v3 was scalars and a file path, so handing out interior state was harmless in practice; v4
+  nests resolvedConfig -- an entire capability payload -- inside every entry, and the getters read
+  straight off live state. A consumer mutating what it received would be editing the configuration
+  that later restarts and scale-up workers read, silently, and would make worker generations
+  disagree about what they are running. setApplicationConfigPatch exists precisely so that changing
+  a running application's configuration is explicit, patch-shaped and visible.
+
+  Only plain objects and arrays are copied. Anything carrying its own prototype -- a class
+  instance, a stream, a buffer -- is handed back as it is, because a copy of it would not be the
+  thing; the hazard this closes is a consumer editing configuration, not one editing a socket.
+*/
+function frozenSnapshot (value, seen = new Map()) {
+  if (value === null || typeof value !== 'object') {
+    return value
+  }
+
+  if (seen.has(value)) {
+    return seen.get(value)
+  }
+
+  if (Array.isArray(value)) {
+    const copy = []
+    seen.set(value, copy)
+
+    for (const entry of value) {
+      copy.push(frozenSnapshot(entry, seen))
+    }
+
+    return Object.freeze(copy)
+  }
+
+  const prototype = Object.getPrototypeOf(value)
+
+  if (prototype !== Object.prototype && prototype !== null) {
+    return value
+  }
+
+  const copy = {}
+  seen.set(value, copy)
+
+  for (const [key, entry] of Object.entries(value)) {
+    copy[key] = frozenSnapshot(entry, seen)
+  }
+
+  return Object.freeze(copy)
+}
+
 export class Runtime extends EventEmitter {
   logger
   error
@@ -681,7 +730,7 @@ export class Runtime extends EventEmitter {
 
     const created = []
     for (const { id } of applications) {
-      created.push(await this.getApplicationDetails(id))
+      created.push(await this.#buildApplicationDetails(id))
     }
 
     this.#updateLoggingPrefixes()
@@ -697,7 +746,7 @@ export class Runtime extends EventEmitter {
 
       // Use allowUnloaded so that applications without a live worker
       // (stopped or crashed with restartOnError: 0) can still be removed.
-      const details = await this.getApplicationDetails(application, true)
+      const details = await this.#buildApplicationDetails(application, true)
       details.status = 'removed'
 
       // The snapshot is taken while the application is still up, but what it reports is an
@@ -1632,12 +1681,14 @@ export class Runtime extends EventEmitter {
   }
 
   getRuntimeConfig (includeMeta = false) {
+    // includeMeta is an internal contract and hands back live state, symbol key and all. It leaves
+    // the public surface with the DTO change; until then, its in-tree callers depend on identity.
     if (includeMeta) {
       return this.#config
     }
 
     const { [kMetadata]: _, ...config } = this.#config
-    return config
+    return frozenSnapshot(config)
   }
 
   getInterceptor () {
@@ -2174,12 +2225,16 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplications (allowUnloaded = false) {
-    return {
+    return frozenSnapshot({
       production: this.#isProduction,
       applications: await Promise.all(
-        this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
+        this.getApplicationsIds().map(id => this.#buildApplicationDetails(id, allowUnloaded))
       )
-    }
+    })
+  }
+
+  async getApplicationDetails (id, allowUnloaded = false) {
+    return frozenSnapshot(await this.#buildApplicationDetails(id, allowUnloaded))
   }
 
   async getApplicationMeta (id) {
@@ -2207,7 +2262,7 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  async getApplicationDetails (id, allowUnloaded = false) {
+  async #buildApplicationDetails (id, allowUnloaded = false) {
     let application
 
     try {

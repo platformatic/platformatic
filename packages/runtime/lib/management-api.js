@@ -301,7 +301,10 @@ export async function managementApiPlugin (app, opts) {
   })
 
   app.get('/metrics', quiet, async (req, reply) => {
-    const config = await runtime.getRuntimeConfig()
+    // The live read: this needs one boolean, and the public getter builds a frozen snapshot of the
+    // whole configuration -- which is the right shape to hand a consumer and the wrong one to pay
+    // for on a scrape.
+    const config = runtime.getRuntimeConfig(true)
 
     if (config.metrics?.enabled === false) {
       reply.code(501)
@@ -326,7 +329,10 @@ export async function managementApiPlugin (app, opts) {
 
   // TODO: Remove in next major version - deprecated endpoint
   app.get('/metrics/live', { ...quiet, websocket: true }, async socket => {
-    const config = await runtime.getRuntimeConfig()
+    // The live read: this needs one boolean, and the public getter builds a frozen snapshot of the
+    // whole configuration -- which is the right shape to hand a consumer and the wrong one to pay
+    // for on a scrape.
+    const config = runtime.getRuntimeConfig(true)
 
     if (config.metrics?.enabled === false) {
       socket.send(
