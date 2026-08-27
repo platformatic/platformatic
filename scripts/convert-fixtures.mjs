@@ -348,6 +348,9 @@ const COMMAND_FIXTURES = [
   and create take { root, config } with the rest of the capability work.
 */
 const CAPABILITY_FIXTURES = [
+  // Read by Controller with an explicit path, which is the worker-side file resolution v4 deletes.
+  'runtime/fixtures/service-app-no-logging/',
+  'runtime/fixtures/no-env.service.json',
   // Not under a fixtures directory, which is why the first sweep for this family missed it.
   'gateway/test/logger/',
   // Reached through a start executable that calls the capability's own create().

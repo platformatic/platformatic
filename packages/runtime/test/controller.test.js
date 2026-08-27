@@ -31,7 +31,11 @@ test('errors when starting an already started application (no logging)', async t
 })
 
 test('errors when stopping an already stopped application', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
+    a configuration file with the v3 loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
   const configFile = configurationFileIn(appPath)
   const config = {
     id: 'serviceApp',
@@ -68,7 +72,7 @@ test('logs errors if an env variable is missing', async t => {
 
 test('logs errors during startup', async t => {
   const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
-  const configFile = configurationFileIn(appPath)
+  const configFile = configurationFileIn(appPath, 'platformatic.service.json')
   const config = {
     id: 'serviceAppThrowsOnStart',
     config: configFile,
@@ -125,7 +129,11 @@ test('returns application statuses', async t => {
 })
 
 test('can update status of a capability with updateStatus support', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
+    a configuration file with the v3 loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
   const configFile = configurationFileIn(appPath)
 
   const config = {
@@ -146,7 +154,11 @@ test('can update status of a capability with updateStatus support', async t => {
 })
 
 test('can update status of a capability without updateStatus support', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
+    a configuration file with the v3 loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
   const configFile = configurationFileIn(appPath)
 
   const config = {
