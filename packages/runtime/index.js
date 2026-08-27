@@ -11,6 +11,7 @@ import {
 import {
   isConfigurationFileName,
   findDecidingFile,
+  isProductionCommand,
   loadConfiguration as loadV4Configuration,
   validateCapabilityConfiguration
 } from '@platformatic/foundation/lib/v4/index.js'
@@ -177,7 +178,15 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 }
 
 async function loadV4RuntimeConfiguration (configurationFile, context) {
-  const production = context?.isProduction ?? context?.production ?? false
+  /*
+    The command decides `production` when the caller did not, rather than the other way round:
+    `build` produces production artifacts, so a build that evaluated as a development boot read the
+    development env files and gave every callback `production: false` while writing what `start`
+    would later run.
+  */
+  const explicitProduction = context?.isProduction ?? context?.production
+  const command = context?.command ?? (explicitProduction ? 'start' : 'dev')
+  const production = explicitProduction ?? isProductionCommand(command)
 
   /*
     The environment the loader treats as real. An embedder can add to it, and can ask for a
@@ -190,7 +199,7 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     cwd: dirname(configurationFile),
     configPath: configurationFile,
     realEnv,
-    command: context?.command ?? (production ? 'start' : 'dev'),
+    command,
     mode: context?.mode,
     production,
     customEnvFile: context?.envFile,
@@ -243,7 +252,7 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
       no such context and keeps resolving configuration files worker-side.
     */
     v4: {
-      command: context?.command ?? (production ? 'start' : 'dev'),
+      command,
       mode: loaded.mode,
       production: loaded.production,
       /*
