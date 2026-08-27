@@ -5,7 +5,6 @@ import { request } from 'undici'
 import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
 import { createPGDataBase, parseNDJson } from './helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 async function getSpans (spanPaths) {

@@ -8,7 +8,6 @@ import {
   verifyDevelopmentMode
 } from '../../basic/test/helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const htmlContents = ['<body data-astro-source-file', /Hello from v\d+/]

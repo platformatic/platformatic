@@ -12,7 +12,6 @@ import {
   verifyJSONViaInject
 } from '../../basic/test/helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 function isTime (body) {

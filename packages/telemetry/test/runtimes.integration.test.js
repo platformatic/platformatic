@@ -6,7 +6,6 @@ import { request } from 'undici'
 import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
 import { startOTEL } from './otelserver/index.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 let received = []

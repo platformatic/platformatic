@@ -11,7 +11,6 @@ import {
 } from '../../basic/test/helper.js'
 import { additionalDependencies } from './helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 setAdditionalDependencies(additionalDependencies)
 
