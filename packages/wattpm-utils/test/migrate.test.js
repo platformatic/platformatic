@@ -687,3 +687,120 @@ test('migrate - converts autoloaded applications and pins only the ids that woul
     'plain'
   ])
 })
+
+test('migrate - moves the root server block to the entrypoint and strips ports that never listened', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      entrypoint: 'api',
+      // v4 has no root server. Which port was public still has to be said somewhere, and in v4 the
+      // only place that can say it is the entrypoint's own capability configuration.
+      server: { hostname: '0.0.0.0', port: 3000 },
+      applications: [
+        { id: 'api', path: './services/api' },
+        { id: 'worker', path: './services/worker' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['api', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    // Neither the entrypoint nor useHttp, so this port never listened on v3 -- and in v4 a declared
+    // port is a real listener.
+    ['worker', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { port: 3000 } }]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const api = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
+  ok(api.includes('port: 3000'), api)
+  ok(api.includes("hostname: '0.0.0.0'"), api)
+
+  const worker = await readFile(join(root, 'services/worker/watt.config.mjs'), 'utf-8')
+  ok(!worker.includes('server'), worker)
+  ok(migrateProcess.stdout.includes('never listened on v3'), migrateProcess.stdout)
+
+  // The root keeps neither, and would not validate if it did.
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(!emitted.includes('entrypoint'), emitted)
+  ok(!emitted.includes('hostname'), emitted)
+})
+
+test('migrate - writes out the block useHttp stood for', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'api', path: './services/api', useHttp: true },
+        { id: 'other', path: './services/other' }
+      ]
+    }
+  })
+
+  for (const name of ['api', 'other']) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(
+      join(root, 'services', name, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v4 has no useHttp, and the v4 entry schema does not admit it either -- so the defaults v3
+    synthesized are written out. keepAliveTimeout is not among them: node is the basic family, whose
+    server block does not admit it, and on v3 the key was inert there.
+  */
+  const api = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
+  ok(api.includes('port: 0'), api)
+  ok(api.includes("hostname: '127.0.0.1'"), api)
+  ok(!api.includes('keepAliveTimeout'), api)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(!emitted.includes('useHttp'), emitted)
+})
+
+test('migrate - refuses an entrypoint that depends on the environment', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      server: { port: 3000 },
+      applications: [
+        { id: 'api', path: './services/api' },
+        // Changes the survivor set, and with it which application is the only one left.
+        { id: 'admin', path: './services/admin', enabled: { production: false, development: true } }
+      ]
+    }
+  })
+
+  for (const name of ['api', 'admin']) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(
+      join(root, 'services', name, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('in production and'), migrateProcess.stdout)
+
+  /*
+    Which application owns the public address is structural in v4, so there is no faithful output
+    here -- and picking one would move a project's public address without saying so.
+  */
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+})

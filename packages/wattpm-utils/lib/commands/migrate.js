@@ -4,12 +4,13 @@ import {
   logFatalError,
   parseArgs
 } from '@platformatic/foundation'
-import { loadConfiguration as loadV4Configuration } from '@platformatic/foundation/lib/v4/index.js'
+import { importCapabilitySchema, loadConfiguration as loadV4Configuration } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /*
   The one-shot codemod from a v3 configuration to a v4 one, and the only code in v4 that reads a
@@ -81,6 +82,10 @@ const factories = {
 // what tells a number from an enum from a string, and therefore which guard to emit.
 const placeholderPattern = /\{[A-Z0-9_]+\}/
 
+// The runtime is where the bundled capability copies live, so it is the fallback scope for the
+// schema import -- the application's own dependencies still come first.
+const runtimeScope = fileURLToPath(import.meta.resolve('@platformatic/runtime'))
+
 /*
   The four names v4 recognizes. A directory already holding one has a configuration, and a second
   beside it is two candidates in one directory -- which the loader rejects. So a `watt.config.js`
@@ -143,6 +148,97 @@ function existingV4Candidate (directory) {
   string -- and emit a configuration whose id the label grammar rejects, which is the one case a
   raw comparison passes over in silence.
 */
+/*
+  v3's `enabled` test (`runtime/lib/config.js:371-387`), over the lexical values. A placeholder is
+  a string that has not been resolved, so it reads as `!== 'false'` here and is reported separately
+  as undecidable wherever it could change which application is the entrypoint.
+*/
+function isEnabled (entry, environment) {
+  const { enabled } = entry ?? {}
+
+  if (typeof enabled === 'undefined') {
+    return true
+  }
+
+  if (typeof enabled === 'string') {
+    return enabled !== 'false'
+  }
+
+  if (typeof enabled === 'object' && enabled !== null) {
+    return enabled[environment] ?? true
+  }
+
+  return enabled
+}
+
+/*
+  The keys the target capability's own `server` block admits.
+
+  Read from the schema rather than kept as a list, because the blocks are not uniform: nitro deletes
+  `http2` from its copy, so a project with `server: { http2: true }` and a nitro entrypoint would
+  fail on migrate's own output if the move were literal. A fixed list would also have to be revised
+  every time a capability narrows its block.
+*/
+async function admittedServerKeys (module, directory) {
+  try {
+    const { schema } = await importCapabilitySchema(module, directory, { runtimeScope })
+    const properties = schema?.properties?.server?.properties
+
+    return properties ? new Set(Object.keys(properties)) : null
+  } catch {
+    // Not installed. The move still happens -- the emitted file is reported as unverified either
+    // way -- and filtering it against a schema migrate could not read would be worse than not.
+    return null
+  }
+}
+
+/*
+  Which family a capability belongs to, asked of the schema rather than of a name list. The full
+  Fastify option set that defines `keepAliveTimeout` belongs to service, db and gateway; the basic
+  family's block admits `hostname, port, backlog, http2, https` and `portAssignment` alone.
+
+  The distinction decides two things v3 made family-dependent: the merge order when a root block met
+  an application's own, and whether the `useHttp` defaults carried `keepAliveTimeout`.
+*/
+function isServiceFamily (admitted) {
+  return admitted === null ? false : admitted.has('keepAliveTimeout')
+}
+
+function isUndecidable (entry) {
+  const { enabled } = entry ?? {}
+
+  return typeof enabled === 'string' && placeholderPattern.test(enabled)
+}
+
+/*
+  Which application was live on v3, reproduced exactly (`runtime/lib/config.js:436-460`
+  pre-`e2da15eda`). v4 has no entrypoint and no root server, but which port was *public* depended on
+  both, so migrate resolves this purely to classify each application's exposure.
+
+  The qualifiers on the third step are not incidental. It skips entries with no app-local config
+  file, which v3 did explicitly -- `type` came from the config file's `$schema` when one existed and
+  from package resolution when it did not, and only the former was eligible. And it tests the *raw*
+  module identity: v3 compared against `@platformatic/gateway`, so a `@platformatic/composer`
+  application was never a candidate. Measuring the renamed identity here would resolve an entrypoint
+  where v3 had none, opening a public listener on a project that had none.
+*/
+function resolveEntrypoint (config, applications, environment) {
+  const surviving = applications.filter(application => isEnabled(application.entry, environment))
+
+  if (config.entrypoint) {
+    return surviving.find(application => application.orchestration?.id === config.entrypoint) ?? null
+  }
+
+  if (surviving.length === 1) {
+    // No type test and no other condition: the only application there is, is the entrypoint.
+    return surviving[0]
+  }
+
+  const gateways = surviving.filter(application => application.declared === '@platformatic/gateway')
+
+  return gateways.length === 1 ? gateways[0] : null
+}
+
 async function autoloadedIds (directory, mapping) {
   const name = basename(directory)
   let packageName
@@ -410,7 +506,12 @@ export function chooseFileName (root) {
   `services` and `web` are both spelled `applications`.
 */
 export function emitRootConfiguration (config, entries, inlined = [], autoload = null) {
-  const { $schema, module: _module, applications, services, web, ...root } = config
+  /*
+    `entrypoint` and root `server` are gone from the v4 runtime schema: what they said about which
+    port was live has already been written into the capability configurations, and carrying either
+    across would fail validation on migrate's own output.
+  */
+  const { $schema, module: _module, applications, services, web, entrypoint, server, ...root } = config
 
   if (autoload) {
     // Carries the pins migrate computed, which is the whole of what autoload gains in v4.
@@ -444,13 +545,13 @@ export async function planMigration (root, source, config) {
   const rootDirectory = canonicalize(dirname(source))
 
   for (const entry of declaredEntries) {
-    const { config: _legacyPath, envfile, ...orchestration } = entry
+    const { config: _legacyPath, envfile, server: _server, useHttp: _useHttp, ...orchestration } = entry
     const named = entry.id ?? entry.path ?? entry.url ?? 'an application'
 
     if (!entry.path) {
       // Orchestration only: an entry with a `url` and no resolvable directory has nothing local to
       // convert, and is another repository's project to migrate.
-      applications.push({ orchestration: entry })
+      applications.push({ entry, orchestration: entry })
       continue
     }
 
@@ -557,7 +658,11 @@ export async function planMigration (root, source, config) {
         error — so the entry is carried through and the directory is left alone.
       */
       skipped.push(named)
-      applications.push({ orchestration: envfile ? { ...orchestration, envfile: rebased } : orchestration })
+      applications.push({
+        directory,
+        entry,
+        orchestration: envfile ? { ...orchestration, envfile: rebased } : orchestration
+      })
       continue
     }
 
@@ -577,16 +682,11 @@ export async function planMigration (root, source, config) {
     // leaving it out would let v4 derive a different one from the package name.
     const settled = { ...orchestration, id, ...(envfile ? { envfile: rebased } : {}) }
 
-    if (inline) {
-      const { $schema: _schema, module: _declared, ...capability } = applicationConfig
-
-      settled.config = raw(`${factories[module]}(${serializeValue(capability, 3)})`)
-    }
-
     applications.push({
       config: applicationConfig,
       declared,
       directory,
+      entry,
       inline,
       legacy,
       module,
@@ -597,13 +697,202 @@ export async function planMigration (root, source, config) {
   }
 
   const autoload = await planAutoload(root, config, applications, refusals, skipped)
+  const entrypoint = planExposure(config, applications, refusals)
+  const exposure = refusals.length === 0 ? await applyExposure(config, applications, entrypoint) : []
 
   return {
     applications,
     autoload,
+    entrypoint,
+    exposure,
     refusals: refusals.concat(collectPlanRefusals(root, source, applications)),
     skipped
   }
+}
+
+/*
+  v4 has no entrypoint, no root `server` and no entry-level `server` or `useHttp`, so everything
+  those said about which port was live has to be said again in the capability configurations. Four
+  rules, in this order -- the order is what keeps rule 2 from overwriting the public port rule 1
+  just carried across.
+
+  Each reports rather than converting silently: nothing here can be verified, and an address that
+  moved without saying so is the worst outcome this conversion has.
+*/
+async function applyExposure (config, applications, entrypoint) {
+  const notes = []
+
+  if (config.server && !entrypoint) {
+    /*
+      Several surviving applications, no explicit entrypoint and no single gateway: v3 left
+      `config.entrypoint` undefined and the project booted mesh-only. Guessing which application was
+      public would open a listener the project never had.
+    */
+    notes.push(
+      `The root ${bold('server')} block was dropped: no application resolved as the v3 entrypoint, so the project was reachable only through the mesh and nothing here owned the public address.`
+    )
+  }
+
+  for (const application of applications) {
+    if (!application.config) {
+      continue
+    }
+
+    const admitted = await admittedServerKeys(application.module, application.directory)
+    const serviceFamily = isServiceFamily(admitted)
+    const own = application.config.server
+    const isEntrypoint = application === entrypoint
+    const useHttp = application.entry?.useHttp === true
+    let synthesized = false
+
+    if (isEntrypoint && config.server) {
+      // Rule 1. Every key the target admits, and only those.
+      const moved = {}
+      const dropped = []
+
+      for (const [key, value] of Object.entries(config.server)) {
+        if (admitted && !admitted.has(key)) {
+          dropped.push(key)
+          continue
+        }
+
+        moved[key] = value
+      }
+
+      /*
+        v3's merge order was family-dependent: the basic family let the application's own block win
+        (a later-wins deepmerge), while service, db and gateway re-applied the root last.
+      */
+      application.config.server = serviceFamily ? { ...own, ...moved } : { ...moved, ...own }
+
+      // Compared by value: `https` is an object, and two structurally identical ones are never the
+      // same reference -- which would report a disagreement on every project that declares one.
+      const disagreed = Object.keys(moved).filter(
+        key => own?.[key] !== undefined && JSON.stringify(own[key]) !== JSON.stringify(moved[key])
+      )
+
+      if (dropped.length > 0) {
+        notes.push(
+          `${dropped.map(key => bold(key)).join(', ')} from the root ${bold('server')} block ${dropped.length > 1 ? 'were' : 'was'} dropped: ${bold(application.module)} does not admit ${dropped.length > 1 ? 'them' : 'it'} on ${bold(application.orchestration.id)}.`
+        )
+      }
+
+      if (disagreed.length > 0) {
+        notes.push(
+          `${bold(application.orchestration.id)} declared ${disagreed.map(key => bold(key)).join(', ')} and the root block declared ${disagreed.length > 1 ? 'them' : 'it'} differently; ${serviceFamily ? 'the root value won on v3 and won here' : "the application's own value won on v3 and won here"}.`
+        )
+      }
+    } else if (useHttp) {
+      /*
+        Rule 2, and only for applications rule 1 did not touch: v3's two branches were mutually
+        exclusive, so an entrypoint with a root block ignored its own `useHttp` entirely.
+
+        `keepAliveTimeout` goes only to the service family. v3 handed this block to a deepmerge
+        rather than through a schema, so for the basic family the key was inert -- and in v4 it is
+        validated, where those schemas refuse it.
+      */
+      const synthetic = { port: 0, hostname: '127.0.0.1' }
+
+      if (serviceFamily) {
+        synthetic.keepAliveTimeout = 5000
+      }
+
+      if (own?.port !== undefined && !serviceFamily) {
+        // The basic family kept the application's fixed port; only the defaults around it are new.
+        synthetic.port = own.port
+        notes.push(
+          `${bold(application.orchestration.id)} used ${bold('useHttp')} and keeps its declared port ${bold(String(own.port))}: v4 has no useHttp, so the block it stood for is written out.`
+        )
+      } else {
+        if (own?.port !== undefined) {
+          notes.push(
+            `${bold(application.orchestration.id)} used ${bold('useHttp')}, whose defaults overrode its declared port ${bold(String(own.port))} on v3; that value is dropped and the port stays ephemeral, as it was.`
+          )
+        }
+
+        synthesized = true
+      }
+
+      application.config.server = { ...own, ...synthetic }
+    } else if (isEntrypoint && !own) {
+      /*
+        Rule 3. v3's `_listen` had no undefined-port guard, so an entrypoint with no server block
+        anywhere still bound an ephemeral port and the runtime advertised it. v4 returns early on an
+        undefined port, so without this the application silently stops listening.
+      */
+      application.config.server = { port: 0 }
+      synthesized = true
+
+      notes.push(
+        `${bold(application.orchestration.id)} was the v3 entrypoint with no ${bold('server')} block anywhere and still bound an ephemeral port, so it is written out as ${bold('port: 0')}. That address was never stable and is no longer advertised by the runtime.`
+      )
+    }
+
+    /*
+      Rule 4. An application that was neither the entrypoint nor `useHttp` never listened on v3 --
+      listening was gated on `useHttp` alone and `listen()` no-opped for non-entrypoints -- while in
+      v4 any declared port is a real listener, and two of them on one port is a hard error rather
+      than a dead value. The strip never applies to a port rules 2 or 3 synthesized: cancelling that
+      would leave the application with no listener at all.
+    */
+    if (!isEntrypoint && !useHttp && !synthesized && own?.port !== undefined) {
+      const { port, ...rest } = application.config.server
+
+      if (Object.keys(rest).length > 0) {
+        application.config.server = rest
+      } else {
+        delete application.config.server
+      }
+
+      notes.push(
+        `${bold(application.orchestration.id)} declared ${bold(`port: ${port}`)} that never listened on v3 — it was neither the entrypoint nor useHttp — and it is dropped, because in v4 a declared port is a real listener.`
+      )
+    }
+  }
+
+  return notes
+}
+
+/*
+  The one place migrate reasons about a v3 concept v4 does not have. It resolves the entrypoint
+  twice -- once for each of the two environments v3 derives -- because `enabled` can change the
+  survivor set, and which application owns the public address is structural in v4 and cannot be made
+  to depend on the environment.
+*/
+function planExposure (config, applications, refusals) {
+  const production = resolveEntrypoint(config, applications, 'production')
+  const development = resolveEntrypoint(config, applications, 'development')
+
+  if (production !== development) {
+    refusals.push({
+      reason: `${bold(production?.orchestration?.id ?? 'no application')} is the entrypoint in production and ${bold(development?.orchestration?.id ?? 'no application')} is in development`,
+      fix: 'set an explicit entrypoint and run migrate again — which application owns the public address is structural in v4, so there is no faithful output for a project where it depends on the environment'
+    })
+
+    return null
+  }
+
+  /*
+    A placeholder `enabled` is unknown at migration time -- v3 interpolated before testing it -- so
+    it is a refusal wherever its value could change the answer, and nothing at all where it could
+    not.
+  */
+  if (!config.entrypoint) {
+    const undecidable = applications.filter(application => isUndecidable(application.entry))
+
+    if (undecidable.length > 0 && applications.length > 1) {
+      for (const application of undecidable) {
+        refusals.push({
+          reason: `${bold(application.orchestration?.id ?? 'an application')} declares ${bold('enabled')} as an interpolated value, and it decides which application is the entrypoint`,
+          fix: 'set an explicit entrypoint and run migrate again — v3 resolved that value before testing it, and migrate cannot know here what it resolved to'
+        })
+      }
+
+      return null
+    }
+  }
+
+  return production
 }
 
 /*
@@ -680,6 +969,7 @@ async function planAutoload (root, config, applications, refusals, skipped) {
 
     if (!legacy || !existsSync(legacy)) {
       skipped.push(v3)
+      applications.push({ autoloaded: true, directory: applicationRoot, entry: mapping, orchestration: { id: v3 } })
       continue
     }
 
@@ -697,6 +987,7 @@ async function planAutoload (root, config, applications, refusals, skipped) {
       config: applicationConfig,
       declared,
       directory: applicationRoot,
+      entry: mapping,
       legacy,
       module,
       orchestration: { id: v3 },
@@ -789,8 +1080,15 @@ async function emitApplications (journal, applications) {
       /*
         Its configuration now lives in the root file, so the file it came from goes -- leaving it
         would put a legacy configuration beside a v4 one, which the loader refuses.
+
+        Serialized here rather than while planning, because the exposure rules rewrite these
+        capability configurations after the plan is built: an inline entrypoint whose expression had
+        already been rendered would be emitted without the root server block it was just given.
       */
       if (application.legacy) {
+        const { $schema: _schema, module: _declared, ...capability } = application.config
+
+        application.orchestration.config = raw(`${factories[application.module]}(${serializeValue(capability, 3)})`)
         await journal.remove(application.legacy)
         inlined.push(application.module)
       }
@@ -1022,6 +1320,10 @@ export async function migrateCommand (logger, args) {
     logger.warn(
       `The application id ${bold(from)} is not a legal v4 id and was written as ${bold(to)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
     )
+  }
+
+  for (const note of plan?.exposure ?? []) {
+    logger.warn(note)
   }
 
   for (const name of skipped) {
