@@ -22,11 +22,19 @@ test('can start with a custom environment', async t => {
   const res = await request(url + '/env')
 
   strictEqual(res.statusCode, 200)
+
+  /*
+    ignoreProcessEnv closes the environment, so what a worker sees is what the runtime put there:
+    the caller's variable and one PLT_<ID>_URL per application, its own included. v3's PLT_DEV,
+    PLT_ENVIRONMENT and PLT_ROOT are removed in v4 -- an application branches on its own variables,
+    or the decision moves into configuration where the typed context is.
+  */
   deepStrictEqual(await res.body.json(), {
     A_CUSTOM_ENV_VAR: 'foobar',
-    PLT_ENVIRONMENT: 'development',
-    PLT_DEV: 'true',
-    PLT_ROOT: join(fixturesDir, 'configs')
+    PLT_SERVICEAPP_URL: 'http://serviceApp.plt.local',
+    PLT_WITH_LOGGER_URL: 'http://with-logger.plt.local',
+    PLT_MULTI_PLUGIN_SERVICE_URL: 'http://multi-plugin-service.plt.local',
+    PLT_DB_APP_URL: 'http://db-app.plt.local'
   })
   process.exitCode = 0
 })

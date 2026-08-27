@@ -179,9 +179,17 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 async function loadV4RuntimeConfiguration (configurationFile, context) {
   const production = context?.isProduction ?? context?.production ?? false
 
+  /*
+    The environment the loader treats as real. An embedder can add to it, and can ask for a
+    hermetic runtime that sees none of this process's -- v3 honours both through loadEnv, and a v4
+    runtime that ignored them would quietly hand every worker the parent's environment.
+  */
+  const realEnv = context?.ignoreProcessEnv ? { ...context?.env } : { ...process.env, ...context?.env }
+
   const loaded = await loadV4Configuration({
     cwd: dirname(configurationFile),
     configPath: configurationFile,
+    realEnv,
     command: context?.command ?? (production ? 'start' : 'dev'),
     mode: context?.mode,
     production,
