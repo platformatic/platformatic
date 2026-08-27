@@ -560,10 +560,10 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:275-279": {
-      "sha": "21fa9cbf80648d56",
-      "head": "/* c8 ignore next 3 - Hard to test */",
-      "lines": 5
+    "packages/runtime/index.js:299-302": {
+      "sha": "f05241a09ec2d711",
+      "head": "const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))",
+      "lines": 4
     },
     "packages/runtime/lib/config.js:450-484": {
       "sha": "0640a25e34ebc3fa",
@@ -620,7 +620,7 @@
       "head": "env.PLT_ROOT = root",
       "lines": 1
     },
-    "packages/runtime/test/start/custom-environment.test.js:21-30": {
+    "packages/runtime/test/start/custom-environment.test.js:21-30@5f611ed65^": {
       "sha": "94c22329a53cf908",
       "head": "const { 'serviceApp:0': url } = await app.start()",
       "lines": 10

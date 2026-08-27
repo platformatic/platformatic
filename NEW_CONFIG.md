@@ -2099,7 +2099,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:275-279`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:299-302`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -2872,8 +2872,8 @@ deliberately saner:
   worker (`runtime/lib/runtime.js:2570` pre-`19d8fb98b`, `:2622`), so **application code reading
   `process.env.PLT_ROOT` gets the runtime root** — a different directory from the one
   the same name means in a per-app config, and a value
-  `packages/runtime/test/start/custom-environment.test.js:21-30` asserts application
-  code receives. Removing it is therefore a **worker-environment breaking change**,
+  `packages/runtime/test/start/custom-environment.test.js:21-30` pre-`5f611ed65`
+  asserts application code receives. Removing it is therefore a **worker-environment breaking change**,
   not merely the retirement of an interpolation helper. It was already excluded from
   every generated `.env` (`generators/lib/base-generator.js:243`), so no scaffolded
   project declares it, but any application reading it does lose it. The v4 answer for
