@@ -53,8 +53,18 @@ test('a whole-string placeholder becomes the variable, and a numeric one is coer
   // rather than a silent conversion — the coercion has to be in the emitted source.
   const source = sourceOf({ server: { port: '{PORT}', hostname: '{{HOST}}' } }, '/x/platformatic.service.json')
 
-  match(source, /port: Number\(process\.env\.PORT\)/)
+  // `?? 0` because an unset variable is a state v3 tolerated, and NaN is one v4 refuses.
+  match(source, /port: Number\(process\.env\.PORT \?\? 0\)/)
   match(source, /hostname: process\.env\.HOST/)
+})
+
+test('a literal numeric string is coerced too, because v4 refuses the string', () => {
+  // v3 read `"port": "0"` through a validator with coerceTypes on; v4's is off, so the same value
+  // has to be spelled as a number.
+  const source = sourceOf({ server: { port: '0', hostname: '127.0.0.1' } }, '/x/platformatic.service.json')
+
+  match(source, /port: 0\b/)
+  match(source, /hostname: '127\.0\.0\.1'/)
 })
 
 test('an embedded placeholder becomes a template literal, keeping the surrounding text', () => {

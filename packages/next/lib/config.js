@@ -1,5 +1,4 @@
-import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { transform as basicTransform, loadCapabilityConfiguration, validationOptions } from '@platformatic/basic'
 import { schema } from './schema.js'
 
 export async function transform (config, schema, options) {
@@ -14,13 +13,12 @@ export async function transform (config, schema, options) {
 }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+  return loadCapabilityConfiguration(configOrRoot, sourceOrConfig, context, {
+    schema,
+    scope: import.meta.filename,
+    suffixes: 'application',
     validationOptions,
     transform,
-    replaceEnv: true,
-    root,
-    ...context
+    replaceEnv: true
   })
 }

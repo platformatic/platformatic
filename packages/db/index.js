@@ -1,21 +1,20 @@
-import { resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { loadCapabilityConfiguration, validationOptions } from '@platformatic/basic'
+import { kMetadata } from '@platformatic/foundation'
 import { DatabaseCapability } from './lib/capability.js'
 import { transform } from './lib/config.js'
 import { schema } from './lib/schema.js'
 import { upgrade } from './lib/upgrade.js'
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'db')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+  return loadCapabilityConfiguration(configOrRoot, sourceOrConfig, context, {
+    schema,
+    scope: import.meta.filename,
+    suffixes: 'db',
     validationOptions,
     transform,
     upgrade,
-    replaceEnv: true,
     replaceEnvIgnore: ['$.db.openapi.ignoreRoutes'],
-    root,
-    ...context
+    replaceEnv: true
   })
 }
 

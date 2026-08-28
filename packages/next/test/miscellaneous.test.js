@@ -116,8 +116,7 @@ test('should support standalone mode with custom build command', async t => {
       return contents.replace('{}', '{ output: "standalone"}')
     })
 
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), raw => {
-      const json = JSON.parse(raw)
+    await updateConfigFile(resolve(root, 'services/frontend/watt.config.mjs'), json => {
       json.next ??= {}
       json.next.standalone = true
       // Add custom build command - this triggers the bug
@@ -159,12 +158,9 @@ test('should support Next.js in standalone mode', async t => {
         return contents.replace('{}', '{ output: "standalone"}')
       })
 
-      await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), raw => {
-        const json = JSON.parse(raw)
+      await updateConfigFile(resolve(root, 'services/frontend/watt.config.mjs'), json => {
         json.next ??= {}
         json.next.standalone = true
-
-        return JSON.stringify(json, null, 2)
       })
     }
   })
@@ -177,8 +173,8 @@ test('should support Next.js in standalone mode', async t => {
     recursive: true
   })
   await cp(
-    resolve(root, 'services/frontend/platformatic.application.json'),
-    resolve(root, 'services/frontend-temp/platformatic.application.json')
+    resolve(root, 'services/frontend/watt.config.mjs'),
+    resolve(root, 'services/frontend-temp/watt.config.mjs')
   )
   await safeRemove(resolve(root, 'services/frontend'))
   await rename(resolve(root, 'services/frontend-temp'), resolve(root, 'services/frontend'))

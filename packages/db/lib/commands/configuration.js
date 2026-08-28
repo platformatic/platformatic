@@ -1,4 +1,5 @@
 import { kMetadata, loadConfiguration } from '@platformatic/foundation'
+import { loadApplicationConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
 import { transform } from '../config.js'
 import { schema } from '../schema.js'
 
@@ -15,16 +16,28 @@ import { schema } from '../schema.js'
   commands was calling the loader with `undefined` and failing on "Source missing" before it did
   anything.
 */
-export function resolveCommandConfiguration (configuration, context) {
+export async function resolveCommandConfiguration (configuration, context) {
   const root = context?.application?.path ?? process.cwd()
 
   /*
-    `resolved` only for the object. A path is a file nobody has read yet, so it still needs the full
-    load -- validation for its defaults above all, which is what these commands read
-    `types.autogenerate` and the migrations directory from.
+    A path is a file nobody has read yet, so it is evaluated first -- by the same loader a boot
+    uses, since the file is a program and there is no document to parse. What comes back is the
+    application's validated configuration, which is exactly what the object form already carries,
+    so both forms converge here.
   */
   if (typeof configuration === 'string') {
-    return loadConfiguration(configuration, schema, { transform })
+    const application = await loadApplicationConfigurationFile(configuration, {
+      // This package's own position is the fallback for resolving its schema: an application that
+      // does not carry @platformatic/db in its dependencies is still one these commands run on.
+      runtimeScope: import.meta.filename
+    })
+
+    return loadConfiguration(application.config, schema, {
+      transform,
+      resolved: true,
+      root: application.root,
+      env: application.env
+    })
   }
 
   return loadConfiguration(configuration, schema, { transform, resolved: true, root })

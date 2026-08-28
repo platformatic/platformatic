@@ -195,7 +195,7 @@ test('migrate creates a schema.lock file', async t => {
   const db = await connectDB(connectionInfo)
 
   let found = false
-  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const configPath = getFixturesConfigFileLocation('watt.config.js', ['schemalock'])
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
   try {

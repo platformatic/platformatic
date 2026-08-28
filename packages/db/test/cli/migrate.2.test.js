@@ -13,7 +13,7 @@ test('migrate creates a schema.lock file on a different path', { skip: true }, a
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const configPath = getFixturesConfigFileLocation('watt.config.js', ['schemalock'])
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
   try {
@@ -46,7 +46,7 @@ test('start creates schema.lock if it is missing', { skip: true }, async t => {
 
   let found = false
   const configPathWithoutSchemaLock = getFixturesConfigFileLocation('no-auto-apply.json')
-  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const configPath = getFixturesConfigFileLocation('watt.config.js', ['schemalock'])
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
   await unlink(expectedFile).catch(() => {})
@@ -90,7 +90,7 @@ test('start updates schema.lock with migrations autoApply', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const configPath = getFixturesConfigFileLocation('platformatic.db.json', ['update-schema-lock'])
+  const configPath = getFixturesConfigFileLocation('watt.config.js', ['update-schema-lock'])
   const schemaLockPath = join(dirname(configPath), 'schema.lock')
   await writeFile(schemaLockPath, '[]')
 
@@ -136,7 +136,7 @@ test('migrate does not update an existing schemalock file if no migrations have 
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const configPath = getFixturesConfigFileLocation('watt.config.js', ['schemalock'])
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
   await unlink(expectedFile).catch(() => {})

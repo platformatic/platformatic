@@ -1,5 +1,5 @@
-import { resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { loadCapabilityConfiguration, validationOptions } from '@platformatic/basic'
+import { kMetadata } from '@platformatic/foundation'
 import { TanstackCapability } from './lib/capability.js'
 import { schema } from './lib/schema.js'
 
@@ -11,14 +11,13 @@ import { schema } from './lib/schema.js'
 // }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+  return loadCapabilityConfiguration(configOrRoot, sourceOrConfig, context, {
+    schema,
+    scope: import.meta.filename,
+    suffixes: 'application',
     validationOptions,
     // transform,
-    replaceEnv: true,
-    root,
-    ...context
+    replaceEnv: true
   })
 }
 

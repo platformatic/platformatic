@@ -450,7 +450,7 @@
       "head": "if (typeof this.serverConfig?.port === 'undefined') {",
       "lines": 3
     },
-    "packages/vite/index.js:60-63": {
+    "packages/vite/index.js:59-62": {
       "sha": "af76493a8d93f3a9",
       "head": "const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)",
       "lines": 4
@@ -755,7 +755,7 @@
       "head": "const config = await resolveCommandConfiguration(configuration, context)",
       "lines": 1
     },
-    "packages/basic/lib/config.js:57,67-71": {
+    "packages/basic/lib/config.js:114,124-128": {
       "sha": "450a850ee25fe21a",
       "head": "const patch = workerData?.applicationConfig?.configPatch",
       "lines": 6

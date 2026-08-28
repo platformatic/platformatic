@@ -1493,7 +1493,7 @@ because two of `#hasServer()`'s three inputs come from the application's own cod
 **`vite` has two rows because the package has two capability classes**, and which one
 runs is decided by the configuration, not by the package: `create()` selects
 `ViteSSRCapability` when `vite.ssr.enabled` and `ViteCapability` otherwise
-(`vite/index.js:60-63`). `ViteSSRCapability extends NodeCapability`
+(`vite/index.js:59-62`). `ViteSSRCapability extends NodeCapability`
 (`vite/lib/capability.js:334`), so an SSR Vite application runs Node's startup path
 and inherits Node's uncertainty exactly — its serving state depends on the module's
 `hasServer` and its factory's `isBackgroundApplication`. A single per-package answer
@@ -3268,7 +3268,7 @@ export default {
   and `watch.enabled` falls back to `false` rather than the runtime's watch flag —
   a config that declares `watch` keeps its own value — which is exactly how
   `basic`'s transform already behaves outside a worker
-  (`basic/lib/config.js:57,67-71` optional-chain `workerData`). Commands never self-load config (db's `loadConfiguration` call and
+  (`basic/lib/config.js:114,124-128` optional-chain `workerData`). Commands never self-load config (db's `loadConfiguration` call and
   its `utimesSync` restart hack are deleted; the restart signal is a
   management-API restart when a runtime is running). These evaluations run with
   **`command: 'exec'`** in the config context, defaulting to `mode:

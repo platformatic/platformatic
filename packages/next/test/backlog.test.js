@@ -79,7 +79,7 @@ for (const [env, options] of Object.entries(envs)) {
           return contents.replace('$PREFIX', '/frontend')
         })
 
-        await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), config => {
+        await updateConfigFile(resolve(root, 'services/frontend/watt.config.mjs'), config => {
           config.server ??= {}
           config.server.backlog = 100
         })

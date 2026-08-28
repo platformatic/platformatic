@@ -144,3 +144,8 @@ export const DuplicateAutoloadedApplicationIdError = createError(
   `${ERROR_PREFIX}_DUPLICATE_AUTOLOADED_APPLICATION_ID`,
   'The autoloaded directories %s and %s both resolve to the application id "%s". Give one of them an explicit id through autoload.mappings, or rename its package.'
 )
+
+export const NotASingleApplicationError = createError(
+  `${ERROR_PREFIX}_NOT_A_SINGLE_APPLICATION`,
+  '%s describes %s applications (%s). A capability command reads one application, so name its configuration file instead of the root.'
+)

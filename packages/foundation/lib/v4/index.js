@@ -2,6 +2,7 @@
 // configuration machinery, and it shares nothing with it: the v3 parsers, replaceEnv, the YAML
 // pre-pass, strictEnv and the $schema URL machinery move into wattpm-utils as migrate's private
 // legacy reader. Only deliberately-kept pieces are carried over, each by explicit decision.
+export * from './application.js'
 export * from './canonicalize.js'
 export * from './capability-resolution.js'
 export * from './classify.js'

@@ -79,6 +79,19 @@ function convertString (value, key) {
   INTERPOLATION.lastIndex = 0
 
   if (!INTERPOLATION.test(value)) {
+    /*
+      A literal `"0"` where the schema wants a number. v3 coerced it on the way in -- its validator
+      runs with coerceTypes -- and v4's does not, so the string that used to work is now a
+      validation error. The value is the same either way; only its spelling was a v3 convenience.
+    */
+    if (NUMERIC_PROPERTIES.has(key) && /^-?\d+(\.\d+)?$/.test(value)) {
+      return Number(value)
+    }
+
+    if (BOOLEAN_PROPERTIES.has(key) && (value === 'true' || value === 'false')) {
+      return value === 'true'
+    }
+
     return value
   }
 
@@ -327,39 +340,24 @@ export function needsExplicitPort (module, config) {
   was for -- and the conversion would be to a format that version never had.
 */
 /*
-  What is left of the fixtures whose applications contribute CLI commands. db's commands take the
-  configuration as data now, so the ones that were waiting on that contract are converted; these
-  two wait on something else, named beside each.
+  Empty: a capability command pointed at a file evaluates it with the v4 loader now, the same one a
+  boot uses, so the fixtures its tests name are ordinary v4 configurations.
 */
-const COMMAND_FIXTURES = [
-  // db's type generation is a capability CLI command, and it reads its configuration with the v3
-  // loader for the same reason createCommands does.
-  'db/test/fixtures/gen-types/',
-  'db/test/fixtures/gen-types-dir/',
-  'db/test/fixtures/auto-gen-types/',
-  'db/test/fixtures/auto-gen-types-dir/',
-  'db/test/fixtures/auto-gen-types-no-plugin/',
-  'db/test/fixtures/chars-gen-types/'
-]
+const COMMAND_FIXTURES = []
 
 /*
-  Fixtures a capability's own create() reads. Every capability still loads its configuration
-  through the v3 reader, which knows json, yaml and toml -- so these convert when createCommands
-  and create take { root, config } with the rest of the capability work.
+  A capability's own create() evaluates a v4 file with the loader a boot uses, so the fixtures it
+  reads are ordinary v4 configurations. What remains is one file that is not a fixture directory's
+  configuration at all.
 */
 const CAPABILITY_FIXTURES = [
-  'runtime/fixtures/no-env.service.json',
-  // Not under a fixtures directory, which is why the first sweep for this family missed it.
-  'gateway/test/logger/',
-  // Reached through a start executable that calls the capability's own create().
-  'db/test/fixtures/update-schema-lock/',
-  'db/test/fixtures/logger/',
-  'db/test/fixtures/sqlite/',
-  'db/test/fixtures/sqlite-basic/',
-  'service/test/fixtures/directories/',
-  'service/test/fixtures/hello/',
-  'service/test/fixtures/logger-options/',
-  'service/test/fixtures/nested-directories/'
+  /*
+    A loose file directly under the runtime's fixtures root, named for the test that passes it.
+    Converting it in place would put a `watt.config.js` at the top of a tree holding a few hundred
+    other fixtures, and every one of them would then be an application of *that* configuration --
+    so it stays until something reads it again, which nothing currently does.
+  */
+  'runtime/fixtures/no-env.service.json'
 ]
 
 /*

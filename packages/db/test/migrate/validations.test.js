@@ -19,7 +19,7 @@ test('missing connectionString', async t => {
   const context = createTestContext()
 
   await assert.rejects(async () => {
-    await applyMigrations(logger, getFixturesConfigFileLocation('no-connectionString.json'), [], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['no-connection-string']), [], context)
   })
 })
 
@@ -34,7 +34,7 @@ test('missing migrations', async t => {
 
   process.env.DATABASE_URL = connectionInfo.connectionString
   await assert.rejects(async () => {
-    await applyMigrations(logger, getFixturesConfigFileLocation('no-migrations.json'), [], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['no-migrations']), [], context)
   })
 })
 
@@ -49,7 +49,7 @@ test('missing migrations.dir', async t => {
 
   process.env.DATABASE_URL = connectionInfo.connectionString
   await assert.rejects(async () => {
-    await applyMigrations(logger, getFixturesConfigFileLocation('no-migrations-dir.json'), [], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['no-migrations-dir']), [], context)
   })
 })
 
@@ -64,7 +64,7 @@ test('not applied migrations', async t => {
 
   process.env.DATABASE_URL = connectionInfo.connectionString
   await assert.rejects(async () => {
-    await applyMigrations(logger, getFixturesConfigFileLocation('bad-migrations.json'), [], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['bad-migrations-config']), [], context)
   })
 })
 
@@ -78,7 +78,7 @@ test('friendly error when a migration contains invalid SQL', async t => {
   const context = createTestContext()
 
   process.env.DATABASE_URL = connectionInfo.connectionString
-  await applyMigrations(logger, getFixturesConfigFileLocation('bad-migrations.json'), [], context)
+  await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['bad-migrations-config']), [], context)
 
   const output = logger.getCaptured()
   assert.match(output, /Unable to apply migration 002\.do\.sql/)

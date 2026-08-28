@@ -1,5 +1,5 @@
-import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { loadCapabilityConfiguration, transform as basicTransform, validationOptions } from '@platformatic/basic'
+import { kMetadata } from '@platformatic/foundation'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ServiceCapability } from './lib/capability.js'
@@ -38,15 +38,14 @@ export async function transform (config, schema, options) {
 }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'service')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+  return loadCapabilityConfiguration(configOrRoot, sourceOrConfig, context, {
+    schema,
+    scope: import.meta.filename,
+    suffixes: 'service',
     validationOptions,
     transform,
     upgrade,
-    replaceEnv: true,
-    root,
-    ...context
+    replaceEnv: true
   })
 }
 
