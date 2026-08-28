@@ -65,11 +65,25 @@ test('attach x-plt-telemetry-id header', async t => {
 })
 
 test('disabled telemetry', async t => {
-  const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
+  /*
+    The same configuration file as the enabled case, with the variable it reads set. v3 kept a
+    second file beside the first that differed in one key; v4 allows one configuration per
+    directory, and a configuration is a program that can read its environment.
+  */
+  const configFile = configurationFileIn(join(fixturesDir, 'telemetry'))
+  const previous = process.env.PLT_TELEMETRY_ENABLED
+  process.env.PLT_TELEMETRY_ENABLED = 'false'
+
   const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
+
+    if (previous === undefined) {
+      delete process.env.PLT_TELEMETRY_ENABLED
+    } else {
+      process.env.PLT_TELEMETRY_ENABLED = previous
+    }
   })
 
   const { 'echo:0': entryUrl } = await app.start()

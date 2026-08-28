@@ -376,7 +376,27 @@ const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-
   only inside migrate's legacy reader -- so the fixtures that exercise them stay with the v3 loader
   that still implements them.
 */
-const LEGACY_FEATURE_FIXTURES = ['runtime/fixtures/configs/monorepo-strict-env/']
+/*
+  And the fixtures that exist to be read *by the v3 loader*. `Controller` reads a configuration file
+  with it, and `wrapInRuntimeConfig` -- which v4 deletes -- is exercised against these directly, so
+  a v4 file here is not read by anything and the v3 file it replaced is what the test opens by name.
+  `service-app-throws-v3` says so in its own name: it is a copy of another fixture made precisely
+  because one directory cannot serve both loaders.
+
+  They convert when the machinery that reads them goes.
+*/
+const LEGACY_FEATURE_FIXTURES = [
+  'runtime/fixtures/configs/monorepo-strict-env/',
+  'runtime/fixtures/custom-argv/',
+  'runtime/fixtures/dbApp/',
+  'runtime/fixtures/dbAppNoName/',
+  'runtime/fixtures/dbAppNoPackageJson/',
+  'runtime/fixtures/dbAppWithMigrationError/',
+  'runtime/fixtures/env-config/',
+  'runtime/fixtures/env-service/',
+  'runtime/fixtures/service-app-throws-v3/',
+  'runtime/fixtures/wrapped-runtime/'
+]
 
 const FORMAT_FIXTURES = [
   'db/test/fixtures/auto-config/',

@@ -286,3 +286,87 @@ export function appendApplications (source, entries, resolveEntry = entry => ent
 export function listedApplications (config) {
   return applicationListKeys.flatMap(candidate => config?.[candidate] ?? [])
 }
+
+/*
+  The environment variable an expression reads, if it reads one.
+
+  `process.env.NAME` is the bare form; `process.env.NAME ?? ''` and `process.env.NAME || 3042` are
+  what a writer emits when the position needs a fallback. All three name the same variable, and the
+  fallback is not part of the name.
+*/
+function environmentReference (node) {
+  if (!node) {
+    return null
+  }
+
+  if (node.type === 'LogicalExpression') {
+    return environmentReference(node.left)
+  }
+
+  if (node.type !== 'MemberExpression' || node.property?.type !== 'Identifier') {
+    return null
+  }
+
+  const { object } = node
+
+  if (object?.type !== 'MemberExpression' || object.object?.name !== 'process' || object.property?.name !== 'env') {
+    return null
+  }
+
+  return node.property.name
+}
+
+function collectEnvironmentReferences (node, path, found) {
+  if (!node) {
+    return
+  }
+
+  if (node.type === 'ObjectExpression') {
+    for (const property of node.properties) {
+      const key = property.key?.name ?? property.key?.value
+
+      if (key !== undefined) {
+        collectEnvironmentReferences(property.value, [...path, key], found)
+      }
+    }
+
+    return
+  }
+
+  if (node.type === 'ArrayExpression') {
+    node.elements.forEach((element, index) => collectEnvironmentReferences(element, [...path, index], found))
+    return
+  }
+
+  const name = environmentReference(node)
+
+  if (name) {
+    found.set(path.join('.'), name)
+  }
+}
+
+/*
+  Which values in a configuration come from the environment, by their path in it.
+
+  A v3 configuration said this in its data: `"port": "{PORT}"` survives being read as JSON. A v4
+  configuration says it in its code, and reading the file gives you the value the expression
+  produced -- `undefined`, for a variable that is not set in the process doing the reading. So a
+  tool that needs to know *which* variable a setting reads has to look at the source.
+*/
+export function readEnvironmentReferences (source) {
+  const { $ast: ast } = parseModule(source)
+  const found = new Map()
+
+  const declaration = ast.body.find(node => node.type === 'ExportDefaultDeclaration')?.declaration
+
+  if (!declaration) {
+    return found
+  }
+
+  // The plain-object form exports the configuration; a factory or `defineConfig` passes it along.
+  const configuration = declaration.type === 'CallExpression' ? declaration.arguments[0] : declaration
+
+  collectEnvironmentReferences(configuration, [], found)
+
+  return found
+}

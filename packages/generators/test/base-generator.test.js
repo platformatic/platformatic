@@ -757,18 +757,18 @@ test('on update should just touch the packages configuration', async t => {
   await bg.prepare()
 
   equal(bg.files.length, 1)
-  equal(bg.files[0].file, 'platformatic.json')
+  equal(bg.files[0].file, 'watt.config.js')
   equal(bg.files[0].path, '')
 
-  const configFileContents = JSON.parse(bg.files[0].contents)
-  deepEqual(configFileContents.plugins.packages, [
-    {
-      name: '@fastify/foo-plugin',
-      options: {
-        name: '{FST_PLUGIN_FOO_FOOBAR}'
-      }
-    }
-  ])
+  /*
+    Edited in place rather than re-emitted, so the rest of the file is untouched -- including the
+    comment at the top, which a rewrite would drop.
+  */
+  const contents = bg.files[0].contents
+  ok(contents.startsWith('// Converted from v3 JSON'), contents)
+  ok(contents.includes("name: '@fastify/foo-plugin'"), contents)
+  ok(contents.includes('name: process.env.FST_PLUGIN_FOO_FOOBAR'), contents)
+  ok(contents.includes("path: './plugins'"), contents)
   deepEqual(bg.config.dependencies, {
     '@fastify/foo-plugin': '1.42.0'
   })
@@ -801,11 +801,16 @@ test('on update should just touch the packages configuration', async t => {
   await bg.prepare()
 
   equal(bg.files.length, 1)
-  equal(bg.files[0].file, 'platformatic.json')
+  equal(bg.files[0].file, 'watt.config.js')
   equal(bg.files[0].path, '')
 
-  const configFileContents = JSON.parse(bg.files[0].contents)
-  equal(configFileContents.plugins, undefined)
+  /*
+    The application had no `plugins` block, and the added package is recorded in one. v3 wrote
+    nothing here -- adding a package to a configuration that declared none silently did not happen.
+  */
+  const contents = bg.files[0].contents
+  ok(contents.includes("name: '@fastify/foo-plugin'"), contents)
+  ok(contents.includes('name: process.env.FST_PLUGIN_FOO_FOOBAR'), contents)
   deepEqual(bg.config.dependencies, {
     '@fastify/foo-plugin': '1.42.0'
   })

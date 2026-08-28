@@ -16,10 +16,10 @@ import {
   convertApplicationNameToPrefix,
   equivalentSource,
   findAnyConfigurationFile,
+  readEnvironmentReferences,
   readEnvFile,
   envStringToObject,
   extractEnvVariablesFromText,
-  flattenObject,
   getApplicationTemplateFromSchemaUrl,
   getLatestNpmVersion,
   getPackageConfigurationObject,
@@ -653,28 +653,36 @@ class BaseGenerator extends FileGenerator {
     )
     const runtimeEnv = envStringToObject(await readFile(join(runtimeRootPath, '.env'), 'utf-8'))
     const applicationNamePrefix = convertApplicationNameToPrefix(applicationName)
+    /*
+      Which options read the environment, taken from the source rather than from the loaded value.
+      A v3 configuration carried `"{PLT_X}"` in its data and survived being read as JSON; a v4 one
+      says `process.env.PLT_X` in its code, and reading it here gives whatever that produced in
+      *this* process -- `undefined`, since these are the scaffolded application's variables and not
+      ours. The name is in the file, so that is where it is read from.
+    */
+    const applicationConfigurationFile = join(applicationRoot, await findAnyConfigurationFile(applicationRoot))
+    const environmentReferences = readEnvironmentReferences(await readFile(applicationConfigurationFile, 'utf-8'))
     const plugins = []
     if (applicationPkgJsonFileData.plugins && applicationPkgJsonFileData.plugins.packages) {
-      for (const pkg of applicationPkgJsonFileData.plugins.packages) {
-        const flattened = flattenObject(pkg)
+      for (const [index, pkg] of applicationPkgJsonFileData.plugins.packages.entries()) {
         const output = {
-          name: flattened.name,
+          name: pkg.name,
           options: []
         }
-        if (pkg.options) {
-          Object.entries(flattened)
-            .filter(([key, value]) => key.indexOf('options.') === 0 && flattened[key].startsWith('{PLT_'))
-            .forEach(([key, value]) => {
-              const runtimeEnvVarKey = value.replace(/[{}]/g, '')
-              const applicationEnvVarKey = runtimeEnvVarKey.replace(`PLT_${applicationNamePrefix}_`, '')
-              const option = {
-                name: applicationEnvVarKey,
-                path: key.replace('options.', ''),
-                type: 'string',
-                value: runtimeEnv[runtimeEnvVarKey]
-              }
-              output.options.push(option)
-            })
+
+        const prefix = `plugins.packages.${index}.options.`
+
+        for (const [path, runtimeEnvVarKey] of environmentReferences) {
+          if (!path.startsWith(prefix)) {
+            continue
+          }
+
+          output.options.push({
+            name: runtimeEnvVarKey.replace(`PLT_${applicationNamePrefix}_`, ''),
+            path: path.slice(prefix.length),
+            type: 'string',
+            value: runtimeEnv[runtimeEnvVarKey]
+          })
         }
 
         plugins.push(output)
