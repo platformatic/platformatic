@@ -42,7 +42,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 */
 const documents = [
   { name: 'NEW_CONFIG.md', markEverything: true },
-  { name: 'docs/guides/migrate-runtime-v4.md', markEverything: false }
+  { name: 'docs/guides/migrate-runtime-v4.md', markEverything: false },
+  { name: 'docs/file-formats.md', markEverything: false }
 ]
 
 const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])
