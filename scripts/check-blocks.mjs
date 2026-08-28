@@ -43,7 +43,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const documents = [
   { name: 'NEW_CONFIG.md', markEverything: true },
   { name: 'docs/guides/migrate-runtime-v4.md', markEverything: false },
-  { name: 'docs/file-formats.md', markEverything: false }
+  { name: 'docs/file-formats.md', markEverything: false },
+  { name: 'docs/reference/runtime/_shared-configuration.md', markEverything: false }
 ]
 
 const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])
@@ -253,18 +254,21 @@ async function loadConfigBlock (file, nested, env) {
     return
   }
 
-  const { loadConfiguration } = await import(pathToFileURL(join(root, 'packages/foundation/lib/v4/load.js')).href)
+  /*
+    The runtime's loader rather than foundation's. Foundation's is the eval worker's shape check,
+    which deliberately injects nothing and does not apply the runtime schema -- so it accepted
+    `strictEnv`, a key v4 removed, and a block using it read as verified. This is the load a boot
+    performs.
+  */
+  const { loadConfiguration } = await import(pathToFileURL(join(root, 'packages/runtime/index.js')).href)
+  const previous = process.env
+  process.env = realEnv
 
-  await loadConfiguration({
-    cwd: dirname(file),
-    configPath: file,
-    realEnv,
-    command: 'start',
-    production: false,
-    runtimeScope: join(root, 'packages/runtime/index.js'),
-    onWarning () {},
-    onInfo () {}
-  })
+  try {
+    await loadConfiguration(file)
+  } finally {
+    process.env = previous
+  }
 }
 
 function validateV3 (content) {
@@ -423,7 +427,12 @@ async function checkDocument (name, documentIndex, blocks, failures, typecheckab
       }
     } catch (error) {
       if (!block.refused) {
-        failures.push(`${name}:${block.line}: ${error.message.split('\n')[0]}`)
+        /*
+          Three lines rather than one: a schema failure says "does not validate against the
+          @platformatic/runtime schema:" and then lists what was wrong, so the first line alone
+          names the block without saying anything about it.
+        */
+        failures.push(`${name}:${block.line}: ${error.message.split('\n').slice(0, 3).join(' ').trim()}`)
       }
     }
   }
