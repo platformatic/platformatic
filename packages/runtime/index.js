@@ -8,7 +8,6 @@ import {
   loadConfiguration as utilsLoadConfiguration
 } from '@platformatic/foundation'
 import {
-  isConfigurationFileName,
   findDecidingFile,
   isProductionCommand,
   LegacyConfigurationFileError,
@@ -19,7 +18,7 @@ import {
 import closeWithGrace from 'close-with-grace'
 import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
-import { basename, dirname, resolve as resolvePath } from 'node:path'
+import { dirname, resolve as resolvePath } from 'node:path'
 import { transform as v3Transform, transformV4 } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
@@ -414,7 +413,14 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return runtime
 }
 
-export { prepareApplication } from './lib/config.js'
+/*
+  The one entry point for an application added while the runtime is running -- what an extension
+  calls before `addApplications`. It replaces the exported `prepareApplication`, which is the v3
+  half of the same job: under v4 an added application has to be evaluated the way boot evaluates
+  one, and an entry that skips that arrives without `resolvedConfig` and fails as an unhelpful
+  "unable to initialize the worker".
+*/
+export { prepareAddedApplications } from './lib/config.js'
 
 /*
   The exported transform dispatches on the dialect. Callers wrap it -- they call it and then adjust

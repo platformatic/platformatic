@@ -3,7 +3,7 @@ export default {
   module: '@platformatic/service',
   server: {
     hostname: '127.0.0.1',
-    port: Number(process.env.PORT),
+    port: Number(process.env.PORT ?? 0),
     logger: {
       level: 'info'
     }

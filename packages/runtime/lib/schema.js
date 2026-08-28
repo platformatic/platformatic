@@ -90,8 +90,13 @@ export const schema = platformaticRuntimeSchema
   loader reads it for version detection and strips it before validation. The schema refusing it is
   what makes the strip load-bearing rather than decorative — a stamp that reached AJV would mean the
   loader had skipped the step that checks the file is not a v3 one.
+
+  `verticalScaler` is the deprecated spelling of `workers`, kept on the v3 schema with a transform
+  that migrates it. v4 has one spelling: a configuration that still says `verticalScaler` is told
+  so by the schema rather than being quietly rewritten, which is the only way the two cannot
+  disagree about which of them a project meant.
 */
-const removedInV4 = ['envfile', 'strictEnv', '$schema']
+const removedInV4 = ['envfile', 'strictEnv', '$schema', 'verticalScaler']
 
 const { ...v4Properties } = platformaticRuntimeSchema.properties
 

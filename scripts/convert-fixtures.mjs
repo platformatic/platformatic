@@ -89,7 +89,12 @@ function convertString (value, key) {
     const read = `process.env.${whole[1]}`
 
     if (NUMERIC_PROPERTIES.has(key)) {
-      return new Expression(`Number(${read})`)
+      /*
+        `?? 0` because an unset variable is a state v3 tolerated: a `{{PORT}}` nobody set resolved
+        to an empty string and the runtime assigned a port. `Number(undefined)` is NaN, which the
+        canonicalizer refuses -- so the fixture would stop loading rather than pick a port.
+      */
+      return new Expression(`Number(${read} ?? 0)`)
     }
 
     if (BOOLEAN_PROPERTIES.has(key)) {

@@ -15,15 +15,14 @@ export default {
   logger: {
     level: 'debug'
   },
-  verticalScaler: {
-    enabled: true,
-    maxWorkers: 2,
-    maxTotalWorkers: 10,
+  workers: {
+    dynamic: true,
+    minimum: 1,
+    maximum: 2,
+    total: 10,
     scaleUpELU: 0.1,
     scaleDownELU: 0.2,
-    timeWindowSec: 1,
-    scaleIntervalSec: 3,
     gracePeriod: 5000,
-    cooldownSec: 5
+    cooldown: 5000
   }
 }

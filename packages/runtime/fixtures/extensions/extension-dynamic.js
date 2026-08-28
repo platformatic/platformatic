@@ -1,4 +1,4 @@
-import { prepareApplication } from '../../index.js'
+import { prepareAddedApplications } from '../../index.js'
 
 export default function setup ({ runtime }) {
   const events = (globalThis.__pltExtensionEvents ??= [])
@@ -15,15 +15,9 @@ export default function setup ({ runtime }) {
       events.push({ event: 'start', extension: name })
 
       const config = runtime.getRuntimeConfig(true)
-      await runtime.addApplications(
-        [
-          await prepareApplication(config, {
-            id: 'b',
-            path: '../services/b'
-          })
-        ],
-        true
-      )
+      const prepared = await prepareAddedApplications(config, [{ id: 'b', path: '../services/b' }])
+
+      await runtime.addApplications(prepared, true)
 
       events.push({ event: 'dynamic-started', application: 'b' })
     },

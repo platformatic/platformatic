@@ -32,7 +32,7 @@ export default {
   },
   server: {
     hostname: process.env.PLT_SERVER_HOSTNAME,
-    port: Number(process.env.PORT),
+    port: Number(process.env.PORT ?? 0),
     logger: {
       level: process.env.PLT_SERVER_LOGGER_LEVEL
     }

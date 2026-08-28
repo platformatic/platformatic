@@ -3,6 +3,6 @@ export default {
   module: '@platformatic/gateway',
   server: {
     hostname: '127.0.0.1',
-    port: Number(process.env.PORT)
+    port: Number(process.env.PORT ?? 0)
   }
 }

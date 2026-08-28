@@ -11,10 +11,11 @@ export default {
     ]
   },
   runtime: {
-    verticalScaler: {
-      enabled: true,
-      maxWorkers: 2,
-      maxTotalWorkers: 10
+    workers: {
+      dynamic: true,
+      minimum: 1,
+      maximum: 2,
+      total: 10
     }
   },
   server: {

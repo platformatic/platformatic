@@ -13,9 +13,11 @@ export default {
   health: {
     enabled: false
   },
-  verticalScaler: {
-    enabled: true,
-    gracePeriod: 1000,
-    maxTotalWorkers: 10
+  workers: {
+    dynamic: true,
+    minimum: 1,
+    maximum: 10,
+    total: 10,
+    gracePeriod: 1000
   }
 }
