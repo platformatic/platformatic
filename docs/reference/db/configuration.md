@@ -2,7 +2,9 @@ import Issues from '../../getting-started/issues.md';
 
 # Configuration
 
-Platformatic DB can be configured with a [configuration file](#configuration-file) in the different file formats below. The DB also support the use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
+Platformatic DB is configured with a `watt.config.ts`. The file is a module that exports its
+configuration, so it reads [environment variables](../service/configuration.md#environment-variables)
+directly.
 
 ## Supported File Formats
 
@@ -28,22 +30,21 @@ A **required** object with the following settings:
 
 - **`connectionString`** (**required**, `string`) — Specifies the URL for database connection.
 
-```json title="Example"
+```plaintext title="Example"
 postgres://user:password@my-database:5432/db-name
 ```
 
 - **`schema`** (array of `string`) - Defines the database schemas, only supported for PostgreSQL. Defaults to 'public' if unspecified.
 
-```json title="Example Object"
-  "db": {
-    "connectionString": "(...)",
-    "schema": [
-      "schema1", "schema2"
-    ],
-    ...
+```ts config title="Example Object"
+import { db } from '@platformatic/db'
 
-  },
-
+export default db({
+  db: {
+    connectionString: 'postgres://user:password@my-database:5432/db-name',
+    schema: ['schema1', 'schema2']
+  }
+})
 ```
 
 - Platformatic DB supports MySQL, MariaDB, PostgreSQL and SQLite.
@@ -51,228 +52,259 @@ postgres://user:password@my-database:5432/db-name
 
   Enables GraphQL support
 
-  ```json
-  {
-    "db": {
-      ...
-      "graphql": true
+  ```ts config
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      graphql: true,
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   Enables GraphQL support with the `enabled` option
 
-  ```json
-  {
-    "db": {
-      ...
-      "graphql": {
-        ...
-        "enabled": true
-      }
+  ```ts config
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      graphql: {
+        enabled: true
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   Enables GraphQL support with GraphiQL
 
-  ```json
-  {
-    "db": {
-      ...
-      "graphql": {
-        "graphiql": true
-      }
+  ```ts config
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      graphql: {
+        graphiql: true
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   It's possible to selectively ignore entities:
 
-  ```json
-  {
-    "db": {
-      ...
-      "graphql": {
-        "ignore": {
-          "categories": true
+  ```ts config
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      graphql: {
+        ignore: {
+          categories: true
         }
-      }
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   It's possible to selectively ignore fields:
 
-  ```json
-  {
-    "db": {
-      ...
-      "graphql": {
-        "ignore": {
-          "categories": {
-            "name": true
+  ```ts config
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      graphql: {
+        ignore: {
+          categories: {
+            name: true
           }
         }
-      }
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   It's possible to add a custom GraphQL schema during the startup:
 
-  ```json
-  {
-    "db": {
-      ...
-      "graphql": {
-        "schemaPath": "path/to/schema.graphql"
-        }
+  ```ts config
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      connectionString: 'sqlite://./db.sqlite',
+      graphql: {
+        schemaPath: 'path/to/schema.graphql'
       }
     }
-  }
+  })
   ```
 
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
-  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `prefix` property can be passed to set the OpenAPI prefix.
+  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `swaggerPrefix` property can be passed to set the base URL of the OpenAPI documentation.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
   Enables OpenAPI
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": true
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: true,
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   Enables OpenAPI using the `enabled` option
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        ...
-        "enabled": true
-      }
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        enabled: true
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   Enables OpenAPI with prefix
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        "prefix": "/api"
-      }
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        prefix: '/api'
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   Enables OpenAPI with options
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        "info": {
-          "title": "Platformatic DB",
-          "description": "Exposing a SQL database as REST"
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        info: {
+          title: 'Platformatic DB',
+          version: '1.0.0',
+          description: 'Exposing a SQL database as REST'
         }
-      }
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
   We're adding a Bearer token in the form of a [JWT](./authorization/strategies.md#json-web-token-jwt) in the code block below:
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        ...
-        "security": [{ "bearerAuth": [] }],
-        "components": {
-          "securitySchemes": {
-            "bearerAuth": {
-              "type": "http",
-              "scheme": "bearer",
-              "bearerFormat": "JWT"
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        security: [
+          {
+            bearerAuth: []
+          }
+        ],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT'
             }
           }
         }
-      }
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   You can selectively ignore entities:
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        "ignore": {
-          "categories": true
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        ignore: {
+          categories: true
         }
-      }
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   Selectively ignore fields:
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        "ignore": {
-          "categories": {
-            "name": true
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        ignore: {
+          categories: {
+            name: true
           }
         }
-      }
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   You can disable all reverse relationship and FK-navigation routes (e.g. `GET /owners/{id}/posts`, `GET /posts/{id}/owner`) with a single option:
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        "ignoreAllReverseRoutes": true
-      }
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        ignoreAllReverseRoutes: true
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   You can explicitly identify tables to build an entity, **however all other tables will be ignored**:
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "openapi": {
-        "include": {
-          "categories": true
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      openapi: {
+        include: {
+          categories: true
         }
-      }
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
 - **`autoTimestamp`** (`boolean` or `object`) - Generate timestamp automatically when inserting/updating records.
@@ -289,89 +321,100 @@ postgres://user:password@my-database:5432/db-name
 
 - **`limit`** (`object`) - Set the default and max limit for pagination. Default is 10, max is 1000.
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "limit": {
-        "default": 10,
-        "max": 1000
-      }
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      limit: {
+        default: 10,
+        max: 1000
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
 - **`ignore`** (`object`) — Key/value object that defines which database tables should not be mapped as API entities.
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "ignore": {
-        "versions": true // "versions" table will be not mapped with GraphQL/REST APIs
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      connectionString: 'sqlite://./db.sqlite',
+      ignore: {
+        versions: true // the "versions" table is not mapped to GraphQL/REST APIs
       }
     }
-  }
+  })
   ```
 
 - **`include`** (`object`) — Key/value object that defines which entities should be exposed.
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "include": {
-        "version": true
-      }
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      include: {
+        version: true
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
 - **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
   - `enabled`: Set to `true` to activate event publishing, which support for GraphQL Subscription over WebSocket using an in-process message broker.
   - Custom Broker: To use an external message broker, such as Valkey, provide the connection string as shown in the example below.
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "events": {
-        ...
-        "enabled": true,
-         "connectionString": "valkey://:password@valkeyhost.com:6380/"
-      }
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      events: {
+        enabled: true,
+        connectionString: 'valkey://:password@valkeyhost.com:6380/'
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
 - **`schemalock`** (`boolean` or `object`, default: `false`) — Controls the caching of the database schema on disk.
   Enabling this feature (`true`) saves the database schema metadata in a `schema.lock` file, ensuring faster startup times and consistent schema enforcement across sessions. You can also customize the storage location of the `schema.lock` file by providing a specific file path:
 
-  ```json title="Example Object"
-  {
-    "db": {
-      ...
-      "schemalock": {
-        "path": "./dbmetadata"
-      }
+  ```ts config title="Example Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      schemalock: {
+        path: './dbmetadata'
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   Starting Platformatic DB or running a migration will automatically create the schemalock file.
 
   Set `readOnly` to `true` (or the string `"true"`) to load the schema lock without ever writing it back, e.g. when the file is checked into version control and must not be rewritten at runtime:
 
-  ```json title="Example Read-Only Object"
-  {
-    "db": {
-      ...
-      "schemalock": {
-        "path": "./schema.lock",
-        "readOnly": true
-      }
+  ```ts config title="Example Read-Only Object"
+  import { db } from '@platformatic/db'
+
+  export default db({
+    db: {
+      schemalock: {
+        path: './schema.lock',
+        readOnly: true
+      },
+      connectionString: 'sqlite://./db.sqlite'
     }
-  }
+  })
   ```
 
   In read-only mode the file is never created or updated, not even when migrations are applied automatically.
@@ -395,8 +438,9 @@ An optional object with the following settings:
 
 - `adminSecret` (`string`): A secret that should be sent in an
   `x-platformatic-admin-secret` HTTP header when performing GraphQL/REST API
-  calls. Use an [environment variable placeholder](#environment-variable-placeholders)
-  to securely provide the value for this setting.
+  calls. Read it from the
+  [environment](../service/configuration.md#environment-variables) rather than writing it into the
+  file.
 - `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration)
 - `rolePath` (`string`): The name of the dot-separated path in user
   metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
@@ -406,8 +450,9 @@ An optional object with the following settings:
   can be passed in this object.
   - `secret` (required, `string` or `object`): The secret key that the JWT was signed with.
     See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#secret-required)
-    for accepted string and object values. Use an [environment variable placeholder](#environment-variable-placeholders)
-    to securely provide the value for this setting.
+    for accepted string and object values. Read it from the
+    [environment](../service/configuration.md#environment-variables) rather than writing it into the
+    file.
   - `jwks` (`boolean` or `object`): Configure authorization with JSON Web Key Sets (JWKS). See the [JWKS documentation](../db/authorization/strategies.md#json-web-key-sets-jwks).
   - `namespace` (`string`): Configure a [JWT Custom Claim Namespace](../db/authorization/strategies.md#jwt-custom-claim-namespace) to
     avoid name collisions.
@@ -425,17 +470,20 @@ operations are allowed unless `adminSecret` is passed.
 
 #### Example
 
-```json title="platformatic.db.json"
-{
-  "authorization": {
-    "jwt": {
-      "secret": "{PLT_AUTHORIZATION_JWT_SECRET}"
+```ts config
+import { db } from '@platformatic/db'
+
+export default db({
+  authorization: {
+    jwt: {
+      secret: process.env.PLT_AUTHORIZATION_JWT_SECRET ?? ''
     },
-    "rules": [
-       ...
-    ]
+    rules: []
+  },
+  db: {
+    connectionString: 'sqlite://./db.sqlite'
   }
-}
+})
 ```
 
 ## Setting and Using ENV placeholders
@@ -452,19 +500,21 @@ The example below is a basic setup for Platformatic DB using a local SQLite data
 
 The server is configured to listen on `http://127.0.0.1:3042`:
 
-```json
-{
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": "3042"
+```ts config
+import { db } from '@platformatic/db'
+
+export default db({
+  server: {
+    hostname: '127.0.0.1',
+    port: '3042'
   },
-  "db": {
-    "connectionString": "sqlite://./db.sqlite",
-    "graphiql": true,
-    "openapi": true,
-    "graphql": true
+  db: {
+    connectionString: 'sqlite://./db.sqlite',
+    graphiql: true,
+    openapi: true,
+    graphql: true
   }
-}
+})
 ```
 
 <Issues />
