@@ -10,7 +10,8 @@ import {
   loadConfigurationFile,
   searchJavascriptFiles
 } from '@platformatic/foundation'
-import { ImportGenerator } from '@platformatic/generators'
+import { isLegacyConfigurationFileName } from '@platformatic/foundation/lib/v4/index.js'
+import { findAnyConfigurationFile, ImportGenerator } from '@platformatic/generators'
 import { execa } from 'execa'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
@@ -259,6 +260,22 @@ export async function createApplication (
     then the v4-aware one -- which is what finds a project this wizard scaffolded, since a
     `watt.config.*` is invisible to the other.
   */
+  /*
+    Wrapping an application leaves a v4 configuration in the application's own directory, and v3
+    recognised that state by the `runtime` block it used to nest inside it. v4 has no such block --
+    those settings are the root's own -- so the signal is a v4 configuration sitting beside the
+    sources, which has to be read before the runtime lookup below claims the directory as an
+    ordinary project.
+  */
+  const wrapped = await findAnyConfigurationFile(projectDir)
+
+  if (wrapped && !isLegacyConfigurationFileName(wrapped) && (await findApplicationRoot(projectDir))) {
+    const { label } = await detectApplicationType(projectDir)
+
+    await say(`The ${label} application has already been wrapped into Watt.`)
+    return
+  }
+
   const runtimeConfigFile =
     (await findConfigurationFileRecursive(projectDir, null, '@platformatic/runtime')) ??
     (await findRuntimeConfigurationFile(logger, projectDir, null, false, false))
@@ -282,7 +299,6 @@ export async function createApplication (
         (await findRuntimeConfigurationFile(logger, applicationRoot, null, false, false))
 
       if (!existingRuntime) {
-        // If there is a watt.json file with a runtime property, we assume we already executed watt create and we exit.
         const existingApplication = await findGatewayConfigFile(projectDir)
 
         if (existingApplication) {

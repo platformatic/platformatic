@@ -5,7 +5,7 @@ import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setupUserInputHandler } from '../../create-wattpm/test/cli/helper.js'
 import { version } from '../lib/version.js'
-import { createTemporaryDirectory, executeCommand, wattpmUtils } from './helper.js'
+import { createTemporaryDirectory, executeCommand, readConfiguration, wattpmUtils } from './helper.js'
 
 const createEnv = {
   NO_COLOR: 'true',
@@ -15,7 +15,7 @@ const createEnv = {
   })
 }
 
-test('create - should create a new project using watt.json by default', async t => {
+test('create - should create a new project using the v4 configuration by default', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const userInputHandler = await setupUserInputHandler(t, [
@@ -33,18 +33,21 @@ test('create - should create a new project using watt.json by default', async t 
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
-    autoload: {
-      exclude: ['docs'],
-      path: 'web'
-    },
-    logger: {
-      level: '{PLT_SERVER_LOGGER_LEVEL}'
-    },
-    managementApi: '{PLT_MANAGEMENT_API}',
-    watch: true
-  })
+  /*
+    Evaluated rather than parsed: the scaffolded root is a module whose values are references into
+    the project's own environment, and it carries no `$schema` -- the marker is a version
+    declaration, and this line is still 3.x.
+  */
+  const configuration = await readConfiguration(resolve(temporaryFolder, 'root/watt.config.mjs'))
+
+  /*
+    Key by key rather than whole: evaluating a root expands its topology, so the result carries the
+    applications it discovered alongside the settings the file states.
+  */
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.logger, { level: 'info' })
+  deepStrictEqual(configuration.managementApi, true)
+  deepStrictEqual(configuration.watch, true)
 })
 
 test('create - should create a new project with two applications', async t => {
@@ -69,18 +72,21 @@ test('create - should create a new project with two applications', async t => {
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
-    autoload: {
-      exclude: ['docs'],
-      path: 'web'
-    },
-    logger: {
-      level: '{PLT_SERVER_LOGGER_LEVEL}'
-    },
-    managementApi: '{PLT_MANAGEMENT_API}',
-    watch: true
-  })
+  /*
+    Evaluated rather than parsed: the scaffolded root is a module whose values are references into
+    the project's own environment, and it carries no `$schema` -- the marker is a version
+    declaration, and this line is still 3.x.
+  */
+  const configuration = await readConfiguration(resolve(temporaryFolder, 'root/watt.config.mjs'))
+
+  /*
+    Key by key rather than whole: evaluating a root expands its topology, so the result carries the
+    applications it discovered alongside the settings the file states.
+  */
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.logger, { level: 'info' })
+  deepStrictEqual(configuration.managementApi, true)
+  deepStrictEqual(configuration.watch, true)
 })
 
 test('create - should not install wattpm as it is already available', async t => {
@@ -104,7 +110,7 @@ test('create - should not install wattpm as it is already available', async t =>
   ok(!createProcess.stdout.includes('Installing wattpm'))
 })
 
-test('create - should use a custom configuration file', async t => {
+test('create - names the configuration by the v4 selector, whatever -c says', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const userInputHandler = await setupUserInputHandler(t, [
@@ -122,18 +128,15 @@ test('create - should use a custom configuration file', async t => {
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt-alternative.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
-    autoload: {
-      exclude: ['docs'],
-      path: 'web'
-    },
-    logger: {
-      level: '{PLT_SERVER_LOGGER_LEVEL}'
-    },
-    managementApi: '{PLT_MANAGEMENT_API}',
-    watch: true
-  })
+  /*
+    v4 recognizes exactly four filenames, so `-c` no longer names the output: the suffix comes from
+    the selector. The flag still selects which file to *read*, which is what it means everywhere
+    else.
+  */
+  const configuration = await readConfiguration(resolve(temporaryFolder, 'root/watt.config.mjs'))
+
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.logger, { level: 'info' })
 })
 
 test('create - should create a new project using a different package manager', async t => {
@@ -248,15 +251,14 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
     }
   })
 
-  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'watt.json')), 'utf-8'), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
-    runtime: {
-      logger: {
-        level: '{PLT_SERVER_LOGGER_LEVEL}'
-      },
-      managementApi: '{PLT_MANAGEMENT_API}'
-    }
-  })
+  /*
+    The wrapped single-app root. v3 nested the runtime settings under a `runtime` key inside the
+    application's own configuration; v4 has no such block, so they are the root's own.
+  */
+  const wrapped = await readConfiguration(resolve(temporaryFolder, 'watt.config.mjs'))
+
+  deepStrictEqual(wrapped.logger, { level: 'info' })
+  deepStrictEqual(wrapped.managementApi, true)
 })
 
 test('create - should not attempt to wrap twice', async t => {
@@ -376,18 +378,13 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     }
   })
 
-  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'watt.json')), 'utf-8'), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/next/${version}.json`,
-    runtime: {
-      logger: {
-        level: '{PLT_SERVER_LOGGER_LEVEL}'
-      },
-      managementApi: '{PLT_MANAGEMENT_API}',
-    }
-  })
+  const wrapped = await readConfiguration(resolve(temporaryFolder, 'watt.config.mjs'))
+
+  deepStrictEqual(wrapped.logger, { level: 'info' })
+  deepStrictEqual(wrapped.managementApi, true)
 })
 
-test('create - correctly write package.json and watt.json when importing a local application within the same folder', async t => {
+test('create - correctly write package.json and the configuration when importing a local application within the same folder', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   await createDirectory(resolve(temporaryFolder, 'my-app'))
@@ -414,7 +411,7 @@ test('create - correctly write package.json and watt.json when importing a local
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/watt.json written!`))
+  ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/watt.config.mjs written!`))
   ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/package.json written!`))
 })
 
@@ -448,22 +445,9 @@ test('create - should not use a URL when importing a local application within th
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
-    autoload: {
-      exclude: ['docs'],
-      path: 'web'
-    },
-    logger: {
-      level: '{PLT_SERVER_LOGGER_LEVEL}'
-    },
-    managementApi: '{PLT_MANAGEMENT_API}',
-    web: [
-      {
-        id: 'main',
-        path: '{PLT_APPLICATION_MAIN_PATH}'
-      }
-    ],
-    watch: true
-  })
+  const configuration = await readConfiguration(resolve(temporaryFolder, 'watt.config.mjs'))
+
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.logger, { level: 'info' })
+  deepStrictEqual(configuration.web.map(entry => entry.id), ['main'])
 })

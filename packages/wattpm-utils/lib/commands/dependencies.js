@@ -7,12 +7,13 @@ import {
   logFatalError,
   parseArgs
 } from '@platformatic/foundation'
+import { evaluateConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
-import { readFile, rm, writeFile } from 'node:fs/promises'
-import { isAbsolute, relative, resolve } from 'node:path'
+import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 
@@ -70,16 +71,57 @@ function isPathInsideDirectory (directory, path) {
   return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath))
 }
 
+/*
+  Where a root says its applications are: the entries it lists, and the directories its autoload
+  would discover. Neither answer needs an application's own configuration, which is the point.
+*/
+async function listApplicationDirectories (configurationFile) {
+  const root = dirname(configurationFile)
+  const { config } = await evaluateConfigurationFile({
+    path: configurationFile,
+    env: { ...process.env },
+    command: 'start',
+    production: false,
+    role: 'root'
+  })
+
+  const entries = config.applications ?? config.services ?? config.web ?? []
+  const applications = entries.filter(entry => entry.path).map(entry => ({ id: entry.id, path: entry.path }))
+
+  if (config.autoload?.path) {
+    const exclude = config.autoload.exclude ?? []
+    const directory = resolve(root, config.autoload.path)
+
+    for (const entry of await readdir(directory, { withFileTypes: true }).catch(() => [])) {
+      if (entry.isDirectory() && !exclude.includes(entry.name)) {
+        applications.push({ id: entry.name, path: join(directory, entry.name) })
+      }
+    }
+  }
+
+  return applications
+}
+
 export async function installDependencies (logger, root, applications, production, packageManager) {
   if (typeof applications === 'string') {
-    const config = await loadConfiguration(applications, null, { validate: false })
+    /*
+      The root only. Loading it fully would evaluate every application's configuration, and those
+      import the capabilities this command is about to install -- so the step that fixes the missing
+      dependencies would need them present to run. What is needed here is where the applications
+      are, which the root states by itself.
+    */
+    if (!applications.endsWith('.json')) {
+      applications = await listApplicationDirectories(applications)
+    } else {
+      const config = await loadConfiguration(applications, null, { validate: false })
 
-    /* c8 ignore next 3 - Hard to test */
-    if (!config) {
-      return
+      /* c8 ignore next 3 - Hard to test */
+      if (!config) {
+        return
+      }
+
+      applications = config.applications
     }
-
-    applications = config.applications
   }
 
   if (!packageManager) {

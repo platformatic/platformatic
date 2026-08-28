@@ -3008,7 +3008,7 @@ export default {
   **`ImportGenerator`** — which wrote a `watt.json` carrying either a `$schema` URL
   or a bare `{ module }` for an imported application whose capability ships no
   generator (`generators/lib/import-generator.js:126-150` pre-`dd89c334f`, reached from
-  `create-wattpm/lib/index.js:439`), and was the one JSON writer easy to miss
+  `create-wattpm/lib/index.js:455`), and was the one JSON writer easy to miss
   because it is not a generator itself; it emits the v4 per-app form now —
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
   (`'export default ' + JSON.stringify(config)`) — the last of which is the
@@ -3296,7 +3296,7 @@ export default {
   and it is what makes the scaffolded per-app `"dev": "wattpm dev"` boot *that*
   application rather than walking up to the root and booting the whole runtime.
   Since the generator writes those scripts into every application directory
-  unconditionally (`generators/lib/base-generator.js:520-529`), omitting the file
+  unconditionally (`generators/lib/base-generator.js:534-543`), omitting the file
   would silently redefine the script the generator just wrote. The v3 wizard's
   `3042` prompt is gone from the root — ports are per-application now, and the
   generator hands application *i* `3042 + i`

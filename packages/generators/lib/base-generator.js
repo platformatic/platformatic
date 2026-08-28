@@ -476,6 +476,20 @@ class BaseGenerator extends FileGenerator {
         them -- and copying it into the configuration would put the same fact in two places, where
         editing one leaves the other saying something else.
       */
+      /*
+        A boolean default becomes a comparison, because v4 validates without coercion: a bare
+        reference hands the schema the string 'true', which is neither of the things a boolean
+        position accepts. The comparison reproduces the scaffolded default when the variable is
+        absent and lets its opposite flip it, which is what the value was there to express.
+      */
+      if (fallback === 'true' || fallback === true) {
+        return expression(`process.env.${name} !== 'false'`)
+      }
+
+      if (fallback === 'false' || fallback === false) {
+        return expression(`process.env.${name} === 'true'`)
+      }
+
       return /^[0-9]+$/.test(String(fallback))
         ? expression(`Number(process.env.${name} || ${fallback})`)
         : expression(`process.env.${name}`)

@@ -645,7 +645,7 @@
       "head": "async #generateConfigFile (originalPath, updatedPath) {",
       "lines": 25
     },
-    "packages/create-wattpm/lib/index.js:439": {
+    "packages/create-wattpm/lib/index.js:455": {
       "sha": "cadcf1b78f0dab35",
       "head": ": new ImportGenerator({",
       "lines": 1
@@ -755,7 +755,7 @@
       "head": "const patch = workerData?.applicationConfig?.configPatch",
       "lines": 6
     },
-    "packages/generators/lib/base-generator.js:520-529": {
+    "packages/generators/lib/base-generator.js:534-543": {
       "sha": "885fedd36393469a",
       "head": "async generatePackageJson () {",
       "lines": 10
