@@ -1,10 +1,10 @@
 import { detectApplicationType, findConfigurationFile } from '@platformatic/foundation'
+import { capabilityFactories, chooseConfigurationFileName } from '@platformatic/foundation/lib/v4/index.js'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
-import { packageJson } from './schema.js'
 import { importFile } from './utils.js'
 
 const importCapabilityPackageMarker = '__pltImportCapabilityPackage.js'
@@ -97,8 +97,18 @@ export async function importCapabilityAndConfig (root, config, context) {
       const logger = pino({ level: context.loggerConfig?.level ?? 'warn', name: context.applicationId })
 
       logger.warn(`We have auto-detected that application "${context.applicationId}" ${autodetectDescription}.`)
+      /*
+        The v4 form, which is what the suggestion has to be: a configuration identifies itself by
+        importing what it uses, and a `$schema` URL naming this version would be read as a stale
+        stamp the moment the next major arrives.
+      */
+      const factory = capabilityFactories[moduleName]
+      const suggestion = factory
+        ? `exporting ${factory}() from "${moduleName}"`
+        : `exporting { module: "${moduleName}" }`
+
       logger.warn(
-        `We suggest you create a watt.json or a platformatic.json file in the folder ${applicationRoot} with the "$schema" property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
+        `We suggest you create a ${chooseConfigurationFileName(applicationRoot)} in the folder ${applicationRoot} ${suggestion}.`
       )
       logger.warn(`Also don't forget to add "${moduleName}" to the application dependencies.`)
       logger.warn('You can also run "wattpm import" to do this automatically.\n')
