@@ -1239,3 +1239,22 @@ test('migrate - converts a position whose branches differ only in how the value 
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
   ok(emitted.includes("target: process.env.LOG_TARGET ?? ''"), emitted)
 })
+
+test('migrate - converts a number written beside a digits-only string', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      // `number | string matching ^[0-9]+$` is one target type written twice. A placeholder
+      // validated there on v3, which replaced before validating, and a number validates the first
+      // branch — so the numeric emission is faithful rather than a guess.
+      next: { imageOptimizer: { fallback: './fallback.png', timeout: '{IMAGE_TIMEOUT}' } }
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("timeout: Number(requiredEnv('IMAGE_TIMEOUT'))"), emitted)
+})

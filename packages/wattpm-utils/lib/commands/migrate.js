@@ -350,6 +350,16 @@ function classifyOne (node) {
         return classifyNode({ ...node, anyOf: undefined, oneOf: undefined, type: [...types][0] })
       }
 
+      /*
+        A number beside a string that admits only digits is one target type written twice --
+        `next`'s imageOptimizer takes `3000` or `'3000'`. A placeholder validated there on v3, which
+        replaced before validating, and a number validates the first branch, so the numeric emission
+        is faithful rather than a guess.
+      */
+      if (real.every(branch => isNumericBranch(branch))) {
+        return classifyNode({ ...node, anyOf: undefined, oneOf: undefined, type: 'number' })
+      }
+
       // Otherwise a genuine union, which is the hand work the audit exists to narrow rather than
       // something to guess at.
       return { kind: 'genuine' }
@@ -388,6 +398,15 @@ function sentinelFor (position) {
       // minLength the empty string fails.
       return 'migrate'
   }
+}
+
+function isNumericBranch (branch) {
+  if (branch.type === 'number' || branch.type === 'integer') {
+    return true
+  }
+
+  // Digits and nothing else: a pattern that admits a letter is a different type wearing a string.
+  return branch.type === 'string' && typeof branch.pattern === 'string' && /^\^\[[0-9-]+\](?:\[[0-9-]+\])?\*?\+?\$$/.test(branch.pattern)
 }
 
 function classifyNode (node) {
@@ -2212,6 +2231,23 @@ export async function migrateCommand (logger, args) {
     // A wrapped single-app project carries the same removed keys, and reaches none of the runtime
     // dialect's planning.
     notes.push(...stripRemovedKeys(converted, derived.id))
+
+    /*
+      Exposure rule 3, which the runtime dialect applies to its entrypoint. A wrapped single-app
+      project was one: v3 put it in a runtime by itself, where being the only survivor made it the
+      entrypoint, and its `_listen` bound an ephemeral port with no undefined-port guard. v4 returns
+      early on an undefined port, so without this the application silently stops listening -- and a
+      framework application does not start at all.
+    */
+    if (!converted.server && !converted.runtime?.server) {
+      // The runtime block's own server moves into the capability configuration when the file is
+      // emitted, so a project that has one is not a project without a listener.
+      converted.server = { port: 0 }
+
+      notes.push(
+        `${bold(derived.id)} declared no ${bold('server')} block and still bound an ephemeral port on v3, so it is written out as ${bold('port: 0')}. That address was never stable and is no longer advertised by the runtime.`
+      )
+    }
 
     await journal.write(
       target,
