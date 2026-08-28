@@ -1,11 +1,4 @@
-import {
-  extractModuleFromSchemaUrl,
-  getInstallationCommand,
-  getPackageManager,
-  loadConfigurationFile as loadRawConfigurationFile,
-  logFatalError,
-  parseArgs
-} from '@platformatic/foundation'
+import { getInstallationCommand, getPackageManager, logFatalError, parseArgs } from '@platformatic/foundation'
 import {
   importCapabilitySchema,
   legacyConfigurationFileNames,
@@ -19,6 +12,12 @@ import {
   topologyVariableName
 } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
+/*
+  The v3 reader is migrate's own, not foundation's. Migrate must keep reading v3 for as long as
+  anyone has a v3 project, which outlives foundation's copy -- that one exists only while the v3
+  loader is still in the tree.
+*/
+import { extractLegacyModule as extractModuleFromSchemaUrl, loadLegacyConfigurationFile as loadRawConfigurationFile } from '../legacy/reader.js'
 import { v4Schema } from '@platformatic/runtime/lib/schema.js'
 import { bold } from 'colorette'
 import { version } from '../version.js'

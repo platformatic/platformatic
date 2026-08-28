@@ -2548,6 +2548,9 @@ importers:
 
   packages/wattpm-utils:
     dependencies:
+      '@iarna/toml':
+        specifier: ^2.2.5
+        version: 2.2.5
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
@@ -2572,12 +2575,18 @@ importers:
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       semver:
         specifier: ^7.7.0
         version: 7.8.5
       tar:
         specifier: ^7.5.7
         version: 7.5.22
+      yaml:
+        specifier: ^2.4.1
+        version: 2.9.0
     devDependencies:
       '@platformatic/node':
         specifier: workspace:*

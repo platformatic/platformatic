@@ -31,6 +31,7 @@
     "lib"
   ],
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/globals": "workspace:*",
@@ -39,8 +40,10 @@
     "create-wattpm": "workspace:*",
     "execa": "^9.4.0",
     "fast-json-patch": "^3.1.1",
+    "json5": "^2.2.3",
     "semver": "^7.7.0",
-    "tar": "^7.5.7"
+    "tar": "^7.5.7",
+    "yaml": "^2.4.1"
   },
   "devDependencies": {
     "@platformatic/node": "workspace:*",
