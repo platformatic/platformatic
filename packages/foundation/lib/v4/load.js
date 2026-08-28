@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { createConfigurationContext, defaultMode, isProductionCommand } from './context.js'
 import { detectCapability } from './detect.js'
@@ -536,6 +537,18 @@ async function assemble ({
     configPath: deciding.path,
     root: deciding.directory,
     envRoot: decidingEnvRoot,
+    /*
+      The runtime process's own view, layered by the same rules a worker's is: its real environment,
+      then the root env block, then the root's env files. It is not any application's environment --
+      no entry block, no injected topology URLs -- and applications never read it; it is what the
+      runtime itself reports and what a command running in the runtime's own context observes.
+    */
+    env: resolveWorkerEnvironment({
+      realEnv,
+      rootEnv: config.env,
+      fileSources: result.rootEnvFileSources ?? [],
+      production
+    }),
     standalone,
     synthesized,
     mode,
@@ -725,6 +738,25 @@ async function prepareApplication ({
   // the id and the dependencies the detector reads.
   report.watch(...configurationFileNames.map(name => join(directory, name)), join(directory, 'package.json'))
 
+  /*
+    A remote application whose clone has not arrived yet. There is nothing at its path for the
+    detector to read, and the configuration file it may carry is inside a repository nobody has
+    fetched — so every step below would fail on the absence rather than on anything the project got
+    wrong.
+
+    It is recorded rather than refused, because `wattpm resolve` runs in exactly this state: it
+    loads the configuration in order to learn what to clone, and a refusal here would make the one
+    command that repairs this state impossible to run in it. The boot refuses instead, and its
+    message names resolve.
+
+    Every remote entry has a directory by this point — its own, or the one the root pipeline
+    backfilled from `resolvedApplicationsBasePath` — so the question is only whether anything is
+    there yet.
+  */
+  if (entry.url && !existsSync(directory)) {
+    return { ...entry, id, path: directory, unresolved: true }
+  }
+
   // Discovery skips a candidate that is the deciding file itself, whatever the entry's shape: an
   // entry whose directory is the deciding file's own falls through to the detector rather than
   // re-reading the file that produced it.
@@ -783,7 +815,25 @@ async function prepareApplication ({
     // Neither an inline config nor a per-app file: one deterministic detector run. A third shape
     // with no eval worker, and the one an envfile is not refused for — nothing is evaluated, so
     // there is no evaluation view for it to be absent from.
-    const { capability, source } = await detectCapability(directory, { id })
+    let detected
+
+    try {
+      detected = await detectCapability(directory, { id })
+    } catch (error) {
+      /*
+        A remote application whose destination exists but holds no application: an empty directory
+        somebody created ahead of the clone, or a clone that failed halfway. Same state as a
+        destination that is not there at all, and `resolve` has to be able to load a project in it
+        to repair it. The boot still refuses — an unresolved entry never reaches a worker.
+      */
+      if (!entry.url) {
+        throw error
+      }
+
+      return { ...entry, id, path: directory, unresolved: true }
+    }
+
+    const { capability, source } = detected
 
     report.onInfo?.({
       type: 'detected-capability',

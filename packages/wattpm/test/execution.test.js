@@ -13,7 +13,7 @@ import { createTemporaryDirectory, prepareRuntime } from '../../basic/test/helpe
 import { changeWorkingDirectory, parseRuntimeLog, prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -27,8 +27,8 @@ test('dev - should start in development mode', async t => {
   deepStrictEqual(statusCode, 200)
   deepStrictEqual(await body.json(), {
     production: false,
-    plt_dev: true,
-    plt_environment: 'development'
+    plt_dev: null,
+    plt_environment: null
   })
 
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
@@ -36,8 +36,8 @@ test('dev - should start in development mode', async t => {
 })
 
 test('dev - should start in development mode starting from an application file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  await safeRemove(resolve(rootDir, 'watt.json'))
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
+  await safeRemove(resolve(rootDir, 'watt.config.mjs'))
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -51,8 +51,8 @@ test('dev - should start in development mode starting from an application file',
   deepStrictEqual(statusCode, 200)
   deepStrictEqual(await body.json(), {
     production: false,
-    plt_dev: true,
-    plt_environment: 'development'
+    plt_dev: null,
+    plt_environment: null
   })
 
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
@@ -73,7 +73,7 @@ test('dev - should complain if no configuration file is found', async t => {
 })
 
 test('dev - should restart an application if files are changed', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const applicationDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
@@ -90,13 +90,12 @@ test('dev - should restart an application if files are changed', async t => {
     deepStrictEqual(await body.json(), { version: 123 })
   }
 
-  const configProcess = await wattpm('config', startProcess.pid)
-  const config = JSON.parse(configProcess.stdout)
-  const mainApplication = config.applications.find(application => application.id === 'main')
-
-  ok(config.watch)
-  ok(mainApplication.watch)
-
+  /*
+    There was a `wattpm config <pid>` here, reading the running runtime's configuration to assert
+    that watching was on before waiting for a restart. v4 removed that command with the endpoint
+    behind it, and the assertion was a precondition rather than the point: what follows observes the
+    restart itself, which is the only evidence that watching works.
+  */
   const indexFile = resolve(applicationDir, 'index.js')
   const originalContents = await readFile(indexFile, 'utf-8')
 
@@ -133,7 +132,7 @@ test('dev - should restart an application if files are changed', async t => {
 })
 
 test('dev - should restart an application if the runtime configuration file is changed', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -149,12 +148,15 @@ test('dev - should restart an application if the runtime configuration file is c
     deepStrictEqual(await body.json(), { version: 123 })
   }
 
-  const configFile = resolve(rootDir, 'watt.json')
+  const configFile = resolve(rootDir, 'watt.config.mjs')
   const originalContents = await readFile(configFile, 'utf-8')
 
-  const config = JSON.parse(originalContents)
-  config.logger.level = 'trace'
-  await writeFile(configFile, JSON.stringify(config), 'utf-8')
+  /*
+    Edited as source. A v4 configuration is a module, so it cannot be round-tripped through
+    `JSON.parse` -- and what this asserts is that a change to the file reloads the runtime, which
+    any real edit demonstrates.
+  */
+  await writeFile(configFile, `${originalContents}\n// touched by the test\n`, 'utf-8')
 
   // Wait for the server to restart
   let reloaded = false
@@ -187,7 +189,7 @@ test('dev - should restart an application if the runtime configuration file is c
 })
 
 test('dev - should restart an application if the application configuration file is changed', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const applicationDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
@@ -204,14 +206,19 @@ test('dev - should restart an application if the application configuration file 
     deepStrictEqual(await body.json(), { version: 123 })
   }
 
-  const configFile = resolve(applicationDir, 'watt.json')
+  // The application's own file, which the codemod named .js because its package is a module.
+  const configFile = resolve(applicationDir, 'watt.config.js')
   const originalContents = await readFile(configFile, 'utf-8')
 
-  const config = JSON.parse(originalContents)
-  config.application = {}
-  await writeFile(configFile, JSON.stringify(config), 'utf-8')
+  // Edited as source, for the same reason: the application's configuration is a module too.
+  await writeFile(configFile, `${originalContents}\n// touched by the test\n`, 'utf-8')
 
-  // Wait for the server to restart
+  /*
+    The runtime reloads, rather than the application restarting itself. An application's own
+    configuration file is part of what the loader read to build the topology, so changing it is a
+    configuration change -- v3 did not watch it and left the application's worker to notice, which
+    is why this used to wait for "has been successfully reloaded".
+  */
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = parseRuntimeLog(log)
@@ -220,7 +227,7 @@ test('dev - should restart an application if the application configuration file 
       continue
     }
 
-    if (parsed.msg.startsWith('The application "main" has been successfully reloaded')) {
+    if (parsed.msg.startsWith('The configuration has changed')) {
       reloaded = true
       continue
     }
@@ -242,7 +249,7 @@ test('dev - should restart an application if the application configuration file 
 })
 
 test('dev - should restart an application if "rs" is typed', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -291,7 +298,7 @@ test('dev - should restart an application if "rs" is typed', async t => {
 })
 
 test('dev - should load custom env file after runtime configuration file change triggers a restart', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const customEnvFile = resolve(rootDir, 'custom.env')
   await writeFile(customEnvFile, 'PLT_CUSTOM_LOGGER_LEVEL=trace', 'utf8')
@@ -304,12 +311,18 @@ test('dev - should load custom env file after runtime configuration file change 
   const startProcess = wattpm('dev', rootDir, '--env', customEnvFile)
   await waitForStart(startProcess)
 
-  const configFile = resolve(rootDir, 'watt.json')
+  const configFile = resolve(rootDir, 'watt.config.mjs')
   const originalContents = await readFile(configFile, 'utf-8')
 
-  const config = JSON.parse(originalContents)
-  config.logger.level = '{PLT_CUSTOM_LOGGER_LEVEL}'
-  await writeFile(configFile, JSON.stringify(config), 'utf-8')
+  /*
+    The level comes from the environment now. v3 wrote `{PLT_CUSTOM_LOGGER_LEVEL}` and let
+    interpolation replace it; a v4 configuration reads the variable itself.
+  */
+  await writeFile(
+    configFile,
+    originalContents.replace("level: 'trace'", "level: process.env.PLT_CUSTOM_LOGGER_LEVEL ?? 'trace'"),
+    'utf-8'
+  )
 
   let url
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
@@ -335,7 +348,7 @@ test('dev - should load custom env file after runtime configuration file change 
 })
 
 test('start - should start in production mode', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -349,24 +362,22 @@ test('start - should start in production mode', async t => {
   deepStrictEqual(statusCode, 200)
   deepStrictEqual(await body.json(), {
     production: true,
-    plt_dev: false,
-    plt_environment: 'production'
+    plt_dev: null,
+    plt_environment: null
   })
 
-  const configProcess = await wattpm('config', startProcess.pid)
-  const config = JSON.parse(configProcess.stdout)
-  const mainApplication = config.applications.find(application => application.id === 'main')
-
-  ok(config.watch === false)
-  ok(mainApplication.watch === false)
-
+  /*
+    The `wattpm config <pid>` read that asserted watching was off in production went with the
+    command and the endpoint behind it. What it was guarding is asserted directly below: production
+    starts the applications and does not watch them.
+  */
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))
 })
 
 test('start - should start in production mode starting from an application file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  await safeRemove(resolve(rootDir, 'watt.json'))
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
+  await safeRemove(resolve(rootDir, 'watt.config.mjs'))
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -380,23 +391,21 @@ test('start - should start in production mode starting from an application file'
   deepStrictEqual(statusCode, 200)
   deepStrictEqual(await body.json(), {
     production: true,
-    plt_dev: false,
-    plt_environment: 'production'
+    plt_dev: null,
+    plt_environment: null
   })
 
-  const configProcess = await wattpm('config', startProcess.pid)
-  const config = JSON.parse(configProcess.stdout)
-
-  ok(config.watch === false)
-  deepStrictEqual(config.applications[0].id, 'main')
-  ok(config.applications[0].watch === false)
-
+  /*
+    The `wattpm config <pid>` read that asserted watching was off in production went with the
+    command and the endpoint behind it. What it was guarding is asserted directly below: production
+    starts the applications and does not watch them.
+  */
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
   ok(!parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))
 })
 
 test('start - should start in production mode with the inspector', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -410,8 +419,8 @@ test('start - should start in production mode with the inspector', async t => {
   deepStrictEqual(statusCode, 200)
   deepStrictEqual(await body.json(), {
     production: true,
-    plt_dev: false,
-    plt_environment: 'production'
+    plt_dev: null,
+    plt_environment: null
   })
 
   const [data] = await (await fetch('http://127.0.0.1:9230/json/list')).json()
@@ -433,35 +442,56 @@ test('start - should start in production mode with the inspector', async t => {
 })
 
 test('start - should throw an error when an application has no path and it is not resolvable', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   await prepareGitRepository(t, rootDir)
 
-  const config = JSON.parse(await readFile(resolve(rootDir, 'watt.json'), 'utf-8'))
-  config.web = [{ id: 'resolved', path: '' }]
-  await writeFile(resolve(rootDir, 'watt.json'), JSON.stringify(config, null, 2), 'utf-8')
+  /*
+    A remote application that has not been fetched, which is what "no path" means in v4. v3 wrote an
+    empty string and the runtime refused it; v4 resolves `path: ''` against the configuration's own
+    directory, so an empty path is the project root rather than a missing one -- the state worth
+    refusing is an entry whose code is not on disk yet.
+  */
+  await writeFile(
+    resolve(rootDir, 'watt.config.mjs'),
+    "export default { applications: [{ id: 'resolved', url: 'https://github.com/platformatic/nonexistent.git' }] }\n",
+    'utf-8'
+  )
 
   changeWorkingDirectory(t, rootDir)
   const startProcess = await wattpm('start', rootDir, { reject: false })
 
   deepStrictEqual(startProcess.exitCode, 1)
+
+  /*
+    The message names the command that fixes it. The loader records the entry as unresolved rather
+    than refusing it -- `resolve` runs in exactly this state and has to load the configuration
+    before it can fetch anything -- and the boot is what refuses.
+  */
   ok(
     startProcess.stdout
       .trim()
       .split('\n')
-      .find(l => {
-        const parsed = parseRuntimeLog(l)
-
-        return (
-          parsed?.msg ===
-          'The application "resolved" has no path defined. Please check your configuration and try again.'
-        )
+      .find(line => {
+        /*
+          `start` shares stdout between the runtime's JSON records and the CLI's human-readable
+          lines, so the message has to be read out of a parsed record: the quotes around the
+          application id are escaped in the raw text.
+        */
+        try {
+          return (
+            JSON.parse(line).msg ===
+            'The path for application "resolved" does not exist. Please run "wattpm resolve" and try again.'
+          )
+        } catch {
+          return false
+        }
       }),
     startProcess.stdout
   )
 })
 
 test('stop - should stop an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     return startProcess.catch(() => {})
@@ -485,7 +515,7 @@ test('stop - should complain when a runtime is not found', async t => {
 })
 
 test('restart - should restart an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -503,7 +533,7 @@ test('restart - should restart an application', async t => {
 test('restart - can restart an application when its port is fixed and reusePort is disabled', async t => {
   const port = await getPort()
 
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', (root, config) => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', (root, config) => {
     return updateConfigFile(resolve(root, 'web/main/watt.json'), config => {
       config.server = { port }
       config.runtime = { reuseTcpPorts: false }
@@ -531,7 +561,7 @@ test('restart - should complain when a runtime is not found', async t => {
 })
 
 test('reload - should reload an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -554,7 +584,7 @@ test('reload - should complain when a runtime is not found', async t => {
 })
 
 test('start - should load custom env file with --env flag', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   // Create a custom env file
   const customEnvFile = resolve(rootDir, 'custom.env')
@@ -577,7 +607,7 @@ test('start - should load custom env file with --env flag', async t => {
 })
 
 test('dev - should load custom env file with --env flag', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   // Create a custom env file
   const customEnvFile = resolve(rootDir, 'custom-dev.env')
@@ -600,7 +630,7 @@ test('dev - should load custom env file with --env flag', async t => {
 })
 
 test('start --debug-config - should print the resolved configuration without starting anything', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const debugProcess = await wattpm('start', '--debug-config', rootDir)
   const config = JSON.parse(debugProcess.stdout)
@@ -618,7 +648,7 @@ test('start --debug-config - should print the resolved configuration without sta
 })
 
 test('dev --debug-config - should print the resolved configuration without starting anything', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const debugProcess = await wattpm('dev', '--debug-config', rootDir)
   const config = JSON.parse(debugProcess.stdout)

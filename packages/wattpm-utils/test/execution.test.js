@@ -7,8 +7,8 @@ import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test
 import { changeWorkingDirectory, prepareGitRepository, wattpm, wattpmUtils } from './helper.js'
 
 test('start - should use default folders for resolved applications', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  await prepareGitRepository(t, rootDir)
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
+  const repo = await prepareGitRepository(t, rootDir)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -16,7 +16,7 @@ test('start - should use default folders for resolved applications', async t => 
   })
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
   await wattpmUtils('resolve', rootDir)
   await updateFile(resolve(rootDir, 'external/resolved/package.json'), content => {
     const config = JSON.parse(content)
@@ -69,11 +69,11 @@ test('start - should use default folders for resolved applications', async t => 
 })
 
 test('start - should throw an error when an application has not been resolved', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  await prepareGitRepository(t, rootDir)
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
+  const repo = await prepareGitRepository(t, rootDir)
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
 
   const startProcess = await wattpm('start', rootDir, { reject: false })
 

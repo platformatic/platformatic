@@ -72,7 +72,7 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
 }
 
 test('logs - should stream runtime logs', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -105,7 +105,7 @@ test('logs - should stream runtime logs', async t => {
 })
 
 test('logs - should stream runtime logs filtering by application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -139,7 +139,7 @@ test('logs - should stream runtime logs filtering by application', async t => {
 })
 
 test('logs - should stream runtime logs filtering by level', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     logsProcess.kill('SIGINT')

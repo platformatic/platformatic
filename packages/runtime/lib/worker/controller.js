@@ -1,3 +1,4 @@
+import { configurationFileNames } from '@platformatic/foundation/lib/v4/index.js'
 import {
   ensureLoggableError,
   FileWatcher,
@@ -142,7 +143,9 @@ export class Controller extends EventEmitter {
         first, so the copy that runs here is the copy whose schema validated the payload.
       */
       if (appConfig.resolvedConfig) {
-        const pkg = await importCapabilityPackage(appConfig.path, appConfig.module)
+        const pkg = await importCapabilityPackage(appConfig.path, appConfig.module, {
+          runtimeScope: import.meta.filename
+        })
 
         /*
           `resolved` says the configuration needs none of v3's reading: the loader layered its
@@ -315,11 +318,20 @@ export class Controller extends EventEmitter {
       return
     }
 
+    /*
+      The application's own configuration file is not the worker's to watch. The runtime evaluates
+      configuration once, main-side, and watches every file that evaluation read -- so a change to
+      one is a configuration change and the runtime reloads for it.
+
+      Watching it here as well meant both fired for a single edit: the runtime tore itself down and
+      rebuilt while this worker restarted the same application, and the rebuilt runtime could not
+      bind its management socket because the one it replaced had not released it yet.
+    */
     const fileWatcher = new FileWatcher({
       path: watch.path,
       /* c8 ignore next 2 */
       allowToWatch: watch?.allow,
-      watchIgnore: watch?.ignore || []
+      watchIgnore: [...(watch?.ignore || []), ...configurationFileNames]
     })
 
     fileWatcher.on('update', this.#debouncedRestart)

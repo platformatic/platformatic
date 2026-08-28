@@ -35,7 +35,7 @@ export function isImportFailedError (error, pkg) {
   carries a nested copy of a capability the root also has — and there it now gets the copy it
   declared.
 */
-export async function importCapabilityPackage (directory, pkg) {
+export async function importCapabilityPackage (directory, pkg, { runtimeScope } = {}) {
   let imported
   try {
     try {
@@ -48,8 +48,16 @@ export async function importCapabilityPackage (directory, pkg) {
         throw e
       }
 
-      // Fall back to the copy bundled with the runtime
-      imported = await import(pkg)
+      /*
+        Fall back to the copy bundled with the runtime -- from the runtime's own position when the
+        caller says where that is. A bare import(pkg) resolves from this file, and this package
+        depends on no capability, so the fallback looked for a copy in the one place it is
+        guaranteed not to be. The schema import and the version-stamp check both resolve their
+        fallback from the runtime, and the three have to name the same copy or a zero-config boot
+        validates against a schema whose implementation the worker then cannot find.
+      */
+      const require = runtimeScope ? createRequire(runtimeScope) : null
+      imported = require ? await importFile(require.resolve(pkg)) : await import(pkg)
     }
   } catch (e) {
     if (!isImportFailedError(e, pkg)) {

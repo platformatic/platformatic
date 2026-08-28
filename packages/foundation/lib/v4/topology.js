@@ -104,6 +104,27 @@ export async function expandAutoload (config, { root }) {
 }
 
 /*
+  A remote application's directory, which exists only in memory until `resolve` fetches the clone.
+  The loader needs it before that: per-app discovery, the detector and capability validation all
+  work from a directory, and v4 resolves every application when the root is read. v3 could defer
+  this to the runtime's `#setupApplication`, because per-app configuration was read worker-side.
+
+  It is relative, like an authored path, so the same resolution against the configuration's own
+  directory applies to both. Applied after the resolve candidates are recorded: an entry that
+  declared no path is one `resolve` reports by the generated location rather than by a path the
+  project never wrote.
+*/
+export function backfillRemotePaths (applications, base) {
+  for (const entry of applications) {
+    if (entry.url && !entry.path) {
+      entry.path = join(base, entry.id)
+    }
+  }
+
+  return applications
+}
+
+/*
   The projection resolve is owed, captured between expansion and the enabled filter — the only
   moment both lists exist. A remote entry excluded in the current mode is fetched all the same.
 
@@ -115,7 +136,9 @@ export async function expandAutoload (config, { root }) {
 export function recordResolveCandidates (applications) {
   return applications
     .filter(entry => typeof entry.url === 'string' && entry.url.length > 0)
-    .map(({ id, url, path, gitBranch }) => ({ id, url, path, gitBranch }))
+    // packageManager travels with the candidate because resolve installs the clone's dependencies
+    // as its last step, and the entry is the only place that says which manager to use for it.
+    .map(({ id, url, path, gitBranch, packageManager }) => ({ id, url, path, gitBranch, packageManager }))
 }
 
 /*

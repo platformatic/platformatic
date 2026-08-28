@@ -12,7 +12,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { waitForStart, wattpm } from './helper.js'
 
 test('ps - should show running applications', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -38,11 +38,11 @@ test('ps - should show running applications', async t => {
 })
 
 test('ps - should support custom sockets', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const socketPath =
     platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(tmpdir(), `platformatic-${randomUUID()}.sock`)
 
-  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
     config.managementApi = { socket: socketPath }
 
     return config
@@ -79,7 +79,7 @@ test('ps - should warn when no runtimes are available', async t => {
 })
 
 test('ps - should warn when some runtimes error during metadata retrieval', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -133,7 +133,7 @@ test('ps - should warn when some runtimes error during metadata retrieval', asyn
 })
 
 test('applications - should list applications for an application with no workers information in development mode', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('dev', rootDir)
   await waitForStart(startProcess)
@@ -156,7 +156,7 @@ test('applications - should list applications for an application with no workers
 })
 
 test('applications - should list applications for an application with workers information in production mode', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -186,7 +186,7 @@ test('applications - should complain when a runtime is not found', async t => {
 })
 
 test('env - should list environment variable for a server', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -201,7 +201,7 @@ test('env - should list environment variable for a server', async t => {
 })
 
 test('env - should list environment variable for an application in tabular way', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -216,7 +216,7 @@ test('env - should list environment variable for an application in tabular way',
 })
 
 test('env - should list environment variable for an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -238,7 +238,7 @@ test('env - should complain when a runtime is not found', async t => {
 })
 
 test('env - should complain when an application is not found', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)

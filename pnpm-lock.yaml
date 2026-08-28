@@ -2465,6 +2465,9 @@ importers:
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
+      magicast:
+        specifier: ^0.5.4
+        version: 0.5.4
       pino-pretty:
         specifier: ^13.0.0
         version: 13.1.3

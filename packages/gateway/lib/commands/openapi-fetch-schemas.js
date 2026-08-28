@@ -24,9 +24,24 @@ export async function fetchOpenApiSchema (application) {
   return schema
 }
 
-export async function fetchOpenApiSchemas (logger, configFile, _args, { colorette }) {
-  const { bold } = colorette
-  const config = await loadConfiguration(configFile, schema, { upgrade })
+export async function fetchOpenApiSchemas (logger, configuration, _args, context) {
+  const { bold } = context.colorette
+
+  /*
+    v4 hands a command the application's already-resolved configuration as data: the loader
+    evaluated it once, main-side, and validated it against this capability's schema. `resolved`
+    says the reading is done, so what happens here is the transform and nothing else.
+
+    Passing a path is still supported and still does the full read, which is what a caller outside
+    a running project supplies.
+  */
+  const config =
+    typeof configuration === 'string'
+      ? await loadConfiguration(configuration, schema, { upgrade })
+      : await loadConfiguration(configuration, schema, {
+        resolved: true,
+        root: context?.application?.path ?? process.cwd()
+      })
   const { applications } = config.gateway
 
   const applicationsWithValidOpenApi = applications.filter(({ openapi }) => openapi && openapi.url && openapi.file)

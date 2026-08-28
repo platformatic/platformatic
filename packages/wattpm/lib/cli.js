@@ -204,7 +204,15 @@ export async function main () {
   if (applicationCommandContext) {
     const invocationCwd = process.cwd()
     process.chdir(applicationCommandContext.path)
-    return command.call(this, logger, applicationCommandContext.config, applicationCommandArgs, {
+    /*
+      The application's resolved configuration, which is what v4 has: the loader evaluated it once
+      and `prepareV4Application` moved it here, clearing `config`. Passing `config` handed every
+      capability command `undefined`, and each of them failed on "Source missing" before doing
+      anything. `config` remains the fallback for a caller that still supplies a path.
+    */
+    const applicationConfiguration = applicationCommandContext.resolvedConfig ?? applicationCommandContext.config
+
+    return command.call(this, logger, applicationConfiguration, applicationCommandArgs, {
       application: applicationCommandContext,
       cwd: invocationCwd,
       colorette,

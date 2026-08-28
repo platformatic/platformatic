@@ -355,13 +355,16 @@ export class Runtime extends EventEmitter {
     this.#servingStates = new Map()
     this.#sharedContext = {}
 
-    if (this.#isProduction) {
-      this.#env.PLT_DEV = 'false'
-      this.#env.PLT_ENVIRONMENT = 'production'
-    } else {
-      this.#env.PLT_DEV = 'true'
-      this.#env.PLT_ENVIRONMENT = 'development'
-    }
+    /*
+      v3 injected `PLT_DEV` and `PLT_ENVIRONMENT` here. v4 removes them: an application branches on
+      its own variables, or the decision moves into the configuration, where the context carries
+      `production` and `mode` with types. `NODE_ENV` is the one the runtime still defaults, at the
+      bottom of the env ladder, so anything the project sets outranks it.
+
+      They were worse than redundant by the end -- the v4 worker environment is the one the loader
+      resolved per application, and these were written onto the runtime's own copy, so under
+      `wattpm start` an application still read `PLT_ENVIRONMENT=development`.
+    */
   }
 
   async init () {
@@ -2580,6 +2583,17 @@ export class Runtime extends EventEmitter {
     }
   }
 
+  async #refuseUnresolvedApplication (id) {
+    const executable = getExecutable() ?? 'platformatic'
+
+    this.logger.error(
+      `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
+      id
+    )
+
+    await this.closeAndThrow(new RuntimeAbortedError())
+  }
+
   async #setupApplication (applicationConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') {
       return
@@ -2595,13 +2609,7 @@ export class Runtime extends EventEmitter {
         applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)
 
         if (!existsSync(applicationConfig.path)) {
-          const executable = getExecutable() ?? 'platformatic'
-          this.logger.error(
-            `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
-            id
-          )
-
-          await this.closeAndThrow(new RuntimeAbortedError())
+          await this.#refuseUnresolvedApplication(id)
         }
       } else {
         this.logger.error(
@@ -2611,6 +2619,15 @@ export class Runtime extends EventEmitter {
 
         await this.closeAndThrow(new RuntimeAbortedError())
       }
+    } else if (applicationConfig.unresolved) {
+      /*
+        A remote application that declares where its clone belongs, and whose clone is not there --
+        either the directory is missing or it holds no application at all. The pathless case above
+        is the same state said differently, and both are what `resolve` exists to fix, so both get
+        the message that names it rather than the capability detector's report that the directory
+        holds nothing.
+      */
+      await this.#refuseUnresolvedApplication(id)
     }
 
     let workers = applicationConfig.workers.static

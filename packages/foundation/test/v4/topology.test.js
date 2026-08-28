@@ -123,7 +123,13 @@ test('resolve candidates are recorded after expansion and before the enabled fil
   // A remote entry excluded in the current mode is fetched all the same: resolve is owed the
   // entries it is expected to fetch, not the entries this boot would run.
   deepStrictEqual(resolveCandidates, [
-    { id: 'excluded', url: 'https://github.com/acme/excluded.git', path: './external/excluded', gitBranch: undefined }
+    {
+      id: 'excluded',
+      url: 'https://github.com/acme/excluded.git',
+      path: './external/excluded',
+      gitBranch: undefined,
+      packageManager: undefined
+    }
   ])
 
   deepStrictEqual(config.applications.map(entry => entry.id), ['local', 'autoloaded'])
@@ -153,7 +159,9 @@ test('the projection carries no capability configuration, so it cannot be booted
       id: 'remote',
       url: 'https://github.com/acme/remote.git',
       path: './external/remote',
-      gitBranch: 'next'
+      gitBranch: 'next',
+      // Carried because resolve installs the clone's dependencies and the entry says how.
+      packageManager: undefined
     }
   ])
 })

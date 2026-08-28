@@ -1,8 +1,5 @@
-import {
-  createDirectory,
-  loadConfigurationFile as loadRawConfigurationFile,
-  saveConfigurationFile
-} from '@platformatic/foundation'
+import { createDirectory } from '@platformatic/foundation'
+import { generateCode, parseModule } from 'magicast'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -11,7 +8,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
 
 test('inject - should send a request to an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
@@ -83,7 +80,7 @@ test('inject - should complain when a runtime is not found', async t => {
 })
 
 test('inject - should complain when an application is not found', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -100,7 +97,7 @@ test('inject - should complain when an application is not found', async t => {
 })
 
 test('inject - should properly autodetect the runtime and use the first argument as an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
@@ -163,16 +160,18 @@ test('inject - should properly autodetect the runtime and use the first argument
 })
 
 test('inject - should use the same shared memory HTTP cache of the runtime', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
 
-  const configurationFile = resolve(rootDir, 'watt.json')
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
 
-  const contents = await loadRawConfigurationFile(configurationFile)
-  contents.httpCache = true
-  await saveConfigurationFile(configurationFile, contents)
+  // The configuration is a program, so it is edited as source rather than round-tripped through
+  // its loaded value -- there is no parser that reads one back as a document.
+  const source = parseModule(await readFile(configurationFile, 'utf-8'))
+  source.exports.default.httpCache = true
+  await writeFile(configurationFile, generateCode(source).code, 'utf-8')
 
   const startProcess = wattpm('start', rootDir)
   startProcess.stderr.pipe(process.stdout)

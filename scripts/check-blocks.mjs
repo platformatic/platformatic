@@ -74,7 +74,8 @@ const documents = [
   { name: 'docs/reference/remix/configuration.md', markEverything: false },
   { name: 'docs/reference/nest/configuration.md', markEverything: false },
   { name: 'docs/reference/react-router/configuration.md', markEverything: false },
-  { name: 'docs/reference/tanstack/configuration.md', markEverything: false }
+  { name: 'docs/reference/tanstack/configuration.md', markEverything: false },
+  { name: 'docs/getting-started/port-your-app.md', markEverything: false }
 ]
 
 const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])

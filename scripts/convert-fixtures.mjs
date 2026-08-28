@@ -322,16 +322,11 @@ export function needsExplicitPort (module, config) {
   was for -- and the conversion would be to a format that version never had.
 */
 /*
-  Fixtures whose applications contribute CLI commands. A capability's createCommands still receives
-  a path and reads it with the v3 loader, so an application converted ahead of that contract makes
-  its command unrunnable -- the command moves to { root, config } with the rest of the capability
-  work.
+  What is left of the fixtures whose applications contribute CLI commands. db's commands take the
+  configuration as data now, so the ones that were waiting on that contract are converted; these
+  two wait on something else, named beside each.
 */
 const COMMAND_FIXTURES = [
-  'wattpm/test/fixtures/help/',
-  // applications:add --save rewrites the configuration with JSON.parse and JSON.stringify, which
-  // a module is not. It converts when --save moves to magicast with wattpm import.
-  'wattpm/test/fixtures/dynamic/',
   // db's type generation is a capability CLI command, and it reads its configuration with the v3
   // loader for the same reason createCommands does.
   'db/test/fixtures/gen-types/',
@@ -362,7 +357,11 @@ const CAPABILITY_FIXTURES = [
   'service/test/fixtures/nested-directories/'
 ]
 
-const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-dependencies/']
+/*
+  Empty: `wattpm import` writes v4 now, and the v3 loader that read these is gone. They convert like
+  everything else.
+*/
+const IMPORT_FIXTURES = []
 
 /*
   Fixtures that exist to be a particular file format. auto-config keeps the same configuration as

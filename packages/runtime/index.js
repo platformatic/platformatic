@@ -78,13 +78,15 @@ function handleSignal (runtime, config) {
   v3 half is what a later commit deletes, not something this one has to keep working around.
 */
 /*
-  A configuration named outright does not have to carry one of the four discoverable names -- that
-  is what discovery is for, and --config exists precisely to point at something discovery would not
-  find. What decides the dialect is the extension: v4 configuration is code, and v3 configuration is
-  a document.
+  `--config` names a configuration; it does not widen what a configuration may be called. The four
+  names are the format, and `resolveNamedConfigurationFile` is what refuses anything else -- it
+  separates a legacy name, which gets the migrate hint, from an unrecognised one, which gets told
+  what the four names are. Deciding here instead produced one of those answers for both.
+
+  What `--config` does change is *where*: a named file need not sit where discovery would look.
 */
-function isV4ConfigurationPath (path) {
-  return isConfigurationFileName(basename(path)) || /\.(js|mjs|ts|mts)$/.test(path)
+function isNamedConfigurationPath (path) {
+  return /\.(json|json5|ya?ml|to?ml|js|mjs|ts|mts)$/.test(path)
 }
 
 async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
@@ -97,14 +99,15 @@ async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
   if (typeof sourceOrConfig === 'string') {
     const named = resolvePath(configOrRoot, sourceOrConfig)
 
-    return isV4ConfigurationPath(named) ? named : null
+    // Named outright: the loader decides whether the name is one it accepts, and says which it is.
+    return isNamedConfigurationPath(named) ? named : null
   }
 
   if (typeof configOrRoot !== 'string') {
     return null
   }
 
-  if (isV4ConfigurationPath(configOrRoot)) {
+  if (isNamedConfigurationPath(configOrRoot)) {
     return configOrRoot
   }
 
@@ -137,6 +140,21 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
   if (v4ConfigurationFile) {
     return loadV4RuntimeConfiguration(v4ConfigurationFile, context)
+  }
+
+  /*
+    Level 0. A directory with no configuration file of any kind is not an error: the loader
+    synthesizes one in memory from what the directory contains. Reaching the v3 resolver instead
+    made a configless project fail to load, which is what the removed temporary-file fallback --
+    detect the type, write a watt.json into the user's tree, then load that -- existed to paper
+    over. Nothing is written to disk now.
+  */
+  if (!sourceOrConfig && typeof configOrRoot === 'string' && !isNamedConfigurationPath(configOrRoot)) {
+    const stats = await stat(configOrRoot).catch(() => null)
+
+    if (stats?.isDirectory()) {
+      return loadV4RuntimeConfiguration({ cwd: configOrRoot }, context)
+    }
   }
 
   const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'runtime')
@@ -184,7 +202,7 @@ async function loadV4RuntimeConfiguration (target, context) {
   */
   const realEnv = context?.ignoreProcessEnv ? { ...context?.env } : { ...process.env, ...context?.env }
 
-  const objectSource = typeof target !== 'string'
+  const objectSource = typeof target !== 'string' && target.source !== undefined
   const shared = {
     realEnv,
     command,
@@ -226,9 +244,16 @@ async function loadV4RuntimeConfiguration (target, context) {
     onInfo: info => diagnostics.info(info.message)
   }
 
-  const loaded = objectSource
-    ? await loadV4ObjectConfiguration({ root: target.root, source: target.source, ...shared })
-    : await loadV4Configuration({ cwd: dirname(target), configPath: target, ...shared })
+  let loaded
+  if (objectSource) {
+    loaded = await loadV4ObjectConfiguration({ root: target.root, source: target.source, ...shared })
+  } else if (typeof target === 'string') {
+    loaded = await loadV4Configuration({ cwd: dirname(target), configPath: target, ...shared })
+  } else {
+    // No file was named and none was found: the loader searches from this directory and, finding
+    // nothing, synthesizes.
+    loaded = await loadV4Configuration({ cwd: target.cwd, ...shared })
+  }
 
   const config = loaded.config
 
@@ -245,12 +270,13 @@ async function loadV4RuntimeConfiguration (target, context) {
   })
 
   // kMetadata is symbol-keyed and cannot cross a worker boundary, so each worker rebuilds it; this
-  // is the main process's copy. env is the runtime's own view — every application worker gets the
-  // per-application environment the loader resolved, not this one.
+  // is the main process's copy. env is the runtime's own view — the real environment under the root
+  // env block and the root's env files — and every application worker gets the per-application
+  // environment the loader resolved instead, which this one is not a substitute for.
   config[kMetadata] = {
     root: loaded.root,
     path: loaded.configPath,
-    env: process.env,
+    env: loaded.env ?? process.env,
     module: '@platformatic/runtime',
     /*
       The evaluation context, kept beside the envelope rather than inside it: applications added

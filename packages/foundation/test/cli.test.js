@@ -1,5 +1,5 @@
-import { match, ok, strictEqual } from 'node:assert'
-import { mkdtemp, rmdir, unlink, writeFile } from 'node:fs/promises'
+import { deepStrictEqual, match, ok, strictEqual } from 'node:assert'
+import { mkdtemp, readdir, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
@@ -8,7 +8,6 @@ import { MockAgent, setGlobalDispatcher } from 'undici'
 import {
   applicationToEnvVariable,
   createCliLogger,
-  fallbackToTemporaryConfigFile,
   findRuntimeConfigurationFile,
   getExecutableId,
   getExecutableName,
@@ -433,125 +432,20 @@ test('findRuntimeConfigurationFile - should log fatal error when config not foun
   await rmdir(tmpDir)
 })
 
-test('findRuntimeConfigurationFile - should fallback to temporary config when allowed', async () => {
+test('findRuntimeConfigurationFile - should answer null when a fallback is allowed and nothing exists', async () => {
   const tmpDir = await mkdtemp(join(tmpdir(), 'plt-test-'))
 
-  // Create a JS file to trigger fallback logic
+  // A JavaScript file is all a Level 0 project has: the caller loads the directory itself.
   await writeFile(join(tmpDir, 'index.js'), 'console.log("test")')
 
-  let warnCalled = false
-  const mockLogger = {
-    warn: () => {
-      warnCalled = true
-    }
-  }
+  const result = await findRuntimeConfigurationFile(createCliLogger('info'), tmpDir, undefined, true, false, false)
 
-  const result = await findRuntimeConfigurationFile(mockLogger, tmpDir, undefined, true, false, false)
+  strictEqual(result, null)
 
-  strictEqual(result, join(tmpDir, 'watt.json'))
-  ok(warnCalled)
+  // Nothing was written: the temporary watt.json this used to leave behind is gone.
+  deepStrictEqual(await readdir(tmpDir), ['index.js'])
 
   // Clean up
   await unlink(join(tmpDir, 'index.js'))
-  await unlink(join(tmpDir, 'watt.json'))
-  await rmdir(tmpDir)
-})
-
-test('fallbackToTemporaryConfigFile - should return undefined when no JavaScript files', async () => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'plt-test-'))
-
-  // Create a non-JS file
-  await writeFile(join(tmpDir, 'README.txt'), 'test')
-
-  const mockLogger = createCliLogger('info')
-  const result = await fallbackToTemporaryConfigFile(mockLogger, tmpDir, false)
-
-  strictEqual(result, undefined)
-
-  await unlink(join(tmpDir, 'README.txt'))
-  await rmdir(tmpDir)
-})
-
-test('fallbackToTemporaryConfigFile - should create watt.json when JS files exist', async () => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'plt-test-'))
-
-  // Create package.json and JS file
-  await writeFile(join(tmpDir, 'package.json'), JSON.stringify({}))
-  await writeFile(join(tmpDir, 'index.js'), 'console.log("test")')
-
-  let warnCalled = false
-  const mockLogger = {
-    warn: () => {
-      warnCalled = true
-    }
-  }
-
-  const result = await fallbackToTemporaryConfigFile(mockLogger, tmpDir, false)
-
-  strictEqual(result, join(tmpDir, 'watt.json'))
-  ok(warnCalled)
-
-  // Clean up
-  await unlink(join(tmpDir, 'package.json'))
-  await unlink(join(tmpDir, 'index.js'))
-  await unlink(join(tmpDir, 'watt.json'))
-  await rmdir(tmpDir)
-})
-
-test('fallbackToTemporaryConfigFile - should handle module verification failure', async () => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'plt-test-'))
-  const originalExitCode = process.exitCode
-
-  // Create JS file but no package.json with required dependency
-  await writeFile(join(tmpDir, 'index.js'), 'console.log("test")')
-
-  let warnCalled = false
-  let fatalCalled = false
-  const mockLogger = {
-    warn: () => {
-      warnCalled = true
-    },
-    fatal: () => {
-      fatalCalled = true
-    }
-  }
-
-  const result = await fallbackToTemporaryConfigFile(mockLogger, tmpDir, true)
-
-  strictEqual(result, false)
-  strictEqual(process.exitCode, 1)
-  ok(warnCalled)
-  ok(fatalCalled)
-
-  // Reset
-  process.exitCode = originalExitCode
-
-  // Clean up
-  await unlink(join(tmpDir, 'index.js'))
-  await unlink(join(tmpDir, 'watt.json')).catch(() => {}) // may not exist
-  await rmdir(tmpDir)
-})
-
-test('fallbackToTemporaryConfigFile - should skip verification when verifyPackages is false', async () => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'plt-test-'))
-
-  // Create JS file
-  await writeFile(join(tmpDir, 'index.js'), 'console.log("test")')
-
-  let warnCalled = false
-  const mockLogger = {
-    warn: () => {
-      warnCalled = true
-    }
-  }
-
-  const result = await fallbackToTemporaryConfigFile(mockLogger, tmpDir, false)
-
-  strictEqual(result, join(tmpDir, 'watt.json'))
-  ok(warnCalled)
-
-  // Clean up
-  await unlink(join(tmpDir, 'index.js'))
-  await unlink(join(tmpDir, 'watt.json'))
   await rmdir(tmpDir)
 })

@@ -16,7 +16,7 @@ function wattpmInDir (cwd, ...args) {
 }
 
 test('pprof start - should start profiling on specific service', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -52,7 +52,7 @@ test('pprof start - should start profiling on specific service', async t => {
 })
 
 test('pprof stop - should stop profiling and create profile file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -118,7 +118,7 @@ test('pprof start - should start profiling on all services when no service speci
     startProcess.catch(() => {})
   })
 
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const cwd = process.cwd()
   process.chdir(rootDir)
@@ -147,7 +147,7 @@ test('pprof start - should start profiling on all services when no service speci
 })
 
 test('pprof stop - should stop profiling on all services and create multiple profile files', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const cwd = process.cwd()
   process.chdir(rootDir)
@@ -190,7 +190,7 @@ test('pprof stop - should stop profiling on all services and create multiple pro
 })
 
 test('pprof --all-workers - should create one profile file per worker', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -239,7 +239,7 @@ test('pprof --all-workers - should create one profile file per worker', async t 
 })
 
 test('pprof - should handle service not found error', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(async () => {
     startProcess.kill('SIGINT')
@@ -315,7 +315,7 @@ test('pprof - should show help when no subcommand specified', async t => {
 })
 
 test('pprof start - should start profiling with explicit runtime id and service', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -360,7 +360,7 @@ test('pprof start - should start profiling with explicit runtime id and service'
 })
 
 test('pprof stop - should stop profiling with explicit runtime id and service', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -436,7 +436,7 @@ test('pprof - should handle invalid runtime id error', async t => {
 })
 
 test('pprof - should handle service not found with explicit runtime id', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -484,7 +484,7 @@ test('pprof - should handle service not found with explicit runtime id', async t
 })
 
 test('pprof start --type=heap - should start heap profiling', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -520,7 +520,7 @@ test('pprof start --type=heap - should start heap profiling', async t => {
 })
 
 test('pprof stop --type=heap - should stop heap profiling and create profile file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -576,7 +576,7 @@ test('pprof stop --type=heap - should stop heap profiling and create profile fil
 })
 
 test('pprof concurrent cpu and heap profiling', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -628,7 +628,7 @@ test('pprof concurrent cpu and heap profiling', async t => {
 })
 
 test('pprof --type with short option -t', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -668,7 +668,7 @@ test('pprof --type with short option -t', async t => {
 })
 
 test('pprof start --source-maps - should start profiling with source maps enabled', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -720,7 +720,7 @@ test('pprof start --source-maps - should start profiling with source maps enable
 })
 
 test('pprof start --source-maps with short option -s', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -757,7 +757,7 @@ test('pprof start --source-maps with short option -s', async t => {
 })
 
 test('pprof start --type=heap --source-maps - should work with both options', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
 
   t.after(async () => {
@@ -804,7 +804,7 @@ test('pprof start --type=heap --source-maps - should work with both options', as
 })
 
 test('pprof stop --dir - should save profile to specified directory', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
   const outputDir = await mkdtemp(join(tmpdir(), 'pprof-output-'))
 
@@ -863,7 +863,7 @@ test('pprof stop --dir - should save profile to specified directory', async t =>
 })
 
 test('pprof stop --dir with short option -d', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
   const outputDir = await mkdtemp(join(tmpdir(), 'pprof-output-'))
 

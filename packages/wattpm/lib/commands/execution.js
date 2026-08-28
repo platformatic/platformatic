@@ -11,7 +11,7 @@ import { create, loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { basename, dirname } from 'node:path'
+import { basename, dirname, resolve, sep } from 'node:path'
 import inspector from 'node:inspector'
 import { createInterface } from 'node:readline'
 
@@ -93,10 +93,15 @@ export async function devCommand (logger, args) {
 
   const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!configurationFile) {
+  /*
+    null means no configuration file exists anywhere above the root, which is Level 0 rather than a
+    failure: the loader is handed the directory and synthesizes a configuration for it in memory.
+    `false` is the other answer — the lookup already reported why it refused.
+  */
+  if (configurationFile === false) {
     return
   }
+
   if (debugConfig) {
     return printResolvedConfiguration(logger, root, configurationFile, {
       production: false,
@@ -166,17 +171,41 @@ export async function devCommand (logger, args) {
       }
     }
 
+    /*
+      A watched *directory* is watched for membership: an application directory appearing or
+      disappearing changes the application list, and that is a configuration change. What happens
+      *inside* one is not -- that is the application's own source, which its worker watches and
+      restarts itself for.
+
+      The distinction is the depth of the change, because the watcher reports paths relative to what
+      it watches: `main` is a member, `main/index.js` is inside one. Without it every edit to any
+      file under an autoloaded directory reloaded the whole runtime, which both restarted far more
+      than the edit touched and stopped the application's own watcher from ever getting there.
+    */
     for (const directory of targets.directories) {
       if (existsSync(directory)) {
-        specs.push({ path: directory })
+        specs.push({ path: directory, membershipOnly: true })
       }
     }
 
-    watchers = specs.map(spec => {
+    /*
+      The files the evaluation actually read. A change to one of them is a configuration change
+      wherever it sits -- including inside an autoloaded directory, which is where every
+      application's own configuration file lives.
+    */
+    const known = new Set(targets.files)
+
+    watchers = specs.map(({ membershipOnly, ...spec }) => {
       const watcher = new FileWatcher(spec)
       watcher.startWatching()
 
-      watcher.on('update', () => {
+      watcher.on('update', changed => {
+        if (membershipOnly && typeof changed === 'string' && changed.includes(sep)) {
+          if (!known.has(resolve(spec.path, changed))) {
+            return
+          }
+        }
+
         runtime.logger.info('The configuration has changed, reloading the application ...')
         reloadApplication().catch(reject)
       })
@@ -185,7 +214,23 @@ export async function devCommand (logger, args) {
     })
   }
 
-  async function reloadApplication () {
+  /*
+    One reload at a time. A single edit reaches more than one watcher -- the file has its own, and
+    the directory holding it is watched for membership -- so two reloads would start, and the second
+    runtime would try to bind a management socket the first had not released. Coalescing them is
+    also what the user means: the tree changed once.
+  */
+  let reloading = null
+
+  function reloadApplication () {
+    reloading ??= reloadOnce().finally(() => {
+      reloading = null
+    })
+
+    return reloading
+  }
+
+  async function reloadOnce () {
     await Promise.all(watchers.map(watcher => watcher.stopWatching()))
     await runtime.close()
     runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env, logger, mode, configTimeout: parseConfigTimeout(configTimeout) })
@@ -242,8 +287,12 @@ export async function startCommand (logger, args) {
   const root = getRoot(positionals)
   const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!configurationFile) {
+  /*
+    null means no configuration file exists anywhere above the root, which is Level 0 rather than a
+    failure: the loader is handed the directory and synthesizes a configuration for it in memory.
+    `false` is the other answer — the lookup already reported why it refused.
+  */
+  if (configurationFile === false) {
     return
   }
 

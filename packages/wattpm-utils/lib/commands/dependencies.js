@@ -7,13 +7,13 @@ import {
   logFatalError,
   parseArgs
 } from '@platformatic/foundation'
-import { evaluateConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
+import { deriveApplicationId, evaluateConfigurationFile, readPackageName } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 
@@ -75,7 +75,13 @@ function isPathInsideDirectory (directory, path) {
   Where a root says its applications are: the entries it lists, and the directories its autoload
   would discover. Neither answer needs an application's own configuration, which is the point.
 */
-async function listApplicationDirectories (configurationFile) {
+/*
+  Where the applications are, without evaluating any of them. Every consumer of this is a command
+  that repairs a project -- installing the capability an application is missing, or writing the
+  configuration file it does not have -- so a full load would demand the very thing it is about to
+  supply. The root states the paths by itself.
+*/
+export async function listApplicationDirectories (configurationFile) {
   const root = dirname(configurationFile)
   const { config } = await evaluateConfigurationFile({
     path: configurationFile,
@@ -86,7 +92,28 @@ async function listApplicationDirectories (configurationFile) {
   })
 
   const entries = config.applications ?? config.services ?? config.web ?? []
-  const applications = entries.filter(entry => entry.path).map(entry => ({ id: entry.id, path: entry.path }))
+  const applications = await Promise.all(
+    entries
+      .filter(entry => entry.path)
+      .map(async entry => {
+        /*
+          The same three rungs the loader uses -- an explicit id, the package.json name with any
+          scope stripped, then the directory name. Reading `entry.id` alone named a Level 1
+          application `undefined`: the auto-wrapped entry a single-application file produces
+          carries a path and no id, because the full loader derives it a step later than this
+          reads.
+        */
+        const { id } = deriveApplicationId({
+          id: entry.id,
+          packageName: entry.id ? undefined : await readPackageName(entry.path),
+          directory: entry.path
+        })
+
+        // packageManager comes along because installing is what this list is for, and the entry is
+        // the only place that says which manager an application wants.
+        return { id, path: entry.path, packageManager: entry.packageManager }
+      })
+  )
 
   if (config.autoload?.path) {
     const exclude = config.autoload.exclude ?? []
@@ -311,12 +338,15 @@ export async function installCommand (logger, args) {
     this.executableName
   )
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!configurationFile) {
-    return
-  }
-
-  const installed = await installDependencies(logger, root, configurationFile, production, packageManager)
+  const installed = await installDependencies(
+    logger,
+    root,
+    // Level 0: no configuration file anywhere, so the root directory is itself the one application
+    // and there is nothing to read to find that out.
+    configurationFile ?? [{ id: basename(resolve(root)), path: resolve(root) }],
+    production,
+    packageManager
+  )
 
   if (installed) {
     logger.done('All applications have been resolved.')
@@ -353,19 +383,20 @@ export async function updateCommand (logger, args) {
     this.executableName
   )
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!configurationFile) {
-    return
+  // Level 0 again: the root is the one application, and it is the only thing to update besides
+  // the project itself.
+  let applications = [{ id: basename(resolve(root)), path: resolve(root) }]
+
+  if (configurationFile) {
+    const configuration = await loadConfiguration(configurationFile)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!configuration) {
+      return
+    }
+
+    applications = configuration.applications
   }
-
-  const configuration = await loadConfiguration(configurationFile)
-
-  /* c8 ignore next 3 - Hard to test */
-  if (!configuration) {
-    return
-  }
-
-  const applications = configuration.applications
 
   // First of all, get all version from NPM for the runtime
   const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')

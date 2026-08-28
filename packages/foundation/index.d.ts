@@ -59,12 +59,6 @@ export function findRuntimeConfigurationFile(
   executableName?: string
 ): Promise<string | false | undefined>
 
-export function fallbackToTemporaryConfigFile(
-  logger: Logger,
-  root: string,
-  verifyPackages: boolean
-): Promise<string | false | undefined>
-
 // Configuration types
 export declare const envVariablePattern: RegExp
 export declare const knownConfigurationFilesExtensions: string[]

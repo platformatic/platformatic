@@ -12,7 +12,13 @@ import {
 } from './errors.js'
 import { topologyVariableName } from './identifiers.js'
 import { readAndStripSchemaStamp } from './stamp.js'
-import { expandAutoload, filterEnabledApplications, normalizeApplications, recordResolveCandidates } from './topology.js'
+import {
+  backfillRemotePaths,
+  expandAutoload,
+  filterEnabledApplications,
+  normalizeApplications,
+  recordResolveCandidates
+} from './topology.js'
 
 /*
   The evaluation pipeline, shared by the eval worker and by --debug-config's in-process mode. It is
@@ -138,6 +144,14 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
   snapshot.applications = await expandAutoload(snapshot, { root: directory })
 
   const resolveCandidates = recordResolveCandidates(snapshot.applications)
+
+  /*
+    After the recording, so `resolve` still reports a pathless entry by its generated location
+    rather than by a path the project never wrote, and before the fan-out, which needs a directory
+    for every application whether or not its clone has arrived. The schema's default is applied
+    main-side, after this runs, so it is spelled here too.
+  */
+  backfillRemotePaths(snapshot.applications, snapshot.resolvedApplicationsBasePath ?? 'external')
 
   snapshot.applications = filterEnabledApplications(snapshot.applications, context.mode)
 

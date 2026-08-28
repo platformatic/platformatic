@@ -458,8 +458,7 @@ test('should fail with actionable error when a gateway application is missing fr
 
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, 'plt-gateway-missing-app-'))
   const gatewayDir = resolve(tmpDir, 'gateway')
-  const gatewayConfigPath = resolve(gatewayDir, 'platformatic.gateway.json')
-  const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
+  const runtimeConfigPath = resolve(tmpDir, 'watt.config.mjs')
 
   t.after(async () => {
     await safeRemove(tmpDir)
@@ -469,37 +468,31 @@ test('should fail with actionable error when a gateway application is missing fr
 
   await writeFile(
     runtimeConfigPath,
-    JSON.stringify({
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
-      watch: false,
-      services: [
-        {
-          id: 'composer',
-          path: gatewayDir,
-          config: gatewayConfigPath
-        }
-      ],
-      logger: {
-        level: 'fatal'
-      }
-    }),
+    `export default ${JSON.stringify(
+      {
+        watch: false,
+        applications: [{ id: 'composer', path: 'gateway' }],
+        logger: { level: 'fatal' }
+      },
+      null,
+      2
+    )}\n`,
     'utf-8'
   )
 
   await writeFile(
-    gatewayConfigPath,
-    JSON.stringify({
-      module: resolve(import.meta.dirname, '../index.js'),
-      gateway: {
-        applications: [
-          {
-            id: 'missing',
-            proxy: {}
-          }
-        ],
-        refreshTimeout: REFRESH_TIMEOUT
-      }
-    }),
+    resolve(gatewayDir, 'watt.config.mjs'),
+    `export default ${JSON.stringify(
+      {
+        module: resolve(import.meta.dirname, '../index.js'),
+        gateway: {
+          applications: [{ id: 'missing', proxy: {} }],
+          refreshTimeout: REFRESH_TIMEOUT
+        }
+      },
+      null,
+      2
+    )}\n`,
     'utf-8'
   )
 

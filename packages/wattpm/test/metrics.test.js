@@ -6,7 +6,7 @@ import { parseRuntimeLog, wattpm } from './helper.js'
 import { ok } from 'node:assert'
 
 test('metrics - should return runtime metrics without format opt', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -36,7 +36,7 @@ test('metrics - should return runtime metrics without format opt', async t => {
 })
 
 test('metrics - should return runtime metrics with text format', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')

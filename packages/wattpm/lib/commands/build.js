@@ -37,15 +37,19 @@ export async function buildCommand (logger, args) {
 
     configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
-    /* c8 ignore next 3 - Hard to test */
-    if (!configurationFile) {
+    // `false` means the lookup already reported why it refused; null is Level 0.
+    if (configurationFile === false) {
       return
     }
 
     try {
-      // build produces production artifacts, so it evaluates as a production boot: the same env
-      // files `start` will read, and `production: true` in every callback's context.
-      runtime = await create(configurationFile, undefined, { build: true, command: 'build', envFile: env, logger, mode })
+      /*
+        build produces production artifacts, so it evaluates as a production boot: the same env
+        files `start` will read, and `production: true` in every callback's context. A null
+        configuration file is Level 0 -- nothing exists above the root -- and the directory itself
+        is what gets loaded, which the loader answers by synthesizing in memory.
+      */
+      runtime = await create(configurationFile ?? root, undefined, { build: true, command: 'build', envFile: env, logger, mode })
       await runtime.init()
       /* c8 ignore next 4 - Hard to test */
     } catch (error) {

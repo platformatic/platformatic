@@ -6,7 +6,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { parseRuntimeLog, wattpm } from './helper.js'
 
 test('repl - should start a REPL session in the application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     replProcess.kill('SIGINT')
@@ -73,7 +73,7 @@ test('repl - should start a REPL session in the application', async t => {
 })
 
 test('repl - should have access to platformatic context', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     replProcess.kill('SIGINT')

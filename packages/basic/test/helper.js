@@ -461,6 +461,51 @@ export async function buildRuntime (root) {
   application directory has to be there before v4 resolves the applications, while a change to the
   loaded configuration can only happen once there is one. A single hook cannot do both.
 */
+async function copyFixture (source) {
+  let root
+  let index = 0
+
+  await createDirectory(temporaryFolder)
+
+  while (!root) {
+    const candidate = resolve(temporaryFolder, `${basename(source)}-${index++}`)
+
+    try {
+      await mkdir(candidate)
+      root = candidate
+    } catch (error) {
+      if (error.code !== 'EEXIST') {
+        throw error
+      }
+    }
+  }
+
+  if (process.env.PLT_TESTS_KEEP_TMP === 'true' || process.env.PLT_TESTS_PRINT_TMP === 'true') {
+    process._rawDebug(`Runtime root: ${root}`)
+  }
+
+  currentWorkingDirectory = root
+
+  await cp(source, root, { recursive: true })
+
+  return root
+}
+
+/*
+  A copy of a fixture on disk, with its dependencies linked, and nothing loaded. It is what a test
+  needs when the fixture deliberately does not load yet -- an application whose capability is
+  missing is exactly what `wattpm-utils import` exists to fix -- because v4 validates every
+  application's capability when the root is read, so merely creating a runtime over such a fixture
+  fails before the command under test runs.
+*/
+export async function prepareFixture (t, fixturePath) {
+  const root = await copyFixture(resolve(fixturesDir, fixturePath))
+
+  await ensureDependencies([root])
+
+  return { root }
+}
+
 export async function prepareRuntime (t, fixturePath, production, configFile, additionalSetup, beforeLoad) {
   let source
   let port
@@ -513,32 +558,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   }
 
   const originalCwd = process.cwd()
-  let root
-  let index = 0
-
-  await createDirectory(temporaryFolder)
-
-  while (!root) {
-    const candidate = resolve(temporaryFolder, `${basename(source)}-${index++}`)
-
-    try {
-      await mkdir(candidate)
-      root = candidate
-    } catch (error) {
-      if (error.code !== 'EEXIST') {
-        throw error
-      }
-    }
-  }
-
-  if (process.env.PLT_TESTS_KEEP_TMP === 'true' || process.env.PLT_TESTS_PRINT_TMP === 'true') {
-    process._rawDebug(`Runtime root: ${root}`)
-  }
-
-  currentWorkingDirectory = root
-
-  // Copy the fixtures
-  await cp(source, root, { recursive: true })
+  const root = await copyFixture(source)
 
   /*
     Setup runs before the configuration is read, not after. v4 resolves every application when the

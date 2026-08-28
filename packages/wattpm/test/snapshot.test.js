@@ -14,7 +14,7 @@ function wattpmInDir (cwd, ...args) {
 }
 
 test('heap-snapshot - should take a heap snapshot of a specific application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'heap-snapshot-test-'))
 
   t.after(async () => {
@@ -59,7 +59,7 @@ test('heap-snapshot - should take a heap snapshot of a specific application', as
 })
 
 test('heap-snapshot - should take heap snapshots of all applications when no application specified', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'heap-snapshot-test-'))
 
   t.after(async () => {
@@ -97,7 +97,7 @@ test('heap-snapshot - should take heap snapshots of all applications when no app
 })
 
 test('heap-snapshot - should save to custom directory with --dir option', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'heap-snapshot-test-'))
 
   t.after(async () => {
@@ -136,7 +136,7 @@ test('heap-snapshot - should save to custom directory with --dir option', async 
 })
 
 test('heap-snapshot - should fail with non-existent application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(async () => {
     startProcess.kill('SIGINT')
@@ -164,7 +164,7 @@ test('heap-snapshot - should fail with non-existent application', async t => {
 })
 
 test('heap-snapshot - should fail with non-existent worker', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(async () => {
     startProcess.kill('SIGINT')
