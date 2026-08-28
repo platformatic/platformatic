@@ -3,7 +3,7 @@ export default {
   module: '@platformatic/service',
   server: {
     hostname: '127.0.0.1',
-    port: '14242'
+    port: 14242
   },
   service: {
     openapi: true

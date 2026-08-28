@@ -6,7 +6,7 @@ export default {
       level: 'info'
     },
     hostname: '127.0.0.1',
-    port: '3042',
+    port: 3042,
     pluginTimeout: 60000,
     keepAliveTimeout: 1
   },

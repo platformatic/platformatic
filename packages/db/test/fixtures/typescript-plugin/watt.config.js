@@ -6,7 +6,7 @@ export default {
       level: 'info'
     },
     hostname: '127.0.0.1',
-    port: '3042'
+    port: 3042
   },
   db: {
     connectionString: process.env.DATABASE_URL,

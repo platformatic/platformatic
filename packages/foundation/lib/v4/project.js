@@ -44,7 +44,13 @@ function isPlainObject (value) {
   wherever the schema embeds them: the same health block appears at the root, under `runtime`, and
   under every application entry.
 
-  What is deliberately *not* here is the rest of the health block. `maxHeapTotal`,
+  What is deliberately *not* here, besides the two `enabled` positions above: `https/key` and
+  `https/cert`, whose string is the PEM itself (`sanitizeHTTPSArgument` returns a string argument
+  untouched, and the object form beside it is the file alternative); and `workers`, which
+  `coercePositiveInteger` parses from a string on the v4 path, raising a named error when it will
+  not convert.
+
+  Nor is the rest of the health block. `maxHeapTotal`,
   `maxYoungGeneration`, `codeRangeSize`, `bufferPoolSize` and `defaultHighWaterMark` are each passed
   to `parseMemorySize`, so `'1 GB'` is a value they mean rather than a placeholder they tolerate.
   `maxHeapUsed` sits among them and is not one of them: it is a ratio with `maximum: 1` and a
@@ -54,6 +60,28 @@ function isPlainObject (value) {
 const PLACEHOLDER_BRANCHES = new Set([
   // A port is a number. Forty-eight sites, and nothing anywhere reads a string one.
   'server/port',
+  /*
+    Five properties called `enabled`, four answers, and only their consumers separate them.
+
+    Removed here: these are read as booleans and nothing else -- `!== false` for `health`,
+    `telemetry` and `watch`, `=== false` for a scheduler job, `=== true` for `deduplication`.
+    A string never reached any of those comparisons as anything but a surprise: `'false'` is not
+    `false`, so a v3 configuration that wrote one had a setting that validated and did nothing.
+
+    Worse for Next's two, which test truthiness -- `if (httpsOptions.enabled)`. There `'false'`
+    turns HTTPS *on*.
+
+    Kept, and not on this list: an application entry's `enabled`, which `isApplicationEnabled`
+    reads as "anything but 'false' is true", and `otlpExporter.enabled`, where
+    `packages/metrics/index.js` compares against the string `'false'` by name.
+  */
+  'health/enabled',
+  'telemetry/enabled',
+  'watch/enabled',
+  'scheduler/enabled',
+  'deduplication/enabled',
+  'https/enabled',
+  'cache/enabled',
   // Milliseconds, counts and ratios. Each is compared or arithmetic'd, never parsed.
   'health/interval',
   'health/gracePeriod',
