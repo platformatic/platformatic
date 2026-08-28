@@ -138,11 +138,6 @@ export class RuntimeApiClient {
   pauseRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   resumeRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   runRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerRunResult>
-  getRuntimeConfig (
-    pid: number
-  ): Promise<
-    Record<string, unknown> & { path?: string; configFile?: string; configPath?: string; server?: { path?: string } }
-  >
   getRuntimeApplicationConfig (pid: number, applicationId?: string): Promise<Record<string, unknown>>
   getRuntimeEnv (pid: number): Promise<Record<string, string>>
   getRuntimeOpenapi (pid: number, applicationId: string): Promise<Record<string, unknown>>
