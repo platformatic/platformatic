@@ -58,14 +58,27 @@ function parseBlocks (source) {
   let open = null
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
+    /*
+      Indentation is matched, not required to be absent. A fence inside a list item is indented, and
+      a parser anchored at column zero does not see it -- which is a gate that skips blocks without
+      saying so. Seven of one page's examples were invisible that way.
+    */
+    const fence = lines[i].match(/^(\s*)```(.*)$/)
 
-    if (!line.startsWith('```')) {
+    if (!fence) {
       continue
     }
 
+    const [, indent, line] = fence
+
     if (open) {
-      blocks.push({ ...open, end: i + 1, content: lines.slice(open.start, i).join('\n') })
+      // Dedented by the opening fence's indent, so the content is the source a reader would copy.
+      const content = lines
+        .slice(open.start, i)
+        .map(text => (text.startsWith(open.indent) ? text.slice(open.indent.length) : text))
+        .join('\n')
+
+      blocks.push({ ...open, end: i + 1, content })
       open = null
       continue
     }
@@ -75,7 +88,7 @@ function parseBlocks (source) {
       terminal output has no language at all. The marker is recognised by name rather than by
       position so that `output` alone is a marked block and not a language nobody has heard of.
     */
-    const info = line.slice(3).trim().split(/\s+/).filter(Boolean)
+    const info = line.trim().split(/\s+/).filter(Boolean)
     const marker = info.find(token => markers.has(token)) ?? ''
 
     /*
@@ -100,7 +113,7 @@ function parseBlocks (source) {
     const language = info.find(
       token => token !== marker && token !== 'refused' && !token.startsWith('env=')
     ) ?? ''
-    open = { line: i + 1, start: i + 1, language, marker, env, refused }
+    open = { line: i + 1, start: i + 1, indent, language, marker, env, refused }
   }
 
   if (open) {
@@ -188,8 +201,10 @@ const pendingGeneratedTypes = new Set([
 ])
 
 function typecheck (files) {
+  // The shape the caller destructures, on every path. Returning a bare array here was survivable
+  // only while the pending generated types kept tsc exiting non-zero on every run.
   if (files.length === 0) {
-    return []
+    return { failures: [], pending: new Set() }
   }
 
   const result = spawnSync(
@@ -199,7 +214,7 @@ function typecheck (files) {
   )
 
   if (result.status === 0) {
-    return []
+    return { failures: [], pending: new Set() }
   }
 
   const errors = (result.stdout || result.stderr || '').split('\n').filter(line => line.includes('error TS'))

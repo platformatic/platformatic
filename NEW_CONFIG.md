@@ -2205,7 +2205,7 @@ serial scheme.
    each key, pointing at the explicit `env:` property as the sanctioned
    cross-boundary channel:
 
-   ```
+   ```output
    ⚠ configuration evaluation mutated process.env; these keys do NOT propagate
      to applications: CACHE_PREFIX, OTEL_EXPORTER_OTLP_ENDPOINT
      Use: defineConfig({ env: { CACHE_PREFIX: … } })
@@ -2482,7 +2482,7 @@ loader hooks, no magic; editor and runtime always agree:
   Under pnpm's strict layout an app-local dependency is not visible from the root, so
   the failure gets a targeted error naming both fixes:
 
-  ```
+  ```output
   ✗ Cannot resolve '@platformatic/next' from watt.config.ts.
     Add it to the root package.json, or configure the application in
     web/frontend/watt.config.ts instead.
@@ -2822,7 +2822,7 @@ deliberately saner:
   precedence ladder — the **worker-runtime view** of the two in "Env files" — is
   explicit:
 
-  ```
+  ```output
   real environment  >  entry env block  >  root env block  >  injected
                     >  env files, own directory first, layered up to the env root
                     >  NODE_ENV default
@@ -4067,7 +4067,7 @@ Generation reads both views. Then:
    project to migrate on its own, and re-run here afterwards. The format supports the
    layout; the codemod declines to mutate two independent trees in one transaction.
 
-   ```
+   ```output
    ✗ cannot migrate: 'api' resolves to ../shared/api, outside this project.
      Migrate that project on its own, then re-run here.
    ```
@@ -4532,7 +4532,7 @@ Generation reads both views. Then:
    describe the undo as complete without it. On a `--force` or no-VCS tree it is not
    complete even then, and the summary names what is unrecoverable:
 
-   ```
+   ```output
    ✔ migrated 3 applications
      to undo: git restore <tracked…> && rm <created…> && pnpm install
    ! web/api/platformatic.json was untracked and has been deleted; --force means
@@ -4656,7 +4656,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     `configPath` and `autoload` beside the `projectDir` it already returns, and
     `@platformatic/control` gaining the matching client method over `GET /metadata`:
 
-    ```ts
+    ```ts decl
     interface RuntimeMetadata {                 // additions to the existing shape
       projectDir: string
       configPath: string | null                 // null for object config sources
@@ -5070,7 +5070,12 @@ runs multiple workers on a fixed port at all.
      only for being fenced and marked.
 
    The marker is required: an unmarked block fails the check rather than being
-   skipped, which is what stops the gate from quietly narrowing. The gate exists —
+   skipped, which is what stops the gate from quietly narrowing — but a marker only
+   protects the blocks the gate can see. Its fence parser was anchored at column zero,
+   so **a fence indented inside a list item was invisible to it**, and six blocks in
+   this document were never checked while the gate reported OK on the rest. Being
+   unmarked did not fail them, because being unparsed meant they were never blocks.
+   The parser matches indentation now and dedents what it finds. The gate exists —
    `scripts/check-blocks.mjs`, beside the citation one — and every block carries a
    marker, so the `config` blocks are loaded through the real v4 loader and every
    block that holds types is typechecked.
