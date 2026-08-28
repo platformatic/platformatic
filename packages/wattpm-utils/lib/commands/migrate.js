@@ -1,5 +1,6 @@
 import {
   extractModuleFromSchemaUrl,
+  getInstallationCommand,
   getPackageManager,
   loadConfigurationFile as loadRawConfigurationFile,
   logFatalError,
@@ -21,6 +22,8 @@ import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
 import { v4Schema } from '@platformatic/runtime/lib/schema.js'
 import { bold } from 'colorette'
 import { version } from '../version.js'
+import { execa } from 'execa'
+import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
@@ -943,7 +946,12 @@ export function emitRootConfiguration (
   It is also where the emitted root entry is assembled: an id pinned to what v3 resolved, and an
   `envfile` rebased, are decisions about output that need the same lexical view the refusals need.
 */
-export async function planMigration (root, source, config, { useSampleDefaults = false } = {}) {
+/*
+  `resumed` is the set of paths a paused run already wrote. A fresh run refuses to overwrite a v4
+  file it finds, which is right -- it may be one somebody wrote by hand. A resumed run put those
+  files there itself, and refusing them would make the pause unresumable.
+*/
+export async function planMigration (root, source, config, { useSampleDefaults = false, resumed = new Set() } = {}) {
   const refusals = []
   const applications = []
   const notes = []
@@ -1188,7 +1196,7 @@ export async function planMigration (root, source, config, { useSampleDefaults =
     needsPath: converted.needsPath,
     root: converted.converted,
     suggestions,
-    refusals: refusals.concat(collectPlanRefusals(root, source, applications)),
+    refusals: refusals.concat(collectPlanRefusals(root, source, applications, resumed)),
     seeds,
     skipped
   }
@@ -1513,7 +1521,7 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
   would overwrite, what it would write twice, and which ids stop being distinct once the label rule
   has been applied to them.
 */
-function collectPlanRefusals (root, source, applications) {
+function collectPlanRefusals (root, source, applications, resumed = new Set()) {
   const refusals = []
   const producers = new Map()
   const ids = new Map()
@@ -1593,7 +1601,7 @@ function collectPlanRefusals (root, source, applications) {
 
   const existing = existingV4Candidate(dirname(source))
 
-  if (existing) {
+  if (existing && !resumed.has(join(dirname(source), existing))) {
     refusals.push({
       reason: `${bold(existing)} already exists in ${bold(dirname(source))}`,
       fix: 'move it aside and run migrate again — migrating would overwrite it'
@@ -1966,6 +1974,93 @@ async function auditDependencies (journal, root, plan, module) {
   Undo runs in reverse, because a later step may depend on an earlier one — the legacy file is
   deleted only after its replacement exists.
 */
+/*
+  The file that makes a paused migration resumable.
+
+  `--no-install` leaves the tree in the coexistence state -- v3 and v4 configurations side by side,
+  which the loader refuses -- while it waits for the user to install. That pause is only safe if the
+  second half can tell what the first half wrote from what the user has changed since, so every path
+  the transaction touched is recorded with the bytes it was left holding.
+
+  `package.json` and the lockfile are recorded whether or not this run edited them, because the
+  install the user is about to run writes both. Without that the pause is a trap: they would come
+  back as unexplained modifications and the resumed run would refuse the state it asked for.
+*/
+const MANIFEST_NAME = '.wattpm-migrate.json'
+
+async function digestOf (path) {
+  return createHash('sha256').update(await readFile(path)).digest('hex')
+}
+
+const LOCKFILES = ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'npm-shrinkwrap.json']
+
+async function writeManifest (root, { source, target, legacy, packageManager }) {
+  const entries = []
+
+  for (const path of [...new Set([...legacy, target])]) {
+    if (existsSync(path)) {
+      entries.push({ path: relative(root, path), digest: await digestOf(path) })
+    }
+  }
+
+  const expected = ['package.json', ...LOCKFILES].filter(name => existsSync(join(root, name)))
+
+  await writeFile(
+    join(root, MANIFEST_NAME),
+    `${JSON.stringify({ version: 1, source: relative(root, source), target: relative(root, target), legacy: legacy.map(path => relative(root, path)), packageManager, entries, expected }, null, 2)}\n`
+  )
+}
+
+async function readManifest (root) {
+  const path = join(root, MANIFEST_NAME)
+
+  if (!existsSync(path)) {
+    return null
+  }
+
+  return JSON.parse(await readFile(path, 'utf-8'))
+}
+
+/*
+  The emitted files the user has edited since the pause. They are reported and left exactly as they
+  are: a resumed migration finishes the transaction, and overwriting somebody's correction to what
+  it wrote is not finishing it.
+*/
+async function findModifiedEntries (root, manifest) {
+  const modified = []
+
+  for (const entry of manifest.entries) {
+    const path = join(root, entry.path)
+
+    if (!existsSync(path)) {
+      modified.push({ ...entry, reason: 'deleted' })
+      continue
+    }
+
+    if ((await digestOf(path)) !== entry.digest) {
+      modified.push({ ...entry, reason: 'edited' })
+    }
+  }
+
+  return modified
+}
+
+/*
+  The install, with lifecycle scripts suppressed.
+
+  Between the first emitted file and the deletion of the legacy ones the tree holds both dialects,
+  and the loader refuses that by design -- so a `postinstall` that invokes `wattpm` would fail on a
+  state migrate created and is about to resolve. Suppressing scripts is what keeps the window
+  closed rather than racing whatever is in it.
+*/
+async function runMigrationInstall (logger, root, packageManager) {
+  const args = [...getInstallationCommand(packageManager, false), '--ignore-scripts']
+
+  logger.info(`Installing dependencies with ${bold(packageManager)} (lifecycle scripts suppressed) ...`)
+
+  await execa(packageManager, args, { cwd: root, stdio: 'inherit' })
+}
+
 function createJournal () {
   const undo = []
 
@@ -1995,7 +2090,13 @@ function createJournal () {
 
 export async function migrateCommand (logger, args) {
   const {
-    values: { config: named, 'use-sample-defaults': useSampleDefaults },
+    values: {
+      config: named,
+      'use-sample-defaults': useSampleDefaults,
+      install,
+      'no-install': noInstall,
+      resume
+    },
     positionals
   } = parseArgs(
     args,
@@ -2003,6 +2104,25 @@ export async function migrateCommand (logger, args) {
       config: {
         type: 'string',
         short: 'c'
+      },
+      /*
+        The dependency install is part of the transaction: the emitted files import v4 factories,
+        and an editor's range change is not what makes them resolve. It runs with lifecycle scripts
+        suppressed, because between the first emitted file and the deletion of the legacy ones the
+        tree holds both dialects and the loader refuses that.
+      */
+      install: {
+        type: 'boolean',
+        default: false
+      },
+      'no-install': {
+        type: 'boolean',
+        default: false
+      },
+      // Continues a run that stopped at the install, from the manifest that run left behind.
+      resume: {
+        type: 'boolean',
+        default: false
       },
       /*
         Off by default because a sample value is a suggestion and v3 never read the file: making one
@@ -2023,6 +2143,21 @@ export async function migrateCommand (logger, args) {
     return logFatalError(
       logger,
       `No v3 configuration found in ${bold(root)}. If yours has a name migrate does not recognize, name it with ${bold('--config')}.`
+    )
+  }
+
+  /*
+    Read before planning, because the pre-flight refuses a v4 file it finds beside a v3 one -- and a
+    resumed run is standing in front of the files it wrote itself. The manifest is what tells those
+    two situations apart.
+  */
+  const manifest = resume ? await readManifest(root) : null
+  const resumed = new Set((manifest?.entries ?? []).map(entry => join(root, entry.path)))
+
+  if (resume && !manifest) {
+    return logFatalError(
+      logger,
+      `There is no ${bold(MANIFEST_NAME)} in ${bold(root)}: nothing here is waiting to be resumed. Run ${bold('wattpm-utils migrate')} to start one.`
     )
   }
 
@@ -2049,7 +2184,7 @@ export async function migrateCommand (logger, args) {
   let seeds = new Map()
 
   if (runtime && refusals.length === 0) {
-    plan = await planMigration(directory, source, config, { useSampleDefaults })
+    plan = await planMigration(directory, source, config, { useSampleDefaults, resumed })
     refusals.push(...plan.refusals)
   } else if (!runtime) {
     /*
@@ -2075,7 +2210,7 @@ export async function migrateCommand (logger, args) {
       placeholders.referenced
     )
 
-    if (existsSync(target)) {
+    if (existsSync(target) && !resumed.has(target)) {
       refusals.push({
         reason: `${bold(basename(target))} already exists in ${bold(directory)}`,
         fix: 'move it aside and run migrate again — migrating would overwrite it'
@@ -2113,7 +2248,23 @@ export async function migrateCommand (logger, args) {
   const notes = []
   let skipped = []
 
-  if (runtime) {
+  /*
+    A resumed run does not emit anything: the files are already on disk from the run that paused,
+    and the manifest says what they held when it left. What it checks is whether they still do --
+    an emitted file the user has since corrected is reported and kept, because finishing a
+    transaction is not the same as overwriting somebody's fix to what it wrote.
+  */
+  if (resume) {
+    for (const entry of await findModifiedEntries(root, manifest)) {
+      logger.warn(
+        `${bold(entry.path)} was ${entry.reason} after the migration paused. It is left as it is; the rest of the migration continues.`
+      )
+    }
+  }
+
+  if (resume) {
+    // Emission is skipped, so nothing below it may rely on the journal holding the emitted files.
+  } else if (runtime) {
     const { entries, emitted, inlined } = await emitApplications(journal, plan.applications)
 
     skipped = plan.skipped
@@ -2165,15 +2316,74 @@ export async function migrateCommand (logger, args) {
     )
   }
 
-  await journal.remove(source)
-
   /*
     The dependency edit lands inside the transaction, before validation: the emitted files import v4
     factories, and validating against a v3 install checks the wrong thing. Editing a range does not
-    itself change what resolves -- that needs an install -- which is why the run says so rather than
-    implying the work is finished.
+    itself change what resolves -- that needs an install, which is the next step.
   */
   const edited = await auditDependencies(journal, root, plan, module)
+
+  const legacyPaths = [source, ...(plan?.applications ?? []).map(application => application.legacy).filter(Boolean)]
+  const packageManager = await getPackageManager(root)
+
+  /*
+    Three ways through here.
+
+    `--install` puts the install inside the transaction, which is what makes the validation below
+    mean anything: the emitted files import v4 factories, and a range edited in a `package.json` is
+    not what makes them resolve.
+
+    `--no-install` stops instead, leaving the tree in the coexistence state -- both dialects
+    present, which the loader refuses -- so it has to say what state it is leaving and both ways out
+    of it. A declined consent ends a run the same way, which is why this is one path and not two.
+
+    Neither flag continues without installing, reporting at the end that it could not verify what it
+    emitted. That is the behaviour this command already had, and it stays the default until the
+    consent prompt exists to ask: defaulting to the pause would stop every non-interactive run at a
+    question nothing had asked.
+  */
+  /*
+    A resumed run installs unless told not to: an install against an already-installed tree places
+    nothing, so running it after the user ran the printed command costs nothing, while skipping it
+    silently would leave validation to fail on a missing dependency. `--resume --no-install` is for
+    the people who manage installs themselves.
+  */
+  if (resume ? !noInstall : install) {
+    try {
+      await runMigrationInstall(logger, root, packageManager)
+    } catch (error) {
+      if (!resume) {
+        await journal.rollback()
+      }
+
+      return logFatalError(
+        logger,
+        resume
+          ? `Installing dependencies failed: ${error.message} The migration is still paused; nothing was deleted.`
+          : `Installing dependencies failed: ${error.message} Nothing was changed — ${bold(basename(source))} is as it was.`
+      )
+    }
+  } else if (noInstall && !resume) {
+    await writeManifest(root, { source, target, legacy: legacyPaths, packageManager })
+
+    const command = [packageManager, ...getInstallationCommand(packageManager, false), '--ignore-scripts'].join(' ')
+
+    logger.warn(
+      'Migration paused before installing. The project holds both a v3 and a v4 configuration right now, which is a state the runtime refuses — it is not bootable until this finishes.'
+    )
+    logger.info(`Install with ${bold(command)}, then run ${bold('wattpm-utils migrate --resume')} to finish.`)
+    logger.info(
+      `To undo instead, restore ${legacyPaths.map(path => bold(relative(root, path))).join(', ')} and delete ${bold(relative(root, target))} and ${bold(MANIFEST_NAME)}.`
+    )
+
+    return true
+  }
+
+  for (const path of legacyPaths) {
+    if (existsSync(path)) {
+      await journal.remove(path)
+    }
+  }
 
   /*
     The variables the emitted files reference and this machine does not supply. Seeded only where
@@ -2187,6 +2397,16 @@ export async function migrateCommand (logger, args) {
     if (process.env[name] === undefined) {
       seeded[name] = value
     }
+  }
+
+  /*
+    The manifest goes once the legacy files are gone: from here the tree is valid v4 and there is
+    nothing left to resume. It is removed before validation deliberately -- validation failure is
+    the one path that does not roll back, and a manifest left behind would invite a resume of a
+    migration that has already happened.
+  */
+  if (existsSync(join(root, MANIFEST_NAME))) {
+    await rm(join(root, MANIFEST_NAME), { force: true })
   }
 
   let unresolved = null

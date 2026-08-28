@@ -1258,3 +1258,100 @@ test('migrate - converts a number written beside a digits-only string', async t 
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
   ok(emitted.includes("timeout: Number(requiredEnv('IMAGE_TIMEOUT'))"), emitted)
 })
+
+test('migrate - --no-install pauses in the coexistence state and records what it wrote', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  const migrateProcess = await wattpmUtils('migrate', root, '--no-install')
+
+  ok(migrateProcess.stdout.includes('paused before installing'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('--ignore-scripts'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('migrate --resume'), migrateProcess.stdout)
+
+  /*
+    Both dialects on disk. That is the state the loader refuses, which is exactly why the run says
+    so rather than reporting a success and handing back a project that cannot boot.
+  */
+  strictEqual(await fileExists(join(root, 'platformatic.json')), true)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), true)
+
+  const manifest = JSON.parse(await readFile(join(root, '.wattpm-migrate.json'), 'utf-8'))
+
+  strictEqual(manifest.source, 'platformatic.json')
+  strictEqual(manifest.target, 'watt.config.mjs')
+  ok(manifest.entries.some(entry => entry.path === 'watt.config.mjs'), JSON.stringify(manifest.entries))
+
+  /*
+    `package.json` is recorded whether or not this run edited it, because the install the user is
+    about to run writes it and the lockfile. Without that the pause would be a trap: they would come
+    back as unexplained modifications to the run that resumes.
+  */
+  ok(manifest.expected.includes('package.json'), JSON.stringify(manifest.expected))
+})
+
+test('migrate - --resume finishes the run the pause left', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  await wattpmUtils('migrate', root, '--no-install')
+
+  // --no-install on the resume too: these dependencies are linked rather than installed.
+  const resumeProcess = await wattpmUtils('migrate', root, '--resume', '--no-install')
+
+  ok(resumeProcess.stdout.includes('Migrated platformatic.json to watt.config.mjs'), resumeProcess.stdout)
+
+  // The legacy file goes now, and the manifest with it: there is nothing left to resume.
+  strictEqual(await fileExists(join(root, 'platformatic.json')), false)
+  strictEqual(await fileExists(join(root, '.wattpm-migrate.json')), false)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), true)
+})
+
+test('migrate - --resume keeps an emitted file the user corrected, and says so', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+  await wattpmUtils('migrate', root, '--no-install')
+
+  const emitted = join(root, 'watt.config.mjs')
+  const corrected = `${await readFile(emitted, 'utf-8')}\n// edited while the migration was paused\n`
+  await writeFile(emitted, corrected, 'utf-8')
+
+  const resumeProcess = await wattpmUtils('migrate', root, '--resume', '--no-install')
+
+  ok(resumeProcess.stdout.includes('was edited after the migration paused'), resumeProcess.stdout)
+
+  // Reported and kept. Finishing a transaction is not the same as overwriting a fix to what it wrote.
+  strictEqual(await readFile(emitted, 'utf-8'), corrected)
+})
+
+test('migrate - --resume refuses when nothing is paused', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  const resumeProcess = await wattpmUtils('migrate', root, '--resume', { reject: false })
+
+  strictEqual(resumeProcess.exitCode, 1)
+  ok(resumeProcess.stdout.includes('nothing here is waiting to be resumed'), resumeProcess.stdout)
+})
