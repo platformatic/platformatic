@@ -4947,7 +4947,22 @@ runs multiple workers on a fixed port at all.
    object is left alone, which is what the projection rule is for. `$schema` stays where
    the other two go, because a machine writer stamps it and the loader strips it before
    validation rather than refusing it. The placeholder branches are the remaining half,
-   and they need the hand classification above rather than a key list. The table carries each property's full
+   and they need the hand classification above rather than a key list.
+
+   **The audit's evidence heuristic keys on the property *name*, and two properties
+   called `enabled` settle the question differently.** An application entry's is read
+   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:134-136`), which treats a
+   string as *anything but `'false'` is true* — so its string branch is live v4
+   behaviour and stays. `telemetry.enabled` beside it is read as `config.telemetry.enabled !== false`
+   (`runtime/lib/runtime.js:2692`), a strict comparison against the boolean, so a string
+   there disables nothing and the branch is exactly the placeholder artefact this step
+   deletes. The heuristic reports both under one name, which is why it produces a
+   candidate set and a person produces the answer.
+
+   That second one had already cost something: the runtime's `telemetry` fixture kept a
+   `disabled-telemetry.runtime.json` whose only difference was `"enabled": "false"`, a
+   string that the reader above does not treat as false. The test that used it passed,
+   and what it demonstrated was not what its name said. The table carries each property's full
    **constraint set** — enum members, numeric bounds, `multipleOf`, integer-ness,
    string patterns and lengths — not just its primitive type, because migrate
    intersects those constraints across every position a variable occupies (see step

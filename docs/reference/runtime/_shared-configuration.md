@@ -277,12 +277,15 @@ restarted) and shipping the captured profiles — see the
 runtime. Each application object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the application.
-- **`enabled`** (`boolean` or `object`) - If `false`, the application
+- **`enabled`** (`boolean`, `string` or `object`) - If `false`, the application
   is disabled and will not be loaded by the runtime. It can also be an object where
   each key is a mode name and each value is a boolean. If the current
-  mode does not match any key, the application is enabled. Default:
-  `true`. It is a boolean, so an environment variable has to be compared rather than
-  passed through: `enabled: process.env.PLT_API_ENABLED !== 'false'`.
+  mode does not match any key, the application is enabled. Default: `true`.
+
+  This position reads a string, and reads it as *anything but `'false'` is true* — so
+  `enabled: process.env.PLT_API_ENABLED` works and needs no comparison. Note that this
+  is particular to this setting: `telemetry.enabled` next to it is compared against the
+  boolean `false`, where the string `'false'` does not disable anything.
 - **`path`** (**required**, `string`) - The path to the directory containing
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
