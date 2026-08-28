@@ -43,8 +43,13 @@ export class GatewayCapability extends ServiceCapability {
     // Only register the runtime event handler once. start() can be called
     // multiple times (first with listen:false, then listen:true) so guard
     // against duplicate registrations.
+    //
+    // Not registered at all when `restartOnApplicationChange` is false: a
+    // gateway that does not route from the application registry has nothing to
+    // recompose, and the restart is pure downtime for it. Skipping the
+    // subscription rather than the notify keeps it off the ITC entirely.
     const itc = getITC({ throwOnMissing: false })
-    if (!this.#runtimeEventHandler && itc) {
+    if (this.config.gateway?.restartOnApplicationChange !== false && !this.#runtimeEventHandler && itc) {
       this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
       itc.on('runtime:event', this.#runtimeEventHandler)
     }
@@ -108,6 +113,11 @@ export class GatewayCapability extends ServiceCapability {
     return replaceEnv(application.origin, this.config[kMetadata].env).endsWith('.plt.local')
   }
 
+  // The runtime resolves `request:restart` by replacing this application's
+  // workers one at a time. With two or more workers and SO_REUSEPORT that is
+  // seamless; with ONE — the default, and forced wherever reusePort is
+  // unavailable — the listening socket closes for the length of a worker boot.
+  // `restartOnApplicationChange: false` is how a gateway opts out of that.
   #handleRuntimeEvent ({ event }) {
     if (event === 'application:added' || event === 'application:removed') {
       const itc = getITC()

@@ -444,6 +444,10 @@ export interface PlatformaticGatewayConfig {
     addEmptySchema?: boolean;
     refreshTimeout?: number;
     /**
+     * Restart the gateway when an application is added to or removed from the runtime, so it can recompose its routes. Set to false for a gateway that does not route from the application registry — restarting it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port until the replacement worker boots.
+     */
+    restartOnApplicationChange?: boolean;
+    /**
      * Content types that should be passed through without parsing to enable proxying
      */
     passthroughContentTypes?: string[];
