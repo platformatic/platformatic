@@ -23,6 +23,7 @@ import { bold } from 'colorette'
 import { version } from '../version.js'
 import { execa } from 'execa'
 import { createHash } from 'node:crypto'
+import { createInterface } from 'node:readline/promises'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
@@ -2045,6 +2046,32 @@ async function findModifiedEntries (root, manifest) {
 }
 
 /*
+  The install consent, asked once.
+
+  Only where there is a terminal to ask: a run with no TTY -- CI, a script, a pipe -- has nobody to
+  answer, and a prompt there would hang or, worse, read the next line of piped input as an answer.
+  Those runs say which they want with `--install` or `--no-install`, and a run that says neither
+  keeps the behaviour this command has always had.
+*/
+async function askToInstall (logger, root, packageManager) {
+  const command = [packageManager, ...getInstallationCommand(packageManager, false), '--ignore-scripts'].join(' ')
+
+  logger.info(
+    `The emitted files import v4 packages, and validating them means resolving those -- which needs an install. Migrate can run ${bold(command)} for you.`
+  )
+
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+
+  try {
+    const answer = await rl.question('Install now? [Y/n] ')
+
+    return answer.trim() === '' || /^y(es)?$/i.test(answer.trim())
+  } finally {
+    rl.close()
+  }
+}
+
+/*
   The install, with lifecycle scripts suppressed.
 
   Between the first emitted file and the deletion of the legacy ones the tree holds both dialects,
@@ -2093,7 +2120,7 @@ export async function migrateCommand (logger, args) {
       config: named,
       'use-sample-defaults': useSampleDefaults,
       install,
-      'no-install': noInstall,
+      'no-install': declinedInstall,
       resume
     },
     positionals
@@ -2135,6 +2162,7 @@ export async function migrateCommand (logger, args) {
     false
   )
 
+  let noInstall = declinedInstall
   const root = resolve(process.cwd(), positionals[0] ?? '')
   const source = findLegacyConfiguration(root, named)
 
@@ -2336,10 +2364,10 @@ export async function migrateCommand (logger, args) {
     present, which the loader refuses -- so it has to say what state it is leaving and both ways out
     of it. A declined consent ends a run the same way, which is why this is one path and not two.
 
-    Neither flag continues without installing, reporting at the end that it could not verify what it
-    emitted. That is the behaviour this command already had, and it stays the default until the
-    consent prompt exists to ask: defaulting to the pause would stop every non-interactive run at a
-    question nothing had asked.
+    Neither flag asks, where there is a terminal to ask. Without one -- CI, a script, a pipe -- it
+    continues without installing and reports at the end that it could not verify what it emitted,
+    which is the behaviour this command already had. Pausing there instead would stop every
+    non-interactive run at a question nothing had answered.
   */
   /*
     A resumed run installs unless told not to: an install against an already-installed tree places
@@ -2347,7 +2375,22 @@ export async function migrateCommand (logger, args) {
     silently would leave validation to fail on a missing dependency. `--resume --no-install` is for
     the people who manage installs themselves.
   */
-  if (resume ? !noInstall : install) {
+  /*
+    Consent, where there is somebody to ask and neither flag has already answered. A declined
+    prompt lands on the same path as `--no-install`, which is why that path prints both ways out
+    rather than assuming the user meant to abandon the migration.
+  */
+  let consented = install
+
+  if (!install && !noInstall && !resume && process.stdin.isTTY) {
+    consented = await askToInstall(logger, root, packageManager)
+
+    if (!consented) {
+      noInstall = true
+    }
+  }
+
+  if (resume ? !noInstall : consented) {
     try {
       await runMigrationInstall(logger, root, packageManager)
     } catch (error) {
