@@ -1,3 +1,9 @@
+import {
+  listDirectoryEntries,
+  selectConfigurationFileNames,
+  selectLegacyConfigurationFileNames
+} from '@platformatic/foundation/lib/v4/index.js'
+import { readFile } from 'node:fs/promises'
 import { EOL } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout } from 'timers/promises'
@@ -179,4 +185,39 @@ export function getApplicationTemplateFromSchemaUrl (schemaUrl) {
     return `@platformatic/${splitted[splitted.length - 1]}`
   }
   return `@platformatic/${splitted[splitted.length - 2]}`
+}
+
+/*
+  The configuration file in a directory, whichever dialect it is in. A generator reading an existing
+  project meets both: one it scaffolded under v4, and one that predates the switch.
+*/
+export async function findAnyConfigurationFile (directory) {
+  const entries = await listDirectoryEntries(directory)
+
+  return selectConfigurationFileNames(entries)[0] ?? selectLegacyConfigurationFileNames(entries)[0] ?? null
+}
+
+// The environment a project supplies to its own configuration. Absent is the same as empty here:
+// a project without one simply has nothing to layer.
+export async function readEnvFile (directory) {
+  try {
+    return envStringToObject(await readFile(join(directory, '.env'), 'utf-8'))
+  } catch {
+    return {}
+  }
+}
+
+/*
+  Whether two spellings of a module say the same thing. Used to decide that an edit produced no
+  change: the printer reflows what it touches, so comparing the text byte for byte would report a
+  change on every update whether or not one happened.
+*/
+export function equivalentSource (left, right) {
+  /*
+    Whitespace removed rather than collapsed, because the printer's difference is exactly one space:
+    `packages: [{` against `packages: [\n  {`. Two spellings that differ only inside a string
+    literal would compare equal here, and the consequence of that is leaving a file alone whose only
+    change was spaces inside a string -- which is the harmless direction to be wrong in.
+  */
+  return left.replace(/\s/g, '') === right.replace(/\s/g, '')
 }

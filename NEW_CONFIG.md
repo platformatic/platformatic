@@ -55,7 +55,7 @@ classified by its worker). So an application that joins a monorepo **scopes its 
 variable** — `process.env.PLT_FRONTEND_PORT`, the `PLT_<ID>_` spelling the mesh
 already uses for `PLT_<ID>_URL`, and the one v3's generators switched to the moment
 an application was in runtime context rather than standalone
-(`generators/lib/base-generator.js:109-117`). The file's *shape* is portable. A
+(`generators/lib/base-generator.js:113-121`). The file's *shape* is portable. A
 variable that means "the port" to the whole machine is not, and byte-identical is a
 claim about the first.
 
@@ -1409,13 +1409,13 @@ per-application and visible: `service`'s generator writes `server: { hostname,
 port, logger }` into every application's own config
 (`service/lib/generator.js:414-420` — the `!isRuntimeContext` guard is gone) and
 the runtime generator hands application *i* port `3042 + i`
-(`runtime/lib/generator.js:168-171`) while writing no root `server` block at all.
+(`runtime/lib/generator.js:174-177`) while writing no root `server` block at all.
 v4's code-first equivalent is the same thing spelled in the factory, with the
 variable scoped as v3 scoped it: `next({ server: { port:
 Number(process.env.PLT_API_PORT || 3043) } })`. v3's `getEnvVarName` returned a bare
 `PORT` only for a standalone project and `PLT_<PREFIX>_PORT` for anything in runtime
 context, the prefix derived from the application name
-(`generators/lib/base-generator.js:109-117`, `:167-168`), so the scoping is not new —
+(`generators/lib/base-generator.js:113-121`, `:171-172`), so the scoping is not new —
 it is the part the code-first translation must not lose. **Multi-application
 scaffolding therefore never emits a global `PORT`**: one variable every application
 reads is one port every application binds. Single-app scaffolding keeps
@@ -2889,7 +2889,7 @@ deliberately saner:
   `packages/runtime/test/start/custom-environment.test.js:21-30` pre-`5f611ed65`
   asserts application code receives. Removing it is therefore a **worker-environment breaking change**,
   not merely the retirement of an interpolation helper. It was already excluded from
-  every generated `.env` (`generators/lib/base-generator.js:238`), so no scaffolded
+  every generated `.env` (`generators/lib/base-generator.js:242`), so no scaffolded
   project declares it, but any application reading it does lose it. The v4 answer for
   application code is `import.meta.dirname`, which is **not** an equivalent: it is the
   reading module's directory, where `PLT_ROOT` was the runtime root. Migrate's source
@@ -3286,11 +3286,11 @@ export default {
   and it is what makes the scaffolded per-app `"dev": "wattpm dev"` boot *that*
   application rather than walking up to the root and booting the whole runtime.
   Since the generator writes those scripts into every application directory
-  unconditionally (`generators/lib/base-generator.js:485-494`), omitting the file
+  unconditionally (`generators/lib/base-generator.js:511-520`), omitting the file
   would silently redefine the script the generator just wrote. The v3 wizard's
   `3042` prompt is gone from the root — ports are per-application now, and the
   generator hands application *i* `3042 + i`
-  (`runtime/lib/generator.js:168-171`). The wizard's closing output prints where `watt.config.ts`
+  (`runtime/lib/generator.js:174-177`). The wizard's closing output prints where `watt.config.ts`
   goes and the one-line bare-factory form, so later customization is one
   copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving

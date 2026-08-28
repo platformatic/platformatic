@@ -1,6 +1,7 @@
 import { generateDashedName } from '@platformatic/foundation'
 import {
   capabilityFactories,
+  evaluateConfigurationFile,
   configurationFileNameFor,
   listDirectoryEntries,
   raw,
@@ -9,14 +10,14 @@ import {
   serializeConfiguration,
   serializeString
 } from '@platformatic/foundation/lib/v4/index.js'
-import { generateCode, parseModule } from 'magicast'
+import { builders, generateCode, parseModule } from 'magicast'
 import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { generateGitignore } from './create-gitignore.js'
-import { MissingEnvVariable, ModuleNeeded, PrepareError } from './errors.js'
-import { FileGenerator } from './file-generator.js'
+import { dirname, join } from 'node:path'
 import {
   convertApplicationNameToPrefix,
+  equivalentSource,
+  findAnyConfigurationFile,
+  readEnvFile,
   envStringToObject,
   extractEnvVariablesFromText,
   flattenObject,
@@ -26,6 +27,9 @@ import {
   PLT_ROOT,
   stripVersion
 } from './utils.js'
+import { generateGitignore } from './create-gitignore.js'
+import { MissingEnvVariable, ModuleNeeded, PrepareError } from './errors.js'
+import { FileGenerator } from './file-generator.js'
 
 /* c8 ignore start */
 const fakeLogger = {
@@ -372,10 +376,27 @@ class BaseGenerator extends FileGenerator {
 
     if (configuration) {
       configuration.plugins ??= {}
-      configuration.plugins.packages = packages
+      /*
+        Resolved the same way the file itself spells them -- the generator's model still holds
+        `{PLT_X}`, and writing that into a module would put the placeholder's own text where the
+        expression belongs. magicast has its own way of saying "this is source".
+      */
+      configuration.plugins.packages = this.#resolveScaffoldedPlaceholders(packages, builders.raw)
     }
 
-    this.addFile({ path: '', file: existing.file, contents: generateCode(module).code })
+    const updated = generateCode(module).code
+
+    /*
+      An update that changes nothing about the configuration leaves the file alone. Plugin option
+      *values* live in `.env`, so changing one moves nothing here -- and rewriting the file anyway
+      would reprint the block, producing a diff that says something changed when nothing did.
+    */
+    if (equivalentSource(updated, existing.contents)) {
+      this.addFile({ path: '', file: existing.file, contents: existing.contents })
+      return
+    }
+
+    this.addFile({ path: '', file: existing.file, contents: updated })
   }
 
   async #findExistingConfiguration () {
@@ -421,7 +442,7 @@ class BaseGenerator extends FileGenerator {
     return `import { ${factory} } from '${module}'\n\nexport default ${factory}(${serializeConfiguration(resolved)})\n`
   }
 
-  #resolveScaffoldedPlaceholders (value) {
+  #resolveScaffoldedPlaceholders (value, expression = raw) {
     if (typeof value === 'string') {
       const whole = value.match(/^\{([A-Za-z0-9_]+)\}$/)
 
@@ -433,17 +454,22 @@ class BaseGenerator extends FileGenerator {
       const fallback = this.config.env?.[name]
 
       if (fallback === undefined) {
-        return raw(`process.env.${name}`)
+        return expression(`process.env.${name}`)
       }
 
       /*
-        `||` rather than `??`, and the difference is a real port: an env file carrying the ordinary
-        empty assignment `PORT=` supplies `''`, which is present, so `??` would not fall back and
-        `Number('')` is an ephemeral port where the reader of that line expects the default.
+        A numeric default is written into the expression, and `||` rather than `??`: an env file
+        carrying the ordinary empty assignment `PORT=` supplies `''`, which is present, so `??`
+        would not fall back and `Number('')` is an ephemeral port where the reader of that line
+        expects 3042.
+
+        Everything else is a bare reference. Its value lives in `.env` -- the wizard's answers among
+        them -- and copying it into the configuration would put the same fact in two places, where
+        editing one leaves the other saying something else.
       */
       return /^[0-9]+$/.test(String(fallback))
-        ? raw(`Number(process.env.${name} || ${fallback})`)
-        : raw(`process.env.${name} || ${serializeString(String(fallback))}`)
+        ? expression(`Number(process.env.${name} || ${fallback})`)
+        : expression(`process.env.${name}`)
     }
 
     if (value === null || typeof value !== 'object') {
@@ -451,11 +477,11 @@ class BaseGenerator extends FileGenerator {
     }
 
     if (Array.isArray(value)) {
-      return value.map(entry => this.#resolveScaffoldedPlaceholders(entry))
+      return value.map(entry => this.#resolveScaffoldedPlaceholders(entry, expression))
     }
 
     return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [key, this.#resolveScaffoldedPlaceholders(entry)])
+      Object.entries(value).map(([key, entry]) => [key, this.#resolveScaffoldedPlaceholders(entry, expression)])
     )
   }
 
@@ -563,11 +589,44 @@ class BaseGenerator extends FileGenerator {
     this.packages.push(pkg)
   }
 
+  /*
+    Reads a configuration file whichever dialect it is in. A v3 file is data and parses; a v4 one is
+    a module whose values are expressions, so the only way to know what it says is to evaluate it --
+    which is what the loader does, in a worker with an explicit environment.
+  */
+  async readConfigurationFile (path, role = 'root', envRoot = null) {
+    if (path.endsWith('.json')) {
+      return JSON.parse(await readFile(path, 'utf-8'))
+    }
+
+    /*
+      The project's own environment, because the file's values are expressions that read it: a port
+      written as `Number(process.env.PORT || 3042)` evaluates to NaN without it, and the generator
+      would be reading a configuration the project never has.
+    */
+    const env = { ...process.env, ...(await readEnvFile(envRoot ?? dirname(path))) }
+
+    // The role decides how the file is classified, and a root read as an application -- or the
+    // reverse -- is refused rather than silently accepted.
+    const { config } = await evaluateConfigurationFile({ path, env, command: 'start', production: false, role })
+
+    return config
+  }
+
   async loadFromDir (applicationName, runtimeRootPath) {
-    const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, this.runtimeConfig), 'utf-8'))
+    const runtimePkgConfigFileData = await this.readConfigurationFile(
+      join(runtimeRootPath, await findAnyConfigurationFile(runtimeRootPath)),
+      'root',
+      runtimeRootPath
+    )
     const applicationsPath = runtimePkgConfigFileData.autoload?.path ?? DEFAULT_SERVICES_PATH
-    const applicationPkgJsonFileData = JSON.parse(
-      await readFile(join(runtimeRootPath, applicationsPath, applicationName, 'platformatic.json'), 'utf-8')
+    const applicationRoot = join(runtimeRootPath, applicationsPath, applicationName)
+    // The environment is the runtime's, not the application's: the .env sits at the root beside
+    // the configuration that autoloads it.
+    const applicationPkgJsonFileData = await this.readConfigurationFile(
+      join(applicationRoot, await findAnyConfigurationFile(applicationRoot)),
+      'application',
+      runtimeRootPath
     )
     const runtimeEnv = envStringToObject(await readFile(join(runtimeRootPath, '.env'), 'utf-8'))
     const applicationNamePrefix = convertApplicationNameToPrefix(applicationName)
@@ -601,7 +660,13 @@ class BaseGenerator extends FileGenerator {
 
     return {
       name: applicationName,
-      template: getApplicationTemplateFromSchemaUrl(applicationPkgJsonFileData.$schema),
+      /*
+        A v4 configuration says which capability it is outright -- the factory sets `module` -- and
+        a v3 one says it through the `$schema` URL, which is what that reader is for.
+      */
+      template:
+        applicationPkgJsonFileData.module ??
+        getApplicationTemplateFromSchemaUrl(applicationPkgJsonFileData.$schema),
       fields: [],
       plugins
     }

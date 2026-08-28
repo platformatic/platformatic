@@ -8,7 +8,13 @@ import {
   loadConfigurationFile,
   safeRemove
 } from '@platformatic/foundation'
-import { BaseGenerator, envObjectToString, getApplicationTemplateFromSchemaUrl } from '@platformatic/generators'
+import { serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
+import {
+  BaseGenerator,
+  envObjectToString,
+  findAnyConfigurationFile,
+  getApplicationTemplateFromSchemaUrl
+} from '@platformatic/generators'
 import { existsSync } from 'node:fs'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
@@ -171,6 +177,16 @@ export class RuntimeGenerator extends BaseGenerator {
     }
   }
 
+  /*
+    The root is the one v4 configuration that is not a capability factory call: it imports
+    `defineConfig` from wattpm, whose whole job is to type its argument.
+  */
+  serializeConfigFile (config) {
+    const { $schema, module: _module, ...rest } = config
+
+    return `import { defineConfig } from 'wattpm'\n\nexport default defineConfig(${serializeConfiguration(rest)})\n`
+  }
+
   async _getConfigFileContents () {
     const config = {
       $schema: `https://schemas.platformatic.dev/wattpm/${this.platformaticVersion}.json`,
@@ -291,7 +307,11 @@ export class RuntimeGenerator extends BaseGenerator {
     const output = {
       applications: []
     }
-    const runtimePkgConfigFileData = JSON.parse(await readFile(join(this.targetDirectory, this.runtimeConfig), 'utf-8'))
+    const runtimePkgConfigFileData = await this.readConfigurationFile(
+      join(this.targetDirectory, await findAnyConfigurationFile(this.targetDirectory)),
+      'root',
+      this.targetDirectory
+    )
     const applicationsPath = join(this.targetDirectory, runtimePkgConfigFileData.autoload.path)
 
     // load all applications
@@ -302,8 +322,14 @@ export class RuntimeGenerator extends BaseGenerator {
       const dirStat = await stat(currentApplicationPath)
       if (dirStat.isDirectory()) {
         // load the application config
-        const configFile = await findConfigurationFile(currentApplicationPath)
-        const applicationPltJson = JSON.parse(await readFile(join(currentApplicationPath, configFile), 'utf-8'))
+        const configFile = await findAnyConfigurationFile(currentApplicationPath)
+        // The environment is the runtime's: an application's expressions read the project's .env,
+        // which lives at the root beside the configuration that autoloads it.
+        const applicationPltJson = await this.readConfigurationFile(
+          join(currentApplicationPath, configFile),
+          'application',
+          this.targetDirectory
+        )
         // get module to load
         const template = applicationPltJson.module || getApplicationTemplateFromSchemaUrl(applicationPltJson.$schema)
         const Generator = await this._getGeneratorForTemplate(currentApplicationPath, template)
@@ -350,8 +376,12 @@ export class RuntimeGenerator extends BaseGenerator {
 
         // delete dependencies
         const applicationPath = join(this.targetDirectory, this.applicationsFolder, s.name)
-        const configFile = await findConfigurationFile(applicationPath)
-        const applicationPackageJson = JSON.parse(await readFile(join(applicationPath, configFile), 'utf-8'))
+        const configFile = await findAnyConfigurationFile(applicationPath)
+        const applicationPackageJson = await this.readConfigurationFile(
+          join(applicationPath, configFile),
+          'application',
+          this.targetDirectory
+        )
         if (applicationPackageJson.plugins && applicationPackageJson.plugins.packages) {
           applicationPackageJson.plugins.packages.forEach(p => {
             delete currrentPackageJson.dependencies[p.name]
@@ -468,10 +498,12 @@ export class RuntimeGenerator extends BaseGenerator {
   }
 
   updateRuntimeConfig (config) {
+    this.generatedConfig = config
+
     this.addFile({
       path: '',
-      file: this.runtimeConfig,
-      contents: JSON.stringify(config, null, 2),
+      file: this.configurationFileName(),
+      contents: this.serializeConfigFile(config),
       tags: ['runtime-config']
     })
   }
@@ -551,15 +583,17 @@ export class WrappedGenerator extends BaseGenerator {
   }
 
   async #createConfigFile () {
-    const config = {
-      $schema: `https://schemas.platformatic.dev/${this.module}/${this.platformaticVersion}.json`,
-      runtime: getRuntimeWrappableProperties()
-    }
-
+    /*
+      The wrapped single-app root. v3 spelled the runtime settings under a `runtime` key inside the
+      application's own configuration; v4 has no such block, so they are the root's own and the
+      application is the singular shorthand.
+    */
     this.addFile({
       path: '',
-      file: 'watt.json',
-      contents: JSON.stringify(config, null, 2)
+      file: this.configurationFileName(),
+      contents:
+        "import { defineConfig } from 'wattpm'\n\n" +
+        `export default defineConfig(${serializeConfiguration(getRuntimeWrappableProperties())})\n`
     })
   }
 

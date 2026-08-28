@@ -77,8 +77,12 @@ test('generate correct .env file', async t => {
 
     await dbApp.prepare()
 
-    // Written as a module now; that it parses as JSON was never what this was checking.
-    dbApp.getFileObject(dbApp.configurationFileName())
+    /*
+      A TypeScript project gets the TypeScript suffix, and `.mts` rather than `.ts` because the
+      generated package is CommonJS -- `export default` in a CommonJS `.ts` is a syntax error.
+    */
+    const configFile = dbApp.getFileObject('watt.config.mts')
+    assert.ok(configFile.contents.startsWith("import { db } from '@platformatic/db'"), configFile.contents)
   }
 
   {
