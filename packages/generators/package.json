@@ -28,6 +28,7 @@
     "change-case-all": "^2.1.0",
     "execa": "^9.6.0",
     "fastify": "^5.0.0",
+    "magicast": "^0.5.4",
     "pino": "^9.9.0",
     "undici": "^7.27.2"
   },

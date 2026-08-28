@@ -8,6 +8,7 @@ import {
 import {
   importCapabilitySchema,
   legacyConfigurationFileNames,
+  capabilityFactories as factories,
   chooseConfigurationFileName,
   getApplicationUrl,
   loadConfiguration as loadV4Configuration,
@@ -70,25 +71,6 @@ const legacyCandidates = [
 */
 const renamedModules = {
   '@platformatic/composer': '@platformatic/gateway'
-}
-
-// The capabilities whose factory this slice knows how to call. A configuration naming anything else
-// is refused rather than guessed at: emitting a plain `{ module }` object would produce a file the
-// format allows but a migration should never write.
-const factories = {
-  '@platformatic/astro': 'astro',
-  '@platformatic/db': 'db',
-  '@platformatic/gateway': 'gateway',
-  '@platformatic/nest': 'nest',
-  '@platformatic/next': 'next',
-  '@platformatic/nitro': 'nitro',
-  '@platformatic/node': 'node',
-  '@platformatic/nuxt': 'nuxt',
-  '@platformatic/react-router': 'reactRouter',
-  '@platformatic/remix': 'remix',
-  '@platformatic/service': 'service',
-  '@platformatic/tanstack': 'tanstack',
-  '@platformatic/vite': 'vite'
 }
 
 /*

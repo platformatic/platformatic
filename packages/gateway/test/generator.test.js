@@ -62,8 +62,7 @@ test('config', async t => {
     typescript: true
   })
   await svc.prepare()
-  const platformaticConfigFile = svc.getFileObject('platformatic.json')
-  const contents = JSON.parse(platformaticConfigFile.contents)
+  const contents = svc.generatedConfig
   assert.equal(
     contents.$schema,
     `https://schemas.platformatic.dev/@platformatic/gateway/${svc.platformaticVersion}.json`
@@ -118,8 +117,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       packages: [
@@ -153,8 +151,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       packages: [
@@ -207,8 +204,7 @@ test('runtime context should have server config', async t => {
 
   await svc.prepare()
 
-  const configFile = svc.getFileObject('platformatic.json')
-  const configFileContents = JSON.parse(configFile.contents)
+  const configFileContents = svc.generatedConfig
   assert.deepStrictEqual(configFileContents.server, {
     hostname: '{PLT_MY_SERVICE_SERVER_HOSTNAME}',
     port: '{PLT_MY_SERVICE_PORT}',
@@ -225,8 +221,7 @@ test('runtime context do not generate .env file', async t => {
 
   await svc.prepare()
 
-  const configFile = svc.getFileObject('platformatic.json')
-  const configFileContents = JSON.parse(configFile.contents)
+  const configFileContents = svc.generatedConfig
   assert.deepStrictEqual(configFileContents.server, {
     hostname: '{PLT_MY_SERVICE_SERVER_HOSTNAME}',
     port: '{PLT_MY_SERVICE_PORT}',

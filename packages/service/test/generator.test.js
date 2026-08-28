@@ -69,8 +69,7 @@ test('config', async t => {
     typescript: true
   })
   await svc.prepare()
-  const platformaticConfigFile = svc.getFileObject('platformatic.json')
-  const contents = JSON.parse(platformaticConfigFile.contents)
+  const contents = svc.generatedConfig
   assert.equal(
     contents.$schema,
     `https://schemas.platformatic.dev/@platformatic/service/${svc.platformaticVersion}.json`
@@ -115,8 +114,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       packages: [
@@ -150,8 +148,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       paths: [
@@ -278,8 +275,7 @@ test('runtime context should retain local server config', async t => {
 
   await svc.prepare()
 
-  const configFile = svc.getFileObject('platformatic.json')
-  const configFileContents = JSON.parse(configFile.contents)
+  const configFileContents = svc.generatedConfig
   assert.deepEqual(configFileContents.server, {
     hostname: '{PLT_MY_SERVICE_SERVER_HOSTNAME}',
     port: '{PLT_MY_SERVICE_PORT}',
@@ -309,7 +305,26 @@ test('supports a custom port environment variable', async () => {
 
   await svc.prepare()
 
-  const config = JSON.parse(svc.getFileObject('platformatic.json').contents)
+  const config = svc.generatedConfig
   assert.equal(config.server.port, '{PLT_MY_SERVICE_HTTP_PORT}')
   assert.equal(svc.config.env.PLT_MY_SERVICE_HTTP_PORT, 3042)
+})
+
+test('emits the port as the expression it stood for', async () => {
+  const svc = new Generator()
+  svc.setConfig({ isRuntimeContext: true, applicationName: 'api' })
+
+  await svc.prepare()
+
+  const emitted = svc.getFileObject(svc.configurationFileName()).contents
+
+  /*
+    v3 substituted `{PLT_API_PORT}` before anything read it and v4 has no interpolation, so the
+    scaffolded value becomes the expression it stood for — with `||` rather than `??`, because an
+    env file carrying the ordinary empty assignment supplies '', which is present: `??` would not
+    fall back and `Number('')` is an ephemeral port where the reader of that line expects 3042.
+  */
+  assert.ok(emitted.includes('port: Number(process.env.PLT_API_PORT || 3042)'), emitted)
+  assert.ok(emitted.includes("import { service } from '@platformatic/service'"), emitted)
+  assert.ok(emitted.includes("hostname: process.env.PLT_API_SERVER_HOSTNAME || '0.0.0.0'"), emitted)
 })

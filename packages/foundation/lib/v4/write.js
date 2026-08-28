@@ -11,6 +11,30 @@ import { join } from 'node:path'
 */
 
 /*
+  The factory each in-tree capability exports. A capability outside this table is spelled with the
+  plain object form, which stays part of v4 for capabilities that implement the contract without
+  shipping a factory.
+
+  Here rather than in each writer, because all three of them ask the same question and an answer
+  that differs between them is a configuration that boots under one and not the other.
+*/
+export const capabilityFactories = {
+  '@platformatic/astro': 'astro',
+  '@platformatic/db': 'db',
+  '@platformatic/gateway': 'gateway',
+  '@platformatic/nest': 'nest',
+  '@platformatic/next': 'next',
+  '@platformatic/nitro': 'nitro',
+  '@platformatic/node': 'node',
+  '@platformatic/nuxt': 'nuxt',
+  '@platformatic/react-router': 'reactRouter',
+  '@platformatic/remix': 'remix',
+  '@platformatic/service': 'service',
+  '@platformatic/tanstack': 'tanstack',
+  '@platformatic/vite': 'vite'
+}
+
+/*
   A value that is already source. `config: next({ … })` is a call inside an object literal, and
   quoting it would emit the text of a call rather than the call.
 */
@@ -86,6 +110,15 @@ export function chooseConfigurationFileName (root, { typescript = false } = {}) 
     // it means choosing the suffix that does not.
   }
 
+  return configurationFileNameFor({ module, typescript })
+}
+
+/*
+  The same rule for a writer that already knows the answer rather than having to read it -- a
+  generator writes the package.json in the same pass, so asking the filesystem would be asking about
+  a file it is holding.
+*/
+export function configurationFileNameFor ({ module = false, typescript = false } = {}) {
   if (typescript) {
     return module ? 'watt.config.ts' : 'watt.config.mts'
   }

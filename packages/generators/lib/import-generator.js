@@ -1,32 +1,12 @@
 import { findConfigurationFileRecursive, safeRemove } from '@platformatic/foundation'
+import { capabilityFactories } from '@platformatic/foundation/lib/v4/index.js'
 import { spawnSync } from 'node:child_process'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { BaseGenerator } from './base-generator.js'
 
-/*
-  The factory a capability exposes, by package name. A capability outside this set is spelled with
-  the plain object form, which stays part of v4 for capabilities that implement the contract without
-  shipping a factory -- an imported application is exactly where that happens.
-*/
-const factories = {
-  '@platformatic/astro': 'astro',
-  '@platformatic/db': 'db',
-  '@platformatic/gateway': 'gateway',
-  '@platformatic/nest': 'nest',
-  '@platformatic/next': 'next',
-  '@platformatic/nitro': 'nitro',
-  '@platformatic/node': 'node',
-  '@platformatic/nuxt': 'nuxt',
-  '@platformatic/react-router': 'reactRouter',
-  '@platformatic/remix': 'remix',
-  '@platformatic/service': 'service',
-  '@platformatic/tanstack': 'tanstack',
-  '@platformatic/vite': 'vite'
-}
-
 export function importedConfiguration (pkg) {
-  const factory = factories[pkg]
+  const factory = capabilityFactories[pkg]
 
   if (factory) {
     return `import { ${factory} } from '${pkg}'\n\nexport default ${factory}({})\n`
