@@ -46,7 +46,8 @@ const documents = [
   { name: 'docs/file-formats.md', markEverything: false },
   { name: 'docs/reference/runtime/_shared-configuration.md', markEverything: false },
   { name: 'docs/reference/service/configuration.md', markEverything: false },
-  { name: 'docs/reference/db/configuration.md', markEverything: false }
+  { name: 'docs/reference/db/configuration.md', markEverything: false },
+  { name: 'docs/reference/gateway/configuration.md', markEverything: false }
 ]
 
 const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])

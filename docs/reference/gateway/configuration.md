@@ -2,11 +2,13 @@ import Issues from '../../getting-started/issues.md';
 
 # Configuration
 
-Platformatic Gateway can be configured with a [configuration file](#configuration-files) in the different file formats below. The Gateway also supports use of environment variables as setting values with [environment variable placeholders](../gateway/configuration.md#setting-and-using-env-placeholders).
+Platformatic Gateway is configured with a `watt.config.ts`. The file is a module that exports its
+configuration, so it reads [environment variables](../service/configuration.md#environment-variables)
+directly.
 
 ## Configuration Files
 
-Platformatic will automatically detect and load configuration files found in the current working directory with the file names listed [here](../../file-formats.md#configuration-files).
+Platformatic automatically detects and loads the configuration file in the current working directory. There are four names, listed [here](../../file-formats.md#configuration-files), and one file per directory.
 
 ## Supported File Formats
 
@@ -23,7 +25,7 @@ Configuration file settings are grouped as follows:
 - **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
 
-Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
+Sensitive data within these settings should be read from the [environment](../service/configuration.md#environment-variables) rather than written into the file.
 
 ### Gateway
 
@@ -95,65 +97,101 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     **Example: Basic HTTP Proxy**
 
-    ```json
-    {
-      "id": "external-api",
-      "proxy": {
-        "prefix": "/api",
-        "upstream": "https://api.example.com"
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        applications: [
+          {
+            id: 'external-api',
+            proxy: {
+              prefix: '/api',
+              upstream: 'https://api.example.com'
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
     **Example: Method/Route-based Proxy Selection**
 
-    ```json
-    {
-      "id": "public-read-api",
-      "proxy": {
-        "prefix": "/",
-        "methods": ["GET"],
-        "routes": ["/public/*"]
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        applications: [
+          {
+            id: 'public-read-api',
+            proxy: {
+              prefix: '/',
+              methods: [
+                'GET'
+              ],
+              routes: [
+                '/public/*'
+              ]
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
     **Example: WebSocket Proxy with Reconnection**
 
-    ```json
-    {
-      "id": "ws-service",
-      "proxy": {
-        "prefix": "/ws",
-        "upstream": "http://localhost:3000",
-        "ws": {
-          "upstream": "ws://localhost:3000",
-          "reconnect": {
-            "pingInterval": 5000,
-            "maxReconnectionRetries": 10,
-            "reconnectInterval": 1000,
-            "reconnectDecay": 1.5,
-            "connectionTimeout": 5000,
-            "reconnectOnClose": true,
-            "logs": true
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        applications: [
+          {
+            id: 'ws-service',
+            proxy: {
+              prefix: '/ws',
+              upstream: 'http://localhost:3000',
+              ws: {
+                upstream: 'ws://localhost:3000',
+                reconnect: {
+                  pingInterval: 5000,
+                  maxReconnectionRetries: 10,
+                  reconnectInterval: 1000,
+                  reconnectDecay: 1.5,
+                  connectionTimeout: 5000,
+                  reconnectOnClose: true,
+                  logs: true
+                }
+              }
+            }
           }
-        }
+        ]
       }
-    }
+    })
     ```
 
     **Example: Custom Proxy Logic**
 
-    ```json
-    {
-      "id": "dynamic-router",
-      "proxy": {
-        "prefix": "/",
-        "custom": {
-          "path": "./custom-proxy.js"
-        }
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        applications: [
+          {
+            id: 'dynamic-router',
+            proxy: {
+              prefix: '/',
+              custom: {
+                path: './custom-proxy.js'
+              }
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
     Where `custom-proxy.js` exports:
@@ -189,21 +227,29 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     do not need to be listed in the gateway configuration: any `http://<application-id>.plt.local`
     origin is routed through the runtime mesh network.
 
-    ```json
-    {
-      "id": "main",
-      "proxy": {
-        "prefix": "/",
-        "custom": {
-          "path": "./version-router.js",
-          "options": {
-            "header": "x-app-version",
-            "cookie": "app-version",
-            "fallback": "main"
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        applications: [
+          {
+            id: 'main',
+            proxy: {
+              prefix: '/',
+              custom: {
+                path: './version-router.js',
+                options: {
+                  header: 'x-app-version',
+                  cookie: 'app-version',
+                  fallback: 'main'
+                }
+              }
+            }
           }
-        }
+        ]
       }
-    }
+    })
     ```
 
     Where `version-router.js` exports a factory function receiving `custom.options`:
@@ -254,14 +300,22 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     **Example: Hostname-based Routing**
 
-    ```json
-    {
-      "id": "multi-tenant",
-      "proxy": {
-        "hostname": "tenant1.example.com",
-        "upstream": "http://tenant1-service"
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        applications: [
+          {
+            id: 'multi-tenant',
+            proxy: {
+              hostname: 'tenant1.example.com',
+              upstream: 'http://tenant1-service'
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
 - **`openapi`** (`object`) - See the Platformatic Service [openapi](../service/configuration.md#service) option for more details.
@@ -275,10 +329,11 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   }
   ```
 
-  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the json configuration.
+  or with the [metaline](https://github.com/platformatic/metaline) syntax, which expresses the same
+  adaptation as a string:
 
-  ```json
-  "defaultArgsAdapter": "where.id.in.$>#id"
+  ```plaintext title="defaultArgsAdapter"
+  where.id.in.$>#id
   ```
 
   - **`onSubgraphError`** (`function`) - Hook called when an error occurs getting schema from a subgraph. The arguments are:
@@ -303,21 +358,23 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   }
   ```
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "handler": "./handler.js",
-      "applications": [
+  ```ts config
+  import { gateway } from '@platformatic/gateway'
+
+  export default gateway({
+    gateway: {
+      handler: './handler.js',
+      applications: [
         {
-          "id": "api",
-          "proxy": {
-            "prefix": "/api",
-            "upstream": "http://localhost:3000"
+          id: 'api',
+          proxy: {
+            prefix: '/api',
+            upstream: 'http://localhost:3000'
           }
         }
       ]
     }
-  }
+  })
   ```
 
 - **`deduplication`** (`object`) - Deduplicates concurrent proxied requests with the same computed key. The first request is sent upstream, while matching concurrent requests wait for the first response and replay it. This can be configured globally under `gateway.deduplication` or per application under `gateway.applications[].proxy.deduplication`. Application-level settings override global settings. If both `handler` and `deduplication` are configured, deduplication runs first and the winning request is delegated to the custom handler. See [Request Deduplication](./deduplication.md) for usage examples.
@@ -335,18 +392,34 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     Examples:
 
-    ```json
-    {
-      "adapter": "memory"
-    }
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        deduplication: {
+          storage: {
+            adapter: 'memory'
+          }
+        }
+      }
+    })
     ```
 
-    ```json
-    {
-      "adapter": "valkey",
-      "url": "redis://127.0.0.1:6379",
-      "prefix": "my-app"
-    }
+    ```ts config
+    import { gateway } from '@platformatic/gateway'
+
+    export default gateway({
+      gateway: {
+        deduplication: {
+          storage: {
+            adapter: 'valkey',
+            url: 'redis://127.0.0.1:6379',
+            prefix: 'my-app'
+          }
+        }
+      }
+    })
     ```
 
   - **`methods`** (`array of string`, default: `['GET', 'HEAD']`) - Methods eligible for deduplication when `routes` is not specified.
@@ -361,22 +434,27 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   Default key computation uses the configured application `origin`, request method, rewritten proxy URL including query string, and the configured request headers.
 
-  ```json
-  {
-    "gateway": {
-      "deduplication": {
-        "enabled": true,
-        "storage": {
-          "adapter": "valkey",
-          "url": "redis://127.0.0.1:6379",
-          "prefix": "my-app"
+  ```ts config
+  import { gateway } from '@platformatic/gateway'
+
+  export default gateway({
+    gateway: {
+      deduplication: {
+        enabled: true,
+        storage: {
+          adapter: 'valkey',
+          url: 'redis://127.0.0.1:6379',
+          prefix: 'my-app'
         },
-        "routes": [
-          { "method": "GET", "path": "/blog/*" }
+        routes: [
+          {
+            method: 'GET',
+            path: '/blog/*'
+          }
         ]
       }
     }
-  }
+  })
   ```
 
   A custom key module receives the request and the default key context. The function must be synchronous:
@@ -391,12 +469,18 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "passthroughContentTypes": ["multipart/form-data", "application/octet-stream", "application/custom-binary"]
+  ```ts config
+  import { gateway } from '@platformatic/gateway'
+
+  export default gateway({
+    gateway: {
+      passthroughContentTypes: [
+        'multipart/form-data',
+        'application/octet-stream',
+        'application/custom-binary'
+      ]
     }
-  }
+  })
   ```
 
 ### OpenAPI
@@ -465,54 +549,58 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
 
   Composition of two remote applications:
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "applications": [
+  ```ts config
+  import { gateway } from '@platformatic/gateway'
+
+  export default gateway({
+    gateway: {
+      applications: [
         {
-          "id": "auth-service",
-          "origin": "https://auth-service.com",
-          "openapi": {
-            "url": "/documentation/json",
-            "prefix": "auth"
+          id: 'auth-service',
+          origin: 'https://auth-service.com',
+          openapi: {
+            url: '/documentation/json',
+            prefix: 'auth'
           }
         },
         {
-          "id": "payment-service",
-          "origin": "https://payment-service.com",
-          "openapi": {
-            "file": "./schemas/payment-service.json"
+          id: 'payment-service',
+          origin: 'https://payment-service.com',
+          openapi: {
+            file: './schemas/payment-service.json'
           }
         }
       ],
-      "refreshTimeout": 1000
+      refreshTimeout: 1000
     }
-  }
+  })
   ```
 
   Composition of two local applications inside Platformatic Runtime:
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "applications": [
+  ```ts config
+  import { gateway } from '@platformatic/gateway'
+
+  export default gateway({
+    gateway: {
+      applications: [
         {
-          "id": "auth-service",
-          "openapi": {
-            "url": "/documentation/json",
-            "prefix": "auth"
+          id: 'auth-service',
+          openapi: {
+            url: '/documentation/json',
+            prefix: 'auth'
           }
         },
         {
-          "id": "payment-service",
-          "openapi": {
-            "file": "./schemas/payment-service.json"
+          id: 'payment-service',
+          openapi: {
+            file: './schemas/payment-service.json'
           }
         }
       ],
-      "refreshTimeout": 1000
+      refreshTimeout: 1000
     }
-  }
+  })
   ```
 
 ### GraphQL
