@@ -56,10 +56,19 @@ function isPlainObject (value) {
   `server.trustProxy` is Fastify's, and a string there is an address or CIDR list. A scheduler job's
   `body` is sent as-is when it is a string and `JSON.stringify`d otherwise.
 
+  The rest of the keeps, each a real value rather than a placeholder: a CORS `origin` or
+  `exposedHeaders` is an origin or a header list; an entry of `plugins.packages` is the package's
+  name when it is a string; `schemalock.readOnly` is read as a string by `db/lib/utils.js`; and an
+  `autoload.mappings` entry is an application entry by another name, so it keeps what an entry keeps
+  -- `enabled`, `workers` and `config`.
+
   And the ones left alone for want of evidence rather than for having it: `resolver.argsAdapter` and
   `resolver.partialResults` are handed to `graphql-composer`, which is not in this repository, so
-  the metaline string the gateway documentation describes cannot be confirmed from here. Unverified
-  keeps the branch.
+  the metaline string the gateway documentation describes cannot be confirmed from here.
+  `metrics.opentelemetry`'s `enabled` and `interval` have no in-tree reader at all, and Next's
+  `cache.maxTTL`, `cache.ignoreNextConfig` and `remote.maxTTL` reach the cache adapter rather than
+  anything here. Unverified keeps the branch: this pass removes a position when somebody has read
+  its consumers, not when nobody has found one.
 
   Nor is the rest of the health block. `maxHeapTotal`,
   `maxYoungGeneration`, `codeRangeSize`, `bufferPoolSize` and `defaultHighWaterMark` are each passed
@@ -147,6 +156,14 @@ const PLACEHOLDER_BRANCHES = new Set([
     `contentType` and `path` are destructured off it -- so the string branch reaches nothing.
   */
   'vite/notFoundHandler',
+  /*
+    `migrations.autoApply` is `=== true`, so a string never applied a migration, and
+    `types.autogenerate` is truthiness-tested, so `'false'` would generate types in production
+    where the author had switched them off. The scaffolder already emits booleans for both --
+    `process.env.PLT_APPLY_MIGRATIONS !== 'false'` -- so nothing it writes depends on the branch.
+  */
+  'migrations/autoApply',
+  'types/autogenerate',
   // Milliseconds, counts and ratios. Each is compared or arithmetic'd, never parsed.
   'health/interval',
   'health/gracePeriod',
