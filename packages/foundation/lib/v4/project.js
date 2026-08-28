@@ -50,6 +50,17 @@ function isPlainObject (value) {
   `coercePositiveInteger` parses from a string on the v4 path, raising a named error when it will
   not convert.
 
+  Three more the heuristic flags where removing the branch would be actively wrong.
+  `server.requestIdHeader` is `string | false`: the string is the header's *name* and `false`
+  disables it, so deleting the string branch would leave a property whose only legal value is off.
+  `server.trustProxy` is Fastify's, and a string there is an address or CIDR list. A scheduler job's
+  `body` is sent as-is when it is a string and `JSON.stringify`d otherwise.
+
+  And the ones left alone for want of evidence rather than for having it: `resolver.argsAdapter` and
+  `resolver.partialResults` are handed to `graphql-composer`, which is not in this repository, so
+  the metaline string the gateway documentation describes cannot be confirmed from here. Unverified
+  keeps the branch.
+
   Nor is the rest of the health block. `maxHeapTotal`,
   `maxYoungGeneration`, `codeRangeSize`, `bufferPoolSize` and `defaultHighWaterMark` are each passed
   to `parseMemorySize`, so `'1 GB'` is a value they mean rather than a placeholder they tolerate.
@@ -114,6 +125,14 @@ const PLACEHOLDER_BRANCHES = new Set([
   'healthProbes/enabled',
   'healthProbes/port',
   'telemetry/diagLogger',
+  'otlpExporter/interval',
+  /*
+    The runtime's `watch` switch, as opposed to a capability's `watch` block. It is read as a
+    boolean -- `!config.watch`, `!!config.watch`, and assigned to each application -- so a string
+    `'false'` is truthy and turns watching *on* where the author meant to turn it off.
+  */
+  '(root)/watch',
+  'runtime/watch',
   // Milliseconds, counts and ratios. Each is compared or arithmetic'd, never parsed.
   'health/interval',
   'health/gracePeriod',
