@@ -115,13 +115,19 @@ const TEST_HELPER_JS = `
 'use strict'
 
 const { join } = require('node:path')
-const { readFile } = require('node:fs/promises')
+const { pathToFileURL } = require('node:url')
 const { create } = require('$__MOD__')
 $__REQUIRES__
 
 async function getServer (t) {
 $__PRE__
-  const config = JSON.parse(await readFile(join(__dirname, '..', 'watt.json'), 'utf8'))
+  /*
+    Imported, because the configuration is a module: its values are expressions, and reading the
+    file as text would give the expressions rather than what they evaluate to. The default export is
+    the configuration, so it can be spread and adjusted for a test run.
+  */
+  const { default: definition } = await import(pathToFileURL(join(__dirname, '..', '$__CONFIG_FILE__')).href)
+  const config = { ...definition }
   // Add your config customizations here. For example you want to set
   // all things that are set in the config file to read from an env variable
   config.server ||= {}
@@ -141,7 +147,7 @@ module.exports.getServer = getServer
 
 const TEST_HELPER_TS = `
 import { join } from 'node:path'
-import { readFile } from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
 import { create } from '$__MOD__'
 import { test } from 'node:test'
 $__REQUIRES__
@@ -152,7 +158,8 @@ type TestContext = Parameters<Exclude<testfn, undefined>>[0]
 export async function getServer (t: TestContext) {
 $__PRE__
   // We go up two folder because this files executes in the dist folder
-  const config = JSON.parse(await readFile(join(import.meta.dirname, "..", "watt.json"), 'utf8'))
+  const { default: definition } = await import(pathToFileURL(join(import.meta.dirname, "..", "$__CONFIG_FILE__")).href)
+  const config = { ...definition }
   // Add your config customizations here. For example you want to set
   // all things that are set in the config file to read from an env variable
   config.server ||= {}
@@ -237,8 +244,9 @@ npm start
 - 🔍 Try out the GraphiQL web UI at http://localhost:3042/graphiql
 `
 
-export function applyTestHelperCustomizations (testHelper, mod, customizations) {
+export function applyTestHelperCustomizations (testHelper, mod, customizations, configurationFile) {
   return testHelper
+    .replaceAll('$__CONFIG_FILE__', configurationFile || 'watt.config.mjs')
     .replaceAll('$__MOD__', mod || '@platformatic/service')
     .replaceAll('$__REQUIRES__', customizations.requires || '')
     .replaceAll('$__PRE__', customizations.pre || '')
@@ -363,7 +371,12 @@ export class Generator extends BaseGenerator {
           this.files.push({
             path: 'test',
             file: 'helper.ts',
-            contents: applyTestHelperCustomizations(TEST_HELPER_TS, this.module, this.testHelperCustomizations ?? {})
+            contents: applyTestHelperCustomizations(
+              TEST_HELPER_TS,
+              this.module,
+              this.testHelperCustomizations ?? {},
+              this.configurationFileName()
+            )
           })
           this.files.push({
             path: join('test', 'plugins'),
@@ -379,7 +392,12 @@ export class Generator extends BaseGenerator {
           this.files.push({
             path: 'test',
             file: 'helper.js',
-            contents: applyTestHelperCustomizations(TEST_HELPER_JS, this.module, this.testHelperCustomizations ?? {})
+            contents: applyTestHelperCustomizations(
+              TEST_HELPER_JS,
+              this.module,
+              this.testHelperCustomizations ?? {},
+              this.configurationFileName()
+            )
           })
           this.files.push({
             path: join('test', 'plugins'),

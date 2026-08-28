@@ -326,5 +326,10 @@ test('emits the port as the expression it stood for', async () => {
   */
   assert.ok(emitted.includes('port: Number(process.env.PLT_API_PORT || 3042)'), emitted)
   assert.ok(emitted.includes("import { service } from '@platformatic/service'"), emitted)
-  assert.ok(emitted.includes("hostname: process.env.PLT_API_SERVER_HOSTNAME || '0.0.0.0'"), emitted)
+  /*
+    A bare reference, not a copy of the default: the value lives in `.env`, and writing it into the
+    configuration as well would put the same fact in two places. The port is the exception the
+    document spells out.
+  */
+  assert.ok(emitted.includes('hostname: process.env.PLT_API_SERVER_HOSTNAME,'), emitted)
 })

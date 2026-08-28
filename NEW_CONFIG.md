@@ -1407,7 +1407,7 @@ The rules, in full:
 The consequence for scaffolding is that the `3042` convention becomes
 per-application and visible: `service`'s generator writes `server: { hostname,
 port, logger }` into every application's own config
-(`service/lib/generator.js:414-420` — the `!isRuntimeContext` guard is gone) and
+(`service/lib/generator.js:432-438` — the `!isRuntimeContext` guard is gone) and
 the runtime generator hands application *i* port `3042 + i`
 (`runtime/lib/generator.js:195-198`) while writing no root `server` block at all.
 v4's code-first equivalent is the same thing spelled in the factory, with the

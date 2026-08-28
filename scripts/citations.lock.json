@@ -350,7 +350,7 @@
       "head": "if (runtimeConfig.basePath) {",
       "lines": 5
     },
-    "packages/service/lib/generator.js:414-420": {
+    "packages/service/lib/generator.js:432-438": {
       "sha": "5ff3541740bdcf2c",
       "head": "config.server = {",
       "lines": 7
