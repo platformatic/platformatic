@@ -280,9 +280,14 @@ export async function findRuntimeConfigurationFile (
     if (throwOnError) {
       return logFatalError(
         logger,
-        `Cannot find a supported ${executableName} configuration file (like ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold(
-          'platformatic.json'
-        )}) in ${bold(resolve(root))}.`
+        /*
+          The v4 names first, because they are what someone reading this should create. The legacy
+          ones are still named -- this command reads them while v3 is supported -- but a user told to
+          write a `watt.json` would be told to write a file v4 refuses.
+        */
+        `Cannot find a supported ${executableName} configuration file (like ${bold('watt.config.ts')} or ${bold(
+          'watt.config.js'
+        )}, or a legacy ${bold('watt.json')}) in ${bold(resolve(root))}.`
       )
     }
   }

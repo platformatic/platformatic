@@ -270,10 +270,20 @@ export async function createApplication (
   const wrapped = await findAnyConfigurationFile(projectDir)
 
   if (wrapped && !isLegacyConfigurationFileName(wrapped) && (await findApplicationRoot(projectDir))) {
-    const { label } = await detectApplicationType(projectDir)
+    /*
+      The singular `application` shorthand is what wrapping writes, and what distinguishes a wrapped
+      application from a runtime whose own directory happens to hold sources. Read from the source
+      rather than evaluated: evaluating a root expands its topology, which reaches every
+      application's configuration and so needs the dependencies this command has not installed yet.
+    */
+    const source = await readFile(resolve(projectDir, wrapped), 'utf-8')
 
-    await say(`The ${label} application has already been wrapped into Watt.`)
-    return
+    if (/\bapplication:\s*\{/.test(source)) {
+      const { label } = await detectApplicationType(projectDir)
+
+      await say(`The ${label} application has already been wrapped into Watt.`)
+      return
+    }
   }
 
   const runtimeConfigFile =

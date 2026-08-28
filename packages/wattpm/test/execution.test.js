@@ -67,7 +67,7 @@ test('dev - should complain if no configuration file is found', async t => {
 
   ok(
     devstartProcess.stdout.includes(
-      `Cannot find a supported Watt configuration file (like watt.json, a wattpm.json or a platformatic.json) in ${nonExistentDirectory}.`
+      `Cannot find a supported Watt configuration file (like watt.config.ts or watt.config.js, or a legacy watt.json) in ${nonExistentDirectory}.`
     )
   )
 })
