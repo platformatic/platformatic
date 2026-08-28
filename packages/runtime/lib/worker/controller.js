@@ -23,7 +23,12 @@ import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } from '../errors.js'
+import {
+  ApplicationAlreadyStartedError,
+  exitCodes,
+  InvalidApplicationModuleError,
+  RuntimeNotStartedError
+} from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
 import { installGlobalDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
@@ -82,6 +87,7 @@ export class Controller extends EventEmitter {
       applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.applicationConfig.path,
+      sourcePath: this.applicationConfig.sourcePath,
       dependencies: this.applicationConfig.dependencies,
       isProduction: this.applicationConfig.isProduction,
       telemetryConfig: this.applicationConfig.telemetry,
@@ -126,7 +132,7 @@ export class Controller extends EventEmitter {
 
       // Before returning the base application, check if there is any file we recognize
       // and the user just forgot to specify in the configuration.
-      if (!appConfig.config) {
+      if (!appConfig.module && !appConfig.config) {
         const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
 
         if (candidate) {
@@ -134,7 +140,13 @@ export class Controller extends EventEmitter {
         }
       }
 
-      if (appConfig.config) {
+      if (appConfig.module) {
+        const pkg = await loadConfigurationModule(workerData.dirname, {}, appConfig.module)
+        if (typeof pkg.create !== 'function') {
+          throw new InvalidApplicationModuleError(appConfig.module)
+        }
+        this.capability = await pkg.create(appConfig.path, appConfig.config ?? {}, this.#context)
+      } else if (appConfig.config) {
         // Parse the configuration file the first time to obtain the schema
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
           onMissingEnv: this.#context.fetchApplicationUrl,

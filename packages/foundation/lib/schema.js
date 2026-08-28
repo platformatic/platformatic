@@ -866,7 +866,14 @@ export const compileCache = {
 
 export const application = {
   type: 'object',
-  anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
+  anyOf: [
+    { required: ['id', 'path'] },
+    { required: ['id', 'url'] },
+    { required: ['id', 'path', 'module'] }
+  ],
+  not: {
+    required: ['module', 'url']
+  },
   properties: {
     id: {
       type: 'string'
@@ -892,6 +899,9 @@ export const application = {
       type: 'string'
     },
     url: {
+      type: 'string'
+    },
+    module: {
       type: 'string'
     },
     gitBranch: {
@@ -1084,7 +1094,7 @@ export const runtimeProperties = {
           type: 'object',
           additionalProperties: false,
           required: ['id'],
-          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch'])
+          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch', 'module'])
         }
       }
     }
@@ -1630,6 +1640,7 @@ export const applicationsUnwrappablePropertiesList = [
   'path',
   'config',
   'url',
+  'module',
   'gitBranch',
   'dependencies',
   'management'

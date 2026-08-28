@@ -507,8 +507,21 @@
                   "id",
                   "url"
                 ]
+              },
+              {
+                "required": [
+                  "id",
+                  "path",
+                  "module"
+                ]
               }
             ],
+            "not": {
+              "required": [
+                "module",
+                "url"
+              ]
+            },
             "properties": {
               "id": {
                 "type": "string"
@@ -539,6 +552,9 @@
                 "type": "string"
               },
               "url": {
+                "type": "string"
+              },
+              "module": {
                 "type": "string"
               },
               "gitBranch": {

@@ -276,6 +276,7 @@ runtime. Each application object supports the following settings:
 - **`path`** (**required**, `string`) - The path to the directory containing
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
+- **`module`** (`string`) - The installed npm package that implements the application. When specified, `path` is also required and is used as the writable application root. The package itself is resolved from the Watt project's dependencies and is not modified by the runtime.
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
 - **`config`** (`string`) - The configuration file used to start
   the application.
