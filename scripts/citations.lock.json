@@ -465,7 +465,7 @@
       "head": "if (config.vite.ssr === true) {",
       "lines": 8
     },
-    "packages/foundation/lib/cli.js:293-312": {
+    "packages/foundation/lib/cli.js:298-317": {
       "sha": "a82961d969a7a84a",
       "head": "export async function fallbackToTemporaryConfigFile (logger, root, verifyPackages) {",
       "lines": 20
@@ -645,7 +645,7 @@
       "head": "async #generateConfigFile (originalPath, updatedPath) {",
       "lines": 25
     },
-    "packages/create-wattpm/lib/index.js:455": {
+    "packages/create-wattpm/lib/index.js:465": {
       "sha": "cadcf1b78f0dab35",
       "head": ": new ImportGenerator({",
       "lines": 1

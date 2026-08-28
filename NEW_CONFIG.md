@@ -1579,7 +1579,7 @@ configuration rather than becoming a hidden loader default; synthesis simply *is
 the configuration for a zero-config boot. It applies **only to a
 single-application project**, which is the only shape zero-config can produce:
 detection resolves one application type for the root directory
-(`foundation/lib/cli.js:293-312`). Multi-application projects get their ports from
+(`foundation/lib/cli.js:298-317`). Multi-application projects get their ports from
 their own configuration, never from a default.
 
 Synthesis is **not gated on what sits above**: running in an application directory of
@@ -3008,7 +3008,7 @@ export default {
   **`ImportGenerator`** — which wrote a `watt.json` carrying either a `$schema` URL
   or a bare `{ module }` for an imported application whose capability ships no
   generator (`generators/lib/import-generator.js:126-150` pre-`dd89c334f`, reached from
-  `create-wattpm/lib/index.js:455`), and was the one JSON writer easy to miss
+  `create-wattpm/lib/index.js:465`), and was the one JSON writer easy to miss
   because it is not a generator itself; it emits the v4 per-app form now —
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
   (`'export default ' + JSON.stringify(config)`) — the last of which is the
