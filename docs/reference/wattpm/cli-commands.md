@@ -615,26 +615,6 @@ wattpm env --table
 wattpm env my-app database-application
 ```
 
-### `wattpm config`
-
-Displays configuration for a running application or application.
-
-```bash
-wattpm config [id] [application]
-```
-
-**Arguments:**
-
-- `id` - Process ID or application name (optional if only one app is running)
-- `application` - Application name (optional, shows app config if omitted)
-
-**Example:**
-
-```bash
-wattpm config
-wattpm config my-app api-application
-```
-
 ## Performance Profiling Commands
 
 ### `wattpm pprof start`

@@ -2,7 +2,6 @@ import { FastifyError } from '@fastify/error';
 import { expect, test } from 'tstyche';
 import {
   FailedToGetRuntimeAllLogs,
-  FailedToGetRuntimeConfig,
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeOpenapi,
@@ -122,8 +121,7 @@ test('Metric type', () => {
 // errors
 test('error factories', () => {
   expect(FailedToGetRuntimeAllLogs).type.toBe<(arg: string) => FastifyError>();
-  expect(FailedToGetRuntimeConfig).type.toBe<(arg: string) => FastifyError>();
-  expect(FailedToGetRuntimeEnv).type.toBe<(arg: string) => FastifyError>();
+    expect(FailedToGetRuntimeEnv).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToGetRuntimeOpenapi).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToGetRuntimeScheduler).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToUpdateRuntimeScheduler).type.toBe<

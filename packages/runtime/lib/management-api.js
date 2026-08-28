@@ -99,18 +99,6 @@ export async function managementApiPlugin (app, opts) {
     return runtime.getRuntimeMetadata()
   })
 
-  app.get('/config', quiet, async request => {
-    const metadata = request.query.metadata === 'true'
-    const rawConfig = await runtime.getRuntimeConfig(metadata)
-
-    if (metadata) {
-      const { [kMetadata]: __metadata, ...config } = rawConfig
-      return { ...config, __metadata }
-    }
-
-    return rawConfig
-  })
-
   app.get('/env', quiet, async () => {
     return { ...process.env, ...runtime.getRuntimeEnv() }
   })

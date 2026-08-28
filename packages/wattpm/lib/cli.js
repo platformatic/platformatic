@@ -11,7 +11,7 @@ import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } 
 import { helpCommand } from './commands/help.js'
 import { injectCommand } from './commands/inject.js'
 import { logsCommand } from './commands/logs.js'
-import { applicationsCommand, configCommand, envCommand, psCommand } from './commands/management.js'
+import { applicationsCommand, envCommand, psCommand } from './commands/management.js'
 import { metricsCommand } from './commands/metrics.js'
 import { pprofCommand } from './commands/pprof.js'
 import { replCommand } from './commands/repl.js'
@@ -135,9 +135,6 @@ export async function main () {
       break
     case 'scheduler:run':
       command = schedulerRunCommand
-      break
-    case 'config':
-      command = configCommand
       break
     case 'env':
       command = envCommand

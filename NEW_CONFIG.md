@@ -2915,7 +2915,7 @@ deliberately saner:
     `^\{.+\}$` pattern branch, the string forms of `workers` and `watch`,
     `managementApi`'s top-level string — the socket path is the *object* property
     `managementApi.socket`, and a bare string is merely truthy
-    (`runtime/lib/management-api.js:425`); the branch exists only to admit
+    (`runtime/lib/management-api.js:413`); the branch exists only to admit
     `'{PLT_MANAGEMENT_API}'` — …) — **string branch deleted**;
   - *genuine unions* (`preload`'s string-or-array, `extensions`'
     string-or-object-or-array, `enabled`'s per-environment object) — kept;
@@ -3059,7 +3059,7 @@ export default {
   ITC structured-clones on the way back and the handler JSON round-trips to drop
   `undefined` keys — so the mutability question the payload below raises does not
   arise here. And its HTTP surface, `GET /applications/:id/config`
-  (`runtime/lib/management-api.js:202-206`), is **not** the removed `GET /config`; it
+  (`runtime/lib/management-api.js:190-194`), is **not** the removed `GET /config`; it
   stays. Of its two in-tree callers one is `patch-config`, removed for unrelated
   reasons (BC 9).
 - Reading configs without executing them: the plain-object form is trivially
@@ -3108,9 +3108,10 @@ export default {
   in `runtime/index.d.ts:393` and returns live `#config`, symbol key and all. Its
   in-tree uses do not need a public API. Two are internal — `addApplications` reading
   `config[kMetadata].root` to validate against
-  (`runtime/lib/management-handlers.js:136`, `runtime/lib/management-api.js:157`) —
-  and stay inside the runtime, off the DTO contract. One is `GET /config?metadata=true`
-  (`runtime/lib/management-api.js:104`), which goes with that endpoint. The published
+  (`runtime/lib/management-handlers.js:136`, `runtime/lib/management-api.js:145`) —
+  and stay inside the runtime, off the DTO contract. One was `GET /config?metadata=true`
+  (`runtime/lib/management-api.js:104` pre-`b1d4bac72`), and went with that endpoint,
+  which is now removed. The published
   consumer was `@platformatic/control`'s `getRuntimeConfig(pid, true)`, which
   `applications:add`/`remove --save` called for `root` and `configPath`
   (`wattpm/lib/commands/applications.js:31,110-112` pre-`0f4d17a1b`); they read
@@ -5148,8 +5149,10 @@ runs multiple workers on a fixed port at all.
    on its own.
 9. **cross-repo**: watt-admin migrates off `GET /config`. In-tree but published,
    so tracked here for visibility: **`@platformatic/control`** drops or re-points
-   `getRuntimeConfig` (`control/lib/index.js:242`, the removed `GET /config`) while
-   `getRuntimeApplicationConfig` (`:259`) is untouched — it calls
+   `getRuntimeConfig` (`control/lib/index.js:242` pre-`b1d4bac72`, the removed
+   `GET /config`) — it is dropped, along with the `FailedToGetRuntimeConfig` error it
+   threw — while
+   `getRuntimeApplicationConfig` (`:241`) is untouched — it calls
    `/api/v1/applications/:id/config`, which stays — and gains a metadata
    accessor carrying `root`/`configPath`/`autoload`, which is what
    `applications:add`/`remove --save` actually consume

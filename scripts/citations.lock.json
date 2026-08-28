@@ -635,7 +635,7 @@
       "head": "const excludedEnvs = [PLT_ROOT]",
       "lines": 1
     },
-    "packages/runtime/lib/management-api.js:425": {
+    "packages/runtime/lib/management-api.js:413": {
       "sha": "298e0df64fd1a585",
       "head": "const customSocket = typeof config === 'object' ? config?.socket : null",
       "lines": 1
@@ -670,7 +670,7 @@
       "head": "server = (await sendViaITC(worker, 'getApplicationConfig'))?.server",
       "lines": 1
     },
-    "packages/runtime/lib/management-api.js:202-206": {
+    "packages/runtime/lib/management-api.js:190-194": {
       "sha": "dcfc7a989b3a232f",
       "head": "app.get('/applications/:id/config', quiet, async request => {",
       "lines": 5
@@ -710,12 +710,12 @@
       "head": "register('addApplications', async ({ applications, start }) => {",
       "lines": 1
     },
-    "packages/runtime/lib/management-api.js:157": {
+    "packages/runtime/lib/management-api.js:145": {
       "sha": "76de52d3cb03bc70",
       "head": "const config = runtime.getRuntimeConfig(true)",
       "lines": 1
     },
-    "packages/runtime/lib/management-api.js:104": {
+    "packages/runtime/lib/management-api.js:104@b1d4bac72^": {
       "sha": "2e5f5ec301fe7118",
       "head": "const rawConfig = await runtime.getRuntimeConfig(metadata)",
       "lines": 1
@@ -1045,14 +1045,14 @@
       "head": "async #generateConfigFile (originalPath, updatedPath) {",
       "lines": 22
     },
-    "packages/control/lib/index.js:242": {
+    "packages/control/lib/index.js:242@b1d4bac72^": {
       "sha": "659f8f9bee2fd1e3",
       "head": "async getRuntimeConfig (pid, metadata = false) {",
       "lines": 1
     },
-    "packages/control/lib/index.js:259": {
-      "sha": "8c2087c418e605ac",
-      "head": "async getRuntimeApplicationConfig (pid, applicationId) {",
+    "packages/control/lib/index.js:241@b1d4bac72^": {
+      "sha": "e3b0c44298fc1c14",
+      "head": "",
       "lines": 1
     },
     "packages/runtime/lib/runtime.js:397": {

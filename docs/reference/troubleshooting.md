@@ -119,7 +119,7 @@ wattpm db:migrations:apply
 2. **Verify application configuration:**
 
    ```bash
-   wattpm config
+   wattpm start --debug-config
    ```
 
 3. **Check application health:**
@@ -312,8 +312,8 @@ wattpm inject --path /health
 wattpm inject --path /metrics
 wattpm inject --path /documentation/json
 
-# View application configuration
-wattpm config application-name
+# View the resolved configuration (evaluated locally, boots nothing)
+wattpm start --debug-config
 ```
 
 ### Monitor Logs in Real-time
