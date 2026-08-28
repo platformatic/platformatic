@@ -4929,7 +4929,19 @@ runs multiple workers on a fixed port at all.
    evidence for why this step is hand work rather than a codemod. Note also that the
    deletion has to be applied as a **projection** over the schema objects rather than an
    edit to them: the same objects still validate v3 configurations, where the
-   placeholder branch is load-bearing, and they do until v3 loading is deleted. The table carries each property's full
+   placeholder branch is load-bearing, and they do until v3 loading is deleted.
+
+   **Two consequences of the projection not existing yet are visible today**, and both
+   turned up while converting the reference documentation to this format. The first is
+   what the branch buys a wrong value: `server.port` is still `integer | string`, so
+   `port: process.env.PORT ?? ''` — a string in a number position, and the naive
+   conversion of `{PORT}` — validates. The block gate cannot catch it, because the
+   schema says it is fine. The second is that the runtime has a v4 projection
+   (`v4Schema`, which drops `envfile`, `strictEnv` and `$schema`) and the capabilities
+   do not, so **`strictEnv` is refused at the root and accepted inside a capability's
+   wrapped `runtime` block** — the same key, removed in one place and live in another,
+   in the same configuration. The projection has to reach `wrappedRuntime` as well as
+   the runtime's own schema. The table carries each property's full
    **constraint set** — enum members, numeric bounds, `multipleOf`, integer-ness,
    string patterns and lengths — not just its primitive type, because migrate
    intersects those constraints across every position a variable occupies (see step

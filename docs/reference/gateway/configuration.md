@@ -555,7 +555,7 @@ The `watch` functionality helps in monitoring file changes and dynamically updat
 
 ## Setting and Using ENV placeholders
 
-Environment variable placeholders are used to securely inject runtime configurations. Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
+A configuration file reads its environment directly. Learn how to [set](../service/configuration.md#setting-environment-variables) and [read](../service/configuration.md#environment-variables) environment variables.
 
 ### PLT_ROOT
 
