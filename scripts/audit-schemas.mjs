@@ -106,8 +106,69 @@ function constraintsOf (node) {
     }
   }
 
+  /*
+    The keywords this repository adds to JSON Schema. They do not validate anything, so two branches
+    carrying different ones look identical here -- `logger.transport`'s `target` is
+    `{ string, resolveModule } | { string, resolvePath }`, which reads as an unexplainable
+    `string | string` unless the annotation is shown. A reviewer classifying a union by hand needs
+    to see what actually distinguishes its branches.
+  */
+  for (const key of Object.keys(node)) {
+    if (!standardKeywords.has(key)) {
+      constraints[key] = node[key]
+    }
+  }
+
   return constraints
 }
+
+// Everything JSON Schema itself defines that this audit either captures above or does not report.
+const standardKeywords = new Set([
+  '$comment',
+  '$defs',
+  '$id',
+  '$ref',
+  '$schema',
+  'additionalProperties',
+  'allOf',
+  'anyOf',
+  'const',
+  'default',
+  'dependencies',
+  'dependentRequired',
+  'dependentSchemas',
+  'description',
+  'else',
+  'enum',
+  'examples',
+  'exclusiveMaximum',
+  'exclusiveMinimum',
+  'format',
+  'if',
+  'items',
+  'maxItems',
+  'maxLength',
+  'maxProperties',
+  'maximum',
+  'minItems',
+  'minLength',
+  'minProperties',
+  'minimum',
+  'multipleOf',
+  'not',
+  'nullable',
+  'oneOf',
+  'pattern',
+  'patternProperties',
+  'prefixItems',
+  'properties',
+  'propertyNames',
+  'required',
+  'then',
+  'title',
+  'type',
+  'uniqueItems'
+])
 
 /*
   A branch that exists only to admit a `{PLT_X}` placeholder: a bare string alongside at least one

@@ -1218,3 +1218,24 @@ test('migrate - converts the root configuration too, and writes a sibling URL as
   ok(web.includes("hostname: 'http://api.plt.local'"), web)
   ok(!web.includes('PLT_API_URL'), web)
 })
+
+test('migrate - converts a position whose branches differ only in how the value is resolved', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      logger: {
+        // `target` is `{ string, resolveModule } | { string, resolvePath }`. Those keywords say how
+        // the value is resolved, not which values validate, so both branches accept the same ones
+        // and the position is a string — not the ambiguity its shape suggests.
+        transport: { targets: [{ target: '{LOG_TARGET}', level: 'info' }] }
+      }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("target: process.env.LOG_TARGET ?? ''"), emitted)
+})

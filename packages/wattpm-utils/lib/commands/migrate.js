@@ -221,33 +221,53 @@ function isEnabled (entry, environment) {
   The schema node governing a position, walked from a JSON pointer. Placeholder conversion needs the
   target type of the position a `{PLT_X}` sits in, and the schema is the only thing that knows it.
 */
-function resolveSchemaNode (schema, pointer) {
-  let node = schema
+function resolveSchemaNodes (schema, pointer) {
+  let nodes = [schema]
 
   for (const segment of pointer.split('/').filter(Boolean)) {
-    if (!node || typeof node !== 'object') {
-      return null
+    const next = []
+
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object') {
+        continue
+      }
+
+      if (node.properties?.[segment]) {
+        next.push(node.properties[segment])
+        continue
+      }
+
+      if (/^\d+$/.test(segment) && node.items) {
+        next.push(node.items)
+        continue
+      }
+
+      /*
+        A union on the way down, not at the position itself: `logger.transport` is one object shape
+        or another, and `targets` lives in the second. The value validated against some branch, so
+        every branch that could hold this segment is a candidate and the classification below has to
+        agree across them.
+      */
+      const branches = node.anyOf ?? node.oneOf
+
+      if (branches) {
+        next.push(...branches.flatMap(branch => resolveSchemaNodes(branch, `/${segment}`)))
+        continue
+      }
+
+      if (node.additionalProperties && typeof node.additionalProperties === 'object') {
+        next.push(node.additionalProperties)
+      }
     }
 
-    if (node.properties?.[segment]) {
-      node = node.properties[segment]
-      continue
+    if (next.length === 0) {
+      return []
     }
 
-    if (/^\d+$/.test(segment) && node.items) {
-      node = node.items
-      continue
-    }
-
-    if (node.additionalProperties && typeof node.additionalProperties === 'object') {
-      node = node.additionalProperties
-      continue
-    }
-
-    return null
+    nodes = next
   }
 
-  return node
+  return nodes
 }
 
 /*
@@ -292,20 +312,46 @@ function classifyPosition (schema, pointer) {
     return { kind: 'parsed' }
   }
 
-  const node = resolveSchemaNode(schema, pointer)
+  const candidates = resolveSchemaNodes(schema, pointer)
 
-  if (!node) {
+  if (candidates.length === 0) {
     return { kind: 'unknown' }
   }
 
+  if (candidates.length > 1) {
+    // Several branches could hold this position. They have to agree, or migrate does not know which
+    // one the value was written for.
+    const classified = candidates.map(candidate => classifyOne(candidate))
+    const kinds = new Set(classified.map(one => one.kind))
+
+    return kinds.size === 1 ? classified[0] : { kind: 'genuine' }
+  }
+
+  return classifyOne(candidates[0])
+}
+
+function classifyOne (node) {
   const branches = node.anyOf ?? node.oneOf
 
   if (branches) {
     const real = branches.filter(branch => !isPlaceholderBranch(branch, branches))
 
     if (real.length !== 1) {
-      // Either nothing was recognised as a placeholder branch, or several survive: a genuine union,
-      // which is the hand work the audit exists to narrow and not something to guess at.
+      /*
+        Branches that agree on a type and constrain nothing else are not an ambiguity, whatever they
+        are annotated with: `logger.transport`'s target is
+        `{ string, resolveModule } | { string, resolvePath }`, and those keywords say how the value
+        is resolved rather than which values validate. Both branches accept exactly the same ones.
+      */
+      const types = new Set(real.map(branch => branch.type))
+      const plain = real.every(branch => branch.enum === undefined && branch.pattern === undefined)
+
+      if (types.size === 1 && plain) {
+        return classifyNode({ ...node, anyOf: undefined, oneOf: undefined, type: [...types][0] })
+      }
+
+      // Otherwise a genuine union, which is the hand work the audit exists to narrow rather than
+      // something to guess at.
       return { kind: 'genuine' }
     }
 
