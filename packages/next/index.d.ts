@@ -6,6 +6,26 @@ import type { PlatformaticNextJsConfig } from './config.d.ts'
 
 export type { PlatformaticNextJsConfig } from './config.d.ts'
 
+/*
+  The option types this capability's configuration is built from, generated from the audited schema.
+  `NextHttpsOptions` is Next's own and sits next to `AppServerOptions['https']`, which is
+  `HttpsOptions`: two adjacent keys spelled almost alike, which is exactly why both have names.
+*/
+export type {
+  AppLoggerOptions,
+  AppServerOptions,
+  ApplicationHealthOptions,
+  ApplicationTelemetryOverrides,
+  ApplicationWorkersOptions,
+  BuildableApplicationOptions,
+  HttpsOptions,
+  ImageOptimizerOptions,
+  NextCacheOptions,
+  NextHttpsOptions,
+  PermissionsOptions,
+  WatchOptions
+} from './config.d.ts'
+
 export interface NextContext extends BaseContext {}
 
 export type NextConfiguration = Configuration<PlatformaticNextJsConfig>

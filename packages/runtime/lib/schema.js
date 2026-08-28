@@ -33,6 +33,12 @@ const runtimeLogger = {
   }
 }
 
+/*
+  The root logger is not the application one: it carries `captureStdio` and the `pino` key mapping,
+  which only the runtime reads. Naming them apart is what lets a person write the type of either.
+*/
+runtimeLogger.title = 'RuntimeLoggerOptions'
+
 schemaComponents.runtimeProperties.logger = runtimeLogger
 
 schemaComponents.runtimeProperties.verticalScaler.properties.applications = {

@@ -145,41 +145,24 @@ function prepareWorkspace () {
 }
 
 /*
-  The option types Appendix A's blocks name. The document says where they come from -- "complete
-  list generated from the audited v4 runtime schema" -- and the audit has not run, so a block naming
-  one is ahead of the implementation rather than wrong.
+  The option types Appendix A's blocks name that the generated types still do not carry.
+
+  The audit has run and the schemas carry titles now, so most of these names are real types the
+  blocks import. These four are not: they live inside the runtime's application entry, and the
+  generator pinned here collapses that entry to `{ [k: string]: unknown }` because the schema lists
+  it three times -- once as `applications` and twice more as the v3 aliases. Its next major gets
+  this right; that release is too new for this repository's minimum-release-age policy. The four are
+  generated correctly in every capability schema, which lists the entry once.
 
   Listed by name rather than matched by shape, and reported rather than declared into existence: a
   name that is not on this list is a typo, a type somebody forgot, or -- as four of these were --
-  one that already exists and the block simply failed to import. When the generation lands, the
-  names leave this list and the blocks typecheck against the real thing.
+  one that already exists and the block simply failed to import.
 */
 const pendingGeneratedTypes = new Set([
-  'ApplicationEntryOverrides',
   'ApplicationHealthOptions',
   'ApplicationTelemetryOverrides',
   'ApplicationWorkersOptions',
-  'AppLoggerOptions',
-  'AppServerOptions',
-  'BuildableApplicationOptions',
-  'CompileCacheOptions',
-  'ExtensionEntry',
-  'GracefulShutdownOptions',
-  'HealthOptions',
-  'HealthProbesOptions',
-  'HttpCacheOptions',
-  'HttpsOptions',
-  'ImageOptimizerOptions',
-  'ManagementApiOptions',
-  'MetricsOptions',
-  'NextCacheOptions',
-  'NextHttpsOptions',
-  'PermissionsOptions',
-  'RuntimeLoggerOptions',
-  'TelemetryOptions',
-  'UndiciOptions',
-  'WatchOptions',
-  'WorkersOptions'
+  'PermissionsOptions'
 ])
 
 function typecheck (files) {

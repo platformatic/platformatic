@@ -243,6 +243,15 @@ const next = {
   additionalProperties: false
 }
 
+/*
+  The names the generated types carry -- see the table in `foundation/lib/schema.js` for why they
+  are assigned rather than written at each site. `https` is Next's own, distinct from `server.https`
+  next to it, and the two names are what keeps that adjacency legible.
+*/
+next.properties.https.title = 'NextHttpsOptions'
+next.properties.imageOptimizer.title = 'ImageOptimizerOptions'
+cache.title = 'NextCacheOptions'
+
 export const schemaComponents = { next }
 
 export const schema = {

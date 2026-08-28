@@ -24,7 +24,7 @@ import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { parseEnv } from 'node:util'
 import { extract } from 'tar'
 import { version } from '../version.js'
@@ -221,7 +221,13 @@ async function importApplicationIntoV4 (logger, configurationFile, { id, path, u
     lived in.
   */
   if (path) {
-    entry.path = relative(root, resolve(root, path))
+    /*
+      Forward slashes whatever the platform. `relative` answers in the local separator, and a
+      Windows answer would put `web\main` in a file that gets committed -- unreadable on the next
+      machine, and a backslash escape inside the string literal it is written into. Node resolves a
+      forward-slash path on Windows, so one spelling works everywhere.
+    */
+    entry.path = relative(root, resolve(root, path)).split(sep).join('/')
   }
 
   /*

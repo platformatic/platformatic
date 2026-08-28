@@ -4,6 +4,33 @@ import type { PlatformaticRuntimeConfig } from './config.d.ts'
 export type { PlatformaticRuntimeConfig } from './config.d.ts'
 
 /*
+  The option types the root configuration is built from, generated from the audited schema and
+  re-exported so that a `watt.config.ts` can name the shape of a piece of itself -- a helper that
+  builds the logger block, a constant holding the health settings -- rather than repeating an
+  anonymous object literal the editor cannot check against anything.
+
+  `ApplicationEntry` and the four types nested inside it are missing on purpose: the generator
+  pinned here cannot name them (see `foundation/lib/schema.js`), and exporting a hand-written stand-in
+  would be a second answer to a question the schema already answers.
+*/
+export type {
+  ApplicationEntryOverrides,
+  CompileCacheOptions,
+  ExtensionEntry,
+  GracefulShutdownOptions,
+  HealthOptions,
+  HealthProbesOptions,
+  HttpCacheOptions,
+  HttpsOptions,
+  ManagementApiOptions,
+  MetricsOptions,
+  RuntimeLoggerOptions,
+  TelemetryOptions,
+  UndiciOptions,
+  WorkersOptions
+} from './config.d.ts'
+
+/*
   The shape of a root `watt.config.ts`. `$schema` is the stamped marker machine writers of the
   plain-object form emit; a hand-written file identifies itself by importing what it uses and does
   not carry one.

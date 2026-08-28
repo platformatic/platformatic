@@ -178,7 +178,8 @@
         }
       },
       "default": {},
-      "additionalProperties": true
+      "additionalProperties": true,
+      "title": "AppLoggerOptions"
     },
     "server": {
       "type": "object",
@@ -299,10 +300,12 @@
           "required": [
             "key",
             "cert"
-          ]
+          ],
+          "title": "HttpsOptions"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "title": "AppServerOptions"
     },
     "watch": {
       "anyOf": [
@@ -338,7 +341,8 @@
               "default": null
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "WatchOptions"
         },
         {
           "type": "boolean"
@@ -398,7 +402,8 @@
       },
       "additionalProperties": false,
       "required": [],
-      "default": {}
+      "default": {},
+      "title": "BuildableApplicationOptions"
     },
     "runtime": {
       "type": "object",
@@ -443,7 +448,8 @@
                   "type": "boolean",
                   "default": false
                 }
-              }
+              },
+              "title": "ExtensionEntry"
             },
             {
               "type": "array",
@@ -472,7 +478,8 @@
                         "type": "boolean",
                         "default": false
                       }
-                    }
+                    },
+                    "title": "ExtensionEntry"
                   }
                 ]
               }
@@ -580,7 +587,8 @@
                         "minimum": 0,
                         "maximum": 1
                       }
-                    }
+                    },
+                    "title": "ApplicationWorkersOptions"
                   }
                 ]
               },
@@ -733,7 +741,8 @@
                     ]
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "title": "ApplicationHealthOptions"
               },
               "restartOnError": {
                 "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
@@ -832,7 +841,8 @@
                     "additionalProperties": false
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "title": "PermissionsOptions"
               },
               "telemetry": {
                 "type": "object",
@@ -866,7 +876,8 @@
                       ]
                     }
                   }
-                }
+                },
+                "title": "ApplicationTelemetryOverrides"
               },
               "compileCache": {
                 "anyOf": [
@@ -886,7 +897,8 @@
                         "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
                       }
                     },
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "title": "CompileCacheOptions"
                   }
                 ]
               },
@@ -913,7 +925,8 @@
                   }
                 ]
               }
-            }
+            },
+            "title": "ApplicationEntry"
           }
         },
         "workers": {
@@ -970,7 +983,8 @@
                   "minimum": 0,
                   "maximum": 1
                 }
-              }
+              },
+              "title": "WorkersOptions"
             }
           ]
         },
@@ -1154,7 +1168,8 @@
             }
           },
           "default": {},
-          "additionalProperties": true
+          "additionalProperties": true,
+          "title": "AppLoggerOptions"
         },
         "reuseTcpPorts": {
           "type": "boolean",
@@ -1226,7 +1241,8 @@
             "runtime",
             "application"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "GracefulShutdownOptions"
         },
         "health": {
           "type": "object",
@@ -1388,7 +1404,8 @@
               "default": 262144
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "HealthOptions"
         },
         "healthProbes": {
           "anyOf": [
@@ -1505,7 +1522,8 @@
                   ]
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "title": "HealthProbesOptions"
             }
           ],
           "default": true
@@ -1602,7 +1620,8 @@
                 }
               ]
             }
-          }
+          },
+          "title": "UndiciOptions"
         },
         "httpCache": {
           "oneOf": [
@@ -1658,7 +1677,8 @@
                   "default": "shared",
                   "description": "Cache type. \"shared\" caches may be shared between users, \"private\" caches are user-specific."
                 }
-              }
+              },
+              "title": "HttpCacheOptions"
             }
           ]
         },
@@ -1699,7 +1719,8 @@
                   "description": "Custom path for the control socket. If not specified, uses the default platform-specific location."
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "title": "ManagementApiOptions"
             }
           ],
           "default": true
@@ -1852,7 +1873,8 @@
                   "required": [
                     "key",
                     "cert"
-                  ]
+                  ],
+                  "title": "HttpsOptions"
                 },
                 "auth": {
                   "type": "object",
@@ -2131,7 +2153,8 @@
                   }
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "title": "MetricsOptions"
             }
           ]
         },
@@ -2306,7 +2329,8 @@
           "required": [
             "applicationName"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "TelemetryOptions"
         },
         "verticalScaler": {
           "type": "object",
@@ -2562,7 +2586,8 @@
                   "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "title": "CompileCacheOptions"
             }
           ]
         },
@@ -2606,7 +2631,8 @@
                       "minimum": 0,
                       "maximum": 1
                     }
-                  }
+                  },
+                  "title": "ApplicationWorkersOptions"
                 }
               ]
             },
@@ -2759,7 +2785,8 @@
                   ]
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "title": "ApplicationHealthOptions"
             },
             "restartOnError": {
               "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
@@ -2851,7 +2878,8 @@
                   "additionalProperties": false
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "title": "PermissionsOptions"
             },
             "telemetry": {
               "type": "object",
@@ -2885,7 +2913,8 @@
                     ]
                   }
                 }
-              }
+              },
+              "title": "ApplicationTelemetryOverrides"
             },
             "compileCache": {
               "anyOf": [
@@ -2905,7 +2934,8 @@
                       "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
                     }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "title": "CompileCacheOptions"
                 }
               ]
             }

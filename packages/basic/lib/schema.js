@@ -89,6 +89,13 @@ const watch = {
   ]
 }
 
+/*
+  The name the generated type carries -- see the table in `foundation/lib/schema.js`. `application`
+  itself stays anonymous: it is the capability block every schema embeds under its own key, and a
+  shared name for it would collide with the runtime's application *entry*.
+*/
+buildableApplication.title = 'BuildableApplicationOptions'
+
 export const schemaComponents = { application, buildableApplication, watch }
 
 export const schema = {
