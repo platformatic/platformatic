@@ -88,7 +88,13 @@ export async function createCommand (logger, args) {
 
   const runArgs = ['wattpm-utils' + (latest ? '@latest' : ''), '--', 'create']
 
-  runArgs.push('-c', config)
+  /*
+    Only when given. It names an existing file to read, so there is no default to forward -- and
+    forwarding the absent one sent the literal string `undefined` as a filename.
+  */
+  if (config) {
+    runArgs.push('-c', config)
+  }
 
   if (packageManager) {
     runArgs.push('-P', packageManager)

@@ -608,3 +608,153 @@ test('import - should find the nearest watt.json', async t => {
   ok(!existsSync(resolve(directory, 'web/next/package.json')))
   ok(!existsSync(resolve(directory, 'web/next/watt.json')))
 })
+
+async function prepareV4Root (t, root, contents) {
+  await writeFile(resolve(root, 'package.json'), JSON.stringify({ name: 'root', type: 'module' }), 'utf-8')
+  await writeFile(resolve(root, 'watt.config.js'), contents, 'utf-8')
+  changeWorkingDirectory(t, root)
+}
+
+test('import - a remote application in a v4 root is written without a path', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4')
+
+  await prepareV4Root(
+    t,
+    root,
+    [
+      'export default {',
+      '  // The level, once, so every application agrees on it.',
+      '  logger: { level: process.env.PLT_LOG_LEVEL ?? \'info\' },',
+      '  applications: []',
+      '}',
+      ''
+    ].join('\n')
+  )
+
+  await wattpmUtils('import', 'http://github.com/foo/bar.git')
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+
+  // What the root said is still what it says: the comment and the reference both survive.
+  ok(source.includes('// The level, once, so every application agrees on it.'), source)
+  ok(source.includes("process.env.PLT_LOG_LEVEL ?? 'info'"), source)
+
+  ok(/id:\s*["']bar["']/.test(source), source)
+  ok(/url:\s*["']http:\/\/github\.com\/foo\/bar\.git["']/.test(source), source)
+
+  /*
+    No path and no variable: v3 wrote an empty `PLT_APPLICATION_BAR_PATH` here, which reads as the
+    project root in every clone that does not have the gitignored file it lives in.
+  */
+  ok(!source.includes('path'), source)
+  ok(!existsSync(resolve(root, '.env')), 'no .env was written')
+})
+
+test('import - a local application outside a v4 root is written as a relative path', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-outside')
+  const applicationDirectory = await createTemporaryDirectory(t, 'import-v4-elsewhere')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
+  await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'elsewhere' }), 'utf-8')
+
+  await wattpmUtils('import', applicationDirectory)
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+
+  /*
+    Relative and literal, even leaving the project. v3 wrote a `{PLT_APPLICATION_<ID>_PATH}` and an
+    `.env` line for this case; the indirection said nothing the path does not, and its value went
+    missing in every clone.
+  */
+  ok(new RegExp(`path:\\s*["']\\.\\./[^"']*${basename(applicationDirectory)}["']`).test(source), source)
+  ok(!existsSync(resolve(root, '.env')), 'no .env was written')
+})
+
+test('import - a remote application in a v4 root records its branch', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-branch')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await wattpmUtils('import', '-b', 'another', 'http://github.com/foo/bar.git')
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+  ok(/gitBranch:\s*["']another["']/.test(source), source)
+})
+
+test('import - a v4 root that lists its applications under an alias keeps that name', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-alias')
+
+  await prepareV4Root(t, root, "export default { web: [{ id: 'first', path: 'first' }] }\n")
+  await wattpmUtils('import', 'http://github.com/foo/bar.git')
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+
+  // One list, under the name the file already used, holding both entries.
+  ok(!source.includes('applications'), source)
+  ok(/id:\s*["']first["']/.test(source), source)
+  ok(/id:\s*["']bar["']/.test(source), source)
+})
+
+test('import - a v4 root it cannot edit is printed rather than rewritten', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-unsafe')
+
+  // The configuration is behind a binding, so there is no literal to append to.
+  const original = 'const configuration = { applications: [] }\n\nexport default configuration\n'
+  await prepareV4Root(t, root, original)
+
+  const process = await wattpmUtils('import', 'http://github.com/foo/bar.git')
+
+  ok(process.stdout.includes('Cannot edit watt.config.js automatically'), process.stdout)
+  ok(process.stdout.includes('http://github.com/foo/bar.git'), process.stdout)
+  deepStrictEqual(await readFile(resolve(root, 'watt.config.js'), 'utf-8'), original)
+})
+
+test('import - a local application inside a v4 root gets a relative path and a v4 file', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-local')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+
+  const applicationDirectory = resolve(root, 'web/main')
+  await createDirectory(applicationDirectory)
+  await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
+  await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'main' }), 'utf-8')
+
+  await wattpmUtils('import', applicationDirectory)
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+
+  // Inside the root, so the path is the project's own and needs no variable to say it.
+  ok(/path:\s*["']web\/main["']/.test(source), source)
+  ok(!existsSync(resolve(root, '.env')), 'no .env was written')
+
+  /*
+    The per-application file is v4 too. A `watt.json` beside a v4 root is the coexistence the loader
+    refuses, so writing one here would leave a project that no longer boots.
+  */
+  ok(!existsSync(resolve(applicationDirectory, 'watt.json')), 'no watt.json was written')
+
+  /*
+    `.mjs` rather than `.js`: the imported package does not declare `"type": "module"`, and the
+    `export default` this writes is a syntax error in a CommonJS `.js`.
+  */
+  const applicationSource = await readFile(resolve(applicationDirectory, 'watt.config.mjs'), 'utf-8')
+  deepStrictEqual(applicationSource, "import { node } from '@platformatic/node'\n\nexport default node({})\n")
+})
+
+test('import - a v4 root leaves an application that already has a configuration alone', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-configured')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+
+  const applicationDirectory = resolve(root, 'web/main')
+  await createDirectory(applicationDirectory)
+  await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
+  await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'main' }), 'utf-8')
+
+  const existing = "import { node } from '@platformatic/node'\n\nexport default node({ /* mine */ })\n"
+  await writeFile(resolve(applicationDirectory, 'watt.config.mjs'), existing, 'utf-8')
+
+  await wattpmUtils('import', applicationDirectory)
+
+  deepStrictEqual(await readFile(resolve(applicationDirectory, 'watt.config.mjs'), 'utf-8'), existing)
+})

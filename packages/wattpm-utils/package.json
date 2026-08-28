@@ -32,6 +32,7 @@
   ],
   "dependencies": {
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/generators": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "colorette": "^2.0.20",

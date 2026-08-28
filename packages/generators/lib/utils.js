@@ -3,6 +3,7 @@ import {
   selectConfigurationFileNames,
   selectLegacyConfigurationFileNames
 } from '@platformatic/foundation/lib/v4/index.js'
+import { builders, generateCode, parseModule } from 'magicast'
 import { readFile } from 'node:fs/promises'
 import { EOL } from 'node:os'
 import { join } from 'node:path'
@@ -220,4 +221,68 @@ export function equivalentSource (left, right) {
     change was spaces inside a string -- which is the harmless direction to be wrong in.
   */
   return left.replace(/\s/g, '') === right.replace(/\s/g, '')
+}
+
+/*
+  The three names a root can list its applications under. `applications` is the v4 spelling; the
+  other two are the v3 aliases, which a migrated root may still carry.
+*/
+const applicationListKeys = ['applications', 'services', 'web']
+
+/*
+  A string to be printed as source rather than as a string literal. Exported so that a caller
+  outside this package can hand one to `resolveScaffoldedPlaceholders` without taking on the AST
+  library itself.
+*/
+export const rawSource = builders.raw
+
+/*
+  Add applications to an existing root configuration by editing the file the user has, rather than
+  by writing a new one from the configuration the loader returned.
+
+  The difference is everything the source says and the loaded configuration does not:
+  `process.env.PLT_SERVER_LOGGER_LEVEL` comes back as `'info'`, a factory call comes back as the
+  object it built, and comments come back not at all. Re-emitting replaces each of those with the
+  value it happened to have on the machine doing the writing.
+
+  Returns `null` when the file's shape cannot be edited in place -- a configuration built by a call,
+  or held in a variable, or an application list that is not a literal array. There is nothing to
+  edit there, and the caller is expected to say so rather than to write something else.
+*/
+export function appendApplications (source, entries, resolveEntry = entry => entry) {
+  const module = parseModule(source)
+  const target = module.exports.default
+  // The plain object form exports the configuration; the factory form passes it as the first argument.
+  const configuration = target?.$type === 'function-call' ? target.$args[0] : target
+
+  if (configuration?.$type !== 'object') {
+    return null
+  }
+
+  /*
+    The key the file already uses, because a second list beside its own would be two answers to one
+    question. `applications` is the name for a file that lists none yet.
+  */
+  const key = applicationListKeys.find(candidate => configuration[candidate] !== undefined) ?? 'applications'
+  const listed = configuration[key] ?? []
+
+  if (!Array.isArray(listed)) {
+    return null
+  }
+
+  const present = new Set(Array.from(listed, entry => entry.id))
+  const added = entries.filter(entry => entry.id && !present.has(entry.id))
+
+  if (added.length === 0) {
+    return source
+  }
+
+  configuration[key] = [...listed, ...added.map(entry => resolveEntry(entry))]
+
+  return generateCode(module).code
+}
+
+// The applications a configuration lists, under whichever of the three names it uses.
+export function listedApplications (config) {
+  return applicationListKeys.flatMap(candidate => config?.[candidate] ?? [])
 }

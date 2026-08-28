@@ -7,11 +7,13 @@ import {
   safeRemove
 } from '@platformatic/foundation'
 import { serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
-import { builders, generateCode, parseModule } from 'magicast'
 import {
   BaseGenerator,
+  appendApplications,
   envObjectToString,
   findAnyConfigurationFile,
+  listedApplications,
+  rawSource,
   readEnvFile,
   getApplicationTemplateFromSchemaUrl
 } from '@platformatic/generators'
@@ -49,43 +51,6 @@ function getRuntimeBaseEnvVars (config) {
   the user has rather than to a re-rendering of it, so their formatting, their comments and the
   expressions their values are written as all survive the edit.
 */
-function applyApplicationsEdit (source, config, resolve) {
-  const module = parseModule(source)
-  const target = module.exports.default
-  // The root is a plain object here; a `defineConfig(...)` call keeps its configuration in the
-  // first argument.
-  const configuration = target?.$type === 'function-call' ? target.$args[0] : target
-
-  if (!configuration) {
-    return source
-  }
-
-  /*
-    The key the file already uses, because a second list beside its own would be two answers to one
-    question. `applications` is the name for a file that lists none yet.
-  */
-  const key = ['applications', 'services', 'web'].find(candidate => configuration[candidate]) ?? 'applications'
-  const listed = configuration[key] ?? []
-  const present = new Set(Array.from(listed, entry => entry.id))
-
-  /*
-    Only what is new. The entries already in the file are the user's, written however they wrote
-    them -- the configuration handed here holds those same entries as the loader resolved them, and
-    writing those back would replace every reference with the value it has on this machine.
-  */
-  const added = ['applications', 'services', 'web']
-    .flatMap(candidate => config[candidate] ?? [])
-    .filter(entry => entry.id && !present.has(entry.id))
-
-  if (added.length === 0) {
-    return source
-  }
-
-  configuration[key] = [...listed, ...added.map(entry => resolve(entry))]
-
-  return generateCode(module).code
-}
-
 export class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
     super({
@@ -618,9 +583,7 @@ export class RuntimeGenerator extends BaseGenerator {
       this.addFile({
         path: '',
         file: this.existingConfigFile,
-        contents: applyApplicationsEdit(this.existingConfigSource, config, entry =>
-          this.resolveScaffoldedPlaceholders(entry, builders.raw)
-        ),
+        contents: this.#editExistingRoot(config),
         tags: ['runtime-config']
       })
 
@@ -633,6 +596,26 @@ export class RuntimeGenerator extends BaseGenerator {
       contents: this.serializeConfigFile(config),
       tags: ['runtime-config']
     })
+  }
+
+  /*
+    An existing root is edited rather than rewritten, so that everything it says survives -- see
+    `appendApplications`. A shape it cannot edit is reported here rather than papered over by
+    writing the file from the loaded configuration, which would be a silent rewrite of every
+    reference the root contains.
+  */
+  #editExistingRoot (config) {
+    const edited = appendApplications(this.existingConfigSource, listedApplications(config), entry =>
+      this.resolveScaffoldedPlaceholders(entry, rawSource)
+    )
+
+    if (edited === null) {
+      throw new Error(
+        `Cannot add applications to ${this.existingConfigFile}: its default export is not a configuration object this tool can edit. Add them by hand.`
+      )
+    }
+
+    return edited
   }
 
   updateRuntimeEnv (contents) {

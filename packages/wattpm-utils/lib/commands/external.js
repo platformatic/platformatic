@@ -3,7 +3,6 @@ import {
   createDirectory,
   detectApplicationType,
   ensureLoggableError,
-  findConfigurationFile,
   findRuntimeConfigurationFile,
   getRoot,
   kMetadata,
@@ -13,6 +12,12 @@ import {
   safeRemove,
   saveConfigurationFile
 } from '@platformatic/foundation'
+import {
+  chooseConfigurationFileName,
+  isConfigurationFileName,
+  serializeConfiguration
+} from '@platformatic/foundation/lib/v4/index.js'
+import { appendApplications, findAnyConfigurationFile, importedConfiguration } from '@platformatic/generators'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { execa } from 'execa'
@@ -140,7 +145,8 @@ async function fixConfiguration (context, logger, root, configOption, skipDepend
 
   // For each application, if there is no watt.json, create one and fix package dependencies
   for (const { path } of applications) {
-    const wattConfiguration = await findConfigurationFile(path, 'application')
+    // Both dialects, because a v4 file that goes unseen here is one this command would overwrite.
+    const wattConfiguration = await findAnyConfigurationFile(resolve(root, path))
 
     const appType = await parseLocalFolder(resolve(root, path))
 
@@ -152,11 +158,7 @@ async function fixConfiguration (context, logger, root, configOption, skipDepend
     const { id, packageJson, capability, label } = appType
 
     if (!wattConfiguration) {
-      const wattJson = {
-        $schema: `https://schemas.platformatic.dev/${capability}/${version}.json`
-      }
-
-      await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)
+      await writeApplicationConfiguration(configurationFile, resolve(root, path), capability)
     }
 
     packageJson.dependencies ??= {}
@@ -184,6 +186,71 @@ async function fixConfiguration (context, logger, root, configOption, skipDepend
   }
 }
 
+/*
+  The configuration file an imported application gets, when it does not already have one. Which
+  dialect it is written in follows the root: a `watt.json` beside a v4 root is the coexistence the
+  loader refuses, so a project half-converted by this command would not boot.
+*/
+async function writeApplicationConfiguration (configurationFile, directory, capability) {
+  if (isConfigurationFileName(basename(configurationFile))) {
+    const name = await chooseConfigurationFileName(directory)
+
+    await writeFile(resolve(directory, name), importedConfiguration(capability), 'utf-8')
+    return
+  }
+
+  await saveConfigurationFile(resolve(directory, 'watt.json'), {
+    $schema: `https://schemas.platformatic.dev/${capability}/${version}.json`
+  })
+}
+
+/*
+  Adding an application to a v4 root. The root is a program, so it is edited as source rather than
+  round-tripped through its loaded value -- see `appendApplications`. When its shape is not one that
+  can be edited, the entry is printed for the user to paste and the command still succeeds: nothing
+  was written, and there is nothing to undo.
+*/
+async function importApplicationIntoV4 (logger, configurationFile, { id, path, url, branch }) {
+  const root = dirname(configurationFile)
+  const entry = { id }
+
+  /*
+    A literal relative path, wherever the application sits. v3 wrote `{PLT_APPLICATION_<ID>_PATH}`
+    and an `.env` line for anything outside the root; the indirection bought nothing and cost the
+    project a value that reads as the root itself in every clone missing the gitignored file it
+    lived in.
+  */
+  if (path) {
+    entry.path = relative(root, resolve(root, path))
+  }
+
+  /*
+    A remote application gets no path at all -- v4 backfills an unresolved one from
+    `resolvedApplicationsBasePath`, so the absence is the answer rather than an empty string.
+  */
+  if (url) {
+    entry.url = url
+
+    if (branch) {
+      entry.gitBranch = branch
+    }
+  }
+
+  const source = await readFile(configurationFile, 'utf-8')
+  const edited = appendApplications(source, [entry])
+
+  if (edited === null) {
+    logger.warn(
+      `Cannot edit ${bold(basename(configurationFile))} automatically. Add this to its applications:\n\n${serializeConfiguration(entry, 2)}\n`
+    )
+
+    return true
+  }
+
+  await writeFile(configurationFile, edited, 'utf-8')
+  return true
+}
+
 async function importApplication (logger, configurationFile, id, path, url, branch) {
   const config = await loadConfiguration(configurationFile)
 
@@ -192,7 +259,13 @@ async function importApplication (logger, configurationFile, id, path, url, bran
     return
   }
 
-  const rawConfig = await loadRawConfigurationFile(configurationFile)
+  /*
+    A v4 file is edited as source further down, so it is not read as data here -- the parser this
+    calls only understands the serialized dialects.
+  */
+  const rawConfig = isConfigurationFileName(basename(configurationFile))
+    ? null
+    : await loadRawConfigurationFile(configurationFile)
   const root = dirname(configurationFile)
   const envFile = resolve(root, '.env')
   const envSampleFile = resolve(root, '.env.sample')
@@ -236,6 +309,10 @@ async function importApplication (logger, configurationFile, id, path, url, bran
       logger,
       `There is already an application ${bold(id)} defined, please choose a different application ID.`
     )
+  }
+
+  if (isConfigurationFileName(basename(configurationFile))) {
+    return importApplicationIntoV4(logger, configurationFile, { id, path, url, branch })
   }
 
   /* c8 ignore next */
@@ -310,7 +387,7 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
   }
 
   // Check if there is any configuration file we recognize. If so, don't do anything
-  const wattConfiguration = await findConfigurationFile(path, 'application')
+  const wattConfiguration = await findAnyConfigurationFile(resolve(root, path))
 
   if (wattConfiguration) {
     /* c8 ignore next */
@@ -320,11 +397,7 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
       `Path ${bold(resolve(displayPath, wattConfiguration))} already exists. Skipping configuration management ...`
     )
   } else {
-    const wattJson = {
-      $schema: `https://schemas.platformatic.dev/${capability}/${version}.json`
-    }
-
-    await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)
+    await writeApplicationConfiguration(configurationFile, resolve(root, path), capability)
   }
 
   packageJson.dependencies ??= {}
