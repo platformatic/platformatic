@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 /*
-  The gate for NEW_CONFIG.md's fenced blocks.
+  The gate for the fenced blocks in NEW_CONFIG.md and in the documentation pages that teach the
+  same format.
 
   Three rounds of review found invalid examples by hand, including the sole illustration of the
   callback form, so the scope is every block rather than the ones somebody thought to check. The
@@ -16,16 +17,35 @@
     ```output       terminal output, warnings, errors and directory trees. Checked for being fenced
                     and marked, which is all there is to check.
 
+  NEW_CONFIG.md is the specification, so every one of its fences must carry a marker. A
+  documentation page is not: it fences shell commands and v3 JSON and prose output that no marker
+  describes, and demanding one on each would be ceremony. What it must mark is every **TypeScript**
+  block -- the ones that claim to be configuration a reader can copy. That is the narrow rule, and
+  it is still a rule rather than a guess: an unmarked `ts` block in a checked page fails.
+
+  A page is checked because it is listed in `documents` below. Adding a page to the list is how its
+  examples start being executed; leaving one off is visible in this file rather than implied by the
+  absence of markers in the page.
+
   Usage: node scripts/check-blocks.mjs [--verbose]
 */
 
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const document = join(root, 'NEW_CONFIG.md')
+/*
+  `markEverything` is what separates the specification from a page about it: NEW_CONFIG.md fails on
+  any unmarked fence, a page fails only on an unmarked TypeScript one.
+*/
+const documents = [
+  { name: 'NEW_CONFIG.md', markEverything: true },
+  { name: 'docs/guides/migrate-runtime-v4.md', markEverything: false }
+]
+
+const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])
 const workspace = join(root, 'tmp', 'check-blocks')
 const markers = new Set(['config', 'decl', 'v3', 'output'])
 const verbose = process.argv.includes('--verbose')
@@ -250,36 +270,82 @@ function validateV3 (content) {
   JSON.parse(content)
 }
 
-async function main () {
-  const source = readFileSync(document, 'utf-8')
-  const { blocks, unterminated } = parseBlocks(source)
+/*
+  Every block a document asks to have categorised. A block the rule does not reach keeps its empty
+  marker and is skipped, which for a documentation page is a shell command or a v3 JSON example the
+  prose is quoting.
+*/
+function collectMarkerFailures (name, blocks, markEverything) {
   const failures = []
 
-  if (unterminated !== null) {
-    failures.push(`NEW_CONFIG.md:${unterminated}: fence is never closed`)
-  }
-
   for (const block of blocks) {
-    if (!markers.has(block.marker)) {
+    if (markers.has(block.marker)) {
+      continue
+    }
+
+    if (markEverything) {
       failures.push(
-        `NEW_CONFIG.md:${block.line}: fence carries no category marker (expected one of ${[...markers].join(', ')})`
+        `${name}:${block.line}: fence carries no category marker (expected one of ${[...markers].join(', ')})`
+      )
+    } else if (typescriptLanguages.has(block.language)) {
+      failures.push(
+        `${name}:${block.line}: TypeScript fence carries no category marker (expected config or decl)`
       )
     }
   }
 
-  if (failures.length > 0) {
-    // Categorising the blocks is the prerequisite for checking any of them, so an unmarked block is
-    // reported on its own rather than alongside errors from a partial run.
-    report(blocks, failures)
-    return
-  }
+  return failures
+}
 
+async function main () {
   prepareWorkspace()
 
   const typecheckable = []
+  const failures = []
+  const summaries = []
 
+  for (const [documentIndex, { name, markEverything }] of documents.entries()) {
+    const { blocks, unterminated } = parseBlocks(readFileSync(join(root, name), 'utf-8'))
+
+    summaries.push({ name, blocks })
+
+    if (unterminated !== null) {
+      failures.push(`${name}:${unterminated}: fence is never closed`)
+      continue
+    }
+
+    const markerFailures = collectMarkerFailures(name, blocks, markEverything)
+
+    if (markerFailures.length > 0) {
+      /*
+        Categorising the blocks is the prerequisite for checking any of them, so an unmarked block
+        stops this document rather than producing errors from a partial run of it.
+      */
+      failures.push(...markerFailures)
+      continue
+    }
+
+    await checkDocument(name, documentIndex, blocks, failures, typecheckable)
+  }
+
+  const { failures: typeErrors, pending } = typecheck(typecheckable)
+
+  for (const error of typeErrors) {
+    failures.push(`typecheck: ${error}`)
+  }
+
+  report(summaries, failures, pending)
+}
+
+async function checkDocument (name, documentIndex, blocks, failures, typecheckable) {
   for (const [index, block] of blocks.entries()) {
-    if (block.marker === 'output') {
+    /*
+      Unmarked and allowed to be: a shell command, or JSON the prose is quoting. Only a page reaches
+      here with one -- the specification stops before this on any unmarked fence -- and the check
+      has to be explicit, because the branches below end in `config` and would otherwise hand the
+      loader a block of shell.
+    */
+    if (!markers.has(block.marker) || block.marker === 'output') {
       continue
     }
 
@@ -287,13 +353,14 @@ async function main () {
       try {
         validateV3(block.content)
       } catch (error) {
-        failures.push(`NEW_CONFIG.md:${block.line}: ${error.message}`)
+        failures.push(`${name}:${block.line}: ${error.message}`)
       }
 
       continue
     }
 
-    const name = `block-${String(index).padStart(2, '0')}`
+    // Unique across documents, because every block shares one workspace directory.
+    const slug = `block-${documentIndex}-${String(index).padStart(2, '0')}`
 
     if (block.marker === 'decl') {
       /*
@@ -301,7 +368,7 @@ async function main () {
         global script, and every declaration in the document shares one namespace -- so two blocks
         quoting the same exported name collide with each other rather than being checked.
       */
-      const file = join(workspace, `${name}.ts`)
+      const file = join(workspace, `${slug}.ts`)
       writeFileSync(file, `${block.content}\n\nexport {}\n`)
       typecheckable.push(file)
       continue
@@ -309,9 +376,9 @@ async function main () {
 
     // config: it has to stand alone, so it gets a directory of its own -- which is also what the
     // loader needs, since exactly one configuration lives in a directory.
-    const directory = join(workspace, name)
+    const directory = join(workspace, slug)
     mkdirSync(directory, { recursive: true })
-    writeFileSync(join(directory, 'package.json'), JSON.stringify({ name, type: 'module' }, null, 2))
+    writeFileSync(join(directory, 'package.json'), JSON.stringify({ name: slug, type: 'module' }, null, 2))
 
     const declared = declaredPath(block.content)
     const nested = declared?.includes('/') ?? false
@@ -328,43 +395,53 @@ async function main () {
       following the example would do.
     */
     for (const [, named] of block.content.matchAll(/path:\s*'([^'\n]+)'/g)) {
-      mkdirSync(join(directory, named), { recursive: true })
+      const application = join(directory, named)
+      mkdirSync(application, { recursive: true })
+
+      /*
+        Seeded rather than merely created. An entry that names a path points at an application, and
+        the loader detects that application's capability from what is in the directory -- an empty
+        one declares nothing and fails, so a block would be reported for the fixture instead of for
+        itself. A `package.json` and a JavaScript file are what the reader following the example
+        has, and what the detector reads as a plain Node.js application.
+      */
+      if (!existsSync(join(application, 'package.json'))) {
+        writeFileSync(
+          join(application, 'package.json'),
+          JSON.stringify({ name: basename(named), type: 'module' }, null, 2)
+        )
+        writeFileSync(join(application, 'index.js'), 'export function build () {}\n')
+      }
     }
 
     try {
       await loadConfigBlock(file, nested, block.env)
 
       if (block.refused) {
-        failures.push(`NEW_CONFIG.md:${block.line}: marked refused, but the loader accepted it`)
+        failures.push(`${name}:${block.line}: marked refused, but the loader accepted it`)
       }
     } catch (error) {
       if (!block.refused) {
-        failures.push(`NEW_CONFIG.md:${block.line}: ${error.message.split('\n')[0]}`)
+        failures.push(`${name}:${block.line}: ${error.message.split('\n')[0]}`)
       }
     }
   }
-
-  const { failures: typeErrors, pending } = typecheck(typecheckable)
-
-  for (const error of typeErrors) {
-    failures.push(`typecheck: ${error}`)
-  }
-
-  report(blocks, failures, pending)
 }
 
-function report (blocks, failures, pending = new Set()) {
-  const counts = {}
+function report (summaries, failures, pending = new Set()) {
+  for (const { name, blocks } of summaries) {
+    const counts = {}
 
-  for (const block of blocks) {
-    counts[block.marker || '(unmarked)'] = (counts[block.marker || '(unmarked)'] ?? 0) + 1
+    for (const block of blocks) {
+      counts[block.marker || '(unmarked)'] = (counts[block.marker || '(unmarked)'] ?? 0) + 1
+    }
+
+    console.log(
+      `${name}: ${blocks.length} blocks — ${Object.entries(counts)
+        .map(([marker, count]) => `${count} ${marker}`)
+        .join(', ')}`
+    )
   }
-
-  console.log(
-    `NEW_CONFIG.md: ${blocks.length} blocks — ${Object.entries(counts)
-      .map(([marker, count]) => `${count} ${marker}`)
-      .join(', ')}`
-  )
 
   if (pending.size > 0) {
     // Named rather than hidden: this is the generation the blocks are waiting on, and a gate that

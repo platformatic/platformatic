@@ -33,7 +33,7 @@ v3 interpolated `{PLT_X}` into strings and then coerced the result to the schema
 
 Before, in `platformatic.runtime.json`:
 
-```json
+```json v3
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
   "logger": { "level": "{PLT_SERVER_LOGGER_LEVEL}" },
@@ -43,16 +43,39 @@ Before, in `platformatic.runtime.json`:
 
 After, in `watt.config.ts`:
 
-```ts
+```ts config env=PLT_SERVER_LOGGER_LEVEL=info
 import { defineConfig } from 'wattpm'
 
+/*
+  `level` is an enum, so a fallback is not enough: `process.env.X ?? 'info'` has type `string`, and
+  `string` is not one of the seven levels. This is the helper `migrate` writes into the file for
+  you.
+*/
+function requiredEnum <const T extends readonly string[]> (name: string, allowed: T): T[number] {
+  const value = process.env[name]
+
+  if (!value || !allowed.includes(value)) {
+    throw new Error(`${name} must be one of: ${allowed.join(', ')}`)
+  }
+
+  return value as T[number]
+}
+
 export default defineConfig({
-  logger: { level: process.env.PLT_SERVER_LOGGER_LEVEL ?? 'info' },
+  logger: {
+    level: requiredEnum('PLT_SERVER_LOGGER_LEVEL',
+      ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+  },
   applications: [{ id: 'api', path: './api' }]
 })
 ```
 
-A missing variable used to interpolate to the empty string. Now it is `undefined`, which is why the fallback is written out: `?? 'info'` for a string, `Number(process.env.PORT || 3042)` for a number. `||` rather than `??` for a port, because `PORT=` in an env file supplies the empty string, which is present.
+A missing variable used to interpolate to the empty string. Now it is `undefined`, which is why what replaces a placeholder depends on what the position holds:
+
+- **a string** — `process.env.PLT_BASE_PATH ?? ''`
+- **a number** — `Number(process.env.PORT || 3042)`, with `||` rather than `??`, because `PORT=` in an env file supplies the empty string and the empty string is present
+- **an enum** — `requiredEnum(...)` as above, because nothing narrows a `string` to the members
+- **a boolean** — by hand. v3's rules contradicted each other by position, so there is no single conversion to write
 
 `defineConfig` types the object; it does not transform it. Omitting it is legal and costs you the editor's help.
 
@@ -62,7 +85,7 @@ Remove `server` and `entrypoint` from the root. Configure the listening address 
 
 Before:
 
-```json
+```json v3
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
   "entrypoint": "api",
@@ -76,7 +99,7 @@ Before:
 
 After, in the root `watt.config.ts`:
 
-```ts
+```ts config
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
@@ -86,7 +109,7 @@ export default defineConfig({
 
 and in `api/watt.config.ts`, the application that used to be the entrypoint:
 
-```ts
+```ts config
 import { service } from '@platformatic/service'
 
 export default service({
@@ -97,11 +120,11 @@ export default service({
 })
 ```
 
-Each capability exports a factory named after it — `node`, `next`, `vite`, `astro`, `remix`, `nest`, `nitro`, `nuxt`, `reactRouter`, `tanstack`, `service`, `db`, `gateway`. A capability without one is spelled as a plain object carrying `module`:
+Each capability exports a factory named after it — `node`, `next`, `vite`, `astro`, `remix`, `nest`, `nitro`, `nuxt`, `reactRouter`, `tanstack`, `service`, `db`, `gateway`. The factory is a convenience, not the format: any capability can be named directly instead, and a capability that ships no factory has to be.
 
-```ts
+```ts config
 export default {
-  module: '@example/my-capability'
+  module: '@platformatic/node'
 }
 ```
 
@@ -109,7 +132,7 @@ Do not put `server` in an `applications` entry. It belongs to the capability con
 
 If the v3 entrypoint used `server.portAssignment: "perWorkerIncrement"` to run several workers on a fixed port without `SO_REUSEPORT` — on macOS or Windows, where nothing else does — move that setting with the rest. The `workers` count stays on the runtime's `applications` entry, and worker *N* listens on `port + N` exactly as before:
 
-```ts
+```ts config
 import { service } from '@platformatic/service'
 
 export default service({
@@ -131,7 +154,7 @@ Node.js applications without a `create()` or `build()` factory, and applications
 
 The runtime no longer uses an application-level port environment setting and does not write `PORT`. Read the variable where you want it:
 
-```ts
+```ts config
 import { service } from '@platformatic/service'
 
 export default service({
@@ -143,7 +166,7 @@ export default service({
 
 A project with one application can be configured by that application's file alone — the bare factory export is auto-wrapped as a one-application runtime:
 
-```ts
+```ts config
 import { next } from '@platformatic/next'
 
 export default next({
@@ -153,7 +176,7 @@ export default next({
 
 Add a root only when you have something to say at the root. The singular `application` key is there for that case, so one application with runtime options never needs a one-element array:
 
-```ts
+```ts config
 import { defineConfig } from 'wattpm'
 import { next } from '@platformatic/next'
 

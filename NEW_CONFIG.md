@@ -5073,7 +5073,19 @@ runs multiple workers on a fixed port at all.
    skipped, which is what stops the gate from quietly narrowing. The gate exists —
    `scripts/check-blocks.mjs`, beside the citation one — and every block carries a
    marker, so the `config` blocks are loaded through the real v4 loader and every
-   block that holds types is typechecked. **Two of the four descriptions above are
+   block that holds types is typechecked.
+
+   **The gate covers the documentation pages that teach this format, not only this
+   document.** A page is not the specification, so the rule there is narrower: its
+   TypeScript fences must be marked, while the shell commands and quoted JSON around
+   them need not be. That narrower rule is still a rule rather than a guess — an
+   unmarked `ts` block in a checked page fails — and which pages are checked is a list
+   in the gate, so leaving one out is visible in a file rather than implied by the
+   absence of markers in the page. It earned its place immediately: the v4 migration
+   guide had been rewritten into this format by hand, and the gate found that its
+   `logger.level` example used `?? 'info'`, the string conversion, at an **enum**
+   position — the exact mistake the conversion table below exists to prevent, made by
+   somebody who had read the table. **Two of the four descriptions above are
    still ahead of it**: a `v3` block is parsed rather than validated against the
    vendored v3 schema, which migrate does not yet carry, and Appendix A's `decl`
    blocks are not key-diffed against `runtime/schema.json`. It also reports, rather
