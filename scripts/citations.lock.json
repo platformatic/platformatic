@@ -640,7 +640,7 @@
       "head": "function isApplicationEnabled (application, environment) {",
       "lines": 17
     },
-    "packages/generators/lib/import-generator.js:126-150": {
+    "packages/generators/lib/import-generator.js:126-150@dd89c334f^": {
       "sha": "67ddfa627268878e",
       "head": "async #generateConfigFile (originalPath, updatedPath) {",
       "lines": 25
@@ -1034,6 +1034,11 @@
       "sha": "25fc32a324044e69",
       "head": "const app = await create(config[kMetadata].root, configFile, { logger: abstractLogger })",
       "lines": 1
+    },
+    "packages/generators/lib/import-generator.js:157-178": {
+      "sha": "d04e281d8637226b",
+      "head": "async #generateConfigFile (originalPath, updatedPath) {",
+      "lines": 22
     },
     "packages/control/lib/index.js:242": {
       "sha": "659f8f9bee2fd1e3",

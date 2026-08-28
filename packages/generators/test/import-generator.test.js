@@ -180,9 +180,14 @@ test('copy - should generate config file for platformatic module', async t => {
   await gen._beforeWriteFiles(runtime)
   await gen.writeFiles()
 
-  const configContent = await readFile(join(targetDir, 'platformatic.json'), 'utf-8')
-  const config = JSON.parse(configContent)
-  deepStrictEqual(config.$schema, 'https://schemas.platformatic.dev/@platformatic/service/1.0.0.json')
+  /*
+    The v4 per-app form: a capability with a factory is spelled by calling it. This is the path
+    taken for capabilities that ship no generator, so a JSON stub here would leave the wizard
+    writing the old dialect for exactly the applications least likely to be exercised elsewhere.
+  */
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes("import { service } from '@platformatic/service'"), configContent)
+  ok(configContent.includes('export default service({})'), configContent)
 })
 
 test('copy - should generate config file for non-platformatic module', async t => {
@@ -196,9 +201,10 @@ test('copy - should generate config file for non-platformatic module', async t =
   await gen._beforeWriteFiles(runtime)
   await gen.writeFiles()
 
-  const configContent = await readFile(join(targetDir, 'platformatic.json'), 'utf-8')
-  const config = JSON.parse(configContent)
-  deepStrictEqual(config.module, 'custom-module')
+  // No factory to call, so the plain object form -- which stays part of v4 for capabilities that
+  // implement the contract without shipping one.
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes("module: 'custom-module'"), configContent)
 })
 
 test('copy - should not overwrite existing config file', async t => {
@@ -421,8 +427,8 @@ test('import - when importing folders already in the project root, should not cr
   deepStrictEqual(gen.files, [
     {
       path: '',
-      file: join(targetDir, 'my-app', 'platformatic.json'),
-      contents: '{\n' + '  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.0.0.json"\n' + '}',
+      file: join(targetDir, 'my-app', 'watt.config.mjs'),
+      contents: "import { service } from '@platformatic/service'\n\nexport default service({})\n",
       options: {},
       tags: []
     },

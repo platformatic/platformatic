@@ -4,6 +4,37 @@ import { readFile, readdir, stat } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { BaseGenerator } from './base-generator.js'
 
+/*
+  The factory a capability exposes, by package name. A capability outside this set is spelled with
+  the plain object form, which stays part of v4 for capabilities that implement the contract without
+  shipping a factory -- an imported application is exactly where that happens.
+*/
+const factories = {
+  '@platformatic/astro': 'astro',
+  '@platformatic/db': 'db',
+  '@platformatic/gateway': 'gateway',
+  '@platformatic/nest': 'nest',
+  '@platformatic/next': 'next',
+  '@platformatic/nitro': 'nitro',
+  '@platformatic/node': 'node',
+  '@platformatic/nuxt': 'nuxt',
+  '@platformatic/react-router': 'reactRouter',
+  '@platformatic/remix': 'remix',
+  '@platformatic/service': 'service',
+  '@platformatic/tanstack': 'tanstack',
+  '@platformatic/vite': 'vite'
+}
+
+export function importedConfiguration (pkg) {
+  const factory = factories[pkg]
+
+  if (factory) {
+    return `import { ${factory} } from '${pkg}'\n\nexport default ${factory}({})\n`
+  }
+
+  return `export default {\n  module: '${pkg}'\n}\n`
+}
+
 export class ImportGenerator extends BaseGenerator {
   constructor (options = {}) {
     const { applicationName, module, version, parent: runtime, ...opts } = options
@@ -124,7 +155,7 @@ export class ImportGenerator extends BaseGenerator {
   }
 
   async #generateConfigFile (originalPath, updatedPath) {
-    // Determine if there is a watt.json file in the application path - If it's missing, insert one
+    // Determine if there is a config file in the application path - If it's missing, insert one
     // For import it means we don't update  the file, for copy it means it was already copied in #copy.
     const existingConfig = await findConfigurationFileRecursive(originalPath)
 
@@ -132,21 +163,18 @@ export class ImportGenerator extends BaseGenerator {
       return
     }
 
-    const { module: pkg, version } = this.config
+    const { module: pkg } = this.config
 
-    if (pkg.startsWith('@platformatic/')) {
-      this.addFile({
-        path: '',
-        file: join(updatedPath, this.runtimeConfig),
-        contents: JSON.stringify({ $schema: `https://schemas.platformatic.dev/${pkg}/${version}.json` }, null, 2)
-      })
-    } else {
-      this.addFile({
-        path: '',
-        file: join(updatedPath, this.runtimeConfig),
-        contents: JSON.stringify({ module: pkg }, null, 2)
-      })
-    }
+    /*
+      The v4 per-app form rather than a JSON stub. This is the path taken for a capability that
+      ships no generator of its own, so a stub here would leave the wizard writing the old dialect
+      for exactly the applications least likely to be exercised by anything else.
+    */
+    this.addFile({
+      path: '',
+      file: join(updatedPath, 'watt.config.mjs'),
+      contents: importedConfiguration(pkg)
+    })
   }
 
   async #updatePackageJson (originalPath, updatedPath, pkg, version) {

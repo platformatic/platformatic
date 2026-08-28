@@ -3005,11 +3005,11 @@ export default {
   the file is.
 - Writers converted in v4: `next pack` (bundle config; gains a test asserting the
   bundle boots), the `wattpm install`/external flow (per-app files in cloned repos),
-  **`ImportGenerator`** — which writes a `watt.json` carrying either a `$schema` URL
+  **`ImportGenerator`** — which wrote a `watt.json` carrying either a `$schema` URL
   or a bare `{ module }` for an imported application whose capability ships no
-  generator (`generators/lib/import-generator.js:126-150`, reached from
-  `create-wattpm/lib/index.js:424`), and is the one JSON writer that is easy to miss
-  because it is not a generator itself —
+  generator (`generators/lib/import-generator.js:126-150` pre-`dd89c334f`, reached from
+  `create-wattpm/lib/index.js:424`), and was the one JSON writer easy to miss
+  because it is not a generator itself; it emits the v4 per-app form now —
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
   (`'export default ' + JSON.stringify(config)`) — the last of which is the
   plain-object case the `$schema` rule governs. A machine writer emitting **`.js`
@@ -5026,10 +5026,12 @@ runs multiple workers on a fixed port at all.
 8. **create-wattpm + generators**: wizard output switches to `.ts` (`.mts`/`.js` per
    package type); a monorepo emits a config file for **every** application, while a
    single-app project emits one only for non-default answers (single-app defaults
-   produce no config file); **`ImportGenerator` emits the v4 per-app form** instead of
-   a `watt.json` stub (`generators/lib/import-generator.js:126-150`) — it is the path
-   taken for capabilities without a generator, so leaving it would let the wizard
-   still write JSON for exactly the applications least likely to be tested;
+   produce no config file); **`ImportGenerator` emits the v4 per-app form** rather than
+   a `watt.json` stub (`generators/lib/import-generator.js:157-178`) — it is the path
+   taken for capabilities without a generator, so leaving it would have let the wizard
+   still write JSON for exactly the applications least likely to be tested. A
+   capability with a factory is spelled by calling it, and one without keeps the plain
+   object form, which is where an imported application most often lands;
    scaffolded test helpers import the config module instead
    of `JSON.parse`-ing `watt.json`; fixture conversion codemod for the ~868 in-tree
    JSON fixtures.
@@ -5057,11 +5059,18 @@ runs multiple workers on a fixed port at all.
      only for being fenced and marked.
 
    The marker is required: an unmarked block fails the check rather than being
-   skipped, which is what stops the gate from quietly narrowing. No block in this
-   document carries a marker yet, so **adopting the gate is a task in the plan rather
-   than a property of the present** — and the inventory is deliberately not quoted
-   here, because a hard-coded count is stale the next time a block is added, which is
-   exactly how the previous count came to be wrong.
+   skipped, which is what stops the gate from quietly narrowing. The gate exists —
+   `scripts/check-blocks.mjs`, beside the citation one — and every block carries a
+   marker, so the `config` blocks are loaded through the real v4 loader and every
+   block that holds types is typechecked. **Two of the four descriptions above are
+   still ahead of it**: a `v3` block is parsed rather than validated against the
+   vendored v3 schema, which migrate does not yet carry, and Appendix A's `decl`
+   blocks are not key-diffed against `runtime/schema.json`. It also reports, rather
+   than resolves, the option types those blocks name that the audited schema has not
+   generated yet — declaring them into existence would let the gate read as though the
+   document were fully checked. The inventory is deliberately not quoted here, because
+   a hard-coded count is stale the next time a block is added, which is exactly how the
+   previous count came to be wrong.
 
    **The source citations are already gated**, by `scripts/check-citations.mjs` and
    the workflow beside it. Every `file.js:line-range` reference in this document is
