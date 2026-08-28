@@ -3,8 +3,8 @@ import ServerConfiguration from '../_server-in-capabilities.md';
 
 # Configuration
 
-Platformatic NestJS is configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic NestJS is configured with a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 ## `application`
 
@@ -60,7 +60,7 @@ Configures NestJS. Supported object properties:
 
 If your `main.ts` looked like this one (the default one created by `nest create`), you are good to go:
 
-```typescript
+```typescript source
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 
@@ -75,7 +75,7 @@ If, instead, you had some custom logic between the application creation and and 
 
 For instance, let's say your `main.ts` looked like this one:
 
-```typescript
+```typescript source
 // original main.ts
 
 import { NestFactory } from '@nestjs/core'
@@ -94,7 +94,7 @@ bootstrap()
 
 Then you will have to create a `setup.ts` like this one:
 
-```typescript
+```typescript source
 // setup.ts
 
 export function setupApplication(app) {
@@ -104,7 +104,7 @@ export function setupApplication(app) {
 
 And modify `main.ts` to look like this:
 
-```typescript
+```typescript source
 // new main.ts
 
 import { NestFactory } from '@nestjs/core'

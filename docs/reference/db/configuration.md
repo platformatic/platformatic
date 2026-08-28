@@ -22,7 +22,7 @@ Configuration file settings are grouped as follows:
 - **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
 
-Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
+Sensitive data within these settings should be read from the [environment](../service/configuration.md#environment-variables) rather than written into the file.
 
 ### `db`
 

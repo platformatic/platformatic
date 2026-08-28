@@ -5076,6 +5076,14 @@ runs multiple workers on a fixed port at all.
      are a `SyntaxError` after type stripping and export nothing. Typechecked with
      `tsc --noEmit` against the shipped `.d.ts` files; Appendix A's blocks are
      additionally key-diffed against `runtime/schema.json` and `next/schema.json`.
+   - **`source`** — TypeScript that is not configuration: an application's own code,
+     quoted on a documentation page to show what it looks like. Type-stripped rather
+     than typechecked, because its imports are the reader's dependencies and not this
+     repository's — but a snippet that does not parse is wrong on the page whatever it
+     imports. The category exists because the alternative was worse: without it, the
+     rule "every TypeScript fence carries a marker" forces a Nest application's
+     `main.ts` to be labelled a configuration, and a marker that lies is worse than
+     the absent one it replaced.
    - **`v3`** — legacy JSON input, validated against the **vendored v3** schema that
      migrate carries, so the before/after examples are checked on both sides.
    - **`output`** — terminal output, warnings, errors and directory trees, checked

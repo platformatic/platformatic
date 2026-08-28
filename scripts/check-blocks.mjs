@@ -13,6 +13,9 @@
                     included. Loaded through the real v4 loader and typechecked.
     ```ts decl      interfaces, type aliases and bodiless factory overloads -- a SyntaxError after
                     type stripping, and they export nothing. Typechecked only.
+    ```ts source    TypeScript that is not configuration -- an application's own code, quoted to
+                    show what it looks like. Type-stripped, which catches a syntax error without
+                    pretending its imports resolve in this repository.
     ```json v3      legacy JSON input, validated against the v3 schema.
     ```output       terminal output, warnings, errors and directory trees. Checked for being fenced
                     and marked, which is all there is to check.
@@ -31,9 +34,22 @@
 */
 
 import { spawnSync } from 'node:child_process'
+import { stripTypeScriptTypes } from 'node:module'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+
+/*
+  The type stripper is flagged experimental and Node says so on stderr. This script's output is a
+  report, and a warning in the middle of it reads as one of its findings -- so that one is dropped
+  and every other warning still prints.
+*/
+process.removeAllListeners('warning')
+process.on('warning', warning => {
+  if (warning.name !== 'ExperimentalWarning') {
+    console.warn(warning)
+  }
+})
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 /*
@@ -47,12 +63,22 @@ const documents = [
   { name: 'docs/reference/runtime/_shared-configuration.md', markEverything: false },
   { name: 'docs/reference/service/configuration.md', markEverything: false },
   { name: 'docs/reference/db/configuration.md', markEverything: false },
-  { name: 'docs/reference/gateway/configuration.md', markEverything: false }
+  { name: 'docs/reference/gateway/configuration.md', markEverything: false },
+  { name: 'docs/reference/next/configuration.md', markEverything: false },
+  { name: 'docs/reference/nitro/configuration.md', markEverything: false },
+  { name: 'docs/reference/nuxt/configuration.md', markEverything: false },
+  { name: 'docs/reference/node/configuration.md', markEverything: false },
+  { name: 'docs/reference/vite/configuration.md', markEverything: false },
+  { name: 'docs/reference/astro/configuration.md', markEverything: false },
+  { name: 'docs/reference/remix/configuration.md', markEverything: false },
+  { name: 'docs/reference/nest/configuration.md', markEverything: false },
+  { name: 'docs/reference/react-router/configuration.md', markEverything: false },
+  { name: 'docs/reference/tanstack/configuration.md', markEverything: false }
 ]
 
 const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])
 const workspace = join(root, 'tmp', 'check-blocks')
-const markers = new Set(['config', 'decl', 'v3', 'output'])
+const markers = new Set(['config', 'decl', 'source', 'v3', 'output'])
 const verbose = process.argv.includes('--verbose')
 
 function parseBlocks (source) {
@@ -312,7 +338,7 @@ function collectMarkerFailures (name, blocks, markEverything) {
       )
     } else if (typescriptLanguages.has(block.language)) {
       failures.push(
-        `${name}:${block.line}: TypeScript fence carries no category marker (expected config or decl)`
+        `${name}:${block.line}: TypeScript fence carries no category marker (expected config, decl or source)`
       )
     }
   }
@@ -369,6 +395,21 @@ async function checkDocument (name, documentIndex, blocks, failures, typecheckab
       loader a block of shell.
     */
     if (!markers.has(block.marker) || block.marker === 'output') {
+      continue
+    }
+
+    if (block.marker === 'source') {
+      /*
+        Stripped rather than typechecked. It is an application's own code quoted for illustration,
+        so its imports are the reader's dependencies and not this repository's -- but it is still
+        TypeScript, and a snippet that does not parse is wrong on the page whatever it imports.
+      */
+      try {
+        stripTypeScriptTypes(block.content, { mode: 'strip' })
+      } catch (error) {
+        failures.push(`${name}:${block.line}: ${error.message.split('\n')[0]}`)
+      }
+
       continue
     }
 
