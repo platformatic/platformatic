@@ -1,12 +1,13 @@
-import { getPlatformaticVersion, safeRemove } from '@platformatic/foundation'
+import { createDirectory, getPlatformaticVersion, safeRemove } from '@platformatic/foundation'
 import assert from 'node:assert'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { basename, join } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import test from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { Generator as GatewayGenerator } from '../../gateway/lib/generator.js'
 import { Generator as ApplicationGenerator } from '../../service/lib/generator.js'
+import { loadConfiguration as loadRuntimeConfiguration } from '../index.js'
 import { RuntimeGenerator, WrappedGenerator } from '../lib/generator.js'
 
 const mockAgent = new MockAgent()
@@ -568,4 +569,33 @@ test('WrappedGenerator - should create a valid package.json', async t => {
   }
 
   assert.deepStrictEqual(packageJson.contents.split(/\r?\n/), JSON.stringify(expected, null, 2).split(/\r?\n/))
+})
+
+test('RuntimeGenerator - what it writes loads', async t => {
+  const root = await createTemporaryDirectory(t)
+  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+
+  rg.addApplication(new ApplicationGenerator(), 'api')
+  rg.setConfig({ targetDirectory: root })
+
+  await rg.prepare()
+  await rg.writeFiles()
+
+  await createDirectory(join(root, 'node_modules', '@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../service'), join(root, 'node_modules/@platformatic/service'), 'dir')
+
+  /*
+    Through the real loader, because that is the only thing that says the output is right. Every
+    value in these files is an expression reading the .env written beside them, so this is also what
+    checks that the two agree: a scaffolded project whose configuration cannot be read, or reads
+    back as the text of a placeholder, is what this asserts against.
+  */
+  const config = await loadRuntimeConfiguration(join(root, 'watt.config.mjs'), null, { command: 'start' })
+  const application = config.applications.find(entry => entry.id === 'api')
+
+  assert.deepStrictEqual(config.logger.level, 'info')
+  // A boolean position, and v4 validates without coercion: the string 'true' would not be accepted.
+  assert.deepStrictEqual(config.managementApi, true)
+  assert.deepStrictEqual(application.resolvedConfig.server.port, 3042)
+  assert.deepStrictEqual(application.resolvedConfig.server.logger.level, 'info')
 })
