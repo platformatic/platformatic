@@ -3,6 +3,7 @@ import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { CapabilitySchemaNotFoundError, InvalidApplicationConfigurationError } from './errors.js'
+import { projectCapabilitySchema } from './project.js'
 
 /*
   The AJV custom keywords are one of the deliberately-kept pieces, carried over as code by explicit
@@ -127,7 +128,7 @@ export async function importCapabilitySchema (module, applicationRoot, { runtime
           scope,
           via,
           path: resolved,
-          schema: loaded.schema,
+          schema: projectCapabilitySchema(loaded.schema),
           // The package-level metadata main-side preparation needs besides the schema. An absent
           // servesWithoutPort means 'worker', which is what the serving predicate reads.
           metadata: {
