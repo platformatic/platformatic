@@ -13,6 +13,7 @@ import {
   findDecidingFile,
   isProductionCommand,
   loadConfiguration as loadV4Configuration,
+  loadObjectConfiguration as loadV4ObjectConfiguration,
   validateCapabilityConfiguration
 } from '@platformatic/foundation/lib/v4/index.js'
 import closeWithGrace from 'close-with-grace'
@@ -150,6 +151,18 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
   const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'runtime')
 
+  /*
+    A configuration handed over as an object rather than named as a file: what an embedder builds in
+    memory, and what the ICC generates. There is nothing to evaluate, so it skips the root eval
+    worker and joins the v4 pipeline at validation -- which is what the note on
+    `findV4ConfigurationFile` says the v4 entry point for an object is, and nothing routed to it.
+    Falling through to the v3 loader instead meant an object source got v3's env walk, v3's
+    placeholder substitution and v3's coercion, on a runtime that has none of those.
+  */
+  if (source && typeof source !== 'string') {
+    return loadV4RuntimeConfiguration({ root, source }, context)
+  }
+
   // First of all, load the configuration without any validation
   const config = await utilsLoadConfiguration(source, null, {
     root,
@@ -177,7 +190,13 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   })
 }
 
-async function loadV4RuntimeConfiguration (configurationFile, context) {
+/*
+  `target` is either a configuration file to evaluate or `{ root, source }` for a configuration
+  handed over as an object -- what an embedder builds in memory and what the ICC generates. The two
+  differ only in where the configuration comes from: an object skips the root eval worker, since
+  there is nothing to evaluate, and everything after that is the same pipeline.
+*/
+async function loadV4RuntimeConfiguration (target, context) {
   /*
     The command decides `production` when the caller did not, rather than the other way round:
     `build` produces production artifacts, so a build that evaluated as a development boot read the
@@ -196,9 +215,8 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
   */
   const realEnv = context?.ignoreProcessEnv ? { ...context?.env } : { ...process.env, ...context?.env }
 
-  const loaded = await loadV4Configuration({
-    cwd: dirname(configurationFile),
-    configPath: configurationFile,
+  const objectSource = typeof target !== 'string'
+  const shared = {
     realEnv,
     command,
     mode: context?.mode,
@@ -237,7 +255,11 @@ async function loadV4RuntimeConfiguration (configurationFile, context) {
     */
     onWarning: warning => diagnostics.warn(warning.message),
     onInfo: info => diagnostics.info(info.message)
-  })
+  }
+
+  const loaded = objectSource
+    ? await loadV4ObjectConfiguration({ root: target.root, source: target.source, ...shared })
+    : await loadV4Configuration({ cwd: dirname(target), configPath: target, ...shared })
 
   const config = loaded.config
 

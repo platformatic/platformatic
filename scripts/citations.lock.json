@@ -565,7 +565,7 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:346-349": {
+    "packages/runtime/index.js:368-371": {
       "sha": "f05241a09ec2d711",
       "head": "const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))",
       "lines": 4
@@ -835,7 +835,7 @@
       "head": "onMissingEnv: this.#context.fetchApplicationUrl,",
       "lines": 1
     },
-    "packages/runtime/index.js:154-157": {
+    "packages/runtime/index.js:167-170": {
       "sha": "2098a439fe52a74f",
       "head": "const config = await utilsLoadConfiguration(source, null, {",
       "lines": 4

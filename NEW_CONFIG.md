@@ -2114,7 +2114,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:346-349`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:368-371`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -3664,7 +3664,7 @@ Generation reads both views. Then:
    by position: `onMissingEnv` is supplied only where a worker parses a separate
    app config (`worker/controller.js:174`), so both a **root** config's `*_URL`
    placeholders **and every placeholder in a wrapped single-app config** — which
-   `runtime/index.js:154-157` loads with no `onMissingEnv`, capability half included
+   `runtime/index.js:167-170` loads with no `onMissingEnv`, capability half included
    — throw on v3 under effective `strictEnv` and get `requiredEnv` like any other
    key.
    Embedded placeholders become template literals with the same
