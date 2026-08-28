@@ -519,7 +519,9 @@ export async function createApplication (
   }
 
   if (typeof install === 'function') {
-    await install(projectDir, generator.runtimeConfig, packageManager)
+    // The file the generator actually wrote. `runtimeConfig` still names a legacy candidate, and an
+    // install hook that opened it would open nothing.
+    await install(projectDir, generator.configurationFileName(), packageManager)
   } else if (install) {
     const spinner = ora('Installing dependencies...').start()
     await execa(packageManager, ['install'], { cwd: projectDir })
