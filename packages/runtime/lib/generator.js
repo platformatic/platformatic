@@ -650,12 +650,23 @@ export class WrappedGenerator extends BaseGenerator {
       application's own configuration; v4 has no such block, so they are the root's own and the
       application is the singular shorthand.
     */
+    /*
+      The application is the root's own, named by the singular shorthand. Without it the root
+      describes a runtime with nothing in it -- it would load, and start none of the code it was
+      wrapped around.
+
+      Its capability is spelled as a plain object rather than a factory call because this file is
+      read before anything is installed, and an import cannot be resolved in that state.
+    */
+    const config = {
+      ...this.resolveScaffoldedPlaceholders(getRuntimeWrappableProperties()),
+      application: { config: { module: this.module } }
+    }
+
     this.addFile({
       path: '',
       file: this.configurationFileName(),
-      contents: `export default ${serializeConfiguration(
-        this.resolveScaffoldedPlaceholders(getRuntimeWrappableProperties())
-      )}\n`
+      contents: `export default ${serializeConfiguration(config)}\n`
     })
   }
 

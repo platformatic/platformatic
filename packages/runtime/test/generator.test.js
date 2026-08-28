@@ -599,3 +599,34 @@ test('RuntimeGenerator - what it writes loads', async t => {
   assert.deepStrictEqual(application.resolvedConfig.server.port, 3042)
   assert.deepStrictEqual(application.resolvedConfig.server.logger.level, 'info')
 })
+
+test('WrappedGenerator - what it writes loads, and runs the application it wrapped', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(
+    join(root, 'package.json'),
+    JSON.stringify({ name: 'wrapped-app', type: 'module', main: 'index.js' }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'index.js'), 'export default {}\n', 'utf-8')
+
+  const generator = new WrappedGenerator({ module: '@platformatic/node', targetDirectory: root })
+  await generator.prepare()
+  await generator.writeFiles()
+
+  await createDirectory(join(root, 'node_modules', '@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
+
+  const config = await loadRuntimeConfiguration(join(root, 'watt.config.js'), null, { command: 'start' })
+
+  /*
+    The application is the point. A wrapped root carrying only the runtime settings loads perfectly
+    well and describes a runtime with nothing in it -- it would start none of the code it was
+    wrapped around, and nothing about the file would say so.
+  */
+  assert.deepStrictEqual(
+    config.applications.map(entry => entry.id),
+    ['wrapped-app']
+  )
+  assert.deepStrictEqual(config.logger.level, 'info')
+})
