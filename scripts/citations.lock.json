@@ -140,7 +140,7 @@
       "head": "this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false",
       "lines": 1
     },
-    "packages/runtime/lib/worker/controller.js:125-126": {
+    "packages/runtime/lib/worker/controller.js:122-123": {
       "sha": "23bf1319c06ab474",
       "head": "if (appConfig.isProduction && !process.env.NODE_ENV) {",
       "lines": 2
@@ -205,7 +205,7 @@
       "head": "reuseTcpPorts: {",
       "lines": 4
     },
-    "packages/runtime/lib/worker/controller.js:83": {
+    "packages/runtime/lib/worker/controller.js:80": {
       "sha": "e4a960560cf0426e",
       "head": "applicationConfig: this.applicationConfig,",
       "lines": 1
@@ -615,7 +615,7 @@
       "head": "let envFile = customEnvFile",
       "lines": 9
     },
-    "packages/runtime/lib/worker/controller.js:32-38": {
+    "packages/runtime/lib/worker/controller.js:29-35": {
       "sha": "26a6954378d99b6a",
       "head": "function fetchApplicationUrl (application, key) {",
       "lines": 7
@@ -825,12 +825,12 @@
       "head": "const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)",
       "lines": 1
     },
-    "packages/runtime/lib/worker/controller.js:96,175": {
+    "packages/runtime/lib/worker/controller.js:96,175@5b556c4fe^": {
       "sha": "2d34de7e30b3ae83",
       "head": "strictEnv: runtimeConfig.strictEnv",
       "lines": 2
     },
-    "packages/runtime/lib/worker/controller.js:174": {
+    "packages/runtime/lib/worker/controller.js:174@5b556c4fe^": {
       "sha": "850d09ff63331471",
       "head": "onMissingEnv: this.#context.fetchApplicationUrl,",
       "lines": 1

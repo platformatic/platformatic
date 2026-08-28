@@ -2,8 +2,6 @@ import {
   ensureLoggableError,
   FileWatcher,
   kHandledError,
-  listRecognizedConfigurationFiles,
-  loadConfiguration,
   loadConfigurationModule,
   mirrorGlobalDispatcherForBuiltinFetch
 } from '@platformatic/foundation'
@@ -20,7 +18,6 @@ import {
 import { importCapabilityPackage } from '@platformatic/basic'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
@@ -158,29 +155,15 @@ export class Controller extends EventEmitter {
           resolved: true
         })
       } else {
-        // Before returning the base application, check if there is any file we recognize
-        // and the user just forgot to specify in the configuration.
-        if (!appConfig.config) {
-          const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
-
-          if (candidate) {
-            appConfig.config = resolve(appConfig.path, candidate)
-          }
-        }
-
-        if (appConfig.config) {
-          // Parse the configuration file the first time to obtain the schema
-          const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-            onMissingEnv: this.#context.fetchApplicationUrl,
-            strictEnv: this.#context.strictEnv
-          })
-          const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
-          this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
-          // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
-        } else {
-          const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
-          this.capability = await pkg.create(appConfig.path, {}, this.#context)
-        }
+        /*
+          No payload at all, which the v4 loader does not produce -- `prepareV4Application` gives
+          every entry a `resolvedConfig`, an empty object where there is nothing to say. What is
+          left here is an embedder constructing a Controller by hand, and the bundled base
+          capability is the answer for that: there is no configuration file to look for, because v4
+          decides that main-side and hands the result over.
+        */
+        const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
+        this.capability = await pkg.create(appConfig.path, {}, this.#context)
       }
 
       this.#updateDispatcher()

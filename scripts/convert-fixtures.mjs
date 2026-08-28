@@ -348,8 +348,6 @@ const COMMAND_FIXTURES = [
   and create take { root, config } with the rest of the capability work.
 */
 const CAPABILITY_FIXTURES = [
-  // Read by Controller with an explicit path, which is the worker-side file resolution v4 deletes.
-  'runtime/fixtures/service-app-no-logging/',
   'runtime/fixtures/no-env.service.json',
   // Not under a fixtures directory, which is why the first sweep for this family missed it.
   'gateway/test/logger/',
@@ -387,12 +385,7 @@ const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-
 */
 const LEGACY_FEATURE_FIXTURES = [
   'runtime/fixtures/configs/monorepo-strict-env/',
-  /*
-    What is left of that set. The v3 *root* loader is gone, so the fixtures that existed for it are
-    converted or deleted -- only `Controller`'s worker-side v3 branch still reads a configuration
-    file, and this is the fixture it reads.
-  */
-  'runtime/fixtures/service-app-throws-v3/'
+  // Nothing: the last reader of a v3 configuration file, `Controller`'s worker-side branch, is gone.
 ]
 
 const FORMAT_FIXTURES = [

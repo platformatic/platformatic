@@ -1146,7 +1146,7 @@ them.
 `NODE_ENV` defaults to `production` under `build` when nothing else supplied it
 (see "Env files"). That is **new**: v3's build created the runtime with no
 production flag (`wattpm/lib/commands/build.js:43` pre-`b1e03a5b9` → `runtime.js:303`), so
-`worker/controller.js:125-126` never fired and builds ran with `NODE_ENV` unset.
+`worker/controller.js:122-123` never fired and builds ran with `NODE_ENV` unset.
 Bundlers and Babel configurations that branch on it will produce different — and
 correct — artifacts.
 
@@ -1251,7 +1251,7 @@ The rules, in full:
   (`foundation/lib/schema.js:905-908` for the entry, `foundation/lib/schema.js:1111-1114` for the root),
   and the
   **entry-level one now reaches the decision** — the runtime passes the whole
-  application entry into the capability context (`worker/controller.js:83`), which
+  application entry into the capability context (`worker/controller.js:80`), which
   is the plumbing v3 lacked. Where the OS lacks `SO_REUSEPORT`
   (`features.node.reusePort` is `false` on macOS and Windows,
   `foundation/lib/node.js:77`) a fixed port with `workers > 1` cannot be shared.
@@ -2577,7 +2577,7 @@ It is the one injection a build is allowed to make.
 
 **Non-empty, not merely absent, because that is what v3 tested.** v3's rule is
 `if (appConfig.isProduction && !process.env.NODE_ENV)`
-(`worker/controller.js:125-126`, applied after all seeding), a truthiness test — so
+(`worker/controller.js:122-123`, applied after all seeding), a truthiness test — so
 `NODE_ENV=` in an env file became `production` there, and would stay empty under a
 ladder that only asks whether some rung supplied the key. This is the **one** place
 where the ladder treats an empty string as missing, and it is deliberately not
@@ -2805,7 +2805,7 @@ v3's behavior here was subtler than commonly understood: when a *worker* parsed 
 app's config, any unset placeholder whose key **ends in `_URL`** resolved to the URL
 of **the app being parsed**, whatever the rest of the key said — `fetchApplicationUrl`
 gates on the suffix and then ignores the key, returning the current app's
-`.plt.local` URL (`runtime/lib/worker/controller.js:32-38`); in the *root* config,
+`.plt.local` URL (`runtime/lib/worker/controller.js:29-35`); in the *root* config,
 which is loaded without `onMissingEnv`, unset placeholders resolved to `''` or
 threw under `strictEnv`. That machinery dies with interpolation, and its replacement is explicit and
 deliberately saner:
@@ -3656,13 +3656,13 @@ Generation reads both views. Then:
    the *root* config's value wins when defined, and a per-app capability config
    carrying a `runtime` block supplies the third fallback,
    `foundation/lib/configuration.js:551` with
-   `runtime/lib/worker/controller.js:96,175`), and `*_URL`
+   `runtime/lib/worker/controller.js:96,175` pre-`5b556c4fe`), and `*_URL`
    placeholders in **separate application config files** never get `requiredEnv`
    even under strict mode — v3 resolved unset `*_URL` keys there through the
    current-app fallback, which warns and never throws — they get the literal or
    `?? ''` plus the review warning. The carve-out is scoped by *loader pass*, not
    by position: `onMissingEnv` is supplied only where a worker parses a separate
-   app config (`worker/controller.js:174`), so both a **root** config's `*_URL`
+   app config (`worker/controller.js:174` pre-`5b556c4fe`), so both a **root** config's `*_URL`
    placeholders **and every placeholder in a wrapped single-app config** — which
    `runtime/index.js:167-170` pre-`d1bd647f2` loaded with no `onMissingEnv`, capability half included
    — throw on v3 under effective `strictEnv` and get `requiredEnv` like any other
@@ -4767,7 +4767,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     now covers every application including the app's own self-URL. `NODE_ENV`
     remains, as the **lowest** rung of both ladders: it defaults to `production`
     when `production` is `true` and nothing else supplied it. Under `start` that
-    matches v3 (`worker/controller.js:125-126`); under `build` it is **new** — v3's
+    matches v3 (`worker/controller.js:122-123`); under `build` it is **new** — v3's
     build passed no production flag (`wattpm/lib/commands/build.js:43` pre-`b1e03a5b9`), so
     builds ran with `NODE_ENV` unset and bundlers that branch on it will now
     produce different artifacts.
@@ -4782,7 +4782,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
     (`runtime/lib/runtime.js:2628-2644`) — a start-time decision, not a
     configuration-format one. The
     **per-application `reuseTcpPorts` now reaches the `SO_REUSEPORT` decision**
-    (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:83`), where
+    (`basic/lib/capability.js:105-110`, fed by `worker/controller.js:80`), where
     in v3 it only selected the restart strategy. Two applications binding the same
     port is a hard `AddressInUseError` naming both
     (`runtime/lib/errors.js:14-17`); `EADDRINUSE`/`EACCES`/`EADDRNOTAVAIL` are
