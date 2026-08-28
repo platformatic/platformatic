@@ -8,8 +8,12 @@ import {
 import {
   importCapabilitySchema,
   legacyConfigurationFileNames,
+  chooseConfigurationFileName,
   getApplicationUrl,
   loadConfiguration as loadV4Configuration,
+  raw,
+  serializeConfiguration as serializeValue,
+  serializeString,
   topologyVariableName
 } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
@@ -822,59 +826,6 @@ export function collectRefusals (config, { module }) {
   A value that is already source. `config: next({ … })` is a call inside an object literal, and
   quoting it would emit the text of a call rather than the call.
 */
-const rawExpression = Symbol('raw')
-
-function raw (source) {
-  return { [rawExpression]: source }
-}
-
-function serializeValue (value, indent = 0) {
-  const pad = '  '.repeat(indent)
-  const inner = '  '.repeat(indent + 1)
-
-  if (value !== null && typeof value === 'object' && value[rawExpression]) {
-    return value[rawExpression]
-  }
-
-  if (typeof value === 'string') {
-    return serializeString(value)
-  }
-
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value)
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return '[]'
-    }
-
-    return `[\n${value.map(entry => `${inner}${serializeValue(entry, indent + 1)}`).join(',\n')}\n${pad}]`
-  }
-
-  const entries = Object.entries(value)
-
-  if (entries.length === 0) {
-    return '{}'
-  }
-
-  return `{\n${entries
-    .map(([key, entry]) => `${inner}${serializeKey(key)}: ${serializeValue(entry, indent + 1)}`)
-    .join(',\n')}\n${pad}}`
-}
-
-// Quoted only when it has to be. A migrated file is read by people, and `'cache'` where `cache`
-// would do is the kind of thing that makes generated output look generated.
-function serializeKey (key) {
-  return /^[A-Za-z_$][\w$]*$/.test(key) ? key : serializeString(key)
-}
-
-// Single quotes, because the emitted file lands in a project whose other files use them and a
-// migration should not leave a seam showing where it touched.
-function serializeString (value) {
-  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`
-}
-
 /*
   The id v3 gave a wrapped single-app project: the package.json name with any scope stripped,
   falling back to `main` (`runtime/lib/config.js:135-142`). v4 derives it the same way, so the two
@@ -959,29 +910,6 @@ export function emitApplicationConfiguration (
     preamble +
     `export default defineConfig(${serializeValue({ ...root, application: shorthand })})\n`
   )
-}
-
-/*
-  A machine writer emitting `.js` into a "type": "commonjs" package writes CommonJS, where
-  `export default` is a syntax error. `.mjs` is unambiguous in either, which is what a migration
-  wants: the suffix should not depend on a field the user may change later.
-*/
-export function chooseFileName (root) {
-  const manifest = join(root, 'package.json')
-
-  if (existsSync(manifest)) {
-    try {
-      const { type } = JSON.parse(readFileSync(manifest, 'utf-8'))
-
-      if (type === 'module') {
-        return 'watt.config.js'
-      }
-    } catch {
-      // An unreadable package.json is not a reason to fail: .mjs is correct either way.
-    }
-  }
-
-  return 'watt.config.mjs'
 }
 
 /*
@@ -1195,7 +1123,7 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       module,
       orchestration: settled,
       renamedFrom: entry.id && id !== entry.id ? entry.id : entry.id ? null : derived.renamedFrom,
-      target: inline ? null : join(directory, chooseFileName(directory)),
+      target: inline ? null : join(directory, chooseConfigurationFileName(directory)),
       where: relative(root, legacy)
     })
   }
@@ -1590,7 +1518,7 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
       module,
       orchestration: { id: v3 },
       renamedFrom: null,
-      target: join(applicationRoot, chooseFileName(applicationRoot)),
+      target: join(applicationRoot, chooseConfigurationFileName(applicationRoot)),
       where: relative(root, legacy)
     })
   }
@@ -2122,7 +2050,7 @@ export async function migrateCommand (logger, args) {
   const module = renamedModules[declared] ?? declared
 
   const directory = dirname(source)
-  const target = join(directory, chooseFileName(directory))
+  const target = join(directory, chooseConfigurationFileName(directory))
   const runtime = module === '@platformatic/runtime'
 
   /*
