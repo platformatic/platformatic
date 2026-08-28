@@ -22,6 +22,20 @@ Update package imports and dependencies accordingly:
 + import { telemetry } from '@platformatic/tracing'
 ```
 
+## Replace the legacy runtime global
+
+Runtime v4 removes `globalThis.platformatic`. Use the typed APIs from `@platformatic/globals` instead:
+
+```js
+import { getApplicationId, getLogger, setBasePath } from '@platformatic/globals'
+
+const applicationId = getApplicationId()
+const logger = getLogger()
+setBasePath('/api')
+```
+
+Runtime API values are private to the resolved `@platformatic/globals` package instance. Applications and Platformatic internals must use compatible dependency trees so they resolve the same package instance.
+
 ## Move listener configuration to the capability
 
 Remove `server` and `entrypoint` from the Runtime or Watt configuration. Configure the listening address in the configuration file of the application that owns the HTTP endpoint.

@@ -1,46 +1,49 @@
-export const kFields = Symbol.for('plt.globals.fields')
+import { MissingGlobalError } from './errors.js'
+
+const values = {}
+const fields = new Set()
+let initialized = false
 
 function getField (name, options) {
   const { throwOnMissing = true } = options ?? {}
 
-  if (throwOnMissing && !globalThis.platformatic?.[kFields]?.has(name)) {
-    throw new Error(`globalThis.platformatic.${name} is not available`)
+  if (throwOnMissing && !fields.has(name)) {
+    throw new MissingGlobalError(name)
   }
 
-  return globalThis.platformatic?.[name]
+  return values[name]
 }
 
 export function getGlobal () {
-  return globalThis.platformatic
+  return initialized ? values : undefined
 }
 
 export function updateGlobals (updates) {
-  globalThis.platformatic ??= {}
-  globalThis.platformatic[kFields] ??= new Set()
+  initialized = true
 
   for (const [key, value] of Object.entries(updates)) {
-    globalThis.platformatic[key] = value
-    globalThis.platformatic[kFields].add(key)
+    values[key] = value
+    fields.add(key)
   }
 
-  return globalThis.platformatic
+  return values
 }
 
-export function removeGlobals (fields) {
-  if (!globalThis.platformatic?.[kFields]) {
-    return globalThis.platformatic
+export function removeGlobals (names) {
+  if (!initialized) {
+    return undefined
   }
 
-  for (const field of fields) {
-    delete globalThis.platformatic[field]
-    globalThis.platformatic[kFields].delete(field)
+  for (const name of names) {
+    delete values[name]
+    fields.delete(name)
   }
 
-  return globalThis.platformatic
+  return values
 }
 
 export function hasField (name) {
-  return globalThis.platformatic?.[kFields]?.has(name) ?? false
+  return fields.has(name)
 }
 
 export function isBuilding (options) {
@@ -258,5 +261,7 @@ export function getTracerProvider (options) {
 export function getNotifyConfig (options) {
   return getField('notifyConfig', options)
 }
+
+export * as errors from './errors.js'
 
 export default getGlobal
