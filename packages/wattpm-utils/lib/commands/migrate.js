@@ -8,9 +8,12 @@ import {
 import {
   importCapabilitySchema,
   legacyConfigurationFileNames,
-  loadConfiguration as loadV4Configuration
+  getApplicationUrl,
+  loadConfiguration as loadV4Configuration,
+  topologyVariableName
 } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
+import { v4Schema } from '@platformatic/runtime/lib/schema.js'
 import { bold } from 'colorette'
 import { version } from '../version.js'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
@@ -399,7 +402,11 @@ function readSampleEnv (directory) {
   What cannot be decided from the schema is refused rather than guessed: a genuine union, a boolean
   whose v3 rule differs by site, and a position whose string form is really parsed.
 */
-function convertPlaceholders (config, schema, { module, sample = {}, useSampleDefaults = false, where }) {
+function convertPlaceholders (
+  config,
+  schema,
+  { module, sample = {}, urls = new Map(), useSampleDefaults = false, where }
+) {
   const refusals = []
   const helpers = new Set()
   const seeds = new Map()
@@ -468,6 +475,17 @@ function convertPlaceholders (config, schema, { module, sample = {}, useSampleDe
       }
 
       const name = whole[1]
+
+      /*
+        A sibling's injected URL variable stands for an address the topology already fixes, so the
+        address is what gets written. v4 still injects the variable, but a configuration that names
+        the application reads as what it is, and does not depend on the injection to say so.
+      */
+      const sibling = urls.get(name.toUpperCase())
+
+      if (sibling) {
+        return getApplicationUrl(sibling)
+      }
 
       seeds.set(name, sample[name] ?? sentinelFor(position))
       referenced.set(name, (referenced.get(name) ?? []).concat(pointer))
@@ -908,7 +926,13 @@ export function chooseFileName (root) {
 
   `services` and `web` are both spelled `applications`.
 */
-export function emitRootConfiguration (config, entries, inlined = [], autoload = null) {
+export function emitRootConfiguration (
+  config,
+  entries,
+  inlined = [],
+  autoload = null,
+  { helpers = new Set(), needsPath = false } = {}
+) {
   /*
     `entrypoint` and root `server` are gone from the v4 runtime schema: what they said about which
     port was live has already been written into the capability configurations, and carrying either
@@ -925,11 +949,15 @@ export function emitRootConfiguration (config, entries, inlined = [], autoload =
   // deduplicated because two inline entries may share a capability.
   const imports = ["import { defineConfig } from 'wattpm'"]
 
+  if (needsPath) {
+    imports.unshift("import { join } from 'node:path'")
+  }
+
   for (const module of [...new Set(inlined)].sort()) {
     imports.push(`import { ${factories[module]} } from '${module}'`)
   }
 
-  return `${imports.join('\n')}\n\nexport default defineConfig(${serializeValue({ ...root, applications: entries })})\n`
+  return `${imports.join('\n')}\n\n${emitHelpers(helpers)}export default defineConfig(${serializeValue({ ...root, applications: entries })})\n`
 }
 
 /*
@@ -1081,33 +1109,6 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       refusals.push({ ...refusal, reason: `${refusal.reason} (${bold(relative(root, legacy))})` })
     }
 
-    const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, directory), {
-      module,
-      sample: readSampleEnv(directory),
-      useSampleDefaults,
-      where: relative(root, legacy)
-    })
-
-    refusals.push(...placeholders.refusals)
-
-    for (const [name, value] of placeholders.seeds) {
-      seeds.set(name, value)
-    }
-
-    notes.push(
-      ...reportEnvBlocks(
-        [
-          { env: entry.env, where: `the entry for ${named}` },
-          { env: config.env, where: basename(source) }
-        ],
-        placeholders.referenced
-      )
-    )
-
-    for (const [name, value] of placeholders.suggested) {
-      suggestions.set(name, value)
-    }
-
     const derived = await deriveLegacyId(directory)
     const id = entry.id ? legalId(entry.id) : derived.id
 
@@ -1116,30 +1117,101 @@ export async function planMigration (root, source, config, { useSampleDefaults =
     const settled = { ...orchestration, id, ...(envfile ? { envfile: rebased } : {}) }
 
     applications.push({
-      config: placeholders.converted,
+      config: applicationConfig,
       declared,
       directory,
       entry,
-      helpers: placeholders.helpers,
-      needsPath: placeholders.needsPath,
+      envBlocks: [
+        { env: entry.env, where: `the entry for ${named}` },
+        { env: config.env, where: basename(source) }
+      ],
       inline,
       legacy,
       module,
       orchestration: settled,
       renamedFrom: entry.id && id !== entry.id ? entry.id : entry.id ? null : derived.renamedFrom,
-      target: inline ? null : join(directory, chooseFileName(directory))
+      target: inline ? null : join(directory, chooseFileName(directory)),
+      where: relative(root, legacy)
     })
   }
 
   const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds, useSampleDefaults)
-  const entrypoint = planExposure(config, applications, refusals)
-  const exposure = refusals.length === 0 ? await applyExposure(config, applications, entrypoint) : []
+
+  /*
+    Conversion runs here rather than as each application is discovered, because it needs two things
+    the loops above are still assembling: every id, so that a sibling's injected URL variable can be
+    written as the address it stands for, and the root's own configuration, whose values the
+    exposure rules are about to move into a capability's.
+  */
+  const urls = new Map(
+    applications
+      .map(application => application.orchestration?.id)
+      .filter(Boolean)
+      .map(id => [topologyVariableName(id), id])
+  )
+
+  const converted = convertPlaceholders(config, v4Schema, {
+    module: '@platformatic/runtime',
+    sample: readSampleEnv(root),
+    urls,
+    useSampleDefaults,
+    where: basename(source)
+  })
+
+  refusals.push(...converted.refusals)
+
+  for (const [name, value] of converted.seeds) {
+    seeds.set(name, value)
+  }
+
+  for (const [name, value] of converted.suggested) {
+    suggestions.set(name, value)
+  }
+
+  for (const application of applications) {
+    if (!application.config) {
+      continue
+    }
+
+    const placeholders = convertPlaceholders(
+      application.config,
+      await capabilitySchema(application.module, application.directory),
+      {
+        module: application.module,
+        sample: readSampleEnv(application.directory),
+        urls,
+        useSampleDefaults,
+        where: application.where
+      }
+    )
+
+    application.config = placeholders.converted
+    application.helpers = placeholders.helpers
+    application.needsPath = placeholders.needsPath
+
+    refusals.push(...placeholders.refusals)
+    notes.push(...reportEnvBlocks(application.envBlocks ?? [], placeholders.referenced))
+
+    for (const [name, value] of placeholders.seeds) {
+      seeds.set(name, value)
+    }
+
+    for (const [name, value] of placeholders.suggested) {
+      suggestions.set(name, value)
+    }
+  }
+
+  const entrypoint = planExposure(converted.converted, applications, refusals)
+  const exposure = refusals.length === 0 ? await applyExposure(converted.converted, applications, entrypoint) : []
 
   return {
     applications,
     autoload,
     entrypoint,
     exposure: notes.concat(exposure),
+    helpers: converted.helpers,
+    needsPath: converted.needsPath,
+    root: converted.converted,
     suggestions,
     refusals: refusals.concat(collectPlanRefusals(root, source, applications)),
     seeds,
@@ -1442,24 +1514,10 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
       refusals.push({ ...refusal, reason: `${refusal.reason} (${bold(relative(root, legacy))})` })
     }
 
-    const placeholders = convertPlaceholders(applicationConfig, await capabilitySchema(module, applicationRoot), {
-      module,
-      sample: readSampleEnv(applicationRoot),
-      useSampleDefaults,
-      where: relative(root, legacy)
-    })
-
-    refusals.push(...placeholders.refusals)
-
-    for (const [name, value] of placeholders.seeds) {
-      seeds.set(name, value)
-    }
-
     applications.push({
       autoloaded: true,
-      config: placeholders.converted,
-      helpers: placeholders.helpers,
-      needsPath: placeholders.needsPath,
+      config: applicationConfig,
+      envBlocks: [{ env: mapping.env, where: `the mapping for ${entry.name}` }],
       declared,
       directory: applicationRoot,
       entry: mapping,
@@ -1467,7 +1525,8 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
       module,
       orchestration: { id: v3 },
       renamedFrom: null,
-      target: join(applicationRoot, chooseFileName(applicationRoot))
+      target: join(applicationRoot, chooseFileName(applicationRoot)),
+      where: relative(root, legacy)
     })
   }
 
@@ -2090,7 +2149,13 @@ export async function migrateCommand (logger, args) {
       }
     }
 
-    await journal.write(target, emitRootConfiguration(config, entries, inlined, plan.autoload))
+    await journal.write(
+      target,
+      emitRootConfiguration(plan.root, entries, inlined, plan.autoload, {
+        helpers: plan.helpers,
+        needsPath: plan.needsPath
+      })
+    )
   } else {
     const derived = await deriveLegacyId(directory)
 

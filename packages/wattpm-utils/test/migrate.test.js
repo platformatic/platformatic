@@ -1174,3 +1174,47 @@ test('migrate - treats .env.sample as a suggestion unless asked otherwise', asyn
 
   ok((await readFile(join(applied, 'watt.config.mjs'), 'utf-8')).includes("process.env.HOSTNAME ?? '0.0.0.0'"))
 })
+
+test('migrate - converts the root configuration too, and writes a sibling URL as its address', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // A root position. Nothing converted these before: they were emitted as the literal text of
+      // themselves, which the schema then refused or, worse, accepted as a string.
+      startTimeout: '{START_TIMEOUT}',
+      applications: [
+        { id: 'api', path: './services/api' },
+        { id: 'web', path: './services/web' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['api', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    [
+      'web',
+      {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+        // The variable v4 injects for the sibling. The address it stands for is fixed by the
+        // topology, so the configuration can say it outright.
+        server: { hostname: '{PLT_API_URL}' }
+      }
+    ]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("startTimeout: Number(requiredEnv('START_TIMEOUT'))"), emitted)
+  ok(emitted.includes('function requiredEnv (name)'), emitted)
+
+  const web = await readFile(join(root, 'services/web/watt.config.mjs'), 'utf-8')
+  ok(web.includes("hostname: 'http://api.plt.local'"), web)
+  ok(!web.includes('PLT_API_URL'), web)
+})
