@@ -82,6 +82,38 @@ const PLACEHOLDER_BRANCHES = new Set([
   'deduplication/enabled',
   'https/enabled',
   'cache/enabled',
+  /*
+    Numbers, at the root of a runtime configuration and under the `runtime` block a capability
+    embeds -- the same properties, reachable by two paths, so both are named.
+
+    `applicationTimeout` and `messagingTimeout` are passed straight to a timeout,
+    `workersRestartDelay` is compared and slept on, `startupConcurrency` goes through `Math.max`,
+    and both halves of `gracefulShutdown` are milliseconds. None is parsed from a string.
+  */
+  '(root)/applicationTimeout',
+  'runtime/applicationTimeout',
+  '(root)/messagingTimeout',
+  'runtime/messagingTimeout',
+  '(root)/workersRestartDelay',
+  'runtime/workersRestartDelay',
+  '(root)/startupConcurrency',
+  'runtime/startupConcurrency',
+  'gracefulShutdown/runtime',
+  'gracefulShutdown/application',
+  /*
+    Metrics and probes. `metrics.enabled` and `healthProbes.enabled` are `!== false`,
+    `telemetry.diagLogger` is `!== true`, and the ports and timeouts are numbers.
+
+    `metrics.httpClientMetrics` is *not* here: `packages/metrics/index.js` compares it against the
+    string `'true'` by name, like `otlpExporter.enabled` beside it.
+  */
+  'metrics/enabled',
+  'metrics/port',
+  'metrics/timeout',
+  'metrics/healthChecksTimeouts',
+  'healthProbes/enabled',
+  'healthProbes/port',
+  'telemetry/diagLogger',
   // Milliseconds, counts and ratios. Each is compared or arithmetic'd, never parsed.
   'health/interval',
   'health/gracePeriod',
@@ -129,7 +161,7 @@ function withoutPlaceholderBranch (property) {
   Returns the same object when nothing below it changed, so a schema with no placeholder branch to
   remove is not rebuilt -- every capability embeds the shared blocks, and this runs per load.
 */
-function projectPlaceholderBranches (node, parent = null, name = null) {
+function projectPlaceholderBranches (node, parent = '(root)', name = null) {
   if (Array.isArray(node)) {
     let changed = false
     const mapped = node.map(entry => {

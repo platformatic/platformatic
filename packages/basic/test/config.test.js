@@ -36,7 +36,7 @@ test('applyPortAssignment - should increment the port using the worker port offs
   })
 
   // Ports can be provided as strings
-  deepStrictEqual(applyPortAssignment({ port: 3000, portAssignment: 'perWorkerIncrement' }, { index: 1 }), {
+  deepStrictEqual(applyPortAssignment({ port: '3000', portAssignment: 'perWorkerIncrement' }, { index: 1 }), {
     port: 3001,
     portAssignment: 'perWorkerIncrement'
   })

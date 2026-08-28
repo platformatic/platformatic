@@ -148,7 +148,7 @@ test('useDefaults runs here rather than in the eval worker', () => {
 test('coercion is off, so a stringly number is a failure rather than a silent conversion', () => {
   throws(
     () =>
-      validateCapabilityConfiguration({ server: { port: 3042 } }, capabilitySchema, {
+      validateCapabilityConfiguration({ server: { port: '3042' } }, capabilitySchema, {
         id: 'api',
         module: '@acme/capability',
         root: '/app'
