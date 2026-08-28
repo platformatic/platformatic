@@ -4937,12 +4937,17 @@ runs multiple workers on a fixed port at all.
    what the branch buys a wrong value: `server.port` is still `integer | string`, so
    `port: process.env.PORT ?? ''` — a string in a number position, and the naive
    conversion of `{PORT}` — validates. The block gate cannot catch it, because the
-   schema says it is fine. The second is that the runtime has a v4 projection
-   (`v4Schema`, which drops `envfile`, `strictEnv` and `$schema`) and the capabilities
-   do not, so **`strictEnv` is refused at the root and accepted inside a capability's
-   wrapped `runtime` block** — the same key, removed in one place and live in another,
-   in the same configuration. The projection has to reach `wrappedRuntime` as well as
-   the runtime's own schema. The table carries each property's full
+   schema says it is fine. The second **is fixed**: the runtime had a v4
+   projection (`v4Schema`, which drops `envfile`, `strictEnv` and `$schema`) and the
+   capabilities had none, so `strictEnv` was refused at the root and accepted inside a
+   capability's wrapped `runtime` block — the same key, removed in one place and live in
+   another, in the same configuration, where it validated and then did nothing.
+   `foundation/lib/v4/project.js` is that projection, applied where the v4 loader
+   obtains a capability's schema, which is the one place only v4 reaches; the shipped
+   object is left alone, which is what the projection rule is for. `$schema` stays where
+   the other two go, because a machine writer stamps it and the loader strips it before
+   validation rather than refusing it. The placeholder branches are the remaining half,
+   and they need the hand classification above rather than a key list. The table carries each property's full
    **constraint set** — enum members, numeric bounds, `multipleOf`, integer-ness,
    string patterns and lengths — not just its primitive type, because migrate
    intersects those constraints across every position a variable occupies (see step
