@@ -5096,7 +5096,8 @@ runs multiple workers on a fixed port at all.
    this document were never checked while the gate reported OK on the rest. Being
    unmarked did not fail them, because being unparsed meant they were never blocks.
    The parser matches indentation now and dedents what it finds. The gate exists —
-   `scripts/check-blocks.mjs`, beside the citation one — and every block carries a
+   `scripts/check-blocks.mjs`, run by `.github/workflows/block-check.yml` beside the
+   citation one — and every block carries a
    marker, so the `config` blocks are loaded through the real v4 loader and every
    block that holds types is typechecked.
 
