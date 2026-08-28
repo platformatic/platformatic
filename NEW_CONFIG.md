@@ -3028,6 +3028,16 @@ export default {
   up the one signal the next major's migration reads. Those writers can be *ready* before
   the bump; they cannot be *shipped* before it.
 
+  **Scaffolding's root is the exception, and it takes exactly that cost.** The wizard
+  writes the root before anything is installed and reads it back on a later run — adding
+  an application to an existing project is that run — so a root importing `defineConfig`
+  from `wattpm` cannot be read in the state that produced it, and a stamped one is
+  refused on a `3.x` tree for the reason above. Unstamped plain object is the only form
+  that both survives the gate and can be read pre-install, so that is what scaffolding
+  emits until the bump, when the stamp becomes both writable and worth writing. It is
+  listed here because the cost is real: a project scaffolded before 4.0.0 carries no
+  version marker for the next major's migration to read.
+
   **`migrate` is not in that set**, and the difference is the point of the marker rule
   rather than an exemption: what it emits imports what it uses — a factory call, or
   `defineConfig` — so the file identifies itself and carries no stamp to go stale. The
