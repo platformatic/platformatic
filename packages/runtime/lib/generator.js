@@ -1,11 +1,9 @@
 import {
   createEnvFileTool,
   defaultPackageManager,
-  findConfigurationFile,
   generateDashedName,
   kMetadata,
   loadConfiguration,
-  loadConfigurationFile,
   safeRemove
 } from '@platformatic/foundation'
 import { serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
@@ -13,6 +11,7 @@ import {
   BaseGenerator,
   envObjectToString,
   findAnyConfigurationFile,
+  readEnvFile,
   getApplicationTemplateFromSchemaUrl
 } from '@platformatic/generators'
 import { existsSync } from 'node:fs'
@@ -126,17 +125,39 @@ export class RuntimeGenerator extends BaseGenerator {
       return
     }
     this._hasCheckedForExistingConfig = true
-    const existingConfigFile = this.runtimeConfig ?? (await findConfigurationFile(this.targetDirectory, 'runtime'))
-    if (existingConfigFile && existsSync(join(this.targetDirectory, existingConfigFile))) {
-      this.existingConfigRaw = await loadConfigurationFile(join(this.targetDirectory, existingConfigFile))
-      this.existingConfig = await loadConfiguration(join(this.targetDirectory, existingConfigFile), schema, {
-        transform,
-        ignoreProcessEnv: true
-      })
+    /*
+      Whichever dialect the project is in: a v4 configuration is a module and is invisible to the
+      legacy lookup, so without this the wizard treats a project it scaffolded itself as a new one.
+    */
+    const existingConfigFile = await findAnyConfigurationFile(this.targetDirectory)
 
-      const { PLT_ROOT, ...existingEnvironment } = this.existingConfig[kMetadata].env
-      this.config.env = existingEnvironment
-      this.existingApplications = this.existingConfig.applications.map(s => s.id)
+    if (existingConfigFile && existsSync(join(this.targetDirectory, existingConfigFile))) {
+      const existingConfigPath = join(this.targetDirectory, existingConfigFile)
+
+      this.existingConfigRaw = await this.readConfigurationFile(existingConfigPath, 'root', this.targetDirectory)
+
+      if (existingConfigFile.endsWith('.json')) {
+        this.existingConfig = await loadConfiguration(existingConfigPath, schema, {
+          transform,
+          ignoreProcessEnv: true
+        })
+
+        const { PLT_ROOT, ...existingEnvironment } = this.existingConfig[kMetadata].env
+        this.config.env = existingEnvironment
+        this.existingApplications = this.existingConfig.applications.map(s => s.id)
+      } else {
+        /*
+          Derived from the root rather than loaded through it. A full load evaluates every
+          application's configuration, and those import their capabilities -- so the wizard would
+          need the project's dependencies installed before it could read the project, which is
+          exactly the state it is called in to fix.
+        */
+        const { PLT_ROOT, ...existingEnvironment } = await readEnvFile(this.targetDirectory)
+
+        this.config.env = existingEnvironment
+        this.existingConfig = this.existingConfigRaw
+        this.existingApplications = await this.#listExistingApplications(this.existingConfigRaw)
+      }
 
       this.updateRuntimeConfig(this.existingConfigRaw)
       this.updateRuntimeEnv(await readFile(join(this.targetDirectory, '.env'), 'utf-8'))
@@ -183,8 +204,11 @@ export class RuntimeGenerator extends BaseGenerator {
   */
   serializeConfigFile (config) {
     const { $schema, module: _module, ...rest } = config
+    // Resolved like every other scaffolded value: the root's placeholders are the same kind of
+    // thing, and leaving them would write the placeholder's own text where an expression belongs.
+    const resolved = this.resolveScaffoldedPlaceholders(rest)
 
-    return `import { defineConfig } from 'wattpm'\n\nexport default defineConfig(${serializeConfiguration(rest)})\n`
+    return `import { defineConfig } from 'wattpm'\n\nexport default defineConfig(${serializeConfiguration(resolved)})\n`
   }
 
   async _getConfigFileContents () {
@@ -301,6 +325,29 @@ export class RuntimeGenerator extends BaseGenerator {
     const _require = createRequire(dir)
     const fileToImport = _require.resolve(pkg)
     return (await import(pathToFileURL(fileToImport))).Generator
+  }
+
+  /*
+    Which applications a root already describes: the entries it lists, and the directories its
+    autoload would discover. Neither needs an application's own configuration, which is the point.
+  */
+  async #listExistingApplications (config) {
+    const ids = (config.applications ?? config.services ?? config.web ?? []).map(entry => entry.id).filter(Boolean)
+
+    if (!config.autoload?.path) {
+      return ids
+    }
+
+    const exclude = config.autoload.exclude ?? []
+    const directory = join(this.targetDirectory, config.autoload.path)
+
+    for (const entry of await readdir(directory, { withFileTypes: true }).catch(() => [])) {
+      if (entry.isDirectory() && !exclude.includes(entry.name) && !ids.includes(entry.name)) {
+        ids.push(entry.name)
+      }
+    }
+
+    return ids
   }
 
   async loadFromDir () {

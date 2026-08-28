@@ -1,4 +1,5 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { evaluateConfigurationFile, selectConfigurationFileNames } from '@platformatic/foundation/lib/v4/index.js'
 import { execa } from 'execa'
 import { promises as fs } from 'node:fs'
 import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
@@ -88,5 +89,67 @@ export async function linkDependencies (projectDir, dependencies) {
     }
     // Symlink the dependency
     await symlink(resolved, moduleRoot, 'dir')
+  }
+}
+
+/*
+  A v4 configuration is a module whose values are expressions, so reading one means evaluating it --
+  against the project's own environment, which is where those expressions get their values.
+*/
+export async function readConfiguration (path, root, role = 'root') {
+  /*
+    A v4 configuration imports what it uses -- `wattpm` at the root, its capability in an application
+    -- and these runs scaffold without installing. What an install would have put there is linked
+    here instead; the evaluation needs it either way.
+  */
+  await linkWorkspacePackages(root)
+
+  const env = { ...process.env }
+
+  try {
+    for (const line of (await readFile(join(root, '.env'), 'utf-8')).split(/\r?\n/)) {
+      const separator = line.indexOf('=')
+
+      if (separator > 0 && !line.startsWith('#')) {
+        env[line.slice(0, separator)] = line.slice(separator + 1)
+      }
+    }
+  } catch {
+    // A project without one simply has nothing to layer.
+  }
+
+  const { config } = await evaluateConfigurationFile({ path, env, command: 'start', production: false, role })
+
+  return config
+}
+
+// The configuration a directory holds, whichever suffix the selector chose for it: a TypeScript
+// project gets `.mts` where a JavaScript one gets `.mjs`, and most assertions care that there is one.
+export async function configurationFileIn (directory) {
+  const entries = await fs.readdir(directory).catch(() => [])
+
+  return selectConfigurationFileNames(entries)[0] ?? null
+}
+
+async function linkWorkspacePackages (root) {
+  const packages = join(pltRoot, '..')
+
+  await mkdir(join(root, 'node_modules', '@platformatic'), { recursive: true })
+
+  for (const entry of await fs.readdir(packages).catch(() => [])) {
+    const manifest = join(packages, entry, 'package.json')
+    let name
+
+    try {
+      name = JSON.parse(await readFile(manifest, 'utf-8')).name
+    } catch {
+      continue
+    }
+
+    if (!name) {
+      continue
+    }
+
+    await symlink(join(packages, entry), join(root, 'node_modules', name), 'dir').catch(() => {})
   }
 }

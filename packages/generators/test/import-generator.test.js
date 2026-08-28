@@ -20,9 +20,7 @@ function createGenerator (runtime, opts) {
 }
 function createMockedRuntimeGenerator (opts) {
   const runtime = {
-    getRuntimeConfigFileObject () {
-      return { contents: '{}' }
-    },
+    generatedConfig: {},
     getRuntimeEnvFileObject () {
       return { contents: '{}' }
     },
@@ -325,12 +323,8 @@ test('import - should handle runtime with existing applications', async t => {
 
   const runtime = createMockedRuntimeGenerator({
     applicationsBasePath: '/nonexistent/applications',
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          web: [{ id: 'existing-application', path: '/existing/path' }]
-        })
-      }
+    generatedConfig: {
+      web: [{ id: 'existing-application', path: '/existing/path' }]
     },
     getRuntimeEnvFileObject () {
       return { contents: 'EXISTING_VAR=value' }
@@ -355,12 +349,8 @@ test('import - should not duplicate applications in runtime config', async t => 
   const targetDir = await createTemporaryDirectory(t)
 
   const runtime = createMockedRuntimeGenerator({
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          applications: [{ id: 'test-application', path: '/existing/path' }]
-        })
-      }
+    generatedConfig: {
+      applications: [{ id: 'test-application', path: '/existing/path' }]
     },
     getRuntimeEnvFileObject () {
       return { contents: '' }
@@ -381,12 +371,8 @@ test('import - should use different applications keys', async t => {
   const targetDir = await createTemporaryDirectory(t)
 
   const runtime = createMockedRuntimeGenerator({
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          applications: []
-        })
-      }
+    generatedConfig: {
+      applications: []
     },
     getRuntimeEnvFileObject () {
       return { contents: '' }
@@ -407,12 +393,8 @@ test('import - when importing folders already in the project root, should not cr
   const sourceDir = join(targetDir, 'my-app')
 
   const runtime = createMockedRuntimeGenerator({
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          applications: [{ id: 'test-application', path: '/existing/path' }]
-        })
-      }
+    generatedConfig: {
+      applications: [{ id: 'test-application', path: '/existing/path' }]
     },
     getRuntimeEnvFileObject () {
       return { contents: '' }

@@ -1,14 +1,9 @@
-import { deepStrictEqual, equal } from 'node:assert'
+import { deepStrictEqual, equal, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../lib/utils.js'
-import {
-  createTemporaryDirectory,
-  executeCreatePlatformatic,
-  getApplications,
-  setupUserInputHandler
-} from './helper.js'
+import { configurationFileIn, createTemporaryDirectory, executeCreatePlatformatic, getApplications, setupUserInputHandler } from './helper.js'
 
 test('Creates a Platformatic DB application with no migrations', async t => {
   const root = await createTemporaryDirectory(t, 'db')
@@ -31,7 +26,7 @@ test('Creates a Platformatic DB application with no migrations', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'watt.json')), true)
+  ok(await configurationFileIn(baseProjectDir))
   equal(await isFileAccessible(join(baseProjectDir, 'pnpm-workspace.yaml')), true)
 
   const pnpmWorkspace = await readFile(join(baseProjectDir, 'pnpm-workspace.yaml'), 'utf8')
@@ -41,7 +36,7 @@ test('Creates a Platformatic DB application with no migrations', async t => {
   const applications = await getApplications(join(baseProjectDir, 'web'))
   deepStrictEqual(applications, ['main'])
   const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
-  equal(await isFileAccessible(join(baseApplicationDir, 'watt.json')), true)
+  ok(await configurationFileIn(baseApplicationDir))
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   // This is accessible only because is a folder with a .gitkeep file only
   equal(await isFileAccessible(join(baseApplicationDir, 'migrations')), true)

@@ -178,9 +178,12 @@ export class ImportGenerator extends BaseGenerator {
   }
 
   async #updateRuntime (runtime) {
-    const configObject = runtime.getRuntimeConfigFileObject()
-    /* c8 ignore next - else */
-    const config = JSON.parse(configObject?.contents ?? '{}')
+    /*
+      The configuration the runtime generator built, not a parse of the file it wrote: that file is
+      a module now, and its values are expressions rather than the data this is about to add an
+      entry to. It is written back through the same generator, which knows how to spell it.
+    */
+    const config = runtime.generatedConfig ?? {}
     const envObject = runtime.getRuntimeEnvFileObject()
     /* c8 ignore next - else */
     let env = envObject?.contents ?? ''

@@ -3,6 +3,7 @@ import {
   defaultPackageManager,
   detectApplicationType,
   findConfigurationFileRecursive,
+  findRuntimeConfigurationFile,
   generateDashedName,
   getPackageManager,
   getPkgManager,
@@ -248,7 +249,19 @@ export async function createApplication (
   // Check in the directory and its parents if there is a config file
   let shouldChooseProjectDir = true
   let projectDir = process.cwd()
-  const runtimeConfigFile = await findConfigurationFileRecursive(projectDir, null, '@platformatic/runtime')
+  /*
+    The legacy lookup first, because it is the one whose search shape the flows below were written
+    against, then the v4-aware one -- which is what finds a project this wizard scaffolded, since a
+    `watt.config.*` is invisible to the other.
+  */
+  /*
+    The legacy lookup first, because it is the search shape the flows below were written against,
+    then the v4-aware one -- which is what finds a project this wizard scaffolded, since a
+    `watt.config.*` is invisible to the other.
+  */
+  const runtimeConfigFile =
+    (await findConfigurationFileRecursive(projectDir, null, '@platformatic/runtime')) ??
+    (await findRuntimeConfigurationFile(logger, projectDir, null, false, false))
 
   if (runtimeConfigFile) {
     shouldChooseProjectDir = false
@@ -264,7 +277,9 @@ export async function createApplication (
 
       // Check if the file belongs to a Watt application, this can happen for instance if we executed watt create
       // in the applications folder
-      const existingRuntime = await findConfigurationFileRecursive(applicationRoot, null, '@platformatic/runtime')
+      const existingRuntime =
+        (await findConfigurationFileRecursive(applicationRoot, null, '@platformatic/runtime')) ??
+        (await findRuntimeConfigurationFile(logger, applicationRoot, null, false, false))
 
       if (!existingRuntime) {
         // If there is a watt.json file with a runtime property, we assume we already executed watt create and we exit.

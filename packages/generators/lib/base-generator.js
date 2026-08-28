@@ -7,8 +7,7 @@ import {
   raw,
   selectConfigurationFileNames,
   selectLegacyConfigurationFileNames,
-  serializeConfiguration,
-  serializeString
+  serializeConfiguration
 } from '@platformatic/foundation/lib/v4/index.js'
 import { builders, generateCode, parseModule } from 'magicast'
 import { readFile } from 'node:fs/promises'
@@ -350,9 +349,12 @@ class BaseGenerator extends FileGenerator {
     const packages = generated.plugins?.packages ?? []
     const existing = await this.#findExistingConfiguration()
 
-    this.reset()
-
     if (!existing) {
+      /*
+        Nothing on disk to update, which is what an "update" of a directory that does not exist yet
+        looks like -- adding an application to a project is one. The generated files stand as they
+        are; resetting here would throw away everything this pass just produced.
+      */
       return
     }
 
@@ -381,7 +383,7 @@ class BaseGenerator extends FileGenerator {
         `{PLT_X}`, and writing that into a module would put the placeholder's own text where the
         expression belongs. magicast has its own way of saying "this is source".
       */
-      configuration.plugins.packages = this.#resolveScaffoldedPlaceholders(packages, builders.raw)
+      configuration.plugins.packages = this.resolveScaffoldedPlaceholders(packages, builders.raw)
     }
 
     const updated = generateCode(module).code
@@ -433,7 +435,7 @@ class BaseGenerator extends FileGenerator {
     const { $schema, module: declared, ...rest } = config
     const module = declared ?? this.module
     const factory = capabilityFactories[module]
-    const resolved = this.#resolveScaffoldedPlaceholders(rest)
+    const resolved = this.resolveScaffoldedPlaceholders(rest)
 
     if (!factory) {
       return `export default ${serializeConfiguration({ $schema, module, ...resolved })}\n`
@@ -442,7 +444,7 @@ class BaseGenerator extends FileGenerator {
     return `import { ${factory} } from '${module}'\n\nexport default ${factory}(${serializeConfiguration(resolved)})\n`
   }
 
-  #resolveScaffoldedPlaceholders (value, expression = raw) {
+  resolveScaffoldedPlaceholders (value, expression = raw) {
     if (typeof value === 'string') {
       const whole = value.match(/^\{([A-Za-z0-9_]+)\}$/)
 
@@ -477,11 +479,11 @@ class BaseGenerator extends FileGenerator {
     }
 
     if (Array.isArray(value)) {
-      return value.map(entry => this.#resolveScaffoldedPlaceholders(entry, expression))
+      return value.map(entry => this.resolveScaffoldedPlaceholders(entry, expression))
     }
 
     return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [key, this.#resolveScaffoldedPlaceholders(entry, expression)])
+      Object.entries(value).map(([key, entry]) => [key, this.resolveScaffoldedPlaceholders(entry, expression)])
     )
   }
 
