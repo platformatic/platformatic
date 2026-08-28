@@ -482,8 +482,7 @@ test('should support adding env variables only to .env and not .env.sample', asy
   ])
 })
 
-test('WrappedGenerator - should create a valid watt.json', async t => {
-  const version = await getPlatformaticVersion()
+test('WrappedGenerator - should create a valid configuration', async t => {
   const root = await createTemporaryDirectory(t)
 
   const generator = new WrappedGenerator({ module: '@platformatic/next', targetDirectory: root })
