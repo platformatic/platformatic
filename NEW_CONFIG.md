@@ -1299,7 +1299,7 @@ The rules, in full:
   the bound one — meaningful only while an entrypoint proxied the application, and
   without a referent since `e2da15eda`. It was also load-bearing in a place it was
   never meant to reach: the reported URL is the only input to the collision scan
-  (`runtime.js:5150-5166` → `:5120-5141`), so two applications on genuinely distinct
+  (`runtime.js:5159-5175` → `:5129-5150`), so two applications on genuinely distinct
   ports that both set `entrypointPort: 3000` raised a spurious `AddressInUseError`,
   while two sharing a real port with different values escaped detection. Nothing in
   the codebase sets it outside its own two tests. `_getEntrypointUrl` keeps only its
@@ -1309,8 +1309,8 @@ The rules, in full:
   runtime checks the port against every *other* application's listening workers
   and raises `AddressInUseError` — `Port %d is already in use by applications
   "%s" and "%s"` (`runtime/lib/errors.js:14-17`, raised at
-  `runtime/lib/runtime.js:5164-5166`, ownership scan at `runtime/lib/runtime.js:5120-5141`). Workers of
-  the *same* application are exempt by construction (`runtime/lib/runtime.js:5126`), which is what makes
+  `runtime/lib/runtime.js:5173-5175`, ownership scan at `runtime/lib/runtime.js:5129-5150`). Workers of
+  the *same* application are exempt by construction (`runtime/lib/runtime.js:5135`), which is what makes
   `SO_REUSEPORT` legal. An OS-level `EADDRINUSE` carrying a port is upgraded to
   the same error (`runtime/lib/runtime.js:3552-3562`), and `EADDRINUSE` / `EACCES` / `EADDRNOTAVAIL`
   are excluded from restart-on-error (`runtime/lib/runtime.js:3590-3594`) — a port problem fails fast
@@ -1356,7 +1356,7 @@ The rules, in full:
   **Host overlap is a table, deliberately a small one.** Two ranges conflict only if
   their hosts overlap, and the loader decides that the way the runtime already does:
   a wildcard (`0.0.0.0`, `::`, `[::]`) overlaps everything, and otherwise the hosts
-  must be equal, case-insensitively (`runtime/lib/runtime.js:5143-5148`). Anything
+  must be equal, case-insensitively (`runtime/lib/runtime.js:5152-5157`). Anything
   that would need name resolution — two DNS names for one address, a name pointing at
   an interface something else has bound — is **not** compared here and is left to the
   runtime scan, which sees addresses that are actually bound. A static check that
@@ -4599,7 +4599,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    config time belongs in an env file or the real environment.
 6. `verticalScaler`: removed from the v4 schema. `metrics.healthChecksTimeouts` is
    **kept** — it is not a top-level key and is not dead: `#getHealthChecksTimeout`
-   reads it (`runtime/lib/runtime.js:4859-4866`, falling back to `healthChecksTimeout`
+   reads it (`runtime/lib/runtime.js:4868-4875`, falling back to `healthChecksTimeout`
    then 5000 ms) and extension health checks are configured through it. Its schema
    description still says "no longer used", which the audit corrects.
 7. Schema audit: placeholder-string unions removed from every schema (validation is

@@ -4119,11 +4119,20 @@ export class Runtime extends EventEmitter {
   }
 
   async #getRuntimePackageJson () {
-    const runtimeDir = this.#root
-    const packageJsonPath = join(runtimeDir, 'package.json')
-    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
-    const packageJson = JSON.parse(packageJsonFile)
-    return packageJson
+    const packageJsonPath = join(this.#root, 'package.json')
+
+    /*
+      A project need not have one, and a runtime that cannot report its metadata without one is a
+      runtime whose `applications:add --save` stops working -- that command reads `projectDir`,
+      `configPath` and `autoload` from this, and has done since `GET /config` was removed. The
+      metadata already declares `packageName` and `packageVersion` as nullable, so absence is a
+      state its shape allows.
+    */
+    try {
+      return JSON.parse(await readFile(packageJsonPath, 'utf8'))
+    } catch {
+      return {}
+    }
   }
 
   #handleWorkerStandardStreams (worker, applicationId, workerId) {

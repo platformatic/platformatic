@@ -133,6 +133,20 @@ const PLACEHOLDER_BRANCHES = new Set([
   */
   '(root)/watch',
   'runtime/watch',
+  /*
+    Switches whose object form carries the settings and whose boolean form turns them off. A string
+    satisfies neither and defeats both: `if (!config.managementApi)` and `healthProbes !== false`
+    are truthiness tests, so `'false'` starts the very thing it was written to stop.
+  */
+  '(root)/managementApi',
+  'runtime/managementApi',
+  '(root)/healthProbes',
+  'runtime/healthProbes',
+  /*
+    Vite's not-found handler is read only through its object form -- `.enabled`, then `statusCode`,
+    `contentType` and `path` are destructured off it -- so the string branch reaches nothing.
+  */
+  'vite/notFoundHandler',
   // Milliseconds, counts and ratios. Each is compared or arithmetic'd, never parsed.
   'health/interval',
   'health/gracePeriod',
