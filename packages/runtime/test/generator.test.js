@@ -630,3 +630,47 @@ test('WrappedGenerator - what it writes loads, and runs the application it wrapp
   )
   assert.deepStrictEqual(config.logger.level, 'info')
 })
+
+test('RuntimeGenerator - editing an existing root keeps what it says', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'existing', type: 'commonjs' }), 'utf-8')
+  await writeFile(join(root, '.env'), 'PLT_SERVER_LOGGER_LEVEL=info\n', 'utf-8')
+  await writeFile(
+    join(root, 'watt.config.mjs'),
+    [
+      'export default {',
+      '  // a comment the user wrote',
+      '  logger: {',
+      '    level: process.env.PLT_SERVER_LOGGER_LEVEL',
+      '  },',
+      "  applications: [{ id: 'first', path: './first' }]",
+      '}',
+      ''
+    ].join('\n'),
+    'utf-8'
+  )
+
+  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+  rg.setConfig({ targetDirectory: root })
+
+  await rg.populateFromExistingConfig()
+  rg.updateRuntimeConfig({
+    ...rg.generatedConfig,
+    applications: [
+      { id: 'first', path: './first' },
+      { id: 'second', path: './second' }
+    ]
+  })
+
+  /*
+    An edit, not a re-rendering. Re-emitting from the evaluated configuration would write the level
+    this machine resolves -- 'info' -- where the user wrote a reference, and drop their comment with
+    it: their configuration would silently stop reading its own environment.
+  */
+  const written = rg.files.find(file => file.file === 'watt.config.mjs').contents
+
+  assert.ok(written.includes('level: process.env.PLT_SERVER_LOGGER_LEVEL'), written)
+  assert.ok(written.includes('a comment the user wrote'), written)
+  assert.ok(written.includes("id: 'second'"), written)
+})

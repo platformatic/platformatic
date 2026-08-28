@@ -7,6 +7,7 @@ import {
   safeRemove
 } from '@platformatic/foundation'
 import { serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
+import { builders, generateCode, parseModule } from 'magicast'
 import {
   BaseGenerator,
   envObjectToString,
@@ -41,6 +42,48 @@ function getRuntimeBaseEnvVars (config) {
     PLT_SERVER_LOGGER_LEVEL: config.logLevel || 'info',
     PLT_MANAGEMENT_API: true
   }
+}
+
+/*
+  The one thing an import changes about a root: which applications it lists. Applied to the module
+  the user has rather than to a re-rendering of it, so their formatting, their comments and the
+  expressions their values are written as all survive the edit.
+*/
+function applyApplicationsEdit (source, config, resolve) {
+  const module = parseModule(source)
+  const target = module.exports.default
+  // The root is a plain object here; a `defineConfig(...)` call keeps its configuration in the
+  // first argument.
+  const configuration = target?.$type === 'function-call' ? target.$args[0] : target
+
+  if (!configuration) {
+    return source
+  }
+
+  /*
+    The key the file already uses, because a second list beside its own would be two answers to one
+    question. `applications` is the name for a file that lists none yet.
+  */
+  const key = ['applications', 'services', 'web'].find(candidate => configuration[candidate]) ?? 'applications'
+  const listed = configuration[key] ?? []
+  const present = new Set(Array.from(listed, entry => entry.id))
+
+  /*
+    Only what is new. The entries already in the file are the user's, written however they wrote
+    them -- the configuration handed here holds those same entries as the loader resolved them, and
+    writing those back would replace every reference with the value it has on this machine.
+  */
+  const added = ['applications', 'services', 'web']
+    .flatMap(candidate => config[candidate] ?? [])
+    .filter(entry => entry.id && !present.has(entry.id))
+
+  if (added.length === 0) {
+    return source
+  }
+
+  configuration[key] = [...listed, ...added.map(entry => resolve(entry))]
+
+  return generateCode(module).code
 }
 
 export class RuntimeGenerator extends BaseGenerator {
@@ -135,6 +178,14 @@ export class RuntimeGenerator extends BaseGenerator {
       const existingConfigPath = join(this.targetDirectory, existingConfigFile)
 
       this.existingConfigRaw = await this.readConfigurationFile(existingConfigPath, 'root', this.targetDirectory)
+      /*
+        The file as written, kept so that editing it can be an edit. Re-emitting from the evaluated
+        configuration would bake this machine's environment into the user's root -- a reference to
+        PLT_SERVER_LOGGER_LEVEL becomes whatever it happens to resolve to here -- and take every
+        comment with it.
+      */
+      this.existingConfigFile = existingConfigFile
+      this.existingConfigSource = await readFile(existingConfigPath, 'utf-8')
 
       if (existingConfigFile.endsWith('.json')) {
         this.existingConfig = await loadConfiguration(existingConfigPath, schema, {
@@ -562,9 +613,23 @@ export class RuntimeGenerator extends BaseGenerator {
   updateRuntimeConfig (config) {
     this.generatedConfig = config
 
+    // Editing what is there, rather than replacing it with a rendering of what it evaluated to.
+    if (this.existingConfigSource && !this.existingConfigFile.endsWith('.json')) {
+      this.addFile({
+        path: '',
+        file: this.existingConfigFile,
+        contents: applyApplicationsEdit(this.existingConfigSource, config, entry =>
+          this.resolveScaffoldedPlaceholders(entry, builders.raw)
+        ),
+        tags: ['runtime-config']
+      })
+
+      return
+    }
+
     this.addFile({
       path: '',
-      file: this.configurationFileName(),
+      file: this.existingConfigFile ?? this.configurationFileName(),
       contents: this.serializeConfigFile(config),
       tags: ['runtime-config']
     })

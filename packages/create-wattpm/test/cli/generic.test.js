@@ -132,9 +132,14 @@ test('Support packages without generator via importing (existing applications)',
     applications until `wattpm resolve` has run.
   */
   const rootSource = await readFile(resolve(baseProjectDir, 'watt.config.mjs'), 'utf8')
-  ok(rootSource.includes("id: 'main'"), rootSource)
-  ok(rootSource.includes("id: 'alternate'"), rootSource)
-  ok(rootSource.includes("url: 'git@github.com:hello/world.git'"), rootSource)
+
+  /*
+    Quoting is not asserted: the entry is added by editing the file, which keeps whatever style it
+    was written in -- that preservation is the point.
+  */
+  ok(/["']?id["']?:\s*["']main["']/.test(rootSource), rootSource)
+  ok(/["']?id["']?:\s*["']alternate["']/.test(rootSource), rootSource)
+  ok(rootSource.includes('git@github.com:hello/world.git'), rootSource)
   deepStrictEqual(runtimeConfig.startTimeout, 12345)
 
   ok(typeof runtimeConfig.applications, 'undefined')

@@ -355,7 +355,7 @@
       "head": "config.server = {",
       "lines": 7
     },
-    "packages/runtime/lib/generator.js:195-198": {
+    "packages/runtime/lib/generator.js:246-249": {
       "sha": "8c75bbe7a87ccb10",
       "head": "setApplicationPort (application, ordinal) {",
       "lines": 4

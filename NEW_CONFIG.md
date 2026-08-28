@@ -1409,7 +1409,7 @@ per-application and visible: `service`'s generator writes `server: { hostname,
 port, logger }` into every application's own config
 (`service/lib/generator.js:432-438` — the `!isRuntimeContext` guard is gone) and
 the runtime generator hands application *i* port `3042 + i`
-(`runtime/lib/generator.js:195-198`) while writing no root `server` block at all.
+(`runtime/lib/generator.js:246-249`) while writing no root `server` block at all.
 v4's code-first equivalent is the same thing spelled in the factory, with the
 variable scoped as v3 scoped it: `next({ server: { port:
 Number(process.env.PLT_API_PORT || 3043) } })`. v3's `getEnvVarName` returned a bare
@@ -3300,7 +3300,7 @@ export default {
   would silently redefine the script the generator just wrote. The v3 wizard's
   `3042` prompt is gone from the root — ports are per-application now, and the
   generator hands application *i* `3042 + i`
-  (`runtime/lib/generator.js:195-198`). The wizard's closing output prints where `watt.config.ts`
+  (`runtime/lib/generator.js:246-249`). The wizard's closing output prints where `watt.config.ts`
   goes and the one-line bare-factory form, so later customization is one
   copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
