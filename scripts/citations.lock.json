@@ -1,6 +1,6 @@
 {
   "citations": {
-    "packages/generators/lib/base-generator.js:113-121": {
+    "packages/generators/lib/base-generator.js:112-120": {
       "sha": "2ec0698c73e7baed",
       "head": "getEnvVarName (envVarName) {",
       "lines": 9
@@ -355,12 +355,12 @@
       "head": "config.server = {",
       "lines": 7
     },
-    "packages/runtime/lib/generator.js:174-177": {
+    "packages/runtime/lib/generator.js:195-198": {
       "sha": "8c75bbe7a87ccb10",
       "head": "setApplicationPort (application, ordinal) {",
       "lines": 4
     },
-    "packages/generators/lib/base-generator.js:171-172": {
+    "packages/generators/lib/base-generator.js:170-171": {
       "sha": "bf35ca8d2b293c27",
       "head": "if (this.config.applicationName && !this.config.envPrefix) {",
       "lines": 2
@@ -625,7 +625,7 @@
       "head": "const { 'serviceApp:0': url } = await app.start()",
       "lines": 10
     },
-    "packages/generators/lib/base-generator.js:242": {
+    "packages/generators/lib/base-generator.js:241": {
       "sha": "dad64043affbee0d",
       "head": "const excludedEnvs = [PLT_ROOT]",
       "lines": 1
@@ -645,7 +645,7 @@
       "head": "async #generateConfigFile (originalPath, updatedPath) {",
       "lines": 25
     },
-    "packages/create-wattpm/lib/index.js:424": {
+    "packages/create-wattpm/lib/index.js:439": {
       "sha": "cadcf1b78f0dab35",
       "head": ": new ImportGenerator({",
       "lines": 1
@@ -755,7 +755,7 @@
       "head": "const patch = workerData?.applicationConfig?.configPatch",
       "lines": 6
     },
-    "packages/generators/lib/base-generator.js:511-520": {
+    "packages/generators/lib/base-generator.js:520-529": {
       "sha": "885fedd36393469a",
       "head": "async generatePackageJson () {",
       "lines": 10

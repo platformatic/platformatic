@@ -1,7 +1,6 @@
 import { execa } from 'execa'
 import { deepStrictEqual, equal, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { promises as fsp } from 'node:fs'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
@@ -127,13 +126,15 @@ test('Support packages without generator via importing (existing applications)',
   // Verify that the runtime configuration has an explicit entry for the vite application but with other entries untouched
   runtimeConfig = await readConfiguration(resolve(baseProjectDir, 'watt.config.mjs'), baseProjectDir)
 
-  deepStrictEqual(
-    runtimeConfig.applications.map(entry => ({ id: entry.id, url: entry.url })),
-    [
-      { id: 'main', url: undefined },
-      { id: 'alternate', url: 'git@github.com:hello/world.git' }
-    ]
-  )
+  /*
+    Asserted as source: an imported application carries a `url`, which makes it something to fetch
+    rather than something the topology already has, so it does not appear among the evaluated
+    applications until `wattpm resolve` has run.
+  */
+  const rootSource = await readFile(resolve(baseProjectDir, 'watt.config.mjs'), 'utf8')
+  ok(rootSource.includes("id: 'main'"), rootSource)
+  ok(rootSource.includes("id: 'alternate'"), rootSource)
+  ok(rootSource.includes("url: 'git@github.com:hello/world.git'"), rootSource)
   deepStrictEqual(runtimeConfig.startTimeout, 12345)
 
   ok(typeof runtimeConfig.applications, 'undefined')
@@ -256,14 +257,12 @@ test('Support packages without generator via copy (existing applications)', asyn
     )}\n`
   )
 
-  const secondRun = await executeCreatePlatformatic(root, {
+  await executeCreatePlatformatic(root, {
     userInputHandler: userInputHandler2,
     args: ['--module=@platformatic/vite']
   })
 
   const applicationDir = join(baseProjectDir, 'web', 'alternate')
-  console.log('DIRDEBUG', JSON.stringify(await fsp.readdir(baseProjectDir, { recursive: true })))
-  console.log('RUNDEBUG', JSON.stringify(secondRun?.stdout ?? 'no output captured').slice(0, 1500))
 
   // Verify that a configuration file was created and not in the original path
   ok(!existsSync(resolve(sourcePath, 'watt.config.mjs')))

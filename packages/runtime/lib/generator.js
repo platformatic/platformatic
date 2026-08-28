@@ -17,7 +17,7 @@ import {
 import { existsSync } from 'node:fs'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { basename, join } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { transform } from './config.js'
 import { schema } from './schema.js'
@@ -202,13 +202,24 @@ export class RuntimeGenerator extends BaseGenerator {
     The root is the one v4 configuration that is not a capability factory call: it imports
     `defineConfig` from wattpm, whose whole job is to type its argument.
   */
+  /*
+    The stamped plain-object form rather than an imported `defineConfig`, which is the machine-writer
+    case the `$schema` marker exists for: the wizard writes this file before anything is installed
+    and reads it back on a later run, so a root that imported `wattpm` could not be read in the
+    state that produced it. A person editing the file afterwards can switch to the imported form.
+  */
   serializeConfigFile (config) {
+    /*
+      Unstamped while this line is still 3.x. The marker is a version declaration, and the loader
+      refuses a v3 one outright -- correctly, since that is how it catches a configuration nobody
+      migrated. It becomes writable, and worth writing, at 4.0.0.
+    */
     const { $schema, module: _module, ...rest } = config
     // Resolved like every other scaffolded value: the root's placeholders are the same kind of
     // thing, and leaving them would write the placeholder's own text where an expression belongs.
     const resolved = this.resolveScaffoldedPlaceholders(rest)
 
-    return `import { defineConfig } from 'wattpm'\n\nexport default defineConfig(${serializeConfiguration(resolved)})\n`
+    return `export default ${serializeConfiguration(resolved)}\n`
   }
 
   async _getConfigFileContents () {
@@ -276,7 +287,11 @@ export class RuntimeGenerator extends BaseGenerator {
       }
       let basePath
       if (this.existingConfig) {
-        basePath = this.existingConfig.autoload.path
+        /*
+          Resolved against the project, because the configuration says it relative to itself. The v3
+          loader handed back an absolute path; reading the file directly hands back what it says.
+        */
+        basePath = resolve(this.targetDirectory, this.existingConfig.autoload.path)
       } else {
         basePath = join(this.targetDirectory, this.config.autoload || this.applicationsFolder)
       }
@@ -638,9 +653,9 @@ export class WrappedGenerator extends BaseGenerator {
     this.addFile({
       path: '',
       file: this.configurationFileName(),
-      contents:
-        "import { defineConfig } from 'wattpm'\n\n" +
-        `export default defineConfig(${serializeConfiguration(getRuntimeWrappableProperties())})\n`
+      contents: `export default ${serializeConfiguration(
+        this.resolveScaffoldedPlaceholders(getRuntimeWrappableProperties())
+      )}\n`
     })
   }
 

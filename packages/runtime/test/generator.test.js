@@ -66,7 +66,7 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
+  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.mjs', '.env', '.env.sample', '.gitignore'])
 
   // applications have correct target directory
   assert.equal(
@@ -84,8 +84,9 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
 
   assert.notDeepStrictEqual(env.contents.split(/\r?\n/), envSample.contents.split(/\r?\n/))
 
-  const schemaJson = rg.getFileObject('platformatic.json')
-  assert.deepStrictEqual(JSON.parse(schemaJson.contents), {
+  // The configuration the generator built. The file spells its values as expressions, and this is
+  // about which settings it carries.
+  assert.deepStrictEqual(rg.generatedConfig, {
     $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
     watch: true,
     autoload: { path: 'applications', exclude: ['docs'] },
@@ -207,7 +208,7 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
+  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.mjs', '.env', '.env.sample', '.gitignore'])
 
   // applications have correct target directory
   assert.equal(
@@ -246,8 +247,7 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
   await rg.prepare()
 
   // double check config files
-  const firstGatewayConfigFile = firstGateway.getFileObject('platformatic.json')
-  const firstGatewayConfigFileJson = JSON.parse(firstGatewayConfigFile.contents)
+  const firstGatewayConfigFileJson = firstGateway.generatedConfig
   assert.deepEqual(firstGatewayConfigFileJson.gateway.applications, [
     {
       id: 'first-service'
@@ -257,8 +257,7 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
     }
   ])
 
-  const secondGatewayConfigFile = secondGateway.getFileObject('platformatic.json')
-  const secondGatewayConfigFileJson = JSON.parse(secondGatewayConfigFile.contents)
+  const secondGatewayConfigFileJson = secondGateway.generatedConfig
   assert.deepEqual(secondGatewayConfigFileJson.gateway.applications, [
     {
       id: 'first-service'
@@ -355,7 +354,7 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
 
     // should list only runtime files
     const runtimeFileList = rg.listFiles()
-    assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
+    assert.deepEqual(runtimeFileList, ['watt.config.mjs', '.env', '.env.sample'])
 
     // applications have correct target directory
     assert.equal(
@@ -423,7 +422,7 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
 
     // should list only runtime files
     const runtimeFileList = rg.listFiles()
-    assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
+    assert.deepEqual(runtimeFileList, ['watt.config.mjs', '.env', '.env.sample'])
 
     // applications have correct target directory
     assert.equal(
@@ -490,15 +489,15 @@ test('WrappedGenerator - should create a valid watt.json', async t => {
   const generator = new WrappedGenerator({ module: '@platformatic/next', targetDirectory: root })
   await generator.prepare()
 
-  const wattJson = generator.getFileObject('watt.json')
+  /*
+    The wrapped single-app root. v3 nested the runtime settings under a `runtime` key inside the
+    application's own configuration; v4 has no such block, so they are the root's own.
+  */
+  const wattJson = generator.getFileObject('watt.config.mjs')
 
-  assert.deepStrictEqual(JSON.parse(wattJson.contents), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/next/${version}.json`,
-    runtime: {
-      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
-      managementApi: '{PLT_MANAGEMENT_API}'
-    }
-  })
+  assert.ok(wattJson.contents.includes('export default {'), wattJson.contents)
+  assert.ok(wattJson.contents.includes('level: process.env.PLT_SERVER_LOGGER_LEVEL'), wattJson.contents)
+  assert.ok(!wattJson.contents.includes('runtime:'), wattJson.contents)
 })
 
 test('WrappedGenerator - should create a valid package.json', async t => {

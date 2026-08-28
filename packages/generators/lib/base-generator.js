@@ -358,6 +358,13 @@ class BaseGenerator extends FileGenerator {
       return
     }
 
+    /*
+      Only once there is something to rewrite. An update replaces the configuration and nothing
+      else, so the staged files go -- but a pass that found no configuration is adding an
+      application rather than updating one, and its files are the whole output.
+    */
+    this.reset()
+
     if (existing.file.endsWith('.json')) {
       // A v3 project being updated: it is data, and rewriting it loses nothing it carries.
       const current = JSON.parse(existing.contents)
