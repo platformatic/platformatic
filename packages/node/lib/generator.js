@@ -116,17 +116,12 @@ export class Generator extends BaseGenerator {
       })
     }
 
-    this.addFile({
-      path: '',
-      file: 'watt.json',
-      contents: JSON.stringify(
-        {
-          $schema: `https://schemas.platformatic.dev/@platformatic/node/${this.platformaticVersion}.json`
-        },
-        null,
-        2
-      )
-    })
+    /*
+      Through the shared writer rather than by hand. This used to add its own `watt.json`, which was
+      the same name the base class writes and so replaced it -- once that became a module they would
+      have been two configurations in one directory, which the loader refuses.
+    */
+    await this.generateConfigFile()
 
     return {
       targetDirectory: this.targetDirectory,
@@ -134,5 +129,12 @@ export class Generator extends BaseGenerator {
     }
   }
 
-  async _getConfigFileContents () {}
+  /*
+    Nothing to configure: a Node application declares which capability it is and lets the detector
+    do the rest. The empty object still gets a file, because owning one is how an application
+    declares its scope.
+  */
+  async _getConfigFileContents () {
+    return {}
+  }
 }

@@ -923,6 +923,9 @@ importers:
       fastify:
         specifier: ^5.0.0
         version: 5.11.0
+      magicast:
+        specifier: ^0.5.4
+        version: 0.5.4
       pino:
         specifier: ^9.9.0
         version: 9.14.0
