@@ -123,3 +123,58 @@ test('every shipped capability schema loses it', async () => {
     deepStrictEqual(projected.properties.server?.properties?.port, { type: 'integer' }, capability)
   }
 })
+
+/*
+  The health block is the case for reading consumers rather than shapes. Six of its properties are
+  `number | string` with the string branch looking identical in every one; five of them mean `'1 GB'`
+  and the sixth is a ratio that could never have been a size.
+*/
+test('the health block keeps the sizes and loses the numbers', () => {
+  const health = {
+    type: 'object',
+    properties: {
+      interval: { anyOf: [{ type: 'number', minimum: 0 }, { type: 'string' }], default: 30000 },
+      maxHeapUsed: { anyOf: [{ type: 'number', minimum: 0, maximum: 1 }, { type: 'string' }], default: 0.99 },
+      maxHeapTotal: { anyOf: [{ type: 'number', minimum: 0 }, { type: 'string' }], default: 4294967296 },
+      bufferPoolSize: { anyOf: [{ type: 'number', minimum: 0 }, { type: 'string' }], default: 262144 }
+    }
+  }
+
+  const { properties } = projectCapabilitySchema({ type: 'object', properties: { health } }).properties.health
+
+  // Compared and arithmetic'd, never parsed.
+  strictEqual(properties.interval.anyOf, undefined)
+  strictEqual(properties.maxHeapUsed.anyOf, undefined)
+  strictEqual(properties.maxHeapUsed.maximum, 1)
+
+  // Passed to parseMemorySize, so the string is a value they mean.
+  strictEqual(properties.maxHeapTotal.anyOf.length, 2)
+  strictEqual(properties.bufferPoolSize.anyOf.length, 2)
+})
+
+/*
+  Positions are matched by `parent/property`, not by name. `health.interval` is on the list and any
+  other `interval` is not -- which is the distinction the audit cannot draw, and the reason two
+  properties called `enabled` were reported as one candidate.
+*/
+test('a property of the same name elsewhere is untouched', () => {
+  const union = { anyOf: [{ type: 'number' }, { type: 'string' }] }
+  const schema = {
+    type: 'object',
+    properties: {
+      health: { type: 'object', properties: { interval: { ...union } } },
+      scheduler: { type: 'object', properties: { interval: { ...union } } }
+    }
+  }
+
+  const projected = projectCapabilitySchema(schema)
+
+  strictEqual(projected.properties.health.properties.interval.anyOf, undefined)
+  strictEqual(projected.properties.scheduler.properties.interval.anyOf.length, 2)
+})
+
+test('a schema with nothing on the list is returned as it is', () => {
+  const schema = { type: 'object', properties: { scheduler: { type: 'object', properties: { cron: { type: 'string' } } } } }
+
+  strictEqual(projectCapabilitySchema(schema), schema)
+})

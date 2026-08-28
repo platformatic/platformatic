@@ -4925,8 +4925,14 @@ runs multiple workers on a fixed port at all.
    is `health.maxHeapTotal`.** Its schema is
    `anyOf: [{ type: 'number', minimum: 0 }, { type: 'string' }]` — byte-for-byte the
    shape of a placeholder union — but the string branch is real: it accepts a
-   human-readable size like `'1 GB'`. `maxYoungGeneration` and `maxHeapUsed` are the
-   same. Deleting the branch mechanically was tried and it broke them, which is the
+   human-readable size like `'1 GB'`. `maxYoungGeneration` is the same, and so
+   are `codeRangeSize`, `bufferPoolSize` and `defaultHighWaterMark`, each of which
+   reaches `parseMemorySize`. **`maxHeapUsed` sits among them and is not one of
+   them**: it is a ratio with `maximum: 1` and a default of `0.99`, compared
+   numerically and printed as a percentage, and nothing parses it — its own schema
+   settles it, since no memory size could ever satisfy `maximum: 1`. Reading the
+   consumers is what separates the five from the one, and the schema shape alone
+   would have put all six on the same side. Deleting the branch mechanically was tried and it broke them, which is the
    evidence for why this step is hand work rather than a codemod. Note also that the
    deletion has to be applied as a **projection** over the schema objects rather than an
    edit to them: the same objects still validate v3 configurations, where the

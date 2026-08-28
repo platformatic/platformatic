@@ -34,17 +34,35 @@ function isPlainObject (value) {
   wanted -- so a surviving branch does not merely admit a dead spelling, it admits a value that
   reaches the capability as the wrong type.
 
-  Each entry here is a position somebody read the consumers of before adding it. The audit
+  Each entry is a position whose consumers somebody read. The audit
   (`scripts/audit-schemas.mjs`) produces the candidates and flags the ones whose string form is
   parsed somewhere; it cannot produce this list, because it keys its evidence on the property name
   and two properties sharing a name can answer differently -- an application entry's `enabled` reads
   a string and `telemetry.enabled` beside it does not.
 
-  `port`: 48 sites across the shipped schemas, every one placeholder-shaped, and nothing anywhere
-  reads a string port. `Number(process.env.PORT || 3042)` is what the documentation and migrate
-  both emit.
+  Positions are named `parent/property` rather than by name alone, for that reason, and matched
+  wherever the schema embeds them: the same health block appears at the root, under `runtime`, and
+  under every application entry.
+
+  What is deliberately *not* here is the rest of the health block. `maxHeapTotal`,
+  `maxYoungGeneration`, `codeRangeSize`, `bufferPoolSize` and `defaultHighWaterMark` are each passed
+  to `parseMemorySize`, so `'1 GB'` is a value they mean rather than a placeholder they tolerate.
+  `maxHeapUsed` sits among them and is not one of them: it is a ratio with `maximum: 1` and a
+  default of `0.99`, compared numerically and printed as a percentage, and nothing parses it. Its
+  own schema says so -- a memory size could never have satisfied `maximum: 1`.
 */
-const PLACEHOLDER_BRANCHES = [['server', 'port']]
+const PLACEHOLDER_BRANCHES = new Set([
+  // A port is a number. Forty-eight sites, and nothing anywhere reads a string one.
+  'server/port',
+  // Milliseconds, counts and ratios. Each is compared or arithmetic'd, never parsed.
+  'health/interval',
+  'health/gracePeriod',
+  'health/maxUnhealthyChecks',
+  'health/maxELU',
+  'health/maxEventLoopDelay',
+  'health/maxEventLoopDelayP99',
+  'health/maxHeapUsed'
+])
 
 /*
   A bare string branch: `{ type: 'string' }` and nothing else. One that enumerates values, bounds a
@@ -79,45 +97,67 @@ function withoutPlaceholderBranch (property) {
   return property
 }
 
-function projectPlaceholderBranches (schema) {
-  let projected = schema
+/*
+  Returns the same object when nothing below it changed, so a schema with no placeholder branch to
+  remove is not rebuilt -- every capability embeds the shared blocks, and this runs per load.
+*/
+function projectPlaceholderBranches (node, parent = null, name = null) {
+  if (Array.isArray(node)) {
+    let changed = false
+    const mapped = node.map(entry => {
+      const next = projectPlaceholderBranches(entry, parent, name)
+      changed ||= next !== entry
+      return next
+    })
 
-  for (const path of PLACEHOLDER_BRANCHES) {
-    let node = projected
-    const parents = []
-
-    for (const key of path) {
-      const next = node?.properties?.[key]
-
-      if (!next) {
-        break
-      }
-
-      parents.push([node, key])
-      node = next
-    }
-
-    if (parents.length !== path.length) {
-      continue
-    }
-
-    const replacement = withoutPlaceholderBranch(node)
-
-    if (replacement === node) {
-      continue
-    }
-
-    // Rebuilt from the leaf up, copying only the objects on the path.
-    let rebuilt = replacement
-
-    for (const [parent, key] of parents.reverse()) {
-      rebuilt = { ...parent, properties: { ...parent.properties, [key]: rebuilt } }
-    }
-
-    projected = rebuilt
+    return changed ? mapped : node
   }
 
-  return projected
+  if (node === null || typeof node !== 'object') {
+    return node
+  }
+
+  let result = node
+
+  if (parent && name && PLACEHOLDER_BRANCHES.has(`${parent}/${name}`)) {
+    result = withoutPlaceholderBranch(node)
+  }
+
+  let changed = result !== node
+  const mapped = { ...result }
+
+  for (const [key, value] of Object.entries(result)) {
+    /*
+      `properties` and `$defs` are maps whose keys are property names rather than schema keywords,
+      so descending into them is what advances the `parent/property` path. Everywhere else the path
+      is carried through unchanged -- an `anyOf` branch of `server` is still `server`.
+    */
+    if (key === 'properties' || key === '$defs' || key === 'definitions') {
+      let innerChanged = false
+      const inner = {}
+
+      for (const [property, schema] of Object.entries(value ?? {})) {
+        inner[property] = projectPlaceholderBranches(schema, name ?? parent, property)
+        innerChanged ||= inner[property] !== schema
+      }
+
+      if (innerChanged) {
+        mapped[key] = inner
+        changed = true
+      }
+
+      continue
+    }
+
+    const next = projectPlaceholderBranches(value, parent, name)
+
+    if (next !== value) {
+      mapped[key] = next
+      changed = true
+    }
+  }
+
+  return changed ? mapped : result
 }
 
 export function projectRuntimeBlock (block) {
