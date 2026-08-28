@@ -2006,7 +2006,7 @@ serial scheme.
       filter, which is what lets `resolve` fetch an application this boot excludes. Orchestration drives filesystem access — `autoload.path`
       decides which directories are read, `mappings` and `enabled` decide which
       applications are evaluated at all — so it is checked before it is acted on,
-      which is what v3 did (`foundation/lib/configuration.js:587-606`, validate then
+      which is what v3 did (`foundation/lib/configuration.js:598-617`, validate then
       transform). This is the **only** place autoload expansion runs; the runtime
       transform consumes the already-expanded list.
    5. **Call the deferred slots that survived**, with the same context the root export
@@ -2361,7 +2361,7 @@ object, not a file: for those, the root pipeline runs main-side with no import
 step, and `loadEnv` builds the env map without mutating the main process's
 `process.env`. The **`root` argument stands in for the deciding file's directory** —
 there is no config file to take a `dirname` of
-(v3 required it for the same reason, `foundation/lib/configuration.js:495,507-509`).
+(v3 required it for the same reason, `foundation/lib/configuration.js:503,515-517`).
 
 Where the walk *floors* differs between the two object sources, because they arrive
 differently. For the **programmatic API** the caller declared its root, so that root
@@ -2880,7 +2880,7 @@ deliberately saner:
 
   **`PLT_ROOT` carries two different values in v3, and removing it breaks both.** The
   loader assigns it per config parse — `env.PLT_ROOT = root` after `loadEnv`
-  (`foundation/lib/configuration.js:512`) — so inside a configuration `{PLT_ROOT}`
+  (`foundation/lib/configuration.js:522`) — so inside a configuration `{PLT_ROOT}`
   resolves to *that config file's own directory*, which is why migrate can seed it
   when resolving structural paths instead of reading it from the environment. But the
   runtime's own parse also puts it in `#env`, which is `structuredClone`d into every
@@ -3374,8 +3374,8 @@ packages — and the closure is larger than foundation alone:
   `replaceEnv` and the YAML brace pre-pass, all `$schema` URL generations, and a
   **v3 → v4 module rename table** (`@platformatic/composer` →
   `@platformatic/gateway`; the identity is extracted *before* the upgrade chains
-  run, `foundation/lib/configuration.js:166-179` called at `:573`, ahead of `upgrade()`
-  at `:583`, so composer-era apps
+  run, `foundation/lib/configuration.js:166-179` called at `:584`, ahead of `upgrade()`
+  at `:594`, so composer-era apps
   keep the old module name and must be renamed explicitly);
 - the four `semgrator` upgrade chains (from `runtime`, `service`, `db`, and
   `gateway` — including v1/v2→v3);
@@ -3655,14 +3655,14 @@ Generation reads both views. Then:
    precedence (`strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv` —
    the *root* config's value wins when defined, and a per-app capability config
    carrying a `runtime` block supplies the third fallback,
-   `foundation/lib/configuration.js:540` with
-   `runtime/lib/worker/controller.js:96,166`), and `*_URL`
+   `foundation/lib/configuration.js:551` with
+   `runtime/lib/worker/controller.js:96,175`), and `*_URL`
    placeholders in **separate application config files** never get `requiredEnv`
    even under strict mode — v3 resolved unset `*_URL` keys there through the
    current-app fallback, which warns and never throws — they get the literal or
    `?? ''` plus the review warning. The carve-out is scoped by *loader pass*, not
    by position: `onMissingEnv` is supplied only where a worker parses a separate
-   app config (`worker/controller.js:165`), so both a **root** config's `*_URL`
+   app config (`worker/controller.js:174`), so both a **root** config's `*_URL`
    placeholders **and every placeholder in a wrapped single-app config** — which
    `runtime/index.js:154-157` loads with no `onMissingEnv`, capability half included
    — throw on v3 under effective `strictEnv` and get `requiredEnv` like any other
@@ -3931,7 +3931,7 @@ Generation reads both views. Then:
    refuses rather than falling back to name discovery, because discovery is exactly
    what an entry naming its own file declined. The resolution chain is, in order: **`PLT_ROOT`**, seeded to the directory of
    the config file being read — v3's loader assigned it *after* `loadEnv`
-   (`foundation/lib/configuration.js:512`), so it was defined in every config parse
+   (`foundation/lib/configuration.js:522`), so it was defined in every config parse
    and is not something migrate can read from the environment it runs in — the
    worker-environment copy is the *runtime* root, a different value (see BC 20); then
    the **migration-time environment**; then **the env file v3 itself would have read

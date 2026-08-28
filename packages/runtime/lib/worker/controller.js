@@ -147,7 +147,16 @@ export class Controller extends EventEmitter {
       if (appConfig.resolvedConfig) {
         const pkg = await importCapabilityPackage(appConfig.path, appConfig.module)
 
-        this.capability = await pkg.create(appConfig.path, appConfig.resolvedConfig, this.#context)
+        /*
+          `resolved` says the configuration needs none of v3's reading: the loader layered its
+          environment main-side, there are no placeholders in it, and it has already been validated
+          against this capability's schema. Without it the capability re-runs that machinery here
+          and puts `PLT_ROOT` -- a variable v4 removed -- back into what the application reports.
+        */
+        this.capability = await pkg.create(appConfig.path, appConfig.resolvedConfig, {
+          ...this.#context,
+          resolved: true
+        })
       } else {
         // Before returning the base application, check if there is any file we recognize
         // and the user just forgot to specify in the configuration.

@@ -545,7 +545,7 @@
       "head": "const directory = resolve(root, application.path)",
       "lines": 9
     },
-    "packages/foundation/lib/configuration.js:587-606": {
+    "packages/foundation/lib/configuration.js:598-617": {
       "sha": "d945a37ca8dde526",
       "head": "if (shouldValidate) {",
       "lines": 20
@@ -585,7 +585,7 @@
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
     },
-    "packages/foundation/lib/configuration.js:495,507-509": {
+    "packages/foundation/lib/configuration.js:503,515-517": {
       "sha": "15a668a0fda2a666",
       "head": "let root = options.root",
       "lines": 4
@@ -620,7 +620,7 @@
       "head": "function fetchApplicationUrl (application, key) {",
       "lines": 7
     },
-    "packages/foundation/lib/configuration.js:512": {
+    "packages/foundation/lib/configuration.js:522": {
       "sha": "44e597015d28d8b6",
       "head": "env.PLT_ROOT = root",
       "lines": 1
@@ -780,12 +780,12 @@
       "head": "const matching = knownConfigurationFilesSchemas.map(matcher => config.$schema.match(matcher)).find(m => m)",
       "lines": 14
     },
-    "packages/foundation/lib/configuration.js:573": {
+    "packages/foundation/lib/configuration.js:584": {
       "sha": "48406bf2f9bdc71f",
       "head": "const moduleInfo = extractModuleFromSchemaUrl(config)",
       "lines": 1
     },
-    "packages/foundation/lib/configuration.js:583": {
+    "packages/foundation/lib/configuration.js:594": {
       "sha": "45788695c5808b17",
       "head": "config = await upgrade(logger, config, version)",
       "lines": 1
@@ -820,17 +820,17 @@
       "head": "resolvedApplicationsBasePath: {",
       "lines": 4
     },
-    "packages/foundation/lib/configuration.js:540": {
+    "packages/foundation/lib/configuration.js:551": {
       "sha": "99ff4a93c4d1ac02",
       "head": "const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)",
       "lines": 1
     },
-    "packages/runtime/lib/worker/controller.js:96,166": {
+    "packages/runtime/lib/worker/controller.js:96,175": {
       "sha": "2d34de7e30b3ae83",
       "head": "strictEnv: runtimeConfig.strictEnv",
       "lines": 2
     },
-    "packages/runtime/lib/worker/controller.js:165": {
+    "packages/runtime/lib/worker/controller.js:174": {
       "sha": "850d09ff63331471",
       "head": "onMissingEnv: this.#context.fetchApplicationUrl,",
       "lines": 1

@@ -481,7 +481,15 @@ export async function loadConfiguration (source, schema, options = {}) {
     fixPaths,
     logger,
     skipMetadata,
-    envFile: customEnvFile
+    envFile: customEnvFile,
+    /*
+      The configuration arrived already resolved by the v4 loader: its environment was layered
+      main-side, its placeholders do not exist, and it has been validated against the capability's
+      schema. Everything below that reads the filesystem for `.env` files or substitutes `{PLT_X}`
+      is v3 machinery, and running it here does not merely waste work -- it puts `PLT_ROOT` back,
+      a variable v4 removed, into the environment `wattpm env` reports for the application.
+    */
+    resolved
   } = {
     validate: !!schema,
     validationOptions: {},
@@ -508,10 +516,13 @@ export async function loadConfiguration (source, schema, options = {}) {
     throw new RootMissingError()
   }
 
-  const env = await loadEnv(root, ignoreProcessEnv, additionalEnv, customEnvFile)
-  env.PLT_ROOT = root
+  const env = resolved ? { ...additionalEnv } : await loadEnv(root, ignoreProcessEnv, additionalEnv, customEnvFile)
 
-  if (shouldReplaceEnv) {
+  if (!resolved) {
+    env.PLT_ROOT = root
+  }
+
+  if (shouldReplaceEnv && !resolved) {
     const missingEnv = new Set()
     const fallbackEnv = new Set()
 
