@@ -1,15 +1,13 @@
-import { importCapabilityAndConfig, validationOptions } from '@platformatic/basic'
+import { importCapabilityAndConfig } from '@platformatic/basic'
 import {
   extractModuleFromSchemaUrl,
   findConfigurationFile,
   kMetadata,
   loadConfiguration,
   loadConfigurationModule,
-  loadModule,
-  omitProperties,
-  runtimeUnwrappablePropertiesList
+  loadModule
 } from '@platformatic/foundation'
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { loadAdditionalApplications } from '@platformatic/foundation/lib/v4/index.js'
 import { isAbsolute, join, resolve as resolvePath } from 'node:path'
@@ -21,8 +19,6 @@ import {
   InspectorPortError,
   InvalidArgumentError
 } from './errors.js'
-import { schema } from './schema.js'
-import { upgrade } from './upgrade.js'
 
 // The runtime package's own entry point, which is where the bundled capability copies live.
 const runtimeScopePath = fileURLToPath(new URL('../index.js', import.meta.url))
@@ -130,49 +126,6 @@ export function autoDetectPprofCapture (config) {
   }
 
   return config
-}
-
-export async function wrapInRuntimeConfig (config, context) {
-  let applicationId = 'main'
-  try {
-    const packageJson = JSON.parse(await readFile(join(config[kMetadata].root, 'package.json'), 'utf-8'))
-    applicationId = packageJson?.name ?? 'main'
-
-    if (applicationId.startsWith('@')) {
-      applicationId = applicationId.split('/')[1]
-    }
-  } catch (err) {
-    // on purpose, the package.json might be missing
-  }
-
-  const production = context?.isProduction ?? context?.production
-
-  const runtimeConfig = config.runtime ?? {}
-
-  // Important: do not change the order of the properties in this object
-  /* c8 ignore next */
-  const wrapped = {
-    $schema: schema.$id,
-    watch: !production,
-    ...omitProperties(runtimeConfig, runtimeUnwrappablePropertiesList),
-    applications: [
-      {
-        id: applicationId,
-        path: config[kMetadata].root,
-        config: config[kMetadata].path,
-        ...(runtimeConfig.application ?? {})
-      }
-    ]
-  }
-
-  return loadConfiguration(wrapped, context?.schema ?? schema, {
-    validationOptions,
-    transform,
-    upgrade,
-    replaceEnv: true,
-    root: config[kMetadata].root,
-    ...context
-  })
 }
 
 export function parseInspectorOptions (config, inspect, inspectBreak) {

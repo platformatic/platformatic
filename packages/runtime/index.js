@@ -1,8 +1,7 @@
-import { importCapabilityPackage, resolve, validationOptions } from '@platformatic/basic'
+import { importCapabilityPackage, resolve } from '@platformatic/basic'
 import {
   abstractLogger,
   ensureLoggableError,
-  extractModuleFromSchemaUrl,
   findRuntimeConfigurationFile,
   kMetadata,
   loadConfigurationModule,
@@ -12,6 +11,7 @@ import {
   isConfigurationFileName,
   findDecidingFile,
   isProductionCommand,
+  LegacyConfigurationFileError,
   loadConfiguration as loadV4Configuration,
   loadObjectConfiguration as loadV4ObjectConfiguration,
   validateCapabilityConfiguration
@@ -20,11 +20,10 @@ import closeWithGrace from 'close-with-grace'
 import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { basename, dirname, resolve as resolvePath } from 'node:path'
-import { transform as v3Transform, transformV4, wrapInRuntimeConfig } from './lib/config.js'
+import { transform as v3Transform, transformV4 } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
-import { schema, v4Schema } from './lib/schema.js'
-import { upgrade } from './lib/upgrade.js'
+import { v4Schema } from './lib/schema.js'
 
 async function restartRuntime (runtime) {
   runtime.logger.info('Received SIGUSR2, restarting all applications ...')
@@ -121,23 +120,14 @@ async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
     return null
   }
 
-  try {
-    const deciding = await findDecidingFile(configOrRoot, { throwOnMissing: false })
+  /*
+    A v3 configuration found by the walk is refused, with the error that names migrate. It used to
+    be swallowed so the v3 loader below could answer instead; that loader is gone, and the refusal
+    is the correct answer again.
+  */
+  const deciding = await findDecidingFile(configOrRoot, { throwOnMissing: false })
 
-    return deciding?.path ?? null
-  } catch (error) {
-    /*
-      The walk refuses a v3 configuration wherever it consults, which is right once v3 is gone and
-      wrong while it is still supported: here a v3 file means "this project is not v4", and the v3
-      loader below is the one that should answer. Deleting this catch is part of deleting the v3
-      path, and at that point the refusal becomes the correct answer again.
-    */
-    if (error.code === 'PLT_LEGACY_CONFIGURATION_FILE') {
-      return null
-    }
-
-    throw error
-  }
+  return deciding?.path ?? null
 }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
@@ -154,40 +144,19 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   /*
     A configuration handed over as an object rather than named as a file: what an embedder builds in
     memory, and what the ICC generates. There is nothing to evaluate, so it skips the root eval
-    worker and joins the v4 pipeline at validation -- which is what the note on
-    `findV4ConfigurationFile` says the v4 entry point for an object is, and nothing routed to it.
-    Falling through to the v3 loader instead meant an object source got v3's env walk, v3's
-    placeholder substitution and v3's coercion, on a runtime that has none of those.
+    worker and joins the v4 pipeline at validation.
   */
   if (source && typeof source !== 'string') {
     return loadV4RuntimeConfiguration({ root, source }, context)
   }
 
-  // First of all, load the configuration without any validation
-  const config = await utilsLoadConfiguration(source, null, {
-    root,
-    envFile: context?.envFile
-  })
-
-  if (config.envfile) {
-    // The context is optional, so it might not have been provided at all
-    context ??= {}
-    context.envFile = config.envfile
-  }
-
-  const mod = extractModuleFromSchemaUrl(config)
-  if (mod?.module !== '@platformatic/runtime') {
-    return wrapInRuntimeConfig(config, context)
-  }
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
-    validationOptions,
-    transform: v3Transform,
-    upgrade,
-    replaceEnv: true,
-    root,
-    ...context
-  })
+  /*
+    Everything above this point is v4. A path that reaches here named a file the v4 walk did not
+    recognise as configuration, so the walk's own refusal is the answer -- it names the file and
+    tells the reader to run migrate, which is more use than loading a v3 configuration into a
+    runtime that no longer implements what it says.
+  */
+  throw new LegacyConfigurationFileError(source)
 }
 
 /*
@@ -419,7 +388,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return runtime
 }
 
-export { prepareApplication, wrapInRuntimeConfig } from './lib/config.js'
+export { prepareApplication } from './lib/config.js'
 
 /*
   The exported transform dispatches on the dialect. Callers wrap it -- they call it and then adjust

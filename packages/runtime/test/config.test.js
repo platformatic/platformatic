@@ -1,13 +1,28 @@
-import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db'
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
 import { writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { loadConfiguration, wrapInRuntimeConfig } from '../index.js'
+import { loadConfiguration } from '../index.js'
 import { parseInspectorOptions } from '../lib/config.js'
 import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+
+/*
+  The machine-generated plain-object form: a stamped configuration with no imports, which is what a
+  deployment tool or the ICC emits. It used to be written here as JSON, which v4 does not read --
+  the stamp said 4.0.0 and the file was a v3 document.
+*/
+async function writeStampedConfiguration (directory, configuration) {
+  const file = join(directory, 'watt.config.js')
+
+  await writeFile(
+    file,
+    `export default ${JSON.stringify({ $schema: 'https://schemas.platformatic.dev/wattpm/4.0.0.json', ...configuration }, null, 2)}\n`
+  )
+
+  return file
+}
 
 test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
   throws(() => {
@@ -113,36 +128,29 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
 
 test('rejects root server configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = configurationFileIn(directory)
+  const configFile = await writeStampedConfiguration(directory, {
+    applications: [{ id: 'main', path: '.' }],
+    server: { port: 3042 }
+  })
 
-  await writeFile(
-    configFile,
-    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], server: { port: 3042 } })
-  )
-
-  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+  await rejects(() => loadConfiguration(configFile), /must NOT have the additional property 'server'/)
 })
 
 test('rejects root entrypoint configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = configurationFileIn(directory)
+  const configFile = await writeStampedConfiguration(directory, {
+    applications: [{ id: 'main', path: '.' }],
+    entrypoint: 'main'
+  })
 
-  await writeFile(
-    configFile,
-    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], entrypoint: 'main' })
-  )
-
-  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+  await rejects(() => loadConfiguration(configFile), /must NOT have the additional property 'entrypoint'/)
 })
 
 test('does not use application useHttp configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = configurationFileIn(directory)
-
-  await writeFile(
-    configFile,
-    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.', useHttp: true }] })
-  )
+  const configFile = await writeStampedConfiguration(directory, {
+    applications: [{ id: 'main', path: '.', useHttp: true }]
+  })
 
   const config = await loadConfiguration(configFile)
   strictEqual(config.applications[0].exposed, undefined)
@@ -150,9 +158,7 @@ test('does not use application useHttp configuration', async t => {
 
 test('does not add application listener configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = configurationFileIn(directory)
-
-  await writeFile(configFile, JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }] }))
+  const configFile = await writeStampedConfiguration(directory, { applications: [{ id: 'main', path: '.' }] })
 
   const config = await loadConfiguration(configFile)
   strictEqual(config.applications[0].exposed, undefined)
@@ -183,178 +189,16 @@ test('defaults graceful shutdown timeouts', async () => {
   strictEqual(gracefulShutdown.application, 10000)
 })
 
-test('strictEnv should fail loading the configuration when environment variables are missing', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'platformatic.json')
-  delete process.env.PLT_STRICT_ENV_WATCH
-
-  await rejects(
-    async () => {
-      await createRuntime(configFile)
-    },
-    {
-      code: 'PLT_MISSING_ENV_VARIABLES',
-      message:
-        'The configuration references the following environment variables which are not set: PLT_STRICT_ENV_WATCH'
-    }
-  )
-})
-
-test('strictEnv should not fail loading the configuration when all environment variables are set', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env', 'platformatic.json')
-  process.env.PLT_STRICT_ENV_WATCH = 'false'
-
-  t.after(() => {
-    delete process.env.PLT_STRICT_ENV_WATCH
-  })
-
-  const runtime = await createRuntime(configFile)
-  strictEqual((await runtime.getRuntimeConfig()).watch, false)
-})
-
-test('defaults the application name to `main` if there is no package.json', async t => {
-  const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'main')
-})
-
-test('uses the name in package.json', async t => {
-  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'mysimplename')
-})
-
-test('uses the name in package.json, removing the scope', async t => {
-  const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'myname')
-})
-
-test('defaults name to `main` if package.json exists but has no name', async t => {
-  const configFile = join(fixturesDir, 'dbAppNoName', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'main')
-})
-
-test('wrapInRuntimeConfig does not copy server configuration to the runtime', async t => {
-  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
-
-  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.server, undefined)
-})
-
-test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
-  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
-
-  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  ok(typeof runtimeConfig.web, 'undefined')
-  ok(typeof runtimeConfig.autoload, 'undefined')
-  ok(runtimeConfig.watch === false)
-  strictEqual(runtimeConfig.server, undefined)
-  deepStrictEqual(runtimeConfig.applications, [
-    {
-      config: configFile,
-      dependencies: [],
-      enabled: true,
-      gitBranch: 'main',
-      health: {},
-      id: 'main',
-      localUrl: 'http://main.plt.local',
-      path: dirname(configFile),
-      reuseTcpPorts: true,
-      type: '@platformatic/db',
-      watch: false,
-      skipTelemetryHooks: true,
-      workers: {
-        static: 1,
-        dynamic: false
-      }
-    },
-    {
-      dependencies: [],
-      enabled: true,
-      gitBranch: 'main',
-      health: {},
-      id: 'another',
-      localUrl: 'http://another.plt.local',
-      path: resolve(dirname(configFile), 'another'),
-      reuseTcpPorts: true,
-      type: 'unknown',
-      watch: false,
-      workers: {
-        static: 1,
-        dynamic: false
-      }
-    }
-  ])
-})
-
-test('supports configurable envfile location', async t => {
-  const configFile = join(fixturesDir, 'env-config', 'platformatic.json')
-  const runtime = await createRuntime(configFile)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.init()
-  await runtime.start()
-
-  const { payload } = await runtime.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  deepStrictEqual(data, {
-    FROM_ENV_FILE: 'true',
-    FROM_MAIN_CONFIG_FILE: 'true',
-    FROM_SERVICE_CONFIG_FILE: 'true',
-    OVERRIDE_TEST: 'service-override'
-  })
-})
-
-test('supports default envfile location', async t => {
-  const configFile = join(fixturesDir, 'env-service', 'platformatic.json')
-  const runtime = await createRuntime(configFile)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.init()
-  await runtime.start()
-
-  const { payload } = await runtime.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  deepStrictEqual(data, {
-    FROM_ENV_FILE: 'true',
-    FROM_MAIN_CONFIG_FILE: 'true',
-    FROM_SERVICE_CONFIG_FILE: 'true',
-    OVERRIDE_TEST: 'service-override'
-  })
-})
+/*
+  `strictEnv` and the root `envfile` were removed in v4 -- there are no placeholders to be strict
+  about, and env files are discovered by walking from the configuration to the project root rather
+  than named. The four tests that covered them went with the v3 loader that implemented them; what
+  replaces `strictEnv` is a guard the configuration writes for itself, which
+  `docs/reference/service/configuration.md` shows.
+*/
 
 test('supports configurable arguments', async t => {
-  const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
+  const configFile = configurationFileIn(join(fixturesDir, 'custom-argv'))
   const runtime = await createRuntime(configFile)
 
   t.after(async () => {

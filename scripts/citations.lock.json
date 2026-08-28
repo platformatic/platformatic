@@ -5,12 +5,12 @@
       "head": "getEnvVarName (envVarName) {",
       "lines": 9
     },
-    "packages/runtime/lib/config.js:135": {
+    "packages/runtime/lib/config.js:135@d1bd647f2^": {
       "sha": "e4d5f9238d2a9c56",
       "head": "export async function wrapInRuntimeConfig (config, context) {",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:476-481": {
+    "packages/runtime/lib/config.js:429-434": {
       "sha": "b6e178fa03b4a573",
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
@@ -30,7 +30,7 @@
       "head": "async #setupApplication (applicationConfig) {",
       "lines": 2
     },
-    "packages/runtime/lib/config.js:277-279": {
+    "packages/runtime/lib/config.js:230-232": {
       "sha": "c3921d6a110bb1c8",
       "head": "if (application.url && !application.path) {",
       "lines": 3
@@ -105,7 +105,7 @@
       "head": "{ required: ['autoload'] },",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:465": {
+    "packages/runtime/lib/config.js:418": {
       "sha": "cc751cccf31f9c25",
       "head": "const id = mapping.id ?? entry.name",
       "lines": 1
@@ -115,7 +115,7 @@
       "head": "export function getApplicationUrl (id) {",
       "lines": 3
     },
-    "packages/runtime/lib/config.js:136-147": {
+    "packages/runtime/lib/config.js:136-147@d1bd647f2^": {
       "sha": "0f3d554d493fd9e4",
       "head": "let applicationId = 'main'",
       "lines": 12
@@ -565,22 +565,22 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:368-371": {
+    "packages/runtime/index.js:337-340": {
       "sha": "f05241a09ec2d711",
       "head": "const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))",
       "lines": 4
     },
-    "packages/runtime/lib/config.js:450-484": {
+    "packages/runtime/lib/config.js:403-437": {
       "sha": "0640a25e34ebc3fa",
       "head": "if (config.autoload) {",
       "lines": 35
     },
-    "packages/runtime/lib/config.js:486-490": {
+    "packages/runtime/lib/config.js:439-443": {
       "sha": "2cb2892b8add119f",
       "head": "for (let i = applications.length - 1; i >= 0; --i) {",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:532": {
+    "packages/runtime/lib/config.js:485": {
       "sha": "234e889c1536e65b",
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
@@ -640,7 +640,7 @@
       "head": "const customSocket = typeof config === 'object' ? config?.socket : null",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:371-387": {
+    "packages/runtime/lib/config.js:324-340": {
       "sha": "0c8025c3daeca38e",
       "head": "function isApplicationEnabled (application, environment) {",
       "lines": 17
@@ -835,9 +835,9 @@
       "head": "onMissingEnv: this.#context.fetchApplicationUrl,",
       "lines": 1
     },
-    "packages/runtime/index.js:167-170": {
-      "sha": "2098a439fe52a74f",
-      "head": "const config = await utilsLoadConfiguration(source, null, {",
+    "packages/runtime/index.js:167-170@d1bd647f2^": {
+      "sha": "007d59c280634f94",
+      "head": "return wrapInRuntimeConfig(config, context)",
       "lines": 4
     },
     "packages/runtime/lib/config.js:323@e2da15eda^": {
@@ -875,7 +875,7 @@
       "head": "",
       "lines": 3
     },
-    "packages/runtime/lib/config.js:391": {
+    "packages/runtime/lib/config.js:344": {
       "sha": "04398a437454d1ad",
       "head": "const environment = production ? 'production' : 'development'",
       "lines": 1
@@ -935,12 +935,12 @@
       "head": "if (!this.config.isRuntimeContext) {",
       "lines": 9
     },
-    "packages/runtime/lib/config.js:270-271": {
+    "packages/runtime/lib/config.js:223-224": {
       "sha": "c410aebf0f15de2a",
       "head": "if (application.path && application.config) {",
       "lines": 2
     },
-    "packages/runtime/lib/config.js:469-472": {
+    "packages/runtime/lib/config.js:422-425": {
       "sha": "408ebe7805cbc6c7",
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4
@@ -1014,6 +1014,11 @@
       "sha": "b54741e63a5dd48b",
       "head": "if (!isRuntimeSchema) {",
       "lines": 3
+    },
+    "packages/runtime/lib/config.js:418@d1bd647f2^": {
+      "sha": "72082c3039032ae4",
+      "head": "config.workers.scaleUpELU ??= config.verticalScaler.scaleUpELU",
+      "lines": 1
     },
     "packages/foundation/lib/v4/topology.js:134-136": {
       "sha": "5aeff7944a5bb1d0",

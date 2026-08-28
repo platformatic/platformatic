@@ -387,15 +387,12 @@ const IMPORT_FIXTURES = ['wattpm/test/fixtures/main/', 'wattpm/test/fixtures/no-
 */
 const LEGACY_FEATURE_FIXTURES = [
   'runtime/fixtures/configs/monorepo-strict-env/',
-  'runtime/fixtures/custom-argv/',
-  'runtime/fixtures/dbApp/',
-  'runtime/fixtures/dbAppNoName/',
-  'runtime/fixtures/dbAppNoPackageJson/',
-  'runtime/fixtures/dbAppWithMigrationError/',
-  'runtime/fixtures/env-config/',
-  'runtime/fixtures/env-service/',
-  'runtime/fixtures/service-app-throws-v3/',
-  'runtime/fixtures/wrapped-runtime/'
+  /*
+    What is left of that set. The v3 *root* loader is gone, so the fixtures that existed for it are
+    converted or deleted -- only `Controller`'s worker-side v3 branch still reads a configuration
+    file, and this is the fixture it reads.
+  */
+  'runtime/fixtures/service-app-throws-v3/'
 ]
 
 const FORMAT_FIXTURES = [

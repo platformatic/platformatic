@@ -479,11 +479,6 @@ export declare class Runtime extends EventEmitter {
   runApplicationScheduledTasks (id: string, scheduleId: string, scheduledTime: number): Promise<unknown>
 }
 
-export function wrapInRuntimeConfig (
-  config: Configuration<unknown>,
-  context?: ConfigurationOptions
-): Promise<RuntimeConfiguration>
-
 export declare const version: string
 
 export declare function loadConfiguration (
