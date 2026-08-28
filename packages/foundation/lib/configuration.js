@@ -595,7 +595,15 @@ export async function loadConfiguration (source, schema, options = {}) {
     }
   }
 
-  if (shouldValidate) {
+  /*
+    A resolved configuration was validated main-side, against the v4 projection of this same
+    schema, with defaults applied and paths resolved -- the validator there mutates the object it
+    checks, and that object is what arrived here. Re-checking it does more than repeat work: these
+    options carry `coerceTypes: true`, which v4's own validator disables on the grounds that
+    coercion is a documented hazard in this codebase, so the second pass applies semantics the first
+    one refused.
+  */
+  if (shouldValidate && !resolved) {
     if (typeof schema === 'undefined') {
       throw new SourceMissingError()
     }

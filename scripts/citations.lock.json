@@ -545,9 +545,9 @@
       "head": "const directory = resolve(root, application.path)",
       "lines": 9
     },
-    "packages/foundation/lib/configuration.js:598-617": {
-      "sha": "d945a37ca8dde526",
-      "head": "if (shouldValidate) {",
+    "packages/foundation/lib/configuration.js:606-625": {
+      "sha": "b59e047a704b2b44",
+      "head": "if (shouldValidate && !resolved) {",
       "lines": 20
     },
     "packages/runtime/lib/config.js:398-402@19d8fb98b^": {

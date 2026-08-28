@@ -78,3 +78,48 @@ test('without it, the v3 reading still happens — that path still serves v3 pro
 
   strictEqual(legacy[kMetadata].env.PLT_ROOT, import.meta.dirname)
 })
+
+/*
+  The first hand classification of a placeholder branch. It matters more since the worker stopped
+  re-validating a resolved configuration: with no coercion left to turn `'3042'` into `3042`, a
+  surviving string branch does not admit a dead spelling, it admits the wrong type.
+*/
+test('server.port loses its placeholder string branch', () => {
+  const schema = {
+    type: 'object',
+    properties: { server: { type: 'object', properties: { port: { anyOf: [{ type: 'integer' }, { type: 'string' }] } } } }
+  }
+
+  const projected = projectCapabilitySchema(schema)
+
+  deepStrictEqual(projected.properties.server.properties.port, { type: 'integer' })
+  // The shipped object still validates v3, where the branch is load-bearing.
+  deepStrictEqual(schema.properties.server.properties.port.anyOf.length, 2)
+})
+
+test('a string branch that describes something real is left alone', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      server: {
+        type: 'object',
+        // A pattern says the string means something; it is not there to admit a placeholder.
+        properties: { port: { anyOf: [{ type: 'integer' }, { type: 'string', pattern: '^\\d+$' }] } }
+      }
+    }
+  }
+
+  strictEqual(projectCapabilitySchema(schema).properties.server.properties.port.anyOf.length, 2)
+})
+
+test('every shipped capability schema loses it', async () => {
+  const { readFileSync } = await import('node:fs')
+  const { join } = await import('node:path')
+
+  for (const capability of ['node', 'service', 'db', 'gateway', 'next', 'vite']) {
+    const path = join(import.meta.dirname, '../../../', capability, 'schema.json')
+    const projected = projectCapabilitySchema(JSON.parse(readFileSync(path, 'utf-8')))
+
+    deepStrictEqual(projected.properties.server?.properties?.port, { type: 'integer' }, capability)
+  }
+})

@@ -25,6 +25,101 @@ function isPlainObject (value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+/*
+  The placeholder branches, classified one at a time.
+
+  v3's `{PLT_X}` was a string, so almost every typed property grew a bare string branch beside its
+  real type to admit one. v4 has no placeholders, and since the worker stopped re-validating a
+  resolved configuration there is no coercion left to turn a string back into what the property
+  wanted -- so a surviving branch does not merely admit a dead spelling, it admits a value that
+  reaches the capability as the wrong type.
+
+  Each entry here is a position somebody read the consumers of before adding it. The audit
+  (`scripts/audit-schemas.mjs`) produces the candidates and flags the ones whose string form is
+  parsed somewhere; it cannot produce this list, because it keys its evidence on the property name
+  and two properties sharing a name can answer differently -- an application entry's `enabled` reads
+  a string and `telemetry.enabled` beside it does not.
+
+  `port`: 48 sites across the shipped schemas, every one placeholder-shaped, and nothing anywhere
+  reads a string port. `Number(process.env.PORT || 3042)` is what the documentation and migrate
+  both emit.
+*/
+const PLACEHOLDER_BRANCHES = [['server', 'port']]
+
+/*
+  A bare string branch: `{ type: 'string' }` and nothing else. One that enumerates values, bounds a
+  length or names a pattern is describing something real, and is not what this removes.
+*/
+function isBareString (branch) {
+  return branch?.type === 'string' && Object.keys(branch).every(key => key === 'type' || key === 'description')
+}
+
+function withoutPlaceholderBranch (property) {
+  for (const keyword of ['anyOf', 'oneOf']) {
+    const branches = property?.[keyword]
+
+    if (!Array.isArray(branches) || branches.length < 2) {
+      continue
+    }
+
+    const kept = branches.filter(branch => !isBareString(branch))
+
+    if (kept.length > 0 && kept.length < branches.length) {
+      const { [keyword]: _removed, ...rest } = property
+
+      /*
+        One branch left is not a union any more. Keeping a single-member `anyOf` would validate the
+        same and read worse, and it leaves the keyword present for anything that inspects the schema
+        -- the generated types among them.
+      */
+      return kept.length === 1 ? { ...rest, ...kept[0] } : { ...rest, [keyword]: kept }
+    }
+  }
+
+  return property
+}
+
+function projectPlaceholderBranches (schema) {
+  let projected = schema
+
+  for (const path of PLACEHOLDER_BRANCHES) {
+    let node = projected
+    const parents = []
+
+    for (const key of path) {
+      const next = node?.properties?.[key]
+
+      if (!next) {
+        break
+      }
+
+      parents.push([node, key])
+      node = next
+    }
+
+    if (parents.length !== path.length) {
+      continue
+    }
+
+    const replacement = withoutPlaceholderBranch(node)
+
+    if (replacement === node) {
+      continue
+    }
+
+    // Rebuilt from the leaf up, copying only the objects on the path.
+    let rebuilt = replacement
+
+    for (const [parent, key] of parents.reverse()) {
+      rebuilt = { ...parent, properties: { ...parent.properties, [key]: rebuilt } }
+    }
+
+    projected = rebuilt
+  }
+
+  return projected
+}
+
 export function projectRuntimeBlock (block) {
   if (!isPlainObject(block?.properties)) {
     return block
@@ -52,14 +147,13 @@ export function projectCapabilitySchema (schema) {
   const runtimeBlock = schema?.properties?.runtime
 
   if (!runtimeBlock) {
-    return schema
+    return projectPlaceholderBranches(schema)
   }
 
   const projected = projectRuntimeBlock(runtimeBlock)
 
-  if (projected === runtimeBlock) {
-    return schema
-  }
+  const withRuntime =
+    projected === runtimeBlock ? schema : { ...schema, properties: { ...schema.properties, runtime: projected } }
 
-  return { ...schema, properties: { ...schema.properties, runtime: projected } }
+  return projectPlaceholderBranches(withRuntime)
 }

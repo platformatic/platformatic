@@ -2006,7 +2006,7 @@ serial scheme.
       filter, which is what lets `resolve` fetch an application this boot excludes. Orchestration drives filesystem access — `autoload.path`
       decides which directories are read, `mappings` and `enabled` decide which
       applications are evaluated at all — so it is checked before it is acted on,
-      which is what v3 did (`foundation/lib/configuration.js:598-617`, validate then
+      which is what v3 did (`foundation/lib/configuration.js:606-625`, validate then
       transform). This is the **only** place autoload expansion runs; the runtime
       transform consumes the already-expanded list.
    5. **Call the deferred slots that survived**, with the same context the root export
@@ -4946,8 +4946,15 @@ runs multiple workers on a fixed port at all.
    obtains a capability's schema, which is the one place only v4 reaches; the shipped
    object is left alone, which is what the projection rule is for. `$schema` stays where
    the other two go, because a machine writer stamps it and the loader strips it before
-   validation rather than refusing it. The placeholder branches are the remaining half,
-   and they need the hand classification above rather than a key list.
+   validation rather than refusing it. The placeholder branches are the remaining half, and they
+   need the hand classification above rather than a key list. **`server.port` is the
+   first of them**, and removing the worker's second validation pass is what made it
+   urgent rather than tidy: the worker used to re-validate a resolved configuration
+   with `coerceTypes: true`, so a string port became a number on the way past. With
+   that gone a surviving string branch does not admit a dead spelling, it admits a
+   value that reaches the capability as the wrong type. Forty-eight sites, every one
+   placeholder-shaped, and nothing anywhere reads a string port. The gate found a
+   documentation example writing one within a minute of the branch being removed.
 
    **The audit's evidence heuristic keys on the property *name*, and two properties
    called `enabled` settle the question differently.** An application entry's is read

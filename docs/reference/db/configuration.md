@@ -506,7 +506,7 @@ import { db } from '@platformatic/db'
 export default db({
   server: {
     hostname: '127.0.0.1',
-    port: '3042'
+    port: 3042
   },
   db: {
     connectionString: 'sqlite://./db.sqlite',
