@@ -631,6 +631,34 @@ test('WrappedGenerator - what it writes loads, and runs the application it wrapp
   assert.deepStrictEqual(config.logger.level, 'info')
 })
 
+/*
+  The wizard used to load a legacy root through the v3 reader and rewrite it -- the module form
+  over a .json file. It refuses now, with the hint every other v4 entry point gives: migrate owns
+  that conversion, refusals and divergence reports included.
+*/
+test('RuntimeGenerator - a legacy root is refused with the migrate hint', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'legacy' }), 'utf-8')
+  await writeFile(
+    join(root, 'watt.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/wattpm/2.65.0.json', autoload: { path: 'web' } }),
+    'utf-8'
+  )
+
+  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+  rg.setConfig({ targetDirectory: root })
+
+  await assert.rejects(
+    () => rg.populateFromExistingConfig(),
+    error => {
+      assert.strictEqual(error.code, 'PLT_LEGACY_CONFIGURATION_FILE')
+      assert.ok(error.message.includes('migrate'), error.message)
+      return true
+    }
+  )
+})
+
 test('RuntimeGenerator - editing an existing root keeps what it says', async t => {
   const root = await createTemporaryDirectory(t)
 

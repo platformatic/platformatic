@@ -18,7 +18,7 @@ import closeWithGrace from 'close-with-grace'
 import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { dirname, resolve as resolvePath } from 'node:path'
-import { transform as v3Transform, transformV4 } from './lib/config.js'
+import { transformV4 } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
 import { v4Schema } from './lib/schema.js'
@@ -423,14 +423,10 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 */
 export { prepareAddedApplications } from './lib/config.js'
 
-/*
-  The exported transform dispatches on the dialect. Callers wrap it -- they call it and then adjust
-  the result -- and a wrapper that reached the v3 transform with a v4 configuration would run the
-  wrong pipeline over it: autoload expansion and enabled filtering have already happened in the
-  eval worker. v4 configurations are recognizable by the evaluation context on kMetadata.
-*/
+// The one transform there is: the v3 one died with its last caller, the wizard's legacy-JSON
+// branch, and the dispatch that told the two apart went with it.
 export async function transform (config, schema, context) {
-  return config?.[kMetadata]?.v4 ? transformV4(config, schema, context) : v3Transform(config, schema, context)
+  return transformV4(config, schema, context)
 }
 export * as errors from './lib/errors.js'
 export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'

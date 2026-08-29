@@ -1,12 +1,5 @@
-import {
-  createEnvFileTool,
-  defaultPackageManager,
-  generateDashedName,
-  kMetadata,
-  loadConfiguration,
-  safeRemove
-} from '@platformatic/foundation'
-import { serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
+import { createEnvFileTool, defaultPackageManager, generateDashedName, safeRemove } from '@platformatic/foundation'
+import { LegacyConfigurationFileError, serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
 import {
   BaseGenerator,
   appendApplications,
@@ -22,8 +15,6 @@ import { readFile, readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { basename, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { transform } from './config.js'
-import { schema } from './schema.js'
 import { getArrayDifference } from './utils.js'
 
 const engines = {
@@ -152,15 +143,14 @@ export class RuntimeGenerator extends BaseGenerator {
       this.existingConfigFile = existingConfigFile
       this.existingConfigSource = await readFile(existingConfigPath, 'utf-8')
 
+      /*
+        A legacy root is refused with the hint every other v4 entry point gives, rather than loaded
+        and rewritten: continuing wrote the v4 module form over the .json file, and migrate is the
+        tool whose whole job is that conversion -- with the refusals and divergence reports the
+        wizard has no way to make.
+      */
       if (existingConfigFile.endsWith('.json')) {
-        this.existingConfig = await loadConfiguration(existingConfigPath, schema, {
-          transform,
-          ignoreProcessEnv: true
-        })
-
-        const { PLT_ROOT, ...existingEnvironment } = this.existingConfig[kMetadata].env
-        this.config.env = existingEnvironment
-        this.existingApplications = this.existingConfig.applications.map(s => s.id)
+        throw new LegacyConfigurationFileError(existingConfigPath)
       } else {
         /*
           Derived from the root rather than loaded through it. A full load evaluates every
