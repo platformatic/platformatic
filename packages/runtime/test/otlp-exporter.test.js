@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, configurationFileIn } from './helpers.js'
+import { createRuntime, configurationFileIn, updateConfigFile } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -102,24 +102,23 @@ test('should export metrics with custom headers', async t => {
   const projectDir = join(fixturesDir, 'otlp-exporter')
   const configFile = configurationFileIn(projectDir)
 
-  // Read and modify config to add headers
+  // Through updateConfigFile, which reads and writes whichever dialect the fixture is in, and
+  // restoring the original afterwards -- the edit happens in the source fixture directory.
   const fs = await import('node:fs/promises')
-  const config = JSON.parse(await fs.readFile(configFile, 'utf-8'))
-  config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
-  config.metrics.otlpExporter.headers = {
-    'x-api-key': 'test-key-123',
-    'x-custom-header': 'custom-value'
-  }
-
-  // Write temporary config
-  const tmpConfigFile = configurationFileIn(projectDir)
-  await fs.writeFile(tmpConfigFile, JSON.stringify(config, null, 2))
-
-  t.after(async () => {
-    await fs.unlink(tmpConfigFile)
+  const original = await fs.readFile(configFile, 'utf-8')
+  await updateConfigFile(configFile, config => {
+    config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
+    config.metrics.otlpExporter.headers = {
+      'x-api-key': 'test-key-123',
+      'x-custom-header': 'custom-value'
+    }
   })
 
-  const app = await createRuntime(tmpConfigFile)
+  t.after(async () => {
+    await fs.writeFile(configFile, original, 'utf-8')
+  })
+
+  const app = await createRuntime(configFile)
   await app.start()
 
   t.after(async () => {
@@ -286,18 +285,17 @@ test('should not export metrics when OTLP exporter is disabled', async t => {
   const configFile = configurationFileIn(projectDir)
 
   const fs = await import('node:fs/promises')
-  const config = JSON.parse(await fs.readFile(configFile, 'utf-8'))
-  config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
-  config.metrics.otlpExporter.enabled = false
-
-  const tmpConfigFile = configurationFileIn(projectDir)
-  await fs.writeFile(tmpConfigFile, JSON.stringify(config, null, 2))
-
-  t.after(async () => {
-    await fs.unlink(tmpConfigFile)
+  const original = await fs.readFile(configFile, 'utf-8')
+  await updateConfigFile(configFile, config => {
+    config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
+    config.metrics.otlpExporter.enabled = false
   })
 
-  const app = await createRuntime(tmpConfigFile)
+  t.after(async () => {
+    await fs.writeFile(configFile, original, 'utf-8')
+  })
+
+  const app = await createRuntime(configFile)
   await app.start()
 
   t.after(async () => {

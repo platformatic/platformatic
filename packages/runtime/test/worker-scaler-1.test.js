@@ -109,13 +109,10 @@ for (const [name, file] of Object.entries(configurations)) {
     const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
-        config.verticalScaler = {
-          enabled: true,
-          maxTotalWorkers: 5,
-          gracePeriod: 1,
-          scaleUpELU: 1
-        }
         config = await transform(config, ...args)
+        // The v4 spelling of what verticalScaler.scaleUpELU said: a threshold no load reaches, so
+        // nothing scales. verticalScaler does not exist in v4 -- the transform carries no migration.
+        config.workers.scaleUpELU = 1
         return config
       }
     })
@@ -200,11 +197,14 @@ for (const [name, file] of Object.entries(configurations)) {
     const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
-        config.applications = [
-          { id: 'service-1', workers: 1 },
-          { id: 'service-2', workers: 1 }
-        ]
         config = await transform(config, ...args)
+
+        // On the list the loader produced, not a replacement for it: v3's transform re-expanded
+        // autoload so a skeleton list grew paths back, and v4's transform deliberately does not.
+        for (const application of config.applications) {
+          application.workers = { static: 1, dynamic: false }
+        }
+
         return config
       }
     })
@@ -243,11 +243,22 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 }
 
+/*
+  The three tests below edit the configuration, so each copies the whole variant directory to a
+  scratch sibling first -- a sibling, because the configuration autoloads `../services` and a copy
+  anywhere else would point at nothing. v3 could copy just the file under a second name; v4 allows
+  one configuration per directory.
+*/
+async function prepareScratchVariant (t) {
+  const scratchDir = await mkdtemp(join(fixturesDir, 'worker-scaler', 'scratch-'))
+  await cp(join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs'), join(scratchDir, 'watt.config.mjs'))
+  t.after(() => safeRemove(scratchDir))
+
+  return join(scratchDir, 'watt.config.mjs')
+}
+
 test('should properly apply runtime workers configuration to the applications (number)', async t => {
-  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs')
-  const configFile = join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs')
-  await cp(originalConfigFile, configFile)
-  t.after(() => safeRemove(configFile))
+  const configFile = await prepareScratchVariant(t)
 
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
   const logsPath = join(tmpDir, 'log.txt')
@@ -269,10 +280,7 @@ test('should properly apply runtime workers configuration to the applications (n
 })
 
 test('should properly apply runtime workers configuration to the applications (object)', async t => {
-  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs')
-  const configFile = join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs')
-  await cp(originalConfigFile, configFile)
-  t.after(() => safeRemove(configFile))
+  const configFile = await prepareScratchVariant(t)
 
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
   const logsPath = join(tmpDir, 'log.txt')
@@ -299,10 +307,7 @@ test('should properly apply runtime workers configuration to the applications (o
 })
 
 test('should ensure the right order for minimum and maximum', async t => {
-  const originalConfigFile = join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs')
-  const configFile = join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs')
-  await cp(originalConfigFile, configFile)
-  t.after(() => safeRemove(configFile))
+  const configFile = await prepareScratchVariant(t)
 
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
   const logsPath = join(tmpDir, 'log.txt')
@@ -332,20 +337,22 @@ test('should apply application scaleUpELU and scaleDownELU', async t => {
   const configFile = join(fixturesDir, 'worker-scaler', 'worker-scaler', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
-      delete config.verticalScaler
-
-      config.applications = [
-        { id: 'service-1', workers: { scaleUpELU: 1 } },
-        { id: 'service-2', workers: { scaleUpELU: 0.5 } }
-      ]
-      config.workers = {
-        dynamic: true,
-        minimum: 1,
-        maximum: 5,
-        scaleUpELU: 1,
-        gracePeriod: 1
-      }
       config = await transform(config, ...args)
+
+      Object.assign(config.workers, { dynamic: true, minimum: 1, maximum: 5, scaleUpELU: 1, gracePeriod: 1 })
+
+      // Per-application thresholds override the runtime-wide one, so only service-2 -- the one the
+      // load actually hits -- crosses its threshold.
+      for (const application of config.applications) {
+        application.workers = {
+          dynamic: true,
+          static: 1,
+          minimum: 1,
+          maximum: 5,
+          scaleUpELU: application.id === 'service-2' ? 0.5 : 1
+        }
+      }
+
       return config
     }
   })

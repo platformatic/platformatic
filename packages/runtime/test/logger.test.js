@@ -7,7 +7,7 @@ import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { transform } from '../index.js'
 import { startPath } from './cli/helper.js'
-import { configurationFileIn, createRuntime, execRuntime, isWindows, requestAndDump, stdioOutputToLogs, updateFile } from './helpers.js'
+import { configurationFileIn, createRuntime, execRuntime, isWindows, requestAndDump, stdioOutputToLogs, updateConfigFile } from './helpers.js'
 import { prepareRuntime } from './multiple-workers/helper.js'
 
 setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
@@ -473,10 +473,8 @@ test('should use colors when printing applications logs', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = configurationFileIn(root)
 
-  await updateFile(configFile, data => {
-    const config = JSON.parse(data)
+  await updateConfigFile(configFile, config => {
     config.logger.level = 'info'
-    return JSON.stringify(config, null, 2)
   })
 
   const child = execa(process.execPath, [startPath, configFile], {
@@ -542,10 +540,8 @@ test('should use colors when FORCE_COLOR is set in .env', { skip: isWindows }, a
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = configurationFileIn(root)
 
-  await updateFile(configFile, data => {
-    const config = JSON.parse(data)
+  await updateConfigFile(configFile, config => {
     config.logger.level = 'info'
-    return JSON.stringify(config, null, 2)
   })
   await writeFile(resolve(root, '.env'), 'FORCE_TTY=true\nFORCE_COLOR=true', 'utf-8')
 

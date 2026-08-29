@@ -164,6 +164,15 @@ test('starts the inspector', async t => {
 
   assert(found)
 
+  /*
+    One inspector port per application worker, in the order the ports were assigned. The identity
+    check is the thread id, read relative to the first rather than pinned to 1: the v4 loader
+    evaluates each configuration file in a worker of its own before any application starts, and
+    thread ids are process-global and never reused, so the first application worker is not thread 1
+    and how many threads precede it is an implementation detail of the loader.
+  */
+  const threadIds = []
+
   for (let i = 0; i < 4; i++) {
     const [data] = await (await fetch(`http://127.0.0.1:${9230 + i}/json/list`)).json()
     const { webSocketDebuggerUrl } = data
@@ -178,10 +187,16 @@ test('starts the inspector', async t => {
       awaitPromise: true
     })
 
-    assert.strictEqual(res.result.value, i + 1)
+    threadIds.push(res.result.value)
 
     await client.close()
   }
+
+  assert.deepStrictEqual(
+    threadIds,
+    [0, 1, 2, 3].map(offset => threadIds[0] + offset),
+    'each port belongs to the next application worker'
+  )
 
   child.kill('SIGKILL')
 

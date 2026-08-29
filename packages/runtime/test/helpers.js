@@ -111,6 +111,24 @@ function resolveConfigurationPath (path) {
   return path
 }
 
+/*
+  The read half of updateConfigFile, without its write-back. A reader that goes through the updater
+  serializes the file it only meant to inspect, and for a v4 configuration that bakes every
+  expression into the value it evaluated to on this machine -- which is how a fixture's
+  process.env read once became a committed literal.
+*/
+export async function readConfigFile (originalPath) {
+  const path = resolveConfigurationPath(originalPath)
+
+  if (/\.(js|mjs|ts|mts)$/.test(path)) {
+    const { default: contents } = await import(`${pathToFileURL(path).href}?read=${randomUUID()}`)
+
+    return contents
+  }
+
+  return JSON.parse(await readFile(path, 'utf-8'))
+}
+
 export async function updateConfigFile (originalPath, update) {
   const path = resolveConfigurationPath(originalPath)
 

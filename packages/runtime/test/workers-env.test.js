@@ -3,12 +3,33 @@ import { mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadConfiguration, schema } from '../index.js'
-import { configurationFileIn } from './helpers.js'
+import { loadConfiguration } from '../index.js'
 
-async function writeJSON (path, data) {
-  const content = JSON.stringify(data, null, 2)
-  await writeFile(path, content, 'utf8')
+/*
+  v3 wrote `workers: '{PLT_WORKERS}'` and interpolated; v4's configuration file reads the
+  environment itself, and `workers` still admits the string that read produces because
+  `coercePositiveInteger` parses it on the way in, raising a named error when it will not convert.
+  The `?? ''` mirrors v3's fail-closed-to-empty for an unset variable, which is what makes the
+  missing-variable case an error rather than a silent default.
+*/
+async function writeRootConfig (dir, workersExpression) {
+  const path = join(dir, 'watt.config.mjs')
+  await writeFile(
+    path,
+    `export default {\n  workers: ${workersExpression},\n  applications: [{ id: 'svc', path: '.' }]\n}\n`,
+    'utf8'
+  )
+  return path
+}
+
+async function writeEntryConfig (dir, workersExpression) {
+  const path = join(dir, 'watt.config.mjs')
+  await writeFile(
+    path,
+    `export default {\n  applications: [{ id: 'svc', path: '.', workers: ${workersExpression} }]\n}\n`,
+    'utf8'
+  )
+  return path
 }
 
 function withEnv (vars, fn) {
@@ -35,61 +56,25 @@ function withEnv (vars, fn) {
 
 test('root workers: missing PLT_WORKERS fails fast', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = configurationFileIn(dir)
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    workers: '{PLT_WORKERS}',
-    services: [{ id: 'svc', path: '.' }]
-  })
+  const cfgPath = await writeRootConfig(dir, "process.env.PLT_WORKERS ?? ''")
 
   await withEnv({ PLT_WORKERS: undefined }, async () => {
-    await rejects(
-      async () => {
-        await loadConfiguration(cfgPath)
-      },
-      err => {
-        // Either our custom error or schema validation (AJV) kicks in first
-        return (
-          /Runtime workers must be a positive integer/.test(err?.message || '') ||
-          err?.code === 'PLT_CONFIG_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA'
-        )
-      }
-    )
+    await rejects(() => loadConfiguration(cfgPath), /Runtime workers must be a positive integer/)
   })
 })
 
 test('root workers: invalid PLT_WORKERS fails fast', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = configurationFileIn(dir)
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    workers: '{PLT_WORKERS}',
-    services: [{ id: 'svc', path: '.' }]
-  })
+  const cfgPath = await writeRootConfig(dir, "process.env.PLT_WORKERS ?? ''")
 
   await withEnv({ PLT_WORKERS: 'foobar' }, async () => {
-    await rejects(
-      async () => {
-        await loadConfiguration(cfgPath)
-      },
-      err => {
-        return (
-          /Runtime workers must be a positive integer/.test(err?.message || '') ||
-          err?.code === 'PLT_CONFIG_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA'
-        )
-      }
-    )
+    await rejects(() => loadConfiguration(cfgPath), /Runtime workers must be a positive integer/)
   })
 })
 
 test('root workers: valid PLT_WORKERS coerces to number', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = configurationFileIn(dir)
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    workers: '{PLT_WORKERS}',
-    services: [{ id: 'svc', path: '.' }]
-  })
+  const cfgPath = await writeRootConfig(dir, "process.env.PLT_WORKERS ?? ''")
 
   await withEnv({ PLT_WORKERS: '2' }, async () => {
     const loaded = await loadConfiguration(cfgPath)
@@ -99,17 +84,7 @@ test('root workers: valid PLT_WORKERS coerces to number', async () => {
 
 test('service workers: missing PLT_WORKERS fails fast with service context', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = configurationFileIn(dir)
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    services: [
-      {
-        id: 'svc',
-        path: '.',
-        workers: '{PLT_WORKERS}'
-      }
-    ]
-  })
+  const cfgPath = await writeEntryConfig(dir, "process.env.PLT_WORKERS ?? ''")
 
   await withEnv({ PLT_WORKERS: undefined }, async () => {
     await rejects(() => loadConfiguration(cfgPath), /Service "svc" workers must be a positive integer/)
@@ -118,17 +93,7 @@ test('service workers: missing PLT_WORKERS fails fast with service context', asy
 
 test('service workers: valid PLT_WORKERS coerces to number', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-workers-'))
-  const cfgPath = configurationFileIn(dir)
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    services: [
-      {
-        id: 'svc',
-        path: '.',
-        workers: '{PLT_WORKERS}'
-      }
-    ]
-  })
+  const cfgPath = await writeEntryConfig(dir, "process.env.PLT_WORKERS ?? ''")
 
   await withEnv({ PLT_WORKERS: '3' }, async () => {
     const loaded = await loadConfiguration(cfgPath)
