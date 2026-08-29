@@ -2,7 +2,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { copyCommonApplication, prepareRuntime, startRuntime } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
-import { updateConfigFile } from '../../../runtime/test/helpers.js'
+import { readConfigFile, updateConfigFile } from '../../../runtime/test/helpers.js'
 
 export const base64ValueMatcher = /^[a-z0-9-_]+$/i
 export const valkeyUser = 'plt-caching-test'
@@ -49,13 +49,9 @@ export async function cleanupCache (valkey, valkeyUser) {
   the v3 file, and a converted application does not have one.
 */
 export async function getCacheSettings (root) {
-  let cache
-
-  await updateConfigFile(resolve(root, 'services/frontend/platformatic.json'), config => {
-    cache = config.cache
-  })
-
-  return cache
+  // Read-only on purpose: going through the updater would write the evaluated file back, baking
+  // every expression -- a process.env read included -- into a literal.
+  return (await readConfigFile(resolve(root, 'services/frontend/platformatic.json'))).cache
 }
 
 export async function setCacheSettings (root, settings) {

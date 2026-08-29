@@ -6,7 +6,7 @@ export default {
   },
   cache: {
     adapter: 'valkey',
-    url: `valkey://${process.env.VALKEY_URL}`,
+    url: `valkey://${process.env.VALKEY_URL ?? ""}`,
     prefix: 'plt:test:caching-valkey',
     cacheComponents: true
   },
