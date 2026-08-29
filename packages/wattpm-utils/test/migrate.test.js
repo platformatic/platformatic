@@ -294,6 +294,33 @@ test('migrate - unwraps a runtime block into defineConfig with the singular shor
   strictEqual(application.config.cache.adapter, 'redis')
 })
 
+/*
+  The block is a v3 shape, and the v4 view of a capability's schema removes it -- so classifying a
+  position inside one against that view would report every placeholder in it as untypable and
+  refuse a file that converts exactly.
+*/
+test('migrate - types a placeholder inside the runtime block', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      runtime: {
+        logger: { level: '{PLT_LOG_LEVEL}' },
+        applicationTimeout: '{PLT_APPLICATION_TIMEOUT}'
+      }
+    }
+  })
+
+  await linkCapability(root, 'next')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(!migrateProcess.stdout.includes('cannot determine'), migrateProcess.stdout)
+  ok(emitted.includes("requiredEnum('PLT_LOG_LEVEL'"), emitted)
+  ok(emitted.includes("Number(requiredEnv('PLT_APPLICATION_TIMEOUT'))"), emitted)
+})
+
 test('migrate - pins the id v3 used, and says so when the label grammar changes it', async t => {
   const root = await project(
     t,

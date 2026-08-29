@@ -1,26 +1,21 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { test } from 'node:test'
-import { projectCapabilitySchema, projectRuntimeBlock } from '../../lib/v4/project.js'
+import { projectCapabilitySchema } from '../../lib/v4/project.js'
 
-test('the runtime block loses the keys v4 does not implement', () => {
-  const block = {
-    type: 'object',
-    properties: {
-      envfile: { type: 'string' },
-      strictEnv: { type: 'boolean' },
-      logger: { type: 'object' }
-    }
-  }
+/*
+  The block is v3's way of putting orchestration inside an application's own configuration so that
+  `wrapInRuntimeConfig` could hoist it. v4 has no hoisting step, so nothing reads it -- and while
+  the schema admitted it, a configuration asking for `workers: 3` validated, collected defaults and
+  got one worker with no diagnostic. Removing it from the projection makes that a refusal naming
+  the property.
+*/
+test('the runtime block is not part of a v4 capability configuration', () => {
+  const runtime = { type: 'object', properties: { workers: {}, logger: {} } }
+  const schema = { type: 'object', properties: { runtime, module: { type: 'string' } } }
 
-  const projected = projectRuntimeBlock(block)
+  const projected = projectCapabilitySchema(schema)
 
-  deepStrictEqual(Object.keys(projected.properties), ['logger'])
-})
-
-test('$schema stays: the loader strips it rather than refusing it', () => {
-  const block = { type: 'object', properties: { $schema: { type: 'string' }, logger: {} } }
-
-  deepStrictEqual(Object.keys(projectRuntimeBlock(block).properties), ['$schema', 'logger'])
+  ok(!('runtime' in projected.properties))
 })
 
 /*
@@ -34,15 +29,8 @@ test('the shipped schema is not modified', () => {
   const projected = projectCapabilitySchema(schema)
 
   ok(projected !== schema)
-  ok('strictEnv' in schema.properties.runtime.properties, 'the original still validates v3')
-  ok(!('strictEnv' in projected.properties.runtime.properties))
+  ok('runtime' in schema.properties, 'the original still validates v3')
   strictEqual(projected.properties.module, schema.properties.module, 'untouched branches are shared')
-})
-
-test('a schema with nothing to remove is returned as it is', () => {
-  const schema = { type: 'object', properties: { runtime: { type: 'object', properties: { logger: {} } } } }
-
-  strictEqual(projectCapabilitySchema(schema), schema)
 })
 
 test('a schema with no runtime block is returned as it is', () => {

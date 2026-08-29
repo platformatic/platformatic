@@ -11,21 +11,6 @@
 */
 
 /*
-  The runtime's own schema drops these in `v4Schema`. A capability embeds the same properties under
-  its `runtime` key and dropped nothing, so `strictEnv` was refused at the root of a project and
-  accepted a few lines further down in the same configuration -- the worst of both, since the key
-  validated and then did nothing.
-
-  `$schema` is not in this list: a machine writer of the plain-object form stamps it, and the loader
-  strips it before validation rather than refusing it (see "Machine-generated configs").
-*/
-const REMOVED_FROM_RUNTIME_BLOCK = ['envfile', 'strictEnv']
-
-function isPlainObject (value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-/*
   The placeholder branches, classified one at a time.
 
   v3's `{PLT_X}` was a string, so almost every typed property grew a bare string branch beside its
@@ -103,21 +88,15 @@ const PLACEHOLDER_BRANCHES = new Set([
   'https/enabled',
   'cache/enabled',
   /*
-    Numbers, at the root of a runtime configuration and under the `runtime` block a capability
-    embeds -- the same properties, reachable by two paths, so both are named.
-
-    `applicationTimeout` and `messagingTimeout` are passed straight to a timeout,
-    `workersRestartDelay` is compared and slept on, `startupConcurrency` goes through `Math.max`,
-    and both halves of `gracefulShutdown` are milliseconds. None is parsed from a string.
+    Numbers at the root of a runtime configuration. `applicationTimeout` and `messagingTimeout` are
+    passed straight to a timeout, `workersRestartDelay` is compared and slept on,
+    `startupConcurrency` goes through `Math.max`, and both halves of `gracefulShutdown` are
+    milliseconds. None is parsed from a string.
   */
   '(root)/applicationTimeout',
-  'runtime/applicationTimeout',
   '(root)/messagingTimeout',
-  'runtime/messagingTimeout',
   '(root)/workersRestartDelay',
-  'runtime/workersRestartDelay',
   '(root)/startupConcurrency',
-  'runtime/startupConcurrency',
   'gracefulShutdown/runtime',
   'gracefulShutdown/application',
   /*
@@ -141,16 +120,13 @@ const PLACEHOLDER_BRANCHES = new Set([
     `'false'` is truthy and turns watching *on* where the author meant to turn it off.
   */
   '(root)/watch',
-  'runtime/watch',
   /*
     Switches whose object form carries the settings and whose boolean form turns them off. A string
     satisfies neither and defeats both: `if (!config.managementApi)` and `healthProbes !== false`
     are truthiness tests, so `'false'` starts the very thing it was written to stop.
   */
   '(root)/managementApi',
-  'runtime/managementApi',
   '(root)/healthProbes',
-  'runtime/healthProbes',
   /*
     Vite's not-found handler is read only through its object form -- `.enabled`, then `statusCode`,
     `contentType` and `path` are destructured off it -- so the string branch reaches nothing.
@@ -270,40 +246,26 @@ function projectPlaceholderBranches (node, parent = '(root)', name = null) {
   return changed ? mapped : result
 }
 
-export function projectRuntimeBlock (block) {
-  if (!isPlainObject(block?.properties)) {
-    return block
-  }
-
-  const properties = { ...block.properties }
-  let removed = false
-
-  for (const key of REMOVED_FROM_RUNTIME_BLOCK) {
-    if (key in properties) {
-      delete properties[key]
-      removed = true
-    }
-  }
-
-  return removed ? { ...block, properties } : block
-}
-
 /*
   Copied only along the path that changes. A schema is large and every capability embeds the shared
-  blocks, so rebuilding all of it to remove two keys would allocate a second copy of the whole thing
+  blocks, so rebuilding all of it to remove one key would allocate a second copy of the whole thing
   per load for no benefit.
+
+  The `runtime` block goes entirely. It is v3's way of putting orchestration inside an
+  application's own configuration so that `wrapInRuntimeConfig` could hoist it, and v4 has no
+  hoisting step: an autoloaded application's block is read by nobody, and a standalone one's is
+  read by nobody either, because the auto-wrap makes the whole export the application's capability
+  configuration. Leaving it in the schema meant it validated, collected defaults, and was then
+  ignored -- a configuration asking for `workers: 3` got one worker and no diagnostic. Removing it
+  turns that into a refusal naming the property, and the v4 spelling is one level out: orchestration
+  is top-level beside `application`, which is Level 1b.
 */
 export function projectCapabilitySchema (schema) {
-  const runtimeBlock = schema?.properties?.runtime
-
-  if (!runtimeBlock) {
+  if (!schema?.properties?.runtime) {
     return projectPlaceholderBranches(schema)
   }
 
-  const projected = projectRuntimeBlock(runtimeBlock)
+  const { runtime: _removed, ...properties } = schema.properties
 
-  const withRuntime =
-    projected === runtimeBlock ? schema : { ...schema, properties: { ...schema.properties, runtime: projected } }
-
-  return projectPlaceholderBranches(withRuntime)
+  return projectPlaceholderBranches({ ...schema, properties })
 }

@@ -85,9 +85,9 @@ test('supports execArgv', async t => {
   ])
 })
 
-test('supports execArgv when not using a runtime configuration file', async t => {
+test('supports execArgv from a single-application configuration', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'exec-argv', 'applications', 'main', 'watt.config.js')
+  const configFile = join(fixturesDir, 'exec-argv-single', 'watt.config.js')
   const app = await createRuntime(configFile)
   const promise = once(app, 'application:worker:event:argv')
   const { 'main:0': entryUrl } = await app.start()

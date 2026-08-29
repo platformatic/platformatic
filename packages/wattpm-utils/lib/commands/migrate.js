@@ -762,7 +762,9 @@ function emitHelpers (helpers) {
 */
 async function capabilitySchema (module, directory) {
   try {
-    const { schema } = await importCapabilitySchema(module, directory, { runtimeScope })
+    // Unprojected on purpose: the file being read is a v3 one, and it is classified by migrate's
+    // own union rules rather than by the v4 view's.
+    const { schema } = await importCapabilitySchema(module, directory, { runtimeScope, projected: false })
 
     return schema ?? null
   } catch {

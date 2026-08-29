@@ -86,8 +86,13 @@ export function createCapabilityValidator (schema, { root, fixPaths = true, useD
   package's main entry is a transitional step: until every capability ships the subpath, boot would
   otherwise not be able to validate at all, and a validator that skips what it cannot import is not
   a validator. Removing the fallback is part of the capability work.
+
+  `projected: false` asks for the shipped schema instead of the v4 view of it. The one caller is
+  migrate, which reads v3 configurations: classifying a position in one against a schema with v3's
+  shape removed would report the `runtime` block as a position whose type migrate cannot determine,
+  and refuse a file it converts perfectly well.
 */
-export async function importCapabilitySchema (module, applicationRoot, { runtimeScope } = {}) {
+export async function importCapabilitySchema (module, applicationRoot, { runtimeScope, projected = true } = {}) {
   const scopes = [
     { scope: 'application', require: createRequire(join(applicationRoot, 'noop.js')) },
     // The bundled fallback resolves from the caller's position, not from this module's: foundation
@@ -128,7 +133,7 @@ export async function importCapabilitySchema (module, applicationRoot, { runtime
           scope,
           via,
           path: resolved,
-          schema: projectCapabilitySchema(loaded.schema),
+          schema: projected ? projectCapabilitySchema(loaded.schema) : loaded.schema,
           // The package-level metadata main-side preparation needs besides the schema. An absent
           // servesWithoutPort means 'worker', which is what the serving predicate reads.
           metadata: {
