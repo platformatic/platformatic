@@ -58,24 +58,26 @@ Hello YOURNAME, welcome to Watt!
 INFO: .env written!
 INFO: .env.sample written!
 INFO: package.json written!
-INFO: watt.json written!
+INFO: watt.config.mjs written!
 INFO: Installing dependencies for the project using npm ...
 INFO: You are all set! Run `npm start` to start your project.
 ```
 
-This writes a `watt.json` that treats your project as a single `@platformatic/node` application:
+This treats your project as a single `@platformatic/node` application. With default settings it
+writes no configuration file at all — the capability is inferred from your dependencies. Write one
+when you want to say something the defaults do not:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
-  "runtime": {
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
-    "managementApi": "{PLT_MANAGEMENT_API}"
-  }
-}
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  logger: { level: 'info' },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
+
+There is no `runtime` block: orchestration settings belong to the root, and a single-application
+project has no root to put them in until it grows one.
 
 Start it:
 
@@ -180,37 +182,40 @@ directory under `web/`:
 ```
 my-project/
 ├── package.json          # "workspaces": ["web/*"]
-├── watt.json             # runtime configuration
+├── watt.config.ts        # runtime configuration
 └── web/
     ├── api/              # the Express application
     │   ├── package.json
-    │   ├── watt.json
+    │   ├── watt.config.ts
     │   └── index.js
     └── notifier/
         ├── package.json
-        ├── watt.json
+        ├── watt.config.ts
         └── index.js
 ```
 
 The runtime configuration picks up everything under `web/` and names one application as the
 entrypoint:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "entrypoint": "api",
-  "autoload": { "path": "web" },
-  "server": { "hostname": "127.0.0.1", "port": 3042 },
-  "logger": { "level": "info" }
-}
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: { path: 'web' },
+  logger: { level: 'info' }
+})
 ```
 
-Each application gets a minimal `watt.json` naming its capability:
+There is no `entrypoint` and no root `server`: each application declares its own port, and the one
+that is publicly addressable is the one you point traffic at. Each application gets a
+`watt.config.ts` naming its capability:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json"
-}
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 Applications call each other over the mesh, using the directory name as the hostname:
@@ -238,25 +243,27 @@ When an Express application is not the entrypoint, it usually sits behind a
 
 Declare the prefix on the application:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
-  "application": {
-    "basePath": "/orders"
-  }
-}
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  application: { basePath: '/orders' },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 and let the gateway pick it up:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
-  "gateway": {
-    "applications": [{ "id": "orders" }],
-    "refreshTimeout": 1000
-  }
-}
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [{ id: 'orders' }],
+    refreshTimeout: 1000
+  },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 :::caution[The prefix is stripped before your application sees it]
@@ -271,12 +278,14 @@ match it and you will get a 404 that looks like a routing bug.
 If your application genuinely needs the full path — because it builds absolute URLs, or generates
 links that must include the prefix — set `absoluteUrl` and prefix your routes explicitly:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
-  "application": { "basePath": "/orders" },
-  "node": { "absoluteUrl": true }
-}
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  application: { basePath: '/orders' },
+  node: { absoluteUrl: true },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 ```js
