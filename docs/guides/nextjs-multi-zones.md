@@ -11,47 +11,51 @@ In this guide, you will configure two Next.js applications:
 
 Create a Watt runtime with Gateway as its entrypoint:
 
-```json title="watt.json"
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
-  "entrypoint": "gateway",
-  "applications": [
+```ts config title="watt.config.ts"
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [
     {
-      "id": "gateway",
-      "path": "./web/gateway"
+      id: 'gateway',
+      path: './web/gateway'
     },
     {
-      "id": "frontend",
-      "path": "./web/frontend"
+      id: 'frontend',
+      path: './web/frontend'
     },
     {
-      "id": "blog",
-      "path": "./web/blog"
+      id: 'blog',
+      path: './web/blog'
     }
   ]
-}
+})
 ```
 
-Each application runs independently. Gateway is the only public entrypoint and routes every request for a zone, including its pages and assets.
+Each application runs independently. Gateway is the only public entrypoint — it is the one that declares a `server.port`, and it routes every request for a zone, including its pages and assets.
 
 ## Configure Gateway
 
 List both Next.js applications in the Gateway configuration:
 
-```json title="web/gateway/watt.json"
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config title="web/gateway/watt.config.ts"
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [
       {
-        "id": "blog"
+        id: 'blog'
       },
       {
-        "id": "frontend"
+        id: 'frontend'
       }
     ]
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 Gateway obtains each public prefix from the application. The more specific `/blog` zone is listed before the root zone.
@@ -66,10 +70,14 @@ Do not configure a separate Next.js `assetPrefix` for this layout. A base path m
 
 The root application does not need a base path:
 
-```json title="web/frontend/watt.json"
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json"
-}
+```ts config title="web/frontend/watt.config.ts"
+import { next } from '@platformatic/next'
+
+export default next({
+  server: {
+    port: Number(process.env.PORT ?? 3042)
+  }
+})
 ```
 
 It serves its pages and Next.js assets from `/` and `/_next`.
@@ -78,13 +86,17 @@ It serves its pages and Next.js assets from `/` and `/_next`.
 
 Set the blog application's public path with `application.basePath`:
 
-```json title="web/blog/watt.json"
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
-  "application": {
-    "basePath": "/blog"
+```ts config title="web/blog/watt.config.ts"
+import { next } from '@platformatic/next'
+
+export default next({
+  application: {
+    basePath: '/blog'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 Pages are served below `/blog`, and generated assets use `/blog/_next`.

@@ -52,21 +52,25 @@ Why this matters:
 
 ## Configuration
 
-Enable Image Optimizer mode in `watt.json` (or `platformatic.json`):
+Enable Image Optimizer mode in `watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json",
-  "next": {
-    "imageOptimizer": {
-      "enabled": true,
-      "fallback": "frontend",
-      "timeout": 30000,
-      "ttl": 3600000,
-      "maxAttempts": 3
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  next: {
+    imageOptimizer: {
+      enabled: true,
+      fallback: 'frontend',
+      timeout: 30000,
+      ttl: 3600000,
+      maxAttempts: 3
     }
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 In this example:
@@ -83,30 +87,31 @@ If you do not set `storage`, Platformatic uses in-memory queue storage by defaul
 
 A common production setup is to expose Gateway publicly and route only `/_next/image` traffic to the optimizer service.
 
-`services/gateway/platformatic.json`:
+`web/gateway/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [
       {
-        "id": "frontend",
-        "proxy": {
-          "prefix": "/"
+        id: 'frontend',
+        proxy: {
+          prefix: '/'
         }
       },
       {
-        "id": "optimizer",
-        "proxy": {
-          "prefix": "/",
-          "routes": ["/_next/image"],
-          "methods": ["GET"]
+        id: 'optimizer',
+        proxy: {
+          prefix: '/',
+          routes: ['/_next/image'],
+          methods: ['GET']
         }
       }
     ]
   }
-}
+})
 ```
 
 This routes image optimization requests to `optimizer`, while all other requests are handled by `frontend`.

@@ -86,40 +86,42 @@ Here is a policy that can be used for the various configuration:
 ## Configure existing Watt application
 
 The first change to make is configuring the application to export logs. The
-logger needs a new timestamp format and an exporter added to _watt.json_:
+logger needs a new timestamp format and an exporter added to _watt.config.ts_:
 
-```json
-{
-    "logger": {
-        "timestamp": "isoTime",
-        "openTelemetryExporter": {
-            "url": "http://localhost:4318/v1/logs"
-        }
+```ts
+export default defineConfig({
+  // ...
+  logger: {
+    timestamp: 'isoTime',
+    openTelemetryExporter: {
+      url: 'http://localhost:4318/v1/logs'
     }
-}
+  }
+})
 ```
 
 This makes sure our logs are shipped to Cloudwatch and we integrate with the
 `@timestamp` property of Cloudwatch.
 
-Next, a `telemetry` block must be added to _watt.json_ so that metrics flow into Cloudwatch.
+Next, a `telemetry` block must be added to _watt.config.ts_ so that metrics flow into Cloudwatch.
 
 This example uses OTLP over HTTP. You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport": "grpc"`) and using `http://localhost:4317` without `/v1/traces`.
 
-```json
-{
-    "telemetry": {
-        "applicationName": "the-app-name",
-        "version": "1.0.0",
-        "enabled": true,
-        "exporter": {
-            "type": "otlp",
-            "options": {
-                "url": "http://localhost:4318/v1/traces"
-            }
-        }
+```ts
+export default defineConfig({
+  // ...
+  telemetry: {
+    applicationName: 'the-app-name',
+    version: '1.0.0',
+    enabled: true,
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
+      }
     }
-}
+  }
+})
 ```
 
 
@@ -901,7 +903,7 @@ Congratulations! You've successfully deployed a Watt application to ECS.
 
 **Key Takeaways:**
 
-- The `watt.json` logger and telemetry configuration connects Watt to the ADOT sidecar running on `localhost:4318`
+- The `watt.config.ts` logger and telemetry configuration connects Watt to the ADOT sidecar running on `localhost:4318`
 - ADOT handles routing: logs to CloudWatch Logs, metrics to CloudWatch via EMF, and traces to X-Ray
 - Autoscaling is driven by `nodejs_eventloop_utilization`, a more accurate signal of Node.js saturation than CPU
 

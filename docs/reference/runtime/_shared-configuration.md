@@ -968,44 +968,29 @@ export default defineConfig({
 })
 ```
 
-### verticalScaler
+### `verticalScaler`
 
-:::warning
-The `verticalScaler` configuration is deprecated and will be removed in a future version. These options are now mapped to the equivalent properties in the `workers` configuration. Please use the `workers` configuration instead.
-:::
+**Removed in v4.** It was the deprecated spelling of [`workers`](#workers), kept on the v3 schema
+with a transform that rewrote it. v4 has one spelling: a configuration that still says
+`verticalScaler` is told so by the schema rather than being quietly rewritten, which is the only way
+the two cannot disagree about which of them a project meant.
 
-The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime. The vertical scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory.
+The v3 transform is the mapping to apply by hand:
 
-The scaler operates in two modes:
+| `verticalScaler`     | `workers`                     |
+| -------------------- | ----------------------------- |
+| `enabled`            | `dynamic`                     |
+| `maxTotalWorkers`    | `total`                       |
+| `minWorkers`         | `minimum`                     |
+| `maxWorkers`         | `maximum`                     |
+| `maxTotalMemory`     | `maxMemory`                   |
+| `cooldownSec`        | `cooldown`, in milliseconds   |
+| `gracePeriod`        | `gracePeriod`                 |
+| `applications[<id>]` | that application's `workers`  |
 
-- **Reactive Mode**: Triggers scaling checks immediately when any worker's ELU exceeds the `scaleUpELU` threshold
-- **Periodic Mode**: Runs scaling checks at regular intervals defined by `scaleIntervalSec`
-
-When scaling up, the algorithm ensures there is sufficient available memory to accommodate new workers based on the application's average heap usage. Available memory is calculated as `maxTotalMemory - currently used memory`, where used memory is obtained from cgroup files in containerized environments or from the operating system otherwise.
-
-Configuration options:
-
-- **`enabled`** (`boolean` or `string`). If `false` the vertical scaling is disabled. Default: `true`.
-- **`maxTotalWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
-- **`maxTotalMemory`** (`number`). The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
-- **`minWorkers`** (`number`). The minimum number of workers that can be used for _each_ application. It can be overridden at application level. Default: `1`.
-- **`maxWorkers`** (`number`). The maximum number of workers that can be used for _each_ application. It can be overridden at application level. Default: global `maxTotalWorkers` value.
-- **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60`.
-- **`scaleUpELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling up is hardcoded to `0.8`.
-- **`scaleDownELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling down is hardcoded to `0.2`.
-- **`timeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-up decisions is hardcoded to `10` seconds.
-- **`scaleDownTimeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-down decisions is hardcoded to `60` seconds.
-- **`gracePeriod`** (`number`). The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
-- **`scaleIntervalSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The interval for periodic scaling checks is hardcoded to `60` seconds.
-- **`applications`** (`object`). An object with application-specific scaling configuration. Each key is an application ID, with an object value containing:
-  - **`minWorkers`** (`number`). The minimum number of workers that can be used for this application. Default: `1`.
-  - **`maxWorkers`** (`number`). The maximum number of workers that can be used for this application. Default: global `maxWorkers` value.
-
-**Notes:**
-
-- Applications with a fixed `workers` configuration will have their min/max workers automatically set to their current value to prevent scaling.
-- The scaler tracks heap memory usage and will not scale up if there is insufficient available memory, even if ELU thresholds are met.
-- By default, the scaler uses 90% of total system memory as the memory limit to provide a safety buffer and prevent out-of-memory situations.
+`scaleUpELU`, `scaleDownELU`, `timeWindowSec`, `scaleDownTimeWindowSec` and `scaleIntervalSec` were
+already unused on v3 — the thresholds and windows the scaler uses are fixed — so they carry across to
+nothing.
 
 ### policies
 

@@ -62,6 +62,7 @@ const documents = [
   { name: 'docs/file-formats.md', markEverything: false },
   { name: 'docs/guides/generating-watt-configuration.md', markEverything: false },
   { name: 'docs/reference/runtime/_shared-configuration.md', markEverything: false },
+  { name: 'docs/reference/_runtime-in-capabilities.md', markEverything: false },
   { name: 'docs/reference/service/configuration.md', markEverything: false },
   { name: 'docs/reference/db/configuration.md', markEverything: false },
   { name: 'docs/reference/gateway/configuration.md', markEverything: false },
@@ -79,10 +80,48 @@ const documents = [
   { name: 'docs/overview/what-is-watt.md', markEverything: false },
   { name: 'docs/learn/migrations/from-express.md', markEverything: false },
   { name: 'docs/learn/migrations/from-fastify.md', markEverything: false },
-  { name: 'docs/guides/logging.md', markEverything: false }
+  { name: 'docs/guides/logging.md', markEverything: false },
+  { name: 'docs/guides/dynamic-workers.md', markEverything: false },
+  { name: 'docs/guides/capabilities.md', markEverything: false },
+  { name: 'docs/learn/beginner/environment-variables.md', markEverything: false },
+  { name: 'docs/guides/use-watt-with-ts-node.md', markEverything: false },
+  { name: 'docs/guides/deployment/nextjs-in-k8s.md', markEverything: false },
+  { name: 'docs/reference/astro/overview.md', markEverything: false },
+  { name: 'docs/reference/nest/overview.md', markEverything: false },
+  { name: 'docs/reference/next/overview.md', markEverything: false },
+  { name: 'docs/reference/nitro/overview.md', markEverything: false },
+  { name: 'docs/reference/node/overview.md', markEverything: false },
+  { name: 'docs/reference/nuxt/overview.md', markEverything: false },
+  { name: 'docs/reference/react-router/overview.md', markEverything: false },
+  { name: 'docs/reference/remix/overview.md', markEverything: false },
+  { name: 'docs/reference/tanstack/overview.md', markEverything: false },
+  { name: 'docs/reference/vite/overview.md', markEverything: false },
+  { name: 'docs/reference/runtime/overview.md', markEverything: false },
+  { name: 'docs/getting-started/quick-start.md', markEverything: false },
+  { name: 'docs/guides/distributed-tracing.md', markEverything: false },
+  { name: 'docs/guides/use-watt-multiple-repository.md', markEverything: false },
+  { name: 'docs/overview/architecture-overview.md', markEverything: false },
+  { name: 'docs/overview/comparison-with-alternatives.md', markEverything: false },
+  { name: 'docs/learn/beginner/crud-application.md', markEverything: false },
+  { name: 'docs/guides/generate-frontend-code-to-consume-platformatic-rest-api.md', markEverything: false },
+  { name: 'docs/reference/next/experimental-adapter-path.md', markEverything: false },
+  { name: 'docs/guides/opentelemetry-logging.md', markEverything: false },
+  { name: 'docs/guides/opentelemetry-sdk-setup.md', markEverything: false },
+  { name: 'docs/guides/cache-with-platformatic-watt.md', markEverything: false },
+  { name: 'docs/guides/nextjs-multi-zones.md', markEverything: false },
+  { name: 'docs/guides/next-image-optimizer.md', markEverything: false },
+  { name: 'docs/reference/next/image-optimizer.md', markEverything: false },
+  { name: 'docs/guides/build-modular-monolith.md', markEverything: false },
+  { name: 'docs/reference/runtime/programmatic.md', markEverything: false }
 ]
 
 const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])
+/*
+  Node's type stripper parses TypeScript and not JSX, so a `tsx` block cannot be parse-checked here.
+  It still carries a marker: the category is what the page is claiming about the block, and that
+  claim is worth stating whether or not this gate can act on it.
+*/
+const jsxLanguages = new Set(['tsx'])
 const workspace = join(root, 'tmp', 'check-blocks')
 const markers = new Set(['config', 'decl', 'source', 'v3', 'output'])
 const verbose = process.argv.includes('--verbose')
@@ -405,15 +444,33 @@ async function checkDocument (name, documentIndex, blocks, failures, typecheckab
     }
 
     if (block.marker === 'source') {
+      if (jsxLanguages.has(block.language)) {
+        continue
+      }
+
       /*
         Stripped rather than typechecked. It is an application's own code quoted for illustration,
         so its imports are the reader's dependencies and not this repository's -- but it is still
         TypeScript, and a snippet that does not parse is wrong on the page whatever it imports.
+
+        `refused` inverts the check, which is what a page quoting a construct Node cannot strip --
+        an enum, say -- is asserting about its own example. Without it those pages would either be
+        unchecked or would have to stop saying what they exist to say.
       */
+      let stripped = true
+
       try {
         stripTypeScriptTypes(block.content, { mode: 'strip' })
       } catch (error) {
-        failures.push(`${name}:${block.line}: ${error.message.split('\n')[0]}`)
+        stripped = false
+
+        if (!block.refused) {
+          failures.push(`${name}:${block.line}: ${error.message.split('\n')[0]}`)
+        }
+      }
+
+      if (stripped && block.refused) {
+        failures.push(`${name}:${block.line}: marked refused, but Node strips it`)
       }
 
       continue

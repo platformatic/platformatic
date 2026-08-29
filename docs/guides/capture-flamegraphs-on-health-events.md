@@ -17,25 +17,26 @@ npm install @platformatic/wattpm-pprof-capture @aws-sdk/client-s3
 
 ## Configure the extension
 
-Register the extension in your `watt.json` (or `platformatic.json`) and pass its settings via `options`:
+Register the extension in your `watt.config.ts` and pass its settings via `options`:
 
-```json
-{
-  "extensions": [
+```ts
+export default defineConfig({
+  // ...
+  extensions: [
     {
-      "path": "./flamegraph-extension.js",
-      "options": {
-        "bucket": "{PLT_FLAMEGRAPHS_BUCKET}",
-        "region": "{PLT_AWS_REGION}",
-        "profileDurationMillis": 10000,
-        "cooldownMillis": 300000
+      path: './flamegraph-extension.js',
+      options: {
+        bucket: process.env.PLT_FLAMEGRAPHS_BUCKET,
+        region: process.env.PLT_AWS_REGION,
+        profileDurationMillis: 10000,
+        cooldownMillis: 300000
       }
     }
   ]
-}
+})
 ```
 
-The environment variable placeholders are resolved from the runtime environment, so the bucket and region never need to be hardcoded.
+The configuration file reads the environment directly, so the bucket and region never need to be hardcoded.
 
 ## The extension
 

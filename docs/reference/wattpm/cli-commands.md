@@ -49,7 +49,7 @@ wattpm init  # creates in current directory
 **Options:**
 
 - `-l, --latest` - Use the latest version of watt-utils
-- `-c, --config <name>` - Configuration file name (default: `watt.json`)
+- `-c, --config <name>` - Configuration file name (default: `watt.config.ts`)
 - `-s, --skip-dependencies` - Don't install dependencies after creating files
 - `-P, --package-manager <manager>` - Use specific package manager (`npm`, `yarn`, `pnpm`)
 - `-M, --module <name>` - Additional application generator modules (can be used multiple times)
@@ -79,7 +79,7 @@ wattpm dev [directory]
 
 ```bash
 wattpm dev
-wattpm dev ./my-app --config custom-watt.json
+wattpm dev ./my-app --config custom.watt.config.ts
 ```
 
 ### `wattpm start`
@@ -799,10 +799,10 @@ wattpm version
 
 Watt automatically detects configuration files in this order:
 
-1. `watt.json` / `watt.json5`
-2. `platformatic.json` / `platformatic.json5`
-3. `platformatic.yml` / `platformatic.yaml`
-4. `platformatic.tml` / `platformatic.toml`
+1. `watt.config.ts`
+2. `watt.config.mts`
+3. `watt.config.js`
+4. `watt.config.mjs`
 
 For more details, see [Configuration File Formats](../../file-formats.md).
 

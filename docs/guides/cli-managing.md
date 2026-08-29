@@ -9,12 +9,13 @@ Before you can Watt to manage your application, you need to enable
 the application management API in your application's configuration file. This will
 allow the CLI to communicate with your application.
 
-To enable the application management API, add the following configuration to your application's `platformatic.json` file:
+To enable the application management API, add the following configuration to your `watt.config.ts` file:
 
-```json
-{
-  "managementApi": true
-}
+```ts
+export default defineConfig({
+  // ...
+  managementApi: true
+})
 ```
 
 ## Installing

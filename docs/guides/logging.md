@@ -34,6 +34,7 @@ The default configuration uses `level: info` with pretty-printed output in devel
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     level: 'debug'
   }
@@ -62,6 +63,7 @@ const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as
 const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: { level }
 })
 ```
@@ -78,6 +80,7 @@ Set `LOG_LEVEL=error` in production, `LOG_LEVEL=debug` in development.
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     transport: {
       targets: [
@@ -100,6 +103,7 @@ export default defineConfig({
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     transport: {
       targets: [
@@ -138,6 +142,7 @@ This logs all messages to console with pretty formatting, and errors to a file.
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     openTelemetryExporter: {
       protocol: 'http',
@@ -170,6 +175,7 @@ The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   telemetry: {
     applicationName: 'my-app',
     exporter: {
@@ -203,6 +209,7 @@ Then add a Sentry target to `logger.transport.targets`:
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     level: 'info',
     transport: {
@@ -237,6 +244,7 @@ Use `minLevel` if you also want `pino-sentry-transport` to filter records intern
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     level: 'debug',
     transport: {
@@ -265,6 +273,7 @@ In this example, Watt emits `debug` and above, the Sentry transport target recei
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     transport: {
       targets: [
@@ -292,6 +301,7 @@ Insights dashboards. To do this, the timestamp format needs to be changed.
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     timestamp: 'isoTime'
   }
@@ -308,6 +318,7 @@ export default defineConfig({
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     redact: {
       paths: ['req.headers.authorization', 'password', 'apiKey', 'req.body.creditCard'],
@@ -357,6 +368,7 @@ export default defineConfig({
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     level: 'info',
     timestamp: 'isoTime',
@@ -446,6 +458,7 @@ With custom logger configuration, for example
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     captureStdio: false,
     level: 'info',
@@ -468,6 +481,7 @@ Set `logger.pino` to the keys emitted by your worker application logs:
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     pino: {
       level: 'severity',
@@ -534,6 +548,7 @@ The `captureStdio` option in `wattpm` can be set to `false` to disable the captu
 import { defineConfig } from 'wattpm'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     captureStdio: false
   }
@@ -560,6 +575,7 @@ const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as
 const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
 
 export default defineConfig({
+  autoload: { path: 'web' },
   logger: {
     level,
     transport: {

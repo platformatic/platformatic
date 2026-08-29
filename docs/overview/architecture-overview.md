@@ -236,14 +236,15 @@ const cached = await fetch('https://api.slow-application.com/data')
 
 **Note:** HTTP caching must be enabled in your configuration file to take advantage of automatic caching:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "httpCache": true,
-  "autoload": {
-    "path": "web"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  httpCache: true,
+  autoload: {
+    path: 'web'
   }
-}
+})
 ```
 
 ## Deployment Architecture Patterns

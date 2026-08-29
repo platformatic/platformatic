@@ -76,18 +76,28 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 ? What port do you want to use? 5042
 ```
 
-Open the `web/main/platformatic.json` file and add the telemetry configuration:
+Open the `web/main/watt.config.ts` file and add the telemetry configuration to the factory call:
 
-```json
-  "telemetry": {
-    "applicationName": "test-db",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+```ts config
+import { db } from '@platformatic/db'
+
+export default db({
+  db: {
+    connectionString: process.env.DATABASE_URL ?? 'sqlite://./db.sqlite'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 5042)
+  },
+  telemetry: {
+    applicationName: 'test-db',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   }
+})
 ```
 
 Finally, start the application:
@@ -118,18 +128,25 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 ? What port do you want to use? 5043
 ```
 
-Open the `web/main/platformatic.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `applicationName`)
+Open the `web/main/watt.config.ts` file and add the following telemetry configuration to the factory call (it's exactly the same as `DB`, but with a different `applicationName`)
 
-```json
-  "telemetry": {
-    "applicationName": "test-service",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+```ts config
+import { service } from '@platformatic/service'
+
+export default service({
+  server: {
+    port: Number(process.env.PORT ?? 5043)
+  },
+  telemetry: {
+    applicationName: 'test-service',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   }
+})
 ```
 
 We want this application to invoke the DB application, so we need to add a [Massimo client](https://massimohttp.dev/) for `test-db` to it:
@@ -196,34 +213,35 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 ? What port do you want to use? 5044
 ```
 
-Open `web/main/platformatic.json` and change it to the following:
+Open `web/main/watt.config.ts` and change it to the following:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [
       {
-        "id": "example",
-        "origin": "http://127.0.0.1:5043",
-        "openapi": {
-          "url": "/documentation/json"
+        id: 'example',
+        origin: 'http://127.0.0.1:5043',
+        openapi: {
+          url: '/documentation/json'
         }
       }
     ],
-    "refreshTimeout": 3000
+    refreshTimeout: 3000
   },
-  "telemetry": {
-    "applicationName": "test-gateway",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+  telemetry: {
+    applicationName: 'test-gateway',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   },
-  "watch": true
-}
+  watch: true
+})
 ```
 
 Note that we just added `test-service` as `origin` of the proxied application and added the usual `telemetry` configuration, with a different `applicationName`.

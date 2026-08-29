@@ -142,12 +142,13 @@ Caches npm downloads between builds, significantly speeding up subsequent builds
 
 **Module Compile Cache:**
 
-Enable Node.js module compile cache in your `watt.json` for faster container startup times:
+Enable Node.js module compile cache in your `watt.config.ts` for faster container startup times:
 
-```json
-{
-  "compileCache": true
-}
+```ts
+export default defineConfig({
+  // ...
+  compileCache: true
+})
 ```
 
 When enabled, the compile cache is populated during `npm run build` and baked into your Docker image. This means every container started from the image benefits from pre-compiled V8 code, significantly reducing startup time.

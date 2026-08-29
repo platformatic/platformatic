@@ -79,14 +79,15 @@ app.listen(3000)
 
 **Example Watt Migration:**
 
-```json
+```ts config
 // Wrap existing Express app in Watt
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
-  "application": {
-    "main": "app.js"
+import { node } from '@platformatic/node'
+
+export default node({
+  node: {
+    main: 'app.js'
   }
-}
+})
 ```
 
 #### Migration Path: Express.js → Watt
@@ -306,12 +307,12 @@ NestJS is an enterprise-focused Node.js framework inspired by Angular, emphasizi
 
 **Example NestJS Use Case:**
 
-```typescript
+```typescript source refused
 @Controller('users')
 export class UsersController {
   constructor (private usersService: UsersService) {}
 
-  @Get( ()
+  @Get()
   @UseGuards(AuthGuard)
   async findAll(): Promise<User[]> {
     return this.usersService.findAll()

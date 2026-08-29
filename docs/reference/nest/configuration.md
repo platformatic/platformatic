@@ -122,20 +122,22 @@ async function bootstrap() {
 bootstrap()
 ```
 
-Then, modify the `watt.json` file like this:
+Then, modify the `watt.config.ts` file like this:
 
-```javascript
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/nest/2.66.0.json",
-  // ...
-  "nest": {
-    // ...
-    "setup": {
-      "path": "setup",
-      "name": "setupApplication
+```ts config
+import { nest } from '@platformatic/nest'
+
+export default nest({
+  nest: {
+    setup: {
+      path: 'setup',
+      name: 'setupApplication'
     }
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 <Issues />

@@ -84,7 +84,7 @@ Navigate to your web directory and add a database application:
 
 Take a moment to examine the files Watt created:
 
-1. **`watt.json`** - Your application server configuration
+1. **`watt.config.ts`** - Your application server configuration
 2. **`.env`** - Environment variables shared across all applications
 3. **`web/`** - Directory where your applications will live
 
@@ -146,7 +146,7 @@ If you prefer to use PostgreSQL from the start (recommended for enterprise devel
 
    :::caution[Edit the existing variable — do not add a new one]
    The variable is named after your application. Because we named the application `db`, the variable
-   is `PLT_DB_DATABASE_URL`, and `web/db/watt.json` refers to it as `{PLT_DB_DATABASE_URL}`.
+   is `PLT_DB_DATABASE_URL`, and `web/db/watt.config.ts` reads it as `process.env.PLT_DB_DATABASE_URL`.
 
    Adding a differently named variable such as `DATABASE_URL` **fails silently**: nothing reads it,
    no error is raised, and your migrations quietly continue to go to the SQLite file. If you are
@@ -179,8 +179,8 @@ The first one is the dangerous one, because it fails later than the other two �
 
 | Component                       | Role                 | Responsibilities                                                                                                                                                     | Configuration                              |
 | ------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **Watt**                        | Application Server   | • Orchestrates multiple applications<br/>• Manages unified configuration<br/>• Handles application discovery<br/>• Provides unified logging<br/>• Manages deployment | `watt.json` + shared `.env`                |
-| **Platformatic DB Application** | Database Application | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation             | `web/db/watt.json` |
+| **Watt**                        | Application Server   | • Orchestrates multiple applications<br/>• Manages unified configuration<br/>• Handles application discovery<br/>• Provides unified logging<br/>• Manages deployment | `watt.config.ts` + shared `.env`                |
+| **Platformatic DB Application** | Database Application | • Connects to your database<br/>• Auto-generates REST/GraphQL APIs<br/>• Handles migrations<br/>• Manages data operations<br/>• Provides type generation             | `web/db/watt.config.ts` |
 
 **Key Distinction:**
 
@@ -383,22 +383,26 @@ Open your project root `.env` file and add:
 PLT_SERVER_CORS_ORIGIN=http://localhost:3000
 ```
 
-Now add the CORS configuration to your **application's** configuration file, `web/db/watt.json`, by
-adding a `server` section:
+Now add the CORS configuration to your **application's** configuration file, `web/db/watt.config.ts`,
+by adding a `server` section:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/db/3.0.0.json",
-  "server": {
-    "cors": {
-      "origin": "{PLT_SERVER_CORS_ORIGIN}"
+```ts config
+import { db } from '@platformatic/db'
+
+export default db({
+  db: {
+    connectionString: process.env.DATABASE_URL ?? 'sqlite://./db.sqlite'
+  },
+  server: {
+    cors: {
+      origin: process.env.PLT_SERVER_CORS_ORIGIN ?? 'http://localhost:5173'
     }
   }
-}
+})
 ```
 
 :::caution[CORS goes in the application config, not the runtime config]
-It is tempting to put this in the root `watt.json` alongside `server.hostname` and `server.port`, but
+It is tempting to put this in the root `watt.config.ts` alongside `server.hostname` and `server.port`, but
 the runtime's `server` block does not accept a `cors` property. Doing so stops the whole runtime on
 startup with:
 
@@ -408,7 +412,7 @@ The configuration does not validate against the configuration schema:
 ```
 
 CORS is answered by the application that serves the request, so it is configured there — in
-`web/db/watt.json`. The runtime `server` block only controls the public socket (`hostname`, `port`,
+`web/db/watt.config.ts`. The runtime `server` block only controls the public socket (`hostname`, `port`,
 `http2`, `https`).
 :::
 
