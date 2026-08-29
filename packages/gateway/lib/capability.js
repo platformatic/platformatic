@@ -43,13 +43,8 @@ export class GatewayCapability extends ServiceCapability {
     // Only register the runtime event handler once. start() can be called
     // multiple times (first with listen:false, then listen:true) so guard
     // against duplicate registrations.
-    //
-    // Not registered at all when `restartOnApplicationChange` is false: a
-    // gateway that does not route from the application registry has nothing to
-    // recompose, and the restart is pure downtime for it. Skipping the
-    // subscription rather than the notify keeps it off the ITC entirely.
     const itc = getITC({ throwOnMissing: false })
-    if (this.config.gateway?.restartOnApplicationChange !== false && !this.#runtimeEventHandler && itc) {
+    if (!this.#runtimeEventHandler && itc) {
       this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
       itc.on('runtime:event', this.#runtimeEventHandler)
     }
@@ -113,13 +108,22 @@ export class GatewayCapability extends ServiceCapability {
     return replaceEnv(application.origin, this.config[kMetadata].env).endsWith('.plt.local')
   }
 
+  // The subscription is unconditional and the decision lives here, next to the
+  // behaviour it governs, so a future event handled from this method needs no
+  // change to start().
+  //
   // The runtime resolves `request:restart` by replacing this application's
   // workers one at a time. With two or more workers and SO_REUSEPORT that is
   // seamless; with ONE — the default, and forced wherever reusePort is
   // unavailable — the listening socket closes for the length of a worker boot.
-  // `restartOnApplicationChange: false` is how a gateway opts out of that.
+  // `restartOnApplicationChange: false` is how a gateway that does not route
+  // from the application registry opts out of paying that for nothing.
   #handleRuntimeEvent ({ event }) {
     if (event === 'application:added' || event === 'application:removed') {
+      if (this.config.gateway?.restartOnApplicationChange === false) {
+        return
+      }
+
       const itc = getITC()
       itc.notify('request:restart')
     }
