@@ -565,7 +565,7 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:362-365": {
+    "packages/runtime/index.js:368-371": {
       "sha": "f05241a09ec2d711",
       "head": "const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))",
       "lines": 4
@@ -980,7 +980,7 @@
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:1744": {
+    "packages/wattpm-utils/lib/commands/migrate.js:1746": {
       "sha": "8041b6bc6460351a",
       "head": "function collectCloneOverlapRefusals (root, applications, config, refusals) {",
       "lines": 1

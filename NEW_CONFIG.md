@@ -2114,7 +2114,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:362-365`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:368-371`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -4174,7 +4174,7 @@ Generation reads both views. Then:
    not intersect, or whose combination migrate cannot decide**; and a **directory
    `resolve` will clone into that already holds a local application, a file migrate
    must read, or a path it plans to emit** — a project whose remote checkouts and own
-   sources share a directory (`wattpm-utils/lib/commands/migrate.js:1744`). An earlier
+   sources share a directory (`wattpm-utils/lib/commands/migrate.js:1746`). An earlier
    draft framed this as an exclusion protecting the clone swallowing work the run has
    to do; there is no such exclusion, because migrate never looks inside a remote
    entry's directory in the first place — an entry with a `url` and no local path has
@@ -4988,15 +4988,18 @@ runs multiple workers on a fixed port at all.
    `port: process.env.PORT ?? ''` — a string in a number position, and the naive
    conversion of `{PORT}` — validates. The block gate cannot catch it, because the
    schema says it is fine. The second **is fixed**: the runtime had a v4
-   projection (`v4Schema`, which drops `envfile`, `strictEnv` and `$schema`) and the
-   capabilities had none, so `strictEnv` was refused at the root and accepted inside a
-   capability's wrapped `runtime` block — the same key, removed in one place and live in
-   another, in the same configuration, where it validated and then did nothing.
-   `foundation/lib/v4/project.js` is that projection, applied where the v4 loader
-   obtains a capability's schema, which is the one place only v4 reaches; the shipped
-   object is left alone, which is what the projection rule is for. `$schema` stays where
-   the other two go, because a machine writer stamps it and the loader strips it before
-   validation rather than refusing it. The placeholder branches are the remaining half, and they
+   projection (`v4Schema`, which drops `envfile`, `strictEnv`, `$schema` and
+   `verticalScaler`) and the capabilities had none, so a capability configuration could
+   still declare the whole wrapped `runtime` block — where every key validated,
+   collected schema defaults, and did nothing, `workers: 3` starting one worker with no
+   diagnostic. `foundation/lib/v4/project.js` is the capability-side projection,
+   applied where the v4 loader obtains a capability's schema, which is the one place
+   only v4 reaches; it removes the `runtime` block entirely, because the block was
+   v3's input to `wrapInRuntimeConfig` and v4 has no hoisting step — the v4 spelling
+   of the same settings is Level 1b, orchestration top-level beside `application`. The
+   shipped object is left alone, which is what the projection rule is for. `$schema`
+   is not treated like the block: a machine writer stamps it and the loader strips it
+   before validation rather than refusing it. The placeholder branches are the remaining half, and they
    need the hand classification above rather than a key list. **`server.port` is the
    first of them**, and removing the worker's second validation pass is what made it
    urgent rather than tidy: the worker used to re-validate a resolved configuration
