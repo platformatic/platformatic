@@ -755,7 +755,7 @@
       "head": "const config = await resolveCommandConfiguration(configuration, context)",
       "lines": 1
     },
-    "packages/basic/lib/config.js:114,124-128": {
+    "packages/basic/lib/config.js:127,137-141": {
       "sha": "450a850ee25fe21a",
       "head": "const patch = workerData?.applicationConfig?.configPatch",
       "lines": 6
@@ -1020,6 +1020,21 @@
       "head": "config.workers.scaleUpELU ??= config.verticalScaler.scaleUpELU",
       "lines": 1
     },
+    "packages/foundation/lib/v4/application.js:68": {
+      "sha": "206d0aaf07c0443b",
+      "head": "export async function applyResolvedConfiguration (root, config, { schema, transform, env = {}, context } = {}) {",
+      "lines": 1
+    },
+    "packages/foundation/lib/v4/application.js:20": {
+      "sha": "373cc458d978e74c",
+      "head": "export async function loadApplicationConfigurationFile (path, options = {}) {",
+      "lines": 1
+    },
+    "packages/basic/lib/config.js:52": {
+      "sha": "7d014e8630cbbe3c",
+      "head": "export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig, context, capability) {",
+      "lines": 1
+    },
     "packages/foundation/lib/v4/topology.js:158-160": {
       "sha": "0df6dcc899c8f39b",
       "head": "if (typeof enabled === 'string') {",
@@ -1044,6 +1059,11 @@
       "sha": "8950f97efb7b5302",
       "head": "entrypointPort: 3042",
       "lines": 2
+    },
+    "packages/wattpm/lib/commands/execution.js:237-252": {
+      "sha": "7fd1002121c27499",
+      "head": "try {",
+      "lines": 16
     },
     "packages/db/lib/commands/print-schema.js:18": {
       "sha": "2ba5d91d7a552842",

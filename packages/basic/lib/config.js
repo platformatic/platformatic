@@ -5,6 +5,7 @@ import {
   findConfigurationFile as utilsFindConfigurationFile
 } from '@platformatic/foundation'
 import {
+  applyResolvedConfiguration,
   configurationFileNames,
   isConfigurationFileName,
   loadApplicationConfigurationFile
@@ -65,13 +66,25 @@ export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig,
       runtimeScope: scope
     })
 
-    return utilsLoadConfiguration(application.config, context?.schema ?? schema, {
-      ...options,
-      root: application.root,
+    return applyResolvedConfiguration(application.root, application.config, {
+      schema: context?.schema ?? schema,
+      transform: options.transform,
       env: application.env,
-      ...context,
-      // Not overridable by the caller: this configuration was resolved a moment ago, by the loader.
-      resolved: true
+      context
+    })
+  }
+
+  /*
+    An object the runtime already resolved, or a v3 document. The first is the worker's path and
+    goes through the same v4 pipeline as a file; the second is a serialized configuration, which
+    only the v3 reader understands and which only the fixtures that exist to be v3 still are.
+  */
+  if (typeof source !== 'string' && context?.resolved) {
+    return applyResolvedConfiguration(root, source, {
+      schema: context?.schema ?? schema,
+      transform: options.transform,
+      env: context?.env,
+      context
     })
   }
 

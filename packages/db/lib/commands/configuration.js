@@ -1,5 +1,5 @@
-import { kMetadata, loadConfiguration } from '@platformatic/foundation'
-import { loadApplicationConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
+import { kMetadata } from '@platformatic/foundation'
+import { applyResolvedConfiguration, loadApplicationConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
 import { transform } from '../config.js'
 import { schema } from '../schema.js'
 
@@ -32,15 +32,15 @@ export async function resolveCommandConfiguration (configuration, context) {
       runtimeScope: import.meta.filename
     })
 
-    return loadConfiguration(application.config, schema, {
+    return applyResolvedConfiguration(application.root, application.config, {
+      schema,
       transform,
-      resolved: true,
-      root: application.root,
-      env: application.env
+      env: application.env,
+      context
     })
   }
 
-  return loadConfiguration(configuration, schema, { transform, resolved: true, root })
+  return applyResolvedConfiguration(root, configuration, { schema, transform, context })
 }
 
 export { kMetadata }

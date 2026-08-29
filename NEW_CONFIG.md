@@ -3268,7 +3268,7 @@ export default {
   and `watch.enabled` falls back to `false` rather than the runtime's watch flag —
   a config that declares `watch` keeps its own value — which is exactly how
   `basic`'s transform already behaves outside a worker
-  (`basic/lib/config.js:114,124-128` optional-chain `workerData`). Commands never self-load config (db's `loadConfiguration` call and
+  (`basic/lib/config.js:127,137-141` optional-chain `workerData`). Commands never self-load config (db's `loadConfiguration` call and
   its `utimesSync` restart hack are deleted; the restart signal is a
   management-API restart when a runtime is running). These evaluations run with
   **`command: 'exec'`** in the config context, defaulting to `mode:
@@ -4907,6 +4907,20 @@ runs multiple workers on a fixed port at all.
    migrate's legacy reader. Only deliberately-kept pieces are
    carried over as code (AJV custom keywords, `transform` hooks), each by explicit
    decision rather than by surviving a refactor.
+
+   **The v4 half of that reader is `applyResolvedConfiguration`**
+   (`foundation/lib/v4/application.js:68`), and its size is what the deletion is
+   about: attach `kMetadata`, call the capability's `transform`, and stop. The v3
+   reader did fourteen things at that position — read a document off disk, walk for
+   `.env` files, substitute `{PLT_X}`, enforce `strictEnv`, upgrade by `$schema`
+   version, validate with coercion on — and every one of them has already happened,
+   main-side, exactly once. Its companion `loadApplicationConfigurationFile`
+   (`:20`) is the other direction: one file, evaluated by the same loader a boot
+   uses, answering with the single application's validated configuration. Capability
+   `create()` calls and capability CLI commands reach one or the other through
+   `loadCapabilityConfiguration` (`basic/lib/config.js:52`), which is the only place
+   the two shapes — a configuration the runtime resolved, and a file nobody has read
+   — are told apart.
 2. **Schema audit** (foundation + all capabilities): classify the union sites, delete
    placeholder-only branches, regenerate `schema.json` + types; produce the
    per-property target-type table for migrate. `scripts/audit-schemas.mjs` walks the
@@ -5037,6 +5051,15 @@ runs multiple workers on a fixed port at all.
    graph; `--debug-config` via the eval-worker pipeline, with the single-file
    in-process `--inspect-brk` mode; `build` evaluates
    with `production: true`.
+
+   **A reload that cannot evaluate is reported, not fatal**
+   (`wattpm/lib/commands/execution.js:237-252`). A half-typed edit is the ordinary case, and it
+   reaches the watcher: without this, one unbalanced brace ends the dev server and the developer
+   restarts it by hand. The watchers are re-armed against the targets the last good configuration
+   named — which is the half that makes surviving useful — so saving the corrected file starts the
+   runtime again. v3 had the same guarantee for a different reason: it read an application's
+   configuration in that application's worker, so a file that stopped parsing broke one worker
+   rather than the process.
 6. **capabilities** (next, node, vite, astro, remix, nest, nitro, react-router,
    tanstack, nuxt, service, db, gateway): factory + option types (~20 lines each via
    the helper); **`servesWithoutPort` declared per capability** against the exposure

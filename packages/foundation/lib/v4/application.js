@@ -1,4 +1,6 @@
 import { dirname } from 'node:path'
+import { CannotParseConfigFileError, RootMissingError, SourceMissingError } from '../errors.js'
+import { kMetadata } from '../symbols.js'
 import { NotASingleApplicationError } from './errors.js'
 import { loadConfiguration } from './load.js'
 
@@ -46,5 +48,52 @@ export async function loadApplicationConfigurationFile (path, options = {}) {
     env: application.workerEnv ?? {},
     module: application.module,
     loaded
+  }
+}
+
+/*
+  The capability half of a v4 load: everything that happens to an application's configuration after
+  the loader has produced it.
+
+  It is deliberately small, and its size is the point. The v3 reader did fourteen things here --
+  read a document off disk, walk for `.env` files, substitute `{PLT_X}`, enforce strictEnv, upgrade
+  by `$schema` version, validate with coercion on -- and under v4 every one of them has already
+  happened, main-side, exactly once. What is left is the capability's own transform and the metadata
+  it reads its root from.
+
+  `env` is the environment the loader resolved for this application, not the process's. A capability
+  asked for `process.env` here would report a different environment than the worker actually runs
+  with, which is the thing evaluating configuration once was meant to make impossible.
+*/
+export async function applyResolvedConfiguration (root, config, { schema, transform, env = {}, context } = {}) {
+  if (typeof config === 'undefined' || config === null) {
+    throw new SourceMissingError()
+  }
+
+  if (typeof root !== 'string' || root.length === 0) {
+    throw new RootMissingError()
+  }
+
+  config[kMetadata] = {
+    root,
+    env: { ...env },
+    // A v4 configuration is not a file the capability reads, so there is no path to report.
+    path: null,
+    module: typeof config.module === 'string' ? config.module : null
+  }
+
+  if (typeof transform !== 'function') {
+    return config
+  }
+
+  try {
+    /*
+      The context reaches the transform, because capabilities read it there: node folds
+      `telemetryConfig` into the application's own telemetry block, and a transform handed only a
+      root silently produces a configuration with none.
+    */
+    return await transform(config, schema, { ...context, root })
+  } catch (error) {
+    throw new CannotParseConfigFileError(error.message, { cause: error })
   }
 }

@@ -233,7 +233,23 @@ export async function devCommand (logger, args) {
   async function reloadOnce () {
     await Promise.all(watchers.map(watcher => watcher.stopWatching()))
     await runtime.close()
-    runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env, logger, mode, configTimeout: parseConfigTimeout(configTimeout) })
+
+    try {
+      runtime = await create(root, configurationFile, { start: true, reloaded: true, envFile: env, logger, mode, configTimeout: parseConfigTimeout(configTimeout) })
+    } catch (error) {
+      /*
+        A configuration that no longer evaluates -- a half-typed edit is the ordinary case -- must
+        not take the dev server down with it. The failure is reported and the watchers are re-armed
+        against the targets the last good configuration named, so saving a corrected file starts the
+        runtime again. v3 had the same guarantee for a different reason: it read an application's
+        configuration in that application's worker, so a file that stopped parsing broke one worker
+        rather than the process.
+      */
+      logger.error({ err: ensureLoggableError(error) }, `Cannot reload the application: ${error.message}`)
+      watchConfiguration()
+      return
+    }
+
     watchConfiguration()
   }
 

@@ -188,6 +188,66 @@ test('dev - should restart an application if the runtime configuration file is c
   }
 })
 
+/*
+  What `runtime/test/cli/do-not-crash-on-bad-config.test.js` used to assert, at the position the
+  subject moved to. v3 read an application's configuration in its worker, so a file that stopped
+  parsing broke that worker; v4 reads it main-side, once, and a file that stops evaluating breaks
+  the *reload* instead. The runtime has to survive it either way: report the failure and keep
+  serving what it already loaded.
+*/
+test('dev - should survive an application configuration file that stops evaluating', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
+  const configFile = resolve(rootDir, 'web/main/watt.config.js')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('dev', rootDir)
+  await waitForStart(startProcess)
+
+  const originalContents = await readFile(configFile, 'utf-8')
+  await writeFile(configFile, 'export default { server: {', 'utf-8')
+
+  let reported = false
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const line = log.toString()
+    let message = line
+
+    try {
+      const parsed = JSON.parse(line)
+      message = parsed.err?.message ?? parsed.msg ?? line
+    } catch {
+      // A human-readable CLI line rather than a runtime record; both share this stream.
+    }
+
+    if (message.includes('Unexpected end of input') || message.includes('Cannot parse config file')) {
+      reported = true
+      break
+    }
+  }
+
+  ok(reported)
+
+  /*
+    And the watchers are re-armed against the targets the last good configuration named, so the
+    corrected file starts the runtime again. That is the half that makes surviving useful: a dev
+    server that stays up but stops watching is a dev server you have to restart by hand.
+  */
+  await writeFile(configFile, originalContents, 'utf-8')
+
+  let restarted = false
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    if (log.toString().includes('Platformatic is now listening')) {
+      restarted = true
+      break
+    }
+  }
+
+  ok(restarted)
+})
+
 test('dev - should restart an application if the application configuration file is changed', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const applicationDir = resolve(rootDir, 'web/main')

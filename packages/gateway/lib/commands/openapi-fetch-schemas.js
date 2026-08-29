@@ -1,10 +1,8 @@
-import { loadConfiguration } from '@platformatic/foundation'
-import { loadApplicationConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
+import { applyResolvedConfiguration, loadApplicationConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
 import { writeFile } from 'node:fs/promises'
 import { request } from 'undici'
 import { FailedToFetchOpenAPISchemaError } from '../errors.js'
 import { schema } from '../schema.js'
-import { upgrade } from '../upgrade.js'
 import { prefixWithSlash } from '../utils.js'
 
 export async function fetchOpenApiSchema (application) {
@@ -46,17 +44,12 @@ export async function fetchOpenApiSchemas (logger, configuration, _args, context
       runtimeScope: import.meta.filename
     })
 
-    config = await loadConfiguration(application.config, schema, {
-      upgrade,
-      resolved: true,
-      root: application.root,
+    config = await applyResolvedConfiguration(application.root, application.config, {
+      schema,
       env: application.env
     })
   } else {
-    config = await loadConfiguration(configuration, schema, {
-      resolved: true,
-      root: context?.application?.path ?? process.cwd()
-    })
+    config = await applyResolvedConfiguration(context?.application?.path ?? process.cwd(), configuration, { schema })
   }
   const { applications } = config.gateway
 
