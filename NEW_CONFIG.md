@@ -4172,10 +4172,17 @@ Generation reads both views. Then:
    nothing** after the fallbacks above; **two application ids that collide once
    renamed**; **one variable occupying two positions whose schema constraints do
    not intersect, or whose combination migrate cannot decide**; and a **directory
-   `resolve` cloned into that also holds a local application, a file migrate must
-   read, or a path it plans to emit** — a project whose remote checkouts and own
-   sources share a directory, where the exclusion that protects the clone would
-   otherwise swallow work the run has to do (see step 1). **Its message is built from
+   `resolve` will clone into that already holds a local application, a file migrate
+   must read, or a path it plans to emit** — a project whose remote checkouts and own
+   sources share a directory (`wattpm-utils/lib/commands/migrate.js:1744`). An earlier
+   draft framed this as an exclusion protecting the clone swallowing work the run has
+   to do; there is no such exclusion, because migrate never looks inside a remote
+   entry's directory in the first place — an entry with a `url` and no local path has
+   nothing to convert, which is a stronger guarantee than a path rule. The hazard that
+   remains is the plain one, and it is worth the whole refusal: **the clone replaces
+   its destination**, so a migration that emits such a project has handed the user a
+   `resolve` that deletes their own source, and migrate is the last moment anyone looks
+   at the whole tree at once. **Its message is built from
    the two paths involved, not from a fixed pair of suggestions**, because the
    destination has two possible producers and the overlap has several possible shapes.
    Where the destination was **backfilled**, `resolvedApplicationsBasePath` is what put

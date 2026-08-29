@@ -980,6 +980,11 @@
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
     },
+    "packages/wattpm-utils/lib/commands/migrate.js:1744": {
+      "sha": "8041b6bc6460351a",
+      "head": "function collectCloneOverlapRefusals (root, applications, config, refusals) {",
+      "lines": 1
+    },
     "packages/runtime/lib/worker/main.js:254-262": {
       "sha": "b23cc6f195f32055",
       "head": "try {",

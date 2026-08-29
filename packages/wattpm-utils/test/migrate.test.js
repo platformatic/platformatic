@@ -1455,3 +1455,79 @@ test('migrate - does not assume a variable the project supplies in an env file',
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
   ok(emitted.includes("requiredEnum('PLT_LOG_LEVEL'"), emitted)
 })
+
+/*
+  `wattpm resolve` checks a remote application out at `<resolvedApplicationsBasePath>/<id>`, or at
+  the `path` the entry declares. Either can land on a directory this project already uses, and the
+  clone replaces what is there -- so a migration that emits such a project has handed the user a
+  `resolve` that deletes their own source. Migrate is the last moment anyone looks at the whole tree
+  at once, which is why it is refused here.
+*/
+test('migrate - refuses a clone destination that lands on a local application', async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'local',
+      services: [
+        { id: 'local', path: 'external/remote' },
+        { id: 'remote', url: 'https://github.com/acme/remote.git' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'external/remote'), { recursive: true })
+  await writeFile(
+    join(root, 'external/remote/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'external/remote/package.json'), JSON.stringify({ name: 'local' }), 'utf-8')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('is checked out into'), migrateProcess.stdout)
+
+  // The destination was backfilled, so the base is what put it there and changing it is the fix.
+  ok(migrateProcess.stdout.includes('resolvedApplicationsBasePath'), migrateProcess.stdout)
+
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+})
+
+test('migrate - names the entry rather than the base when the entry declares the destination', async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'local',
+      services: [
+        { id: 'local', path: 'vendor/shared' },
+        { id: 'remote', url: 'https://github.com/acme/remote.git', path: 'vendor/shared' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'vendor/shared'), { recursive: true })
+  await writeFile(
+    join(root, 'vendor/shared/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'vendor/shared/package.json'), JSON.stringify({ name: 'local' }), 'utf-8')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+
+  /*
+    The base is irrelevant when the entry names its own destination, and offering it would send the
+    reader through the identical refusal a second time.
+  */
+  ok(migrateProcess.stdout.includes('give that entry a path outside'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('does not decide this one'), migrateProcess.stdout)
+})

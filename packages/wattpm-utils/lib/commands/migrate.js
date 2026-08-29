@@ -479,9 +479,9 @@ function readLegacyEnvFile (configDirectory, declaredEnvfile, root) {
 /*
   A structural position resolved to the literal it stands for.
 
-  Six positions have to be concrete before anything is emitted -- an entry's `path` and `config`,
-  `autoload.path`, `autoload.mappings[].config`, `envfile` and `resolvedApplicationsBasePath` --
-  because migrate needs real directories and real filenames at generation time: to decide where each
+  Five positions have to be concrete before anything is emitted -- an entry's `path` and `config`,
+  `autoload.path`, `autoload.mappings[].config` and `envfile` -- because migrate needs real
+  directories and real filenames at generation time: to decide where each
   per-app file goes, to open the legacy config an entry points at, to run the detector, to rebase an
   `envfile`, and to know which legacy files step 5 deletes by name. None of that is expressible over
   an unresolved token, so these are **resolved, not converted**: the placeholders are evaluated and
@@ -1366,7 +1366,7 @@ export async function planMigration (root, source, config, { useSampleDefaults =
     needsPath: converted.needsPath,
     root: converted.converted,
     suggestions,
-    refusals: refusals.concat(collectPlanRefusals(root, source, applications, resumed)),
+    refusals: refusals.concat(collectPlanRefusals(root, source, applications, resumed, config)),
     seeds,
     skipped
   }
@@ -1726,14 +1726,87 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
 }
 
 /*
+  A directory `wattpm resolve` will clone into that also holds work this run has to do.
+
+  A remote entry with no `path` is checked out at `<resolvedApplicationsBasePath>/<id>`, and one
+  that declares a `path` at that path. Either can name a directory that already holds a local
+  application, a legacy configuration migrate reads, or a file it plans to emit -- and after the
+  migration `resolve` would clone over it. v3 had the same shape and the same hazard; what makes it
+  worth refusing here is that migrate is the last moment anyone looks at the whole tree at once.
+
+  The message is built from the two paths involved rather than from a fixed pair of suggestions,
+  because the destination has two possible producers: where it was backfilled,
+  `resolvedApplicationsBasePath` put it there and changing that is the fix; where the entry declares
+  a `path`, the base is irrelevant and changing it accomplishes nothing. Offering "move the local
+  application" for a swallowed `envfile` under a declared path would send the reader through the
+  identical refusal twice.
+*/
+function collectCloneOverlapRefusals (root, applications, config, refusals) {
+  const base = config.resolvedApplicationsBasePath ?? 'external'
+
+  // What the run needs the tree to keep: every local application, every legacy file it reads, and
+  // every file it plans to write.
+  const occupied = new Map()
+
+  for (const application of applications) {
+    if (application.entry?.url) {
+      continue
+    }
+
+    if (application.directory) {
+      occupied.set(canonicalize(application.directory), { kind: 'a local application', path: application.directory })
+    }
+
+    for (const [kind, path] of [
+      ['a legacy configuration this run reads', application.legacy],
+      ['a file this run writes', application.target]
+    ]) {
+      if (path) {
+        occupied.set(canonicalize(path), { kind, path })
+      }
+    }
+  }
+
+  for (const application of applications) {
+    const entry = application.entry
+
+    if (!entry?.url) {
+      continue
+    }
+
+    const declared = typeof entry.path === 'string' && entry.path.length > 0
+    const id = application.orchestration?.id ?? entry.id
+    const destination = resolve(root, declared ? entry.path : join(base, id ?? ''))
+
+    for (const [path, swallowed] of occupied) {
+      // The clone replaces its destination, so an overlap is the destination being at or above it.
+      if (path !== canonicalize(destination) && !contains(destination, path)) {
+        continue
+      }
+
+      refusals.push({
+        reason: `${bold(id ?? 'a remote application')} is checked out into ${bold(relative(root, destination) || '.')}, which holds ${swallowed.kind} at ${bold(relative(root, swallowed.path))}`,
+        fix: declared
+          ? `give that entry a ${bold('path')} outside ${bold(relative(root, swallowed.path))} — the entry names its own destination, so ${bold('resolvedApplicationsBasePath')} does not decide this one`
+          : `set ${bold('resolvedApplicationsBasePath')} to a directory this project does not otherwise use, or give that entry an explicit ${bold('path')} — the destination was backfilled from the base, which is what puts it here`
+      })
+
+      break
+    }
+  }
+}
+
+/*
   The refusals that are about the plan as a whole rather than about any one entry: what the run
   would overwrite, what it would write twice, and which ids stop being distinct once the label rule
   has been applied to them.
 */
-function collectPlanRefusals (root, source, applications, resumed = new Set()) {
+function collectPlanRefusals (root, source, applications, resumed = new Set(), config = {}) {
   const refusals = []
   const producers = new Map()
   const ids = new Map()
+
+  collectCloneOverlapRefusals(root, applications, config, refusals)
 
   // Everything this run converts, so that a legacy file another entry owns is not reported as one
   // nobody does -- a root-inline application's configuration sits in the root's own directory.
