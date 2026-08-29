@@ -148,10 +148,10 @@ export class Controller extends EventEmitter {
         })
 
         /*
-          `resolved` says the configuration needs none of v3's reading: the loader layered its
-          environment main-side, there are no placeholders in it, and it has already been validated
-          against this capability's schema. Without it the capability re-runs that machinery here
-          and puts `PLT_ROOT` -- a variable v4 removed -- back into what the application reports.
+          `resolved` says this object has already been through the loader: its environment was
+          layered main-side, it holds no placeholders, and it has been validated against this
+          capability's schema. It is what tells the capability apart from an embedder handing over
+          an object nobody has checked, which still gets validated on the way in.
         */
         this.capability = await pkg.create(appConfig.path, appConfig.resolvedConfig, {
           ...this.#context,

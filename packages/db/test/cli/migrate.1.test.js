@@ -15,7 +15,7 @@ test('migrate on start', async t => {
   const db = await connectDB(connectionInfo)
 
   let found = false
-  const child = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply.json')], {
+  const child = execa('node', [startPath, getFixturesConfigFileLocation('watt.config.js', ['auto-apply'])], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -44,7 +44,7 @@ test('validate migration checksums', async t => {
 
   let firstFound = false
 
-  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('validate-migrations-checksums.json')], {
+  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('watt.config.js', ['validate-migrations-checksums'])], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -61,7 +61,7 @@ test('validate migration checksums', async t => {
   assert.equal(firstFound, true)
 
   let secondFound = false
-  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('validate-migrations-checksums.json')], {
+  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('watt.config.js', ['validate-migrations-checksums'])], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -89,7 +89,7 @@ test('do not validate migration checksums if disabled', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply-no-checksums.json')], {
+  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('watt.config.js', ['auto-apply-no-checksums'])], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -100,7 +100,7 @@ test('do not validate migration checksums if disabled', async t => {
   const [message] = await once(firstOutput, 'data')
   assert.match(message, /(.*)running(.*)(001\.do\.sql)/)
 
-  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply-no-checksums.json')], {
+  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('watt.config.js', ['auto-apply-no-checksums'])], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -126,7 +126,7 @@ test('throws if migrations directory does not exist', async t => {
 
   const { stderr } = await execa(
     'node',
-    [startPath, getFixturesConfigFileLocation('invalid-migrations-directory.json')],
+    [startPath, getFixturesConfigFileLocation('watt.config.js', ['invalid-migrations-directory'])],
     {
       reject: false,
       env: {
@@ -146,7 +146,7 @@ test('do not run migrations by default', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('no-auto-apply.json')], {
+  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('watt.config.js', ['no-auto-apply'])], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }

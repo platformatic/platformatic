@@ -12,8 +12,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     suffixes: 'gateway',
     validationOptions,
     transform,
-    upgrade,
-    replaceEnv: true
+    upgrade
   })
 }
 

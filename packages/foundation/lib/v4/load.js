@@ -779,7 +779,7 @@ async function prepareApplication ({
     report
   )
 
-  // Non-enumerable, as foundation already does for kEnvFileFallbackKeys: the runtime reads these
+  // Non-enumerable, deliberately: the runtime reads these
   // main-side to build workerData, and they have no business in the configuration DTO, in
   // --debug-config output, or in anything that structured-clones into a worker. The environment in
   // particular would otherwise put every secret on every application entry.

@@ -7,7 +7,6 @@ import type debug from 'debug';
 
 // Symbols
 export declare const kCanceled: unique symbol
-export declare const kEnvFileFallbackKeys: unique symbol
 export declare const kFailedImport: unique symbol
 export declare const kHandledError: unique symbol
 export declare const kMetadata: unique symbol
@@ -60,7 +59,6 @@ export function findRuntimeConfigurationFile(
 ): Promise<string | false | undefined>
 
 // Configuration types
-export declare const envVariablePattern: RegExp
 export declare const knownConfigurationFilesExtensions: string[]
 export declare const knownConfigurationFilesSchemas: RegExp[]
 
@@ -87,11 +85,6 @@ export type ConfigurationOptions<T = {}> = Partial<{
   ) => Promise<Configuration<T>> | Configuration<T>
   upgrade: (logger: Logger, config: RawConfiguration, version: string) => Promise<RawConfiguration> | RawConfiguration
   env: Record<string, string>
-  ignoreProcessEnv: boolean
-  replaceEnv: boolean
-  replaceEnvIgnore: string[]
-  onMissingEnv: (key: string) => string | undefined
-  strictEnv: boolean | 'warn'
   fixPaths: boolean
   logger: Logger
   root: string
@@ -154,13 +147,6 @@ export declare function createValidator (
   validationOptions?: object,
   context?: ConfigurationOptions
 ): (data: any) => boolean
-export declare function loadEnv (root: string): Promise<Record<string, string>>
-export declare function replaceEnv (
-  config: RawConfiguration,
-  env: Record<string, string>,
-  onMissingEnv?: (key: string) => string | undefined,
-  ignore?: string[]
-): RawConfiguration
 // `config` also accepts an array: the exported `applications` schema is a
 // JSONSchemaType<object[]> (an ARRAY schema), and validate() is called with
 // a matching array of application configs before they are handed to

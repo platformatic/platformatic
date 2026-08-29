@@ -50,8 +50,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     scope: import.meta.filename,
     suffixes: 'application',
     validationOptions,
-    transform,
-    replaceEnv: true
+    transform
   })
 }
 

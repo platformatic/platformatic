@@ -5,7 +5,6 @@ import {
   executeInParallel,
   executeWithTimeout,
   features,
-  kEnvFileFallbackKeys,
   kMetadata,
   kTimeout,
   parseMemorySize
@@ -2781,10 +2780,7 @@ export class Runtime extends EventEmitter {
           codeRangeSizeMb
         },
         inspectorOptions,
-        dirname: this.#root,
-        // Keys of the worker environment which only come from an env file of the runtime:
-        // the env file of the application is allowed to override those.
-        envFileFallbackKeys: this.#env[kEnvFileFallbackKeys] ?? []
+        dirname: this.#root
       },
       argv: applicationConfig.arguments,
       execArgv,

@@ -45,7 +45,7 @@ test('start creates schema.lock if it is missing', { skip: true }, async t => {
   const db = await connectDB(connectionInfo)
 
   let found = false
-  const configPathWithoutSchemaLock = getFixturesConfigFileLocation('no-auto-apply.json')
+  const configPathWithoutSchemaLock = getFixturesConfigFileLocation('watt.config.js', ['no-auto-apply'])
   const configPath = getFixturesConfigFileLocation('watt.config.js', ['schemalock'])
   const expectedFile = join(dirname(configPath), 'schema.lock')
 

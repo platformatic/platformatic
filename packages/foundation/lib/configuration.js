@@ -1,31 +1,24 @@
 import toml from '@iarna/toml'
 import Ajv from 'ajv'
-import jsonPatch from 'fast-json-patch'
 import JSON5 from 'json5'
 import { readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { dirname, extname, isAbsolute, parse, resolve } from 'node:path'
-import { parseEnv } from 'node:util'
+import { dirname, extname, resolve } from 'node:path'
 import { parse as rawParseYAML, stringify as stringifyYAML } from 'yaml'
 import {
   AddAModulePropertyToTheConfigOrAddAKnownSchemaError,
   CannotParseConfigFileError,
   ConfigurationDoesNotValidateAgainstSchemaError,
   InvalidConfigFileExtensionError,
-  MissingEnvVariablesError,
   RootMissingError,
   SourceMissingError
 } from './errors.js'
 import { isFileAccessible } from './file-system.js'
 import { loadModule, splitModuleFromVersion } from './module.js'
-import { kEnvFileFallbackKeys, kMetadata } from './symbols.js'
+import { kMetadata } from './symbols.js'
 
 const { parse: parseJSON5, stringify: rawStringifyJSON5 } = JSON5
 const { parse: parseTOML, stringify: stringifyTOML } = toml
-
-const kReplaceEnvIgnore = Symbol('plt.foundation.replaceEnvIgnore')
-
-export const envVariablePattern = /(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/i
 
 export const knownConfigurationFilesExtensions = ['json', 'json5', 'yaml', 'yml', 'toml', 'tml']
 
@@ -341,131 +334,15 @@ export function validate (schema, config, validationOptions = {}, fixPaths = tru
   }
 }
 
-export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {}, customEnvFile = null) {
-  if (!isAbsolute(root)) {
-    root = resolve(process.cwd(), root)
-  }
+/*
+  What remains of the v3 reader: parse a serialized configuration, run its capability's `upgrade`
+  chain, validate it, and hand it to `transform`.
 
-  let envFile = customEnvFile
-
-  // If a custom env file is provided, resolve it and check if it exists
-  if (customEnvFile) {
-    envFile = isAbsolute(customEnvFile) ? customEnvFile : resolve(root, customEnvFile)
-    if (!(await isFileAccessible(envFile))) {
-      throw new Error(`Custom env file not found: ${envFile}`)
-    }
-  } else {
-    // Default behavior: search for .env file in the current directory and its parents
-    let currentPath = root
-    const rootPath = parse(root).root
-
-    while (currentPath !== rootPath) {
-      const candidate = resolve(currentPath, '.env')
-
-      if (await isFileAccessible(candidate)) {
-        envFile = candidate
-        break
-      }
-
-      currentPath = dirname(currentPath)
-    }
-
-    // If not found, check the current working directory
-    if (!envFile) {
-      const cwdCandidate = resolve(process.cwd(), '.env')
-
-      if (await isFileAccessible(cwdCandidate)) {
-        envFile = cwdCandidate
-      }
-    }
-  }
-
-  const baseEnv = ignoreProcessEnv ? {} : process.env
-  const envFromFile = envFile ? parseEnv(await readFile(envFile, 'utf-8')) : {}
-
-  // The env file provides fallback defaults: variables already set in the real
-  // environment (and explicit programmatic values) take precedence over it,
-  // matching the dotenv/docker-compose/Vite convention.
-  const env = {
-    ...envFromFile,
-    ...baseEnv,
-    ...additionalEnv
-  }
-
-  // Keys whose only source is the env file are not real environment variables, they are defaults:
-  // a more specific env file, like the one of a single application inside a runtime, must still be
-  // able to override them. The list is attached non enumerably, so spreading, Object.keys,
-  // JSON.stringify and structuredClone of the returned environment are all unchanged.
-  const fallbackKeys = Object.keys(envFromFile).filter(key => !(key in baseEnv) && !(key in additionalEnv))
-
-  Object.defineProperty(env, kEnvFileFallbackKeys, { value: fallbackKeys, enumerable: false })
-
-  return env
-}
-
-export function replaceEnv (config, env, onMissingEnv, ignore) {
-  // First of all, apply the ignore list
-  if (ignore) {
-    for (let path of ignore) {
-      // Migrate JSON Path to JSON Pointer
-      if (path.startsWith('$')) {
-        path = '/' + path.slice(2).replaceAll('.', '/')
-      }
-
-      try {
-        const value = jsonPatch.getValueByPointer(config, path)
-
-        if (typeof value !== 'undefined') {
-          jsonPatch.applyOperation(config, {
-            op: 'add',
-            path,
-            value: { [kReplaceEnvIgnore]: true, originalValue: value }
-          })
-        }
-      } catch {
-        // No-op, the path does not exist
-      }
-    }
-  }
-
-  if (typeof config === 'object' && config !== null) {
-    if (config[kReplaceEnvIgnore]) {
-      return config.originalValue
-    }
-
-    for (const key of Object.keys(config)) {
-      config[key] = replaceEnv(config[key], env, onMissingEnv)
-    }
-  } else if (typeof config === 'string') {
-    let matches = config.match(envVariablePattern)
-
-    while (matches) {
-      const [template, key] = matches
-
-      try {
-        const replacement = env[key] ?? onMissingEnv?.(key) ?? ''
-        config = config.replace(template, replacement)
-
-        matches = config.match(envVariablePattern)
-      } catch (error) {
-        throw new CannotParseConfigFileError(error.message, { cause: error })
-      }
-    }
-  }
-
-  return config
-}
-
-function normalizeStrictEnv (value) {
-  if (value === 'warn') {
-    return 'warn'
-  } else if (value === 'false' || value === '') {
-    return false
-  }
-
-  return Boolean(value)
-}
-
+  It does not resolve an environment and does not substitute `{PLT_X}`. Those went with the format:
+  a v4 configuration is a program that reads `process.env` itself, and the loader resolves every
+  application's environment main-side, exactly once. What is left here reads the documents that are
+  deliberately still v3 -- the upgrade chains, which exist to be old -- and nothing else.
+*/
 export async function loadConfiguration (source, schema, options = {}) {
   const {
     validate: shouldValidate,
@@ -473,29 +350,12 @@ export async function loadConfiguration (source, schema, options = {}) {
     transform,
     upgrade,
     env: additionalEnv,
-    ignoreProcessEnv,
-    replaceEnv: shouldReplaceEnv,
-    replaceEnvIgnore,
-    onMissingEnv,
-    strictEnv: strictEnvOption,
     fixPaths,
     logger,
-    skipMetadata,
-    envFile: customEnvFile,
-    /*
-      The configuration arrived already resolved by the v4 loader: its environment was layered
-      main-side, its placeholders do not exist, and it has been validated against the capability's
-      schema. Everything below that reads the filesystem for `.env` files or substitutes `{PLT_X}`
-      is v3 machinery, and running it here does not merely waste work -- it puts `PLT_ROOT` back,
-      a variable v4 removed, into the environment `wattpm env` reports for the application.
-    */
-    resolved
+    skipMetadata
   } = {
     validate: !!schema,
     validationOptions: {},
-    ignoreProcessEnv: false,
-    replaceEnv: true,
-    replaceEnvIgnore: [],
     fixPaths: true,
     ...options
   }
@@ -516,70 +376,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     throw new RootMissingError()
   }
 
-  const env = resolved ? { ...additionalEnv } : await loadEnv(root, ignoreProcessEnv, additionalEnv, customEnvFile)
-
-  if (!resolved) {
-    env.PLT_ROOT = root
-  }
-
-  if (shouldReplaceEnv && !resolved) {
-    const missingEnv = new Set()
-    const fallbackEnv = new Set()
-
-    config = replaceEnv(
-      config,
-      env,
-      key => {
-        const value = onMissingEnv?.(key)
-
-        if (typeof value === 'undefined' || value === null) {
-          missingEnv.add(key)
-        } else {
-          // The variable is not set: it only has a value because onMissingEnv provided a fallback.
-          // Track it separately so that strictEnv can still report it, as a fallback can silently
-          // mask a misconfiguration.
-          fallbackEnv.add(key)
-        }
-
-        return value
-      },
-      replaceEnvIgnore
-    )
-
-    // strictEnv can be set programmatically or in the configuration file itself, either at the top level
-    // (runtime configurations) or in the runtime property (capabilities configurations).
-    const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)
-
-    function warn (message) {
-      if (logger) {
-        logger.warn(message)
-      } else {
-        process.emitWarning(message)
-      }
-    }
-
-    // Variables resolved by a fallback are always reported as a warning, never as an error: they did
-    // resolve to a value, so failing on them would change which configurations are able to boot.
-    // This is emitted before handling the missing ones so that a throw does not swallow it.
-    if (strictEnv && fallbackEnv.size > 0) {
-      const keys = Array.from(fallbackEnv).sort().join(', ')
-
-      warn(
-        'The configuration references the following environment variables which are not set ' +
-          `and have been replaced by a fallback value: ${keys}`
-      )
-    }
-
-    if (strictEnv && missingEnv.size > 0) {
-      const keys = Array.from(missingEnv).sort().join(', ')
-
-      if (strictEnv === 'warn') {
-        warn(`The configuration references the following environment variables which are not set: ${keys}`)
-      } else {
-        throw new MissingEnvVariablesError(keys)
-      }
-    }
-  }
+  const env = { ...additionalEnv }
 
   const moduleInfo = extractModuleFromSchemaUrl(config)
 
@@ -595,15 +392,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     }
   }
 
-  /*
-    A resolved configuration was validated main-side, against the v4 projection of this same
-    schema, with defaults applied and paths resolved -- the validator there mutates the object it
-    checks, and that object is what arrived here. Re-checking it does more than repeat work: these
-    options carry `coerceTypes: true`, which v4's own validator disables on the grounds that
-    coercion is a documented hazard in this codebase, so the second pass applies semantics the first
-    one refused.
-  */
-  if (shouldValidate && !resolved) {
+  if (shouldValidate) {
     if (typeof schema === 'undefined') {
       throw new SourceMissingError()
     }

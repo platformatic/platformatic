@@ -242,18 +242,20 @@ async function main () {
   const logger = getLogger()
   logger.debug({ envfile }, 'Loading envfile...')
 
-  // Note that process.loadEnvFile is not used here as it never overrides an already defined
-  // variable. The worker environment is seeded from the environment the runtime resolved, which
-  // might contain values coming from an env file of the runtime. Those are only defaults, so the
-  // env file of this application, which is more specific, is allowed to override them. Real
-  // environment variables are never overridden.
-  const envFileFallbackKeys = new Set(workerData.envFileFallbackKeys ?? [])
+  /*
+    process.loadEnvFile is not used here because it never overrides an already defined variable,
+    and a value the runtime resolved for this worker is not "already defined" in the sense that
+    matters. Real environment variables are never overridden either way.
 
+    The `envFileFallbackKeys` list this consulted is gone with the v3 reader that produced it: it
+    named the keys the runtime's own env file contributed, so that an application's more specific
+    file could override them. v4 layers both main-side, in that order, before the worker exists.
+  */
   try {
     const applicationEnv = parseEnv(await readFile(envfile, 'utf-8'))
 
     for (const [key, value] of Object.entries(applicationEnv)) {
-      if (!(key in process.env) || envFileFallbackKeys.has(key)) {
+      if (!(key in process.env)) {
         process.env[key] = value
       }
     }

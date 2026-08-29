@@ -13,8 +13,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     validationOptions,
     transform,
     upgrade,
-    replaceEnvIgnore: ['$.db.openapi.ignoreRoutes'],
-    replaceEnv: true
+    replaceEnvIgnore: ['$.db.openapi.ignoreRoutes']
   })
 }
 
