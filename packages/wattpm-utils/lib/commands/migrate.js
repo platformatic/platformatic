@@ -7,6 +7,7 @@ import {
   getApplicationUrl,
   loadConfiguration as loadV4Configuration,
   raw,
+  resolveEnvFileSources,
   serializeConfiguration as serializeValue,
   serializeString,
   topologyVariableName
@@ -2641,10 +2642,39 @@ export async function migrateCommand (logger, args) {
     unconditionally would validate the output against migrate's fabrications rather than against the
     values the project actually configures, which is the opposite of what this step is for.
   */
+  /*
+    What the emitted files will actually see at boot, so that a variable the project supplies is
+    never replaced by one migrate invented. The real environment outranks env files in v4, and
+    seeds ride in on the real environment -- so a seed for a variable the project's `.env` sets
+    would shadow the project's own value and validate the output against a fabrication.
+
+    Read through the loader's own resolver rather than a rule of migrate's: the answer has to be
+    the file set the boot will read, mode variants and directory chain included.
+  */
+  const supplied = { ...process.env }
+
+  try {
+    const sources = await resolveEnvFileSources({
+      directory: dirname(target),
+      envRoot: root,
+      decidingDirectory: dirname(target),
+      decidingEnvRoot: root,
+      mode: 'production'
+    })
+
+    for (const source of sources) {
+      for (const [name, value] of Object.entries(source.values)) {
+        supplied[name] ??= value
+      }
+    }
+  } catch {
+    // No env files, or none readable: the real environment is the whole of what is supplied.
+  }
+
   const seeded = {}
 
   for (const [name, value] of plan?.seeds ?? seeds) {
-    if (process.env[name] === undefined) {
+    if (supplied[name] === undefined) {
       seeded[name] = value
     }
   }

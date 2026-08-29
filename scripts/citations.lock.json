@@ -790,7 +790,7 @@
       "head": "if (upgrade) {",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:84-86": {
+    "packages/wattpm-utils/lib/commands/migrate.js:85-87": {
       "sha": "b97011168e2b412e",
       "head": "const placeholderPattern = /(?:\\{{1,2})([a-z0-9_]+)(?:\\}{1,2})/i",
       "lines": 3
@@ -935,7 +935,7 @@
       "head": "if (!this.config.isRuntimeContext) {",
       "lines": 9
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:500": {
+    "packages/wattpm-utils/lib/commands/migrate.js:501": {
       "sha": "ff440ded0415b4ee",
       "head": "function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {",
       "lines": 1
@@ -950,7 +950,7 @@
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:443": {
+    "packages/wattpm-utils/lib/commands/migrate.js:444": {
       "sha": "6fc44b37a39f9c96",
       "head": "function readLegacyEnvFile (configDirectory, declaredEnvfile, root) {",
       "lines": 1

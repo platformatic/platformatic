@@ -1417,3 +1417,41 @@ test("migrate - refuses an entry's path that resolves nowhere", async t => {
   strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
   ok(await fileExists(join(root, 'platformatic.runtime.json')))
 })
+
+/*
+  Seeds ride in on the real environment, and the real environment outranks env files in v4 -- so a
+  seed for a variable the project's own `.env` sets would shadow the project's value and validate
+  the emitted files against a fabrication migrate invented. It also told the user the variable was
+  "not set here" when the project sets it.
+*/
+test('migrate - does not assume a variable the project supplies in an env file', async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'api',
+      autoload: { path: 'web' },
+      logger: { level: '{PLT_LOG_LEVEL}' }
+    },
+    '.env': 'PLT_LOG_LEVEL=warn\n'
+  })
+
+  await mkdir(join(root, 'web/api'), { recursive: true })
+  await writeFile(
+    join(root, 'web/api/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 0 }
+    }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'web/api/package.json'), JSON.stringify({ name: 'api' }), 'utf-8')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  ok(!migrateProcess.stdout.includes('PLT_LOG_LEVEL assumed'), migrateProcess.stdout)
+  ok(!migrateProcess.stdout.includes('are not set here'), migrateProcess.stdout)
+
+  // And the conversion itself is unchanged: the enum position still guards the value.
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("requiredEnum('PLT_LOG_LEVEL'"), emitted)
+})
