@@ -3903,15 +3903,24 @@ Generation reads both views. Then:
    directory, which is why that case is reported by the source scan instead of
    converted.
 
-   **Six positions are *structural* and must be concrete before anything is
+   **Five positions are *structural* and must be concrete before anything is
    emitted**: an entry's `path`, an entry's `config`, `autoload.mappings[].config`,
-   `autoload.path`, `envfile`, and `resolvedApplicationsBasePath`. Migrate needs real
+   `autoload.path`, and `envfile`. Migrate needs real
    directories and real filenames at generation time — to decide where each per-app
    file goes, to open the legacy config each entry points at, to run the detector, to
    rebase `envfile` app-relative, and to evaluate the root-directory `envfile` refusal
-   — and none of that is expressible over an unresolved token. So these six are
-   **resolved, not converted**: migrate evaluates their placeholders and writes the
-   resulting literal path.
+   — and none of that is expressible over an unresolved token. So these five are
+   **resolved, not converted** (`wattpm-utils/lib/commands/migrate.js:500`): migrate
+   evaluates their placeholders and writes the resulting literal path, and refuses by
+   name when a token survives the chain.
+
+   **`resolvedApplicationsBasePath` was listed here and does not belong.** It is
+   environment-dependent in the same way, but nothing in migrate reads it: it decides
+   where `wattpm resolve` clones a remote application, which v4 evaluates at boot and
+   at resolve time, long after generation. Converting it to an expression is therefore
+   both possible and better, since it keeps the environment-dependence v3 had at a
+   position that can still honour it. The test of this list is whether *migrate* needs
+   the value, not whether the value names a path.
 
    **The two config positions are the easiest to leave off a list like this**, because
    they name files rather than directories, and because v4 has no equivalent of
@@ -3939,8 +3948,10 @@ Generation reads both views. Then:
    for that config file**; then the value in **`.env.sample`** if one exists; then the
    conventional **`<autoload.path>/<id>` directory** if it exists on disk.
 
-   That third rung is per-file, not per-project, and it is the vendored `loadEnv` that
-   decides it rather than a rule of migrate's own. v3 skips the search entirely when
+   That third rung is per-file, not per-project, and it is v3's own walk
+   (`wattpm-utils/lib/commands/migrate.js:443`) that decides it rather than a rule of
+   migrate's own — kept here because migrate is the only thing that still needs to know
+   what v3 would have done. v3 skips the search entirely when
    the config declared an `envfile` (`foundation/lib/configuration.js:349-357` pre-`7a541feae`);
    otherwise it walks up from **that config file's own directory** and stops at the
    **first** `.env` it finds (`:361-371` pre-`7a541feae`), falling back to `process.cwd()/.env` when

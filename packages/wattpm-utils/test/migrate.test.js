@@ -1355,3 +1355,65 @@ test('migrate - --resume refuses when nothing is paused', async t => {
   strictEqual(resumeProcess.exitCode, 1)
   ok(resumeProcess.stdout.includes('nothing here is waiting to be resumed'), resumeProcess.stdout)
 })
+
+/*
+  An entry's `path` is a structural position: migrate opens the legacy configuration there, runs
+  the detector on it, decides where the per-app file goes and deletes the legacy file by name.
+  None of that works over a token, and the token is the common shape rather than an exotic one --
+  v3's own generator wrote `{PLT_APPLICATION_<ID>_PATH}` into the configuration and its value into
+  `.env`. Left unresolved, the emitted root named a directory that does not exist and the
+  application's own v3 file stayed on disk: the coexistence state the migration exists to end.
+*/
+test("migrate - resolves an entry's path from the env file v3 would have read", async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'api',
+      services: [{ id: 'api', path: '{PLT_APPLICATION_API_PATH}' }]
+    },
+    '.env': 'PLT_APPLICATION_API_PATH=web/api\n'
+  })
+
+  await mkdir(join(root, 'web/api'), { recursive: true })
+  await writeFile(
+    join(root, 'web/api/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }),
+    'utf-8'
+  )
+
+  await wattpmUtils('migrate', root)
+
+  // `.mjs` because the package does not declare "type": "module".
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // The literal it stands for, not the token and not an expression reading it back.
+  ok(emitted.includes("path: 'web/api'"), emitted)
+  ok(!emitted.includes('PLT_APPLICATION_API_PATH'), emitted)
+
+  // Which is what let migrate find the application at all: its own file is converted and the
+  // legacy one is gone.
+  ok(await fileExists(join(root, 'web/api/watt.config.mjs')))
+  strictEqual(await fileExists(join(root, 'web/api/platformatic.service.json')), false)
+})
+
+test("migrate - refuses an entry's path that resolves nowhere", async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'api',
+      services: [{ id: 'api', path: '{PLT_NOWHERE}' }]
+    }
+  })
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('which does not resolve here'), migrateProcess.stdout)
+
+  // Nothing was written: a refusal is decided before the run touches the tree.
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  ok(await fileExists(join(root, 'platformatic.runtime.json')))
+})

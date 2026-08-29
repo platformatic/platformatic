@@ -26,7 +26,7 @@ import { createHash } from 'node:crypto'
 import { createInterface } from 'node:readline/promises'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseEnv } from 'node:util'
 
@@ -423,6 +423,105 @@ function classifyNode (node) {
     default:
       return { constraints, kind: 'unknown' }
   }
+}
+
+/*
+  The env file v3 itself would have read for a given configuration file, and its contents.
+
+  This is v3's `loadEnv` walk, kept here because migrate is the only thing that still needs to know
+  what v3 would have done: a declared `envfile` replaced the search outright, and otherwise the
+  loader walked up from **that config file's own directory** and stopped at the **first** `.env` it
+  found, falling back to `process.cwd()/.env` when the walk found none. Calling it "the root .env"
+  is wrong twice over -- it reads the wrong file whenever an intermediate directory has one, and it
+  has no answer at all for a project whose only `.env` sits in neither place.
+
+  It matters because the structural positions have to be concrete before anything is emitted, and
+  the value that makes them concrete is, in the overwhelmingly common case, in a file rather than in
+  the environment migrate happens to run in: v3's own generator wrote `{PLT_APPLICATION_<ID>_PATH}`
+  into the configuration and its value into `.env`.
+*/
+function readLegacyEnvFile (configDirectory, declaredEnvfile, root) {
+  const candidates = []
+
+  if (declaredEnvfile) {
+    // v3 resolved an entry's envfile against the runtime root, and skipped the walk entirely.
+    candidates.push(isAbsolute(declaredEnvfile) ? declaredEnvfile : resolve(root, declaredEnvfile))
+  } else {
+    let current = configDirectory
+
+    while (true) {
+      candidates.push(join(current, '.env'))
+
+      const parent = dirname(current)
+
+      if (parent === current) {
+        break
+      }
+
+      current = parent
+    }
+
+    candidates.push(join(process.cwd(), '.env'))
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return parseEnv(readFileSync(candidate, 'utf-8'))
+    } catch {
+      // Not there, or unreadable: v3 carried on to the next rung.
+    }
+  }
+
+  return {}
+}
+
+/*
+  A structural position resolved to the literal it stands for.
+
+  Six positions have to be concrete before anything is emitted -- an entry's `path` and `config`,
+  `autoload.path`, `autoload.mappings[].config`, `envfile` and `resolvedApplicationsBasePath` --
+  because migrate needs real directories and real filenames at generation time: to decide where each
+  per-app file goes, to open the legacy config an entry points at, to run the detector, to rebase an
+  `envfile`, and to know which legacy files step 5 deletes by name. None of that is expressible over
+  an unresolved token, so these are **resolved, not converted**: the placeholders are evaluated and
+  the resulting literal is written.
+
+  The chain, in order: `PLT_ROOT`, seeded to the directory of the config file being read, because v3
+  assigned it per parse and it is not something migrate can read from its own environment; then the
+  migration-time environment; then the env file v3 itself would have read for that config file; then
+  `.env.sample`. Each rung is more specific about *this project* than the one before it is about
+  this machine.
+
+  Returns null when a token survives the chain. That is a refusal rather than a fallback: a
+  structural position migrate cannot resolve is one where every later step operates on a path that
+  does not exist, and the worst of those is the deletion -- a legacy configuration left behind is
+  the coexistence state the migration exists to end.
+*/
+function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {
+  if (typeof value !== 'string' || !placeholderPattern.test(value)) {
+    return value
+  }
+
+  const fileEnv = readLegacyEnvFile(configDirectory, envfile, root)
+
+  let unresolved = false
+
+  const resolved = value.replace(everyPlaceholder, (token, name) => {
+    if (rootPlaceholder.test(token)) {
+      return configDirectory
+    }
+
+    const replacement = process.env[name] ?? fileEnv[name] ?? sample[name]
+
+    if (replacement === undefined || replacement === '') {
+      unresolved = true
+      return token
+    }
+
+    return replacement
+  })
+
+  return unresolved ? null : resolved
 }
 
 /*
@@ -961,8 +1060,10 @@ export async function planMigration (root, source, config, { useSampleDefaults =
   const declaredEntries = config.applications ?? config.services ?? config.web ?? []
   const rootDirectory = canonicalize(dirname(source))
 
+  const sample = readSampleEnv(root)
+
   for (const entry of declaredEntries) {
-    const { config: _legacyPath, envfile, server: _server, useHttp: _useHttp, ...orchestration } = entry
+    let { config: _legacyPath, envfile, server: _server, useHttp: _useHttp, ...orchestration } = entry
     const named = entry.id ?? entry.path ?? entry.url ?? 'an application'
 
     if (!entry.path) {
@@ -972,7 +1073,40 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       continue
     }
 
-    const directory = resolve(root, entry.path)
+    /*
+      Resolved rather than converted. An entry's `path` is a structural position: migrate opens the
+      legacy configuration there, runs the detector on it, decides where the per-app file goes and
+      deletes the legacy file by name, and none of that works over `{PLT_APPLICATION_API_PATH}`.
+      v3's own generator wrote exactly that token, with its value in `.env`, so this is the common
+      shape rather than an exotic one.
+    */
+    const entryPath = resolveStructuralValue(entry.path, {
+      configDirectory: rootDirectory,
+      envfile,
+      root,
+      sample
+    })
+
+    if (entryPath === null) {
+      refusals.push({
+        reason: `${bold(named)} has a ${bold('path')} of ${bold(entry.path)}, which does not resolve here`,
+        fix: 'set that variable and run migrate again, or replace it with the directory it stands for — v4 needs a real directory to find the application, and migrate needs one to convert it'
+      })
+      continue
+    }
+
+    /*
+      Written back onto the entry as well as onto what is emitted. Everything downstream reads the
+      configuration rather than this loop's copy -- the placeholder conversion above all, which
+      would otherwise record a seed for a variable the output no longer mentions and report it as
+      assumed. A resolved position is a literal from here on, for every reader.
+    */
+    const settledPath = relative(root, resolve(root, entryPath)).split(sep).join('/')
+
+    entry.path = settledPath
+    orchestration.path = settledPath
+
+    const directory = resolve(root, entryPath)
 
     /*
       The transaction root is the tree one dirty check, one lockfile and one install cover. An
@@ -996,6 +1130,23 @@ export async function planMigration (root, source, config, { useSampleDefaults =
     let rebased = null
 
     if (envfile) {
+      /*
+        Structural: the path is rebased app-relative and the root-directory refusal is evaluated
+        against it, and neither is expressible over a token. Resolved without consulting an env
+        file, deliberately -- naming this one is what decides which file v3 read.
+      */
+      const settledEnvfile = resolveStructuralValue(envfile, { configDirectory: rootDirectory, root, sample })
+
+      if (settledEnvfile === null) {
+        refusals.push({
+          reason: `${bold(named)} declares ${bold('envfile')} ${bold(envfile)}, which does not resolve here`,
+          fix: 'set that variable and run migrate again, or name the file directly — migrate rebases this path app-relative and cannot over a token'
+        })
+        continue
+      }
+
+      envfile = settledEnvfile
+
       const declaredFile = resolve(root, envfile)
 
       if (!existsSync(declaredFile)) {
@@ -1040,7 +1191,25 @@ export async function planMigration (root, source, config, { useSampleDefaults =
     let legacy = null
 
     if (entry.config) {
-      legacy = resolve(directory, entry.config)
+      // Structural too, and for the sharper reason: step 5 deletes this file by name, so a token
+      // here leaves a legacy configuration behind -- the coexistence state the migration ends.
+      const entryConfig = resolveStructuralValue(entry.config, {
+        configDirectory: rootDirectory,
+        envfile,
+        root,
+        sample
+      })
+
+      if (entryConfig === null) {
+        refusals.push({
+          reason: `${bold(named)} names the configuration ${bold(entry.config)}, which does not resolve here`,
+          fix: 'set that variable and run migrate again, or name the file directly — migrate reads this file to classify the application and deletes it once it is converted, and can do neither over a token'
+        })
+        continue
+      }
+
+      entry.config = entryConfig
+      legacy = resolve(directory, entryConfig)
 
       if (!existsSync(legacy)) {
         refusals.push({
@@ -1118,7 +1287,7 @@ export async function planMigration (root, source, config, { useSampleDefaults =
     })
   }
 
-  const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds, useSampleDefaults)
+  const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds, useSampleDefaults, source)
 
   /*
     Conversion runs here rather than as each application is discovered, because it needs two things
@@ -1420,12 +1589,35 @@ function planExposure (config, applications, refusals) {
   The directories themselves are converted like any other application: each one that has a
   configuration of its own gets a v4 file in its place.
 */
-async function planAutoload (root, config, applications, refusals, skipped, seeds, useSampleDefaults) {
+async function planAutoload (root, config, applications, refusals, skipped, seeds, useSampleDefaults, source) {
   if (!config.autoload) {
     return null
   }
 
-  const { exclude = [], mappings = {}, path } = config.autoload
+  const { exclude = [], mappings = {} } = config.autoload
+  const sample = readSampleEnv(root)
+
+  /*
+    Structural: this directory is read to discover the applications, so a token here means migrate
+    finds none and emits a root describing an empty project.
+  */
+  const path = resolveStructuralValue(config.autoload.path, {
+    configDirectory: dirname(source),
+    root,
+    sample
+  })
+
+  if (path === null) {
+    refusals.push({
+      reason: `${bold('autoload.path')} is ${bold(config.autoload.path)}, which does not resolve here`,
+      fix: 'set that variable and run migrate again, or name the directory directly — migrate reads it to discover the applications, and cannot over a token'
+    })
+
+    return null
+  }
+
+  config.autoload.path = path
+
   const directory = resolve(root, path)
 
   if (!contains(root, directory)) {
@@ -1478,8 +1670,24 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
       pinned[entry.name] = { ...mapping, id: v3 }
     }
 
-    const legacy = mapping.config
-      ? resolve(applicationRoot, mapping.config)
+    const mappingConfig = mapping.config
+      ? resolveStructuralValue(mapping.config, { configDirectory: dirname(source), root, sample })
+      : null
+
+    if (mapping.config && mappingConfig === null) {
+      refusals.push({
+        reason: `${bold(`autoload.mappings.${entry.name}.config`)} is ${bold(mapping.config)}, which does not resolve here`,
+        fix: 'set that variable and run migrate again, or name the file directly — migrate reads it to classify the application and deletes it once converted'
+      })
+      continue
+    }
+
+    if (mappingConfig) {
+      mapping.config = mappingConfig
+    }
+
+    const legacy = mappingConfig
+      ? resolve(applicationRoot, mappingConfig)
       : findLegacyConfiguration(applicationRoot, null)
 
     if (!legacy || !existsSync(legacy)) {

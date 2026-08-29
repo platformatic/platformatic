@@ -935,6 +935,11 @@
       "head": "if (!this.config.isRuntimeContext) {",
       "lines": 9
     },
+    "packages/wattpm-utils/lib/commands/migrate.js:500": {
+      "sha": "ff440ded0415b4ee",
+      "head": "function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {",
+      "lines": 1
+    },
     "packages/runtime/lib/config.js:237-238": {
       "sha": "c410aebf0f15de2a",
       "head": "if (application.path && application.config) {",
@@ -944,6 +949,11 @@
       "sha": "408ebe7805cbc6c7",
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4
+    },
+    "packages/wattpm-utils/lib/commands/migrate.js:443": {
+      "sha": "6fc44b37a39f9c96",
+      "head": "function readLegacyEnvFile (configDirectory, declaredEnvfile, root) {",
+      "lines": 1
     },
     "packages/foundation/lib/configuration.js:361-371@7a541feae^": {
       "sha": "b6a837803e92251b",
