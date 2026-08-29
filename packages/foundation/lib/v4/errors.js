@@ -40,6 +40,11 @@ export const DeferredSlotInApplicationDefinitionError = createError(
   '%s exports an application definition with a function at %s. Application definitions have no config slots; use the factory callback form instead.'
 )
 
+export const NoApplicationsDeclaredError = createError(
+  `${ERROR_PREFIX}_NO_APPLICATIONS_DECLARED`,
+  "%s declares no applications: add 'applications', 'autoload' or the singular 'application'. To run this directory with zero configuration, delete the file instead."
+)
+
 export const ApplicationShorthandConflictError = createError(
   `${ERROR_PREFIX}_APPLICATION_SHORTHAND_CONFLICT`,
   '%s declares the singular application shorthand alongside %s. The shorthand is only for genuinely single-application projects.'

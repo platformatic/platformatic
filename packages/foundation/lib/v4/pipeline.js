@@ -8,6 +8,7 @@ import {
   DeferredSlotInApplicationDefinitionError,
   InvalidRootConfigurationError,
   NestedFunctionExportError,
+  NoApplicationsDeclaredError,
   RootConfigurationInApplicationEntryError
 } from './errors.js'
 import { topologyVariableName } from './identifiers.js'
@@ -39,7 +40,17 @@ function validateOrchestration (config, { schema, path }) {
   const validate = ajv.compile(schema)
 
   if (!validate(config)) {
-    const messages = validate.errors.map(error => `${error.instancePath || '/'} ${error.message}`).join('; ')
+    const messages = validate.errors
+      .map(error => {
+        // Named like the main-side describeFailure: AJV puts the offending property in params, and
+        // "must NOT have additional properties" without it is an error the author has to bisect.
+        const message = error.params?.additionalProperty
+          ? `must NOT have the additional property '${error.params.additionalProperty}'`
+          : error.message
+
+        return `${error.instancePath || '/'}: ${message}`
+      })
+      .join('; ')
 
     throw new InvalidRootConfigurationError(path, messages)
   }
@@ -125,7 +136,28 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
     return { config, classification, resolveCandidates: [], warnings: [] }
   }
 
+  /*
+    Before normalization, which is the only moment the question can still be asked: the very next
+    step defaults `applications` to an empty list, after which every configuration looks like it
+    declared one. v3 drew the same line through its schema -- `services: []` was a statement and
+    an absent key was a rejection -- and an empty root config here is a file that boots an empty
+    runtime while looking like it configures something. Level 0 is the spelling for "no
+    configuration": no file at all.
+  */
+  if (snapshot.application === undefined && snapshot.applications === undefined && snapshot.autoload === undefined) {
+    throw new NoApplicationsDeclaredError(path)
+  }
+
   const slots = resolveSlotContainers(snapshot, deferred)
+
+  /*
+    Step 3, on the authored shape. Orchestration keys only: a pending config slot is an absent key
+    until step 5 splices it, and capability configuration is validated later, main-side, against
+    each capability's own schema. Before normalization on purpose -- the singular `application`
+    shorthand legitimately has no id and no path, and folding it into `applications` first would
+    validate it against the entry rules that require exactly those.
+  */
+  validateOrchestration(snapshot, { schema, path })
 
   normalizeApplications(snapshot, {
     directory,
@@ -133,10 +165,6 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
       throw new ApplicationShorthandConflictError(path, snapshot.autoload ? 'autoload' : 'applications')
     }
   })
-
-  // Step 3. Orchestration keys only: a pending config slot has nothing to validate yet, and
-  // capability configuration is validated later, main-side, against each capability's own schema.
-  validateOrchestration(snapshot, { schema, path })
 
   // Step 4. The recording sits between expansion and the filter because that is the only moment
   // both lists exist: after expansion, so autoloaded entries are in it, and before the filter,

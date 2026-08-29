@@ -209,6 +209,12 @@ async function loadV4RuntimeConfiguration (target, context) {
     production,
     customEnvFile: context?.envFile,
     /*
+      Step 3 of the pipeline validates orchestration in the eval worker, before autoload expansion
+      acts on it -- without the schema that step is skipped, and a malformed `autoload` reaches the
+      filesystem walk as a raw TypeError instead of a validation error naming the property.
+    */
+    schema: context?.schema ?? v4Schema,
+    /*
       The evaluation deadline. A configuration that never resolves — an awaited fetch to a dead
       host, a forgotten promise — otherwise hangs the boot rather than failing it, and the default
       is a guess about how long a reasonable one takes. A deployment that knows better says so.
