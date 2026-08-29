@@ -77,7 +77,8 @@ const documents = [
   { name: 'docs/reference/tanstack/configuration.md', markEverything: false },
   { name: 'docs/getting-started/port-your-app.md', markEverything: false },
   { name: 'docs/overview/what-is-watt.md', markEverything: false },
-  { name: 'docs/learn/migrations/from-express.md', markEverything: false }
+  { name: 'docs/learn/migrations/from-express.md', markEverything: false },
+  { name: 'docs/learn/migrations/from-fastify.md', markEverything: false }
 ]
 
 const typescriptLanguages = new Set(['ts', 'tsx', 'typescript'])
