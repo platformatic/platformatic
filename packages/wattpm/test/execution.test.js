@@ -593,10 +593,15 @@ test('restart - should restart an application', async t => {
 test('restart - can restart an application when its port is fixed and reusePort is disabled', async t => {
   const port = await getPort()
 
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', (root, config) => {
-    return updateConfigFile(resolve(root, 'web/main/watt.json'), config => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
+    await updateConfigFile(resolve(root, 'web/main/watt.json'), config => {
       config.server = { port }
-      config.runtime = { reuseTcpPorts: false }
+    })
+
+    // reuseTcpPorts is orchestration, so it moves to the root: v4 has no runtime block inside an
+    // application's own configuration.
+    await updateConfigFile(resolve(root, 'watt.config.mjs'), config => {
+      config.reuseTcpPorts = false
     })
   })
 

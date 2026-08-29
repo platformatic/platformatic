@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { test } from 'node:test'
-import { prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
+import { prepareFixture, prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, wattpmUtils } from './helper.js'
 
 /*
@@ -284,7 +284,9 @@ test('resolve - should refuse an invalid --for target', async t => {
 })
 
 test('resolve --for all - should refuse an id that resolves to two different clones', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'resolve-branching', false, 'watt.config.mjs')
+  // prepareFixture, not prepareRuntime: the fixture's url reads an environment variable only
+  // the CLI invocation supplies, so a load in this process would refuse the entry as placeless.
+  const { root: rootDir } = await prepareFixture(t, 'resolve-branching')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
@@ -305,7 +307,9 @@ test('resolve --for all - should refuse an id that resolves to two different clo
 })
 
 test('resolve - should not let enabled: false hide an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'resolve-disabled', false, 'watt.config.mjs')
+  // prepareFixture, not prepareRuntime: the fixture's url reads an environment variable only
+  // the CLI invocation supplies, so a load in this process would refuse the entry as placeless.
+  const { root: rootDir } = await prepareFixture(t, 'resolve-disabled')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 

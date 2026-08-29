@@ -483,18 +483,19 @@ test('import - a remote application in a v4 root records its branch', async t =>
   ok(/gitBranch:\s*["']another["']/.test(source), source)
 })
 
-test('import - a v4 root that lists its applications under an alias keeps that name', async t => {
+/*
+  v3 spelled the list `services` or `web` too; v4 has one spelling and the loader refuses the
+  others by name -- so import fails on the load, before any edit, rather than growing a second
+  list beside a key nothing reads.
+*/
+test('import - a v4 root that lists its applications under a v3 alias is refused', async t => {
   const root = await createTemporaryDirectory(t, 'import-v4-alias')
 
   await prepareV4Root(t, root, "export default { web: [{ id: 'first', path: 'first' }] }\n")
-  await wattpmUtils('import', 'http://github.com/foo/bar.git')
+  const process = await wattpmUtils('import', 'http://github.com/foo/bar.git', { reject: false })
 
-  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
-
-  // One list, under the name the file already used, holding both entries.
-  ok(!source.includes('applications'), source)
-  ok(/id:\s*["']first["']/.test(source), source)
-  ok(/id:\s*["']bar["']/.test(source), source)
+  deepStrictEqual(process.exitCode, 1)
+  ok(process.stderr.includes('declares no applications'), process.stderr)
 })
 
 test('import - a v4 root it cannot edit is printed rather than rewritten', async t => {

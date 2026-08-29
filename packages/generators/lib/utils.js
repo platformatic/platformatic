@@ -224,12 +224,6 @@ export function equivalentSource (left, right) {
 }
 
 /*
-  The three names a root can list its applications under. `applications` is the v4 spelling; the
-  other two are the v3 aliases, which a migrated root may still carry.
-*/
-const applicationListKeys = ['applications', 'services', 'web']
-
-/*
   A string to be printed as source rather than as a string literal. Exported so that a caller
   outside this package can hand one to `resolveScaffoldedPlaceholders` without taking on the AST
   library itself.
@@ -259,11 +253,9 @@ export function appendApplications (source, entries, resolveEntry = entry => ent
     return null
   }
 
-  /*
-    The key the file already uses, because a second list beside its own would be two answers to one
-    question. `applications` is the name for a file that lists none yet.
-  */
-  const key = applicationListKeys.find(candidate => configuration[candidate] !== undefined) ?? 'applications'
+  // One spelling: the loader refuses `services` and `web` by name, so a file this editor sees
+  // lists its applications under `applications` or not at all.
+  const key = 'applications'
   const listed = configuration[key] ?? []
 
   if (!Array.isArray(listed)) {
@@ -282,9 +274,9 @@ export function appendApplications (source, entries, resolveEntry = entry => ent
   return generateCode(module).code
 }
 
-// The applications a configuration lists, under whichever of the three names it uses.
+// The applications a configuration lists. One spelling: the v3 aliases are refused by the loader.
 export function listedApplications (config) {
-  return applicationListKeys.flatMap(candidate => config?.[candidate] ?? [])
+  return config?.applications ?? []
 }
 
 /*
