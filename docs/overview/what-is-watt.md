@@ -159,54 +159,68 @@ services:
 
 Watt uses a **configuration-driven approach** where each application declares its requirements:
 
-```json
-// watt.json - Application orchestration
-{
-  "applications": [
-    {
-      "path": "./web/api",
-      "id": "api"
-    },
-    {
-      "path": "./web/frontend",
-      "id": "frontend"
-    }
+Each file is a module whose default export is its configuration. The root orchestrates,
+and every application owns the file in its own directory:
+
+```ts config
+// watt.config.ts — application orchestration
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [
+    { id: 'api', path: './web/api' },
+    { id: 'frontend', path: './web/frontend' }
   ]
-}
+})
+```
 
-// web/api/platformatic.json - Express.js application
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json"
-}
+```ts config
+// web/api/watt.config.ts — an Express.js application
+import { node } from '@platformatic/node'
 
-// web/frontend/watt.json - Next.js integration
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
-  "application": {
-    "basePath": "/app"
-  }
-}
+export default node({
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
+```
+
+```ts config
+// web/frontend/watt.config.ts — Next.js
+import { next } from '@platformatic/next'
+
+export default next({
+  application: { basePath: '/app' },
+  server: { port: Number(process.env.PORT ?? 3043) }
+})
 ```
 
 ### Enterprise Production Patterns
 
 #### Multi-Environment Configuration
 
-```javascript
-// Environment-specific configuration
-{
-  "db": {
-    "connectionString": "{DATABASE_URL}",
-    "poolSize": "{DB_POOL_SIZE}"
+A configuration file is a program, so it reads its environment directly — there is no
+`{PLACEHOLDER}` interpolation to learn, and the same file can branch, compute and
+validate:
+
+```ts config
+import { db } from '@platformatic/db'
+
+const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
+
+// `level` is a literal union, not a string, so the value is narrowed rather than cast.
+// The editor is what makes this worth doing: an unknown level is caught while you type.
+const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
+
+export default db({
+  db: {
+    connectionString: process.env.DATABASE_URL ?? 'sqlite://./db.sqlite',
+    poolSize: Number(process.env.DB_POOL_SIZE ?? 10)
   },
-  "server": {
-    "port": "{PORT}",
-    "hostname": "{HOST}"
-  },
-  "logging": {
-    "level": "{LOG_LEVEL}"
+  server: {
+    hostname: process.env.HOST ?? '127.0.0.1',
+    port: Number(process.env.PORT ?? 3042),
+    logger: { level }
   }
-}
+})
 ```
 
 #### Health Checks and Kubernetes Integration
@@ -234,37 +248,46 @@ spec:
 
 #### From Express/Fastify Applications
 
-```javascript
-// 1. Wrap existing Express app
+```js source
+// 1. Wrap existing Express app — existing-express-app/index.js
 import express from 'express'
 
-export function build() {
+export function build () {
   const app = express()
   // ... your existing Express routes
   return app
 }
+```
 
-// 2. Add to Watt configuration
-// watt.json
-{
-  "applications": [
-    { "path": "./existing-express-app", "id": "api" }
-  ]
-}
+```ts config
+// 2. Add it to the Watt configuration — watt.config.ts
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [{ id: 'api', path: './existing-express-app' }]
+})
 ```
 
 #### From Next.js Applications
 
 ```bash
-# 1. Add Watt configuration to existing Next.js app
-echo '{"$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json"}' > watt.json
-
-# 2. Create Watt project structure
-npm wattpm create
+# 1. Import the app — this installs @platformatic/next and needs no configuration file,
+#    because a single application with default settings is inferred from its dependencies
 wattpm-utils import ./existing-nextjs-app
 
-# 3. Add database application
-npm wattpm create # Choose @platformatic/db
+# 2. Add a database application
+npm create wattpm # Choose @platformatic/db
+```
+
+Write a `watt.config.ts` only where the defaults are not what you want:
+
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  application: { basePath: '/app' },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 ### Development Experience
