@@ -350,7 +350,7 @@ orchestration is always root-lexical, which is what lets the loader know an app'
 `env`, `envfile` and `enabled` before that app is evaluated. Where two *entries*
 describe the same app id — one discovered by `autoload`, one listed explicitly —
 their orchestration keys merge **shallowly, per-key, the explicit entry winning**
-(`runtime/lib/config.js:435-440`, v3 semantics) — **but only once the two are known
+(`runtime/lib/config.js:435-440` pre-`7f3ce97ef`, v3 semantics) — **but only once the two are known
 to be the same application.** v3 matched on `id` alone, which is not sufficient: an
 explicit `{ id: 'api', url: '…' }` beside an autoloaded `web/api` merges into an entry
 that keeps the local `path` *and* carries the `url`, so `wattpm resolve` skips the
@@ -669,7 +669,7 @@ loaded worker-side; v4 needs an absolute `path` during loading to find the per-a
 file, run the detector, and validate the capability. An entry with a `url` whose directory — backfilled or declared — **does not exist
 yet** is recorded **unresolved** and skipped by per-app discovery entirely: no
 per-app file lookup, no detector, no capability validation. This is v3's
-`type: 'unknown'` (`runtime/lib/config.js:236-238`, whose comment gives the same
+`type: 'unknown'` (`runtime/lib/config.js:236-238` pre-`7f3ce97ef`, whose comment gives the same
 reason: detection on a missing directory would glob the cwd), adapted to the fact
 that v4 always has a `path` and only the directory may be absent.
 
@@ -982,7 +982,7 @@ What the deciding file *is* then decides what boots:
   label, `wattpm inject`'s argument and how siblings name each other in
   `dependencies`. A default that varied by boot style would move all five at once —
   so **`autoload` uses the same rule**, where v3 used the directory name alone
-  (`runtime/lib/config.js:424`, `mapping.id ?? entry.name`). Stripping the scope is not cosmetic: the id becomes a
+  (`runtime/lib/config.js:424` pre-`7f3ce97ef`, `mapping.id ?? entry.name`). Stripping the scope is not cosmetic: the id becomes a
   DNS label in `http://<id>.plt.local` (`runtime/lib/utils.js:12-14`, no
   sanitization), so keeping `@acme/frontend` would emit
   `http://@acme/frontend.plt.local`, where `@acme` parses as userinfo. v3 stripped it
@@ -1410,7 +1410,7 @@ per-application and visible: `service`'s generator writes `server: { hostname,
 port, logger }` into every application's own config
 (`service/lib/generator.js:432-438` — the `!isRuntimeContext` guard is gone) and
 the runtime generator hands application *i* port `3042 + i`
-(`runtime/lib/generator.js:211-214`) while writing no root `server` block at all.
+(`runtime/lib/generator.js:201-204`) while writing no root `server` block at all.
 v4's code-first equivalent is the same thing spelled in the factory, with the
 variable scoped as v3 scoped it: `next({ server: { port:
 Number(process.env.PLT_API_PORT || 3043) } })`. v3's `getEnvVarName` returned a bare
@@ -2232,7 +2232,7 @@ The result then enters the pipeline in the main process: AJV validation
 `transform()` (`runtime/lib/config.js`, which normalizes and prepares the entries it
 is handed). **In v4 that transform no longer expands `autoload` and no longer filters
 on `enabled`**: both moved to the root eval worker's step 4, which is the only place
-either runs. v3 did both here (`runtime/lib/config.js:409-443` then `:445-449`), and
+either runs. v3 did both here (`runtime/lib/config.js:409-443` pre-`7f3ce97ef` then `:445-449` pre-`7f3ce97ef`), and
 leaving that code reachable would let a second expansion re-merge entries and read
 the filesystem after the authoritative snapshot already exists. The `autoload`
 **declaration** survives expansion untouched, as data beside the expanded list —
@@ -2253,7 +2253,7 @@ outright (see "Object config sources"), so the carve-out the root worker makes f
 function slots does not apply. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
-hazard in this very codebase (`runtime/lib/config.js:491` warns that `2` would be
+hazard in this very codebase (`runtime/lib/config.js:301` warns that `2` would be
 coerced to `true`). The audit also guarantees that schema-injected defaults are
 themselves serializable.
 
@@ -2926,7 +2926,7 @@ deliberately saner:
   `start`/`build` and `dev`, so every existing config keeps its meaning, and
   `enabled: { staging: false }` now does what it looks like under
   `--mode staging` — where v3 silently ignored the key
-  (`runtime/lib/config.js:330-346`). `enabled` is resolved in the root eval worker against
+  (`runtime/lib/config.js:330-346` pre-`7f3ce97ef`). `enabled` is resolved in the root eval worker against
   `ctx.mode`, before fan-out (see "Loading mechanism").
 
   v4.0 is the only free moment for this: no v4 configs exist yet, and `migrate` emits
@@ -3302,7 +3302,7 @@ export default {
   would silently redefine the script the generator just wrote. The v3 wizard's
   `3042` prompt is gone from the root — ports are per-application now, and the
   generator hands application *i* `3042 + i`
-  (`runtime/lib/generator.js:211-214`). The wizard's closing output prints where `watt.config.ts`
+  (`runtime/lib/generator.js:201-204`). The wizard's closing output prints where `watt.config.ts`
   goes and the one-line bare-factory form, so later customization is one
   copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
@@ -3439,7 +3439,7 @@ earlier design compared the emitted configuration against a third "resolved view
 — the config loaded as production v3 would be — but no comparand works: comparing
 *pre-transform* leaves the two sides structurally incomparable, since v3 expands
 `autoload` and applies `enabled` inside `transform`
-(`runtime/lib/config.js:409-443`, `:445-449`) while v4 does both in
+(`runtime/lib/config.js:409-443` pre-`7f3ce97ef`, `:445-449` pre-`7f3ce97ef`) while v4 does both in
 the root eval worker; and comparing *post-transform* pits v3's transform output
 against v4's, which differ by design after the schema audit. Building either to a
 useful fidelity is a large amount of machinery for a one-shot codemod — the
@@ -3474,14 +3474,14 @@ Generation reads both views. Then:
    **Two autoloaded directories that resolve to the same id are a boot error naming
    both.** v3's ids were directory names, unique by construction; v4 prefers the
    `package.json` `name`, which is not — two directories copied from one another
-   carry the same name, and v3's shallow merge (`runtime/lib/config.js:435-440`)
+   carry the same name, and v3's shallow merge (`runtime/lib/config.js:435-440` pre-`7f3ce97ef`)
    would silently absorb the second, so it would never boot and nothing would say so.
    That merge remains what it was in v3: a rule for an autoloaded entry meeting an
    *explicit* one, not for two autoloaded directories colliding.
 
    `autoload`-discovered applications need the same protection as explicit entries,
    but only where the id would actually move. v3 derived their id from the **directory name** alone
-   (`runtime/lib/config.js:424`, `mapping.id ?? entry.name`); v4 prefers the
+   (`runtime/lib/config.js:424` pre-`7f3ce97ef`, `mapping.id ?? entry.name`); v4 prefers the
    `package.json` `name` (see "How applications are exposed"), so an application in
    `web/composer/` whose package is named `gateway-service` would be renamed — and
    with it the mesh hostname, the injected variable, the metrics label and any
@@ -3523,7 +3523,7 @@ Generation reads both views. Then:
    resolvable directory — gets no per-app file, because there is no directory to
    write one into. It is exempt from the closure gate too (v3 could not even
    determine its capability, marking it `type: 'unknown'`,
-   `runtime/lib/config.js:236-238`), and appears on the migrate-the-other-repository
+   `runtime/lib/config.js:236-238` pre-`7f3ce97ef`), and appears on the migrate-the-other-repository
    list instead. Otherwise per-app files are emitted **unconditionally**, including
    when one would contain nothing but the capability call. Two reasons: owning a
    file is the scope declaration (see "Loading mechanism"), and migrate does not
@@ -3770,9 +3770,9 @@ Generation reads both views. Then:
    was publicly reachable — and since a v4 listener opens only where
    `server.port` is defined, a framework application treated that way would not
    start at all. Migrate therefore evaluates `isApplicationEnabled`
-   (`config.js:330-346`) over the lexical values and resolves the entrypoint
+   (`config.js:330-346` pre-`7f3ce97ef`) over the lexical values and resolves the entrypoint
    **twice, once for `production` and once for `development`** — the only two
-   values v3 derives (`:350`).
+   values v3 derives (`:350` pre-`7f3ce97ef`).
 
    When both environments resolve to the same application, that is the entrypoint.
    When they **disagree** — an `enabled` object such as
@@ -3925,9 +3925,9 @@ Generation reads both views. Then:
    **The two config positions are the easiest to leave off a list like this**, because
    they name files rather than directories, and because v4 has no equivalent of
    either. v3 accepted a path in an entry's `config` and resolved it against that
-   application's own `path` (`runtime/lib/config.js:229-230`), and accepted a filename
+   application's own `path` (`runtime/lib/config.js:229-230` pre-`7f3ce97ef`), and accepted a filename
    in `autoload.mappings[].config`, joined to the discovered entry directory
-   (`runtime/lib/config.js:428-431`) — so `config: '{APP_CONFIG}'` is a legal v3
+   (`runtime/lib/config.js:428-431` pre-`7f3ce97ef`) — so `config: '{APP_CONFIG}'` is a legal v3
    project, and one that names a file no rule of migrate's own could guess. Every
    later step is downstream of that value being real: the lexical pass reads that file
    to learn the application's module, step 1 classifies and emits from it, step 3
@@ -4087,7 +4087,7 @@ Generation reads both views. Then:
 
    **The bound is every path migrate touches, not only application directories.** An
    entry's `config` is a structural position (see step 1) and v3 resolved it against
-   the application's own path (`runtime/lib/config.js:229-230`), so an application
+   the application's own path (`runtime/lib/config.js:229-230` pre-`7f3ce97ef`), so an application
    *inside* the root may legally point at `../../shared/platformatic.json` — a file
    migrate would **read** to classify the application and **delete** in step 5, on a
    tree its dirty check never covered and its rollback cannot reach. That is worse
@@ -5055,7 +5055,7 @@ runs multiple workers on a fixed port at all.
    the override (`test/capability.test.js:96,114` pre-`3c92a2a64`).
 4. **runtime**: delete `wrapInRuntimeConfig` and alias merging; entry `config`
    accepts inline definitions; **`autoload` expansion and `enabled` filtering leave
-   the runtime transform** (`runtime/lib/config.js:409-443`, `:445-449`) for the root
+   the runtime transform** (`runtime/lib/config.js:409-443` pre-`7f3ce97ef`, `:445-449` pre-`7f3ce97ef`) for the root
    eval worker, with the `autoload` declaration carried through as data for
    `GET /metadata` and `--save`; phased evaluation (root worker first, per-app
    workers in parallel) with uniform per-app file

@@ -10,7 +10,7 @@
       "head": "export async function wrapInRuntimeConfig (config, context) {",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:435-440": {
+    "packages/runtime/lib/config.js:435-440@7f3ce97ef^": {
       "sha": "b6e178fa03b4a573",
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
@@ -30,7 +30,7 @@
       "head": "async #setupApplication (applicationConfig) {",
       "lines": 2
     },
-    "packages/runtime/lib/config.js:236-238": {
+    "packages/runtime/lib/config.js:236-238@7f3ce97ef^": {
       "sha": "c3921d6a110bb1c8",
       "head": "if (application.url && !application.path) {",
       "lines": 3
@@ -105,7 +105,7 @@
       "head": "{ required: ['autoload'] },",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:424": {
+    "packages/runtime/lib/config.js:424@7f3ce97ef^": {
       "sha": "cc751cccf31f9c25",
       "head": "const id = mapping.id ?? entry.name",
       "lines": 1
@@ -360,7 +360,7 @@
       "head": "config.server = {",
       "lines": 7
     },
-    "packages/runtime/lib/generator.js:211-214": {
+    "packages/runtime/lib/generator.js:201-204": {
       "sha": "8c75bbe7a87ccb10",
       "head": "setApplicationPort (application, ordinal) {",
       "lines": 4
@@ -570,17 +570,17 @@
       "head": "const applicationConfig = application.resolvedConfig",
       "lines": 4
     },
-    "packages/runtime/lib/config.js:409-443": {
+    "packages/runtime/lib/config.js:409-443@7f3ce97ef^": {
       "sha": "0640a25e34ebc3fa",
       "head": "if (config.autoload) {",
       "lines": 35
     },
-    "packages/runtime/lib/config.js:445-449": {
+    "packages/runtime/lib/config.js:445-449@7f3ce97ef^": {
       "sha": "2cb2892b8add119f",
       "head": "for (let i = applications.length - 1; i >= 0; --i) {",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:491": {
+    "packages/runtime/lib/config.js:301": {
       "sha": "234e889c1536e65b",
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
@@ -640,7 +640,7 @@
       "head": "const customSocket = typeof config === 'object' ? config?.socket : null",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:330-346": {
+    "packages/runtime/lib/config.js:330-346@7f3ce97ef^": {
       "sha": "0c8025c3daeca38e",
       "head": "function isApplicationEnabled (application, environment) {",
       "lines": 17
@@ -875,7 +875,7 @@
       "head": "",
       "lines": 3
     },
-    "packages/runtime/lib/config.js:350": {
+    "packages/runtime/lib/config.js:350@7f3ce97ef^": {
       "sha": "04398a437454d1ad",
       "head": "const environment = production ? 'production' : 'development'",
       "lines": 1
@@ -940,12 +940,12 @@
       "head": "function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:229-230": {
+    "packages/runtime/lib/config.js:229-230@7f3ce97ef^": {
       "sha": "c410aebf0f15de2a",
       "head": "if (application.path && application.config) {",
       "lines": 2
     },
-    "packages/runtime/lib/config.js:428-431": {
+    "packages/runtime/lib/config.js:428-431@7f3ce97ef^": {
       "sha": "408ebe7805cbc6c7",
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4
