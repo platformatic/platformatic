@@ -28,14 +28,16 @@ The default configuration uses `level: info` with pretty-printed output in devel
 
 **Problem:** You need different amounts of logging detail in different environments.
 
-**Solution:** Configure the `level` property in your `watt.json`:
+**Solution:** Configure the `level` property in your `watt.config.ts`:
 
-```json
-{
-  "logger": {
-    "level": "debug"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    level: 'debug'
   }
-}
+})
 ```
 
 **Available levels (most to least verbose):**
@@ -50,12 +52,18 @@ The default configuration uses `level: info` with pretty-printed output in devel
 
 **Environment-specific example:**
 
-```json
-{
-  "logger": {
-    "level": "{LOG_LEVEL}"
-  }
-}
+```ts config
+import { defineConfig } from 'wattpm'
+
+const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
+
+// `level` is a literal union, so the value is narrowed rather than cast: an unknown
+// level is caught while you type instead of at boot.
+const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
+
+export default defineConfig({
+  logger: { level }
+})
 ```
 
 Set `LOG_LEVEL=error` in production, `LOG_LEVEL=debug` in development.
@@ -64,52 +72,56 @@ Set `LOG_LEVEL=error` in production, `LOG_LEVEL=debug` in development.
 
 **Problem:** You need to persist logs to files for auditing or analysis.
 
-**Solution:** Configure a file transport in your `watt.json`:
+**Solution:** Configure a file transport in your `watt.config.ts`:
 
-```json
-{
-  "logger": {
-    "transport": {
-      "targets": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    transport: {
+      targets: [
         {
-          "target": "pino/file",
-          "options": {
-            "destination": "{LOG_DIR}/app.log",
-            "mkdir": true
+          target: 'pino/file',
+          options: {
+            destination: `${process.env.LOG_DIR ?? './logs'}/app.log`,
+            mkdir: true
           }
         }
       ]
     }
   }
-}
+})
 ```
 
 **Multiple destinations example:**
 
-```json
-{
-  "logger": {
-    "transport": {
-      "targets": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    transport: {
+      targets: [
         {
-          "target": "pino-pretty",
-          "level": "info",
-          "options": {
-            "colorize": true
+          target: 'pino-pretty',
+          level: 'info',
+          options: {
+            colorize: true
           }
         },
         {
-          "target": "pino/file",
-          "level": "error",
-          "options": {
-            "destination": "{LOG_DIR}/errors.log",
-            "mkdir": true
+          target: 'pino/file',
+          level: 'error',
+          options: {
+            destination: `${process.env.LOG_DIR ?? './logs'}/errors.log`,
+            mkdir: true
           }
         }
       ]
     }
   }
-}
+})
 ```
 
 This logs all messages to console with pretty formatting, and errors to a file.
@@ -122,26 +134,28 @@ This logs all messages to console with pretty formatting, and errors to a file.
 
 ### OpenTelemetry (Recommended for Observability)
 
-```json
-{
-  "logger": {
-    "openTelemetryExporter": {
-      "protocol": "http",
-      "url": "http://localhost:4318/v1/logs"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    openTelemetryExporter: {
+      protocol: 'http',
+      url: 'http://localhost:4318/v1/logs'
     }
   },
-  "telemetry": {
-    "enabled": true,
-    "applicationName": "my-app",
-    "version": "1.0.0",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://otel-collector:4318/v1/traces"
+  telemetry: {
+    enabled: true,
+    applicationName: 'my-app',
+    version: '1.0.0',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://otel-collector:4318/v1/traces'
       }
     }
   }
-}
+})
 ```
 
 This automatically:
@@ -152,18 +166,21 @@ This automatically:
 
 The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support OTLP over gRPC with:
 
-```json
-{
-  "telemetry": {
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "protocol": "grpc",
-        "url": "http://otel-collector:4317"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  telemetry: {
+    applicationName: 'my-app',
+    exporter: {
+      type: 'otlp',
+      options: {
+        protocol: 'grpc',
+        url: 'http://otel-collector:4317'
       }
     }
   }
-}
+})
 ```
 
 When using gRPC, do not include `/v1/traces` in the URL.
@@ -182,30 +199,32 @@ npm install pino-sentry-transport @sentry/node
 
 Then add a Sentry target to `logger.transport.targets`:
 
-```json
-{
-  "logger": {
-    "level": "info",
-    "transport": {
-      "targets": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    level: 'info',
+    transport: {
+      targets: [
         {
-          "target": "pino/file"
+          target: 'pino/file'
         },
         {
-          "target": "pino-sentry-transport",
-          "options": {
-            "sentry": {
-              "dsn": "{SENTRY_DSN}"              
+          target: 'pino-sentry-transport',
+          options: {
+            sentry: {
+              dsn: process.env.SENTRY_DSN
             },
-            "withLogRecord": true,
-            "tags": ["level", "name", "worker", "application"],
-            "context": ["err", "req", "url", "method", "application", "worker"]
+            withLogRecord: true,
+            tags: ['level', 'name', 'worker', 'application'],
+            context: ['err', 'req', 'url', 'method', 'application', 'worker']
           }
         }
       ]
     }
   }
-}
+})
 ```
 
 The top-level `logger.level` controls which logs Watt emits. Each transport target can also define its own `level`, which controls which emitted logs that target receives. Set the Sentry target level explicitly if it should differ from Pino's transport target default.
@@ -214,48 +233,52 @@ Options inside `options.sentry` are passed to `@sentry/node` initialization. Use
 
 Use `minLevel` if you also want `pino-sentry-transport` to filter records internally:
 
-```json
-{
-  "logger": {
-    "level": "debug",
-    "transport": {
-      "targets": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    level: 'debug',
+    transport: {
+      targets: [
         {
-          "target": "pino-sentry-transport",
-          "level": "debug",
-          "options": {
-            "sentry": {
-              "dsn": "{SENTRY_DSN}"
+          target: 'pino-sentry-transport',
+          level: 'debug',
+          options: {
+            sentry: {
+              dsn: process.env.SENTRY_DSN
             },
-            "minLevel": 40
+            minLevel: 40
           }
         }
       ]
     }
   }
-}
+})
 ```
 
 In this example, Watt emits `debug` and above, the Sentry transport target receives `debug` and above, and `pino-sentry-transport` sends only `warn` and above to Sentry.
 
 ### Elasticsearch
 
-```json
-{
-  "logger": {
-    "transport": {
-      "targets": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    transport: {
+      targets: [
         {
-          "target": "pino-elasticsearch",
-          "options": {
-            "node": "http://127.0.0.1:9200",
-            "index": "my-app-logs"
+          target: 'pino-elasticsearch',
+          options: {
+            node: 'http://127.0.0.1:9200',
+            index: 'my-app-logs'
           }
         }
       ]
     }
   }
-}
+})
 ```
 
 Install the transport: `npm install pino-elasticsearch`
@@ -265,12 +288,14 @@ Install the transport: `npm install pino-elasticsearch`
 AWS Cloudwatch can use the timestamp from logs in the Cloudwatch and Cloudwatch
 Insights dashboards. To do this, the timestamp format needs to be changed.
 
-```json
-{
-    "logger": {
-        "timestamp": "isoTime",
-    }
-}
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    timestamp: 'isoTime'
+  }
+})
 ```
 
 ## Redact Sensitive Information
@@ -279,15 +304,17 @@ Insights dashboards. To do this, the timestamp format needs to be changed.
 
 **Solution:** Use the `redact` configuration to automatically hide sensitive fields:
 
-```json
-{
-  "logger": {
-    "redact": {
-      "paths": ["req.headers.authorization", "password", "apiKey", "req.body.creditCard"],
-      "censor": "[REDACTED]"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    redact: {
+      paths: ['req.headers.authorization', 'password', 'apiKey', 'req.body.creditCard'],
+      censor: '[REDACTED]'
     }
   }
-}
+})
 ```
 
 **Before redaction:**
@@ -326,20 +353,22 @@ Insights dashboards. To do this, the timestamp format needs to be changed.
 
 **Solution:** Configure production-optimized logging:
 
-```json
-{
-  "logger": {
-    "level": "info",
-    "timestamp": "isoTime",
-    "base": {
-      "application": "my-app",
-      "version": "1.2.0"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    level: 'info',
+    timestamp: 'isoTime',
+    base: {
+      application: 'my-app',
+      version: '1.2.0'
     },
-    "redact": {
-      "paths": ["req.headers.authorization", "password"]
+    redact: {
+      paths: ['req.headers.authorization', 'password']
     }
   }
-}
+})
 ```
 
 This provides:
@@ -350,20 +379,16 @@ This provides:
 
 - **base**: The base object for the logs; it can be either be `null` to remove `pid` and `hostname` or a custom key/value object to add custom properties to the logs.
 
-  ```json
-  {
-    "logger": {
-      "base": {
-        "application": "my-application",
-        "version": "1.0.0"
-      }
+  ```js
+  logger: {
+    base: {
+      application: 'my-application',
+      version: '1.0.0'
     }
   }
 
-  {
-    "logger": {
-      "base": null
-    }
+  logger: {
+    base: null
   }
   ```
 
@@ -371,11 +396,9 @@ This provides:
 
 - **messageKey**: The key to use for the log message, it defaults to `msg` but can be set to any other key.
 
-  ```json
-  {
-    "logger": {
-      "messageKey": "message"
-    }
+  ```js
+  logger: {
+    messageKey: 'message'
   }
   ```
 
@@ -383,12 +406,10 @@ This provides:
 
 - **customLevels**: Specify custom levels for the logger, it can be an object with the level name and the level value.
 
-  ```json
-  {
-    "logger": {
-      "customLevels": {
-        "verbose": 10
-      }
+  ```js
+  logger: {
+    customLevels: {
+      verbose: 10
     }
   }
   ```
@@ -421,36 +442,40 @@ With default pino settings:
 
 With custom logger configuration, for example
 
-```json
-{
-  "logger": {
-    "captureStdio": false,
-    "level": "info",
-    "customLevels": {
-      "verbose": 10
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    captureStdio: false,
+    level: 'info',
+    customLevels: {
+      verbose: 10
     },
-    "base": null,
-    "messageKey": "message",
-    "timestamp": "isoTime",
-    "formatters": {
-      "path": "logger-formatters.js"
+    base: null,
+    messageKey: 'message',
+    timestamp: 'isoTime',
+    formatters: {
+      path: 'logger-formatters.js'
     }
   }
-}
+})
 ```
 
 Set `logger.pino` to the keys emitted by your worker application logs:
 
-```json
-{
-  "logger": {
-    "pino": {
-      "level": "severity",
-      "time": "time",
-      "message": "message"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    pino: {
+      level: 'severity',
+      time: 'time',
+      message: 'message'
     }
   }
-}
+})
 ```
 
 By default, Watt uses `level`, `time` and `msg`. If the configured keys are not present, Watt treats the entry as a JSON log entry and wraps it in the `stdout` property:
@@ -503,14 +528,16 @@ By default, Watt applications logs are captured by Watt and wrapped in the `stdo
 
 The `captureStdio` option in `wattpm` can be set to `false` to disable the capture of the logs of the child applications; in this case logs will be written directly to the `stdout` and `stderr` streams of Watt.
 
-`watt.json`
+`watt.config.ts`
 
-```json
-{
-  "logger": {
-    "captureStdio": false
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    captureStdio: false
   }
-}
+})
 ```
 
 So the previous log output will be
@@ -523,21 +550,27 @@ Note the log is the content of the `stdout` property.
 
 ### Using Environment Variables
 
-You can use environment variables in your logger configuration:
+A configuration file is a program, so it reads the environment directly — there is no
+`{PLACEHOLDER}` syntax:
 
-```json
-{
-  "logger": {
-    "level": "{LOG_LEVEL}",
-    "transport": {
-      "target": "pino/file",
-      "options": {
-        "destination": "{LOG_DIR}/application.log",
-        "mkdir": true
+```ts config
+import { defineConfig } from 'wattpm'
+
+const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
+const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
+
+export default defineConfig({
+  logger: {
+    level,
+    transport: {
+      target: 'pino/file',
+      options: {
+        destination: `${process.env.LOG_DIR ?? './logs'}/application.log`,
+        mkdir: true
       }
     }
   }
-}
+})
 ```
 
 ---
@@ -546,23 +579,25 @@ You can use environment variables in your logger configuration:
 
 ### Full options configuration
 
-A `platformatic.json` configuration file contains the following logger options will look like this:
+A `watt.config.ts` with those logger options looks like this:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
-  "logger": {
-    "level": "debug",
-    "formatters": {
-      "path": "formatters.js"
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  logger: {
+    level: 'debug',
+    formatters: {
+      path: 'formatters.js'
     },
-    "timestamp": "isoTime",
-    "redact": {
-      "censor": "[redacted]",
-      "paths": ["secret", "req.headers.authorization"]
+    timestamp: 'isoTime',
+    redact: {
+      censor: '[redacted]',
+      paths: ['secret', 'req.headers.authorization']
     }
-  }
-}
+  },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 `formatters.js`:
@@ -617,48 +652,52 @@ Let's see an example of a Watt configuration with `gateway`, `backend` based on 
 
 The main `watt` application has a shared logger configuration that is used by all the applications, it sets the timestamp in ISO format and the level in uppercase. Setting it in the `watt` application ensures that the logs will be consistent across all the applications.
 
-`watt.json`
+`watt.config.ts`
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "logger": {
-    "level": "info",
-    "timestamp": "isoTime"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  logger: {
+    level: 'info',
+    timestamp: 'isoTime'
   },
-  "autoload": {
-    "path": "applications"
+  autoload: {
+    path: 'applications'
   }
-}
+})
 ```
 
 The applications have their own configuration. The `gateway` application is the intended public ingress, while `backend` has a redaction configuration:
 
-`gateway/platformatic.json`
+`gateway/watt.config.ts`
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  "server": {
-    "hostname": "{HOSTNAME}",
-    "port": "{PORT}"
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  server: {
+    hostname: process.env.HOSTNAME ?? '127.0.0.1',
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
-`backend/platformatic.json`
+`backend/watt.config.ts`
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
-  "logger": {
-    "level": "debug",
-    "redact": {
-      "paths": ["req.headers.authorization"],
-      "censor": "***HIDDEN***"
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  logger: {
+    level: 'debug',
+    redact: {
+      paths: ['req.headers.authorization'],
+      censor: '***HIDDEN***'
     }
-  }
-}
+  },
+  server: { port: Number(process.env.PORT ?? 3043) }
+})
 ```
 
 In the `node` application the logger is available via [`getLogger()`](../reference/runtime/globals.md#logging-and-observability), for example
@@ -676,18 +715,20 @@ const app = fastify({
 
 The `next` application has a custom formatter that adds the `application` property to the logs, note the application level is different in the applications.
 
-`next/watt.json`
+`next/watt.config.ts`
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
-  "application": {
-    "basePath": "/next"
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  application: {
+    basePath: '/next'
   },
-  "logger": {
-    "level": "debug"
-  }
-}
+  logger: {
+    level: 'debug'
+  },
+  server: { port: Number(process.env.PORT ?? 3044) }
+})
 ```
 
 Then in the `next` application the logger is available via [`getLogger()`](../reference/runtime/globals.md#logging-and-observability), for example
