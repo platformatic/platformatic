@@ -3958,7 +3958,7 @@ Generation reads both views. Then:
    the walk finds none (`:373-380` pre-`7a541feae`). Calling that "the root `.env`" — as an earlier
    draft did — is wrong twice over: it reads the wrong file whenever an intermediate
    directory has one, and it has no answer at all for a project whose only `.env`
-   sits in neither place. Reusing the closure also gets the precedence right for
+   sits in neither place. Reproducing the walk also gets the precedence right for
    free, since v3 layers the real environment *over* the file rather than under it
    (`:383-393` pre-`7a541feae`), which is the order the two rungs above already have. This is the one place migrate reads the ambient environment to decide
    *structure* rather than to preserve a value, and the report says which link in the
@@ -4204,8 +4204,8 @@ Generation reads both views. Then:
    correct one for a collision that was never a collision: `SETTING` in `web/a` under
    an enum and `SETTING` in `web/b` under a numeric range are two variables that
    happen to be spelled alike. So migrate resolves, per position, **which file would
-   have supplied that variable for that config file** — the vendored `loadEnv` answers
-   this already, and it is the same walk the structural paths use — and intersects
+   have supplied that variable for that config file** — the same walk the structural
+   paths already use (`wattpm-utils/lib/commands/migrate.js:443`) — and intersects
    only within a supplier. A variable coming from the real environment, or from a file
    both positions reach, *is* intersected across all of them, because there the one
    value is real and every position genuinely sees it. Seeding follows the same
