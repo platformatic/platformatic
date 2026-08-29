@@ -104,14 +104,6 @@ export function getStringifier (path) {
   return stringifer
 }
 
-export function printValidationErrors (err) {
-  const tabularData = err.validation.map(err => {
-    return { path: err.path, message: err.message }
-  })
-
-  console.table(tabularData, ['path', 'message'])
-}
-
 export function listRecognizedConfigurationFiles (suffixes, extensions) {
   if (typeof suffixes === 'undefined' || suffixes === null) {
     // composer is retained for backward compatibility with V2

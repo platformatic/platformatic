@@ -4,8 +4,7 @@ import {
   ensureLoggableError,
   findRuntimeConfigurationFile,
   kMetadata,
-  loadConfigurationModule,
-  loadConfiguration as utilsLoadConfiguration
+  loadConfigurationModule
 } from '@platformatic/foundation'
 import {
   findDecidingFile,
@@ -359,13 +358,9 @@ export async function loadApplicationsCommands (executableName = '', configurati
 
   for (const application of config.applications) {
     try {
-      /*
-        A v4 application arrives with its configuration already evaluated and its capability
-        already named, so there is nothing to read and nothing to infer. Reading application.config
-        as a path threw into the catch below, which skipped the application silently -- the command
-        it contributes then simply did not exist, and the CLI said the command was unknown.
-      */
-      const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))
+      // A v4 application arrives with its configuration already evaluated and its capability
+      // already named, so there is nothing to read and nothing to infer.
+      const applicationConfig = application.resolvedConfig
       const pkg = application.module
         ? await importCapabilityPackage(application.path, application.module)
         : await loadConfigurationModule(application.path, applicationConfig)

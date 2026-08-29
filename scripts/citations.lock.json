@@ -10,7 +10,7 @@
       "head": "export async function wrapInRuntimeConfig (config, context) {",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:443-448": {
+    "packages/runtime/lib/config.js:435-440": {
       "sha": "b6e178fa03b4a573",
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
@@ -30,7 +30,7 @@
       "head": "async #setupApplication (applicationConfig) {",
       "lines": 2
     },
-    "packages/runtime/lib/config.js:244-246": {
+    "packages/runtime/lib/config.js:236-238": {
       "sha": "c3921d6a110bb1c8",
       "head": "if (application.url && !application.path) {",
       "lines": 3
@@ -105,7 +105,7 @@
       "head": "{ required: ['autoload'] },",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:432": {
+    "packages/runtime/lib/config.js:424": {
       "sha": "cc751cccf31f9c25",
       "head": "const id = mapping.id ?? entry.name",
       "lines": 1
@@ -545,7 +545,7 @@
       "head": "const directory = resolve(root, application.path)",
       "lines": 9
     },
-    "packages/foundation/lib/configuration.js:395-415": {
+    "packages/foundation/lib/configuration.js:387-407": {
       "sha": "ed0d54184d247373",
       "head": "if (shouldValidate) {",
       "lines": 21
@@ -565,27 +565,27 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:368-371": {
-      "sha": "f05241a09ec2d711",
-      "head": "const applicationConfig = application.resolvedConfig ?? (await utilsLoadConfiguration(application.config))",
+    "packages/runtime/index.js:363-366": {
+      "sha": "750363db47ef0cdd",
+      "head": "const applicationConfig = application.resolvedConfig",
       "lines": 4
     },
-    "packages/runtime/lib/config.js:417-451": {
+    "packages/runtime/lib/config.js:409-443": {
       "sha": "0640a25e34ebc3fa",
       "head": "if (config.autoload) {",
       "lines": 35
     },
-    "packages/runtime/lib/config.js:453-457": {
+    "packages/runtime/lib/config.js:445-449": {
       "sha": "2cb2892b8add119f",
       "head": "for (let i = applications.length - 1; i >= 0; --i) {",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:499": {
+    "packages/runtime/lib/config.js:491": {
       "sha": "234e889c1536e65b",
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
     },
-    "packages/foundation/lib/configuration.js:365,375-376": {
+    "packages/foundation/lib/configuration.js:357,367-368": {
       "sha": "72c4b31cd30c6049",
       "head": "if (typeof source === 'undefined') {",
       "lines": 3
@@ -640,7 +640,7 @@
       "head": "const customSocket = typeof config === 'object' ? config?.socket : null",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:338-354": {
+    "packages/runtime/lib/config.js:330-346": {
       "sha": "0c8025c3daeca38e",
       "head": "function isApplicationEnabled (application, environment) {",
       "lines": 17
@@ -770,22 +770,22 @@
       "head": "await updateConfigFile(metadata.configPath, async config => {",
       "lines": 1
     },
-    "packages/foundation/lib/configuration.js:189-218": {
+    "packages/foundation/lib/configuration.js:181-210": {
       "sha": "3ba58079e37d5bd1",
       "head": "export async function findConfigurationFileRecursive (root, configurationFile, schemas, suffixes) {",
       "lines": 30
     },
-    "packages/foundation/lib/configuration.js:148-173": {
+    "packages/foundation/lib/configuration.js:140-165": {
       "sha": "7b8d5e520dd0577d",
       "head": "export function extractModuleFromSchemaUrl (config, throwOnMissing = false) {",
       "lines": 26
     },
-    "packages/foundation/lib/configuration.js:381": {
+    "packages/foundation/lib/configuration.js:373": {
       "sha": "48406bf2f9bdc71f",
       "head": "const moduleInfo = extractModuleFromSchemaUrl(config)",
       "lines": 1
     },
-    "packages/foundation/lib/configuration.js:383": {
+    "packages/foundation/lib/configuration.js:375": {
       "sha": "8142a83665eaa73d",
       "head": "if (upgrade) {",
       "lines": 1
@@ -795,7 +795,7 @@
       "head": "const placeholderPattern = /(?:\\{{1,2})([a-z0-9_]+)(?:\\}{1,2})/i",
       "lines": 3
     },
-    "packages/foundation/lib/configuration.js:149-150": {
+    "packages/foundation/lib/configuration.js:141-142": {
       "sha": "1feae4659f8d34e2",
       "head": "if (typeof config?.module === 'string') {",
       "lines": 2
@@ -875,7 +875,7 @@
       "head": "",
       "lines": 3
     },
-    "packages/runtime/lib/config.js:358": {
+    "packages/runtime/lib/config.js:350": {
       "sha": "04398a437454d1ad",
       "head": "const environment = production ? 'production' : 'development'",
       "lines": 1
@@ -940,12 +940,12 @@
       "head": "function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {",
       "lines": 1
     },
-    "packages/runtime/lib/config.js:237-238": {
+    "packages/runtime/lib/config.js:229-230": {
       "sha": "c410aebf0f15de2a",
       "head": "if (application.path && application.config) {",
       "lines": 2
     },
-    "packages/runtime/lib/config.js:436-439": {
+    "packages/runtime/lib/config.js:428-431": {
       "sha": "408ebe7805cbc6c7",
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4

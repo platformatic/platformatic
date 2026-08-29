@@ -196,16 +196,6 @@ export function parseInspectorOptions (config, inspect, inspectBreak) {
 export async function prepareAddedApplications (config, entries, existingIds = []) {
   const metadata = config[kMetadata]
 
-  if (!metadata?.v4) {
-    const prepared = []
-
-    for (const entry of entries) {
-      prepared.push(await prepareApplication(config, entry, config.workers))
-    }
-
-    return prepared
-  }
-
   const { applications } = await loadAdditionalApplications({
     configPath: metadata.path,
     entries,
@@ -227,7 +217,9 @@ export async function prepareAddedApplications (config, entries, existingIds = [
   return prepared
 }
 
-export async function prepareApplication (config, application, defaultWorkers) {
+// v3's per-entry preparation, alive only through the v3 transform below -- which itself survives
+// for the wizard's legacy-JSON branch and goes when it does.
+async function prepareApplication (config, application, defaultWorkers) {
   // We need to have absolute paths here, ot the `loadConfig` will fail
   // Make sure we don't resolve if env var was not replaced
   if (application.path && !isAbsolute(application.path) && !application.path.match(/^\{.*\}$/)) {

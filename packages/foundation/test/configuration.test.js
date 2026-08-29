@@ -18,7 +18,6 @@ import {
   loadConfiguration,
   loadConfigurationFile,
   loadConfigurationModule,
-  printValidationErrors,
   safeRemove,
   saveConfigurationFile,
   stringifyJSON,
@@ -66,32 +65,6 @@ test('getStringifier - should return correct stringifier for file extensions', (
 
   throws(() => getStringifier('config.txt'), { name: 'FastifyError' })
   throws(() => getStringifier('config.xml'), { name: 'FastifyError' })
-})
-
-test('printValidationErrors - should print validation errors in table format', () => {
-  const originalConsoleTable = console.table
-  const capturedOutput = []
-  console.table = (data, columns) => {
-    capturedOutput.push({ data, columns })
-  }
-
-  const err = {
-    validation: [
-      { path: '/name', message: 'must be string' },
-      { path: '/age', message: 'must be number' }
-    ]
-  }
-
-  try {
-    printValidationErrors(err)
-  } finally {
-    console.table = originalConsoleTable
-  }
-
-  equal(capturedOutput.length, 1)
-  equal(capturedOutput[0].columns.length, 2)
-  equal(capturedOutput[0].columns[0], 'path')
-  equal(capturedOutput[0].columns[1], 'message')
 })
 
 test('parseYAML - should handle strings with mixed quote types around braces', async t => {
