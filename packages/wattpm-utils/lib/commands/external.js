@@ -256,6 +256,15 @@ async function importApplicationIntoV4 (logger, configurationFile, { id, path, u
   return true
 }
 
+/*
+  Containment by path boundary, not by string prefix: /root/web-admin starts with /root/web as a
+  string and is not inside it as a directory.
+*/
+function isPathInsideDirectory (directory, path) {
+  const relativePath = relative(directory, path)
+  return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath))
+}
+
 async function importApplication (logger, configurationFile, id, path, url, branch) {
   const config = await loadConfiguration(configurationFile)
 
@@ -273,7 +282,7 @@ async function importApplication (logger, configurationFile, id, path, url, bran
     // If we already autoload this path, there is nothing to do
     if (autoloadPath) {
       autoloadPath = resolve(root, autoloadPath)
-      if (path.startsWith(autoloadPath)) {
+      if (isPathInsideDirectory(autoloadPath, path)) {
         logger.warn('The path is already autoloaded as an application.')
         return
       }
@@ -281,7 +290,7 @@ async function importApplication (logger, configurationFile, id, path, url, bran
 
     // If the path is within the application repository and already defined as an application,
     // there is nothing to do
-    if (path.startsWith(root) && config.applications.some(s => s.path === path)) {
+    if (isPathInsideDirectory(root, path) && config.applications.some(s => s.path === path)) {
       logger.warn('The path is already defined as an application.')
       return
     }
@@ -591,7 +600,7 @@ export async function resolveApplications (
 
     // If the directory already exists, it's either external or already resolved, nothing to do in both cases
     if (!existsSync(directory)) {
-      if (!directory.startsWith(root)) {
+      if (!isPathInsideDirectory(root, directory)) {
         logger.warn(
           `Skipping application ${bold(application.id)} as the non existent directory ${bold(
             application.path

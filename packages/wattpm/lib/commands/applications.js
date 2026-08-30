@@ -2,7 +2,7 @@ import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { readFile, stat, writeFile } from 'node:fs/promises'
-import { basename, dirname, isAbsolute, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 
 /*
   Editing the configuration in place.
@@ -149,18 +149,23 @@ export async function applicationsRemoveCommand (logger, args) {
         : null
 
       await updateConfigFile(metadata.configPath, async config => {
-        // Remove applications from all relevant sections
         for (const app of removed) {
-          for (const section of ['applications', 'services', 'web']) {
-            if (Array.isArray(config[section])) {
-              config[section] = config[section].filter(a => a.id !== app.id)
-            }
+          // One spelling: the loader refuses the v3 aliases by name, so the list is `applications`.
+          if (Array.isArray(config.applications)) {
+            config.applications = config.applications.filter(a => a.id !== app.id)
           }
 
           if (config.autoload && absoluteAutoloadPath) {
-            if (app.path.startsWith(absoluteAutoloadPath)) {
+            /*
+              Containment by path boundary, not by string prefix -- and only for a direct child:
+              autoload discovers one level of directories, and its exclude entries are directory
+              names, so anything else written here could never match what expansion reads.
+            */
+            const relativePath = relative(absoluteAutoloadPath, app.path)
+
+            if (relativePath !== '' && !relativePath.startsWith('..') && !relativePath.includes(sep)) {
               config.autoload.exclude ??= []
-              config.autoload.exclude.push(relative(absoluteAutoloadPath, app.path))
+              config.autoload.exclude.push(relativePath)
             }
           }
         }
