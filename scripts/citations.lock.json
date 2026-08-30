@@ -20,7 +20,7 @@
       "head": "try {",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:590-718": {
+    "packages/wattpm-utils/lib/commands/external.js:522-650": {
       "sha": "87d4a705cdec8be4",
       "head": "export async function resolveApplications (",
       "lines": 129
@@ -40,27 +40,27 @@
       "head": "anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:616,635-646": {
+    "packages/wattpm-utils/lib/commands/external.js:548,567-578": {
       "sha": "7153dd7a8a5ca333",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:616": {
+    "packages/wattpm-utils/lib/commands/external.js:548": {
       "sha": "a9d0ff941726dfdd",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:471": {
+    "packages/wattpm-utils/lib/commands/external.js:403": {
       "sha": "b4684192235ac8fb",
       "head": "const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:635-646": {
+    "packages/wattpm-utils/lib/commands/external.js:567-578": {
       "sha": "4d9354cd936b48a4",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 12
     },
-    "packages/wattpm-utils/lib/commands/external.js:635-665": {
+    "packages/wattpm-utils/lib/commands/external.js:567-597": {
       "sha": "eba49f9cb8f9745b",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 31
@@ -75,27 +75,27 @@
       "head": "if (application.path && existsSync(application.path)) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:635-642": {
+    "packages/wattpm-utils/lib/commands/external.js:567-574": {
       "sha": "7ec3ae3f6a5f58ad",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 8
     },
-    "packages/wattpm-utils/lib/commands/external.js:342-370": {
+    "packages/wattpm-utils/lib/commands/external.js:342-370@6eca16405^": {
       "sha": "cb349c6ef66adab2",
       "head": "if (useEnv) {",
       "lines": 29
     },
-    "packages/wattpm-utils/lib/commands/external.js:397-432": {
+    "packages/wattpm-utils/lib/commands/external.js:329-364": {
       "sha": "bad938280c7c317c",
       "head": "async function importLocal (logger, root, configurationFile, path, overridenId) {",
       "lines": 36
     },
-    "packages/wattpm-utils/lib/commands/external.js:190-201": {
+    "packages/wattpm-utils/lib/commands/external.js:190-201@6eca16405^": {
       "sha": "4f118445575ad446",
       "head": "async function writeApplicationConfiguration (configurationFile, directory, capability) {",
       "lines": 12
     },
-    "packages/wattpm-utils/lib/commands/external.js:228-273": {
+    "packages/wattpm-utils/lib/commands/external.js:212-257": {
       "sha": "073f79cba9f7e453",
       "head": "async function importApplicationIntoV4 (logger, configurationFile, { id, path, url, branch }) {",
       "lines": 46
@@ -540,7 +540,7 @@
       "head": "let serverConfigOverride",
       "lines": 5
     },
-    "packages/wattpm-utils/lib/commands/external.js:658-666": {
+    "packages/wattpm-utils/lib/commands/external.js:590-598": {
       "sha": "dcb308e3c5250431",
       "head": "const directory = resolve(root, application.path)",
       "lines": 9
@@ -810,7 +810,7 @@
       "head": "const dependencies = {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:655": {
+    "packages/wattpm-utils/lib/commands/external.js:587": {
       "sha": "d0ee36b8b0f4017f",
       "head": "application.path = resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)",
       "lines": 1
