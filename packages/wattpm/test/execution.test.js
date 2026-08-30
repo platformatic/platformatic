@@ -775,22 +775,40 @@ test('dev - should restart an application when a file the configuration imports 
     The deciding file is untouched: what changes is a module it imports. Watching only the
     configuration file meant this edit reloaded nothing, which is the whole reason the loader
     collects the import graph.
+
+    Written repeatedly rather than once: the watcher arms shortly after the listening line, and a
+    single write landing in that gap is a change nobody sees -- the wait below would then never
+    resolve, which is how this test hung on CI.
   */
-  await writeFile(resolve(rootDir, 'logging.mjs'), "export const level = 'trace'\n", 'utf-8')
-
   let reloaded = false
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = parseRuntimeLog(log)
 
-    if (!parsed) {
-      continue
+  const observed = (async () => {
+    for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+      const parsed = parseRuntimeLog(log)
+
+      if (!parsed) {
+        continue
+      }
+
+      if (parsed.msg?.startsWith('The configuration has changed, reloading the application')) {
+        reloaded = true
+      }
+
+      if (parsed.msg?.match(/Platformatic is now listening at \S+ for worker \d+ of the application "main"/)) {
+        return true
+      }
     }
 
-    if (parsed.msg?.startsWith('The configuration has changed, reloading the application')) {
-      reloaded = true
-    }
+    return false
+  })().then(found => ({ settled: true, found }))
 
-    if (parsed.msg?.match(/Platformatic is now listening at \S+ for worker \d+ of the application "main"/)) {
+  let attempt = 0
+  while (true) {
+    await writeFile(resolve(rootDir, 'logging.mjs'), `export const level = 'trace'\n${'\n'.repeat(attempt++)}`, 'utf-8')
+
+    const outcome = await Promise.race([observed, sleep(5000, { settled: false })])
+    if (outcome.settled) {
+      ok(outcome.found)
       break
     }
   }
