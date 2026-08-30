@@ -96,7 +96,9 @@ test('Support packages without generator via importing (existing applications)',
 
   let runtimeConfig = await readConfiguration(join(baseProjectDir, 'watt.config.mjs'), baseProjectDir)
   const originalEnvFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
-  runtimeConfig.web = [{ id: 'main', path: 'services/main' }]
+  // One spelling: v3's `web` alias is refused by the loader now, so the list the test plants uses
+  // the name the editor keeps.
+  runtimeConfig.applications = [{ id: 'main', path: 'services/main' }]
   runtimeConfig.startTimeout = 12345
   // Written back as the module it is. The plain object form is a valid v4 root, which is what a
   // test editing a configuration wants: no imports to resolve.
