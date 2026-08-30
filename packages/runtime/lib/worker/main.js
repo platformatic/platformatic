@@ -271,6 +271,7 @@ async function main () {
   }
 
   const { threadDispatcher } = await setDispatcher(runtimeConfig)
+  updateGlobals({ undiciThreadInterceptor: threadDispatcher.interceptor })
 
   const inspectorOptions = workerData.inspectorOptions
 
@@ -306,6 +307,19 @@ async function main () {
     metricsConfig
   )
 
+  const sharedContext = new SharedContext()
+  updateGlobals({
+    sharedContext: {
+      get: () => sharedContext.get(),
+      update: (...args) => sharedContext.update(...args)
+    }
+  })
+
+  // Setup interaction with the parent before loading the application so plugins
+  // can register messaging handlers during their initialization.
+  const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
+  updateGlobals({ itc })
+
   await controller.init(cleanup)
 
   if (runtimeConfig.basePath) {
@@ -314,19 +328,6 @@ async function main () {
       stripBasePath(runtimeConfig.basePath)
     }
   }
-
-  const sharedContext = new SharedContext()
-  // Limit the amount of methods a user can call
-  updateGlobals({
-    sharedContext: {
-      get: () => sharedContext.get(),
-      update: (...args) => sharedContext.update(...args)
-    }
-  })
-
-  // Setup interaction with parent port
-  const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
-  updateGlobals({ itc })
 
   // Setup management client for privileged applications
   if (applicationConfig.management) {
@@ -387,7 +388,9 @@ function stripBasePath (basePath) {
         request.url = '/' + request.url
       }
 
-      response[kBasePath] = basePath
+      if (response) {
+        response[kBasePath] = basePath
+      }
     }
   })
 

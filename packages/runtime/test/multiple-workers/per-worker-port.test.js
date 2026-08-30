@@ -72,6 +72,7 @@ async function preparePerWorkerPortRuntime (
 
   await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
+    contents.metrics = false
 
     let applicationConfig = contents.applications.find(service => service.id === application)
     if (!applicationConfig) {

@@ -569,17 +569,6 @@ export class RuntimeApiClient {
     return metrics
   }
 
-  getRuntimeLiveMetricsStream (pid) {
-    const socketPath = this.#getSocketPathFromPid(pid)
-
-    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/metrics/live'
-    const webSocketStream = new WebSocketStream(webSocketUrl)
-    this.#webSockets.add(webSocketStream.ws)
-
-    return webSocketStream
-  }
-
   getRuntimeLiveLogsStream (pid) {
     const socketPath = this.#getSocketPathFromPid(pid)
 

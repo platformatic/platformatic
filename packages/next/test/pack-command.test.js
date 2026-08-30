@@ -33,7 +33,13 @@ test(
       })
     })
 
-    const packProcess = await wattpm('frontend:pack', '--output', '.platformatic/frontend-bundle', { cwd: root })
+    const packProcess = await wattpm('frontend:pack', '--output', '.platformatic/frontend-bundle', {
+      cwd: root,
+      env: {
+        ...process.env,
+        NPM_CONFIG_MIN_RELEASE_AGE: '0'
+      }
+    })
     ok(packProcess.stdout.includes('Packed application frontend into'))
 
     const bundleRoot = resolve(root, '.platformatic/frontend-bundle')

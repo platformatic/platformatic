@@ -315,56 +315,6 @@ export async function managementApiPlugin (app, opts) {
     return metrics
   })
 
-  // TODO: Remove in next major version - deprecated endpoint
-  app.get('/metrics/live', { ...quiet, websocket: true }, async socket => {
-    // The live read: this needs one boolean, and the public getter builds a frozen snapshot of the
-    // whole configuration -- which is the right shape to hand a consumer and the wrong one to pay
-    // for on a scrape.
-    const config = runtime.getRuntimeConfig(true)
-
-    if (config.metrics?.enabled === false) {
-      socket.send(
-        JSON.stringify({
-          statusCode: 501,
-          error: 'Not Implemented',
-          message: 'Metrics are disabled.'
-        }),
-        () => {
-          socket.close()
-        }
-      )
-
-      return
-    }
-
-    const pollAndSendMetrics = async () => {
-      try {
-        const metrics = await runtime.getFormattedMetrics()
-        if (metrics) {
-          const serializedMetrics = JSON.stringify(metrics)
-          socket.send(serializedMetrics + '\n')
-        }
-      } catch (error) {
-        // If there's an error, stop polling and close the connection
-        clearInterval(pollingInterval)
-        socket.close()
-      }
-    }
-
-    // Poll every second
-    const pollingInterval = setInterval(pollAndSendMetrics, 1000)
-
-    // Send initial metrics immediately
-    await pollAndSendMetrics()
-
-    const cleanup = () => {
-      clearInterval(pollingInterval)
-    }
-
-    socket.on('error', cleanup)
-    socket.on('close', cleanup)
-  })
-
   app.get('/logs/live', { ...quiet, websocket: true }, async socket => {
     runtime.addLoggerDestination(createWebSocketStream(socket))
   })

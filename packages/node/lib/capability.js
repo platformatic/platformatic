@@ -462,6 +462,23 @@ export class NodeCapability extends BaseCapability {
       return this.getUrl()
     }
 
+    if (this.#server) {
+      if (this.#isFastify) {
+        return this.#app
+      }
+
+      if (this.#server.listenerCount('upgrade') > 0) {
+        return {
+          inject: this.inject.bind(this),
+          emit: this.#server.emit.bind(this.#server),
+          listenerCount: this.#server.listenerCount.bind(this.#server),
+          server: this.#server
+        }
+      }
+
+      return this.getDispatchFunc()
+    }
+
     return this.getDispatchFunc()
   }
 

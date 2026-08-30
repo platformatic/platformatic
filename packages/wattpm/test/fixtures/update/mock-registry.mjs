@@ -1,18 +1,17 @@
 import { readFile } from 'node:fs/promises'
-import { MockAgent, setGlobalDispatcher } from 'undici'
+const runtimeInfo = JSON.parse(await readFile(new URL('./runtime-info.json', import.meta.url)))
+runtimeInfo['dist-tags'].latest = '3.67.0'
+runtimeInfo.versions['3.67.0'] = { version: '3.67.0' }
 
-const mockAgent = new MockAgent()
-mockAgent.disableNetConnect()
-setGlobalDispatcher(mockAgent)
+const originalFetch = globalThis.fetch
+globalThis.fetch = async (input, init) => {
+  const url = typeof input === 'string' ? input : input?.url
+  if (url === 'https://registry.npmjs.org/@platformatic/runtime') {
+    return new Response(JSON.stringify(runtimeInfo), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    })
+  }
 
-// Node.js >= 26 bundles undici >= 8, whose built-in fetch() reads the global
-// dispatcher from Symbol.for('undici.globalDispatcher.2'), while undici 7's
-// setGlobalDispatcher() only writes Symbol.for('undici.globalDispatcher.1').
-// Mirror the mock onto the symbol fetch() reads so it observes the mock too.
-globalThis[Symbol.for('undici.globalDispatcher.2')] = mockAgent
-
-const mockPool = mockAgent.get('https://registry.npmjs.org')
-
-mockPool
-  .intercept({ path: '@platformatic/runtime' })
-  .reply(200, await readFile(new URL('./runtime-info.json', import.meta.url)))
+  return originalFetch(input, init)
+}

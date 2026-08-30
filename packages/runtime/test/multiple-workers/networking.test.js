@@ -143,7 +143,7 @@ test('can inject on a worker', async t => {
 
   {
     const res = await client.request({ method: 'GET', path: '/api/v1/applications/node/proxy/hello' })
-    nextWorker = parseInt(res.headers['x-plt-worker-id']) + 1
+    nextWorker = (parseInt(res.headers['x-plt-worker-id']) + 1) % 5
   }
 
   await verifyInject(client, 'node', nextWorker)

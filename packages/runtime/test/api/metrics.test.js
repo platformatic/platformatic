@@ -1,7 +1,6 @@
 import { deepEqual, deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { configurationFileIn, createRuntime } from '../helpers.js'
 
@@ -335,115 +334,6 @@ test('should get json runtime metrics with custom labels', async t => {
   for (const metric of metrics) {
     for (const value of metric.values) {
       ok(value.labels.foo === 'bar')
-    }
-  }
-})
-
-test('should get formatted runtime metrics', async t => {
-  const projectDir = join(fixturesDir, 'metrics')
-  const configFile = configurationFileIn(projectDir)
-  const app = await createRuntime(configFile)
-
-  await app.start()
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  const { applications } = await app.getFormattedMetrics()
-
-  deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
-
-  for (const applicationMetrics of Object.values(applications)) {
-    deepStrictEqual(
-      Object.keys(applicationMetrics).sort(),
-      ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
-    )
-
-    const latencyMetrics = applicationMetrics.latency
-    const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-    deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
-  }
-})
-
-test('should get formatted runtime metrics multiple times', async t => {
-  const projectDir = join(fixturesDir, 'metrics')
-  const configFile = configurationFileIn(projectDir)
-  const app = await createRuntime(configFile)
-
-  const { 'service-1:0': appUrl } = await app.start()
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  for (let i = 0; i < 10; i++) {
-    const { statusCode } = await request(appUrl + '/hello')
-    strictEqual(statusCode, 200)
-  }
-
-  // wait for the metrics to be collected
-  await sleep(2000)
-
-  // Collect metrics multiple times to ensure polling works
-  for (let i = 0; i < 3; i++) {
-    const { applications } = await app.getFormattedMetrics()
-
-    deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2', 'service-db'].sort())
-
-    for (const applicationMetrics of Object.values(applications)) {
-      deepStrictEqual(
-        Object.keys(applicationMetrics).sort(),
-        ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
-      )
-
-      const latencyMetrics = applicationMetrics.latency
-      const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-      deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
-    }
-
-    if (i < 2) {
-      await sleep(1000)
-    }
-  }
-})
-
-test('should get metrics after reloading one of the applications', async t => {
-  const projectDir = join(fixturesDir, 'metrics')
-  const configFile = configurationFileIn(projectDir)
-  const app = await createRuntime(configFile)
-
-  await app.start()
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  await app.stopApplication('service-2')
-  await app.startApplication('service-2')
-
-  await sleep(2000)
-
-  // Collect metrics multiple times after reloading
-  for (let i = 0; i < 3; i++) {
-    const { applications } = await app.getFormattedMetrics()
-    const applicationsNames = Object.keys(applications)
-    ok(applicationsNames.includes('service-1'))
-    ok(applicationsNames.includes('service-db'))
-
-    for (const applicationMetrics of Object.values(applications)) {
-      deepStrictEqual(
-        Object.keys(applicationMetrics).sort(),
-        ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
-      )
-
-      const latencyMetrics = applicationMetrics.latency
-      const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-      deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
-    }
-
-    if (i < 2) {
-      await sleep(1000)
     }
   }
 })

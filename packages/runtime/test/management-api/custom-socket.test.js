@@ -77,9 +77,10 @@ test('should use custom socket path when specified', async t => {
 })
 
 test('should throw when the custom socket remains in use after retries', async t => {
-  const tempDir = await createTemporaryDirectory(t, 'custom-socket-in-use')
   const customSocketPath =
-    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : join(tempDir, 'custom.sock')
+    platform() === 'win32'
+      ? `\\\\.\\pipe\\platformatic-${randomUUID()}`
+      : join(tmpdir(), `platformatic-${randomUUID()}.sock`)
   const server = createServer()
   server.listen(customSocketPath)
   await once(server, 'listening')

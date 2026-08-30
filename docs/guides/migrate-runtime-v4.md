@@ -220,3 +220,39 @@ Pass an application ID to select only its workers:
 ```js
 const apiUrls = runtime.getUrls('api')
 ```
+
+## Update custom Undici interceptors
+
+Runtime v4 uses Undici 8 for the global dispatcher. Custom modules configured through `runtime.undici.interceptors`
+must use the Undici 8 dispatcher handler lifecycle. The legacy handler callbacks are not supported:
+
+| Undici 7 | Undici 8 |
+| --- | --- |
+| `onConnect` | `onRequestStart` |
+| `onHeaders` | `onResponseStart` |
+| `onData` | `onResponseData` |
+| `onComplete` | `onResponseEnd` |
+| `onError` | `onResponseError` |
+
+For example, update a response handler from:
+
+```js
+class ResponseHandler {
+  onHeaders (statusCode, headers) {
+    // ...
+  }
+}
+```
+
+to the Undici 8 lifecycle:
+
+```js
+class ResponseHandler {
+  onResponseStart (controller, statusCode, headers) {
+    // ...
+  }
+}
+```
+
+See the [Undici Dispatcher documentation](https://undici.nodejs.org/#/docs/api/Dispatcher) for the complete handler
+contract.

@@ -1,4 +1,4 @@
-import { createDirectory, executeWithTimeout, kTimeout, safeRemove } from '@platformatic/foundation'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import assert from 'assert/strict'
 import { once } from 'node:events'
 import { symlink } from 'node:fs/promises'
@@ -29,29 +29,7 @@ async function prepareEchoWsFixture (t, modulesRoot = echoWsModulesRoot) {
   await symlink(resolve(import.meta.dirname, '../../node'), resolve(modulesRoot, '@platformatic/node'), 'dir')
 }
 
-async function assertGuardRejection (url, applicationId) {
-  const client = new WebSocket(url)
-
-  const result = await executeWithTimeout(once(client, 'unexpected-response'), 10000)
-  assert.notEqual(result, kTimeout, 'the WebSocket upgrade should fail fast instead of hanging')
-
-  const [req, res] = result
-  assert.equal(res.statusCode, 502)
-
-  let body = ''
-  res.setEncoding('utf-8')
-  for await (const chunk of res) {
-    body += chunk
-  }
-
-  const payload = JSON.parse(body)
-  assert.equal(payload.code, 'PLT_GATEWAY_WS_NO_TCP_UPSTREAM')
-  assert.ok(payload.message.includes(`"${applicationId}" application`), `unexpected error message: ${payload.message}`)
-
-  req.destroy()
-}
-
-test('should reject a WebSocket upgrade to a mesh-only application with a coded error', async t => {
+test('should proxy WebSocket connections to a mesh-only application', async t => {
   await prepareEchoWsFixture(t)
 
   const runtime = await createGatewayInRuntime(
@@ -107,8 +85,15 @@ test('should reject a WebSocket upgrade to a mesh-only application with a coded 
     assert.equal(payload.body, requestBody)
   }
 
-  // The WebSocket upgrade must fail fast with the coded error
-  await assertGuardRejection(`${address.replace('http://', 'ws://')}/echo/`, 'echo')
+  const client = new WebSocket(`${address.replace('http://', 'ws://')}/echo/`)
+  await once(client, 'open')
+
+  client.send('hello')
+  const [response] = await once(client, 'message')
+  assert.equal(response.toString(), 'hello')
+
+  client.close()
+  await once(client, 'close')
 })
 
 test('should proxy WebSocket connections when the application exposes a TCP server', async t => {
@@ -151,7 +136,7 @@ test('should proxy WebSocket connections when the application exposes a TCP serv
   await once(client, 'close')
 })
 
-test('should warn at boot when proxy.ws is explicitly configured for a mesh-only application', async t => {
+test('should not warn when proxy.ws is configured for a mesh-only application', async t => {
   const messages = []
   const logger = {
     warn: msg => {
@@ -195,8 +180,7 @@ test('should warn at boot when proxy.ws is explicitly configured for a mesh-only
   await gateway.start({ listen: true })
 
   const wsWarnings = messages.filter(m => typeof m === 'string' && m.includes('WebSocket upgrades to this application will fail'))
-  assert.equal(wsWarnings.length, 1)
-  assert.ok(wsWarnings[0].includes('"mesh-ws"'))
+  assert.equal(wsWarnings.length, 0)
 })
 
 test('should keep proxying WebSocket connections to an application with an external origin', async t => {
@@ -298,6 +282,13 @@ test('should compose the guard with a user configured custom preValidation hook'
     assert.equal(payload.service, 'echo')
   }
 
-  // The WebSocket upgrade must still be rejected by the guard
-  await assertGuardRejection(`${address.replace('http://', 'ws://')}/echo/`, 'echo')
+  const client = new WebSocket(`${address.replace('http://', 'ws://')}/echo/`)
+  await once(client, 'open')
+
+  client.send('hello')
+  const [response] = await once(client, 'message')
+  assert.equal(response.toString(), 'hello')
+
+  client.close()
+  await once(client, 'close')
 })

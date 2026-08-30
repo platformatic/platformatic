@@ -147,27 +147,27 @@ test('update - should update version in package.json files', async t => {
   const rootPackageJson = JSON.parse(await readFile(resolve(rootDir, 'package.json'), 'utf-8'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
-    wattpm: '^3.55.0',
-    '@platformatic/runtime': '^3.55.0'
+    wattpm: '^3.67.0',
+    '@platformatic/runtime': '^3.67.0'
   })
 
   const mainPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/main/package.json'), 'utf-8'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
-    '@platformatic/node': '^3.55.0',
+    '@platformatic/node': '^3.67.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '3.55.0'
+    '@platformatic/vite': '3.67.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.55.0'
+    '@platformatic/telemetry': '^3.67.0'
   })
 
   const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^3.55.0',
+    '@platformatic/service': '^3.67.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'
@@ -175,19 +175,19 @@ test('update - should update version in package.json files', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/runtime of the application from ^3.0.0 to ^3.55.0 ...'
+      'Updating dependency @platformatic/runtime of the application from ^3.0.0 to ^3.67.0 ...'
     )
   )
 
   ok(
     !updateProcess.stdout.includes(
-      'Updating dependency @platformatic/node of the application main from ^3.55.0 to ^3.55.0 ...'
+      'Updating dependency @platformatic/node of the application main from ^3.67.0 to ^3.67.0 ...'
     )
   )
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.55.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.67.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
@@ -218,14 +218,14 @@ test('update - scopes to the application when executed inside its folder', async
   const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
-    '@platformatic/node': '^3.55.0',
+    '@platformatic/node': '^3.67.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '3.55.0'
+    '@platformatic/vite': '3.67.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.55.0'
+    '@platformatic/telemetry': '^3.67.0'
   })
 
   // Untouched: it belongs to the runtime above the boundary, which this invocation is not
@@ -262,14 +262,14 @@ test('update - should work when loaded from an application file', async t => {
   const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
-    '@platformatic/node': '^3.55.0',
+    '@platformatic/node': '^3.67.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '3.55.0'
+    '@platformatic/vite': '3.67.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.55.0'
+    '@platformatic/telemetry': '^3.67.0'
   })
 
   // The another application is not updated, because it is not considered as part of the project.
@@ -282,13 +282,13 @@ test('update - should work when loaded from an application file', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/node of the application main from ^3.55.0 to ^3.55.0 ...'
+      'Updating dependency @platformatic/node of the application main from ^3.67.0 to ^3.67.0 ...'
     )
   )
 
   ok(
     !updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.55.0 ...'
+      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.67.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
@@ -307,8 +307,8 @@ test('update - should fail when a dependency cannot be updated', async t => {
   const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
-    wattpm: '^3.55.0',
-    '@platformatic/runtime': '^3.55.0'
+    wattpm: '^3.67.0',
+    '@platformatic/runtime': '^3.67.0'
   })
 
   deepStrictEqual(mainPackageJson.dependencies, {
@@ -323,7 +323,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^3.55.0',
+    '@platformatic/service': '^3.67.0',
     '@platformatic/db': '^1.53.4',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'

@@ -3,8 +3,7 @@ import {
   ensureLoggableError,
   FileWatcher,
   kHandledError,
-  loadConfigurationModule,
-  mirrorGlobalDispatcherForBuiltinFetch
+  loadConfigurationModule
 } from '@platformatic/foundation'
 import {
   getLogger,
@@ -22,10 +21,10 @@ import { EventEmitter } from 'node:events'
 import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
-import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+import { getGlobalDispatcher } from 'undici'
 import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
-import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
+import { installGlobalDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
 function fetchApplicationUrl (application, key) {
   if (!key.endsWith('_URL') || !application.id) {
@@ -379,9 +378,7 @@ export class Controller extends EventEmitter {
 
     const dispatcher = getGlobalDispatcher().compose(interceptor)
 
-    markAsPlatformaticDispatcher(dispatcher)
-    setGlobalDispatcher(dispatcher)
-    mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
+    installGlobalDispatcher(dispatcher)
   }
 
   #setupHandlers (timeout) {

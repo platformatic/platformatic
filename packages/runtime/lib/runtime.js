@@ -24,6 +24,7 @@ import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
 import { basename, dirname, isAbsolute, join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
@@ -31,7 +32,7 @@ import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
-import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { createCoordinator, createInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
 import {
   AddressInUseError,
@@ -56,14 +57,13 @@ import {
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
   RuntimeExtensionBuildAlreadyCalledError,
-  WorkerInterceptorJoinTimeoutError,
   WorkerNotFoundError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { createManagementHandlers } from './management-handlers.js'
 import { OpenTelemetryMetricsForwarder } from './opentelemetry-metrics.js'
-import { createChannelCreationHook } from './policies.js'
+import { createChannelCreationHook, createTargetPermissionHook } from './policies.js'
 import { startHealthProbesServer, startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
@@ -79,7 +79,6 @@ import {
   kFullId,
   kHealthCheckTimer,
   kId,
-  kInterceptorReadyPromise,
   kIsSubprocessHost,
   kITC,
   kLastHealthCheckELU,
@@ -87,6 +86,7 @@ import {
   kWorkerHealthSignals,
   kWorkerId,
   kWorkerPortOffset,
+  kWorkerServerOptions,
   kWorkerUrl,
   kWorkersBroadcast,
   kWorkerStartTime,
@@ -250,6 +250,8 @@ export class Runtime extends EventEmitter {
   #healthMetricsCollectionActive
 
   #meshInterceptor
+  #meshCoordinator
+  #meshId
   #dispatcher
 
   #managementApi
@@ -305,13 +307,7 @@ export class Runtime extends EventEmitter {
     this.#applicationRestartCounts = new Map()
     this.#workers = new RoundRobinMap()
     this.#channelCreationHook = createChannelCreationHook(this.#config)
-    this.#meshInterceptor = createThreadInterceptor({
-      domain: '.plt.local',
-      timeout: this.#config.applicationTimeout,
-      meshTimeout: this.#context.meshTimeout ?? true,
-      onChannelCreation: this.#channelCreationHook,
-      onError: this.#onMeshInterceptorError.bind(this)
-    })
+    this.#meshId = `runtime-${randomUUID()}`
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingApplications = new Set()
@@ -427,6 +423,16 @@ export class Runtime extends EventEmitter {
     this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
     this.#assertExtensionHealthRoutesApplied()
 
+    this.#meshCoordinator = createCoordinator({ meshId: this.#meshId })
+    this.#meshInterceptor = createInterceptor({
+      meshId: this.#meshId,
+      domain: '.plt.local',
+      connectTimeout: this.#config.applicationTimeout,
+      bootstrapTimeout: this.#config.applicationTimeout,
+      allowTarget: createTargetPermissionHook(this.#config)
+    })
+    await this.#meshInterceptor.ready
+
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
 
@@ -541,7 +547,8 @@ export class Runtime extends EventEmitter {
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
-    await this.#meshInterceptor.close()
+    await this.#meshInterceptor?.close()
+    this.#meshCoordinator?.destroy()
     this.#workersBroadcastChannel?.close()
 
     this.#updateStatus('stopped')
@@ -795,8 +802,24 @@ export class Runtime extends EventEmitter {
     const levels = topologicalLevels(applications, dependencies)
 
     for (const level of levels) {
-      const startInvocations = level.map(app => [app, silent])
-      await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+      const applicationsWithPort = await Promise.all(
+        level.map(async applicationId => {
+          const worker = await this.#getWorkerByIdOrNext(applicationId)
+          const applicationConfig = await sendViaITC(worker, 'getApplicationConfig')
+          const port = Number(applicationConfig?.server?.port)
+          return { applicationId, hasPort: Number.isInteger(port) && port > 0 }
+        })
+      )
+
+      for (const hasPort of [true, false]) {
+        const startInvocations = applicationsWithPort
+          .filter(application => application.hasPort === hasPort)
+          .map(({ applicationId }) => [applicationId, silent])
+
+        if (startInvocations.length > 0) {
+          await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+        }
+      }
     }
   }
 
@@ -1895,7 +1918,7 @@ export class Runtime extends EventEmitter {
       // Drop any configured custom label that shares the name of the application
       // label (a config can set both `applicationLabel: 'serviceId'` and a static
       // `serviceId` label): keeping it would make these runtime-wide metrics look
-      // like they belong to an application, both here and in getFormattedMetrics().
+      // like they belong to an application during metrics aggregation.
       const processLabels = { ...this.#config.metrics?.labels }
       delete processLabels[this.#metricsLabelName]
       this.#applyLabelsToMetrics(processMetricsJson, processLabels, processMetrics)
@@ -2058,155 +2081,6 @@ export class Runtime extends EventEmitter {
     }
 
     return output
-  }
-
-  async getFormattedMetrics () {
-    try {
-      const { metrics } = await this.getMetrics()
-
-      if (metrics === null || metrics.length === 0) {
-        return null
-      }
-
-      const metricsNames = [
-        'process_cpu_percent_usage',
-        'process_resident_memory_bytes',
-        'nodejs_heap_size_total_bytes',
-        'nodejs_heap_size_used_bytes',
-        'nodejs_heap_space_size_total_bytes',
-        'nodejs_eventloop_utilization',
-        'http_request_all_summary_seconds'
-      ]
-
-      const applicationsMetrics = {}
-
-      // Process-level metrics are reported only once for the whole runtime, without
-      // an application label, since they are shared by all the applications running
-      // in worker threads (see issue #3332). Applications running as separate OS
-      // processes report their own labeled values, which take precedence below.
-      const runtimeProcessMetrics = {}
-      const applicationProcessMetrics = new Set()
-
-      for (const metric of metrics) {
-        const { name, values } = metric
-
-        if (!metricsNames.includes(name)) continue
-        if (!values || values.length === 0) continue
-
-        const labels = values[0].labels
-        // Use the configured label name (serviceId for v2 compatibility, applicationId for v3+)
-        const applicationId = labels?.[this.#metricsLabelName]
-
-        if (!applicationId) {
-          if (name === 'process_cpu_percent_usage') {
-            runtimeProcessMetrics.cpu = values[0].value
-            continue
-          }
-          if (name === 'process_resident_memory_bytes') {
-            runtimeProcessMetrics.rss = values[0].value
-            continue
-          }
-
-          throw new Error(`Missing ${this.#metricsLabelName} label in metrics`)
-        }
-
-        if (name === 'process_cpu_percent_usage' || name === 'process_resident_memory_bytes') {
-          applicationProcessMetrics.add(`${applicationId}:${name}`)
-        }
-
-        let applicationMetrics = applicationsMetrics[applicationId]
-        if (!applicationMetrics) {
-          applicationMetrics = {
-            cpu: 0,
-            rss: 0,
-            totalHeapSize: 0,
-            usedHeapSize: 0,
-            newSpaceSize: 0,
-            oldSpaceSize: 0,
-            elu: 0,
-            latency: {
-              p50: 0,
-              p90: 0,
-              p95: 0,
-              p99: 0
-            }
-          }
-          applicationsMetrics[applicationId] = applicationMetrics
-        }
-
-        parsePromMetric(applicationMetrics, metric)
-      }
-
-      // Apply the runtime-wide process-level values to every application that did
-      // not report its own (i.e. every application running in a worker thread).
-      for (const [applicationId, applicationMetrics] of Object.entries(applicationsMetrics)) {
-        if (
-          runtimeProcessMetrics.cpu !== undefined &&
-          !applicationProcessMetrics.has(`${applicationId}:process_cpu_percent_usage`)
-        ) {
-          applicationMetrics.cpu = runtimeProcessMetrics.cpu
-        }
-
-        if (
-          runtimeProcessMetrics.rss !== undefined &&
-          !applicationProcessMetrics.has(`${applicationId}:process_resident_memory_bytes`)
-        ) {
-          applicationMetrics.rss = runtimeProcessMetrics.rss
-        }
-      }
-
-      function parsePromMetric (applicationMetrics, promMetric) {
-        const { name } = promMetric
-
-        if (name === 'process_cpu_percent_usage') {
-          applicationMetrics.cpu = promMetric.values[0].value
-          return
-        }
-        if (name === 'process_resident_memory_bytes') {
-          applicationMetrics.rss = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_size_total_bytes') {
-          applicationMetrics.totalHeapSize = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_size_used_bytes') {
-          applicationMetrics.usedHeapSize = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_space_size_total_bytes') {
-          const newSpaceSize = promMetric.values.find(value => value.labels.space === 'new')
-          const oldSpaceSize = promMetric.values.find(value => value.labels.space === 'old')
-
-          applicationMetrics.newSpaceSize = newSpaceSize.value
-          applicationMetrics.oldSpaceSize = oldSpaceSize.value
-          return
-        }
-        if (name === 'nodejs_eventloop_utilization') {
-          applicationMetrics.elu = promMetric.values[0].value
-          return
-        }
-        if (name === 'http_request_all_summary_seconds') {
-          applicationMetrics.latency = {
-            p50: promMetric.values.find(value => value.labels.quantile === 0.5)?.value || 0,
-            p90: promMetric.values.find(value => value.labels.quantile === 0.9)?.value || 0,
-            p95: promMetric.values.find(value => value.labels.quantile === 0.95)?.value || 0,
-            p99: promMetric.values.find(value => value.labels.quantile === 0.99)?.value || 0
-          }
-        }
-      }
-
-      return {
-        version: 1,
-        date: new Date().toISOString(),
-        applications: applicationsMetrics
-      }
-    } catch (err) {
-      // If any metric is missing, return nothing
-      this.logger.warn({ err }, 'Cannot fetch metrics')
-
-      return null
-    }
   }
 
   getSharedContext () {
@@ -2763,6 +2637,7 @@ export class Runtime extends EventEmitter {
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config: workerConfig,
+        meshId: this.#meshId,
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,
@@ -2901,6 +2776,10 @@ export class Runtime extends EventEmitter {
     // Forward events from the worker
     // Do not use emitAndNotify here since we don't want to forward unknown events
     worker[kITC].on('event', ({ event, payload }) => {
+      if (event === 'serverOptions') {
+        worker[kWorkerServerOptions] = payload[0]
+      }
+
       event = `application:worker:event:${event}`
 
       this.emit(event, ...payload, workerId, applicationId, index)
@@ -3085,11 +2964,6 @@ export class Runtime extends EventEmitter {
       // Store locally
       this.#workers.set(workerId, worker)
     }
-
-    // Setup the interceptor
-    // kInterceptorReadyPromise resolves when the worker
-    // is ready to receive requests: after calling the replaceServer method
-    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
 
     // Wait for initialization
     try {
@@ -3531,12 +3405,6 @@ export class Runtime extends EventEmitter {
 
       this.#recordWorkerUrl(worker, id, workerUrl)
 
-      // Wait for the interceptor to be ready
-      const interceptorResult = await executeWithTimeout(worker[kInterceptorReadyPromise], config.startTimeout)
-      if (interceptorResult === kTimeout) {
-        throw new WorkerInterceptorJoinTimeoutError(label, config.startTimeout)
-      }
-
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
 
@@ -3722,7 +3590,6 @@ export class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
-    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
     worker.removeAllListeners('exit')
     await worker.terminate()
 
@@ -3892,6 +3759,7 @@ export class Runtime extends EventEmitter {
 
     const stopBeforeStart =
       Boolean(worker[kWorkerUrl]) &&
+      worker[kWorkerServerOptions]?.port !== 0 &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
 
     try {
@@ -5125,18 +4993,6 @@ export class Runtime extends EventEmitter {
     }
 
     this.#loggerContext.updatePrefixes(ids)
-  }
-
-  #onMeshInterceptorError (error) {
-    const worker = error.port
-
-    this.logger.error(
-      { err: ensureLoggableError(error.cause) },
-      `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup. Replacing it ...`
-    )
-
-    this.emit('application:worker:init:failed', { application: worker[kApplicationId], worker: worker[kWorkerId] })
-    worker.terminate()
   }
 
   #getPortOwner (port, applicationId, hostname, includeSameApplication = false) {

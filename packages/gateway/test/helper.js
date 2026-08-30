@@ -351,7 +351,11 @@ export async function createOpenApiApplication (t, entitiesNames = [], options =
 }
 
 export async function createGraphqlApplication (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
-  const app = fastify({ logger: false, port: 0 })
+  const app = fastify({
+    logger: false,
+    keepAliveTimeout: 10,
+    forceCloseConnections: true
+  })
   t.after(async () => {
     await app.close()
   })
@@ -365,7 +369,8 @@ export async function createGraphqlApplication (t, { schema, resolvers, extend, 
 
   if (extend) {
     if (extend.file) {
-      const { schema, resolvers } = await import(extend.file)
+      const extension = await import(extend.file)
+      const { schema, resolvers } = extension.default ?? extension
       if (schema) {
         app.graphql.extendSchema(schema)
       }
