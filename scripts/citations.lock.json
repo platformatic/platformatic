@@ -15,17 +15,17 @@
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
     },
-    "packages/foundation/lib/v4/topology.js:106-122": {
-      "sha": "0c6beb9dfcff9778",
+    "packages/foundation/lib/v4/topology.js:108-131": {
+      "sha": "45e2923b4f02ea0c",
       "head": "const samePath = typeof explicit.path === 'string' && resolve(root, explicit.path) === directory",
-      "lines": 17
+      "lines": 24
     },
     "packages/basic/lib/modules.js:24-36@b7d953770^": {
       "sha": "b40a53b4822d4c88",
       "head": "try {",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:531-659": {
+    "packages/wattpm-utils/lib/commands/external.js:535-663": {
       "sha": "cee132a22cb0a3ff",
       "head": "export async function resolveApplications (",
       "lines": 129
@@ -45,27 +45,27 @@
       "head": "anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:557,576-587": {
+    "packages/wattpm-utils/lib/commands/external.js:561,580-591": {
       "sha": "7153dd7a8a5ca333",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:557": {
+    "packages/wattpm-utils/lib/commands/external.js:561": {
       "sha": "a9d0ff941726dfdd",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:412": {
+    "packages/wattpm-utils/lib/commands/external.js:416": {
       "sha": "b4684192235ac8fb",
       "head": "const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:576-587": {
+    "packages/wattpm-utils/lib/commands/external.js:580-591": {
       "sha": "4d9354cd936b48a4",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 12
     },
-    "packages/wattpm-utils/lib/commands/external.js:576-606": {
+    "packages/wattpm-utils/lib/commands/external.js:580-610": {
       "sha": "3a9ca7cd6d80343e",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 31
@@ -80,7 +80,7 @@
       "head": "if (application.path && existsSync(application.path)) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:576-583": {
+    "packages/wattpm-utils/lib/commands/external.js:580-587": {
       "sha": "7ec3ae3f6a5f58ad",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 8
@@ -90,7 +90,7 @@
       "head": "if (useEnv) {",
       "lines": 29
     },
-    "packages/wattpm-utils/lib/commands/external.js:338-373": {
+    "packages/wattpm-utils/lib/commands/external.js:342-377": {
       "sha": "bad938280c7c317c",
       "head": "async function importLocal (logger, root, configurationFile, path, overridenId) {",
       "lines": 36
@@ -545,15 +545,15 @@
       "head": "let serverConfigOverride",
       "lines": 5
     },
-    "packages/wattpm-utils/lib/commands/external.js:599-607": {
+    "packages/wattpm-utils/lib/commands/external.js:603-611": {
       "sha": "6918e491f76cf04f",
       "head": "const directory = resolve(root, application.path)",
       "lines": 9
     },
-    "packages/wattpm-utils/lib/commands/external.js:263-266": {
-      "sha": "c975c1372305dc84",
+    "packages/wattpm-utils/lib/commands/external.js:263-270": {
+      "sha": "0713c96d1aeec3af",
       "head": "function isPathInsideDirectory (directory, path) {",
-      "lines": 4
+      "lines": 8
     },
     "packages/foundation/lib/configuration.js:387-407": {
       "sha": "ed0d54184d247373",
@@ -820,7 +820,7 @@
       "head": "const dependencies = {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:596": {
+    "packages/wattpm-utils/lib/commands/external.js:600": {
       "sha": "d0ee36b8b0f4017f",
       "head": "application.path = resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)",
       "lines": 1
@@ -945,7 +945,7 @@
       "head": "if (!this.config.isRuntimeContext) {",
       "lines": 9
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:501": {
+    "packages/wattpm-utils/lib/commands/migrate.js:502": {
       "sha": "ff440ded0415b4ee",
       "head": "function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {",
       "lines": 1
@@ -960,7 +960,7 @@
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:444": {
+    "packages/wattpm-utils/lib/commands/migrate.js:445": {
       "sha": "6fc44b37a39f9c96",
       "head": "function readLegacyEnvFile (configDirectory, declaredEnvfile, root) {",
       "lines": 1
@@ -990,7 +990,7 @@
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:1746": {
+    "packages/wattpm-utils/lib/commands/migrate.js:1747": {
       "sha": "8041b6bc6460351a",
       "head": "function collectCloneOverlapRefusals (root, applications, config, refusals) {",
       "lines": 1
@@ -1060,7 +1060,7 @@
       "head": "export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig, context, capability) {",
       "lines": 1
     },
-    "packages/foundation/lib/v4/topology.js:184-186": {
+    "packages/foundation/lib/v4/topology.js:191-193": {
       "sha": "0df6dcc899c8f39b",
       "head": "if (typeof enabled === 'string') {",
       "lines": 3

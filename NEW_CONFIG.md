@@ -355,10 +355,14 @@ to be the same application.** v3 matched on `id` alone, which is not sufficient:
 explicit `{ id: 'api', url: '…' }` beside an autoloaded `web/api` merges into an entry
 that keeps the local `path` *and* carries the `url`, so `wattpm resolve` skips the
 remote (its path exists) and the runtime boots local code while the configuration
-names a repository. v4 merges only when the entries identify the same application —
-equal canonical `path`, or a `url` matching what the autoloaded directory resolves
-to — and otherwise reports a **duplicate id** naming both sources
-(`foundation/lib/v4/topology.js:106-122`). An id is the mesh
+names a repository. v4 merges only when the entries identify the same application, which
+means one thing: **equal resolved `path`** — normalized, not canonicalized, so a
+symlink spelling of the directory is refused loudly rather than recognized. A `url`
+entry qualifies the same way, once `wattpm resolve` has materialized its clone at a
+path; until then a bare url beside a directory that already exists cannot be shown
+to be the same application, and is refused with the rest. Anything else sharing the
+id is `PLT_AMBIGUOUS_APPLICATION_ID`, naming both sources
+(`foundation/lib/v4/topology.js:108-131`). An id is the mesh
 hostname, the injected `PLT_<ID>_URL`, the metrics label and `wattpm inject`'s
 argument, so two distinct applications cannot share one. (Filed against the runtime
 as platformatic/platformatic#5079; v4 does not inherit it.) Capability configuration
@@ -658,7 +662,7 @@ first clean build rather than during migration.
 `wattpm resolve` is otherwise unchanged, and it writes **nothing** to the configuration: it
 computes `application.path` in memory from `resolvedApplicationsBasePath`, clones
 or extracts, and installs dependencies
-(`wattpm-utils/lib/commands/external.js:531-659`). That matters in v4: `resolve`
+(`wattpm-utils/lib/commands/external.js:535-663`). That matters in v4: `resolve`
 runs unattended in build and deploy pipelines, so it must not depend on magicast's
 statically-safe shapes or its snippet fallback.
 
@@ -685,7 +689,7 @@ type sketch in Appendix A models the two as a union for the same reason.
 
 **Loading must succeed in that state, because it is the only state `resolve` ever
 runs in.** `resolveApplications` calls `loadConfiguration` first and *then* selects
-the applications whose path is missing (`wattpm-utils/lib/commands/external.js:557,576-587`),
+the applications whose path is missing (`wattpm-utils/lib/commands/external.js:561,580-591`),
 so a configuration that refuses to load without its clones could never produce them.
 
 **`resolve` must see every entry a later boot will need**, and what makes that hard
@@ -755,13 +759,13 @@ see it. Three different things follow from that, and they are not one rule:
   **Where that list comes from is the load-bearing part**, because `resolve` cannot
   produce it. The filter runs inside the root eval worker, which drops the disabled
   entries and exits; by the time `resolveApplications` has called `loadConfiguration`
-  (`external.js:557`) nothing is left holding the pre-filter list, and re-deriving it
+  (`external.js:561`) nothing is left holding the pre-filter list, and re-deriving it
   would mean evaluating the root a second time. So the worker records it on the way
   past — every entry carrying a `url`, projected to `{ id, url, path, gitBranch }` —
   and posts it beside the config as `resolveCandidates` (see "Loading mechanism",
   step 4). **`gitBranch` is in the projection because dropping it changes which
   revision lands on disk.** `resolveGitApplication` selects with
-  `application.gitBranch ?? parsedGitUrl.branch` (`external.js:412`), so a disabled
+  `application.gitBranch ?? parsedGitUrl.branch` (`external.js:416`), so a disabled
   remote pinned to `release` would otherwise be cloned from the URL's branch. It
   travels **as authored**: the projection is taken in the worker, ahead of the
   main-side schema pass, so an undeclared `gitBranch` stays undeclared rather than
@@ -773,7 +777,7 @@ see it. Three different things follow from that, and they are not one rule:
   returning the configuration object, so every caller keeps working; the list is
   attached to the symbol-keyed metadata envelope beside `root`, `path`, `env` and
   `module`, and `resolve` reads `config[kMetadata].resolveCandidates` rather than
-  filtering the returned application list as it does today (`external.js:576-587`).
+  filtering the returned application list as it does today (`external.js:580-591`).
   That envelope is the right home rather than a convenient one: it already exists to
   carry facts *about* a load that are not part of the configuration, it is already
   stripped from the public payloads by the shallow spread in `getRuntimeConfig()`,
@@ -786,7 +790,7 @@ see it. Three different things follow from that, and they are not one rule:
   **`path` is the fourth field for the same reason `gitBranch` is the third**: it is
   where the clone lands. `resolveApplications` clones into `application.path`,
   defaulting it from `resolvedApplicationsBasePath` when the entry declares none
-  (`external.js:576-606`), so a candidate is identified by its **effective
+  (`external.js:580-610`), so a candidate is identified by its **effective
   destination** — the declared path if there is one, otherwise
   `join(root, resolvedApplicationsBasePath, id)` — canonicalized before comparison,
   since `./external/api` and `external/api` are one directory. Under `--for all` a
@@ -814,7 +818,7 @@ see it. Three different things follow from that, and they are not one rule:
   set in a single context — and refuses a destination claimed by more than one
   repository/revision pair, naming both ids and the path. **Over every candidate, not
   every candidate it is about to fetch**: existence filtering runs after it, dropping
-  any entry whose path already exists (`external.js:576-583`), and that is exactly the
+  any entry whose path already exists (`external.js:580-587`), and that is exactly the
   state this refusal exists for — a directory left holding one of the two clones, from
   a previous run or a failed one, is the case where the conflict is already doing
   damage and the filter would hide it. Existence decides whether a *coherent* producer
@@ -849,7 +853,7 @@ is the message above, never a detector "no JavaScript sources" error.
 
 The `{PLT_APPLICATION_X_PATH}` placeholder entries plus `.env` lines were written
 by **`wattpm import`** (`external.js:342-370` pre-`6eca16405`), not `resolve` — as is the capability
-dependency added to a cloned app's `package.json` (`external.js:338-373`, inside
+dependency added to a cloned app's `package.json` (`external.js:342-377`, inside
 `importLocal`). A v3 root no longer reaches `import` at all -- the load refuses it with the migrate
 hint -- so the per-app form is always the v4 one; the branch that followed the
 root's dialect and wrote a `watt.json` `$schema` stub went with the legacy roots
@@ -1860,9 +1864,9 @@ configuration names — a configuration is trusted code, and a directory it name
 part of what it describes. The one containment rule lives in `resolve`, and it
 governs *creating* directories rather than reading them: `resolveApplications`
 refuses to clone into a path outside the project root, skipping that entry with a
-warning (`wattpm-utils/lib/commands/external.js:599-607`), while a directory that
+warning (`wattpm-utils/lib/commands/external.js:603-611`), while a directory that
 already exists is used as-is whatever its location. The check is a path-boundary
-test (`isPathInsideDirectory`, `wattpm-utils/lib/commands/external.js:263-266`), so
+test (`isPathInsideDirectory`, `wattpm-utils/lib/commands/external.js:263-270`), so
 `/tmp/app-evil` is not contained by `/tmp/app`. What remains of
 [#5078](https://github.com/platformatic/platformatic/issues/5078) is
 canonicalization: the boundary is computed on the spelled paths, so a symlinked
@@ -3539,7 +3543,7 @@ Generation reads both views. Then:
    **The directories `resolve` cloned into are excluded from every step** — the
    lexical pass, the dirty check, emission, the source scan and the deletion set.
    `wattpm resolve` clones remote applications into `resolvedApplicationsBasePath`
-   (`external.js:596`), so those directories hold *other repositories'* v3
+   (`external.js:600`), so those directories hold *other repositories'* v3
    configurations, untracked.
 
    **The exclusion is that set of directories, not the configured base wholesale**,
@@ -3911,7 +3915,7 @@ Generation reads both views. Then:
    file goes, to open the legacy config each entry points at, to run the detector, to
    rebase `envfile` app-relative, and to evaluate the root-directory `envfile` refusal
    — and none of that is expressible over an unresolved token. So these five are
-   **resolved, not converted** (`wattpm-utils/lib/commands/migrate.js:501`): migrate
+   **resolved, not converted** (`wattpm-utils/lib/commands/migrate.js:502`): migrate
    evaluates their placeholders and writes the resulting literal path, and refuses by
    name when a token survives the chain.
 
@@ -3950,7 +3954,7 @@ Generation reads both views. Then:
    conventional **`<autoload.path>/<id>` directory** if it exists on disk.
 
    That third rung is per-file, not per-project, and it is v3's own walk
-   (`wattpm-utils/lib/commands/migrate.js:444`) that decides it rather than a rule of
+   (`wattpm-utils/lib/commands/migrate.js:445`) that decides it rather than a rule of
    migrate's own — kept here because migrate is the only thing that still needs to know
    what v3 would have done. v3 skips the search entirely when
    the config declared an `envfile` (`foundation/lib/configuration.js:349-357` pre-`7a541feae`);
@@ -4175,7 +4179,7 @@ Generation reads both views. Then:
    not intersect, or whose combination migrate cannot decide**; and a **directory
    `resolve` will clone into that already holds a local application, a file migrate
    must read, or a path it plans to emit** — a project whose remote checkouts and own
-   sources share a directory (`wattpm-utils/lib/commands/migrate.js:1746`). An earlier
+   sources share a directory (`wattpm-utils/lib/commands/migrate.js:1747`). An earlier
    draft framed this as an exclusion protecting the clone swallowing work the run has
    to do; there is no such exclusion, because migrate never looks inside a remote
    entry's directory in the first place — an entry with a `url` and no local path has
@@ -4213,7 +4217,7 @@ Generation reads both views. Then:
    an enum and `SETTING` in `web/b` under a numeric range are two variables that
    happen to be spelled alike. So migrate resolves, per position, **which file would
    have supplied that variable for that config file** — the same walk the structural
-   paths already use (`wattpm-utils/lib/commands/migrate.js:444`) — and intersects
+   paths already use (`wattpm-utils/lib/commands/migrate.js:445`) — and intersects
    only within a supplier. A variable coming from the real environment, or from a file
    both positions reach, *is* intersected across all of them, because there the one
    value is real and every position genuinely sees it. Seeding follows the same
@@ -5014,7 +5018,7 @@ runs multiple workers on a fixed port at all.
 
    **The audit's evidence heuristic keys on the property *name*, and two properties
    called `enabled` settle the question differently.** An application entry's is read
-   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:184-186`), which treats a
+   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:191-193`), which treats a
    string as *anything but `'false'` is true* — so its string branch is live v4
    behaviour and stays. `telemetry.enabled` beside it is read as `config.telemetry.enabled !== false`
    (`runtime/lib/runtime.js:2582`), a strict comparison against the boolean, so a string
@@ -5125,7 +5129,7 @@ runs multiple workers on a fixed port at all.
    checkout once. It takes those candidates from the
    loader's `kMetadata` `resolveCandidates` list, recorded before the `enabled` filter, rather
    than by filtering the returned application list as it does today
-   (`external.js:576-587`) — the pre-filter list does not survive the eval worker, so
+   (`external.js:580-591`) — the pre-filter list does not survive the eval worker, so
    this is a protocol change before it is a command change. A remote entry excluded
    in the current mode is fetched all the same. **`wattpm-utils migrate` lives here,
    under `wattpm-utils`' own binary — no `wattpm` routing**: it hosts the vendored
