@@ -132,15 +132,6 @@ export class Controller extends EventEmitter {
         The capability is imported through the canonical resolution order, application-scoped first,
         so the copy that runs here is the copy whose schema validated the payload main-side.
       */
-      /*
-        v4: the configuration was evaluated exactly once, main-side, and this worker receives the
-        validated capability payload as data. There is no file to re-read and no schema to
-        rediscover — which is the point, since re-parsing per worker meant an application with
-        workers: 4 evaluated user code five times and could reach five different answers.
-
-        The capability is imported through the canonical resolution order, application-scoped
-        first, so the copy that runs here is the copy whose schema validated the payload.
-      */
       if (appConfig.resolvedConfig) {
         const pkg = await importCapabilityPackage(appConfig.path, appConfig.module, {
           runtimeScope: import.meta.filename
