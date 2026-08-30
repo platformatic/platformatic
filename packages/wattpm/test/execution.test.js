@@ -7,6 +7,7 @@ import { on } from 'node:events'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import split2 from 'split2'
 import { request } from 'undici'
 import { createTemporaryDirectory, prepareRuntime } from '../../basic/test/helper.js'
@@ -208,25 +209,58 @@ test('dev - should survive an application configuration file that stops evaluati
   await waitForStart(startProcess)
 
   const originalContents = await readFile(configFile, 'utf-8')
-  await writeFile(configFile, 'export default { server: {', 'utf-8')
 
-  let reported = false
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const line = log.toString()
-    let message = line
+  /*
+    Written repeatedly rather than once: the watcher arms shortly after the listening line, and a
+    single write landing in that gap is a change nobody sees -- the wait below would then never
+    resolve, which is how this test hung on CI. Re-writing until the reload reports makes the
+    trigger independent of who wins that race; each write differs, so the watcher cannot dismiss
+    one as unchanged.
+  */
+  const waitForLine = async predicate => {
+    const stream = startProcess.stdout.pipe(split2())
 
     try {
-      const parsed = JSON.parse(line)
-      message = parsed.err?.message ?? parsed.msg ?? line
-    } catch {
-      // A human-readable CLI line rather than a runtime record; both share this stream.
+      for await (const log of on(stream, 'data')) {
+        const line = log.toString()
+        let message = line
+
+        try {
+          const parsed = JSON.parse(line)
+          message = parsed.err?.message ?? parsed.msg ?? line
+        } catch {
+          // A human-readable CLI line rather than a runtime record; both share this stream.
+        }
+
+        if (predicate(message, line)) {
+          return true
+        }
+      }
+    } finally {
+      startProcess.stdout.unpipe(stream)
     }
 
-    if (message.includes('Unexpected end of input') || message.includes('Cannot parse config file')) {
-      reported = true
-      break
+    return false
+  }
+
+  const triggerUntil = async (contents, predicate) => {
+    let attempt = 0
+    const observed = waitForLine(predicate).then(found => ({ settled: true, found }))
+
+    while (true) {
+      await writeFile(configFile, `${contents}${'\n'.repeat(attempt++)}`, 'utf-8')
+
+      const outcome = await Promise.race([observed, sleep(5000, { settled: false })])
+      if (outcome.settled) {
+        // false only when the stream ended -- the dev server died, which is its own failure.
+        return outcome.found
+      }
     }
   }
+
+  const reported = await triggerUntil('export default { server: {', message => {
+    return message.includes('Unexpected end of input') || message.includes('Cannot parse config file')
+  })
 
   ok(reported)
 
@@ -235,15 +269,9 @@ test('dev - should survive an application configuration file that stops evaluati
     corrected file starts the runtime again. That is the half that makes surviving useful: a dev
     server that stays up but stops watching is a dev server you have to restart by hand.
   */
-  await writeFile(configFile, originalContents, 'utf-8')
-
-  let restarted = false
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    if (log.toString().includes('Platformatic is now listening')) {
-      restarted = true
-      break
-    }
-  }
+  const restarted = await triggerUntil(originalContents, (_, line) => {
+    return line.includes('Platformatic is now listening')
+  })
 
   ok(restarted)
 })
