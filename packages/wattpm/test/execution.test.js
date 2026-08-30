@@ -286,7 +286,7 @@ test('dev - should restart an application if the application configuration file 
   })
 
   const startProcess = wattpm('dev', rootDir)
-  let { url } = await waitForStart(startProcess)
+  const { url } = await waitForStart(startProcess)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
@@ -358,27 +358,37 @@ test('dev - should restart an application if the application configuration file 
     }
   }
 
+  ok(reloaded)
+  ok(lastListening)
+
   /*
-    A write may have landed just before the reload it was chasing reported, starting a second
-    reload behind the observed one; requesting immediately would race that teardown. Wait for the
-    listening lines to go quiet and take the newest address.
+    A write may have landed just before the reload it was chasing reported, starting another
+    reload behind the observed one, and on a slow machine each reload takes tens of seconds -- no
+    quiet-window heuristic survives that. The observer stays attached so the address follows every
+    restart, and the request retries until whichever reload is last answers; a server that never
+    comes back fails the test by its timeout, naming this wait.
   */
-  // eslint-disable-next-line no-unmodified-loop-condition -- the observer above mutates it
-  while (lastListening && Date.now() - lastListening.at < 3000) {
-    await sleep(500)
+  let version
+  while (version === undefined) {
+    try {
+      const { statusCode, body } = await request(new URL('/version', lastListening.url))
+
+      if (statusCode === 200) {
+        version = await body.json()
+        continue
+      }
+
+      await body.dump()
+    } catch {
+      // The server is between reloads; the next listening line moves the address.
+    }
+
+    await sleep(1000)
   }
 
   startProcess.stdout.unpipe(stream)
-  url = lastListening?.url
 
-  ok(reloaded)
-  ok(url)
-
-  {
-    const { statusCode, body } = await request(new URL('/version', url))
-    deepStrictEqual(statusCode, 200)
-    deepStrictEqual(await body.json(), { version: 123 })
-  }
+  deepStrictEqual(version, { version: 123 })
 })
 
 test('dev - should restart an application if "rs" is typed', async t => {
