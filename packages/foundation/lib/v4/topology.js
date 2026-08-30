@@ -96,7 +96,9 @@ export async function expandAutoload (config, { root }) {
 
       /*
         A shared id merges only once the two are known to be the same application, which for a
-        local entry means the same canonical path. v3 matched on id alone, and an explicit
+        local entry means the same resolved path -- normalized, not canonicalized: a symlink
+        spelling of the autoloaded directory is refused rather than recognized, loudly, with the
+        rename as the fix. v3 matched on id alone, and an explicit
         { id, url } beside an autoloaded directory then merged into an entry that kept the local
         path *and* carried the url -- resolve skipped the remote because its path existed, and the
         runtime booted local code while the configuration named a repository (#5079). An id is the
@@ -106,7 +108,12 @@ export async function expandAutoload (config, { root }) {
       const samePath = typeof explicit.path === 'string' && resolve(root, explicit.path) === directory
 
       if (!samePath) {
-        const described = typeof explicit.path === 'string' ? `path '${explicit.path}'` : `url '${explicit.url}'`
+        const described =
+          typeof explicit.path === 'string'
+            ? `path '${explicit.path}'`
+            : typeof explicit.url === 'string'
+              ? `url '${explicit.url}'`
+              : 'neither path nor url'
         throw new AmbiguousApplicationIdError(directory, described, id)
       }
 

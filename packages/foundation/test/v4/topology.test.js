@@ -121,6 +121,8 @@ test('an entry naming no place does not merge with an autoloaded directory', asy
     () => evaluate(root),
     error => {
       strictEqual(error.code, 'PLT_AMBIGUOUS_APPLICATION_ID')
+      // A placeless entry is described as such, not as "url 'undefined'".
+      ok(error.message.includes('neither path nor url'), error.message)
       return true
     }
   )
