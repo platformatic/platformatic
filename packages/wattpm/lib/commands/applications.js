@@ -163,7 +163,7 @@ export async function applicationsRemoveCommand (logger, args) {
             */
             const relativePath = relative(absoluteAutoloadPath, app.path)
 
-            if (relativePath !== '' && !relativePath.startsWith('..') && !relativePath.includes(sep)) {
+            if (relativePath !== '' && relativePath !== '..' && !relativePath.includes(sep)) {
               config.autoload.exclude ??= []
               config.autoload.exclude.push(relativePath)
             }

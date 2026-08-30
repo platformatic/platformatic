@@ -142,7 +142,8 @@ function canonicalize (path) {
 function contains (root, path) {
   const inside = relative(canonicalize(root), canonicalize(path))
 
-  return inside === '' || (!inside.startsWith('..') && !isAbsolute(inside))
+  // Not a bare startsWith('..'): a directory legitimately named `..foo` relativizes to `..foo`.
+  return inside === '' || (inside !== '..' && !inside.startsWith(`..${sep}`) && !isAbsolute(inside))
 }
 
 // v3 imposed no grammar on ids; v4 requires a DNS label. The rewrite is mechanical, which is what

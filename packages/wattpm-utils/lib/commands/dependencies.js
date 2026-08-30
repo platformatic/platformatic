@@ -13,7 +13,7 @@ import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 
@@ -68,7 +68,11 @@ async function withTemporaryPnpmConfig (directory, fn) {
 
 function isPathInsideDirectory (directory, path) {
   const relativePath = relative(directory, path)
-  return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath))
+  // Not a bare startsWith('..'): a directory legitimately named `..foo` relativizes to `..foo`.
+  return (
+    relativePath === '' ||
+    (relativePath !== '..' && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath))
+  )
 }
 
 /*

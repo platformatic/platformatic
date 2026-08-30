@@ -262,7 +262,11 @@ async function importApplicationIntoV4 (logger, configurationFile, { id, path, u
 */
 function isPathInsideDirectory (directory, path) {
   const relativePath = relative(directory, path)
-  return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath))
+  // Not a bare startsWith('..'): a directory legitimately named `..foo` relativizes to `..foo`.
+  return (
+    relativePath === '' ||
+    (relativePath !== '..' && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath))
+  )
 }
 
 async function importApplication (logger, configurationFile, id, path, url, branch) {
