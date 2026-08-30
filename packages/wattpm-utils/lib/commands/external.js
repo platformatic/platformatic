@@ -1,22 +1,16 @@
 import {
-  applicationToEnvVariable,
   createDirectory,
   detectApplicationType,
   ensureLoggableError,
   findRuntimeConfigurationFile,
   getRoot,
   kMetadata,
-  loadConfigurationFile as loadRawConfigurationFile,
   logFatalError,
   parseArgs,
   safeRemove,
   saveConfigurationFile
 } from '@platformatic/foundation'
-import {
-  chooseConfigurationFileName,
-  isConfigurationFileName,
-  serializeConfiguration
-} from '@platformatic/foundation/lib/v4/index.js'
+import { chooseConfigurationFileName, serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
 import { appendApplications, findAnyConfigurationFile, importedConfiguration } from '@platformatic/generators'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
@@ -25,7 +19,6 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { parseEnv } from 'node:util'
 import { extract } from 'tar'
 import { version } from '../version.js'
 import { installDependencies, listApplicationDirectories } from './dependencies.js'
@@ -182,22 +175,13 @@ async function fixConfiguration (context, logger, root, configOption, skipDepend
   }
 }
 
-/*
-  The configuration file an imported application gets, when it does not already have one. Which
-  dialect it is written in follows the root: a `watt.json` beside a v4 root is the coexistence the
-  loader refuses, so a project half-converted by this command would not boot.
-*/
+// The configuration file an imported application gets, when it does not already have one. Always
+// the v4 dialect: a legacy root cannot reach this command any more, so there is no root left whose
+// dialect a watt.json would be following.
 async function writeApplicationConfiguration (configurationFile, directory, capability) {
-  if (isConfigurationFileName(basename(configurationFile))) {
-    const name = await chooseConfigurationFileName(directory)
+  const name = await chooseConfigurationFileName(directory)
 
-    await writeFile(resolve(directory, name), importedConfiguration(capability), 'utf-8')
-    return
-  }
-
-  await saveConfigurationFile(resolve(directory, 'watt.json'), {
-    $schema: `https://schemas.platformatic.dev/${capability}/${version}.json`
-  })
+  await writeFile(resolve(directory, name), importedConfiguration(capability), 'utf-8')
 }
 
 /*
@@ -280,19 +264,7 @@ async function importApplication (logger, configurationFile, id, path, url, bran
     return
   }
 
-  /*
-    A v4 file is edited as source further down, so it is not read as data here -- the parser this
-    calls only understands the serialized dialects.
-  */
-  const rawConfig = isConfigurationFileName(basename(configurationFile))
-    ? null
-    : await loadRawConfigurationFile(configurationFile)
   const root = dirname(configurationFile)
-  const envFile = resolve(root, '.env')
-  const envSampleFile = resolve(root, '.env.sample')
-  const envVariable = applicationToEnvVariable(id)
-
-  let useEnv = true
 
   // If there is a locale path
   if (path) {
@@ -307,16 +279,11 @@ async function importApplication (logger, configurationFile, id, path, url, bran
       }
     }
 
-    // If the path is within the application repository
-    if (path.startsWith(root)) {
-      // If the path is already defined as an application, there is nothing to do
-      if (config.applications.some(s => s.path === path)) {
-        logger.warn('The path is already defined as an application.')
-        return
-      }
-
-      // Do not use env variables
-      useEnv = false
+    // If the path is within the application repository and already defined as an application,
+    // there is nothing to do
+    if (path.startsWith(root) && config.applications.some(s => s.path === path)) {
+      logger.warn('The path is already defined as an application.')
+      return
     }
 
     if (!url) {
@@ -332,47 +299,12 @@ async function importApplication (logger, configurationFile, id, path, url, bran
     )
   }
 
-  if (isConfigurationFileName(basename(configurationFile))) {
-    return importApplicationIntoV4(logger, configurationFile, { id, path, url, branch })
-  }
-
-  /* c8 ignore next */
-  rawConfig.web ??= []
-
-  if (useEnv) {
-    const resolveConfig = { id, path: `{${envVariable}}`, url }
-
-    if (resolveConfig.url && branch) {
-      resolveConfig.gitBranch = branch
-    }
-
-    rawConfig.web.push(resolveConfig)
-
-    // Make sure the environment variable is not already defined
-    if (existsSync(envFile)) {
-      const env = parseEnv(await readFile(envFile, 'utf-8'))
-
-      if (env[envVariable]) {
-        return logFatalError(
-          logger,
-          `There is already an environment variable ${bold(envVariable)} defined, please choose a different application ID.`
-        )
-      }
-    }
-
-    // Copy the .env file to .env.sample if it does not exist
-    if (!existsSync(envSampleFile)) {
-      await writeFile(envSampleFile, '', 'utf-8')
-    }
-
-    await appendEnvVariable(envFile, envVariable, path ?? '')
-    await appendEnvVariable(envSampleFile, envVariable, '')
-  } else {
-    rawConfig.web.push({ id, path: relative(root, path) })
-  }
-
-  await saveConfigurationFile(configurationFile, rawConfig)
-  return true
+  /*
+    Always the v4 editor: a legacy root cannot get this far, because the load above refuses it with
+    the migrate hint. The v3 half that wrote a `{PLT_APPLICATION_<ID>_PATH}` indirection and an
+    .env line for it went with the legacy reader -- a v4 entry carries its path or url literally.
+  */
+  return importApplicationIntoV4(logger, configurationFile, { id, path, url, branch })
 }
 
 async function importURL (logger, _, configurationFile, rawUrl, id, http, branch) {
