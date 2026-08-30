@@ -2,7 +2,7 @@ import { execa } from 'execa'
 import { deepStrictEqual, equal, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { cp, readFile, writeFile } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import { test } from 'node:test'
 import { configurationFileIn, createTemporaryDirectory, executeCreatePlatformatic, readConfiguration, setupUserInputHandler } from './helper.js'
 
@@ -47,17 +47,17 @@ test('Support packages without generator via importing (new application)', async
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
 
   /*
-    Asserted as source: an imported application carries a `url`, which makes it something to fetch
-    rather than something the topology already has, so it does not appear among the evaluated
-    applications until `wattpm resolve` has run.
+    Asserted as source, and as a literal: the importer writes the relative path itself rather than
+    v3's `{PLT_APPLICATION_<ID>_PATH}` placeholder plus a gitignored `.env` line to carry it.
   */
   const runtimeConfigSource = await readFile(resolve(baseProjectDir, 'watt.config.mjs'), 'utf8')
   ok(runtimeConfigSource.includes("id: 'main'"), runtimeConfigSource)
-  ok(runtimeConfigSource.includes('path: process.env.PLT_APPLICATION_MAIN_PATH'), runtimeConfigSource)
 
-  // Verify that the .env file was created with the correct path
+  const expectedPath = relative(baseProjectDir, applicationPath).split(sep).join('/')
+  ok(runtimeConfigSource.includes(`path: '${expectedPath}'`), runtimeConfigSource)
+
   const envFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
-  ok(envFile.includes(`PLT_APPLICATION_MAIN_PATH=${applicationPath}`))
+  ok(!envFile.includes('PLT_APPLICATION_MAIN_PATH'), envFile)
 })
 
 test('Support packages without generator via importing (existing applications)', async t => {
@@ -98,7 +98,9 @@ test('Support packages without generator via importing (existing applications)',
   const originalEnvFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
   // One spelling: v3's `web` alias is refused by the loader now, so the list the test plants uses
   // the name the editor keeps.
-  runtimeConfig.applications = [{ id: 'main', path: 'services/main' }]
+  // Not id 'main': the first run scaffolded web/main, which autoload discovers under that id, and
+  // a planted entry at another directory sharing it is the ambiguity the loader refuses (#5079).
+  runtimeConfig.applications = [{ id: 'planted', path: 'services/planted' }]
   runtimeConfig.startTimeout = 12345
   // Written back as the module it is. The plain object form is a valid v4 root, which is what a
   // test editing a configuration wants: no imports to resolve.
@@ -139,7 +141,7 @@ test('Support packages without generator via importing (existing applications)',
     Quoting is not asserted: the entry is added by editing the file, which keeps whatever style it
     was written in -- that preservation is the point.
   */
-  ok(/["']?id["']?:\s*["']main["']/.test(rootSource), rootSource)
+  ok(/["']?id["']?:\s*["']planted["']/.test(rootSource), rootSource)
   ok(/["']?id["']?:\s*["']alternate["']/.test(rootSource), rootSource)
   ok(rootSource.includes('git@github.com:hello/world.git'), rootSource)
   deepStrictEqual(runtimeConfig.startTimeout, 12345)
@@ -158,8 +160,10 @@ test('Support packages without generator via importing (existing applications)',
     ok(envLines.includes(line), `Expected env file to contain: ${line}`)
   }
 
-  // Check that the new variable was added
-  ok(envFile.includes(`PLT_APPLICATION_ALTERNATE_PATH=${applicationPath}`), 'Expected env file to contain PLT_APPLICATION_ALTERNATE_PATH')
+  // The path is a literal in the configuration now, not an .env indirection
+  ok(!envFile.includes('PLT_APPLICATION_ALTERNATE_PATH'), envFile)
+  // Like the id assertions above, quoting style is the file's own and not asserted
+  ok(rootSource.includes(relative(baseProjectDir, applicationPath).split(sep).join('/')), rootSource)
 })
 
 test('Support packages without generator via copy (new application)', async t => {

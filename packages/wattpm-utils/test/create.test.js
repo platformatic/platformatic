@@ -1,5 +1,5 @@
 import { createDirectory } from '@platformatic/foundation'
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
@@ -449,5 +449,8 @@ test('create - should not use a URL when importing a local application within th
 
   deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
   deepStrictEqual(configuration.logger, { level: 'info' })
-  deepStrictEqual(configuration.web.map(entry => entry.id), ['main'])
+  // One spelling and a literal path: the entry lands under `applications`, and the root's git
+  // remote is not the application's -- my-app has no repository, so nothing to fetch, no url.
+  deepStrictEqual(configuration.applications.map(entry => entry.id), ['main'])
+  strictEqual(configuration.applications[0].url, undefined)
 })
