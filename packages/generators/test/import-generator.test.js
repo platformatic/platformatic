@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, relative, sep } from 'node:path'
 import { test } from 'node:test'
 import { ImportGenerator } from '../lib/import-generator.js'
 import { fakeLogger, getTempDir } from './helpers.js'
@@ -307,14 +307,12 @@ test('import - should import application', async t => {
 
   await gen._beforeWriteFiles(runtime)
 
-  // Check that runtime config was updated
-  ok(Array.isArray(runtime.config.web))
-  deepStrictEqual(runtime.config.web[0].id, 'test-application')
-  deepStrictEqual(runtime.config.web[0].path, '{PLT_APPLICATION_TEST_APPLICATION_PATH}')
-  deepStrictEqual(runtime.config.web[0].url, 'git@github.com:hello/world.git')
-
-  // Check that runtime env was updated
-  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
+  // One spelling, and a literal relative path rather than v3's env-variable indirection --
+  // relative even out of the root, exactly as wattpm import writes it.
+  ok(Array.isArray(runtime.config.applications))
+  deepStrictEqual(runtime.config.applications[0].id, 'test-application')
+  deepStrictEqual(runtime.config.applications[0].path, relative('/foo', sourceDir).split(sep).join('/'))
+  deepStrictEqual(runtime.config.applications[0].url, 'git@github.com:hello/world.git')
 })
 
 test('import - should handle runtime with existing applications', async t => {
@@ -324,7 +322,7 @@ test('import - should handle runtime with existing applications', async t => {
   const runtime = createMockedRuntimeGenerator({
     applicationsBasePath: '/nonexistent/applications',
     generatedConfig: {
-      web: [{ id: 'existing-application', path: '/existing/path' }]
+      applications: [{ id: 'existing-application', path: '/existing/path' }]
     },
     getRuntimeEnvFileObject () {
       return { contents: 'EXISTING_VAR=value' }
@@ -337,11 +335,9 @@ test('import - should handle runtime with existing applications', async t => {
   await gen._beforeWriteFiles(runtime)
   await gen._afterWriteFiles(runtime)
 
-  deepStrictEqual(runtime.config.web.length, 2)
-  deepStrictEqual(runtime.config.web[0].id, 'existing-application')
-  deepStrictEqual(runtime.config.web[1].id, 'test-application')
-  ok(runtime.env.includes('EXISTING_VAR=value'))
-  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
+  deepStrictEqual(runtime.config.applications.length, 2)
+  deepStrictEqual(runtime.config.applications[0].id, 'existing-application')
+  deepStrictEqual(runtime.config.applications[1].id, 'test-application')
 })
 
 test('import - should not duplicate applications in runtime config', async t => {
@@ -366,7 +362,9 @@ test('import - should not duplicate applications in runtime config', async t => 
   deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })
 
-test('import - should use different applications keys', async t => {
+// One spelling: the list is always `applications`, whatever the wizard's folder is called --
+// the loader refuses the v3 aliases by name, so writing one scaffolded a project that cannot boot.
+test('import - writes the list under applications whatever the applications folder is called', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 

@@ -13,7 +13,7 @@ import {
 import { existsSync } from 'node:fs'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { basename, join, resolve } from 'node:path'
+import { basename, join, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { getArrayDifference } from './utils.js'
 
@@ -595,7 +595,26 @@ export class RuntimeGenerator extends BaseGenerator {
     reference the root contains.
   */
   #editExistingRoot (config) {
-    const edited = appendApplications(this.existingConfigSource, listedApplications(config), entry =>
+    /*
+      The evaluated configuration arrives with autoload already expanded, so its application list
+      holds every discovered directory as an explicit entry with an absolute machine path.
+      Appending those would bake this machine's layout into the user's root -- and duplicate what
+      autoload will discover again on the next boot. Only entries autoload does not cover belong in
+      the file: the ones this run scaffolds outside the autoload directory, or a root with no
+      autoload at all.
+    */
+    const autoloadPath = config.autoload?.path
+      ? resolve(this.targetDirectory, config.autoload.path) + sep
+      : null
+    const additions = listedApplications(config).filter(entry => {
+      if (!autoloadPath || typeof entry.path !== 'string') {
+        return true
+      }
+
+      return !resolve(this.targetDirectory, entry.path).startsWith(autoloadPath)
+    })
+
+    const edited = appendApplications(this.existingConfigSource, additions, entry =>
       this.resolveScaffoldedPlaceholders(entry, rawSource)
     )
 

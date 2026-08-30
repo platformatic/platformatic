@@ -636,6 +636,45 @@ test('WrappedGenerator - what it writes loads, and runs the application it wrapp
   over a .json file. It refuses now, with the hint every other v4 entry point gives: migrate owns
   that conversion, refusals and divergence reports included.
 */
+/*
+  The evaluated configuration arrives with autoload expanded into explicit entries carrying this
+  machine's absolute paths. Editing an autoload-based root must not append them: the next boot
+  discovers those directories again, and an absolute path baked into the file breaks on the next
+  machine.
+*/
+test('RuntimeGenerator - editing an autoload root does not bake the expanded entries in', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'existing', type: 'commonjs' }), 'utf-8')
+  await writeFile(join(root, '.env'), '', 'utf-8')
+  await writeFile(
+    join(root, 'watt.config.mjs'),
+    "export default {\n  autoload: { path: 'web' },\n  applications: []\n}\n",
+    'utf-8'
+  )
+  await mkdir(join(root, 'web/present'), { recursive: true })
+  await writeFile(join(root, 'web/present/package.json'), JSON.stringify({ name: 'present', type: 'module' }), 'utf-8')
+  await writeFile(join(root, 'web/present/watt.config.js'), "export default { module: '@platformatic/node' }\n", 'utf-8')
+
+  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+  rg.setConfig({ targetDirectory: root })
+
+  await rg.populateFromExistingConfig()
+  rg.updateRuntimeConfig({
+    ...rg.generatedConfig,
+    autoload: { path: 'web' },
+    applications: [
+      { id: 'present', path: join(root, 'web/present') },
+      { id: 'outside', path: './elsewhere' }
+    ]
+  })
+
+  const written = rg.files.find(file => file.file === 'watt.config.mjs').contents
+
+  assert.ok(!written.includes("id: 'present'"), written)
+  assert.ok(written.includes("id: 'outside'"), written)
+})
+
 test('RuntimeGenerator - a legacy root is refused with the migrate hint', async t => {
   const root = await createTemporaryDirectory(t)
 
