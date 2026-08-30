@@ -298,9 +298,6 @@ test('dev - should restart an application if the application configuration file 
   const configFile = resolve(applicationDir, 'watt.config.js')
   const originalContents = await readFile(configFile, 'utf-8')
 
-  // Edited as source, for the same reason: the application's configuration is a module too.
-  await writeFile(configFile, `${originalContents}\n// touched by the test\n`, 'utf-8')
-
   /*
     The runtime reloads, rather than the application restarting itself. An application's own
     configuration file is part of what the loader read to build the topology, so changing it is a
@@ -308,26 +305,57 @@ test('dev - should restart an application if the application configuration file 
     is why this used to wait for "has been successfully reloaded".
   */
   let reloaded = false
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = parseRuntimeLog(log)
 
-    if (!parsed) {
-      continue
+  const observe = async () => {
+    const stream = startProcess.stdout.pipe(split2())
+
+    try {
+      for await (const log of on(stream, 'data')) {
+        const parsed = parseRuntimeLog(log)
+
+        if (!parsed) {
+          continue
+        }
+
+        if (parsed.msg.startsWith('The configuration has changed')) {
+          reloaded = true
+          continue
+        }
+
+        const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
+        if (mo) {
+          return mo[1]
+        }
+      }
+    } finally {
+      startProcess.stdout.unpipe(stream)
     }
 
-    if (parsed.msg.startsWith('The configuration has changed')) {
-      reloaded = true
-      continue
-    }
+    return null
+  }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
-    if (mo) {
-      url = mo[1]
+  /*
+    Edited as source, because the application's configuration is a module too -- and written
+    repeatedly rather than once: the watcher arms shortly after the listening line, and a single
+    write landing in that gap is a change nobody sees, which left this wait hanging on CI. Each
+    write differs, so the watcher cannot dismiss one as unchanged.
+  */
+  let attempt = 0
+  const observed = observe().then(value => ({ settled: true, value }))
+
+  while (true) {
+    await writeFile(configFile, `${originalContents}\n// touched by the test${'\n'.repeat(attempt++)}`, 'utf-8')
+
+    const outcome = await Promise.race([observed, sleep(5000, { settled: false })])
+    if (outcome.settled) {
+      // null only when the stream ended -- the dev server died, which is its own failure.
+      url = outcome.value
       break
     }
   }
 
   ok(reloaded)
+  ok(url)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
