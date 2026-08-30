@@ -362,16 +362,18 @@ test('import - should not duplicate applications in runtime config', async t => 
   deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })
 
-// One spelling: the list is always `applications`, whatever the wizard's folder is called --
-// the loader refuses the v3 aliases by name, so writing one scaffolded a project that cannot boot.
+/*
+  One spelling: the list is always `applications`, whatever the wizard's folder is called -- the
+  loader refuses the v3 aliases by name, so writing one scaffolded a project that cannot boot.
+  The config deliberately holds no `applications` array: that was exactly the fixture the old
+  key-scanning writer answered with a `web` list, so it is the one that tells the two apart.
+*/
 test('import - writes the list under applications whatever the applications folder is called', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
   const runtime = createMockedRuntimeGenerator({
-    generatedConfig: {
-      applications: []
-    },
+    generatedConfig: {},
     getRuntimeEnvFileObject () {
       return { contents: '' }
     }
@@ -384,6 +386,7 @@ test('import - writes the list under applications whatever the applications fold
 
   ok(Array.isArray(runtime.config.applications))
   deepStrictEqual(runtime.config.applications[0].id, 'test-application')
+  deepStrictEqual(runtime.config.web, undefined)
 })
 
 test('import - when importing folders already in the project root, should not create useless file and should update the right files', async t => {
