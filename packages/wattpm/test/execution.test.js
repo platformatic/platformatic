@@ -305,34 +305,40 @@ test('dev - should restart an application if the application configuration file 
     is why this used to wait for "has been successfully reloaded".
   */
   let reloaded = false
+  let lastListening = null
 
-  const observe = async () => {
-    const stream = startProcess.stdout.pipe(split2())
+  const stream = startProcess.stdout.pipe(split2())
 
-    try {
-      for await (const log of on(stream, 'data')) {
-        const parsed = parseRuntimeLog(log)
+  let sawListening
+  const firstListening = new Promise(resolve => {
+    sawListening = resolve
+  })
 
-        if (!parsed) {
-          continue
-        }
+  const observing = (async () => {
+    for await (const log of on(stream, 'data')) {
+      const parsed = parseRuntimeLog(log)
 
-        if (parsed.msg.startsWith('The configuration has changed')) {
-          reloaded = true
-          continue
-        }
-
-        const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
-        if (mo) {
-          return mo[1]
-        }
+      if (!parsed) {
+        continue
       }
-    } finally {
-      startProcess.stdout.unpipe(stream)
+
+      if (parsed.msg.startsWith('The configuration has changed')) {
+        reloaded = true
+        continue
+      }
+
+      const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
+      if (mo) {
+        lastListening = { url: mo[1], at: Date.now() }
+        sawListening()
+      }
     }
 
-    return null
-  }
+    // The stream only ends when the dev server died, which is its own failure: settle the wait so
+    // the trigger loop stops writing and the assertions below report it.
+    sawListening()
+  })()
+  observing.catch(() => {})
 
   /*
     Edited as source, because the application's configuration is a module too -- and written
@@ -341,18 +347,29 @@ test('dev - should restart an application if the application configuration file 
     write differs, so the watcher cannot dismiss one as unchanged.
   */
   let attempt = 0
-  const observed = observe().then(value => ({ settled: true, value }))
+  const observed = firstListening.then(() => ({ settled: true }))
 
   while (true) {
     await writeFile(configFile, `${originalContents}\n// touched by the test${'\n'.repeat(attempt++)}`, 'utf-8')
 
     const outcome = await Promise.race([observed, sleep(5000, { settled: false })])
     if (outcome.settled) {
-      // null only when the stream ended -- the dev server died, which is its own failure.
-      url = outcome.value
       break
     }
   }
+
+  /*
+    A write may have landed just before the reload it was chasing reported, starting a second
+    reload behind the observed one; requesting immediately would race that teardown. Wait for the
+    listening lines to go quiet and take the newest address.
+  */
+  // eslint-disable-next-line no-unmodified-loop-condition -- the observer above mutates it
+  while (lastListening && Date.now() - lastListening.at < 3000) {
+    await sleep(500)
+  }
+
+  startProcess.stdout.unpipe(stream)
+  url = lastListening?.url
 
   ok(reloaded)
   ok(url)
