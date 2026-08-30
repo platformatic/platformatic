@@ -27,7 +27,10 @@ for (const command of ['install', 'resolve']) {
     const wattProcess = await wattpmUtils(command, '-P', 'npm')
 
     deepStrictEqual(wattProcess.exitCode, 0)
-    deepStrictEqual((await readdir(rootDir)).sort(), ['index.js', 'package.json'])
+
+    // npm may write its own lockfile; the assertion is about configuration, which must not appear.
+    const files = (await readdir(rootDir)).sort().filter(file => file !== 'package-lock.json')
+    deepStrictEqual(files, ['index.js', 'package.json'])
   })
 }
 

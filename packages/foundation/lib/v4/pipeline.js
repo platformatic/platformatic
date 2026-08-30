@@ -32,14 +32,19 @@ function validateOrchestration (config, { schema, path }) {
     return
   }
 
-  // A shape check that injects no defaults: the useDefaults pass runs main-side on the returned
-  // snapshot, which is what keeps step 4's projection carrying authored values rather than
-  // schema-supplied ones. Coercion is disabled in v4 — on the genuine unions that survive the
-  // audit it is a documented hazard rather than a convenience.
-  const ajv = new Ajv({ useDefaults: false, coerceTypes: false, allErrors: true, strict: false })
+  /*
+    Validated on a throwaway copy with defaults ON, so this pass accepts exactly what the
+    main-side pass accepts: a schema is allowed to require a property its own default supplies --
+    gracefulShutdown does -- and refusing the authored partial here would reject a configuration
+    the documented pipeline loads. The copy is what keeps step 4's projection carrying authored
+    values rather than schema-supplied ones: the defaults land on the clone and are discarded.
+    Coercion stays disabled -- on the genuine unions that survive the audit it is a documented
+    hazard rather than a convenience.
+  */
+  const ajv = new Ajv({ useDefaults: true, coerceTypes: false, allErrors: true, strict: false })
   const validate = ajv.compile(schema)
 
-  if (!validate(config)) {
+  if (!validate(structuredClone(config))) {
     const messages = validate.errors
       .map(error => {
         // Named like the main-side describeFailure: AJV puts the offending property in params, and
