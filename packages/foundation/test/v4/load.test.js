@@ -169,6 +169,37 @@ test('composer is an alias of gateway rather than a second capability', async t 
   strictEqual(config.applications[0].module, '@platformatic/gateway')
 })
 
+test('a root that declares nothing to run is refused before normalization can hide it', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { logger: { level: "info" } }'
+  })
+
+  await rejects(() => load(root), error => {
+    strictEqual(error.code, 'PLT_NO_APPLICATIONS_DECLARED')
+    ok(error.message.includes("add 'applications', 'autoload' or the singular 'application'"))
+    return true
+  })
+})
+
+test('a v3 spelling of the applications list is named, not reported as an absence', async t => {
+  // A v3 project renamed to the new file name lands on the topology check with a services list
+  // that reads as nothing declared; "declares no applications" would be nonsense to its author.
+  for (const spelling of ['services', 'web']) {
+    const root = await createTree(t, {
+      'package.json': '{ "name": "proj" }',
+      'watt.config.js': `export default { ${spelling}: [{ id: "api", path: "./web/api" }] }`
+    })
+
+    await rejects(() => load(root), error => {
+      strictEqual(error.code, 'PLT_LEGACY_APPLICATIONS_SPELLING')
+      ok(error.message.includes(`'${spelling}'`))
+      ok(error.message.includes("Rename the key to 'applications'"))
+      return true
+    })
+  }
+})
+
 test('a directory with nothing to go on is an error naming the application', async t => {
   const root = await createTree(t, {
     'package.json': '{ "name": "proj" }',

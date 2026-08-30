@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, resolve } from 'node:path'
-import { DuplicateAutoloadedApplicationIdError } from './errors.js'
+import { AmbiguousApplicationIdError, DuplicateAutoloadedApplicationIdError } from './errors.js'
 import { deriveApplicationId } from './identifiers.js'
 
 // The shorthand exists so a single app with runtime options never needs a one-element array.
@@ -92,9 +92,35 @@ export async function expandAutoload (config, { root }) {
     const existing = applications.findIndex(application => application.id === id)
 
     if (existing !== -1) {
-      // Shallow explicit-wins merge, v3 semantics. Assigning in place rather than reordering keeps
-      // every explicit entry's position stable.
-      applications[existing] = { ...expanded, ...applications[existing] }
+      const explicit = applications[existing]
+
+      /*
+        A shared id merges only once the two are known to be the same application, which for a
+        local entry means the same canonical path. v3 matched on id alone, and an explicit
+        { id, url } beside an autoloaded directory then merged into an entry that kept the local
+        path *and* carried the url -- resolve skipped the remote because its path existed, and the
+        runtime booted local code while the configuration named a repository (#5079). An id is the
+        mesh hostname, the injected variable, the metrics label and inject's argument, so two
+        distinct applications cannot share one.
+      */
+      const samePath = typeof explicit.path === 'string' && resolve(root, explicit.path) === directory
+
+      if (!samePath) {
+        const described = typeof explicit.path === 'string' ? `path '${explicit.path}'` : `url '${explicit.url}'`
+        throw new AmbiguousApplicationIdError(directory, described, id)
+      }
+
+      /*
+        Shallow explicit-wins merge, v3 semantics, applied to the explicit entry *in place*: a
+        deferred config slot recorded before expansion addresses this object by identity, and
+        replacing it would leave the slot pointing at an entry the topology no longer holds -- the
+        application would boot without the configuration its author wrote, and nothing would say so.
+      */
+      for (const key of Object.keys(expanded)) {
+        if (!(key in explicit)) {
+          explicit[key] = expanded[key]
+        }
+      }
     } else {
       applications.push(expanded)
     }

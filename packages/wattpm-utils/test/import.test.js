@@ -67,7 +67,9 @@ test('import - should not do anything when the local folder is already a defined
   const configurationFile = resolve(rootDir, 'watt.config.mjs')
 
   await updateConfigFile(configurationFile, config => {
-    config.applications = [{ id: 'main', path: 'main' }]
+    // Not id 'main': the autoloaded web/main already owns that id, and an explicit entry at a
+    // different directory sharing it is the ambiguity the loader now refuses (#5079).
+    config.applications = [{ id: 'local', path: 'main' }]
   })
   await createDirectory(resolve(rootDir, 'main'))
   await writeFile(resolve(rootDir, 'main/index.js'), '', 'utf-8')
@@ -507,7 +509,7 @@ test('import - a v4 root that lists its applications under a v3 alias is refused
   const process = await wattpmUtils('import', 'http://github.com/foo/bar.git', { reject: false })
 
   deepStrictEqual(process.exitCode, 1)
-  ok(process.stderr.includes('declares no applications'), process.stderr)
+  ok(process.stderr.includes("declares its applications under 'web', which is the v3 spelling"), process.stderr)
 })
 
 test('import - a v4 root it cannot edit is printed rather than rewritten', async t => {

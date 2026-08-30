@@ -8,6 +8,7 @@ import {
   DeferredSlotInApplicationDefinitionError,
   InvalidRootConfigurationError,
   NestedFunctionExportError,
+  LegacyApplicationsSpellingError,
   NoApplicationsDeclaredError,
   RootConfigurationInApplicationEntryError
 } from './errors.js'
@@ -150,6 +151,18 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
     configuration": no file at all.
   */
   if (snapshot.application === undefined && snapshot.applications === undefined && snapshot.autoload === undefined) {
+    /*
+      Named before the generic refusal: a v3 project renamed to the new file name lands exactly
+      here, and "declares no applications" reads as nonsense to an author staring at a services
+      list. Beside an `applications` key the same spellings survive to the schema, which refuses
+      them by name too.
+    */
+    const legacySpelling = ['services', 'web'].find(key => snapshot[key] !== undefined)
+
+    if (legacySpelling) {
+      throw new LegacyApplicationsSpellingError(path, legacySpelling)
+    }
+
     throw new NoApplicationsDeclaredError(path)
   }
 

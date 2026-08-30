@@ -56,7 +56,7 @@ test('an explicit entry wins over the autoloaded one and keeps its position', as
   const root = await createTree(t, {
     'watt.config.js': `
       export default {
-        applications: [{ id: 'api', workers: 5 }, { id: 'standalone', path: './elsewhere' }],
+        applications: [{ id: 'api', path: './web/api', workers: 5 }, { id: 'standalone', path: './elsewhere' }],
         autoload: { path: 'web' }
       }
     `,
@@ -66,13 +66,91 @@ test('an explicit entry wins over the autoloaded one and keeps its position', as
 
   const { config } = await evaluate(root)
 
-  // Shallow explicit-wins merge, v3 semantics; assigning in place rather than reordering is what
+  // Shallow explicit-wins merge, v3 semantics; merging in place rather than reordering is what
   // keeps a recorded deferred slot pointing at the entry it was recorded for.
   deepStrictEqual(config.applications, [
-    { id: 'api', workers: 5, path: join(root, 'web/api') },
+    { id: 'api', path: './web/api', workers: 5 },
     { id: 'standalone', path: './elsewhere' },
     { id: 'zeta', path: join(root, 'web/zeta') }
   ])
+})
+
+/*
+  The v3 rule matched on id alone, and an explicit { id, url } beside an autoloaded directory then
+  merged into an entry keeping the local path *and* the url -- resolve skipped the remote because
+  its path existed, and the runtime booted local code while the configuration named a repository
+  (#5079). A shared id merges only when the two are the same application by canonical path;
+  anything else is two applications claiming one mesh hostname.
+*/
+test('a url-bearing entry does not merge with an autoloaded directory by id alone', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  await rejects(
+    () => evaluate(root),
+    error => {
+      strictEqual(error.code, 'PLT_AMBIGUOUS_APPLICATION_ID')
+      ok(error.message.includes("'git@github.com:acme/api.git'"), error.message)
+      return true
+    }
+  )
+})
+
+// The id-only override spelling died with v3's id-alone matching: an entry that names no place is
+// refused by the schema before expansion, and here by expansion for loads that skip validation.
+// The override channel for an autoloaded application is autoload.mappings.
+test('an entry naming no place does not merge with an autoloaded directory', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', workers: 5 }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  await rejects(
+    () => evaluate(root),
+    error => {
+      strictEqual(error.code, 'PLT_AMBIGUOUS_APPLICATION_ID')
+      return true
+    }
+  )
+})
+
+/*
+  The regression that motivated the in-place merge: a deferred config slot addresses its entry by
+  object identity, and the old spread-into-a-new-object merge left the slot pointing at an entry
+  the topology no longer held -- the application booted without the configuration its author
+  wrote, and nothing said so.
+*/
+test('a deferred config slot survives the merge with an autoloaded directory', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'api', path: './web/api', config: async () => ({ module: '@platformatic/node', node: { main: 'index.js' } }) }
+        ],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications[0].config, {
+    module: '@platformatic/node',
+    node: { main: 'index.js' }
+  })
 })
 
 test('disabled entries are dropped, and the object form is keyed by mode', async t => {

@@ -62,7 +62,7 @@ test('an autoloaded entry still merges into an explicit one of the same id', asy
   const root = await createTree(t, {
     'package.json': '{ "name": "root", "type": "module" }',
     'watt.config.js':
-      'export default { autoload: { path: "./web" }, applications: [{ id: "frontend", workers: 3 }] }',
+      'export default { autoload: { path: "./web" }, applications: [{ id: "frontend", path: "./web/frontend", workers: 3 }] }',
     'web/frontend/package.json': '{ "name": "frontend", "type": "module" }',
     'web/frontend/watt.config.js': 'export default { module: "@platformatic/node" }'
   })
@@ -70,8 +70,9 @@ test('an autoloaded entry still merges into an explicit one of the same id', asy
   const loaded = await load(root)
 
   /*
-    The shallow explicit-wins merge is v3 semantics and stays what it was: a rule for an autoloaded
-    entry meeting an explicit one, which is a different situation from two directories colliding.
+    The shallow explicit-wins merge is v3 semantics with one narrowing: the two entries have to be
+    the same application by canonical path, because matching on id alone let an entry naming a
+    different place absorb the autoloaded one silently (#5079).
   */
   strictEqual(loaded.config.applications.length, 1)
   strictEqual(loaded.config.applications[0].workers, 3)

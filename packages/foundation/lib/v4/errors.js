@@ -45,6 +45,11 @@ export const NoApplicationsDeclaredError = createError(
   "%s declares no applications: add 'applications', 'autoload' or the singular 'application'. To run this directory with zero configuration, delete the file instead."
 )
 
+export const LegacyApplicationsSpellingError = createError(
+  `${ERROR_PREFIX}_LEGACY_APPLICATIONS_SPELLING`,
+  "%s declares its applications under '%s', which is the v3 spelling. Rename the key to 'applications'."
+)
+
 export const ApplicationShorthandConflictError = createError(
   `${ERROR_PREFIX}_APPLICATION_SHORTHAND_CONFLICT`,
   '%s declares the singular application shorthand alongside %s. The shorthand is only for genuinely single-application projects.'
@@ -148,6 +153,11 @@ export const LegacySchemaStampError = createError(
 export const DuplicateAutoloadedApplicationIdError = createError(
   `${ERROR_PREFIX}_DUPLICATE_AUTOLOADED_APPLICATION_ID`,
   'The autoloaded directories %s and %s both resolve to the application id "%s". Give one of them an explicit id through autoload.mappings, or rename its package.'
+)
+
+export const AmbiguousApplicationIdError = createError(
+  `${ERROR_PREFIX}_AMBIGUOUS_APPLICATION_ID`,
+  'The autoloaded directory %s and the explicit entry with %s both resolve to the application id "%s", and they do not identify the same application. Give one of them a different id, or point the entry at the autoloaded directory to merge them.'
 )
 
 export const NotASingleApplicationError = createError(
