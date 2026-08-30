@@ -3,12 +3,24 @@ import { capabilityFactories } from '@platformatic/foundation/lib/v4/index.js'
 import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { cp, readFile, writeFile } from 'node:fs/promises'
-import { basename, resolve } from 'node:path'
+import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { basename, dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareFixture, prepareRuntime } from '../../basic/test/helper.js'
 import { version } from '../lib/version.js'
 import { changeWorkingDirectory, createTemporaryDirectory, wattpmUtils } from './helper.js'
+
+/*
+  Windows CI puts the repository and os.tmpdir() on different drives, and a cross-drive path has no
+  relative spelling -- `relative` answers with the absolute path. A directory imported into a
+  runtime root therefore sits beside that root, so the relative path the assertions read exists on
+  every OS.
+*/
+async function createSiblingDirectory (t, root, prefix) {
+  const directory = await mkdtemp(join(dirname(root), `${prefix}-`))
+  t.after(() => safeRemove(directory))
+  return directory
+}
 
 const autodetect = {
   astro: 'astro',
@@ -132,7 +144,7 @@ test('import - should not modify an existing configuration file when importing a
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const directory = await createTemporaryDirectory(t, 'local-with-git')
+  const directory = await createSiblingDirectory(t, rootDir, 'local-with-git')
   await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
 
   const existing = "export default { module: '@platformatic/node' } // mine\n"
@@ -159,7 +171,7 @@ for (const [name, dependency] of Object.entries(autodetect)) {
 
     const configurationFile = resolve(rootDir, 'watt.config.mjs')
 
-    const directory = await createTemporaryDirectory(t, 'local-with-git')
+    const directory = await createSiblingDirectory(t, rootDir, 'local-with-git')
     await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
     if (dependency) {
       await writeFile(
@@ -202,7 +214,7 @@ test('import - should fail when an application type cannot be detected', async t
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const directory = await createTemporaryDirectory(t, 'local-with-git')
+  const directory = await createSiblingDirectory(t, rootDir, 'local-with-git')
 
   changeWorkingDirectory(t, rootDir)
   const importProcess = await wattpmUtils('import', directory, { reject: false })
