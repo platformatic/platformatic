@@ -194,6 +194,8 @@ export async function prepareAddedApplications (config, entries, existingIds = [
     command: metadata.v4.command,
     mode: metadata.v4.mode,
     production: metadata.v4.production,
+    realEnv: metadata.v4.realEnv,
+    customEnvFile: metadata.v4.customEnvFile,
     // The runtime is the fallback scope for capability resolution, the same as at boot.
     runtimeScope: runtimeScopePath
   })

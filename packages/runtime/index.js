@@ -293,6 +293,15 @@ async function loadV4RuntimeConfiguration (target, context) {
       mode: loaded.mode,
       production: loaded.production,
       /*
+        The environment contract of the boot, carried so an application added while the runtime
+        runs is enveloped under the same one: the realEnv the boot resolved ladders against
+        (hermetic under ignoreProcessEnv, augmented by context.env) and the --env file that
+        replaces every application's env-file rung. Without them the add path defaulted to
+        process.env and the conventional .env chain -- an environment the boot says cannot exist.
+      */
+      realEnv,
+      customEnvFile: context?.envFile,
+      /*
         Everything the evaluation actually read: the configuration files, their import graph minus
         node_modules, the env files consulted, and the directories whose membership decides the
         application list. `wattpm dev` reloads on any of it -- watching only the deciding file meant
