@@ -221,7 +221,8 @@ test('dev - should survive an application configuration file that stops evaluati
     const stream = startProcess.stdout.pipe(split2())
 
     try {
-      for await (const log of on(stream, 'data')) {
+      // Iterated as a stream, not through events.on, so the loop actually ends when the stream does.
+      for await (const log of stream) {
         const line = log.toString()
         let message = line
 
@@ -314,31 +315,42 @@ test('dev - should restart an application if the application configuration file 
     sawListening = resolve
   })
 
+  /*
+    Iterated as a stream, not through events.on: stream iteration ends when the stream does, and
+    the stream only ends when the dev server died -- which is its own failure, so the finally
+    settles the wait, the loops below stop, and the assertions report it. events.on never ends on
+    'end', which made the previous version's safety net unreachable.
+  */
+  let observerError = null
+  let streamEnded = false
+
   const observing = (async () => {
-    for await (const log of on(stream, 'data')) {
-      const parsed = parseRuntimeLog(log)
+    try {
+      for await (const log of stream) {
+        const parsed = parseRuntimeLog(log)
 
-      if (!parsed) {
-        continue
-      }
+        if (typeof parsed?.msg !== 'string') {
+          continue
+        }
 
-      if (parsed.msg.startsWith('The configuration has changed')) {
-        reloaded = true
-        continue
-      }
+        if (parsed.msg.startsWith('The configuration has changed')) {
+          reloaded = true
+          continue
+        }
 
-      const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
-      if (mo) {
-        lastListening = { url: mo[1], at: Date.now() }
-        sawListening()
+        const mo = parsed.msg.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
+        if (mo) {
+          lastListening = { url: mo[1], at: Date.now() }
+          sawListening()
+        }
       }
+    } catch (error) {
+      observerError = error
+    } finally {
+      streamEnded = true
+      sawListening()
     }
-
-    // The stream only ends when the dev server died, which is its own failure: settle the wait so
-    // the trigger loop stops writing and the assertions below report it.
-    sawListening()
   })()
-  observing.catch(() => {})
 
   /*
     Edited as source, because the application's configuration is a module too -- and written
@@ -358,6 +370,7 @@ test('dev - should restart an application if the application configuration file 
     }
   }
 
+  deepStrictEqual(observerError, null)
   ok(reloaded)
   ok(lastListening)
 
@@ -369,7 +382,8 @@ test('dev - should restart an application if the application configuration file 
     comes back fails the test by its timeout, naming this wait.
   */
   let version
-  while (version === undefined) {
+  // eslint-disable-next-line no-unmodified-loop-condition -- the observer above mutates streamEnded
+  while (version === undefined && !streamEnded) {
     try {
       const { statusCode, body } = await request(new URL('/version', lastListening.url))
 
@@ -387,6 +401,8 @@ test('dev - should restart an application if the application configuration file 
   }
 
   startProcess.stdout.unpipe(stream)
+  stream.destroy()
+  await observing
 
   deepStrictEqual(version, { version: 123 })
 })
