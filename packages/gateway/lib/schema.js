@@ -22,7 +22,14 @@ export const openApiApplication = {
     url: { type: 'string' },
     file: { type: 'string', resolvePath: true },
     prefix: { type: 'string' },
-    config: { type: 'string', resolvePath: true }
+    config: { type: 'string', resolvePath: true },
+    validation: {
+      type: 'string',
+      enum: ['full', 'none'],
+      default: 'full',
+      description:
+        'Whether the gateway validates incoming requests against the OpenAPI schema of the application before proxying them. "full" compiles a validator for the body, params, querystring and headers of every operation and answers 400 at the gateway when a request does not match. "none" compiles no validator: requests that pass Fastify parsing are forwarded to the upstream application as they are, which stays responsible for validating them.'
+    }
   },
   anyOf: [{ required: ['url'] }, { required: ['file'] }],
   additionalProperties: false
