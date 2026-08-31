@@ -79,8 +79,10 @@ test('an explicit entry wins over the autoloaded one and keeps its position', as
   The v3 rule matched on id alone, and an explicit { id, url } beside an autoloaded directory then
   merged into an entry keeping the local path *and* the url -- resolve skipped the remote because
   its path existed, and the runtime booted local code while the configuration named a repository
-  (#5079). A shared id merges only when the two are the same application by canonical path;
-  anything else is two applications claiming one mesh hostname.
+  (#5079). A shared id merges only when the two are the same application: same resolved path, or
+  an autoloaded directory that is the url entry's own clone destination. Anything else is two
+  applications claiming one mesh hostname -- here the destination is external/api and the
+  directory is web/api, so nothing ties the directory to the remote.
 */
 test('a url-bearing entry does not merge with an autoloaded directory by id alone', async t => {
   const root = await createTree(t, {
@@ -106,6 +108,49 @@ test('a url-bearing entry does not merge with an autoloaded directory by id alon
 // The id-only override spelling died with v3's id-alone matching: an entry that names no place is
 // refused by the schema before expansion, and here by expansion for loads that skip validation.
 // The override channel for an autoloaded application is autoload.mappings.
+/*
+  The exception: a bare url entry's clone lands at resolvedApplicationsBasePath/<id>, so when
+  autoload covers the resolved base, the directory `wattpm resolve` creates *is* the entry.
+  Refusing it would mean resolve bricks the configuration it just repaired: the first load passes
+  (no clone, no clash), the clone arrives, and every load after that throws.
+*/
+test('a url entry merges with the autoloaded directory that is its own clone destination', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'external' }
+      }
+    `,
+    'external/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { id: 'api', url: 'git@github.com:acme/api.git', path: join(root, 'external/api') }
+  ])
+})
+
+test('the clone-destination merge honours an authored resolvedApplicationsBasePath', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        resolvedApplicationsBasePath: 'vendor',
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'vendor' }
+      }
+    `,
+    'vendor/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { id: 'api', url: 'git@github.com:acme/api.git', path: join(root, 'vendor/api') }
+  ])
+})
+
 test('an entry naming no place does not merge with an autoloaded directory', async t => {
   const root = await createTree(t, {
     'watt.config.js': `

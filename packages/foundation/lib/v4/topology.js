@@ -104,10 +104,22 @@ export async function expandAutoload (config, { root }) {
         runtime booted local code while the configuration named a repository (#5079). An id is the
         mesh hostname, the injected variable, the metrics label and inject's argument, so two
         distinct applications cannot share one.
+
+        A url entry with no authored path is the one exception: its clone lands at
+        resolvedApplicationsBasePath/<id>, so an autoloaded directory that *is* that destination is
+        the entry's own clone -- refusing it would mean `wattpm resolve` bricks the very
+        configuration it just repaired, when autoload covers the resolved base. Anywhere else,
+        nothing ties the directory to the remote, and the bare url is refused with the rest.
       */
       const samePath = typeof explicit.path === 'string' && resolve(root, explicit.path) === directory
 
-      if (!samePath) {
+      // The schema's default is applied main-side, after this runs, so it is spelled here too.
+      const cloneDestination =
+        typeof explicit.path !== 'string' && typeof explicit.url === 'string'
+          ? resolve(root, config.resolvedApplicationsBasePath ?? 'external', id)
+          : null
+
+      if (!samePath && cloneDestination !== directory) {
         const described =
           typeof explicit.path === 'string'
             ? `path '${explicit.path}'`
