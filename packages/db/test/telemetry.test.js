@@ -67,7 +67,7 @@ test('should setup telemetry if configured', async t => {
         await createBasicPages(db, sql)
       }
     },
-    telemetry: {
+    tracing: {
       applicationName: 'test-service',
       version: '1.0.0',
       exporter: {
@@ -179,7 +179,7 @@ async function setupDBAppWithTelemetry (t, telemetryOpts, plugins) {
         ...connectionInfo,
         onDatabaseLoad
       },
-      telemetry: telemetryOpts
+      tracing: telemetryOpts
     },
     null,
     { skipInit: true }

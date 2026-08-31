@@ -69,7 +69,7 @@ const findSpanWithParentWithId = (spans, startSpan, id) => {
 
 // Changes the telemetry config to point to the otel server
 const setupTelemetryServer = (root, config, args) => {
-  const currentTelemetry = config.telemetry
+  const currentTelemetry = config.tracing
   const newTelemetry = {
     ...currentTelemetry,
     exporter: {
@@ -80,7 +80,7 @@ const setupTelemetryServer = (root, config, args) => {
       processor: 'simple' // this is used only in tests. Otherwise for OTLP we defaults to batch
     }
   }
-  config.telemetry = newTelemetry
+  config.tracing = newTelemetry
 }
 
 test('configure telemetry correctly with a node app - integration test', async t => {

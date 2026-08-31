@@ -91,7 +91,7 @@ export interface PlatformaticGlobal {
   host: string
   port: number
   additionalServerOptions: object
-  telemetryConfig: object
+  tracingConfig: object
   config: object
   runtimeConfig: object
   applicationConfig: object | null
@@ -157,7 +157,7 @@ export interface PlatformaticGlobal {
   sharedContext: SharedContext
   management: Management
   sendHealthSignal (signal: HealthSignal): Promise<void>
-  telemetryReady: Promise<void>
+  tracingReady: Promise<void>
   tracerProvider: TracerProvider
   notifyConfig (config: object): void
 }
@@ -205,9 +205,9 @@ export declare function getPort (options: GlobalGetterOptions): PlatformaticGlob
 export declare function getAdditionalServerOptions (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['additionalServerOptions']
 export declare function getAdditionalServerOptions (options: OptionalGlobalGetterOptions): PlatformaticGlobal['additionalServerOptions'] | undefined
 export declare function getAdditionalServerOptions (options: GlobalGetterOptions): PlatformaticGlobal['additionalServerOptions'] | undefined
-export declare function getTelemetryConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['telemetryConfig']
-export declare function getTelemetryConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['telemetryConfig'] | undefined
-export declare function getTelemetryConfig (options: GlobalGetterOptions): PlatformaticGlobal['telemetryConfig'] | undefined
+export declare function getTracingConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['tracingConfig']
+export declare function getTracingConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['tracingConfig'] | undefined
+export declare function getTracingConfig (options: GlobalGetterOptions): PlatformaticGlobal['tracingConfig'] | undefined
 export declare function getConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['config']
 export declare function getConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['config'] | undefined
 export declare function getConfig (options: GlobalGetterOptions): PlatformaticGlobal['config'] | undefined
@@ -319,9 +319,9 @@ export declare function getManagement (options: GlobalGetterOptions): Platformat
 export declare function getSendHealthSignal (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['sendHealthSignal']
 export declare function getSendHealthSignal (options: OptionalGlobalGetterOptions): PlatformaticGlobal['sendHealthSignal'] | undefined
 export declare function getSendHealthSignal (options: GlobalGetterOptions): PlatformaticGlobal['sendHealthSignal'] | undefined
-export declare function getTelemetryReady (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['telemetryReady']
-export declare function getTelemetryReady (options: OptionalGlobalGetterOptions): PlatformaticGlobal['telemetryReady'] | undefined
-export declare function getTelemetryReady (options: GlobalGetterOptions): PlatformaticGlobal['telemetryReady'] | undefined
+export declare function getTracingReady (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['tracingReady']
+export declare function getTracingReady (options: OptionalGlobalGetterOptions): PlatformaticGlobal['tracingReady'] | undefined
+export declare function getTracingReady (options: GlobalGetterOptions): PlatformaticGlobal['tracingReady'] | undefined
 export declare function getTracerProvider (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['tracerProvider']
 export declare function getTracerProvider (options: OptionalGlobalGetterOptions): PlatformaticGlobal['tracerProvider'] | undefined
 export declare function getTracerProvider (options: GlobalGetterOptions): PlatformaticGlobal['tracerProvider'] | undefined

@@ -23,7 +23,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return new GatewayCapability(config[kMetadata].root, config, context)
 }
 
-export const skipTelemetryHooks = true
+export const skipTracingHooks = true
 
 export { platformaticGateway } from './lib/application.js'
 export { GatewayCapability } from './lib/capability.js'

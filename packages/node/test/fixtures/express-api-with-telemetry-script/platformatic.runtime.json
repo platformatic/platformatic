@@ -9,7 +9,7 @@
       "path": "./services/api"
     }
   ],
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-service",
     "version": "1.0.0",
     "exporter": {

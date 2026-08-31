@@ -37,6 +37,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
     steps:
@@ -60,6 +61,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -187,6 +189,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -217,6 +220,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -244,6 +248,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -271,6 +276,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -298,6 +304,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -357,6 +364,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -386,6 +394,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         node: [22, 24, 26]
     env:
@@ -417,6 +426,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         node: [22, 24, 26]
     steps:
@@ -443,6 +453,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -475,6 +486,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         node: [22, 24, 26]
     steps:
@@ -503,6 +515,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [22, 24, 26]
@@ -542,6 +555,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [22, 24, 26]
@@ -577,6 +591,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -604,6 +619,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -631,6 +647,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -658,6 +675,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -691,6 +709,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -724,6 +743,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -751,6 +771,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -777,6 +798,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         node: [22, 24, 26]
     steps:
@@ -794,7 +816,7 @@ jobs:
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite
-        run: cd packages/telemetry && pnpm test && pnpm run lint
+        run: cd packages/tracing && pnpm test && pnpm run lint
 
   generators:
     name: 'generators - ${{ matrix.os }} - ${{ matrix.node }}'
@@ -803,6 +825,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -830,6 +853,7 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -890,6 +914,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -917,6 +942,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -944,6 +970,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -971,6 +998,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -998,6 +1026,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -1025,6 +1054,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -1052,6 +1082,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
@@ -1079,6 +1110,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]

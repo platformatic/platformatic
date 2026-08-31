@@ -84,7 +84,7 @@ export class Controller extends EventEmitter {
       directory: this.applicationConfig.path,
       dependencies: this.applicationConfig.dependencies,
       isProduction: this.applicationConfig.isProduction,
-      telemetryConfig: this.applicationConfig.telemetry,
+      tracingConfig: this.applicationConfig.tracing,
       loggerConfig: runtimeConfig.logger,
       metricsConfig,
       worker: workerData?.worker,
@@ -332,8 +332,8 @@ export class Controller extends EventEmitter {
   }
 
   #updateDispatcher () {
-    const telemetryConfig = this.#context.telemetryConfig
-    const telemetryId = telemetryConfig?.applicationName
+    const tracingConfig = this.#context.tracingConfig
+    const telemetryId = tracingConfig?.applicationName
 
     const interceptor = dispatch => {
       return function InterceptedDispatch (opts, handler) {

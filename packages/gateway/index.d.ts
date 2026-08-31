@@ -60,7 +60,7 @@ export declare const schemaComponents: {
   types: JSONSchemaType<object>
 }
 
-export declare const skipTelemetryHooks: boolean
+export declare const skipTracingHooks: boolean
 
 export declare const version: string
 

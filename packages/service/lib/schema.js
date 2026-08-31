@@ -1277,7 +1277,7 @@ export const schema = {
     },
     server,
     plugins,
-    telemetry: utilsSchemaComponents.telemetry,
+    tracing: utilsSchemaComponents.tracing,
     watch: {
       anyOf: [
         watch,

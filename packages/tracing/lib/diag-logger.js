@@ -122,7 +122,7 @@ export function createPlatformaticDiagLogger (logger) {
 
   if (typeof target?.child === 'function') {
     try {
-      target = target.child({ name: '@platformatic/telemetry/diag' })
+      target = target.child({ name: '@platformatic/tracing/diag' })
     } catch {
       // Ignore child logger creation failures and use the parent logger.
     }

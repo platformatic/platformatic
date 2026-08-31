@@ -30,7 +30,7 @@ You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport"
 
 ```json
 {
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-db",
     "exporter": {
       "type": "otlp",
@@ -79,7 +79,7 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 Open the `web/main/platformatic.json` file and add the telemetry configuration:
 
 ```json
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-db",
     "exporter": {
       "type": "otlp",
@@ -121,7 +121,7 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 Open the `web/main/platformatic.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `applicationName`)
 
 ```json
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-service",
     "exporter": {
       "type": "otlp",
@@ -213,7 +213,7 @@ Open `web/main/platformatic.json` and change it to the following:
     ],
     "refreshTimeout": 3000
   },
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-gateway",
     "exporter": {
       "type": "otlp",
@@ -226,7 +226,7 @@ Open `web/main/platformatic.json` and change it to the following:
 }
 ```
 
-Note that we just added `test-service` as `origin` of the proxied application and added the usual `telemetry` configuration, with a different `applicationName`.
+Note that we just added `test-service` as `origin` of the proxied application and added the usual `tracing` configuration, with a different `applicationName`.
 
 Finally, start the gateway:
 
@@ -291,10 +291,10 @@ Starting from this example, it's also possible to run the same test using Zipkin
 docker run -d -p 9411:9411 openzipkin/zipkin
 ```
 
-Then, you need to change the `telemetry` configuration in all the `platformatic.*.json` files to the following (only the `exporter` object is different):
+Then, you need to change the `tracing` configuration in all the `platformatic.*.json` files to the following (only the `exporter` object is different):
 
 ```json
-  "telemetry": {
+  "tracing": {
     (...)
     "exporter": {
       "type": "zipkin",

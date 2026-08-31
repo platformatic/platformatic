@@ -1,5 +1,5 @@
 import { ROOT_CONTEXT, SpanKind, SpanStatusCode, context, propagation, trace } from '@opentelemetry/api'
-import { getTelemetryReady, getTracerProvider } from '@platformatic/globals'
+import { getTracingReady, getTracerProvider } from '@platformatic/globals'
 
 let tracer = null
 let telemetryInitialization = null
@@ -82,7 +82,7 @@ export function initializeITCTelemetry () {
     return telemetryInitialization
   }
 
-  telemetryInitialization = Promise.resolve(getTelemetryReady({ throwOnMissing: false }))
+  telemetryInitialization = Promise.resolve(getTracingReady({ throwOnMissing: false }))
     .catch(() => {
       // Ignore telemetry initialization failures and fall back to untraced messaging.
     })

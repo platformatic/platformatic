@@ -13,7 +13,7 @@ test('getters should return global fields', () => {
     host: '127.0.0.1',
     port: 3042,
     additionalServerOptions: {},
-    telemetryConfig: {},
+    tracingConfig: {},
     config: {},
     runtimeConfig: {},
     applicationConfig: {},
@@ -55,7 +55,7 @@ test('getters should return global fields', () => {
     sharedContext: {},
     management: {},
     sendHealthSignal: () => {},
-    telemetryReady: Promise.resolve(),
+    tracingReady: Promise.resolve(),
     tracerProvider: {},
     notifyConfig: () => {}
   }
@@ -71,7 +71,7 @@ test('getters should return global fields', () => {
   strictEqual(globals.getHost(), values.host)
   strictEqual(globals.getPort(), values.port)
   strictEqual(globals.getAdditionalServerOptions(), values.additionalServerOptions)
-  strictEqual(globals.getTelemetryConfig(), values.telemetryConfig)
+  strictEqual(globals.getTracingConfig(), values.tracingConfig)
   strictEqual(globals.getConfig(), values.config)
   strictEqual(globals.getRuntimeConfig(), values.runtimeConfig)
   strictEqual(globals.getApplicationConfig(), values.applicationConfig)
@@ -113,7 +113,7 @@ test('getters should return global fields', () => {
   strictEqual(globals.getSharedContext(), values.sharedContext)
   strictEqual(globals.getManagement(), values.management)
   strictEqual(globals.getSendHealthSignal(), values.sendHealthSignal)
-  strictEqual(globals.getTelemetryReady(), values.telemetryReady)
+  strictEqual(globals.getTracingReady(), values.tracingReady)
   strictEqual(globals.getTracerProvider(), values.tracerProvider)
   strictEqual(globals.getNotifyConfig(), values.notifyConfig)
 })

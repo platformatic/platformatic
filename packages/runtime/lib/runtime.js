@@ -2401,11 +2401,11 @@ export class Runtime extends EventEmitter {
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
     }
 
-    if (config.telemetry) {
-      applicationConfig.telemetry = {
-        ...config.telemetry,
-        ...applicationConfig.telemetry,
-        applicationName: `${config.telemetry.applicationName}-${applicationConfig.id}`
+    if (config.tracing) {
+      applicationConfig.tracing = {
+        ...config.tracing,
+        ...applicationConfig.tracing,
+        applicationName: `${config.tracing.applicationName}-${applicationConfig.id}`
       }
     }
 
@@ -2414,9 +2414,9 @@ export class Runtime extends EventEmitter {
 
     const execArgv = applicationConfig.execArgv ?? []
 
-    if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+    if (!applicationConfig.skipTracingHooks && config.tracing && config.tracing.enabled !== false) {
       const require = createRequire(import.meta.url)
-      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const telemetryPath = require.resolve('@platformatic/tracing')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
       const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
 

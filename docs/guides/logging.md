@@ -130,7 +130,7 @@ This logs all messages to console with pretty formatting, and errors to a file.
       "url": "http://localhost:4318/v1/logs"
     }
   },
-  "telemetry": {
+  "tracing": {
     "enabled": true,
     "applicationName": "my-app",
     "version": "1.0.0",
@@ -154,7 +154,7 @@ The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support
 
 ```json
 {
-  "telemetry": {
+  "tracing": {
     "exporter": {
       "type": "otlp",
       "options": {

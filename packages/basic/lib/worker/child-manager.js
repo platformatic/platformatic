@@ -172,10 +172,10 @@ export class ChildManager extends ITC {
     const childProcessInclude = `--import="${new URL('./child-process.js', import.meta.url)}"`
 
     let telemetryInclude = ''
-    if (this.#context.telemetryConfig && this.#context.telemetryConfig.enabled !== false) {
+    if (this.#context.tracingConfig && this.#context.tracingConfig.enabled !== false) {
       const require = createRequire(import.meta.url)
-      const telemetryPath = require.resolve('@platformatic/telemetry')
-      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
+      const tracingPath = require.resolve('@platformatic/tracing')
+      const openTelemetrySetupPath = join(tracingPath, '..', 'lib', 'node-telemetry.js')
       telemetryInclude = `--import="${pathToFileURL(openTelemetrySetupPath)}"`
     }
 

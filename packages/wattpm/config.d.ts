@@ -92,7 +92,7 @@ export type PlatformaticRuntimeConfig = {
             write?: string[];
           };
         };
-        telemetry?: {
+        tracing?: {
           /**
            * An array of instrumentations loaded if telemetry is enabled
            */
@@ -514,7 +514,7 @@ export type PlatformaticRuntimeConfig = {
           default?: string;
         }[];
       };
-  telemetry?: {
+  tracing?: {
     enabled?: boolean | string;
     /**
      * The name of the application. Defaults to the folder name if not specified.

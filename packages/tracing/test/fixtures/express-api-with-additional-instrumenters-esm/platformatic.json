@@ -7,14 +7,14 @@
     {
       "id": "api",
       "path": "./services/api",
-      "telemetry": {
+      "tracing": {
         "instrumentations": [
           "@opentelemetry/instrumentation-express"
         ]
       }
     }
   ],
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-service",
     "version": "1.0.0",
     "exporter": {

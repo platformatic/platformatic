@@ -1,4 +1,4 @@
-import { parseNDJson } from '@platformatic/telemetry/test/helper.js'
+import { parseNDJson } from '@platformatic/tracing/test/helper.js'
 import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert'
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -413,7 +413,7 @@ test('should set an opentelemetry attribute', async t => {
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
-      config.telemetry = {
+      config.tracing = {
         applicationName: 'test-service',
         version: '1.0.0',
         exporter: {

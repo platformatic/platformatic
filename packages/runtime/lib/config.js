@@ -237,7 +237,7 @@ export async function prepareApplication (config, application, defaultWorkers) {
         pkg = await loadConfigurationModule(application.path, applicationConfig)
 
         application.type = extractModuleFromSchemaUrl(applicationConfig, true).module
-        application.skipTelemetryHooks = pkg.skipTelemetryHooks
+        application.skipTracingHooks = pkg.skipTracingHooks
       } else {
         const { moduleName, capability } = await importCapabilityAndConfig(application.path)
         pkg = capability
@@ -245,7 +245,7 @@ export async function prepareApplication (config, application, defaultWorkers) {
         application.type = moduleName
       }
 
-      application.skipTelemetryHooks = pkg.skipTelemetryHooks
+      application.skipTracingHooks = pkg.skipTracingHooks
 
       // This is needed to work around Rust bug on dylibs:
       // https://github.com/rust-lang/rust/issues/91979

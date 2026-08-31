@@ -278,7 +278,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       reuseTcpPorts: true,
       type: '@platformatic/db',
       watch: false,
-      skipTelemetryHooks: true,
+      skipTracingHooks: true,
       workers: {
         static: 1,
         dynamic: false

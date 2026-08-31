@@ -102,13 +102,13 @@ logger needs a new timestamp format and an exporter added to _watt.json_:
 This makes sure our logs are shipped to Cloudwatch and we integrate with the
 `@timestamp` property of Cloudwatch.
 
-Next, a `telemetry` block must be added to _watt.json_ so that metrics flow into Cloudwatch.
+Next, a `tracing` block must be added to _watt.json_ so that traces flow into CloudWatch.
 
 This example uses OTLP over HTTP. You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport": "grpc"`) and using `http://localhost:4317` without `/v1/traces`.
 
 ```json
 {
-    "telemetry": {
+    "tracing": {
         "applicationName": "the-app-name",
         "version": "1.0.0",
         "enabled": true,

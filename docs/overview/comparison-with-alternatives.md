@@ -440,7 +440,7 @@ services:
 ```json
 // Single configuration for all service monitoring
 {
-  "telemetry": {
+  "tracing": {
     "serviceName": "my-app",
     "tracing": { "exporter": "jaeger" },
     "metrics": { "exporter": "prometheus" }

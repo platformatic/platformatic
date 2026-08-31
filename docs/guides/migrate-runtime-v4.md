@@ -6,6 +6,22 @@ title: Migrate Runtime Configuration to v4
 
 Runtime v4 removes the runtime-level HTTP listener. Each capability or application owns whether it listens and all of its listener configuration. Runtime observes listening servers to report their URLs, but it does not select ports or rewrite listener options.
 
+## Rename tracing configuration and package
+
+Rename the `telemetry` configuration section to `tracing`. The OpenTelemetry integration package is now `@platformatic/tracing` instead of `@platformatic/telemetry`:
+
+```diff
+- "telemetry": {
++ "tracing": {
+```
+
+Update package imports and dependencies accordingly:
+
+```diff
+- import { telemetry } from '@platformatic/telemetry'
++ import { telemetry } from '@platformatic/tracing'
+```
+
 ## Move listener configuration to the capability
 
 Remove `server` and `entrypoint` from the Runtime or Watt configuration. Configure the listening address in the configuration file of the application that owns the HTTP endpoint.

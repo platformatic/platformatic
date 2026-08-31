@@ -167,7 +167,7 @@ test('update - should update version in package.json files', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.67.0'
+    '@platformatic/tracing': '^3.67.0'
   })
 
   const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
@@ -226,7 +226,7 @@ test('update - should work when executed inside an application folder', async t 
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.67.0'
+    '@platformatic/tracing': '^3.67.0'
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {
@@ -275,7 +275,7 @@ test('update - should work when loaded from an application file', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.67.0'
+    '@platformatic/tracing': '^3.67.0'
   })
 
   // The another application is not updated, because it is not considered as part of the project.
@@ -325,7 +325,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.0.0'
+    '@platformatic/tracing': '^3.0.0'
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {

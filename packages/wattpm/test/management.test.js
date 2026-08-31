@@ -395,7 +395,7 @@ test('config - should list configuration for an application', async t => {
     watch: {
       enabled: false
     },
-    telemetry: {}
+    tracing: {}
   })
 })
 
