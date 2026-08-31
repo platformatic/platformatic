@@ -84,7 +84,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
         log.stdout.level === 'DEBUG' &&
         log.stdout.time.length === 24 && // isotime
         log.stdout.name === 'service' &&
-        log.stdout.msg === 'Loading envfile...'
+        log.stdout.msg === 'Using the worker environment resolved by the loader.'
     )
   )
 

@@ -48,7 +48,7 @@ test('logs stdio from the application thread', async t => {
           pid,
           hostname,
           name: 'stdio',
-          msg: 'Loading envfile...',
+          msg: 'Using the worker environment resolved by the loader.',
           payload: undefined,
           stdout: undefined
         },

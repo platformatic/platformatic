@@ -766,7 +766,7 @@ test('start - should load custom env file with --env flag', async t => {
   deepStrictEqual(statusCode, 200)
 
   // Verify that the custom env vars are available
-  ok(parsed.some(p => p.msg?.includes('Loading envfile')))
+  ok(parsed.some(p => p.msg?.includes('Using the worker environment resolved by the loader')))
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
 })
 
@@ -789,7 +789,7 @@ test('dev - should load custom env file with --env flag', async t => {
   deepStrictEqual(statusCode, 200)
 
   // Verify that the custom env vars are available
-  ok(parsed.some(p => p.msg?.includes('Loading envfile')))
+  ok(parsed.some(p => p.msg?.includes('Using the worker environment resolved by the loader')))
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
 })
 

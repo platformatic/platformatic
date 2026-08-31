@@ -62,6 +62,34 @@ test('should pass global .env data to workers', async t => {
   })
 })
 
+/*
+  The declared v4 breaking change: v3 applied env blocks over the real environment (they were
+  pins); v4 follows the dotenv convention and the real environment is always authoritative, over
+  blocks and files alike. Blocks still apply where the real environment is silent.
+*/
+test('the real environment is authoritative over both env blocks', async t => {
+  const configFile = join(fixturesDir, 'env', 'watt.config.mjs')
+  const app = await createRuntime(configFile, null, {
+    env: { OVERRIDE_TEST: 'from-real-env' },
+    ignoreProcessEnv: true
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  const { payload } = await app.inject('hello', { method: 'GET', url: '/' })
+  const data = JSON.parse(payload)
+
+  // v3 pinned the entry block's 'service-override' over this; v4 inverts the top rung.
+  strictEqual(data.OVERRIDE_TEST, 'from-real-env')
+  strictEqual(data.FROM_SERVICE_CONFIG_FILE, 'true')
+  strictEqual(data.FROM_MAIN_CONFIG_FILE, 'true')
+  strictEqual(data.FROM_ENV_FILE, 'true')
+})
+
 test('should load custom env file when envFile option is provided', async t => {
   const tmpDir = await mkdtemp(join(tmpdir(), 'plt-test-'))
   const customEnvFile = join(tmpDir, 'custom.env')

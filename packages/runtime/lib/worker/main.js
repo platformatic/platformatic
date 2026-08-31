@@ -11,14 +11,12 @@ import { addPinoInstrumentation } from '@platformatic/telemetry'
 import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
-import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import inspector from 'node:inspector'
 import { hostname } from 'node:os'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import { setDefaultHighWaterMark } from 'node:stream'
 import { pathToFileURL } from 'node:url'
-import { parseEnv } from 'node:util'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { install as installUndiciGlobals } from 'undici'
@@ -231,44 +229,16 @@ async function main () {
 
   await performPreloading(runtimeConfig, applicationConfig)
 
-  // Load env file and mixin env vars from application config
-  let envfile
-  if (applicationConfig.envfile) {
-    envfile = resolve(workerData.dirname, applicationConfig.envfile)
-  } else {
-    envfile = resolve(workerData.applicationConfig.path, '.env')
-  }
-
-  const logger = getLogger()
-  logger.debug({ envfile }, 'Loading envfile...')
-
   /*
-    process.loadEnvFile is not used here because it never overrides an already defined variable,
-    and a value the runtime resolved for this worker is not "already defined" in the sense that
-    matters. Real environment variables are never overridden either way.
-
-    The `envFileFallbackKeys` list this consulted is gone with the v3 reader that produced it: it
-    named the keys the runtime's own env file contributed, so that an application's more specific
-    file could override them. v4 layers both main-side, in that order, before the worker exists.
+    Nothing is layered onto process.env here, and that absence is load-bearing. The loader resolved
+    this worker's entire environment main-side -- env-file chains, both env blocks, the injected
+    topology URLs, with the real environment authoritative over all of them -- and the worker was
+    *spawned* with that result. Re-reading a .env or re-applying an env block on top re-decides
+    what was already decided, with the opposite precedence: v3 treated blocks as pins over the real
+    environment, and v4 declares the inversion as a breaking change. The suppression of a block
+    value by the real environment is reported at boot, main-side, where the ladder is resolved.
   */
-  try {
-    const applicationEnv = parseEnv(await readFile(envfile, 'utf-8'))
-
-    for (const [key, value] of Object.entries(applicationEnv)) {
-      if (!(key in process.env)) {
-        process.env[key] = value
-      }
-    }
-  } catch {
-    // Ignore if the file doesn't exist, similar to dotenv behavior
-  }
-
-  if (runtimeConfig.env) {
-    Object.assign(process.env, runtimeConfig.env)
-  }
-  if (applicationConfig.env) {
-    Object.assign(process.env, applicationConfig.env)
-  }
+  getLogger().debug('Using the worker environment resolved by the loader.')
 
   const { threadDispatcher } = await setDispatcher(runtimeConfig)
   updateGlobals({ undiciThreadInterceptor: threadDispatcher.interceptor })
