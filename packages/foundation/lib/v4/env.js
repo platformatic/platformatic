@@ -41,9 +41,10 @@ async function readEnvFile (path, { required = false } = {}) {
   try {
     contents = await readFile(path, 'utf-8')
   } catch (error) {
-    if (error.code === 'ENOENT' || error.code === 'EISDIR') {
-      // A directory at the path is the same authoring mistake as nothing there: the named env
-      // file is not a file that can be read, and the named error beats a raw EISDIR.
+    if (error.code === 'ENOENT' || error.code === 'EISDIR' || error.code === 'ENOTDIR') {
+      // A directory at the path, or a file standing where the path expects a directory, is the
+      // same authoring mistake as nothing there: the named env file is not a file that can be
+      // read, and the named error beats a raw errno.
       if (required) {
         throw new EnvFileNotFoundError(path)
       }

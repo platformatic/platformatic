@@ -196,6 +196,20 @@ test('a missing explicitly-named envfile is a load error, unlike the implicit se
       }),
     { code: 'PLT_ENV_FILE_NOT_FOUND' }
   )
+
+  // And a path stepping through a file -- index.js exists here, as a file -- is a raw ENOTDIR by
+  // errno, the same mistake by the same rule.
+  await rejects(
+    () =>
+      resolveEnvFileSources({
+        directory: join(root, 'web/api'),
+        envRoot: root,
+        decidingDirectory: root,
+        decidingEnvRoot: root,
+        envfile: './index.js/nested'
+      }),
+    { code: 'PLT_ENV_FILE_NOT_FOUND' }
+  )
 })
 
 test('--env replaces the entire env-files rung and is mode-exempt', async t => {
