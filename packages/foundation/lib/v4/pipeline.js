@@ -67,9 +67,9 @@ function assertOrchestrationShape (config, path) {
 }
 
 function validateOrchestration (config, { schema, path }) {
-  assertOrchestrationShape(config, path)
-
+  // The schema owns the messages when it is present; the shape guard is its stand-in, not a preamble.
   if (!schema) {
+    assertOrchestrationShape(config, path)
     return
   }
 

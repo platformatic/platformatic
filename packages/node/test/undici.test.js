@@ -29,7 +29,14 @@ test('supports undici 8 in a node application when replacing the global dispatch
       await rm(undici, { recursive: true, force: true })
       await symlink(undici8, undici, 'dir')
 
-      config.env = { ...config.env, EXTERNAL_URL: externalUrl }
+      /*
+        Into each worker's resolved environment, not the root env block: the ladder is resolved at
+        load time and the worker is spawned with its result, so a block mutated after the load is
+        a value nothing reads any more.
+      */
+      for (const application of config.applications) {
+        application.workerEnv.EXTERNAL_URL = externalUrl
+      }
     },
     // Links into node_modules, which dependency linking creates, and reads the loaded
     // configuration: both belong after the load.
