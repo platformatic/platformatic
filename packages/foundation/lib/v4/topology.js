@@ -55,8 +55,29 @@ export async function expandAutoload (config, { root }) {
 
   const { exclude = [], mappings = {} } = config.autoload
   const path = isAbsolute(config.autoload.path) ? config.autoload.path : resolve(root, config.autoload.path)
-  const entries = await readdir(path, { withFileTypes: true })
+
+  let entries
+  try {
+    entries = await readdir(path, { withFileTypes: true })
+  } catch (error) {
+    /*
+      A directory that does not exist yet contributes nothing, and that absence is a state the
+      configuration is designed to pass through: autoload over the resolved applications base is
+      empty on a fresh checkout until `wattpm resolve` runs -- and resolve learns what to clone
+      from this very load, so refusing here would brick the configuration before the command that
+      repairs it.
+    */
+    if (error.code === 'ENOENT') {
+      return config.applications
+    }
+
+    throw error
+  }
+
   const applications = config.applications
+
+  // The schema's default is applied main-side, after this runs, so it is spelled here too.
+  const resolvedBase = resolve(root, config.resolvedApplicationsBasePath ?? 'external')
 
   /*
     v3's ids were directory names, unique by construction. v4 prefers the package.json name, which
@@ -74,6 +95,55 @@ export async function expandAutoload (config, { root }) {
 
     const mapping = mappings[entry.name] ?? {}
     const directory = join(path, entry.name)
+
+    /*
+      Identity is decided by place, before any id is derived: an explicit entry claims the
+      directory by authored path or -- for a url entry with no authored path -- by clone
+      destination, resolvedApplicationsBasePath/<id>, where the clone `wattpm resolve` makes of it
+      lands. The directory's package name belongs to the code, not to the topology, so an upstream
+      repository whose package.json disagrees with the authored id must not split one application
+      into two entries sharing a directory. The comparison is normalized, not canonicalized: a
+      symlink spelling of the directory is refused below rather than recognized, loudly, with the
+      rename as the fix.
+    */
+    const claimant = applications.find(application => {
+      if (typeof application.path === 'string') {
+        return resolve(root, application.path) === directory
+      }
+
+      return (
+        typeof application.url === 'string' &&
+        typeof application.id === 'string' &&
+        resolve(resolvedBase, application.id) === directory
+      )
+    })
+
+    if (claimant) {
+      const claimed = autoloaded.get(claimant.id)
+
+      if (claimed) {
+        throw new DuplicateAutoloadedApplicationIdError(claimed, directory, claimant.id)
+      }
+
+      autoloaded.set(claimant.id, directory)
+
+      /*
+        Shallow explicit-wins merge, v3 semantics, applied to the explicit entry *in place*: a
+        deferred config slot recorded before expansion addresses this object by identity, and
+        replacing it would leave the slot pointing at an entry the topology no longer holds -- the
+        application would boot without the configuration its author wrote, and nothing would say so.
+      */
+      const expanded = { id: claimant.id, path: directory, ...mapping }
+
+      for (const key of Object.keys(expanded)) {
+        if (!(key in claimant)) {
+          claimant[key] = expanded[key]
+        }
+      }
+
+      continue
+    }
+
     const { id } = deriveApplicationId({
       id: mapping.id,
       packageName: await readPackageName(directory),
@@ -88,61 +158,28 @@ export async function expandAutoload (config, { root }) {
 
     autoloaded.set(id, directory)
 
-    const expanded = { id, path: directory, ...mapping }
-    const existing = applications.findIndex(application => application.id === id)
+    const existing = applications.find(application => application.id === id)
 
-    if (existing !== -1) {
-      const explicit = applications[existing]
-
+    if (existing) {
       /*
-        A shared id merges only once the two are known to be the same application, which for a
-        local entry means the same resolved path -- normalized, not canonicalized: a symlink
-        spelling of the autoloaded directory is refused rather than recognized, loudly, with the
-        rename as the fix. v3 matched on id alone, and an explicit
-        { id, url } beside an autoloaded directory then merged into an entry that kept the local
-        path *and* carried the url -- resolve skipped the remote because its path existed, and the
-        runtime booted local code while the configuration named a repository (#5079). An id is the
-        mesh hostname, the injected variable, the metrics label and inject's argument, so two
-        distinct applications cannot share one.
-
-        A url entry with no authored path is the one exception: its clone lands at
-        resolvedApplicationsBasePath/<id>, so an autoloaded directory that *is* that destination is
-        the entry's own clone -- refusing it would mean `wattpm resolve` bricks the very
-        configuration it just repaired, when autoload covers the resolved base. Anywhere else,
-        nothing ties the directory to the remote, and the bare url is refused with the rest.
+        The entry shares the id and did not claim the directory by place, so it names a different
+        place -- or none. v3 matched on id alone, and an explicit { id, url } beside an autoloaded
+        directory then merged into an entry that kept the local path *and* carried the url --
+        resolve skipped the remote because its path existed, and the runtime booted local code
+        while the configuration named a repository (#5079). An id is the mesh hostname, the
+        injected variable, the metrics label and inject's argument, so two distinct applications
+        cannot share one.
       */
-      const samePath = typeof explicit.path === 'string' && resolve(root, explicit.path) === directory
-
-      // The schema's default is applied main-side, after this runs, so it is spelled here too.
-      const cloneDestination =
-        typeof explicit.path !== 'string' && typeof explicit.url === 'string'
-          ? resolve(root, config.resolvedApplicationsBasePath ?? 'external', id)
-          : null
-
-      if (!samePath && cloneDestination !== directory) {
-        const described =
-          typeof explicit.path === 'string'
-            ? `path '${explicit.path}'`
-            : typeof explicit.url === 'string'
-              ? `url '${explicit.url}'`
-              : 'neither path nor url'
-        throw new AmbiguousApplicationIdError(directory, described, id)
-      }
-
-      /*
-        Shallow explicit-wins merge, v3 semantics, applied to the explicit entry *in place*: a
-        deferred config slot recorded before expansion addresses this object by identity, and
-        replacing it would leave the slot pointing at an entry the topology no longer holds -- the
-        application would boot without the configuration its author wrote, and nothing would say so.
-      */
-      for (const key of Object.keys(expanded)) {
-        if (!(key in explicit)) {
-          explicit[key] = expanded[key]
-        }
-      }
-    } else {
-      applications.push(expanded)
+      const described =
+        typeof existing.path === 'string'
+          ? `path '${existing.path}'`
+          : typeof existing.url === 'string'
+            ? `url '${existing.url}'`
+            : 'neither path nor url'
+      throw new AmbiguousApplicationIdError(directory, described, id)
     }
+
+    applications.push({ id, path: directory, ...mapping })
   }
 
   return applications

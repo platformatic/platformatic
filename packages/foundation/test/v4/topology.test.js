@@ -151,6 +151,75 @@ test('the clone-destination merge honours an authored resolvedApplicationsBasePa
   ])
 })
 
+/*
+  Identity is decided by place, before any id is derived: the clone's package.json belongs to the
+  upstream repository, which does not know this project's ids. Deriving first split one
+  application into two entries sharing a directory -- the authored entry and the autoloaded twin
+  under the package name -- and both booted on one mesh.
+*/
+test('a claimed directory merges under the entry id whatever its package.json says', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'api', url: 'git@github.com:acme/api.git' },
+          { id: 'local', path: './web/renamed' }
+        ],
+        autoload: { path: 'external' }
+      }
+    `,
+    'external/api/package.json': '{ "name": "@acme/api-server" }',
+    'external/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { id: 'api', url: 'git@github.com:acme/api.git', path: join(root, 'external/api') },
+    { id: 'local', path: './web/renamed' }
+  ])
+})
+
+test('an authored-path entry claims its directory whatever the package name derives to', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', path: './web/api' }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/package.json': '{ "name": "totally-different" }',
+    'web/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  // One entry, the authored id -- not an ['api', 'totally-different'] pair booting one directory twice.
+  deepStrictEqual(config.applications, [{ id: 'api', path: './web/api' }])
+})
+
+/*
+  The fresh-checkout state the clone-destination merge narrates: the resolved base is gitignored
+  and absent until `wattpm resolve` runs, and resolve learns what to clone from this very load.
+  An absent autoload directory contributes nothing rather than throwing a raw ENOENT.
+*/
+test('autoload over a directory that does not exist yet contributes nothing', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'external' }
+      }
+    `
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications.map(({ id, url }) => ({ id, url })), [
+    { id: 'api', url: 'git@github.com:acme/api.git' }
+  ])
+})
+
 test('an entry naming no place does not merge with an autoloaded directory', async t => {
   const root = await createTree(t, {
     'watt.config.js': `
