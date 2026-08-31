@@ -355,14 +355,16 @@ to be the same application.** v3 matched on `id` alone, which is not sufficient:
 explicit `{ id: 'api', url: '…' }` beside an autoloaded `web/api` merges into an entry
 that keeps the local `path` *and* carries the `url`, so `wattpm resolve` skips the
 remote (its path exists) and the runtime boots local code while the configuration
-names a repository. v4 merges only when the entries identify the same application, which
-means one thing: **equal resolved `path`** — normalized, not canonicalized, so a
-symlink spelling of the directory is refused loudly rather than recognized. A `url`
-entry qualifies the same way, once `wattpm resolve` has materialized its clone at a
-path; until then a bare url beside a directory that already exists cannot be shown
-to be the same application, and is refused with the rest. Anything else sharing the
-id is `PLT_AMBIGUOUS_APPLICATION_ID`, naming both sources
-(`foundation/lib/v4/topology.js:108-131`). An id is the mesh
+names a repository. v4 merges only when the entries identify the same application:
+**equal resolved `path`** — normalized, not canonicalized, so a symlink spelling of
+the directory is refused loudly rather than recognized — or, for a `url` entry with
+no authored path, an autoloaded directory that is the entry's own **clone
+destination**, `resolvedApplicationsBasePath/<id>`. The second branch is what keeps
+`wattpm resolve` from bricking a configuration whose autoload covers the resolved
+base: the first load passes (no clone, no clash), the clone arrives, and without it
+every load after that would throw. Anything else sharing the id is
+`PLT_AMBIGUOUS_APPLICATION_ID`, naming both sources
+(`foundation/lib/v4/topology.js:114-131`). An id is the mesh
 hostname, the injected `PLT_<ID>_URL`, the metrics label and `wattpm inject`'s
 argument, so two distinct applications cannot share one. (Filed against the runtime
 as platformatic/platformatic#5079; v4 does not inherit it.) Capability configuration
@@ -5018,7 +5020,7 @@ runs multiple workers on a fixed port at all.
 
    **The audit's evidence heuristic keys on the property *name*, and two properties
    called `enabled` settle the question differently.** An application entry's is read
-   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:191-193`), which treats a
+   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:203-205`), which treats a
    string as *anything but `'false'` is true* — so its string branch is live v4
    behaviour and stays. `telemetry.enabled` beside it is read as `config.telemetry.enabled !== false`
    (`runtime/lib/runtime.js:2582`), a strict comparison against the boolean, so a string

@@ -15,10 +15,10 @@
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
     },
-    "packages/foundation/lib/v4/topology.js:108-131": {
-      "sha": "45e2923b4f02ea0c",
+    "packages/foundation/lib/v4/topology.js:114-131": {
+      "sha": "3b2d05e9496f16b9",
       "head": "const samePath = typeof explicit.path === 'string' && resolve(root, explicit.path) === directory",
-      "lines": 24
+      "lines": 18
     },
     "packages/basic/lib/modules.js:24-36@b7d953770^": {
       "sha": "b40a53b4822d4c88",
@@ -1060,7 +1060,7 @@
       "head": "export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig, context, capability) {",
       "lines": 1
     },
-    "packages/foundation/lib/v4/topology.js:191-193": {
+    "packages/foundation/lib/v4/topology.js:203-205": {
       "sha": "0df6dcc899c8f39b",
       "head": "if (typeof enabled === 'string') {",
       "lines": 3
