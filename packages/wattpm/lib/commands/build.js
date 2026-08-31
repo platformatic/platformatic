@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import {
   ensureLoggableError,
   findRuntimeConfigurationFile,
@@ -14,7 +15,7 @@ export async function buildCommand (logger, args) {
 
   try {
     const {
-      values: { config, env, mode },
+      values: { config, env: rawEnvFile, mode },
       positionals
     } = parseArgs(
       args,
@@ -34,6 +35,8 @@ export async function buildCommand (logger, args) {
       false
     )
     const root = getRoot(positionals)
+    // --env is relative to where the command ran; resolved here, before the loader anchors it elsewhere.
+    const env = rawEnvFile ? resolve(process.cwd(), rawEnvFile) : undefined
 
     configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 

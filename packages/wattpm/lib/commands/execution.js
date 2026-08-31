@@ -64,7 +64,7 @@ async function printResolvedConfiguration (logger, root, configurationFile, { pr
 
 export async function devCommand (logger, args) {
   const {
-    values: { config, env, 'debug-config': debugConfig, 'config-timeout': configTimeout, mode },
+    values: { config, env: rawEnvFile, 'debug-config': debugConfig, 'config-timeout': configTimeout, mode },
     positionals
   } = parseArgs(
     args,
@@ -90,6 +90,8 @@ export async function devCommand (logger, args) {
     false
   )
   const root = getRoot(positionals)
+  // --env is relative to where the command ran; resolved here, before the loader anchors it elsewhere.
+  const env = rawEnvFile ? resolve(process.cwd(), rawEnvFile) : undefined
 
   const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
@@ -271,7 +273,7 @@ export async function devCommand (logger, args) {
 export async function startCommand (logger, args) {
   const {
     positionals,
-    values: { inspect, config, env, 'debug-config': debugConfig, 'config-timeout': configTimeout, mode }
+    values: { inspect, config, env: rawEnvFile, 'debug-config': debugConfig, 'config-timeout': configTimeout, mode }
   } = parseArgs(
     args,
     {
@@ -301,6 +303,8 @@ export async function startCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
+  // --env is relative to where the command ran; resolved here, before the loader anchors it elsewhere.
+  const env = rawEnvFile ? resolve(process.cwd(), rawEnvFile) : undefined
   const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
   /*
