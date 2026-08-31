@@ -208,6 +208,10 @@ export interface PlatformaticDatabaseConfig {
           [k: string]: unknown;
         };
     poolSize?: number;
+    /**
+     * Derive the exposed type of every column from its SQL type. When false (the default), primary keys and the foreign keys referencing them are always exposed as strings, even when their SQL type is a JSON-safe number such as int4.
+     */
+    usePrimaryKeySqlType?: boolean;
     idleTimeoutMilliseconds?: number;
     queueTimeoutMilliseconds?: number;
     acquireLockTimeoutMilliseconds?: number;
