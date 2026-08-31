@@ -15,10 +15,10 @@
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
     },
-    "packages/foundation/lib/v4/topology.js:109-193": {
-      "sha": "ac547d949a473482",
+    "packages/foundation/lib/v4/topology.js:118-204": {
+      "sha": "80ea0345c8dd5dec",
       "head": "const claimant = applications.find(application => {",
-      "lines": 85
+      "lines": 87
     },
     "packages/basic/lib/modules.js:24-36@b7d953770^": {
       "sha": "b40a53b4822d4c88",
@@ -130,10 +130,10 @@
       "head": "async buildApplication (id) {",
       "lines": 2
     },
-    "packages/runtime/lib/worker/main.js:267,270": {
-      "sha": "02f9fa50bce17684",
-      "head": "Object.assign(process.env, runtimeConfig.env)",
-      "lines": 2
+    "packages/runtime/lib/runtime.js:2612": {
+      "sha": "4af1fec3d6c2bea7",
+      "head": "const workerEnv = structuredClone(applicationConfig.workerEnv ?? this.#env)",
+      "lines": 1
     },
     "packages/wattpm/lib/commands/build.js:43@b1e03a5b9^": {
       "sha": "e7e7e69706801bfb",
@@ -355,7 +355,7 @@
       "head": "if (!application) {",
       "lines": 10
     },
-    "packages/runtime/lib/worker/main.js:325-329": {
+    "packages/runtime/lib/worker/main.js:295-299": {
       "sha": "00fe4918aecefeb6",
       "head": "if (runtimeConfig.basePath) {",
       "lines": 5
@@ -475,7 +475,7 @@
       "head": "if (config.vite.ssr === true) {",
       "lines": 8
     },
-    "packages/foundation/lib/v4/load.js:457": {
+    "packages/foundation/lib/v4/load.js:469": {
       "sha": "38f06c935a15b4df",
       "head": "const { capability } = await detectCapability(cwd)",
       "lines": 1
@@ -575,7 +575,7 @@
       "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
       "lines": 1
     },
-    "packages/runtime/index.js:363-366": {
+    "packages/runtime/index.js:372-375": {
       "sha": "750363db47ef0cdd",
       "head": "const applicationConfig = application.resolvedConfig",
       "lines": 4
@@ -590,7 +590,7 @@
       "head": "for (let i = applications.length - 1; i >= 0; --i) {",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:301": {
+    "packages/runtime/lib/config.js:303": {
       "sha": "234e889c1536e65b",
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
@@ -615,7 +615,7 @@
       "head": "env: workerEnv,",
       "lines": 1
     },
-    "packages/runtime/lib/worker/main.js:236-237": {
+    "packages/runtime/lib/worker/main.js:236-237@26954f3f7^": {
       "sha": "5ccdb2ab64e0b274",
       "head": "if (applicationConfig.envfile) {",
       "lines": 2
@@ -995,7 +995,7 @@
       "head": "function collectCloneOverlapRefusals (root, applications, config, refusals) {",
       "lines": 1
     },
-    "packages/runtime/lib/worker/main.js:254-262": {
+    "packages/runtime/lib/worker/main.js:254-262@26954f3f7^": {
       "sha": "b23cc6f195f32055",
       "head": "try {",
       "lines": 9
@@ -1015,7 +1015,7 @@
       "head": "while (currentPath !== rootPath) {",
       "lines": 10
     },
-    "packages/runtime/lib/worker/main.js:239": {
+    "packages/runtime/lib/worker/main.js:239@26954f3f7^": {
       "sha": "3302feab96482c3b",
       "head": "envfile = resolve(workerData.applicationConfig.path, '.env')",
       "lines": 1
@@ -1060,7 +1060,7 @@
       "head": "export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig, context, capability) {",
       "lines": 1
     },
-    "packages/foundation/lib/v4/topology.js:251-253": {
+    "packages/foundation/lib/v4/topology.js:262-264": {
       "sha": "0df6dcc899c8f39b",
       "head": "if (typeof enabled === 'string') {",
       "lines": 3
@@ -1085,7 +1085,7 @@
       "head": "entrypointPort: 3042",
       "lines": 2
     },
-    "packages/wattpm/lib/commands/execution.js:237-252": {
+    "packages/wattpm/lib/commands/execution.js:239-254": {
       "sha": "7fd1002121c27499",
       "head": "try {",
       "lines": 16

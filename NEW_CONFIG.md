@@ -364,7 +364,7 @@ destination**, `resolvedApplicationsBasePath/<id>`. The second branch is what ke
 base: the first load passes (no clone, no clash), the clone arrives, and without it
 every load after that would throw. Anything else sharing the id is
 `PLT_AMBIGUOUS_APPLICATION_ID`, naming both sources
-(`foundation/lib/v4/topology.js:109-193`). An id is the mesh
+(`foundation/lib/v4/topology.js:118-204`). An id is the mesh
 hostname, the injected `PLT_<ID>_URL`, the metrics label and `wattpm inject`'s
 argument, so two distinct applications cannot share one. (Filed against the runtime
 as platformatic/platformatic#5079; v4 does not inherit it.) Capability configuration
@@ -1134,9 +1134,9 @@ files are read and layered the same way they are at runtime; **there is no reduc
 or special build environment, and no rung is excluded**. This is what v3 did and
 what the runtime does today
 — `buildApplication` sends `build` over ITC to a normally spawned worker
-(`runtime/lib/runtime.js:1039,1075`), which has already applied both `env` blocks
-(`worker/main.js:267,270`) — and a build that reads an author-supplied constant
-should keep reading it.
+(`runtime/lib/runtime.js:1039,1075`), spawned with the environment the loader
+resolved, both `env` blocks on its ladder (`runtime/lib/runtime.js:2612`) — and a
+build that reads an author-supplied constant should keep reading it.
 
 The injected `PLT_<ID>_URL` values are included, and they are the case that most
 needs to be: a bundler inlines `process.env.PLT_API_URL` at build time, so omitting
@@ -1409,7 +1409,7 @@ The rules, in full:
   requires an application name unless the runtime has exactly one
   (`wattpm/lib/commands/inject.js:79-88`).
 - **`basePath` now applies to every application**, not only the one facing the
-  network (`runtime/lib/worker/main.js:325-329`, where the strip is no longer
+  network (`runtime/lib/worker/main.js:295-299`, where the strip is no longer
   gated on `applicationConfig.entrypoint`).
 
 The consequence for scaffolding is that the `3042` convention becomes
@@ -1587,7 +1587,7 @@ configuration rather than becoming a hidden loader default; synthesis simply *is
 the configuration for a zero-config boot. It applies **only to a
 single-application project**, which is the only shape zero-config can produce:
 detection resolves one application type for the root directory
-(`foundation/lib/v4/load.js:457`). Multi-application projects get their ports from
+(`foundation/lib/v4/load.js:469`). Multi-application projects get their ports from
 their own configuration, never from a default.
 
 Synthesis is **not gated on what sits above**: running in an application directory of
@@ -2121,7 +2121,7 @@ serial scheme.
    capability package into the main process. Non-boot paths do, and deliberately:
    `command: 'exec'` imports `transform` and `createCommands` from the capability's
    main entry (see "CLI commands over config"), which is what v3 already does
-   (`runtime/index.js:363-366`). The subpath keeps the boot path light; it is not a
+   (`runtime/index.js:372-375`). The subpath keeps the boot path light; it is not a
    claim about the whole process lifetime.
 
    An entry with **neither** inline `config` **nor** a per-app file spawns no
@@ -2260,7 +2260,7 @@ outright (see "Object config sources"), so the carve-out the root worker makes f
 function slots does not apply. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
-hazard in this very codebase (`runtime/lib/config.js:301` warns that `2` would be
+hazard in this very codebase (`runtime/lib/config.js:303` warns that `2` would be
 coerced to `true`). The audit also guarantees that schema-injected defaults are
 themselves serializable.
 
@@ -2420,8 +2420,9 @@ but the capability pipeline is split deliberately:**
   filters `node_modules` out of the recorded import list. Because the
   symbol-keyed `kMetadata` cannot cross structured clone, **each worker rebuilds
   it locally** before the capability transform runs — `root` = the application
-  directory, `path` = `configPath` (null for inline definitions),
-  `module`/`version` from the entry envelope, `env` = the worker's seeded
+  directory, `path` = null always, because a v4 configuration is not a file the
+  capability reads (v3 consumers resolved siblings off it; the v4 ones read
+  `root`), `module`/`version` from the entry envelope, `env` = the worker's seeded
   environment (v3's `kMetadata` carried `{ root, env, path, module }`;
   `version` is a v4 addition, and `PLT_ROOT` is deliberately absent from `env`
   now that the variable is removed) — so the worker-side consumers that read it today
@@ -2762,7 +2763,7 @@ an **error**. Two entry shapes are in that position. The first carries an **inli
 `envfile` would govern the worker-runtime view alone, and a key that silently covers
 one view and not the other is the ambiguity this document spends its length removing.
 That one is a deliberate simplification rather than an impossibility — v3 did exactly
-that (`worker/main.js:236-237`), and root-inline entries already tolerate a comparable
+that (`worker/main.js:236-237` pre-`26954f3f7`), and root-inline entries already tolerate a comparable
 asymmetry.
 
 The second is the entry whose directory **is the deciding file's own directory** —
@@ -4296,7 +4297,7 @@ Generation reads both views. Then:
    **The missing `envfile` is a refusal because v3 tolerated it and v4 will not.**
    v3 read an application's env file inside a `try`/`catch` and carried on when it was
    not there — the comment says "Ignore if the file doesn't exist, similar to dotenv
-   behavior" (`runtime/lib/worker/main.js:254-262`) — and that applied to a *declared*
+   behavior" (`runtime/lib/worker/main.js:254-262` pre-`26954f3f7`) — and that applied to a *declared*
    `envfile` exactly as it did to the conventional `.env`. v4 makes an explicitly named
    missing file a load error (see "Env files"), on the grounds that naming a file you
    do not have is a mistake worth hearing about. Both positions are defensible; the
@@ -4608,7 +4609,7 @@ step 2: the v4 range bumps, missing app-local capability entries, the root
    keep environment in files. v3 took the **first** `.env` found walking up from the
    config file's directory (`foundation/lib/configuration.js:362-371` pre-`7a541feae` — it `break`s),
    plus the application's own applied worker-side with no walk
-   (`runtime/lib/worker/main.js:239`), plus a `process.cwd()` fallback when the walk
+   (`runtime/lib/worker/main.js:239` pre-`26954f3f7`), plus a `process.cwd()` fallback when the walk
    found nothing (`foundation/lib/configuration.js:373-380` pre-`7a541feae`). v4 instead **layers every** `.env` from a config
    file's own directory up to the **env root** — the outermost `watt.config.*` above
    it — so (1) intermediate directories now participate, (2) no file shadows the ones
@@ -5020,7 +5021,7 @@ runs multiple workers on a fixed port at all.
 
    **The audit's evidence heuristic keys on the property *name*, and two properties
    called `enabled` settle the question differently.** An application entry's is read
-   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:251-253`), which treats a
+   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:262-264`), which treats a
    string as *anything but `'false'` is true* — so its string branch is live v4
    behaviour and stays. `telemetry.enabled` beside it is read as `config.telemetry.enabled !== false`
    (`runtime/lib/runtime.js:2582`), a strict comparison against the boolean, so a string
@@ -5095,7 +5096,7 @@ runs multiple workers on a fixed port at all.
    with `production: true`.
 
    **A reload that cannot evaluate is reported, not fatal**
-   (`wattpm/lib/commands/execution.js:237-252`). A half-typed edit is the ordinary case, and it
+   (`wattpm/lib/commands/execution.js:239-254`). A half-typed edit is the ordinary case, and it
    reaches the watcher: without this, one unbalanced brace ends the dev server and the developer
    restarts it by hand. The watchers are re-armed against the targets the last good configuration
    named — which is the half that makes surviving useful — so saving the corrected file starts the
