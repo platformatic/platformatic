@@ -1,4 +1,4 @@
-import { deepStrictEqual, rejects, strictEqual } from 'node:assert'
+import { deepStrictEqual, rejects, strictEqual, throws } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { loadConfiguration, readAndStripSchemaStamp } from '../../lib/v4/index.js'
@@ -19,6 +19,18 @@ test('a URL the loader does not recognize is not its to interpret', () => {
 
   strictEqual(readAndStripSchemaStamp(config, 'watt.config.js'), './my-own-schema.json')
   deepStrictEqual(config, { applications: [] })
+})
+
+test('a prerelease version is a version, on both sides of the gate', () => {
+  // Recognized rather than treated as an unknown editor URL: a 2.0.0-beta stamp evading the
+  // legacy refusal because of its suffix would reinterpret exactly the file the refusal is for.
+  const current = { $schema: 'https://schemas.platformatic.dev/wattpm/4.0.0-alpha.1.json', applications: [] }
+  strictEqual(readAndStripSchemaStamp(current, 'watt.config.js'), 'https://schemas.platformatic.dev/wattpm/4.0.0-alpha.1.json')
+
+  throws(
+    () => readAndStripSchemaStamp({ $schema: 'https://schemas.platformatic.dev/wattpm/2.0.0-beta.json' }, 'watt.config.js'),
+    { code: 'PLT_LEGACY_SCHEMA_STAMP' }
+  )
 })
 
 test('a stale v3 stamp refuses with the migrate hint', async t => {

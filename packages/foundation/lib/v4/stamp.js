@@ -1,7 +1,11 @@
 import { describeValue, isPlainObject } from './canonicalize.js'
 import { InvalidSchemaStampError, LegacySchemaStampError } from './errors.js'
 
-const stampPattern = /^https:\/\/schemas\.platformatic\.dev\/(?<module>.+)\/(?<major>\d+)\.\d+\.\d+\.json$/
+// The version may carry a prerelease (and build) suffix: the release machinery ships prereleases
+// as first-class versions, and a 2.0.0-beta stamp evading the legacy refusal because of its
+// suffix would silently reinterpret exactly the file the refusal exists for.
+const stampPattern =
+  /^https:\/\/schemas\.platformatic\.dev\/(?<module>.+)\/(?<major>\d+)\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\.json$/
 
 /*
   The stamped `$schema` property is mandatory for machine writers of the plain-object form — pack,
