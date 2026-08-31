@@ -117,7 +117,7 @@ export const EnvFileOnDecidingDirectoryError = createError(
 
 export const EnvFileNotFoundError = createError(
   `${ERROR_PREFIX}_ENV_FILE_NOT_FOUND`,
-  'The env file %s does not exist.'
+  'The env file %s does not exist or is not a file.'
 )
 
 export const InvalidApplicationIdError = createError(

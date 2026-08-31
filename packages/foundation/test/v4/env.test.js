@@ -182,6 +182,20 @@ test('a missing explicitly-named envfile is a load error, unlike the implicit se
       }),
     { code: 'PLT_ENV_FILE_NOT_FOUND' }
   )
+
+  // A directory at the path is the same authoring mistake, and gets the same named error rather
+  // than a raw EISDIR.
+  await rejects(
+    () =>
+      resolveEnvFileSources({
+        directory: join(root, 'web/api'),
+        envRoot: root,
+        decidingDirectory: root,
+        decidingEnvRoot: root,
+        envfile: '.'
+      }),
+    { code: 'PLT_ENV_FILE_NOT_FOUND' }
+  )
 })
 
 test('--env replaces the entire env-files rung and is mode-exempt', async t => {
