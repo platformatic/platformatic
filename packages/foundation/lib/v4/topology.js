@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, resolve } from 'node:path'
-import { AmbiguousApplicationIdError, DuplicateAutoloadedApplicationIdError } from './errors.js'
+import { AmbiguousApplicationIdError, DuplicateAutoloadedApplicationIdError, InvalidConfigValueError } from './errors.js'
 import { deriveApplicationId } from './identifiers.js'
 
 // The shorthand exists so a single app with runtime options never needs a one-element array.
@@ -48,7 +48,7 @@ export async function readPackageName (directory) {
   default that varied by boot style would move the mesh hostname, the injected variable name, the
   metrics label, wattpm inject's argument and the dependencies spelling all at once.
 */
-export async function expandAutoload (config, { root }) {
+export async function expandAutoload (config, { root, stats }) {
   if (!config.autoload) {
     return config.applications
   }
@@ -71,6 +71,11 @@ export async function expandAutoload (config, { root }) {
       return config.applications
     }
 
+    if (error.code === 'ENOTDIR') {
+      // A file at the autoload path is an authoring mistake, not a filesystem condition to relay raw.
+      throw new InvalidConfigValueError('/autoload/path', `'${config.autoload.path}' is not a directory`)
+    }
+
     throw error
   }
 
@@ -91,6 +96,10 @@ export async function expandAutoload (config, { root }) {
   for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
     if (!entry.isDirectory() || exclude.includes(entry.name)) {
       continue
+    }
+
+    if (stats) {
+      stats.matched++
     }
 
     const mapping = mappings[entry.name] ?? {}
@@ -126,9 +135,11 @@ export async function expandAutoload (config, { root }) {
         "undefined"; whatever ids such entries end up with, the downstream id-collision check owns
         that case.
       */
-      const claimedId = typeof claimant.id === 'string' ? claimant.id : mapping.id
+      const claimedId = typeof claimant.id === 'string' && claimant.id.length > 0 ? claimant.id : mapping.id
 
-      if (typeof claimedId === 'string') {
+      // The same presence test derivation uses: an empty string is an absent id, not an id every
+      // other empty-id claimant duplicates.
+      if (typeof claimedId === 'string' && claimedId.length > 0) {
         const claimed = autoloaded.get(claimedId)
 
         if (claimed) {

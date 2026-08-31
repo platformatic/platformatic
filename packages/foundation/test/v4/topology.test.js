@@ -281,6 +281,73 @@ test('an autoload that contributes nothing to an empty topology warns about the 
   ok(warnings[0].message.includes("'aplications'"), warnings[0].message)
 })
 
+test('a disabled explicit entry does not mask the typo, and disabling what autoload found stays silent', async t => {
+  // The warning is checked after the enabled filter and gated on the match count.
+  const masked = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'off', path: './web/off', enabled: false }],
+        autoload: { path: 'aplications' }
+      }
+    `,
+    'web/off/index.js': ''
+  })
+
+  const { warnings } = await evaluate(masked)
+  deepStrictEqual(warnings.filter(w => w.type === 'empty-autoload').length, 1)
+
+  const deliberate = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', path: './web/api', enabled: false }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  const { warnings: none } = await evaluate(deliberate)
+  deepStrictEqual(none.filter(w => w.type === 'empty-autoload'), [])
+})
+
+test('a file at the autoload path is a named refusal, not a raw ENOTDIR', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { autoload: { path: "web" } }',
+    web: ''
+  })
+
+  await rejects(
+    () => evaluate(root),
+    error => {
+      strictEqual(error.code, 'PLT_INVALID_CONFIG_VALUE')
+      ok(error.message.includes('/autoload/path'), error.message)
+      return true
+    }
+  )
+})
+
+test('an empty-string id is an absent id, not one every empty-id claimant duplicates', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: '', path: './web/a' },
+          { id: '', path: './web/b' }
+        ],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/a/package.json': '{ "name": "app-a" }',
+    'web/a/index.js': '',
+    'web/b/package.json': '{ "name": "app-b" }',
+    'web/b/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications.length, 2)
+})
+
 test('an entry naming no place does not merge with an autoloaded directory', async t => {
   const root = await createTree(t, {
     'watt.config.js': `

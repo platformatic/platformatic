@@ -169,6 +169,98 @@ test('composer is an alias of gateway rather than a second capability', async t 
   strictEqual(config.applications[0].module, '@platformatic/gateway')
 })
 
+/*
+  The declared breaking change's diagnostic: v3 applied env blocks over the real environment, v4
+  inverts that, and a block value the real environment suppresses is reported at boot -- once per
+  key, and only when the values actually differ.
+*/
+test('a block value the real environment suppresses is reported once', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': `
+      export default {
+        env: { SHARED: 'from-block', AGREES: 'same' },
+        applications: [
+          { id: 'a', path: './web/a', env: { SHARED: 'from-entry' } },
+          { id: 'b', path: './web/b' }
+        ]
+      }
+    `,
+    'web/a/index.js': '',
+    'web/b/index.js': ''
+  })
+
+  const warnings = []
+  await load(root, { realEnv: { SHARED: 'from-real', AGREES: 'same' }, onWarning: w => warnings.push(w) })
+
+  const suppressed = warnings.filter(w => w.type === 'env-block-suppressed')
+  deepStrictEqual(suppressed.length, 1)
+  deepStrictEqual(suppressed[0].key, 'SHARED')
+})
+
+test('a relative --env resolves against the invocation, and one file reaches every application', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'custom.env': 'CUSTOM_KEY=from-custom\n',
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'a', path: './web/a' },
+          { id: 'b', path: './web/b' }
+        ]
+      }
+    `,
+    'web/a/index.js': '',
+    'web/b/index.js': ''
+  })
+
+  // Left relative, each application resolved this against its own directory and the boot failed.
+  const { config } = await load(root, { customEnvFile: './custom.env' })
+
+  for (const application of config.applications) {
+    deepStrictEqual(application.workerEnv.CUSTOM_KEY, 'from-custom')
+  }
+})
+
+/*
+  A capability CLI load has no orchestration schema to pass, and without the unconditional shape
+  check a malformed autoload reached the filesystem walk as a raw TypeError.
+*/
+test('the pipeline refuses a malformed orchestration shape even with no schema', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { autoload: 42, applications: [] }'
+  })
+
+  await rejects(() => load(root), error => {
+    strictEqual(error.code, 'PLT_INVALID_ROOT_CONFIGURATION')
+    ok(error.message.includes('/autoload'), error.message)
+    return true
+  })
+})
+
+test('two applications sharing one id are refused as a duplicate, not an invalid label', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'api', path: './web/a' },
+          { id: 'api', path: './web/b' }
+        ]
+      }
+    `,
+    'web/a/index.js': '',
+    'web/b/index.js': ''
+  })
+
+  await rejects(() => load(root), error => {
+    strictEqual(error.code, 'PLT_DUPLICATE_APPLICATION_ID')
+    ok(error.message.includes('"api"'), error.message)
+    return true
+  })
+})
+
 test('a root that declares nothing to run is refused before normalization can hide it', async t => {
   const root = await createTree(t, {
     'package.json': '{ "name": "proj" }',

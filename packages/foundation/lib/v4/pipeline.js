@@ -1,6 +1,6 @@
 import Ajv from 'ajv'
 import { pathToFileURL } from 'node:url'
-import { canonicalize } from './canonicalize.js'
+import { canonicalize, describeValue, isPlainObject } from './canonicalize.js'
 import { autoWrapApplicationDefinition, classifyConfiguration } from './classify.js'
 import { createConfigurationContext } from './context.js'
 import {
@@ -28,7 +28,47 @@ import {
   written for the diagnostic would be a second contract.
 */
 
+/*
+  The minimum shape the pipeline itself relies on, checked whether or not a schema arrived: a
+  capability CLI load (`plt db ... -c watt.config.mjs`) has no orchestration schema to pass, and
+  without this a malformed `autoload` reached the filesystem walk as a raw TypeError instead of a
+  validation error naming the property. The schema, when present, still owns everything else.
+*/
+function assertOrchestrationShape (config, path) {
+  const failures = []
+
+  if (config.autoload !== undefined) {
+    if (!isPlainObject(config.autoload)) {
+      failures.push(`/autoload: must be an object, not ${describeValue(config.autoload)}`)
+    } else if (typeof config.autoload.path !== 'string' || config.autoload.path.length === 0) {
+      failures.push('/autoload/path: must be a non-empty string')
+    }
+  }
+
+  if (config.applications !== undefined) {
+    if (!Array.isArray(config.applications)) {
+      failures.push(`/applications: must be an array, not ${describeValue(config.applications)}`)
+    } else {
+      for (let index = 0; index < config.applications.length; index++) {
+        if (!isPlainObject(config.applications[index])) {
+          failures.push(`/applications/${index}: must be an object, not ${describeValue(config.applications[index])}`)
+        }
+      }
+    }
+  }
+
+  if (config.application !== undefined && !isPlainObject(config.application)) {
+    failures.push(`/application: must be an object, not ${describeValue(config.application)}`)
+  }
+
+  if (failures.length > 0) {
+    throw new InvalidRootConfigurationError(path, failures.join('; '))
+  }
+}
+
 function validateOrchestration (config, { schema, path }) {
+  assertOrchestrationShape(config, path)
+
   if (!schema) {
     return
   }
@@ -187,22 +227,10 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
   // Step 4. The recording sits between expansion and the filter because that is the only moment
   // both lists exist: after expansion, so autoloaded entries are in it, and before the filter,
   // which is what lets resolve fetch an application this boot excludes.
-  snapshot.applications = await expandAutoload(snapshot, { root: directory })
+  const autoloadStats = { matched: 0 }
+  snapshot.applications = await expandAutoload(snapshot, { root: directory, stats: autoloadStats })
 
   const warnings = []
-
-  /*
-    Expansion that produced nothing at all is legal -- `applications: []` is a statement -- but a
-    configuration whose only topology is an autoload that matched nothing is one typo'd path away
-    from a runtime that boots empty and says nothing. The empty boot proceeds; this says so.
-  */
-  if (snapshot.autoload && snapshot.applications.length === 0) {
-    warnings.push({
-      type: 'empty-autoload',
-      path: snapshot.autoload.path,
-      message: `The autoload path '${snapshot.autoload.path}' contributed no applications and none are declared explicitly; the runtime will boot empty. Check the path for a typo.`
-    })
-  }
 
   const resolveCandidates = recordResolveCandidates(snapshot.applications)
 
@@ -215,6 +243,21 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
   backfillRemotePaths(snapshot.applications, snapshot.resolvedApplicationsBasePath ?? 'external')
 
   snapshot.applications = filterEnabledApplications(snapshot.applications, context.mode)
+
+  /*
+    An empty boot is legal -- `applications: []` is a statement, and disabling every entry is a
+    choice -- but an autoload that matched no directory at all, leaving nothing to boot, is one
+    typo'd path away from a runtime that comes up empty and says nothing. Checked after the
+    enabled filter so a disabled explicit entry does not mask it, and gated on the match count so
+    deliberately disabling everything autoload found stays silent.
+  */
+  if (snapshot.autoload && autoloadStats.matched === 0 && snapshot.applications.length === 0) {
+    warnings.push({
+      type: 'empty-autoload',
+      path: snapshot.autoload.path,
+      message: `The autoload path '${snapshot.autoload.path}' matched no application directory -- missing directory, no subdirectories, or all excluded -- and no applications remain declared; the runtime will boot empty.`
+    })
+  }
 
   warnings.push(...checkInheritedTopologyKeys(snapshot.applications, env))
 

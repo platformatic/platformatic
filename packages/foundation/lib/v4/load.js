@@ -15,6 +15,7 @@ import {
   CapabilityVersionSkewError,
   EnvFileOnDecidingDirectoryError,
   EnvFileOnInlineConfigError,
+  DuplicateApplicationIdError,
   InvalidApplicationIdError,
   ObjectSourceRootRequiredError
 } from './errors.js'
@@ -218,6 +219,17 @@ export async function loadConfiguration ({
   const resolvedProduction = production ?? isProductionCommand(command)
   const resolvedMode = mode ?? defaultMode(command, resolvedProduction)
   const report = createReport({ onImport, onWatchFile, onWarning, onInfo })
+
+  /*
+    --env names one file, relative to where the command ran -- not to each directory that later
+    reads it. Resolved once here, the same file reaches every application's ladder and the watch
+    set; left relative, each application resolved it against its own directory, and a multi-app
+    boot failed unless the file was copied into every one of them.
+  */
+  if (customEnvFile && !isAbsolute(customEnvFile)) {
+    customEnvFile = resolve(cwd, customEnvFile)
+  }
+
   const shared = {
     command,
     mode: resolvedMode,
@@ -530,7 +542,7 @@ async function assemble ({
     report
   })
 
-  applyWorkerEnvironments(config.applications, { rootEnv: config.env, realEnv, production })
+  applyWorkerEnvironments(config.applications, { rootEnv: config.env, realEnv, production, report })
 
   return {
     config,
@@ -574,7 +586,7 @@ async function assemble ({
 */
 export function applyWorkerEnvironments (
   applications,
-  { rootEnv, realEnv = process.env, production, additionalIds = [] }
+  { rootEnv, realEnv = process.env, production, additionalIds = [], report }
 ) {
   const injectedUrls = {}
 
@@ -588,6 +600,8 @@ export function applyWorkerEnvironments (
     }
   }
 
+  const suppressed = new Set()
+
   for (const entry of applications) {
     const workerEnv = resolveWorkerEnvironment({
       realEnv,
@@ -599,6 +613,29 @@ export function applyWorkerEnvironments (
     })
 
     Object.defineProperty(entry, 'workerEnv', { value: workerEnv, enumerable: false })
+
+    /*
+      The declared breaking change's only diagnostic: v3 applied env blocks over the real
+      environment, v4 inverts that, and a machine-generated configuration has no other channel to
+      learn a block value it carries is not the one its application sees. Reported once per key at
+      boot, and only when the values actually differ -- an override that agrees is not a flip.
+    */
+    for (const block of [entry.env, rootEnv]) {
+      if (!block) {
+        continue
+      }
+
+      for (const key of Object.keys(block)) {
+        if (key in realEnv && realEnv[key] !== String(block[key]) && !suppressed.has(key)) {
+          suppressed.add(key)
+          report?.onWarning?.({
+            type: 'env-block-suppressed',
+            key,
+            message: `The env block sets ${key}, but the real environment already defines it and the real environment always wins; the block value is not applied.`
+          })
+        }
+      }
+    }
   }
 
   return applications
@@ -641,6 +678,11 @@ export async function loadAdditionalApplications ({
   const report = createReport({ onImport, onWatchFile, onWarning, onInfo })
   const deciding = { path: configPath, directory: dirname(configPath) }
 
+  // Same one-file rule as boot; the command's cwd is gone by now, so the project root stands in.
+  if (customEnvFile && !isAbsolute(customEnvFile)) {
+    customEnvFile = resolve(deciding.directory, customEnvFile)
+  }
+
   const applications = await prepareApplications({
     entries,
     deciding,
@@ -661,7 +703,8 @@ export async function loadAdditionalApplications ({
     rootEnv: rootEnvBlock,
     realEnv,
     production: resolvedProduction,
-    additionalIds: existingIds
+    additionalIds: existingIds,
+    report
   })
 
   return { applications, watchTargets: collectWatchTargets(report) }
@@ -695,8 +738,17 @@ async function prepareApplications ({ entries, deciding, reservedIds = [], ...sh
   const [collision] = findTopologyVariableCollisions([...reservedIds, ...identified.map(({ id }) => id)])
 
   if (collision) {
-    // The label grammar removes most of the ways this could happen, so what remains is a case
-    // difference — and DNS labels being case-insensitive, those are the same mesh hostname too.
+    /*
+      Two identical ids are a duplicate, and the error says duplicate -- calling a perfectly valid
+      DNS label invalid sent the author checking the wrong thing. What remains after that is a case
+      difference: DNS labels are case-insensitive, so those are the same mesh hostname too.
+    */
+    const distinct = new Set(collision.ids)
+
+    if (distinct.size === 1) {
+      throw new DuplicateApplicationIdError(collision.ids[0], collision.ids.length)
+    }
+
     throw new InvalidApplicationIdError(
       JSON.stringify(collision.ids.join(', ')),
       `two application ids normalizing to ${collision.name}`

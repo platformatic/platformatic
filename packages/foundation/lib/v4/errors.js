@@ -120,6 +120,11 @@ export const EnvFileNotFoundError = createError(
   'The env file %s does not exist or is not a file.'
 )
 
+export const DuplicateApplicationIdError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_APPLICATION_ID`,
+  'The application id "%s" is used by %s applications. An id is the mesh hostname, the injected variable and the metrics label, so every application needs its own.'
+)
+
 export const InvalidApplicationIdError = createError(
   `${ERROR_PREFIX}_INVALID_APPLICATION_ID`,
   'The application id %s (derived from %s) is not a valid DNS label, so it cannot be used as a mesh hostname. Set an explicit id on the entry.'
