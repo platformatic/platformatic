@@ -220,6 +220,67 @@ test('autoload over a directory that does not exist yet contributes nothing', as
   ])
 })
 
+/*
+  Attaching per-app options to autoloaded applications via id-less path entries is a supported
+  shape: the id is derived main-side, after the merge. The dedup map used to key such claimants on
+  their undefined id, colliding every pair as duplicates of an application named "undefined".
+*/
+test('id-less path entries under autoload carry options without colliding', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { path: './web/api', workers: 3 },
+          { path: './web/frontend', workers: 1 }
+        ],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': '',
+    'web/frontend/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { path: './web/api', workers: 3 },
+    { path: './web/frontend', workers: 1 }
+  ])
+})
+
+test('a mapping still names an id-less claimed entry, and duplicates are still caught by it', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ path: './web/api', workers: 3 }],
+        autoload: { path: 'web', mappings: { api: { id: 'alpha' } } }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [{ path: './web/api', workers: 3, id: 'alpha' }])
+})
+
+/*
+  The empty boot proceeds -- applications: [] is a statement -- but an autoload that matched
+  nothing, with nothing declared beside it, is one typo'd path away from a runtime that boots
+  empty and says nothing. The warning is what says so.
+*/
+test('an autoload that contributes nothing to an empty topology warns about the empty boot', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { autoload: { path: "aplications" } }'
+  })
+
+  const { config, warnings } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [])
+  deepStrictEqual(warnings.filter(w => w.type === 'empty-autoload').length, 1)
+  ok(warnings[0].message.includes("'aplications'"), warnings[0].message)
+})
+
 test('an entry naming no place does not merge with an autoloaded directory', async t => {
   const root = await createTree(t, {
     'watt.config.js': `

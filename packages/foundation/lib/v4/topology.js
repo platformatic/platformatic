@@ -119,13 +119,24 @@ export async function expandAutoload (config, { root }) {
     })
 
     if (claimant) {
-      const claimed = autoloaded.get(claimant.id)
+      /*
+        The dedup map is keyed by id, and an id-less claimant does not have one yet -- its id is
+        derived main-side, after this merge, from a mapping or the package name. Keying undefined
+        here collided every pair of id-less path entries as duplicates of an application named
+        "undefined"; whatever ids such entries end up with, the downstream id-collision check owns
+        that case.
+      */
+      const claimedId = typeof claimant.id === 'string' ? claimant.id : mapping.id
 
-      if (claimed) {
-        throw new DuplicateAutoloadedApplicationIdError(claimed, directory, claimant.id)
+      if (typeof claimedId === 'string') {
+        const claimed = autoloaded.get(claimedId)
+
+        if (claimed) {
+          throw new DuplicateAutoloadedApplicationIdError(claimed, directory, claimedId)
+        }
+
+        autoloaded.set(claimedId, directory)
       }
-
-      autoloaded.set(claimant.id, directory)
 
       /*
         Shallow explicit-wins merge, v3 semantics, applied to the explicit entry *in place*: a
@@ -133,7 +144,7 @@ export async function expandAutoload (config, { root }) {
         replacing it would leave the slot pointing at an entry the topology no longer holds -- the
         application would boot without the configuration its author wrote, and nothing would say so.
       */
-      const expanded = { id: claimant.id, path: directory, ...mapping }
+      const expanded = { ...mapping, path: directory }
 
       for (const key of Object.keys(expanded)) {
         if (!(key in claimant)) {
