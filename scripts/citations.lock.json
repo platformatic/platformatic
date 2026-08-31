@@ -15,10 +15,10 @@
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
     },
-    "packages/foundation/lib/v4/topology.js:109-182": {
-      "sha": "7a5a2f6c08fabf41",
+    "packages/foundation/lib/v4/topology.js:109-193": {
+      "sha": "ac547d949a473482",
       "head": "const claimant = applications.find(application => {",
-      "lines": 74
+      "lines": 85
     },
     "packages/basic/lib/modules.js:24-36@b7d953770^": {
       "sha": "b40a53b4822d4c88",
@@ -1060,7 +1060,7 @@
       "head": "export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig, context, capability) {",
       "lines": 1
     },
-    "packages/foundation/lib/v4/topology.js:240-242": {
+    "packages/foundation/lib/v4/topology.js:251-253": {
       "sha": "0df6dcc899c8f39b",
       "head": "if (typeof enabled === 'string') {",
       "lines": 3

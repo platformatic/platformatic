@@ -189,6 +189,21 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
   // which is what lets resolve fetch an application this boot excludes.
   snapshot.applications = await expandAutoload(snapshot, { root: directory })
 
+  const warnings = []
+
+  /*
+    Expansion that produced nothing at all is legal -- `applications: []` is a statement -- but a
+    configuration whose only topology is an autoload that matched nothing is one typo'd path away
+    from a runtime that boots empty and says nothing. The empty boot proceeds; this says so.
+  */
+  if (snapshot.autoload && snapshot.applications.length === 0) {
+    warnings.push({
+      type: 'empty-autoload',
+      path: snapshot.autoload.path,
+      message: `The autoload path '${snapshot.autoload.path}' contributed no applications and none are declared explicitly; the runtime will boot empty. Check the path for a typo.`
+    })
+  }
+
   const resolveCandidates = recordResolveCandidates(snapshot.applications)
 
   /*
@@ -201,7 +216,7 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
 
   snapshot.applications = filterEnabledApplications(snapshot.applications, context.mode)
 
-  const warnings = checkInheritedTopologyKeys(snapshot.applications, env)
+  warnings.push(...checkInheritedTopologyKeys(snapshot.applications, env))
 
   // Step 5. Steps 3-5 are in this order for one reason: a disabled entry's config callback must
   // never run. An entry excluded from this boot may name a capability the production image does

@@ -364,7 +364,7 @@ destination**, `resolvedApplicationsBasePath/<id>`. The second branch is what ke
 base: the first load passes (no clone, no clash), the clone arrives, and without it
 every load after that would throw. Anything else sharing the id is
 `PLT_AMBIGUOUS_APPLICATION_ID`, naming both sources
-(`foundation/lib/v4/topology.js:109-182`). An id is the mesh
+(`foundation/lib/v4/topology.js:109-193`). An id is the mesh
 hostname, the injected `PLT_<ID>_URL`, the metrics label and `wattpm inject`'s
 argument, so two distinct applications cannot share one. (Filed against the runtime
 as platformatic/platformatic#5079; v4 does not inherit it.) Capability configuration
@@ -5020,7 +5020,7 @@ runs multiple workers on a fixed port at all.
 
    **The audit's evidence heuristic keys on the property *name*, and two properties
    called `enabled` settle the question differently.** An application entry's is read
-   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:240-242`), which treats a
+   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:251-253`), which treats a
    string as *anything but `'false'` is true* — so its string branch is live v4
    behaviour and stays. `telemetry.enabled` beside it is read as `config.telemetry.enabled !== false`
    (`runtime/lib/runtime.js:2582`), a strict comparison against the boolean, so a string
