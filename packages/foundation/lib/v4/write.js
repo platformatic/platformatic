@@ -88,7 +88,9 @@ export function serializeKey (key) {
 // Single quotes, because the file lands in a project whose other files use them and a writer should
 // not leave a seam showing where it touched.
 export function serializeString (value) {
-  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`
+  // \r escaped too: a carriage return is a LineTerminator inside a string literal, and one riding
+  // in from a v3 value would make the generated module a SyntaxError.
+  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r')}'`
 }
 
 /*
