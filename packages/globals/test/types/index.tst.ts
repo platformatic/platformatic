@@ -51,6 +51,17 @@ test("updateGlobals", () => {
   expect(globals.updateGlobals).type.not.toBeCallableWith({ unknown: true })
 })
 
+test("externalizePlatformaticGlobals", () => {
+  expect(globals.externalizePlatformaticGlobals({ options: {} })).type.toBe<void>()
+  expect(globals.externalizePlatformaticGlobals).type.toBeCallableWith({
+    options: {
+      traceDeps: ['existing-trace'],
+      externals: { external: ['existing-external'] },
+      rollupConfig: { external: (source: string) => source === 'existing-external' }
+    }
+  })
+})
+
 test("getters", () => {
   expect(globals.isBuilding()).type.toBe<PlatformaticGlobal['isBuilding']>()
   expect(globals.getExecutable()).type.toBe<PlatformaticGlobal['executable']>()

@@ -36,17 +36,24 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ## Preparing for production mode
 
-Add the following to your `vite.config.ts` plugins section:
+Add Nitro and the Platformatic globals externalization helper to `vite.config.ts`:
 
 ```javascript
+import { externalizePlatformaticGlobals } from '@platformatic/globals'
+
 process.env.NODE_ENV === 'production' &&
   nitro({
     preset: 'node-server',
+    modules: [externalizePlatformaticGlobals],
     output: {
       dir: 'dist'
     }
   }),
 ```
+
+Platformatic injects the helper during managed Vite builds. Keeping it in the Nitro configuration also covers custom
+build commands and builds run outside Platformatic. It ensures server code resolves the same `@platformatic/globals`
+instance initialized by the runtime.
 
 ## Architecture
 

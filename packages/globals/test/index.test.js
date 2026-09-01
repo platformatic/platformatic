@@ -1,11 +1,42 @@
-import { deepStrictEqual, strictEqual, throws } from 'node:assert'
+import { deepStrictEqual, equal, strictEqual, throws } from 'node:assert'
+import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import * as globals from '../lib/index.js'
+
+const require = createRequire(import.meta.url)
 
 test('getGlobal should be undefined before initialization', async () => {
   const isolated = await import('../lib/index.js?uninitialized')
 
   strictEqual(isolated.getGlobal(), undefined)
+})
+
+test('externalizes globals with Nitro 2 and Nitro 3 options', () => {
+  const nitro = {
+    options: {
+      traceDeps: ['existing-trace'],
+      externals: { external: ['existing-external'] },
+      rollupConfig: { external: ['existing-rollup-external'] }
+    }
+  }
+
+  globals.externalizePlatformaticGlobals(nitro)
+  globals.externalizePlatformaticGlobals(nitro)
+
+  deepStrictEqual(nitro.options.traceDeps, ['existing-trace', '@platformatic/globals'])
+  deepStrictEqual(nitro.options.externals.external, ['existing-external', '@platformatic/globals'])
+  deepStrictEqual(nitro.options.rollupConfig.external, ['existing-rollup-external', '@platformatic/globals'])
+})
+
+test('preserves a Rollup external function', () => {
+  const external = source => source === 'existing-external'
+  const nitro = { options: { rollupConfig: { external } } }
+
+  globals.externalizePlatformaticGlobals(nitro)
+
+  equal(nitro.options.rollupConfig.external('existing-external'), true)
+  equal(nitro.options.rollupConfig.external('@platformatic/globals'), true)
+  equal(nitro.options.rollupConfig.external('other'), false)
 })
 
 test('getters should return global fields', () => {
@@ -132,6 +163,15 @@ test('updateGlobals should merge and return global fields', () => {
   strictEqual(updated, original)
   deepStrictEqual(updated.config, { hello: 'world' })
   strictEqual(Object.hasOwn(globalThis, 'platformatic'), false)
+})
+
+test('CommonJS and ESM entrypoints should share global fields', () => {
+  const commonjs = require('@platformatic/globals')
+  const logger = {}
+
+  globals.updateGlobals({ logger })
+
+  strictEqual(commonjs.getLogger(), logger)
 })
 
 test('removeGlobals should remove global fields', () => {

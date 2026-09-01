@@ -83,6 +83,23 @@ node .output/server/index.mjs
 
 Deploy the full `.output` directory, not only `.output/server/index.mjs`. Nitro bundles the application server, public assets, and any copied runtime dependencies inside `.output`.
 
+## Runtime APIs in server bundles
+
+Nuxt server code that imports from `@platformatic/globals` must keep the package external from the Nitro server bundle.
+Add the globals helper as a Nitro module in `nuxt.config`:
+
+```js
+import { externalizePlatformaticGlobals } from '@platformatic/globals'
+
+export default defineNuxtConfig({
+  nitro: {
+    modules: [externalizePlatformaticGlobals]
+  }
+})
+```
+
+`@platformatic/nuxt/scheduler` applies this configuration automatically when that module is enabled.
+
 ## Scheduled tasks
 
 Nuxt scheduled tasks can be managed by Watt by adding `@platformatic/nuxt/scheduler` to `nuxt.config`:

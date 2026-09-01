@@ -28,6 +28,9 @@ test('moves scheduled tasks to the Platformatic runtime plugin', () => {
 
   deepStrictEqual(nitro.options.scheduledTasks, {})
   equal(nitro.options.experimental.tasks, true)
+  deepStrictEqual(nitro.options.traceDeps, ['@platformatic/globals'])
+  deepStrictEqual(nitro.options.externals.external, ['@platformatic/globals'])
+  deepStrictEqual(nitro.options.rollupConfig.external, ['@platformatic/globals'])
   deepStrictEqual(nitro.options.runtimeConfig.platformaticScheduler.scheduledTasks, [
     { id: '0', cron: '* * * * *', tasks: ['log'] }
   ])
@@ -40,12 +43,18 @@ test('preserves existing Nitro configuration', () => {
   nitro.options.experimental = { tasks: false }
   nitro.options.plugins = ['existing-plugin.mjs']
   nitro.options.runtimeConfig = { existing: true }
+  nitro.options.traceDeps = ['existing-trace']
+  nitro.options.externals = { external: ['existing-external'] }
+  nitro.options.rollupConfig = { external: ['existing-rollup-external'] }
 
   schedulerModule(nitro)
 
   equal(nitro.options.experimental.tasks, true)
   equal(nitro.options.plugins.length, 2)
   equal(nitro.options.runtimeConfig.existing, true)
+  deepStrictEqual(nitro.options.traceDeps, ['existing-trace', '@platformatic/globals'])
+  deepStrictEqual(nitro.options.externals.external, ['existing-external', '@platformatic/globals'])
+  deepStrictEqual(nitro.options.rollupConfig.external, ['existing-rollup-external', '@platformatic/globals'])
 })
 
 test('uses the Nitro 3 runtime plugin for Nitro 3', () => {

@@ -1,8 +1,39 @@
 import { MissingGlobalError } from './errors.js'
 
+const globalsPackage = '@platformatic/globals'
 const values = {}
 const fields = new Set()
 let initialized = false
+
+export function externalizePlatformaticGlobals (nitro) {
+  nitro.options.traceDeps ??= []
+  if (!nitro.options.traceDeps.includes(globalsPackage)) {
+    nitro.options.traceDeps.push(globalsPackage)
+  }
+
+  nitro.options.externals ??= {}
+  nitro.options.externals.external ??= []
+  if (!nitro.options.externals.external.includes(globalsPackage)) {
+    nitro.options.externals.external.push(globalsPackage)
+  }
+
+  nitro.options.rollupConfig ??= {}
+  const external = nitro.options.rollupConfig.external
+
+  if (typeof external === 'function') {
+    nitro.options.rollupConfig.external = (source, importer, isResolved) => {
+      return source === globalsPackage || external(source, importer, isResolved)
+    }
+  } else if (Array.isArray(external)) {
+    if (!external.includes(globalsPackage)) {
+      external.push(globalsPackage)
+    }
+  } else if (external) {
+    nitro.options.rollupConfig.external = [external, globalsPackage]
+  } else {
+    nitro.options.rollupConfig.external = [globalsPackage]
+  }
+}
 
 function getField (name, options) {
   const { throwOnMissing = true } = options ?? {}

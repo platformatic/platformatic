@@ -56,6 +56,22 @@ export interface OptionalGlobalGetterOptions {
   throwOnMissing: false
 }
 
+export type NitroExternal =
+  | string
+  | RegExp
+  | (string | RegExp)[]
+  | ((source: string, importer: string | undefined, isResolved: boolean) => boolean | null | void)
+
+export interface NitroExternalizationOptions {
+  traceDeps?: (string | RegExp)[]
+  externals?: {
+    external?: (string | RegExp)[]
+  }
+  rollupConfig?: {
+    external?: NitroExternal
+  }
+}
+
 // This is purposely a copy of the one in @platformatic/itc to avoid the dependency
 export interface ITC {
   send (message: string, data: any, options?: Record<string, any>): Promise<any>
@@ -166,6 +182,7 @@ export interface PlatformaticGlobal {
 export type PlatformaticGlobalInterface = PlatformaticGlobal
 
 export declare function getGlobal<T extends {}> (): (PlatformaticGlobal & T) | undefined
+export declare function externalizePlatformaticGlobals (nitro: { options: NitroExternalizationOptions }): void
 export declare function updateGlobals (updates: Partial<PlatformaticGlobal>): PlatformaticGlobal
 export declare function removeGlobals (fields: string[]): PlatformaticGlobal | undefined
 export declare function hasField (name: string): boolean

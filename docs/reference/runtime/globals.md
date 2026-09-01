@@ -51,11 +51,31 @@ const basePath = getBasePath({ throwOnMissing: false }) ?? ''
 
 Setter functions, such as `setCustomHealthCheck()`, throw when the corresponding runtime API is not available.
 
+## Bundled server applications
+
+Runtime API values are private to the loaded `@platformatic/globals` package instance. Server-side bundlers must keep
+`@platformatic/globals` external so application code resolves the same package instance initialized by Platformatic.
+
+Platformatic configures this automatically for managed Next.js and Vite builds. Nitro-based applications built with a
+custom command or outside Platformatic must add `externalizePlatformaticGlobals` as a Nitro module:
+
+```js
+import { externalizePlatformaticGlobals } from '@platformatic/globals'
+
+export default defineNitroConfig({
+  modules: [externalizePlatformaticGlobals]
+})
+```
+
+The helper preserves existing Nitro 2, Nitro 3, and Rollup externalization options. The Nitro, Nuxt, and TanStack
+references show the corresponding framework configuration.
+
 ## Helpers
 
 | API | Description |
 | --- | --- |
 | `getGlobal<T>()` | Returns the complete runtime API object, optionally extended with the generic type `T`. Prefer the specific getters below. |
+| `externalizePlatformaticGlobals(nitro)` | Configures Nitro 2, Nitro 3, and Rollup to keep `@platformatic/globals` external. Use this as a Nitro module for builds Platformatic does not manage. |
 | `hasField(name)` | Returns whether the runtime API identified by `name` is available. |
 | `updateGlobals(updates)` | Updates the private runtime API object with the values in `updates` and returns the updated object. This helper is intended for Platformatic internals and tests. |
 | `removeGlobals(fields)` | Removes fields from the private runtime API object and returns the updated object. This helper is intended for Platformatic internals and tests. |
