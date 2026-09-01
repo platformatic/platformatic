@@ -2,6 +2,7 @@ import Ajv from 'ajv'
 import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { rootOnlyKeys } from './classify.js'
 import { CapabilitySchemaNotFoundError, InvalidApplicationConfigurationError } from './errors.js'
 import { projectCapabilitySchema } from './project.js'
 
@@ -180,10 +181,22 @@ export function validateCapabilityConfiguration (config, schema, { id, module, r
     params: error.params
   }))
 
+  // The keys that only a root configuration carries, rejected here as unknown capability options
+  // because the file classified as an application definition -- almost always because a root config
+  // grew a `module`. The precise per-key error above already names them; this says what they mean.
+  const strayRootKeys = failures
+    .map(failure => failure.params?.additionalProperty)
+    .filter(property => rootOnlyKeys.includes(property))
+
+  const hint =
+    strayRootKeys.length > 0
+      ? `\n  This looks like a root configuration: ${strayRootKeys.join(', ')} ${strayRootKeys.length === 1 ? 'is' : 'are'} a root-level key. If it is, remove the module property.`
+      : ''
+
   const error = new InvalidApplicationConfigurationError(
     id,
     module,
-    failures.map(failure => `\n  - ${failure.path}: ${failure.message}`).join('')
+    failures.map(failure => `\n  - ${failure.path}: ${failure.message}`).join('') + hint
   )
 
   Object.defineProperty(error, 'validationErrors', { value: failures })

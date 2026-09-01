@@ -35,10 +35,6 @@ export function classifyConfiguration (snapshot, file) {
   return 'root'
 }
 
-export function findRootOnlyKeys (snapshot) {
-  return rootOnlyKeys.filter(key => key in snapshot)
-}
-
 // Auto-wrapping happens here, on the snapshot, rather than at the point of a shape read: the whole
 // point of the ordering is that nothing reads the raw export's shape.
 export function autoWrapApplicationDefinition (definition) {

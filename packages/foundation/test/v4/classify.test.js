@@ -2,8 +2,7 @@ import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert'
 import { test } from 'node:test'
 import {
   autoWrapApplicationDefinition,
-  classifyConfiguration,
-  findRootOnlyKeys
+  classifyConfiguration
 } from '../../lib/v4/index.js'
 
 const file = '/proj/watt.config.ts'
@@ -49,15 +48,6 @@ test('everything that is not an object is refused ahead of the rules, naming the
       return true
     })
   }
-})
-
-test('root-only keys are reported so a misclassified root config can say why', () => {
-  deepStrictEqual(findRootOnlyKeys({ module: '@platformatic/node', autoload: {}, workers: 2 }), [
-    'autoload',
-    'workers'
-  ])
-
-  deepStrictEqual(findRootOnlyKeys({ module: '@platformatic/next', cache: {} }), [])
 })
 
 test('auto-wrapping produces the normalized singular form', () => {

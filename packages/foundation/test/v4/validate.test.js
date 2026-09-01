@@ -100,6 +100,39 @@ test('a capability whose schema cannot be imported is an error, not a skipped ch
   })
 })
 
+test('a stray root-only key hints that this looks like a root config', () => {
+  // A root configuration that grew a module classifies as an application definition, and its
+  // root-only keys land here as unknown options. The precise per-key error names them; the hint
+  // says what they mean.
+  throws(
+    () => validateCapabilityConfiguration({ autoload: { path: 'web' }, workers: 3 }, capabilitySchema, {
+      id: 'api',
+      module: '@acme/capability',
+      root: '/app'
+    }),
+    error => {
+      strictEqual(error.code, 'PLT_INVALID_APPLICATION_CONFIGURATION')
+      ok(error.message.includes('autoload'), error.message)
+      ok(error.message.includes('remove the module property'), error.message)
+      return true
+    }
+  )
+})
+
+test('a genuine unknown option carries no root-config hint', () => {
+  throws(
+    () => validateCapabilityConfiguration({ notAnOption: true }, capabilitySchema, {
+      id: 'api',
+      module: '@acme/capability',
+      root: '/app'
+    }),
+    error => {
+      ok(!error.message.includes('remove the module property'), error.message)
+      return true
+    }
+  )
+})
+
 test('validation reports every failure by path', () => {
   throws(
     () => validateCapabilityConfiguration({ notAnOption: true }, capabilitySchema, {
