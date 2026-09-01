@@ -94,7 +94,9 @@ const everyPlaceholder = /(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/gi
   configuration would evaluate on every boot. v3 read every one of these as inert text.
 */
 function escapeTemplateLiteralText (text) {
-  return text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')
+  // \r escaped too, as serializeString does: a raw carriage return inside a template literal is
+  // normalized to \n by the parser, silently changing the value a v3 CRLF string resolves to.
+  return text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$').replace(/\r/g, '\\r')
 }
 
 /*

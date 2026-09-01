@@ -1079,7 +1079,7 @@ test('migrate - a string value carrying template syntax cannot smuggle code into
   // Assembled so this test file holds no literal ${...}: a live interpolation trying to set the
   // global, a backslash the emitter must not read as an escape, and {REGION} to take the embedded
   // path.
-  const danger = 'x' + '$' + '{ globalThis.__MIGRATE_PWNED = true }' + '\\ty-{REGION}'
+  const danger = 'x' + '$' + '{ globalThis.__MIGRATE_PWNED = true }' + '\\t\rline-{REGION}'
 
   const root = await project(t, {
     'platformatic.json': {
@@ -1113,7 +1113,11 @@ test('migrate - a string value carrying template syntax cannot smuggle code into
   })
 
   strictEqual(globalThis.__MIGRATE_PWNED, false)
-  ok(loaded.config.applications[0].config.server.hostname.endsWith('y-eu'), loaded.config.applications[0].config.server.hostname)
+
+  // Backslash, carriage return and the injected ${...} all survive as inert text; only {REGION}
+  // resolved. A CR left unescaped in the template would have been normalized to a newline.
+  const resolved = loaded.config.applications[0].config.server.hostname
+  strictEqual(resolved, 'x' + '$' + '{ globalThis.__MIGRATE_PWNED = true }' + '\\t\rline-eu')
 })
 
 test('migrate - resolves PLT_ROOT against the file rather than reading a variable v4 removed', async t => {
