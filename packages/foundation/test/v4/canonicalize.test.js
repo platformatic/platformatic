@@ -1,6 +1,6 @@
 import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert'
 import { test } from 'node:test'
-import { canonicalize, formatPointer, isDeferredSlot, spliceDeferredSlot } from '../../lib/v4/index.js'
+import { canonicalize, formatPointer, isDeferredSlot } from '../../lib/v4/index.js'
 
 function invalidAt (pointer, fragment) {
   return error => {
@@ -142,19 +142,6 @@ test('a deferred result is canonicalized with no carve-out of its own', () => {
   throws(() => canonicalize({ application: { config: () => {} } }), invalidAt('/application/config'))
 })
 
-test('a resolved slot splices back into the position its function occupied', () => {
-  const { config, deferred } = canonicalize(
-    { applications: [{ id: 'a' }, { id: 'b', config: () => ({}) }] },
-    { deferred: true }
-  )
-
-  spliceDeferredSlot(config, deferred[0].path, { module: '@platformatic/node' })
-
-  deepStrictEqual(config, {
-    applications: [{ id: 'a' }, { id: 'b', config: { module: '@platformatic/node' } }]
-  })
-})
-
 test('pointers escape the JSON Pointer metacharacters', () => {
   strictEqual(formatPointer([]), '/')
   strictEqual(formatPointer(['applications', 0, 'config']), '/applications/0/config')
@@ -167,4 +154,19 @@ test('a top-level value that is not an object still canonicalizes, and classific
   deepStrictEqual(canonicalize(null).config, null)
   deepStrictEqual(canonicalize([1, 2]).config, [1, 2])
   deepStrictEqual(canonicalize('text').config, 'text')
+})
+
+test('a hole in an array is a hard error naming the JSON path', () => {
+  // JSON.stringify semantics stop at explicit undefined; a hole reads as undefined on iteration and
+  // null under JSON, so it is named here rather than carried silently across the worker boundary.
+  // eslint-disable-next-line no-sparse-arrays -- the hole is exactly what this test feeds
+  throws(() => canonicalize({ applications: [], allowed: ['a', , 'b'] }), invalidAt('/allowed/1', 'hole'))
+})
+
+test('an own __proto__ data property is preserved without touching the prototype', () => {
+  const { config } = canonicalize({ telemetry: { ['__proto__']: { exporter: 'otlp' } }, applications: [] })
+
+  deepStrictEqual(Object.keys(config.telemetry), ['__proto__'])
+  strictEqual(Object.getPrototypeOf(config.telemetry), Object.prototype)
+  strictEqual(({}).exporter, undefined)
 })

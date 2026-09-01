@@ -132,7 +132,19 @@ export function canonicalize (value, { deferred = false } = {}) {
     if (Array.isArray(current)) {
       ancestors.add(current)
 
-      const snapshot = current.map((entry, index) => walk(entry, [...segments, index]))
+      const snapshot = []
+
+      for (let index = 0; index < current.length; index++) {
+        // Not current.map: map skips a hole and preserves it, so `['a', , 'b']` -- one stray comma
+        // from a valid array -- would cross the worker boundary reading as undefined on iteration
+        // and null under JSON. An absent element is a value the author did not write, named here
+        // like the explicit undefined the case above rejects.
+        if (!(index in current)) {
+          throw new InvalidConfigValueError(formatPointer([...segments, index]), 'a hole in an array is not a configuration value')
+        }
+
+        snapshot.push(walk(current[index], [...segments, index]))
+      }
 
       ancestors.delete(current)
       return snapshot
@@ -176,7 +188,11 @@ export function canonicalize (value, { deferred = false } = {}) {
         continue
       }
 
-      snapshot[key] = child
+      // defineProperty, not assignment: for key '__proto__' -- a legal own data property, the shape
+      // JSON.parse of untrusted input produces -- `snapshot[key] = child` would hit the prototype
+      // setter and silently drop the authored value (or reparent the snapshot), rather than record
+      // an own property named __proto__.
+      Object.defineProperty(snapshot, key, { value: child, enumerable: true, writable: true, configurable: true })
     }
 
     ancestors.delete(current)
@@ -186,21 +202,4 @@ export function canonicalize (value, { deferred = false } = {}) {
   const config = walk(value, [])
 
   return { config, deferred: slots }
-}
-
-// Step 5 splices each resolved definition back into the slot its function occupied.
-export function spliceDeferredSlot (config, path, value) {
-  let current = config
-
-  for (let i = 0; i < path.length - 1; i++) {
-    current = current[path[i]]
-
-    if (current === undefined || current === null) {
-      throw new InvalidConfigValueError(formatPointer(path), 'the deferred slot no longer exists in the snapshot')
-    }
-  }
-
-  current[path[path.length - 1]] = value
-
-  return config
 }
