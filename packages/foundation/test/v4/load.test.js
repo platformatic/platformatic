@@ -239,6 +239,21 @@ test('the pipeline refuses a malformed orchestration shape even with no schema',
   })
 })
 
+test('the schema-less shape guard is no stricter than the schema on an empty autoload path', async t => {
+  // The runtime schema has no minLength on autoload.path, so '' is accepted (it walks the config's
+  // own directory). A capability-CLI load, which passes no schema, must not refuse what a boot takes.
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { autoload: { path: "" } }',
+    'api/package.json': '{ "dependencies": { "@platformatic/node": "3.0.0" } }',
+    'api/index.js': ''
+  })
+
+  const { config } = await load(root)
+
+  ok(config.applications.some(application => application.id === 'api'))
+})
+
 test('two applications sharing one id are refused as a duplicate, not an invalid label', async t => {
   const root = await createTree(t, {
     'package.json': '{ "name": "proj" }',
@@ -259,6 +274,36 @@ test('two applications sharing one id are refused as a duplicate, not an invalid
     ok(error.message.includes('"api"'), error.message)
     return true
   })
+})
+
+test('a config file with no default export is a named error, not a pointer at nothing', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export const config = { applications: [] }'
+  })
+
+  await rejects(() => load(root), error => {
+    strictEqual(error.code, 'PLT_MISSING_DEFAULT_EXPORT')
+    ok(error.message.includes('watt.config.js'), error.message)
+    return true
+  })
+})
+
+test('a directory named like a config file is a named refusal, not a raw dir-import error', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js/keep': ''
+  })
+
+  // --config pointed at the directory: a configuration is a file, so this refuses by name rather
+  // than reaching import() as a raw ERR_UNSUPPORTED_DIR_IMPORT.
+  await rejects(
+    () => load(root, { configPath: join(root, 'watt.config.js') }),
+    error => {
+      strictEqual(error.code, 'PLT_CONFIGURATION_FILE_NOT_FOUND')
+      return true
+    }
+  )
 })
 
 test('a root that declares nothing to run is refused before normalization can hide it', async t => {

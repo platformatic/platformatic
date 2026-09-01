@@ -7,6 +7,7 @@ import {
   ApplicationShorthandConflictError,
   DeferredSlotInApplicationDefinitionError,
   InvalidRootConfigurationError,
+  MissingDefaultExportError,
   NestedFunctionExportError,
   LegacyApplicationsSpellingError,
   NoApplicationsDeclaredError,
@@ -40,8 +41,10 @@ function assertOrchestrationShape (config, path) {
   if (config.autoload !== undefined) {
     if (!isPlainObject(config.autoload)) {
       failures.push(`/autoload: must be an object, not ${describeValue(config.autoload)}`)
-    } else if (typeof config.autoload.path !== 'string' || config.autoload.path.length === 0) {
-      failures.push('/autoload/path: must be a non-empty string')
+    } else if (typeof config.autoload.path !== 'string') {
+      // Type only, not non-empty: the runtime schema has no minLength, so a schema-carrying boot
+      // accepts '' (it walks the config's own directory), and the stand-in must not be stricter.
+      failures.push(`/autoload/path: must be a string, not ${describeValue(config.autoload.path)}`)
     }
   }
 
@@ -297,6 +300,13 @@ export function runApplicationPipeline (exported, { path, applicationId, directo
 export async function importAndUnwrap (path, context) {
   const module = await import(pathToFileURL(path).toString())
   const exported = module.default
+
+  if (exported === undefined) {
+    // Named ahead of canonicalize, which would otherwise reject the undefined at pointer `/` with
+    // no file and no mention of the export -- `export const config = {}` is the common way to land
+    // here.
+    throw new MissingDefaultExportError(path)
+  }
 
   if (typeof exported !== 'function') {
     return exported

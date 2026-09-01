@@ -30,6 +30,11 @@ export const NestedFunctionExportError = createError(
   'The default export of %s is a function that returned another function.'
 )
 
+export const MissingDefaultExportError = createError(
+  `${ERROR_PREFIX}_MISSING_DEFAULT_EXPORT`,
+  '%s has no default export. A configuration file exports its configuration as the default export: `export default { ... }`.'
+)
+
 export const InvalidConfigValueError = createError(
   `${ERROR_PREFIX}_INVALID_CONFIG_VALUE`,
   'Invalid configuration value at %s: %s.'
