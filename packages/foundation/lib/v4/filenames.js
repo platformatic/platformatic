@@ -1,4 +1,4 @@
-import { readdir } from 'node:fs/promises'
+import { readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { AmbiguousConfigurationFileError, LegacyConfigurationFileError } from './errors.js'
 
@@ -42,11 +42,38 @@ const configurationFileNamesSet = new Set(configurationFileNames)
 // walked a directory answer both questions without a second stat storm.
 export async function listDirectoryEntries (directory) {
   try {
-    // Directories are excluded: every caller is selecting a configuration file, and a directory
-    // named `watt.config.js` would otherwise be returned as a candidate and reach `import()` as a
-    // raw ERR_UNSUPPORTED_DIR_IMPORT blaming the loader rather than the directory.
+    /*
+      Directories are excluded: every caller is selecting a configuration file, and a directory
+      named `watt.config.js` would otherwise be returned as a candidate and reach `import()` as a
+      raw ERR_UNSUPPORTED_DIR_IMPORT blaming the loader rather than the directory. readdir does not
+      follow symlinks, so a symlink *to* a directory reports isSymbolicLink() and passes an
+      isDirectory() test -- its target type has to be resolved with a following stat, or the same
+      raw import error slips through the discovery path. A broken symlink resolves to nothing and is
+      dropped too, since it is not a file that can be imported.
+    */
     const entries = await readdir(directory, { withFileTypes: true })
-    return entries.filter(entry => !entry.isDirectory()).map(entry => entry.name)
+
+    const kept = await Promise.all(
+      entries.map(async entry => {
+        if (entry.isDirectory()) {
+          return null
+        }
+
+        if (entry.isSymbolicLink()) {
+          try {
+            if ((await stat(join(directory, entry.name))).isDirectory()) {
+              return null
+            }
+          } catch {
+            return null
+          }
+        }
+
+        return entry.name
+      })
+    )
+
+    return kept.filter(name => name !== null)
   } catch (error) {
     if (error.code === 'ENOENT' || error.code === 'ENOTDIR' || error.code === 'EACCES') {
       return []

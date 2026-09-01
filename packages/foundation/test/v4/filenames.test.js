@@ -1,4 +1,5 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
+import { symlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import {
@@ -50,6 +51,23 @@ test('a directory with exactly one candidate resolves to it', async t => {
   const root = await createTree(t, { 'watt.config.ts': '' })
 
   strictEqual(await inspectDirectory(root), join(root, 'watt.config.ts'))
+})
+
+test('a directory or a symlink to one, named like a config file, is not a candidate', async t => {
+  const root = await createTree(t, {
+    'package.json': '{}',
+    'watt.config.js/keep': '',
+    'real-dir/keep': '',
+    'target.js': 'export default { applications: [] }'
+  })
+
+  // A symlink whose target is a directory reports isSymbolicLink(), not isDirectory(), so a plain
+  // type filter keeps it and it reaches import() as a raw dir-import error.
+  await symlink(join(root, 'real-dir'), join(root, 'watt.config.ts'), 'dir')
+  // A symlink to a file is a real configuration and stays a candidate.
+  await symlink(join(root, 'target.js'), join(root, 'watt.config.mjs'), 'file')
+
+  strictEqual(await inspectDirectory(root), join(root, 'watt.config.mjs'))
 })
 
 test('a directory with no candidate resolves to null, and a missing directory is not an error', async t => {
