@@ -347,9 +347,11 @@ export async function ensureDependencies (configOrPaths) {
             name: dep,
             private: true,
             type: 'module',
-            exports: { '.': { import: './index.js', require: './index.cjs' } }
+            types: './index.d.ts',
+            exports: { '.': { types: './index.d.ts', import: './index.js', require: './index.cjs' } }
           })
         )
+        await cp(resolve(resolved, 'lib/index.d.ts'), resolve(moduleRoot, 'index.d.ts'))
         await writeFile(
           resolve(moduleRoot, 'index.js'),
           `export * from ${JSON.stringify(esmEntrypoint)}\nexport { default } from ${JSON.stringify(esmEntrypoint)}\n`
