@@ -81,6 +81,13 @@ test('a prerelease on either side demands exact identity', () => {
     level: 'ok',
     reason: 'prerelease-identical'
   })
+
+  // Build metadata does not affect precedence, so two copies of one prerelease that differ only in
+  // a build suffix are the same version, not a skew -- semver equality, not string identity.
+  deepStrictEqual(compareCapabilityVersions('4.0.0-alpha.1+build.1', '4.0.0-alpha.1+build.2'), {
+    level: 'ok',
+    reason: 'prerelease-identical'
+  })
 })
 
 test('a hand-written definition carries no stamp and skips the check', async t => {

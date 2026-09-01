@@ -100,7 +100,10 @@ export function compareCapabilityVersions (stamped, resolved) {
   }
 
   if (left.prerelease.length > 0 || right.prerelease.length > 0) {
-    return stamped === resolved
+    // semver.eq, not string identity: build metadata (+sha, +build.N) does not affect precedence,
+    // so two copies of 4.0.0-alpha.1 that differ only in a build suffix are the same prerelease and
+    // must not be flagged as a skew. Different prerelease identifiers still are.
+    return semver.eq(left, right)
       ? { level: 'ok', reason: 'prerelease-identical' }
       : { level: 'error', reason: 'prerelease-mismatch' }
   }
