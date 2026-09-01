@@ -42,7 +42,11 @@ const configurationFileNamesSet = new Set(configurationFileNames)
 // walked a directory answer both questions without a second stat storm.
 export async function listDirectoryEntries (directory) {
   try {
-    return await readdir(directory)
+    // Directories are excluded: every caller is selecting a configuration file, and a directory
+    // named `watt.config.js` would otherwise be returned as a candidate and reach `import()` as a
+    // raw ERR_UNSUPPORTED_DIR_IMPORT blaming the loader rather than the directory.
+    const entries = await readdir(directory, { withFileTypes: true })
+    return entries.filter(entry => !entry.isDirectory()).map(entry => entry.name)
   } catch (error) {
     if (error.code === 'ENOENT' || error.code === 'ENOTDIR' || error.code === 'EACCES') {
       return []

@@ -1,4 +1,5 @@
 import { basename, dirname, isAbsolute, join, parse, resolve } from 'node:path'
+import { stat } from 'node:fs/promises'
 import { isFileAccessible } from '../file-system.js'
 import { ConfigurationFileNotFoundError, LegacyConfigurationFileError } from './errors.js'
 import {
@@ -86,7 +87,16 @@ export async function resolveNamedConfigurationFile (path, cwd = process.cwd()) 
     throw new ConfigurationFileNotFoundError(resolved, configurationFileNames.join(', '))
   }
 
-  if (!(await isFileAccessible(resolved))) {
+  // stat, not access: a directory named watt.config.js is accessible, and passing it on reaches
+  // import() as a raw ERR_UNSUPPORTED_DIR_IMPORT. A configuration is a file.
+  let stats
+  try {
+    stats = await stat(resolved)
+  } catch {
+    throw new ConfigurationFileNotFoundError(resolved, dirname(resolved))
+  }
+
+  if (!stats.isFile()) {
     throw new ConfigurationFileNotFoundError(resolved, dirname(resolved))
   }
 
