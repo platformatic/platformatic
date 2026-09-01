@@ -945,7 +945,7 @@
       "head": "if (!this.config.isRuntimeContext) {",
       "lines": 9
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:502": {
+    "packages/wattpm-utils/lib/commands/migrate.js:532": {
       "sha": "ff440ded0415b4ee",
       "head": "function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {",
       "lines": 1
@@ -960,7 +960,7 @@
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:445": {
+    "packages/wattpm-utils/lib/commands/migrate.js:475": {
       "sha": "6fc44b37a39f9c96",
       "head": "function readLegacyEnvFile (configDirectory, declaredEnvfile, root) {",
       "lines": 1
@@ -990,7 +990,7 @@
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:1747": {
+    "packages/wattpm-utils/lib/commands/migrate.js:1774": {
       "sha": "8041b6bc6460351a",
       "head": "function collectCloneOverlapRefusals (root, applications, config, refusals) {",
       "lines": 1

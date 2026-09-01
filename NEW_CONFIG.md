@@ -3918,7 +3918,7 @@ Generation reads both views. Then:
    file goes, to open the legacy config each entry points at, to run the detector, to
    rebase `envfile` app-relative, and to evaluate the root-directory `envfile` refusal
    — and none of that is expressible over an unresolved token. So these five are
-   **resolved, not converted** (`wattpm-utils/lib/commands/migrate.js:502`): migrate
+   **resolved, not converted** (`wattpm-utils/lib/commands/migrate.js:532`): migrate
    evaluates their placeholders and writes the resulting literal path, and refuses by
    name when a token survives the chain.
 
@@ -3957,7 +3957,7 @@ Generation reads both views. Then:
    conventional **`<autoload.path>/<id>` directory** if it exists on disk.
 
    That third rung is per-file, not per-project, and it is v3's own walk
-   (`wattpm-utils/lib/commands/migrate.js:445`) that decides it rather than a rule of
+   (`wattpm-utils/lib/commands/migrate.js:475`) that decides it rather than a rule of
    migrate's own — kept here because migrate is the only thing that still needs to know
    what v3 would have done. v3 skips the search entirely when
    the config declared an `envfile` (`foundation/lib/configuration.js:349-357` pre-`7a541feae`);
@@ -4182,7 +4182,7 @@ Generation reads both views. Then:
    not intersect, or whose combination migrate cannot decide**; and a **directory
    `resolve` will clone into that already holds a local application, a file migrate
    must read, or a path it plans to emit** — a project whose remote checkouts and own
-   sources share a directory (`wattpm-utils/lib/commands/migrate.js:1747`). An earlier
+   sources share a directory (`wattpm-utils/lib/commands/migrate.js:1774`). An earlier
    draft framed this as an exclusion protecting the clone swallowing work the run has
    to do; there is no such exclusion, because migrate never looks inside a remote
    entry's directory in the first place — an entry with a `url` and no local path has
@@ -4220,7 +4220,7 @@ Generation reads both views. Then:
    an enum and `SETTING` in `web/b` under a numeric range are two variables that
    happen to be spelled alike. So migrate resolves, per position, **which file would
    have supplied that variable for that config file** — the same walk the structural
-   paths already use (`wattpm-utils/lib/commands/migrate.js:445`) — and intersects
+   paths already use (`wattpm-utils/lib/commands/migrate.js:475`) — and intersects
    only within a supplier. A variable coming from the real environment, or from a file
    both positions reach, *is* intersected across all of them, because there the one
    value is real and every position genuinely sees it. Seeding follows the same
