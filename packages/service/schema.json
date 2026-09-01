@@ -1173,16 +1173,10 @@
                   "id",
                   "url"
                 ]
-              },
-              {
-                "required": [
-                  "id",
-                  "path",
-                  "module"
-                ]
               }
             ],
             "not": {
+              "type": "object",
               "required": [
                 "module",
                 "url"

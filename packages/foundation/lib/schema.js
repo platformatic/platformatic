@@ -868,10 +868,10 @@ export const application = {
   type: 'object',
   anyOf: [
     { required: ['id', 'path'] },
-    { required: ['id', 'url'] },
-    { required: ['id', 'path', 'module'] }
+    { required: ['id', 'url'] }
   ],
   not: {
+    type: 'object',
     required: ['module', 'url']
   },
   properties: {
