@@ -87,6 +87,36 @@ const wholePlaceholderPattern = /^(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})$/i
 const everyPlaceholder = /(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/gi
 
 /*
+  A literal segment on its way into a generated template literal. The three characters that are
+  syntax there -- backslash, backtick, and the `${` opener -- must be neutralized, or a v3 value
+  carrying them corrupts the emitted module: an unescaped backslash turns `\t` into a tab or `\x`
+  into a SyntaxError, and an unescaped `${expr}` becomes a *live interpolation* the generated
+  configuration would evaluate on every boot. v3 read every one of these as inert text.
+*/
+function escapeTemplateLiteralText (text) {
+  return text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')
+}
+
+/*
+  Builds a template literal from a string mixing literal text and `{PLACEHOLDER}` tokens: the
+  literal runs are escaped for the template-literal context, and each token becomes an interpolation
+  the `resolve` callback names. Bracket access on `process.env`, not dot, because v3's grammar
+  admits names -- digit-leading among them -- that are not valid JS identifiers.
+*/
+function interpolatedTemplate (value, resolve) {
+  let out = '`'
+  let last = 0
+
+  for (const match of value.matchAll(everyPlaceholder)) {
+    out += escapeTemplateLiteralText(value.slice(last, match.index))
+    out += '${' + resolve(match[1]) + '}'
+    last = match.index + match[0].length
+  }
+
+  return out + escapeTemplateLiteralText(value.slice(last)) + '`'
+}
+
+/*
   The positions a capability reads literally, where a placeholder-shaped value is not a placeholder.
   db's OpenAPI `ignoreRoutes` holds paths like `/users/{id}`, which v3 excluded from replacement by
   passing this list to its loader (`db/index.js:16`) -- it is an argument there rather than an
@@ -595,9 +625,10 @@ function convertPlaceholders (
           return raw(`join(import.meta.dirname, ${serializeString(rest.slice(1))})`)
         }
 
-        // Anything else keeps the value's own shape and substitutes in place. The opening is split
-        // so this literal never holds an interpolation of its own, which is not what it means.
-        return raw('`' + '$' + `{import.meta.dirname}${rest.replace(/`/g, '\\`')}\``)
+        // Anything else keeps the value's own shape: the root becomes import.meta.dirname and the
+        // rest is literal text, escaped so nothing in it is read as template syntax.
+        // eslint-disable-next-line no-template-curly-in-string -- assembling the literal as text
+        return raw('`' + '${import.meta.dirname}' + escapeTemplateLiteralText(rest) + '`')
       }
 
       const position = classifyPosition(schema, pointer)
@@ -622,11 +653,7 @@ function convertPlaceholders (
           return value
         }
 
-        return raw(
-          '`' +
-            value.replace(/`/g, '\\`').replace(everyPlaceholder, (_, name) => `\${process.env.${name} ?? ''}`) +
-            '`'
-        )
+        return raw(interpolatedTemplate(value, name => `process.env[${serializeString(name)}] ?? ''`))
       }
 
       const name = whole[1]
@@ -657,7 +684,7 @@ function convertPlaceholders (
             read the file it came from.
           */
           return raw(
-            `process.env.${name} ?? ${
+            `process.env[${serializeString(name)}] ?? ${
               useSampleDefaults && sample[name] !== undefined ? serializeString(sample[name]) : "''"
             }`
           )
@@ -2533,6 +2560,35 @@ export async function migrateCommand (logger, args) {
       refusals.push({
         reason: `${bold(stray)} is a v3 configuration migrate is not converting`,
         fix: `remove it, or name it with ${bold('--config')} — migrate deletes only what it reads, and v4 refuses a directory holding a legacy file, so leaving it would emit a tree that cannot load`
+      })
+    }
+  }
+
+  /*
+    The package.json files auditDependencies will edit are parsed here, before anything is written:
+    a malformed one there threw a raw JSON error after the emit, leaving both dialects on disk in
+    the coexistence state the loader refuses. A refusal names it instead, and nothing is written.
+  */
+  const manifestDirectories = new Set([canonicalize(root)])
+  for (const application of plan?.applications ?? []) {
+    if (!application.inline && application.directory) {
+      manifestDirectories.add(canonicalize(application.directory))
+    }
+  }
+
+  for (const manifestDirectory of manifestDirectories) {
+    const manifestPath = join(manifestDirectory, 'package.json')
+
+    if (!existsSync(manifestPath)) {
+      continue
+    }
+
+    try {
+      JSON.parse(await readFile(manifestPath, 'utf-8'))
+    } catch (error) {
+      refusals.push({
+        reason: `${bold(manifestPath)} is not valid JSON (${error.message})`,
+        fix: 'fix the package.json and run migrate again — migrate edits it to point at the v4 dependencies and cannot while it does not parse'
       })
     }
   }

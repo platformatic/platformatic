@@ -193,6 +193,30 @@ async function fileExists (path) {
   }
 }
 
+test('migrate - refuses before writing when a package.json it must edit is not valid JSON', async t => {
+  const root = await createTemporaryDirectory(t, 'migrate')
+
+  // A trailing comma: valid-looking, unparseable. Written directly rather than through project(),
+  // which JSON.stringifies and could never produce a malformed manifest.
+  await writeFile(join(root, 'package.json'), '{ "name": "legacy", "type": "commonjs", }', 'utf-8')
+  await writeFile(
+    join(root, 'platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { port: 3042 } }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('is not valid JSON'), migrateProcess.stdout)
+
+  // Nothing written: the refusal is decided before the emit, so no coexistence state is left behind.
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  ok(await fileExists(join(root, 'platformatic.json')))
+})
+
 test('migrate - refuses to overwrite a configuration that is already there', async t => {
   const root = await project(t, {
     'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' },
@@ -1009,7 +1033,7 @@ test('migrate - converts a placeholder according to the type of the position it 
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
 
   ok(emitted.includes("port: Number(requiredEnv('PORT'))"), emitted)
-  ok(emitted.includes("hostname: process.env.HOSTNAME ?? ''"), emitted)
+  ok(emitted.includes("hostname: process.env['HOSTNAME'] ?? ''"), emitted)
   ok(emitted.includes("level: requiredEnum('LOG_LEVEL', ["), emitted)
   ok(emitted.includes("'silent'"), emitted)
 
@@ -1041,8 +1065,55 @@ test('migrate - leaves a string position holding an interpolation as a template 
   // Assembled rather than written inline: the expected text is a template literal, and spelling it
   // out here would be one in this file too.
   const interpolation = ['host-', 'REGION', "?? ''}-", 'ZONE', "?? ''}`"]
-  ok(emitted.includes(`hostname: \`${interpolation[0]}\${process.env.${interpolation[1]} ${interpolation[2]}\${process.env.${interpolation[3]} ${interpolation[4]}`), emitted)
+  ok(emitted.includes(`hostname: \`${interpolation[0]}\${process.env['${interpolation[1]}'] ${interpolation[2]}\${process.env['${interpolation[3]}'] ${interpolation[4]}`), emitted)
   ok(!emitted.includes('requiredEnv'), emitted)
+})
+
+test('migrate - a string value carrying template syntax cannot smuggle code into the emitted file', async t => {
+  globalThis.__MIGRATE_PWNED = false
+
+  t.after(() => {
+    delete globalThis.__MIGRATE_PWNED
+  })
+
+  // Assembled so this test file holds no literal ${...}: a live interpolation trying to set the
+  // global, a backslash the emitter must not read as an escape, and {REGION} to take the embedded
+  // path.
+  const danger = 'x' + '$' + '{ globalThis.__MIGRATE_PWNED = true }' + '\\ty-{REGION}'
+
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: { hostname: danger }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  // migrate ran its own validation import() of the emitted file; nothing executed the injected code.
+  strictEqual(globalThis.__MIGRATE_PWNED, false)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // The dangerous $ + { is escaped, and only {REGION} became a real interpolation -- via bracket
+  // access, so a digit-leading name would be legal too.
+  ok(emitted.includes('\\$' + '{ globalThis'), emitted)
+  ok(emitted.includes("process.env['REGION']"), emitted)
+
+  // And it loads: the value is a string, its interpolation inert text, its placeholder resolved.
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: { REGION: 'eu' },
+    validateCapabilities: false
+  })
+
+  strictEqual(globalThis.__MIGRATE_PWNED, false)
+  ok(loaded.config.applications[0].config.server.hostname.endsWith('y-eu'), loaded.config.applications[0].config.server.hostname)
 })
 
 test('migrate - resolves PLT_ROOT against the file rather than reading a variable v4 removed', async t => {
@@ -1092,7 +1163,7 @@ test('migrate - matches v3 grammar, and leaves the positions a capability reads 
 
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
 
-  ok(emitted.includes("connectionString: process.env.DATABASE_URL ?? ''"), emitted)
+  ok(emitted.includes("connectionString: process.env['DATABASE_URL'] ?? ''"), emitted)
   ok(emitted.includes("path: '/users/{id}'"), emitted)
 })
 
@@ -1126,7 +1197,7 @@ test('migrate - reports what an env block changes about a placeholder', async t 
 
   // Nothing is inlined: a codemod must not bake a block's value into tracked source.
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
-  ok(emitted.includes("hostname: process.env.GREETING ?? ''"), emitted)
+  ok(emitted.includes("hostname: process.env['GREETING'] ?? ''"), emitted)
 })
 
 test('migrate - names the breaking changes this tree stands in front of', async t => {
@@ -1193,13 +1264,13 @@ test('migrate - treats .env.sample as a suggestion unless asked otherwise', asyn
     v3 never read .env.sample, so turning one of its values into an executable fallback would change
     what the project does whenever the real variable is absent. The value is reported instead.
   */
-  ok((await readFile(join(noted, 'watt.config.mjs'), 'utf-8')).includes("process.env.HOSTNAME ?? ''"))
+  ok((await readFile(join(noted, 'watt.config.mjs'), 'utf-8')).includes("process.env['HOSTNAME'] ?? ''"))
   ok(notedProcess.stdout.includes('suggests') && notedProcess.stdout.includes('0.0.0.0'), notedProcess.stdout)
 
   const applied = await sampleProject()
   await wattpmUtils('migrate', applied, '--use-sample-defaults')
 
-  ok((await readFile(join(applied, 'watt.config.mjs'), 'utf-8')).includes("process.env.HOSTNAME ?? '0.0.0.0'"))
+  ok((await readFile(join(applied, 'watt.config.mjs'), 'utf-8')).includes("process.env['HOSTNAME'] ?? '0.0.0.0'"))
 })
 
 test('migrate - converts the root configuration too, and writes a sibling URL as its address', async t => {
@@ -1264,7 +1335,7 @@ test('migrate - converts a position whose branches differ only in how the value 
   await wattpmUtils('migrate', root)
 
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
-  ok(emitted.includes("target: process.env.LOG_TARGET ?? ''"), emitted)
+  ok(emitted.includes("target: process.env['LOG_TARGET'] ?? ''"), emitted)
 })
 
 test('migrate - converts a number written beside a digits-only string', async t => {
