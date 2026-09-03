@@ -81,7 +81,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
   ok(
     logs.find(
       log =>
-        log.stdout.level === 'DEBUG' &&
+        log.stdout?.level === 'DEBUG' &&
         log.stdout.time.length === 24 && // isotime
         log.stdout.name === 'service' &&
         log.stdout.msg === 'Loading envfile...'
