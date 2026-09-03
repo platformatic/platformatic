@@ -517,8 +517,9 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   // Start CPU intensive task first
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Start profiling with threshold and rotation interval
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.5, durationMillis: 500, maxELU: false })
+  // Stop the workload before the first rotation. Profile serialization adds
+  // enough ELU to obscure the workload transition this test is exercising.
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.9, durationMillis: 5000, maxELU: false })
 
   // Wait for the runtime health cycle to observe the high ELU and resume the profiler
   await waitForCondition(async () => {
@@ -526,18 +527,7 @@ test('profiling with eluThreshold should pause during rotation when below thresh
     return state.isProfilerRunning
   }, 10000)
 
-  // Wait for a profile to be captured
-  await waitForCondition(async () => {
-    const state = await app.sendCommandToApplication('service', 'getProfilingState')
-    return state.hasProfile
-  }, 2000)
-
-  // Get first profile - should have content
-  const profile1 = await app.sendCommandToApplication('service', 'getLastProfile')
-  assert.ok(profile1 instanceof Uint8Array, 'First profile should be available')
-  assert.ok(profile1.length > 0, 'First profile should have content')
-
-  // Stop CPU intensive task - ELU should drop below stop threshold (0.4)
+  // Stop CPU intensive task so ELU drops below the threshold hysteresis.
   await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
 
   // Wait for the runtime health cycle to observe the low ELU and pause the profiler
@@ -550,6 +540,11 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   const state = await app.sendCommandToApplication('service', 'getProfilingState')
   assert.ok(!state.isProfilerRunning, 'Profiler should have stopped running')
   assert.ok(state.isPausedBelowThreshold, 'Should be paused below threshold')
+  assert.ok(state.hasProfile, 'The completed rotation should have captured a profile')
+
+  const profile = await app.sendCommandToApplication('service', 'getLastProfile')
+  assert.ok(profile instanceof Uint8Array, 'Final profile should be available')
+  assert.ok(profile.length > 0, 'Final profile should have content')
 
   // Clean up
   await app.sendCommandToApplication('service', 'stopProfiling')

@@ -5,9 +5,44 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import getPort from 'get-port'
 import { Agent, request } from 'undici'
+import { transform } from '../index.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+
+test('starts the metrics server when applications are added after init', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const port = await getPort()
+  let deferredApplications
+
+  const app = await createRuntime(
+    projectDir,
+    {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+      watch: false,
+      autoload: { path: './services' },
+      metrics: { hostname: '127.0.0.1', port },
+      workers: 1
+    },
+    {
+      async transform (config, ...args) {
+        config = await transform(config, ...args)
+        deferredApplications = config.applications
+        config.applications = []
+        return config
+      }
+    }
+  )
+
+  t.after(() => app.close())
+
+  await app.init()
+  await app.addApplications(deferredApplications)
+
+  const { statusCode, body } = await request(`http://127.0.0.1:${port}`)
+  strictEqual(statusCode, 200)
+  await body.dump()
+})
 
 test('Hello', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
