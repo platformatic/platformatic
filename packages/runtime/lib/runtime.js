@@ -4384,6 +4384,10 @@ export class Runtime extends EventEmitter {
       }
     }
 
+    if (applicationConfig.sourcePath) {
+      allows.add(`--allow-fs-read=${join(applicationConfig.sourcePath, '*')}`)
+    }
+
     if (write?.length) {
       for (const p of write) {
         allows.add(`--allow-fs-write=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)

@@ -1,8 +1,8 @@
 import { findConfigurationFile } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { access, constants, readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
-import { dirname, join, resolve } from 'node:path'
+import { findPackageJSON } from 'node:module'
+import { join, resolve } from 'node:path'
 
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 export const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
@@ -101,18 +101,7 @@ export async function getDependencyVersion (dependencyName) {
   }
 
   async function resolveWorkspaceDependency (dependencyName) {
-    const require = createRequire(import.meta.url)
-    let dependencyPath = dirname(require.resolve(dependencyName))
-    // some deps are resolved not at their root level
-    // for instance 'typescript' will be risolved in its own ./lib directory
-    // next loop is to find the nearest parent directory that contains a package.json file
-    while (!(await isFileAccessible(join(dependencyPath, 'package.json')))) {
-      dependencyPath = join(dependencyPath, '..')
-      if (dependencyPath === '/') {
-        throw new Error(`Cannot find package.json for ${dependencyName}`)
-      }
-    }
-    const pathToPackageJson = join(dependencyPath, 'package.json')
+    const pathToPackageJson = findPackageJSON(dependencyName, import.meta.url)
     const packageJsonFile = await readFile(pathToPackageJson, 'utf-8')
     const packageJson = JSON.parse(packageJsonFile)
     return packageJson.version

@@ -529,6 +529,13 @@
             ]
           }
         ],
+        "not": {
+          "type": "object",
+          "required": [
+            "module",
+            "url"
+          ]
+        },
         "properties": {
           "id": {
             "type": "string"
@@ -559,6 +566,9 @@
             "type": "string"
           },
           "url": {
+            "type": "string"
+          },
+          "module": {
             "type": "string"
           },
           "gitBranch": {
@@ -956,6 +966,13 @@
             ]
           }
         ],
+        "not": {
+          "type": "object",
+          "required": [
+            "module",
+            "url"
+          ]
+        },
         "properties": {
           "id": {
             "type": "string"
@@ -986,6 +1003,9 @@
             "type": "string"
           },
           "url": {
+            "type": "string"
+          },
+          "module": {
             "type": "string"
           },
           "gitBranch": {
@@ -1383,6 +1403,13 @@
             ]
           }
         ],
+        "not": {
+          "type": "object",
+          "required": [
+            "module",
+            "url"
+          ]
+        },
         "properties": {
           "id": {
             "type": "string"
@@ -1413,6 +1440,9 @@
             "type": "string"
           },
           "url": {
+            "type": "string"
+          },
+          "module": {
             "type": "string"
           },
           "gitBranch": {

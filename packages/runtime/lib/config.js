@@ -1,5 +1,6 @@
 import { importCapabilityAndConfig, validationOptions } from '@platformatic/basic'
 import {
+  createDirectory,
   extractModuleFromSchemaUrl,
   findConfigurationFile,
   kMetadata,
@@ -10,14 +11,15 @@ import {
   runtimeUnwrappablePropertiesList
 } from '@platformatic/foundation'
 import { readdir, readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
-import { isAbsolute, join, resolve as resolvePath } from 'node:path'
+import { createRequire, findPackageJSON } from 'node:module'
+import { dirname, isAbsolute, join, resolve as resolvePath } from 'node:path'
 
 import {
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
-  InvalidArgumentError
+  InvalidArgumentError,
+  MissingDependencyError
 } from './errors.js'
 import { schema } from './schema.js'
 import { upgrade } from './upgrade.js'
@@ -219,6 +221,20 @@ export async function prepareApplication (config, application, defaultWorkers) {
     application.path = resolvePath(config[kMetadata].root, application.path)
   }
 
+  if (application.module) {
+    if (!application.path) {
+      throw new InvalidArgumentError(`Application "${application.id}" must define path when module is set`)
+    }
+
+    try {
+      application.sourcePath = dirname(findPackageJSON(application.module, resolvePath(config[kMetadata].root, 'noop.js')))
+    } catch (error) {
+      throw new MissingDependencyError(application.module, { cause: error })
+    }
+    application.moduleRoot = config[kMetadata].root
+    await createDirectory(application.path)
+  }
+
   if (application.path && application.config) {
     application.config = resolvePath(application.path, application.config)
   }
@@ -226,7 +242,9 @@ export async function prepareApplication (config, application, defaultWorkers) {
   // Skip capability detection for external services (url without path)
   // These services will have their path resolved later in runtime.js #setupApplication
   // Attempting to detect capability here would cause slow glob operations on the cwd
-  if (application.url && !application.path) {
+  if (application.module) {
+    application.type = application.module
+  } else if (application.url && !application.path) {
     application.type = 'unknown'
   } else {
     try {
@@ -250,7 +268,7 @@ export async function prepareApplication (config, application, defaultWorkers) {
       // This is needed to work around Rust bug on dylibs:
       // https://github.com/rust-lang/rust/issues/91979
       // https://github.com/rollup/rollup/issues/5761
-      const _require = createRequire(application.path)
+      const _require = createRequire(application.sourcePath ?? application.path)
       for (const m of pkg.modulesToLoad ?? []) {
         const toLoad = _require.resolve(m)
         loadModule(_require, toLoad).catch(() => {})
