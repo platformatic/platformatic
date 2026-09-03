@@ -441,7 +441,6 @@ export interface PlatformaticGatewayConfig {
       };
       addEntitiesResolvers?: boolean;
     };
-    addEmptySchema?: boolean;
     refreshTimeout?: number;
     /**
      * Content types that should be passed through without parsing to enable proxying

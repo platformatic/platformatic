@@ -99,14 +99,22 @@ test('should keep both the body-less and the described responses of an operation
   assert.equal(responses['204'].content, undefined)
 })
 
-test('should not change the body-less responses when the deprecated addEmptySchema is set', async t => {
-  const { schema } = await composeBasicApplication(t, { addEmptySchema: true })
-
-  const responses = schema.paths['/empty'].get.responses
-
-  assert.deepEqual(Object.keys(responses).sort(), ['204', '302'])
-  assert.equal(responses['204'].content, undefined)
-  assert.equal(responses['302'].content, undefined)
+test('should reject the deprecated addEmptySchema option', async t => {
+  await assert.rejects(
+    () =>
+      createFromConfig(t, {
+        gateway: {
+          applications: [],
+          addEmptySchema: true
+        }
+      }),
+    error => {
+      assert.equal(error.code, 'PLT_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA')
+      assert.equal(error.validationErrors[0].path, '/gateway')
+      assert.equal(error.validationErrors[0].params.additionalProperty, 'addEmptySchema')
+      return true
+    }
+  )
 })
 
 test('should proxy a body-less response as it is', async t => {
