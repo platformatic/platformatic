@@ -2135,7 +2135,8 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "default": false
         },
         "tracing": {
           "type": "object",

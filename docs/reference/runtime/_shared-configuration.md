@@ -710,7 +710,7 @@ The same server also exposes Kubernetes readiness and liveness probes when [`hea
 
 When `healthProbes` is an object with a different resolved `hostname` and `port`, the Prometheus server follows only the metrics configuration and health probes are exposed on their own server.
 
-- **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
+- **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Metrics are disabled by default when the `metrics` section is omitted. Set `metrics` to `true` or provide an object to enable them.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
 - **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
 - **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.

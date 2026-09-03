@@ -56,8 +56,7 @@ export async function start (...args) {
                 `Platformatic is now listening at (https?://\\S+) for worker \\d+ of the application "${applicationId}"`
               )
             )
-            : (message.msg?.match(/Platformatic is now listening at (https?:\/\/\S+) for /i) ??
-              message.msg?.match(/server listening at (https?:\/\/.+)/i))
+            : message.msg?.match(/Platformatic is now listening at (https?:\/\/\S+) for /i)
 
           if (!serverStarted && mo) {
             clearTimeout(errorTimeout)

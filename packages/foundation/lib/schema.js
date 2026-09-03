@@ -1488,7 +1488,8 @@ export const runtimeProperties = {
         },
         additionalProperties: false
       }
-    ]
+    ],
+    default: false
   },
   tracing,
   verticalScaler,
