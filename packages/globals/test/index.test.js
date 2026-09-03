@@ -162,6 +162,8 @@ test('updateGlobals should merge and return global fields', () => {
 
   strictEqual(updated, original)
   deepStrictEqual(updated.config, { hello: 'world' })
+  strictEqual(Object.getOwnPropertySymbols(globalThis).includes(Symbol.for('plt.globals.state')), true)
+  strictEqual(Object.hasOwn(globals, 'kState'), false)
   strictEqual(Object.hasOwn(globalThis, 'platformatic'), false)
 })
 
@@ -189,9 +191,9 @@ test('removeGlobals should remove global fields', () => {
   throws(() => globals.getMessaging(), { code: 'PLT_GLOBALS_MISSING_FIELD' })
 })
 
-test('removeGlobals should be noop without global object', () => {
+test('removeGlobals should be noop without initialized state', () => {
   return import('../lib/index.js?without-global').then(isolated => {
-    strictEqual(isolated.removeGlobals(['messaging']), undefined)
+    strictEqual(isolated.removeGlobals(['missing']), isolated.getGlobal())
   })
 })
 
@@ -205,11 +207,11 @@ test('getters should return undefined when throwOnMissing is false', () => {
   strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
 })
 
-test('separate module instances should not share global values', async () => {
+test('separate module instances should share global values', async () => {
   const isolated = await import('../lib/index.js?isolated')
 
   isolated.updateGlobals({ logger: { isolated: true } })
 
-  strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
+  strictEqual(globals.getLogger().isolated, true)
   strictEqual(isolated.getLogger().isolated, true)
 })

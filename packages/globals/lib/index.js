@@ -1,9 +1,16 @@
 import { MissingGlobalError } from './errors.js'
 
 const globalsPackage = '@platformatic/globals'
-const values = {}
-const fields = new Set()
-let initialized = false
+const kState = Symbol.for('plt.globals.state')
+
+if (!globalThis[kState]) {
+  Object.defineProperty(globalThis, kState, {
+    value: { values: {}, fields: new Set(), initialized: false },
+    enumerable: false
+  })
+}
+
+const state = globalThis[kState]
 
 export function externalizePlatformaticGlobals (nitro) {
   nitro.options.traceDeps ??= []
@@ -38,43 +45,43 @@ export function externalizePlatformaticGlobals (nitro) {
 function getField (name, options) {
   const { throwOnMissing = true } = options ?? {}
 
-  if (throwOnMissing && !fields.has(name)) {
+  if (throwOnMissing && !state.fields.has(name)) {
     throw new MissingGlobalError(name)
   }
 
-  return values[name]
+  return state.values[name]
 }
 
 export function getGlobal () {
-  return initialized ? values : undefined
+  return state.initialized ? state.values : undefined
 }
 
 export function updateGlobals (updates) {
-  initialized = true
+  state.initialized = true
 
   for (const [key, value] of Object.entries(updates)) {
-    values[key] = value
-    fields.add(key)
+    state.values[key] = value
+    state.fields.add(key)
   }
 
-  return values
+  return state.values
 }
 
 export function removeGlobals (names) {
-  if (!initialized) {
+  if (!state.initialized) {
     return undefined
   }
 
   for (const name of names) {
-    delete values[name]
-    fields.delete(name)
+    delete state.values[name]
+    state.fields.delete(name)
   }
 
-  return values
+  return state.values
 }
 
 export function hasField (name) {
-  return fields.has(name)
+  return state.fields.has(name)
 }
 
 export function isBuilding (options) {
