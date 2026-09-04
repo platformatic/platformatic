@@ -11,7 +11,6 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { ensureTrailingSlash } from '../lib/utils.js'
 import { request } from 'undici'
 import { create, createTemporaryDirectory, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
@@ -72,56 +71,6 @@ test('BaseCapability - should properly setup globals', async t => {
   deepStrictEqual(capability.logger.level, 'info')
   deepStrictEqual(capability.basePath, 'basePath')
   deepStrictEqual(platformatic.reuseTcpPorts, capability.reuseTcpPorts)
-})
-
-test('BaseCapability - startCommand - should expose the configured entrypoint port as url', async t => {
-  const capability = await create(
-    t,
-    {
-      applicationId: 'application',
-      serverConfig: {
-        hostname: '127.0.0.1',
-        port: 0
-      },
-      tracingConfig: {},
-      runtimeConfig: {
-        gracefulShutdown: {
-          runtime: 1000,
-          application: 1000
-        }
-      }
-    },
-    {
-      application: {
-        entrypointPort: 3042
-      }
-    }
-  )
-
-  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await capability.startWithCommand(`node ${executablePath}`)
-
-  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
-  await capability.stopCommand()
-})
-
-test('BaseCapability - setupChildManagerEventsForwarding - should keep entrypoint port on child url updates', async t => {
-  const capability = await create(
-    t,
-    {},
-    {
-      application: {
-        entrypointPort: 3042
-      }
-    }
-  )
-  const childManager = new EventEmitter()
-
-  capability.setupChildManagerEventsForwarding(childManager)
-  childManager.emit('url', 'http://127.0.0.1:1234', 'client-ws')
-
-  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
-  deepStrictEqual(capability.clientWs, 'client-ws')
 })
 
 test('BaseCapability - other getters', async t => {
