@@ -284,11 +284,12 @@ runtime. Each application object supports the following settings:
 
   This position reads a string, and reads it as *anything but `'false'` is true* — so
   `enabled: process.env.PLT_API_ENABLED` works and needs no comparison. Note that this
-  is particular to this setting: `telemetry.enabled` next to it is compared against the
+  is particular to this setting: `tracing.enabled` next to it is compared against the
   boolean `false`, where the string `'false'` does not disable anything.
 - **`path`** (**required**, `string`) - The path to the directory containing
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
+- **`module`** (`string`) - The installed npm package that implements the application. When specified, `path` is also required and is used as the writable application root. The package itself is resolved from the Watt project's dependencies and is not modified by the runtime.
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
 - **`config`** (`object`) - The application's own configuration, inline: what a capability factory
   returns, or a plain object naming its `module`. In v3 this was the path to a configuration file;
@@ -325,7 +326,7 @@ runtime. Each application object supports the following settings:
 
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 - **`management`** (`boolean` or `object`): Grants the application access to runtime management operations via the ITC (Inter-Thread Communication) channel. See the [management](#management) section for details.
-- **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
+- **`tracing`** (`object`): containing an `instrumentations` array to optionally configure additional OpenTelemetry
   intrumentations per application, e.g.:
 
 ```ts config
@@ -336,7 +337,7 @@ export default defineConfig({
     {
       id: 'api',
       path: './services/api',
-      telemetry: {
+      tracing: {
         instrumentations: [
           '@opentelemetry/instrumentation-express'
         ]
@@ -356,7 +357,7 @@ export default defineConfig({
     {
       id: 'api',
       path: './services/api',
-      telemetry: {
+      tracing: {
         instrumentations: [
           {
             package: '@opentelemetry/instrumentation-express',
@@ -384,7 +385,7 @@ export default defineConfig({
     {
       id: 'api',
       path: './services/api',
-      telemetry: {
+      tracing: {
         enabled: process.env.PLT_TELEMETRY_ENABLED === 'true',
         instrumentations: [{ package: '@opentelemetry/instrumentation-express' }]
       }
@@ -583,7 +584,7 @@ export default defineConfig({
 })
 ```
 
-### `telemetry`
+### `tracing`
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
@@ -622,7 +623,7 @@ export default defineConfig({
   autoload: {
     path: 'web'
   },
-  telemetry: {
+  tracing: {
     applicationName: 'test-application',
     diagLogger: true,
     exporter: {
@@ -687,11 +688,11 @@ An object with the following settings:
   - **`time`** — The key that contains the log timestamp. Default: `time`.
   - **`message`** — The key that contains the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
-- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
+- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `tracing` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
 
-  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
+  When used with tracing configuration, the service name and version from `tracing.applicationName` and `tracing.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
 
 ### `undici`
 
@@ -771,7 +772,7 @@ The same server also exposes Kubernetes readiness and liveness probes when [`hea
 
 When `healthProbes` is an object with a different resolved `hostname` and `port`, the Prometheus server follows only the metrics configuration and health probes are exposed on their own server.
 
-- **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
+- **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Metrics are disabled by default when the `metrics` section is omitted. Set `metrics` to `true` or provide an object to enable them.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
 - **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
 - **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.

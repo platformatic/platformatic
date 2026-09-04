@@ -79,6 +79,22 @@ A missing variable used to interpolate to the empty string. Now it is `undefined
 
 `defineConfig` types the object; it does not transform it. Omitting it is legal and costs you the editor's help.
 
+## Rename tracing configuration and package
+
+Rename the `telemetry` configuration section to `tracing`. The OpenTelemetry integration package is now `@platformatic/tracing` instead of `@platformatic/telemetry`:
+
+```diff
+- "telemetry": {
++ "tracing": {
+```
+
+Update package imports and dependencies accordingly:
+
+```diff
+- import { telemetry } from '@platformatic/telemetry'
++ import { telemetry } from '@platformatic/tracing'
+```
+
 ## Move listener configuration to the capability
 
 Remove `server` and `entrypoint` from the root. Configure the listening address in the configuration file of the application that owns the HTTP endpoint.

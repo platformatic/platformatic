@@ -19,7 +19,7 @@ Configuration file settings are grouped as follows:
 - **`gateway`**: Specific settings for Platformatic Gateway, such as service management and API composition.
 - **`metrics`**: Monitors and records performance [metrics](../service/configuration.md#metrics).
 - **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
-- **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
+- **`tracing`**: Handles [tracing data reporting](../service/configuration.md#tracing).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
 
 Sensitive data within these settings should be read from the [environment](../service/configuration.md#environment-variables) rather than written into the file.

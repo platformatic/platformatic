@@ -7,7 +7,7 @@ import {
   parseMemorySize
 } from '@platformatic/foundation'
 import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
-import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { addPinoInstrumentation } from '@platformatic/tracing'
 import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
@@ -98,7 +98,7 @@ function createLogger () {
     pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
   }
 
-  if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.telemetry?.enabled !== false) {
+  if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.tracing?.enabled !== false) {
     addPinoInstrumentation(pinoOptions)
   }
 

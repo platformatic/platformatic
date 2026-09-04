@@ -11,10 +11,10 @@ import { createRuntime, configurationFileIn } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 /*
-  The applications under prom-server are v4, so the runtime configuration that autoloads them has
-  to be one too -- an inline v3 object would send them through the v3 loader, which does not
-  recognize their configuration files. The blocks that cannot live in a file, because their ports
-  are allocated at run time, are layered on top of the loaded one.
+  The applications under prom-server are v4, so the runtime configuration that autoloads them is a
+  v4 object source: it goes through the same root pipeline a file does — autoload is expanded and
+  each application's watt.config is evaluated — while the blocks that cannot live in a file, because
+  their ports are allocated at run time, are layered on top.
 */
 function createPromRuntime (overrides) {
   const configFile = join(fixturesDir, 'prom-server', 'probes', 'watt.config.mjs')
@@ -26,6 +26,39 @@ function createPromRuntime (overrides) {
     }
   })
 }
+
+test('starts the metrics server when applications are added after init', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const port = await getPort()
+  let deferredApplications
+
+  const app = await createRuntime(
+    projectDir,
+    {
+      watch: false,
+      autoload: { path: './services' },
+      metrics: { hostname: '127.0.0.1', port },
+      workers: 1
+    },
+    {
+      async transform (config, ...args) {
+        config = await transform(config, ...args)
+        deferredApplications = config.applications
+        config.applications = []
+        return config
+      }
+    }
+  )
+
+  t.after(() => app.close())
+
+  await app.init()
+  await app.addApplications(deferredApplications)
+
+  const { statusCode, body } = await request(`http://127.0.0.1:${port}`)
+  strictEqual(statusCode, 200)
+  await body.dump()
+})
 
 test('Hello', async t => {
   const projectDir = join(fixturesDir, 'prom-server')

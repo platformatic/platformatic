@@ -161,7 +161,7 @@ test('update - should update version in package.json files', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.67.0'
+    '@platformatic/tracing': '^3.67.0'
   })
 
   const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
@@ -225,7 +225,7 @@ test('update - scopes to the application when executed inside its folder', async
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.67.0'
+    '@platformatic/tracing': '^3.67.0'
   })
 
   // Untouched: it belongs to the runtime above the boundary, which this invocation is not
@@ -269,7 +269,7 @@ test('update - should work when loaded from an application file', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.67.0'
+    '@platformatic/tracing': '^3.67.0'
   })
 
   // The another application is not updated, because it is not considered as part of the project.
@@ -319,7 +319,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/telemetry': '^3.0.0'
+    '@platformatic/tracing': '^3.0.0'
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {

@@ -4,7 +4,7 @@ export default {
     level: 'error'
   },
   messagingTimeout: 200,
-  telemetry: {
+  tracing: {
     applicationName: 'test-telemetry-messaging-runtime',
     version: '1.0.0',
     exporter: {

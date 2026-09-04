@@ -257,6 +257,8 @@ export class Runtime extends EventEmitter {
   #managementApi
   #prometheusServer
   #healthProbesServer
+  #metricsServersInitialized
+  #metricsServersStartPromise
   #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
@@ -342,6 +344,8 @@ export class Runtime extends EventEmitter {
     // Registered per-worker in #setupWorker, reserved so extensions cannot clobber it
     this.#reservedITCHandlerNames.add('profiling:started')
     this.#extensions = []
+    this.#metricsServersInitialized = false
+    this.#metricsServersStartPromise = null
     this.#extensionsWantHealthMetrics = false
     this.#extensionReadinessChecks = new Map()
     this.#extensionLivenessChecks = new Map()
@@ -377,10 +381,9 @@ export class Runtime extends EventEmitter {
       this.#metricsLabelName = 'applicationId'
     }
 
-    // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
+    // Initialize process-level metrics registry only when metrics are enabled.
     // These metrics are the same across all workers and only need to be collected once
-    // We need this for management API as it can request metrics even without explicit metrics config
-    if (config.metrics || config.managementApi) {
+    if (config.metrics && config.metrics.enabled !== false) {
       this.#processMetricsRegistry = new metricsClient.Registry()
       collectProcessMetrics(this.#processMetricsRegistry)
     }
@@ -416,12 +419,12 @@ export class Runtime extends EventEmitter {
     // readiness/liveness checks and probe routes before Fastify starts listening.
     await this.#loadExtensions()
 
-    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+    // A runtime without applications exits during start and must not briefly
+    // claim the default health-probe port. Applications added later, including
+    // by extension start hooks, initialize these servers in addApplications().
+    if (config.applications.length > 0) {
+      await this.#ensureMetricsServersStarted()
     }
-
-    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
-    this.#assertExtensionHealthRoutesApplied()
 
     this.#meshCoordinator = createCoordinator({ meshId: this.#meshId })
     this.#meshInterceptor = createInterceptor({
@@ -727,6 +730,10 @@ export class Runtime extends EventEmitter {
     }
 
     await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
+
+    if (applications.length > 0) {
+      await this.#ensureMetricsServersStarted()
+    }
 
     for (const application of applications) {
       this.logger.debug(`Added application "${application.id}".`)
@@ -1397,6 +1404,8 @@ export class Runtime extends EventEmitter {
       this.#healthProbesServer = null
     }
 
+    this.#metricsServersInitialized = false
+
     if (this.#opentelemetryMetricsForwarder) {
       await this.#opentelemetryMetricsForwarder.close()
       this.#opentelemetryMetricsForwarder = null
@@ -1410,10 +1419,7 @@ export class Runtime extends EventEmitter {
       entry.applied = false
     }
 
-    this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
-
-    this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
-    this.#assertExtensionHealthRoutesApplied()
+    await this.#ensureMetricsServersStarted()
 
     await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
 
@@ -1433,6 +1439,41 @@ export class Runtime extends EventEmitter {
 
     this.logger.info({ metricsConfig }, 'Metrics configuration updated')
     return { success: true, config: metricsConfig }
+  }
+
+  async #ensureMetricsServersStarted () {
+    if (this.#metricsServersInitialized) {
+      return
+    }
+
+    if (this.#metricsServersStartPromise) {
+      return this.#metricsServersStartPromise
+    }
+
+    this.#metricsServersStartPromise = (async () => {
+      const config = this.#config
+
+      try {
+        if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
+          this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+        }
+
+        this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
+        this.#assertExtensionHealthRoutesApplied()
+        this.#metricsServersInitialized = true
+      } catch (err) {
+        await Promise.allSettled([this.#prometheusServer?.close(), this.#healthProbesServer?.close()])
+        this.#prometheusServer = null
+        this.#healthProbesServer = null
+        throw err
+      }
+    })()
+
+    try {
+      await this.#metricsServersStartPromise
+    } finally {
+      this.#metricsServersStartPromise = null
+    }
   }
 
   async #startOpenTelemetryMetricsForwarder (config) {
@@ -2566,11 +2607,11 @@ export class Runtime extends EventEmitter {
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
     }
 
-    if (config.telemetry) {
-      applicationConfig.telemetry = {
-        ...config.telemetry,
-        ...applicationConfig.telemetry,
-        applicationName: `${config.telemetry.applicationName}-${applicationConfig.id}`
+    if (config.tracing) {
+      applicationConfig.tracing = {
+        ...config.tracing,
+        ...applicationConfig.tracing,
+        applicationName: `${config.tracing.applicationName}-${applicationConfig.id}`
       }
     }
 
@@ -2579,9 +2620,9 @@ export class Runtime extends EventEmitter {
 
     const execArgv = applicationConfig.execArgv ?? []
 
-    if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+    if (!applicationConfig.skipTracingHooks && config.tracing && config.tracing.enabled !== false) {
       const require = createRequire(import.meta.url)
-      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const telemetryPath = require.resolve('@platformatic/tracing')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
       const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
 
@@ -4519,6 +4560,10 @@ export class Runtime extends EventEmitter {
       for (const p of read) {
         allows.add(`--allow-fs-read=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)
       }
+    }
+
+    if (applicationConfig.sourcePath) {
+      allows.add(`--allow-fs-read=${join(applicationConfig.sourcePath, '*')}`)
     }
 
     if (write?.length) {

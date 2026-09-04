@@ -42,7 +42,7 @@ export interface PlatformaticNuxtConfig {
           operations?: string[];
         };
     metrics?: boolean | MetricsOptions;
-    telemetry?: TelemetryOptions;
+    tracing?: TelemetryOptions;
     verticalScaler?: {
       enabled?: boolean;
       maxTotalWorkers?: number;
@@ -133,7 +133,7 @@ export interface PlatformaticNuxtConfig {
       nodeOptions?: string;
       execArgv?: string[];
       permissions?: PermissionsOptions;
-      telemetry?: ApplicationTelemetryOverrides;
+      tracing?: ApplicationTelemetryOverrides;
       compileCache?: boolean | CompileCacheOptions1;
     };
   };
@@ -777,7 +777,7 @@ export interface PermissionsOptions {
 }
 export interface ApplicationTelemetryOverrides {
   /**
-   * An array of instrumentations loaded if telemetry is enabled
+   * An array of instrumentations loaded if tracing is enabled
    */
   instrumentations?: (
     | string

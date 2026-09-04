@@ -45,6 +45,8 @@ test('restart in case of a crash with a delay in development', async t => {
     await child.catch(() => {})
   })
 
+  const messages = waitForMessages(child, 'listening')
+
   {
     const res = await request(url + '/crash', {
       method: 'POST'
@@ -53,7 +55,7 @@ test('restart in case of a crash with a delay in development', async t => {
     assert.strictEqual(res.statusCode, 200)
   }
 
-  const matches = await waitForMessages(child, 'listening')
+  const matches = await messages
 
   assert.ok(matches.crash)
   assert.ok(matches.restartDelayed)
@@ -74,6 +76,8 @@ test('restart in case of a crash without any delay in production', async t => {
     await child.catch(() => {})
   })
 
+  const messages = waitForMessages(child, 'listening')
+
   {
     const res = await request(url + '/crash', {
       method: 'POST'
@@ -82,7 +86,7 @@ test('restart in case of a crash without any delay in production', async t => {
     assert.strictEqual(res.statusCode, 200)
   }
 
-  const matches = await waitForMessages(child, 'listening')
+  const matches = await messages
 
   assert.ok(matches.crash)
   assert.ok(!matches.restartDelayed)
@@ -110,6 +114,8 @@ test("do not restart in case of a crash in case it's so specified in development
     await child.catch(() => {})
   })
 
+  const messages = waitForMessages(child, 'unavailable')
+
   {
     const res = await request(url + '/crash', {
       method: 'POST'
@@ -118,7 +124,7 @@ test("do not restart in case of a crash in case it's so specified in development
     assert.strictEqual(res.statusCode, 200)
   }
 
-  const matches = await waitForMessages(child, 'unavailable')
+  const matches = await messages
 
   assert.ok(matches.crash)
   assert.ok(!matches.restartDelayed)
@@ -143,6 +149,8 @@ test('should restart in production even if restartOnError is false', async t => 
     await child.catch(() => {})
   })
 
+  const messages = waitForMessages(child, 'listening')
+
   {
     const res = await request(url + '/crash', {
       method: 'POST'
@@ -151,7 +159,7 @@ test('should restart in production even if restartOnError is false', async t => 
     assert.strictEqual(res.statusCode, 200)
   }
 
-  const matches = await waitForMessages(child, 'listening')
+  const matches = await messages
 
   assert.ok(matches.crash)
   assert.ok(!matches.restartDelayed)

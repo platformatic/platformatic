@@ -20,7 +20,7 @@ export default {
       }
     }
   },
-  telemetry: {
+  tracing: {
     applicationName: 'test-telemetry',
     exporter: {
       type: 'otlp',

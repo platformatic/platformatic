@@ -408,7 +408,7 @@ export interface PlatformaticGatewayConfig {
           operations?: string[];
         };
     metrics?: boolean | MetricsOptions;
-    telemetry?: TelemetryOptions;
+    tracing?: TelemetryOptions;
     verticalScaler?: {
       enabled?: boolean;
       maxTotalWorkers?: number;
@@ -499,11 +499,11 @@ export interface PlatformaticGatewayConfig {
       nodeOptions?: string;
       execArgv?: string[];
       permissions?: PermissionsOptions;
-      telemetry?: ApplicationTelemetryOverrides;
+      tracing?: ApplicationTelemetryOverrides;
       compileCache?: boolean | CompileCacheOptions1;
     };
   };
-  telemetry?: TelemetryOptions1;
+  tracing?: TelemetryOptions1;
   watch?: WatchOptions | boolean | string;
   $schema?: string;
   module?: string;
@@ -1299,7 +1299,7 @@ export interface PermissionsOptions {
 }
 export interface ApplicationTelemetryOverrides {
   /**
-   * An array of instrumentations loaded if telemetry is enabled
+   * An array of instrumentations loaded if tracing is enabled
    */
   instrumentations?: (
     | string

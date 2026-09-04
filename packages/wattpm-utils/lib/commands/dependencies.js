@@ -186,7 +186,12 @@ export async function installDependencies (logger, root, applications, productio
     )
   }
 
-  for (let { id, path, packageManager: applicationPackageManager } of applications) {
+  for (let { id, path, module, packageManager: applicationPackageManager } of applications) {
+    // Module applications use dependencies installed in the Watt root and their package is not writable.
+    if (module) {
+      continue
+    }
+
     const hasConfiguredPackageManager = !!applicationPackageManager
     applicationPackageManager ??= await getPackageManager(path, packageManager)
     const applicationPackageArgs = getInstallationCommand(applicationPackageManager, production)
@@ -426,6 +431,10 @@ export async function updateCommand (logger, args) {
 
   // Now, for all the applications in the configuration file, update the dependencies
   for (const application of applications) {
+    if (application.module) {
+      continue
+    }
+
     await updateDependencies(
       logger,
       latest,

@@ -507,6 +507,13 @@
                 ]
               }
             ],
+            "not": {
+              "type": "object",
+              "required": [
+                "module",
+                "url"
+              ]
+            },
             "properties": {
               "id": {
                 "type": "string"
@@ -544,6 +551,9 @@
                 ]
               },
               "url": {
+                "type": "string"
+              },
+              "module": {
                 "type": "string"
               },
               "gitBranch": {
@@ -844,12 +854,12 @@
                 "additionalProperties": false,
                 "title": "PermissionsOptions"
               },
-              "telemetry": {
+              "tracing": {
                 "type": "object",
                 "properties": {
                   "instrumentations": {
                     "type": "array",
-                    "description": "An array of instrumentations loaded if telemetry is enabled",
+                    "description": "An array of instrumentations loaded if tracing is enabled",
                     "items": {
                       "oneOf": [
                         {
@@ -2156,9 +2166,10 @@
               "additionalProperties": false,
               "title": "MetricsOptions"
             }
-          ]
+          ],
+          "default": false
         },
-        "telemetry": {
+        "tracing": {
           "type": "object",
           "properties": {
             "enabled": {
@@ -2881,12 +2892,12 @@
               "additionalProperties": false,
               "title": "PermissionsOptions"
             },
-            "telemetry": {
+            "tracing": {
               "type": "object",
               "properties": {
                 "instrumentations": {
                   "type": "array",
-                  "description": "An array of instrumentations loaded if telemetry is enabled",
+                  "description": "An array of instrumentations loaded if tracing is enabled",
                   "items": {
                     "oneOf": [
                       {

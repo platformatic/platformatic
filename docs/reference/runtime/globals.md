@@ -94,8 +94,8 @@ The default export is `getGlobal`.
 | `getLogger(options?)` | Returns the application Pino logger instance. See the [logging guide](../../guides/logging.md). |
 | `getLogLevel(options?)` | Returns the configured application log level. |
 | `getInterceptLogging(options?)` | Returns a boolean indicating whether logging interception is enabled. |
-| `getTelemetryConfig(options?)` | Returns the telemetry configuration as an object. |
-| `getTelemetryReady(options?)` | Returns the promise that resolves when telemetry is ready. |
+| `getTracingConfig(options?)` | Returns the tracing configuration as an object. |
+| `getTracingReady(options?)` | Returns the promise that resolves when tracing is ready. |
 | `getTracerProvider(options?)` | Returns the OpenTelemetry tracer provider. |
 | `getClientSpansAls(options?)` | Returns the async local storage instance used for client spans. |
 | `getPrometheus(options?)` | Returns an object containing the Prometheus client and registry used by the runtime. |

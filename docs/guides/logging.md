@@ -149,7 +149,7 @@ export default defineConfig({
       url: 'http://localhost:4318/v1/logs'
     }
   },
-  telemetry: {
+  tracing: {
     enabled: true,
     applicationName: 'my-app',
     version: '1.0.0',
@@ -176,7 +176,7 @@ import { defineConfig } from 'wattpm'
 
 export default defineConfig({
   autoload: { path: 'web' },
-  telemetry: {
+  tracing: {
     applicationName: 'my-app',
     exporter: {
       type: 'otlp',

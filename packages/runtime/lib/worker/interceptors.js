@@ -6,7 +6,7 @@ import {
   getOnHttpCacheMiss,
   getOnHttpCacheRequest
 } from '@platformatic/globals'
-import { createTelemetryThreadInterceptorHooks } from '@platformatic/telemetry'
+import { createTelemetryThreadInterceptorHooks } from '@platformatic/tracing'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -43,8 +43,8 @@ export function refreshGlobalDispatcher () {
 }
 
 export async function setDispatcher (runtimeConfig) {
-  const telemetryHooks = runtimeConfig.telemetry ? createTelemetryThreadInterceptorHooks() : {}
-  const threadDispatcher = createThreadInterceptor(runtimeConfig, telemetryHooks)
+  const tracingHooks = runtimeConfig.tracing ? createTelemetryThreadInterceptorHooks() : {}
+  const threadDispatcher = createThreadInterceptor(runtimeConfig, tracingHooks)
   const threadInterceptor = threadDispatcher
 
   await threadDispatcher.ready
@@ -79,7 +79,7 @@ export async function setDispatcher (runtimeConfig) {
     threadDispatcher: {
       interceptor: threadDispatcher,
       server: null,
-      serverHooks: telemetryHooks.serverHooks
+      serverHooks: tracingHooks.serverHooks
     }
   }
 }
@@ -217,7 +217,7 @@ async function getDispatcherOpts (undiciConfig) {
   return dispatcherOpts
 }
 
-function createThreadInterceptor (runtimeConfig, telemetryHooks) {
+function createThreadInterceptor (runtimeConfig, tracingHooks) {
   const threadDispatcher = createInterceptor({
     meshId: workerData.meshId,
     domain: '.plt.local',
@@ -227,7 +227,7 @@ function createThreadInterceptor (runtimeConfig, telemetryHooks) {
       ...runtimeConfig,
       applicationId: workerData.applicationConfig.id
     }),
-    ...telemetryHooks
+    ...tracingHooks
   })
   return threadDispatcher
 }

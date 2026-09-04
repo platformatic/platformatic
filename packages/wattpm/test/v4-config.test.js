@@ -65,7 +65,7 @@ test('a Level 1 file is a bare factory call, auto-wrapped into a single-applicat
   // Validation ran main-side against the capability's own schema, so the payload carries that
   // schema's defaults — useDefaults runs here rather than in the eval worker.
   strictEqual(entry.config.node.hasServer, true)
-  deepStrictEqual(entry.capabilityMetadata, { skipTelemetryHooks: false, modulesToLoad: [] })
+  deepStrictEqual(entry.capabilityMetadata, { skipTracingHooks: false, modulesToLoad: [] })
 
   /*
     The serving declaration is not capability metadata: it is consumed at load time, by the check

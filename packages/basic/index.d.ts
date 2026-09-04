@@ -23,7 +23,7 @@ export type BaseContext = Partial<{
   isProduction: boolean
   isStandalone: boolean
   directory: string
-  telemetryConfig: object
+  tracingConfig: object
   metricsConfig: object
   hasManagementApi: boolean
 }>
@@ -163,7 +163,7 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   standardStreams: Record<string, NodeJS.WritableStream>
   applicationId?: string
   workerId: number
-  telemetryConfig?: object
+  tracingConfig?: object
   serverConfig?: Record<string, unknown>
   openapiSchema: object | string | null
   graphqlSchema: unknown

@@ -13,7 +13,7 @@ import {
   getRoot,
   getRuntimeConfig,
   getRuntimeBasePath,
-  getTelemetryConfig,
+  getTracingConfig,
   getWantsAbsoluteUrls,
   getWorkerId
 } from '@platformatic/globals'
@@ -39,7 +39,7 @@ function handler (_, res) {
     root: getRoot(),
     runtimeConfig: getRuntimeConfig(),
     runtimeBasePath: getRuntimeBasePath(),
-    telemetryConfig: getTelemetryConfig(),
+    tracingConfig: getTracingConfig(),
     wantsAbsoluteUrls: getWantsAbsoluteUrls(),
     workerId: getWorkerId()
   }

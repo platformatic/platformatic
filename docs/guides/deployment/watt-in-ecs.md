@@ -103,14 +103,14 @@ export default defineConfig({
 This makes sure our logs are shipped to Cloudwatch and we integrate with the
 `@timestamp` property of Cloudwatch.
 
-Next, a `telemetry` block must be added to _watt.config.ts_ so that metrics flow into Cloudwatch.
+Next, a `tracing` block must be added to _watt.config.ts_ so that metrics flow into Cloudwatch.
 
 This example uses OTLP over HTTP. You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport": "grpc"`) and using `http://localhost:4317` without `/v1/traces`.
 
 ```ts
 export default defineConfig({
   // ...
-  telemetry: {
+  tracing: {
     applicationName: 'the-app-name',
     version: '1.0.0',
     enabled: true,

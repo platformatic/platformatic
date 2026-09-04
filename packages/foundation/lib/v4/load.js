@@ -837,6 +837,22 @@ async function prepareApplication ({
   // particular would otherwise put every secret on every application entry.
   Object.defineProperty(prepared, 'envFileSources', { value: fileSources, enumerable: false })
 
+  /*
+    A module application is delivered as an npm package that exports `create`: the package named on
+    the entry is the capability. There is no configuration file to discover and no capability to
+    detect — the detector run below would read the empty writable root and fail — so the loader
+    records the module and its inline config, if any, and stops. The package is imported and its
+    `create` invoked worker-side, which is where an absent factory or a missing dependency is
+    reported (see prepareV4Application). Nothing is validated against a schema here: a module
+    application carries no per-capability schema subpath the way a detected capability does.
+  */
+  if (entry.module) {
+    prepared.module = entry.module
+    prepared.config = entry.config ?? {}
+
+    return prepared
+  }
+
   if (entry.config !== undefined) {
     if (configurationFile) {
       // A root boot must not have two sources for one application. No evaluation is involved, and

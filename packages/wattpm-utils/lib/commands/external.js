@@ -127,7 +127,12 @@ async function fixConfiguration (context, logger, root, configOption, skipDepend
   }
 
   // For each application, if there is no watt.json, create one and fix package dependencies
-  for (const { path } of applications) {
+  for (const { path, module } of applications) {
+    // A module application has no local folder to inspect or fix; its capability is an npm package.
+    if (module) {
+      continue
+    }
+
     // Both dialects, because a v4 file that goes unseen here is one this command would overwrite.
     const wattConfiguration = await findAnyConfigurationFile(resolve(root, path))
 

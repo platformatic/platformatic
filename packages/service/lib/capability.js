@@ -14,7 +14,7 @@ import {
   sanitizeHTTPSOptions
 } from '@platformatic/foundation'
 import { getTracerProvider } from '@platformatic/globals'
-import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
+import { addPinoInstrumentation, telemetry } from '@platformatic/tracing'
 import fastify from 'fastify'
 import { printSchema } from 'graphql'
 import { randomUUID } from 'node:crypto'
@@ -75,8 +75,8 @@ export class ServiceCapability extends BaseCapability {
     // Skip manual telemetry plugin if automatic instrumentation is already active
     // (loaded via --import from node-telemetry.js)
     const hasAutomaticInstrumentation = !!getTracerProvider({ throwOnMissing: false })
-    if (isKeyEnabled('telemetry', config) && !hasAutomaticInstrumentation) {
-      await this.#app.register(telemetry, config.telemetry)
+    if (isKeyEnabled('tracing', config) && !hasAutomaticInstrumentation) {
+      await this.#app.register(telemetry, config.tracing)
     }
 
     this.#app.decorate('platformatic', { config: this.config })
@@ -207,12 +207,12 @@ export class ServiceCapability extends BaseCapability {
       return
     }
 
-    const { telemetryConfig, serverConfig, isProduction, logger } = this.context
+    const { tracingConfig, serverConfig, isProduction, logger } = this.context
 
     const config = { ...this.config }
 
-    if (telemetryConfig) {
-      config.telemetry = telemetryConfig
+    if (tracingConfig) {
+      config.tracing = tracingConfig
     }
 
     const loggerInstance = logger ?? serverConfig?.loggerInstance ?? this.serverConfig?.loggerInstance
@@ -282,7 +282,7 @@ export class ServiceCapability extends BaseCapability {
       pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig?.timestamp)
     }
 
-    if (this.loggerConfig.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
+    if (this.loggerConfig.openTelemetryExporter && this.tracingConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)
     }
 

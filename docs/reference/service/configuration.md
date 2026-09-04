@@ -267,7 +267,7 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   })
   ```
 
-### `telemetry`
+### `tracing`
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
@@ -298,7 +298,7 @@ _Example_
 import { service } from '@platformatic/service'
 
 export default service({
-  telemetry: {
+  tracing: {
     applicationName: 'test-application',
     diagLogger: true,
     exporter: {

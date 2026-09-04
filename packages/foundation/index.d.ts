@@ -169,7 +169,7 @@ export declare function loadConfiguration (
 // hence the index signature).
 export interface ConfigurationModule {
   loadConfiguration?: (configPath: string) => Promise<unknown>
-  skipTelemetryHooks?: boolean
+  skipTracingHooks?: boolean
   createCommands?: (applicationId: string) => unknown
   modulesToLoad?: string[]
   [key: string]: unknown

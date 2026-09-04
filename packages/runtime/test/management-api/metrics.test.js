@@ -171,3 +171,31 @@ test('should only receive an error message if the metrics are disabled', async t
   const metrics = await body.json()
   deepStrictEqual(metrics, { statusCode: 501, error: 'Not Implemented', message: 'Metrics are disabled.' })
 })
+
+test('should disable metrics when no metrics configuration is provided', async t => {
+  const projectDir = join(fixturesDir, 'management-api-without-metrics-omitted')
+  const app = await createRuntime(projectDir)
+
+  await app.start()
+
+  const client = new Client(
+    { hostname: 'localhost', protocol: 'http:' },
+    { socketPath: app.getManagementApiUrl(), keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }
+  )
+
+  t.after(async () => {
+    await client.close()
+    await app.close()
+  })
+
+  const config = await app.getRuntimeConfig()
+  strictEqual(config.metrics.enabled, false)
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/metrics',
+    headers: { Accept: 'application/json' }
+  })
+  strictEqual(statusCode, 501)
+  deepStrictEqual(await body.json(), { statusCode: 501, error: 'Not Implemented', message: 'Metrics are disabled.' })
+})

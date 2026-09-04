@@ -15,7 +15,7 @@ import {
   getReuseTcpPorts,
   getRuntimeBasePath,
   getRuntimeConfig,
-  getTelemetryReady,
+  getTracingReady,
   getWantsAbsoluteUrls,
   getWorkerId,
   hasField,
@@ -335,9 +335,9 @@ export class ChildProcess extends ITC {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
-    if (telemetryReady) {
-      await telemetryReady
+    const tracingReady = getTracingReady({ throwOnMissing: false })
+    if (tracingReady) {
+      await tracingReady
     }
 
     // Setup and start OTLP exporter bridge over the child's populated registry

@@ -79,8 +79,8 @@ export function getAdditionalServerOptions (options) {
   return getField('additionalServerOptions', options)
 }
 
-export function getTelemetryConfig (options) {
-  return getField('telemetryConfig', options)
+export function getTracingConfig (options) {
+  return getField('tracingConfig', options)
 }
 
 export function getConfig (options) {
@@ -247,8 +247,8 @@ export function getSendHealthSignal (options) {
   return getField('sendHealthSignal', options)
 }
 
-export function getTelemetryReady (options) {
-  return getField('telemetryReady', options)
+export function getTracingReady (options) {
+  return getField('tracingReady', options)
 }
 
 export function getTracerProvider (options) {

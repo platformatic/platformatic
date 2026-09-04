@@ -20,7 +20,7 @@ export const servesWithoutPort = { development: true, production: true }
 // Package-level metadata main-side preparation reads before any worker exists. It lives beside the
 // schema so the light /schema subpath carries it, which is what keeps boot from importing the full
 // capability package into the loader.
-export const skipTelemetryHooks = true
+export const skipTracingHooks = true
 
 const { plugins, openApiBase, $defs } = serviceSchemaComponents
 
@@ -496,7 +496,7 @@ export const schema = {
     types,
     plugins,
     application: basicSchemaComponents.application,
-    telemetry: utilsSchemaComponents.telemetry,
+    tracing: utilsSchemaComponents.tracing,
     runtime: wrappedRuntime,
     watch: {
       anyOf: [

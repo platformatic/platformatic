@@ -81,7 +81,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   async function getActiveConnections () {
     const metrics = await prometheusRegistry.metrics()
-    const match = metrics.match(/active_ws_gateway_connections.+\s(\d+)$/m)
+    const match = metrics.match(/^active_ws_gateway_connections(?:\{[^}]*\})?\s+(\d+)$/m)
     return match ? parseInt(match[1]) : 0
   }
 

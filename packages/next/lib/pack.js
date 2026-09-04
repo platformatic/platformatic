@@ -15,7 +15,7 @@ import {
   symlink,
   writeFile
 } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import { findPackageJSON } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, relative, resolve as resolvePath } from 'node:path'
 import { version as platformaticVersion } from './schema.js'
@@ -169,60 +169,15 @@ async function loadPackageFromRoot (root, fallbackName) {
 }
 
 async function resolvePackageRoot (name, from) {
-  const require = createRequire(from)
-
   try {
-    const packageJsonPath = require.resolve(`${name}/package.json`)
-    return dirname(packageJsonPath)
+    return dirname(findPackageJSON(name, from))
   } catch (error) {
-    const packageJsonPath = resolvePackageJsonFromSearchPaths(require, name)
-    if (packageJsonPath) {
-      return dirname(packageJsonPath)
+    const workspacePackage = resolveWorkspacePackageRoot(name)
+    if (workspacePackage) {
+      return workspacePackage
     }
 
-    try {
-      const resolvedEntry = require.resolve(name)
-      return await findPackageRoot(dirname(resolvedEntry))
-    } catch (resolveError) {
-      const workspacePackage = resolveWorkspacePackageRoot(name)
-      if (workspacePackage) {
-        return workspacePackage
-      }
-
-      throw resolveError
-    }
-  }
-}
-
-function resolvePackageJsonFromSearchPaths (require, name) {
-  const searchPaths = require.resolve.paths(name) ?? []
-  const packageSegments = name.split('/')
-
-  for (const searchPath of searchPaths) {
-    const candidate = resolvePath(searchPath, ...packageSegments, 'package.json')
-    if (existsSync(candidate)) {
-      return candidate
-    }
-  }
-
-  return null
-}
-
-async function findPackageRoot (directory) {
-  let current = directory
-
-  while (true) {
-    const candidate = resolvePath(current, 'package.json')
-    if (existsSync(candidate)) {
-      return current
-    }
-
-    const parent = resolvePath(current, '..')
-    if (parent === current) {
-      throw new Error(`Cannot determine package root for ${directory}.`)
-    }
-
-    current = parent
+    throw error
   }
 }
 

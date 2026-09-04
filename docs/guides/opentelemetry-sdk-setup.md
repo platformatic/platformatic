@@ -190,7 +190,7 @@ When using manual SDK setup, you should disable Watt's built-in telemetry to avo
         "--import", "@opentelemetry/instrumentation/hook.mjs",
         "--import", "./telemetry-init.mjs"
       ],
-      "telemetry": {
+      "tracing": {
         "enabled": false
       }
     }

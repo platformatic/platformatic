@@ -138,7 +138,7 @@ export async function importCapabilitySchema (module, applicationRoot, { runtime
           // The package-level metadata main-side preparation needs besides the schema. An absent
           // servesWithoutPort means 'worker', which is what the serving predicate reads.
           metadata: {
-            skipTelemetryHooks: loaded.skipTelemetryHooks ?? false,
+            skipTracingHooks: loaded.skipTracingHooks ?? false,
             modulesToLoad: loaded.modulesToLoad ?? [],
             servesWithoutPort: loaded.servesWithoutPort ?? 'worker'
           }

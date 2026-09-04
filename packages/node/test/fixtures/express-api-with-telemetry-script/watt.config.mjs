@@ -3,7 +3,7 @@ export default {
   logger: {
     level: 'error'
   },
-  telemetry: {
+  tracing: {
     applicationName: 'test-service',
     version: '1.0.0',
     exporter: {

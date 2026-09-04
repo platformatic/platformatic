@@ -6,6 +6,6 @@
     "@platformatic/vite": ">1"
   },
   "devDependencies": {
-    "@platformatic/telemetry": "^3.0.0"
+    "@platformatic/tracing": "^3.0.0"
   }
 }

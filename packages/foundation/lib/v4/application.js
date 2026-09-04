@@ -89,7 +89,7 @@ export async function applyResolvedConfiguration (root, config, { schema, transf
   try {
     /*
       The context reaches the transform, because capabilities read it there: node folds
-      `telemetryConfig` into the application's own telemetry block, and a transform handed only a
+      `tracingConfig` into the application's own tracing block, and a transform handed only a
       root silently produces a configuration with none.
     */
     return await transform(config, schema, { ...context, root })

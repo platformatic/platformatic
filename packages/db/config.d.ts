@@ -351,7 +351,7 @@ export interface PlatformaticDatabaseConfig {
     [k: string]: unknown;
   };
   application?: {};
-  telemetry?: TelemetryOptions;
+  tracing?: TelemetryOptions;
   runtime?: {
     preload?: string | string[];
     extensions?: string | ExtensionEntry | (string | ExtensionEntry1)[];
@@ -378,7 +378,7 @@ export interface PlatformaticDatabaseConfig {
           operations?: string[];
         };
     metrics?: boolean | MetricsOptions;
-    telemetry?: TelemetryOptions1;
+    tracing?: TelemetryOptions1;
     verticalScaler?: {
       enabled?: boolean;
       maxTotalWorkers?: number;
@@ -469,7 +469,7 @@ export interface PlatformaticDatabaseConfig {
       nodeOptions?: string;
       execArgv?: string[];
       permissions?: PermissionsOptions;
-      telemetry?: ApplicationTelemetryOverrides;
+      tracing?: ApplicationTelemetryOverrides;
       compileCache?: boolean | CompileCacheOptions1;
     };
   };
@@ -1364,7 +1364,7 @@ export interface PermissionsOptions {
 }
 export interface ApplicationTelemetryOverrides {
   /**
-   * An array of instrumentations loaded if telemetry is enabled
+   * An array of instrumentations loaded if tracing is enabled
    */
   instrumentations?: (
     | string

@@ -30,14 +30,14 @@ Where each v3 property went:
 - What was directly under `runtime` — [`preload`](./runtime/configuration.md#preload),
   [`workers`](./runtime/configuration.md#workers), [`logger`](./runtime/configuration.md#logger),
   [`watch`](./runtime/configuration.md#watch), [`health`](./runtime/configuration.md#health),
-  [`telemetry`](./runtime/configuration.md#telemetry), [`undici`](./runtime/configuration.md#undici),
+  [`tracing`](./runtime/configuration.md#tracing), [`undici`](./runtime/configuration.md#undici),
   [`httpCache`](./runtime/configuration.md#httpcache), [`metrics`](./runtime/configuration.md#metrics),
   [`gracefulShutdown`](./runtime/configuration.md#gracefulshutdown),
   [`startTimeout`](./runtime/configuration.md#starttimeout),
   [`restartOnError`](./runtime/configuration.md#restartonerror) and
   [`compileCache`](./runtime/configuration.md#compilecache) — is top-level.
 - What was under `runtime.application` — `workers`, `health`, `env`, `envfile`, `sourceMaps`,
-  `preload`, `nodeOptions`, `execArgv`, `permissions`, `telemetry` and `compileCache` — belongs to the
+  `preload`, `nodeOptions`, `execArgv`, `permissions`, `tracing` and `compileCache` — belongs to the
   [`application`](./runtime/configuration.md#applications) entry, beside `config`.
 - `runtime.server` has nowhere to go, because v4 has no runtime-level listener: the address is the
   application's own `server` block, inside the capability configuration.

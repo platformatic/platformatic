@@ -7,7 +7,7 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
-import { getITC, getPrometheus, getTelemetryReady, updateGlobals } from '@platformatic/globals'
+import { getITC, getPrometheus, getTracingReady, updateGlobals } from '@platformatic/globals'
 import {
   clearRegistry,
   client,
@@ -16,7 +16,7 @@ import {
   openTelemetryITCMessage,
   setupOtlpExporter
 } from '@platformatic/metrics'
-import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { addPinoInstrumentation } from '@platformatic/tracing'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { tracingChannel } from 'node:diagnostics_channel'
@@ -42,7 +42,7 @@ export class BaseCapability extends EventEmitter {
 
   applicationId
   workerId
-  telemetryConfig
+  tracingConfig
   serverConfig
   reuseTcpPorts
   openapiSchema
@@ -85,7 +85,7 @@ export class BaseCapability extends EventEmitter {
 
     this.applicationId = this.context.applicationId
     this.workerId = this.context.worker.index
-    this.telemetryConfig = this.context.telemetryConfig
+    this.tracingConfig = this.context.tracingConfig
     this.serverConfig = deepmerge({}, config.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
@@ -694,7 +694,7 @@ export class BaseCapability extends EventEmitter {
       host: this.serverConfig?.hostname ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig, true),
-      telemetryConfig: this.telemetryConfig,
+      tracingConfig: this.tracingConfig,
       compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache,
       resourceLimits: this.context.resourceLimits
     }
@@ -835,7 +835,7 @@ export class BaseCapability extends EventEmitter {
       this.root
     )
 
-    if (loggerOptions.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
+    if (loggerOptions.openTelemetryExporter && this.tracingConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)
     }
 
@@ -891,7 +891,7 @@ export class BaseCapability extends EventEmitter {
 
     this.#metricsCollected = true
 
-    if (this.context.metricsConfig === false || this.context.metricsConfig?.enabled === false) {
+    if (!this.context.metricsConfig || this.context.metricsConfig.enabled === false) {
       return
     }
 
@@ -1054,9 +1054,9 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
-    if (telemetryReady) {
-      await telemetryReady
+    const tracingReady = getTracingReady({ throwOnMissing: false })
+    if (tracingReady) {
+      await tracingReady
     }
 
     // Setup and start OTLP exporter bridge

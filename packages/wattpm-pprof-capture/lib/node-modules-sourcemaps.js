@@ -1,7 +1,7 @@
 import { getLogger } from '@platformatic/globals'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { createRequire } from 'node:module'
+import { createRequire, findPackageJSON } from 'node:module'
 import * as sourceMap from 'source-map'
 
 const MAP_EXT = '.map'
@@ -130,10 +130,15 @@ function resolveModulePath (appPath, moduleName) {
   // Try using require.resolve from the app's context
   try {
     const require = createRequire(path.join(appPath, 'package.json'))
+    const packageJsonPath = findPackageJSON(moduleName, path.join(appPath, 'package.json'))
     const modulePath = require.resolve(moduleName)
     // Get the module's root directory
     // For regular packages: node_modules/next/dist/file.js -> node_modules/next
     // For scoped packages: node_modules/@next/next-server/dist/file.js -> node_modules/@next/next-server
+    if (packageJsonPath) {
+      return path.dirname(packageJsonPath)
+    }
+
     const nodeModulesIndex = modulePath.lastIndexOf('node_modules')
     if (nodeModulesIndex === -1) {
       return null

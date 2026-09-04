@@ -27,7 +27,7 @@ const capabilitySchema = {
 function capabilityPackage (name, version, { subpath = true, servesWithoutPort, servesWithoutPortSource } = {}) {
   const exported = `export const schema = ${JSON.stringify(capabilitySchema)}
 export const version = '${version}'
-export const skipTelemetryHooks = true
+export const skipTracingHooks = true
 export const modulesToLoad = ['thing']
 ${servesWithoutPortSource ? `export const servesWithoutPort = ${servesWithoutPortSource}` : servesWithoutPort ? `export const servesWithoutPort = ${JSON.stringify(servesWithoutPort)}` : ''}
 `
@@ -63,7 +63,7 @@ test('the schema is imported through the light subpath, application-scoped first
 
   // The subpath carries the package-level metadata main-side preparation needs besides the schema.
   deepStrictEqual(imported.metadata, {
-    skipTelemetryHooks: true,
+    skipTracingHooks: true,
     modulesToLoad: ['thing'],
     servesWithoutPort: 'always'
   })
@@ -259,7 +259,7 @@ test('the loader validates each application payload when asked to', async t => {
   // The serving declaration is not here: it is evaluated main-side and can be a function, and this
   // entry is structured-cloned into the worker.
   deepStrictEqual(config.applications[0].capabilityMetadata, {
-    skipTelemetryHooks: true,
+    skipTracingHooks: true,
     modulesToLoad: ['thing']
   })
 })

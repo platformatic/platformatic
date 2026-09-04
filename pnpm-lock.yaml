@@ -103,9 +103,9 @@ importers:
       '@platformatic/metrics':
         specifier: workspace:*
         version: link:../metrics
-      '@platformatic/telemetry':
+      '@platformatic/tracing':
         specifier: workspace:*
-        version: link:../telemetry
+        version: link:../tracing
       execa:
         specifier: ^9.3.1
         version: 9.6.1
@@ -430,9 +430,9 @@ importers:
       '@platformatic/sql-openapi':
         specifier: workspace:*
         version: link:../sql-openapi
-      '@platformatic/telemetry':
+      '@platformatic/tracing':
         specifier: workspace:*
-        version: link:../telemetry
+        version: link:../tracing
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -779,9 +779,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      '@platformatic/telemetry':
+      '@platformatic/tracing':
         specifier: workspace:*
-        version: link:../telemetry
+        version: link:../tracing
       '@scalar/fastify-api-reference':
         specifier: 1.62.5
         version: 1.62.5
@@ -1592,9 +1592,9 @@ importers:
       '@platformatic/prom-client':
         specifier: ^1.0.0
         version: 1.0.0
-      '@platformatic/telemetry':
+      '@platformatic/tracing':
         specifier: workspace:*
-        version: link:../telemetry
+        version: link:../tracing
       '@platformatic/undici-cache-memory':
         specifier: ^0.9.0
         version: 0.9.0
@@ -1809,9 +1809,9 @@ importers:
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
-      '@platformatic/telemetry':
+      '@platformatic/tracing':
         specifier: workspace:*
-        version: link:../telemetry
+        version: link:../tracing
       '@scalar/fastify-api-reference':
         specifier: 1.62.5
         version: 1.62.5
@@ -2022,9 +2022,9 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      '@platformatic/telemetry':
+      '@platformatic/tracing':
         specifier: workspace:*
-        version: link:../telemetry
+        version: link:../tracing
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -2110,9 +2110,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
-      '@platformatic/telemetry':
+      '@platformatic/tracing':
         specifier: workspace:*
-        version: link:../telemetry
+        version: link:../tracing
       async-cache-dedupe:
         specifier: ^2.1.0
         version: 2.2.0
@@ -2306,7 +2306,7 @@ importers:
         specifier: ^8.18.0
         version: 8.21.1
 
-  packages/telemetry:
+  packages/tracing:
     dependencies:
       '@fastify/swagger':
         specifier: ^9.5.1

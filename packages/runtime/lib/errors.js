@@ -103,6 +103,10 @@ export const NoConfigFileFoundError = createError(
   "No config file found for application '%s'"
 )
 export const MissingDependencyError = createError(`${ERROR_PREFIX}_MISSING_DEPENDENCY`, 'Missing dependency: "%s"')
+export const InvalidApplicationModuleError = createError(
+  `${ERROR_PREFIX}_INVALID_APPLICATION_MODULE`,
+  'Application module "%s" must export a create function'
+)
 export const InspectAndInspectBrkError = createError(
   `${ERROR_PREFIX}_INSPECT_AND_INSPECT_BRK`,
   '--inspect and --inspect-brk cannot be used together'

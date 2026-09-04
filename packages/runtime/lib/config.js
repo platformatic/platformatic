@@ -1,13 +1,15 @@
-import { kMetadata, loadModule } from '@platformatic/foundation'
+import { createDirectory, kMetadata, loadModule } from '@platformatic/foundation'
 import { loadAdditionalApplications } from '@platformatic/foundation/lib/v4/index.js'
-import { createRequire } from 'node:module'
+import { createRequire, findPackageJSON } from 'node:module'
+import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import {
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
-  InvalidArgumentError
+  InvalidArgumentError,
+  MissingDependencyError
 } from './errors.js'
 
 // The runtime package's own entry point, which is where the bundled capability copies live.
@@ -232,7 +234,7 @@ export function finalizeApplication (config, application, defaultWorkers) {
 
 /*
   The v4 preparation. The loader resolved the path, selected the capability and imported its schema
-  subpath — which carries skipTelemetryHooks and modulesToLoad — all main-side, before any worker
+  subpath — which carries skipTracingHooks and modulesToLoad — all main-side, before any worker
   existed. So there is nothing to discover here, and in particular no application config file to
   re-read: that is the whole point of evaluating configuration exactly once per load.
 */
@@ -241,14 +243,36 @@ export async function prepareV4Application (config, application, defaultWorkers)
   // capability payload as data and never re-reads a file.
   application.resolvedConfig = application.config ?? {}
   application.config = undefined
+
+  /*
+    A module application names an npm package as its capability instead of describing one in a file.
+    The package is resolved from the runtime root, and its own directory (sourcePath) is kept
+    separate from the application's writable root (path) — which the module treats as a working
+    directory and which need not exist yet.
+  */
+  if (application.module) {
+    if (!application.path) {
+      throw new InvalidArgumentError(`Application "${application.id}" must define path when module is set`)
+    }
+
+    try {
+      application.sourcePath = dirname(findPackageJSON(application.module, resolvePath(config[kMetadata].root, 'noop.js')))
+    } catch (error) {
+      throw new MissingDependencyError(application.module, { cause: error })
+    }
+
+    application.moduleRoot = config[kMetadata].root
+    await createDirectory(application.path)
+  }
+
   application.type = application.module ?? 'unknown'
-  application.skipTelemetryHooks = application.capabilityMetadata?.skipTelemetryHooks ?? false
+  application.skipTracingHooks = application.capabilityMetadata?.skipTracingHooks ?? false
 
   // This is needed to work around a Rust bug on dylibs, as in the v3 path.
   const modulesToLoad = application.capabilityMetadata?.modulesToLoad ?? []
 
   if (modulesToLoad.length > 0 && application.path) {
-    const _require = createRequire(application.path)
+    const _require = createRequire(application.sourcePath ?? application.path)
 
     for (const m of modulesToLoad) {
       try {

@@ -1,9 +1,11 @@
-import { deepStrictEqual, rejects, strictEqual, throws } from 'node:assert'
-import { writeFile } from 'node:fs/promises'
+import { kMetadata } from '@platformatic/foundation'
+import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
+import { existsSync } from 'node:fs'
+import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { loadConfiguration } from '../index.js'
-import { parseInspectorOptions } from '../lib/config.js'
+import { parseInspectorOptions, prepareV4Application } from '../lib/config.js'
 import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -28,6 +30,84 @@ test('parseInspectorOptions - throws if --inspect and --inspect-brk are both use
   throws(() => {
     parseInspectorOptions({}, 'true', 'true')
   }, /--inspect and --inspect-brk cannot be used together/)
+})
+
+test('prepareApplication - resolves module source separately from writable application root', async t => {
+  const root = await createTemporaryDirectory(t, 'module')
+  const applicationPath = join(root, 'applications', 'module-app')
+  const config = {
+    [kMetadata]: {
+      root: resolve(import.meta.dirname, '..')
+    },
+    watch: false
+  }
+
+  const application = await prepareV4Application(
+    config,
+    {
+      id: 'module-app',
+      path: applicationPath,
+      module: '@platformatic/basic'
+    },
+    { static: 1, dynamic: false }
+  )
+
+  strictEqual(application.path, applicationPath)
+  ok(application.sourcePath !== application.path)
+  strictEqual(JSON.parse(await readFile(join(application.sourcePath, 'package.json'), 'utf8')).name, '@platformatic/basic')
+  ok(existsSync(application.path))
+})
+
+test('prepareApplication - reports missing application modules with a coded error', async () => {
+  await rejects(
+    prepareV4Application(
+      {
+        [kMetadata]: { root: resolve(fixturesDir, 'missing') },
+        watch: false
+      },
+      {
+        id: 'missing-module',
+        path: resolve(fixturesDir, 'missing', 'application'),
+        module: '@platformatic/does-not-exist'
+      },
+      { static: 1, dynamic: false }
+    ),
+    error => error.code === 'PLT_RUNTIME_MISSING_DEPENDENCY'
+  )
+})
+
+test('module applications invoke create with a separate writable root', async t => {
+  const root = await createTemporaryDirectory(t, 'module-runtime')
+  const nodeModules = join(root, 'node_modules')
+  const packageScope = join(nodeModules, '@platformatic')
+  const applicationPath = join(root, 'applications', 'module-app')
+  const fixtureRoot = join(fixturesDir, 'module-application')
+  const configFile = join(root, 'watt.config.js')
+
+  await mkdir(packageScope, { recursive: true })
+  await symlink(join(fixtureRoot, 'mock-application'), join(nodeModules, 'mock-application'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../node_modules/@platformatic/basic'), join(packageScope, 'basic'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../node_modules/@platformatic/service'), join(packageScope, 'service'), 'dir')
+  await writeFile(
+    configFile,
+    `export default ${JSON.stringify({
+      applications: [{ id: 'module-app', path: applicationPath, module: 'mock-application' }]
+    })}\n`
+  )
+
+  const runtime = await createRuntime(configFile)
+  t.after(() => runtime.close(true))
+
+  await runtime.init()
+  await runtime.start()
+
+  const created = JSON.parse(await readFile(join(applicationPath, 'module-created.json'), 'utf8'))
+  strictEqual(created.root, applicationPath)
+  strictEqual(created.sourcePath, join(nodeModules, 'mock-application'))
+
+  const response = await runtime.inject('module-app', { method: 'GET', url: '/module' })
+  strictEqual(response.statusCode, 200)
+  strictEqual(response.payload, JSON.stringify({ running: true }))
 })
 
 test('parseInspectorOptions - --inspect default settings', () => {

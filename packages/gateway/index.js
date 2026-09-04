@@ -27,6 +27,6 @@ export * from './lib/commands/index.js'
 export * from './lib/errors.js'
 export * as errors from './lib/errors.js'
 export { Generator } from './lib/generator.js'
-export { packageJson, schema, schemaComponents, skipTelemetryHooks, version } from './lib/schema.js'
+export { packageJson, schema, schemaComponents, skipTracingHooks, version } from './lib/schema.js'
 
 export * from './lib/factory.js'

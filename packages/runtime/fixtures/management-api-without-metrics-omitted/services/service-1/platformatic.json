@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.52.0.json",
+  "service": {
+    "openapi": true
+  },
+  "watch": true,
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  }
+}

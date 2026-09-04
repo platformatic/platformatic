@@ -22,7 +22,12 @@ import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } from '../errors.js'
+import {
+  ApplicationAlreadyStartedError,
+  exitCodes,
+  InvalidApplicationModuleError,
+  RuntimeNotStartedError
+} from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
 import { installGlobalDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
@@ -81,9 +86,10 @@ export class Controller extends EventEmitter {
       applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.applicationConfig.path,
+      sourcePath: this.applicationConfig.sourcePath,
       dependencies: this.applicationConfig.dependencies,
       isProduction: this.applicationConfig.isProduction,
-      telemetryConfig: this.applicationConfig.telemetry,
+      tracingConfig: this.applicationConfig.tracing,
       loggerConfig: runtimeConfig.logger,
       metricsConfig,
       worker: workerData?.worker,
@@ -130,12 +136,19 @@ export class Controller extends EventEmitter {
         with workers: 4 evaluated user code five times and could reach five different answers.
 
         The capability is imported through the canonical resolution order, application-scoped first,
-        so the copy that runs here is the copy whose schema validated the payload main-side.
+        so the copy that runs here is the copy whose schema validated the payload main-side. When the
+        entry names an npm module, that module is the capability, resolved the same way.
       */
       if (appConfig.resolvedConfig) {
         const pkg = await importCapabilityPackage(appConfig.path, appConfig.module, {
           runtimeScope: import.meta.filename
         })
+
+        // A module application names its capability directly. If that package exports no `create`,
+        // name it rather than letting the call below throw a bare "pkg.create is not a function".
+        if (appConfig.module && typeof pkg.create !== 'function') {
+          throw new InvalidApplicationModuleError(appConfig.module)
+        }
 
         /*
           `resolved` says this object has already been through the loader: its environment was
@@ -352,8 +365,8 @@ export class Controller extends EventEmitter {
   }
 
   #updateDispatcher () {
-    const telemetryConfig = this.#context.telemetryConfig
-    const telemetryId = telemetryConfig?.applicationName
+    const tracingConfig = this.#context.tracingConfig
+    const telemetryId = tracingConfig?.applicationName
 
     const interceptor = dispatch => {
       return function InterceptedDispatch (opts, handler) {

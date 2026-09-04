@@ -4,7 +4,7 @@ export default {
     path: 'services',
     exclude: ['docs']
   },
-  telemetry: {
+  tracing: {
     /*
       The disabled case is this same configuration with the variable set, rather than a second
       configuration file beside this one -- v4 allows one per directory, and the two differed only

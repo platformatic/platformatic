@@ -752,7 +752,7 @@ export const openTelemetryExporter = {
   }
 }
 
-export const telemetry = {
+export const tracing = {
   type: 'object',
   properties: {
     enabled: {
@@ -866,7 +866,14 @@ export const compileCache = {
 
 export const application = {
   type: 'object',
-  anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
+  anyOf: [
+    { required: ['id', 'path'] },
+    { required: ['id', 'url'] }
+  ],
+  not: {
+    type: 'object',
+    required: ['module', 'url']
+  },
   properties: {
     id: {
       type: 'string'
@@ -896,6 +903,9 @@ export const application = {
       anyOf: [{ type: 'string' }, { type: 'object' }]
     },
     url: {
+      type: 'string'
+    },
+    module: {
       type: 'string'
     },
     gitBranch: {
@@ -1000,12 +1010,12 @@ export const application = {
       },
       additionalProperties: false
     },
-    telemetry: {
+    tracing: {
       type: 'object',
       properties: {
         instrumentations: {
           type: 'array',
-          description: 'An array of instrumentations loaded if telemetry is enabled',
+          description: 'An array of instrumentations loaded if tracing is enabled',
           items: {
             oneOf: [
               {
@@ -1088,7 +1098,7 @@ export const runtimeProperties = {
           type: 'object',
           additionalProperties: false,
           required: ['id'],
-          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch'])
+          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch', 'module'])
         }
       }
     }
@@ -1492,9 +1502,10 @@ export const runtimeProperties = {
         },
         additionalProperties: false
       }
-    ]
+    ],
+    default: false
   },
-  telemetry,
+  tracing,
   verticalScaler,
   inspectorOptions: {
     type: 'object',
@@ -1640,7 +1651,7 @@ logger.title = 'AppLoggerOptions'
 server.title = 'AppServerOptions'
 server.properties.https.title = 'HttpsOptions'
 health.title = 'HealthOptions'
-telemetry.title = 'TelemetryOptions'
+tracing.title = 'TelemetryOptions'
 
 /*
   Titled for the capability schemas, which list one application entry and generate it in full.
@@ -1658,7 +1669,7 @@ application.title = 'ApplicationEntry'
 application.properties.health.title = 'ApplicationHealthOptions'
 application.properties.workers.anyOf[2].title = 'ApplicationWorkersOptions'
 application.properties.permissions.title = 'PermissionsOptions'
-application.properties.telemetry.title = 'ApplicationTelemetryOverrides'
+application.properties.tracing.title = 'ApplicationTelemetryOverrides'
 
 runtimeProperties.autoload.properties.mappings.additionalProperties.title = 'ApplicationEntryOverrides'
 runtimeProperties.gracefulShutdown.title = 'GracefulShutdownOptions'
@@ -1686,6 +1697,7 @@ export const applicationsUnwrappablePropertiesList = [
   'path',
   'config',
   'url',
+  'module',
   'gitBranch',
   'dependencies',
   'management'
@@ -1723,7 +1735,7 @@ export const schemaComponents = {
   health,
   healthWithoutDefaults,
   openTelemetryExporter,
-  telemetry,
+  tracing,
   policies,
   compileCache,
   applications,

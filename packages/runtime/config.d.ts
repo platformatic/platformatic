@@ -43,7 +43,7 @@ export type PlatformaticRuntimeConfig = {
         operations?: string[];
       };
   metrics?: boolean | MetricsOptions;
-  telemetry?: TelemetryOptions;
+  tracing?: TelemetryOptions;
   verticalScaler?: {
     enabled?: boolean;
     maxTotalWorkers?: number;
@@ -211,9 +211,9 @@ export interface ApplicationEntryOverrides {
       write?: string[];
     };
   };
-  telemetry?: {
+  tracing?: {
     /**
-     * An array of instrumentations loaded if telemetry is enabled
+     * An array of instrumentations loaded if tracing is enabled
      */
     instrumentations?: (
       | string
