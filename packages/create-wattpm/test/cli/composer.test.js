@@ -26,9 +26,9 @@ test('Creates a Platformatic Gateway', async t => {
   ok(await configurationFileIn(baseProjectDir))
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'web'))
+  const applications = await getApplications(join(baseProjectDir, 'applications'))
   deepStrictEqual(applications, ['main'])
-  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
+  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
   ok(await configurationFileIn(baseApplicationDir))
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'routes', 'root.js')), false)
@@ -57,9 +57,9 @@ test('Creates a Platformatic Gateway (TypeScript)', async t => {
   ok(await configurationFileIn(baseProjectDir))
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'web'))
+  const applications = await getApplications(join(baseProjectDir, 'applications'))
   deepStrictEqual(applications, ['main'])
-  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
+  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
   ok(await configurationFileIn(baseApplicationDir))
   equal(await isFileAccessible(join(baseApplicationDir, 'tsconfig.json')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)

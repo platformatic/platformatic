@@ -573,7 +573,7 @@ test('WrappedGenerator - should create a valid package.json', async t => {
 
 test('RuntimeGenerator - what it writes loads', async t => {
   const root = await createTemporaryDirectory(t)
-  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+  const rg = new RuntimeGenerator({ targetDirectory: root })
 
   rg.addApplication(new ApplicationGenerator(), 'api')
   rg.setConfig({ targetDirectory: root })

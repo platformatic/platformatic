@@ -229,8 +229,7 @@ export async function createPlatformatic (argv) {
   const pkgManager = getPkgManager()
   const modules = Array.isArray(args.module) ? args.module : [args.module]
   await createApplication(logger, pkgManager, modules, args['install'], {
-    runtimeConfig: 'watt.json',
-    applicationsFolder: 'web'
+    applicationsFolder: 'applications'
   })
 }
 
@@ -526,9 +525,7 @@ export async function createApplication (
   if (packageManager === 'pnpm' && !existsSync(pnpmWorkspacePath)) {
     // add pnpm-workspace.yaml file if needed
     let content = `packages:
-- 'applications/*'
-- 'services/*'
-- 'web/*'`
+- 'applications/*'`
 
     // Add imported applications
     for (const { application } of generator.applications) {

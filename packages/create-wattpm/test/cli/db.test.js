@@ -33,9 +33,9 @@ test('Creates a Platformatic DB application with no migrations', async t => {
   equal(pnpmWorkspace.includes('allowBuilds:\n  better-sqlite3: true'), true)
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'web'))
+  const applications = await getApplications(join(baseProjectDir, 'applications'))
   deepStrictEqual(applications, ['main'])
-  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
+  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
   ok(await configurationFileIn(baseApplicationDir))
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   // This is accessible only because is a folder with a .gitkeep file only

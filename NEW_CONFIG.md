@@ -2260,7 +2260,7 @@ outright (see "Object config sources"), so the carve-out the root worker makes f
 function slots does not apply. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
-hazard in this very codebase (`runtime/lib/config.js:327` warns that `2` would be
+hazard in this very codebase (`runtime/lib/config.js:328` warns that `2` would be
 coerced to `true`). The audit also guarantees that schema-injected defaults are
 themselves serializable.
 
@@ -3017,7 +3017,7 @@ export default {
   **`ImportGenerator`** — which wrote a `watt.json` carrying either a `$schema` URL
   or a bare `{ module }` for an imported application whose capability ships no
   generator (`generators/lib/import-generator.js:126-150` pre-`dd89c334f`, reached from
-  `create-wattpm/lib/index.js:465`), and was the one JSON writer easy to miss
+  `create-wattpm/lib/index.js:464`), and was the one JSON writer easy to miss
   because it is not a generator itself; it emits the v4 per-app form now —
   `wattpm-utils migrate` output, and the documented pattern for ICC-style platforms
   (`'export default ' + JSON.stringify(config)`) — the last of which is the

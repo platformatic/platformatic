@@ -590,7 +590,7 @@
       "head": "for (let i = applications.length - 1; i >= 0; --i) {",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:327": {
+    "packages/runtime/lib/config.js:328": {
       "sha": "234e889c1536e65b",
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
@@ -660,7 +660,7 @@
       "head": "async #generateConfigFile (originalPath, updatedPath) {",
       "lines": 25
     },
-    "packages/create-wattpm/lib/index.js:465": {
+    "packages/create-wattpm/lib/index.js:464": {
       "sha": "cadcf1b78f0dab35",
       "head": ": new ImportGenerator({",
       "lines": 1

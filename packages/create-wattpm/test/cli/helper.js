@@ -131,7 +131,7 @@ export async function configurationFileIn (directory) {
   return selectConfigurationFileNames(entries)[0] ?? null
 }
 
-async function linkWorkspacePackages (root) {
+export async function linkWorkspacePackages (root) {
   const packages = join(pltRoot, '..')
 
   await mkdir(join(root, 'node_modules', '@platformatic'), { recursive: true })

@@ -98,9 +98,9 @@ test('Support packages without generator via importing (existing applications)',
   const originalEnvFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
   // One spelling: v3's `web` alias is refused by the loader now, so the list the test plants uses
   // the name the editor keeps.
-  // Not id 'main': the first run scaffolded web/main, which autoload discovers under that id, and
-  // a planted entry at another directory sharing it is the ambiguity the loader refuses (#5079).
-  runtimeConfig.applications = [{ id: 'planted', path: 'services/planted' }]
+  // Not id 'main': the first run scaffolded applications/main, which autoload discovers under that
+  // id, and a planted entry at another directory sharing it is the ambiguity the loader refuses (#5079).
+  runtimeConfig.applications = [{ id: 'planted', path: 'applications/planted' }]
   runtimeConfig.startTimeout = 12345
   // Written back as the module it is. The plain object form is a valid v4 root, which is what a
   // test editing a configuration wants: no imports to resolve.
@@ -192,7 +192,7 @@ test('Support packages without generator via copy (new application)', async t =>
   })
 
   const baseProjectDir = join(root, 'platformatic')
-  const applicationDir = join(baseProjectDir, 'web', 'main')
+  const applicationDir = join(baseProjectDir, 'applications', 'main')
 
   // Verify that a configuration file was created and not in the original path
   ok(!existsSync(resolve(sourcePath, 'watt.config.mjs')))
