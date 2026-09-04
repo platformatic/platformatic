@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createFromConfig, createGraphqlApplication, createOpenApiApplication } from '../helper.js'
+import { createFromConfig, createOpenApiApplication } from '../helper.js'
 
 test('should respond 200 on root endpoint', async t => {
   const gateway = await createFromConfig(t, {
@@ -48,7 +48,7 @@ test('should respond 200 on root endpoint', async t => {
     })
     assert.equal(statusCode, 200)
     assert.equal(headers['content-type']?.toLowerCase(), 'text/html; charset=UTF-8'.toLowerCase())
-    // Does not have links to OpenAPI/GraphQL docs as it has no applications
+    // Does not have an OpenAPI docs link as it has no applications.
     assert.ok(!body.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
   }
 })
@@ -76,7 +76,7 @@ test('should not expose a default root endpoint if it is composed', async t => {
           openapi: {
             url: '/documentation/json'
           }
-        }
+        },
       ]
     }
   })
@@ -112,24 +112,9 @@ test('should have links to composed applications', async t => {
   const application1 = await createOpenApiApplication(t, ['users'], { addHeadersSchema: true })
   const application2 = await createOpenApiApplication(t, ['posts'])
   const application3 = await createOpenApiApplication(t, ['comments'])
-  const application4 = await createGraphqlApplication(t, {
-    schema: `
-    type Query {
-      mul(x: Int, y: Int): Int
-    }`,
-    resolvers: {
-      Query: {
-        async mul (_, { x, y }) {
-          return x * y
-        }
-      }
-    }
-  })
-
   const origin1 = await application1.listen({ port: 0 })
   const origin2 = await application2.listen({ port: 0 })
   const origin3 = await application3.listen({ port: 0 })
-  const origin4 = await application4.listen({ port: 0 })
 
   const config = {
     server: {
@@ -169,11 +154,6 @@ test('should have links to composed applications', async t => {
             prefix: '/internal/service3'
           }
         },
-        {
-          id: 'service4',
-          origin: origin4,
-          graphql: true
-        }
       ],
       refreshTimeout: 1000
     }
@@ -191,9 +171,8 @@ test('should have links to composed applications', async t => {
 
   const content = await body.text()
 
-  // Has links to OpenAPI/GraphQL docs
+  // Has a link to the OpenAPI docs.
   assert.ok(content.includes('<a id="openapi-link" target="_blank" class="button-link" href="documentation">'))
-  assert.ok(content.includes('<a id="graphql-link" target="_blank" class="button-link" href="graphiql">'))
 
   assert.ok(content.includes('<div class="service-path">/internal/service1</div>'))
   assert.ok(content.includes('<div class="service-path">/internal/service2</div>'))

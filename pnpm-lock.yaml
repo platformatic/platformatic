@@ -767,9 +767,6 @@ importers:
       '@platformatic/globals':
         specifier: workspace:*
         version: link:../globals
-      '@platformatic/graphql-composer':
-        specifier: ^0.11.0
-        version: 0.11.0
       '@platformatic/openapi-schema-validator':
         specifier: ^3.0.0
         version: 3.0.0
@@ -806,9 +803,6 @@ importers:
       find-my-way:
         specifier: ^9.0.0
         version: 9.7.0
-      graphql:
-        specifier: ^16.8.1
-        version: 16.14.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -818,9 +812,6 @@ importers:
       json-schema-traverse:
         specifier: ^1.0.0
         version: 1.0.0
-      mercurius:
-        specifier: ^16.0.0
-        version: 16.10.0(graphql@16.14.2)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -3663,9 +3654,6 @@ packages:
   '@fastify/cors@11.3.0':
     resolution: {integrity: sha512-ggQGua+xHv1MvePbPr0v//xLYEsCXbWspquXCJS9Ot5YoRXq8J8ZWzHnxDBVnbtXosvistXo6LtNzOJswf64Fw==}
 
-  '@fastify/deepmerge@1.3.0':
-    resolution: {integrity: sha512-J8TOSBq3SoZbDhM9+R/u77hP93gz/rajSA+K2kGyijPpORPWUXHUpTaleoj+92As0S9uPRP7Oi8IqMf0u+ro6A==}
-
   '@fastify/deepmerge@3.2.1':
     resolution: {integrity: sha512-N5Oqvltoa2r9z1tbx4xjky0oRR60v+T47Ic4J1ukoVQcptLOrIdRnCSdTGmOmajZuHVKlTnfcmrjyqsGEW1ztA==}
 
@@ -5396,9 +5384,6 @@ packages:
   '@platformatic/fastify-openapi-glue@5.2.0':
     resolution: {integrity: sha512-5Syxh9EHCcxwrTvqRm2jv9Lpw7AUni3EWK95/5aFtIFAtz+POxlCbMaHcz3rdAD+D44nd1ZGqWa6wZ6dKNTqlg==}
 
-  '@platformatic/graphql-composer@0.11.0':
-    resolution: {integrity: sha512-e3EZH1okfdQPkhTNPrijgGQrlETFVO1V5WOjxN4EJFYRlurZdmqSuJw56JgvD08TMhdRXgwQK9bAbn1ZY2YzHg==}
-
   '@platformatic/http-metrics@0.3.0':
     resolution: {integrity: sha512-e+wQJDCd9v7yKeV4u30ibAe5uGB14k+jDw1w9FqsM3tDgFY0UEHb24hJR9j2bVa6091e+ppGy3L4LhyUR92M0w==}
 
@@ -6726,9 +6711,6 @@ packages:
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
-
-  abstract-logger@0.2.5:
-    resolution: {integrity: sha512-tcSYS736l1i6m5aG0lka/gkhThaR1T2LZArk5wqvk/ZzZfkMZuKlCZJZzqw5qnKqV/+NZxJIlDz1PJ6Ft/zpYA==}
 
   abstract-logging@2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
@@ -8993,9 +8975,6 @@ packages:
   inflected@2.1.0:
     resolution: {integrity: sha512-hAEKNxvHf2Iq3H60oMBHkB4wl5jn3TPF3+fXek/sRwAB5gP9xWs4r7aweSF95f99HFoz69pnZTcu8f0SIHV18w==}
 
-  inherits-ex@1.6.0:
-    resolution: {integrity: sha512-67sANrSoIvMmYDy0qyjmM/PvFdgBmWZVQoPBsRpDuP4tmlylEX1KdGN1bHvReG3eHBdaHY7WlZsrqys4y/cLVA==}
-
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
@@ -9893,9 +9872,6 @@ packages:
   meriyah@6.1.4:
     resolution: {integrity: sha512-Sz8FzjzI0kN13GK/6MVEsVzMZEPvOhnmmI1lU5+/1cGOiK3QUahntrNNtdVeihrO7t9JpoH75iMNXg6R6uWflQ==}
     engines: {node: '>=18.0.0'}
-
-  metaline@1.1.0:
-    resolution: {integrity: sha512-VBgxP9mZx8FHvCyKe6Nla32xgImEj4zAyf/BtIdkLKqfkMWtcekIeB5fL24/EZi/u7PbbJNsVqL7R2bV3cUh/Q==}
 
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
@@ -12960,9 +12936,6 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  util-ex@0.3.18:
-    resolution: {integrity: sha512-GPVjD257DtgCDMHYqbdWvZ+RY3HaXZ7Dps/44de5WscOjFNL2Qr+6dTIKGlyfA4A5BXyeFKWy8mb19OATWhh8Q==}
-
   util@0.12.5:
     resolution: {integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==}
 
@@ -14519,8 +14492,6 @@ snapshots:
     dependencies:
       fastify-plugin: 6.0.0
       toad-cache: 3.7.4
-
-  '@fastify/deepmerge@1.3.0': {}
 
   '@fastify/deepmerge@3.2.1': {}
 
@@ -16539,19 +16510,6 @@ snapshots:
       fastify-plugin: 5.1.0
       js-yaml: 4.3.1
 
-  '@platformatic/graphql-composer@0.11.0':
-    dependencies:
-      abstract-logger: 0.2.5
-      fastify: 5.11.0
-      graphql: 16.14.2
-      mercurius: 16.10.0(graphql@16.14.2)
-      metaline: 1.1.0
-      pino: 9.14.0
-      undici: 8.10.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@platformatic/http-metrics@0.3.0':
     dependencies:
       '@platformatic/prom-client': 1.0.0
@@ -18155,11 +18113,6 @@ snapshots:
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
-
-  abstract-logger@0.2.5:
-    dependencies:
-      inherits-ex: 1.6.0
-      util-ex: 0.3.18
 
   abstract-logging@2.0.1: {}
 
@@ -20980,8 +20933,6 @@ snapshots:
 
   inflected@2.1.0: {}
 
-  inherits-ex@1.6.0: {}
-
   inherits@2.0.4: {}
 
   ini@1.3.8: {}
@@ -22058,10 +22009,6 @@ snapshots:
   merge2@1.4.1: {}
 
   meriyah@6.1.4: {}
-
-  metaline@1.1.0:
-    dependencies:
-      '@fastify/deepmerge': 1.3.0
 
   methods@1.1.2: {}
 
@@ -26099,11 +26046,6 @@ snapshots:
       react: 19.2.8
 
   util-deprecate@1.0.2: {}
-
-  util-ex@0.3.18:
-    dependencies:
-      inherits-ex: 1.6.0
-      xtend: 4.0.2
 
   util@0.12.5:
     dependencies:
