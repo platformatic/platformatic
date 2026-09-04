@@ -540,6 +540,11 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   // Stop CPU intensive task so ELU drops below the threshold hysteresis.
   await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
 
+  // Apply the same gate transition directly so this test remains focused on
+  // pausing at the rotation boundary. Health-driven gate transitions are
+  // covered by the threshold tests above.
+  await app.sendCommandToApplication('service', 'pauseProfiling', { reason: 'threshold' })
+
   // Wait for the runtime health cycle to observe the low ELU and pause the profiler
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
