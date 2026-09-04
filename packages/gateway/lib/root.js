@@ -22,7 +22,6 @@ export default function root (app) {
     handler: async (req, reply) => {
       const uaString = req.headers['user-agent']
       let hasOpenAPIServices = false
-      let hasGraphQLServices = false
       if (uaString) {
         const parsed = userAgentParser(uaString)
         if (parsed.browser.name !== undefined) {
@@ -37,21 +36,12 @@ export default function root (app) {
               icon: './images/openapi.svg',
               services: []
             },
-            graphql: {
-              title: 'GraphQL',
-              icon: './images/graphql.svg',
-              services: []
-            }
           }
 
           app.platformatic.config.gateway.applications.forEach(s => {
             if (s.openapi) {
               hasOpenAPIServices = true
               serviceTypes.openapi.services.push(s)
-            }
-            if (s.graphql) {
-              hasGraphQLServices = true
-              serviceTypes.graphql.services.push(s)
             }
             if (s.proxy) {
               serviceTypes.proxy.services.push({
@@ -64,7 +54,6 @@ export default function root (app) {
           const swaggerPrefix = app.platformatic.config.gateway.openapi?.swaggerPrefix || '/documentation'
 
           return reply.view('index.njk', {
-            hasGraphQLServices,
             hasOpenAPIServices,
             openapiRoute: swaggerPrefix.replace(/^\/+/, ''),
             services: serviceTypes
