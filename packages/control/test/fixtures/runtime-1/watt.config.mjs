@@ -7,6 +7,7 @@ export default {
   logger: {
     level: 'trace'
   },
+  metrics: true,
   scheduler: [
     {
       name: 'control-test',

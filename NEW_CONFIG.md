@@ -1255,7 +1255,7 @@ The rules, in full:
   reachable from capability code, not from a configuration file. It is then
   applied by a `net.server.listen` subscriber that sets `options.reusePort =
   true` (`:845-859`). Both `reuseTcpPorts` properties default to `true`
-  (`foundation/lib/schema.js:915-918` for the entry, `foundation/lib/schema.js:1121-1124` for the root),
+  (`foundation/lib/schema.js:911-914` for the entry, `foundation/lib/schema.js:1117-1120` for the root),
   and the
   **entry-level one now reaches the decision** — the runtime passes the whole
   application entry into the capability context (`worker/controller.js:85`), which
@@ -1773,7 +1773,7 @@ does. `startWithCommand` waits for the child to report a URL
 (`basic/lib/capability.js:622`), and a command that never reports one is bounded from
 outside rather than left hanging: the runtime runs `sendViaITC(worker, 'start')` under
 `executeWithTimeout` and raises `ApplicationStartTimeoutError` after `startTimeout`
-milliseconds — 30 s by default (`foundation/lib/schema.js:1125-1129`), the worker
+milliseconds — 30 s by default (`foundation/lib/schema.js:1121-1125`), the worker
 terminated and the application named
 (`runtime/lib/runtime.js:3429-3436`). So a command that never binds does not need a
 report row of its own: it never reaches the report at all, because the boot failed
@@ -3551,7 +3551,7 @@ Generation reads both views. Then:
 
    **The exclusion is that set of directories, not the configured base wholesale**,
    and the difference is load-bearing because the base is an ordinary string with no
-   dedicated-directory rule (`foundation/lib/schema.js:1556-1559`). A project may set
+   dedicated-directory rule (`foundation/lib/schema.js:1552-1555`). A project may set
    it to `applications` and keep local applications at `applications/api`, or to `.`
    so clones land at the root. Excluding the base itself would then hide a local
    application's legacy config from the lexical pass and skip the per-app file it must
@@ -4113,7 +4113,7 @@ Generation reads both views. Then:
 
    **Canonicalizing means the nearest existing ancestor, not the path itself**, because
    several of these legitimately do not exist yet. `resolvedApplicationsBasePath`
-   defaults to `external` (`foundation/lib/schema.js:1556-1559`) and that directory is
+   defaults to `external` (`foundation/lib/schema.js:1552-1555`) and that directory is
    absent in every project that has never resolved a remote — which is most of them,
    and exactly the clean tree a migration runs on. Node's `realpath` throws on a
    missing path, so requiring it of the path itself would abort an ordinary migration

@@ -507,13 +507,6 @@
                 ]
               }
             ],
-            "not": {
-              "type": "object",
-              "required": [
-                "module",
-                "url"
-              ]
-            },
             "properties": {
               "id": {
                 "type": "string"

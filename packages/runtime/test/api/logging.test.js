@@ -38,7 +38,10 @@ test('logs stdio from the application thread', async t => {
       .filter(m => m.msg !== 'Runtime event')
 
     const applicationMessages = messages.filter(m => m.name === 'stdio')
-    const runtimeMessages = messages.filter(m => m.name === undefined)
+    // The metrics/health server, now started by default, logs a "Server listening at" line per
+    // network interface -- addresses that vary by machine. They are internal-server noise for a test
+    // about application stdio, so they are dropped rather than pinned.
+    const runtimeMessages = messages.filter(m => m.name === undefined && !m.msg?.startsWith('Server listening at'))
 
     deepStrictEqual(
       applicationMessages,

@@ -200,12 +200,12 @@
       "head": "#setupSharedStartResources () {",
       "lines": 15
     },
-    "packages/foundation/lib/schema.js:915-918": {
+    "packages/foundation/lib/schema.js:911-914": {
       "sha": "7857da3e36eabe4b",
       "head": "reuseTcpPorts: {",
       "lines": 4
     },
-    "packages/foundation/lib/schema.js:1121-1124": {
+    "packages/foundation/lib/schema.js:1117-1120": {
       "sha": "7857da3e36eabe4b",
       "head": "reuseTcpPorts: {",
       "lines": 4
@@ -530,7 +530,7 @@
       "head": "const [url, clientWs] = await once(this.childManager, 'url')",
       "lines": 1
     },
-    "packages/foundation/lib/schema.js:1125-1129": {
+    "packages/foundation/lib/schema.js:1121-1125": {
       "sha": "297ce247691030df",
       "head": "startTimeout: {",
       "lines": 5
@@ -825,7 +825,7 @@
       "head": "application.path = resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)",
       "lines": 1
     },
-    "packages/foundation/lib/schema.js:1556-1559": {
+    "packages/foundation/lib/schema.js:1552-1555": {
       "sha": "e861080de667a0a3",
       "head": "resolvedApplicationsBasePath: {",
       "lines": 4

@@ -69,7 +69,36 @@ function assertOrchestrationShape (config, path) {
   }
 }
 
+/*
+  An application authored with both `module` and `url` is a contradiction -- the module names the
+  package it *is*, the url a repository to clone it *from*. It is refused here, on the authored
+  config, rather than in the schema: every application ends up with a `module` once the loader records
+  its capability, so a schema `not` on module+url would fire on every resolved remote application. On
+  the authored snapshot the two are distinguishable, because only a module application authors `module`.
+*/
+function assertNoModuleUrlConflict (config, path) {
+  if (!Array.isArray(config.applications)) {
+    return
+  }
+
+  const failures = []
+
+  for (let index = 0; index < config.applications.length; index++) {
+    const entry = config.applications[index]
+
+    if (isPlainObject(entry) && typeof entry.module === 'string' && typeof entry.url === 'string') {
+      failures.push(`/applications/${index}: must not set both 'module' and 'url'`)
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new InvalidRootConfigurationError(path, failures.join('; '))
+  }
+}
+
 function validateOrchestration (config, { schema, path }) {
+  assertNoModuleUrlConflict(config, path)
+
   // The schema owns the messages when it is present; the shape guard is its stand-in, not a preamble.
   if (!schema) {
     assertOrchestrationShape(config, path)

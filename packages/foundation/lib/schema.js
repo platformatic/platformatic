@@ -870,10 +870,6 @@ export const application = {
     { required: ['id', 'path'] },
     { required: ['id', 'url'] }
   ],
-  not: {
-    type: 'object',
-    required: ['module', 'url']
-  },
   properties: {
     id: {
       type: 'string'

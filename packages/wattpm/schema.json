@@ -539,13 +539,6 @@
             ]
           }
         ],
-        "not": {
-          "type": "object",
-          "required": [
-            "module",
-            "url"
-          ]
-        },
         "properties": {
           "id": {
             "type": "string"
@@ -989,13 +982,6 @@
             ]
           }
         ],
-        "not": {
-          "type": "object",
-          "required": [
-            "module",
-            "url"
-          ]
-        },
         "properties": {
           "id": {
             "type": "string"
@@ -1439,13 +1425,6 @@
             ]
           }
         ],
-        "not": {
-          "type": "object",
-          "required": [
-            "module",
-            "url"
-          ]
-        },
         "properties": {
           "id": {
             "type": "string"

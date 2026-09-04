@@ -114,8 +114,14 @@ export async function listApplicationDirectories (configurationFile) {
         })
 
         // packageManager comes along because installing is what this list is for, and the entry is
-        // the only place that says which manager an application wants.
-        return { id, path: entry.path, packageManager: entry.packageManager }
+        // the only place that says which manager an application wants. moduleApplication marks an
+        // entry that names an npm package as its capability -- the one shape install and update skip.
+        return {
+          id,
+          path: entry.path,
+          packageManager: entry.packageManager,
+          moduleApplication: entry.module ? true : undefined
+        }
       })
   )
 
@@ -186,9 +192,11 @@ export async function installDependencies (logger, root, applications, productio
     )
   }
 
-  for (let { id, path, module, packageManager: applicationPackageManager } of applications) {
-    // Module applications use dependencies installed in the Watt root and their package is not writable.
-    if (module) {
+  for (let { id, path, moduleApplication, packageManager: applicationPackageManager } of applications) {
+    // A module application's dependencies are installed in the Watt root and its package is not
+    // writable. Keyed on moduleApplication, not module: every v4 application carries a module (its
+    // capability), so module alone would skip them all.
+    if (moduleApplication) {
       continue
     }
 
@@ -431,7 +439,9 @@ export async function updateCommand (logger, args) {
 
   // Now, for all the applications in the configuration file, update the dependencies
   for (const application of applications) {
-    if (application.module) {
+    // A module application has no writable package of its own. Keyed on moduleApplication, not
+    // module: every v4 application carries a module (its capability), so module alone would skip all.
+    if (application.moduleApplication) {
       continue
     }
 
