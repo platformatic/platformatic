@@ -78,24 +78,6 @@ node .output/server/index.mjs
 
 Deploy the full `.output` directory, not only `.output/server/index.mjs`. Nitro bundles the application server, public assets, and copied runtime dependencies inside `.output`.
 
-## Runtime APIs in server bundles
-
-When server code imports runtime APIs from `@platformatic/globals`, keep that package external so it shares the instance
-initialized by Platformatic. The Platformatic scheduler module configures this automatically. For other standalone Nitro
-builds, add the globals helper to `nitro.config`:
-
-```js
-import { externalizePlatformaticGlobals } from '@platformatic/globals'
-import { defineNitroConfig } from 'nitropack/config'
-
-export default defineNitroConfig({
-  modules: [externalizePlatformaticGlobals]
-})
-```
-
-Vite applications using Nitro receive this configuration from Platformatic during managed builds. Add the module
-explicitly when a custom build command invokes Vite or when building outside Platformatic.
-
 ## Configuration
 
 See the [configuration](./configuration.md) page.
