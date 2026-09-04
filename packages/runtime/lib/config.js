@@ -248,9 +248,10 @@ export async function prepareV4Application (config, application, defaultWorkers)
     A module application names an npm package as its capability instead of describing one in a file.
     The package is resolved from the runtime root, and its own directory (sourcePath) is kept
     separate from the application's writable root (path) — which the module treats as a working
-    directory and which need not exist yet.
+    directory and which need not exist yet. Keyed on moduleApplication, not module: a regular
+    application also carries a module (its detected capability), and must not be resolved this way.
   */
-  if (application.module) {
+  if (application.moduleApplication) {
     if (!application.path) {
       throw new InvalidArgumentError(`Application "${application.id}" must define path when module is set`)
     }

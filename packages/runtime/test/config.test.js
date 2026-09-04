@@ -47,7 +47,8 @@ test('prepareApplication - resolves module source separately from writable appli
     {
       id: 'module-app',
       path: applicationPath,
-      module: '@platformatic/basic'
+      module: '@platformatic/basic',
+      moduleApplication: true
     },
     { static: 1, dynamic: false }
   )
@@ -68,7 +69,8 @@ test('prepareApplication - reports missing application modules with a coded erro
       {
         id: 'missing-module',
         path: resolve(fixturesDir, 'missing', 'application'),
-        module: '@platformatic/does-not-exist'
+        module: '@platformatic/does-not-exist',
+        moduleApplication: true
       },
       { static: 1, dynamic: false }
     ),

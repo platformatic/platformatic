@@ -849,6 +849,11 @@ async function prepareApplication ({
   if (entry.module) {
     prepared.module = entry.module
     prepared.config = entry.config ?? {}
+    // The mark that survives to the runtime: every application ends up with a `module` (its
+    // capability, set by detection or definition), so `module` alone cannot tell a module
+    // application apart downstream. This flag records that the module was authored on the entry —
+    // the application *is* the package — which is what the writable-root preparation keys on.
+    prepared.moduleApplication = true
 
     return prepared
   }
