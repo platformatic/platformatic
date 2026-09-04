@@ -25,12 +25,12 @@
       "head": "try {",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:535-663": {
+    "packages/wattpm-utils/lib/commands/external.js:540-668": {
       "sha": "cee132a22cb0a3ff",
       "head": "export async function resolveApplications (",
       "lines": 129
     },
-    "packages/runtime/lib/runtime.js:2470,2485": {
+    "packages/runtime/lib/runtime.js:2511,2526": {
       "sha": "86dcccdbaefcf6ac",
       "head": "async #setupApplication (applicationConfig) {",
       "lines": 2
@@ -40,32 +40,32 @@
       "head": "if (application.url && !application.path) {",
       "lines": 3
     },
-    "packages/foundation/lib/schema.js:869": {
-      "sha": "c7b1965b654e187a",
-      "head": "anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],",
-      "lines": 1
+    "packages/foundation/lib/schema.js:869-872": {
+      "sha": "0c0f73923da4ae1e",
+      "head": "anyOf: [",
+      "lines": 4
     },
-    "packages/wattpm-utils/lib/commands/external.js:561,580-591": {
+    "packages/wattpm-utils/lib/commands/external.js:566,585-596": {
       "sha": "7153dd7a8a5ca333",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 13
     },
-    "packages/wattpm-utils/lib/commands/external.js:561": {
+    "packages/wattpm-utils/lib/commands/external.js:566": {
       "sha": "a9d0ff941726dfdd",
       "head": "const config = await loadConfiguration(configurationFile, null, { command, mode, production })",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:416": {
+    "packages/wattpm-utils/lib/commands/external.js:421": {
       "sha": "b4684192235ac8fb",
       "head": "const effectiveBranch = application.gitBranch ?? parsedGitUrl.branch",
       "lines": 1
     },
-    "packages/wattpm-utils/lib/commands/external.js:580-591": {
+    "packages/wattpm-utils/lib/commands/external.js:585-596": {
       "sha": "4d9354cd936b48a4",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 12
     },
-    "packages/wattpm-utils/lib/commands/external.js:580-610": {
+    "packages/wattpm-utils/lib/commands/external.js:585-615": {
       "sha": "3a9ca7cd6d80343e",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 31
@@ -80,7 +80,7 @@
       "head": "if (application.path && existsSync(application.path)) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:580-587": {
+    "packages/wattpm-utils/lib/commands/external.js:585-592": {
       "sha": "7ec3ae3f6a5f58ad",
       "head": "const resolvableApplications = applications.filter(application => {",
       "lines": 8
@@ -90,7 +90,7 @@
       "head": "if (useEnv) {",
       "lines": 29
     },
-    "packages/wattpm-utils/lib/commands/external.js:342-377": {
+    "packages/wattpm-utils/lib/commands/external.js:347-382": {
       "sha": "bad938280c7c317c",
       "head": "async function importLocal (logger, root, configurationFile, path, overridenId) {",
       "lines": 36
@@ -100,7 +100,7 @@
       "head": "async function writeApplicationConfiguration (configurationFile, directory, capability) {",
       "lines": 12
     },
-    "packages/wattpm-utils/lib/commands/external.js:212-257": {
+    "packages/wattpm-utils/lib/commands/external.js:217-262": {
       "sha": "073f79cba9f7e453",
       "head": "async function importApplicationIntoV4 (logger, configurationFile, { id, path, url, branch }) {",
       "lines": 46
@@ -125,12 +125,12 @@
       "head": "let applicationId = 'main'",
       "lines": 12
     },
-    "packages/runtime/lib/runtime.js:1039,1075": {
+    "packages/runtime/lib/runtime.js:1046,1082": {
       "sha": "5f6ccd41544e359f",
       "head": "async buildApplication (id) {",
       "lines": 2
     },
-    "packages/runtime/lib/runtime.js:2612": {
+    "packages/runtime/lib/runtime.js:2653": {
       "sha": "4af1fec3d6c2bea7",
       "head": "const workerEnv = structuredClone(applicationConfig.workerEnv ?? this.#env)",
       "lines": 1
@@ -140,12 +140,12 @@
       "head": "runtime = await create(configurationFile, undefined, { build: true, envFile: env })",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:304": {
+    "packages/runtime/lib/runtime.js:306": {
       "sha": "a6f69d754867a64b",
       "head": "this.#isProduction = this.#context.isProduction ?? this.#context.production ?? false",
       "lines": 1
     },
-    "packages/runtime/lib/worker/controller.js:122-123": {
+    "packages/runtime/lib/worker/controller.js:128-129": {
       "sha": "23bf1319c06ab474",
       "head": "if (appConfig.isProduction && !process.env.NODE_ENV) {",
       "lines": 2
@@ -200,17 +200,17 @@
       "head": "#setupSharedStartResources () {",
       "lines": 15
     },
-    "packages/foundation/lib/schema.js:905-908": {
+    "packages/foundation/lib/schema.js:915-918": {
       "sha": "7857da3e36eabe4b",
       "head": "reuseTcpPorts: {",
       "lines": 4
     },
-    "packages/foundation/lib/schema.js:1111-1114": {
+    "packages/foundation/lib/schema.js:1121-1124": {
       "sha": "7857da3e36eabe4b",
       "head": "reuseTcpPorts: {",
       "lines": 4
     },
-    "packages/runtime/lib/worker/controller.js:80": {
+    "packages/runtime/lib/worker/controller.js:85": {
       "sha": "e4a960560cf0426e",
       "head": "applicationConfig: this.applicationConfig,",
       "lines": 1
@@ -220,7 +220,7 @@
       "head": "reusePort: satisfies(process.version, '^22.12.0 || ^23.1.0 || >=24.0.0') && !['win32', 'darwin'].includes(currentPlatform),",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2518-2534": {
+    "packages/runtime/lib/runtime.js:2559-2575": {
       "sha": "af2b2c92b05d549f",
       "head": "// On platforms where reusePort is not available, multiple workers cannot listen on the same fixed port.",
       "lines": 17
@@ -250,12 +250,12 @@
       "head": "const port = this.config.application?.entrypointPort",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:5028-5044": {
+    "packages/runtime/lib/runtime.js:5073-5089": {
       "sha": "26df4937949e6472",
       "head": "#recordWorkerUrl (worker, applicationId, workerUrl) {",
       "lines": 17
     },
-    "packages/runtime/lib/runtime.js:4998-5019": {
+    "packages/runtime/lib/runtime.js:5043-5064": {
       "sha": "6eae509a726c7eba",
       "head": "#getPortOwner (port, applicationId, hostname, includeSameApplication = false) {",
       "lines": 22
@@ -265,22 +265,22 @@
       "head": "export const AddressInUseError = createError(",
       "lines": 4
     },
-    "packages/runtime/lib/runtime.js:5042-5044": {
+    "packages/runtime/lib/runtime.js:5087-5089": {
       "sha": "90db33ab09e7c6b2",
       "head": "const owner = this.#getPortOwner(port, applicationId, hostname)",
       "lines": 3
     },
-    "packages/runtime/lib/runtime.js:5004": {
+    "packages/runtime/lib/runtime.js:5049": {
       "sha": "2cd995ac0689be72",
       "head": "if (!worker[kWorkerUrl] || (!includeSameApplication && worker[kApplicationId] === applicationId)) {",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:3433-3443": {
+    "packages/runtime/lib/runtime.js:3474-3484": {
       "sha": "00b427fcb062b41c",
       "head": "if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {",
       "lines": 11
     },
-    "packages/runtime/lib/runtime.js:3471-3475": {
+    "packages/runtime/lib/runtime.js:3512-3516": {
       "sha": "7b842472ff8bfc27",
       "head": "error.code === 'EACCES' ||",
       "lines": 5
@@ -295,7 +295,7 @@
       "head": "async #startProduction () {",
       "lines": 11
     },
-    "packages/runtime/lib/runtime.js:5021-5026": {
+    "packages/runtime/lib/runtime.js:5066-5071": {
       "sha": "aea3da1dcb6d1cb8",
       "head": "#listenersOverlap (host, otherHost) {",
       "lines": 6
@@ -310,32 +310,32 @@
       "head": "export function buildListenOptions (serverConfig) {",
       "lines": 6
     },
-    "packages/runtime/lib/runtime.js:1643-1657": {
+    "packages/runtime/lib/runtime.js:1684-1698": {
       "sha": "fb3cd0d685051d04",
       "head": "getUrls (applicationId) {",
       "lines": 15
     },
-    "packages/runtime/lib/runtime.js:515": {
+    "packages/runtime/lib/runtime.js:518": {
       "sha": "e5f2c37e178d3005",
       "head": "return this.getUrls()",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2437-2457": {
+    "packages/runtime/lib/runtime.js:2478-2498": {
       "sha": "ec35fac99ba0e6c8",
       "head": "#showUrls (workerIds) {",
       "lines": 21
     },
-    "packages/runtime/lib/runtime.js:1684": {
+    "packages/runtime/lib/runtime.js:1725": {
       "sha": "e63036045f3bd8b5",
       "head": "urls: this.getUrls()",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2196-2198": {
+    "packages/runtime/lib/runtime.js:2237-2239": {
       "sha": "5a655c18089fdfc2",
       "head": "const urls = status === 'started' ? Object.values(this.getUrls(id)) : []",
       "lines": 3
     },
-    "packages/runtime/lib/runtime.js:2315": {
+    "packages/runtime/lib/runtime.js:2356": {
       "sha": "4931eea02b7bf2a6",
       "head": "url: worker[kWorkerUrl] ?? null,",
       "lines": 1
@@ -510,12 +510,12 @@
       "head": "#backgroundServiceInject (_, res) {",
       "lines": 2
     },
-    "packages/runtime/lib/runtime.js:2433-2453": {
+    "packages/runtime/lib/runtime.js:2474-2494": {
       "sha": "e18d35659de4acaa",
       "head": "this.#status = status",
       "lines": 21
     },
-    "packages/runtime/lib/runtime.js:2196": {
+    "packages/runtime/lib/runtime.js:2237": {
       "sha": "0f61db6851ef20cf",
       "head": "const urls = status === 'started' ? Object.values(this.getUrls(id)) : []",
       "lines": 1
@@ -530,12 +530,12 @@
       "head": "const [url, clientWs] = await once(this.childManager, 'url')",
       "lines": 1
     },
-    "packages/foundation/lib/schema.js:1115-1119": {
+    "packages/foundation/lib/schema.js:1125-1129": {
       "sha": "297ce247691030df",
       "head": "startTimeout: {",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:3388-3395": {
+    "packages/runtime/lib/runtime.js:3429-3436": {
       "sha": "877f96836876a323",
       "head": "if (config.startTimeout > 0) {",
       "lines": 8
@@ -545,12 +545,12 @@
       "head": "let serverConfigOverride",
       "lines": 5
     },
-    "packages/wattpm-utils/lib/commands/external.js:603-611": {
+    "packages/wattpm-utils/lib/commands/external.js:608-616": {
       "sha": "6918e491f76cf04f",
       "head": "const directory = resolve(root, application.path)",
       "lines": 9
     },
-    "packages/wattpm-utils/lib/commands/external.js:263-270": {
+    "packages/wattpm-utils/lib/commands/external.js:268-275": {
       "sha": "0713c96d1aeec3af",
       "head": "function isPathInsideDirectory (directory, path) {",
       "lines": 8
@@ -570,9 +570,9 @@
       "head": "await prepareApplication(config, applications[i], defaultWorkers)",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2582": {
-      "sha": "8a3ddc1ad1e8f8be",
-      "head": "if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {",
+    "packages/runtime/lib/runtime.js:2623": {
+      "sha": "64b3b17242e211bc",
+      "head": "if (!applicationConfig.skipTracingHooks && config.tracing && config.tracing.enabled !== false) {",
       "lines": 1
     },
     "packages/runtime/index.js:372-375": {
@@ -590,7 +590,7 @@
       "head": "for (let i = applications.length - 1; i >= 0; --i) {",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:303": {
+    "packages/runtime/lib/config.js:327": {
       "sha": "234e889c1536e65b",
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
@@ -625,7 +625,7 @@
       "head": "let envFile = customEnvFile",
       "lines": 9
     },
-    "packages/runtime/lib/worker/controller.js:29-35": {
+    "packages/runtime/lib/worker/controller.js:34-40": {
       "sha": "26a6954378d99b6a",
       "head": "function fetchApplicationUrl (application, key) {",
       "lines": 7
@@ -665,7 +665,7 @@
       "head": ": new ImportGenerator({",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:2207-2211": {
+    "packages/runtime/lib/runtime.js:2248-2252": {
       "sha": "21c030b006599ba4",
       "head": "async getApplicationConfig (id, ensureStarted = true) {",
       "lines": 5
@@ -675,7 +675,7 @@
       "head": "async getApplicationConfig () {",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:3634": {
+    "packages/runtime/lib/runtime.js:3675": {
       "sha": "19c97e5fbb7578ec",
       "head": "server = (await sendViaITC(worker, 'getApplicationConfig'))?.server",
       "lines": 1
@@ -685,12 +685,12 @@
       "head": "app.get('/applications/:id/config', quiet, async request => {",
       "lines": 5
     },
-    "packages/runtime/lib/runtime.js:2154-2170": {
+    "packages/runtime/lib/runtime.js:2195-2211": {
       "sha": "8ed5845a41d20965",
       "head": "const { localUrl, config, configPath, path } = application[kConfig]",
       "lines": 17
     },
-    "packages/runtime/lib/runtime.js:2158": {
+    "packages/runtime/lib/runtime.js:2199": {
       "sha": "3878307d4f94d23e",
       "head": "const { type, version, dependencies } = await sendViaITC(application, 'getApplicationInfo')",
       "lines": 1
@@ -745,7 +745,7 @@
       "head": "'addApplications',",
       "lines": 12
     },
-    "packages/runtime/lib/runtime.js:1672": {
+    "packages/runtime/lib/runtime.js:1713": {
       "sha": "3034ac2c2e4505cd",
       "head": "projectDir: this.#root,",
       "lines": 1
@@ -820,12 +820,12 @@
       "head": "const dependencies = {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/external.js:600": {
+    "packages/wattpm-utils/lib/commands/external.js:605": {
       "sha": "d0ee36b8b0f4017f",
       "head": "application.path = resolve(root, `${config.resolvedApplicationsBasePath}/${application.id}`)",
       "lines": 1
     },
-    "packages/foundation/lib/schema.js:1545-1548": {
+    "packages/foundation/lib/schema.js:1556-1559": {
       "sha": "e861080de667a0a3",
       "head": "resolvedApplicationsBasePath: {",
       "lines": 4
@@ -945,7 +945,7 @@
       "head": "if (!this.config.isRuntimeContext) {",
       "lines": 9
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:532": {
+    "packages/wattpm-utils/lib/commands/migrate.js:534": {
       "sha": "ff440ded0415b4ee",
       "head": "function resolveStructuralValue (value, { configDirectory, envfile, root, sample = {} }) {",
       "lines": 1
@@ -960,7 +960,7 @@
       "head": "const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))",
       "lines": 4
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:475": {
+    "packages/wattpm-utils/lib/commands/migrate.js:477": {
       "sha": "6fc44b37a39f9c96",
       "head": "function readLegacyEnvFile (configDirectory, declaredEnvfile, root) {",
       "lines": 1
@@ -990,7 +990,7 @@
       "head": "export function applicationToEnvVariable (application) {",
       "lines": 3
     },
-    "packages/wattpm-utils/lib/commands/migrate.js:1774": {
+    "packages/wattpm-utils/lib/commands/migrate.js:1776": {
       "sha": "8041b6bc6460351a",
       "head": "function collectCloneOverlapRefusals (root, applications, config, refusals) {",
       "lines": 1
@@ -1000,7 +1000,7 @@
       "head": "try {",
       "lines": 9
     },
-    "packages/runtime/lib/runtime.js:2482": {
+    "packages/runtime/lib/runtime.js:2523": {
       "sha": "4b6f5ec3a0f8edda",
       "head": "applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)",
       "lines": 1
@@ -1020,7 +1020,7 @@
       "head": "envfile = resolve(workerData.applicationConfig.path, '.env')",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:4749-4756": {
+    "packages/runtime/lib/runtime.js:4794-4801": {
       "sha": "c0cc82ad34284a00",
       "head": "#getHealthChecksTimeout () {",
       "lines": 8
@@ -1110,7 +1110,7 @@
       "head": "",
       "lines": 1
     },
-    "packages/runtime/lib/runtime.js:395": {
+    "packages/runtime/lib/runtime.js:398": {
       "sha": "7b3a045b17f63162",
       "head": "if (config.managementApi) {",
       "lines": 1
