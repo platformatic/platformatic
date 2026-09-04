@@ -1,3 +1,4 @@
+import { convertApplicationNameToPrefix } from '@platformatic/foundation'
 import { EOL } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout } from 'timers/promises'
@@ -20,9 +21,9 @@ export function stripVersion (version) {
   return version
 }
 
-export function convertApplicationNameToPrefix (applicationName) {
-  return applicationName.replace(/-/g, '_').toUpperCase()
-}
+// Kept as a re-export: the convention now lives in @platformatic/foundation, so that the runtime can
+// recognise application references without depending on the generators.
+export { convertApplicationNameToPrefix }
 
 export function addPrefixToString (input, prefix) {
   if (!prefix) {

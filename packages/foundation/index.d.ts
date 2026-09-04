@@ -370,5 +370,6 @@ export declare const schemaComponents: Record<string, JSONSchemaType<any>>
 // String types
 export declare function findNearestString (strings: string[], target: string): string | null
 export declare function match (actual: any, expected: any): boolean
+export declare function convertApplicationNameToPrefix (applicationName: string): string
 export declare function escapeRegexp (raw: string): string
 export declare function parseMemorySize (size: string): number
