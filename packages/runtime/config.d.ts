@@ -42,7 +42,11 @@ export type PlatformaticRuntimeConfig = {
           | {
               [k: string]: boolean;
             };
-        config?: string;
+        config?:
+          | string
+          | {
+              [k: string]: unknown;
+            };
         reuseTcpPorts?: boolean;
         workers?:
           | number
