@@ -36,9 +36,13 @@ for (const command of ['start', 'dev']) {
       `
 import { createServer } from 'node:http'
 
+// Port 0, not a fixed one: the start and dev cases run in sequence, and a fixed port outlives the
+// process that held it -- on a slow Windows runner the previous case's socket is still bound when
+// the next binds, and the boot this asserts on crashes with EADDRINUSE. An ephemeral port cannot
+// collide, and the test only cares that the synthesized application comes up and is announced.
 createServer((req, res) => {
   res.writeHead(200, { 'content-type': 'application/json', connection: 'close' }).end('{}')
-}).listen(3000)
+}).listen(0)
       `,
       'utf-8'
     )
