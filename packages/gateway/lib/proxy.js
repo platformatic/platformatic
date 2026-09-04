@@ -114,7 +114,7 @@ async function proxyPlugin (app, opts) {
     if (!application.proxy) {
       // When a application defines no expose config at all
       // we assume a proxy exposed with a prefix equals to its id or meta.prefix
-      if (application.proxy === false || application.openapi || application.graphql) {
+      if (application.proxy === false || application.openapi) {
         continue
       }
     }
