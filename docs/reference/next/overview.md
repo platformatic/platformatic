@@ -88,6 +88,9 @@ In this setup:
 
 The Next.js capability owns its managed listener and uses its capability-level `server` configuration. An application that uses the `commands` property is responsible for starting its own server.
 
+Next.js server bundles keep `@platformatic/globals` external automatically, ensuring application code uses the runtime
+API instance initialized by Platformatic.
+
 ## HTTPS
 
 For development, configure HTTPS in this Next.js capability's `server.https` object:

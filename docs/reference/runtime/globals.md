@@ -7,7 +7,7 @@ label: Runtime APIs (@platformatic/globals)
 
 `@platformatic/globals` exposes typed accessors for the runtime APIs that Watt injects into each application at execution time. Applications use these APIs to read their runtime context, use the shared logger, register metrics, exchange messages, customize health checks, and publish metadata to the runtime.
 
-The package replaces direct access to `globalThis.platformatic`. Direct access remains available for compatibility, but typed getters and setters are preferred.
+The package provides the supported interface for runtime APIs. The former `globalThis.platformatic` object is not available in v4.
 
 ## Install
 
@@ -51,14 +51,34 @@ const basePath = getBasePath({ throwOnMissing: false }) ?? ''
 
 Setter functions, such as `setCustomHealthCheck()`, throw when the corresponding runtime API is not available.
 
+## Bundled server applications
+
+Runtime API values are private to the loaded `@platformatic/globals` package instance. Server-side bundlers must keep
+`@platformatic/globals` external so application code resolves the same package instance initialized by Platformatic.
+
+Platformatic configures this automatically for managed Next.js and Vite builds. Nitro-based applications built with a
+custom command or outside Platformatic must add `externalizePlatformaticGlobals` as a Nitro module:
+
+```js
+import { externalizePlatformaticGlobals } from '@platformatic/globals'
+
+export default defineNitroConfig({
+  modules: [externalizePlatformaticGlobals]
+})
+```
+
+The helper preserves existing Nitro 2, Nitro 3, and Rollup externalization options. The Nitro, Nuxt, and TanStack
+references show the corresponding framework configuration.
+
 ## Helpers
 
 | API | Description |
 | --- | --- |
-| `getGlobal<T>()` | Returns the complete legacy global object, optionally extended with the generic type `T`. Prefer the specific getters below. |
+| `getGlobal<T>()` | Returns the complete runtime API object, optionally extended with the generic type `T`. Prefer the specific getters below. |
+| `externalizePlatformaticGlobals(nitro)` | Configures Nitro 2, Nitro 3, and Rollup to keep `@platformatic/globals` external. Use this as a Nitro module for builds Platformatic does not manage. |
 | `hasField(name)` | Returns whether the runtime API identified by `name` is available. |
-| `updateGlobals(updates)` | Updates the legacy global object with the values in `updates` and returns the updated global object. This helper is intended for Platformatic internals and tests. |
-| `removeGlobals(fields)` | Removes fields from the legacy global object and returns the updated global object. This helper is intended for Platformatic internals and tests. |
+| `updateGlobals(updates)` | Updates the private runtime API object with the values in `updates` and returns the updated object. This helper is intended for Platformatic internals and tests. |
+| `removeGlobals(fields)` | Removes fields from the private runtime API object and returns the updated object. This helper is intended for Platformatic internals and tests. |
 
 The default export is `getGlobal`.
 
@@ -320,23 +340,3 @@ invalidateHttpCache({ tags: ['products'] })
 | --- | --- |
 | `getInterceptors(options?)` | Returns the runtime worker interceptor registry as an object. Intended for Platformatic internals. |
 | `getValkeyClients(options?)` | Returns the Valkey clients map. Intended for framework integrations and caching internals. |
-
-## Legacy `globalThis.platformatic` API
-
-During application execution some APIs are also available on `globalThis.platformatic`. This API is deprecated. Prefer the typed getters and setters exported by `@platformatic/globals`.
-
-| Legacy API | Preferred API |
-| --- | --- |
-| `globalThis.platformatic.applicationId` | `getApplicationId()` |
-| `globalThis.platformatic.applicationConfig` | `getApplicationConfig()` |
-| `globalThis.platformatic.runtimeConfig` | `getRuntimeConfig()` |
-| `globalThis.platformatic.workerId` | `getWorkerId()` |
-| `globalThis.platformatic.root` | `getRoot()` |
-| `globalThis.platformatic.basePath` | `getBasePath()` |
-| `globalThis.platformatic.logLevel` | `getLogLevel()` |
-| `globalThis.platformatic.events` | `getEvents()` |
-| `globalThis.platformatic.sharedContext` | `getSharedContext()` |
-| `globalThis.platformatic.sendHealthSignal` | `getSendHealthSignal()` |
-| `globalThis.platformatic.setBasePath(path)` | `setBasePath(path)` |
-| `globalThis.platformatic.setCustomHealthCheck(fn)` | `setCustomHealthCheck(fn)` |
-| `globalThis.platformatic.setCustomReadinessCheck(fn)` | `setCustomReadinessCheck(fn)` |

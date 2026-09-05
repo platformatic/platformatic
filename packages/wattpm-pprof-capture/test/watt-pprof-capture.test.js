@@ -13,8 +13,21 @@ async function createApp (t, config = 'fixtures/runtime-test/platformatic.json')
   })
 
   const { 'service:0': url } = await app.start()
-  // Wait for services and handlers to register
+
+  // Give applications a moment to start up before sending requests.
   await new Promise(resolve => setTimeout(resolve, 200))
+
+  // Wait for the service to accept requests anyway,
+  // to improve reliability on slower CI runners.
+  await waitForCondition(async () => {
+    try {
+      const response = await request(`${url}/health`)
+      await response.body.dump()
+      return response.statusCode === 200
+    } catch {
+      return false
+    }
+  })
 
   return { app, url }
 }
@@ -118,8 +131,11 @@ test('error types should be distinguishable throughout lifecycle', async t => {
     'Should throw NoProfileAvailableError (not ProfilingNotStartedError)'
   )
 
-  // Wait for the profile to be captured through rotation
-  await new Promise(resolve => setTimeout(resolve, 600))
+  // Wait for the profile to be captured through rotation.
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.hasProfile
+  }, 5000)
 
   // Get the profile (should succeed now)
   const profile = await app.sendCommandToApplication('service', 'getLastProfile')
@@ -176,7 +192,10 @@ test('multiple start attempts should throw error', async t => {
   )
 
   // Should still be able to get profile after first rotation
-  await new Promise(resolve => setTimeout(resolve, 600))
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.hasProfile
+  }, 5000)
   const profile = await app.sendCommandToApplication('service', 'getLastProfile')
   assert.ok(profile instanceof Uint8Array, 'Should get Uint8Array from ITC')
 
@@ -216,12 +235,19 @@ test('profile rotation should update available profiles', async t => {
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 200 })
 
   // Wait for first rotation
-  await new Promise(resolve => setTimeout(resolve, 250))
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.hasProfile
+  }, 5000)
   const profile1 = await app.sendCommandToApplication('service', 'getLastProfile')
   assert.ok(profile1 instanceof Uint8Array)
 
   // Wait for second rotation
-  await new Promise(resolve => setTimeout(resolve, 250))
+  const firstState = await app.sendCommandToApplication('service', 'getProfilingState')
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.latestProfileTimestamp > firstState.latestProfileTimestamp
+  }, 5000)
   const profile2 = await app.sendCommandToApplication('service', 'getLastProfile')
   assert.ok(profile2 instanceof Uint8Array)
 
@@ -237,7 +263,10 @@ test('getLastProfile should return same profile until next rotation', async t =>
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500 })
 
   // Wait for first rotation
-  await new Promise(resolve => setTimeout(resolve, 600))
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.hasProfile
+  }, 5000)
 
   // Multiple getLastProfile calls should return the same profile
   const profile1 = await app.sendCommandToApplication('service', 'getLastProfile')
@@ -531,6 +560,7 @@ test('profiling with eluThreshold should pause during rotation when below thresh
   await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
 
   // Wait for the runtime health cycle to observe the low ELU and pause the profiler
+  // at the next rotation boundary.
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return !state.isProfilerRunning && state.isPausedBelowThreshold
@@ -855,7 +885,10 @@ test('latestProfileTimestamp should be set after profile rotation', async t => {
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 200 })
 
   // Wait for first rotation
-  await new Promise(resolve => setTimeout(resolve, 250))
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.latestProfileTimestamp != null
+  }, 5000)
 
   // Get state and verify timestamp is set
   const stateAfterRotation = await app.sendCommandToApplication('service', 'getProfilingState')
@@ -906,8 +939,11 @@ test('latestProfileTimestamp should be cleared after profile cleanup timeout', a
   // Stop profiling - this schedules cleanup after durationMillis (200ms)
   await app.sendCommandToApplication('service', 'stopProfiling')
 
-  // Wait for cleanup timeout (durationMillis after stop)
-  await new Promise(resolve => setTimeout(resolve, 300))
+  // Wait for the cleanup timeout to clear the completed profile.
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.latestProfileTimestamp === null && !state.hasProfile
+  }, 5000)
 
   // Verify timestamp is cleared after cleanup
   const stateAfterCleanup = await app.sendCommandToApplication('service', 'getProfilingState')
@@ -949,13 +985,19 @@ test('latestProfileTimestamp should update with each rotation', async t => {
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 200 })
 
   // Wait for first rotation
-  await new Promise(resolve => setTimeout(resolve, 250))
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.latestProfileTimestamp != null
+  }, 5000)
   const stateAfterFirst = await app.sendCommandToApplication('service', 'getProfilingState')
   const firstTimestamp = stateAfterFirst.latestProfileTimestamp
   assert.ok(firstTimestamp != null, 'Timestamp should be set after first rotation')
 
   // Wait for second rotation
-  await new Promise(resolve => setTimeout(resolve, 250))
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.latestProfileTimestamp > firstTimestamp
+  }, 5000)
   const stateAfterSecond = await app.sendCommandToApplication('service', 'getProfilingState')
   const secondTimestamp = stateAfterSecond.latestProfileTimestamp
 

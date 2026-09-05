@@ -8,7 +8,7 @@
     ".": {
       "types": "./lib/index.d.ts",
       "import": "./lib/index.js",
-      "require": "./lib/index.js"
+      "require": "./lib/index.cjs"
     }
   },
   "types": "./lib/index.d.ts",
@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
+    "@fastify/error": "^4.0.0",
     "@platformatic/prom-client": "^1.0.0",
     "pino": "^9.9.0"
   },

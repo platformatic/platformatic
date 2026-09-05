@@ -22,7 +22,7 @@ Common APIs include:
 - `getEvents()` to listen for lifecycle events such as `close`.
 - `setCustomHealthCheck()` and `setCustomReadinessCheck()` to customize health and readiness checks.
 
-Direct access through `globalThis.platformatic` is still supported for compatibility, but deprecated. Use the typed APIs from [`@platformatic/globals`](/docs/reference/runtime/globals) instead.
+Use the typed APIs from [`@platformatic/globals`](/docs/reference/runtime/globals); the former `globalThis.platformatic` object is no longer available in v4.
 
 See the [Runtime APIs reference](/docs/reference/runtime/globals) for the complete API list, error handling behavior, and examples.
 

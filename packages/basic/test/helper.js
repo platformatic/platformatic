@@ -18,7 +18,7 @@ import { basename, dirname, join, matchesGlob, resolve } from 'node:path'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
@@ -332,6 +332,35 @@ export async function ensureDependencies (configOrPaths) {
       // Create the subfolder if needed
       if (dep.includes('/')) {
         await createDirectory(resolve(path, 'node_modules', dirname(dep)))
+      }
+
+      if (dep === '@platformatic/globals') {
+        await createDirectory(moduleRoot)
+
+        // Turbopack follows workspace symlinks before applying serverExternalPackages, so use a
+        // physical proxy that represents the package layout consumers get from the registry.
+        const esmEntrypoint = pathToFileURL(resolve(resolved, 'lib/index.js')).href
+        const commonjsEntrypoint = resolve(resolved, 'lib/index.cjs')
+        await writeFile(
+          resolve(moduleRoot, 'package.json'),
+          JSON.stringify({
+            name: dep,
+            private: true,
+            type: 'module',
+            types: './index.d.ts',
+            exports: { '.': { types: './index.d.ts', import: './index.js', require: './index.cjs' } }
+          })
+        )
+        await cp(resolve(resolved, 'lib/index.d.ts'), resolve(moduleRoot, 'index.d.ts'))
+        await writeFile(
+          resolve(moduleRoot, 'index.js'),
+          `export * from ${JSON.stringify(esmEntrypoint)}\nexport { default } from ${JSON.stringify(esmEntrypoint)}\n`
+        )
+        await writeFile(
+          resolve(moduleRoot, 'index.cjs'),
+          `module.exports = require(${JSON.stringify(commonjsEntrypoint)})\n`
+        )
+        continue
       }
 
       // Symlink the dependency
