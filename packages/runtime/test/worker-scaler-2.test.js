@@ -6,15 +6,23 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { transform } from '../lib/config.js'
+import { transform } from '../index.js'
 import { DynamicWorkersScaler } from '../lib/worker-scaler.js'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
+// Both sides of this pair are now directories, which v4 requires: the standalone application's
+// variant became an application of its own naming the shared routes, rather than a second
+// configuration sitting beside them.
 const configurations = {
-  default: 'platformatic.json',
-  'worker-scaler': 'platformatic.worker-scaler.json'
+  default: 'worker-scaler-service',
+  'worker-scaler': 'worker-scaler-service-vertical'
+}
+
+const runtimeVariants = {
+  default: 'default',
+  'worker-scaler': 'worker-scaler'
 }
 
 test('should remove pending initial updates by application ID', async t => {
@@ -40,9 +48,9 @@ test('should remove pending initial updates by application ID', async t => {
   assert.strictEqual(resourcesUpdates, 0)
 })
 
-for (const [name, file] of Object.entries(configurations)) {
+for (const [name, directory] of Object.entries(configurations)) {
   test(`should not scale an applications when the app maxWorkers is reached (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', runtimeVariants[name]))
 
     const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
     const logsPath = join(tmpDir, 'log.txt')
@@ -107,7 +115,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should scale a standalone application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler-service', file)
+    const configFile = configurationFileIn(join(fixturesDir, directory))
 
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
@@ -156,7 +164,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should scale applications to their min workers at start (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', runtimeVariants[name]))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
@@ -189,7 +197,7 @@ for (const [name, file] of Object.entries(configurations)) {
   })
 
   test(`should not scale an application is there is not enough memory (configuration ${name})`, async t => {
-    const configFile = join(fixturesDir, 'worker-scaler', file)
+    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', runtimeVariants[name]))
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)

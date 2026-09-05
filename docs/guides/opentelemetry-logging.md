@@ -13,30 +13,32 @@ Watt supports exporting logs directly to OpenTelemetry-compatible collectors, pr
 
 ### Basic Configuration
 
-Add OpenTelemetry log export to your `watt.json`:
+Add OpenTelemetry log export to your `watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "logger": {
-    "level": "info",
-    "openTelemetryExporter": {
-      "protocol": "http",
-      "url": "http://localhost:4318/v1/logs"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: { path: 'web' },
+  logger: {
+    level: 'info',
+    openTelemetryExporter: {
+      protocol: 'http',
+      url: 'http://localhost:4318/v1/logs'
     }
   },
-  "tracing": {
-    "enabled": true,
-    "applicationName": "my-service",
-    "version": "1.0.0",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+  tracing: {
+    enabled: true,
+    applicationName: 'my-service',
+    version: '1.0.0',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   }
-}
+})
 ```
 
 This configuration:
@@ -157,30 +159,33 @@ The `tracing` object provides service identity:
 
 ## Integration Example (Grafana + Loki + Tempo)
 
-### Watt configuration file (`watt.json`)
+### Watt configuration file (`watt.config.ts`)
 
-```json
-{
-  "logger": {
-    "level": "info",
-    "openTelemetryExporter": {
-      "protocol": "http",
-      "url": "http://otel-collector:4318/v1/logs"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: { path: 'web' },
+  logger: {
+    level: 'info',
+    openTelemetryExporter: {
+      protocol: 'http',
+      url: 'http://otel-collector:4318/v1/logs'
     }
   },
-  "tracing": {
-    "enabled": true,
-    "applicationName": "api-gateway",
-    "version": "2.0.0",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "protocol": "http",
-        "url": "http://otel-collector:4318/v1/traces"
+  tracing: {
+    enabled: true,
+    applicationName: 'api-gateway',
+    version: '2.0.0',
+    exporter: {
+      type: 'otlp',
+      options: {
+        protocol: 'http',
+        url: 'http://otel-collector:4318/v1/traces'
       }
     }
   }
-}
+})
 ```
 
 ### Docker compose file (`docker-compose.yml`)
@@ -489,25 +494,26 @@ done
 
 When using multiple applications in a Watt runtime, each inherits the logger configuration:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "autoload": {
-    "path": "applications"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: {
+    path: 'applications'
   },
-  "logger": {
-    "level": "info",
-    "openTelemetryExporter": {
-      "protocol": "http",
-      "url": "{OTLP_ENDPOINT}/v1/logs"
+  logger: {
+    level: 'info',
+    openTelemetryExporter: {
+      protocol: 'http',
+      url: `${process.env.OTLP_ENDPOINT ?? 'http://localhost:4318'}/v1/logs`
     }
   },
-  "tracing": {
-    "enabled": true,
-    "applicationName": "microservices-platform",
-    "version": "1.0.0"
+  tracing: {
+    enabled: true,
+    applicationName: 'microservices-platform',
+    version: '1.0.0'
   }
-}
+})
 ```
 
 Each service automatically:

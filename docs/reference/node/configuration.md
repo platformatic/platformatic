@@ -4,8 +4,8 @@ import ServerConfiguration from '../_server-in-capabilities.md';
 
 # Configuration
 
-Platformatic Node is configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Node is configured with a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 ## `application`
 

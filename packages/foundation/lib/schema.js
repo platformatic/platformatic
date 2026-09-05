@@ -870,10 +870,6 @@ export const application = {
     { required: ['id', 'path'] },
     { required: ['id', 'url'] }
   ],
-  not: {
-    type: 'object',
-    required: ['module', 'url']
-  },
   properties: {
     id: {
       type: 'string'
@@ -896,7 +892,11 @@ export const application = {
       resolvePath: true
     },
     config: {
-      type: 'string'
+      // v4 entries carry an inline ApplicationDefinition here — the object a capability factory
+      // returns — where v3 carried a path to a configuration file. The union is transitional and
+      // narrows to the object alone when the v3 reader leaves foundation; it is listed for the
+      // schema audit rather than left to be rediscovered.
+      anyOf: [{ type: 'string' }, { type: 'object' }]
     },
     url: {
       type: 'string'
@@ -1011,7 +1011,7 @@ export const application = {
       properties: {
         instrumentations: {
           type: 'array',
-          description: 'An array of instrumentations loaded if telemetry is enabled',
+          description: 'An array of instrumentations loaded if tracing is enabled',
           items: {
             oneOf: [
               {
@@ -1622,6 +1622,58 @@ export const runtimeProperties = {
   policies,
   compileCache
 }
+
+/*
+  The names the generated types carry.
+
+  `json-schema-to-typescript` hoists a subschema that has a `title` into an interface of that name
+  and inlines one that does not, so without this every capability's `config.d.ts` spells `health` as
+  an anonymous object literal -- eighteen copies of the same shape, none of which a person can name
+  in their own code. With it, the document, the editor and the generated types use one vocabulary.
+
+  Assigned here rather than written at each site because several of these objects are copies of
+  another: the application `health` is the runtime `health` with its defaults removed, and a `title`
+  written into the shared literal would name both the same thing. Assignment also keeps the table
+  readable as a table, which is what it is.
+
+  A `title` is annotation only -- AJV ignores it -- so this changes what is generated and nothing
+  about what validates.
+*/
+workers.anyOf[2].title = 'WorkersOptions'
+extension.anyOf[1].title = 'ExtensionEntry'
+compileCache.anyOf[1].title = 'CompileCacheOptions'
+watch.title = 'WatchOptions'
+logger.title = 'AppLoggerOptions'
+server.title = 'AppServerOptions'
+server.properties.https.title = 'HttpsOptions'
+health.title = 'HealthOptions'
+tracing.title = 'TelemetryOptions'
+
+/*
+  Titled for the capability schemas, which list one application entry and generate it in full.
+
+  The runtime's own schema does not get the benefit: it lists three -- `applications` and the v3
+  aliases `services` and `web` -- and the pinned generator, handed three copies of one 24-property
+  object, gives up and emits `{ [k: string]: unknown }` for all three. Two copies generate
+  correctly; three do not. Its next major fixes this, and a `$ref` for the aliases works there too,
+  but that release is hours old and this repository will not install a package that new. So the
+  runtime entry and the four option types nested in it stay anonymous for now, recorded in
+  `scripts/check-blocks.mjs` rather than worked around.
+*/
+application.title = 'ApplicationEntry'
+
+application.properties.health.title = 'ApplicationHealthOptions'
+application.properties.workers.anyOf[2].title = 'ApplicationWorkersOptions'
+application.properties.permissions.title = 'PermissionsOptions'
+application.properties.tracing.title = 'ApplicationTelemetryOverrides'
+
+runtimeProperties.autoload.properties.mappings.additionalProperties.title = 'ApplicationEntryOverrides'
+runtimeProperties.gracefulShutdown.title = 'GracefulShutdownOptions'
+runtimeProperties.healthProbes.anyOf[2].title = 'HealthProbesOptions'
+runtimeProperties.undici.title = 'UndiciOptions'
+runtimeProperties.httpCache.oneOf[1].title = 'HttpCacheOptions'
+runtimeProperties.managementApi.anyOf[2].title = 'ManagementApiOptions'
+runtimeProperties.metrics.anyOf[1].title = 'MetricsOptions'
 
 export const runtimeUnwrappablePropertiesList = [
   '$schema',

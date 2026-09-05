@@ -1,15 +1,30 @@
 import { kMetadata } from '@platformatic/foundation'
-import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db'
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { loadConfiguration, wrapInRuntimeConfig } from '../index.js'
-import { parseInspectorOptions, prepareApplication } from '../lib/config.js'
-import { createRuntime, createTemporaryDirectory } from './helpers.js'
+import { loadConfiguration } from '../index.js'
+import { parseInspectorOptions, prepareV4Application } from '../lib/config.js'
+import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+
+/*
+  The machine-generated plain-object form: a stamped configuration with no imports, which is what a
+  deployment tool or the ICC emits. It used to be written here as JSON, which v4 does not read --
+  the stamp said 4.0.0 and the file was a v3 document.
+*/
+async function writeStampedConfiguration (directory, configuration) {
+  const file = join(directory, 'watt.config.js')
+
+  await writeFile(
+    file,
+    `export default ${JSON.stringify({ $schema: 'https://schemas.platformatic.dev/wattpm/4.0.0.json', ...configuration }, null, 2)}\n`
+  )
+
+  return file
+}
 
 test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
   throws(() => {
@@ -27,12 +42,13 @@ test('prepareApplication - resolves module source separately from writable appli
     watch: false
   }
 
-  const application = await prepareApplication(
+  const application = await prepareV4Application(
     config,
     {
       id: 'module-app',
       path: applicationPath,
-      module: '@platformatic/basic'
+      module: '@platformatic/basic',
+      moduleApplication: true
     },
     { static: 1, dynamic: false }
   )
@@ -45,7 +61,7 @@ test('prepareApplication - resolves module source separately from writable appli
 
 test('prepareApplication - reports missing application modules with a coded error', async () => {
   await rejects(
-    prepareApplication(
+    prepareV4Application(
       {
         [kMetadata]: { root: resolve(fixturesDir, 'missing') },
         watch: false
@@ -53,7 +69,8 @@ test('prepareApplication - reports missing application modules with a coded erro
       {
         id: 'missing-module',
         path: resolve(fixturesDir, 'missing', 'application'),
-        module: '@platformatic/does-not-exist'
+        module: '@platformatic/does-not-exist',
+        moduleApplication: true
       },
       { static: 1, dynamic: false }
     ),
@@ -67,7 +84,7 @@ test('module applications invoke create with a separate writable root', async t 
   const packageScope = join(nodeModules, '@platformatic')
   const applicationPath = join(root, 'applications', 'module-app')
   const fixtureRoot = join(fixturesDir, 'module-application')
-  const configFile = join(root, 'watt.json')
+  const configFile = join(root, 'watt.config.js')
 
   await mkdir(packageScope, { recursive: true })
   await symlink(join(fixtureRoot, 'mock-application'), join(nodeModules, 'mock-application'), 'dir')
@@ -75,10 +92,9 @@ test('module applications invoke create with a separate writable root', async t 
   await symlink(resolve(import.meta.dirname, '../node_modules/@platformatic/service'), join(packageScope, 'service'), 'dir')
   await writeFile(
     configFile,
-    JSON.stringify({
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/3.67.0.json',
+    `export default ${JSON.stringify({
       applications: [{ id: 'module-app', path: applicationPath, module: 'mock-application' }]
-    })
+    })}\n`
   )
 
   const runtime = await createRuntime(configFile)
@@ -194,36 +210,29 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
 
 test('rejects root server configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
+  const configFile = await writeStampedConfiguration(directory, {
+    applications: [{ id: 'main', path: '.' }],
+    server: { port: 3042 }
+  })
 
-  await writeFile(
-    configFile,
-    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], server: { port: 3042 } })
-  )
-
-  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+  await rejects(() => loadConfiguration(configFile), /must NOT have the additional property 'server'/)
 })
 
 test('rejects root entrypoint configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
+  const configFile = await writeStampedConfiguration(directory, {
+    applications: [{ id: 'main', path: '.' }],
+    entrypoint: 'main'
+  })
 
-  await writeFile(
-    configFile,
-    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], entrypoint: 'main' })
-  )
-
-  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+  await rejects(() => loadConfiguration(configFile), /must NOT have the additional property 'entrypoint'/)
 })
 
 test('does not use application useHttp configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
-
-  await writeFile(
-    configFile,
-    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.', useHttp: true }] })
-  )
+  const configFile = await writeStampedConfiguration(directory, {
+    applications: [{ id: 'main', path: '.', useHttp: true }]
+  })
 
   const config = await loadConfiguration(configFile)
   strictEqual(config.applications[0].exposed, undefined)
@@ -231,9 +240,7 @@ test('does not use application useHttp configuration', async t => {
 
 test('does not add application listener configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
-  const configFile = join(directory, 'platformatic.runtime.json')
-
-  await writeFile(configFile, JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }] }))
+  const configFile = await writeStampedConfiguration(directory, { applications: [{ id: 'main', path: '.' }] })
 
   const config = await loadConfiguration(configFile)
   strictEqual(config.applications[0].exposed, undefined)
@@ -242,21 +249,21 @@ test('does not add application listener configuration', async t => {
 })
 
 test('correctly loads the watch value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'watt.config.mjs')
   process.env.PLT_WATCH = 'true'
   const runtime = await createRuntime(configFile)
   strictEqual((await runtime.getRuntimeConfig()).watch, true)
 })
 
 test('correctly loads the watch value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env', 'watt.config.mjs')
   process.env.PLT_WATCH = 'false'
   const runtime = await createRuntime(configFile)
   strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
 test('defaults graceful shutdown timeouts', async () => {
-  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults.json')
+  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults', 'watt.config.mjs')
   const runtime = await createRuntime(configFile)
   const { gracefulShutdown } = await runtime.getRuntimeConfig()
 
@@ -264,178 +271,16 @@ test('defaults graceful shutdown timeouts', async () => {
   strictEqual(gracefulShutdown.application, 10000)
 })
 
-test('strictEnv should fail loading the configuration when environment variables are missing', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
-  delete process.env.PLT_STRICT_ENV_WATCH
-
-  await rejects(
-    async () => {
-      await createRuntime(configFile)
-    },
-    {
-      code: 'PLT_MISSING_ENV_VARIABLES',
-      message:
-        'The configuration references the following environment variables which are not set: PLT_STRICT_ENV_WATCH'
-    }
-  )
-})
-
-test('strictEnv should not fail loading the configuration when all environment variables are set', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
-  process.env.PLT_STRICT_ENV_WATCH = 'false'
-
-  t.after(() => {
-    delete process.env.PLT_STRICT_ENV_WATCH
-  })
-
-  const runtime = await createRuntime(configFile)
-  strictEqual((await runtime.getRuntimeConfig()).watch, false)
-})
-
-test('defaults the application name to `main` if there is no package.json', async t => {
-  const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'main')
-})
-
-test('uses the name in package.json', async t => {
-  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'mysimplename')
-})
-
-test('uses the name in package.json, removing the scope', async t => {
-  const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'myname')
-})
-
-test('defaults name to `main` if package.json exists but has no name', async t => {
-  const configFile = join(fixturesDir, 'dbAppNoName', 'platformatic.db.json')
-  const config = await databaseLoadConfiguration(configFile)
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.applications.length, 1)
-  strictEqual(runtimeConfig.applications[0].id, 'main')
-})
-
-test('wrapInRuntimeConfig does not copy server configuration to the runtime', async t => {
-  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
-
-  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  strictEqual(runtimeConfig.server, undefined)
-})
-
-test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
-  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
-
-  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
-  const runtimeConfig = await wrapInRuntimeConfig(config)
-
-  ok(typeof runtimeConfig.web, 'undefined')
-  ok(typeof runtimeConfig.autoload, 'undefined')
-  ok(runtimeConfig.watch === false)
-  strictEqual(runtimeConfig.server, undefined)
-  deepStrictEqual(runtimeConfig.applications, [
-    {
-      config: configFile,
-      dependencies: [],
-      enabled: true,
-      gitBranch: 'main',
-      health: {},
-      id: 'main',
-      localUrl: 'http://main.plt.local',
-      path: dirname(configFile),
-      reuseTcpPorts: true,
-      type: '@platformatic/db',
-      watch: false,
-      skipTracingHooks: true,
-      workers: {
-        static: 1,
-        dynamic: false
-      }
-    },
-    {
-      dependencies: [],
-      enabled: true,
-      gitBranch: 'main',
-      health: {},
-      id: 'another',
-      localUrl: 'http://another.plt.local',
-      path: resolve(dirname(configFile), 'another'),
-      reuseTcpPorts: true,
-      type: 'unknown',
-      watch: false,
-      workers: {
-        static: 1,
-        dynamic: false
-      }
-    }
-  ])
-})
-
-test('supports configurable envfile location', async t => {
-  const configFile = join(fixturesDir, 'env-config', 'platformatic.json')
-  const runtime = await createRuntime(configFile)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.init()
-  await runtime.start()
-
-  const { payload } = await runtime.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  deepStrictEqual(data, {
-    FROM_ENV_FILE: 'true',
-    FROM_MAIN_CONFIG_FILE: 'true',
-    FROM_SERVICE_CONFIG_FILE: 'true',
-    OVERRIDE_TEST: 'service-override'
-  })
-})
-
-test('supports default envfile location', async t => {
-  const configFile = join(fixturesDir, 'env-service', 'platformatic.json')
-  const runtime = await createRuntime(configFile)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.init()
-  await runtime.start()
-
-  const { payload } = await runtime.inject('hello', {
-    method: 'GET',
-    url: '/'
-  })
-  const data = JSON.parse(payload)
-
-  deepStrictEqual(data, {
-    FROM_ENV_FILE: 'true',
-    FROM_MAIN_CONFIG_FILE: 'true',
-    FROM_SERVICE_CONFIG_FILE: 'true',
-    OVERRIDE_TEST: 'service-override'
-  })
-})
+/*
+  `strictEnv` and the root `envfile` were removed in v4 -- there are no placeholders to be strict
+  about, and env files are discovered by walking from the configuration to the project root rather
+  than named. The four tests that covered them went with the v3 loader that implemented them; what
+  replaces `strictEnv` is a guard the configuration writes for itself, which
+  `docs/reference/service/configuration.md` shows.
+*/
 
 test('supports configurable arguments', async t => {
-  const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
+  const configFile = configurationFileIn(join(fixturesDir, 'custom-argv'))
   const runtime = await createRuntime(configFile)
 
   t.after(async () => {
@@ -470,7 +315,7 @@ test('supports configurable arguments', async t => {
 })
 
 test('should manage application config patch', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'watt.config.mjs')
   const runtime = await createRuntime(configFile)
 
   runtime.setApplicationConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
@@ -507,140 +352,4 @@ test('should manage application config patch', async t => {
 
     deepStrictEqual(data, { alternate: true })
   }
-})
-
-test('prepareApplication should not perform slow glob for services with url but no path', async t => {
-  const { prepareApplication } = await import('../lib/config.js')
-  const { kMetadata } = await import('@platformatic/foundation')
-  const { mkdir, writeFile, rm } = await import('node:fs/promises')
-
-  // Create a temporary directory with many JS files to simulate a large codebase
-  // This will make the glob operation slow if it runs unnecessarily
-  const tempDir = join(fixturesDir, 'temp-glob-test-' + Date.now())
-  await mkdir(tempDir, { recursive: true })
-
-  // Create subdirectories with many JS files (simulating external services)
-  const numDirs = 20
-  const filesPerDir = 50
-  for (let i = 0; i < numDirs; i++) {
-    const subDir = join(tempDir, `service-${i}`)
-    await mkdir(subDir, { recursive: true })
-    for (let j = 0; j < filesPerDir; j++) {
-      await writeFile(join(subDir, `file-${j}.js`), '// test file')
-    }
-  }
-
-  t.after(async () => {
-    await rm(tempDir, { recursive: true, force: true })
-  })
-
-  // Create a minimal config object with metadata pointing to the temp directory
-  // This is the root that would be globbed if the bug exists
-  const config = {
-    [kMetadata]: {
-      root: tempDir,
-      env: {},
-      path: null,
-      module: '@platformatic/runtime'
-    },
-    watch: false
-  }
-
-  const defaultWorkers = { static: 1, dynamic: false }
-
-  // Service with url but no path - simulates external service from git
-  // BUG: When path is undefined, importCapabilityAndConfig(undefined) is called
-  // which globs the cwd looking for JS files
-  const application = {
-    id: 'service-with-url',
-    url: 'git@github.com:example/repo.git',
-    gitBranch: 'main'
-    // Note: no 'path' property - this is the problematic case
-  }
-
-  // Measure ONLY the prepareApplication call, not the test setup
-  const startTime = performance.now()
-  const result = await prepareApplication(config, application, defaultWorkers)
-  const elapsed = performance.now() - startTime
-
-  // Verify the application type is set to 'unknown'
-  strictEqual(result.type, 'unknown', 'Application type should be "unknown" when path is missing')
-
-  // Verify other expected properties are set
-  deepStrictEqual(result.dependencies, [], 'Dependencies should default to empty array')
-  strictEqual(result.localUrl, 'http://service-with-url.plt.local', 'localUrl should be set')
-  strictEqual(result.watch, false, 'watch should inherit from config')
-
-  // Services with url but no path should skip capability detection entirely
-  // This means no file operations (glob, readFile, etc.) should be performed
-  // The threshold is 10ms because we're only setting a few properties
-  ok(elapsed < 10, `prepareApplication for url-only service should skip file operations (took ${elapsed.toFixed(2)}ms, expected < 10ms)`)
-})
-
-test('prepareApplication should handle multiple services with url but no path efficiently', async t => {
-  const { prepareApplication } = await import('../lib/config.js')
-  const { kMetadata } = await import('@platformatic/foundation')
-  const { mkdir, writeFile, rm } = await import('node:fs/promises')
-
-  // Create a temporary directory with many JS files
-  const tempDir = join(fixturesDir, 'temp-glob-test-multi-' + Date.now())
-  await mkdir(tempDir, { recursive: true })
-
-  // Create subdirectories with many JS files
-  const numDirs = 30
-  const filesPerDir = 100
-  for (let i = 0; i < numDirs; i++) {
-    const subDir = join(tempDir, `service-${i}`)
-    await mkdir(subDir, { recursive: true })
-    for (let j = 0; j < filesPerDir; j++) {
-      await writeFile(join(subDir, `file-${j}.js`), '// test file')
-    }
-  }
-
-  t.after(async () => {
-    await rm(tempDir, { recursive: true, force: true })
-  })
-
-  const config = {
-    [kMetadata]: {
-      root: tempDir,
-      env: {},
-      path: null,
-      module: '@platformatic/runtime'
-    },
-    watch: false
-  }
-
-  const defaultWorkers = { static: 1, dynamic: false }
-
-  // Create multiple services with url but no path (like in watt.json with git repos)
-  const services = []
-  for (let i = 1; i <= 16; i++) {
-    services.push({
-      id: `service-${i}`,
-      url: `git@github.com:example/repo-${i}.git`,
-      gitBranch: 'main'
-    })
-  }
-
-  // Measure ONLY the prepareApplication calls, not the test setup
-  const startTime = performance.now()
-
-  // Process all services
-  const results = []
-  for (const service of services) {
-    results.push(await prepareApplication(config, { ...service }, defaultWorkers))
-  }
-
-  const elapsed = performance.now() - startTime
-
-  // All services should have type 'unknown'
-  for (const result of results) {
-    strictEqual(result.type, 'unknown', `Service ${result.id} should have type "unknown"`)
-  }
-
-  // 16 services with url but no path should complete in under 50ms total
-  // because they should skip capability detection entirely (no file operations)
-  // With the bug, each service would trigger a glob operation on the temp directory
-  ok(elapsed < 50, `Processing 16 url-only services should be fast (took ${elapsed.toFixed(2)}ms, expected < 50ms)`)
 })

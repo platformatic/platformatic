@@ -23,15 +23,19 @@ npm install @platformatic/vite
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/vite/4.0.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { vite } from '@platformatic/vite'
+
+export default vite({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture

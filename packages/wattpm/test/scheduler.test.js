@@ -16,9 +16,9 @@ test('scheduler commands should list, pause, run, and resume scheduler jobs', as
   await target.listen({ port: 0 })
   t.after(() => target.close())
 
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
-  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
     config.scheduler = [
       {
         name: 'cli-test',

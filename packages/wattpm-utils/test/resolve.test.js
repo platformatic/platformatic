@@ -1,26 +1,33 @@
-import {
-  createDirectory,
-  loadConfigurationFile as loadRawConfigurationFile,
-  safeRemove,
-  saveConfigurationFile
-} from '@platformatic/foundation'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { relative, resolve, sep } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 import { test } from 'node:test'
-import { prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
-import { appendEnvVariable } from '../lib/commands/external.js'
+import { prepareFixture, prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, wattpmUtils } from './helper.js'
 
-test('resolve - should clone a URL when the environment variable is set to a folder inside the repo', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+/*
+  Where a remote application is checked out. v3 put the destination in the environment, under
+  `PLT_APPLICATION_<ID>_PATH`, and the imported entry carried that variable's name as its path. v4
+  writes no such indirection: an entry either declares a literal path or declares none, and one
+  that declares none is checked out under `resolvedApplicationsBasePath` — `external/<id>`.
+*/
+function declarePath (rootDir, id, path) {
+  return updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications.find(application => application.id === id).path = path
+  })
+}
+
+test('resolve - should clone a URL into the path the entry declares', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
+  await declarePath(rootDir, 'resolved', 'web/resolved')
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
 
@@ -30,31 +37,32 @@ test('resolve - should clone a URL when the environment variable is set to a fol
   deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'main')
 })
 
-test('resolve - should clone a URL when the environment variable is not set', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+test('resolve - should clone a URL into the default base path when the entry declares none', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
 
-  ok(resolveProcess.stdout.includes(`Cloning ${repo} into ${relative(rootDir, 'external/resolved')}`))
+  ok(resolveProcess.stdout.includes(`Cloning ${repo} into ${join('external', 'resolved')}`))
   ok(resolveProcess.stdout.includes('Installing dependencies for the application resolved using npm ...'))
+
+  deepStrictEqual(await readFile(resolve(rootDir, 'external/resolved/branch'), 'utf-8'), 'main')
 })
 
 test('resolve - should do nothing when the directory already exists inside the repo', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
 
-  const envValue = resolve(rootDir, 'whatever')
-  await createDirectory(envValue)
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'whatever')
+  await createDirectory(resolve(rootDir, 'whatever'))
+  await declarePath(rootDir, 'resolved', 'whatever')
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
   ok(!resolveProcess.stdout.includes(`Cloning ${repo}`))
@@ -62,14 +70,13 @@ test('resolve - should do nothing when the directory already exists inside the r
 })
 
 test('resolve - should do nothing when loaded vian application file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
-  await safeRemove(resolve(rootDir, 'watt.json'))
-  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
-  })
+  // The root is gone, so web/main's own configuration is the only one there is: a standalone
+  // application, which resolve has nothing to do for.
+  await safeRemove(resolve(rootDir, 'watt.config.mjs'))
 
   changeWorkingDirectory(t, resolve(rootDir, 'web/main'))
   const resolveProcess = await wattpmUtils('resolve', resolve(rootDir, 'web/main'))
@@ -78,16 +85,17 @@ test('resolve - should do nothing when loaded vian application file', async t =>
 })
 
 test('resolve - should do nothing when the directory already exists outside the repo', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
 
-  const envValue = resolve(temporaryFolder, 'outside-' + Date.now())
-  await createDirectory(envValue)
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', envValue)
+  const outside = resolve(temporaryFolder, 'outside-' + process.pid)
+  await createDirectory(outside)
+  t.after(() => safeRemove(outside))
+  await declarePath(rootDir, 'resolved', outside)
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
   ok(!resolveProcess.stdout.includes(`Cloning ${repo}`))
@@ -95,12 +103,12 @@ test('resolve - should do nothing when the directory already exists outside the 
 })
 
 test('resolve - should do nothing when the autogenerated directory already exists inside the repo', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
   await createDirectory(resolve(rootDir, 'external/resolved'))
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
@@ -115,28 +123,28 @@ test('resolve - should do nothing when the autogenerated directory already exist
 })
 
 test('resolve - should throw an error when the directory outside the repo do not exist', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
 
-  const envValue = resolve(temporaryFolder, 'outside-' + Date.now())
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', envValue)
+  const outside = resolve(temporaryFolder, 'missing-' + process.pid)
+  await declarePath(rootDir, 'resolved', outside)
 
   const resolveProcess = await wattpmUtils('resolve', rootDir, { reject: false })
   ok(!resolveProcess.stdout.includes(`Cloning ${repo}`))
   ok(!resolveProcess.stdout.includes('Installing dependencies for the application resolved using npm ...'))
   ok(
     resolveProcess.stdout.includes(
-      `Skipping application resolved as the non existent directory ${envValue} is outside the project directory.`
+      `Skipping application resolved as the non existent directory ${outside} is outside the project directory.`
     )
   )
 })
 
 test('resolve - should attempt to clone with username and password', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
   const url = 'https://127.0.0.1:60000/platformatic/wattpm-fixtures.git'
@@ -150,13 +158,13 @@ test('resolve - should attempt to clone with username and password', async t => 
 })
 
 test('resolve - should clone a different branch', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '-b', 'another', '{PLT_GIT_REPO_URL}')
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '-b', 'another', repo)
+  await declarePath(rootDir, 'resolved', 'web/resolved')
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
 
@@ -167,13 +175,13 @@ test('resolve - should clone a different branch', async t => {
 })
 
 test('resolve - should install dependencies using a different package manager', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
+  await declarePath(rootDir, 'resolved', 'web/resolved')
 
   const resolveProcess = await wattpmUtils('resolve', '-P', 'pnpm', rootDir)
 
@@ -185,18 +193,17 @@ test('resolve - should install dependencies using a different package manager', 
 })
 
 test('resolve - should respect the application package manager, if any', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  await prepareGitRepository(t, rootDir)
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
+  const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
+  await declarePath(rootDir, 'resolved', 'web/resolved')
 
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-  originalFileContents.web[0].packageManager = 'npm'
-  await saveConfigurationFile(configurationFile, originalFileContents)
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications.find(application => application.id === 'resolved').packageManager = 'npm'
+  })
 
   const resolveProcess = await wattpmUtils('resolve', '-P', 'pnpm', rootDir)
 
@@ -204,7 +211,7 @@ test('resolve - should respect the application package manager, if any', async t
 })
 
 test('resolve - should parse branch from git URL fragment', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
@@ -213,7 +220,7 @@ test('resolve - should parse branch from git URL fragment', async t => {
   // Use git URL with #branch fragment
   const gitUrlWithBranch = `${repo}#another`
   await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', gitUrlWithBranch)
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+  await declarePath(rootDir, 'resolved', 'web/resolved')
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
 
@@ -225,7 +232,7 @@ test('resolve - should parse branch from git URL fragment', async t => {
 })
 
 test('resolve - branch flag should take precedence over URL fragment', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
 
@@ -234,7 +241,7 @@ test('resolve - branch flag should take precedence over URL fragment', async t =
   // Use git URL with #main fragment, but specify -b another
   const gitUrlWithBranch = `${repo}#main`
   await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '-b', 'another', gitUrlWithBranch)
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', 'web/resolved')
+  await declarePath(rootDir, 'resolved', 'web/resolved')
 
   const resolveProcess = await wattpmUtils('resolve', rootDir)
 
@@ -246,7 +253,7 @@ test('resolve - branch flag should take precedence over URL fragment', async t =
 })
 
 test('resolve - should clone a NPM package', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
   changeWorkingDirectory(t, rootDir)
@@ -256,7 +263,7 @@ test('resolve - should clone a NPM package', async t => {
 
   ok(
     resolveProcess.stdout.includes(
-      `Downloading npm package @platformatic/foundation@3.37.0 into ${relative(rootDir, 'external/resolved')}`
+      `Downloading npm package @platformatic/foundation@3.37.0 into ${join('external', 'resolved')}`
     )
   )
   ok(resolveProcess.stdout.includes('Installing dependencies for the application resolved using npm ...'))
@@ -264,4 +271,81 @@ test('resolve - should clone a NPM package', async t => {
   ok(existsSync(resolve(rootDir, 'external/resolved/package.json')))
   ok(existsSync(resolve(rootDir, 'external/resolved/index.js')))
   ok(existsSync(resolve(rootDir, 'external/resolved/lib/module.js')))
+})
+
+test('resolve - should refuse an invalid --for target', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
+  t.after(() => safeRemove(rootDir))
+
+  const resolveProcess = await wattpmUtils('resolve', rootDir, '--for', 'deploy', { reject: false })
+
+  deepStrictEqual(resolveProcess.exitCode, 1)
+  ok(resolveProcess.stdout.includes('Invalid value deploy for --for'))
+})
+
+test('resolve --for all - should refuse an id that resolves to two different clones', async t => {
+  // prepareFixture, not prepareRuntime: the fixture's url reads an environment variable only
+  // the CLI invocation supplies, so a load in this process would refuse the entry as placeless.
+  const { root: rootDir } = await prepareFixture(t, 'resolve-branching')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  /*
+    One directory cannot hold two checkouts, and choosing silently is how a deploy ships the wrong
+    code. `--for build` alone is fine — it is only the union that has to decide.
+  */
+  const resolveProcess = await wattpmUtils('resolve', rootDir, '--for', 'all', {
+    reject: false,
+    env: { ...process.env, PLT_GIT_REPO_URL: repo }
+  })
+
+  deepStrictEqual(resolveProcess.exitCode, 1)
+  ok(resolveProcess.stdout.includes('resolves to two different clones'))
+  ok(resolveProcess.stdout.includes('gitBranch'))
+})
+
+test('resolve - should not let enabled: false hide an application', async t => {
+  // prepareFixture, not prepareRuntime: the fixture's url reads an environment variable only
+  // the CLI invocation supplies, so a load in this process would refuse the entry as placeless.
+  const { root: rootDir } = await prepareFixture(t, 'resolve-disabled')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  /*
+    The eval worker drops disabled entries before the application list leaves it, so resolve reads
+    the candidates it recorded on the way past instead. Otherwise the boot that turns this
+    application on fails on a directory nobody fetched.
+  */
+  const resolveProcess = await wattpmUtils('resolve', rootDir, '-s', {
+    env: { ...process.env, PLT_GIT_REPO_URL: repo }
+  })
+
+  ok(resolveProcess.stdout.includes('Cloning'))
+  ok(existsSync(resolve(rootDir, 'external/resolved')))
+})
+
+test('resolve - should refuse one destination claimed by two repositories', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'resolve-shared-destination', false, 'watt.config.mjs')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  changeWorkingDirectory(t, rootDir)
+
+  /*
+    The ids differ, so nothing keyed by id sees this: it is the destination that is claimed twice.
+    Whichever clone lands second either overwrites the first or is silently skipped, and in both
+    cases one of the two applications runs code from the other's repository.
+  */
+  const resolveProcess = await wattpmUtils('resolve', rootDir, {
+    reject: false,
+    env: { ...process.env, PLT_GIT_REPO_URL: repo }
+  })
+
+  deepStrictEqual(resolveProcess.exitCode, 1)
+  ok(resolveProcess.stdout.includes('both resolve into'), resolveProcess.stdout)
+  ok(resolveProcess.stdout.includes('somewhere-else'), resolveProcess.stdout)
 })

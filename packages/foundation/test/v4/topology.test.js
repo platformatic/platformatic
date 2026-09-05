@@ -1,0 +1,632 @@
+import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { evaluateConfigurationFile } from '../../lib/v4/index.js'
+import { createTree } from './helper.js'
+
+async function evaluate (root, overrides = {}) {
+  return evaluateConfigurationFile({
+    path: join(root, 'watt.config.js'),
+    directory: root,
+    command: 'start',
+    mode: 'production',
+    production: true,
+    ...overrides
+  })
+}
+
+test('autoload expands directories and derives ids the same way every other position does', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { autoload: { path: "web" } }',
+    'web/api/package.json': '{ "name": "@acme/api" }',
+    'web/frontend/package.json': '{ "name": "frontend" }',
+    'web/worker/index.js': '',
+    'web/notes.md': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  // v3 used the directory name alone here. Stripping the scope is not cosmetic: the id becomes a
+  // DNS label in http://<id>.plt.local, where @acme would parse as userinfo.
+  deepStrictEqual(config.applications, [
+    { id: 'api', path: join(root, 'web/api') },
+    { id: 'frontend', path: join(root, 'web/frontend') },
+    { id: 'worker', path: join(root, 'web/worker') }
+  ])
+})
+
+test('autoload honours exclude and mappings', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        autoload: { path: 'web', exclude: ['fixtures'], mappings: { api: { id: 'backend', workers: 3 } } }
+      }
+    `,
+    'web/api/index.js': '',
+    'web/fixtures/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [{ id: 'backend', path: join(root, 'web/api'), workers: 3 }])
+})
+
+test('an explicit entry wins over the autoloaded one and keeps its position', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', path: './web/api', workers: 5 }, { id: 'standalone', path: './elsewhere' }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': '',
+    'web/zeta/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  // Shallow explicit-wins merge, v3 semantics; merging in place rather than reordering is what
+  // keeps a recorded deferred slot pointing at the entry it was recorded for.
+  deepStrictEqual(config.applications, [
+    { id: 'api', path: './web/api', workers: 5 },
+    { id: 'standalone', path: './elsewhere' },
+    { id: 'zeta', path: join(root, 'web/zeta') }
+  ])
+})
+
+/*
+  The v3 rule matched on id alone, and an explicit { id, url } beside an autoloaded directory then
+  merged into an entry keeping the local path *and* the url -- resolve skipped the remote because
+  its path existed, and the runtime booted local code while the configuration named a repository
+  (#5079). A shared id merges only when the two are the same application: same resolved path, or
+  an autoloaded directory that is the url entry's own clone destination. Anything else is two
+  applications claiming one mesh hostname -- here the destination is external/api and the
+  directory is web/api, so nothing ties the directory to the remote.
+*/
+test('a url-bearing entry does not merge with an autoloaded directory by id alone', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  await rejects(
+    () => evaluate(root),
+    error => {
+      strictEqual(error.code, 'PLT_AMBIGUOUS_APPLICATION_ID')
+      ok(error.message.includes("'git@github.com:acme/api.git'"), error.message)
+      return true
+    }
+  )
+})
+
+// The id-only override spelling died with v3's id-alone matching: an entry that names no place is
+// refused by the schema before expansion, and here by expansion for loads that skip validation.
+// The override channel for an autoloaded application is autoload.mappings.
+/*
+  The exception: a bare url entry's clone lands at resolvedApplicationsBasePath/<id>, so when
+  autoload covers the resolved base, the directory `wattpm resolve` creates *is* the entry.
+  Refusing it would mean resolve bricks the configuration it just repaired: the first load passes
+  (no clone, no clash), the clone arrives, and every load after that throws.
+*/
+test('a url entry merges with the autoloaded directory that is its own clone destination', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'external' }
+      }
+    `,
+    'external/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { id: 'api', url: 'git@github.com:acme/api.git', path: join(root, 'external/api') }
+  ])
+})
+
+test('the clone-destination merge honours an authored resolvedApplicationsBasePath', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        resolvedApplicationsBasePath: 'vendor',
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'vendor' }
+      }
+    `,
+    'vendor/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { id: 'api', url: 'git@github.com:acme/api.git', path: join(root, 'vendor/api') }
+  ])
+})
+
+/*
+  Identity is decided by place, before any id is derived: the clone's package.json belongs to the
+  upstream repository, which does not know this project's ids. Deriving first split one
+  application into two entries sharing a directory -- the authored entry and the autoloaded twin
+  under the package name -- and both booted on one mesh.
+*/
+test('a claimed directory merges under the entry id whatever its package.json says', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'api', url: 'git@github.com:acme/api.git' },
+          { id: 'local', path: './web/renamed' }
+        ],
+        autoload: { path: 'external' }
+      }
+    `,
+    'external/api/package.json': '{ "name": "@acme/api-server" }',
+    'external/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { id: 'api', url: 'git@github.com:acme/api.git', path: join(root, 'external/api') },
+    { id: 'local', path: './web/renamed' }
+  ])
+})
+
+test('an authored-path entry claims its directory whatever the package name derives to', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', path: './web/api' }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/package.json': '{ "name": "totally-different" }',
+    'web/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  // One entry, the authored id -- not an ['api', 'totally-different'] pair booting one directory twice.
+  deepStrictEqual(config.applications, [{ id: 'api', path: './web/api' }])
+})
+
+/*
+  The fresh-checkout state the clone-destination merge narrates: the resolved base is gitignored
+  and absent until `wattpm resolve` runs, and resolve learns what to clone from this very load.
+  An absent autoload directory contributes nothing rather than throwing a raw ENOENT.
+*/
+test('autoload over a directory that does not exist yet contributes nothing', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', url: 'git@github.com:acme/api.git' }],
+        autoload: { path: 'external' }
+      }
+    `
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications.map(({ id, url }) => ({ id, url })), [
+    { id: 'api', url: 'git@github.com:acme/api.git' }
+  ])
+})
+
+/*
+  Attaching per-app options to autoloaded applications via id-less path entries is a supported
+  shape: the id is derived main-side, after the merge. The dedup map used to key such claimants on
+  their undefined id, colliding every pair as duplicates of an application named "undefined".
+*/
+test('id-less path entries under autoload carry options without colliding', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { path: './web/api', workers: 3 },
+          { path: './web/frontend', workers: 1 }
+        ],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': '',
+    'web/frontend/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [
+    { path: './web/api', workers: 3 },
+    { path: './web/frontend', workers: 1 }
+  ])
+})
+
+test('a mapping still names an id-less claimed entry, and duplicates are still caught by it', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ path: './web/api', workers: 3 }],
+        autoload: { path: 'web', mappings: { api: { id: 'alpha' } } }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [{ path: './web/api', workers: 3, id: 'alpha' }])
+})
+
+/*
+  The empty boot proceeds -- applications: [] is a statement -- but an autoload that matched
+  nothing, with nothing declared beside it, is one typo'd path away from a runtime that boots
+  empty and says nothing. The warning is what says so.
+*/
+test('an autoload that contributes nothing to an empty topology warns about the empty boot', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { autoload: { path: "aplications" } }'
+  })
+
+  const { config, warnings } = await evaluate(root)
+
+  deepStrictEqual(config.applications, [])
+  deepStrictEqual(warnings.filter(w => w.type === 'empty-autoload').length, 1)
+  ok(warnings[0].message.includes("'aplications'"), warnings[0].message)
+})
+
+test('a disabled explicit entry does not mask the typo, and disabling what autoload found stays silent', async t => {
+  // The warning is checked after the enabled filter and gated on the match count.
+  const masked = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'off', path: './web/off', enabled: false }],
+        autoload: { path: 'aplications' }
+      }
+    `,
+    'web/off/index.js': ''
+  })
+
+  const { warnings } = await evaluate(masked)
+  deepStrictEqual(warnings.filter(w => w.type === 'empty-autoload').length, 1)
+
+  const deliberate = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', path: './web/api', enabled: false }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  const { warnings: none } = await evaluate(deliberate)
+  deepStrictEqual(none.filter(w => w.type === 'empty-autoload'), [])
+})
+
+test('a file at the autoload path is a named refusal, not a raw ENOTDIR', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { autoload: { path: "web" } }',
+    web: ''
+  })
+
+  await rejects(
+    () => evaluate(root),
+    error => {
+      strictEqual(error.code, 'PLT_INVALID_CONFIG_VALUE')
+      ok(error.message.includes('/autoload/path'), error.message)
+      return true
+    }
+  )
+})
+
+test('an empty-string id is an absent id, not one every empty-id claimant duplicates', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: '', path: './web/a' },
+          { id: '', path: './web/b' }
+        ],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/a/package.json': '{ "name": "app-a" }',
+    'web/a/index.js': '',
+    'web/b/package.json': '{ "name": "app-b" }',
+    'web/b/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications.length, 2)
+})
+
+test('an entry naming no place does not merge with an autoloaded directory', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [{ id: 'api', workers: 5 }],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  await rejects(
+    () => evaluate(root),
+    error => {
+      strictEqual(error.code, 'PLT_AMBIGUOUS_APPLICATION_ID')
+      // A placeless entry is described as such, not as "url 'undefined'".
+      ok(error.message.includes('neither path nor url'), error.message)
+      return true
+    }
+  )
+})
+
+/*
+  The regression that motivated the in-place merge: a deferred config slot addresses its entry by
+  object identity, and the old spread-into-a-new-object merge left the slot pointing at an entry
+  the topology no longer held -- the application booted without the configuration its author
+  wrote, and nothing said so.
+*/
+test('a deferred config slot survives the merge with an autoloaded directory', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'api', path: './web/api', config: async () => ({ module: '@platformatic/node', node: { main: 'index.js' } }) }
+        ],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/api/index.js': ''
+  })
+
+  const { config } = await evaluate(root)
+
+  deepStrictEqual(config.applications[0].config, {
+    module: '@platformatic/node',
+    node: { main: 'index.js' }
+  })
+})
+
+test('disabled entries are dropped, and the object form is keyed by mode', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'always', path: '.' },
+          { id: 'never', path: '.', enabled: false },
+          { id: 'stringly', path: '.', enabled: 'false' },
+          { id: 'bymode', path: '.', enabled: { production: false, development: true } },
+          { id: 'staged', path: '.', enabled: { staging: false } }
+        ]
+      }
+    `
+  })
+
+  // production and development remain the default mode names under start/build and dev, so every
+  // v3 configuration keeps its meaning.
+  const { config: inProduction } = await evaluate(root, { production: true, mode: 'production' })
+  deepStrictEqual(inProduction.applications.map(entry => entry.id), ['always', 'staged'])
+
+  const { config: inDevelopment } = await evaluate(root, { production: false, command: 'dev', mode: 'development' })
+  deepStrictEqual(inDevelopment.applications.map(entry => entry.id), ['always', 'bymode', 'staged'])
+
+  // And enabled: { staging: false } now does what it looks like, where v3 silently ignored the key
+  // because it only ever compared against the two default names.
+  const { config: inStaging } = await evaluate(root, { production: true, mode: 'staging' })
+  deepStrictEqual(inStaging.applications.map(entry => entry.id), ['always', 'bymode'])
+})
+
+test('resolve candidates are recorded after expansion and before the enabled filter', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'excluded', path: './external/excluded', url: 'https://github.com/acme/excluded.git', enabled: false },
+          { id: 'local', path: '.' }
+        ],
+        autoload: { path: 'web' }
+      }
+    `,
+    'web/autoloaded/index.js': ''
+  })
+
+  const { config, resolveCandidates } = await evaluate(root)
+
+  // A remote entry excluded in the current mode is fetched all the same: resolve is owed the
+  // entries it is expected to fetch, not the entries this boot would run.
+  deepStrictEqual(resolveCandidates, [
+    {
+      id: 'excluded',
+      url: 'https://github.com/acme/excluded.git',
+      path: './external/excluded',
+      gitBranch: undefined,
+      packageManager: undefined
+    }
+  ])
+
+  deepStrictEqual(config.applications.map(entry => entry.id), ['local', 'autoloaded'])
+})
+
+test('the projection carries no capability configuration, so it cannot be booted by accident', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          {
+            id: 'remote',
+            path: './external/remote',
+            url: 'https://github.com/acme/remote.git',
+            gitBranch: 'next',
+            config: { module: '@platformatic/node' }
+          }
+        ]
+      }
+    `
+  })
+
+  const { resolveCandidates } = await evaluate(root)
+
+  deepStrictEqual(resolveCandidates, [
+    {
+      id: 'remote',
+      url: 'https://github.com/acme/remote.git',
+      path: './external/remote',
+      gitBranch: 'next',
+      // Carried because resolve installs the clone's dependencies and the entry says how.
+      packageManager: undefined
+    }
+  ])
+})
+
+test('a deferred config slot is called with the same context and spliced into its position', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'first', path: '.' },
+          { id: 'second', path: '.', config: async ctx => ({ module: '@platformatic/node', mode: ctx.mode }) }
+        ]
+      }
+    `
+  })
+
+  const { config } = await evaluate(root, { mode: 'staging' })
+
+  deepStrictEqual(config.applications[1].config, { module: '@platformatic/node', mode: 'staging' })
+})
+
+test('a disabled entry deferred config callback never runs', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      import { writeFileSync } from 'node:fs'
+      import { join } from 'node:path'
+
+      export default {
+        applications: [
+          {
+            id: 'legacy',
+            path: '.',
+            enabled: false,
+            config: () => {
+              writeFileSync(join(import.meta.dirname, 'called.txt'), 'x')
+              return { module: '@platformatic/legacy-capability' }
+            }
+          }
+        ]
+      }
+    `
+  })
+
+  const { config } = await evaluate(root)
+
+  // An entry excluded from this boot may name a capability the production image does not ship, or
+  // call requiredEnv() for a variable decommissioned with it. Invoking it to find out would fail a
+  // boot that excludes it.
+  strictEqual(config.applications.length, 0)
+  strictEqual(existsSync(join(root, 'called.txt')), false)
+})
+
+test('the enabled filter does not misdirect a surviving entry slot', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': `
+      export default {
+        applications: [
+          { id: 'dropped', path: '.', enabled: false, config: () => ({ module: '@platformatic/gone' }) },
+          { id: 'kept', path: '.', config: () => ({ module: '@platformatic/node' }) }
+        ]
+      }
+    `
+  })
+
+  const { config } = await evaluate(root)
+
+  // Filtering shifts indices, so a slot addressed by position would be spliced into the wrong
+  // entry. Recording the container rather than the index is what survives step 4.
+  deepStrictEqual(config.applications, [
+    { id: 'kept', path: '.', config: { module: '@platformatic/node' } }
+  ])
+})
+
+test('a deferred config may not itself return a function', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { applications: [{ id: "a", path: ".", config: () => () => ({}) }] }'
+  })
+
+  await rejects(() => evaluate(root), { code: 'PLT_INVALID_CONFIG_VALUE' })
+})
+
+test('a function slot in a file that classifies as an application definition is an error', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { module: "@platformatic/gateway", application: { config: () => ({}) } }'
+  })
+
+  // A per-app file has no config slots, so the only thing that path can hold there is a capability
+  // option that happens to be named config; calling it would be the loader inventing a callback.
+  await rejects(() => evaluate(root), error => {
+    strictEqual(error.code, 'PLT_DEFERRED_SLOT_IN_APPLICATION_DEFINITION')
+    ok(error.message.includes('/application/config'))
+    return true
+  })
+})
+
+test('an inherited topology variable is reported once the ids are known', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { applications: [{ id: "api", path: "." }, { id: "web", path: "." }] }'
+  })
+
+  const { warnings } = await evaluate(root, { env: { PLT_API_URL: 'http://inherited' } })
+
+  // The root worker cannot have these stripped — its ids are declared by the file being evaluated.
+  // A warning rather than an error, because presence is not use.
+  strictEqual(warnings.length, 1)
+  strictEqual(warnings[0].key, 'PLT_API_URL')
+  strictEqual(warnings[0].applicationId, 'api')
+})
+
+test('the orchestration shape is validated before expansion reads the filesystem', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { autoload: { path: 42 } }'
+  })
+
+  const schema = {
+    type: 'object',
+    properties: {
+      autoload: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] }
+    }
+  }
+
+  // Orchestration drives filesystem access — autoload.path decides which directories are read — so
+  // it is checked before it is acted on, and coercion is off, so 42 is not quietly a string.
+  await rejects(() => evaluate(root, { schema }), error => {
+    strictEqual(error.code, 'PLT_INVALID_ROOT_CONFIGURATION')
+    ok(error.message.includes('/autoload/path'))
+    return true
+  })
+})
+
+test('validation injects no defaults into the returned snapshot', async t => {
+  const root = await createTree(t, {
+    'watt.config.js': 'export default { applications: [{ id: "api", path: "." }] }'
+  })
+
+  const schema = {
+    type: 'object',
+    properties: { logger: { type: 'object', default: { level: 'info' } } }
+  }
+
+  const { config } = await evaluate(root, { schema })
+
+  // The useDefaults pass runs main-side on the returned snapshot, which is what keeps the recorded
+  // projection carrying authored values rather than schema-supplied ones.
+  ok(!('logger' in config))
+})

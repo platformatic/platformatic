@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import {
   ensureLoggableError,
   findRuntimeConfigurationFile,
@@ -14,7 +15,7 @@ export async function buildCommand (logger, args) {
 
   try {
     const {
-      values: { config, env },
+      values: { config, env: rawEnvFile, mode },
       positionals
     } = parseArgs(
       args,
@@ -26,21 +27,32 @@ export async function buildCommand (logger, args) {
         env: {
           type: 'string',
           short: 'e'
+        },
+        mode: {
+          type: 'string'
         }
       },
       false
     )
     const root = getRoot(positionals)
+    // --env is relative to where the command ran; resolved here, before the loader anchors it elsewhere.
+    const env = rawEnvFile ? resolve(process.cwd(), rawEnvFile) : undefined
 
     configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
-    /* c8 ignore next 3 - Hard to test */
-    if (!configurationFile) {
+    // `false` means the lookup already reported why it refused; null is Level 0.
+    if (configurationFile === false) {
       return
     }
 
     try {
-      runtime = await create(configurationFile, undefined, { build: true, envFile: env })
+      /*
+        build produces production artifacts, so it evaluates as a production boot: the same env
+        files `start` will read, and `production: true` in every callback's context. A null
+        configuration file is Level 0 -- nothing exists above the root -- and the directory itself
+        is what gets loaded, which the loader answers by synthesizing in memory.
+      */
+      runtime = await create(configurationFile ?? root, undefined, { build: true, command: 'build', envFile: env, logger, mode })
       await runtime.init()
       /* c8 ignore next 4 - Hard to test */
     } catch (error) {
@@ -98,6 +110,10 @@ export const help = {
       {
         usage: '-e, --env <path>',
         description: 'Path to a custom .env file to load environment variables from'
+      },
+      {
+        usage: '--mode <name>',
+        description: 'The mode to select environment files with (the default is production)'
       }
     ]
   }

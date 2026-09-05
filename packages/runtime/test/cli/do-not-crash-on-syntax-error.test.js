@@ -1,7 +1,8 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { cp, mkdtemp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { updateConfigFile } from '../helpers.js'
 import { createCjsLoggingPlugin, start } from './helper.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
@@ -35,18 +36,19 @@ async function waitForMessageAndWatch (child, expected, watchMessage = 'start wa
 test('do not crash on syntax error', async t => {
   const tmpDir = await mkdtemp(join(base, 'do-no-crash-'))
   t.after(() => safeRemove(tmpDir))
-  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch.json')
-  const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch', 'watt.config.mjs')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'watt.config.mjs')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
   const cjsPluginFilePath = join(appDst, 'serviceAppWithLogger', 'plugin.js')
-  const applicationConfigFilePath = join(appDst, 'serviceAppWithLogger', 'platformatic.service.json')
+  const applicationConfigFilePath = join(appDst, 'serviceAppWithLogger', 'watt.config.mjs')
 
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
-  const original = JSON.parse(await readFile(applicationConfigFilePath, 'utf8'))
-  original.server.logger.level = 'trace'
-  await writeFile(applicationConfigFilePath, JSON.stringify(original, null, 2))
+  // The configuration is a program, so it is edited as one rather than parsed as a document.
+  await updateConfigFile(applicationConfigFilePath, config => {
+    config.server.logger.level = 'trace'
+  })
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v0', true))
   const { child } = await start(configFileDst, { env: { PLT_USE_PLAIN_CREATE: 'true' } })

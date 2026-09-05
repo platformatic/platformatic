@@ -1,10 +1,13 @@
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/lib/schema.js'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation/lib/schema.js'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
+
+// Production builds an in-thread application and awaits ready() before the port check.
+export const servesWithoutPort = { development: false, production: true }
 
 const nest = {
   type: 'object',

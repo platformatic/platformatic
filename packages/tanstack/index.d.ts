@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticTanStackConfig } from './config.d.ts'
@@ -33,3 +33,10 @@ export declare const schema: JSONSchemaType<PlatformaticTanStackConfig>
 export declare const schemaComponents: {}
 export declare const version: string
 export declare const supportedVersions: string
+
+export type TanstackConfigOptions = CapabilityFactoryOptions<PlatformaticTanStackConfig, 'vite', never>
+
+export declare function tanstack (options?: TanstackConfigOptions): ApplicationDefinition
+export declare function tanstack (
+  callback: (context: ConfigContext) => TanstackConfigOptions | Promise<TanstackConfigOptions>
+): DeferredApplicationDefinition

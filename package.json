@@ -1,7 +1,7 @@
 {
   "name": "platformatic",
   "type": "module",
-  "version": "3.67.0",
+  "version": "4.0.0-new-config.3",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
@@ -14,6 +14,8 @@
     "lint:fix": "pnpm -r --workspace-concurrency=1 --if-present lint:fix",
     "lint:markdown": "markdownlint-cli2",
     "lint:updated-only": "node ./scripts/lint-updated-packages.js",
+    "check-citations": "node ./scripts/check-citations.mjs",
+    "convert-fixtures": "node ./scripts/convert-fixtures.mjs",
     "license-check": "node ./scripts/license-check.js",
     "license-list": "node ./scripts/license-check.js --format=markdown --out=THIRD_PARTY_LICENSES.md",
     "gen-schemas-types": "node ./scripts/gen-schemas-types.js",

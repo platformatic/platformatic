@@ -1,15 +1,14 @@
-import { getPlatformaticVersion } from '@platformatic/foundation'
 import { deepStrictEqual, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -38,10 +37,12 @@ test('should get application config', async t => {
   strictEqual(statusCode, 200)
 
   const applicationConfig = await body.json()
-  const platformaticVersion = await getPlatformaticVersion()
 
+  /*
+    No $schema: a v4 configuration is code, and the capability it selects is named by `module`,
+    which the loader consumes rather than passing on to the worker.
+  */
   deepStrictEqual(applicationConfig, {
-    $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',
       port: 0,

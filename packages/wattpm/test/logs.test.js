@@ -4,7 +4,7 @@ import { on } from 'node:events'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { wattpm } from './helper.js'
+import { parseRuntimeLog, wattpm, wattpmNoRuntime } from './helper.js'
 
 async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = false) {
   let mainLogFound
@@ -39,7 +39,11 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
         process._rawDebug(log.toString())
       }
 
-      const parsed = JSON.parse(log.toString())
+      const parsed = parseRuntimeLog(log)
+
+      if (!parsed) {
+        continue
+      }
 
       messages.push(parsed)
 
@@ -68,7 +72,7 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
 }
 
 test('logs - should stream runtime logs', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -80,7 +84,11 @@ test('logs - should stream runtime logs', async t => {
   const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: '5000' } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
       break
@@ -97,7 +105,7 @@ test('logs - should stream runtime logs', async t => {
 })
 
 test('logs - should stream runtime logs filtering by application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -109,7 +117,11 @@ test('logs - should stream runtime logs filtering by application', async t => {
   const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: '5000' } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
       break
@@ -127,7 +139,7 @@ test('logs - should stream runtime logs filtering by application', async t => {
 })
 
 test('logs - should stream runtime logs filtering by level', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -139,7 +151,11 @@ test('logs - should stream runtime logs filtering by level', async t => {
   const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: '5000' } })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
       break
@@ -157,7 +173,7 @@ test('logs - should stream runtime logs filtering by level', async t => {
 })
 
 test('logs - should complain when a runtime is not found', async t => {
-  const logsProcess = await wattpm('logs', 'p-' + Date.now.toString(), { reject: false })
+  const logsProcess = await wattpmNoRuntime(t, 'logs', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(logsProcess.exitCode, 1)
   ok(logsProcess.stdout.includes('Cannot find a matching runtime.'))

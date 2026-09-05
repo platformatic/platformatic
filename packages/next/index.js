@@ -109,3 +109,5 @@ export * from './lib/config.js'
 export * as errors from './lib/errors.js'
 export * from './lib/image-optimizer.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+
+export * from './lib/factory.js'

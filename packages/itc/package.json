@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/itc",
-  "version": "3.67.0",
+  "version": "4.0.0-new-config.3",
   "description": "Platformatic ITC",
   "main": "lib/index.js",
   "type": "module",

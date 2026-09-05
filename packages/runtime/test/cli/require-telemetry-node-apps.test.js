@@ -7,7 +7,7 @@ import { startPath } from './helper.js'
 
 // TODO@mcollina: This test cannot properly see logs as our monkey patching has issues. Please reafactor later
 test('require open telemetry for nodejs applications', { skip: true }, async () => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo-with-node-telemetry.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo-with-node-telemetry', 'watt.config.mjs')
   const child = execa(process.execPath, [startPath, config], {
     encoding: 'utf8',
     env: { PLT_USE_PLAIN_CREATE: 'true' }

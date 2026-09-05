@@ -480,20 +480,23 @@ export async function createGatewayInRuntime (
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
   await createDirectory(resolve(tmpDir, 'gateway'))
 
-  const gatewayConfigPath = resolve(tmpDir, 'gateway/platformatic.gateway.json')
+  const gatewayConfigPath = resolve(tmpDir, 'gateway/watt.config.mjs')
   const pluginConfigPath = resolve(tmpDir, 'gateway/plugin.js')
-  const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
+  const runtimeConfigPath = resolve(tmpDir, 'watt.config.mjs')
 
+  /*
+    Written as a module rather than JSON, and the gateway entry no longer names its configuration
+    file: v4 discovers an application's configuration in its own directory, and config in an entry
+    means an inline definition rather than a path to one.
+  */
   await writeFile(
     runtimeConfigPath,
-    JSON.stringify({
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
+    'export default ' + JSON.stringify({
       watch: false,
-      services: (applications ?? []).concat([
+      applications: (applications ?? []).concat([
         {
           id: 'composer',
-          path: resolve(tmpDir, 'gateway'),
-          config: gatewayConfigPath
+          path: resolve(tmpDir, 'gateway')
         }
       ]),
       autoload: autoload ? { path: autoload } : undefined,
@@ -511,7 +514,7 @@ export async function createGatewayInRuntime (
 
   await writeFile(
     gatewayConfigPath,
-    JSON.stringify({
+    'export default ' + JSON.stringify({
       module: resolve(import.meta.dirname, '../index.js'),
       plugins: {
         paths: [

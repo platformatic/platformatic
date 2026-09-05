@@ -9,10 +9,13 @@ export async function createCommand (logger, args) {
   } = parseArgs(
     args,
     {
+      /*
+        No default: v4 recognizes exactly four filenames and the suffix comes from the selector, so
+        this names an existing file to read rather than the one to write.
+      */
       config: {
         type: 'string',
-        short: 'c',
-        default: 'watt.json'
+        short: 'c'
       },
       'package-manager': {
         type: 'string',
@@ -56,7 +59,7 @@ export async function createCommand (logger, args) {
         },
     {
       runtimeConfig: config,
-      applicationsFolder: 'web'
+      applicationsFolder: 'applications'
     },
     {
       devCommand: 'wattpm dev',
@@ -73,7 +76,7 @@ const createHelp = {
   options: [
     {
       usage: '-c, --config <config>',
-      description: 'Name of the configuration file to use (the default is watt.json)'
+      description: 'Name of an existing configuration file to read (new files are named by the v4 rule)'
     },
     {
       usage: '-s, --skip-dependencies',

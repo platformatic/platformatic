@@ -3,14 +3,14 @@ import { deepStrictEqual, equal, ok, strictEqual, throws } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { transform } from '../lib/config.js'
+import { transform } from '../index.js'
 import { SchedulerService } from '../lib/scheduler.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function createRuntimeWithScheduler (t, scheduler, { managementApi = false } = {}) {
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
+  const configFile = join(fixturesDir, 'scheduler', 'watt.config.mjs')
 
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {

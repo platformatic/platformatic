@@ -37,8 +37,10 @@ test('should write file and dirs', async t => {
 
   equal(packageJson.name, 'test-application')
 
-  const configFile = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf8'))
-  deepEqual(configFile, {})
+  // A generator with nothing to say still writes the factory call: owning the file is what declares
+  // the application's scope.
+  const configFile = await readFile(join(dir, 'watt.config.mjs'), 'utf8')
+  equal(configFile, "import { service } from '@platformatic/service'\n\nexport default service({})\n")
 
   const gitignore = await readFile(join(dir, '.gitignore'), 'utf8')
   ok(gitignore.length > 0) // file is created and not empty
@@ -70,8 +72,9 @@ test('extended class should generate config', async t => {
   const configFile = svc.files[1]
   deepEqual(configFile, {
     path: '',
-    file: 'platformatic.json',
-    contents: JSON.stringify({ foo: 'bar' }, null, 2),
+    file: 'watt.config.mjs',
+    // The v4 per-app form: a capability with a factory is spelled by calling it.
+    contents: "import { service } from '@platformatic/service'\n\nexport default service({\n  foo: 'bar'\n})\n",
     options: {},
     tags: []
   })
@@ -346,7 +349,7 @@ test('should throw if there is a missing env variable', async () => {
     fail()
   } catch (err) {
     equal(err.code, 'PLT_GEN_MISSING_ENV_VAR')
-    equal(err.message, 'Env variable BAR is defined in config file platformatic.json, but not in config.env object.')
+    equal(err.message, 'Env variable BAR is defined in config file watt.config.mjs, but not in config.env object.')
   }
 })
 
@@ -401,8 +404,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     deepEqual(contents.plugins, {
       packages: [
@@ -446,8 +448,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     deepEqual(contents.plugins, {
       packages: [
@@ -485,8 +486,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     deepEqual(contents.plugins, {
       packages: [
@@ -526,8 +526,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     deepEqual(contents.plugins, {
       packages: [
@@ -758,18 +757,18 @@ test('on update should just touch the packages configuration', async t => {
   await bg.prepare()
 
   equal(bg.files.length, 1)
-  equal(bg.files[0].file, 'platformatic.json')
+  equal(bg.files[0].file, 'watt.config.js')
   equal(bg.files[0].path, '')
 
-  const configFileContents = JSON.parse(bg.files[0].contents)
-  deepEqual(configFileContents.plugins.packages, [
-    {
-      name: '@fastify/foo-plugin',
-      options: {
-        name: '{FST_PLUGIN_FOO_FOOBAR}'
-      }
-    }
-  ])
+  /*
+    Edited in place rather than re-emitted, so the rest of the file is untouched -- including the
+    comment at the top, which a rewrite would drop.
+  */
+  const contents = bg.files[0].contents
+  ok(contents.startsWith('// Converted from v3 JSON'), contents)
+  ok(contents.includes("name: '@fastify/foo-plugin'"), contents)
+  ok(contents.includes('name: process.env.FST_PLUGIN_FOO_FOOBAR'), contents)
+  ok(contents.includes("path: './plugins'"), contents)
   deepEqual(bg.config.dependencies, {
     '@fastify/foo-plugin': '1.42.0'
   })
@@ -802,11 +801,16 @@ test('on update should just touch the packages configuration', async t => {
   await bg.prepare()
 
   equal(bg.files.length, 1)
-  equal(bg.files[0].file, 'platformatic.json')
+  equal(bg.files[0].file, 'watt.config.js')
   equal(bg.files[0].path, '')
 
-  const configFileContents = JSON.parse(bg.files[0].contents)
-  equal(configFileContents.plugins, undefined)
+  /*
+    The application had no `plugins` block, and the added package is recorded in one. v3 wrote
+    nothing here -- adding a package to a configuration that declared none silently did not happen.
+  */
+  const contents = bg.files[0].contents
+  ok(contents.includes("name: '@fastify/foo-plugin'"), contents)
+  ok(contents.includes('name: process.env.FST_PLUGIN_FOO_FOOBAR'), contents)
   deepEqual(bg.config.dependencies, {
     '@fastify/foo-plugin': '1.42.0'
   })

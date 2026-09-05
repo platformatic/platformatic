@@ -6,9 +6,26 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import getPort from 'get-port'
 import { Agent, request } from 'undici'
 import { transform } from '../index.js'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+
+/*
+  The applications under prom-server are v4, so the runtime configuration that autoloads them is a
+  v4 object source: it goes through the same root pipeline a file does — autoload is expanded and
+  each application's watt.config is evaluated — while the blocks that cannot live in a file, because
+  their ports are allocated at run time, are layered on top.
+*/
+function createPromRuntime (overrides) {
+  const configFile = join(fixturesDir, 'prom-server', 'probes', 'watt.config.mjs')
+
+  return createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      Object.assign(config, overrides)
+      return transform(config, ...args)
+    }
+  })
+}
 
 test('starts the metrics server when applications are added after init', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
@@ -18,7 +35,6 @@ test('starts the metrics server when applications are added after init', async t
   const app = await createRuntime(
     projectDir,
     {
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
       watch: false,
       autoload: { path: './services' },
       metrics: { hostname: '127.0.0.1', port },
@@ -46,7 +62,7 @@ test('starts the metrics server when applications are added after init', async t
 
 test('Hello', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -76,6 +92,7 @@ The liveness endpoint is available at /status.`
 })
 
 test('supports https options', async t => {
+  // Absolute: the override is layered after validation, so the schema's resolvePath never sees it.
   const projectDir = join(fixturesDir, 'prom-server')
   const port = await getPort()
   const dispatcher = new Agent({
@@ -84,18 +101,13 @@ test('supports https options', async t => {
     }
   })
 
-  const app = await createRuntime(projectDir, {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    watch: false,
-    autoload: {
-      path: './services'
-    },
+  const app = await createPromRuntime({
     metrics: {
       hostname: '127.0.0.1',
       port,
       https: {
-        cert: { path: './https.crt' },
-        key: [{ path: './https.key' }]
+        cert: { path: join(projectDir, 'https.crt') },
+        key: [{ path: join(projectDir, 'https.key') }]
       }
     },
     workers: 1
@@ -124,7 +136,7 @@ test('supports https options', async t => {
 
 test('Hello without readiness', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'readiness-disabled.json')
+  const configFile = join(projectDir, 'readiness-disabled', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -154,7 +166,7 @@ The liveness endpoint is available at /status.`
 
 test('Hello without liveness', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'liveness-disabled.json')
+  const configFile = join(projectDir, 'liveness-disabled', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -184,7 +196,7 @@ The readiness endpoint is available at /ready.`
 
 test('should start a prometheus server on port 9090', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -276,7 +288,7 @@ test('should start a prometheus server on port 9090', async t => {
 
 test('should support custom metrics', async t => {
   const projectDir = join(fixturesDir, 'custom-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -320,7 +332,7 @@ test('should support custom metrics', async t => {
 
 test('should track http cache hits/misses', async t => {
   const projectDir = join(fixturesDir, 'http-cache')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
   const { 'main:0': entryUrl } = await app.start()
 
@@ -371,7 +383,7 @@ test('should track http cache hits/misses', async t => {
 
 test('metrics can be disabled while health probes stay enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'metrics-disabled.json')
+  const configFile = join(projectDir, 'metrics-disabled', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -425,15 +437,9 @@ The liveness endpoint is available at /status.`
 })
 
 test('health probes use a standalone server when configured as an object', async t => {
-  const projectDir = join(fixturesDir, 'prom-server')
   const metricsPort = await getPort()
   const healthProbesPort = await getPort()
-  const app = await createRuntime(projectDir, {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    watch: false,
-    autoload: {
-      path: './services'
-    },
+  const app = await createPromRuntime({
     metrics: {
       hostname: '127.0.0.1',
       port: metricsPort,
@@ -535,14 +541,8 @@ The liveness endpoint is available at /livez.`
 })
 
 test('health probes object uses the metrics server when the address is the same', async t => {
-  const projectDir = join(fixturesDir, 'prom-server')
   const port = await getPort()
-  const app = await createRuntime(projectDir, {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    watch: false,
-    autoload: {
-      path: './services'
-    },
+  const app = await createPromRuntime({
     metrics: {
       hostname: '127.0.0.1',
       port,
@@ -617,14 +617,8 @@ The liveness endpoint is available at /livez.`
 })
 
 test('health probes object can disable probes', async t => {
-  const projectDir = join(fixturesDir, 'prom-server')
   const port = await getPort()
-  const app = await createRuntime(projectDir, {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    watch: false,
-    autoload: {
-      path: './services'
-    },
+  const app = await createPromRuntime({
     metrics: {
       hostname: '127.0.0.1',
       port
@@ -669,14 +663,8 @@ The metrics are available at /metrics.`
 })
 
 test('health probes object starts a standalone server when metrics are disabled', async t => {
-  const projectDir = join(fixturesDir, 'prom-server')
   const healthProbesPort = await getPort()
-  const app = await createRuntime(projectDir, {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    watch: false,
-    autoload: {
-      path: './services'
-    },
+  const app = await createPromRuntime({
     metrics: false,
     healthProbes: {
       hostname: '127.0.0.1',
@@ -728,7 +716,7 @@ The liveness endpoint is available at /status.`
 
 test('health probes can be disabled while metrics stay enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'health-probes-disabled.json')
+  const configFile = join(projectDir, 'health-probes-disabled', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -781,7 +769,7 @@ The metrics are available at /metrics.`
 
 test('prometheus server is not started when metrics and health probes are disabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'metrics-and-health-probes-disabled.json')
+  const configFile = join(projectDir, 'metrics-and-health-probes-disabled', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -803,7 +791,7 @@ test('prometheus server is not started when metrics and health probes are disabl
 
 test('readiness - should get 404 if readiness is not enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'readiness-disabled.json')
+  const configFile = join(projectDir, 'readiness-disabled', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -824,7 +812,7 @@ test('readiness - should get 404 if readiness is not enabled', async t => {
 
 test('readiness - should expose readiness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -846,7 +834,7 @@ test('readiness - should expose readiness by default and get a success response 
 
 test('readiness - should expose readiness and get a fail response when not all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -868,7 +856,7 @@ test('readiness - should expose readiness and get a fail response when not all a
 
 test('readiness - should expose readiness and get a success response when at least one worker per service is started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   const { 'main:0': url } = await app.start()
@@ -908,7 +896,7 @@ test('readiness - should expose readiness and get a success response when at lea
 
 test('readiness - should expose readiness and get a fail and success responses with custom settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'readiness-custom.json')
+  const configFile = join(projectDir, 'readiness-custom', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -944,7 +932,7 @@ test('readiness - should expose readiness and get a fail and success responses w
 
 test('liveness - should get 404 if liveness is not enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'liveness-disabled.json')
+  const configFile = join(projectDir, 'liveness-disabled', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -965,7 +953,7 @@ test('liveness - should get 404 if liveness is not enabled', async t => {
 
 test('liveness - should expose liveness by default and get a success response when all applications are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -987,7 +975,7 @@ test('liveness - should expose liveness by default and get a success response wh
 
 test('liveness - should expose liveness and get a fail response when not all applications are ready, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -1009,7 +997,7 @@ test('liveness - should expose liveness and get a fail response when not all app
 
 test('liveness - should expose liveness and get a fail response when not all applications are healthy, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1033,7 +1021,7 @@ test('liveness - should expose liveness and get a fail response when not all app
 
 test('liveness - should expose liveness and get a fail and success responses with custom settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'liveness-custom.json')
+  const configFile = join(projectDir, 'liveness-custom', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1071,7 +1059,7 @@ test('liveness - should expose liveness and get a fail and success responses wit
 
 test('liveness - should respond to liveness with a custom content from setCustomHealthCheck', async t => {
   const projectDir = join(fixturesDir, 'healthcheck-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1123,7 +1111,7 @@ test('liveness - should respond to liveness with a custom content from setCustom
 
 test('liveness - should respond to liveness with the response from settings when setCustomHealthCheck does not return a response', async t => {
   const projectDir = join(fixturesDir, 'healthcheck-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1175,7 +1163,7 @@ test('liveness - should respond to liveness with the response from settings when
 
 test('readiness - should respond to readiness with a custom content from setCustomReadinessCheck', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1227,7 +1215,7 @@ test('readiness - should respond to readiness with a custom content from setCust
 
 test('readiness - should respond to readiness with the response from settings when setCustomReadinessCheck does not return a response', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1279,7 +1267,7 @@ test('readiness - should respond to readiness with the response from settings wh
 
 test('liveness - should respond to liveness with the custom readiness response from setCustomHealthCheck on liveness failure consequent of readiness check failure', async t => {
   const projectDir = join(fixturesDir, 'readiness-custom-response')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -1312,7 +1300,7 @@ test('liveness - should respond to liveness with the custom readiness response f
 
 test('should not wait for a blocked worker for metrics', async t => {
   const projectDir = join(fixturesDir, 'custom-metrics-blocked')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -1339,7 +1327,7 @@ test('should not wait for a blocked worker for metrics', async t => {
 
 test('liveness - should get a fail if the custom health check times out', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'liveness-timeout.json')
+  const configFile = join(projectDir, 'liveness-timeout', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()

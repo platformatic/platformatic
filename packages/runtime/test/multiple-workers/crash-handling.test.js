@@ -2,12 +2,12 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime, updateFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateFile } from '../helpers.js'
 import { prepareRuntime, waitForEvents } from './helper.js'
 
 test('can restart only crashed workers when they throw an exception during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -51,7 +51,7 @@ test('can restart only crashed workers when they throw an exception during start
 
 test('can restart only crashed workers when they exit during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -95,7 +95,7 @@ test('can restart only crashed workers when they exit during start', async t => 
 
 test('can restart only crashed workers when they crash', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -141,22 +141,39 @@ test('can restart only crashed workers when they crash', async t => {
     { event: 'application:worker:error', application: 'node', worker: 4 }
   )
 
-  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
-  await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
-  await client.close()
+  /*
+    Registered before the restarts are triggered, not after: the events for the new workers are
+    emitted while the start request below is still in flight, so a listener attached afterwards is
+    racing something that has already happened.
 
-  await eventsPromise
-
-  update.revert()
-
-  // Restarted workers get new unique indices (5, 6, 7) instead of reusing old ones (0, 2, 4)
-  // Note: there are 5 initial workers (0-4), so next index starts at 5
-  await waitForEvents(
+    Restarted workers get new unique indices (5, 6, 7) instead of reusing the old ones (0, 2, 4) --
+    there are 5 initial workers, so the next index is 5.
+  */
+  const restartedPromise = waitForEvents(
     app,
     { event: 'application:worker:started', application: 'node', worker: 5 },
     { event: 'application:worker:started', application: 'node', worker: 6 },
     { event: 'application:worker:started', application: 'node', worker: 7 }
   )
+
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
+
+  /*
+    Deliberately not awaited here. The start request resolves only once the application is up, which
+    is after the crashed workers have been replaced -- so awaiting it first would put the revert
+    below after the replacements had already read the crashing file, and the third one would crash
+    too and be replaced in turn by a worker 8 this test does not expect.
+  */
+  const startRequest = client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
+
+  await eventsPromise
+
+  // As soon as the crashes have been observed, so the replacements read the reverted file.
+  update.revert()
+
+  await restartedPromise
+  await startRequest
+  await client.close()
 
   // Verify that the crashed workers were 0, 2, 4 (even indices)
   ok(errors.find(e => e.application === 'node' && e.worker === 0))
@@ -172,7 +189,7 @@ test('can restart only crashed workers when they crash', async t => {
 
 test('can restart only crashed workers when they exit', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -217,22 +234,39 @@ test('can restart only crashed workers when they exit', async t => {
     { event: 'application:worker:error', application: 'node', worker: 4 }
   )
 
-  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
-  await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
-  await client.close()
+  /*
+    Registered before the restarts are triggered, not after: the events for the new workers are
+    emitted while the start request below is still in flight, so a listener attached afterwards is
+    racing something that has already happened.
 
-  await eventsPromise
-
-  update.revert()
-
-  // Restarted workers get new unique indices (5, 6, 7) instead of reusing old ones (0, 2, 4)
-  // Note: there are 5 initial workers (0-4), so next index starts at 5
-  await waitForEvents(
+    Restarted workers get new unique indices (5, 6, 7) instead of reusing the old ones (0, 2, 4) --
+    there are 5 initial workers, so the next index is 5.
+  */
+  const restartedPromise = waitForEvents(
     app,
     { event: 'application:worker:started', application: 'node', worker: 5 },
     { event: 'application:worker:started', application: 'node', worker: 6 },
     { event: 'application:worker:started', application: 'node', worker: 7 }
   )
+
+  await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
+
+  /*
+    Deliberately not awaited here. The start request resolves only once the application is up, which
+    is after the crashed workers have been replaced -- so awaiting it first would put the revert
+    below after the replacements had already read the crashing file, and the third one would crash
+    too and be replaced in turn by a worker 8 this test does not expect.
+  */
+  const startRequest = client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
+
+  await eventsPromise
+
+  // As soon as the crashes have been observed, so the replacements read the reverted file.
+  update.revert()
+
+  await restartedPromise
+  await startRequest
+  await client.close()
 
   // Verify that the crashed workers were 0, 2, 4 (even indices)
   ok(errors.find(e => e.application === 'node' && e.worker === 0))

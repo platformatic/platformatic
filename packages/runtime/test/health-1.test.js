@@ -12,7 +12,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 const isWindows = process.platform === 'win32'
 
 test('should continously monitor workers health', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'configs', 'health-healthy.json')
+  const configFile = join(fixturesDir, 'configs', 'health-healthy', 'watt.config.mjs')
   const server = await createRuntime(configFile)
 
   await server.start()
@@ -27,7 +27,7 @@ test('should continously monitor workers health', { skip: isWindows && 'Skipping
 })
 
 test('should not lose any connection when restarting the process', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'health-check-swapping', 'platformatic.json')
+  const configFile = join(fixturesDir, 'health-check-swapping', 'watt.config.mjs')
   const context = {}
 
   const server = await createRuntime(configFile, null, context)
@@ -59,7 +59,7 @@ test('should not lose any connection when restarting the process', { skip: isWin
 })
 
 test('set the spaces memory correctly', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'health-spaces', 'platformatic.json')
+  const configFile = join(fixturesDir, 'health-spaces', 'watt.config.mjs')
   const server = await createRuntime(configFile)
 
   const { 'service:0': url } = await server.start()
@@ -78,7 +78,7 @@ test('set the spaces memory correctly', { skip: isWindows && 'Skipping on Window
 })
 
 test('set the spaces memory correctly when maxHeapTotal is a string', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'health-spaces-heap-string', 'platformatic.json')
+  const configFile = join(fixturesDir, 'health-spaces-heap-string', 'watt.config.mjs')
   const server = await createRuntime(configFile)
 
   const { 'service:0': url } = await server.start()
@@ -97,7 +97,7 @@ test('set the spaces memory correctly when maxHeapTotal is a string', { skip: is
 })
 
 test('set the code range size correctly', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'health-code-range', 'platformatic.json')
+  const configFile = join(fixturesDir, 'health-code-range', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   const { 'service:0': url } = await server.start()
@@ -118,7 +118,7 @@ test(
   'set Buffer.poolSize and default stream highWaterMark from health config',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'health-buffer-pool', 'platformatic.json')
+    const configFile = join(fixturesDir, 'health-buffer-pool', 'watt.config.js')
     const server = await createRuntime(configFile)
 
     const { 'service:0': url } = await server.start()
@@ -135,7 +135,7 @@ test(
 )
 
 test('should continously monitor workers health', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'configs', 'health-grace-period.json')
+  const configFile = join(fixturesDir, 'configs', 'health-grace-period', 'watt.config.mjs')
   const server = await createRuntime(configFile)
 
   await server.start()

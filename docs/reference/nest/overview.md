@@ -23,15 +23,19 @@ npm install @platformatic/nest
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/nest/2.66.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { nest } from '@platformatic/nest'
+
+export default nest({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture

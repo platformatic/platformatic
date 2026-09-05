@@ -1,9 +1,15 @@
 {
   "name": "@platformatic/nest",
-  "version": "3.67.0",
+  "version": "4.0.0-new-config.3",
   "description": "Platformatic Nest.js Capability",
   "main": "index.js",
   "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./schema": "./schema.js",
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",

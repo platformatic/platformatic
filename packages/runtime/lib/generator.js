@@ -1,21 +1,20 @@
+import { createEnvFileTool, defaultPackageManager, generateDashedName, safeRemove } from '@platformatic/foundation'
+import { LegacyConfigurationFileError, serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
 import {
-  createEnvFileTool,
-  defaultPackageManager,
-  findConfigurationFile,
-  generateDashedName,
-  kMetadata,
-  loadConfiguration,
-  loadConfigurationFile,
-  safeRemove
-} from '@platformatic/foundation'
-import { BaseGenerator, envObjectToString, getApplicationTemplateFromSchemaUrl } from '@platformatic/generators'
+  BaseGenerator,
+  appendApplications,
+  envObjectToString,
+  findAnyConfigurationFile,
+  listedApplications,
+  rawSource,
+  readEnvFile,
+  getApplicationTemplateFromSchemaUrl
+} from '@platformatic/generators'
 import { existsSync } from 'node:fs'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { basename, join } from 'node:path'
+import { basename, join, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { transform } from './config.js'
-import { schema } from './schema.js'
 import { getArrayDifference } from './utils.js'
 
 const engines = {
@@ -38,6 +37,11 @@ function getRuntimeBaseEnvVars (config) {
   }
 }
 
+/*
+  The one thing an import changes about a root: which applications it lists. Applied to the module
+  the user has rather than to a re-rendering of it, so their formatting, their comments and the
+  expressions their values are written as all survive the edit.
+*/
 export class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
     super({
@@ -120,17 +124,46 @@ export class RuntimeGenerator extends BaseGenerator {
       return
     }
     this._hasCheckedForExistingConfig = true
-    const existingConfigFile = this.runtimeConfig ?? (await findConfigurationFile(this.targetDirectory, 'runtime'))
-    if (existingConfigFile && existsSync(join(this.targetDirectory, existingConfigFile))) {
-      this.existingConfigRaw = await loadConfigurationFile(join(this.targetDirectory, existingConfigFile))
-      this.existingConfig = await loadConfiguration(join(this.targetDirectory, existingConfigFile), schema, {
-        transform,
-        ignoreProcessEnv: true
-      })
+    /*
+      Whichever dialect the project is in: a v4 configuration is a module and is invisible to the
+      legacy lookup, so without this the wizard treats a project it scaffolded itself as a new one.
+    */
+    const existingConfigFile = await findAnyConfigurationFile(this.targetDirectory)
 
-      const { PLT_ROOT, ...existingEnvironment } = this.existingConfig[kMetadata].env
-      this.config.env = existingEnvironment
-      this.existingApplications = this.existingConfig.applications.map(s => s.id)
+    if (existingConfigFile && existsSync(join(this.targetDirectory, existingConfigFile))) {
+      const existingConfigPath = join(this.targetDirectory, existingConfigFile)
+
+      this.existingConfigRaw = await this.readConfigurationFile(existingConfigPath, 'root', this.targetDirectory)
+      /*
+        The file as written, kept so that editing it can be an edit. Re-emitting from the evaluated
+        configuration would bake this machine's environment into the user's root -- a reference to
+        PLT_SERVER_LOGGER_LEVEL becomes whatever it happens to resolve to here -- and take every
+        comment with it.
+      */
+      this.existingConfigFile = existingConfigFile
+      this.existingConfigSource = await readFile(existingConfigPath, 'utf-8')
+
+      /*
+        A legacy root is refused with the hint every other v4 entry point gives, rather than loaded
+        and rewritten: continuing wrote the v4 module form over the .json file, and migrate is the
+        tool whose whole job is that conversion -- with the refusals and divergence reports the
+        wizard has no way to make.
+      */
+      if (existingConfigFile.endsWith('.json')) {
+        throw new LegacyConfigurationFileError(existingConfigPath)
+      } else {
+        /*
+          Derived from the root rather than loaded through it. A full load evaluates every
+          application's configuration, and those import their capabilities -- so the wizard would
+          need the project's dependencies installed before it could read the project, which is
+          exactly the state it is called in to fix.
+        */
+        const { PLT_ROOT, ...existingEnvironment } = await readEnvFile(this.targetDirectory)
+
+        this.config.env = existingEnvironment
+        this.existingConfig = this.existingConfigRaw
+        this.existingApplications = await this.#listExistingApplications(this.existingConfigRaw)
+      }
 
       this.updateRuntimeConfig(this.existingConfigRaw)
       this.updateRuntimeEnv(await readFile(join(this.targetDirectory, '.env'), 'utf-8'))
@@ -169,6 +202,30 @@ export class RuntimeGenerator extends BaseGenerator {
     if (application.config.port === 3042) {
       application.setConfig({ port: 3042 + ordinal })
     }
+  }
+
+  /*
+    The root is the one v4 configuration that is not a capability factory call: it imports
+    `defineConfig` from wattpm, whose whole job is to type its argument.
+  */
+  /*
+    The stamped plain-object form rather than an imported `defineConfig`, which is the machine-writer
+    case the `$schema` marker exists for: the wizard writes this file before anything is installed
+    and reads it back on a later run, so a root that imported `wattpm` could not be read in the
+    state that produced it. A person editing the file afterwards can switch to the imported form.
+  */
+  serializeConfigFile (config) {
+    /*
+      Unstamped while this line is still 3.x. The marker is a version declaration, and the loader
+      refuses a v3 one outright -- correctly, since that is how it catches a configuration nobody
+      migrated. It becomes writable, and worth writing, at 4.0.0.
+    */
+    const { $schema, module: _module, ...rest } = config
+    // Resolved like every other scaffolded value: the root's placeholders are the same kind of
+    // thing, and leaving them would write the placeholder's own text where an expression belongs.
+    const resolved = this.resolveScaffoldedPlaceholders(rest)
+
+    return `export default ${serializeConfiguration(resolved)}\n`
   }
 
   async _getConfigFileContents () {
@@ -236,7 +293,11 @@ export class RuntimeGenerator extends BaseGenerator {
       }
       let basePath
       if (this.existingConfig) {
-        basePath = this.existingConfig.autoload.path
+        /*
+          Resolved against the project, because the configuration says it relative to itself. The v3
+          loader handed back an absolute path; reading the file directly hands back what it says.
+        */
+        basePath = resolve(this.targetDirectory, this.existingConfig.autoload.path)
       } else {
         basePath = join(this.targetDirectory, this.config.autoload || this.applicationsFolder)
       }
@@ -287,11 +348,38 @@ export class RuntimeGenerator extends BaseGenerator {
     return (await import(pathToFileURL(fileToImport))).Generator
   }
 
+  /*
+    Which applications a root already describes: the entries it lists, and the directories its
+    autoload would discover. Neither needs an application's own configuration, which is the point.
+  */
+  async #listExistingApplications (config) {
+    const ids = (config.applications ?? config.services ?? config.web ?? []).map(entry => entry.id).filter(Boolean)
+
+    if (!config.autoload?.path) {
+      return ids
+    }
+
+    const exclude = config.autoload.exclude ?? []
+    const directory = join(this.targetDirectory, config.autoload.path)
+
+    for (const entry of await readdir(directory, { withFileTypes: true }).catch(() => [])) {
+      if (entry.isDirectory() && !exclude.includes(entry.name) && !ids.includes(entry.name)) {
+        ids.push(entry.name)
+      }
+    }
+
+    return ids
+  }
+
   async loadFromDir () {
     const output = {
       applications: []
     }
-    const runtimePkgConfigFileData = JSON.parse(await readFile(join(this.targetDirectory, this.runtimeConfig), 'utf-8'))
+    const runtimePkgConfigFileData = await this.readConfigurationFile(
+      join(this.targetDirectory, await findAnyConfigurationFile(this.targetDirectory)),
+      'root',
+      this.targetDirectory
+    )
     const applicationsPath = join(this.targetDirectory, runtimePkgConfigFileData.autoload.path)
 
     // load all applications
@@ -302,8 +390,14 @@ export class RuntimeGenerator extends BaseGenerator {
       const dirStat = await stat(currentApplicationPath)
       if (dirStat.isDirectory()) {
         // load the application config
-        const configFile = await findConfigurationFile(currentApplicationPath)
-        const applicationPltJson = JSON.parse(await readFile(join(currentApplicationPath, configFile), 'utf-8'))
+        const configFile = await findAnyConfigurationFile(currentApplicationPath)
+        // The environment is the runtime's: an application's expressions read the project's .env,
+        // which lives at the root beside the configuration that autoloads it.
+        const applicationPltJson = await this.readConfigurationFile(
+          join(currentApplicationPath, configFile),
+          'application',
+          this.targetDirectory
+        )
         // get module to load
         const template = applicationPltJson.module || getApplicationTemplateFromSchemaUrl(applicationPltJson.$schema)
         const Generator = await this._getGeneratorForTemplate(currentApplicationPath, template)
@@ -350,8 +444,12 @@ export class RuntimeGenerator extends BaseGenerator {
 
         // delete dependencies
         const applicationPath = join(this.targetDirectory, this.applicationsFolder, s.name)
-        const configFile = await findConfigurationFile(applicationPath)
-        const applicationPackageJson = JSON.parse(await readFile(join(applicationPath, configFile), 'utf-8'))
+        const configFile = await findAnyConfigurationFile(applicationPath)
+        const applicationPackageJson = await this.readConfigurationFile(
+          join(applicationPath, configFile),
+          'application',
+          this.targetDirectory
+        )
         if (applicationPackageJson.plugins && applicationPackageJson.plugins.packages) {
           applicationPackageJson.plugins.packages.forEach(p => {
             delete currrentPackageJson.dependencies[p.name]
@@ -468,12 +566,65 @@ export class RuntimeGenerator extends BaseGenerator {
   }
 
   updateRuntimeConfig (config) {
+    this.generatedConfig = config
+
+    // Editing what is there, rather than replacing it with a rendering of what it evaluated to.
+    if (this.existingConfigSource && !this.existingConfigFile.endsWith('.json')) {
+      this.addFile({
+        path: '',
+        file: this.existingConfigFile,
+        contents: this.#editExistingRoot(config),
+        tags: ['runtime-config']
+      })
+
+      return
+    }
+
     this.addFile({
       path: '',
-      file: this.runtimeConfig,
-      contents: JSON.stringify(config, null, 2),
+      file: this.existingConfigFile ?? this.configurationFileName(),
+      contents: this.serializeConfigFile(config),
       tags: ['runtime-config']
     })
+  }
+
+  /*
+    An existing root is edited rather than rewritten, so that everything it says survives -- see
+    `appendApplications`. A shape it cannot edit is reported here rather than papered over by
+    writing the file from the loaded configuration, which would be a silent rewrite of every
+    reference the root contains.
+  */
+  #editExistingRoot (config) {
+    /*
+      The evaluated configuration arrives with autoload already expanded, so its application list
+      holds every discovered directory as an explicit entry with an absolute machine path.
+      Appending those would bake this machine's layout into the user's root -- and duplicate what
+      autoload will discover again on the next boot. Only entries autoload does not cover belong in
+      the file: the ones this run scaffolds outside the autoload directory, or a root with no
+      autoload at all.
+    */
+    const autoloadPath = config.autoload?.path
+      ? resolve(this.targetDirectory, config.autoload.path) + sep
+      : null
+    const additions = listedApplications(config).filter(entry => {
+      if (!autoloadPath || typeof entry.path !== 'string') {
+        return true
+      }
+
+      return !resolve(this.targetDirectory, entry.path).startsWith(autoloadPath)
+    })
+
+    const edited = appendApplications(this.existingConfigSource, additions, entry =>
+      this.resolveScaffoldedPlaceholders(entry, rawSource)
+    )
+
+    if (edited === null) {
+      throw new Error(
+        `Cannot add applications to ${this.existingConfigFile}: its default export is not a configuration object this tool can edit. Add them by hand.`
+      )
+    }
+
+    return edited
   }
 
   updateRuntimeEnv (contents) {
@@ -551,15 +702,28 @@ export class WrappedGenerator extends BaseGenerator {
   }
 
   async #createConfigFile () {
+    /*
+      The wrapped single-app root. v3 spelled the runtime settings under a `runtime` key inside the
+      application's own configuration; v4 has no such block, so they are the root's own and the
+      application is the singular shorthand.
+    */
+    /*
+      The application is the root's own, named by the singular shorthand. Without it the root
+      describes a runtime with nothing in it -- it would load, and start none of the code it was
+      wrapped around.
+
+      Its capability is spelled as a plain object rather than a factory call because this file is
+      read before anything is installed, and an import cannot be resolved in that state.
+    */
     const config = {
-      $schema: `https://schemas.platformatic.dev/${this.module}/${this.platformaticVersion}.json`,
-      runtime: getRuntimeWrappableProperties()
+      ...this.resolveScaffoldedPlaceholders(getRuntimeWrappableProperties()),
+      application: { config: { module: this.module } }
     }
 
     this.addFile({
       path: '',
-      file: 'watt.json',
-      contents: JSON.stringify(config, null, 2)
+      file: this.configurationFileName(),
+      contents: `export default ${serializeConfiguration(config)}\n`
     })
   }
 

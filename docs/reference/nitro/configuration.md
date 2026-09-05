@@ -3,7 +3,8 @@ import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
 
 # Configuration
 
-Platformatic Nitro is configured through a configuration file. It supports environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Nitro is configured through a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 ## `application`
 
@@ -39,14 +40,17 @@ Configures Vite options used by the development server when Nitro is used as a V
 
 This is useful for development server settings such as allowing mesh-network hostnames:
 
-```json
-{
-  "vite": {
-    "devServer": {
-      "strict": false
+```ts config
+import { nitro } from '@platformatic/nitro'
+
+export default nitro({
+  server: { port: 3042 },
+  vite: {
+    devServer: {
+      strict: false
     }
   }
-}
+})
 ```
 
 ## `logger`

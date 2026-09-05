@@ -44,7 +44,7 @@ It detects the existing application and offers to wrap it:
 ```
 Hello YOURNAME, welcome to Watt!
 ? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
-INFO: watt.json written!
+INFO: watt.config.mjs written!
 INFO: You are all set! Run `npm start` to start your project.
 ```
 
@@ -142,33 +142,36 @@ Move each Fastify service into its own directory under `web/`:
 ```
 my-project/
 ├── package.json          # "workspaces": ["web/*"]
-├── watt.json             # runtime configuration
+├── watt.config.ts        # runtime configuration
 └── web/
     ├── gateway/
     │   ├── package.json
-    │   └── watt.json
+    │   └── watt.config.ts
     └── orders/
         ├── package.json
-        ├── watt.json
+        ├── watt.config.ts
         └── index.js
 ```
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "entrypoint": "gateway",
-  "autoload": { "path": "web" },
-  "server": { "hostname": "127.0.0.1", "port": 3042 },
-  "logger": { "level": "info" }
-}
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: { path: 'web' },
+  logger: { level: 'info' }
+})
 ```
 
-Each Fastify application declares the Node.js capability:
+There is no `entrypoint` and no root `server`: each application declares its own port, and the one
+that is publicly addressable is the one you point traffic at. Each Fastify application declares the
+Node.js capability:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json"
-}
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 Applications reach each other by id:
@@ -192,25 +195,27 @@ exactly that ordering in the startup logs, without configuring anything.
 
 Declare the prefix on the application:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
-  "application": {
-    "basePath": "/orders"
-  }
-}
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  application: { basePath: '/orders' },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 and list it in the gateway:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
-  "gateway": {
-    "applications": [{ "id": "orders" }],
-    "refreshTimeout": 1000
-  }
-}
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [{ id: 'orders' }],
+    refreshTimeout: 1000
+  },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 :::caution[The prefix is stripped before your application sees it]
@@ -231,12 +236,14 @@ removed the prefix.
 If the application needs the full path — it builds absolute URLs, or serves an OpenAPI document whose
 paths must match what clients see — set `absoluteUrl` and register routes under the base path:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
-  "application": { "basePath": "/orders" },
-  "node": { "absoluteUrl": true }
-}
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  application: { basePath: '/orders' },
+  node: { absoluteUrl: true },
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
 ```js

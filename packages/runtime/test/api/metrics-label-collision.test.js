@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 function createRuntimeWithCollidingLabels (t) {
-  const configFile = join(fixturesDir, 'management-api', 'platformatic.json')
+  const configFile = join(fixturesDir, 'management-api', 'watt.config.mjs')
 
   return createRuntime(configFile, null, {
     async transform (config, ...args) {

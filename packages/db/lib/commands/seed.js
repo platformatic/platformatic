@@ -1,15 +1,15 @@
-import { kMetadata, loadConfiguration, loadModule } from '@platformatic/foundation'
+import { kMetadata, loadModule } from '@platformatic/foundation'
 import { access } from 'fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import { transform } from '../config.js'
 import { MissingSeedFileError } from '../errors.js'
 import { Migrator } from '../migrator.js'
-import { schema } from '../schema.js'
+import { resolveCommandConfiguration } from './configuration.js'
 import { setupDB } from '../utils.js'
 
-export async function seed (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const config = await loadConfiguration(configFile, schema, { transform })
+export async function seed (logger, configuration, args, context) {
+  const { colorette: { bold }, logFatalError } = context
+  const config = await resolveCommandConfiguration(configuration, context)
 
   if (config.migrations !== undefined) {
     const migrator = new Migrator(config.migrations, config.db, logger)

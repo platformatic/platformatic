@@ -3,8 +3,8 @@ import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
 
 # Configuration
 
-Platformatic Remix is configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Remix is configured with a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 It supports all the [settings supported by Platformatic Vite](../vite/configuration.md), plus the following one:
 

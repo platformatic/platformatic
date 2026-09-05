@@ -19,7 +19,7 @@ test('print validation errors', async t => {
   process.env.DATABASE_URL = connectionInfo.connectionString
 
   try {
-    await create(join(import.meta.dirname, '..', 'fixtures', 'missing-required-values.json'))
+    await create(join(import.meta.dirname, '..', 'fixtures', 'missing-required-values', 'watt.config.js'))
     assert.fail('should have thrown')
   } catch (err) {
     assert.ok(err.message.includes("must have required property 'dir'"))

@@ -1,14 +1,14 @@
-import { safeRemove, saveConfigurationFile } from '@platformatic/foundation'
+import { safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
 test('build - should build the application', async t => {
-  const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
+  const { root: buildDir } = await prepareRuntime(t, 'build', false, null)
   const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
@@ -30,13 +30,15 @@ test('build - should build the application', async t => {
 })
 
 test('build - should build the application from an application file', async t => {
-  const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
+  const { root: buildDir } = await prepareRuntime(t, 'build', false, null)
   const applicationDir = resolve(buildDir, 'web/main')
 
-  await safeRemove(resolve(buildDir, 'watt.json'))
-  await saveConfigurationFile(resolve(applicationDir, 'watt.json'), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
-  })
+  await safeRemove(resolve(buildDir, 'watt.config.mjs'))
+  await writeFile(
+    resolve(applicationDir, 'watt.config.mjs'),
+    "export default { module: '@platformatic/node' }\n",
+    'utf-8'
+  )
 
   t.after(async () => {
     await safeRemove(resolve(applicationDir, 'dist'))
@@ -48,7 +50,7 @@ test('build - should build the application from an application file', async t =>
 })
 
 test('build - should handle build errors', async t => {
-  const { root: buildDir } = await prepareRuntime(t, 'build-error', false, 'watt.json')
+  const { root: buildDir } = await prepareRuntime(t, 'build-error', false, null)
   const applicationDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
@@ -64,7 +66,7 @@ test('build - should handle build errors', async t => {
 
 test('build - should build with custom env file', async t => {
   const { writeFile } = await import('node:fs/promises')
-  const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
+  const { root: buildDir } = await prepareRuntime(t, 'build', false, null)
   const applicationDir = resolve(buildDir, 'web/main')
 
   // Create a custom env file

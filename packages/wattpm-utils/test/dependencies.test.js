@@ -1,8 +1,6 @@
-import {
-  loadConfigurationFile as loadRawConfigurationFile,
-  safeRemove,
-  saveConfigurationFile
-} from '@platformatic/foundation'
+import { safeRemove } from '@platformatic/foundation'
+import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
+import { readFile } from 'node:fs/promises'
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -11,16 +9,15 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { executeCommand, wattpmUtils, wattUtilsCliPath } from './helper.js'
 
 test('install - should install dependencies of autoloaded applications', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
 
-  // Introduce a validation error. In that case with invalid configuration, the transformConfig will not be invoked.
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-  originalFileContents.logger = { level: 'invalid' }
-  await saveConfigurationFile(configurationFile, originalFileContents)
+  // Introduce a validation error: with an invalid configuration the transform is never invoked.
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.logger = { level: 'invalid' }
+  })
 
   const installProcess = await wattpmUtils('install', rootDir)
 
@@ -30,15 +27,13 @@ test('install - should install dependencies of autoloaded applications', async t
 })
 
 test('install - should install dependencies when loaded vian application file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
 
-  await safeRemove(resolve(rootDir, 'watt.json'))
-  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
-  })
+  // The root is gone, so web/main's own configuration is the only one there is.
+  await safeRemove(resolve(rootDir, 'watt.config.mjs'))
 
   const installProcess = await wattpmUtils('install', resolve(rootDir, 'web/main'))
 
@@ -48,7 +43,7 @@ test('install - should install dependencies when loaded vian application file', 
 })
 
 test('install - should install dependencies of application and its applications using npm by default', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
@@ -60,7 +55,7 @@ test('install - should install dependencies of application and its applications 
 })
 
 test('install - should install dependencies of application and its applications using npm by default', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
@@ -72,7 +67,7 @@ test('install - should install dependencies of application and its applications 
 })
 
 test('install - should install dependencies of application and its applications using a specific package manager', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
@@ -84,12 +79,12 @@ test('install - should install dependencies of application and its applications 
 })
 
 test('install - should setup package version to 0.1.0 when using yarn', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
 
-  const originalPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/alternative/package.json'))
+  const originalPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/alternative/package.json'), 'utf-8'))
   ok(typeof originalPackageJson.version === 'undefined')
   const installProcess = await wattpmUtils('install', rootDir, '-P', 'yarn')
 
@@ -104,26 +99,25 @@ test('install - should setup package version to 0.1.0 when using yarn', async t 
     )
   )
 
-  const updatePackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/alternative/package.json'))
+  const updatePackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/alternative/package.json'), 'utf-8'))
   deepStrictEqual(updatePackageJson.version, '0.1.0')
 })
 
 test('install - should respect the application package manager, if any', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
 
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-  originalFileContents.applications = [
-    {
-      id: 'main',
-      path: 'web/main',
-      packageManager: 'npm'
-    }
-  ]
-  await saveConfigurationFile(configurationFile, originalFileContents)
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications = [
+      {
+        id: 'main',
+        path: 'web/main',
+        packageManager: 'npm'
+      }
+    ]
+  })
 
   const installProcess = await wattpmUtils('install', rootDir, '-P', 'pnpm')
 
@@ -132,7 +126,7 @@ test('install - should respect the application package manager, if any', async t
 })
 
 test('install - should install production dependencies only', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs', async root => {
     await safeRemove(resolve(root, 'node_modules'))
     await safeRemove(resolve(root, 'web/main/node_modules'))
   })
@@ -144,20 +138,20 @@ test('install - should install production dependencies only', async t => {
 })
 
 test('update - should update version in package.json files', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
   const updateProcess = await executeCommand('node', '--import', loader, wattUtilsCliPath, 'update', '-f', rootDir)
 
-  const rootPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'package.json'))
+  const rootPackageJson = JSON.parse(await readFile(resolve(rootDir, 'package.json'), 'utf-8'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
     wattpm: '^3.67.0',
     '@platformatic/runtime': '^3.67.0'
   })
 
-  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
+  const mainPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/main/package.json'), 'utf-8'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/node': '^3.67.0',
@@ -170,7 +164,7 @@ test('update - should update version in package.json files', async t => {
     '@platformatic/tracing': '^3.67.0'
   })
 
-  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
+  const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(anotherPackageJson.dependencies, {
     '@platformatic/service': '^3.67.0',
@@ -199,12 +193,17 @@ test('update - should update version in package.json files', async t => {
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
 })
 
-test('update - should work when executed inside an application folder', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+test('update - scopes to the application when executed inside its folder', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
-  // Note that web/main folder contains a watt.json which will be considered as the root of the project.
+  /*
+    web/main has its own package.json, and the configuration search stops at the nearest one --
+    because it executes what it finds, and a configuration above your package belongs to something
+    else. So this updates the application rather than the runtime above it. v3 ignored package
+    boundaries and walked up, which is what this test used to assert.
+  */
   const updateProcess = await executeCommand(
     'node',
     '--import',
@@ -215,8 +214,8 @@ test('update - should work when executed inside an application folder', async t 
     resolve(rootDir, 'web/main')
   )
 
-  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
-  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
+  const mainPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/main/package.json'), 'utf-8'))
+  const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/node': '^3.67.0',
@@ -229,31 +228,26 @@ test('update - should work when executed inside an application folder', async t 
     '@platformatic/tracing': '^3.67.0'
   })
 
+  // Untouched: it belongs to the runtime above the boundary, which this invocation is not
+  // scoped to.
   deepStrictEqual(anotherPackageJson.dependencies, {
-    '@platformatic/service': '^3.67.0',
-    '@platformatic/db': '^1.53.4',
+    '@platformatic/service': '^3.0.0',
+    '@platformatic/db': '^1.0.0',
     '@platformatic/db-dashboard': '^0.1.0',
     '@platformatic/gateway': '^99.0.0'
   })
 
-  ok(
-    updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of the application another from ^3.0.0 to ^3.67.0 ...'
-    )
-  )
+  ok(!updateProcess.stdout.includes('of the application another'))
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
 })
 
 test('update - should work when loaded from an application file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
-  await safeRemove(resolve(rootDir, 'watt.json'))
-  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
-  })
-
-  // Note that web/main folder contains a watt.json which will be considered as the root of the project.
+  // The root is gone, so web/main's own configuration is the only one there is, and it is what
+  // this command treats as the project.
+  await safeRemove(resolve(rootDir, 'watt.config.mjs'))
   const updateProcess = await executeCommand(
     'node',
     '--import',
@@ -264,8 +258,8 @@ test('update - should work when loaded from an application file', async t => {
     resolve(rootDir, 'web/main')
   )
 
-  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
-  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
+  const mainPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/main/package.json'), 'utf-8'))
+  const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/node': '^3.67.0',
@@ -301,16 +295,16 @@ test('update - should work when loaded from an application file', async t => {
 })
 
 test('update - should fail when a dependency cannot be updated', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
   const updateProcess = await executeCommand(process.argv[0], '--import', loader, wattUtilsCliPath, 'update', rootDir, {
     reject: false
   })
-  const rootPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'package.json'))
-  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
-  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
+  const rootPackageJson = JSON.parse(await readFile(resolve(rootDir, 'package.json'), 'utf-8'))
+  const mainPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/main/package.json'), 'utf-8'))
+  const anotherPackageJson = JSON.parse(await readFile(resolve(rootDir, 'web/another/package.json'), 'utf-8'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
     wattpm: '^3.67.0',
@@ -343,7 +337,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
 })
 
 test('update - should fail when NPM is not responsing', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, null)
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry-fail.mjs')).href
 

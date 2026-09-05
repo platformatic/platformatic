@@ -1,4 +1,6 @@
 import { createDirectory, createEnvFileTool } from '@platformatic/foundation'
+import { evaluateConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
+import { envStringToObject } from '@platformatic/generators'
 import { Generator as ServiceGenerator } from '@platformatic/service'
 import assert from 'node:assert'
 import { cp, readFile, stat, symlink, writeFile } from 'node:fs/promises'
@@ -37,6 +39,22 @@ function mockNpmJsRequestForPkgs (pkgs) {
         }
       })
   }
+}
+
+/*
+  A v4 configuration is a module whose values are expressions, so reading one means evaluating it --
+  against the project's own environment, which is where those expressions get their values.
+*/
+async function readConfiguration (path, root) {
+  const { config } = await evaluateConfigurationFile({
+    path,
+    env: { ...process.env, ...envStringToObject(await readFile(join(root, '.env'), 'utf-8').catch(() => '')) },
+    command: 'start',
+    production: false,
+    role: 'application'
+  })
+
+  return config
 }
 
 test('should remove an application', async t => {
@@ -124,15 +142,18 @@ test('should add a new application with new env variables', async t => {
   })
 
   // the new application has been generated
-  const applicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
-  )
+  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.mjs'), dir)
+  /*
+    Evaluated rather than parsed, so an option reads as the value its variable carries -- the
+    configuration holds the reference and .env holds the value, which is the whole point of the
+    split.
+  */
   assert.deepEqual(applicationConfigFile.plugins.packages[0], {
     name: '@fastify/foo-plugin',
     options: {
-      testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
+      testValue: 'foobar',
       credentials: {
-        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}'
+        name: 'johndoe'
       }
     }
   })
@@ -160,9 +181,9 @@ test("should update existing application's plugin options", async t => {
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
-  const oldApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
-  )
+  // Compared as source: the claim is that the file is untouched, and its values are references
+  // whose meaning changes with .env — evaluating them would compare the environment instead.
+  const oldApplicationConfigFile = await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   // load previous application config file
   const updatedApplication = {
     name: 'rival',
@@ -211,9 +232,7 @@ test("should update existing application's plugin options", async t => {
   })
 
   // the config file should be left unchanged
-  const newApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
-  )
+  const newApplicationConfigFile = await readFile(join(dir, 'services', 'rival', 'watt.config.mjs'), 'utf-8')
   assert.deepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
   // the runtime .env should be updated
@@ -248,9 +267,7 @@ test("should add new application's plugin and options", async t => {
   const samplerouteFileContents = "console.log('hello world')"
   await writeFile(sampleRouteFilePath, samplerouteFileContents)
   await rg.loadFromDir(dir)
-  const oldApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
-  )
+  const oldApplicationConfigFile = await readConfiguration(join(dir, 'services', 'rival', 'watt.config.mjs'), dir)
   // load previous application config file
   const updatedApplication = {
     name: 'rival',
@@ -316,9 +333,7 @@ test("should add new application's plugin and options", async t => {
   })
 
   // the config file should be updated with the new plugin
-  const newApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
-  )
+  const newApplicationConfigFile = await readConfiguration(join(dir, 'services', 'rival', 'watt.config.mjs'), dir)
   assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
   // all properties except "packages" should be the same
   const equalRootProperties = ['$schema', 'application', 'watch']
@@ -334,12 +349,12 @@ test("should add new application's plugin and options", async t => {
   assert.equal(newApplicationConfigFile.plugins.packages.length, 2)
   assert.deepEqual(newApplicationConfigFile.plugins.packages[0], {
     name: '@fastify/passport',
-    options: { country: '{PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY}' }
+    options: { country: 'italy' }
   })
 
   // the first package has been updated with a new option
   assert.deepEqual(newApplicationConfigFile.plugins.packages[1].options.new, {
-    option: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION}'
+    option: 'new_options_value'
   })
   // the runtime .env should be updated
   const runtimeDotEnv = createEnvFileTool({
@@ -367,9 +382,7 @@ test('should remove a plugin from an existing application', async t => {
 
   const rg = new RuntimeGenerator({ targetDirectory: dir, applicationsFolder: 'services' })
   await rg.loadFromDir(dir)
-  const oldApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
-  )
+  const oldApplicationConfigFile = await readConfiguration(join(dir, 'services', 'rival', 'watt.config.mjs'), dir)
   // load previous application config file
   const updatedApplication = {
     name: 'rival',
@@ -394,9 +407,7 @@ test('should remove a plugin from an existing application', async t => {
   })
 
   // the config file should be left unchanged
-  const newApplicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8')
-  )
+  const newApplicationConfigFile = await readConfiguration(join(dir, 'services', 'rival', 'watt.config.mjs'), dir)
   assert.notDeepEqual(oldApplicationConfigFile, newApplicationConfigFile)
 
   // the runtime .env should be updated
@@ -489,15 +500,18 @@ test('should remove a plugin from an application and add the same on the other',
   })
 
   // the new application has been generated
-  const applicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
-  )
+  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.mjs'), dir)
+  /*
+    Evaluated rather than parsed, so an option reads as the value its variable carries -- the
+    configuration holds the reference and .env holds the value, which is the whole point of the
+    split.
+  */
   assert.deepEqual(applicationConfigFile.plugins.packages[0], {
     name: '@fastify/foo-plugin',
     options: {
-      testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
+      testValue: 'foobar',
       credentials: {
-        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}'
+        name: 'johndoe'
       }
     }
   })
@@ -570,9 +584,7 @@ test('should handle new fields on new application', async t => {
   })
 
   // the new application has been generated
-  const applicationConfigFile = JSON.parse(
-    await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8')
-  )
+  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.mjs'), dir)
   assert.equal(applicationConfigFile.plugins.packages, undefined)
 
   // the runtime .env should be updated

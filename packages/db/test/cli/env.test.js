@@ -8,7 +8,7 @@ import { getConnectionInfo } from '../helper.js'
 import { connectDB, safeKill, start } from './helper.js'
 import { createCapturingLogger, createTestContext, withTestEnvironment } from './test-utilities.js'
 
-test('env white list', async t => {
+test('a configuration reads variables outside the PLT_ prefix', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 
@@ -20,7 +20,7 @@ test('env white list', async t => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start([resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist.json')], {
+  const { child, url } = await start([resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist', 'watt.config.mjs')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString,
       HOSTNAME: '127.0.0.1'
@@ -51,7 +51,7 @@ test('env white list', async t => {
   await safeKill(child)
 })
 
-test('env white list default values', async t => {
+test('a configuration supplies its own default for an unset variable', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 
@@ -63,7 +63,7 @@ test('env white list default values', async t => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start([resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist-default.json')], {
+  const { child, url } = await start([resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist-default', 'watt.config.mjs')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString,
       PORT: 10555
@@ -95,7 +95,7 @@ test('env white list default values', async t => {
   await safeKill(child)
 })
 
-test('env white list schema', async t => {
+test('the same variables reach a capability command', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 
@@ -117,7 +117,7 @@ test('env white list schema', async t => {
     const logger = createCapturingLogger()
     const context = createTestContext()
 
-    await printSchema(logger, resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist.json'), ['graphql'], context)
+    await printSchema(logger, resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist', 'watt.config.mjs'), ['graphql'], context)
 
     assert.equal(captureObj.get().trim(), snapshot)
   })()

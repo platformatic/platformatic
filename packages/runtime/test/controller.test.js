@@ -1,20 +1,33 @@
 import { BaseCapability } from '@platformatic/basic'
-import { abstractLogger } from '@platformatic/foundation'
-import { updateGlobals } from '@platformatic/globals'
 import { deepStrictEqual, notStrictEqual, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
 import { Controller } from '../lib/worker/controller.js'
+import { configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
+/*
+  What the v4 loader hands a worker: the capability's validated configuration as data, plus the
+  module that validated it. Controller no longer reads a configuration file -- that resolution
+  moved main-side -- so a test that constructs one directly supplies what the loader would have.
+*/
+async function resolvedConfigurationIn (directory) {
+  const file = configurationFileIn(directory)
+  const { default: configuration } = await import(pathToFileURL(file).href)
+
+  return configuration
+}
+
 test('errors when starting an already started application (no logging)', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.no-logging.json')
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
     watch: true,
     dependencies: []
@@ -30,11 +43,16 @@ test('errors when starting an already started application (no logging)', async t
 })
 
 test('errors when stopping an already stopped application', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
+    a configuration file with the v3 loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
     watch: true,
     dependencies: []
@@ -47,30 +65,21 @@ test('errors when stopping an already stopped application', async t => {
   }, /Application has not been started/)
 })
 
-test('logs errors if an env variable is missing', async t => {
-  const configFile = join(fixturesDir, 'no-env.service.json')
-  const config = {
-    id: 'no-env',
-    config: configFile,
-    path: fixturesDir,
-    watch: true
-  }
-  const app = new Controller({}, config)
-
-  updateGlobals({ logger: abstractLogger })
-
-  await rejects(async () => {
-    await app.init()
-    await app.start()
-  }, /The configuration does not validate against the configuration schema/)
-})
+/*
+  There was a test here for the error a missing `{PLT_X}` produced. v4 has no placeholders: an unset
+  variable is `undefined` and what happens next is written in the configuration file, so there is no
+  substitution left to fail. `docs/reference/service/configuration.md` shows the guard that replaces
+  it.
+*/
 
 test('logs errors during startup', async t => {
-  const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
-  const configFile = join(appPath, 'platformatic.service.json')
+  // A copy of serviceAppThrowsOnStart, kept from when one directory could not serve both loaders.
+  const appPath = join(fixturesDir, 'service-app-throws-v3')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceAppThrowsOnStart',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
     watch: true
   }
@@ -90,11 +99,12 @@ test('logs errors during startup', async t => {
 })
 
 test('returns application statuses', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.no-logging.json')
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
     watch: true,
     dependencies: []
@@ -124,12 +134,17 @@ test('returns application statuses', async t => {
 })
 
 test('can update status of a capability with updateStatus support', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
+    a configuration file with the v3 loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
 
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
     watch: true,
     dependencies: []
@@ -145,12 +160,17 @@ test('can update status of a capability with updateStatus support', async t => {
 })
 
 test('can update status of a capability without updateStatus support', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
+    a configuration file with the v3 loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
 
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
     watch: true,
     dependencies: []

@@ -23,15 +23,16 @@ npm install @platformatic/node
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  application: {
+    basePath: '/frontend'
   }
-}
+})
 ```
 
 ## Specify application info
@@ -122,11 +123,11 @@ If the application uses the `commands` property, it is responsible for starting 
 
 If your application entrypoint exports a `create` or `build` function that returns an object with `isBackgroundApplication` set to `true`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. If the returned object has a `close` function, it will be called upon application shutdown as `close(app)`, where `app` is the returned object.
 
-Alternatively, your application entrypoint can export a `hasServer` variable set to `false`, or you can set the `node.hasServer` property to false in your `watt.json` file. To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
+Alternatively, your application entrypoint can export a `hasServer` variable set to `false`, or you can set the `node.hasServer` property to false in your `watt.config.ts` file. To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
 
 ## HTTPS
 
-Configure HTTPS in this Node.js capability's `server.https` object. The `server` object belongs in the capability's own `watt.json`, not in the Runtime or Watt root configuration:
+Configure HTTPS in this Node.js capability's `server.https` object. The `server` object belongs in the capability's own `watt.config.ts`, not in the Runtime or Watt root configuration:
 
 ```json
 {
@@ -332,19 +333,20 @@ To make Typescript work in development mode, setup a `commands.development` valu
 
 When configuring production mode instead, you have to configure both the `commands.build` and `commands.production` values. The former will be used to compile your application, while the latter will be used to start it.
 
-A complete typical setup for the application `watt.json` file will be something like this:
+A complete typical setup for the application `watt.config.ts` file will be something like this:
 
-```
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.9.1.json",
-  "application": {
-    "commands": {
-      "development": "node --import tsx server.ts",
-      "build": "tsc",
-      "production": "node dist/server.js"
+```ts config
+import { node } from '@platformatic/node'
+
+export default node({
+  application: {
+    commands: {
+      development: 'node --import tsx server.ts',
+      build: 'tsc',
+      production: 'node dist/server.js'
     }
   }
-}
+})
 ```
 
 Watt supports setting up `npm run ...` commands so you can reuse your existing npm scripts flow.

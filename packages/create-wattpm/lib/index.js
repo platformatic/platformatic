@@ -3,13 +3,15 @@ import {
   defaultPackageManager,
   detectApplicationType,
   findConfigurationFileRecursive,
+  findRuntimeConfigurationFile,
   generateDashedName,
   getPackageManager,
   getPkgManager,
   loadConfigurationFile,
   searchJavascriptFiles
 } from '@platformatic/foundation'
-import { ImportGenerator } from '@platformatic/generators'
+import { isLegacyConfigurationFileName } from '@platformatic/foundation/lib/v4/index.js'
+import { findAnyConfigurationFile, ImportGenerator } from '@platformatic/generators'
 import { execa } from 'execa'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
@@ -227,8 +229,7 @@ export async function createPlatformatic (argv) {
   const pkgManager = getPkgManager()
   const modules = Array.isArray(args.module) ? args.module : [args.module]
   await createApplication(logger, pkgManager, modules, args['install'], {
-    runtimeConfig: 'watt.json',
-    applicationsFolder: 'web'
+    applicationsFolder: 'applications'
   })
 }
 
@@ -248,7 +249,45 @@ export async function createApplication (
   // Check in the directory and its parents if there is a config file
   let shouldChooseProjectDir = true
   let projectDir = process.cwd()
-  const runtimeConfigFile = await findConfigurationFileRecursive(projectDir, null, '@platformatic/runtime')
+  /*
+    The legacy lookup first, because it is the one whose search shape the flows below were written
+    against, then the v4-aware one -- which is what finds a project this wizard scaffolded, since a
+    `watt.config.*` is invisible to the other.
+  */
+  /*
+    The legacy lookup first, because it is the search shape the flows below were written against,
+    then the v4-aware one -- which is what finds a project this wizard scaffolded, since a
+    `watt.config.*` is invisible to the other.
+  */
+  /*
+    Wrapping an application leaves a v4 configuration in the application's own directory, and v3
+    recognised that state by the `runtime` block it used to nest inside it. v4 has no such block --
+    those settings are the root's own -- so the signal is a v4 configuration sitting beside the
+    sources, which has to be read before the runtime lookup below claims the directory as an
+    ordinary project.
+  */
+  const wrapped = await findAnyConfigurationFile(projectDir)
+
+  if (wrapped && !isLegacyConfigurationFileName(wrapped) && (await findApplicationRoot(projectDir))) {
+    /*
+      The singular `application` shorthand is what wrapping writes, and what distinguishes a wrapped
+      application from a runtime whose own directory happens to hold sources. Read from the source
+      rather than evaluated: evaluating a root expands its topology, which reaches every
+      application's configuration and so needs the dependencies this command has not installed yet.
+    */
+    const source = await readFile(resolve(projectDir, wrapped), 'utf-8')
+
+    if (/\bapplication:\s*\{/.test(source)) {
+      const { label } = await detectApplicationType(projectDir)
+
+      await say(`The ${label} application has already been wrapped into Watt.`)
+      return
+    }
+  }
+
+  const runtimeConfigFile =
+    (await findConfigurationFileRecursive(projectDir, null, '@platformatic/runtime')) ??
+    (await findRuntimeConfigurationFile(logger, projectDir, null, false, false))
 
   if (runtimeConfigFile) {
     shouldChooseProjectDir = false
@@ -264,10 +303,11 @@ export async function createApplication (
 
       // Check if the file belongs to a Watt application, this can happen for instance if we executed watt create
       // in the applications folder
-      const existingRuntime = await findConfigurationFileRecursive(applicationRoot, null, '@platformatic/runtime')
+      const existingRuntime =
+        (await findConfigurationFileRecursive(applicationRoot, null, '@platformatic/runtime')) ??
+        (await findRuntimeConfigurationFile(logger, applicationRoot, null, false, false))
 
       if (!existingRuntime) {
-        // If there is a watt.json file with a runtime property, we assume we already executed watt create and we exit.
         const existingApplication = await findGatewayConfigFile(projectDir)
 
         if (existingApplication) {
@@ -485,9 +525,7 @@ export async function createApplication (
   if (packageManager === 'pnpm' && !existsSync(pnpmWorkspacePath)) {
     // add pnpm-workspace.yaml file if needed
     let content = `packages:
-- 'applications/*'
-- 'services/*'
-- 'web/*'`
+- 'applications/*'`
 
     // Add imported applications
     for (const { application } of generator.applications) {
@@ -504,7 +542,9 @@ export async function createApplication (
   }
 
   if (typeof install === 'function') {
-    await install(projectDir, generator.runtimeConfig, packageManager)
+    // The file the generator actually wrote. `runtimeConfig` still names a legacy candidate, and an
+    // install hook that opened it would open nothing.
+    await install(projectDir, generator.configurationFileName(), packageManager)
   } else if (install) {
     const spinner = ora('Installing dependencies...').start()
     await execa(packageManager, ['install'], { cwd: projectDir })

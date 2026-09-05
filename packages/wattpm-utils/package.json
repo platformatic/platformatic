@@ -1,6 +1,6 @@
 {
   "name": "wattpm-utils",
-  "version": "3.67.0",
+  "version": "4.0.0-new-config.3",
   "description": "The Node.js Application Server Utilities Commands",
   "main": "index.js",
   "type": "module",
@@ -31,15 +31,19 @@
     "lib"
   ],
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/generators": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "colorette": "^2.0.20",
     "create-wattpm": "workspace:*",
     "execa": "^9.4.0",
     "fast-json-patch": "^3.1.1",
+    "json5": "^2.2.3",
     "semver": "^7.7.0",
-    "tar": "^7.5.7"
+    "tar": "^7.5.7",
+    "yaml": "^2.4.1"
   },
   "devDependencies": {
     "@platformatic/node": "workspace:*",

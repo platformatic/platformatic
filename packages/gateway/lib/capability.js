@@ -1,4 +1,3 @@
-import { kMetadata, replaceEnv } from '@platformatic/foundation'
 import { getEvents, getITC } from '@platformatic/globals'
 import { ServiceCapability } from '@platformatic/service'
 import { ensureApplications, platformaticGateway } from './application.js'
@@ -99,7 +98,12 @@ export class GatewayCapability extends ServiceCapability {
       return true
     }
 
-    return replaceEnv(application.origin, this.config[kMetadata].env).endsWith('.plt.local')
+    /*
+      The origin as configured. v4 resolves the configuration main-side, once, so there is no
+      `{PLT_X}` left for a request to substitute -- this ran the v3 interpolator at request time
+      over a value the loader had already produced.
+    */
+    return application.origin.endsWith('.plt.local')
   }
 
   #handleRuntimeEvent ({ event }) {

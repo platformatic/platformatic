@@ -3,7 +3,7 @@ import { deepStrictEqual, match, ok, rejects, strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createRuntime, readLogs, updateConfigFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, readLogs, updateConfigFile } from '../helpers.js'
 import { findAvailablePortRange, prepareRuntime } from './helper.js'
 
 const HOST = '127.0.0.1'
@@ -29,16 +29,16 @@ async function prepareFixedPortRuntime (
   { workers = 3, server = {}, application = {}, runtime = {}, portRangeSize = 1 } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const port = await findAvailablePortRange({ host: HOST, size: portRangeSize })
 
-  await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(resolve(root, 'node')), contents => {
     contents.server = { ...contents.server, hostname: HOST, port, ...server }
   })
 
   await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
-    contents.services[0] = { ...contents.services[0], workers, ...application }
+    contents.applications[0] = { ...contents.applications[0], workers, ...application }
     Object.assign(contents, runtime)
   })
 

@@ -77,8 +77,12 @@ test('generate correct .env file', async t => {
 
     await dbApp.prepare()
 
-    const configFile = dbApp.getFileObject('platformatic.json')
-    JSON.parse(configFile.contents)
+    /*
+      A TypeScript project gets the TypeScript suffix, and `.mts` rather than `.ts` because the
+      generated package is CommonJS -- `export default` in a CommonJS `.ts` is a syntax error.
+    */
+    const configFile = dbApp.getFileObject('watt.config.mts')
+    assert.ok(configFile.contents.startsWith("import { db } from '@platformatic/db'"), configFile.contents)
   }
 
   {
@@ -130,8 +134,7 @@ test('config', async t => {
     types: true
   })
   await dbApp.prepare()
-  const platformaticConfigFile = dbApp.getFileObject('platformatic.json')
-  const contents = JSON.parse(platformaticConfigFile.contents)
+  const contents = dbApp.generatedConfig
   assert.equal(contents.$schema, `https://schemas.platformatic.dev/@platformatic/db/${dbApp.platformaticVersion}.json`)
   assert.deepEqual(contents.server, {
     hostname: '{PLT_SERVER_HOSTNAME}',
@@ -339,8 +342,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       packages: [
@@ -374,8 +376,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       paths: [
@@ -431,12 +432,12 @@ test('runtime context should have server config', async t => {
 
   await svc.prepare()
 
-  const configFile = svc.getFileObject('platformatic.json')
-  const configFileContents = JSON.parse(configFile.contents)
+  const configFileContents = svc.generatedConfig
   assert.deepStrictEqual(configFileContents.server, {
     hostname: '{PLT_MY_DB_SERVER_HOSTNAME}',
     port: '{PLT_MY_DB_PORT}',
     logger: { level: '{PLT_MY_DB_SERVER_LOGGER_LEVEL}' }
   })
-  assert.ok(configFile.contents.match(/"connectionString": "{PLT_MY_DB_DATABASE_URL}"/))
+  // The connection string is a placeholder in the model and the expression it stands for in the file.
+  assert.strictEqual(configFileContents.db.connectionString, '{PLT_MY_DB_DATABASE_URL}')
 })

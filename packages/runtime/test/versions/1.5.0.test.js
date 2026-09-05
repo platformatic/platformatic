@@ -2,7 +2,7 @@ import { loadConfiguration } from '@platformatic/foundation'
 import { equal } from 'node:assert'
 import { test } from 'node:test'
 import { join } from 'path'
-import { transform } from '../../lib/config.js'
+import { transform } from '../../index.js'
 import { upgrade } from '../../lib/upgrade.js'
 import { version } from '../../lib/version.js'
 

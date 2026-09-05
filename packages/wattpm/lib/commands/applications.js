@@ -2,12 +2,36 @@ import { getMatchingRuntime, RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { readFile, stat, writeFile } from 'node:fs/promises'
-import { basename, isAbsolute, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 
+/*
+  Editing the configuration in place.
+
+  A v4 configuration is a module, so it cannot be round-tripped through `JSON.parse` and
+  `JSON.stringify` -- that read a program as data and wrote data back over the program. magicast
+  parses it, the caller edits the parsed object, and the printer keeps everything it did not touch:
+  comments, references, the spelling of every value the edit did not name.
+
+  Imported where it is used rather than at the top, because it is the only thing in this command
+  that needs an AST library and only `--save` needs it at all.
+*/
 async function updateConfigFile (path, update) {
-  const contents = JSON.parse(await readFile(path, 'utf-8'))
-  await update(contents)
-  await writeFile(path, JSON.stringify(contents, null, 2), 'utf-8')
+  const { generateCode, parseModule } = await import('magicast')
+  const source = await readFile(path, 'utf-8')
+  const module = parseModule(source)
+  const target = module.exports.default
+  // The plain-object form exports the configuration; `defineConfig` passes it as the first argument.
+  const configuration = target?.$type === 'function-call' ? target.$args[0] : target
+
+  if (configuration?.$type !== 'object') {
+    throw new Error(
+      `Cannot edit ${basename(path)} automatically: its default export is not a configuration object this command can change. Edit it by hand.`
+    )
+  }
+
+  await update(configuration)
+
+  await writeFile(path, generateCode(module).code, 'utf-8')
 }
 
 export async function applicationsAddCommand (logger, args) {
@@ -28,8 +52,10 @@ export async function applicationsAddCommand (logger, args) {
   const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, applications] = await getMatchingRuntime(client, allPositionals)
-    const config = await client.getRuntimeConfig(runtime.pid, true)
-    const root = config.__metadata.root
+    // The metadata endpoint carries what this needs. Reading the whole runtime configuration over
+    // HTTP to get at one path was the only reason this command wanted GET /config.
+    const metadata = await client.getRuntimeMetadata(runtime.pid)
+    const root = metadata.projectDir
 
     let toAdd = []
     let added = 0
@@ -63,8 +89,13 @@ export async function applicationsAddCommand (logger, args) {
     }
 
     if (save) {
-      await updateConfigFile(config.__metadata.path, async config => {
-        config.applications = (config.applications ?? []).concat(toAdd)
+      await updateConfigFile(metadata.configPath, async config => {
+        /*
+          Spread rather than `concat`: the parsed array is a proxy over AST nodes, and `concat` on
+          one does not carry its elements across -- the existing entries vanished and the file came
+          back holding only what was being added.
+        */
+        config.applications = [...(config.applications ?? []), ...toAdd]
       })
     }
 
@@ -107,22 +138,34 @@ export async function applicationsRemoveCommand (logger, args) {
     const removed = await client.removeApplications(runtime.pid, applications)
 
     if (save) {
-      const config = await client.getRuntimeConfig(runtime.pid, true)
-      const absoluteAutoloadPath = resolve(config.__metadata.path, config.autoload.path)
+      const metadata = await client.getRuntimeMetadata(runtime.pid)
+      /*
+        Against the configuration's *directory*, not the file: `resolve('/a/watt.config.mjs', '../x')`
+        is `/a/x` only by accident of the file name having no slashes in it. v4 hands this back
+        already absolute, in which case resolve returns it untouched.
+      */
+      const absoluteAutoloadPath = metadata.autoload
+        ? resolve(dirname(metadata.configPath), metadata.autoload.path)
+        : null
 
-      await updateConfigFile(config.__metadata.path, async config => {
-        // Remove applications from all relevant sections
+      await updateConfigFile(metadata.configPath, async config => {
         for (const app of removed) {
-          for (const section of ['applications', 'services', 'web']) {
-            if (Array.isArray(config[section])) {
-              config[section] = config[section].filter(a => a.id !== app.id)
-            }
+          // One spelling: the loader refuses the v3 aliases by name, so the list is `applications`.
+          if (Array.isArray(config.applications)) {
+            config.applications = config.applications.filter(a => a.id !== app.id)
           }
 
-          if (config.autoload) {
-            if (app.path.startsWith(absoluteAutoloadPath)) {
+          if (config.autoload && absoluteAutoloadPath) {
+            /*
+              Containment by path boundary, not by string prefix -- and only for a direct child:
+              autoload discovers one level of directories, and its exclude entries are directory
+              names, so anything else written here could never match what expansion reads.
+            */
+            const relativePath = relative(absoluteAutoloadPath, app.path)
+
+            if (relativePath !== '' && relativePath !== '..' && !relativePath.includes(sep)) {
               config.autoload.exclude ??= []
-              config.autoload.exclude.push(relative(absoluteAutoloadPath, app.path))
+              config.autoload.exclude.push(relativePath)
             }
           }
         }

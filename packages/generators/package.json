@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/generators",
-  "version": "3.67.0",
+  "version": "4.0.0-new-config.3",
   "description": "Main classes and utils for generators.",
   "main": "index.js",
   "type": "module",
@@ -28,6 +28,7 @@
     "change-case-all": "^2.1.0",
     "execa": "^9.6.0",
     "fastify": "^5.0.0",
+    "magicast": "^0.5.4",
     "pino": "^9.9.0",
     "undici": "^8.5.0"
   },

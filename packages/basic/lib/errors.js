@@ -11,6 +11,16 @@ export const exitCodes = {
   PROCESS_SOCKET_ERROR: 22
 }
 
+export const CapabilityFactoryKeyCollisionError = createError(
+  `${ERROR_PREFIX}_CAPABILITY_FACTORY_KEY_COLLISION`,
+  "%s cannot flatten '%s' from the %s block: it already collides with %s."
+)
+
+export const CapabilityFactoryOptionsRequiredError = createError(
+  `${ERROR_PREFIX}_CAPABILITY_FACTORY_OPTIONS_REQUIRED`,
+  'defineCapabilityFactory requires the capability module name as its first argument.'
+)
+
 export const UnsupportedVersion = createError(
   `${ERROR_PREFIX}_UNSUPPORTED_VERSION`,
   '%s version %s is not supported. Please use version %s.'

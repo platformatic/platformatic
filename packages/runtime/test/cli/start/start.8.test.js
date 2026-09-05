@@ -5,7 +5,7 @@ import { request } from 'undici'
 import { start } from '../helper.js'
 
 test('capability', async () => {
-  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'capabilities', 'platformatic.json')
+  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'capabilities', 'watt.config.mjs')
   const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   const res = await request(url + '/foo')
 

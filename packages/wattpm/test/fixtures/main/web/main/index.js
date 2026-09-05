@@ -15,8 +15,9 @@ const app = fastify({
 app.get('/', async () => {
   return {
     production: process.env.NODE_ENV === 'production',
-    plt_dev: process.env.PLT_DEV === 'true',
-    plt_environment: process.env.PLT_ENVIRONMENT
+    // PLT_DEV and PLT_ENVIRONMENT are not injected in v4; reported so their absence is asserted.
+    plt_dev: process.env.PLT_DEV ?? null,
+    plt_environment: process.env.PLT_ENVIRONMENT ?? null
   }
 })
 

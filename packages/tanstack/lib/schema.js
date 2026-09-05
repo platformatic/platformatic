@@ -1,11 +1,14 @@
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
-import { schemaComponents as viteSchemaComponents } from '@platformatic/vite'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/lib/schema.js'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation/lib/schema.js'
+import { schemaComponents as viteSchemaComponents } from '@platformatic/vite/lib/schema.js'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
+
+// The port is checked before any startup path is selected, so no port means no start.
+export const servesWithoutPort = { development: false, production: false }
 
 export const schemaComponents = {}
 

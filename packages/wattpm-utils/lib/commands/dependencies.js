@@ -7,12 +7,13 @@ import {
   logFatalError,
   parseArgs
 } from '@platformatic/foundation'
+import { deriveApplicationId, evaluateConfigurationFile, readPackageName } from '@platformatic/foundation/lib/v4/index.js'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
-import { readFile, rm, writeFile } from 'node:fs/promises'
-import { isAbsolute, relative, resolve } from 'node:path'
+import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 
@@ -67,19 +68,97 @@ async function withTemporaryPnpmConfig (directory, fn) {
 
 function isPathInsideDirectory (directory, path) {
   const relativePath = relative(directory, path)
-  return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath))
+  // Not a bare startsWith('..'): a directory legitimately named `..foo` relativizes to `..foo`.
+  return (
+    relativePath === '' ||
+    (relativePath !== '..' && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath))
+  )
+}
+
+/*
+  Where a root says its applications are: the entries it lists, and the directories its autoload
+  would discover. Neither answer needs an application's own configuration, which is the point.
+*/
+/*
+  Where the applications are, without evaluating any of them. Every consumer of this is a command
+  that repairs a project -- installing the capability an application is missing, or writing the
+  configuration file it does not have -- so a full load would demand the very thing it is about to
+  supply. The root states the paths by itself.
+*/
+export async function listApplicationDirectories (configurationFile) {
+  const root = dirname(configurationFile)
+  const { config } = await evaluateConfigurationFile({
+    path: configurationFile,
+    env: { ...process.env },
+    command: 'start',
+    production: false,
+    role: 'root'
+  })
+
+  const entries = config.applications ?? config.services ?? config.web ?? []
+  const applications = await Promise.all(
+    entries
+      .filter(entry => entry.path)
+      .map(async entry => {
+        /*
+          The same three rungs the loader uses -- an explicit id, the package.json name with any
+          scope stripped, then the directory name. Reading `entry.id` alone named a Level 1
+          application `undefined`: the auto-wrapped entry a single-application file produces
+          carries a path and no id, because the full loader derives it a step later than this
+          reads.
+        */
+        const { id } = deriveApplicationId({
+          id: entry.id,
+          packageName: entry.id ? undefined : await readPackageName(entry.path),
+          directory: entry.path
+        })
+
+        // packageManager comes along because installing is what this list is for, and the entry is
+        // the only place that says which manager an application wants. moduleApplication marks an
+        // entry that names an npm package as its capability -- the one shape install and update skip.
+        return {
+          id,
+          path: entry.path,
+          packageManager: entry.packageManager,
+          moduleApplication: entry.module ? true : undefined
+        }
+      })
+  )
+
+  if (config.autoload?.path) {
+    const exclude = config.autoload.exclude ?? []
+    const directory = resolve(root, config.autoload.path)
+
+    for (const entry of await readdir(directory, { withFileTypes: true }).catch(() => [])) {
+      if (entry.isDirectory() && !exclude.includes(entry.name)) {
+        applications.push({ id: entry.name, path: join(directory, entry.name) })
+      }
+    }
+  }
+
+  return applications
 }
 
 export async function installDependencies (logger, root, applications, production, packageManager) {
   if (typeof applications === 'string') {
-    const config = await loadConfiguration(applications, null, { validate: false })
+    /*
+      The root only. Loading it fully would evaluate every application's configuration, and those
+      import the capabilities this command is about to install -- so the step that fixes the missing
+      dependencies would need them present to run. What is needed here is where the applications
+      are, which the root states by itself.
+    */
+    if (!applications.endsWith('.json')) {
+      applications = await listApplicationDirectories(applications)
+    } else {
+      const config = await loadConfiguration(applications, null, { validate: false })
 
-    /* c8 ignore next 3 - Hard to test */
-    if (!config) {
-      return
+      /* c8 ignore next 3 - Hard to test */
+      if (!config) {
+        return
+      }
+
+      applications = config.applications
     }
-
-    applications = config.applications
   }
 
   if (!packageManager) {
@@ -113,9 +192,11 @@ export async function installDependencies (logger, root, applications, productio
     )
   }
 
-  for (let { id, path, module, packageManager: applicationPackageManager } of applications) {
-    // Module applications use dependencies installed in the Watt root and their package is not writable.
-    if (module) {
+  for (let { id, path, moduleApplication, packageManager: applicationPackageManager } of applications) {
+    // A module application's dependencies are installed in the Watt root and its package is not
+    // writable. Keyed on moduleApplication, not module: every v4 application carries a module (its
+    // capability), so module alone would skip them all.
+    if (moduleApplication) {
       continue
     }
 
@@ -274,12 +355,15 @@ export async function installCommand (logger, args) {
     this.executableName
   )
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!configurationFile) {
-    return
-  }
-
-  const installed = await installDependencies(logger, root, configurationFile, production, packageManager)
+  const installed = await installDependencies(
+    logger,
+    root,
+    // Level 0: no configuration file anywhere, so the root directory is itself the one application
+    // and there is nothing to read to find that out.
+    configurationFile ?? [{ id: basename(resolve(root)), path: resolve(root) }],
+    production,
+    packageManager
+  )
 
   if (installed) {
     logger.done('All applications have been resolved.')
@@ -316,19 +400,20 @@ export async function updateCommand (logger, args) {
     this.executableName
   )
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!configurationFile) {
-    return
+  // Level 0 again: the root is the one application, and it is the only thing to update besides
+  // the project itself.
+  let applications = [{ id: basename(resolve(root)), path: resolve(root) }]
+
+  if (configurationFile) {
+    const configuration = await loadConfiguration(configurationFile)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!configuration) {
+      return
+    }
+
+    applications = configuration.applications
   }
-
-  const configuration = await loadConfiguration(configurationFile)
-
-  /* c8 ignore next 3 - Hard to test */
-  if (!configuration) {
-    return
-  }
-
-  const applications = configuration.applications
 
   // First of all, get all version from NPM for the runtime
   const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')
@@ -354,7 +439,9 @@ export async function updateCommand (logger, args) {
 
   // Now, for all the applications in the configuration file, update the dependencies
   for (const application of applications) {
-    if (application.module) {
+    // A module application has no writable package of its own. Keyed on moduleApplication, not
+    // module: every v4 application carries a module (its capability), so module alone would skip all.
+    if (application.moduleApplication) {
       continue
     }
 

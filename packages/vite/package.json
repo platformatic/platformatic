@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/vite",
-  "version": "3.67.0",
+  "version": "4.0.0-new-config.3",
   "description": "Platformatic Vite Capability",
   "main": "index.js",
   "type": "module",
@@ -15,6 +15,7 @@
       "import": "./skew-plugin.js",
       "default": "./skew-plugin.js"
     },
+    "./schema": "./schema.js",
     "./*": "./*"
   },
   "scripts": {

@@ -20,7 +20,7 @@ test('configure telemetry correctly with a express app using pg', async t => {
     await dropTestDB()
   })
 
-  const { url, root } = await createRuntime(t, 'express-api-pg', false, false, 'platformatic.json')
+  const { url, root } = await createRuntime(t, 'express-api-pg', false, false, 'watt.config.mjs')
   const spansPath = join(root, 'spans.log')
 
   // Test request to add http metrics

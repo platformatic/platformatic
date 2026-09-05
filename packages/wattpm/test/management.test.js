@@ -9,10 +9,10 @@ import { platform, tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { waitForStart, wattpm } from './helper.js'
+import { waitForStart, wattpm, wattpmNoRuntime } from './helper.js'
 
 test('ps - should show running applications', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -38,11 +38,11 @@ test('ps - should show running applications', async t => {
 })
 
 test('ps - should support custom sockets', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const socketPath =
     platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(tmpdir(), `platformatic-${randomUUID()}.sock`)
 
-  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
     config.managementApi = { socket: socketPath }
 
     return config
@@ -79,7 +79,7 @@ test('ps - should warn when no runtimes are available', async t => {
 })
 
 test('ps - should warn when some runtimes error during metadata retrieval', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -133,7 +133,7 @@ test('ps - should warn when some runtimes error during metadata retrieval', asyn
 })
 
 test('applications - should list applications for an application with no workers information in development mode', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('dev', rootDir)
   await waitForStart(startProcess)
@@ -156,7 +156,7 @@ test('applications - should list applications for an application with no workers
 })
 
 test('applications - should list applications for an application with workers information in production mode', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -179,14 +179,14 @@ test('applications - should list applications for an application with workers in
 })
 
 test('applications - should complain when a runtime is not found', async t => {
-  const applicationsProcess = await wattpm('applications', 'p-' + Date.now.toString(), { reject: false })
+  const applicationsProcess = await wattpmNoRuntime(t, 'applications', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(applicationsProcess.exitCode, 1)
   ok(applicationsProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
 test('env - should list environment variable for a server', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -201,7 +201,7 @@ test('env - should list environment variable for a server', async t => {
 })
 
 test('env - should list environment variable for an application in tabular way', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -216,7 +216,7 @@ test('env - should list environment variable for an application in tabular way',
 })
 
 test('env - should list environment variable for an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -231,14 +231,14 @@ test('env - should list environment variable for an application', async t => {
 })
 
 test('env - should complain when a runtime is not found', async t => {
-  const envProcess = await wattpm('env', 'p-' + Date.now.toString(), { reject: false })
+  const envProcess = await wattpmNoRuntime(t, 'env', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(envProcess.exitCode, 1)
   ok(envProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
 test('env - should complain when an application is not found', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -252,173 +252,4 @@ test('env - should complain when an application is not found', async t => {
 
   deepStrictEqual(envProcess.exitCode, 1)
   ok(envProcess.stdout.includes('Cannot find a matching application.'))
-})
-
-test('config - should list configuration for the runtime', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const alternativeApplicationDir = resolve(rootDir, 'web/alternative')
-  const mainApplicationDir = resolve(rootDir, 'web/main')
-
-  const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess)
-
-  t.after(() => {
-    startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
-  })
-
-  const configProcess = await wattpm('config', 'main')
-
-  deepStrictEqual(JSON.parse(configProcess.stdout), {
-    $schema: 'https://schemas.platformatic.dev/wattpm/2.0.0.json',
-    logger: {
-      captureStdio: true,
-      level: 'trace',
-      pino: {
-        level: 'level',
-        message: 'msg',
-        time: 'time'
-      }
-    },
-    autoload: {
-      path: `${resolve(rootDir, 'web')}`,
-      exclude: []
-    },
-    sourceMaps: false,
-    nodeModulesSourceMaps: [],
-    reuseTcpPorts: true,
-    restartOnError: 2,
-    exitOnUnhandledErrors: true,
-    startTimeout: 30000,
-    messagingTimeout: 30000,
-    managementApi: true,
-    preload: [resolve('../wattpm-pprof-capture/index.js')],
-    applications: [
-      {
-        id: 'alternative',
-        type: '@platformatic/node',
-        path: alternativeApplicationDir,
-        config: resolve(alternativeApplicationDir, 'watt.json'),
-        watch: false,
-        workers: {
-          dynamic: false,
-          static: 1
-        },
-        dependencies: [],
-        localUrl: 'http://alternative.plt.local'
-      },
-      {
-        id: 'main',
-        type: '@platformatic/node',
-        path: mainApplicationDir,
-        config: resolve(mainApplicationDir, 'watt.json'),
-        watch: false,
-        workers: {
-          dynamic: false,
-          static: 1
-        },
-        dependencies: [],
-        localUrl: 'http://main.plt.local'
-      }
-    ],
-    applicationTimeout: 300000,
-    workers: {
-      dynamic: false,
-      static: 1
-    },
-    workersRestartDelay: 0,
-    watch: false,
-    gracefulShutdown: {
-      runtime: 30000,
-      application: 10000,
-      closeConnections: true
-    },
-    health: {
-      enabled: true,
-      gracePeriod: 30000,
-      interval: 30000,
-      maxELU: 0.99,
-      maxHeapTotal: 4294967296,
-      maxHeapUsed: 0.99,
-      maxUnhealthyChecks: 10,
-      maxYoungGeneration: 134217728,
-      codeRangeSize: 268435456,
-      bufferPoolSize: 262144,
-      defaultHighWaterMark: 262144
-    },
-    healthProbes: true,
-    resolvedApplicationsBasePath: 'external',
-    metrics: {
-      enabled: true,
-      timeout: 1000
-    }
-  })
-})
-
-test('config - should list configuration for an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-
-  const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess)
-
-  t.after(() => {
-    startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
-  })
-
-  const configProcess = await wattpm('config', 'main', 'main')
-
-  deepStrictEqual(JSON.parse(configProcess.stdout), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
-    logger: {},
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    application: {
-      outputDirectory: 'dist',
-      include: ['dist'],
-      commands: {
-        install: 'npm ci --omit-dev'
-      },
-      changeDirectoryBeforeExecution: false,
-      preferLocalCommands: true
-    },
-    node: {
-      absoluteUrl: false,
-      main: 'index.js',
-      dispatchViaHttp: false,
-      disablePlatformaticInBuild: false,
-      disableBuildInDevelopment: false,
-      hasServer: true
-    },
-    watch: {
-      enabled: false
-    },
-    tracing: {}
-  })
-})
-
-test('config - should complain when a runtime is not found', async t => {
-  const configProcess = await wattpm('config', 'p-' + Date.now.toString(), { reject: false })
-
-  deepStrictEqual(configProcess.exitCode, 1)
-  ok(configProcess.stdout.includes('Cannot find a matching runtime.'))
-})
-
-test('config - should complain when an application is not found', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-
-  const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess)
-
-  t.after(() => {
-    startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
-  })
-
-  const configProcess = await wattpm('config', 'main', 'invalid', { reject: false })
-
-  deepStrictEqual(configProcess.exitCode, 1)
-  ok(configProcess.stdout.includes('Cannot find a matching application.'))
 })

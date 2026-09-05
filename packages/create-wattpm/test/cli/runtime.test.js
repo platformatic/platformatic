@@ -1,15 +1,10 @@
-import { deepStrictEqual, equal } from 'node:assert'
+import { loadConfiguration as loadRuntimeConfiguration } from '@platformatic/runtime'
+import { deepStrictEqual, equal, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../lib/utils.js'
-import {
-  createTemporaryDirectory,
-  executeCreatePlatformatic,
-  getApplications,
-  linkDependencies,
-  setupUserInputHandler
-} from './helper.js'
+import { configurationFileIn, createTemporaryDirectory, executeCreatePlatformatic, getApplications, linkDependencies, linkWorkspacePackages, setupUserInputHandler } from './helper.js'
 
 test('Creates a Platformatic Runtime with two Applications', async t => {
   const root = await createTemporaryDirectory(t, 'runtime')
@@ -34,30 +29,42 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
   equal(await isFileAccessible(join(root, '.gitignore')), true)
   equal(await isFileAccessible(join(root, '.env')), true)
   equal(await isFileAccessible(join(root, '.env.sample')), true)
-  equal(await isFileAccessible(join(root, 'watt.json')), true)
+  ok(await configurationFileIn(root))
 
   // using pnpm will create workspace file
   equal(await isFileAccessible(join(root, 'pnpm-workspace.yaml')), true)
 
   // Here check the generated applications
-  const applications = await getApplications(join(root, 'web'))
+  const applications = await getApplications(join(root, 'applications'))
   deepStrictEqual(applications, ['application1', 'application2'])
   const env = await readFile(join(root, '.env'), 'utf-8')
   equal(env.includes('PLT_APPLICATION1_PORT=3042'), true)
   equal(env.includes('PLT_APPLICATION2_PORT=3043'), true)
-  const baseApplication0Dir = join(root, 'web', applications[0])
-  equal(await isFileAccessible(join(baseApplication0Dir, 'watt.json')), true)
+  const baseApplication0Dir = join(root, 'applications', applications[0])
+  ok(await configurationFileIn(baseApplication0Dir))
   equal(await isFileAccessible(join(baseApplication0Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseApplication0Dir, 'plt-env.d.ts')), true)
 
-  const baseApplication1Dir = join(root, 'web', applications[1])
-  equal(await isFileAccessible(join(baseApplication1Dir, 'watt.json')), true)
+  const baseApplication1Dir = join(root, 'applications', applications[1])
+  ok(await configurationFileIn(baseApplication1Dir))
   equal(await isFileAccessible(join(baseApplication1Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplication1Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseApplication1Dir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseApplication1Dir, 'plt-env.d.ts')), true)
+
+  // The scaffolded project loads through the full v4 runtime pipeline: autoload discovers both
+  // applications under applications/, each evaluating against the project's own environment. This is
+  // what proves the wizard writes a bootable project rather than merely a plausible set of files.
+  await linkWorkspacePackages(root)
+  const runtimeConfig = await loadRuntimeConfiguration(join(root, await configurationFileIn(root)), null, {
+    command: 'start'
+  })
+  deepStrictEqual(
+    runtimeConfig.applications.map(entry => entry.id).sort(),
+    ['application1', 'application2']
+  )
 })
 
 test('Add another application to an existing application', async t => {
@@ -79,16 +86,16 @@ test('Add another application to an existing application', async t => {
     equal(await isFileAccessible(join(root, '.gitignore')), true)
     equal(await isFileAccessible(join(root, '.env')), true)
     equal(await isFileAccessible(join(root, '.env.sample')), true)
-    equal(await isFileAccessible(join(root, 'watt.json')), true)
+    ok(await configurationFileIn(root))
 
     // using pnpm will create workspace file
     equal(await isFileAccessible(join(root, 'pnpm-workspace.yaml')), true)
 
     // Here check the generated applications
-    const applications = await getApplications(join(root, 'web'))
+    const applications = await getApplications(join(root, 'applications'))
     deepStrictEqual(applications, ['application1'])
-    const applicationRoot = join(root, 'web', applications[0])
-    equal(await isFileAccessible(join(applicationRoot, 'watt.json')), true)
+    const applicationRoot = join(root, 'applications', applications[0])
+    ok(await configurationFileIn(applicationRoot))
     equal(await isFileAccessible(join(applicationRoot, 'README.md')), true)
     equal(await isFileAccessible(join(applicationRoot, 'routes', 'root.js')), true)
     equal(await isFileAccessible(join(applicationRoot, 'plugins', 'example.js')), true)
@@ -110,13 +117,13 @@ test('Add another application to an existing application', async t => {
     await executeCreatePlatformatic(root, { pkgManager: 'pnpm', userInputHandler })
 
     // Here check the generated applications
-    const applications = await getApplications(join(root, 'web'))
+    const applications = await getApplications(join(root, 'applications'))
     deepStrictEqual(applications, ['application1', 'application2'])
     const env = await readFile(join(root, '.env'), 'utf-8')
     equal(env.includes('PLT_APPLICATION1_PORT=3042'), true)
     equal(env.includes('PLT_APPLICATION2_PORT=3043'), true)
-    const applicationRoot = join(root, 'web', applications[1])
-    equal(await isFileAccessible(join(applicationRoot, 'watt.json')), true)
+    const applicationRoot = join(root, 'applications', applications[1])
+    ok(await configurationFileIn(applicationRoot))
     equal(await isFileAccessible(join(applicationRoot, 'README.md')), true)
     equal(await isFileAccessible(join(applicationRoot, 'routes', 'root.ts')), true)
     equal(await isFileAccessible(join(applicationRoot, 'plugins', 'example.ts')), true)

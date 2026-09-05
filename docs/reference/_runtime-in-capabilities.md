@@ -1,65 +1,47 @@
-## `runtime`
+## Runtime settings for a single application
 
-The `runtime` property allows you to embed runtime configuration directly in your application's configuration file. This is useful when you want to configure runtime-level settings specific to this application without needing a separate runtime configuration file.
+v3 let an application's own configuration file carry a `runtime` block, which was hoisted when that
+application was started on its own. There is no such block in v4, and no hoisting step: orchestration
+is written at the top level, in exactly the place a multi-application project writes it.
 
-See the [runtime configuration](./runtime/configuration.md) documentation for details on each property.
+A single application with orchestration to express is a runtime configuration with the singular
+`application` shorthand, whose `config` is the same factory call the file would otherwise export:
 
-### Available properties
+```ts config
+import { defineConfig } from 'wattpm'
+import { next } from '@platformatic/next'
 
-The following runtime properties can be configured at the application level:
-
-- [**`preload`**](./runtime/configuration.md#preload): Files to load before the application code.
-- [**`workers`**](./runtime/configuration.md#workers): Worker configuration for this application.
-- [**`logger`**](./runtime/configuration.md#logger): Logger configuration.
-- [**`watch`**](./runtime/configuration.md#watch): Enable/disable file watching.
-- [**`health`**](./runtime/configuration.md#health): Health check configuration.
-- [**`tracing`**](./runtime/configuration.md#tracing): OpenTelemetry configuration.
-- [**`undici`**](./runtime/configuration.md#undici): Undici HTTP client configuration.
-- [**`httpCache`**](./runtime/configuration.md#httpcache): HTTP caching configuration.
-- [**`metrics`**](./runtime/configuration.md#metrics): Prometheus metrics configuration.
-- [**`gracefulShutdown`**](./runtime/configuration.md#gracefulshutdown): Shutdown timeout settings.
-- [**`startTimeout`**](./runtime/configuration.md#starttimeout): Application start timeout.
-- [**`restartOnError`**](./runtime/configuration.md#restartonerror): Restart behavior on errors.
-- [**`compileCache`**](./runtime/configuration.md#compilecache): Node.js compile cache settings.
-
-### Application-specific overrides
-
-Within the `runtime` property, you can also use the `application` sub-property to configure application-specific settings that would normally be set in the runtime's [`applications`](./runtime/configuration.md#applications) array:
-
-- **`workers`**: Worker count for this application.
-- **`health`**: Health check settings for this application.
-- **`env`**: Environment variables.
-- **`envfile`**: Path to an `.env` file.
-- **`sourceMaps`**: Enable source maps.
-- **`preload`**: Files to preload.
-- **`nodeOptions`**: Node.js options.
-- **`execArgv`**: Arguments passed to worker threads.
-- **`permissions`**: File system permissions.
-- **`tracing`**: Application-specific tracing instrumentations.
-- **`compileCache`**: Compile cache settings.
-
-### Example
-
-The following example uses `@platformatic/next`, but the same configuration applies to other capabilities like `@platformatic/node`, `@platformatic/astro`, `@platformatic/vite`, and `@platformatic/remix`.
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.31.0.json",
-  "runtime": {
-    "logger": {
-      "level": "debug"
-    },
-    "workers": {
-      "dynamic": true,
-      "minimum": 1,
-      "maximum": 4
-    },
-    "application": {
-      "env": {
-        "CUSTOM_VAR": "value"
-      },
-      "execArgv": ["--max-old-space-size=4096"]
-    }
+export default defineConfig({
+  logger: { level: 'debug' },
+  workers: { dynamic: true, minimum: 1, maximum: 4 },
+  application: {
+    execArgv: ['--max-old-space-size=4096'],
+    config: next({
+      server: { port: Number(process.env.PORT ?? 3042) }
+    })
   }
-}
+})
 ```
+
+The example uses `@platformatic/next`; the same shape applies to every capability.
+
+Where each v3 property went:
+
+- What was directly under `runtime` — [`preload`](./runtime/configuration.md#preload),
+  [`workers`](./runtime/configuration.md#workers), [`logger`](./runtime/configuration.md#logger),
+  [`watch`](./runtime/configuration.md#watch), [`health`](./runtime/configuration.md#health),
+  [`tracing`](./runtime/configuration.md#tracing), [`undici`](./runtime/configuration.md#undici),
+  [`httpCache`](./runtime/configuration.md#httpcache), [`metrics`](./runtime/configuration.md#metrics),
+  [`gracefulShutdown`](./runtime/configuration.md#gracefulshutdown),
+  [`startTimeout`](./runtime/configuration.md#starttimeout),
+  [`restartOnError`](./runtime/configuration.md#restartonerror) and
+  [`compileCache`](./runtime/configuration.md#compilecache) — is top-level.
+- What was under `runtime.application` — `workers`, `health`, `env`, `envfile`, `sourceMaps`,
+  `preload`, `nodeOptions`, `execArgv`, `permissions`, `tracing` and `compileCache` — belongs to the
+  [`application`](./runtime/configuration.md#applications) entry, beside `config`.
+- `runtime.server` has nowhere to go, because v4 has no runtime-level listener: the address is the
+  application's own `server` block, inside the capability configuration.
+
+A configuration that still declares `runtime` is refused by name rather than accepted and ignored.
+[`wattpm-utils migrate`](../guides/migrate-runtime-v4.md) writes the form above for any v3 file that had
+a non-default block.

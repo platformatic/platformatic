@@ -2,13 +2,13 @@ import SharedConfiguration from './_shared-configuration.md'
 
 # Configuration
 
-Platformatic Runtime is configured with a configuration file. It supports the
-use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
+Platformatic Runtime is configured with a configuration file. The file is a module that exports
+its configuration, so it reads [environment variables](#environment-variables) directly.
 
 ## Configuration Files
 
-The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../../file-formats.md#configuration-files).
+The Platformatic CLI automatically detects and loads the configuration file in the current working directory. There are four names, listed [here](../../file-formats.md#configuration-files), and one file per directory.
 
-Alternatively, you can use the `--config` option to specify a configuration file path for most `wattpm` CLI commands. The configuration examples in this reference use the JSON format.
+Alternatively, you can use the `--config` option to specify a configuration file path for most `wattpm` CLI commands. The examples in this reference are written as `watt.config.ts`; the same configuration in JavaScript differs only in that it carries no type annotations.
 
 <SharedConfiguration/>

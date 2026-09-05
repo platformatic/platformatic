@@ -1,0 +1,1635 @@
+import { loadConfiguration } from '@platformatic/foundation/lib/v4/index.js'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { version } from '../lib/version.js'
+import { createTemporaryDirectory, wattpmUtils } from './helper.js'
+
+/*
+  What migrate requires is its own major: `npx wattpm-utils@4 migrate` emits v4 files and asks for
+  the v4 line, and the same is true of whatever line supersedes it. Asserted as the invariant rather
+  than as a literal, which would be wrong on one side of every bump.
+*/
+const requiredRange = `^${version.split('.')[0]}.0.0`
+
+const packagesDir = resolve(import.meta.dirname, '../..')
+
+async function project (t, files, { type = 'commonjs', name = 'legacy' } = {}) {
+  const root = await createTemporaryDirectory(t, 'migrate')
+
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name, type }), 'utf-8')
+
+  for (const [name, contents] of Object.entries(files)) {
+    await writeFile(join(root, name), typeof contents === 'string' ? contents : JSON.stringify(contents), 'utf-8')
+  }
+
+  return root
+}
+
+// The emitted file imports its capability, so it only loads where that capability resolves — which
+// is the state a real migrated project is in.
+async function linkCapability (root, name) {
+  await mkdir(join(root, 'node_modules/@platformatic'), { recursive: true })
+  await symlink(join(packagesDir, name), join(root, 'node_modules/@platformatic', name), 'dir')
+}
+
+async function linkPackage (root, directory, name) {
+  await mkdir(join(root, 'node_modules'), { recursive: true })
+  await symlink(join(packagesDir, directory), join(root, 'node_modules', name), 'dir')
+}
+
+test('migrate - converts a single-application configuration into a file the loader accepts', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      cache: { adapter: 'redis', url: 'redis://localhost:6379' },
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  ok(migrateProcess.stdout.includes('Migrated platformatic.json to watt.config.mjs'))
+
+  // The legacy file goes: v4 refuses a directory that still has one, so leaving it would mean
+  // reporting success and handing back a project that cannot boot.
+  strictEqual(await fileExists(join(root, 'platformatic.json')), false)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // It imports what it uses, which is what lets it carry no $schema stamp: the file identifies
+  // itself, so there is nothing to go stale when the schema version moves.
+  ok(emitted.includes("import { next } from '@platformatic/next'"), emitted)
+  ok(!emitted.includes('$schema'), emitted)
+  ok(emitted.includes("adapter: 'redis'"), emitted)
+
+  /*
+    The round trip is the point: a migration that emits something the loader refuses has converted
+    nothing. This is the check the plan calls step 3, run against migrate's own output.
+  */
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: false
+  })
+
+  strictEqual(loaded.config.applications.length, 1)
+  strictEqual(loaded.config.applications[0].module, '@platformatic/next')
+  deepStrictEqual(loaded.config.applications[0].config.cache, { adapter: 'redis', url: 'redis://localhost:6379' })
+})
+
+test('migrate - writes .js where the package is a module and .mjs where it is not', async t => {
+  const esm = await project(
+    t,
+    { 'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' } },
+    { type: 'module' }
+  )
+
+  await wattpmUtils('migrate', esm)
+  ok(await readFile(join(esm, 'watt.config.js'), 'utf-8'))
+
+  // `.js` in a "type": "commonjs" package is CommonJS, where `export default` is a syntax error.
+  const cjs = await project(t, {
+    'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }
+  })
+
+  await wattpmUtils('migrate', cjs)
+  ok(await readFile(join(cjs, 'watt.config.mjs'), 'utf-8'))
+})
+
+test('migrate - writes the new name for a renamed module', async t => {
+  const root = await project(t, {
+    'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/composer/3.65.0.json' }
+  })
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("import { gateway } from '@platformatic/gateway'"), emitted)
+  ok(migrateProcess.stdout.includes('is now'), migrateProcess.stdout)
+})
+
+test('migrate - reads a configuration whose name it would not have looked for', async t => {
+  const root = await project(t, {
+    'config.production.yaml': '$schema: https://schemas.platformatic.dev/@platformatic/node/3.65.0.json\n'
+  })
+
+  // v3's -c accepted any filename, so a project whose scripts say `-c config.production.yaml` has a
+  // real configuration that a candidates-only migrator would report as nothing to migrate.
+  const migrateProcess = await wattpmUtils('migrate', root, '-c', 'config.production.yaml')
+
+  ok(migrateProcess.stdout.includes('Migrated config.production.yaml'), migrateProcess.stdout)
+})
+
+for (const [name, files, expected] of [
+  [
+    'a root envfile',
+    { 'platformatic.json': { $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json', envfile: '.env.prod' } },
+    'envfile'
+  ],
+  [
+    /*
+      A boolean position is the one migrate will not convert: v3's rules for them differ by site and
+      contradict each other -- `enabled` treats any string but 'false' as true, while a capability's
+      watch block is disabled only by the boolean -- so the same resolved string means opposite
+      things and nothing in the shape says which.
+    */
+    'an interpolated boolean',
+    {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+        server: { http2: '{HTTP2}' }
+      }
+    },
+    'a boolean position'
+  ],
+  [
+    // A structural position has to be concrete before anything is emitted: migrate needs the real
+    // directory to know which applications exist at all.
+    'an autoload path that resolves to nothing',
+    {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+        autoload: { path: './web' }
+      }
+    },
+    'does not exist'
+  ],
+  [
+    'an unknown capability',
+    { 'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/php/3.65.0.json' } },
+    'not a capability this migrator knows'
+  ]
+]) {
+  test(`migrate - refuses ${name}, and writes nothing`, async t => {
+    const root = await project(t, files)
+
+    const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+    strictEqual(migrateProcess.exitCode, 1)
+    ok(migrateProcess.stdout.includes(expected), migrateProcess.stdout)
+
+    /*
+      Refusals are detected before anything is written, so a refused run leaves the project exactly
+      as it found it. A migrator that had already emitted half a tree would be worse than one that
+      declined, because nothing would say which half.
+    */
+    strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+    strictEqual(await fileExists(join(root, 'watt.config.js')), false)
+  })
+}
+
+async function fileExists (path) {
+  try {
+    await readFile(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
+test('migrate - refuses before writing when a package.json it must edit is not valid JSON', async t => {
+  const root = await createTemporaryDirectory(t, 'migrate')
+
+  // A trailing comma: valid-looking, unparseable. Written directly rather than through project(),
+  // which JSON.stringifies and could never produce a malformed manifest.
+  await writeFile(join(root, 'package.json'), '{ "name": "legacy", "type": "commonjs", }', 'utf-8')
+  await writeFile(
+    join(root, 'platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { port: 3042 } }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('is not valid JSON'), migrateProcess.stdout)
+
+  // Nothing written: the refusal is decided before the emit, so no coexistence state is left behind.
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  ok(await fileExists(join(root, 'platformatic.json')))
+})
+
+test('migrate - refuses to overwrite a configuration that is already there', async t => {
+  const root = await project(t, {
+    'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' },
+    'watt.config.mjs': 'export default {}\n'
+  })
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('already exists'), migrateProcess.stdout)
+  strictEqual(await readFile(join(root, 'watt.config.mjs'), 'utf-8'), 'export default {}\n')
+})
+
+test('migrate - says so when there is nothing it recognizes', async t => {
+  const root = await project(t, {})
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('No v3 configuration found'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('--config'), migrateProcess.stdout)
+})
+
+test('migrate - puts the original back when the emitted configuration does not load', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      // Refused by the v4 runtime schema, so the emitted file will not load — which is the case
+      // this exists for: migrate cannot verify that a converted value means what it meant, but it
+      // can refuse to leave behind something that does not load at all.
+      strictEnv: true
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('does not load'), migrateProcess.stdout)
+
+  /*
+    The swap has to be undone in full: the emitted file gone and the original back byte for byte.
+    A half-undone rollback is worse than no rollback, because the project looks migrated.
+  */
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+
+  const restored = JSON.parse(await readFile(join(root, 'platformatic.json'), 'utf-8'))
+  strictEqual(restored.strictEnv, true)
+})
+
+test('migrate - unwraps a runtime block into defineConfig with the singular shorthand', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      cache: { adapter: 'redis', url: 'redis://localhost:6379' },
+      runtime: {
+        server: { hostname: '127.0.0.1', port: 3042 },
+        logger: { level: 'info' },
+        managementApi: true,
+        application: { workers: 2 }
+      }
+    }
+  })
+
+  await linkCapability(root, 'next')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // The factory call sits inside the object as a call, not as the text of one.
+  ok(emitted.includes('config: next({'), emitted)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: true,
+    onWarning () {},
+    onInfo () {}
+  })
+
+  const [application] = loaded.config.applications
+
+  // The runtime block unwraps to the root...
+  strictEqual(loaded.config.logger.level, 'info')
+  strictEqual(loaded.config.managementApi, true)
+
+  // ...except for `application`, which becomes the shorthand...
+  strictEqual(application.workers, 2)
+
+  // ...and `server`, which moves into the capability configuration, because v4 has no root server:
+  // an application declares its own address.
+  strictEqual(application.config.server.port, 3042)
+  strictEqual(application.config.cache.adapter, 'redis')
+})
+
+/*
+  The block is a v3 shape, and the v4 view of a capability's schema removes it -- so classifying a
+  position inside one against that view would report every placeholder in it as untypable and
+  refuse a file that converts exactly.
+*/
+test('migrate - types a placeholder inside the runtime block', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      runtime: {
+        logger: { level: '{PLT_LOG_LEVEL}' },
+        applicationTimeout: '{PLT_APPLICATION_TIMEOUT}'
+      }
+    }
+  })
+
+  await linkCapability(root, 'next')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(!migrateProcess.stdout.includes('cannot determine'), migrateProcess.stdout)
+  ok(emitted.includes("requiredEnum('PLT_LOG_LEVEL'"), emitted)
+  ok(emitted.includes("Number(requiredEnv('PLT_APPLICATION_TIMEOUT'))"), emitted)
+})
+
+test('migrate - pins the id v3 used, and says so when the label grammar changes it', async t => {
+  const root = await project(
+    t,
+    {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+        runtime: { logger: { level: 'info' } }
+      }
+    },
+    { name: '@acme/my_app' }
+  )
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  /*
+    v3 stripped the scope and v4 does too, so the disagreement is only the underscore — which is a
+    legal package name and not a legal id. Rewriting it silently would move the mesh hostname, the
+    injected variable, the metrics label and every sibling's dependencies entry at once.
+  */
+  ok(emitted.includes("id: 'my-app'"), emitted)
+  ok(migrateProcess.stdout.includes('my_app'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('mesh hostname'), migrateProcess.stdout)
+})
+
+test('migrate - emits a file per application plus a thin root', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      logger: { level: 'warn' },
+      services: [
+        { id: 'api', path: './services/api', config: 'platformatic.json', workers: 2 },
+        { id: 'inferred', path: './services/inferred' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+  // A real zero-config application has sources for the detector to read; an empty directory is
+  // something v4 refuses, and rightly.
+  await mkdir(join(root, 'services/inferred'), { recursive: true })
+  await writeFile(join(root, 'services/inferred/index.js'), 'export default {}\n', 'utf-8')
+  await writeFile(
+    join(root, 'services/inferred/package.json'),
+    JSON.stringify({ name: 'inferred', type: 'module', main: 'index.js' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  // The application's own file, in its own directory.
+  const application = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
+  ok(application.includes("import { node } from '@platformatic/node'"), application)
+  strictEqual(await fileExists(join(root, 'services/api/platformatic.json')), false)
+
+  const emittedRoot = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  /*
+    `services` is spelled `applications`, and the entry's `config` is gone: it named the path to the
+    application's own configuration in v3, and in v4 that file simply is the configuration, so the
+    key has nothing left to name.
+  */
+  ok(emittedRoot.includes('applications:'), emittedRoot)
+  ok(!emittedRoot.includes('services:'), emittedRoot)
+  ok(!emittedRoot.includes("config: 'platformatic.json'"), emittedRoot)
+
+  // A directory with no configuration of its own is left alone: that is v4's zero-config case
+  // rather than an error, and saying so beats silently doing nothing.
+  ok(migrateProcess.stdout.includes('inferred'), migrateProcess.stdout)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: false,
+    onWarning () {},
+    onInfo () {}
+  })
+
+  strictEqual(loaded.config.logger.level, 'warn')
+  strictEqual(loaded.config.applications.length, 2)
+  strictEqual(loaded.config.applications.find(entry => entry.id === 'api').workers, 2)
+})
+
+test('migrate - refuses a later application before writing an earlier one', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'first', path: './services/first' },
+        { id: 'second', path: './services/second' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['first', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    // The second interpolates into a boolean, which migrate refuses — and it is reached only after
+    // the first has already been converted on disk.
+    ['second', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { http2: '{HTTP2}' } }]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('a boolean position'), migrateProcess.stdout)
+
+  /*
+    The first application is untouched because nothing was written at all: every refusal is computed
+    from the tree as it stands, before the first file is emitted. The weaker property -- writing and
+    then undoing -- is what the validation path below has to rely on, and this one does not.
+  */
+  strictEqual(await fileExists(join(root, 'services/first/watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'services/first/platformatic.json')), true)
+  strictEqual(await fileExists(join(root, 'services/second/platformatic.json')), true)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'platformatic.json')), true)
+})
+
+test('migrate - undoes every file it touched when the emitted tree does not load', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // Legal v3 and refused by the v4 runtime schema, so it survives the pre-flight and fails
+      // validation -- by which point both applications have been converted and their legacy files
+      // deleted, which is the state this exists to prove does not survive.
+      strictEnv: true,
+      applications: [
+        { id: 'first', path: './services/first' },
+        { id: 'second', path: './services/second' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['first', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    ['second', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  await linkCapability(root, 'node')
+  // The root file imports wattpm, and an unresolvable import is reported rather than treated as bad
+  // output -- so without this the run would end in a warning and validate nothing.
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('does not load'), migrateProcess.stdout)
+
+  /*
+    Every directory the run touched goes back, not only the one that failed. A tree that is neither
+    v3 nor v4, with nothing in it saying which half moved, is the worst outcome available here.
+  */
+  for (const name of ['first', 'second']) {
+    strictEqual(await fileExists(join(root, 'services', name, 'watt.config.mjs')), false)
+    strictEqual(await fileExists(join(root, 'services', name, 'platformatic.json')), true)
+  }
+
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'platformatic.json')), true)
+})
+
+test('migrate - refuses two applications that would write one file, and ids that collide once renamed', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // Legal v3: each entry named its own config file, so one directory held two applications.
+      applications: [
+        { id: 'my_api', path: './services/shared', config: 'a.json' },
+        { id: 'my-api', path: './services/shared', config: 'b.json' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'services/shared'), { recursive: true })
+
+  for (const name of ['a.json', 'b.json']) {
+    await writeFile(
+      join(root, 'services/shared', name),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+
+  // Both refusals, in one report: the shared target, and the id `my_api` becoming the `my-api` that
+  // is already taken. Neither is a state v3 ever called invalid, and both are computable by looking.
+  ok(migrateProcess.stdout.includes('would both be written to'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('resolve to the id'), migrateProcess.stdout)
+  strictEqual(await fileExists(join(root, 'services/shared/watt.config.mjs')), false)
+})
+
+test('migrate - refuses an application outside the project, and a missing envfile', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'outside', path: '../elsewhere' },
+        { id: 'inside', path: './services/inside', envfile: './services/inside/deploy.env' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'services/inside'), { recursive: true })
+  await writeFile(
+    join(root, 'services/inside/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('outside this project'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('does not exist'), migrateProcess.stdout)
+  strictEqual(await fileExists(join(root, 'services/inside/watt.config.mjs')), false)
+})
+
+test('migrate - rebases an envfile the entry declared against the root', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [{ id: 'api', path: './services/api', envfile: './services/api/deploy.env' }]
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(join(root, 'services/api/deploy.env'), 'TOKEN=secret\n', 'utf-8')
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v3 resolved an entry's envfile against the runtime root and v4 resolves it against the
+    application's directory, so carrying the string across unchanged would silently point it at a
+    file that is not there -- which v4 makes a load error.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("envfile: 'deploy.env'"), emitted)
+})
+
+test('migrate - emits an application in the root directory inline', async t => {
+  const root = await project(t, {
+    // Legal v3: the entry's own config file names the application, so the runtime and one of its
+    // applications shared a directory.
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'main', path: '.', config: 'platformatic.service.json' },
+        { id: 'api', path: './services/api' }
+      ]
+    },
+    'platformatic.service.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: { port: 3042 }
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    The per-app style would put a second v4 candidate in the root directory, which the loader
+    refuses -- so this application's capability configuration becomes the entry's own `config`, and
+    the file it came from goes.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("import { node } from '@platformatic/node'"), emitted)
+  ok(emitted.includes('config: node({'), emitted)
+  strictEqual(await fileExists(join(root, 'platformatic.service.json')), false)
+
+  // The sibling keeps the ordinary per-app emission: only the root directory has the collision.
+  ok(await fileExists(join(root, 'services/api/watt.config.mjs')))
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: { ...process.env },
+    validateCapabilities: false
+  })
+
+  deepStrictEqual(loaded.config.applications.map(entry => entry.id).sort(), ['api', 'main'])
+})
+
+test('migrate - converts autoloaded applications and pins only the ids that would move', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      autoload: { path: './web', exclude: ['shared'] }
+    }
+  })
+
+  const applications = {
+    // Named after its directory once the scope is stripped, so both versions answer `frontend`.
+    frontend: '@acme/frontend',
+    // The package name differs from the directory, so v4 would rename it.
+    gateway: 'gateway-application',
+    // Neither version's raw value is a legal label, so both resolve to `legacy-api` -- the case a
+    // raw comparison passes over in silence.
+    legacy_api: 'legacy_api',
+    // No package.json at all: the directory name is the answer under both versions.
+    plain: null
+  }
+
+  for (const [directory, name] of Object.entries(applications)) {
+    await mkdir(join(root, 'web', directory), { recursive: true })
+
+    if (name) {
+      await writeFile(join(root, 'web', directory, 'package.json'), JSON.stringify({ name }), 'utf-8')
+    }
+
+    await writeFile(
+      join(root, 'web', directory, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  // Excluded, so it is neither converted nor pinned.
+  await mkdir(join(root, 'web/shared'), { recursive: true })
+  await writeFile(
+    join(root, 'web/shared/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  // Each autoloaded directory keeps being discovered; what it gains is its configuration in v4
+  // spelling, in place of the one it had.
+  for (const directory of Object.keys(applications)) {
+    ok(await fileExists(join(root, 'web', directory, 'watt.config.mjs')), directory)
+    strictEqual(await fileExists(join(root, 'web', directory, 'platformatic.json')), false, directory)
+  }
+
+  strictEqual(await fileExists(join(root, 'web/shared/watt.config.mjs')), false)
+  strictEqual(await fileExists(join(root, 'web/shared/platformatic.json')), true)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  /*
+    Pinned wherever the legal v4 id differs from the id v3 used, and nowhere else -- a root that
+    pinned every directory would be noise, and one that pinned none would move two hostnames.
+  */
+  ok(emitted.includes("gateway: {\n        id: 'gateway'"), emitted)
+  ok(emitted.includes("legacy_api: {\n        id: 'legacy-api'"), emitted)
+  ok(!emitted.includes('frontend:'), emitted)
+  ok(!emitted.includes('plain:'), emitted)
+  ok(!emitted.includes('shared:'), emitted)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: { ...process.env },
+    validateCapabilities: false
+  })
+
+  deepStrictEqual(loaded.config.applications.map(entry => entry.id).sort(), [
+    'frontend',
+    'gateway',
+    'legacy-api',
+    'plain'
+  ])
+})
+
+test('migrate - moves the root server block to the entrypoint and strips ports that never listened', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      entrypoint: 'api',
+      // v4 has no root server. Which port was public still has to be said somewhere, and in v4 the
+      // only place that can say it is the entrypoint's own capability configuration.
+      server: { hostname: '0.0.0.0', port: 3000 },
+      applications: [
+        { id: 'api', path: './services/api' },
+        { id: 'worker', path: './services/worker' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['api', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    // Neither the entrypoint nor useHttp, so this port never listened on v3 -- and in v4 a declared
+    // port is a real listener.
+    ['worker', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json', server: { port: 3000 } }]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const api = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
+  ok(api.includes('port: 3000'), api)
+  ok(api.includes("hostname: '0.0.0.0'"), api)
+
+  const worker = await readFile(join(root, 'services/worker/watt.config.mjs'), 'utf-8')
+  ok(!worker.includes('server'), worker)
+  ok(migrateProcess.stdout.includes('never listened on v3'), migrateProcess.stdout)
+
+  // The root keeps neither, and would not validate if it did.
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(!emitted.includes('entrypoint'), emitted)
+  ok(!emitted.includes('hostname'), emitted)
+})
+
+test('migrate - writes out the block useHttp stood for', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [
+        { id: 'api', path: './services/api', useHttp: true },
+        { id: 'other', path: './services/other' }
+      ]
+    }
+  })
+
+  for (const name of ['api', 'other']) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(
+      join(root, 'services', name, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v4 has no useHttp, and the v4 entry schema does not admit it either -- so the defaults v3
+    synthesized are written out. keepAliveTimeout is not among them: node is the basic family, whose
+    server block does not admit it, and on v3 the key was inert there.
+  */
+  const api = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
+  ok(api.includes('port: 0'), api)
+  ok(api.includes("hostname: '127.0.0.1'"), api)
+  ok(!api.includes('keepAliveTimeout'), api)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(!emitted.includes('useHttp'), emitted)
+})
+
+test('migrate - refuses an entrypoint that depends on the environment', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      server: { port: 3000 },
+      applications: [
+        { id: 'api', path: './services/api' },
+        // Changes the survivor set, and with it which application is the only one left.
+        { id: 'admin', path: './services/admin', enabled: { production: false, development: true } }
+      ]
+    }
+  })
+
+  for (const name of ['api', 'admin']) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(
+      join(root, 'services', name, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('in production and'), migrateProcess.stdout)
+
+  /*
+    Which application owns the public address is structural in v4, so there is no faithful output
+    here -- and picking one would move a project's public address without saying so.
+  */
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+})
+
+test('migrate - strips entrypointPort, which no upgrade chain removes', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      // Left in place this fails validation on migrate's own output: it left the capability schema,
+      // and the v4 upgrade chain returns early for exactly the configurations it lives in.
+      application: { entrypointPort: 3000, basePath: '/api' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(!emitted.includes('entrypointPort'), emitted)
+  ok(emitted.includes("basePath: '/api'"), emitted)
+  ok(migrateProcess.stdout.includes('entrypointPort'), migrateProcess.stdout)
+})
+
+test('migrate - reports the source references it will not rewrite', async t => {
+  const root = await project(
+    t,
+    {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json'
+      }
+    },
+    // The package name is not a legal v4 id, so migrate renames it -- and out here that name is a
+    // mesh hostname and a metrics label, which is why the old spelling is looked for.
+    { name: 'my_app', type: 'module' }
+  )
+
+  await writeFile(
+    join(root, 'index.js'),
+    [
+      "import { readFile } from 'node:fs/promises'",
+      "const config = JSON.parse(await readFile('platformatic.json', 'utf-8'))",
+      'const root = process.env.PLT_ROOT',
+      "const url = 'http://my_app.plt.local'",
+      "if (process.env.NODE_ENV === 'production') { console.log(config, root, url) }"
+    ].join('\n'),
+    'utf-8'
+  )
+
+  // Not this project's code, and a scan that reported on it would bury the four things it is for.
+  await mkdir(join(root, 'node_modules/pkg'), { recursive: true })
+  await writeFile(join(root, 'node_modules/pkg/index.js'), 'process.env.PLT_ROOT\n', 'utf-8')
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const { stdout } = migrateProcess
+
+  ok(stdout.includes('index.js:2'), stdout)
+  ok(stdout.includes('index.js:3') && stdout.includes('PLT_ROOT'), stdout)
+  ok(stdout.includes('index.js:4') && stdout.includes('my_app'), stdout)
+  ok(stdout.includes('index.js:5') && stdout.includes('NODE_ENV'), stdout)
+  ok(!stdout.includes(join('node_modules', 'pkg')), stdout)
+})
+
+test('migrate - pins the id of a package that has no name', async t => {
+  const root = await project(t, {
+    'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }
+  })
+
+  // project() writes a name, and this case is the absence of one.
+  await writeFile(join(root, 'package.json'), JSON.stringify({ type: 'commonjs' }), 'utf-8')
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v3 fell back to `main` for a nameless package and v4 falls back to the directory name, so
+    without the pin the application would answer at a different hostname after migration -- a
+    temporary directory's name, here, which is the clearest possible version of the problem.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("id: 'main'"), emitted)
+})
+
+test('migrate - refuses a stale legacy file it is not converting', async t => {
+  const root = await project(t, {
+    'platformatic.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' },
+    // v4's legacy table is wider than the set migrate looks in, and it refuses a directory holding
+    // any of them. Migrate deletes only what it reads, so this one would survive the migration and
+    // leave a tree that cannot load.
+    'platformatic.service.json': { $schema: 'https://schemas.platformatic.dev/@platformatic/service/3.65.0.json' }
+  })
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('platformatic.service.json'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('is not converting'), migrateProcess.stdout)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+})
+
+test('migrate - requires the packages the emitted files import', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [{ id: 'api', path: './services/api' }]
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+  await writeFile(
+    join(root, 'services/api/package.json'),
+    // Already held, and as a devDependency: where a dependency lives is the project's decision, so
+    // the range is raised in place rather than a second copy added under dependencies.
+    JSON.stringify({ name: 'api', devDependencies: { '@platformatic/node': '^2.0.0' } }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const rootManifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))
+  const apiManifest = JSON.parse(await readFile(join(root, 'services/api/package.json'), 'utf-8'))
+
+  // The root file imports defineConfig from wattpm, which an umbrella-platformatic project never had.
+  strictEqual(rootManifest.dependencies.wattpm, requiredRange, JSON.stringify(rootManifest))
+
+  strictEqual(apiManifest.devDependencies['@platformatic/node'], requiredRange, JSON.stringify(apiManifest))
+  strictEqual(apiManifest.dependencies, undefined)
+
+  // A range is not an install: until one runs the emitted files still import the v3 copy on disk.
+  ok(migrateProcess.stdout.includes('install'), migrateProcess.stdout)
+})
+
+test('migrate - converts a placeholder according to the type of the position it sits in', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: {
+        // A number position: v3 validated after replacement with coerceTypes on, and ajv rejects
+        // the empty string there, so an unset PORT did not boot. The guard keeps that true.
+        port: '{PORT}',
+        // A string position: v3 replaced a missing variable with '' and the schema accepted it.
+        hostname: '{HOSTNAME}'
+      },
+      // An enum position. A string-returning guard would be wrong twice over: it would let a value
+      // outside the set through to fail at the schema two steps later.
+      logger: { level: '{LOG_LEVEL}' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("port: Number(requiredEnv('PORT'))"), emitted)
+  ok(emitted.includes("hostname: process.env['HOSTNAME'] ?? ''"), emitted)
+  ok(emitted.includes("level: requiredEnum('LOG_LEVEL', ["), emitted)
+  ok(emitted.includes("'silent'"), emitted)
+
+  // The helpers are written into the file only where it has a position needing one, and requiredEnum
+  // is defined in terms of requiredEnv, so it never arrives alone.
+  ok(emitted.includes('function requiredEnv (name)'), emitted)
+  ok(emitted.includes('function requiredEnum (name, allowed)'), emitted)
+})
+
+test('migrate - leaves a string position holding an interpolation as a template literal', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: { hostname: 'host-{REGION}-{ZONE}' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    Each part keeps the plain fallback rather than a guard: v3 interpolated '' for a missing one and
+    the surrounding string still had to validate, so a part may legitimately be empty while the
+    whole value is not.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // Assembled rather than written inline: the expected text is a template literal, and spelling it
+  // out here would be one in this file too.
+  const interpolation = ['host-', 'REGION', "?? ''}-", 'ZONE', "?? ''}`"]
+  ok(emitted.includes(`hostname: \`${interpolation[0]}\${process.env['${interpolation[1]}'] ${interpolation[2]}\${process.env['${interpolation[3]}'] ${interpolation[4]}`), emitted)
+  ok(!emitted.includes('requiredEnv'), emitted)
+})
+
+test('migrate - a string value carrying template syntax cannot smuggle code into the emitted file', async t => {
+  globalThis.__MIGRATE_PWNED = false
+
+  t.after(() => {
+    delete globalThis.__MIGRATE_PWNED
+  })
+
+  // Assembled so this test file holds no literal ${...}: a live interpolation trying to set the
+  // global, a backslash the emitter must not read as an escape, and {REGION} to take the embedded
+  // path.
+  const danger = 'x' + '$' + '{ globalThis.__MIGRATE_PWNED = true }' + '\\t\rline-{REGION}'
+
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      server: { hostname: danger }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  // migrate ran its own validation import() of the emitted file; nothing executed the injected code.
+  strictEqual(globalThis.__MIGRATE_PWNED, false)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // The dangerous $ + { is escaped, and only {REGION} became a real interpolation -- via bracket
+  // access, so a digit-leading name would be legal too.
+  ok(emitted.includes('\\$' + '{ globalThis'), emitted)
+  ok(emitted.includes("process.env['REGION']"), emitted)
+
+  // And it loads: the value is a string, its interpolation inert text, its placeholder resolved.
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: { REGION: 'eu' },
+    validateCapabilities: false
+  })
+
+  strictEqual(globalThis.__MIGRATE_PWNED, false)
+
+  // Backslash, carriage return and the injected ${...} all survive as inert text; only {REGION}
+  // resolved. A CR left unescaped in the template would have been normalized to a newline.
+  const resolved = loaded.config.applications[0].config.server.hostname
+  strictEqual(resolved, 'x' + '$' + '{ globalThis.__MIGRATE_PWNED = true }' + '\\t\rline-eu')
+})
+
+test('migrate - resolves PLT_ROOT against the file rather than reading a variable v4 removed', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      application: { outputDirectory: '{PLT_ROOT}/dist' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  /*
+    v4 injects no PLT_ROOT, so the ordinary emission would read a variable nothing sets. v3 resolved
+    it against the directory of the config file being parsed, which for a per-app configuration is
+    the application root — the directory import.meta.dirname gives, so this is exact.
+  */
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("outputDirectory: join(import.meta.dirname, 'dist')"), emitted)
+  ok(emitted.includes("import { join } from 'node:path'"), emitted)
+  ok(!emitted.includes('PLT_ROOT'), emitted)
+})
+
+test('migrate - matches v3 grammar, and leaves the positions a capability reads literally', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/db/3.65.0.json',
+      db: {
+        // Two braces and a lowercase name are both v3 placeholders. A narrower grammar would leave
+        // them as literal text where v3 substituted them, which is a silent change.
+        connectionString: '{{DATABASE_URL}}',
+        openapi: {
+          // Not a placeholder: db excludes this position from replacement, because a route path
+          // holds parameters that look exactly like one.
+          ignoreRoutes: [{ method: 'GET', path: '/users/{id}' }]
+        }
+      }
+    }
+  })
+
+  await linkCapability(root, 'db')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  ok(emitted.includes("connectionString: process.env['DATABASE_URL'] ?? ''"), emitted)
+  ok(emitted.includes("path: '/users/{id}'"), emitted)
+})
+
+test('migrate - reports what an env block changes about a placeholder', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      runtime: {
+        // v3's worker applied blocks to process.env before parsing the application's config, so
+        // this key was defined by the time the placeholder below was replaced.
+        env: { GREETING: 'hello', OTHER: 'kept' }
+      },
+      server: { hostname: '{GREETING}' }
+    }
+  })
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const { stdout } = migrateProcess
+
+  /*
+    Two divergences, neither of which migrate can avoid and both of which it therefore has to say.
+    v4 keeps env blocks out of configuration evaluation, so the expression yields '' where v3
+    yielded 'hello'; and every key carried across has its precedence inverted.
+  */
+  ok(stdout.includes('GREETING') && stdout.includes('/server/hostname'), stdout)
+  ok(stdout.includes('yields the empty string now'), stdout)
+  ok(stdout.includes('precedence is inverted') && stdout.includes('OTHER'), stdout)
+
+  // Nothing is inlined: a codemod must not bake a block's value into tracked source.
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("hostname: process.env['GREETING'] ?? ''"), emitted)
+})
+
+test('migrate - names the breaking changes this tree stands in front of', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // Explicit, so that the per-environment `enabled` below is only a breaking-change witness and
+      // not also an entrypoint that depends on the environment, which migrate refuses outright.
+      entrypoint: 'web',
+      applications: [
+        { id: 'web', path: './services/web' },
+        // Resolved against development by v3's build and against production by v4's, so which
+        // applications build changes without anything in the file changing.
+        { id: 'api', path: './services/api', enabled: { production: true, development: false } }
+      ]
+    }
+  })
+
+  for (const name of ['web', 'api']) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(
+      join(root, 'services', name, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  // Inert under v3, which stopped at the first .env it found, and live under v4's four-file layering.
+  await writeFile(join(root, 'services/api/.env.local'), 'TOKEN=local\n', 'utf-8')
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const { stdout } = migrateProcess
+
+  /*
+    Evidence rather than enumeration: these are not migrate's conversions, and v4 changes them for
+    projects that were never migrated at all — so the run names the ones this tree actually has.
+  */
+  ok(stdout.includes('.env.local') && stdout.includes('BC 5'), stdout)
+  ok(stdout.includes('BC 17') && stdout.includes('api'), stdout)
+})
+
+test('migrate - treats .env.sample as a suggestion unless asked otherwise', async t => {
+  async function sampleProject () {
+    const root = await project(t, {
+      'platformatic.json': {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+        server: { hostname: '{HOSTNAME}' }
+      }
+    })
+
+    await writeFile(join(root, '.env.sample'), 'HOSTNAME=0.0.0.0\n', 'utf-8')
+    await linkCapability(root, 'node')
+
+    return root
+  }
+
+  const noted = await sampleProject()
+  const notedProcess = await wattpmUtils('migrate', noted)
+
+  /*
+    v3 never read .env.sample, so turning one of its values into an executable fallback would change
+    what the project does whenever the real variable is absent. The value is reported instead.
+  */
+  ok((await readFile(join(noted, 'watt.config.mjs'), 'utf-8')).includes("process.env['HOSTNAME'] ?? ''"))
+  ok(notedProcess.stdout.includes('suggests') && notedProcess.stdout.includes('0.0.0.0'), notedProcess.stdout)
+
+  const applied = await sampleProject()
+  await wattpmUtils('migrate', applied, '--use-sample-defaults')
+
+  ok((await readFile(join(applied, 'watt.config.mjs'), 'utf-8')).includes("process.env['HOSTNAME'] ?? '0.0.0.0'"))
+})
+
+test('migrate - converts the root configuration too, and writes a sibling URL as its address', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      // A root position. Nothing converted these before: they were emitted as the literal text of
+      // themselves, which the schema then refused or, worse, accepted as a string.
+      startTimeout: '{START_TIMEOUT}',
+      applications: [
+        { id: 'api', path: './services/api' },
+        { id: 'web', path: './services/web' }
+      ]
+    }
+  })
+
+  for (const [name, contents] of [
+    ['api', { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }],
+    [
+      'web',
+      {
+        $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+        // The variable v4 injects for the sibling. The address it stands for is fixed by the
+        // topology, so the configuration can say it outright.
+        server: { hostname: '{PLT_API_URL}' }
+      }
+    ]
+  ]) {
+    await mkdir(join(root, 'services', name), { recursive: true })
+    await writeFile(join(root, 'services', name, 'platformatic.json'), JSON.stringify(contents), 'utf-8')
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("startTimeout: Number(requiredEnv('START_TIMEOUT'))"), emitted)
+  ok(emitted.includes('function requiredEnv (name)'), emitted)
+
+  const web = await readFile(join(root, 'services/web/watt.config.mjs'), 'utf-8')
+  ok(web.includes("hostname: 'http://api.plt.local'"), web)
+  ok(!web.includes('PLT_API_URL'), web)
+})
+
+test('migrate - converts a position whose branches differ only in how the value is resolved', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      logger: {
+        // `target` is `{ string, resolveModule } | { string, resolvePath }`. Those keywords say how
+        // the value is resolved, not which values validate, so both branches accept the same ones
+        // and the position is a string — not the ambiguity its shape suggests.
+        transport: { targets: [{ target: '{LOG_TARGET}', level: 'info' }] }
+      }
+    }
+  })
+
+  await linkCapability(root, 'node')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("target: process.env['LOG_TARGET'] ?? ''"), emitted)
+})
+
+test('migrate - converts a number written beside a digits-only string', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      // `number | string matching ^[0-9]+$` is one target type written twice. A placeholder
+      // validated there on v3, which replaced before validating, and a number validates the first
+      // branch — so the numeric emission is faithful rather than a guess.
+      next: { imageOptimizer: { fallback: './fallback.png', timeout: '{IMAGE_TIMEOUT}' } }
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("timeout: Number(requiredEnv('IMAGE_TIMEOUT'))"), emitted)
+})
+
+test('migrate - --no-install pauses in the coexistence state and records what it wrote', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  const migrateProcess = await wattpmUtils('migrate', root, '--no-install')
+
+  ok(migrateProcess.stdout.includes('paused before installing'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('--ignore-scripts'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('migrate --resume'), migrateProcess.stdout)
+
+  /*
+    Both dialects on disk. That is the state the loader refuses, which is exactly why the run says
+    so rather than reporting a success and handing back a project that cannot boot.
+  */
+  strictEqual(await fileExists(join(root, 'platformatic.json')), true)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), true)
+
+  const manifest = JSON.parse(await readFile(join(root, '.wattpm-migrate.json'), 'utf-8'))
+
+  strictEqual(manifest.source, 'platformatic.json')
+  strictEqual(manifest.target, 'watt.config.mjs')
+  ok(manifest.entries.some(entry => entry.path === 'watt.config.mjs'), JSON.stringify(manifest.entries))
+
+  /*
+    `package.json` is recorded whether or not this run edited it, because the install the user is
+    about to run writes it and the lockfile. Without that the pause would be a trap: they would come
+    back as unexplained modifications to the run that resumes.
+  */
+  ok(manifest.expected.includes('package.json'), JSON.stringify(manifest.expected))
+})
+
+test('migrate - --resume finishes the run the pause left', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  await wattpmUtils('migrate', root, '--no-install')
+
+  // --no-install on the resume too: these dependencies are linked rather than installed.
+  const resumeProcess = await wattpmUtils('migrate', root, '--resume', '--no-install')
+
+  ok(resumeProcess.stdout.includes('Migrated platformatic.json to watt.config.mjs'), resumeProcess.stdout)
+
+  // The legacy file goes now, and the manifest with it: there is nothing left to resume.
+  strictEqual(await fileExists(join(root, 'platformatic.json')), false)
+  strictEqual(await fileExists(join(root, '.wattpm-migrate.json')), false)
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), true)
+})
+
+test('migrate - --resume keeps an emitted file the user corrected, and says so', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+  await wattpmUtils('migrate', root, '--no-install')
+
+  const emitted = join(root, 'watt.config.mjs')
+  const corrected = `${await readFile(emitted, 'utf-8')}\n// edited while the migration was paused\n`
+  await writeFile(emitted, corrected, 'utf-8')
+
+  const resumeProcess = await wattpmUtils('migrate', root, '--resume', '--no-install')
+
+  ok(resumeProcess.stdout.includes('was edited after the migration paused'), resumeProcess.stdout)
+
+  // Reported and kept. Finishing a transaction is not the same as overwriting a fix to what it wrote.
+  strictEqual(await readFile(emitted, 'utf-8'), corrected)
+})
+
+test('migrate - --resume refuses when nothing is paused', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  const resumeProcess = await wattpmUtils('migrate', root, '--resume', { reject: false })
+
+  strictEqual(resumeProcess.exitCode, 1)
+  ok(resumeProcess.stdout.includes('nothing here is waiting to be resumed'), resumeProcess.stdout)
+})
+
+/*
+  An entry's `path` is a structural position: migrate opens the legacy configuration there, runs
+  the detector on it, decides where the per-app file goes and deletes the legacy file by name.
+  None of that works over a token, and the token is the common shape rather than an exotic one --
+  v3's own generator wrote `{PLT_APPLICATION_<ID>_PATH}` into the configuration and its value into
+  `.env`. Left unresolved, the emitted root named a directory that does not exist and the
+  application's own v3 file stayed on disk: the coexistence state the migration exists to end.
+*/
+test("migrate - resolves an entry's path from the env file v3 would have read", async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'api',
+      services: [{ id: 'api', path: '{PLT_APPLICATION_API_PATH}' }]
+    },
+    '.env': 'PLT_APPLICATION_API_PATH=web/api\n'
+  })
+
+  await mkdir(join(root, 'web/api'), { recursive: true })
+  await writeFile(
+    join(root, 'web/api/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }),
+    'utf-8'
+  )
+
+  await wattpmUtils('migrate', root)
+
+  // `.mjs` because the package does not declare "type": "module".
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // The literal it stands for, not the token and not an expression reading it back.
+  ok(emitted.includes("path: 'web/api'"), emitted)
+  ok(!emitted.includes('PLT_APPLICATION_API_PATH'), emitted)
+
+  // Which is what let migrate find the application at all: its own file is converted and the
+  // legacy one is gone.
+  ok(await fileExists(join(root, 'web/api/watt.config.mjs')))
+  strictEqual(await fileExists(join(root, 'web/api/platformatic.service.json')), false)
+})
+
+test("migrate - refuses an entry's path that resolves nowhere", async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'api',
+      services: [{ id: 'api', path: '{PLT_NOWHERE}' }]
+    }
+  })
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('which does not resolve here'), migrateProcess.stdout)
+
+  // Nothing was written: a refusal is decided before the run touches the tree.
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+  ok(await fileExists(join(root, 'platformatic.runtime.json')))
+})
+
+/*
+  Seeds ride in on the real environment, and the real environment outranks env files in v4 -- so a
+  seed for a variable the project's own `.env` sets would shadow the project's value and validate
+  the emitted files against a fabrication migrate invented. It also told the user the variable was
+  "not set here" when the project sets it.
+*/
+test('migrate - does not assume a variable the project supplies in an env file', async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'api',
+      autoload: { path: 'web' },
+      logger: { level: '{PLT_LOG_LEVEL}' }
+    },
+    '.env': 'PLT_LOG_LEVEL=warn\n'
+  })
+
+  await mkdir(join(root, 'web/api'), { recursive: true })
+  await writeFile(
+    join(root, 'web/api/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 0 }
+    }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'web/api/package.json'), JSON.stringify({ name: 'api' }), 'utf-8')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  ok(!migrateProcess.stdout.includes('PLT_LOG_LEVEL assumed'), migrateProcess.stdout)
+  ok(!migrateProcess.stdout.includes('are not set here'), migrateProcess.stdout)
+
+  // And the conversion itself is unchanged: the enum position still guards the value.
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(emitted.includes("requiredEnum('PLT_LOG_LEVEL'"), emitted)
+})
+
+/*
+  `wattpm resolve` checks a remote application out at `<resolvedApplicationsBasePath>/<id>`, or at
+  the `path` the entry declares. Either can land on a directory this project already uses, and the
+  clone replaces what is there -- so a migration that emits such a project has handed the user a
+  `resolve` that deletes their own source. Migrate is the last moment anyone looks at the whole tree
+  at once, which is why it is refused here.
+*/
+test('migrate - refuses a clone destination that lands on a local application', async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'local',
+      services: [
+        { id: 'local', path: 'external/remote' },
+        { id: 'remote', url: 'https://github.com/acme/remote.git' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'external/remote'), { recursive: true })
+  await writeFile(
+    join(root, 'external/remote/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'external/remote/package.json'), JSON.stringify({ name: 'local' }), 'utf-8')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+  ok(migrateProcess.stdout.includes('is checked out into'), migrateProcess.stdout)
+
+  // The destination was backfilled, so the base is what put it there and changing it is the fix.
+  ok(migrateProcess.stdout.includes('resolvedApplicationsBasePath'), migrateProcess.stdout)
+
+  strictEqual(await fileExists(join(root, 'watt.config.mjs')), false)
+})
+
+test('migrate - names the entry rather than the base when the entry declares the destination', async t => {
+  const root = await project(t, {
+    'platformatic.runtime.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json',
+      entrypoint: 'local',
+      services: [
+        { id: 'local', path: 'vendor/shared' },
+        { id: 'remote', url: 'https://github.com/acme/remote.git', path: 'vendor/shared' }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'vendor/shared'), { recursive: true })
+  await writeFile(
+    join(root, 'vendor/shared/platformatic.service.json'),
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/service/2.0.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'vendor/shared/package.json'), JSON.stringify({ name: 'local' }), 'utf-8')
+
+  const migrateProcess = await wattpmUtils('migrate', root, { reject: false })
+
+  strictEqual(migrateProcess.exitCode, 1)
+
+  /*
+    The base is irrelevant when the entry names its own destination, and offering it would send the
+    reader through the identical refusal a second time.
+  */
+  ok(migrateProcess.stdout.includes('give that entry a path outside'), migrateProcess.stdout)
+  ok(migrateProcess.stdout.includes('does not decide this one'), migrateProcess.stdout)
+})

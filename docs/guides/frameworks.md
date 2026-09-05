@@ -75,16 +75,17 @@ Progressive Node.js framework for building scalable server-side applications.
 To add a framework to your Watt application:
 
 1. **Add the application to your configuration:**
-   ```json
-   {
-     "applications": [
+   ```ts config
+   import { defineConfig } from 'wattpm'
+
+   export default defineConfig({
+     applications: [
        {
-         "id": "frontend",
-         "path": "./frontend",
-         "config": "platformatic.json"
+         id: 'frontend',
+         path: './frontend'
        }
      ]
-   }
+   })
    ```
 
 2. **Create framework-specific configuration:**

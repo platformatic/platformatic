@@ -1,4 +1,4 @@
-import { schemaComponents } from '@platformatic/foundation'
+import { schemaComponents } from '@platformatic/foundation/lib/schema.js'
 
 const schema = {
   ...schemaComponents.tracing,

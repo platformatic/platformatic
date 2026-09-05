@@ -53,11 +53,6 @@ export const FailedToReloadRuntime = createError(
   'Failed to reload the runtime %s.'
 )
 
-export const FailedToGetRuntimeConfig = createError(
-  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_CONFIG`,
-  'Failed to get runtime config %s.'
-)
-
 export const FailedToGetRuntimeApplicationEnv = createError(
   `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_APPLICATION_ENV`,
   'Failed to get runtime application environment variables %s.'

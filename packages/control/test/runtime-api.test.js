@@ -19,7 +19,7 @@ function getRuntimeTmpDir (runtimeDir) {
 
 test('should control runtime scheduler jobs', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
 
@@ -47,7 +47,7 @@ test('should control runtime scheduler jobs', async t => {
 
 test('should get runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -117,7 +117,7 @@ test('should get runtime metrics', async t => {
 
 test('should get matching runtime', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -130,7 +130,7 @@ test('should get matching runtime', async t => {
 
 test('should get runtime OpenAPI definition', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -184,7 +184,7 @@ test('should get runtime OpenAPI definition', async t => {
 
 test('should restart all applications', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -206,7 +206,7 @@ test('should restart all applications', async t => {
 
 test('should only restart certain applications', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -228,7 +228,7 @@ test('should only restart certain applications', async t => {
 
 test('should be able to add and remove applications', async t => {
   const projectDir = join(fixturesDir, 'runtime-4')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -248,11 +248,13 @@ test('should be able to add and remove applications', async t => {
   assert.ok(addedUrl)
   assert.deepStrictEqual([addedDetails], [
     {
+      configPath: resolve(projectDir, 'services', 'service-2', 'watt.config.mjs'),
       dependencies: [],
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),
       status: 'started',
+      servingState: 'listening',
       type: 'service',
       version,
       sourceMaps: false
@@ -265,6 +267,7 @@ test('should be able to add and remove applications', async t => {
   assert.ok(removedUrl)
   assert.deepStrictEqual([removedDetails], [
     {
+      configPath: resolve(projectDir, 'services', 'service-2', 'watt.config.mjs'),
       dependencies: [],
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',

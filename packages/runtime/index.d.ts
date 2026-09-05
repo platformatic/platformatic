@@ -111,12 +111,19 @@ export interface InjectResponse {
   rawPayload: ArrayBuffer
 }
 
+export type ServingState = 'listening' | 'mesh-only' | 'background' | 'inactive'
+
 export interface ApplicationDetails {
   id: string
   type?: string
+  /** v3 only: the path to the application's configuration file. v4 reports configPath. */
   config?: string
+  /** v4 only: the configuration file the loader decided on, absent for an inline definition. */
+  configPath?: string
   path?: string
   status?: string
+  /** How the application serves, as opposed to whether it runs. Absent when it is not started. */
+  servingState?: ServingState
   dependencies?: string[]
   version?: string
   localUrl?: string
@@ -194,6 +201,10 @@ export interface RuntimeMetadata {
   execPath: string
   nodeVersion: string
   projectDir: string
+  /** The configuration file the loader decided on. Null when the runtime was built from an object. */
+  configPath: string | null
+  /** The autoload declaration, with its path resolved. Null when the project does not autoload. */
+  autoload: { path: string, exclude?: string[], mappings?: Record<string, unknown> } | null
   packageName: string | null
   packageVersion: string | null
   platformaticVersion: string
@@ -467,11 +478,6 @@ export declare class Runtime extends EventEmitter {
   getApplicationScheduledTasks (id: string): Promise<ApplicationSchedule[]>
   runApplicationScheduledTasks (id: string, scheduleId: string, scheduledTime: number): Promise<unknown>
 }
-
-export function wrapInRuntimeConfig (
-  config: Configuration<unknown>,
-  context?: ConfigurationOptions
-): Promise<RuntimeConfiguration>
 
 export declare const version: string
 

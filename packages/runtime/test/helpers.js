@@ -1,9 +1,12 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
+import { randomUUID } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { create, transform } from '../index.js'
 
@@ -50,6 +53,29 @@ export async function moveToTmpdir (teardown) {
   return dir
 }
 
+/*
+  The configuration file a directory actually holds. Tests used to name it, which was safe while
+  every project spelled it the same way; a converted project spells it watt.config.js or
+  watt.config.mjs depending on what its nearest package.json says about modules, so asking the
+  directory is the only spelling that keeps working.
+*/
+export function configurationFileIn (directory, fallback = 'platformatic.json') {
+  for (const candidate of ['watt.config.js', 'watt.config.mjs', 'watt.config.ts', 'watt.config.mts']) {
+    const path = join(directory, candidate)
+
+    if (existsSync(path)) {
+      return path
+    }
+  }
+
+  /*
+    A directory with no v4 configuration is a fixture deliberately left in v3 -- the format tests,
+    the upgrade chains, the ones wattpm import rewrites -- and they do not all spell it
+    platformatic.json, so the caller passes the name it was going to use.
+  */
+  return join(directory, fallback)
+}
+
 export async function updateFile (path, update) {
   const contents = await readFile(path, 'utf-8')
   await writeFile(path, await update(contents), 'utf-8')
@@ -61,7 +87,67 @@ export async function updateFile (path, update) {
   }
 }
 
-export async function updateConfigFile (path, update) {
+/*
+  A test naming a v3 configuration file in a directory that now holds a v4 one is asking to update
+  that directory's configuration, not to create the file it named. Resolving it here keeps the
+  callers -- which say platformatic.application.json in a good many places -- from having to know
+  which dialect the fixture they were handed is written in.
+*/
+function resolveConfigurationPath (path) {
+  if (existsSync(path)) {
+    return path
+  }
+
+  const directory = dirname(path)
+
+  for (const candidate of ['watt.config.js', 'watt.config.mjs', 'watt.config.ts', 'watt.config.mts']) {
+    const resolved = join(directory, candidate)
+
+    if (existsSync(resolved)) {
+      return resolved
+    }
+  }
+
+  return path
+}
+
+/*
+  The read half of updateConfigFile, without its write-back. A reader that goes through the updater
+  serializes the file it only meant to inspect, and for a v4 configuration that bakes every
+  expression into the value it evaluated to on this machine -- which is how a fixture's
+  process.env read once became a committed literal.
+*/
+export async function readConfigFile (originalPath) {
+  const path = resolveConfigurationPath(originalPath)
+
+  if (/\.(js|mjs|ts|mts)$/.test(path)) {
+    const { default: contents } = await import(`${pathToFileURL(path).href}?read=${randomUUID()}`)
+
+    return contents
+  }
+
+  return JSON.parse(await readFile(path, 'utf-8'))
+}
+
+export async function updateConfigFile (originalPath, update) {
+  const path = resolveConfigurationPath(originalPath)
+
+  /*
+    A v4 configuration is code, so it is imported rather than parsed. The cache-busting query is
+    what makes a second update in the same process see the first one's result.
+
+    Writing it back as a literal loses any expression the file contained — a process.env read
+    becomes whatever it evaluated to. That is acceptable for a fixture a test is deliberately
+    rewriting, and wrong for anything else, which is why this lives in the test helpers.
+  */
+  if (/\.(js|mjs|ts|mts)$/.test(path)) {
+    const { default: contents } = await import(`${pathToFileURL(path).href}?update=${randomUUID()}`)
+
+    await update(contents)
+    await writeFile(path, `export default ${JSON.stringify(contents, null, 2)}\n`, 'utf-8')
+    return
+  }
+
   const contents = JSON.parse(await readFile(path, 'utf-8'))
   await update(contents)
   await writeFile(path, JSON.stringify(contents, null, 2), 'utf-8')

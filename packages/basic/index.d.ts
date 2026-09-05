@@ -316,3 +316,81 @@ export declare function createServerListener (
 ): CancellablePromise<Server | null>
 
 export declare function createChildProcessListener (): CancellablePromise<ChildProcess | null>
+
+/*
+  How a capability serves when no listener is configured, declared per capability beside its schema
+  so main-side preparation can read it before any worker exists. A constant is the common case; the
+  callable exists for the capability whose own configuration selects the class, which is the shape a
+  per-package constant cannot express.
+*/
+export type ServesWithoutPort =
+  | 'worker'
+  | { development: boolean, production: boolean }
+  | ((config: Record<string, unknown>) => 'worker' | { development: boolean, production: boolean })
+
+/*
+  The configuration context a deferred definition is evaluated against: the command the boot was
+  started with, the mode selected for it, whether it is a production boot, and the environment the
+  loader resolved for config evaluation — which is not the worker's runtime environment.
+*/
+export interface ConfigContext {
+  command: string
+  mode?: string
+  production: boolean
+  env: Record<string, string | undefined>
+}
+
+/*
+  What a factory returns: the capability's per-app configuration with `module` — and `version`, when
+  the capability stamps one — as loader metadata the loader strips into the entry's envelope before
+  validation.
+*/
+export interface ApplicationDefinition {
+  module: string
+  version?: string
+  [key: string]: unknown
+}
+
+/*
+  The callback form returns a function the loader awaits, so reading `.module` on it is a type error
+  until it has run. A single signature returning ApplicationDefinition for both forms would
+  typecheck `next(cb).module`, which is exactly the mistake this type exists to prevent.
+*/
+export type DeferredApplicationDefinition = (context: ConfigContext) => Promise<ApplicationDefinition>
+
+type UnionToIntersection<Union> = (Union extends unknown ? (value: Union) => void : never) extends (
+  value: infer Intersection
+) => void
+  ? Intersection
+  : never
+
+/*
+  Factory options are the capability's per-app configuration with its namespaced blocks flattened
+  into the top level (`next.trailingSlash` -> `trailingSlash`), while the shared blocks — logger,
+  server, watch, application — keep their v3 positions. `Excluded` names the keys a capability
+  deliberately keeps nested, which is how two capabilities meaning structurally different things at
+  one flattened key are kept apart.
+*/
+export type CapabilityFactoryOptions<
+  Config,
+  Blocks extends keyof Config,
+  Excluded extends string = never
+> = Omit<Config, '$schema' | 'module' | Blocks> &
+  Partial<Pick<Config, Extract<Blocks, keyof Config>>> &
+  Omit<UnionToIntersection<{ [Block in Blocks]-?: NonNullable<Config[Block]> }[Blocks]>, Excluded>
+
+export declare function buildFlatteningPlan (
+  module: string,
+  schema: Record<string, unknown>,
+  flatten: string[],
+  exclude?: string[]
+): Map<string, string>
+
+export declare function defineCapabilityFactory<Options> (
+  module: string,
+  schema: Record<string, unknown>,
+  options?: { version?: string, flatten?: string[], exclude?: string[], mapOptions?: (options: Options) => Options }
+): {
+  (options?: Options): ApplicationDefinition
+  (callback: (context: ConfigContext) => Options | Promise<Options>): DeferredApplicationDefinition
+}

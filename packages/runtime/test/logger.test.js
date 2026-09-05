@@ -7,7 +7,7 @@ import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { transform } from '../index.js'
 import { startPath } from './cli/helper.js'
-import { createRuntime, execRuntime, isWindows, requestAndDump, stdioOutputToLogs, updateFile } from './helpers.js'
+import { configurationFileIn, createRuntime, execRuntime, isWindows, requestAndDump, stdioOutputToLogs, updateConfigFile } from './helpers.js'
 import { prepareRuntime } from './multiple-workers/helper.js'
 
 setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
@@ -18,7 +18,7 @@ afterEach(async () => {
 })
 
 test('should use full logger options - formatters, timestamp, redaction', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'watt.config.js')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -63,7 +63,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
 })
 
 test('should inherit full logger options from runtime to a platformatic/application', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options', 'watt.config.js')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -84,7 +84,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
         log.stdout?.level === 'DEBUG' &&
         log.stdout.time.length === 24 && // isotime
         log.stdout.name === 'service' &&
-        log.stdout.msg === 'Loading envfile...'
+        log.stdout.msg === 'Using the worker environment resolved by the loader.'
     )
   )
 
@@ -139,7 +139,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
 })
 
 test('should inherit full logger options from runtime to different applications', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'watt.config.js')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -168,7 +168,7 @@ test('should inherit full logger options from runtime to different applications'
 })
 
 test('should get json logs from thread applications when they are not pino default config', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'watt.config.js')
 
   let incomingRequest = false
   let requestCompleted = false
@@ -215,7 +215,7 @@ test(
   'should handle logs from thread applications as they are with captureStdio: false',
   { skip: isWindows },
   async t => {
-    const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
+    const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'watt.config.js')
 
     let serviceResponded = false
     let nodeResponded = false
@@ -267,7 +267,7 @@ test(
 )
 
 test('should handle logs from thread applications as they are with captureStdio: false and managementApi: false', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'watt.config.js')
 
   let responses = 0
   const { stdout } = await execRuntime({
@@ -319,7 +319,7 @@ test('should handle logs from thread applications as they are with captureStdio:
 })
 
 test('should use base and messageKey options', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key', 'watt.config.js')
 
   let responses = 0
   const { stdout } = await execRuntime({
@@ -352,7 +352,7 @@ test('should use base and messageKey options', async t => {
 })
 
 test('should use configured pino message key to detect thread application logs', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key-pino', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key-pino', 'watt.config.js')
 
   let responses = 0
   const { stdout } = await execRuntime({
@@ -386,7 +386,7 @@ test('should use configured pino message key to detect thread application logs',
 })
 
 test('should use configured pino keys to detect thread application logs', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-pino-keys', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-pino-keys', 'watt.config.js')
 
   let requested = false
   const { stdout } = await execRuntime({
@@ -409,7 +409,7 @@ test('should use configured pino keys to detect thread application logs', async 
 })
 
 test('should use null base in options', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'watt.config.js')
 
   let responses = 0
   const { stdout } = await execRuntime({
@@ -438,7 +438,7 @@ test('should use null base in options', async t => {
 })
 
 test('should use custom config', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-config', 'watt.config.js')
 
   let responses = 0
   const { stdout } = await execRuntime({
@@ -471,12 +471,10 @@ test('should use custom config', async t => {
 
 test('should use colors when printing applications logs', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
-  await updateFile(configFile, data => {
-    const config = JSON.parse(data)
+  await updateConfigFile(configFile, config => {
     config.logger.level = 'info'
-    return JSON.stringify(config, null, 2)
   })
 
   const child = execa(process.execPath, [startPath, configFile], {
@@ -508,7 +506,7 @@ test('should use colors when printing applications logs', async t => {
 
 test('should use pretty logs when FORCE_TTY is set in .env', { skip: isWindows }, async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
   await writeFile(resolve(root, '.env'), 'FORCE_TTY=true', 'utf-8')
 
@@ -540,12 +538,10 @@ test('should use pretty logs when FORCE_TTY is set in .env', { skip: isWindows }
 
 test('should use colors when FORCE_COLOR is set in .env', { skip: isWindows }, async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
 
-  await updateFile(configFile, data => {
-    const config = JSON.parse(data)
+  await updateConfigFile(configFile, config => {
     config.logger.level = 'info'
-    return JSON.stringify(config, null, 2)
   })
   await writeFile(resolve(root, '.env'), 'FORCE_TTY=true\nFORCE_COLOR=true', 'utf-8')
 
@@ -585,7 +581,7 @@ test('should use colors when FORCE_COLOR is set in .env', { skip: isWindows }, a
 // JSON.parse("null") returns null, and typeof null === 'object' (JS quirk),
 // so the code enters the object branch and tries to access null.level
 test('should handle literal null output from workers without crashing', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-null-output', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-null-output', 'watt.config.js')
 
   let requested = false
   const { stderr } = await execRuntime({
@@ -611,7 +607,7 @@ test('should handle literal null output from workers without crashing', async t 
 // Previously, the logger schema had `default: 'info'` which would override
 // the runtime-level logger setting when merging configs.
 test('should inherit logger level from runtime when service does not specify logger level', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-level-inheritance', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-level-inheritance', 'watt.config.mjs')
 
   let requested = false
   let levelResponse = null
@@ -640,7 +636,7 @@ test('should inherit logger level from runtime when service does not specify log
 
 // Same test but for @platformatic/node applications
 test('should inherit logger level from runtime when node app does not specify logger level', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-level-inheritance-node', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-level-inheritance-node', 'watt.config.mjs')
 
   let requested = false
   let levelResponse = null
@@ -673,7 +669,7 @@ test('should export logs to OpenTelemetry', async t => {
     return log.resourceLogs[0].resource.attributes.find(attr => attr.key === name)
   }
 
-  const configFile = join(import.meta.dirname, '..', 'fixtures', 'logger-opentelemetry', 'platformatic.json')
+  const configFile = join(import.meta.dirname, '..', 'fixtures', 'logger-opentelemetry', 'watt.config.js')
   const { promise, resolve } = Promise.withResolvers()
 
   // Create a sample OpenTelemetry collector that listens for logs on a specific port and stores them in memory for assertions
