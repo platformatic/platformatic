@@ -44,7 +44,7 @@ test('create - should create a new project using the v4 configuration by default
     Key by key rather than whole: evaluating a root expands its topology, so the result carries the
     applications it discovered alongside the settings the file states.
   */
-  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'applications' })
   deepStrictEqual(configuration.logger, { level: 'info' })
   deepStrictEqual(configuration.managementApi, true)
   deepStrictEqual(configuration.watch, true)
@@ -83,7 +83,7 @@ test('create - should create a new project with two applications', async t => {
     Key by key rather than whole: evaluating a root expands its topology, so the result carries the
     applications it discovered alongside the settings the file states.
   */
-  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'applications' })
   deepStrictEqual(configuration.logger, { level: 'info' })
   deepStrictEqual(configuration.managementApi, true)
   deepStrictEqual(configuration.watch, true)
@@ -135,7 +135,7 @@ test('create - names the configuration by the v4 selector, whatever -c says', as
   */
   const configuration = await readConfiguration(resolve(temporaryFolder, 'root/watt.config.mjs'))
 
-  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'applications' })
   deepStrictEqual(configuration.logger, { level: 'info' })
 })
 
@@ -411,8 +411,8 @@ test('create - correctly write package.json and the configuration when importing
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/watt.config.mjs written!`))
-  ok(!stdout.includes(`${temporaryFolder}/web/main/my-app/package.json written!`))
+  ok(!stdout.includes(`${temporaryFolder}/applications/main/my-app/watt.config.mjs written!`))
+  ok(!stdout.includes(`${temporaryFolder}/applications/main/my-app/package.json written!`))
 })
 
 test('create - should not use a URL when importing a local application within the same folder', async t => {
@@ -447,7 +447,7 @@ test('create - should not use a URL when importing a local application within th
 
   const configuration = await readConfiguration(resolve(temporaryFolder, 'watt.config.mjs'))
 
-  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'web' })
+  deepStrictEqual(configuration.autoload, { exclude: ['docs'], path: 'applications' })
   deepStrictEqual(configuration.logger, { level: 'info' })
   // One spelling and a literal path: the entry lands under `applications`, and the root's git
   // remote is not the application's -- my-app has no repository, so nothing to fetch, no url.

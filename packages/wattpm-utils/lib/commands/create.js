@@ -59,7 +59,7 @@ export async function createCommand (logger, args) {
         },
     {
       runtimeConfig: config,
-      applicationsFolder: 'web'
+      applicationsFolder: 'applications'
     },
     {
       devCommand: 'wattpm dev',
