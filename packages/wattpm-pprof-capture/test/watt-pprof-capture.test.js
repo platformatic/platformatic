@@ -14,8 +14,11 @@ async function createApp (t, config = 'fixtures/runtime-test/platformatic.json')
 
   const { 'service:0': url } = await app.start()
 
-  // Wait for the service to accept requests instead of relying on a fixed
-  // delay, which is not reliable on slower CI runners.
+  // Give applications a moment to start up before sending requests.
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  // Wait for the service to accept requests anyway,
+  // to improve reliability on slower CI runners.
   await waitForCondition(async () => {
     try {
       const response = await request(`${url}/health`)
