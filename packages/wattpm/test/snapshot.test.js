@@ -196,7 +196,18 @@ test('heap-snapshot - should fail with non-existent worker', async t => {
 })
 
 test('heap-snapshot - should fail with non-existent runtime', async t => {
-  const snapshotProcess = await wattpm('heap-snapshot', '999999').catch(e => e)
+  /*
+    In an isolated working directory. Every runtime a sibling test starts reports the directory it
+    was spawned in -- the package directory, shared by all of them, because the test helper does not
+    change it -- and getMatchingRuntime falls back to "any runtime whose cwd is the current one" when
+    the id matches nothing. Running here from the shared directory let a sibling runtime that had not
+    finished shutting down be picked up in place of the "999999" that matches none, so the command
+    snapshotted a dying runtime and failed with its error instead of the clean "not found".
+  */
+  const isolated = await mkdtemp(join(tmpdir(), 'plt-snapshot-none-'))
+  t.after(() => safeRemove(isolated))
+
+  const snapshotProcess = await wattpmInDir(isolated, 'heap-snapshot', '999999').catch(e => e)
 
   strictEqual(snapshotProcess.exitCode, 1, 'Should exit with code 1')
   ok(
