@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "4.0.0-new-config.1",
+  "version": "4.0.0-new-config.2",
   "description": "Platformatic Composer",
   "main": "index.js",
   "types": "index.d.ts",

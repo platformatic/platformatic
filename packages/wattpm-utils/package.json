@@ -1,6 +1,6 @@
 {
   "name": "wattpm-utils",
-  "version": "4.0.0-new-config.1",
+  "version": "4.0.0-new-config.2",
   "description": "The Node.js Application Server Utilities Commands",
   "main": "index.js",
   "type": "module",

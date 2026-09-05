@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/tanstack/4.0.0-new-config.1.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/tanstack/4.0.0-new-config.2.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic TanStack Config",
   "type": "object",
