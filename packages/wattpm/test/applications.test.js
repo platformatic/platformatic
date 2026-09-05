@@ -7,7 +7,7 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { ensureDependencies, isWindows, prepareRuntime } from '../../basic/test/helper.js'
-import { changeWorkingDirectory, waitForStart, wattpm } from './helper.js'
+import { changeWorkingDirectory, waitForStart, wattpm, wattpmNoRuntime } from './helper.js'
 
 const ADD_FILE = '1-only/add.json'
 
@@ -260,7 +260,7 @@ test('applications:add - fails if a path contains invalid JSON', async t => {
 })
 
 test('applications:add - should complain when a runtime is not found', async t => {
-  const addProcess = await wattpm('applications:add', 'p-' + Date.now.toString(), { reject: false })
+  const addProcess = await wattpmNoRuntime(t, 'applications:add', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(addProcess.exitCode, 1)
   ok(addProcess.stdout.includes('Cannot find a matching runtime.'))
@@ -356,7 +356,7 @@ test('applications:remove - should remove application from an existing app and s
 })
 
 test('applications:add - should complain when a runtime is not found', async t => {
-  const addProcess = await wattpm('applications:add', 'p-' + Date.now.toString(), { reject: false })
+  const addProcess = await wattpmNoRuntime(t, 'applications:add', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(addProcess.exitCode, 1)
   ok(addProcess.stdout.includes('Cannot find a matching runtime.'))
@@ -419,7 +419,7 @@ test('applications:remove - should remove applications from an existing app', { 
 })
 
 test('applications:add - should complain when a runtime is not found', async t => {
-  const removeProcess = await wattpm('applications:remove', 'p-' + Date.now.toString(), { reject: false })
+  const removeProcess = await wattpmNoRuntime(t, 'applications:remove', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(removeProcess.exitCode, 1)
   ok(removeProcess.stdout.includes('Cannot find a matching runtime.'))

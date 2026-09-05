@@ -117,6 +117,21 @@ export function wattpm (...args) {
 }
 
 /*
+  A wattpm invocation from a throwaway directory that no runtime lives in. getMatchingRuntime falls
+  back to "any runtime whose cwd is the current one" when the id it was given matches none -- which
+  is how `inject <app>` autodetects the runtime -- and every runtime a test starts reports this
+  package's directory as its cwd, because the helper spawns them there without changing it. A
+  "runtime not found" test run from that shared directory therefore picks up a sibling runtime that
+  has not finished shutting down instead of finding nothing; running from its own directory leaves
+  the fallback nothing to match.
+*/
+export async function wattpmNoRuntime (t, ...args) {
+  const directory = await createTemporaryDirectory(t, 'no-runtime')
+  const options = typeof args.at(-1) === 'object' ? args.pop() : {}
+  return executeCommand(process.argv[0], cliPath, ...args, { ...options, cwd: directory })
+}
+
+/*
   `dev` and `start` share stdout between two writers: the runtime logs JSON records there, and the
   CLI logs human-readable lines — the boot-scope announcement, the standalone warning, `logger.done`.
   A test looking for a runtime record has to step over the CLI's, which were never JSON to begin

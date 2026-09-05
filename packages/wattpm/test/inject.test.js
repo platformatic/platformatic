@@ -5,7 +5,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
+import { createTemporaryDirectory, waitForStart, wattpm, wattpmNoRuntime } from './helper.js'
 
 test('inject - should send a request to an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
@@ -73,7 +73,7 @@ test('inject - should send a request to an application', async t => {
 })
 
 test('inject - should complain when a runtime is not found', async t => {
-  const envProcess = await wattpm('inject', 'p-' + Date.now.toString(), { reject: false })
+  const envProcess = await wattpmNoRuntime(t, 'inject', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(envProcess.exitCode, 1)
   ok(envProcess.stdout.includes('Cannot find a matching runtime.'))

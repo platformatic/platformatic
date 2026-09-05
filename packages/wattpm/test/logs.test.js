@@ -4,7 +4,7 @@ import { on } from 'node:events'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { parseRuntimeLog, wattpm } from './helper.js'
+import { parseRuntimeLog, wattpm, wattpmNoRuntime } from './helper.js'
 
 async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = false) {
   let mainLogFound
@@ -173,7 +173,7 @@ test('logs - should stream runtime logs filtering by level', async t => {
 })
 
 test('logs - should complain when a runtime is not found', async t => {
-  const logsProcess = await wattpm('logs', 'p-' + Date.now.toString(), { reject: false })
+  const logsProcess = await wattpmNoRuntime(t, 'logs', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(logsProcess.exitCode, 1)
   ok(logsProcess.stdout.includes('Cannot find a matching runtime.'))

@@ -11,7 +11,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import split2 from 'split2'
 import { request } from 'undici'
 import { createTemporaryDirectory, prepareRuntime } from '../../basic/test/helper.js'
-import { changeWorkingDirectory, parseRuntimeLog, prepareGitRepository, waitForStart, wattpm } from './helper.js'
+import { changeWorkingDirectory, parseRuntimeLog, prepareGitRepository, waitForStart, wattpm, wattpmNoRuntime } from './helper.js'
 
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
@@ -667,7 +667,7 @@ test('stop - should stop an application', async t => {
 })
 
 test('stop - should complain when a runtime is not found', async t => {
-  const logsProcess = await wattpm('stop', 'p-' + Date.now.toString(), { reject: false })
+  const logsProcess = await wattpmNoRuntime(t, 'stop', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(logsProcess.exitCode, 1)
   ok(logsProcess.stdout.includes('Cannot find a matching runtime.'))
@@ -718,7 +718,7 @@ test('restart - can restart an application when its port is fixed and reusePort 
 })
 
 test('restart - should complain when a runtime is not found', async t => {
-  const logsProcess = await wattpm('restart', 'p-' + Date.now.toString(), { reject: false })
+  const logsProcess = await wattpmNoRuntime(t, 'restart', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(logsProcess.exitCode, 1)
   ok(logsProcess.stdout.includes('Cannot find a matching runtime.'))
@@ -741,7 +741,7 @@ test('reload - should reload an application', async t => {
 })
 
 test('reload - should complain when a runtime is not found', async t => {
-  const logsProcess = await wattpm('reload', 'p-' + Date.now.toString(), { reject: false })
+  const logsProcess = await wattpmNoRuntime(t, 'reload', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(logsProcess.exitCode, 1)
   ok(logsProcess.stdout.includes('Cannot find a matching runtime.'))

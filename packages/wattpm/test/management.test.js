@@ -9,7 +9,7 @@ import { platform, tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { waitForStart, wattpm } from './helper.js'
+import { waitForStart, wattpm, wattpmNoRuntime } from './helper.js'
 
 test('ps - should show running applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
@@ -179,7 +179,7 @@ test('applications - should list applications for an application with workers in
 })
 
 test('applications - should complain when a runtime is not found', async t => {
-  const applicationsProcess = await wattpm('applications', 'p-' + Date.now.toString(), { reject: false })
+  const applicationsProcess = await wattpmNoRuntime(t, 'applications', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(applicationsProcess.exitCode, 1)
   ok(applicationsProcess.stdout.includes('Cannot find a matching runtime.'))
@@ -231,7 +231,7 @@ test('env - should list environment variable for an application', async t => {
 })
 
 test('env - should complain when a runtime is not found', async t => {
-  const envProcess = await wattpm('env', 'p-' + Date.now.toString(), { reject: false })
+  const envProcess = await wattpmNoRuntime(t, 'env', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(envProcess.exitCode, 1)
   ok(envProcess.stdout.includes('Cannot find a matching runtime.'))
