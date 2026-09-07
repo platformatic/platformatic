@@ -67,7 +67,7 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.mjs', '.env', '.env.sample', '.gitignore'])
+  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.ts', '.env', '.env.sample', '.gitignore'])
 
   // applications have correct target directory
   assert.equal(
@@ -209,7 +209,7 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.mjs', '.env', '.env.sample', '.gitignore'])
+  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.ts', '.env', '.env.sample', '.gitignore'])
 
   // applications have correct target directory
   assert.equal(
@@ -328,6 +328,12 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
     await rg.writeFiles()
   }
 
+  // The root config imports wattpm for its defineConfig, which reading it back to add an application
+  // evaluates -- so wattpm has to resolve, exactly as it does in a project whose dependencies were
+  // installed after the scaffold.
+  await createDirectory(join(targetDirectory, 'node_modules'))
+  await symlink(resolve(import.meta.dirname, '../../wattpm'), join(targetDirectory, 'node_modules/wattpm'), 'dir')
+
   {
     const rg = new RuntimeGenerator({
       targetDirectory
@@ -355,7 +361,7 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
 
     // should list only runtime files
     const runtimeFileList = rg.listFiles()
-    assert.deepEqual(runtimeFileList, ['watt.config.mjs', '.env', '.env.sample'])
+    assert.deepEqual(runtimeFileList, ['watt.config.ts', '.env', '.env.sample'])
 
     // applications have correct target directory
     assert.equal(
@@ -396,6 +402,12 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
     await rg.writeFiles()
   }
 
+  // The root config imports wattpm for its defineConfig, which reading it back to add an application
+  // evaluates -- so wattpm has to resolve, exactly as it does in a project whose dependencies were
+  // installed after the scaffold.
+  await createDirectory(join(targetDirectory, 'node_modules'))
+  await symlink(resolve(import.meta.dirname, '../../wattpm'), join(targetDirectory, 'node_modules/wattpm'), 'dir')
+
   {
     const rg = new RuntimeGenerator({
       targetDirectory
@@ -423,7 +435,7 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
 
     // should list only runtime files
     const runtimeFileList = rg.listFiles()
-    assert.deepEqual(runtimeFileList, ['watt.config.mjs', '.env', '.env.sample'])
+    assert.deepEqual(runtimeFileList, ['watt.config.ts', '.env', '.env.sample'])
 
     // applications have correct target directory
     assert.equal(
@@ -492,8 +504,12 @@ test('WrappedGenerator - should create a valid configuration', async t => {
   /*
     The wrapped single-app root. v3 nested the runtime settings under a `runtime` key inside the
     application's own configuration; v4 has no such block, so they are the root's own.
+
+    The suffix is .mts, not .ts: wrapping an existing project must not force "type": "module" on it
+    -- the code it wraps may be CommonJS -- so the module type is left unset and the unambiguous
+    TypeScript-ESM suffix is the one that does not need the answer.
   */
-  const wattJson = generator.getFileObject('watt.config.mjs')
+  const wattJson = generator.getFileObject('watt.config.mts')
 
   assert.ok(wattJson.contents.includes('export default {'), wattJson.contents)
   assert.ok(wattJson.contents.includes('level: process.env.PLT_SERVER_LOGGER_LEVEL'), wattJson.contents)
@@ -583,6 +599,8 @@ test('RuntimeGenerator - what it writes loads', async t => {
 
   await createDirectory(join(root, 'node_modules', '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../service'), join(root, 'node_modules/@platformatic/service'), 'dir')
+  // The root config imports wattpm for its defineConfig, so it has to resolve too.
+  await symlink(resolve(import.meta.dirname, '../../wattpm'), join(root, 'node_modules/wattpm'), 'dir')
 
   /*
     Through the real loader, because that is the only thing that says the output is right. Every
@@ -590,7 +608,7 @@ test('RuntimeGenerator - what it writes loads', async t => {
     checks that the two agree: a scaffolded project whose configuration cannot be read, or reads
     back as the text of a placeholder, is what this asserts against.
   */
-  const config = await loadRuntimeConfiguration(join(root, 'watt.config.mjs'), null, { command: 'start' })
+  const config = await loadRuntimeConfiguration(join(root, 'watt.config.ts'), null, { command: 'start' })
   const application = config.applications.find(entry => entry.id === 'api')
 
   assert.deepStrictEqual(config.logger.level, 'info')
@@ -617,7 +635,7 @@ test('WrappedGenerator - what it writes loads, and runs the application it wrapp
   await createDirectory(join(root, 'node_modules', '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
 
-  const config = await loadRuntimeConfiguration(join(root, 'watt.config.js'), null, { command: 'start' })
+  const config = await loadRuntimeConfiguration(join(root, 'watt.config.ts'), null, { command: 'start' })
 
   /*
     The application is the point. A wrapped root carrying only the runtime settings loads perfectly

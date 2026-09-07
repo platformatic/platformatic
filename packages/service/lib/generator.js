@@ -311,7 +311,7 @@ export class Generator extends BaseGenerator {
         type: 'select',
         name: 'typescript',
         message: 'Do you want to use TypeScript?',
-        default: false,
+        default: true,
         choices: [
           { name: 'yes', value: true },
           { name: 'no', value: false }

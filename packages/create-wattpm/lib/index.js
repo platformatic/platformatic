@@ -185,7 +185,7 @@ export async function wrapApplication (
     ...generator.config,
     ...additionalGeneratorConfig,
     targetDirectory: projectDir,
-    typescript: false
+    typescript: true
   })
 
   await generator.ask()

@@ -39,7 +39,7 @@ test('should write file and dirs', async t => {
 
   // A generator with nothing to say still writes the factory call: owning the file is what declares
   // the application's scope.
-  const configFile = await readFile(join(dir, 'watt.config.mjs'), 'utf8')
+  const configFile = await readFile(join(dir, 'watt.config.ts'), 'utf8')
   equal(configFile, "import { service } from '@platformatic/service'\n\nexport default service({})\n")
 
   const gitignore = await readFile(join(dir, '.gitignore'), 'utf8')
@@ -72,7 +72,7 @@ test('extended class should generate config', async t => {
   const configFile = svc.files[1]
   deepEqual(configFile, {
     path: '',
-    file: 'watt.config.mjs',
+    file: 'watt.config.ts',
     // The v4 per-app form: a capability with a factory is spelled by calling it.
     contents: "import { service } from '@platformatic/service'\n\nexport default service({\n  foo: 'bar'\n})\n",
     options: {},
@@ -92,7 +92,7 @@ test('setConfig', async t => {
     port: 3042,
     hostname: '0.0.0.0',
     plugin: false,
-    typescript: false,
+    typescript: true,
     initGitRepository: false,
     env: {},
     defaultEnv: {},
@@ -119,7 +119,7 @@ test('setConfig', async t => {
     port: 3084, // this is the only custom value
     hostname: '0.0.0.0',
     plugin: false,
-    typescript: false,
+    typescript: true,
     initGitRepository: false,
     env: {},
     defaultEnv: {},
@@ -138,7 +138,7 @@ test('setConfig', async t => {
     port: 3042,
     hostname: '0.0.0.0',
     plugin: false,
-    typescript: false,
+    typescript: true,
     initGitRepository: false,
     env: {},
     defaultEnv: {},
@@ -165,7 +165,7 @@ test('setConfig', async t => {
     port: 1234,
     hostname: '123.123.123.123',
     plugin: false,
-    typescript: false,
+    typescript: true,
     initGitRepository: false,
     env: {},
     defaultEnv: {},
@@ -349,7 +349,7 @@ test('should throw if there is a missing env variable', async () => {
     fail()
   } catch (err) {
     equal(err.code, 'PLT_GEN_MISSING_ENV_VAR')
-    equal(err.message, 'Env variable BAR is defined in config file watt.config.mjs, but not in config.env object.')
+    equal(err.message, 'Env variable BAR is defined in config file watt.config.ts, but not in config.env object.')
   }
 })
 

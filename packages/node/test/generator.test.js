@@ -22,6 +22,7 @@ test('should return environment and environment variables', async () => {
 
 test('should generate proper index.js file (Javascript)', async () => {
   const generator = new Generator()
+  generator.setConfig({ typescript: false })
   await generator.prepare()
   const file = generator.getFileObject('index.js')
 
@@ -44,6 +45,7 @@ test('should generate proper index.js file (Javascript)', async () => {
 
 test('should prepare a valid package.json file (Javascript)', async () => {
   const generator = new Generator()
+  generator.setConfig({ typescript: false })
   await generator.prepare()
   const packageJson = JSON.parse(generator.getFileObject('package.json').contents)
 
@@ -112,7 +114,7 @@ test('should prepare exactly one configuration file, in the v4 form', async () =
 
   deepStrictEqual(
     configurations.map(file => file.file),
-    ['watt.config.js']
+    ['watt.config.ts']
   )
   ok(configurations[0].contents.startsWith("import { node } from '@platformatic/node'"), configurations[0].contents)
 })

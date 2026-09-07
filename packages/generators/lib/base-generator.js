@@ -71,7 +71,7 @@ class BaseGenerator extends FileGenerator {
       hostname: '0.0.0.0',
       plugin: false,
       tests: false,
-      typescript: false,
+      typescript: true,
       initGitRepository: false,
       dependencies: {},
       devDependencies: {},
@@ -535,6 +535,7 @@ class BaseGenerator extends FileGenerator {
     const template = {
       name: `${this.config.applicationName}`,
       version: '0.1.0',
+      type: 'module',
       scripts: {
         dev: 'wattpm dev',
         start: 'wattpm start',

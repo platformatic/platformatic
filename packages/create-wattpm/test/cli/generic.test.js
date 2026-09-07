@@ -50,7 +50,7 @@ test('Support packages without generator via importing (new application)', async
     Asserted as source, and as a literal: the importer writes the relative path itself rather than
     v3's `{PLT_APPLICATION_<ID>_PATH}` placeholder plus a gitignored `.env` line to carry it.
   */
-  const runtimeConfigSource = await readFile(resolve(baseProjectDir, 'watt.config.mjs'), 'utf8')
+  const runtimeConfigSource = await readFile(resolve(baseProjectDir, 'watt.config.ts'), 'utf8')
   ok(runtimeConfigSource.includes("id: 'main'"), runtimeConfigSource)
 
   const expectedPath = relative(baseProjectDir, applicationPath).split(sep).join('/')
@@ -94,7 +94,7 @@ test('Support packages without generator via importing (existing applications)',
     userInputHandler: userInputHandler1
   })
 
-  let runtimeConfig = await readConfiguration(join(baseProjectDir, 'watt.config.mjs'), baseProjectDir)
+  let runtimeConfig = await readConfiguration(join(baseProjectDir, 'watt.config.ts'), baseProjectDir)
   const originalEnvFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
   // One spelling: v3's `web` alias is refused by the loader now, so the list the test plants uses
   // the name the editor keeps.
@@ -105,7 +105,7 @@ test('Support packages without generator via importing (existing applications)',
   // Written back as the module it is. The plain object form is a valid v4 root, which is what a
   // test editing a configuration wants: no imports to resolve.
   await writeFile(
-    resolve(join(baseProjectDir, 'watt.config.mjs')),
+    resolve(join(baseProjectDir, 'watt.config.ts')),
     `export default ${JSON.stringify(runtimeConfig, null, 2)}\n`
   )
 
@@ -128,14 +128,14 @@ test('Support packages without generator via importing (existing applications)',
   ok(typeof packageJson.devDependencies['@platformatic/vite'], 'undefined')
 
   // Verify that the runtime configuration has an explicit entry for the vite application but with other entries untouched
-  runtimeConfig = await readConfiguration(resolve(baseProjectDir, 'watt.config.mjs'), baseProjectDir)
+  runtimeConfig = await readConfiguration(resolve(baseProjectDir, 'watt.config.ts'), baseProjectDir)
 
   /*
     Asserted as source: an imported application carries a `url`, which makes it something to fetch
     rather than something the topology already has, so it does not appear among the evaluated
     applications until `wattpm resolve` has run.
   */
-  const rootSource = await readFile(resolve(baseProjectDir, 'watt.config.mjs'), 'utf8')
+  const rootSource = await readFile(resolve(baseProjectDir, 'watt.config.ts'), 'utf8')
 
   /*
     Quoting is not asserted: the entry is added by editing the file, which keeps whatever style it
@@ -208,7 +208,7 @@ test('Support packages without generator via copy (new application)', async t =>
   deepStrictEqual(await readFile(resolve(sourcePath, 'package.json'), 'utf8'), originalPackageJson)
 
   // Verify that the runtime configuration has no explicit entry as everything is in the applications directory
-  const runtimeConfig = await readConfiguration(resolve(baseProjectDir, 'watt.config.mjs'), baseProjectDir)
+  const runtimeConfig = await readConfiguration(resolve(baseProjectDir, 'watt.config.ts'), baseProjectDir)
   ok(typeof runtimeConfig.applications, 'undefined')
   ok(typeof runtimeConfig.web, 'undefined')
 
@@ -256,7 +256,7 @@ test('Support packages without generator via copy (existing applications)', asyn
     a v4 root accepts without imports to resolve.
   */
   await writeFile(
-    resolve(join(baseProjectDir, 'watt.config.mjs')),
+    resolve(join(baseProjectDir, 'watt.config.ts')),
     `export default ${JSON.stringify(
       {
         autoload: { path: 'web', exclude: ['docs'] },
@@ -296,7 +296,7 @@ test('Support packages without generator via copy (existing applications)', asyn
   )
 
   // Verify that the runtime configuration has no explicit entry as everything is in the applications directory
-  const runtimeConfig = await readConfiguration(resolve(baseProjectDir, 'watt.config.mjs'), baseProjectDir)
+  const runtimeConfig = await readConfiguration(resolve(baseProjectDir, 'watt.config.ts'), baseProjectDir)
   ok(typeof runtimeConfig.applications, 'undefined')
   ok(typeof runtimeConfig.web, 'undefined')
 })

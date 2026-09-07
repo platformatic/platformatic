@@ -21,6 +21,8 @@ async function setupTemporaryDirectory (fixture) {
   await createDirectory(resolve(dir, 'node_modules/@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../service'), join(dir, 'node_modules/@platformatic/service'), 'dir')
   await symlink(resolve(import.meta.dirname, '../../db'), join(dir, 'node_modules/@platformatic/db'), 'dir')
+  // The scaffolded root config imports wattpm for its defineConfig, evaluated whenever it is read back.
+  await symlink(resolve(import.meta.dirname, '../../wattpm'), join(dir, 'node_modules/wattpm'), 'dir')
 
   return dir
 }
@@ -142,7 +144,7 @@ test('should add a new application with new env variables', async t => {
   })
 
   // the new application has been generated
-  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.mjs'), dir)
+  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.ts'), dir)
   /*
     Evaluated rather than parsed, so an option reads as the value its variable carries -- the
     configuration holds the reference and .env holds the value, which is the whole point of the
@@ -500,7 +502,7 @@ test('should remove a plugin from an application and add the same on the other',
   })
 
   // the new application has been generated
-  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.mjs'), dir)
+  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.ts'), dir)
   /*
     Evaluated rather than parsed, so an option reads as the value its variable carries -- the
     configuration holds the reference and .env holds the value, which is the whole point of the
@@ -584,7 +586,7 @@ test('should handle new fields on new application', async t => {
   })
 
   // the new application has been generated
-  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.mjs'), dir)
+  const applicationConfigFile = await readConfiguration(join(dir, 'services', 'foobar', 'watt.config.ts'), dir)
   assert.equal(applicationConfigFile.plugins.packages, undefined)
 
   // the runtime .env should be updated

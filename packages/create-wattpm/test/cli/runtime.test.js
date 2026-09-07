@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../lib/utils.js'
-import { configurationFileIn, createTemporaryDirectory, executeCreatePlatformatic, getApplications, linkDependencies, linkWorkspacePackages, setupUserInputHandler } from './helper.js'
+import { configurationFileIn, createTemporaryDirectory, executeCreatePlatformatic, getApplications, linkWorkspacePackages, setupUserInputHandler } from './helper.js'
 
 test('Creates a Platformatic Runtime with two Applications', async t => {
   const root = await createTemporaryDirectory(t, 'runtime')
@@ -101,7 +101,10 @@ test('Add another application to an existing application', async t => {
     equal(await isFileAccessible(join(applicationRoot, 'plugins', 'example.js')), true)
     equal(await isFileAccessible(join(applicationRoot, 'plt-env.d.ts')), true)
 
-    await linkDependencies(root, ['@platformatic/service'])
+    // The second run evaluates the scaffolded root config, which imports `defineConfig` from
+    // `wattpm`; linking every workspace package supplies both that and the application capability an
+    // install would otherwise provide.
+    await linkWorkspacePackages(root)
   }
 
   {

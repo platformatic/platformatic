@@ -365,7 +365,7 @@
       "head": "config.server = {",
       "lines": 7
     },
-    "packages/runtime/lib/generator.js:201-204": {
+    "packages/runtime/lib/generator.js:202-205": {
       "sha": "8c75bbe7a87ccb10",
       "head": "setApplicationPort (application, ordinal) {",
       "lines": 4
@@ -770,10 +770,10 @@
       "head": "const patch = workerData?.applicationConfig?.configPatch",
       "lines": 6
     },
-    "packages/generators/lib/base-generator.js:534-543": {
-      "sha": "885fedd36393469a",
+    "packages/generators/lib/base-generator.js:534-544": {
+      "sha": "05d4e91262e5a2ce",
       "head": "async generatePackageJson () {",
-      "lines": 10
+      "lines": 11
     },
     "packages/wattpm/lib/commands/applications.js:92": {
       "sha": "2c92f2a224269c7d",

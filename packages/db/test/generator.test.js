@@ -21,7 +21,7 @@ test('should have default config', async () => {
     hostname: '0.0.0.0',
     plugin: true,
     tests: true,
-    typescript: false,
+    typescript: true,
     initGitRepository: false,
     dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
     devDependencies: {},
@@ -78,10 +78,10 @@ test('generate correct .env file', async t => {
     await dbApp.prepare()
 
     /*
-      A TypeScript project gets the TypeScript suffix, and `.mts` rather than `.ts` because the
-      generated package is CommonJS -- `export default` in a CommonJS `.ts` is a syntax error.
+      A TypeScript project gets the TypeScript suffix. The generated package is ESM
+      (`"type": "module"`), so the config file is `watt.config.ts` rather than `.mts`.
     */
-    const configFile = dbApp.getFileObject('watt.config.mts')
+    const configFile = dbApp.getFileObject('watt.config.ts')
     assert.ok(configFile.contents.startsWith("import { db } from '@platformatic/db'"), configFile.contents)
   }
 

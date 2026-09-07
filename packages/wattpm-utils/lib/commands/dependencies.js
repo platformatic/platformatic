@@ -140,26 +140,12 @@ export async function listApplicationDirectories (configurationFile) {
 }
 
 export async function installDependencies (logger, root, applications, production, packageManager) {
-  if (typeof applications === 'string') {
-    /*
-      The root only. Loading it fully would evaluate every application's configuration, and those
-      import the capabilities this command is about to install -- so the step that fixes the missing
-      dependencies would need them present to run. What is needed here is where the applications
-      are, which the root states by itself.
-    */
-    if (!applications.endsWith('.json')) {
-      applications = await listApplicationDirectories(applications)
-    } else {
-      const config = await loadConfiguration(applications, null, { validate: false })
-
-      /* c8 ignore next 3 - Hard to test */
-      if (!config) {
-        return
-      }
-
-      applications = config.applications
-    }
-  }
+  // The path to the root configuration, resolved into the application list only after the root's own
+  // dependencies are installed below -- because the root config imports `defineConfig` from wattpm,
+  // so evaluating it to discover where the applications are needs wattpm present, which the root
+  // install is what provides. Reading it first is what fails in a freshly scaffolded, not-yet-
+  // installed project.
+  const configurationFile = typeof applications === 'string' ? applications : null
 
   if (!packageManager) {
     packageManager = await getPackageManager(root)
@@ -190,6 +176,27 @@ export async function installDependencies (logger, root, applications, productio
       { error: ensureLoggableError(error) },
       'Unable to install dependencies of the application.'
     )
+  }
+
+  if (configurationFile !== null) {
+    /*
+      Now that the root's own dependencies are installed, the root configuration can be evaluated to
+      learn where its applications are. Only the root is read -- an application's own configuration
+      imports its capability, which the per-application install below is what provides, so those are
+      never evaluated here.
+    */
+    if (!configurationFile.endsWith('.json')) {
+      applications = await listApplicationDirectories(configurationFile)
+    } else {
+      const config = await loadConfiguration(configurationFile, null, { validate: false })
+
+      /* c8 ignore next 3 - Hard to test */
+      if (!config) {
+        return
+      }
+
+      applications = config.applications
+    }
   }
 
   for (let { id, path, moduleApplication, packageManager: applicationPackageManager } of applications) {

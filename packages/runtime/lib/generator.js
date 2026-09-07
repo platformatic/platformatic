@@ -78,6 +78,7 @@ export class RuntimeGenerator extends BaseGenerator {
   async generatePackageJson () {
     const template = {
       name: `${this.runtimeName}`,
+      type: 'module',
       scripts: {
         dev: this.config.devCommand ?? 'wattpm dev',
         build: this.config.buildCommand ?? 'wattpm build',
@@ -205,14 +206,11 @@ export class RuntimeGenerator extends BaseGenerator {
   }
 
   /*
-    The root is the one v4 configuration that is not a capability factory call: it imports
-    `defineConfig` from wattpm, whose whole job is to type its argument.
-  */
-  /*
-    The stamped plain-object form rather than an imported `defineConfig`, which is the machine-writer
-    case the `$schema` marker exists for: the wizard writes this file before anything is installed
-    and reads it back on a later run, so a root that imported `wattpm` could not be read in the
-    state that produced it. A person editing the file afterwards can switch to the imported form.
+    The root is spelled the same way an application is: it imports `defineConfig` from wattpm and
+    calls it, so the editor types and checks the shape the loader would otherwise only reject at
+    boot. The import means the file cannot be evaluated before its dependencies are installed --
+    which is why `wattpm install`/`create` install the root's own dependencies before reading it to
+    discover the applications (see installDependencies in wattpm-utils).
   */
   serializeConfigFile (config) {
     /*
@@ -225,7 +223,13 @@ export class RuntimeGenerator extends BaseGenerator {
     // thing, and leaving them would write the placeholder's own text where an expression belongs.
     const resolved = this.resolveScaffoldedPlaceholders(rest)
 
-    return `export default ${serializeConfiguration(resolved)}\n`
+    /*
+      The root is spelled the same way an application is: a factory call, `defineConfig` from
+      wattpm, whose whole job is to type its argument so the editor completes and checks the shape
+      the loader would otherwise only reject at boot. wattpm's defineConfig imports nothing, so the
+      root evaluates in the eval worker without paying for the runtime it would otherwise pull in.
+    */
+    return `import { defineConfig } from 'wattpm'\n\nexport default defineConfig(${serializeConfiguration(resolved)})\n`
   }
 
   async _getConfigFileContents () {
