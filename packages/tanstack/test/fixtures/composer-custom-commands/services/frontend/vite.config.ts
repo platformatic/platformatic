@@ -1,4 +1,4 @@
-import { getBasePath, getITC } from '@platformatic/globals'
+import { externalizePlatformaticGlobals, getBasePath, getITC } from '@platformatic/globals'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
@@ -13,6 +13,7 @@ export default defineConfig({
     process.env.NODE_ENV === 'production' &&
       nitro({
         preset: 'node-server',
+        modules: [externalizePlatformaticGlobals],
         output: {
           dir: 'dist'
         }

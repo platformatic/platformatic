@@ -1,11 +1,72 @@
-import { deepStrictEqual, strictEqual, throws } from 'node:assert'
+import { deepStrictEqual, equal, strictEqual, throws } from 'node:assert'
+import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import * as globals from '../lib/index.js'
+
+const require = createRequire(import.meta.url)
 
 test('getGlobal should be undefined before initialization', async () => {
   const isolated = await import('../lib/index.js?uninitialized')
 
   strictEqual(isolated.getGlobal(), undefined)
+})
+
+test('externalizes globals with Nitro 2 and Nitro 3 options', () => {
+  const nitro = {
+    options: {
+      traceDeps: ['existing-trace'],
+      externals: { external: ['existing-external'] },
+      rollupConfig: { external: ['existing-rollup-external'] }
+    }
+  }
+
+  globals.externalizePlatformaticGlobals(nitro)
+  globals.externalizePlatformaticGlobals(nitro)
+
+  deepStrictEqual(nitro.options.traceDeps, ['existing-trace', '@platformatic/globals'])
+  deepStrictEqual(nitro.options.externals.external, ['existing-external', '@platformatic/globals'])
+  deepStrictEqual(nitro.options.rollupConfig.external, ['existing-rollup-external', '@platformatic/globals'])
+})
+
+test('externalizes globals for Vite and other Rollup based builders', () => {
+  // Vite, Nuxt and TanStack Start only expose the Rollup configuration: the
+  // Nitro specific keys must still be created, and never overwrite each other.
+  const vite = { options: { rollupConfig: { external: ['vite-external'] } } }
+
+  globals.externalizePlatformaticGlobals(vite)
+
+  deepStrictEqual(vite.options.rollupConfig.external, ['vite-external', '@platformatic/globals'])
+  deepStrictEqual(vite.options.traceDeps, ['@platformatic/globals'])
+  deepStrictEqual(vite.options.externals.external, ['@platformatic/globals'])
+})
+
+test('externalizes globals from empty builder options', () => {
+  const builder = { options: {} }
+
+  globals.externalizePlatformaticGlobals(builder)
+
+  deepStrictEqual(builder.options.traceDeps, ['@platformatic/globals'])
+  deepStrictEqual(builder.options.externals.external, ['@platformatic/globals'])
+  deepStrictEqual(builder.options.rollupConfig.external, ['@platformatic/globals'])
+})
+
+test('preserves a single Rollup external value', () => {
+  const builder = { options: { rollupConfig: { external: 'existing-external' } } }
+
+  globals.externalizePlatformaticGlobals(builder)
+
+  deepStrictEqual(builder.options.rollupConfig.external, ['existing-external', '@platformatic/globals'])
+})
+
+test('preserves a Rollup external function', () => {
+  const external = source => source === 'existing-external'
+  const builder = { options: { rollupConfig: { external } } }
+
+  globals.externalizePlatformaticGlobals(builder)
+
+  equal(builder.options.rollupConfig.external('existing-external'), true)
+  equal(builder.options.rollupConfig.external('@platformatic/globals'), true)
+  equal(builder.options.rollupConfig.external('other'), false)
 })
 
 test('getters should return global fields', () => {
@@ -131,7 +192,18 @@ test('updateGlobals should merge and return global fields', () => {
 
   strictEqual(updated, original)
   deepStrictEqual(updated.config, { hello: 'world' })
+  strictEqual(Object.getOwnPropertySymbols(globalThis).includes(Symbol.for('plt.globals.state')), true)
+  strictEqual(Object.hasOwn(globals, 'kState'), false)
   strictEqual(Object.hasOwn(globalThis, 'platformatic'), false)
+})
+
+test('CommonJS and ESM entrypoints should share global fields', () => {
+  const commonjs = require('@platformatic/globals')
+  const logger = {}
+
+  globals.updateGlobals({ logger })
+
+  strictEqual(commonjs.getLogger(), logger)
 })
 
 test('removeGlobals should remove global fields', () => {
@@ -149,9 +221,9 @@ test('removeGlobals should remove global fields', () => {
   throws(() => globals.getMessaging(), { code: 'PLT_GLOBALS_MISSING_FIELD' })
 })
 
-test('removeGlobals should be noop without global object', () => {
+test('removeGlobals should be noop without initialized state', () => {
   return import('../lib/index.js?without-global').then(isolated => {
-    strictEqual(isolated.removeGlobals(['messaging']), undefined)
+    strictEqual(isolated.removeGlobals(['missing']), isolated.getGlobal())
   })
 })
 
@@ -165,11 +237,11 @@ test('getters should return undefined when throwOnMissing is false', () => {
   strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
 })
 
-test('separate module instances should not share global values', async () => {
+test('separate module instances should share global values', async () => {
   const isolated = await import('../lib/index.js?isolated')
 
   isolated.updateGlobals({ logger: { isolated: true } })
 
-  strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
+  strictEqual(globals.getLogger().isolated, true)
   strictEqual(isolated.getLogger().isolated, true)
 })

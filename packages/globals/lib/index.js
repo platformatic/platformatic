@@ -1,49 +1,110 @@
 import { MissingGlobalError } from './errors.js'
 
-const values = {}
-const fields = new Set()
-let initialized = false
+const globalsPackage = '@platformatic/globals'
+const kState = Symbol.for('plt.globals.state')
+
+if (!globalThis[kState]) {
+  Object.defineProperty(globalThis, kState, {
+    value: { values: {}, fields: new Set(), initialized: false },
+    enumerable: false,
+  })
+}
+
+const state = globalThis[kState]
+
+/**
+ * Marks `@platformatic/globals` as external so bundlers never inline a private
+ * copy of it into an application bundle. The runtime state lives on a symbol on
+ * `globalThis`, but a bundled copy would still register its own getters against
+ * a module instance the runtime never writes to, so the application would read
+ * empty values.
+ *
+ * This is builder agnostic: it accepts anything exposing an `options` object
+ * shaped like Nitro's, which covers Nitro 2 and 3, Vite/Rollup and Nuxt. Pass
+ * it directly where a builder accepts a module (for example Nitro's `modules`),
+ * or call it with `{ options }` when integrating a builder that only exposes
+ * its configuration object.
+ *
+ * @param {{ options: object }} builder Nitro, Vite, Nuxt, or any builder
+ *   exposing a compatible `options` object. Unknown keys are left untouched.
+ */
+export function externalizePlatformaticGlobals (builder) {
+  const options = builder.options
+
+  // Nitro traces these dependencies so they survive into the build output.
+  options.traceDeps ??= []
+  if (!options.traceDeps.includes(globalsPackage)) {
+    options.traceDeps.push(globalsPackage)
+  }
+
+  // Nitro's own externals list.
+  options.externals ??= {}
+  options.externals.external ??= []
+  if (!options.externals.external.includes(globalsPackage)) {
+    options.externals.external.push(globalsPackage)
+  }
+
+  // The underlying Rollup configuration, shared by Nitro, Vite and Nuxt.
+  // `external` accepts a predicate, an array or a single value, so preserve
+  // whichever form the builder already uses.
+  options.rollupConfig ??= {}
+  const external = options.rollupConfig.external
+
+  if (typeof external === 'function') {
+    options.rollupConfig.external = (source, importer, isResolved) => {
+      return source === globalsPackage || external(source, importer, isResolved)
+    }
+  } else if (Array.isArray(external)) {
+    if (!external.includes(globalsPackage)) {
+      external.push(globalsPackage)
+    }
+  } else if (external) {
+    options.rollupConfig.external = [external, globalsPackage]
+  } else {
+    options.rollupConfig.external = [globalsPackage]
+  }
+}
 
 function getField (name, options) {
   const { throwOnMissing = true } = options ?? {}
 
-  if (throwOnMissing && !fields.has(name)) {
+  if (throwOnMissing && !state.fields.has(name)) {
     throw new MissingGlobalError(name)
   }
 
-  return values[name]
+  return state.values[name]
 }
 
 export function getGlobal () {
-  return initialized ? values : undefined
+  return state.initialized ? state.values : undefined
 }
 
 export function updateGlobals (updates) {
-  initialized = true
+  state.initialized = true
 
   for (const [key, value] of Object.entries(updates)) {
-    values[key] = value
-    fields.add(key)
+    state.values[key] = value
+    state.fields.add(key)
   }
 
-  return values
+  return state.values
 }
 
 export function removeGlobals (names) {
-  if (!initialized) {
+  if (!state.initialized) {
     return undefined
   }
 
   for (const name of names) {
-    delete values[name]
-    fields.delete(name)
+    delete state.values[name]
+    state.fields.delete(name)
   }
 
-  return values
+  return state.values
 }
 
 export function hasField (name) {
-  return fields.has(name)
+  return state.fields.has(name)
 }
 
 export function isBuilding (options) {

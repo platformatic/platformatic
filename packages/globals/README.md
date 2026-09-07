@@ -32,7 +32,7 @@ import { getBasePath } from '@platformatic/globals'
 const basePath = getBasePath({ throwOnMissing: false }) ?? ''
 ```
 
-Runtime state is kept private to the resolved `@platformatic/globals` package instance. Use the typed getters and setters to access it.
+Runtime state is shared through a non-enumerable global symbol so that duplicate package instances can access the same values. Use the typed getters and setters to access it.
 
 ## Documentation
 

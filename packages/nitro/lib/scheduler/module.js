@@ -1,6 +1,7 @@
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { externalizePlatformaticGlobals } from '@platformatic/globals'
 import {
   normalizeScheduledTasks,
   SCHEDULER_MANIFEST_FILENAME,
@@ -13,6 +14,8 @@ export { SCHEDULER_MANIFEST_FILENAME }
 
 export default function schedulerModule (nitro) {
   const scheduledTasks = normalizeScheduledTasks(nitro.options.scheduledTasks)
+
+  externalizePlatformaticGlobals(nitro)
 
   nitro.options.scheduledTasks = {}
   nitro.options.experimental ??= {}
