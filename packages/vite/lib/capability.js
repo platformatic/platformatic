@@ -17,7 +17,6 @@ import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
 import { platformaticSkewPlugin } from './skew-plugin.js'
 import { platformaticHttp2HeadersPlugin } from './http2-headers-plugin.js'
-import { platformaticGlobalsPlugin } from './globals.js'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
@@ -129,7 +128,6 @@ export class ViteCapability extends BaseCapability {
           outDir: config.application.outputDirectory
         },
         plugins: [
-          platformaticGlobalsPlugin(),
           skewPlugin,
           {
             name: 'platformatic-build',
@@ -257,7 +255,6 @@ export class ViteCapability extends BaseCapability {
       clearScreen: false,
       optimizeDeps: { force: false },
       plugins: [
-        platformaticGlobalsPlugin(),
         platformaticHttp2HeadersPlugin(),
         ...(skewPlugin ? [skewPlugin] : [])
       ],

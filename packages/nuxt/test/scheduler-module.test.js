@@ -30,10 +30,6 @@ test('moves grouped scheduled tasks to the Platformatic runtime plugin', async (
 
   deepStrictEqual(nitroConfig.scheduledTasks, [])
   equal(nitroConfig.experimental.tasks, true)
-  deepStrictEqual(nitroConfig.traceDeps, ['@platformatic/globals'])
-  deepStrictEqual(nitroConfig.externals.external, ['@platformatic/globals'])
-  deepStrictEqual(nitroConfig.rollupConfig.external, ['@platformatic/globals'])
-
   deepStrictEqual(nitroConfig.runtimeConfig.platformaticScheduler.scheduledTasks, [
     { id: '0', cron: '* * * * *', tasks: ['log'] },
     { id: '1', cron: '0 * * * *', tasks: ['a', 'b'] }
@@ -53,10 +49,7 @@ test('supports the array configuration format and preserves existing config', as
     experimental: { tasks: false },
     handlers: [{ route: '/existing', method: 'get', handler: 'existing.mjs' }],
     plugins: ['existing-plugin.mjs'],
-    runtimeConfig: { existing: true },
-    traceDeps: ['existing-trace'],
-    externals: { external: ['existing-external'] },
-    rollupConfig: { external: ['existing-rollup-external'] }
+    runtimeConfig: { existing: true }
   }
 
   await hooks['nitro:config'](nitroConfig)
@@ -69,9 +62,6 @@ test('supports the array configuration format and preserves existing config', as
   equal(nitroConfig.handlers.length, 1)
   equal(nitroConfig.plugins.length, 2)
   equal(nitroConfig.runtimeConfig.existing, true)
-  deepStrictEqual(nitroConfig.traceDeps, ['existing-trace', '@platformatic/globals'])
-  deepStrictEqual(nitroConfig.externals.external, ['existing-external', '@platformatic/globals'])
-  deepStrictEqual(nitroConfig.rollupConfig.external, ['existing-rollup-external', '@platformatic/globals'])
 })
 
 test('emits the manifest in the build output', async () => {

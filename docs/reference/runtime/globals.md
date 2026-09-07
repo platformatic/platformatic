@@ -51,44 +51,11 @@ const basePath = getBasePath({ throwOnMissing: false }) ?? ''
 
 Setter functions, such as `setCustomHealthCheck()`, throw when the corresponding runtime API is not available.
 
-## Bundled server applications
-
-Runtime API values are private to the loaded `@platformatic/globals` package instance. Server-side bundlers must keep
-`@platformatic/globals` external so application code resolves the same package instance initialized by Platformatic.
-
-Platformatic configures this automatically for managed Next.js and Vite builds. Applications built with a custom
-command or outside Platformatic must apply `externalizePlatformaticGlobals` themselves.
-
-The helper is builder agnostic: it accepts any builder exposing an `options` object shaped like Nitro's, which covers
-Nitro 2 and 3, Vite, Rollup, Nuxt, and TanStack Start. Pass it wherever the builder accepts a module:
-
-```js
-import { externalizePlatformaticGlobals } from '@platformatic/globals'
-
-export default defineNitroConfig({
-  modules: [externalizePlatformaticGlobals]
-})
-```
-
-When a builder only exposes its configuration object, call the helper with it directly:
-
-```js
-import { externalizePlatformaticGlobals } from '@platformatic/globals'
-
-// `options` is the builder configuration, for example a Vite or Rollup config.
-externalizePlatformaticGlobals({ options })
-```
-
-The helper preserves externalization options the build already declares, in every form Rollup accepts for `external`
-(a predicate, an array, or a single value). The Nitro, Nuxt, and TanStack references show the corresponding framework
-configuration.
-
 ## Helpers
 
 | API | Description |
 | --- | --- |
 | `getGlobal<T>()` | Returns the complete runtime API object, optionally extended with the generic type `T`. Prefer the specific getters below. |
-| `externalizePlatformaticGlobals(builder)` | Configures any Nitro, Vite, Rollup, or Nuxt based builder to keep `@platformatic/globals` external. Use it for builds Platformatic does not manage. |
 | `hasField(name)` | Returns whether the runtime API identified by `name` is available. |
 | `updateGlobals(updates)` | Updates the private runtime API object with the values in `updates` and returns the updated object. This helper is intended for Platformatic internals and tests. |
 | `removeGlobals(fields)` | Removes fields from the private runtime API object and returns the updated object. This helper is intended for Platformatic internals and tests. |

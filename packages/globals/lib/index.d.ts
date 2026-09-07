@@ -56,33 +56,6 @@ export interface OptionalGlobalGetterOptions {
   throwOnMissing: false
 }
 
-/** The shapes Rollup accepts for `external`, shared by Nitro, Vite and Nuxt. */
-export type BundlerExternal =
-  | string
-  | RegExp
-  | (string | RegExp)[]
-  | ((source: string, importer: string | undefined, isResolved: boolean) => boolean | null | void)
-
-/** @deprecated Use `BundlerExternal` instead. */
-export type NitroExternal = BundlerExternal
-
-/**
- * The builder options `externalizePlatformaticGlobals` understands. Nitro 2 and
- * 3, Vite/Rollup and Nuxt all expose a compatible subset.
- */
-export interface BundlerExternalizationOptions {
-  traceDeps?: (string | RegExp)[]
-  externals?: {
-    external?: (string | RegExp)[]
-  }
-  rollupConfig?: {
-    external?: BundlerExternal
-  }
-}
-
-/** @deprecated Use `BundlerExternalizationOptions` instead. */
-export type NitroExternalizationOptions = BundlerExternalizationOptions
-
 // This is purposely a copy of the one in @platformatic/itc to avoid the dependency
 export interface ITC {
   send (message: string, data: any, options?: Record<string, any>): Promise<any>
@@ -193,14 +166,6 @@ export interface PlatformaticGlobal {
 export type PlatformaticGlobalInterface = PlatformaticGlobal
 
 export declare function getGlobal<T extends {}> (): (PlatformaticGlobal & T) | undefined
-/**
- * Marks `@platformatic/globals` as external so bundlers never inline a private
- * copy of it. Builder agnostic: accepts Nitro, Vite, Nuxt, or any builder
- * exposing a compatible `options` object.
- */
-export declare function externalizePlatformaticGlobals (builder: {
-  options: BundlerExternalizationOptions
-}): void
 export declare function updateGlobals (updates: Partial<PlatformaticGlobal>): PlatformaticGlobal
 export declare function removeGlobals (fields: string[]): PlatformaticGlobal | undefined
 export declare function hasField (name: string): boolean

@@ -34,7 +34,7 @@ const logger = getLogger()
 setBasePath('/api')
 ```
 
-Runtime API values are private to the resolved `@platformatic/globals` package instance. Applications and Platformatic internals must use compatible dependency trees so they resolve the same package instance. Server-side bundlers must also keep the package external. Platformatic configures managed Next.js and Vite builds automatically; see the [Runtime APIs bundling guidance](../reference/runtime/globals.md#bundled-server-applications) for Nitro, Vite, Rollup, and Nuxt based builds and custom commands.
+Runtime API values are no longer exposed on `globalThis.platformatic`: they are kept in an internal, non-enumerable store shared across every copy of `@platformatic/globals` in the process, so the typed getters and setters work regardless of how the package is resolved or bundled.
 
 ## Move listener configuration to the capability
 

@@ -1,7 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { externalizePlatformaticGlobals } from '@platformatic/globals'
 import {
   normalizeScheduledTasks,
   SCHEDULER_MANIFEST_FILENAME,
@@ -17,8 +16,6 @@ export default function schedulerModule (_options, nuxt) {
 
   nuxt.hook('nitro:config', nitroConfig => {
     scheduledTasks = normalizeScheduledTasks(nitroConfig.scheduledTasks)
-
-    externalizePlatformaticGlobals({ options: nitroConfig })
 
     nitroConfig.scheduledTasks = []
     nitroConfig.experimental ??= {}

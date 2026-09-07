@@ -339,8 +339,8 @@ export async function ensureDependencies (configOrPaths) {
 
         // Turbopack follows workspace symlinks before applying serverExternalPackages, so use a
         // physical proxy that represents the package layout consumers get from the registry.
-        const esmEntrypoint = pathToFileURL(resolve(resolved, 'lib/index.js')).href
-        const commonjsEntrypoint = resolve(resolved, 'lib/index.cjs')
+        const entrypoint = resolve(resolved, 'lib/index.js')
+        const esmEntrypoint = pathToFileURL(entrypoint).href
         await writeFile(
           resolve(moduleRoot, 'package.json'),
           JSON.stringify({
@@ -356,9 +356,11 @@ export async function ensureDependencies (configOrPaths) {
           resolve(moduleRoot, 'index.js'),
           `export * from ${JSON.stringify(esmEntrypoint)}\nexport { default } from ${JSON.stringify(esmEntrypoint)}\n`
         )
+        // The package is ESM only: CommonJS consumers reach it through
+        // require(esm), supported on every Node.js version we target.
         await writeFile(
           resolve(moduleRoot, 'index.cjs'),
-          `module.exports = require(${JSON.stringify(commonjsEntrypoint)})\n`
+          `module.exports = require(${JSON.stringify(entrypoint)})\n`
         )
         continue
       }
