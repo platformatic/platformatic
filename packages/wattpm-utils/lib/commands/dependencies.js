@@ -17,19 +17,36 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 
-// This function will not perform the command if the .npmrc file contains the 'dry-run' flag - This is useful in tests
+// This function will not perform the command if a .npmrc file contains the 'dry-run' flag - This is
+// useful in tests. The whole ancestor chain is consulted, not just the command's own directory,
+// because that is how the package managers themselves resolve .npmrc: a fixture that marks its root
+// dry-run means it for every install inside it, including the one for an application in a
+// subdirectory. Checking only the immediate directory let a sub-application install run for real --
+// which, against a fixture whose dependencies are symlinked to a prerelease of the workspace, is a
+// dependency graph npm cannot reconcile.
 async function executeCommand (root, ...args) {
-  const npmrc = resolve(root, '.npmrc')
-  if (existsSync(npmrc)) {
-    try {
-      const contents = await readFile(npmrc, 'utf-8')
-      if (contents.split(/\r?\n/).some(line => /^dry-run\s*=\s*true\s*$/.test(line))) {
-        return
+  let directory = resolve(root)
+
+  while (true) {
+    const npmrc = join(directory, '.npmrc')
+
+    if (existsSync(npmrc)) {
+      try {
+        const contents = await readFile(npmrc, 'utf-8')
+        if (contents.split(/\r?\n/).some(line => /^dry-run\s*=\s*true\s*$/.test(line))) {
+          return
+        }
+        /* c8 ignore next 5 */
+      } catch (error) {
+        // No-op
       }
-      /* c8 ignore next 5 */
-    } catch (error) {
-      // No-op
     }
+
+    const parent = dirname(directory)
+    if (parent === directory) {
+      break
+    }
+    directory = parent
   }
 
   /* c8 ignore next - Mistakenly reported as uncovered by C8 */
