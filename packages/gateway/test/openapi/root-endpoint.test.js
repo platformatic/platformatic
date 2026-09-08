@@ -200,13 +200,13 @@ test('should have links to composed applications', async t => {
   assert.ok(content.includes('<div class="service-path">/internal/service3</div>'))
 
   assert.ok(
-    content.includes("document.getElementById('proxy-service1-external-link').href = baseUrl + '/internal/service1/'")
+    content.includes("document.getElementById('proxy-service1-external-link').href = baseUrl + '/internal/service1/' + deploymentQuery")
   )
   assert.ok(
-    content.includes("document.getElementById('proxy-service2-external-link').href = baseUrl + '/internal/service2/'")
+    content.includes("document.getElementById('proxy-service2-external-link').href = baseUrl + '/internal/service2/' + deploymentQuery")
   )
   assert.ok(
-    content.includes("document.getElementById('proxy-service3-external-link').href = baseUrl + '/internal/service3/'")
+    content.includes("document.getElementById('proxy-service3-external-link').href = baseUrl + '/internal/service3/' + deploymentQuery")
   )
 
   assert.ok(content.includes('<div class="service-path">/service1</div>'))
@@ -219,6 +219,8 @@ test('should have links to composed applications', async t => {
   // "/?dpl=v1/internal/service1/"). See packages/gateway/public/index.njk.
   assert.ok(content.includes("const basePath = window.location.pathname.replace(/\\/$/, '')"))
   assert.ok(content.includes('const baseUrl = window.location.origin + basePath'))
+  assert.ok(content.includes("const deploymentId = new URLSearchParams(window.location.search).get('dpl')"))
+  assert.ok(content.includes("const deploymentQuery = deploymentId ? `?dpl=${encodeURIComponent(deploymentId)}` : ''"))
   // The buggy form specifically: href includes the query string.
   assert.ok(!content.includes('const href = window.location.href'))
 })
