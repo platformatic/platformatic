@@ -15,6 +15,10 @@ export const AddressInUseError = createError(
   `${ERROR_PREFIX}_EADDR_IN_USE`,
   'Port %d is already in use by applications "%s" and "%s"'
 )
+export const ApplicationsPortsOverlapError = createError(
+  `${ERROR_PREFIX}_APPLICATIONS_PORTS_OVERLAP`,
+  'The applications "%s" (%s) and "%s" (%s) are both configured to listen on port %d. Applications cannot share a port: change one of the ports or make them listen on different hostnames.'
+)
 export const WorkerAddressInUseError = createError(
   `${ERROR_PREFIX}_WORKER_EADDR_IN_USE`,
   'Port %d is already in use by another worker of the application "%s". Multiple workers can share a port only when the reusePort feature is available in your OS, otherwise set "server.portAssignment" to "perWorkerIncrement" in the application configuration or use a single worker.'
