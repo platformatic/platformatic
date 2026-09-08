@@ -117,6 +117,17 @@ export class Generator extends BaseGenerator {
     }
 
     /*
+      The entrypoint's port lives in the env like every other scaffolded port: the config file reads
+      it back as `Number(process.env.<PORT> || 3042)`, and .env carries the default so a reader sees
+      what it resolves to. Registered before the config file is generated, because the placeholder
+      resolution reads the env to learn the numeric fallback. Non-entrypoint applications write no
+      port and stay reachable only on the mesh.
+    */
+    if (this.config.entrypoint) {
+      this.addEnvVar('PORT', this.config.port, { overwrite: false, default: true })
+    }
+
+    /*
       Through the shared writer rather than by hand. This used to add its own `watt.json`, which was
       the same name the base class writes and so replaced it -- once that became a module they would
       have been two configurations in one directory, which the loader refuses.
@@ -130,11 +141,24 @@ export class Generator extends BaseGenerator {
   }
 
   /*
-    Nothing to configure: a Node application declares which capability it is and lets the detector
-    do the rest. The empty object still gets a file, because owning one is how an application
-    declares its scope.
+    A Node application declares which capability it is and lets the detector do the rest, so its
+    configuration is empty -- except for the one thing the detector cannot infer. A Node capability
+    binds an external port only when its configuration names one, so a sole application (the runtime's
+    entrypoint) would otherwise start nothing reachable. When the runtime generator has marked this
+    application the entrypoint, the port is written the same way every other capability writes it: a
+    placeholder resolved against the scaffolded env var, so the file reads
+    `Number(process.env.<PORT> || 3042)`. The empty object still gets a file otherwise, because
+    owning one is how an application declares its scope.
   */
   async _getConfigFileContents () {
-    return {}
+    if (!this.config.entrypoint) {
+      return {}
+    }
+
+    return {
+      server: {
+        port: `{${this.getEnvVarName('PORT')}}`
+      }
+    }
   }
 }

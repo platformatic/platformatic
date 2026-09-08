@@ -365,10 +365,20 @@
       "head": "config.server = {",
       "lines": 7
     },
-    "packages/runtime/lib/generator.js:202-205": {
+    "packages/runtime/lib/generator.js:212-215": {
       "sha": "8c75bbe7a87ccb10",
       "head": "setApplicationPort (application, ordinal) {",
       "lines": 4
+    },
+    "packages/runtime/lib/generator.js:189-209": {
+      "sha": "c88aeae1e614440f",
+      "head": "setApplicationsConfigValues () {",
+      "lines": 21
+    },
+    "packages/node/lib/generator.js:153-163": {
+      "sha": "afaecc89070b02b4",
+      "head": "async _getConfigFileContents () {",
+      "lines": 11
     },
     "packages/generators/lib/base-generator.js:170-171": {
       "sha": "bf35ca8d2b293c27",

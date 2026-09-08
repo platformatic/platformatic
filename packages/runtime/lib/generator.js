@@ -188,6 +188,15 @@ export class RuntimeGenerator extends BaseGenerator {
 
   setApplicationsConfigValues () {
     let newApplicationOrdinal = 0
+    // A runtime of exactly one application has no mesh of siblings to fall back on: with the v4
+    // entrypoint gone, a sole application that declares no port would bind nothing and be reachable
+    // from nowhere. So the sole application is marked as the entrypoint here -- the one place the
+    // whole application set is known -- and a capability that otherwise scaffolds no port reads the
+    // flag and exposes itself on PORT/3042 (@platformatic/node does; the framework capabilities,
+    // which also scaffold no port, can adopt the same flag). The count is the gate: the moment a
+    // second application exists, nothing is forced and a portless application stays mesh-only, which
+    // is what keeps "expose the one" from becoming "expose them all".
+    const totalApplications = this.existingApplications.length + this.applications.length
     this.applications.forEach(({ name, application }) => {
       if (!application.config) {
         // set default config
@@ -196,6 +205,7 @@ export class RuntimeGenerator extends BaseGenerator {
       const existingOrdinal = this.existingApplications.indexOf(name)
       const ordinal = existingOrdinal === -1 ? this.existingApplications.length + newApplicationOrdinal++ : existingOrdinal
       this.setApplicationPort(application, ordinal)
+      application.config.entrypoint = totalApplications === 1
     })
   }
 
@@ -652,6 +662,13 @@ export class WrappedGenerator extends BaseGenerator {
   async #updateEnvironment () {
     this.addEnvVars(getRuntimeBaseEnvVars(this.config), { overwrite: false, default: true })
 
+    // A wrapped project is a runtime of one application by construction, so that application is the
+    // one that must face the network -- otherwise the wrap would leave the code it was built around
+    // reachable from nowhere. The port is registered here so #createConfigFile can read it back as
+    // `Number(process.env.PORT || 3042)`; bare PORT rather than a scoped name, because the wrapped
+    // application is the root's own singular one and is what a hosting platform's PORT addresses.
+    this.addEnvVar('PORT', 3042, { overwrite: false, default: true })
+
     this.addFile({
       path: '',
       file: '.env',
@@ -721,7 +738,9 @@ export class WrappedGenerator extends BaseGenerator {
     */
     const config = {
       ...this.resolveScaffoldedPlaceholders(getRuntimeWrappableProperties()),
-      application: { config: { module: this.module } }
+      application: {
+        config: this.resolveScaffoldedPlaceholders({ module: this.module, server: { port: '{PORT}' } })
+      }
     }
 
     this.addFile({

@@ -240,14 +240,18 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
   const envFile = await readFile(resolve(temporaryFolder, '.env'), 'utf-8')
   const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
 
+  // A wrapped project is a runtime of one application, so the wrapped application is exposed on the
+  // default port and PORT carries the 3042 default into both env files.
   deepStrictEqual(envFile.split(/\r?\n/), [
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   deepStrictEqual(envSampleFile.split(/\r?\n/), [
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'package.json')), 'utf-8'), {
@@ -363,14 +367,16 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     'A=B',
     'C=D',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   deepStrictEqual(envSampleFile.split(/\r?\n/), [
     'E=F',
     'G=H',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'package.json')), 'utf-8'), {

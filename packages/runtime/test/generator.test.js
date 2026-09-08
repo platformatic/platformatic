@@ -6,6 +6,7 @@ import { basename, join, resolve } from 'node:path'
 import test from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { Generator as GatewayGenerator } from '../../gateway/lib/generator.js'
+import { Generator as NodeGenerator } from '../../node/index.js'
 import { Generator as ApplicationGenerator } from '../../service/lib/generator.js'
 import { loadConfiguration as loadRuntimeConfiguration } from '../index.js'
 import { RuntimeGenerator, WrappedGenerator } from '../lib/generator.js'
@@ -94,6 +95,45 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
     logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
     managementApi: '{PLT_MANAGEMENT_API}'
   })
+})
+
+test('RuntimeGenerator - exposes the sole application on the default port', async () => {
+  const rg = new RuntimeGenerator({ targetDirectory: '/tmp/runtime-single' })
+
+  const only = new NodeGenerator()
+  rg.addApplication(only, 'api')
+
+  await rg.prepare()
+
+  // A Node capability writes no port of its own, so without the entrypoint rule the runtime's one
+  // application would bind nothing and be reachable from nowhere.
+  const config = only.files.find(file => /^watt\.config\./.test(file.file))
+  assert.ok(config.contents.includes('port: Number(process.env.PLT_API_PORT || 3042)'), config.contents)
+
+  const env = rg.getFileObject('.env')
+  assert.ok(env.contents.includes('PLT_API_PORT=3042'), env.contents)
+})
+
+test('RuntimeGenerator - leaves portless applications on the mesh once there is more than one', async () => {
+  const rg = new RuntimeGenerator({ targetDirectory: '/tmp/runtime-multi' })
+
+  const first = new NodeGenerator()
+  rg.addApplication(first, 'api')
+  const second = new NodeGenerator()
+  rg.addApplication(second, 'web')
+
+  await rg.prepare()
+
+  // The count is the whole gate: with a sibling present, a Node application declares no port and
+  // stays reachable only through the mesh -- which is what keeps "expose the one" from exposing all.
+  for (const application of [first, second]) {
+    const config = application.files.find(file => /^watt\.config\./.test(file.file))
+    assert.ok(config.contents.includes('node({})'), config.contents)
+    assert.ok(!config.contents.includes('server'), config.contents)
+  }
+
+  const env = rg.getFileObject('.env')
+  assert.ok(!env.contents.includes('PORT'), env.contents)
 })
 
 test('RuntimeGenerator - should have a valid package.json', async () => {
@@ -456,15 +496,19 @@ test('WrappedGenerator - should create valid environment files', async t => {
   const env = generator.getFileObject('.env')
   const envSample = generator.getFileObject('.env.sample')
 
+  // A wrapped project is a runtime of one application, so the wrapped application is exposed on the
+  // default port -- PORT is registered for it and carries the 3042 default into both env files.
   assert.deepStrictEqual(env.contents.split(/\r?\n/), [
     'A=1',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 })
 
@@ -485,13 +529,15 @@ test('should support adding env variables only to .env and not .env.sample', asy
     'A=1',
     'FOO=A',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
     'FOO=1',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 })
 
@@ -647,6 +693,10 @@ test('WrappedGenerator - what it writes loads, and runs the application it wrapp
     ['wrapped-app']
   )
   assert.deepStrictEqual(config.logger.level, 'info')
+  // A wrapped project is a runtime of one, so its application is exposed: the port reads back from
+  // the .env written beside it rather than as the text of a placeholder.
+  const application = config.applications.find(entry => entry.id === 'wrapped-app')
+  assert.deepStrictEqual(application.resolvedConfig.server.port, 3042)
 })
 
 /*

@@ -1417,7 +1417,18 @@ per-application and visible: `service`'s generator writes `server: { hostname,
 port, logger }` into every application's own config
 (`service/lib/generator.js:432-438` — the `!isRuntimeContext` guard is gone) and
 the runtime generator hands application *i* port `3042 + i`
-(`runtime/lib/generator.js:202-205`) while writing no root `server` block at all.
+(`runtime/lib/generator.js:212-215`) while writing no root `server` block at all.
+The capabilities that scaffold no `server` of their own — `@platformatic/node` and
+the framework ones — are where the entrypoint rule earns its place: when the runtime
+being scaffolded holds exactly one application, the generator marks that sole
+application the entrypoint (`runtime/lib/generator.js:189-209`), and a marked node
+application writes `server: { port: Number(process.env.<PORT> || 3042) }` where it
+otherwise writes an empty config (`node/lib/generator.js:153-163`). So a
+single-application project is reachable the moment it boots, and the count is the
+gate: a second application turns the mark off and a portless sibling stays mesh-only.
+This is the scaffolding counterpart of the loader's own single-listener model — the
+port lives in the generated configuration, visible and overridable, rather than
+becoming a hidden loader default.
 v4's code-first equivalent is the same thing spelled in the factory, with the
 variable scoped as v3 scoped it: `next({ server: { port:
 Number(process.env.PLT_API_PORT || 3043) } })`. v3's `getEnvVarName` returned a bare
@@ -3310,7 +3321,7 @@ export default {
   would silently redefine the script the generator just wrote. The v3 wizard's
   `3042` prompt is gone from the root — ports are per-application now, and the
   generator hands application *i* `3042 + i`
-  (`runtime/lib/generator.js:202-205`). The wizard's closing output prints where `watt.config.ts`
+  (`runtime/lib/generator.js:212-215`). The wizard's closing output prints where `watt.config.ts`
   goes and the one-line bare-factory form, so later customization is one
   copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
