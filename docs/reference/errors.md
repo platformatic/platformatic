@@ -201,6 +201,9 @@
 ### PLT_RUNTIME_APPLICATIONS_DEPENDENCIES_CYCLE
 **Message:** Detected a cycle in the applications dependencies: %s 
 
+### PLT_RUNTIME_APPLICATIONS_PORTS_OVERLAP
+**Message:** The applications "%s" (%s) and "%s" (%s) are both configured to listen on port %d. Applications cannot share a port: change one of the ports or make them listen on different hostnames. 
+
 ### PLT_RUNTIME_CANNOT_MAP_SPECIFIER_TO_ABSOLUTE_PATH
 **Message:** Cannot map "%s" to an absolute path 
 
@@ -272,6 +275,9 @@
 
 ### PLT_RUNTIME_INSPECTOR_PORT
 **Message:** Inspector port must be 0 or in range 1024 to 65535 
+
+### PLT_RUNTIME_INVALID_APPLICATION_MODULE
+**Message:** Application module "%s" must export a create function 
 
 ### PLT_RUNTIME_INVALID_ARGUMENT
 **Message:** Invalid argument: "%s" 

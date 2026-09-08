@@ -5,6 +5,7 @@ import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import {
+  ApplicationsPortsOverlapError,
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
@@ -211,6 +212,100 @@ export async function prepareAddedApplications (config, entries, existingIds = [
   return prepared
 }
 
+const hostnameWildcards = new Set(['0.0.0.0', '::', '[::]'])
+
+// The listener an application declares in its own configuration, when it can be determined without
+// starting it. A port coming from an environment variable which was not replaced, an ephemeral port
+// and a missing server block all yield null, in which case only the start time check applies.
+function declaredListener (applicationConfig) {
+  const server = applicationConfig?.server
+
+  if (!server) {
+    return null
+  }
+
+  const port = Number(server.port)
+
+  if (!Number.isInteger(port) || port <= 0) {
+    return null
+  }
+
+  return { port, hostname: server.hostname, perWorker: server.portAssignment === 'perWorkerIncrement' }
+}
+
+// Two declared listeners can only be compared when both hostnames are known. When a hostname is
+// omitted the capability picks its own default, so unless the other side is a wildcard - which
+// overlaps with anything - the comparison is left to the start time check.
+function declaredListenersOverlap (first, second) {
+  const hostname = first.hostname?.toLowerCase()
+  const otherHostname = second.hostname?.toLowerCase()
+
+  // A wildcard overlaps with any other hostname, known or not
+  if (hostnameWildcards.has(hostname) || hostnameWildcards.has(otherHostname)) {
+    return true
+  }
+
+  // Both applications rely on the same capability default, so they do collide
+  if (typeof hostname === 'undefined' && typeof otherHostname === 'undefined') {
+    return true
+  }
+
+  // Only one of the two defaults is unknown, so nothing can be concluded here
+  if (typeof hostname === 'undefined' || typeof otherHostname === 'undefined') {
+    return false
+  }
+
+  return hostname === otherHostname
+}
+
+function describeDeclaredPorts (listener) {
+  const { port, last } = listener
+  return port === last ? `port ${port}` : `ports ${port}-${last}, one per worker`
+}
+
+// Rejects applications whose declared ports overlap before any of them is started, so that the
+// failure does not depend on which worker happens to report its URL first. This is best effort:
+// applications whose port cannot be determined here are checked when their workers start.
+function verifyApplicationsPorts (applications) {
+  const listeners = []
+
+  for (const application of applications) {
+    // v4 keeps the validated capability configuration on the application (resolvedConfig), so the
+    // declared listener is read from it directly rather than being stashed on a symbol during a
+    // separate config-loading pass, as the v3 path did.
+    const listener = declaredListener(application.resolvedConfig)
+
+    // Dynamic scaling changes how many ports the application ends up using, so leave it to the start time check
+    if (!listener || application.workers?.dynamic) {
+      continue
+    }
+
+    const workers = listener.perWorker ? (application.workers?.static ?? 1) : 1
+    listeners.push({ ...listener, id: application.id, last: listener.port + workers - 1 })
+  }
+
+  for (let i = 0; i < listeners.length; i++) {
+    for (let j = i + 1; j < listeners.length; j++) {
+      const first = listeners[i]
+      const second = listeners[j]
+
+      const port = Math.max(first.port, second.port)
+
+      if (port > Math.min(first.last, second.last) || !declaredListenersOverlap(first, second)) {
+        continue
+      }
+
+      throw new ApplicationsPortsOverlapError(
+        first.id,
+        describeDeclaredPorts(first),
+        second.id,
+        describeDeclaredPorts(second),
+        port
+      )
+    }
+  }
+}
+
 // Everything an application needs regardless of how its capability was determined. v3 discovers
 // that by loading the application's config file; v4 has it from the loader's envelope before any
 // worker exists.
@@ -302,6 +397,8 @@ export async function finalizeConfiguration (config, applications, context, prod
   for (let i = 0; i < applications.length; ++i) {
     await prepare(config, applications[i], defaultWorkers)
   }
+
+  verifyApplicationsPorts(applications)
 
   if (typeof config.metrics === 'boolean') {
     config.metrics = {
