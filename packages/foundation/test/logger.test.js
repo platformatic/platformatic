@@ -1,4 +1,4 @@
-import { deepStrictEqual, strictEqual, throws } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert'
 import { once } from 'node:events'
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs'
 import { hostname as currentHostname } from 'node:os'
@@ -11,6 +11,7 @@ import {
   buildPinoOptions,
   buildPinoTimestamp,
   disablePinoDirectWrite,
+  forwardedPinoOptions,
   loadFormatters,
   setPinoFormatters,
   setPinoTimestamp
@@ -509,6 +510,41 @@ test('buildPinoOptions - with valid customLevels', t => {
     myLevel: 35,
     anotherLevel: 45
   })
+})
+
+test('buildPinoOptions - forwards additional pino options', t => {
+  const loggerConfig = {
+    levelVal: 35,
+    useOnlyCustomLevels: true,
+    levelComparison: 'DESC',
+    msgPrefix: '[PLT] ',
+    nestedKey: 'payload',
+    errorKey: 'error',
+    depthLimit: 3,
+    edgeLimit: 10,
+    crlf: true,
+    enabled: false
+  }
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-application', 'worker-1', {}, import.meta.dirname)
+
+  for (const [key, value] of Object.entries(loggerConfig)) {
+    deepStrictEqual(pinoOptions[key], value)
+  }
+})
+
+test('buildPinoOptions - does not set additional pino options which are not configured', t => {
+  const pinoOptions = buildPinoOptions({}, {}, 'test-application', 'worker-1', {}, import.meta.dirname)
+
+  for (const option of forwardedPinoOptions) {
+    ok(!(option in pinoOptions))
+  }
+})
+
+test('buildPinoOptions - with redact remove', t => {
+  const loggerConfig = { redact: { paths: ['secret'], remove: true } }
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-application', 'worker-1', {}, import.meta.dirname)
+
+  deepStrictEqual(pinoOptions.redact, { paths: ['secret'], censor: undefined, remove: true })
 })
 
 test('buildPinoOptions - with pretty option', t => {

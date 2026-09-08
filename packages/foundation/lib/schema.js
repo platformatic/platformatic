@@ -263,12 +263,8 @@ export const logger = {
   properties: {
     level: {
       type: 'string',
-      oneOf: [
-        {
-          enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
-        },
-        { pattern: '^\\{.+\\}$' }
-      ]
+      description:
+        'The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.'
     },
     transport: {
       anyOf: [
@@ -354,6 +350,11 @@ export const logger = {
         censor: {
           type: 'string',
           default: '[redacted]'
+        },
+        remove: {
+          type: 'boolean',
+          default: false,
+          description: 'Remove the redacted keys entirely instead of replacing their values with the censor.'
         }
       },
       required: ['paths'],
@@ -369,6 +370,53 @@ export const logger = {
       type: 'object',
       additionalProperties: true
     },
+    levelVal: {
+      type: 'integer',
+      description: 'The numeric value of the level defined in level, when it is not one of the standard pino levels.'
+    },
+    useOnlyCustomLevels: {
+      type: 'boolean',
+      description: 'Only use the levels defined in customLevels and omit the standard pino ones.'
+    },
+    levelComparison: {
+      type: 'string',
+      enum: ['ASC', 'DESC'],
+      default: 'ASC',
+      description: 'How log levels are compared to the logger level. Use DESC when lower values are more severe.'
+    },
+    msgPrefix: {
+      type: 'string',
+      description: 'A string prefixed to every message, including the ones of child loggers.'
+    },
+    nestedKey: {
+      type: 'string',
+      description: 'The key under which any logged object is placed.'
+    },
+    errorKey: {
+      type: 'string',
+      default: 'err',
+      description: 'The key used for the serialized error in the log object.'
+    },
+    depthLimit: {
+      type: 'integer',
+      default: 5,
+      description: 'The stringification limit at a specific nesting depth when logging circular objects.'
+    },
+    edgeLimit: {
+      type: 'integer',
+      default: 100,
+      description: 'The stringification limit of properties or elements when logging a circular object or array.'
+    },
+    crlf: {
+      type: 'boolean',
+      default: false,
+      description: 'Terminate each log line with \\r\\n instead of \\n.'
+    },
+    enabled: {
+      type: 'boolean',
+      default: true,
+      description: 'Set to false to disable logging entirely.'
+    },
     openTelemetryExporter: {
       type: 'object',
       properties: {
@@ -382,6 +430,15 @@ export const logger = {
       },
       required: ['protocol', 'url'],
       additionalProperties: false
+    }
+  },
+  // Custom levels can only be validated when customLevels is not set.
+  if: { not: { required: ['customLevels'] } },
+  then: {
+    properties: {
+      level: {
+        oneOf: [{ enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] }, { pattern: '^\\{.+\\}$' }]
+      }
     }
   },
   default: {},

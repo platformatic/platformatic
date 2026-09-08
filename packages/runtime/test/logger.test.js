@@ -667,6 +667,33 @@ test('should inherit logger level from runtime when node app does not specify lo
   )
 })
 
+test('should support additional pino options and inherit them in the applications', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-pino-options', 'platformatic.json')
+
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/logs' })
+      requested = true
+    },
+    done: message => {
+      return requested && message.includes('call route /logs')
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  // The runtime logger uses msgPrefix
+  ok(logs.find(log => log.msg?.startsWith('[PLT] Platformatic is now listening at http://127.0.0.1:')))
+
+  // The application logger inherits msgPrefix, nestedKey, customLevels and redact.remove
+  const applicationLog = logs.find(log => log.msg === '[PLT] call route /logs')
+  ok(applicationLog)
+  deepStrictEqual(applicationLog.level, 25)
+  deepStrictEqual(applicationLog.name, 'node-app')
+  deepStrictEqual(applicationLog.payload, { hello: 'world' })
+})
+
 // Same test but for @platformatic/node applications
 test('should export logs to OpenTelemetry', async t => {
   function findAttribute (log, name) {
