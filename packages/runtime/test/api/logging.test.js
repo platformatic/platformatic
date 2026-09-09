@@ -7,7 +7,7 @@ import { createRuntime, readLogs } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('logs stdio from the application thread', async t => {
-  const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
+  const configFile = join(fixturesDir, 'configs', 'service-with-stdio', 'watt.config.mjs')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 
@@ -38,7 +38,10 @@ test('logs stdio from the application thread', async t => {
       .filter(m => m.msg !== 'Runtime event')
 
     const applicationMessages = messages.filter(m => m.name === 'stdio')
-    const runtimeMessages = messages.filter(m => m.name === undefined)
+    // The metrics/health server, now started by default, logs a "Server listening at" line per
+    // network interface -- addresses that vary by machine. They are internal-server noise for a test
+    // about application stdio, so they are dropped rather than pinned.
+    const runtimeMessages = messages.filter(m => m.name === undefined && !m.msg?.startsWith('Server listening at'))
 
     deepStrictEqual(
       applicationMessages,
@@ -48,7 +51,7 @@ test('logs stdio from the application thread', async t => {
           pid,
           hostname,
           name: 'stdio',
-          msg: 'Loading envfile...',
+          msg: 'Using the worker environment resolved by the loader.',
           payload: undefined,
           stdout: undefined
         },
@@ -197,7 +200,7 @@ test('logs stdio from the application thread', async t => {
 })
 
 test('logs with caller info', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'watt.config.mjs')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 
@@ -242,7 +245,7 @@ test('logs with caller info', async t => {
 })
 
 test('isoTime support', async t => {
-  const configFile = join(fixturesDir, 'isotime-logs', 'platformatic.json')
+  const configFile = join(fixturesDir, 'isotime-logs', 'watt.config.mjs')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 

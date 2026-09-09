@@ -40,7 +40,7 @@ To demonstrate the benefits of distributed caching with Watt and Valkey, you sho
 
 Let's modify the home page to show cached data that demonstrates how caching works across multiple pods:
 
-```tsx
+```tsx source
 // src/app/page.tsx
 import { hostname } from "os";
 
@@ -81,7 +81,7 @@ In this example:
 
 Use `revalidateTag` or `revalidatePath` to manually trigger cache revalidation:
 
-```tsx
+```tsx source
 // src/app/actions.ts
 'use server'
 import { revalidatePath } from 'next/cache';
@@ -96,7 +96,7 @@ export async function updateData() {
 
 With Next.js 15+, you can use the new `unstable_cache` for more granular caching:
 
-```tsx
+```tsx source
 // src/app/page.tsx
 import { unstable_cache } from 'next/cache';
 
@@ -123,7 +123,7 @@ When you deploy multiple replicas of your Next.js application in Kubernetes, eac
 - Consistent data across all replicas
 - Better resource utilization
 
-## Add `watt.json`
+## Add `watt.config.ts`
 
 In order to run your existing Next.js application with Watt, you can use the import capability of `wattpm-utils`.
 
@@ -133,63 +133,56 @@ From the root of your application, run:
 npx wattpm-utils import
 ```
 
-The command will create a `watt.json` for you and also install `@platformatic/next` as part of your dependencies.
+The command will create a `watt.config.ts` for you and also install `@platformatic/next` as part of your dependencies.
 
 By default, Watt will run on a random port. To choose a specific port, configure the Next.js capability's `server`
-property. Configure multithreading in the `runtime` block:
+property. Multithreading is orchestration, so it goes on the application entry rather than inside the
+capability configuration — which makes this file a `defineConfig` with the singular `application`
+shorthand:
 
-```json
-{
-  ...
-  "server": {
-    "hostname": "0.0.0.0",
-    "port": "{PORT}"
-  },
-  "runtime": {
-    "workers": {
-      "static": "{PLT_NEXT_WORKERS}"
-    }
+```ts config
+import { defineConfig } from 'wattpm'
+import { next } from '@platformatic/next'
+
+export default defineConfig({
+  application: {
+    workers: Number(process.env.PLT_NEXT_WORKERS ?? 1),
+    config: next({
+      server: {
+        hostname: '0.0.0.0',
+        port: Number(process.env.PORT ?? 3042)
+      }
+    })
   }
-}
+})
 ```
 
-The `{MYENV}` syntax tells Watt to take that value from the process environment; `.env` loading is also fully supported.
+The configuration file is a module, so it reads `process.env` directly; `.env` loading is also fully
+supported, and happens before the file is evaluated.
 
-You will also need to configure the Valkey connection string. Edit it and add:
+You will also need to configure the Valkey connection string. At the end, your `watt.config.ts`
+should match:
 
+```ts config
+import { defineConfig } from 'wattpm'
+import { next } from '@platformatic/next'
 
-```json
-{
-  ...
-  "cache": {
-    "adapter": "valkey"
-    "url": "{PLT_VALKEY_HOST}"
+export default defineConfig({
+  application: {
+    workers: Number(process.env.PLT_NEXT_WORKERS ?? 1),
+    config: next({
+      server: {
+        hostname: '0.0.0.0',
+        port: Number(process.env.PORT ?? 3042)
+      },
+      cache: {
+        adapter: 'valkey',
+        url: process.env.PLT_VALKEY_HOST ?? 'redis://127.0.0.1:6379'
+      }
+    })
   }
-}
+})
 ```
-
-At the end, your `watt.json` should match:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.8.0.json",
-  "server": {
-    "hostname": "0.0.0.0",
-    "port": "{PORT}"
-  },
-  "runtime": {
-    "workers": {
-      "static": "{PLT_NEXT_WORKERS}"
-    }
-  },
-  "cache": {
-    "adapter": "valkey"
-    "url": "{PLT_VALKEY_HOST}"
-  }
-}
-```
-
-If you prefer, you can also use YAML format and use a `watt.yml`.
 
 ### Test it locally
 
@@ -277,19 +270,20 @@ Here's an example of a minimal `package.json` for a Next.js standalone app:
 
 This is a standard Next.js package.json - no Watt dependencies needed. The `wattpm` and `@platformatic/next` packages are installed only in the Docker production image.
 
-And a minimal `watt.json`:
+And a minimal `watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.30.0.json",
-  "next": {
-    "standalone": true
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  next: {
+    standalone: true
   },
-  "server": {
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}"
+  server: {
+    hostname: process.env.PLT_SERVER_HOSTNAME ?? '127.0.0.1',
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 The only required change is to insert `standalone: true` in the `next` section.
@@ -326,7 +320,7 @@ WORKDIR /app
 
 # Copy the necessary files from the builder stage
 COPY --from=builder /app/.next/standalone .
-COPY --from=builder /app/watt.json ./watt.json
+COPY --from=builder /app/watt.config.ts ./watt.config.ts
 COPY --from=builder /app/.next/static .next/static
 # Remove or comment out the following if you don't have a public folder
 COPY --from=builder /app/public ./public
@@ -385,7 +379,7 @@ The packed bundle contains:
 - the Next standalone output
 - `.next/static`
 - `public/` when present
-- a bundle-local `watt.json`
+- a bundle-local `watt.config.ts`
 - a bundle-local `./node_modules/.bin/wattpm`
 
 That means the production image only needs to copy the bundle and start it.
@@ -745,7 +739,7 @@ Congratulations! You've successfully deployed a production-ready Next.js applica
 
 **Key Takeaways:**
 
-- The `watt.json` configuration enables seamless integration of Next.js with enterprise infrastructure
+- The `watt.config.ts` configuration enables seamless integration of Next.js with enterprise infrastructure
 - Resource limits should be adjusted based on the number of workers (`PLT_NEXT_WORKERS`)
 - The `platformatic.dev/monitor: prometheus` label connects your application to the monitoring stack
 - Health probes ensure Kubernetes can detect and recover from application failures automatically

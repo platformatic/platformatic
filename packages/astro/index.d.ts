@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticAstroConfig } from './config.d.ts'
@@ -36,3 +36,10 @@ export declare const schema: JSONSchemaType<PlatformaticAstroConfig>
 export declare const schemaComponents: { astro: JSONSchemaType<object> }
 export declare const version: string
 export declare const supportedVersions: string
+
+export type AstroConfigOptions = CapabilityFactoryOptions<PlatformaticAstroConfig, 'astro', never>
+
+export declare function astro (options?: AstroConfigOptions): ApplicationDefinition
+export declare function astro (
+  callback: (context: ConfigContext) => AstroConfigOptions | Promise<AstroConfigOptions>
+): DeferredApplicationDefinition

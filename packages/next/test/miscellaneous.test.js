@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import {
-  commonFixturesRoot,
+  copyCommonApplication,
   configureHTTPS,
   createHTTPSDispatcher,
   getLogsFromFile,
@@ -14,6 +14,7 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -23,10 +24,8 @@ test('can properly show the headers in the output', async t => {
     root: resolve(import.meta.dirname, 'fixtures/server-side-standalone'),
     port: 0,
     additionalSetup: async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const parsed = JSON.parse(contents)
-        parsed.logger.level = 'info'
-        return JSON.stringify(parsed, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.logger.level = 'info'
       })
 
       await updateFile(resolve(root, 'services/frontend/src/app/page.js'), contents => {
@@ -103,14 +102,10 @@ test('should support standalone mode with custom build command', async t => {
   // This test verifies issue #4604: build fails when using both
   // a custom build command AND standalone: true
   const { runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
-    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
-      recursive: true
-    })
+    await copyCommonApplication(root, 'backend')
 
     for (const type of ['backend', 'composer']) {
-      await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-        recursive: true
-      })
+      await copyCommonApplication(root, type)
     }
 
     await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
@@ -121,8 +116,7 @@ test('should support standalone mode with custom build command', async t => {
       return contents.replace('{}', '{ output: "standalone"}')
     })
 
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), raw => {
-      const json = JSON.parse(raw)
+    await updateConfigFile(resolve(root, 'services/frontend/watt.config.mjs'), json => {
       json.next ??= {}
       json.next.standalone = true
       // Add custom build command - this triggers the bug
@@ -150,14 +144,10 @@ test('should support Next.js in standalone mode', async t => {
     production: true,
     port: 0,
     additionalSetup: async root => {
-      await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
-        recursive: true
-      })
+      await copyCommonApplication(root, 'backend')
 
       for (const type of ['backend', 'composer']) {
-        await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-          recursive: true
-        })
+        await copyCommonApplication(root, type)
       }
 
       await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
@@ -168,12 +158,9 @@ test('should support Next.js in standalone mode', async t => {
         return contents.replace('{}', '{ output: "standalone"}')
       })
 
-      await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), raw => {
-        const json = JSON.parse(raw)
+      await updateConfigFile(resolve(root, 'services/frontend/watt.config.mjs'), json => {
         json.next ??= {}
         json.next.standalone = true
-
-        return JSON.stringify(json, null, 2)
       })
     }
   })
@@ -186,8 +173,8 @@ test('should support Next.js in standalone mode', async t => {
     recursive: true
   })
   await cp(
-    resolve(root, 'services/frontend/platformatic.application.json'),
-    resolve(root, 'services/frontend-temp/platformatic.application.json')
+    resolve(root, 'services/frontend/watt.config.mjs'),
+    resolve(root, 'services/frontend-temp/watt.config.mjs')
   )
   await safeRemove(resolve(root, 'services/frontend'))
   await rename(resolve(root, 'services/frontend-temp'), resolve(root, 'services/frontend'))

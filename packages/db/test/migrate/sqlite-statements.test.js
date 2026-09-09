@@ -77,11 +77,12 @@ test('migrations with triggers and comments apply on SQLite', async t => {
    * https://github.com/platformatic/platformatic/issues/125
    */
   const cwd = await mkdtemp(join(tmpdir(), 'sqlite-trigger-migration-'))
-  const configFilePath = join(cwd, 'platformatic.db.json')
+  const configFilePath = join(cwd, 'watt.config.mjs')
   const migrationsDirPath = join(cwd, 'migrations')
   const dbPath = join(cwd, 'db.sqlite')
 
   const config = {
+    module: '@platformatic/db',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -95,7 +96,8 @@ test('migrations with triggers and comments apply on SQLite', async t => {
     }
   }
 
-  await writeFile(configFilePath, JSON.stringify(config))
+  // The configuration is a program, so it is written as one.
+  await writeFile(configFilePath, `export default ${JSON.stringify(config, null, 2)}\n`)
   await createDirectory(migrationsDirPath)
   await writeFile(
     join(migrationsDirPath, '001.do.sql'),

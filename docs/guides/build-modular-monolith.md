@@ -71,7 +71,7 @@ library-app/
         ├── README.md
         ├── migrations
         ├── package.json
-        └── platformatic.json
+        └── watt.config.ts
 ```
 
 ## Start the Library app
@@ -338,16 +338,14 @@ Created book: {
 
 To expose the Books application for testing, configure its application-local server on port `3043`:
 
-```json
-// web/books-application/platformatic.json
-
-{
-  ...
-  "server": {
-    "port": 3043
-  },
-  ...
-}
+```ts source
+// web/books-application/watt.config.ts
+export default db({
+  // ...
+  server: {
+    port: 3043
+  }
+})
 ```
 
 In the terminal where we have our Library app running, let's stop it by pressing `CTRL+C`. Then let's start it again with:
@@ -526,16 +524,14 @@ Created movie: {
 
 To expose the Movies application for testing, configure its application-local server on port `3044`:
 
-```json
-// web/movies-application/platformatic.json
-
-{
-  ...
-  "server": {
-    "port": 3044
-  },
-  ...
-}
+```ts source
+// web/movies-application/watt.config.ts
+export default db({
+  // ...
+  server: {
+    port: 3044
+  }
+})
 ```
 
 And then let's stop our Library app running by pressing `CTRL+C`, and start it again with:
@@ -617,36 +613,34 @@ Once the command has finished, we'll see that our Platformatic Gateway applicati
 
 We're now going to replace the example `services` configuration for our Media application, and configure it to compose the APIs for our Books and Movies applications.
 
-Let's open up `web/media-application/platformatic.json` and replace the `services` array so that it looks like this:
+Let's open up `web/media-application/watt.config.ts` and replace the `applications` array so that it looks like this:
 
-```json
-// web/media-application/platformatic.json
+```ts config
+// web/media-application/watt.config.ts
+import { gateway } from '@platformatic/gateway'
 
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  ...,
-  "server": {
-    "port": 3045
+export default gateway({
+  server: {
+    port: 3045
   },
-  "gateway": {
-    "applications": [
+  gateway: {
+    applications: [
       {
-        "id": "books-application",
-        "openapi": {
-          "url": "/documentation/json"
+        id: 'books-application',
+        openapi: {
+          url: '/documentation/json'
         }
       },
       {
-        "id": "movies-application",
-        "openapi": {
-          "url": "/documentation/json"
+        id: 'movies-application',
+        openapi: {
+          url: '/documentation/json'
         }
       }
     ],
-    "refreshTimeout": 1000
-  },
-  ...
-}
+    refreshTimeout: 1000
+  }
+})
 ```
 
 Let's take a look at the settings we've added here:
@@ -804,36 +798,35 @@ Then let's create another file, `web/media-application/movies-application-openap
 }
 ```
 
-Now let's open up `web/media-application/platformatic.json` and configure the Media application to apply these application configurations to our composed API:
+Now let's open up `web/media-application/watt.config.ts` and configure the Media application to apply these application configurations to our composed API:
 
 ```diff
-// web/media-application/platformatic.json
+// web/media-application/watt.config.ts
 
-  {
-    ...,
-    "gateway": {
-      "applications": [
+  export default gateway({
+    // ...
+    gateway: {
+      applications: [
         {
-          "id": "books-application",
-          "openapi": {
--           "url": "/documentation/json"
-+           "url": "/documentation/json",
-+           "config": "books-application-openapi.config.json"
+          id: 'books-application',
+          openapi: {
+-           url: '/documentation/json'
++           url: '/documentation/json',
++           config: 'books-application-openapi.config.json'
           }
         },
         {
-          "id": "movies-application",
-          "openapi": {
--           "url": "/documentation/json"
-+           "url": "/documentation/json",
-+           "config": "movies-application-openapi.config.json"
+          id: 'movies-application',
+          openapi: {
+-           url: '/documentation/json'
++           url: '/documentation/json',
++           config: 'movies-application-openapi.config.json'
           }
         }
       ],
-      "refreshTimeout": 1000
-    },
-    ...
-  }
+      refreshTimeout: 1000
+    }
+  })
 ```
 
 If we open up the API documentation for our Media application at http://127.0.0.1:3045/documentation/, we should now see that only the composed `GET` routes are available:
@@ -981,18 +974,16 @@ app.platformatic.addGatewayOnRouteHook('/books/', ['GET'], booksOnRouteHook)
 app.platformatic.addGatewayOnRouteHook('/books/{id}', ['GET'], booksOnRouteHook)
 ```
 
-Now we can configure the Media application to load our new plugin. Let's open up `platformatic.json` and add a `plugins` object to the application configuration:
+Now we can configure the Media application to load our new plugin. Let's open up `watt.config.ts` and add a `plugins` object to the application configuration:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  ...,
-  "plugins": {
-    "paths": [
-      "./plugin.js"
-    ]
+```ts source
+// web/media-application/watt.config.ts — the rest of the configuration is unchanged
+export default gateway({
+  // ...
+  plugins: {
+    paths: ['./plugin.js']
   }
-}
+})
 ```
 
 Now let's test our `/books/` routes to see if the people data is being added to the responses:
@@ -1060,36 +1051,34 @@ curl localhost:3045/movies/3 | grep 'Name'
 
 Our Media application is composing the Books and Movies applications into an API, and the Media application is then exposed by the Library app. But what if we want to test or debug the People application API during development? Fortunately, Platformatic Gateway provides a service proxy feature ([`applications[].proxy`](/docs/reference/gateway/configuration#gateway)) which we can use to help us do this.
 
-Let's try this out by adding another application to the `applications` in `platformatic.json`:
+Let's try this out by adding another application to the `applications` in `watt.config.ts`:
 
 ```diff
-// platformatic.json
+// web/media-application/watt.config.ts
 
-  {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-    ...,
-    "gateway": {
-      "applications": [
-        ...,
+  export default gateway({
+    // ...
+    gateway: {
+      applications: [
+        // ...
         {
-          "id": "movies-application",
-          "openapi": {
-            "url": "/documentation/json",
-            "config": "movies-application-openapi.config.json"
+          id: 'movies-application',
+          openapi: {
+            url: '/documentation/json',
+            config: 'movies-application-openapi.config.json'
           }
 -       }
 +       },
 +       {
-+         "id": "people-application",
-+         "proxy": {
-+           "prefix": "people-application"
++         id: 'people-application',
++         proxy: {
++           prefix: 'people-application'
 +         }
 +       }
       ],
-      "refreshTimeout": 1000
-    },
-    ...
-  }
+      refreshTimeout: 1000
+    }
+  })
 ```
 
 Now the People application API will be made available as part of the composed Media application API under the prefix `/people-application/`.
@@ -1113,36 +1102,34 @@ We should receive a response like this from the People application's `/people` r
 ]
 ```
 
-Although the Gateway service proxy is a helpful feature, we don't want to use this in production, so let's remove the configuration that we just added to `platformatic.json`:
+Although the Gateway service proxy is a helpful feature, we don't want to use this in production, so let's remove the configuration that we just added to `watt.config.ts`:
 
 ```diff
-// platformatic.json
+// web/media-application/watt.config.ts
 
-  {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-    ...,
-    "gateway": {
-      "applications": [
-        ...,
+  export default gateway({
+    // ...
+    gateway: {
+      applications: [
+        // ...
         {
-          "id": "movies-application",
-          "openapi": {
-            "url": "/documentation/json",
-            "config": "movies-application-openapi.config.json"
+          id: 'movies-application',
+          openapi: {
+            url: '/documentation/json',
+            config: 'movies-application-openapi.config.json'
           }
 +       }
 -       },
 -       {
--         "id": "people-application",
--         "proxy": {
--           "prefix": "people-application"
+-         id: 'people-application',
+-         proxy: {
+-           prefix: 'people-application'
 -         }
 -       }
       ],
-      "refreshTimeout": 1000
-    },
-    ...
-  }
+      refreshTimeout: 1000
+    }
+  })
 ```
 
 ## Next steps

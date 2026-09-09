@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime } from './helpers.js'
+import { createRuntime, configurationFileIn, updateConfigFile } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -42,7 +42,7 @@ test('should export metrics to OTLP endpoint', async t => {
   process.env.PLT_OTLP_PORT = otlpPort.toString()
 
   const projectDir = join(fixturesDir, 'otlp-exporter')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -100,26 +100,25 @@ test('should export metrics with custom headers', async t => {
 
   // Create a custom config with headers
   const projectDir = join(fixturesDir, 'otlp-exporter')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
 
-  // Read and modify config to add headers
+  // Through updateConfigFile, which reads and writes whichever dialect the fixture is in, and
+  // restoring the original afterwards -- the edit happens in the source fixture directory.
   const fs = await import('node:fs/promises')
-  const config = JSON.parse(await fs.readFile(configFile, 'utf-8'))
-  config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
-  config.metrics.otlpExporter.headers = {
-    'x-api-key': 'test-key-123',
-    'x-custom-header': 'custom-value'
-  }
-
-  // Write temporary config
-  const tmpConfigFile = join(projectDir, 'platformatic-with-headers.json')
-  await fs.writeFile(tmpConfigFile, JSON.stringify(config, null, 2))
-
-  t.after(async () => {
-    await fs.unlink(tmpConfigFile)
+  const original = await fs.readFile(configFile, 'utf-8')
+  await updateConfigFile(configFile, config => {
+    config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
+    config.metrics.otlpExporter.headers = {
+      'x-api-key': 'test-key-123',
+      'x-custom-header': 'custom-value'
+    }
   })
 
-  const app = await createRuntime(tmpConfigFile)
+  t.after(async () => {
+    await fs.writeFile(configFile, original, 'utf-8')
+  })
+
+  const app = await createRuntime(configFile)
   await app.start()
 
   t.after(async () => {
@@ -167,7 +166,7 @@ test('should handle OTLP endpoint errors gracefully', async t => {
   process.env.PLT_OTLP_PORT = otlpPort.toString()
 
   const projectDir = join(fixturesDir, 'otlp-exporter')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -228,7 +227,7 @@ test('should export standard and custom metrics to OTLP', async t => {
   process.env.PLT_OTLP_PORT = otlpPort.toString()
 
   const projectDir = join(fixturesDir, 'otlp-exporter')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()
@@ -283,21 +282,20 @@ test('should not export metrics when OTLP exporter is disabled', async t => {
 
   // Create config with OTLP disabled
   const projectDir = join(fixturesDir, 'otlp-exporter')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
 
   const fs = await import('node:fs/promises')
-  const config = JSON.parse(await fs.readFile(configFile, 'utf-8'))
-  config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
-  config.metrics.otlpExporter.enabled = false
-
-  const tmpConfigFile = join(projectDir, 'platformatic-disabled.json')
-  await fs.writeFile(tmpConfigFile, JSON.stringify(config, null, 2))
-
-  t.after(async () => {
-    await fs.unlink(tmpConfigFile)
+  const original = await fs.readFile(configFile, 'utf-8')
+  await updateConfigFile(configFile, config => {
+    config.metrics.otlpExporter.endpoint = `http://127.0.0.1:${otlpPort}/v1/metrics`
+    config.metrics.otlpExporter.enabled = false
   })
 
-  const app = await createRuntime(tmpConfigFile)
+  t.after(async () => {
+    await fs.writeFile(configFile, original, 'utf-8')
+  })
+
+  const app = await createRuntime(configFile)
   await app.start()
 
   t.after(async () => {
@@ -345,7 +343,7 @@ test('should export non-empty metrics for command-based (childManager) services'
   process.env.PLT_OTLP_PORT = otlpPort.toString()
 
   const projectDir = join(fixturesDir, 'otlp-exporter-command')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   const { 'main:0': entryUrl } = await app.start()

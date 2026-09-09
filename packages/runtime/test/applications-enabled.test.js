@@ -3,10 +3,23 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadConfiguration, schema } from '../index.js'
+import { loadConfiguration } from '../index.js'
 
-async function writeJSON (path, data) {
-  await writeFile(path, JSON.stringify(data, null, 2), 'utf8')
+/*
+  The configuration is a program, so these fixtures are written as source rather than as JSON. The
+  entries carry an inline capability so the loader has nothing to detect: an empty temporary
+  directory declares no capability, and what these tests are about is `enabled`.
+*/
+async function writeConfig (dir, body) {
+  const path = join(dir, 'watt.config.mjs')
+
+  await writeFile(path, `export default ${body}\n`, 'utf8')
+
+  return path
+}
+
+function application (id, extra = '') {
+  return `{ id: '${id}', path: '.', config: { module: '@platformatic/node' }${extra} }`
 }
 
 function withEnv (vars, fn) {
@@ -39,15 +52,16 @@ function withEnv (vars, fn) {
 
 test('should exclude disabled applications', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [
-      { id: 'enabled', path: '.' },
-      { id: 'disabled', path: '.', enabled: false }
-    ]
-  })
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      applications: [
+        ${application('enabled')},
+        ${application('disabled', ', enabled: false')}
+      ]
+    }`
+  )
 
   const loaded = await loadConfiguration(cfgPath)
 
@@ -59,15 +73,21 @@ test('should exclude disabled applications', async () => {
 
 test('should support environment variables for application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [
-      { id: 'from-env', path: '.', enabled: '{PLT_APPLICATION_ENABLED}' },
-      { id: 'always-enabled', path: '.' }
-    ]
-  })
+  /*
+    A configuration reads its environment directly. v3 wrote `'{PLT_APPLICATION_ENABLED}'` and the
+    loader substituted it; the string branch of `enabled` survives because the expression below
+    still produces one, and anything but `'false'` is true.
+  */
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      applications: [
+        ${application('from-env', ", enabled: process.env.PLT_APPLICATION_ENABLED ?? 'true'")},
+        ${application('always-enabled')}
+      ]
+    }`
+  )
 
   await withEnv({ PLT_APPLICATION_ENABLED: 'false' }, async () => {
     const loaded = await loadConfiguration(cfgPath)
@@ -88,15 +108,16 @@ test('should support environment variables for application enabled configuration
 
 test('should support string values for application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [
-      { id: 'enabled', path: '.', enabled: 'true' },
-      { id: 'disabled', path: '.', enabled: 'false' }
-    ]
-  })
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      applications: [
+        ${application('enabled', ", enabled: 'true'")},
+        ${application('disabled', ", enabled: 'false'")}
+      ]
+    }`
+  )
 
   const loaded = await loadConfiguration(cfgPath)
 
@@ -108,15 +129,16 @@ test('should support string values for application enabled configuration', async
 
 test('should support production specific application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [
-      { id: 'production-disabled', path: '.', enabled: { production: false } },
-      { id: 'development-disabled', path: '.', enabled: { development: false } }
-    ]
-  })
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      applications: [
+        ${application('production-disabled', ', enabled: { production: false }')},
+        ${application('development-disabled', ', enabled: { development: false }')}
+      ]
+    }`
+  )
 
   const loaded = await loadConfiguration(cfgPath, null, { production: true })
 
@@ -128,15 +150,16 @@ test('should support production specific application enabled configuration', asy
 
 test('should support development specific application enabled configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [
-      { id: 'production-disabled', path: '.', enabled: { production: false } },
-      { id: 'development-disabled', path: '.', enabled: { development: false } }
-    ]
-  })
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      applications: [
+        ${application('production-disabled', ', enabled: { production: false }')},
+        ${application('development-disabled', ', enabled: { development: false }')}
+      ]
+    }`
+  )
 
   const loaded = await loadConfiguration(cfgPath, null, { production: false })
 
@@ -148,12 +171,11 @@ test('should support development specific application enabled configuration', as
 
 test('should enable applications when enabled configuration does not match the environment', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [{ id: 'enabled', path: '.', enabled: { staging: false } }]
-  })
+  const cfgPath = await writeConfig(
+    dir,
+    `{ applications: [${application('enabled', ', enabled: { staging: false }')}] }`
+  )
 
   const loaded = await loadConfiguration(cfgPath)
 
@@ -165,15 +187,23 @@ test('should enable applications when enabled configuration does not match the e
 
 test('should support environment variables in application enabled environment configuration', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [
-      { id: 'from-env', path: '.', enabled: { production: '{PLT_APPLICATION_ENABLED}' } },
-      { id: 'always-enabled', path: '.' }
-    ]
-  })
+  /*
+    The per-mode form takes booleans, and the configuration computes one. v3 accepted a string
+    there for the sole purpose of holding a `{PLT_X}` placeholder, and that branch is gone -- the
+    top-level `enabled` keeps its string branch because anything but `'false'` is meaningfully
+    true, which is not something a per-mode map needs.
+  */
+
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      applications: [
+        ${application('from-env', ", enabled: { production: process.env.PLT_APPLICATION_ENABLED !== 'false' }")},
+        ${application('always-enabled')}
+      ]
+    }`
+  )
 
   await withEnv({ PLT_APPLICATION_ENABLED: 'false' }, async () => {
     const loaded = await loadConfiguration(cfgPath, null, { production: true })
@@ -195,20 +225,23 @@ test('should support environment variables in application enabled environment co
 test('should support disabling autoloaded applications via mappings', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
   const applicationsDir = join(dir, 'applications')
-  const cfgPath = join(dir, 'platformatic.runtime.json')
 
-  await mkdir(join(applicationsDir, 'disabled'), { recursive: true })
-  await mkdir(join(applicationsDir, 'enabled'), { recursive: true })
+  for (const name of ['disabled', 'enabled']) {
+    await mkdir(join(applicationsDir, name), { recursive: true })
+    await writeFile(join(applicationsDir, name, 'index.js'), '', 'utf8')
+  }
 
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    autoload: {
-      path: 'applications',
-      mappings: {
-        disabled: { id: 'disabled', enabled: false }
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      autoload: {
+        path: 'applications',
+        mappings: {
+          disabled: { id: 'disabled', enabled: false }
+        }
       }
-    }
-  })
+    }`
+  )
 
   const loaded = await loadConfiguration(cfgPath)
 

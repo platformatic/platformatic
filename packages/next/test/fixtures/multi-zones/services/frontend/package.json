@@ -1,5 +1,5 @@
 {
-  "name": "multi-zones-frontend",
+  "name": "frontend",
   "private": true,
   "scripts": {
     "dev": "next dev",

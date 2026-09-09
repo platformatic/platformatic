@@ -4,16 +4,14 @@ import Issues from '../../getting-started/issues.md';
 
 The `@platformatic/runtime` package can be used to start, control, and inspect a Platformatic application from Node.js code, without going through the CLI. This is useful for tests, custom tooling, and embedding Platformatic in another application.
 
-The API works with all Platformatic application types — `service`, `db`, `gateway`, and `runtime` itself. Configurations that are not already a `runtime` configuration are automatically wrapped in one.
-
-The legacy `composer` type is still accepted as a deprecated alias for `gateway`, and will be removed in v4. See [Gateway](../gateway/overview.md) for details.
+The API works with all Platformatic application types — `service`, `db`, `gateway`, and `runtime` itself. A configuration file that exports a capability rather than a topology is auto-wrapped as a single-application runtime.
 
 ## Getting started
 
 ```js
 import { create } from '@platformatic/runtime'
 
-const app = await create('path/to/platformatic.runtime.json')
+const app = await create('path/to/watt.config.ts')
 await app.start()
 
 const res = await app.inject('api', { method: 'GET', url: '/' })
@@ -30,52 +28,51 @@ await app.close()
 
 Builds a `Runtime` from a configuration file path or an in-memory configuration object. The returned runtime is **not** started — call `start()` (or pass `context.start = true`) to bring applications up.
 
-When the configuration's `$schema` resolves to a non-runtime module (e.g. `@platformatic/service`, `@platformatic/db`, `@platformatic/gateway`), it is automatically wrapped in a runtime configuration so the same API works for any application type.
+A configuration that carries a `module` property is a capability configuration rather than a topology, and it is wrapped as a single-application runtime so the same API works for any application type.
 
 ```js
 import { create } from '@platformatic/runtime'
 
-const app = await create({
-  $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json',
+const app = await create(import.meta.dirname, {
   applications: [{ id: 'main', path: './main' }]
 })
 
 await app.start()
 ```
 
-Equivalent `$schema` values that `create()` accepts and wraps transparently:
+An in-memory object needs the root it should resolve relative paths against, which is the first
+argument above. A capability configuration is accepted in the same position:
 
-```text
-https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json
-https://schemas.platformatic.dev/@platformatic/service/4.0.0.json
-https://schemas.platformatic.dev/@platformatic/db/4.0.0.json
-https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json
-https://schemas.platformatic.dev/@platformatic/composer/4.0.0.json  # deprecated alias for gateway
+```js
+import { create } from '@platformatic/runtime'
+
+const app = await create(import.meta.dirname, {
+  module: '@platformatic/service',
+  server: { port: 3042 }
+})
 ```
 
 By default `create()` installs signal handlers (`SIGTERM`/`SIGINT` via `close-with-grace`, and `SIGUSR2` to trigger `runtime.restart()`). Pass `context: { setupSignals: false }` to opt out — recommended when embedding the runtime in tests or another process that owns its own signal handling.
 
 ### `loadConfiguration(configOrRoot, sourceOrConfig?, context?)`
 
-Reads a configuration file (or accepts an in-memory object), validates it against the runtime schema, applies the upgrade pipeline for older schemas, and resolves environment variables. The application type is auto-detected from the `$schema`; non-runtime configurations are wrapped in a runtime configuration via `wrapInRuntimeConfig()`.
+Reads a configuration file (or accepts an in-memory object), evaluates it, validates it against the runtime schema and resolves each application's environment. A capability configuration is wrapped as a single-application runtime.
 
 ```js
 import { loadConfiguration } from '@platformatic/runtime'
 
-const config = await loadConfiguration('/path/to/platformatic.config.json')
+const config = await loadConfiguration('/path/to/watt.config.ts')
 ```
 
 Use this when you need to inspect or mutate the resolved configuration before passing it to `create()`.
 
-### `prepareApplication(runtimeConfig, application)`
+### `prepareAddedApplications(runtimeConfig, entries, existingIds?)`
 
-Normalizes an application descriptor (resolving paths, detecting the capability type, applying defaults for `watch`, `management`, `workers`, `localUrl`, etc.) so it is ready to be passed to `runtime.addApplications()`.
+Takes the entries you want to add and returns the descriptors `runtime.addApplications()` expects: it reads each application's own configuration file, resolves its paths and environment, detects the capability type and applies the defaults for `watch`, `management`, `workers` and `localUrl`.
 
-You must call `prepareApplication()` before adding an application at runtime — see [Adding and removing applications at runtime](#adding-and-removing-applications-at-runtime).
+It takes the whole list rather than one entry at a time, because the ids being added are what a new application's injected sibling URLs are resolved against — and `existingIds` is how a caller names the ids already running.
 
-### `wrapInRuntimeConfig(config, context?)`
-
-Wraps a single-application configuration (service, db, gateway, or the deprecated composer alias) into a synthetic one-application runtime configuration. Called automatically by `create()` and `loadConfiguration()`; exported for advanced use cases.
+You must call `prepareAddedApplications()` before adding an application at runtime — see [Adding and removing applications at runtime](#adding-and-removing-applications-at-runtime).
 
 ### `loadApplicationsCommands(executableName?)`
 
@@ -102,7 +99,7 @@ Dispatches an HTTP request straight into an application by its `id`, without goi
 ```js
 import { create } from '@platformatic/runtime'
 
-const app = await create('path/to/watt.json', { setupSignals: false })
+const app = await create('path/to/watt.config.ts', { setupSignals: false })
 await app.start()
 
 const res = await app.inject('main', {
@@ -174,7 +171,7 @@ test('handles ping messages', async t => {
 
 - **`runtime.getRuntimeStatus(): string`** — One of `starting`, `started`, `stopping`, `stopped`, `closed`.
 - **`runtime.getRuntimeMetadata(): Promise<RuntimeMetadata>`** — `pid`, `cwd`, `argv`, `uptimeSeconds`, `execPath`, `nodeVersion`, `projectDir`, `packageName`, `packageVersion`, `platformaticVersion`, and `urls`. `urls` is a map of observed worker listener URLs keyed by `applicationId:workerId`.
-- **`runtime.getRuntimeConfig(includeMeta = false): object`** — The resolved configuration. When `includeMeta` is `true` the `[kMetadata]` symbol is preserved (needed by `prepareApplication()`).
+- **`runtime.getRuntimeConfig(includeMeta = false): object`** — The resolved configuration. When `includeMeta` is `true` the `[kMetadata]` symbol is preserved (needed by `prepareAddedApplications()`).
 - **`runtime.getRuntimeEnv(): Record<string, string>`** — Environment variables visible to the runtime process.
 - **`runtime.getUrls(applicationId?): Record<string, string>`** — Observed listener URLs for running workers, keyed by `applicationId:workerId`. Pass an application ID to select only that application's workers.
 - **`runtime.getApplicationsIds(): string[]`** — IDs of all configured applications.
@@ -261,26 +258,22 @@ The runtime supports adding and removing applications after `start()` has been c
 
 Registers new applications on a running runtime. If `start` is `true`, the new applications are started in parallel; otherwise they remain stopped until `startApplication()` is called.
 
-Each entry in `applications` must be processed through `prepareApplication()` first — it normalizes paths, detects the capability type, and applies defaults the runtime expects.
+The `applications` array must be produced by `prepareAddedApplications()` — it reads each entry's own configuration, normalizes paths, detects the capability type, and applies the defaults the runtime expects.
 
 ```js
-import { create, prepareApplication } from '@platformatic/runtime'
+import { create, prepareAddedApplications } from '@platformatic/runtime'
 
-const app = await create('path/to/watt.json')
+const app = await create('path/to/watt.config.ts')
 await app.start()
 
-const newApplications = [
-  await prepareApplication(app.getRuntimeConfig(true), {
-    id: 'analytics-service',
-    path: './analytics',
-    workers: 2
-  })
-]
+const newApplications = await prepareAddedApplications(app.getRuntimeConfig(true), [
+  { id: 'analytics-service', path: './analytics', workers: 2 }
+])
 
 await app.addApplications(newApplications, true)
 ```
 
-Pass `app.getRuntimeConfig(true)` (with `includeMeta: true`) so `prepareApplication()` can resolve relative paths against the runtime's root.
+Pass `app.getRuntimeConfig(true)` (with `includeMeta: true`) so `prepareAddedApplications()` can resolve relative paths against the runtime's root.
 
 ### `runtime.removeApplications(applications, silent = false)`
 
@@ -293,18 +286,16 @@ await app.removeApplications(['analytics-service'])
 ### Example: dynamic application management
 
 ```js
-import { create, prepareApplication } from '@platformatic/runtime'
+import { create, prepareAddedApplications } from '@platformatic/runtime'
 
-const app = await create('path/to/watt.json')
+const app = await create('path/to/watt.config.ts')
 await app.start()
 
-const newService = await prepareApplication(app.getRuntimeConfig(true), {
-  id: 'analytics-service',
-  path: './analytics',
-  workers: 2
-})
+const added = await prepareAddedApplications(app.getRuntimeConfig(true), [
+  { id: 'analytics-service', path: './analytics', workers: 2 }
+])
 
-await app.addApplications([newService], true)
+await app.addApplications(added, true)
 
 // Later, when no longer needed
 await app.removeApplications(['analytics-service'])

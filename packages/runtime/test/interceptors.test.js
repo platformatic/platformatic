@@ -19,7 +19,7 @@ test('interceptors as undici options', async t => {
   process.env.PLT_EXTERNAL_SERVICE = externalServer.listeningOrigin
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'interceptors', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'interceptors', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   const { 'a:0': entryUrl } = await app.start()
 
@@ -46,7 +46,7 @@ test('composable interceptors', async t => {
   process.env.PLT_EXTERNAL_SERVICE = externalServer.listeningOrigin
   process.env.PORT = 0
 
-  const configFile = join(fixturesDir, 'interceptors-2', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'interceptors-2', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   const { 'a:0': entryUrl } = await app.start()
 
@@ -63,7 +63,7 @@ test('composable interceptors', async t => {
 })
 
 test('mesh network works from external processes via ChildManager', async t => {
-  const configFile = join(fixturesDir, 'interceptors-3', 'platformatic.json')
+  const configFile = join(fixturesDir, 'interceptors-3', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   const { 'composer:0': entryUrl } = await app.start()
 
@@ -103,7 +103,7 @@ test('mesh network works from external processes via ChildManager', async t => {
 })
 
 test('use client interceptors for internal requests', async t => {
-  const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'interceptors-4', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   const { 'a:0': entryUrl } = await app.start()
 
@@ -120,7 +120,7 @@ test('use client interceptors for internal requests', async t => {
 })
 
 test('update undici interceptor config', async t => {
-  const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'interceptors-4', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   const { 'a:0': entryUrl } = await app.start()
 
@@ -163,7 +163,7 @@ test('update undici interceptor config', async t => {
 })
 
 test('interceptor readiness timeout handling', async t => {
-  const configFile = join(fixturesDir, 'interceptors-timeout', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'interceptors-timeout', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   // Note that this throws only because restartOnError is set to false in the config.

@@ -23,15 +23,19 @@ npm install @platformatic/nuxt
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/nuxt/3.52.4.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { nuxt } from '@platformatic/nuxt'
+
+export default nuxt({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture
@@ -48,7 +52,7 @@ When using the `commands` property, the command is responsible for starting an H
 
 To include the deployment ID in client assets and server-rendered HTML, add the Platformatic skew module to `nuxt.config.ts`:
 
-```ts
+```ts source
 export default defineNuxtConfig({
   modules: ['@platformatic/nuxt/skew']
 })

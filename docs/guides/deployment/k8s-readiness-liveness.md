@@ -169,19 +169,20 @@ You can customize the health check endpoints in your Watt configuration:
 
 Readiness and liveness endpoints run on the metrics server, so enabling HTTPS (TLS, often referred to as SSL) for `metrics` also enables HTTPS for `/ready`, `/status`, and `/metrics`.
 
-For Kubernetes, store the certificate and private key in a Secret and mount it into the container. Then reference those files from `watt.json`:
+For Kubernetes, store the certificate and private key in a Secret and mount it into the container. Then reference those files from `watt.config.ts`:
 
-```json
-{
-  "metrics": {
-    "hostname": "0.0.0.0",
-    "port": 9090,
-    "https": {
-      "key": { "path": "/etc/watt/tls/tls.key" },
-      "cert": { "path": "/etc/watt/tls/tls.crt" }
+```ts
+export default defineConfig({
+  // ...
+  metrics: {
+    hostname: '0.0.0.0',
+    port: 9090,
+    https: {
+      key: { path: '/etc/watt/tls/tls.key' },
+      cert: { path: '/etc/watt/tls/tls.crt' }
     }
   }
-}
+})
 ```
 
 You can also store the PEM values in environment variables and reference them with configuration placeholders. This is useful when your deployment platform injects secrets as environment variables instead of files:
@@ -362,35 +363,36 @@ export async function create () {
 
 ### 2. Watt Configuration
 
-Configure the metrics server in your `watt.json` file:
+Configure the metrics server in your `watt.config.ts` file:
 
-```json
-{
-  "metrics": {
-    "hostname": "0.0.0.0",
-    "port": 9090,
-    "readiness": {
-      "success": {
-        "statusCode": 200,
-        "body": "Ready"
+```ts
+export default defineConfig({
+  // ...
+  metrics: {
+    hostname: '0.0.0.0',
+    port: 9090,
+    readiness: {
+      success: {
+        statusCode: 200,
+        body: 'Ready'
       },
-      "fail": {
-        "statusCode": 503,
-        "body": "Not Ready"
+      fail: {
+        statusCode: 503,
+        body: 'Not Ready'
       }
     },
-    "liveness": {
-      "success": {
-        "statusCode": 200,
-        "body": "Healthy"
+    liveness: {
+      success: {
+        statusCode: 200,
+        body: 'Healthy'
       },
-      "fail": {
-        "statusCode": 503,
-        "body": "Unhealthy"
+      fail: {
+        statusCode: 503,
+        body: 'Unhealthy'
       }
     }
   }
-}
+})
 ```
 
 ### 3. PostgreSQL Database Setup
@@ -965,7 +967,7 @@ kubectl exec <pod-name> -- curl http://localhost:9090/status
 kubectl exec <pod-name> -- netstat -tlnp | grep :9090
 
 # Check Watt configuration
-kubectl exec <pod-name> -- cat watt.json
+kubectl exec <pod-name> -- cat watt.config.ts
 
 # Test endpoints with verbose output
 kubectl exec <pod-name> -- curl -v http://localhost:9090/ready

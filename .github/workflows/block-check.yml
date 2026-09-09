@@ -1,0 +1,50 @@
+name: Block Check
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+    paths:
+      - 'NEW_CONFIG.md'
+      - 'docs/**'
+      - 'scripts/check-blocks.mjs'
+      - 'packages/**'
+  pull_request:
+    paths:
+      - 'NEW_CONFIG.md'
+      - 'docs/**'
+      - 'scripts/check-blocks.mjs'
+      - 'packages/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  blocks:
+    name: Verify document blocks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4.4.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      # Unlike the citation checker, this one runs the code: it loads every `config` block
+      # through the real v4 loader and typechecks with the repository's own tsc.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify blocks
+        run: node scripts/check-blocks.mjs

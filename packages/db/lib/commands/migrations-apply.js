@@ -1,14 +1,11 @@
-import { loadConfiguration } from '@platformatic/foundation'
-import { utimesSync } from 'node:fs'
-import { transform } from '../config.js'
 import { execute } from '../migrator.js'
-import { schema } from '../schema.js'
+import { resolveCommandConfiguration } from './configuration.js'
 import { updateSchemaLock } from '../utils.js'
 import { generateTypes } from './types.js'
 
-export async function applyMigrations (logger, configFile, args, context) {
+export async function applyMigrations (logger, configuration, args, context) {
   const { parseArgs, logFatalError } = context
-  const config = await loadConfiguration(configFile, schema, { transform })
+  const config = await resolveCommandConfiguration(configuration, context)
 
   const {
     values: { to, rollback }
@@ -31,17 +28,19 @@ export async function applyMigrations (logger, configFile, args, context) {
     const appliedMigrations = await execute(logger, config, to, rollback)
 
     if (config.types && config.types.autogenerate) {
-      await generateTypes(logger, configFile, args, context)
+      await generateTypes(logger, configuration, args, context)
     }
 
     if (appliedMigrations) {
       await updateSchemaLock(logger, config)
     }
 
-    // touch the @platformatic/db config to trigger a restart
-    const now = new Date()
-
-    utimesSync(configFile, now, now)
+    /*
+      There used to be a `utimesSync` here, touching the configuration file so a watching runtime
+      would restart. v4 does not reload on a configuration file's mtime -- it watches the files the
+      evaluation actually read and reloads on a change to any of them -- and a command has no file
+      to touch in any case, since it is handed the configuration as data.
+    */
   } catch (err) {
     if (err.code === 'PLT_DB_MIGRATE_ERROR') {
       logFatalError(logger, err.message)

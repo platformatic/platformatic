@@ -2,7 +2,6 @@ import { resolve } from 'node:path'
 import {
   internalApplicationsFiles,
   setFixturesDir,
-  updateFile,
   verifyBuildAndProductionMode,
   verifyFrontendAPIOnPrefix,
   verifyFrontendOnAutodetectedPrefix,
@@ -14,6 +13,7 @@ import {
   verifyPlatformaticService,
   verifyPlatformaticServiceWithProxy
 } from '../../../basic/test/helper.js'
+import { updateConfigFile } from '../../../runtime/test/helpers.js'
 
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
@@ -39,10 +39,8 @@ const configurations = [
     language: 'ts',
     prefix: '/frontend',
     async additionalSetup (root) {
-      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-        const json = JSON.parse(contents)
-        json.gateway.applications[1].proxy = { prefix: '/frontend' }
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        contents.gateway.applications[1].proxy = { prefix: '/frontend' }
       })
     }
   },

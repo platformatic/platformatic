@@ -12,7 +12,7 @@ test('use runtime server', async () => {
     'fixtures',
     'server',
     'runtime-server',
-    'platformatic.runtime.json'
+    'watt.config.mjs'
   )
   const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   assert.strictEqual(url, 'http://127.0.0.1:14242')

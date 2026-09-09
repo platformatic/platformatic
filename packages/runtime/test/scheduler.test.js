@@ -5,13 +5,13 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { transform } from '../lib/config.js'
+import { transform } from '../index.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function createRuntimeWithScheduler (t, scheduler) {
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
+  const configFile = join(fixturesDir, 'scheduler', 'watt.config.mjs')
 
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
@@ -279,7 +279,7 @@ test('Should not start scheduler in build mode', async t => {
   await target.listen({ port: 0 })
   const callbackUrl = `http://localhost:${target.server.address().port}/test`
 
-  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
+  const configFile = join(fixturesDir, 'scheduler', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     build: true,
     async transform (config, ...args) {

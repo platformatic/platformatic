@@ -1,3 +1,4 @@
+import { ApplicationDefinition, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { PlatformaticApplication, ServiceCapability, Generator as ServiceGenerator } from '@platformatic/service'
@@ -62,3 +63,10 @@ export declare function UnknownDatabaseError (): FastifyError
 export declare function MigrateMissingMigrationsDirError (dir: string): FastifyError
 export declare function MissingSeedFileError (): FastifyError
 export declare function MigrationsToApplyError (): FastifyError
+
+export type DbConfigOptions = CapabilityFactoryOptions<PlatformaticDatabaseConfig, 'db', 'cache'>
+
+export declare function db (options?: DbConfigOptions): ApplicationDefinition
+export declare function db (
+  callback: (context: ConfigContext) => DbConfigOptions | Promise<DbConfigOptions>
+): DeferredApplicationDefinition

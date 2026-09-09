@@ -8,13 +8,13 @@ To add more features to a Platformatic service, you will need to register a plug
 
 The config file specifies where the plugin file is located. The path is relative to the config file path.
 
-```json title="platformatic.json"
-{
-  ...
-  "plugins": {
-    "paths": ["./plugin/index.js"]
+```ts title="watt.config.ts"
+export default service({
+  // ...
+  plugins: {
+    paths: ['./plugin/index.js']
   }
-}
+})
 ```
 
 You should export an async `function` which receives the following parameters:
@@ -48,7 +48,7 @@ The path can also be a directory. In that case, the directory will be loaded wit
 │   ├── single-plugin
 │   │   └── utils.js
 │   └── another-plugin.js
-└── platformatic.service.json
+└── watt.config.ts
 ```
 
 By default, the folder will be added as a prefix to all the routes defined within them.
@@ -58,17 +58,17 @@ See the [autoload](../runtime/configuration.md#autoload) documentation for all t
 
 Multiple plugins can be loaded in parallel by specifying an array:
 
-```json
-{
-  ...
-  "plugins": {
-    "paths": [{
-      "path": "./plugin/index.js"
+```ts
+export default service({
+  // ...
+  plugins: {
+    paths: [{
+      path: './plugin/index.js'
     }, {
-      "path": "./routes/"
+      path: './routes/'
     }]
   }
-}
+})
 ```
 
 ## TypeScript and Autocompletion

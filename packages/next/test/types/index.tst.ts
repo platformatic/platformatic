@@ -1,5 +1,6 @@
 import type { JSONSchemaType } from 'ajv'
 import type { FastifyError } from 'fastify'
+import type { ApplicationDefinition, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import type { ConfigurationOptions } from '@platformatic/foundation'
 import { expect, test } from 'tstyche'
 import {
@@ -11,6 +12,8 @@ import {
   create,
   enhanceNextConfig,
   getAdapterPath,
+  next,
+  type NextConfigOptions,
   getCacheHandlerPath,
   loadConfiguration,
   packageJson,
@@ -53,4 +56,29 @@ test('Next types', () => {
   expect(errors.StandaloneServerNotFound()).type.toBe<FastifyError>()
   expect(errors.CannotParseStandaloneServer()).type.toBe<FastifyError>()
   expect(context).type.toBe<NextContext>()
+})
+
+test('Next factory', () => {
+  expect(next({ trailingSlash: true })).type.toBe<ApplicationDefinition>()
+
+  /*
+    The callback form returns a function the loader awaits, so reading a property of the definition
+    on it is a type error until it has run. A single signature returning ApplicationDefinition for
+    both forms would typecheck this, which is the mistake the deferred type exists to prevent.
+  */
+  expect(next(() => ({ trailingSlash: true }))).type.toBe<DeferredApplicationDefinition>()
+  expect(next(async () => ({ trailingSlash: true }))).type.toBe<DeferredApplicationDefinition>()
+  expect(next(() => ({ trailingSlash: true }))).type.not.toHaveProperty('module')
+
+  // The capability's own block is flattened into the top level; the shared blocks keep their
+  // v3 positions.
+  expect<NextConfigOptions>().type.toHaveProperty('trailingSlash')
+  expect<NextConfigOptions>().type.toHaveProperty('server')
+  expect<NextConfigOptions>().type.not.toHaveProperty('$schema')
+  expect<NextConfigOptions>().type.not.toHaveProperty('module')
+
+  // The context a deferred definition is evaluated against.
+  expect(next((context: ConfigContext) => ({ trailingSlash: context.production }))).type.toBe<
+    DeferredApplicationDefinition
+  >()
 })

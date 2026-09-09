@@ -1,6 +1,0 @@
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.3.1.json",
-  "application": {
-    "basePath": "/external-proxy/frontend"
-  }
-}

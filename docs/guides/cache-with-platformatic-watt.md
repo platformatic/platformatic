@@ -136,16 +136,16 @@ Your application structure will look like:
 
 ```
 my-cache-app/
-├── watt.json                 # Watt configuration
+├── watt.config.ts            # Watt configuration
 ├── package.json
 └── web/
     └── api/                  # Your service
         ├── package.json
-        ├── watt.json # Service configuration
+        ├── watt.config.ts # Service configuration
         └── index.js          # Main service file
 ```
 
-Watt automatically loads your services based on the `watt.json` configuration and handles the server lifecycle.
+Watt automatically loads your services based on the `watt.config.ts` configuration and handles the server lifecycle.
 This is provided by the autoload feature.
 
 Then execute:
@@ -191,7 +191,7 @@ Choose `@platformatic/gateway` to create an API gateway, and then create another
 
 ```
 my-cache-app/
-├── watt.json
+├── watt.config.ts
 ├── package.json
 └── web/
     ├── gateway/            # Public API gateway
@@ -313,30 +313,31 @@ Cache tags are unique identifiers that let you invalidate related cache entries:
 
 The gateway acts as your API gateway, routing external requests to internal services and managing the unified cache layer:
 
-```js
-// web/gateway/watt.json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+// web/gateway/watt.config.ts
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [
       {
-        "id": "api",
-        "proxy": {
-          "prefix": "/api"
+        id: 'api',
+        proxy: {
+          prefix: '/api'
         }
       },
       {
-        "id": "data-service",
-        "proxy": {
-          "prefix": "/data"
+        id: 'data-service',
+        proxy: {
+          prefix: '/data'
         }
       }
     ]
   },
-  "server": {
-    "port": 3042
+  server: {
+    port: 3042
   }
-}
+})
 ```
 
 **How Gateway + Caching Works:**
@@ -350,18 +351,19 @@ The gateway acts as your API gateway, routing external requests to internal serv
 
 ## Step 5: Enable HTTP Cache in Watt
 
-Add HTTP caching configuration to your root-level `watt.json` file:
+Add HTTP caching configuration to your root-level `watt.config.ts` file:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "httpCache": {
-    "cacheTagsHeader": "X-Cache-Tags"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  httpCache: {
+    cacheTagsHeader: 'X-Cache-Tags'
   },
-  "autoload": {
-    "path": "web"
+  autoload: {
+    path: 'web'
   }
-}
+})
 ```
 
 **Understanding the configuration:**
@@ -381,25 +383,26 @@ Add HTTP caching configuration to your root-level `watt.json` file:
 
 You can fine-tune the cache behavior with additional options:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "httpCache": {
-    "cacheTagsHeader": "X-Cache-Tags",
-    "origins": [
-      "http://api.plt.local",
-      "/https:\\/\\/.*\\.trusted-api\\.com/"
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  httpCache: {
+    cacheTagsHeader: 'X-Cache-Tags',
+    origins: [
+      'http://api.plt.local',
+      '/https:\\/\\/.*\\.trusted-api\\.com/'
     ],
-    "cacheByDefault": 60000,
-    "type": "shared",
-    "maxSize": 104857600,
-    "maxEntrySize": 5242880,
-    "maxCount": 1024
+    cacheByDefault: 60000,
+    type: 'shared',
+    maxSize: 104857600,
+    maxEntrySize: 5242880,
+    maxCount: 1024
   },
-  "autoload": {
-    "path": "web"
+  autoload: {
+    path: 'web'
   }
-}
+})
 ```
 
 **Additional configuration options:**
@@ -687,7 +690,7 @@ export default async function  (fastify) {
 
 **Solutions:**
 
-- Verify `httpCache` is enabled in `watt.json`
+- Verify `httpCache` is enabled in `watt.config.ts`
 - Check that `Cache-Control` headers are set correctly
 - Ensure cache duration is greater than 0 (`s-maxage=600`)
 - Confirm Watt version supports HTTP caching
@@ -699,7 +702,7 @@ export default async function  (fastify) {
 **Solutions:**
 
 - Check that `X-Cache-Tags` header matches invalidation tags exactly
-- Verify the `cacheTagsHeader` configuration in `watt.json`
+- Verify the `cacheTagsHeader` configuration in `watt.config.ts`
 - Ensure invalidation code runs without errors
 - Confirm route/method/origin match exactly for key-based invalidation
 

@@ -82,42 +82,41 @@ mkdir -p web/ external/
 
 ## Step 2: Configure Multi-Repository Applications
 
-### Define Applications in watt.json
+### Define Applications in the configuration file
 
-Configure your `watt.json` to include applications from multiple repositories:
+Configure your `watt.config.ts` to include applications from multiple repositories:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
-  "applications": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [
     {
-      "id": "gateway",
-      "path": "web/gateway"
+      id: 'gateway',
+      path: 'web/gateway'
     },
     {
-      "id": "user-application",
-      "path": "{PLT_USER_APPLICATION_PATH}",
-      "url": "https://github.com/your-org/user-application.git"
+      id: 'user-application',
+      url: 'https://github.com/your-org/user-application.git'
     },
     {
-      "id": "product-application",
-      "path": "{PLT_PRODUCT_APPLICATION_PATH}",
-      "url": "https://github.com/your-org/product-application.git"
+      id: 'product-application',
+      url: 'https://github.com/your-org/product-application.git'
     },
     {
-      "id": "frontend",
-      "path": "{PLT_FRONTEND_PATH}",
-      "url": "npm:@your-org/frontend"
+      id: 'frontend',
+      url: 'npm:@your-org/frontend'
     }
   ]
-}
+})
 ```
 
 **Configuration explanation:**
 
-- **Local applications** (like `gateway`) use direct paths
-- **Remote applications** use environment variables for paths + Git URLs
-- **Environment variables** allow flexible local vs. remote resolution
+- **Local applications** (like `gateway`) name their directory with `path`
+- **Remote applications** name where to fetch from with `url` and need no `path`: each clone lands in
+  `external/<id>`, which [`resolvedApplicationsBasePath`](../reference/runtime/configuration.md#resolvedapplicationsbasepath)
+  moves as a set
 - **Git URLs** define where to fetch applications when not available locally
 
 ### Repository Architecture Example
@@ -125,15 +124,15 @@ Configure your `watt.json` to include applications from multiple repositories:
 ```
 Organization Structure:
 ├── my-microapplications-app/          # Main orchestration app
-│   ├── watt.json                  # Application definitions
+│   ├── watt.config.ts             # Application definitions
 │   ├── package.json               # Workspace configuration
 │   └── web/                       # Resolved applications appear here
 ├── user-application/                  # Separate repository
 │   ├── package.json
-│   └── platformatic.json
+│   └── watt.config.ts
 ├── product-application/               # Separate repository
 │   ├── package.json
-│   └── platformatic.json
+│   └── watt.config.ts
 └── nextjs-frontend/               # Separate repository
     ├── package.json
     └── next.config.js
@@ -249,7 +248,7 @@ ls -la web/
 
 # Verify application configurations
 cat web/user-application/package.json
-cat web/product-application/platformatic.json
+cat web/product-application/watt.config.ts
 ```
 
 **2. Test application connectivity:**

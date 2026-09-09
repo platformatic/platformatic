@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticNuxtConfig } from './config.d.ts'
@@ -41,3 +41,10 @@ export declare const schema: JSONSchemaType<PlatformaticNuxtConfig>
 export declare const schemaComponents: { nuxt: unknown }
 export declare const version: string
 export declare const supportedVersions: string
+
+export type NuxtConfigOptions = CapabilityFactoryOptions<PlatformaticNuxtConfig, 'vite' | 'nuxt', never>
+
+export declare function nuxt (options?: NuxtConfigOptions): ApplicationDefinition
+export declare function nuxt (
+  callback: (context: ConfigContext) => NuxtConfigOptions | Promise<NuxtConfigOptions>
+): DeferredApplicationDefinition

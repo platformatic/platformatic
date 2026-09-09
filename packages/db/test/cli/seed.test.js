@@ -1,6 +1,6 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import assert from 'node:assert/strict'
-import { copyFile, mkdtemp, readdir } from 'node:fs/promises'
+import { copyFile, cp, mkdtemp, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -15,7 +15,7 @@ test('seed and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
-  const configFile = join(cwd, 'platformatic.db.json')
+  const configFile = join(cwd, 'watt.config.js')
 
   const migrationsLogger = createCapturingLogger()
   const migrationsContext = createTestContext()
@@ -90,7 +90,7 @@ test('seed and start with named export seed function', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
-  const configFile = join(cwd, 'platformatic.db.json')
+  const configFile = join(cwd, 'watt.config.js')
 
   const migrationsLogger = createCapturingLogger()
   const migrationsContext = createTestContext()
@@ -165,7 +165,7 @@ test('seed command should throw an error if there are migrations to apply', asyn
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
-  const configFile = join(cwd, 'platformatic.db.json')
+  const configFile = join(cwd, 'watt.config.js')
 
   t.after(async () => {
     await dropTestDB()
@@ -189,17 +189,22 @@ test('seed command should throw an error if there are migrations to apply', asyn
   }
 })
 
+/*
+  Each of the four names v4 accepts, rather than each of the six serialized formats v3 read. The
+  variants differ in language and module system and in nothing else, and a capability command has
+  to load all four.
+*/
 test('valid config files', async t => {
   const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
   const validConfigFiles = await readdir(join(fixturesDir, 'valid-config-files'))
 
-  for (const configFile of validConfigFiles) {
+  for (const extension of validConfigFiles) {
     const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
     const cwd = await mkdtemp(join(tmpdir(), 'seed-'))
-    const dbConfigFile = join(cwd, configFile)
+    const dbConfigFile = join(cwd, `watt.config.${extension}`)
 
-    await copyFile(join(fixturesDir, 'valid-config-files', configFile), join(cwd, configFile))
+    await cp(join(fixturesDir, 'valid-config-files', extension), cwd, { recursive: true })
     await createDirectory(join(cwd, 'migrations'))
     await copyFile(join(fixturesDir, 'sqlite', 'migrations', '001.do.sql'), join(cwd, 'migrations', '001.do.sql'))
     const seed = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'seed.js')
@@ -235,7 +240,7 @@ test('valid config files', async t => {
 test('missing seed file', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
-  const configFile = join(cwd, 'platformatic.db.json')
+  const configFile = join(cwd, 'watt.config.js')
 
   t.after(async () => {
     await dropTestDB()
@@ -267,7 +272,7 @@ test('seed and start from cwd', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
-  const configFile = join(cwd, 'platformatic.db.json')
+  const configFile = join(cwd, 'watt.config.js')
 
   const migrationsLogger = createCapturingLogger()
   const migrationsContext = createTestContext()

@@ -23,15 +23,19 @@ npm install @platformatic/tanstack
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/tanstack/3.30.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { tanstack } from '@platformatic/tanstack'
+
+export default tanstack({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Preparing for production mode

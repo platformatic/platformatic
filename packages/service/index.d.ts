@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
@@ -80,3 +80,10 @@ export declare class ServiceCapability<Config = PlatformaticServiceConfig> exten
   constructor (root: string, config: Config, context?: object)
   getApplication (): FastifyInstance
 }
+
+export type ServiceConfigOptions = CapabilityFactoryOptions<PlatformaticServiceConfig, 'service', never>
+
+export declare function service (options?: ServiceConfigOptions): ApplicationDefinition
+export declare function service (
+  callback: (context: ConfigContext) => ServiceConfigOptions | Promise<ServiceConfigOptions>
+): DeferredApplicationDefinition

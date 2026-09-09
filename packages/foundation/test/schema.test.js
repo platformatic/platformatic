@@ -1,6 +1,6 @@
 import { deepEqual, strictEqual } from 'node:assert'
 import test from 'node:test'
-import { omitProperties, overridableValue, removeDefaults, server } from '../index.js'
+import { fastifyServer, omitProperties, overridableValue, removeDefaults, server } from '../index.js'
 
 test('overridableValue - should create schema with anyOf and default', () => {
   const spec = { type: 'number', minimum: 0 }
@@ -75,4 +75,22 @@ test('server schema - hostname must not have a default value', () => {
   // into every config even when the user did not set a hostname. That silently
   // overrides whatever the underlying framework would pick as its default.
   strictEqual(server.properties.hostname.default, undefined)
+})
+
+test('server and fastifyServer agree on every key they share', () => {
+  /*
+    They are separate object literals that happen to overlap: fastifyServer re-declares server's
+    keys rather than composing with it, so a key added to one does not reach the other. That is how
+    portAssignment came to be missing from service, db and gateway, leaving them with no way to run
+    workers > 1 on a fixed port. Sharing the declaration is what keeps the two from drifting; this
+    asserts they still do.
+  */
+  const shared = Object.keys(server.properties).filter(key => key in fastifyServer.properties)
+
+  // hostname is the only key both spell out, and it is spelled out identically.
+  for (const key of shared) {
+    deepEqual(fastifyServer.properties[key], server.properties[key], key)
+  }
+
+  strictEqual(shared.includes('portAssignment'), true)
 })

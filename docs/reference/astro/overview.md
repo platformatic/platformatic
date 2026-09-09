@@ -17,15 +17,19 @@ You are all set, you can now start your runtime as usual via `wattpm dev` or `wa
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/astro/4.0.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { astro } from '@platformatic/astro'
+
+export default astro({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture

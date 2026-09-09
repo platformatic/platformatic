@@ -23,34 +23,38 @@ npm install @platformatic/react-router
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/react-router/3.30.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { reactRouter } from '@platformatic/react-router'
+
+export default reactRouter({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Using behind a Platformatic Gateway
 
 When exposing the application through a Platformatic Gateway, adjust your `react-router.config.ts` file to use the Platformatic base path:
 
-```typescript
+```typescript source
 import type { Config } from '@react-router/dev/config'
 import { getBasePath } from '@platformatic/globals'
 
 export default {
-  basename: getBasePath({ throwOnMissing: false }) ?? '/'
+  basename: getBasePath({ throwOnMissing: false }) ?? '/',
   ssr: true
 } satisfies Config
 ```
 
 You also need to adjust the `base` option in your `vite.config.ts`:
 
-```typescript
+```typescript source
 import { getBasePath } from '@platformatic/globals'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
@@ -68,7 +72,7 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
 1. Modify your Vite configuration to properly handle SSR builds by making it dependent on the SSR flags:
 
-   ```typescript
+   ```typescript source
    import { getBasePath } from '@platformatic/globals'
    import { reactRouter } from '@react-router/dev/vite'
    import { defineConfig } from 'vite'
@@ -91,7 +95,7 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
 2. Create an `app/server.ts` file that exports an `entrypoint` variable:
 
-   ```typescript
+   ```typescript source
    export const entrypoint = import('virtual:react-router/server-build')
    ```
 
@@ -101,7 +105,7 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
 React Router uses a user-provided Vite configuration. To tag assets, add the shared plugin:
 
-```ts
+```ts source
 import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
 
 export default defineConfig({

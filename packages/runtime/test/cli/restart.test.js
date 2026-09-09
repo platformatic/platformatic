@@ -38,7 +38,7 @@ async function waitForMessages (child, last) {
 
 test('restart in case of a crash with a delay in development', async t => {
   process.env.PORT = await getPort()
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'watt.config.mjs')
   const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(async () => {
     child.kill('SIGINT')
@@ -69,7 +69,7 @@ test('restart in case of a crash with a delay in development', async t => {
 
 test('restart in case of a crash without any delay in production', async t => {
   process.env.PORT = await getPort()
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'watt.config.mjs')
   const { child, url } = await start(config, '--production', { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(async () => {
     child.kill('SIGINT')
@@ -106,7 +106,7 @@ test("do not restart in case of a crash in case it's so specified in development
     '..',
     'fixtures',
     'do-not-restart-on-crash',
-    'platformatic.runtime.json'
+    'watt.config.mjs'
   )
   const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(async () => {
@@ -141,7 +141,7 @@ test('should restart in production even if restartOnError is false', async t => 
     '..',
     'fixtures',
     'do-not-restart-on-crash',
-    'platformatic.runtime.json'
+    'watt.config.mjs'
   )
   const { child, url } = await start(config, '--production', { env: { PLT_USE_PLAIN_CREATE: 'true' } })
   t.after(async () => {

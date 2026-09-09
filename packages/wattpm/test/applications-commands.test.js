@@ -1,39 +1,36 @@
 import { ok } from 'node:assert'
-import { rename } from 'node:fs/promises'
-import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
 test('should execute applications commands', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.config.mjs')
   const applicationCommandProcess = await wattpm('main:fetch-openapi-schemas', { cwd: rootDir })
 
   ok(applicationCommandProcess.stdout.includes('Fetching schemas for all applications.'))
 })
 
 test('should execute applications commands with an explicit configuration file via --config', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.config.mjs')
 
-  // Rename the configuration file to something which cannot be autodetected
-  await rename(resolve(rootDir, 'watt.json'), resolve(rootDir, 'custom-watt.json'))
+  /*
+    What this asserts in v4 is that `--config` is honoured, and no longer that it rescues a file
+    discovery could not find. It used to rename the configuration to something arbitrary, which v3
+    accepted; v4's `--config` names *where* a configuration is and not what it may be called, so a
+    file in the project root under one of the four names is always discoverable and there is no
+    name that is both legal and hidden.
 
-  // Without --config the application command cannot be found
-  const failingProcess = await wattpm('main:fetch-openapi-schemas', { cwd: rootDir, reject: false })
-  ok(failingProcess.stdout.includes('Unknown command main:fetch-openapi-schemas'))
-
-  const applicationCommandProcess = await wattpm(
-    'main:fetch-openapi-schemas',
-    '--config',
-    'custom-watt.json',
-    { cwd: rootDir }
-  )
+    A name outside the four is refused rather than loaded, which the loader's own tests cover.
+  */
+  const applicationCommandProcess = await wattpm('main:fetch-openapi-schemas', '--config', 'watt.config.mjs', {
+    cwd: rootDir
+  })
 
   ok(applicationCommandProcess.stdout.includes('Fetching schemas for all applications.'))
 })
 
 test('can show help for applications commands', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.config.mjs')
   const mainHelpProcess = await wattpm('help', { cwd: rootDir })
   const applicationHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
 

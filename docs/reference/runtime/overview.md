@@ -23,14 +23,15 @@ If you're only interested in the features available in Platformatic Runtime, you
 
 The following configuration file can be used to start a new Platformatic Runtime project. For more details on the configuration file, see the [configuration documentation](../runtime/configuration.md).
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
-  "autoload": {
-    "path": "./packages",
-    "exclude": ["docs"]
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: {
+    path: './packages',
+    exclude: ['docs']
   }
-}
+})
 ```
 
 ## Platformatic Runtime context

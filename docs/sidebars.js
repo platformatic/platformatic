@@ -75,6 +75,7 @@ const sidebars = {
             'guides/use-watt-with-ts-node',
             'guides/use-watt-with-ai-agents',
             'guides/migrate-runtime-v4',
+            'guides/generating-watt-configuration',
             'guides/scheduler',
             'guides/dynamic-workers',
             'guides/nextjs-multi-zones',

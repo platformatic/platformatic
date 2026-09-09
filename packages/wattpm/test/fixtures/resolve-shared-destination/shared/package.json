@@ -1,0 +1,5 @@
+{
+  "name": "shared",
+  "type": "module",
+  "main": "index.js"
+}

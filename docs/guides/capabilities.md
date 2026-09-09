@@ -9,24 +9,25 @@ A capability is essentially a Node.js package that implements the Platformatic c
 - **Single Capability Applications**: Simple applications with one primary function (e.g., a Next.js frontend or a database API)
 - **Multi-Capability Applications**: Complex applications that combine multiple capabilities (e.g., a database backend with a React frontend and an API gateway)
 
-Each Watt project can define a set of application, each using its own capability by defining them in the main `watt.json` file via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#application) properties.
+Each Watt project can define a set of applications, each using its own capability, by declaring them in the root `watt.config.ts` via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#applications) properties.
 
-Each application gets its own folder and the capability is determined by looking at the `$schema` property of the application `watt.json`.
+Each application gets its own folder, and the capability is the one the application's own `watt.config.ts` imports and calls.
 
-For instance, to use the `@platformatic/next`, you set the `watt.json` (or `platformatic.json`) file as follows:
+For instance, to use `@platformatic/next`:
 
-```js
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
-  // ...
-}
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
-If no `watt.json` is present, then Watt will try to autodetect the right capability by looking at the dependencies in the `package.json` file.
+If the application has no configuration file, Watt autodetects the capability from the dependencies in its `package.json`.
 
 #### Role of Configuration Files
 
-The `watt.json` or `platformatic.json` configuration file serves as the authoritative source for:
+The `watt.config.ts` configuration file serves as the authoritative source for:
 
 - **Service Definition**: Explicitly specifies which capability to use (e.g., `@platformatic/next`, `@platformatic/db`)
 - **Application Entry Point**: Points to your application's main file or build output directory
@@ -36,29 +37,29 @@ The `watt.json` or `platformatic.json` configuration file serves as the authorit
 
 This configuration-first approach ensures predictable behavior and allows developers to override automatic detection when needed.
 
-#### Embedding Runtime Configuration
+#### Orchestration lives in the runtime configuration
 
-Each capability configuration file supports a `runtime` property that allows you to embed runtime-level settings directly in the application's configuration. This is useful for configuring workers, logging, health checks, and other runtime features specific to an application.
+An application's own file configures the capability and nothing else. Workers, logging, health checks
+and the rest are orchestration, and they belong to the runtime configuration — in a single-application
+project, alongside the `application` shorthand:
 
-For example:
+```ts config
+import { defineConfig } from 'wattpm'
+import { next } from '@platformatic/next'
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.31.0.json",
-  "runtime": {
-    "logger": {
-      "level": "debug"
-    },
-    "workers": {
-      "dynamic": true,
-      "minimum": 1,
-      "maximum": 4
-    }
+export default defineConfig({
+  logger: { level: 'debug' },
+  workers: { dynamic: true, minimum: 1, maximum: 4 },
+  application: {
+    config: next({
+      server: { port: Number(process.env.PORT ?? 3042) }
+    })
   }
-}
+})
 ```
 
-See the capability configuration documentation (e.g., [Next.js](../reference/next/configuration.md#runtime), [Node](../reference/node/configuration.md#runtime)) for the full list of available runtime properties.
+v3 accepted these settings under a `runtime` property inside the application's own file. That property
+does not exist in v4; see [Runtime settings for a single application](../reference/next/configuration.md#runtime-settings-for-a-single-application).
 
 ### Available Capabilities
 

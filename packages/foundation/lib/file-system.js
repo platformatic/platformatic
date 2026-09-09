@@ -165,7 +165,18 @@ export class FileWatcher extends EventEmitter {
         }
       }
     } /* c8 ignore next */
-    this.handlePromise = eventHandler()
+
+    /*
+      Caught at creation, not only in stopWatching. The loop rejects when the watch ends: normally
+      that is the AbortError stopWatching triggers, but fs.watch can also give up on its own -- a
+      recursive watch is best-effort on some platforms, and a transient failure on Windows is an
+      ordinary event. Left uncaught until stopWatching attaches its handler, such a failure is an
+      unhandled rejection, which under Node's default policy takes the whole process down. That is
+      what crashed `wattpm dev` for a configuration-less project on Windows, where the sole watcher
+      is a recursive one on the project directory: a dead watcher must stop reporting changes, not
+      end the process.
+    */
+    this.handlePromise = eventHandler().catch(() => {})
   }
 
   async stopWatching () {

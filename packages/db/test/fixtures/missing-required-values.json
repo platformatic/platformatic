@@ -1,9 +1,0 @@
-{
-  "db": {
-    "connectionString": "{DATABASE_URL}"
-  },
-  "migrations": {
-    "table": "versions",
-    "autoApply": false
-  }
-}

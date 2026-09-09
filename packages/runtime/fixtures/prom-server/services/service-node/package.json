@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "test-service-node",
+  "name": "service-node",
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {

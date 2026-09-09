@@ -19,7 +19,7 @@ test('autostart', async t => {
     await dropTestDB()
   })
 
-  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'simple.json')], {
+  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'simple', 'watt.config.js')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -154,7 +154,7 @@ test('start command', async t => {
     await dropTestDB()
   })
 
-  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'simple.json')], {
+  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'simple', 'watt.config.js')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }

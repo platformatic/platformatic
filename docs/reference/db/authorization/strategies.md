@@ -47,14 +47,15 @@ HTTP requests to the Platformatic DB API should include a header like this `Auth
 
 Set up JWT by specifying a shared `secret` in the Platformatic DB configuration file as shown below:
 
-```json title="platformatic.json"
-{
-  "authorization": {
-    "jwt": {
-      "secret": "<shared-secret>"
+```ts title="watt.config.ts"
+export default db({
+  // ...
+  authorization: {
+    jwt: {
+      secret: process.env.PLT_JWT_SECRET
     }
   }
-}
+})
 ```
 
 See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#options)
@@ -64,17 +65,17 @@ for all the available configuration options.
 
 The JWT authorization strategy includes support for [JSON Web Key](https://www.rfc-editor.org/rfc/rfc7517) Sets. For enhanced security, configure JWT to use JWKS for dynamic public key fetching:
 
-```json title="platformatic.json"
-{
-  "authorization": {
-    "jwt": {
-      "jwks": {
-        "allowedDomains": [
-          "https://ISSUER_DOMAIN"]
+```ts title="watt.config.ts"
+export default db({
+  // ...
+  authorization: {
+    jwt: {
+      jwks: {
+        allowedDomains: ['https://ISSUER_DOMAIN']
       }
     }
   }
-}
+})
 ```
 
 When a JSON Web Token is included in a request to Platformatic DB, it retrieves the
@@ -135,14 +136,15 @@ Authenticate API requests by configuring a webhook that Platformatic DB will cal
 
 Define the webhook URL in the authorization settings:
 
-```json title="platformatic.json"
-{
-  "authorization": {
-    "webhook": {
-      "url": "<webhook url>"
+```ts title="watt.config.ts"
+export default db({
+  // ...
+  authorization: {
+    webhook: {
+      url: process.env.PLT_AUTH_WEBHOOK_URL
     }
   }
-}
+})
 ```
 
 When a request is received, Platformatic sends a `POST` to the webhook, replicating

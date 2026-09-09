@@ -23,15 +23,19 @@ npm install @platformatic/remix
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/remix/4.0.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { remix } from '@platformatic/remix'
+
+export default remix({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture
@@ -46,7 +50,7 @@ In both modes, an application that uses the `commands` property is responsible f
 
 Remix uses a user-provided Vite configuration. To tag assets, add the shared plugin:
 
-```ts
+```ts source
 import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
 
 export default defineConfig({

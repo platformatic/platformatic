@@ -19,7 +19,7 @@ async function isCompileCacheAvailable () {
 
 test('compileCache - runtime starts with compile cache enabled', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'compile-cache', 'watt.config.js')
   const app = await createRuntime(configFile)
   const { 'a:0': url } = await app.start()
 
@@ -43,7 +43,7 @@ test('compileCache - cache directory is created on Node.js 22.1.0+', async t => 
   }
 
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'compile-cache', 'watt.config.js')
   const serviceDir = join(fixturesDir, 'compile-cache', 'services', 'a')
   const cacheDir = join(serviceDir, '.plt', 'compile-cache')
 

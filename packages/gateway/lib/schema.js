@@ -1,13 +1,13 @@
 #! /usr/bin/env node
 
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/lib/schema.js'
 import {
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
-} from '@platformatic/foundation'
-import { schemaComponents as applicationSchemaComponents } from '@platformatic/service'
+} from '@platformatic/foundation/lib/schema.js'
+import { schemaComponents as applicationSchemaComponents } from '@platformatic/service/lib/schema.js'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -15,6 +15,14 @@ const { $defs, graphqlBase, openApiBase, plugins } = applicationSchemaComponents
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
+
+// The application is built before _listen, which is the only thing the port guards.
+export const servesWithoutPort = { development: true, production: true }
+
+// Package-level metadata main-side preparation reads before any worker exists. It lives beside the
+// schema so the light /schema subpath carries it, which is what keeps boot from importing the full
+// capability package into the loader.
+export const skipTracingHooks = true
 
 export const openApiApplication = {
   type: 'object',

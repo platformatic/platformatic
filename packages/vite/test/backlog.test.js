@@ -1,15 +1,25 @@
 import { deepStrictEqual } from 'node:assert'
-import { cp } from 'node:fs/promises'
 import path, { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
-  commonFixturesRoot,
+  copyCommonApplication,
   prepareRuntime,
   updateFile,
   updateTargetApplicationConfig
 } from '../../basic/test/helper.js'
 import { updateConfigFile } from '../../runtime/test/helpers.js'
 import { copyServerEntrypoint } from './helper.js'
+
+// It reads the loaded configuration rather than the project directory, so it runs after the load.
+// The update still lands before start, which is when the worker is handed its configuration.
+const setBacklog = async (root, config) => {
+  return updateTargetApplicationConfig(config, applicationConfig => {
+    applicationConfig.server ??= {}
+    applicationConfig.server.backlog = 100
+  })
+}
+
+setBacklog.runAfterPrepare = true
 
 const envs = {
   dev: {
@@ -45,12 +55,7 @@ for (const [env, options] of Object.entries(envs)) {
       port: 0,
       build: options.build,
       production: options.production,
-      async additionalSetup (root, config) {
-        return updateTargetApplicationConfig(config, applicationConfig => {
-          applicationConfig.server ??= {}
-          applicationConfig.server.backlog = 100
-        })
-      }
+      additionalSetup: setBacklog
     })
 
     const promise = waitServerOptions(runtime)
@@ -91,9 +96,7 @@ for (const [env, options] of Object.entries(envs)) {
       production: options.production,
       async additionalSetup (root, config) {
         for (const type of ['backend', 'composer']) {
-          await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-            recursive: true
-          })
+          await copyCommonApplication(root, type)
         }
 
         await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {

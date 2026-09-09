@@ -23,17 +23,21 @@ Using the experimental adapter path provides several advantages:
 
 ## Setup
 
-### 1. Update your platformatic.json
+### 1. Update your configuration file
 
 Enable the experimental adapter in your Platformatic Next configuration file:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.30.0.json",
-  "next": {
-    "useExperimentalAdapter": true
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  next: {
+    useExperimentalAdapter: true
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ### 2. Configure your next.config.js
@@ -78,7 +82,7 @@ The experimental Next.js adapterPath is enabled but the @platformatic/next adapt
 
 This means:
 
-- You have `useExperimentalAdapter: true` in your `platformatic.json`
+- You have `useExperimentalAdapter: true` in your `watt.config.ts`
 - But your `next.config.js` doesn't include the `adapterPath` configuration
 
 **Solution**: Add the adapter configuration to your `next.config.js` as shown in step 2 above.

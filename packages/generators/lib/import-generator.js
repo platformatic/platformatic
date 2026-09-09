@@ -1,8 +1,19 @@
 import { findConfigurationFileRecursive, safeRemove } from '@platformatic/foundation'
+import { capabilityFactories } from '@platformatic/foundation/lib/v4/index.js'
 import { spawnSync } from 'node:child_process'
 import { readFile, readdir, stat } from 'node:fs/promises'
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { BaseGenerator } from './base-generator.js'
+
+export function importedConfiguration (pkg) {
+  const factory = capabilityFactories[pkg]
+
+  if (factory) {
+    return `import { ${factory} } from '${pkg}'\n\nexport default ${factory}({})\n`
+  }
+
+  return `export default {\n  module: '${pkg}'\n}\n`
+}
 
 export class ImportGenerator extends BaseGenerator {
   constructor (options = {}) {
@@ -124,7 +135,7 @@ export class ImportGenerator extends BaseGenerator {
   }
 
   async #generateConfigFile (originalPath, updatedPath) {
-    // Determine if there is a watt.json file in the application path - If it's missing, insert one
+    // Determine if there is a config file in the application path - If it's missing, insert one
     // For import it means we don't update  the file, for copy it means it was already copied in #copy.
     const existingConfig = await findConfigurationFileRecursive(originalPath)
 
@@ -132,21 +143,18 @@ export class ImportGenerator extends BaseGenerator {
       return
     }
 
-    const { module: pkg, version } = this.config
+    const { module: pkg } = this.config
 
-    if (pkg.startsWith('@platformatic/')) {
-      this.addFile({
-        path: '',
-        file: join(updatedPath, this.runtimeConfig),
-        contents: JSON.stringify({ $schema: `https://schemas.platformatic.dev/${pkg}/${version}.json` }, null, 2)
-      })
-    } else {
-      this.addFile({
-        path: '',
-        file: join(updatedPath, this.runtimeConfig),
-        contents: JSON.stringify({ module: pkg }, null, 2)
-      })
-    }
+    /*
+      The v4 per-app form rather than a JSON stub. This is the path taken for a capability that
+      ships no generator of its own, so a stub here would leave the wizard writing the old dialect
+      for exactly the applications least likely to be exercised by anything else.
+    */
+    this.addFile({
+      path: '',
+      file: join(updatedPath, 'watt.config.mjs'),
+      contents: importedConfiguration(pkg)
+    })
   }
 
   async #updatePackageJson (originalPath, updatedPath, pkg, version) {
@@ -170,43 +178,37 @@ export class ImportGenerator extends BaseGenerator {
   }
 
   async #updateRuntime (runtime) {
-    const configObject = runtime.getRuntimeConfigFileObject()
-    /* c8 ignore next - else */
-    const config = JSON.parse(configObject?.contents ?? '{}')
-    const envObject = runtime.getRuntimeEnvFileObject()
-    /* c8 ignore next - else */
-    let env = envObject?.contents ?? ''
+    /*
+      The configuration the runtime generator built, not a parse of the file it wrote: that file is
+      a module now, and its values are expressions rather than the data this is about to add an
+      entry to. It is written back through the same generator, which knows how to spell it.
 
-    // Find which key is being used for the manual applications
-    let key
-    for (const candidate of new Set([runtime.applicationsFolder, 'applications', 'services', 'web'])) {
-      if (Array.isArray(config[candidate])) {
-        key = candidate
-        break
-      }
-    }
-
-    /* c8 ignore next - else */
-    key ??= runtime.applicationsFolder ?? 'applications'
-    const applications = config[key] ?? []
+      One spelling: the list is `applications`, because the loader refuses the v3 aliases by name.
+      And a literal path rather than v3's `{PLT_APPLICATION_<ID>_PATH}` placeholder plus its `.env`
+      line -- the indirection bought nothing and left the entry pointing at the root itself in
+      every clone missing the gitignored file the value lived in.
+    */
+    const config = runtime.generatedConfig ?? {}
+    const applications = Array.isArray(config.applications) ? config.applications : []
 
     if (!applications.some(application => application.id === this.config.applicationName)) {
+      const base = this.runtime?.targetDirectory ?? this.targetDirectory
+      const absolute = isAbsolute(this.config.applicationPath)
+        ? this.config.applicationPath
+        : resolve(base, this.config.applicationPath)
+      const relativePath = relative(base, absolute)
+
       applications.push({
         id: this.config.applicationName,
-        path: `{${this.config.applicationPathEnvName}}`,
+        // A cross-drive path has no relative spelling; `relative` answers with the absolute one.
+        path: (isAbsolute(relativePath) ? absolute : relativePath).split(sep).join('/'),
         url: this.config.gitUrl
       })
     }
 
-    config[key] = applications
-
-    if (env.length > 0) {
-      env += '\n'
-    }
-    env += `${this.config.applicationPathEnvName}=${this.config.applicationPath}`
+    config.applications = applications
 
     runtime.updateRuntimeConfig(config)
-    runtime.updateRuntimeEnv(env)
   }
 
   async #copy (root) {

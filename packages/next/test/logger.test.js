@@ -21,7 +21,6 @@ for (const env of Object.keys(envs)) {
       t,
       root: resolve(import.meta.dirname, 'fixtures/logger'),
       production: envs[env].production,
-      configFile: 'platformatic.json',
       port: 0
     })
     const url = await startRuntime(t, runtime, null, envs[env].build)

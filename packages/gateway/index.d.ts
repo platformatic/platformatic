@@ -1,4 +1,4 @@
-import { BaseCapability } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import {
   ServiceCapability,
@@ -71,3 +71,10 @@ export namespace errors {
   export const PathAlreadyExistsError: () => FastifyError
   export const CouldNotReadOpenAPIConfigError: () => FastifyError
 }
+
+export type GatewayConfigOptions = CapabilityFactoryOptions<PlatformaticGatewayConfig, 'gateway', never>
+
+export declare function gateway (options?: GatewayConfigOptions): ApplicationDefinition
+export declare function gateway (
+  callback: (context: ConfigContext) => GatewayConfigOptions | Promise<GatewayConfigOptions>
+): DeferredApplicationDefinition

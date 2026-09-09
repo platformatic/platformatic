@@ -1,5 +1,5 @@
 {
-  "name": "gateway",
+  "name": "composer",
   "dependencies": {
     "@platformatic/gateway": ">=3.0.0"
   }

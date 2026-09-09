@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticReactRouterConfig } from './config.d.ts'
@@ -42,3 +42,10 @@ export declare const schema: JSONSchemaType<PlatformaticReactRouterConfig>
 export declare const schemaComponents: { reactRouter: JSONSchemaType<object> }
 export declare const version: string
 export declare const supportedVersions: string
+
+export type ReactRouterConfigOptions = CapabilityFactoryOptions<PlatformaticReactRouterConfig, 'vite' | 'reactRouter', never>
+
+export declare function reactRouter (options?: ReactRouterConfigOptions): ApplicationDefinition
+export declare function reactRouter (
+  callback: (context: ConfigContext) => ReactRouterConfigOptions | Promise<ReactRouterConfigOptions>
+): DeferredApplicationDefinition

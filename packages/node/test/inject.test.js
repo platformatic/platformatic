@@ -6,9 +6,9 @@ import {
   getLogsFromFile,
   prepareRuntimeWithApplications,
   setFixturesDir,
-  updateFile,
   verifyJSONViaHTTP
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -21,20 +21,14 @@ test('should inject request via IPC even if a server is started', async t => {
     '/frontend',
     undefined,
     async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const json = JSON.parse(contents)
-        json.logger.level = 'trace'
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.logger.level = 'trace'
       })
 
+      // A v4 module: a legacy name in an application directory is refused by the loader on sight.
       await writeFile(
-        resolve(root, 'services/frontend/platformatic.application.json'),
-        JSON.stringify({
-          $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.0.0.json',
-          logger: {
-            level: 'trace'
-          }
-        }),
+        resolve(root, 'services/frontend/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { level: 'trace' } }, null, 2)}\n`,
         'utf-8'
       )
     }
@@ -62,29 +56,17 @@ test('should inject request via the HTTP port if asked to', async t => {
     '/frontend',
     undefined,
     async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const json = JSON.parse(contents)
-        json.logger.level = 'trace'
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.logger.level = 'trace'
       })
 
-      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-        const json = JSON.parse(contents)
-        json.server = { logger: { level: 'fatal' } }
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        contents.server = { logger: { level: 'fatal' } }
       })
 
       await writeFile(
-        resolve(root, 'services/frontend/platformatic.application.json'),
-        JSON.stringify({
-          $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.0.0.json',
-          logger: {
-            level: 'trace'
-          },
-          node: {
-            dispatchViaHttp: true
-          }
-        }),
+        resolve(root, 'services/frontend/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { level: 'trace' }, node: { dispatchViaHttp: true } }, null, 2)}\n`,
         'utf-8'
       )
     }

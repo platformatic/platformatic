@@ -37,7 +37,16 @@ export async function packCommand (logger, configFile, args, context) {
 
   let config
   try {
-    config = await loadConfiguration(configFile)
+    /*
+      v4 hands a command the application's already-resolved configuration as data -- the loader
+      evaluated it once, main-side, and validated it against this capability's schema -- so
+      `resolved` says the reading is done. A path is still accepted, which is what a caller outside
+      a running project supplies, and it is loaded the way a boot loads one.
+    */
+    config =
+      typeof configFile === 'string'
+        ? await loadConfiguration(configFile)
+        : await loadConfiguration(context.application?.path ?? process.cwd(), configFile, { resolved: true })
   } catch (error) {
     return logFatalError(
       logger,

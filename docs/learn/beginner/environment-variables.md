@@ -4,10 +4,10 @@
 
 **By the end of this tutorial, you'll be able to:**
 
-- Configure Watt applications using environment variables
+- Read environment variables from a Watt configuration file
 - Use `.env` files for local development
 - Set up different configurations for development, staging, and production
-- Understand when and why to use environment variables for configuration
+- Decide, per setting, what happens when a variable is not set
 
 **Time to complete:** 15 minutes
 
@@ -20,33 +20,42 @@ Applications built with Watt follow [the twelve-factor app methodology](https://
 - **Improves security** - database passwords and API keys aren't hardcoded
 - **Simplifies deployment** - same code runs everywhere with different configuration
 
-## Step 1: Understanding Variable Replacement
+## Step 1: Reading a variable
 
-In any Watt configuration file, you can interpolate environment variables using curly braces:
+A Watt configuration file is a module, so it reads `process.env` the way any other module does:
 
-```json
-{
-  "server": {
-    "port": "{PORT}",
-    "hostname": "{HOSTNAME}"
-  },
-  "runtime": {
-    "logger": {
-      "level": "{LOG_LEVEL}"
-    }
+```ts config
+import { defineConfig } from 'wattpm'
+import { node } from '@platformatic/node'
+
+export default defineConfig({
+  logger: { level: 'info' },
+  application: {
+    config: node({
+      server: {
+        port: Number(process.env.PORT ?? 3042),
+        hostname: process.env.HOSTNAME ?? '127.0.0.1'
+      }
+    })
   }
-}
+})
 ```
 
 **How it works:**
 
-- The replacement happens after JSON parsing
-- All Watt configuration files support this syntax
-- Variables are resolved at startup time
+- The file is evaluated when Watt starts, with `.env` already loaded
+- Every setting is an ordinary expression, so the fallback is written where the value is
+- A setting that wants a number gets a number — `port` is `Number(...)`, not the string the environment holds
+
+:::note
+Earlier versions interpolated `{PORT}` placeholders into JSON configuration files. There are no
+placeholders in Watt 4: the file reads the variable itself. See
+[Migrating a v3 runtime](../../guides/migrate-runtime-v4.md).
+:::
 
 ## Step 2: Using .env Files for Local Development
 
-Watt has built-in [`dotenv`](http://npm.im/dotenv) support, automatically loading environment variables from `.env` files.
+Watt loads `.env` files before evaluating the configuration file.
 
 Create a `.env` file in your project root:
 
@@ -57,11 +66,12 @@ LOG_LEVEL=info
 DATABASE_URL=sqlite://./dev.db
 ```
 
-**Where to place .env files:**
+**Where Watt looks:** every directory from the configuration file's own up to the project root
+contributes its `.env`, nearest first. An application under `web/api` therefore sees its own `.env`
+layered over the project's, without naming either.
 
-- Same folder as your Watt configuration file
-- Or in the current working directory
-- Watt automatically finds and loads them
+**What wins:** a variable already set in the real environment outranks every file. Exporting
+`PORT=4042` in your shell beats any `.env`.
 
 ## Step 3: Setting Variables from Command Line
 
@@ -79,7 +89,15 @@ PORT=4042 LOG_LEVEL=debug npx wattpm dev
 
 ## Step 4: Environment-Specific Configuration
 
-You can create different `.env` files for different environments and specify which one to use with the `--env` flag:
+Each directory contributes four files rather than one, most specific first:
+
+1. `.env.<mode>.local`
+2. `.env.<mode>`
+3. `.env.local`
+4. `.env`
+
+The mode is `development` under `wattpm dev` and `production` under `wattpm start`, and `--mode`
+overrides it. So these files are read automatically, with no flag:
 
 ```plaintext title=".env.development"
 PORT=3042
@@ -93,31 +111,30 @@ LOG_LEVEL=warn
 DATABASE_URL=postgresql://user:pass@prod-db:5432/myapp
 ```
 
-**Load specific environment files:**
+The `.local` variants are for values that stay on your machine — add them to `.gitignore`.
+
+To read one specific file and nothing else, pass `--env`:
 
 ```bash
-# Development
-npx wattpm dev --env .env.development
-
-# Production
-npx wattpm start --env .env.production
+npx wattpm start --env .env.staging
 ```
 
-**Note:** By default, Watt only loads `.env` files automatically. To use environment-specific files like `.env.development` or `.env.production`, you must explicitly specify them using the `--env` flag.
+`--env` replaces the whole set: no directory contributes, and a missing file is an error rather than
+a silent skip.
 
 ## Step 5: Common Configuration Patterns
 
 ### Database Configuration
 
-```json
-{
-  "db": {
-    "connectionString": "{DATABASE_URL}",
-    "pool": {
-      "max": "{DB_POOL_SIZE}"
-    }
+```ts config
+import { db } from '@platformatic/db'
+
+export default db({
+  db: {
+    connectionString: process.env.DATABASE_URL ?? 'sqlite://./dev.db',
+    poolSize: Number(process.env.DB_POOL_SIZE ?? 10)
   }
-}
+})
 ```
 
 ```plaintext title=".env"
@@ -125,35 +142,41 @@ DATABASE_URL=postgresql://localhost:5432/myapp
 DB_POOL_SIZE=10
 ```
 
-### Application Configuration
+### Requiring a variable
 
-```json
-{
-  "server": {
-    "port": "{PORT}",
-    "hostname": "{HOSTNAME}"
-  },
-  "cors": {
-    "origin": "{CORS_ORIGIN}"
+A default is a choice, not an obligation. Where a missing value should stop the boot, say so:
+
+```ts config env=DATABASE_URL=postgres://localhost:5432/myapp
+import { db } from '@platformatic/db'
+
+function requiredEnv (name: string): string {
+  const value = process.env[name]
+
+  if (!value) {
+    throw new Error(`${name} is required but is not set`)
   }
+
+  return value
 }
+
+export default db({
+  db: {
+    connectionString: requiredEnv('DATABASE_URL')
+  }
+})
 ```
 
-```plaintext title=".env"
-PORT=3042
-HOSTNAME=0.0.0.0
-CORS_ORIGIN=http://localhost:3000
-```
+The error names the variable and appears before anything starts.
 
 ## Success Criteria
 
 **You've successfully learned environment variables when you can:**
 
-✅ Replace hardcoded values in configuration files with environment variables  
+✅ Read configuration values from `process.env` in a configuration file  
 ✅ Create and use `.env` files for local development  
 ✅ Set up different configurations for different environments  
 ✅ Override variables from the command line  
-✅ Understand why this approach improves security and deployment flexibility
+✅ Decide, per setting, whether a missing variable defaults or fails
 
 ## What's Next?
 
@@ -165,15 +188,14 @@ Now that you understand environment variables, you might want to:
 
 ## Troubleshooting
 
-**Variable not being replaced?**
+**Value not what you expected?**
 
-- Check curly brace syntax: `{VARIABLE_NAME}` not `${VARIABLE_NAME}`
-- Ensure the variable is set: `echo $VARIABLE_NAME`
-- Verify `.env` file location (same folder as config file)
+- Remember the real environment outranks every `.env` file: check `echo $VARIABLE_NAME`
+- Check which file you edited — the nearest directory's `.env` wins over the project root's
+- `undefined` reaches a setting when nothing sets the variable; the `??` beside it is what decides
 
 **Environment-specific file not loading?**
 
-- Make sure you're using the `--env` flag: `wattpm start --env .env.production`
-- Check that the file path is correct (relative or absolute)
+- `.env.development` is read under `wattpm dev` and `.env.production` under `wattpm start`; use `--mode` to pick another
+- With `--env`, only that file is read — the rest are ignored on purpose
 - Verify the file exists: `ls -la .env.production`
-- Remember: command line variables override `.env` files

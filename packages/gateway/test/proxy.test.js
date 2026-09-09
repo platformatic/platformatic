@@ -323,8 +323,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     [
       {
         id: 'main',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic-prefix-in-conf.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service-prefix-in-conf')
       }
     ]
   )
@@ -361,8 +360,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     [
       {
         id: 'main',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic-prefix-in-code.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service-prefix-in-code')
       }
     ]
   )
@@ -402,13 +400,11 @@ test('should proxy all applications if none are defined', async t => {
     [
       {
         id: 'first',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       },
       {
         id: 'second',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       },
       {
         id: 'third',
@@ -417,13 +413,15 @@ test('should proxy all applications if none are defined', async t => {
     ]
   )
 
-  const { 'composer:0': address } = await runtime.start()
+  const started = await runtime.start()
+  const { 'composer:0': address } = started
 
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
       path: '/first/hello'
     })
+    process._rawDebug('PROBE started=%s status=%s', JSON.stringify(started), statusCode)
     assert.equal(statusCode, 200)
 
     const body = await rawBody.json()
@@ -460,8 +458,7 @@ test('should fail with actionable error when a gateway application is missing fr
 
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, 'plt-gateway-missing-app-'))
   const gatewayDir = resolve(tmpDir, 'gateway')
-  const gatewayConfigPath = resolve(gatewayDir, 'platformatic.gateway.json')
-  const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
+  const runtimeConfigPath = resolve(tmpDir, 'watt.config.mjs')
 
   t.after(async () => {
     await safeRemove(tmpDir)
@@ -471,37 +468,31 @@ test('should fail with actionable error when a gateway application is missing fr
 
   await writeFile(
     runtimeConfigPath,
-    JSON.stringify({
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
-      watch: false,
-      services: [
-        {
-          id: 'composer',
-          path: gatewayDir,
-          config: gatewayConfigPath
-        }
-      ],
-      logger: {
-        level: 'fatal'
-      }
-    }),
+    `export default ${JSON.stringify(
+      {
+        watch: false,
+        applications: [{ id: 'composer', path: 'gateway' }],
+        logger: { level: 'fatal' }
+      },
+      null,
+      2
+    )}\n`,
     'utf-8'
   )
 
   await writeFile(
-    gatewayConfigPath,
-    JSON.stringify({
-      module: resolve(import.meta.dirname, '../index.js'),
-      gateway: {
-        applications: [
-          {
-            id: 'missing',
-            proxy: {}
-          }
-        ],
-        refreshTimeout: REFRESH_TIMEOUT
-      }
-    }),
+    resolve(gatewayDir, 'watt.config.mjs'),
+    `export default ${JSON.stringify(
+      {
+        module: resolve(import.meta.dirname, '../index.js'),
+        gateway: {
+          applications: [{ id: 'missing', proxy: {} }],
+          refreshTimeout: REFRESH_TIMEOUT
+        }
+      },
+      null,
+      2
+    )}\n`,
     'utf-8'
   )
 
@@ -556,13 +547,11 @@ test('should fix the path using the referer only if asked to', async t => {
     [
       {
         id: 'first',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       },
       {
         id: 'astro',
-        path: resolve(import.meta.dirname, './proxy/fixtures/astro'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/astro')
       },
       {
         id: 'third',
@@ -631,8 +620,7 @@ test('should rewrite Location headers for proxied applications', async t => {
     [
       {
         id: 'main',
-        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
-        config: 'platformatic.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       }
     ]
   )
@@ -1706,8 +1694,7 @@ test('should properly handle basePath root for generic applications', async t =>
     [
       {
         id: 'node',
-        path: resolve(import.meta.dirname, './proxy/fixtures/node'),
-        config: 'platformatic.with-absolute-url.json'
+        path: resolve(import.meta.dirname, './proxy/fixtures/node-with-absolute-url')
       }
     ],
     null,

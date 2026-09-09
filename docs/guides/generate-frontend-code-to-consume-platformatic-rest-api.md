@@ -71,7 +71,7 @@ npm create vite@latest -- web/frontend --template vue-ts
 </TabItem>
 </Tabs>
 
-Run the command below to add `watt.json` file to your frontend application:
+Run the command below to add a `watt.config.ts` file to your frontend application:
 
 ```bash
 npx wattpm-utils import
@@ -87,28 +87,33 @@ This will also install the required dependencies. The command will output:
 [13:06:14.310] INFO (42432): Installing dependencies for the application next using npm ...
 ```
 
-Add your frontend `id` and DB application to your `watt.json` file in your `web/gateway` application:
+Add your frontend `id` and DB application to the `watt.config.ts` file in your `web/gateway` application:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [
       {
-        "id": "db",
-        "openapi": {
-          "url": "/documentation/json",
-          "prefix": "/db"
+        id: 'db',
+        openapi: {
+          url: '/documentation/json',
+          prefix: '/db'
         }
       },
+      // Frontend ID for Vite applications
       {
-        "id": "frontend" // Frontend ID for Vite applications
+        id: 'frontend'
       }
     ],
-    "refreshTimeout": 1000
+    refreshTimeout: 1000
   },
-  "watch": true
-}
+  server: {
+    port: Number(process.env.PORT ?? 3042)
+  },
+  watch: true
+})
 ```
 
 ### Add a Frontend Client for REST API

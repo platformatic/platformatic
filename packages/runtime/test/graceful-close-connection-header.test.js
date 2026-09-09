@@ -8,7 +8,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should add Connection: close header during graceful shutdown', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'graceful-close-header', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'graceful-close-header', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -46,7 +46,7 @@ test('should add Connection: close header during graceful shutdown', async t => 
 
 test('should respect gracefulShutdown.closeConnections config when disabled', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'graceful-close-header-disabled', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'graceful-close-header-disabled', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -76,7 +76,7 @@ test('should respect gracefulShutdown.closeConnections config when disabled', as
 
 test('should work with NodeCapability raw HTTP server', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'graceful-close-header-node', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'graceful-close-header-node', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(async () => {

@@ -23,15 +23,19 @@ npm install @platformatic/next
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ### Example with Image Optimizer mode (behind Gateway route matching)
@@ -44,44 +48,49 @@ In this setup:
 - all other routes can be forwarded to a regular frontend service
 - relative image URLs (for example `/hero.png`) are fetched from the local fallback service via service discovery
 
-`services/gateway/platformatic.json`:
+`web/gateway/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [
       {
-        "id": "optimizer",
-        "proxy": {
-          "prefix": "/",
-          "routes": ["/_next/image"],
-          "methods": ["GET"]
+        id: 'optimizer',
+        proxy: {
+          prefix: '/',
+          routes: ['/_next/image'],
+          methods: ['GET']
         }
       },
       {
-        "id": "fallback",
-        "proxy": {
-          "prefix": "/"
+        id: 'fallback',
+        proxy: {
+          prefix: '/'
         }
       }
     ]
   }
-}
+})
 ```
 
-`services/optimizer/platformatic.json`:
+`web/optimizer/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json",
-  "next": {
-    "imageOptimizer": {
-      "enabled": true,
-      "fallback": "fallback"
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  next: {
+    imageOptimizer: {
+      enabled: true,
+      fallback: 'fallback'
     }
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture
@@ -92,15 +101,18 @@ The Next.js capability owns its managed listener and uses its capability-level `
 
 For development, configure HTTPS in this Next.js capability's `server.https` object:
 
-```json
-{
-  "server": {
-    "https": {
-      "key": { "path": "./certs/server.key" },
-      "cert": { "path": "./certs/server.crt" }
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  server: {
+    port: Number(process.env.PORT ?? 3042),
+    https: {
+      key: { path: './certs/server.key' },
+      cert: { path: './certs/server.crt' }
     }
   }
-}
+})
 ```
 
 The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.

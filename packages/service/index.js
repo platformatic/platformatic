@@ -1,5 +1,5 @@
-import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { loadCapabilityConfiguration, transform as basicTransform, validationOptions } from '@platformatic/basic'
+import { kMetadata } from '@platformatic/foundation'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ServiceCapability } from './lib/capability.js'
@@ -38,15 +38,13 @@ export async function transform (config, schema, options) {
 }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'service')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+  return loadCapabilityConfiguration(configOrRoot, sourceOrConfig, context, {
+    schema,
+    scope: import.meta.filename,
+    suffixes: 'service',
     validationOptions,
     transform,
-    upgrade,
-    replaceEnv: true,
-    root,
-    ...context
+    upgrade
   })
 }
 
@@ -55,9 +53,9 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return new ServiceCapability(config[kMetadata].root, config, context)
 }
 
-export const skipTracingHooks = true
-
 export { platformaticService } from './lib/application.js'
 export { ServiceCapability } from './lib/capability.js'
 export { applyTestHelperCustomizations, Generator } from './lib/generator.js'
-export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+export { packageJson, schema, schemaComponents, skipTracingHooks, version } from './lib/schema.js'
+
+export * from './lib/factory.js'

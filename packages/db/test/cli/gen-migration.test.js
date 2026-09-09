@@ -9,10 +9,11 @@ import { createMigrations } from '../../lib/commands/migrations-create.js'
 
 test('generates next file correctly with empty dir', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
-  const configFilePath = join(cwd, 'gen-migration.json')
+  const configFilePath = join(cwd, 'watt.config.mjs')
   const migrationsDirPath = join(cwd, 'migrations')
 
   const config = {
+    module: '@platformatic/db',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -26,7 +27,8 @@ test('generates next file correctly with empty dir', async t => {
     }
   }
 
-  await writeFile(configFilePath, JSON.stringify(config))
+  // The configuration is a program, so it is written as one.
+  await writeFile(configFilePath, `export default ${JSON.stringify(config, null, 2)}\n`)
   await createDirectory(migrationsDirPath)
 
   const logger = pino({ level: 'fatal' })
@@ -40,10 +42,11 @@ test('generates next file correctly with empty dir', async t => {
 
 test('generates next file correctly with existing files', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
-  const configFilePath = join(cwd, 'gen-migration.json')
+  const configFilePath = join(cwd, 'watt.config.mjs')
   const migrationsDirPath = join(cwd, 'migrations')
 
   const config = {
+    module: '@platformatic/db',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -57,7 +60,8 @@ test('generates next file correctly with existing files', async t => {
     }
   }
 
-  await writeFile(configFilePath, JSON.stringify(config))
+  // The configuration is a program, so it is written as one.
+  await writeFile(configFilePath, `export default ${JSON.stringify(config, null, 2)}\n`)
   await createDirectory(migrationsDirPath)
 
   const logger = pino({ level: 'fatal' })
@@ -74,9 +78,10 @@ test('generates next file correctly with existing files', async t => {
 
 test('throws if there is no migrations in the config', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
-  const configFilePath = join(cwd, 'gen-migration.json')
+  const configFilePath = join(cwd, 'watt.config.mjs')
 
   const config = {
+    module: '@platformatic/db',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -86,7 +91,8 @@ test('throws if there is no migrations in the config', async t => {
     }
   }
 
-  await writeFile(configFilePath, JSON.stringify(config))
+  // The configuration is a program, so it is written as one.
+  await writeFile(configFilePath, `export default ${JSON.stringify(config, null, 2)}\n`)
 
   let errorMessage = ''
   const logger = {
@@ -105,10 +111,11 @@ test('throws if there is no migrations in the config', async t => {
 
 test('creates the migrations directory if it does not exist', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
-  const configFilePath = join(cwd, 'gen-migration.json')
+  const configFilePath = join(cwd, 'watt.config.mjs')
   const migrationsDirPath = join(cwd, 'nested', 'migrations')
 
   const config = {
+    module: '@platformatic/db',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -122,7 +129,8 @@ test('creates the migrations directory if it does not exist', async t => {
     }
   }
 
-  await writeFile(configFilePath, JSON.stringify(config))
+  // The configuration is a program, so it is written as one.
+  await writeFile(configFilePath, `export default ${JSON.stringify(config, null, 2)}\n`)
 
   let errorMessage = ''
   const logger = pino({ level: 'fatal' })

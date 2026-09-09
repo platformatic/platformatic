@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, updateConfigFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile } from '../helpers.js'
 import { prepareRuntime, waitForEvents } from './helper.js'
 
 async function waitForPortRelease (port, attempts = 50, interval = 100) {
@@ -41,12 +41,12 @@ async function waitForPortRelease (port, attempts = 50, interval = 100) {
 test('applications are started with multiple workers when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const port = await getPort.default({ host: '127.0.0.1' })
 
   await waitForPortRelease(port)
 
-  await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(resolve(root, 'node')), contents => {
     contents.server = {
       hostname: '127.0.0.1',
       port
@@ -55,7 +55,7 @@ test('applications are started with multiple workers when Node.js supports reuse
   await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
     contents.metrics = { port: 0 }
-    contents.services[0].workers = features.node.reusePort ? 5 : 1
+    contents.applications[0].workers = features.node.reusePort ? 5 : 1
   })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
@@ -94,26 +94,42 @@ test('applications are started with multiple workers when Node.js supports reuse
   await startMessagesPromise
 
   const usedWorkers = new Set()
-  // Check that we get the response from different workers
-  const promises = Array.from(Array(workers)).map(async () => {
-    const res = await request(nodeUrl + '/hello')
-    const json = await res.body.json()
 
-    deepStrictEqual(res.statusCode, 200)
+  async function sampleWorkers () {
+    const promises = Array.from(Array(workers)).map(async () => {
+      const res = await request(nodeUrl + '/hello')
+      const json = await res.body.json()
 
-    if (workers > 1) {
-      const worker = res.headers['x-plt-worker-id']
-      ok(worker.match(/^[01234]$/))
+      deepStrictEqual(res.statusCode, 200)
 
-      usedWorkers.add(worker)
-    }
+      if (workers > 1) {
+        const worker = res.headers['x-plt-worker-id']
+        ok(worker.match(/^[01234]$/))
 
-    deepStrictEqual(json, { from: 'node' })
-  })
+        usedWorkers.add(worker)
+      }
 
-  await Promise.all(promises)
+      deepStrictEqual(json, { from: 'node' })
+    })
+
+    await Promise.all(promises)
+  }
+
+  await sampleWorkers()
 
   if (workers > 1) {
+    /*
+      Which worker accepts a connection is the kernel's decision under SO_REUSEPORT, and it is free
+      to send a whole batch to one of them. What is being tested is that more than one worker *can*
+      answer, so the batch repeats until it has seen that -- a single round asserts a distribution
+      nobody promised, and failed on a busy runner while the runtime was working exactly as intended.
+    */
+    const deadline = Date.now() + 30_000
+
+    while (usedWorkers.size < 2 && Date.now() < deadline) {
+      await sampleWorkers()
+    }
+
     ok(usedWorkers.size > 1)
   }
 

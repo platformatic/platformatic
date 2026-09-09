@@ -4,7 +4,7 @@ import Issues from '../getting-started/issues.md';
 
 ## Introduction
 
-Watt includes [built-in telemetry support](./distributed-tracing.md) that can be configured declaratively in your `watt.json` or `platformatic.json` files. This works well for most use cases with OTLP over HTTP or gRPC, and Zipkin exporters.
+Watt includes [built-in telemetry support](./distributed-tracing.md) that can be configured declaratively in your `watt.config.ts` file. This works well for most use cases with OTLP over HTTP or gRPC, and Zipkin exporters.
 
 However, you may need manual OpenTelemetry SDK setup when you:
 
@@ -32,51 +32,53 @@ Watt provides the `execArgv` configuration on each application to pass Node.js f
 
 Use the `execArgv` option on each application to configure OpenTelemetry:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "applications": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [
     {
-      "id": "api",
-      "path": "./services/api",
-      "execArgv": [
-        "--import", "@opentelemetry/instrumentation/hook.mjs",
-        "--import", "./telemetry-init.mjs"
+      id: 'api',
+      path: './services/api',
+      execArgv: [
+        '--import', '@opentelemetry/instrumentation/hook.mjs',
+        '--import', './telemetry-init.mjs'
       ],
-      "env": { "PORT": 3000 }
+      env: { PORT: '3000' }
     }
   ]
-}
+})
 ```
 
-Platformatic Service, Gateway, and DB applications declare their listener in the application's own `server` object, commonly with `"port": "{PORT}"`. An `applications[].env.PORT` value such as the one above overrides the runtime-wide environment for that application only.
+Platformatic Service, Gateway, and DB applications declare their listener in the application's own `server` object, commonly as `port: Number(process.env.PORT ?? 3042)`. An `applications[].env.PORT` value such as the one above overrides the runtime-wide environment for that application only.
 
 ### Multiple Applications
 
 When you have multiple applications, each needs its own `execArgv` configuration:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "applications": [
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [
     {
-      "id": "api",
-      "path": "./services/api",
-      "execArgv": [
-        "--import", "@opentelemetry/instrumentation/hook.mjs",
-        "--import", "./telemetry-init.mjs"
+      id: 'api',
+      path: './services/api',
+      execArgv: [
+        '--import', '@opentelemetry/instrumentation/hook.mjs',
+        '--import', './telemetry-init.mjs'
       ]
     },
     {
-      "id": "worker",
-      "path": "./services/worker",
-      "execArgv": [
-        "--import", "@opentelemetry/instrumentation/hook.mjs",
-        "--import", "./telemetry-init.mjs"
+      id: 'worker',
+      path: './services/worker',
+      execArgv: [
+        '--import', '@opentelemetry/instrumentation/hook.mjs',
+        '--import', './telemetry-init.mjs'
       ]
     }
   ]
-}
+})
 ```
 
 ## Initialization Script
@@ -125,22 +127,25 @@ process.on('SIGTERM', () => {
 })
 ```
 
-The `workerData` object is automatically set by Watt for each worker thread and contains the application configuration. The `applicationConfig.id` property holds the service identifier as defined in your `watt.json`.
+The `workerData` object is automatically set by Watt for each worker thread and contains the application configuration. The `applicationConfig.id` property holds the service identifier as defined in your `watt.config.ts`.
 
 ## OpenTelemetry Metrics
 
-To forward user-created OpenTelemetry metrics through Watt, configure the OTLP endpoint in the root runtime `watt.json`:
+To forward user-created OpenTelemetry metrics through Watt, configure the OTLP endpoint in the root runtime `watt.config.ts`:
 
-```json
-{
-  "metrics": {
-    "opentelemetry": {
-      "endpoint": "http://localhost:4318/v1/metrics",
-      "headers": {},
-      "interval": 60000
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: { path: 'web' },
+  metrics: {
+    opentelemetry: {
+      endpoint: 'http://localhost:4318/v1/metrics',
+      headers: {},
+      interval: 60000
     }
   }
-}
+})
 ```
 
 Then use Watt's metrics exporter in your OpenTelemetry metrics setup:
@@ -218,25 +223,27 @@ Common issues:
 
 ## Complete Example with Jaeger
 
-**watt.json:**
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
-  "applications": [
+**watt.config.ts:**
+
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [
     {
-      "id": "api",
-      "path": "./services/api",
-      "execArgv": [
-        "--import", "@opentelemetry/instrumentation/hook.mjs",
-        "--import", "./telemetry.mjs"
+      id: 'api',
+      path: './services/api',
+      execArgv: [
+        '--import', '@opentelemetry/instrumentation/hook.mjs',
+        '--import', './telemetry.mjs'
       ],
-      "env": { "PORT": 3000 }
+      env: { PORT: '3000' }
     }
   ],
-  "env": {
-    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318/v1/traces"
+  env: {
+    OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4318/v1/traces'
   }
-}
+})
 ```
 
 **telemetry.mjs:**

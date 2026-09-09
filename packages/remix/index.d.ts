@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticRemixConfig } from './config.d.ts'
@@ -36,3 +36,10 @@ export declare const schema: JSONSchemaType<PlatformaticRemixConfig>
 export declare const schemaComponents: { remix: JSONSchemaType<object> }
 export declare const version: string
 export declare const supportedVersions: string
+
+export type RemixConfigOptions = CapabilityFactoryOptions<PlatformaticRemixConfig, 'vite' | 'remix', never>
+
+export declare function remix (options?: RemixConfigOptions): ApplicationDefinition
+export declare function remix (
+  callback: (context: ConfigContext) => RemixConfigOptions | Promise<RemixConfigOptions>
+): DeferredApplicationDefinition

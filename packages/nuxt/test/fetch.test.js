@@ -1,11 +1,10 @@
 import { ok, strictEqual } from 'node:assert'
-import { cp } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import {
   buildRuntime,
-  commonFixturesRoot,
+  copyCommonApplication,
   prepareRuntime,
   setAdditionalDependencies,
   setFixturesDir,
@@ -35,9 +34,7 @@ test('fetch() should work with string URL and Request object in Nuxt app', async
     port: 0,
     additionalSetup: async root => {
       for (const type of ['backend', 'composer']) {
-        await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-          recursive: true
-        })
+        await copyCommonApplication(root, type)
       }
 
       await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {

@@ -315,6 +315,12 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         return controller.capability.getInfo()
       },
 
+      // How this worker serves, which only the worker can answer: for a worker-classified
+      // capability it depends on what the application's factory returned in this worker.
+      getServingState () {
+        return controller.capability?.getServingState?.() ?? 'inactive'
+      },
+
       async getApplicationConfig () {
         const current = await controller.capability.getConfig()
         // Remove all undefined keys from the config

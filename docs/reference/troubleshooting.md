@@ -32,19 +32,18 @@ npx wattpm --help
 
 **Solution:**
 
-1. Ensure you have a configuration file in the current directory:
-   - `watt.json` (recommended for Watt applications)
+1. Ensure you have a configuration file in the current directory or an ancestor:
+   - `watt.config.ts` (or `.mts`, `.js`, `.mjs` — see [file formats](../file-formats.md))
 
-2. Check file format and syntax:
+2. Check the file's syntax:
 
    ```bash
-   # Validate JSON syntax
-   cat watt.json | jq .
+   node --check watt.config.mjs
    ```
 
 3. Use the `--config` option to specify a custom path:
    ```bash
-   wattpm start --config ./config/my-watt.json
+   wattpm start --config ./config/watt.config.ts
    ```
 
 ### Database Connection Issues
@@ -119,7 +118,7 @@ wattpm db:migrations:apply
 2. **Verify application configuration:**
 
    ```bash
-   wattpm config
+   wattpm start --debug-config
    ```
 
 3. **Check application health:**
@@ -256,7 +255,7 @@ cat tsconfig.json
 
 | Error Code                          | Description                        | Solution                                      |
 | ----------------------------------- | ---------------------------------- | --------------------------------------------- |
-| PLT_CONFIG_NO_CONFIG_FILE_FOUND     | Configuration file not found       | Create a `watt.json` or use `--config` option |
+| PLT_CONFIG_NO_CONFIG_FILE_FOUND     | Configuration file not found       | Create a `watt.config.ts` or use `--config` option |
 | PLT_CONFIG_CANNOT_PARSE_CONFIG_FILE | Invalid configuration file syntax  | Validate JSON/YAML syntax                     |
 | PLT_CONFIG_VALIDATION_ERRORS        | Configuration doesn't match schema | Check configuration against schema            |
 | PLT_CONFIG_ENV_VAR_MISSING          | Environment variable not set       | Set required environment variables            |
@@ -312,8 +311,8 @@ wattpm inject --path /health
 wattpm inject --path /metrics
 wattpm inject --path /documentation/json
 
-# View application configuration
-wattpm config application-name
+# View the resolved configuration (evaluated locally, boots nothing)
+wattpm start --debug-config
 ```
 
 ### Monitor Logs in Real-time
@@ -505,7 +504,7 @@ npm --version
 wattpm version
 
 # Configuration (remove sensitive data)
-cat watt.json
+cat watt.config.ts
 
 # Error logs
 wattpm logs --level error > error.log

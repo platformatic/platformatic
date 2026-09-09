@@ -1,4 +1,4 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
@@ -41,3 +41,10 @@ export declare class NodeCapability extends BaseCapability<PlatformaticNodeJsCon
   getScheduledTasks (): Promise<Array<{ id: string, cron: string, tasks: string[] }>>
   runScheduledTasks (scheduleId: string, scheduledTime: number): Promise<unknown[]>
 }
+
+export type NodeConfigOptions = CapabilityFactoryOptions<PlatformaticNodeJsConfig, 'node', never>
+
+export declare function node (options?: NodeConfigOptions): ApplicationDefinition
+export declare function node (
+  callback: (context: ConfigContext) => NodeConfigOptions | Promise<NodeConfigOptions>
+): DeferredApplicationDefinition

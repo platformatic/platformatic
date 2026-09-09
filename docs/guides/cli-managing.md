@@ -9,12 +9,13 @@ Before you can Watt to manage your application, you need to enable
 the application management API in your application's configuration file. This will
 allow the CLI to communicate with your application.
 
-To enable the application management API, add the following configuration to your application's `platformatic.json` file:
+To enable the application management API, add the following configuration to your `watt.config.ts` file:
 
-```json
-{
-  "managementApi": true
-}
+```ts
+export default defineConfig({
+  // ...
+  managementApi: true
+})
 ```
 
 ## Installing
@@ -116,21 +117,16 @@ wattpm env [<PID> | <NAME>]
 
 You can list environment variables for a running application by specifying either its PID or its name.
 
-### Printing application config file
+### Printing the resolved configuration
 
-To print the application config file, run the following command:
-
-```bash
-wattpm config [<PID> | <NAME>]
-```
-
-To print the application config file, run the following command:
+Configuration is a program in v4, so it is inspected where it is evaluated rather than fetched from
+a running server:
 
 ```bash
-wattpm config [<PID> | <NAME>] <APPLICATION>
+wattpm start --debug-config
 ```
 
-You can print the application config file for a running application by specifying either its PID or its name.
+This prints the fully resolved configuration and boots nothing.
 
 ### Injecting an HTTP request into a running application
 

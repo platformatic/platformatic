@@ -1,18 +1,26 @@
-import {
-  applicationToEnvVariable,
-  createDirectory,
-  loadConfigurationFile as loadRawConfigurationFile,
-  safeRemove,
-  saveConfigurationFile
-} from '@platformatic/foundation'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { capabilityFactories } from '@platformatic/foundation/lib/v4/index.js'
+import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { appendFile, cp, readFile, writeFile } from 'node:fs/promises'
-import { basename, join, resolve } from 'node:path'
+import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { basename, dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { prepareRuntime } from '../../basic/test/helper.js'
+import { prepareFixture, prepareRuntime } from '../../basic/test/helper.js'
 import { version } from '../lib/version.js'
-import { changeWorkingDirectory, createTemporaryDirectory, executeCommand, wattpmUtils } from './helper.js'
+import { changeWorkingDirectory, createTemporaryDirectory, wattpmUtils } from './helper.js'
+
+/*
+  Windows CI puts the repository and os.tmpdir() on different drives, and a cross-drive path has no
+  relative spelling -- `relative` answers with the absolute path. A directory imported into a
+  runtime root therefore sits beside that root, so the relative path the assertions read exists on
+  every OS.
+*/
+async function createSiblingDirectory (t, root, prefix) {
+  const directory = await mkdtemp(join(dirname(root), `${prefix}-`))
+  t.after(() => safeRemove(directory))
+  return directory
+}
 
 const autodetect = {
   astro: 'astro',
@@ -27,182 +35,17 @@ const autodetect = {
   vite: 'vite'
 }
 
-test('import - should import a URL', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  t.after(() => safeRemove(rootDir))
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', 'http://github.com/foo/bar.git')
-
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id: 'bar',
-        path: '{PLT_APPLICATION_BAR_PATH}',
-        url: 'http://github.com/foo/bar.git'
-      }
-    ]
-  })
-
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_APPLICATION_BAR_PATH=\n')
-  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'PLT_APPLICATION_BAR_PATH=\n')
-})
-
-test('import - should import a GitHub repo via SSH', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  t.after(() => safeRemove(rootDir))
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, 'foo/bar', '-i', 'id')
-
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id: 'id',
-        path: '{PLT_APPLICATION_ID_PATH}',
-        url: 'git@github.com:foo/bar.git'
-      }
-    ]
-  })
-
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_APPLICATION_ID_PATH=\n')
-  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'PLT_APPLICATION_ID_PATH=\n')
-})
-
-test('import - should import a GitHub repo via HTTP', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  t.after(() => safeRemove(rootDir))
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, 'foo/bar', '-H', '-i', 'id')
-
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id: 'id',
-        path: '{PLT_APPLICATION_ID_PATH}',
-        url: 'https://github.com/foo/bar.git'
-      }
-    ]
-  })
-
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_APPLICATION_ID_PATH=\n')
-  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'PLT_APPLICATION_ID_PATH=\n')
-})
-
-test('import - should import a local folder with a Git remote', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  t.after(() => safeRemove(rootDir))
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  const directory = await createTemporaryDirectory(t, 'local-with-git')
-  await executeCommand('git', 'init', { cwd: directory })
-  await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: directory })
-  await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
-  const id = basename(directory)
-  const envVariable = applicationToEnvVariable(id)
-
-  changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', directory)
-
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id,
-        path: `{${envVariable}}`,
-        url: 'git@github.com:hello/world.git'
-      }
-    ]
-  })
-
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
-  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
-})
-
-test('import - should import a local folder without a Git remote', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  t.after(() => safeRemove(rootDir))
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  const directory = await createTemporaryDirectory(t, 'local-with-git')
-  await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
-  const id = basename(directory)
-  const envVariable = applicationToEnvVariable(id)
-
-  changeWorkingDirectory(t, rootDir)
-  const importProcess = await wattpmUtils('import', directory)
-
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id,
-        path: `{${envVariable}}`
-      }
-    ]
-  })
-
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
-  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
-
-  ok(importProcess.stdout.includes(`The application ${id} does not define a Git repository.`))
-})
-
-test('import - should import a local folder within the repository without using environment variables or URLs', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  t.after(() => safeRemove(rootDir))
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  const id = 'in-a-repo'
-  const path = join('this', 'is', 'in-a-repo') // This is for Windows compatibility
-  const absolute = resolve(rootDir, path)
-  await createDirectory(absolute)
-  await writeFile(resolve(absolute, 'index.js'), '', 'utf-8')
-
-  await executeCommand('git', 'init', { cwd: absolute })
-  await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: absolute })
-
-  changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', resolve(rootDir, path))
-
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id,
-        path
-      }
-    ]
-  })
-
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo')
-  ok(!existsSync(resolve(rootDir, '.env.sample')))
-})
-
+/*
+  The shape `import` writes into a v4 root — a remote application with no path, a local one with a
+  literal relative path, the branch, and the alias case — is covered by the v4 tests at the bottom
+  of this file. What v3 asserted here was the `{PLT_APPLICATION_<ID>_PATH}` indirection and the
+  `.env` lines that carried it, neither of which v4 writes.
+*/
 test('import - should not do anything when the local folder is already an autoloaded application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
 
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
@@ -218,17 +61,19 @@ test('import - should not do anything when the local folder is already an autolo
 })
 
 test('import - should not do anything when the local folder is already a defined application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
 
-  const contents = await loadRawConfigurationFile(configurationFile)
-  contents.web = [{ id: 'main', path: 'main' }]
-  await saveConfigurationFile(configurationFile, contents)
+  await updateConfigFile(configurationFile, config => {
+    // Not id 'main': the autoloaded web/main already owns that id, and an explicit entry at a
+    // different directory sharing it is the ambiguity the loader now refuses (#5079).
+    config.applications = [{ id: 'local', path: 'main' }]
+  })
   await createDirectory(resolve(rootDir, 'main'))
   await writeFile(resolve(rootDir, 'main/index.js'), '', 'utf-8')
-  await cp(resolve(rootDir, 'web/main/watt.json'), resolve(rootDir, 'main/watt.json'))
+  await cp(resolve(rootDir, 'web/main/watt.config.js'), resolve(rootDir, 'main/watt.config.js'))
 
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
@@ -244,11 +89,11 @@ test('import - should not do anything when the local folder is already a defined
 })
 
 test('import - should not do anything when loaded vian application file', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
-  await safeRemove(resolve(rootDir, 'watt.json'))
+  await safeRemove(resolve(rootDir, 'watt.config.mjs'))
 
-  const configurationFile = resolve(rootDir, 'web/main/watt.json')
+  const configurationFile = resolve(rootDir, 'web/main/watt.config.js')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
   changeWorkingDirectory(t, resolve(rootDir, 'web/main'))
@@ -259,10 +104,10 @@ test('import - should not do anything when loaded vian application file', async 
 })
 
 test('import - should raise an error when importing if the application id is already taken', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
   changeWorkingDirectory(t, rootDir)
@@ -276,102 +121,59 @@ test('import - should raise an error when importing if the application id is alr
   ok(importProcess.stdout.includes('There is already an application main defined, please choose a different application ID.'))
 })
 
-test('import - should raise an error when importing if the environment variable is already defined', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+test('import - should not create environment files for an imported application', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  await appendFile(resolve(rootDir, '.env'), '\nPLT_APPLICATION_BAR_PATH=foo\n')
-  const originalEnv = await readFile(resolve(rootDir, '.env'), 'utf-8')
-
-  changeWorkingDirectory(t, rootDir)
-  const importProcess = await wattpmUtils('import', rootDir, 'foo/bar', { reject: false })
-
-  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), originalEnv)
-  ok(!existsSync(resolve(rootDir, '.env.sample')))
-
-  deepStrictEqual(importProcess.exitCode, 1)
-  ok(
-    importProcess.stdout.includes(
-      'There is already an environment variable PLT_APPLICATION_BAR_PATH defined, please choose a different application ID.'
-    )
-  )
-})
-
-test('import - should properly manage environment files', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  t.after(() => safeRemove(rootDir))
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  await cp(resolve(rootDir, '.env'), resolve(rootDir, '.env.sample'))
   await safeRemove(resolve(rootDir, '.env'))
 
   changeWorkingDirectory(t, rootDir)
   await wattpmUtils('import', 'http://github.com/foo/bar.git')
 
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id: 'bar',
-        path: '{PLT_APPLICATION_BAR_PATH}',
-        url: 'http://github.com/foo/bar.git'
-      }
-    ]
-  })
+  const source = await readFile(resolve(rootDir, 'watt.config.mjs'), 'utf-8')
+  ok(/url:\s*["']http:\/\/github\.com\/foo\/bar\.git["']/.test(source), source)
 
-  // The .env has been created
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'PLT_APPLICATION_BAR_PATH=\n')
-
-  // The .env.sample has been updated
-  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_APPLICATION_BAR_PATH=\n')
+  /*
+    v3 wrote a `PLT_APPLICATION_BAR_PATH` line into `.env` and `.env.sample` here, creating both if
+    they were missing. v4 writes the URL into the configuration and nothing anywhere else, so a
+    project that had no environment files still has none.
+  */
+  ok(!existsSync(resolve(rootDir, '.env')), 'no .env was written')
+  ok(!existsSync(resolve(rootDir, '.env.sample')), 'no .env.sample was written')
 })
 
-test('import - should not modify existing watt.json files when exporting local folders', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+test('import - should not modify an existing configuration file when importing a local folder', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
-
-  const directory = await createTemporaryDirectory(t, 'local-with-git')
+  const directory = await createSiblingDirectory(t, rootDir, 'local-with-git')
   await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
-  await writeFile(resolve(directory, 'watt.json'), JSON.stringify({ foo: 'bar' }), 'utf-8')
+
+  const existing = "export default { module: '@platformatic/node' } // mine\n"
+  await writeFile(resolve(directory, 'watt.config.mjs'), existing, 'utf-8')
   const id = basename(directory)
-  const envVariable = applicationToEnvVariable(id)
 
   changeWorkingDirectory(t, rootDir)
   await wattpmUtils('import', directory)
 
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-    ...originalFileContents,
-    web: [
-      {
-        id,
-        path: `{${envVariable}}`
-      }
-    ]
-  })
+  const source = await readFile(resolve(rootDir, 'watt.config.mjs'), 'utf-8')
+  ok(new RegExp(`id:\\s*["']${id}["']`).test(source), source)
 
-  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
-  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
-  deepStrictEqual(await loadRawConfigurationFile(resolve(directory, 'watt.json')), { foo: 'bar' })
+  // A literal relative path out of the root, and no environment variable standing in for it.
+  ok(/path:\s*["']\.\./.test(source), source)
+  ok(!existsSync(resolve(rootDir, '.env.sample')), 'no .env.sample was written')
+
+  deepStrictEqual(await readFile(resolve(directory, 'watt.config.mjs'), 'utf-8'), existing)
 })
 
 for (const [name, dependency] of Object.entries(autodetect)) {
   test(`import - should correctly autodetect a @platformatic/${name} capability when importing local folders`, async t => {
-    const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+    const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
     t.after(() => safeRemove(rootDir))
 
-    const configurationFile = resolve(rootDir, 'watt.json')
-    const originalFileContents = await loadRawConfigurationFile(configurationFile)
+    const configurationFile = resolve(rootDir, 'watt.config.mjs')
 
-    const directory = await createTemporaryDirectory(t, 'local-with-git')
+    const directory = await createSiblingDirectory(t, rootDir, 'local-with-git')
     await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
     if (dependency) {
       await writeFile(
@@ -382,42 +184,39 @@ for (const [name, dependency] of Object.entries(autodetect)) {
     }
 
     const id = basename(directory)
-    const envVariable = applicationToEnvVariable(id)
 
     changeWorkingDirectory(t, rootDir)
     await wattpmUtils('import', directory)
 
-    deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
-      ...originalFileContents,
-      web: [
-        {
-          id,
-          path: `{${envVariable}}`
-        }
-      ]
-    })
+    const source = await readFile(configurationFile, 'utf-8')
+    ok(new RegExp(`id:\\s*["']${id}["']`).test(source), source)
+    ok(/path:\s*["']\.\./.test(source), source)
 
-    deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
-    deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
-
-    deepStrictEqual(await loadRawConfigurationFile(resolve(directory, 'package.json')), {
+    deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'package.json'), 'utf-8')), {
       dependencies: {
         ...(dependency ? { [dependency]: '*' } : {}),
         [`@platformatic/${name}`]: `^${version}`
       }
     })
 
-    deepStrictEqual(await loadRawConfigurationFile(resolve(directory, 'watt.json')), {
-      $schema: `https://schemas.platformatic.dev/@platformatic/${name}/${version}.json`
-    })
+    /*
+      The per-application file is v4: the capability's own factory when it ships one, so the file
+      is the shape a person would have written by hand. The imported package declares no
+      `"type": "module"`, so it is `.mjs` — `export default` in a CommonJS `.js` is a syntax error.
+    */
+    const factory = capabilityFactories[`@platformatic/${name}`]
+    deepStrictEqual(
+      await readFile(resolve(directory, 'watt.config.mjs'), 'utf-8'),
+      `import { ${factory} } from '@platformatic/${name}'\n\nexport default ${factory}({})\n`
+    )
   })
 }
 
 test('import - should fail when an application type cannot be detected', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const directory = await createTemporaryDirectory(t, 'local-with-git')
+  const directory = await createSiblingDirectory(t, rootDir, 'local-with-git')
 
   changeWorkingDirectory(t, rootDir)
   const importProcess = await wattpmUtils('import', directory, { reject: false })
@@ -427,32 +226,39 @@ test('import - should fail when an application type cannot be detected', async t
 })
 
 test('import - when launched without arguments, should fix the configuration of all known applications', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
+  /*
+    A fixture copy rather than a runtime: `no-dependencies` is deliberately missing the capabilities
+    its applications need, which is what this command installs, and v4 validates them when the root
+    is read — so creating a runtime over it fails before `import` can run.
+  */
+  const { root: rootDir } = await prepareFixture(t, 'no-dependencies')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
 
   await writeFile(resolve(rootDir, '.npmrc'), 'dry-run=true\n', 'utf-8')
 
   changeWorkingDirectory(t, rootDir)
   const importProcess = await wattpmUtils('import')
 
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), originalFileContents)
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
 
   for (const applicationPath of ['web-1/first', 'web-1/second']) {
-    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'package.json')), {
+    deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, applicationPath, 'package.json'), 'utf-8')), {
       dependencies: {
         '@platformatic/node': `^${version}`
-      },
+      }
     })
 
-    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'watt.json')), {
-      $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
-    })
+    deepStrictEqual(
+      await readFile(resolve(rootDir, applicationPath, 'watt.config.mjs'), 'utf-8'),
+      "import { node } from '@platformatic/node'\n\nexport default node({})\n"
+    )
   }
 
-  deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
+  // Untouched: `import` leaves an application that already has a configuration alone.
+  ok((await readFile(resolve(rootDir, 'web-2/third/watt.config.js'), 'utf-8')).includes('marker: do not rewrite'))
 
   ok(
     importProcess.stdout.includes(
@@ -482,7 +288,12 @@ test('import - when launched without arguments, should fix the configuration of 
 })
 
 test('import - should not install applications individually inside a pnpm workspace', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
+  /*
+    A fixture copy rather than a runtime: `no-dependencies` is deliberately missing the capabilities
+    its applications need, which is what this command installs, and v4 validates them when the root
+    is read — so creating a runtime over it fails before `import` can run.
+  */
+  const { root: rootDir } = await prepareFixture(t, 'no-dependencies')
   t.after(() => safeRemove(rootDir))
 
   await writeFile(resolve(rootDir, '.npmrc'), 'dry-run=true\n', 'utf-8')
@@ -514,30 +325,37 @@ catalog:
 })
 
 test('import - when launched without arguments, should fix the configuration of all known applications without installing dependencies', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
+  /*
+    A fixture copy rather than a runtime: `no-dependencies` is deliberately missing the capabilities
+    its applications need, which is what this command installs, and v4 validates them when the root
+    is read — so creating a runtime over it fails before `import` can run.
+  */
+  const { root: rootDir } = await prepareFixture(t, 'no-dependencies')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
 
   changeWorkingDirectory(t, rootDir)
   const importProcess = await wattpmUtils('import', '-s')
 
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), originalFileContents)
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
 
   for (const applicationPath of ['web-1/first', 'web-1/second']) {
-    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'package.json')), {
+    deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, applicationPath, 'package.json'), 'utf-8')), {
       dependencies: {
         '@platformatic/node': `^${version}`
       }
     })
 
-    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'watt.json')), {
-      $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
-    })
+    deepStrictEqual(
+      await readFile(resolve(rootDir, applicationPath, 'watt.config.mjs'), 'utf-8'),
+      "import { node } from '@platformatic/node'\n\nexport default node({})\n"
+    )
   }
 
-  deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
+  // Untouched: `import` leaves an application that already has a configuration alone.
+  ok((await readFile(resolve(rootDir, 'web-2/third/watt.config.js'), 'utf-8')).includes('marker: do not rewrite'))
 
   ok(
     importProcess.stdout.includes(
@@ -567,18 +385,16 @@ test('import - when launched without arguments, should fix the configuration of 
 })
 
 test('import - when launched without arguments from an application file, should not do anything', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  await safeRemove(resolve(rootDir, 'watt.json'))
-  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
-  })
+  // The root is gone, so web/main's own configuration is the only one there is.
+  await safeRemove(resolve(rootDir, 'watt.config.mjs'))
 
   changeWorkingDirectory(t, resolve(rootDir, 'web/main'))
   const importProcess = await wattpmUtils('import')
 
-  deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json')), {
+  deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, 'web/main/package.json'), 'utf-8')), {
     dependencies: {
       '@platformatic/globals': '>=3.0.0',
       '@platformatic/node': '>=3.0.0'
@@ -589,12 +405,12 @@ test('import - when launched without arguments from an application file, should 
   ok(!importProcess.stdout.includes('Detected capability'))
 })
 
-test('import - should find the nearest watt.json', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+test('import - should find the nearest configuration file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   t.after(() => safeRemove(rootDir))
 
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(configurationFile)
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
 
   const directory = resolve(rootDir, 'web/next')
   await createDirectory(directory)
@@ -603,8 +419,159 @@ test('import - should find the nearest watt.json', async t => {
   changeWorkingDirectory(t, resolve(rootDir, 'web/next'))
   await wattpmUtils('import', '.')
 
-  deepStrictEqual(await loadRawConfigurationFile(configurationFile), originalFileContents)
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
 
   ok(!existsSync(resolve(directory, 'web/next/package.json')))
-  ok(!existsSync(resolve(directory, 'web/next/watt.json')))
+  ok(!existsSync(resolve(directory, 'web/next/watt.config.mjs')))
+})
+
+async function prepareV4Root (t, root, contents) {
+  await writeFile(resolve(root, 'package.json'), JSON.stringify({ name: 'root', type: 'module' }), 'utf-8')
+  await writeFile(resolve(root, 'watt.config.js'), contents, 'utf-8')
+  changeWorkingDirectory(t, root)
+}
+
+test('import - a remote application in a v4 root is written without a path', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4')
+
+  await prepareV4Root(
+    t,
+    root,
+    [
+      'export default {',
+      '  // The level, once, so every application agrees on it.',
+      '  logger: { level: process.env.PLT_LOG_LEVEL ?? \'info\' },',
+      '  applications: []',
+      '}',
+      ''
+    ].join('\n')
+  )
+
+  await wattpmUtils('import', 'http://github.com/foo/bar.git')
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+
+  // What the root said is still what it says: the comment and the reference both survive.
+  ok(source.includes('// The level, once, so every application agrees on it.'), source)
+  ok(source.includes("process.env.PLT_LOG_LEVEL ?? 'info'"), source)
+
+  ok(/id:\s*["']bar["']/.test(source), source)
+  ok(/url:\s*["']http:\/\/github\.com\/foo\/bar\.git["']/.test(source), source)
+
+  /*
+    No path and no variable: v3 wrote an empty `PLT_APPLICATION_BAR_PATH` here, which reads as the
+    project root in every clone that does not have the gitignored file it lives in.
+  */
+  ok(!source.includes('path'), source)
+  ok(!existsSync(resolve(root, '.env')), 'no .env was written')
+})
+
+test('import - a local application outside a v4 root is written as a relative path', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-outside')
+  const applicationDirectory = await createTemporaryDirectory(t, 'import-v4-elsewhere')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
+  await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'elsewhere' }), 'utf-8')
+
+  await wattpmUtils('import', applicationDirectory)
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+
+  /*
+    Relative and literal, even leaving the project. v3 wrote a `{PLT_APPLICATION_<ID>_PATH}` and an
+    `.env` line for this case; the indirection said nothing the path does not, and its value went
+    missing in every clone.
+  */
+  ok(new RegExp(`path:\\s*["']\\.\\./[^"']*${basename(applicationDirectory)}["']`).test(source), source)
+  ok(!existsSync(resolve(root, '.env')), 'no .env was written')
+})
+
+test('import - a remote application in a v4 root records its branch', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-branch')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await wattpmUtils('import', '-b', 'another', 'http://github.com/foo/bar.git')
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+  ok(/gitBranch:\s*["']another["']/.test(source), source)
+})
+
+/*
+  v3 spelled the list `services` or `web` too; v4 has one spelling and the loader refuses the
+  others by name -- so import fails on the load, before any edit, rather than growing a second
+  list beside a key nothing reads.
+*/
+test('import - a v4 root that lists its applications under a v3 alias is refused', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-alias')
+
+  await prepareV4Root(t, root, "export default { web: [{ id: 'first', path: 'first' }] }\n")
+  const process = await wattpmUtils('import', 'http://github.com/foo/bar.git', { reject: false })
+
+  deepStrictEqual(process.exitCode, 1)
+  ok(process.stderr.includes("declares its applications under 'web', which is the v3 spelling"), process.stderr)
+})
+
+test('import - a v4 root it cannot edit is printed rather than rewritten', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-unsafe')
+
+  // The configuration is behind a binding, so there is no literal to append to.
+  const original = 'const configuration = { applications: [] }\n\nexport default configuration\n'
+  await prepareV4Root(t, root, original)
+
+  const process = await wattpmUtils('import', 'http://github.com/foo/bar.git')
+
+  ok(process.stdout.includes('Cannot edit watt.config.js automatically'), process.stdout)
+  ok(process.stdout.includes('http://github.com/foo/bar.git'), process.stdout)
+  deepStrictEqual(await readFile(resolve(root, 'watt.config.js'), 'utf-8'), original)
+})
+
+test('import - a local application inside a v4 root gets a relative path and a v4 file', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-local')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+
+  const applicationDirectory = resolve(root, 'web/main')
+  await createDirectory(applicationDirectory)
+  await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
+  await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'main' }), 'utf-8')
+
+  await wattpmUtils('import', applicationDirectory)
+
+  const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
+
+  // Inside the root, so the path is the project's own and needs no variable to say it.
+  ok(/path:\s*["']web\/main["']/.test(source), source)
+  ok(!existsSync(resolve(root, '.env')), 'no .env was written')
+
+  /*
+    The per-application file is v4 too. A `watt.json` beside a v4 root is the coexistence the loader
+    refuses, so writing one here would leave a project that no longer boots.
+  */
+  ok(!existsSync(resolve(applicationDirectory, 'watt.json')), 'no watt.json was written')
+
+  /*
+    `.mjs` rather than `.js`: the imported package does not declare `"type": "module"`, and the
+    `export default` this writes is a syntax error in a CommonJS `.js`.
+  */
+  const applicationSource = await readFile(resolve(applicationDirectory, 'watt.config.mjs'), 'utf-8')
+  deepStrictEqual(applicationSource, "import { node } from '@platformatic/node'\n\nexport default node({})\n")
+})
+
+test('import - a v4 root leaves an application that already has a configuration alone', async t => {
+  const root = await createTemporaryDirectory(t, 'import-v4-configured')
+
+  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+
+  const applicationDirectory = resolve(root, 'web/main')
+  await createDirectory(applicationDirectory)
+  await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
+  await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'main' }), 'utf-8')
+
+  const existing = "import { node } from '@platformatic/node'\n\nexport default node({ /* mine */ })\n"
+  await writeFile(resolve(applicationDirectory, 'watt.config.mjs'), existing, 'utf-8')
+
+  await wattpmUtils('import', applicationDirectory)
+
+  deepStrictEqual(await readFile(resolve(applicationDirectory, 'watt.config.mjs'), 'utf-8'), existing)
 })

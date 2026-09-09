@@ -8,13 +8,13 @@ To extend the functionality of an application in Platformatic, you can register 
 
 Specify the location of your plugin files in the configuration file, as shown in the example below. This path is relative to the config file path.
 
-```json
-{
-  ...
-  "plugins": {
-    "paths": ["./plugin/index.js"]
+```ts
+export default gateway({
+  // ...
+  plugins: {
+    paths: ['./plugin/index.js']
   }
-}
+})
 ```
 ### Creating a Plugin
 
@@ -62,7 +62,7 @@ Consider the following directory structure for organizing multiple plugins:
 │   ├── single-plugin
 │   │   └── utils.js
 │   └── another-plugin.js
-└── platformatic.json
+└── watt.config.ts
 ```
 
 By default, each folder will be added as a prefix to the routes defined within them. Refer to the [@fastify/autoload](https://github.com/fastify/fastify-autoload) documentation for customization options.
@@ -71,17 +71,17 @@ By default, each folder will be added as a prefix to the routes defined within t
 
 To load multiple plugins in parallel, specify an array of paths in the configuration:
 
-```json
-{
-  ...
-  "plugins": {
-    "paths": [{
-      "path": "./plugin/index.js"
+```ts
+export default gateway({
+  // ...
+  plugins: {
+    paths: [{
+      path: './plugin/index.js'
     }, {
-      "path": "./routes/"
+      path: './routes/'
     }]
   }
-}
+})
 ```
 
 <Issues />

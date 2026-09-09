@@ -46,7 +46,7 @@ Hello YOURNAME, welcome to Watt!
 ```
 
 Dependencies are going to be installed. Your application is located in `web/node`.
-The `watt.json` file is automatically created in the `node` folder, and the `package.json` file includes `@platformatic/node` as a dependency.
+The `watt.config.ts` file is automatically created in the `node` folder, and the `package.json` file includes `@platformatic/node` as a dependency.
 
 ## Add your first Node.js application to Watt
 
@@ -157,25 +157,26 @@ curl http://localhost:3042/node
 
 :::note
 
-You can customize how the various applications are exposed by changing `web/gateway/watt.json`.
+You can customize how the various applications are exposed by changing `web/gateway/watt.config.ts`.
 Here is the equivalent of the default configuration when exposing a Node.js application:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { gateway } from '@platformatic/gateway'
+
+export default gateway({
+  gateway: {
+    applications: [
       {
-        "id": "node",
-        "proxy": {
-          "prefix": "/node"
+        id: 'node',
+        proxy: {
+          prefix: '/node'
         }
       }
     ],
-    "refreshTimeout": 1000
+    refreshTimeout: 1000
   },
-  "watch": true
-}
+  watch: true
+})
 ```
 
 :::
@@ -277,15 +278,19 @@ This will also install the required dependencies. The command will output:
 [13:06:14.310] INFO (42432): Installing dependencies for the application next using npm ...
 ```
 
-Then, we need to tell Watt to expose our `next` server on `/next` by modifying `web/next/watt.json`:
+Then, we need to tell Watt to expose our `next` server on `/next` by modifying `web/next/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
-  "application": {
-    "basePath": "/next"
+```ts config
+import { next } from '@platformatic/next'
+
+export default next({
+  application: {
+    basePath: '/next'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 You can run `npm run dev` to start your Watt server in dev/watch mode, which in turn will start Next.js
@@ -296,8 +301,8 @@ Then, you can test it by opening your browser at [`http://localhost:3042/next`](
 :::note
 
 In this example, we are exposing the Next.js app at `/next` and the Node.js app at `/node`.
-You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.json`
-and the `prefix` in `web/gateway/watt.json` accordingly if you customize it.
+You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.config.ts`
+and the `prefix` in `web/gateway/watt.config.ts` accordingly if you customize it.
 
 :::
 

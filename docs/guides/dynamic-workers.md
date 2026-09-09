@@ -83,7 +83,7 @@ After each scaling operation, the algorithm enters a cooldown period to prevent 
 
 ### Global Workers Configuration
 
-Add a `workers` property to your runtime configuration (`platformatic.json` or `watt.json`):
+Add a `workers` property to your runtime configuration:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
@@ -96,19 +96,23 @@ Add a `workers` property to your runtime configuration (`platformatic.json` or `
 | **scaleDownELU** | ELU threshold to trigger scaling down (0-1) | 0.2 |
 
 Example:
-```json
-{
-  "workers": {
-    "dynamic": true,
-    "total": 10,
-    "gracePeriod": 30000
+
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  autoload: { path: 'web' },
+  workers: {
+    dynamic: true,
+    total: 10,
+    gracePeriod: 30000
   }
-}
+})
 ```
 
 ### Per-Application Configuration
 
-Individual applications can configure their worker limits using the `workers` property in the application config or the `runtime` section:
+Individual applications can configure their worker limits using the `workers` property of their entry in the runtime configuration:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
@@ -116,17 +120,35 @@ Individual applications can configure their worker limits using the `workers` pr
 | **minimum** | Minimum workers for this application | 1 |
 | **maximum** | Maximum workers for this application | Global total |
 
-Example (in application's `platformatic.json`):
-```json
-{
-  "runtime": {
-    "workers": {
-      "dynamic": true,
-      "minimum": 2,
-      "maximum": 6
+Worker limits are orchestration, so they live in the runtime configuration rather than in the
+application's own file — in a monorepo, on the entry that names the application:
+
+```ts config
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
+  applications: [
+    {
+      id: 'api',
+      path: 'web/api',
+      workers: { dynamic: true, minimum: 2, maximum: 6 }
     }
+  ]
+})
+```
+
+A single-application project says the same thing with the singular `application` shorthand:
+
+```ts config
+import { defineConfig } from 'wattpm'
+import { node } from '@platformatic/node'
+
+export default defineConfig({
+  application: {
+    workers: { dynamic: true, minimum: 2, maximum: 6 },
+    config: node({})
   }
-}
+})
 ```
 
 ## Behavior Examples

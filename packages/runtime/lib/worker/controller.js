@@ -1,9 +1,8 @@
+import { configurationFileNames } from '@platformatic/foundation/lib/v4/index.js'
 import {
   ensureLoggableError,
   FileWatcher,
   kHandledError,
-  listRecognizedConfigurationFiles,
-  loadConfiguration,
   loadConfigurationModule
 } from '@platformatic/foundation'
 import {
@@ -16,9 +15,9 @@ import {
   getOnHttpStatsRunning,
   getOnHttpStatsSize
 } from '@platformatic/globals'
+import { importCapabilityPackage } from '@platformatic/basic'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
@@ -130,32 +129,45 @@ export class Controller extends EventEmitter {
         process.env.NODE_ENV = 'production'
       }
 
-      // Before returning the base application, check if there is any file we recognize
-      // and the user just forgot to specify in the configuration.
-      if (!appConfig.module && !appConfig.config) {
-        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
+      /*
+        v4: the configuration was evaluated exactly once, main-side, and this worker receives the
+        validated capability payload as data. There is no file to re-read and no schema to
+        rediscover — which is the whole point, since re-parsing per worker meant an application
+        with workers: 4 evaluated user code five times and could reach five different answers.
 
-        if (candidate) {
-          appConfig.config = resolve(appConfig.path, candidate)
-        }
-      }
+        The capability is imported through the canonical resolution order, application-scoped first,
+        so the copy that runs here is the copy whose schema validated the payload main-side. When the
+        entry names an npm module, that module is the capability, resolved the same way.
+      */
+      if (appConfig.resolvedConfig) {
+        const pkg = await importCapabilityPackage(appConfig.path, appConfig.module, {
+          runtimeScope: import.meta.filename
+        })
 
-      if (appConfig.module) {
-        const pkg = await loadConfigurationModule(workerData.dirname, {}, appConfig.module)
-        if (typeof pkg.create !== 'function') {
+        // A module application names its capability directly. If that package exports no `create`,
+        // name it rather than letting the call below throw a bare "pkg.create is not a function".
+        if (appConfig.module && typeof pkg.create !== 'function') {
           throw new InvalidApplicationModuleError(appConfig.module)
         }
-        this.capability = await pkg.create(appConfig.path, appConfig.config ?? {}, this.#context)
-      } else if (appConfig.config) {
-        // Parse the configuration file the first time to obtain the schema
-        const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.fetchApplicationUrl,
-          strictEnv: this.#context.strictEnv
+
+        /*
+          `resolved` says this object has already been through the loader: its environment was
+          layered main-side, it holds no placeholders, and it has been validated against this
+          capability's schema. It is what tells the capability apart from an embedder handing over
+          an object nobody has checked, which still gets validated on the way in.
+        */
+        this.capability = await pkg.create(appConfig.path, appConfig.resolvedConfig, {
+          ...this.#context,
+          resolved: true
         })
-        const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
-        this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
-        // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
       } else {
+        /*
+          No payload at all, which the v4 loader does not produce -- `prepareV4Application` gives
+          every entry a `resolvedConfig`, an empty object where there is nothing to say. What is
+          left here is an embedder constructing a Controller by hand, and the bundled base
+          capability is the answer for that: there is no configuration file to look for, because v4
+          decides that main-side and hands the result over.
+        */
         const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
         this.capability = await pkg.create(appConfig.path, {}, this.#context)
       }
@@ -309,11 +321,20 @@ export class Controller extends EventEmitter {
       return
     }
 
+    /*
+      The application's own configuration file is not the worker's to watch. The runtime evaluates
+      configuration once, main-side, and watches every file that evaluation read -- so a change to
+      one is a configuration change and the runtime reloads for it.
+
+      Watching it here as well meant both fired for a single edit: the runtime tore itself down and
+      rebuilt while this worker restarted the same application, and the rebuilt runtime could not
+      bind its management socket because the one it replaced had not released it yet.
+    */
     const fileWatcher = new FileWatcher({
       path: watch.path,
       /* c8 ignore next 2 */
       allowToWatch: watch?.allow,
-      watchIgnore: watch?.ignore || []
+      watchIgnore: [...(watch?.ignore || []), ...configurationFileNames]
     })
 
     fileWatcher.on('update', this.#debouncedRestart)

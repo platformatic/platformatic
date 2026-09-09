@@ -1,4 +1,4 @@
-import { deepStrictEqual } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
 import { test } from 'node:test'
 import { Generator } from '../index.js'
 import { version } from '../lib/schema.js'
@@ -22,6 +22,7 @@ test('should return environment and environment variables', async () => {
 
 test('should generate proper index.js file (Javascript)', async () => {
   const generator = new Generator()
+  generator.setConfig({ typescript: false })
   await generator.prepare()
   const file = generator.getFileObject('index.js')
 
@@ -44,6 +45,7 @@ test('should generate proper index.js file (Javascript)', async () => {
 
 test('should prepare a valid package.json file (Javascript)', async () => {
   const generator = new Generator()
+  generator.setConfig({ typescript: false })
   await generator.prepare()
   const packageJson = JSON.parse(generator.getFileObject('package.json').contents)
 
@@ -98,12 +100,52 @@ test('should prepare a valid tsconfig.json file (Typescript)', async () => {
   deepStrictEqual(tsConfig, { extends: '@platformatic/tsconfig' })
 })
 
-test('should prepare a valid watt.json file', async () => {
+test('should prepare exactly one configuration file, in the v4 form', async () => {
   const generator = new Generator()
   await generator.prepare()
-  const wattJson = JSON.parse(generator.getFileObject('watt.json').contents)
 
-  deepStrictEqual(wattJson, {
-    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
-  })
+  /*
+    One per directory. The generator used to add a `watt.json` of its own beside the one the base
+    class writes; both carried that name, so the second replaced the first, and once the base
+    class started writing a module they became two configurations in one directory -- which the
+    loader refuses.
+  */
+  const configurations = generator.files.filter(file => /^watt\.(json|config\.[a-z]+)$/.test(file.file))
+
+  deepStrictEqual(
+    configurations.map(file => file.file),
+    ['watt.config.ts']
+  )
+  ok(configurations[0].contents.startsWith("import { node } from '@platformatic/node'"), configurations[0].contents)
+})
+
+test('a non-entrypoint application scaffolds no port and stays mesh-only', async () => {
+  const generator = new Generator()
+  await generator.prepare()
+
+  const configuration = generator.files.find(file => /^watt\.config\./.test(file.file))
+
+  // A Node capability binds no external socket without a declared port, which is exactly what keeps
+  // a portless sibling in a multi-application runtime private.
+  ok(!configuration.contents.includes('server'), configuration.contents)
+  ok(configuration.contents.includes('node({})'), configuration.contents)
+})
+
+test('the entrypoint application is exposed on the scaffolded port', async () => {
+  const generator = new Generator()
+  // What the runtime generator sets on the sole application of a runtime: the runtime context, a
+  // name to scope the env var, and the entrypoint mark itself.
+  generator.setConfig({ isRuntimeContext: true, applicationName: 'api', entrypoint: true })
+  await generator.prepare()
+
+  const configuration = generator.files.find(file => /^watt\.config\./.test(file.file))
+
+  // The port is written the way every capability writes it: a scaffolded env var with a 3042 default,
+  // so the sole application is reachable the moment it boots and PORT still overrides it.
+  ok(configuration.contents.includes('server: {'), configuration.contents)
+  ok(configuration.contents.includes('port: Number(process.env.PLT_API_PORT || 3042)'), configuration.contents)
+
+  // The default is registered in the application's env, which the runtime generator collects into
+  // the project's root .env.
+  deepStrictEqual(generator.config.env.PLT_API_PORT, 3042)
 })

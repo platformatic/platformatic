@@ -30,15 +30,19 @@ npm install @platformatic/nitro
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/nitro/3.61.1.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { nitro } from '@platformatic/nitro'
+
+export default nitro({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture

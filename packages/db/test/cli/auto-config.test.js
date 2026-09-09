@@ -5,7 +5,11 @@ import { request } from 'undici'
 import { getConnectionInfo } from '../helper.js'
 import { connectDB, safeKill, start } from './helper.js'
 
-const fileTypes = ['yaml', 'yml', 'toml', 'tml', 'json', 'json5']
+/*
+  The four names v4 accepts, rather than the six serialized formats v3 read. They differ in language
+  and module system and in nothing else, and the loader has to find and evaluate all four.
+*/
+const fileTypes = ['ts', 'mts', 'js', 'mjs']
 for (const fileType of fileTypes) {
   test(`auto config - ${fileType}`, async t => {
     const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -20,7 +24,7 @@ for (const fileType of fileTypes) {
     );`)
 
     const { child, url } = await start(
-      ['-c', join(import.meta.dirname, '..', 'fixtures', 'auto-config', fileType, 'platformatic.db.' + fileType)],
+      ['-c', join(import.meta.dirname, '..', 'fixtures', 'auto-config', fileType, 'watt.config.' + fileType)],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
