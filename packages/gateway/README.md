@@ -1,6 +1,6 @@
 # @platformatic/gateway
 
-Platformatic Gateway is an API gateway that aggregates and exposes multiple services as a single API, with support for OpenAPI composition and GraphQL federation.
+Platformatic Gateway is an API gateway that aggregates and exposes multiple services as a single API, with support for OpenAPI composition.
 
 Check out the full documentation on [our website](https://docs.platformatic.dev/docs/reference/gateway/overview).
 

@@ -212,7 +212,7 @@ test('should not proxy request if it is not in a schema file', async t => {
   }
 })
 
-test('should automatically compose API with application id as prefix if there is no openapi nor graphql config', async t => {
+test('should automatically compose API with application id as prefix if there is no openapi config', async t => {
   const api1 = await createOpenApiApplication(t, ['users'])
   const api2 = await createOpenApiApplication(t, ['posts'])
 

@@ -28,7 +28,7 @@ The properties nested under that key are unchanged, so no other edits are needed
 
 - **Service Discovery**: Automatically discover and compose APIs from multiple applications in your Watt application
 - **OpenAPI Composition**: Combine multiple OpenAPI specifications into a single, unified API documentation
-- **GraphQL Federation**: Aggregate GraphQL schemas from multiple applications with Apollo Federation support
+- **User-owned GraphQL Composition**: Compose GraphQL schemas in a custom application or plugin. See [Reproduce GraphQL Composition](../../guides/reproduce-graphql-composition.md).
 - **Conflict Resolution**: Intelligent handling of endpoint conflicts and path overlaps between applications
 - **Route Prefixing**: Organize APIs with automatic or custom path prefixing for each application
 - **Flexible Proxy Routing**: Route requests by prefix, method, and path patterns when multiple applications share the same prefix. See [Gateway configuration](./configuration.md#gateway).

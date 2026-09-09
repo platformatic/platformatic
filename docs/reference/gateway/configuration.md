@@ -34,7 +34,6 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   - **`id`** (**required**, `string`) - A unique identifier for the application. Use a Platformatic Runtime application id if the application is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, application `id` will be used instead of origin.
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
-  - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
     - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
@@ -265,28 +264,6 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
 - **`openapi`** (`object`) - See the Platformatic Service [openapi](../service/configuration.md#service) option for more details.
-- **`graphql`** (`object`) - Has the Platformatic Service [graphql](../service//configuration.md#service) options, plus
-  - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the applications entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#gateway-entities) for details.
-  - **`defaultArgsAdapter`** (`function` or `string`) - The default `argsAdapter` function for the entities, for example for the `@platformatic/db` mapped entities queries.
-
-  ```js
-  graphql: {
-    defaultArgsAdapter: partialResults => ({ where: { id: { in: partialResults.map(r => r.id) } } })
-  }
-  ```
-
-  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the json configuration.
-
-  ```json
-  "defaultArgsAdapter": "where.id.in.$>#id"
-  ```
-
-  - **`onSubgraphError`** (`function`) - Hook called when an error occurs getting schema from a subgraph. The arguments are:
-    - `error` (`error`) - The error message
-    - `subgraphName` (`string`) - The erroring subgraph
-
-    It's important to note GraphQL subscriptions are not supported in the gateway yet.
-
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the applications. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
 
 - **`addEmptySchema`** (`boolean`) - Deprecated, it no longer has any effect. Responses which declare no body - a `204`, a `304`, or any other status code whose response object has no `content` - always keep their status code in the composed OpenAPI specification, and are documented without a body.
@@ -517,31 +494,21 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
 
 ### GraphQL
 
-- **`host`** (`string`) - application host; if not specified, the `application.origin` is used.
-- **`name`** (`string`) - name to identify the application. If not specified, the `application.origin` is used.
-- **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
-- **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
-- **`entities`** (`object`) - Configuration object for working with entities in this subgraph, the values are objects with the following schema:
-  - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
-    - **`name`** (`string`, **required**) - The name of the resolver.
-    - **`argsAdapter (partialResults)`** (`function` or `string`) - The function invoked with a subset of the result of the initial query, where `partialResults` is an array of the parent node. It should return an object to be used as argument for `resolver` query. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
-      **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](https://github.com/platformatic/graphql-composer/blob/main/lib/utils.js) will be used.
-    - **`partialResults`** (`function` or `string`) - The function to adapt the subset of the result to be passed to `argsAdapter` - usually is needed only on resolvers of `fkeys` and `many`. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
-  - **`pkey`** (`string`, **required**) - The primary key field to identify the entity.
-  - **`fkeys`** (`array of objects`) an array to describe the foreign keys of the entities, for example `fkeys: [{ type: 'Author', field: 'authorId' }]`.
-    - **`type`** (`string`, **required**) - The entity type the foreign key is referred to.
-    - **`field`** (`string`) - The foreign key field.
-    - **`as`** (`string`) - When using `addEntitiesResolvers`, it defines the name of the foreign entity as a field of the current one, as a single type.
-    - **`pkey`** (`string`) - The primary key of the foreign entity.
-    - **`subgraph`** (`string`) - The subgraph name of the foreign entity, where the resolver is located; if missing is intended the self.
-    - **`resolver`** (object) - The resolver definition to query the foreign entity, same structure as `entity.resolver`.
-  - **`many`** (`array of objects`) - Describe a 1-to-many relation - the reverse of the foreign key.
-    - **`type`** (`string`, **required**) - The entity type where the entity is a foreign key.
-    - **`fkey`** (`string`, **required**) - The foreign key field in the referred entity.
-    - **`as`** (`string`, **required**) - When using `addEntitiesResolvers`, it defines the name of the relation as a field of the current one, as a list.
-    - **`pkey`** (`string`) - The primary key of the referred entity.
-    - **`subgraph`** (`string`) - The subgraph name of the referred entity, where the resolver is located; if missing is intended the self.
-    - **`resolver`** (`object`, **required**) - The resolver definition to query the referred entity, same structure as `entity.resolver`.
+Gateway does not compose GraphQL schemas. To expose a GraphQL service through Gateway, configure it as a regular proxy application:
+
+```json
+{
+  "id": "graphql-service",
+  "proxy": {
+    "prefix": "/graphql",
+    "upstream": "http://graphql-service:3000"
+  }
+}
+```
+
+If you need schema composition, implement it in a user-owned application or plugin. The application is responsible for selecting the GraphQL server and composition libraries, loading the subgraph schemas, and registering the resulting `/graphql` endpoint. Gateway can then proxy requests to that endpoint using the standard `proxy` configuration. See the [Reproduce GraphQL Composition](../../guides/reproduce-graphql-composition.md) guide for a complete example.
+
+Configurations using the removed Gateway composition options, including `graphql`, `composeEndpoint`, `entities`, `defaultArgsAdapter`, and `addEntitiesResolvers`, are rejected during validation.
 
 ## Configuration References
 
