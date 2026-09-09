@@ -8,7 +8,8 @@ import {
   kEnvFileFallbackKeys,
   kMetadata,
   kTimeout,
-  parseMemorySize
+  parseMemorySize,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
@@ -448,6 +449,11 @@ export class Runtime extends EventEmitter {
     }
 
     this.#updateStatus('started')
+
+    // The CLI enables the module compile cache for this process. Node.js would only write it when
+    // the process terminates, so flush it now that the boot is complete to not lose it when the
+    // process is killed abruptly. This is a no-op when the compile cache is not enabled.
+    scheduleCompileCacheFlush()
 
     // Start the global health metrics timer for all workers if needed
     this.#startHealthMetricsCollectionIfNeeded()
