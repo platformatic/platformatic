@@ -45,15 +45,6 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.valkeyClients).type.toBe<Map<string, any>>()
 });
 
-test("ambient globalThis.platformatic", () => {
-  // updateGlobals() assigns a real, shared `globalThis.platformatic` object
-  // at worker/main-thread startup; consumers that read it directly (rather
-  // than via the getters below) need this ambient declaration.
-  expect(globalThis.platformatic).type.toBe<PlatformaticGlobal | undefined>()
-  expect(globalThis.platformatic?.sharedContext).type.toBe<PlatformaticGlobal['sharedContext'] | undefined>()
-  expect(globalThis.platformatic?.itc).type.toBe<PlatformaticGlobal['itc'] | undefined>()
-})
-
 test("updateGlobals", () => {
   expect(globals.updateGlobals({ config: {} })).type.toBe<PlatformaticGlobal>()
   expect(globals.updateGlobals).type.toBeCallableWith({ logger: {} as Pino.Logger })

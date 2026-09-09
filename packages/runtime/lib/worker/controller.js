@@ -268,8 +268,6 @@ export class Controller extends EventEmitter {
     const onHttpStatsFree = getOnHttpStatsFree({ throwOnMissing: false })
 
     if (onHttpStatsFree && dispatcher?.stats) {
-      // The capability might come from an older version of @platformatic/basic
-      // which registered these globals without the fields tracking, so never throw.
       const onHttpStatsConnected = getOnHttpStatsConnected({ throwOnMissing: false })
       const onHttpStatsPending = getOnHttpStatsPending({ throwOnMissing: false })
       const onHttpStatsQueued = getOnHttpStatsQueued({ throwOnMissing: false })

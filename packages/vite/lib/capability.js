@@ -254,7 +254,10 @@ export class ViteCapability extends BaseCapability {
       logLevel: this.logger.level,
       clearScreen: false,
       optimizeDeps: { force: false },
-      plugins: [platformaticHttp2HeadersPlugin(), ...(skewPlugin ? [skewPlugin] : [])],
+      plugins: [
+        platformaticHttp2HeadersPlugin(),
+        ...(skewPlugin ? [skewPlugin] : [])
+      ],
       server: serverOptions
     })
 

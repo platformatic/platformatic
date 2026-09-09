@@ -10,11 +10,6 @@ test('start - should use default folders for resolved applications', async t => 
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   await prepareGitRepository(t, rootDir)
 
-  t.after(() => {
-    startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
-  })
-
   changeWorkingDirectory(t, rootDir)
   await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
   await wattpmUtils('resolve', rootDir)
@@ -27,41 +22,53 @@ test('start - should use default folders for resolved applications', async t => 
   await ensureDependencies([resolve(rootDir, 'external/resolved')])
 
   const startProcess = wattpm('start', rootDir)
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
 
   // Use a single stream consumer to avoid race conditions between
   // multiple pipe(split2()) calls losing messages
   let started = false
   let url
+  const output = []
 
   if (startProcess.stderr) {
     startProcess.stderr.pipe(split2()).on('data', (log) => {
+      output.push(log.toString())
       if (process.env.PLT_TESTS_DEBUG === 'true') {
         process._rawDebug(log.toString())
       }
     })
   }
 
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    if (process.env.PLT_TESTS_DEBUG === 'true') {
-      process._rawDebug(log.toString())
-    }
+  try {
+    for await (const log of on(startProcess.stdout.pipe(split2()), 'data', { signal: AbortSignal.timeout(120000) })) {
+      output.push(log.toString())
+      if (process.env.PLT_TESTS_DEBUG === 'true') {
+        process._rawDebug(log.toString())
+      }
 
-    let parsed
-    try {
-      parsed = JSON.parse(log.toString())
-    } catch {
-      continue
-    }
+      let parsed
+      try {
+        parsed = JSON.parse(log.toString())
+      } catch {
+        continue
+      }
 
-    if (parsed.msg?.startsWith('Started the worker 0 of the application "resolved"')) {
-      started = true
-    }
+      if (parsed.msg?.startsWith('Started the worker 0 of the application "resolved"')) {
+        started = true
+      }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
-    if (mo) {
-      url = mo[1]
-      break
+      const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
+      if (mo) {
+        url = mo[1]
+        break
+      }
     }
+  } catch (error) {
+    error.message += `\nWatt output:\n${output.join('\n')}`
+    throw error
   }
 
   ok(started, 'Expected worker 0 of "resolved" application to start')

@@ -1,5 +1,11 @@
 # Platformatic Errors
 
+## @platformatic/globals
+
+### PLT_GLOBALS_MISSING_FIELD
+
+**Message:** Global runtime API "%s" is not available
+
 ## @platformatic/basic
 
 ### PLT_BASIC_NON_ZERO_EXIT_CODE

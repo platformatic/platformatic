@@ -36,7 +36,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ## Preparing for production mode
 
-Add the following to your `vite.config.ts` plugins section:
+Add Nitro to `vite.config.ts`:
 
 ```javascript
 process.env.NODE_ENV === 'production' &&

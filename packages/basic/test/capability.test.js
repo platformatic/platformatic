@@ -1,7 +1,11 @@
-/* globals platformatic */
-
 import { kMetadata } from '@platformatic/foundation'
-import { updateGlobals } from '@platformatic/globals'
+import {
+  getReuseTcpPorts,
+  setBasePath,
+  setGraphqlSchema,
+  setOpenapiSchema,
+  updateGlobals
+} from '@platformatic/globals'
 import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { EventEmitter } from 'node:events'
@@ -63,15 +67,15 @@ test('BaseCapability - should properly setup globals', async t => {
     }
   )
 
-  platformatic.setOpenapiSchema('openapi')
-  platformatic.setGraphqlSchema('graphql')
-  platformatic.setBasePath('basePath')
+  setOpenapiSchema('openapi')
+  setGraphqlSchema('graphql')
+  setBasePath('basePath')
 
   deepStrictEqual(await capability.getOpenapiSchema(), 'openapi')
   deepStrictEqual(await capability.getGraphqlSchema(), 'graphql')
   deepStrictEqual(capability.logger.level, 'info')
   deepStrictEqual(capability.basePath, 'basePath')
-  deepStrictEqual(platformatic.reuseTcpPorts, capability.reuseTcpPorts)
+  deepStrictEqual(getReuseTcpPorts(), capability.reuseTcpPorts)
 })
 
 test('BaseCapability - startCommand - should expose the configured entrypoint port as url', async t => {

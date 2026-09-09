@@ -1,6 +1,15 @@
 import { deepStrictEqual, strictEqual, throws } from 'node:assert'
+import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import * as globals from '../lib/index.js'
+
+const require = createRequire(import.meta.url)
+
+test('getGlobal should be undefined before initialization', async () => {
+  const isolated = await import('../lib/index.js?uninitialized')
+
+  strictEqual(isolated.getGlobal(), undefined)
+})
 
 test('getters should return global fields', () => {
   const values = {
@@ -119,14 +128,24 @@ test('getters should return global fields', () => {
 })
 
 test('updateGlobals should merge and return global fields', () => {
-  const original = { logger: {}, [globals.kFields]: new Set(['logger']) }
-  globalThis.platformatic = original
+  const original = globals.updateGlobals({ logger: {} })
 
   const updated = globals.updateGlobals({ config: { hello: 'world' } })
 
   strictEqual(updated, original)
-  strictEqual(globalThis.platformatic, original)
   deepStrictEqual(updated.config, { hello: 'world' })
+  strictEqual(Object.getOwnPropertySymbols(globalThis).includes(Symbol.for('plt.globals.state')), true)
+  strictEqual(Object.hasOwn(globals, 'kState'), false)
+  strictEqual(Object.hasOwn(globalThis, 'platformatic'), false)
+})
+
+test('CommonJS and ESM entrypoints should share global fields', () => {
+  const commonjs = require('@platformatic/globals')
+  const logger = {}
+
+  globals.updateGlobals({ logger })
+
+  strictEqual(commonjs.getLogger(), logger)
 })
 
 test('removeGlobals should remove global fields', () => {
@@ -137,35 +156,34 @@ test('removeGlobals should remove global fields', () => {
 
   const updated = globals.removeGlobals(['messaging'])
 
-  strictEqual(updated, globalThis.platformatic)
+  strictEqual(updated, globals.getGlobal())
   strictEqual(globals.hasField('messaging'), false)
   strictEqual(globals.hasField('logger'), true)
-  strictEqual(globalThis.platformatic.messaging, undefined)
-  throws(() => globals.getMessaging(), /globalThis\.platformatic\.messaging is not available/)
+  strictEqual(updated.messaging, undefined)
+  throws(() => globals.getMessaging(), { code: 'PLT_GLOBALS_MISSING_FIELD' })
 })
 
-test('removeGlobals should be noop without global object', () => {
-  delete globalThis.platformatic
-
-  strictEqual(globals.removeGlobals(['messaging']), undefined)
+test('removeGlobals should be noop without initialized state', () => {
+  return import('../lib/index.js?without-global').then(isolated => {
+    strictEqual(isolated.removeGlobals(['missing']), isolated.getGlobal())
+  })
 })
 
 test('getters should throw when global fields are not available', () => {
-  globalThis.platformatic = { [globals.kFields]: new Set() }
-
-  throws(() => globals.getLogger(), /globalThis\.platformatic\.logger is not available/)
-
-  delete globalThis.platformatic
-
-  throws(() => globals.getLogger(), /globalThis\.platformatic\.logger is not available/)
+  globals.removeGlobals(['logger'])
+  throws(() => globals.getLogger(), { code: 'PLT_GLOBALS_MISSING_FIELD' })
 })
 
 test('getters should return undefined when throwOnMissing is false', () => {
-  globalThis.platformatic = { [globals.kFields]: new Set() }
-
+  globals.removeGlobals(['logger'])
   strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
+})
 
-  delete globalThis.platformatic
+test('separate module instances should share global values', async () => {
+  const isolated = await import('../lib/index.js?isolated')
 
-  strictEqual(globals.getLogger({ throwOnMissing: false }), undefined)
+  isolated.updateGlobals({ logger: { isolated: true } })
+
+  strictEqual(globals.getLogger().isolated, true)
+  strictEqual(isolated.getLogger().isolated, true)
 })

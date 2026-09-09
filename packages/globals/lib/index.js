@@ -1,46 +1,56 @@
-export const kFields = Symbol.for('plt.globals.fields')
+import { MissingGlobalError } from './errors.js'
+
+const kState = Symbol.for('plt.globals.state')
+
+if (!globalThis[kState]) {
+  Object.defineProperty(globalThis, kState, {
+    value: { values: {}, fields: new Set(), initialized: false },
+    enumerable: false,
+  })
+}
+
+const state = globalThis[kState]
 
 function getField (name, options) {
   const { throwOnMissing = true } = options ?? {}
 
-  if (throwOnMissing && !globalThis.platformatic?.[kFields]?.has(name)) {
-    throw new Error(`globalThis.platformatic.${name} is not available`)
+  if (throwOnMissing && !state.fields.has(name)) {
+    throw new MissingGlobalError(name)
   }
 
-  return globalThis.platformatic?.[name]
+  return state.values[name]
 }
 
 export function getGlobal () {
-  return globalThis.platformatic
+  return state.initialized ? state.values : undefined
 }
 
 export function updateGlobals (updates) {
-  globalThis.platformatic ??= {}
-  globalThis.platformatic[kFields] ??= new Set()
+  state.initialized = true
 
   for (const [key, value] of Object.entries(updates)) {
-    globalThis.platformatic[key] = value
-    globalThis.platformatic[kFields].add(key)
+    state.values[key] = value
+    state.fields.add(key)
   }
 
-  return globalThis.platformatic
+  return state.values
 }
 
-export function removeGlobals (fields) {
-  if (!globalThis.platformatic?.[kFields]) {
-    return globalThis.platformatic
+export function removeGlobals (names) {
+  if (!state.initialized) {
+    return undefined
   }
 
-  for (const field of fields) {
-    delete globalThis.platformatic[field]
-    globalThis.platformatic[kFields].delete(field)
+  for (const name of names) {
+    delete state.values[name]
+    state.fields.delete(name)
   }
 
-  return globalThis.platformatic
+  return state.values
 }
 
 export function hasField (name) {
-  return globalThis.platformatic?.[kFields]?.has(name) ?? false
+  return state.fields.has(name)
 }
 
 export function isBuilding (options) {
@@ -258,5 +268,7 @@ export function getTracerProvider (options) {
 export function getNotifyConfig (options) {
   return getField('notifyConfig', options)
 }
+
+export * as errors from './errors.js'
 
 export default getGlobal
