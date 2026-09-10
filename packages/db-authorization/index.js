@@ -214,11 +214,15 @@ async function auth (app, opts) {
             }
           }
 
-          let hasAllPrimaryKeys = false
+          let hasAllPrimaryKeys = true
           const whereConditions = {}
+          const keyed = type.fixInput(input)
           for (const key of type.primaryKeys) {
-            hasAllPrimaryKeys = hasAllPrimaryKeys || input[key] !== undefined
-            whereConditions[key] = { eq: input[key] }
+            if (keyed[key] === undefined) {
+              hasAllPrimaryKeys = false
+              break
+            }
+            whereConditions[type.fields[key].camelcase] = { eq: keyed[key] }
           }
 
           if (hasAllPrimaryKeys) {
