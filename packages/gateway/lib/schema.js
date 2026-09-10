@@ -188,7 +188,6 @@ export const gateway = {
     handler: { type: 'string' },
     deduplication,
     openapi: openApiBase,
-    graphql: graphqlComposerOptions,
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
     passthroughContentTypes: {
       type: 'array',
