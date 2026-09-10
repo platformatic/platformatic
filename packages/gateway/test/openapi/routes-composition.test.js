@@ -369,8 +369,7 @@ test('should compose empty responses', async t => {
             prefix: '/api'
           }
         }
-      ],
-      addEmptySchema: true
+      ]
     }
   })
 
@@ -448,8 +447,7 @@ test('should compose applications with authentication components', async t => {
             prefix: '/api'
           }
         }
-      ],
-      addEmptySchema: true
+      ]
     }
   })
 
@@ -840,8 +838,7 @@ test('should apply the application document-level security to composed operation
             prefix: '/api'
           }
         }
-      ],
-      addEmptySchema: true
+      ]
     }
   })
 
@@ -902,8 +899,7 @@ test('should include the gateway-level security configuration in the composed sp
           }
         },
         security: [{ bearerAuth: [] }]
-      },
-      addEmptySchema: true
+      }
     }
   })
 

@@ -291,7 +291,6 @@ export interface PlatformaticGatewayConfig {
       path?: string;
       [k: string]: unknown;
     };
-    addEmptySchema?: boolean;
     refreshTimeout?: number;
     /**
      * Content types that should be passed through without parsing to enable proxying
