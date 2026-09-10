@@ -69,7 +69,7 @@ export interface PlatformaticComposerConfig {
             paths: string[];
             censor?: string;
             /**
-             * Remove the redacted keys entirely instead of replacing their values with the censor.
+             * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
              */
             remove?: boolean;
           };
@@ -89,7 +89,7 @@ export interface PlatformaticComposerConfig {
            */
           useOnlyCustomLevels?: boolean;
           /**
-           * How log levels are compared to the logger level. Use DESC when lower values are more severe.
+           * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
            */
           levelComparison?: "ASC" | "DESC";
           /**
@@ -101,23 +101,23 @@ export interface PlatformaticComposerConfig {
            */
           nestedKey?: string;
           /**
-           * The key used for the serialized error in the log object.
+           * The key used for the serialized error in the log object. Defaults to err.
            */
           errorKey?: string;
           /**
-           * The stringification limit at a specific nesting depth when logging circular objects.
+           * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
            */
           depthLimit?: number;
           /**
-           * The stringification limit of properties or elements when logging a circular object or array.
+           * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
            */
           edgeLimit?: number;
           /**
-           * Terminate each log line with \r\n instead of \n.
+           * Terminate each log line with \r\n instead of \n. Defaults to false.
            */
           crlf?: boolean;
           /**
-           * Set to false to disable logging entirely.
+           * Set to false to disable logging entirely. Defaults to true.
            */
           enabled?: boolean;
           openTelemetryExporter?: {
@@ -309,7 +309,7 @@ export interface PlatformaticComposerConfig {
         paths: string[];
         censor?: string;
         /**
-         * Remove the redacted keys entirely instead of replacing their values with the censor.
+         * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
          */
         remove?: boolean;
       };
@@ -329,7 +329,7 @@ export interface PlatformaticComposerConfig {
        */
       useOnlyCustomLevels?: boolean;
       /**
-       * How log levels are compared to the logger level. Use DESC when lower values are more severe.
+       * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
        */
       levelComparison?: "ASC" | "DESC";
       /**
@@ -341,23 +341,23 @@ export interface PlatformaticComposerConfig {
        */
       nestedKey?: string;
       /**
-       * The key used for the serialized error in the log object.
+       * The key used for the serialized error in the log object. Defaults to err.
        */
       errorKey?: string;
       /**
-       * The stringification limit at a specific nesting depth when logging circular objects.
+       * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
        */
       depthLimit?: number;
       /**
-       * The stringification limit of properties or elements when logging a circular object or array.
+       * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
        */
       edgeLimit?: number;
       /**
-       * Terminate each log line with \r\n instead of \n.
+       * Terminate each log line with \r\n instead of \n. Defaults to false.
        */
       crlf?: boolean;
       /**
-       * Set to false to disable logging entirely.
+       * Set to false to disable logging entirely. Defaults to true.
        */
       enabled?: boolean;
       openTelemetryExporter?: {

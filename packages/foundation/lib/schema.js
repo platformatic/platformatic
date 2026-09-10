@@ -353,8 +353,8 @@ export const logger = {
         },
         remove: {
           type: 'boolean',
-          default: false,
-          description: 'Remove the redacted keys entirely instead of replacing their values with the censor.'
+          description:
+            'Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.'
         }
       },
       required: ['paths'],
@@ -381,8 +381,8 @@ export const logger = {
     levelComparison: {
       type: 'string',
       enum: ['ASC', 'DESC'],
-      default: 'ASC',
-      description: 'How log levels are compared to the logger level. Use DESC when lower values are more severe.'
+      description:
+        'How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.'
     },
     msgPrefix: {
       type: 'string',
@@ -394,28 +394,25 @@ export const logger = {
     },
     errorKey: {
       type: 'string',
-      default: 'err',
-      description: 'The key used for the serialized error in the log object.'
+      description: 'The key used for the serialized error in the log object. Defaults to err.'
     },
     depthLimit: {
       type: 'integer',
-      default: 5,
-      description: 'The stringification limit at a specific nesting depth when logging circular objects.'
+      description:
+        'The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.'
     },
     edgeLimit: {
       type: 'integer',
-      default: 100,
-      description: 'The stringification limit of properties or elements when logging a circular object or array.'
+      description:
+        'The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.'
     },
     crlf: {
       type: 'boolean',
-      default: false,
-      description: 'Terminate each log line with \\r\\n instead of \\n.'
+      description: 'Terminate each log line with \\r\\n instead of \\n. Defaults to false.'
     },
     enabled: {
       type: 'boolean',
-      default: true,
-      description: 'Set to false to disable logging entirely.'
+      description: 'Set to false to disable logging entirely. Defaults to true.'
     },
     openTelemetryExporter: {
       type: 'object',
