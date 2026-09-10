@@ -67,6 +67,43 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
   )
 })
 
+test('Creates a single-application runtime that exposes its one application', async t => {
+  const root = await createTemporaryDirectory(t, 'runtime')
+
+  // @platformatic/node is not resolvable from create-wattpm's own context the way the service family
+  // is, so the capability is linked into the project before scaffolding rather than installed.
+  await linkWorkspacePackages(root)
+
+  const userInputHandler = await setupUserInputHandler(t, [
+    { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/node' },
+    { type: 'input', question: 'What is the name of the application?', reply: 'main' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
+  ])
+
+  await executeCreatePlatformatic(root, { pkgManager: 'pnpm', userInputHandler })
+
+  const applications = await getApplications(join(root, 'applications'))
+  deepStrictEqual(applications, ['main'])
+
+  // The sole application of a runtime is the entrypoint: @platformatic/node writes no port of its
+  // own, so without this it would bind nothing and answer from nowhere. The port lives in the
+  // application's config, resolved from the env the wizard also writes.
+  const applicationConfig = await readFile(join(root, 'applications', 'main', await configurationFileIn(join(root, 'applications', 'main'))), 'utf-8')
+  ok(applicationConfig.includes('port: Number(process.env.PLT_MAIN_PORT || 3042)'), applicationConfig)
+  const env = await readFile(join(root, '.env'), 'utf-8')
+  ok(env.includes('PLT_MAIN_PORT=3042'), env)
+
+  // And it is actually exposed when the scaffolded project loads through the full v4 pipeline.
+  const runtimeConfig = await loadRuntimeConfiguration(join(root, await configurationFileIn(root)), null, {
+    command: 'start'
+  })
+  const application = runtimeConfig.applications.find(entry => entry.id === 'main')
+  deepStrictEqual(application.resolvedConfig.server.port, 3042)
+})
+
 test('Add another application to an existing application', async t => {
   const tmpDir = await createTemporaryDirectory(t, 'runtime')
   const root = join(tmpDir, 'platformatic')

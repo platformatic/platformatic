@@ -114,6 +114,22 @@ test('RuntimeGenerator - exposes the sole application on the default port', asyn
   assert.ok(env.contents.includes('PLT_API_PORT=3042'), env.contents)
 })
 
+test('RuntimeGenerator - still exposes the sole application when the wizard seeded its name into existingApplications', async () => {
+  // The create wizard tracks used names in the array it reads from generator.existingApplications and
+  // pushes each new name back into it, so a freshly scaffolded application ends up in both
+  // existingApplications and applications. The entrypoint count must not double-count it.
+  const rg = new RuntimeGenerator({ targetDirectory: '/tmp/runtime-single-wizard' })
+
+  const only = new NodeGenerator()
+  rg.addApplication(only, 'api')
+  rg.existingApplications.push('api')
+
+  await rg.prepare()
+
+  const config = only.files.find(file => /^watt\.config\./.test(file.file))
+  assert.ok(config.contents.includes('port: Number(process.env.PLT_API_PORT || 3042)'), config.contents)
+})
+
 test('RuntimeGenerator - leaves portless applications on the mesh once there is more than one', async () => {
   const rg = new RuntimeGenerator({ targetDirectory: '/tmp/runtime-multi' })
 

@@ -196,7 +196,15 @@ export class RuntimeGenerator extends BaseGenerator {
     // which also scaffold no port, can adopt the same flag). The count is the gate: the moment a
     // second application exists, nothing is forced and a portless application stays mesh-only, which
     // is what keeps "expose the one" from becoming "expose them all".
-    const totalApplications = this.existingApplications.length + this.applications.length
+    //
+    // Counted as distinct names rather than as two array lengths added: the create wizard seeds its
+    // uniqueness set from `existingApplications` and pushes each new name back into it, so a freshly
+    // scaffolded application is present in both `existingApplications` and `applications`. A plain sum
+    // would double-count it and never see a single-application project as single.
+    const totalApplications = new Set([
+      ...this.existingApplications,
+      ...this.applications.map(({ name }) => name)
+    ]).size
     this.applications.forEach(({ name, application }) => {
       if (!application.config) {
         // set default config
