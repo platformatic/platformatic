@@ -125,7 +125,8 @@ test('output schemas stringify numeric primary and referencing foreign keys', ()
         camelcase: 'id',
         sqlType: 'integer',
         isNullable: false,
-        primaryKey: true
+        primaryKey: true,
+        stringifyOutput: true
       },
       contactId: {
         camelcase: 'contactId',

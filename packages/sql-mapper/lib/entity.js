@@ -127,7 +127,7 @@ function createMapper (
       }
 
       if (
-        (primaryKeys.has(key) || fields[key]?.stringifyOutput) &&
+        fields[key]?.stringifyOutput &&
         value !== null &&
         value !== undefined &&
         !(value instanceof Date) &&
