@@ -855,33 +855,6 @@ The value is inherited by all applications that do not explicitly set their own 
 
 The configuration format is the same as the per-application `management` setting (boolean or object with `enabled` and `operations`). See the [per-application management](#management) section for the full list of available operations.
 
-### `scheduler`
-
-An optional array of objects to configure HTTP call triggered by cron jobs.
-_Every object_ has:
-
-- **`enabled`** (`boolean` or `string`). Optional. If `false` the scheduler is disabled. Default: `true`.
-- **`name`** (`string`): The job name
-- **`cron`** (`string`): the crontab schedule expession. See https://crontab.guru/examples.html for some examples.
-- **`callbackUrl`** (`string`): the HTTP URL to be called
-- **`method`** (`string`): Optional, can be `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. Default: `GET`.
-- **`body`** (`string` or `object`). Optional.
-- **`headers`** (`object`). Optional. Headers added to the HTTP call.
-- **`maxRetry`** (`number`). Number of attempts for the HTTP call. Default: 3
-
-```json title="Example Scheduler"
-{
-  "scheduler": [
-    {
-      "name": "test",
-      "callbackUrl": "http://mytarget",
-      "cron": "0 * * * *",
-      "mehod": "GET"
-    }
-  ]
-}
-```
-
 ### verticalScaler
 
 :::warning

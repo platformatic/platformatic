@@ -204,6 +204,22 @@ test('rejects root server configuration', async t => {
   await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
 })
 
+test('rejects removed URL-based scheduler configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json',
+      applications: [{ id: 'main', path: '.' }],
+      scheduler: [{ name: 'legacy', cron: '0 * * * *', callbackUrl: 'http://localhost' }]
+    })
+  )
+
+  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+})
+
 test('rejects root entrypoint configuration', async t => {
   const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
   const configFile = join(directory, 'platformatic.runtime.json')

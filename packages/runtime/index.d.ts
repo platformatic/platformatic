@@ -157,14 +157,6 @@ export interface SchedulerJobBase {
   nextRunAt?: string | null
 }
 
-export interface ConfiguredSchedulerJob extends SchedulerJobBase {
-  source: 'config'
-  callbackUrl: string
-  method: string
-  headers?: Record<string, string>
-  body?: string | Record<string, unknown>
-}
-
 export interface ApplicationSchedulerJob extends SchedulerJobBase {
   source: 'application'
   applicationId: string
@@ -172,7 +164,7 @@ export interface ApplicationSchedulerJob extends SchedulerJobBase {
   tasks: string[]
 }
 
-export type SchedulerJob = ConfiguredSchedulerJob | ApplicationSchedulerJob
+export type SchedulerJob = ApplicationSchedulerJob
 
 export interface SchedulerRunResult {
   name: string

@@ -96,14 +96,12 @@ export interface LogIndexes {
 export interface RuntimeSchedulerJob {
   name: string
   cron: string
-  source: 'config' | 'application'
+  source: 'application'
   paused: boolean
   maxRetries: number
   lastExecutedAt: string | null
   lastStatus: 'success' | 'failed' | null
   nextRunAt: string | null
-  callbackUrl?: string
-  method?: string
   applicationId?: string
   scheduleId?: string
   tasks?: string[]
