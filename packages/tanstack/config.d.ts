@@ -661,23 +661,6 @@ export interface PlatformaticTanStackConfig {
     strictEnv?: boolean | string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
-    scheduler?: {
-      enabled?: boolean | string;
-      name: string;
-      cron: string;
-      callbackUrl: string;
-      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-      headers?: {
-        [k: string]: string;
-      };
-      body?:
-        | string
-        | {
-            [k: string]: unknown;
-          };
-      maxRetries?: number;
-      [k: string]: unknown;
-    }[];
     policies?: {
       deny: {
         /**

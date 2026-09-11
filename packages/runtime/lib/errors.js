@@ -154,6 +154,10 @@ export const DuplicateSchedulerJobError = createError(
   `${ERROR_PREFIX}_DUPLICATE_SCHEDULER_JOB`,
   'Scheduler "%s" is already registered'
 )
+export const InvalidSchedulerCronError = createError(
+  `${ERROR_PREFIX}_INVALID_SCHEDULER_CRON`,
+  'Invalid cron expression "%s" for scheduler "%s"'
+)
 
 export const MissingPprofCapture = createError(
   `${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`,
