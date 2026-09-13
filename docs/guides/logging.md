@@ -290,6 +290,19 @@ Insights dashboards. To do this, the timestamp format needs to be changed.
 }
 ```
 
+Set `remove` to `true` to drop the keys entirely instead of replacing their values with the censor:
+
+```json
+{
+  "logger": {
+    "redact": {
+      "paths": ["password", "apiKey"],
+      "remove": true
+    }
+  }
+}
+```
+
 **Before redaction:**
 
 ```json
@@ -394,6 +407,34 @@ This provides:
   ```
 
   See the [Pino customLevels documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#customlevels-object) for more details.
+
+  Once `customLevels` is set, `logger.level` can be set to one of them:
+
+  ```json
+  {
+    "logger": {
+      "customLevels": {
+        "verbose": 10
+      },
+      "level": "verbose"
+    }
+  }
+  ```
+
+- **Other Pino options**: `levelVal`, `useOnlyCustomLevels`, `levelComparison`, `msgPrefix`, `nestedKey`, `errorKey`,
+  `depthLimit`, `edgeLimit`, `crlf` and `enabled` are passed to Pino as they are. Like every other logger option, they
+  are inherited by all the applications.
+
+  ```json
+  {
+    "logger": {
+      "msgPrefix": "[my-app] ",
+      "nestedKey": "payload"
+    }
+  }
+  ```
+
+  See the [Pino options documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#options) for more details.
 
 ---
 

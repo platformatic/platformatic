@@ -634,7 +634,7 @@ This configures the Platformatic Runtime `logger`, based on [pino](https://getpi
 
 An object with the following settings:
 
-- **`level`** — The log level. Default: `info`. Valid values are: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`.
+- **`level`** — The log level. Default: `info`. Valid values are: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`, or any level defined in `customLevels`.
 - **`transport`** — Configuration for logging transport, see [pino.transport](https://getpino.io/#/docs/transports) for more information. Can be configured in two ways:
   - As a single transport: An object with properties:
     - **`target`** — A string specifying the transport module.
@@ -651,6 +651,7 @@ An object with the following settings:
 - **`redact`** — Configuration for redacting sensitive information, see [pino.redact]https://getpino.io/#/docs/redaction) for more information. An object with properties:
   - **`paths`** (**required**) — An array of strings specifying paths to redact.
   - **`censor`** — A string to replace redacted values with. Default: `[redacted]`.
+  - **`remove`** — If `true`, the redacted keys are removed from the logs instead of having their values replaced with the censor. Default: `false`.
 - **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main application. Default: `false`.
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
@@ -659,6 +660,16 @@ An object with the following settings:
   - **`time`** — The key that contains the log timestamp. Default: `time`.
   - **`message`** — The key that contains the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
+- **`levelVal`** — The numeric value of the level set in `level`, when it is not one of the standard pino levels, see [pino.levelVal](https://getpino.io/#/docs/api?id=levelval-number) for more information.
+- **`useOnlyCustomLevels`** — If `true`, only the levels defined in `customLevels` are available and the standard pino ones are omitted. Default: `false`.
+- **`levelComparison`** — How log levels are compared to the logger level. Valid values are `ASC` and `DESC`; use `DESC` when lower values are more severe. Default: `ASC`.
+- **`msgPrefix`** — A string prefixed to every message, including the ones of child loggers.
+- **`nestedKey`** — The key under which any logged object is placed, see [pino.nestedKey](https://getpino.io/#/docs/api?id=nestedkey-string) for more information.
+- **`errorKey`** — The key used for the serialized error in the log object. Default: `err`.
+- **`depthLimit`** — The stringification limit at a specific nesting depth when logging circular objects. Default: `5`.
+- **`edgeLimit`** — The stringification limit of properties or elements when logging a circular object or array. Default: `100`.
+- **`crlf`** — If `true`, each log line is terminated with `\r\n` instead of `\n`. Default: `false`.
+- **`enabled`** — If `false`, logging is disabled entirely. Default: `true`.
 - **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.

@@ -30,6 +30,7 @@ test('get application config via capability api', async t => {
       applications: [],
       refreshTimeout: 1000,
       addEmptySchema: false,
+      restartOnApplicationChange: true,
       passthroughContentTypes: ['multipart/form-data', 'application/octet-stream']
     },
     plugins: {

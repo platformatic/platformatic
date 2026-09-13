@@ -2865,7 +2865,21 @@ export class Runtime extends EventEmitter {
     // Setup the interceptor
     // kInterceptorReadyPromise resolves when the worker
     // is ready to receive requests: after calling the replaceServer method
-    worker[kInterceptorReadyPromise] = this.#meshInterceptor.route(applicationId, worker)
+    //
+    // It is stored, not awaited: #startWorker awaits it later, and only if the
+    // worker is actually started. A worker that is discarded or torn down
+    // before that — a replacement abandoned because the runtime stopped
+    // mid-restart, for instance — leaves the promise with nobody to observe
+    // it. Closing the mesh interceptor rejects any routing still in flight
+    // ('The dispatcher has been closed.'), so that is a routine shutdown
+    // outcome, not an exotic one, and it surfaced as an unhandledRejection
+    // that could take the process down before graceful shutdown finished.
+    //
+    // Attaching a no-op handler marks the rejection observed WITHOUT
+    // swallowing it: the await in #startWorker still sees and reports it.
+    const interceptorReady = this.#meshInterceptor.route(applicationId, worker)
+    interceptorReady.catch(() => {})
+    worker[kInterceptorReadyPromise] = interceptorReady
 
     // Wait for initialization
     try {
