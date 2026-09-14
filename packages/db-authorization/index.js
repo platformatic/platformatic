@@ -190,6 +190,17 @@ async function auth (app, opts) {
           return originalFind({ ...restOpts, where, ctx, fields })
         },
 
+        async count (originalCount, { where, ctx, skipAuth, ...restOpts } = {}) {
+          if (useOriginal(skipAuth, ctx)) {
+            return originalCount({ ...restOpts, where, ctx })
+          }
+          const request = getRequestFromContext(ctx)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
+          where = await fromRuleToWhere(ctx, rule.find, where, request.user)
+
+          return originalCount({ ...restOpts, where, ctx })
+        },
+
         async save (originalSave, { input, ctx, fields, skipAuth, ...restOpts }) {
           if (useOriginal(skipAuth, ctx)) {
             return originalSave({ ctx, input, fields, ...restOpts })
