@@ -1,7 +1,25 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { isAbsolute, join, resolve } from 'node:path'
+import { applicationDefinitionKey } from './classify.js'
 import { AmbiguousApplicationIdError, DuplicateAutoloadedApplicationIdError, InvalidConfigValueError } from './errors.js'
 import { deriveApplicationId } from './identifiers.js'
+
+// The four keys that identify an application entry: its inline definition, its local or remote
+// source, and its id. A bare capability definition — the object a factory returns — carries none of
+// them, which is what tells it apart from the entry that would hold it.
+const applicationEntryIdentityKeys = ['config', 'path', 'url', 'id']
+
+// `application: node({ … })` rather than `application: { config: node({ … }) }`. A stamped factory
+// result is a capability definition: it carries the module marker (the same one classify.js keys the
+// root auto-wrap on) and none of the entry identity keys, so it is the definition an entry's `config`
+// holds rather than the entry itself. Anything carrying an entry key is left as the entry the author
+// wrote — including a module application, whose `module` names a package and which always carries a
+// source key.
+function isBareApplicationDefinition (value) {
+  return (
+    applicationDefinitionKey in value && !applicationEntryIdentityKeys.some(key => key in value)
+  )
+}
 
 // The shorthand exists so a single app with runtime options never needs a one-element array.
 // Declaring it alongside applications or autoload is an error: either combination would smuggle a
@@ -10,6 +28,14 @@ export function normalizeApplications (config, { directory, onConflict }) {
   if (config.application !== undefined) {
     if (config.applications !== undefined || config.autoload !== undefined) {
       onConflict?.()
+    }
+
+    // A bare capability definition is wrapped into the entry's `config` slot, the same wrap
+    // classify.js applies to a definition exported at the root. This is what lets the shorthand carry
+    // only the definition (`application: node({ … })`) instead of the full entry envelope; per-app
+    // orchestration is expressed top-level for the single app, or with the `applications` array.
+    if (isBareApplicationDefinition(config.application)) {
+      config.application = { config: config.application }
     }
 
     // The shorthand entry — and only it — defaults its path to the config file's own directory.

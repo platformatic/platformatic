@@ -5,6 +5,16 @@
       "head": "getEnvVarName (envVarName) {",
       "lines": 9
     },
+    "packages/foundation/lib/v4/topology.js:12-22": {
+      "sha": "24ab28d86fc2b2a0",
+      "head": "// `application: node({ … })` rather than `application: { config: node({ … }) }`. A stamped factory",
+      "lines": 11
+    },
+    "packages/foundation/lib/v4/classify.js:40-42": {
+      "sha": "dec130ae3e9d8325",
+      "head": "export function autoWrapApplicationDefinition (definition) {",
+      "lines": 3
+    },
     "packages/runtime/lib/config.js:135@d1bd647f2^": {
       "sha": "e4d5f9238d2a9c56",
       "head": "export async function wrapInRuntimeConfig (config, context) {",
@@ -15,7 +25,7 @@
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
     },
-    "packages/foundation/lib/v4/topology.js:118-204": {
+    "packages/foundation/lib/v4/topology.js:144-230": {
       "sha": "80ea0345c8dd5dec",
       "head": "const claimant = applications.find(application => {",
       "lines": 87
@@ -365,13 +375,13 @@
       "head": "config.server = {",
       "lines": 7
     },
-    "packages/runtime/lib/generator.js:212-215": {
+    "packages/runtime/lib/generator.js:220-223": {
       "sha": "8c75bbe7a87ccb10",
       "head": "setApplicationPort (application, ordinal) {",
       "lines": 4
     },
     "packages/runtime/lib/generator.js:189-209": {
-      "sha": "c88aeae1e614440f",
+      "sha": "660b76840870f6eb",
       "head": "setApplicationsConfigValues () {",
       "lines": 21
     },
@@ -600,7 +610,7 @@
       "head": "for (let i = applications.length - 1; i >= 0; --i) {",
       "lines": 5
     },
-    "packages/runtime/lib/config.js:328": {
+    "packages/runtime/lib/config.js:425": {
       "sha": "234e889c1536e65b",
       "head": "// Important: do not use 2 otherwise ajv will convert to boolean `true`",
       "lines": 1
@@ -1070,7 +1080,7 @@
       "head": "export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig, context, capability) {",
       "lines": 1
     },
-    "packages/foundation/lib/v4/topology.js:262-264": {
+    "packages/foundation/lib/v4/topology.js:288-290": {
       "sha": "0df6dcc899c8f39b",
       "head": "if (typeof enabled === 'string') {",
       "lines": 3

@@ -381,6 +381,53 @@ test('the deciding file is exempt from the configured-twice check', async t => {
   ])
 })
 
+test('the application shorthand accepts a bare capability definition, wrapping it as config', async t => {
+  // application: node({ … }) rather than application: { config: node({ … }) }. The factory result is
+  // a definition — a module marker and capability blocks, no entry keys — so it is the value config
+  // holds, not the entry.
+  const root = await createTree(t, {
+    'package.json': '{ "name": "solo" }',
+    'watt.config.js': "export default { application: { module: '@platformatic/service', server: { port: 1234 } } }"
+  })
+
+  const { config } = await load(root)
+
+  strictEqual(config.applications[0].module, '@platformatic/service')
+  // The module marker is stripped into the entry envelope; the capability configuration is what
+  // remains, exactly as if it had been written under an explicit config key.
+  deepStrictEqual(config.applications[0].config, { server: { port: 1234 } })
+})
+
+test('the application shorthand does not double-wrap an explicit config entry', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "solo" }',
+    'watt.config.js':
+      "export default { application: { workers: 3, config: { module: '@platformatic/service', server: { port: 1234 } } } }"
+  })
+
+  const { config } = await load(root)
+
+  // The entry keeps its orchestration; the config is the inner definition, not { config: … } nested
+  // once more.
+  strictEqual(config.applications[0].workers, 3)
+  deepStrictEqual(config.applications[0].config, { server: { port: 1234 } })
+})
+
+test('the application shorthand still treats a module application as an entry, not a definition', async t => {
+  // A module application names a package in `module` and always carries a source key (here path), so
+  // it is the entry form and must not be folded into config — that would drop the module-application
+  // semantics the loader keys on entry.module.
+  const root = await createTree(t, {
+    'package.json': '{ "name": "solo" }',
+    'watt.config.js': "export default { application: { module: 'some-app-package', path: '.' } }"
+  })
+
+  const { config } = await load(root)
+
+  strictEqual(config.applications[0].module, 'some-app-package')
+  strictEqual(config.applications[0].moduleApplication, true)
+})
+
 test('a per-app worker cannot read a topology variable an env file supplies', async t => {
   const root = await createTree(t, {
     'package.json': '{ "name": "proj" }',

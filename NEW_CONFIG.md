@@ -68,13 +68,10 @@ import { next } from '@platformatic/next'
 
 export default defineConfig({
   logger: { level: 'info' },
-  application: {
-    workers: 2,
-    config: next({
-      server: { port: Number(process.env.PORT || 3042) },
-      cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
-    })
-  }
+  application: next({
+    server: { port: Number(process.env.PORT || 3042) },
+    cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
+  })
 })
 ```
 
@@ -82,14 +79,27 @@ Note where the port is: **inside the factory**. v4 has no runtime-level listener
 each application exposes itself through its own capability configuration (see "How
 applications are exposed").
 
-The singular `application` key is the single-app shorthand — the same entry shape
-as one element of `applications`, normalized internally to a one-element array. It
-exists so a single app with runtime options never needs a one-element
-`applications` array; declaring it alongside `applications` **or** `autoload` is
-an error — the shorthand is only for genuinely single-app projects, and either
-combination would smuggle a multi-app runtime out of the "single-app" form. An
-`application` entry that declares no `path` defaults to the config file's own
-directory.
+The singular `application` key is the single-app shorthand, and its value is the
+capability definition itself — the same expression a per-app file's default export
+and a root entry's `config` hold. `application: next({ … })` is one application with
+the runtime options beside it; the shorthand wraps the bare definition into the
+entry's `config` slot the same way a bare definition exported at the root is wrapped
+(`foundation/lib/v4/topology.js:12-22`, `foundation/lib/v4/classify.js:40-42`).
+
+**Per-app orchestration** (`workers`, `health`, per-app `env`, …) is not carried on
+the shorthand, and for a single application it rarely needs to be: every one of those
+settings has a runtime-level counterpart, and with one application "the runtime's
+setting" *is* "the application's setting", so it goes top-level. For the genuinely
+per-entry rest, the shorthand also accepts the full **entry** form — `application: {
+workers: 2, config: next({ … }) }`, the same `{ config, workers, … }` shape as one
+element of `applications` — or drop to the `applications` array. The shorthand tells
+the two apart structurally: a value carrying an entry key (`config`, `path`, `url`,
+`id`) is an entry; a bare factory result is a definition.
+
+Declaring `application` alongside `applications` **or** `autoload` is an error — the
+shorthand is only for genuinely single-app projects, and either combination would
+smuggle a multi-app runtime out of the "single-app" form. An `application` entry that
+declares no `path` defaults to the config file's own directory.
 
 Be precise about what this is: **TypeScript-authored serializable data**, not
 unrestricted TypeScript. The evaluated result must be plain data (it crosses a
@@ -244,11 +254,13 @@ export has no entry to carry an explicit `id`, so a project whose id would move 
 Level 1b instead (see "`wattpm-utils migrate`").
 
 **Level 1b — single app with runtime options.** When there is orchestration to
-express, `defineConfig` with the singular `application` shorthand. Every runtime
-option (`logger`, `health`, `metrics`, `telemetry`, `undici`,
-`httpCache`, `gracefulShutdown`, …) is top-level — exactly where it is in a
-multi-app config. **The `runtime` block does not exist in v4.** `migrate` emits
-this form when the v3 config had a non-default `runtime` block.
+express, `defineConfig` with the singular `application` shorthand carrying the bare
+capability definition: `application: next({ … })`. Every runtime option (`logger`,
+`health`, `metrics`, `telemetry`, `undici`, `httpCache`, `gracefulShutdown`, …) is
+top-level — exactly where it is in a multi-app config — and applies to the one
+application, so per-app orchestration almost never needs the entry form here. **The
+`runtime` block does not exist in v4.** `migrate` emits this form when the v3 config
+had a non-default `runtime` block.
 
 **Level 2 — multi-app monorepo.** The default multi-app style is a **thin root plus
 per-app config files**: the root owns orchestration and discovery (`autoload`
@@ -364,7 +376,7 @@ destination**, `resolvedApplicationsBasePath/<id>`. The second branch is what ke
 base: the first load passes (no clone, no clash), the clone arrives, and without it
 every load after that would throw. Anything else sharing the id is
 `PLT_AMBIGUOUS_APPLICATION_ID`, naming both sources
-(`foundation/lib/v4/topology.js:118-204`). An id is the mesh
+(`foundation/lib/v4/topology.js:144-230`). An id is the mesh
 hostname, the injected `PLT_<ID>_URL`, the metrics label and `wattpm inject`'s
 argument, so two distinct applications cannot share one. (Filed against the runtime
 as platformatic/platformatic#5079; v4 does not inherit it.) Capability configuration
@@ -1417,7 +1429,7 @@ per-application and visible: `service`'s generator writes `server: { hostname,
 port, logger }` into every application's own config
 (`service/lib/generator.js:432-438` — the `!isRuntimeContext` guard is gone) and
 the runtime generator hands application *i* port `3042 + i`
-(`runtime/lib/generator.js:212-215`) while writing no root `server` block at all.
+(`runtime/lib/generator.js:220-223`) while writing no root `server` block at all.
 The capabilities that scaffold no `server` of their own — `@platformatic/node` and
 the framework ones — are where the entrypoint rule earns its place: when the runtime
 being scaffolded holds exactly one application, the generator marks that sole
@@ -2271,7 +2283,7 @@ outright (see "Object config sources"), so the carve-out the root worker makes f
 function slots does not apply. Coercion is disabled in v4: its
 only justification was placeholder strings, and on the genuine unions that survive
 the audit (`boolean | number`, `boolean | object`) AJV coercion is a documented
-hazard in this very codebase (`runtime/lib/config.js:328` warns that `2` would be
+hazard in this very codebase (`runtime/lib/config.js:425` warns that `2` would be
 coerced to `true`). The audit also guarantees that schema-injected defaults are
 themselves serializable.
 
@@ -3321,7 +3333,7 @@ export default {
   would silently redefine the script the generator just wrote. The v3 wizard's
   `3042` prompt is gone from the root — ports are per-application now, and the
   generator hands application *i* `3042 + i`
-  (`runtime/lib/generator.js:212-215`). The wizard's closing output prints where `watt.config.ts`
+  (`runtime/lib/generator.js:220-223`). The wizard's closing output prints where `watt.config.ts`
   goes and the one-line bare-factory form, so later customization is one
   copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
@@ -5032,7 +5044,7 @@ runs multiple workers on a fixed port at all.
 
    **The audit's evidence heuristic keys on the property *name*, and two properties
    called `enabled` settle the question differently.** An application entry's is read
-   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:262-264`), which treats a
+   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:288-290`), which treats a
    string as *anything but `'false'` is true* — so its string branch is live v4
    behaviour and stays. `tracing.enabled` beside it is read as `config.tracing.enabled !== false`
    (`runtime/lib/runtime.js:2623`), a strict comparison against the boolean, so a string
