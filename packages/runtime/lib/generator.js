@@ -742,13 +742,13 @@ export class WrappedGenerator extends BaseGenerator {
       wrapped around.
 
       Its capability is spelled as a plain object rather than a factory call because this file is
-      read before anything is installed, and an import cannot be resolved in that state.
+      read before anything is installed, and an import cannot be resolved in that state. The bare
+      definition sits directly under `application` -- no `config` wrapper -- because the loader wraps
+      a definition (a module marker, no entry keys) into the entry's config slot on its own.
     */
     const config = {
       ...this.resolveScaffoldedPlaceholders(getRuntimeWrappableProperties()),
-      application: {
-        config: this.resolveScaffoldedPlaceholders({ module: this.module, server: { port: '{PORT}' } })
-      }
+      application: this.resolveScaffoldedPlaceholders({ module: this.module, server: { port: '{PORT}' } })
     }
 
     this.addFile({

@@ -576,6 +576,10 @@ test('WrappedGenerator - should create a valid configuration', async t => {
   assert.ok(wattJson.contents.includes('export default {'), wattJson.contents)
   assert.ok(wattJson.contents.includes('level: process.env.PLT_SERVER_LOGGER_LEVEL'), wattJson.contents)
   assert.ok(!wattJson.contents.includes('runtime:'), wattJson.contents)
+  // The capability definition sits directly under `application`, with no `config` wrapper: the loader
+  // wraps a bare definition into the entry's config slot on its own.
+  assert.ok(wattJson.contents.includes("application: {\n    module: '@platformatic/next'"), wattJson.contents)
+  assert.ok(!wattJson.contents.includes('config:'), wattJson.contents)
 })
 
 test('WrappedGenerator - should create a valid package.json', async t => {
