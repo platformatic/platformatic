@@ -42,7 +42,7 @@ With `authorization.roleMergeStrategy` set to `most-permissive` (default `first-
 
 ### Supported Operations
 
-Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). Here's an example illustrating how these permissions are structured:
+Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). The `find` permission also governs counting: the `count` entity method, the `count<Entities>` GraphQL query and the `X-Total-Count` REST header apply the same checks as `find`. Here's an example illustrating how these permissions are structured:
 
 ```json title="Example JSON object"
 {
