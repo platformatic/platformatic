@@ -5,7 +5,7 @@ import type { ResourceLimits } from 'node:worker_threads'
 import type Pino from 'pino'
 import { expect, test } from 'tstyche'
 import * as globals from '../../lib/index.js'
-import { type Management, type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
+import { type CloseCallback, type Management, type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
 
 test("PlatformaticGlobal", () => {
   const platformatic = {} as PlatformaticGlobal
@@ -137,4 +137,13 @@ test("getters", () => {
   expect(globals.getTracingReady()).type.toBe<PlatformaticGlobal['tracingReady']>()
   expect(globals.getTracerProvider()).type.toBe<PlatformaticGlobal['tracerProvider']>()
   expect(globals.getNotifyConfig()).type.toBe<PlatformaticGlobal['notifyConfig']>()
+})
+
+test('close callbacks', () => {
+  expect(globals.registerCloseCallback).type.toBeCallableWith(async () => {})
+  expect(globals.registerCloseCallback).type.toBeCallableWith({ async [Symbol.asyncDispose] () {} })
+  expect(globals.registerCloseCallback).type.not.toBeCallableWith({ [Symbol.asyncDispose]: true })
+  expect(globals.registerCloseCallback).type.not.toBeCallableWith('invalid')
+  expect(globals.consumeCloseCallbacks()).type.toBe<CloseCallback[]>()
+  expect(globals.hasCloseCallbacks()).type.toBe<boolean>()
 })

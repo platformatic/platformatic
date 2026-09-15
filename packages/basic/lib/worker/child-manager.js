@@ -253,7 +253,9 @@ export class ChildManager extends ITC {
   }
 
   _createClosePromise () {
-    return once(this.#server, 'exit')
+    // HTTP servers emit close, not exit. Pending IPC requests must release
+    // their keep-alive interval when a timed-out child is terminated.
+    return once(this.#server, 'close')
   }
 
   _close () {

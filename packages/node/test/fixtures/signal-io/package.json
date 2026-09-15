@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "type": "module",
+  "workspaces": ["services/*"],
+  "dependencies": { "@platformatic/runtime": ">=3.0.0" }
+}

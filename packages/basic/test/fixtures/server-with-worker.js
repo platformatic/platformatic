@@ -1,4 +1,4 @@
-import { getEvents, getITC } from '@platformatic/globals'
+import { getITC, registerCloseCallback } from '@platformatic/globals'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import { isMainThread, Worker } from 'node:worker_threads'
@@ -7,9 +7,9 @@ const server = createServer((_, response) => response.end('ok'))
 const itc = getITC()
 let worker
 
-getEvents().on('close', async () => {
+registerCloseCallback(async () => {
   await worker?.terminate()
-  server.close(() => process.exit(0))
+  await server[Symbol.asyncDispose]()
 })
 
 if (isMainThread) {

@@ -131,8 +131,9 @@ test('should not hang if the runtime forcefully stops during start in case of er
     production: false,
     additionalSetup: setRestartOnError,
     async beforeLoad (root) {
+      // Delay the actual fixture listen call and avoid localhost's asynchronous secondary bindings during stop.
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), content =>
-        content.replace('app.listen({ port: 1 })', 'setTimeout(() => app.listen({ port: 1 }), 2000)'))
+        content.replace('app.listen({ port: 0 })', "setTimeout(() => app.listen({ port: 0, host: '127.0.0.1' }), 2000)"))
 
       await writeFile(
         resolve(root, 'services/app-no-config/watt.config.mjs'),
@@ -154,7 +155,7 @@ test('should not hang if the runtime forcefully stops during start in case of er
   await startingEvent.promise
 
   await runtime.stopApplication('app-no-config')
-  await rejects(() => promise, /exited prematurely/)
+  await rejects(() => promise, { code: 'PLT_RUNTIME_RUNTIME_ABORT' })
 })
 
 for (const application of ['app-no-config', 'app-with-config']) {

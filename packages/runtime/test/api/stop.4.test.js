@@ -19,6 +19,7 @@ test('should kill the thread when it does not exit in time', async t => {
   })
   strictEqual(statusCode, 200)
 
+  const stopTimeout = once(app, 'application:worker:stop:timeout')
   const exitTimeout = once(app, 'application:worker:exit:timeout')
 
   // Should not fail and hang
@@ -26,10 +27,12 @@ test('should kill the thread when it does not exit in time', async t => {
   await app.close()
   const elapsed = Number(process.hrtime.bigint() - start) / 1e6
 
-  // We are satisfied if killing took less that twice of the allowed timeout
+  // Drainage blocks the stop response, consuming both the stop and exit timeouts.
+  // Allow one additional timeout interval for scheduling and worker termination.
   const config = await app.getRuntimeConfig()
-  ok(elapsed < config.gracefulShutdown.application * 2)
+  ok(elapsed < config.gracefulShutdown.application * 3, `Shutdown took ${elapsed} ms`)
 
+  deepStrictEqual(await stopTimeout, [{ application: 'main', worker: 0, workersCount: 1 }])
   deepStrictEqual(await exitTimeout, [{ application: 'main', worker: 0, workersCount: 1 }])
 
   const logs = await readLogs(context.logsPath)

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "applications": [
+    {
+      "id": "frontend",
+      "path": "./services/frontend"
+    }
+  ],
+  "watch": false,
+  "restartOnError": 0,
+  "logger": {
+    "level": "warn"
+  }
+}

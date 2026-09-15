@@ -22,6 +22,16 @@ export function ensureError (error) {
     return error
   }
 
+  if (error?.name === 'AggregateError' && Array.isArray(error.errors)) {
+    const errors = error.errors.map(entry => {
+      return entry?.name && 'message' in entry ? ensureError(entry) : entry
+    })
+    const aggregate = new AggregateError(errors, error.message)
+    Object.assign(aggregate, error)
+    aggregate.errors = errors
+    return aggregate
+  }
+
   const err = new Error(error.message)
   Object.assign(err, error)
   return err

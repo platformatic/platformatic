@@ -107,7 +107,7 @@
     "sonic-boom": "^4.2.0",
     "systeminformation": "^5.27.11",
     "undici": "^8.5.0",
-    "undici-thread-interceptor": "^2.1.1",
+    "undici-thread-interceptor": "^2.2.0",
     "ws": "^8.16.0"
   },
   "engines": {

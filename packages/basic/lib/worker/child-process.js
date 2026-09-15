@@ -9,6 +9,7 @@ import {
 import {
   getApplicationId,
   getConfig,
+  consumeCloseCallbacks,
   getEvents,
   getITC,
   getLogger,
@@ -22,7 +23,7 @@ import {
   hasField,
   updateGlobals
 } from '@platformatic/globals'
-import { ITC } from '@platformatic/itc'
+import { ITC, sanitize } from '@platformatic/itc'
 import {
   clearRegistry,
   client,
@@ -44,9 +45,39 @@ import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
-import { exitCodes } from '../errors.js'
+
+import { ApplicationShutdownError, exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
+
+async function runShutdownCallbacks () {
+  const errors = []
+  const callbacks = consumeCloseCallbacks().reverse()
+
+  for (const callback of callbacks) {
+    try {
+      await callback()
+    } catch (error) {
+      errors.push(error)
+    }
+  }
+
+  const signalListeners = process.listeners('SIGINT')
+  for (const listener of signalListeners) {
+    process.removeListener('SIGINT', listener)
+  }
+
+  for (const listener of signalListeners) {
+    try {
+      // Like a signal emission, ignore return values without consuming rejected promises.
+      listener.call(process, 'SIGINT')
+    } catch (error) {
+      errors.push(error)
+    }
+  }
+
+  return errors
+}
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
@@ -109,8 +140,6 @@ export class ChildProcess extends ITC {
   #urlFromScript
 
   constructor (executable, { urlFromScript = false } = {}) {
-    const events = getEvents()
-
     super({
       throwOnMissingHandler: false,
       name: `${process.env.PLT_MANAGER_ID}-child-process`,
@@ -140,32 +169,13 @@ export class ChildProcess extends ITC {
           // Forward health signals to the parent (ChildManager)
           this.notify('healthSignals', { workerId, signals })
         },
-        close: signal => {
-          let handled = false
-
-          try {
-            handled = events.emit('close', signal)
-          } catch (error) {
-            this.#logger.error({ err: ensureLoggableError(error) }, 'Error while handling close event.')
-            process.exitCode = 1
-          }
-
-          if (!handled) {
-            this.#logger.warn(
-              `Please register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
-            )
-
-            // No user event, just exit without errors
-            setImmediate(() => {
-              process.exit(process.exitCode ?? 0)
-            })
-          }
-
-          return handled
+        close: () => {
+          this._closePromise ??= this.close()
+          return this._closePromise
         },
         setClosing: () => {
           updateGlobals({ closing: true })
-          events.emit('closing')
+          getEvents().emit('closing')
         }
       }
     })
@@ -233,6 +243,29 @@ export class ChildProcess extends ITC {
     return super.notify(name, message, options)
   }
 
+  async close () {
+    const errors = await runShutdownCallbacks()
+
+    // Release telemetry handles but keep the unreferenced socket available to signal handlers.
+    if (this.#otlpBridge) {
+      this.#otlpBridge.stop()
+      this.#otlpBridge = null
+    }
+    clearRegistry(this.#metricsRegistry)
+
+    // Signal listeners can schedule work without returning a promise. Wait for that work
+    // to drain before replying; the parent enforces the shutdown deadline if it never does.
+    await once(process, 'beforeExit')
+    super.close()
+
+    if (errors.length > 0) {
+      process.exitCode = 1
+      const error = new ApplicationShutdownError(errors)
+      this.#logger.error({ err: ensureLoggableError(error) }, 'Errors occurred during application shutdown.')
+      throw error
+    }
+  }
+
   registerGlobals (globals) {
     updateGlobals(globals)
   }
@@ -284,13 +317,17 @@ export class ChildProcess extends ITC {
   }
 
   _send (message) {
+    const payload = JSON.stringify(sanitize(message), (_, value) => {
+      return value instanceof Error ? ensureLoggableError(value) : value
+    })
+
     /* c8 ignore next 4 */
     if (this.#socket.readyState === WebSocket.CONNECTING) {
-      this.#pendingMessages.push(JSON.stringify(message))
+      this.#pendingMessages.push(payload)
       return
     }
 
-    this.#socket.send(JSON.stringify(message))
+    this.#socket.send(payload)
   }
 
   _createClosePromise () {
