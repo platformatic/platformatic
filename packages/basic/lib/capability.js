@@ -5,7 +5,8 @@ import {
   features,
   kHandledError,
   kMetadata,
-  kTimeout
+  kTimeout,
+  remainingTimeout
 } from '@platformatic/foundation'
 import { getITC, getPrometheus, getTracingReady, updateGlobals } from '@platformatic/globals'
 import {
@@ -27,7 +28,7 @@ import { isAbsolute, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
-import { NonZeroExitCode } from './errors.js'
+import { ApplicationShutdownTimeoutError, NonZeroExitCode } from './errors.js'
 import { buildAdditionalServerOptions, cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
@@ -57,7 +58,6 @@ export class BaseCapability extends EventEmitter {
   runtimeConfig
   stdout
   stderr
-  subprocessForceClose
   subprocessTerminationSignal
   logger
   metricsRegistry
@@ -99,7 +99,6 @@ export class BaseCapability extends EventEmitter {
     this.runtimeConfig = deepmerge(this.context?.runtimeConfig ?? {}, workerData?.config ?? {})
     this.stdout = standardStreams?.stdout ?? process.stdout
     this.stderr = standardStreams?.stderr ?? process.stderr
-    this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
     const reuseTcpPorts = [
@@ -594,7 +593,11 @@ export class BaseCapability extends EventEmitter {
       // health metrics via ITC instead of from the coordinator thread handle.
       const itc = getITC({ throwOnMissing: false })
       if (itc) {
-        itc.notify('subprocess:started')
+        const pid = this.subprocess.pid
+        itc.notify('subprocess:started', { pid })
+        this.subprocess.once('exit', () => {
+          itc.notify('subprocess:exited', { pid })
+        })
       }
     } catch (e) {
       this.childManager.close()
@@ -640,36 +643,46 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
-    const exitTimeout = this.runtimeConfig.gracefulShutdown.application
+    const shutdownTimeout = this.shutdownTimeout ?? this.runtimeConfig.gracefulShutdown.application
+    const shutdownStart = this.shutdownStart ?? Date.now()
 
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
 
-    // Attempt graceful close on the process
-    const handled = await this.childManager.send(this.clientWs, 'close', this.subprocessTerminationSignal)
-
-    if (!handled && this.subprocessForceClose) {
-      this.subprocess.kill(this.subprocessTerminationSignal)
+    // Ask the child process to run its own shutdown sequence.
+    let closeError
+    let closeResult
+    try {
+      closeResult = await executeWithTimeout(
+        this.childManager.send(this.clientWs, 'close', this.subprocessTerminationSignal),
+        remainingTimeout(shutdownTimeout, shutdownStart)
+      )
+    } catch (error) {
+      closeError = error.handlerError ?? error
     }
 
-    // If the process hasn't exited in X seconds, kill it in the polite way
+    if (closeResult === kTimeout) {
+      closeError = new ApplicationShutdownTimeoutError()
+      this.subprocess.kill('SIGKILL')
+    }
+
+    // The IPC cleanup and natural process exit share the runtime's shutdown budget.
     /* c8 ignore next 10 */
-    const res = await executeWithTimeout(exitPromise, exitTimeout)
+    const res = await executeWithTimeout(exitPromise, remainingTimeout(shutdownTimeout, shutdownStart))
 
     if (res === kTimeout) {
-      this.subprocess.kill(this.subprocessTerminationSignal)
-
-      // If the process hasn't exited in X seconds, kill it the hard way
-      const res = await executeWithTimeout(exitPromise, exitTimeout)
-      if (res === kTimeout) {
-        this.subprocess.kill('SIGKILL')
-      }
+      closeError ??= new ApplicationShutdownTimeoutError()
+      this.subprocess.kill('SIGKILL')
     }
 
     await exitPromise
 
     // Close the manager
     await this.childManager.close()
+
+    if (closeError) {
+      throw closeError
+    }
   }
 
   getChildManager () {
@@ -765,8 +778,8 @@ export class BaseCapability extends EventEmitter {
   async spawn (command) {
     const isArrayCommand = Array.isArray(command)
     let [executable, ...args] = isArrayCommand ? command : parseCommandString(command)
-    const hasChainedCommands = !isArrayCommand &&
-      (command.includes('&&') || command.includes('||') || command.includes(';'))
+    const hasChainedCommands =
+      !isArrayCommand && (command.includes('&&') || command.includes('||') || command.includes(';'))
 
     // Use the current Node.js executable instead of relying on PATH lookup
     // This ensures subprocess uses the same Node.js version as the parent

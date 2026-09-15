@@ -248,7 +248,7 @@ export class ITC extends EventEmitter {
   #waitingRequests
   #handlers
   #listening
-  #handling
+  #activeRequests
   #closePromise
   #closeAfterCurrentRequest
   #throwOnMissingHandler
@@ -269,7 +269,7 @@ export class ITC extends EventEmitter {
     this.#waitingRequests = new Map()
     this.#handlers = new Map()
     this.#listening = false
-    this.#handling = false
+    this.#activeRequests = 0
     this.#closeAfterCurrentRequest = false
     this.#throwOnMissingHandler = throwOnMissingHandler ?? true
 
@@ -409,7 +409,7 @@ export class ITC extends EventEmitter {
   }
 
   close () {
-    if (this.#handling) {
+    if (this.#activeRequests > 0) {
       this.#closeAfterCurrentRequest = true
       return
     }
@@ -436,12 +436,18 @@ export class ITC extends EventEmitter {
   }
 
   async #handleRequest (raw, context) {
-    const response = await this.#dispatchRequest(raw, context)
+    this.#activeRequests++
 
-    this._send(response, context)
+    try {
+      const response = await this.#dispatchRequest(raw, context)
+      this._send(response, context)
+    } finally {
+      this.#activeRequests--
 
-    if (this.#closeAfterCurrentRequest) {
-      this.close()
+      if (this.#closeAfterCurrentRequest && this.#activeRequests === 0) {
+        // Bypass overrides after all responses have been sent and close the transport.
+        this._close()
+      }
     }
   }
 
@@ -449,8 +455,6 @@ export class ITC extends EventEmitter {
     let request = null
     let handler = null
     let response = null
-
-    this.#handling = true
 
     try {
       request = parseRequest(raw)
@@ -479,10 +483,7 @@ export class ITC extends EventEmitter {
 
         response = generateResponse(request, failedError, null)
       }
-    } finally {
-      this.#handling = false
     }
-
     return response
   }
 

@@ -81,6 +81,7 @@ import {
   kHealthCheckTimer,
   kId,
   kIsSubprocessHost,
+  kSubprocessPid,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
@@ -2668,8 +2669,14 @@ export class Runtime extends EventEmitter {
     // (e.g. Next.js in dev mode). From that point on health metrics must come
     // from the child via ITC; for thread-only workers we keep reading the
     // handle directly in getWorkerHealth().
-    worker[kITC].on('subprocess:started', () => {
+    worker[kITC].on('subprocess:started', ({ pid } = {}) => {
       worker[kIsSubprocessHost] = true
+      worker[kSubprocessPid] = pid
+    })
+    worker[kITC].on('subprocess:exited', ({ pid }) => {
+      if (worker[kSubprocessPid] === pid) {
+        worker[kSubprocessPid] = undefined
+      }
     })
 
     worker[kITC].on(openTelemetryITCMessage, resourceMetrics => {
@@ -3411,17 +3418,23 @@ export class Runtime extends EventEmitter {
     }
 
     const exitTimeout = this.#config.gracefulShutdown.application
+    const shutdownStart = Date.now()
     const exitPromise = once(worker, 'exit')
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      const res = await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
+      const res = await executeWithTimeout(
+        sendViaITC(worker, 'stop', { force: !!this.error, dependents, shutdownTimeout: exitTimeout, shutdownStart }),
+        exitTimeout
+      )
 
       if (res === kTimeout) {
+        this.#terminateSubprocess(worker)
         this.emitAndNotify('application:worker:stop:timeout', eventPayload)
         this.logger.error(`Timeout while stopping ${label}. Killing a worker thread.`)
       }
     } catch (error) {
+      this.#terminateSubprocess(worker)
       this.emitAndNotify('application:worker:stop:error', eventPayload)
       this.logger.error({ err: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
@@ -3452,6 +3465,22 @@ export class Runtime extends EventEmitter {
     worker[kWorkerUrl] = undefined
     this.emitAndNotify('application:worker:stopped', eventPayload)
     this.#broadcastWorkers()
+  }
+
+  #terminateSubprocess (worker) {
+    const pid = worker[kSubprocessPid]
+    if (!Number.isInteger(pid) || pid <= 0) {
+      return
+    }
+    try {
+      // The main thread owns the fallback when a worker cannot supervise its child.
+      this.logger.debug({ pid }, 'Terminating application child process from the runtime.')
+      process.kill(pid, 'SIGKILL')
+    } catch (error) {
+      if (error.code !== 'ESRCH') {
+        this.logger.error({ err: ensureLoggableError(error) }, 'Failed to terminate application child process.')
+      }
+    }
   }
 
   #cleanupWorker (worker) {

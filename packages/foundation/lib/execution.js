@@ -11,6 +11,10 @@ export async function executeWithTimeout (promise, timeout, timeoutValue = kTime
   })
 }
 
+export function remainingTimeout (timeout, start) {
+  return Math.max(0, timeout - (Date.now() - start))
+}
+
 export async function executeInParallel (fn, args, concurrency = 5, throwOnRejections = true, throwAllErrors = false) {
   const { promise, resolve } = Promise.withResolvers()
   const results = new Map()

@@ -235,7 +235,7 @@ export class NodeCapability extends BaseCapability {
 
       if (application.isBackgroundApplication === true && typeof application.close === 'function') {
         this.#appClose = function appClose () {
-          application.close(application)
+          return application.close(application)
         }
       }
 
@@ -304,14 +304,12 @@ export class NodeCapability extends BaseCapability {
   async _stop () {
     await super._stop()
 
-    // Emit the close event so that an application can handle it
+    // Keep emitting the legacy event for compatibility. Resource cleanup is handled by registered callbacks.
     const events = getEvents()
-    const closeHandled = events.emit('close')
-
-    if (!this.#isFastify && !this.#appClose && !closeHandled && !this.#app?.[Symbol.asyncDispose]) {
-      this.logger.warn(
-        `Please export a "close" function or register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
-      )
+    try {
+      events.emit('close')
+    } catch (error) {
+      this.logger.error({ err: error }, 'Legacy close event handler failed.')
     }
 
     if (this.childManager) {

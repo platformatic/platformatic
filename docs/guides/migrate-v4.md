@@ -1,10 +1,12 @@
 ---
-title: Migrate Runtime Configuration to v4
+title: Migrate to Watt v4
 ---
 
-# Migrate Runtime Configuration to v4
+# Migrate to Watt v4
 
-Runtime v4 removes the runtime-level HTTP listener. Each capability or application owns whether it listens and all of its listener configuration. Runtime observes listening servers to report their URLs, but it does not select ports or rewrite listener options.
+Watt v4 changes configuration, globals, HTTP listeners, interceptors, and application shutdown. Use this guide to migrate an application from Watt v3.
+
+Watt v4 removes the runtime-level HTTP listener. Each capability or application owns whether it listens and all of its listener configuration. Runtime observes listening servers to report their URLs, but it does not select ports or rewrite listener options.
 
 ## Rename tracing configuration and package
 
@@ -171,3 +173,33 @@ class ResponseHandler {
 
 See the [Undici Dispatcher documentation](https://undici.nodejs.org/#/docs/api/Dispatcher) for the complete handler
 contract.
+
+## Update application shutdown
+
+Runtime v4 introduces `registerCloseCallback()` as the primary API for application-owned cleanup. Replace v3 `close` event handlers:
+
+```diff
+- import { getEvents } from '@platformatic/globals'
++ import { registerCloseCallback } from '@platformatic/globals'
+
+- getEvents().on('close', async () => {
++ registerCloseCallback(async () => {
+    await database.close()
+  })
+```
+
+Callbacks are awaited after the managed framework or server closes. Multiple callbacks run sequentially in reverse registration order, so resources created later are closed first. Cleanup errors are reported after all callbacks have run.
+
+The legacy `close` event is still emitted for compatibility, but its listeners are not awaited and it does not control shutdown. Use `registerCloseCallback()` for new code.
+
+Applications started through custom commands run their callbacks inside the child process. In that mode Platformatic does not close the application server or invoke exported factories and `close()` functions. The application is responsible for closing every resource through `registerCloseCallback()` and/or `SIGINT` listeners.
+
+Remove the old `close` listener when migrating it, rather than registering the same cleanup through both APIs. `SIGINT` listeners run after the registered callbacks, in registration order. Return the cleanup promise from each callback or listener so Watt can await it. Do not register callbacks once callback execution has begun: late registration throws `PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED`.
+
+See [the shutdown API contract](../reference/runtime/globals.md#health-checks-and-lifecycle) for error handling, child-process responsibilities, and timeout behavior.
+
+### Applications using `close-with-grace`
+
+Watt cannot prevent `close-with-grace` from calling `process.exit()`. If your application uses `close-with-grace`, it must be the **only mechanism for application resource cleanup**: put all resource cleanup in its callback.
+
+Combining `close-with-grace` with `registerCloseCallback()` or additional `SIGINT` listeners is **unsupported**. Their invocation and completion are not guaranteed. When migrating an application that retains `close-with-grace`, consolidate its cleanup into `close-with-grace` instead of adding close callbacks or separate signal listeners. This restriction applies to both worker and child-process mode.

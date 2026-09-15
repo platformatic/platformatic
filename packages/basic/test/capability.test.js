@@ -8,7 +8,7 @@ import {
 } from '@platformatic/globals'
 import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
-import { EventEmitter } from 'node:events'
+import { EventEmitter, once } from 'node:events'
 import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { join } from 'node:path'
@@ -39,6 +39,32 @@ const expectedLogger = {
     }
   }
 }
+
+test('stopCommand enforces the inherited shutdown timeout and reports its timeout', async t => {
+  const capability = await create(t)
+  capability.runtimeConfig.gracefulShutdown = { application: 1000 }
+  const signals = []
+  const child = new EventEmitter()
+  child.kill = signal => {
+    signals.push(signal)
+    setImmediate(() => child.emit('exit', null, signal))
+  }
+  capability.subprocess = child
+  capability.shutdownTimeout = 20
+  capability.shutdownStart = Date.now()
+  let managerClosed = false
+  capability.childManager = {
+    send: () => new Promise(() => {}),
+    close: async () => { managerClosed = true }
+  }
+  const stopping = rejects(capability.stopCommand(), { code: 'PLT_BASIC_APPLICATION_SHUTDOWN_TIMEOUT' })
+  // Keep the loop alive while the unref'ed deadline timer supervises the fake child.
+  await Promise.all([stopping, sleep(50)])
+  deepStrictEqual(signals, ['SIGKILL'])
+  ok(managerClosed)
+  capability.childManager = null
+  capability.subprocess = null
+})
 
 test('BaseCapability - should properly initialize', async t => {
   const capability = await create(t, { applicationId: 'application' })
@@ -884,7 +910,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
   )
 
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await capability.startWithCommand(`node ${executablePath}`)
+  await capability.startWithCommand(`node ${executablePath} --hang-on-close`)
 
   ok(capability.url.startsWith('http://127.0.0.1:'))
   deepStrictEqual(capability.subprocessConfig, { production: false })
@@ -933,7 +959,10 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
     })
   }
 
-  await capability.stopCommand()
+  const exited = once(capability.subprocess, 'exit')
+  await rejects(capability.stopCommand(), { code: 'PLT_BASIC_APPLICATION_SHUTDOWN_TIMEOUT' })
+  const [, signal] = await exited
+  deepStrictEqual(signal, 'SIGKILL')
 })
 
 test('BaseCapability - stopCommand - should not throw if subprocess was never assigned', async t => {

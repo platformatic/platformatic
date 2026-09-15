@@ -1,7 +1,10 @@
-import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
 import { once } from 'node:events'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { getLogsFromFile, prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
@@ -25,11 +28,64 @@ function collectEvents (runtime, endEvent = 'closed') {
   return promise
 }
 
-async function checkWarningEmitted (root, expected, custom = false) {
-  const message = custom
-    ? 'Please register a "close" event handler via getEvents() for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
-    : 'Please export a "close" function or register a "close" event handler via getEvents() for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
+test('startup failure preserves its error and completes async cleanup and SIGINT', async t => {
+  const { runtime } = await prepareRuntime(t, 'failed-start-cleanup')
+  const steps = []
+  runtime.on('application:worker:event:startup:cleanup', step => steps.push(step))
+  await rejects(runtime.start(), { code: 'TEST_START_FAILED' })
+  await runtime.close()
+  deepStrictEqual(steps, ['callback', 'signal'])
+})
 
+for (const mode of ['normal', 'stop-error', 'child-hang', 'open-resource', 'worker-hang', 'worker-busy', 'worker-slow']) {
+  test(`CP shutdown supervises child and keeps worker cleanup separate: ${mode}`, async t => {
+    const { runtime } = await prepareRuntime(t, 'cp-shutdown', false, null, async (root, config) => {
+      config.applications[0].env = { SHUTDOWN_MODE: mode }
+    })
+    const steps = []
+    let exitTimeout = false
+    runtime.on('application:worker:exit:timeout', () => { exitTimeout = true })
+    runtime.on('application:worker:event:shutdown:step', step => steps.push(step))
+    const url = await startRuntime(t, runtime)
+    const { pid } = await (await fetch(url)).json()
+    t.after(() => {
+      try { process.kill(pid, 'SIGKILL') } catch (error) {
+        if (error.code !== 'ESRCH') { throw error }
+      }
+    })
+    await runtime.close()
+    // Reaping the killed child can complete just after the worker exit event.
+    for (let attempt = 0; attempt < 100; attempt++) {
+      try {
+        process.kill(pid, 0)
+      } catch (error) {
+        if (error.code === 'ESRCH') { break }
+        throw error
+      }
+      await sleep(10)
+    }
+    if (mode === 'worker-busy' && process.platform !== 'win32') {
+      try {
+        process.kill(pid, 0)
+        const { stdout } = await promisify(execFile)('ps', ['-o', 'stat=', '-p', String(pid)])
+        ok(stdout.trim().startsWith('Z'), 'the child must be dead, even if its blocked owner could not reap it')
+      } catch (error) {
+        if (error.code !== 'ESRCH') { throw error }
+      }
+    } else {
+      throws(() => process.kill(pid, 0), { code: 'ESRCH' })
+    }
+    if (mode === 'normal' || mode === 'stop-error') {
+      deepStrictEqual(steps, ['child:callback', 'child:signal', 'worker:callback', 'worker:signal'])
+    }
+    if (mode === 'worker-slow') {
+      strictEqual(exitTimeout, false, 'an acknowledgement received during cleanup must not be lost')
+    }
+  })
+}
+
+async function checkWarningEmitted (root, expected) {
+  const message = 'Please export a "close" function or register a "close" event handler via getEvents() for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
   const logs = await getLogsFromFile(root)
   deepStrictEqual(
     logs.some(m => m.msg === message),
@@ -99,8 +155,9 @@ test('should log stop errors without hanging runtime close', async t => {
     m => m.level === 50 && m.msg?.includes('Failed to stop worker 0 of the application "frontend"')
   )
   ok(stopErrorLog)
-  strictEqual(stopErrorLog.err?.code, 'TEST_CLOSE_FAILED')
-  strictEqual(stopErrorLog.err?.message, 'boom while closing')
+  strictEqual(stopErrorLog.err?.code, 'PLT_RUNTIME_APPLICATION_SHUTDOWN')
+  ok(stopErrorLog.err?.message.includes('boom while closing'))
+  ok(stopErrorLog.err?.message.includes('boom while callback'))
 })
 
 test('should invoke Symbol.asyncDispose for custom objects returned by create', async t => {
@@ -200,6 +257,7 @@ test('should support factory returned background apps', async t => {
 
   const closeAppEvent = events.find(m => m.event === 'application:worker:event:close:app')
   strictEqual(closeAppEvent.payload[0], 'factory-background-app')
+  ok(events.some(m => m.event === 'application:worker:event:background:callback'))
   ok(!events.find(m => m.event === 'application:worker:event:close:module'))
 
   ok(!logs.find(m => m.msg === 'Platformatic is now listening at undefined'))
@@ -220,10 +278,19 @@ test('should invoke close handler for custom commands apps', async t => {
 
   ok(events.find(m => m.event === 'application:worker:event:close:handler'))
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+  deepStrictEqual(
+    events
+      .filter(m => m.event.startsWith('application:worker:event:close:callback:'))
+      .map(m => m.event),
+    [
+      'application:worker:event:close:callback:second',
+      'application:worker:event:close:callback:first'
+    ]
+  )
   await checkWarningEmitted(root, false)
 })
 
-test('should emit a warning when an app without create has no function and no close handler', async t => {
+test('should not emit a warning when an app without create has no close handler', async t => {
   const { root, runtime } = await prepareRuntime(t, 'close-standalone-without-closing')
   const url = await startRuntime(t, runtime)
 
@@ -233,10 +300,10 @@ test('should emit a warning when an app without create has no function and no cl
 
   await runtime.close()
 
-  await checkWarningEmitted(root, true)
+  await checkWarningEmitted(root, false)
 })
 
-test('should emit a warning when an background app has no function and no close handler', async t => {
+test('should not emit a warning when an background app has no close handler', async t => {
   const { root, runtime } = await prepareRuntime(t, 'close-background-without-closing')
   await startRuntime(t, runtime)
 
@@ -244,18 +311,32 @@ test('should emit a warning when an background app has no function and no close 
   await once(runtime, 'application:worker:event:work')
   await runtime.close()
 
-  await checkWarningEmitted(root, true)
+  await checkWarningEmitted(root, false)
 })
 
-test('should emit a warning when a custom commands app has no no close handler', async t => {
-  const { root, runtime } = await prepareRuntime(t, 'close-command-without-closing')
-  const url = await startRuntime(t, runtime)
+for (const duplicate of [false, true, 'failure']) {
+  test(`should await reverse callbacks and SIGINT after server shutdown (duplicates: ${duplicate})`, async t => {
+    const { runtime } = await prepareRuntime(t, 'close-callbacks', false)
+    const url = await startRuntime(t, runtime)
+    const eventsPromise = collectEvents(runtime)
 
-  const res = await fetch(url)
-  deepStrictEqual(res.status, 200)
-  deepStrictEqual(await res.json(), { production: false })
+    if (duplicate) {
+      const finished = once(runtime, 'application:worker:event:duplicates:finished')
+      await fetch(`${url}/duplicates${duplicate === 'failure' ? '-fail' : ''}`)
+      await finished
+    }
 
-  await runtime.close()
+    await runtime.close()
+    const events = await eventsPromise
+    const callbackEvents = events
+      .filter(m => m.event.startsWith('application:worker:event:callback:') || m.event === 'application:worker:event:signal')
+      .map(m => m.event)
 
-  await checkWarningEmitted(root, false, true)
-})
+    deepStrictEqual(callbackEvents, [
+      'application:worker:event:callback:second',
+      'application:worker:event:callback:first',
+      'application:worker:event:signal'
+    ])
+    strictEqual(events.some(m => m.event === 'application:worker:stop:error'), duplicate === 'failure')
+  })
+}

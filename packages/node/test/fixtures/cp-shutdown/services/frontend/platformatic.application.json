@@ -1,0 +1,1 @@
+{"$schema":"https://schemas.platformatic.dev/@platformatic/node/3.0.0.json","application":{"commands":{"development":"node index.js"}},"server":{"port":0}}

@@ -258,9 +258,9 @@ export async function close () {
 }
 ```
 
-### `close` Event Handler
+### Legacy `close` Event Handler
 
-Alternatively, you can register a close event handler using the Platformatic events getter. `getEvents()` returns `PlatformaticEvents`, an `EventEmitter` with an additional `emitAndNotify(event, ...args)` method for emitting locally and notifying the runtime.
+For compatibility, applications can still register a `close` event handler using the Platformatic events getter. `getEvents()` returns `PlatformaticEvents`, an `EventEmitter` with an additional `emitAndNotify(event, ...args)` method for emitting locally and notifying the runtime. The event is not awaited and should not be used for new cleanup code.
 
 ```js
 import { getEvents } from '@platformatic/globals'
@@ -316,13 +316,17 @@ Platformatic Node handles closing the main application components:
 - **Applications with `create` function**: It will invoke the `close` method on the server returned by the function.
 - **Applications without `create` function**: It will invoke the `close` method on the first `node:http` server that listened on a TCP port.
 
-However, **additional resources must be manually closed** using the mechanisms described above, otherwise the application will hang during shutdown and eventually timeout.
+However, **additional resources must be registered with `registerCloseCallback()` or closed by a `SIGINT` listener**. These callbacks are awaited after the framework/server shutdown.
 
-In applications launched via custom commands only the `close` event handler is available for cleanup and the `close` function is ignored.
+In applications launched via custom commands, cleanup runs in the child process. The application is responsible for closing its resources through `registerCloseCallback()` and/or `SIGINT` listeners; exported `close` functions are not invoked by this path.
 
-:::warn
-If your application needs to clean up some shared states (connection pool, etc), you must export a `close` function, handle the `close` event, or implement `Symbol.asyncDispose` on the object returned by your factory. If you don't, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts. The exception is Fastify.
+:::info
+The legacy `close` event is retained for compatibility but is not the primary shutdown mechanism in v4. Use `registerCloseCallback()` for application-owned resources.
 :::
+
+### Applications using `close-with-grace`
+
+Watt cannot prevent `close-with-grace` from calling `process.exit()`. If your application uses `close-with-grace`, put all application resource cleanup in its callback: `close-with-grace` must be the **only cleanup mechanism**. Combining it with `registerCloseCallback()` or additional `SIGINT` listeners is **unsupported**, and their invocation and completion are not guaranteed. This applies to both worker and child-process mode. See the [v4 migration guide](../../guides/migrate-v4.md#applications-using-close-with-grace).
 
 ### Typescript
 

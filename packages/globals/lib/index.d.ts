@@ -85,6 +85,7 @@ export interface UndiciThreadInterceptor {
   createUpgradeAgent (): Agent
 }
 
+export type CloseCallback = () => void | Promise<void>
 export interface PlatformaticGlobal {
   // Runtime
   isBuilding: boolean
@@ -311,6 +312,10 @@ export declare const setCustomReadinessCheck: PlatformaticGlobal['setCustomReadi
 export declare function getEvents (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['events']
 export declare function getEvents (options: OptionalGlobalGetterOptions): PlatformaticGlobal['events'] | undefined
 export declare function getEvents (options: GlobalGetterOptions): PlatformaticGlobal['events'] | undefined
+export declare function registerCloseCallback (callback: CloseCallback): void
+/** @internal Consumes registered callbacks and permanently closes registration. */
+export declare function consumeCloseCallbacks (): CloseCallback[]
+export declare function hasCloseCallbacks (): boolean
 export declare function getITC (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['itc']
 export declare function getITC (options: OptionalGlobalGetterOptions): PlatformaticGlobal['itc'] | undefined
 export declare function getITC (options: GlobalGetterOptions): PlatformaticGlobal['itc'] | undefined

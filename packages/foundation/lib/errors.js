@@ -27,6 +27,30 @@ export function ensureError (error) {
   return err
 }
 
+// Errors can cross both structured-clone and JSON transports. Keep only
+// primitive fields, and never invoke application getters without a guard.
+export function serializeError (value, fallbackMessage) {
+  const result = { name: 'Error', message: fallbackMessage }
+  try {
+    result.message = String(value)
+  } catch {}
+
+  for (const key of ['name', 'message', 'code', 'stack']) {
+    try {
+      const field = value?.[key]
+      if (typeof field === 'string') {
+        result[key] = field
+      }
+    } catch {}
+  }
+
+  return result
+}
+
+export function getErrorMessage (error, fallbackMessage) {
+  return serializeError(error, fallbackMessage).message
+}
+
 export const PathOptionRequiredError = createError(`${ERROR_PREFIX}_PATH_OPTION_REQUIRED`, 'path option is required')
 export const NoConfigFileFoundError = createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, 'no config file found')
 export const InvalidConfigFileExtensionError = createError(

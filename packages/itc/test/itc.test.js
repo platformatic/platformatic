@@ -102,6 +102,34 @@ test('should support close while replying to a message', async t => {
   deepStrictEqual(requests, [testRequest])
 })
 
+test('should wait for concurrent replies before closing', async t => {
+  const { port1, port2 } = new MessageChannel()
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+  const bothStarted = Promise.withResolvers()
+  let active = 0
+
+  itc2.handle('stop', async () => {
+    active++
+    if (active === 2) {
+      bothStarted.resolve()
+      itc2.close()
+    }
+
+    await bothStarted.promise
+    active--
+    return 'stopped'
+  })
+
+  itc1.listen()
+  itc2.listen()
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  const responses = await Promise.all([itc1.send('stop'), itc1.send('stop')])
+  deepStrictEqual(responses, ['stopped', 'stopped'])
+})
+
 test('should throw an error if send req before listen', async t => {
   const { port1 } = new MessageChannel()
 

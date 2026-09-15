@@ -14,6 +14,7 @@ export const kWorkerServerOptions = Symbol.for('plt.runtime.worker.serverOptions
 export const kLastHealthCheckELU = Symbol.for('plt.runtime.worker.lastHealthCheckELU')
 export const kLastWorkerScalerELU = Symbol.for('plt.runtime.worker.lastWorkerScalerELU')
 export const kIsSubprocessHost = Symbol.for('plt.runtime.worker.isSubprocessHost')
+export const kSubprocessPid = Symbol('subprocessPid')
 
 // This string marker should be safe to use since it belongs to Unicode private area
 export const kStderrMarker = '\ue002'
