@@ -5,14 +5,23 @@ import { readFile, readdir, stat } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { BaseGenerator } from './base-generator.js'
 
-export function importedConfiguration (pkg) {
+export function importedConfiguration (pkg, { entrypoint = false } = {}) {
   const factory = capabilityFactories[pkg]
 
+  // The sole application of a runtime is its entrypoint, and a framework capability -- like the node
+  // capability -- writes no port of its own, so in production it would bind nothing and be reachable
+  // from nowhere. When it is the only application it takes the default port. The value is written
+  // directly here rather than through the env-scoped placeholder the generators use, because the
+  // import path writes this file itself, outside that machinery.
+  const server = entrypoint ? '{\n  server: { port: Number(process.env.PORT || 3042) }\n}' : '{}'
+
   if (factory) {
-    return `import { ${factory} } from '${pkg}'\n\nexport default ${factory}({})\n`
+    return `import { ${factory} } from '${pkg}'\n\nexport default ${factory}(${server})\n`
   }
 
-  return `export default {\n  module: '${pkg}'\n}\n`
+  return entrypoint
+    ? `export default {\n  module: '${pkg}',\n  server: { port: Number(process.env.PORT || 3042) }\n}\n`
+    : `export default {\n  module: '${pkg}'\n}\n`
 }
 
 export class ImportGenerator extends BaseGenerator {
@@ -153,7 +162,7 @@ export class ImportGenerator extends BaseGenerator {
     this.addFile({
       path: '',
       file: join(updatedPath, 'watt.config.mjs'),
-      contents: importedConfiguration(pkg)
+      contents: importedConfiguration(pkg, { entrypoint: this.config.entrypoint })
     })
   }
 

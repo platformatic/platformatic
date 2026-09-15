@@ -37,8 +37,13 @@ test('Support packages without generator via importing (new application)', async
     Asserted as source rather than evaluated: the file imports the capability, and this run installs
     nothing -- which is the state an import leaves a project in until the install happens.
   */
+  // The imported framework application is the runtime's only one, so it is the entrypoint: a
+  // framework capability writes no port of its own, and the sole application takes the default.
   const applicationConfig = await readFile(resolve(applicationPath, 'watt.config.mjs'), 'utf8')
-  equal(applicationConfig, "import { vite } from '@platformatic/vite'\n\nexport default vite({})\n")
+  equal(
+    applicationConfig,
+    "import { vite } from '@platformatic/vite'\n\nexport default vite({\n  server: { port: Number(process.env.PORT || 3042) }\n})\n"
+  )
 
   // Verify that the package.json file was updated with the new dependency
   const packageJson = JSON.parse(await readFile(resolve(applicationPath, 'package.json'), 'utf8'))
@@ -198,7 +203,7 @@ test('Support packages without generator via copy (new application)', async t =>
   ok(!existsSync(resolve(sourcePath, 'watt.config.mjs')))
   equal(
     await readFile(resolve(applicationDir, await configurationFileIn(applicationDir)), 'utf8'),
-    "import { vite } from '@platformatic/vite'\n\nexport default vite({})\n"
+    "import { vite } from '@platformatic/vite'\n\nexport default vite({\n  server: { port: Number(process.env.PORT || 3042) }\n})\n"
   )
 
   // Verify that the package.json file was updated with the new dependency and that the original package.json was not modified
@@ -279,7 +284,7 @@ test('Support packages without generator via copy (existing applications)', asyn
   ok(!existsSync(resolve(sourcePath, 'watt.config.mjs')))
   equal(
     await readFile(resolve(applicationDir, await configurationFileIn(applicationDir)), 'utf8'),
-    "import { vite } from '@platformatic/vite'\n\nexport default vite({})\n"
+    "import { vite } from '@platformatic/vite'\n\nexport default vite({\n  server: { port: Number(process.env.PORT || 3042) }\n})\n"
   )
 
   // Verify that the package.json file was updated with the new dependency and that the original package.json was not modified
@@ -292,7 +297,7 @@ test('Support packages without generator via copy (existing applications)', asyn
   ok(!existsSync(resolve(sourcePath, 'watt.config.mjs')))
   equal(
     await readFile(resolve(applicationDir, await configurationFileIn(applicationDir)), 'utf8'),
-    "import { vite } from '@platformatic/vite'\n\nexport default vite({})\n"
+    "import { vite } from '@platformatic/vite'\n\nexport default vite({\n  server: { port: Number(process.env.PORT || 3042) }\n})\n"
   )
 
   // Verify that the runtime configuration has no explicit entry as everything is in the applications directory

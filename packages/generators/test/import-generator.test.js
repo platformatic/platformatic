@@ -188,6 +188,40 @@ test('copy - should generate config file for platformatic module', async t => {
   ok(configContent.includes('export default service({})'), configContent)
 })
 
+test('copy - the entrypoint application is exposed on the default port', async t => {
+  const sourceDir = await createTemporaryDirectory(t)
+  const targetDir = await createTemporaryDirectory(t)
+
+  const runtime = createMockedRuntimeGenerator()
+  const gen = createGenerator(runtime, { targetDirectory: targetDir })
+  // The runtime generator marks the sole application the entrypoint; a framework/import capability
+  // writes no port of its own, so the entrypoint takes the default one.
+  gen.setConfig({ applicationPath: sourceDir, operation: 'copy', entrypoint: true })
+
+  await gen._beforeWriteFiles(runtime)
+  await gen.writeFiles()
+
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes('server: { port: Number(process.env.PORT || 3042) }'), configContent)
+})
+
+test('copy - the entrypoint takes the default port for a non-platformatic module too', async t => {
+  const sourceDir = await createTemporaryDirectory(t)
+  const targetDir = await createTemporaryDirectory(t)
+
+  const runtime = createMockedRuntimeGenerator()
+  const gen = createGenerator(runtime, { module: 'custom-module', targetDirectory: targetDir })
+  gen.setConfig({ applicationPath: sourceDir, operation: 'copy', entrypoint: true })
+
+  await gen._beforeWriteFiles(runtime)
+  await gen.writeFiles()
+
+  // A capability with no factory still takes the port when it is the entrypoint, beside its module.
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes("module: 'custom-module'"), configContent)
+  ok(configContent.includes('server: { port: Number(process.env.PORT || 3042) }'), configContent)
+})
+
 test('copy - should generate config file for non-platformatic module', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
