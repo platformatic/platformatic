@@ -466,6 +466,8 @@ This can be specified as:
   - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
   - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `20000`.
   - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
+  - **`scaleUpELU`** (`number`) - The Event Loop Utilization (ELU) threshold an application's average ELU must exceed before the scaler adds a worker. Must be between 0 and 1. It can be overridden at the application level. Default: `0.8`.
+  - **`scaleDownELU`** (`number`) - The ELU threshold an application's average ELU must fall below before the scaler removes a worker. Must be between 0 and 1. It can be overridden at the application level. Default: `0.2`.
 
 This value is hardcoded to `1` if the runtime is running in development mode.
 
@@ -991,11 +993,12 @@ The v3 transform is the mapping to apply by hand:
 | `maxTotalMemory`     | `maxMemory`                   |
 | `cooldownSec`        | `cooldown`, in milliseconds   |
 | `gracePeriod`        | `gracePeriod`                 |
+| `scaleUpELU`         | `scaleUpELU`                  |
+| `scaleDownELU`       | `scaleDownELU`                |
 | `applications[<id>]` | that application's `workers`  |
 
-`scaleUpELU`, `scaleDownELU`, `timeWindowSec`, `scaleDownTimeWindowSec` and `scaleIntervalSec` were
-already unused on v3 — the thresholds and windows the scaler uses are fixed — so they carry across to
-nothing.
+`timeWindowSec`, `scaleDownTimeWindowSec` and `scaleIntervalSec` were already unused on v3 — the
+windows and the check interval the scaler uses are fixed — so they carry across to nothing.
 
 ### policies
 
