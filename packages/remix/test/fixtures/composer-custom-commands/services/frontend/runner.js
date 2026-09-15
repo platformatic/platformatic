@@ -1,6 +1,6 @@
 import fastifyStatic from '@fastify/static'
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
-import { getBasePath, getLogger } from '@platformatic/globals'
+import { getBasePath, getLogger, registerCloseCallback } from '@platformatic/globals'
 import { createRequestHandler } from '@remix-run/node'
 import fastify from 'fastify'
 import { join, resolve } from 'node:path'
@@ -45,4 +45,7 @@ await app.all(
   handleRequest.bind(null, createRequestHandler(await import('./build/server/index.js'), process.env.NODE_ENV))
 )
 
+registerCloseCallback(() => {
+  setTimeout(() => process.exit(0), 1000)
+})
 await app.listen({ port: 3000 })

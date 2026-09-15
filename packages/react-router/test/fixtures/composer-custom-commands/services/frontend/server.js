@@ -1,6 +1,6 @@
 import fastifyStatic from '@fastify/static'
 import { cleanBasePath } from '@platformatic/basic'
-import { getBasePath, getLogger } from '@platformatic/globals'
+import { getBasePath, getLogger, registerCloseCallback } from '@platformatic/globals'
 import fastify from 'fastify'
 import { resolve } from 'node:path'
 
@@ -14,4 +14,7 @@ await app.register(fastifyStatic, {
   schemaHide: true
 })
 
+registerCloseCallback(() => {
+  setTimeout(() => process.exit(0), 1000)
+})
 await app.listen({ port: 3000 })

@@ -1,9 +1,13 @@
 import node from '@astrojs/node'
 import { ensureTrailingSlash } from '@platformatic/basic'
-import { getBasePath, getITC, getLogLevel } from '@platformatic/globals'
+import { getBasePath, getITC, getLogLevel, registerCloseCallback } from '@platformatic/globals'
 import { defineConfig } from 'vite'
 
 const basePath = ensureTrailingSlash(getBasePath(false) ?? '/')
+
+registerCloseCallback(() => {
+  setTimeout(() => process.exit(0), 1000)
+})
 
 export default defineConfig({
   output: 'server',

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "node dist/server/index.mjs"
+    "start": "node --import ./shutdown.js dist/server/index.mjs"
   },
   "dependencies": {
     "@platformatic/tanstack": "^3.0.0",

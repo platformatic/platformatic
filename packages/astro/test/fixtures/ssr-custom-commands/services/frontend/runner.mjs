@@ -1,6 +1,6 @@
 import middie from '@fastify/middie'
 import fastifyStatic from '@fastify/static'
-import { getBasePath, getLogLevel } from '@platformatic/globals'
+import { getBasePath, getLogLevel, registerCloseCallback } from '@platformatic/globals'
 import fastify from 'fastify'
 import { resolve } from 'node:path'
 
@@ -17,4 +17,7 @@ await app.register(fastifyStatic, {
 
 await app.register(middie)
 await app.use(basePath, handler)
+registerCloseCallback(() => {
+  setTimeout(() => process.exit(0), 1000)
+})
 await app.listen({ port: 3000 })

@@ -1,5 +1,9 @@
-import { getBasePath, getITC, getLogLevel } from '@platformatic/globals'
+import { getBasePath, getITC, getLogLevel, registerCloseCallback } from '@platformatic/globals'
 import { defineConfig } from 'vite'
+
+registerCloseCallback(() => {
+  setTimeout(() => process.exit(0), 1000)
+})
 
 export default defineConfig({
   base: getBasePath({ throwOnMissing: false }) ?? '/',

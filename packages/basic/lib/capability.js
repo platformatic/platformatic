@@ -799,7 +799,7 @@ export class BaseCapability extends EventEmitter {
 
     const spawnOptions = { cwd: this.root }
 
-    if (platform() === 'win32' && !isArrayCommand) {
+    if (platform() === 'win32' && !isArrayCommand && executable !== process.execPath) {
       executable = command.replace(/^node\b/, process.execPath)
       args = []
 

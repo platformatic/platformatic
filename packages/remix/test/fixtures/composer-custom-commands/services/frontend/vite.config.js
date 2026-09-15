@@ -1,6 +1,10 @@
-import { getBasePath, getITC } from '@platformatic/globals'
+import { getBasePath, getITC, registerCloseCallback } from '@platformatic/globals'
 import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
+
+registerCloseCallback(() => {
+  setTimeout(() => process.exit(0), 1000)
+})
 
 export default defineConfig({
   base: getBasePath({ throwOnMissing: false }) ?? '/',
