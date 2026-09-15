@@ -4,6 +4,7 @@ import { mkdir, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime, createTemporaryDirectory } from './helpers.js'
+import { findAvailablePortRange } from './multiple-workers/helper.js'
 
 /*
   `server` is written as an expression rather than a value so a port can be an environment read --
@@ -120,7 +121,10 @@ test('runtime refuses to load when an application declares a port inside a per-w
 
 test('applications can listen next to a per-worker range', async t => {
   const root = await createTemporaryDirectory(t, 'next-to-per-worker-range')
-  const port = await getPort()
+  // This test binds real ports, so it takes a verified bindable range rather than a single probed
+  // port: on Windows the runner reserves ranges inside the dynamic port space that probe clean but
+  // fail EACCES on bind, and findAvailablePortRange keeps below them.
+  const port = await findAvailablePortRange({ host: '127.0.0.1', size: 3 })
 
   const first = await createApplication(root, 'first', {
     hostname: '127.0.0.1',
@@ -142,7 +146,9 @@ test('applications can listen next to a per-worker range', async t => {
 
 test('ports which are not declared in the configuration are still checked when applications start', async t => {
   const root = await createTemporaryDirectory(t, 'duplicate-port-from-command')
-  const port = await getPort()
+  // A real bind on a verified-bindable port -- see the per-worker-range test above for why getPort is
+  // not enough on Windows.
+  const port = await findAvailablePortRange({ host: '127.0.0.1', size: 1 })
 
   // A port bound by the application's own command is invisible to the load time check by
   // construction: the configuration carries no fixed server.port for it to read, and the address is
@@ -176,8 +182,10 @@ test('ports which are not declared in the configuration are still checked when a
       // When reusePort is available both applications can bind the port and the runtime detects the conflict when
       // recording the URLs. Otherwise the second application fails to bind: the runtime can name the owner only if the
       // first application already reported its URL, so the raw EADDRINUSE error is also acceptable.
-      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE', error.message)
-      match(error.message, new RegExp(`${port}`))
+      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE', error.code)
+      // The port surfaces in the message when the runtime names the conflict and as error.port on a
+      // raw bind failure; a bare child-process bind error may carry no message at all.
+      match(`${error.message ?? ''} ${error.port ?? ''}`, new RegExp(`${port}`))
       return true
     }
   )
