@@ -1,4 +1,4 @@
-import { deepStrictEqual, match, notStrictEqual, ok, rejects, strictEqual } from 'node:assert'
+import { deepStrictEqual, notStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
 import { resolve, join } from 'node:path'
@@ -336,22 +336,24 @@ test('preserves incremental port when restarting a crashed worker', async t => {
 })
 
 test('rejects another application listening on a port used by one of the workers', async t => {
-  const { app, basePort } = await preparePerWorkerPortRuntime(t, {
-    workerCount: 3,
-    additionalApplications: [{ id: 'service', path: './service', workers: 1 }],
-    // The service listens on the port assigned to the second worker of node
-    async beforeCreate ({ root, basePort }) {
-      await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
-        contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
-      })
-    }
-  })
-
+  // The service is set to the port node's second worker will take, and set before the runtime is
+  // created -- v4 evaluates every configuration once, at load. So the overlap is declared, and the
+  // load time check rejects it when the configuration loads, earlier than the start time check and
+  // naming both applications and the range they collide on.
   await rejects(
-    () => app.start(),
+    () =>
+      preparePerWorkerPortRuntime(t, {
+        workerCount: 3,
+        additionalApplications: [{ id: 'service', path: './service', workers: 1 }],
+        async beforeCreate ({ root, basePort }) {
+          await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
+            contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
+          })
+        }
+      }),
     error => {
-      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE', error.message)
-      match(error.message, new RegExp(`${basePort + 1}`))
+      strictEqual(error.code, 'PLT_RUNTIME_APPLICATIONS_PORTS_OVERLAP')
+      ok(error.message.includes('"node"') && error.message.includes('"service"'), error.message)
       return true
     }
   )
