@@ -15,8 +15,8 @@ import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
-import { createRequire } from 'node:module'
-import { dirname, resolve as resolvePath } from 'node:path'
+import Module from 'node:module'
+import { resolve as resolvePath } from 'node:path'
 import { version } from './schema.js'
 import { getTsconfig, ignoreDirs, isApplicationBuildable } from './utils.js'
 
@@ -182,8 +182,8 @@ export class NodeCapability extends BaseCapability {
     serverPromise.catch(() => {})
 
     try {
-      const require = createRequire(dirname(finalEntrypoint))
-      this.#module = require(finalEntrypoint)
+      // Load CommonJS entrypoints as the main module so applications can use require.main reliably.
+      this.#module = Module._load(finalEntrypoint, null, true)
     } catch (e) {
       // If there is top-leve await or unsupported TS syntax, we try to import the file instead
       if (e.code !== 'ERR_REQUIRE_ASYNC_MODULE' && e.code !== 'ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX') {
