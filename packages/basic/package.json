@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/basic",
-  "version": "4.0.0-new-config.7",
+  "version": "4.0.0-new-config.8",
   "description": "Platformatic Basic",
   "main": "index.js",
   "types": "index.d.ts",
