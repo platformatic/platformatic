@@ -1115,8 +1115,8 @@
       "head": "const app = await create(config[kMetadata].root, config, { logger: abstractLogger })",
       "lines": 1
     },
-    "packages/generators/lib/import-generator.js:137-158": {
-      "sha": "d04e281d8637226b",
+    "packages/generators/lib/import-generator.js:146-167": {
+      "sha": "ba84cd5a8dffa679",
       "head": "async #generateConfigFile (originalPath, updatedPath) {",
       "lines": 22
     },

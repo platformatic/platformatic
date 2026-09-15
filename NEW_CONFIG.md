@@ -5173,7 +5173,7 @@ runs multiple workers on a fixed port at all.
    package type); a monorepo emits a config file for **every** application, while a
    single-app project emits one only for non-default answers (single-app defaults
    produce no config file); **`ImportGenerator` emits the v4 per-app form** rather than
-   a `watt.json` stub (`generators/lib/import-generator.js:137-158`) — it is the path
+   a `watt.json` stub (`generators/lib/import-generator.js:146-167`) — it is the path
    taken for capabilities without a generator, so leaving it would have let the wizard
    still write JSON for exactly the applications least likely to be tested. A
    capability with a factory is spelled by calling it, and one without keeps the plain
