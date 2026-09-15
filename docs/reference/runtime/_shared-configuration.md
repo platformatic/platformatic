@@ -434,6 +434,8 @@ This can be specified as:
   - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
   - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `20000`.
   - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
+  - **`scaleUpELU`** (`number`) - The Event Loop Utilization (ELU) threshold an application's average ELU must exceed before the scaler adds a worker. Must be between 0 and 1. It can be overridden at the application level. Default: `0.8`.
+  - **`scaleDownELU`** (`number`) - The ELU threshold an application's average ELU must fall below before the scaler removes a worker. Must be between 0 and 1. It can be overridden at the application level. Default: `0.2`.
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 
@@ -932,8 +934,8 @@ Configuration options:
 - **`minWorkers`** (`number`). The minimum number of workers that can be used for _each_ application. It can be overridden at application level. Default: `1`.
 - **`maxWorkers`** (`number`). The maximum number of workers that can be used for _each_ application. It can be overridden at application level. Default: global `maxTotalWorkers` value.
 - **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60`.
-- **`scaleUpELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling up is hardcoded to `0.8`.
-- **`scaleDownELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling down is hardcoded to `0.2`.
+- **`scaleUpELU`** (`number`). The Event Loop Utilization (ELU) threshold an application's average ELU must exceed before the scaler adds a worker. Must be between 0 and 1. It can be overridden at application level. Mapped to `workers.scaleUpELU`. Default: `0.8`.
+- **`scaleDownELU`** (`number`). The ELU threshold an application's average ELU must fall below before the scaler removes a worker. Must be between 0 and 1. It can be overridden at application level. Mapped to `workers.scaleDownELU`. Default: `0.2`.
 - **`timeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-up decisions is hardcoded to `10` seconds.
 - **`scaleDownTimeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-down decisions is hardcoded to `60` seconds.
 - **`gracePeriod`** (`number`). The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
@@ -941,6 +943,8 @@ Configuration options:
 - **`applications`** (`object`). An object with application-specific scaling configuration. Each key is an application ID, with an object value containing:
   - **`minWorkers`** (`number`). The minimum number of workers that can be used for this application. Default: `1`.
   - **`maxWorkers`** (`number`). The maximum number of workers that can be used for this application. Default: global `maxWorkers` value.
+  - **`scaleUpELU`** (`number`). The ELU threshold for scaling up this application. Default: global `scaleUpELU` value.
+  - **`scaleDownELU`** (`number`). The ELU threshold for scaling down this application. Default: global `scaleDownELU` value.
 
 **Notes:**
 
