@@ -240,6 +240,7 @@ export interface ManagementClient {
   getApplicationOpenapiSchema (id: string): Promise<unknown>
   getApplicationGraphqlSchema (id: string): Promise<unknown>
   getMetrics (format?: string): Promise<{ metrics: unknown }>
+  getScheduler (): Promise<SchedulerJob[]>
   getSchedulerJobs (): Promise<SchedulerJob[]>
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
   resumeSchedulerJob (name: string): Promise<SchedulerJob>
@@ -452,6 +453,7 @@ export declare class Runtime extends EventEmitter {
   off (event: 'application:worker:health:metrics', listener: (event: HealthMetricsEvent) => void): this
   off (event: string | symbol, listener: (...args: any[]) => void): this
 
+  getScheduler (): SchedulerJob[]
   getSchedulerJobs (): SchedulerJob[]
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
   resumeSchedulerJob (name: string): Promise<SchedulerJob>

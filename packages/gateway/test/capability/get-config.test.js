@@ -29,6 +29,7 @@ test('get application config via capability api', async t => {
     gateway: {
       applications: [],
       refreshTimeout: 1000,
+      restartOnApplicationChange: true,
       passthroughContentTypes: ['multipart/form-data', 'application/octet-stream']
     },
     plugins: {

@@ -350,7 +350,6 @@ check out [this guide](https://github.com/src-d/guide/blob/master/developer-comm
 ## Getting Help
 
 - Check the [documentation](https://docs.platformatic.dev/)
-- Join our [Discord community](https://discord.gg/platformatic) for real-time help and discussions
 - Open an issue on GitHub
 
 Thank you for contributing to Platformatic! 🚀

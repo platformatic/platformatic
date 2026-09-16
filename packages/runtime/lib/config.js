@@ -10,12 +10,14 @@ import {
   omitProperties,
   runtimeUnwrappablePropertiesList
 } from '@platformatic/foundation'
+import { realpathSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
 import { createRequire, findPackageJSON } from 'node:module'
 import { dirname, isAbsolute, join, resolve as resolvePath } from 'node:path'
 
 import {
   ApplicationsPortsOverlapError,
+  ApplicationIdCollisionError,
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
@@ -417,6 +419,32 @@ function isApplicationEnabled (application, environment) {
   return enabled
 }
 
+function canonicalPath (path) {
+  try {
+    return realpathSync(path)
+  } catch {
+    return resolvePath(path)
+  }
+}
+
+function conflictingApplicationSource (root, resolvedApplicationsPath, existing, entryPath) {
+  if (existing.path) {
+    if (existing.path.match(/^\{.*\}$/)) {
+      return null
+    }
+
+    const existingPath = isAbsolute(existing.path) ? existing.path : resolvePath(root, existing.path)
+    return canonicalPath(existingPath) === canonicalPath(entryPath) ? null : `the path "${existing.path}"`
+  }
+
+  if (existing.url) {
+    const resolvedPath = join(resolvedApplicationsPath, existing.id)
+    return canonicalPath(resolvedPath) === canonicalPath(entryPath) ? null : `the URL "${existing.url}"`
+  }
+
+  return null
+}
+
 export async function transform (config, _, context) {
   const production = context?.isProduction ?? context?.production
   const environment = production ? 'production' : 'development'
@@ -481,8 +509,10 @@ export async function transform (config, _, context) {
   if (config.autoload) {
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
+    const root = config[kMetadata].root
+    const resolvedApplicationsPath = resolvePath(root, config.resolvedApplicationsBasePath ?? 'external')
 
-    path = resolvePath(config[kMetadata].root, path)
+    path = resolvePath(root, path)
     const entries = await readdir(path, { withFileTypes: true })
 
     for (let i = 0; i < entries.length; ++i) {
@@ -507,6 +537,14 @@ export async function transform (config, _, context) {
       const existingApplicationId = applications.findIndex(application => application.id === id)
 
       if (existingApplicationId !== -1) {
+        const existing = applications[existingApplicationId]
+        if (isApplicationEnabled(existing, environment)) {
+          const source = conflictingApplicationSource(root, resolvedApplicationsPath, existing, entryPath)
+          if (source) {
+            throw new ApplicationIdCollisionError(id, entryPath, source)
+          }
+        }
+
         applications[existingApplicationId] = { ...application, ...applications[existingApplicationId] }
       } else {
         applications.push(application)

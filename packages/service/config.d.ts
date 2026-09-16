@@ -79,6 +79,10 @@ export interface PlatformaticServiceConfig {
           redact?: {
             paths: string[];
             censor?: string;
+            /**
+             * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
+             */
+            remove?: boolean;
           };
           base?: {
             [k: string]: unknown;
@@ -87,6 +91,46 @@ export interface PlatformaticServiceConfig {
           customLevels?: {
             [k: string]: unknown;
           };
+          /**
+           * The numeric value of the level defined in level, when it is not one of the standard pino levels.
+           */
+          levelVal?: number;
+          /**
+           * Only use the levels defined in customLevels and omit the standard pino ones.
+           */
+          useOnlyCustomLevels?: boolean;
+          /**
+           * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
+           */
+          levelComparison?: "ASC" | "DESC";
+          /**
+           * A string prefixed to every message, including the ones of child loggers.
+           */
+          msgPrefix?: string;
+          /**
+           * The key under which any logged object is placed.
+           */
+          nestedKey?: string;
+          /**
+           * The key used for the serialized error in the log object. Defaults to err.
+           */
+          errorKey?: string;
+          /**
+           * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
+           */
+          depthLimit?: number;
+          /**
+           * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
+           */
+          edgeLimit?: number;
+          /**
+           * Terminate each log line with \r\n instead of \n. Defaults to false.
+           */
+          crlf?: boolean;
+          /**
+           * Set to false to disable logging entirely. Defaults to true.
+           */
+          enabled?: boolean;
           openTelemetryExporter?: {
             protocol: "grpc" | "http";
             url: string;
@@ -313,6 +357,10 @@ export interface PlatformaticServiceConfig {
            */
           swaggerPrefix?: string;
           /**
+           * Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served.
+           */
+          ui?: boolean;
+          /**
            * Path to an OpenAPI spec file
            */
           path?: string;
@@ -429,6 +477,10 @@ export interface PlatformaticServiceConfig {
       redact?: {
         paths: string[];
         censor?: string;
+        /**
+         * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
+         */
+        remove?: boolean;
       };
       base?: {
         [k: string]: unknown;
@@ -437,6 +489,46 @@ export interface PlatformaticServiceConfig {
       customLevels?: {
         [k: string]: unknown;
       };
+      /**
+       * The numeric value of the level defined in level, when it is not one of the standard pino levels.
+       */
+      levelVal?: number;
+      /**
+       * Only use the levels defined in customLevels and omit the standard pino ones.
+       */
+      useOnlyCustomLevels?: boolean;
+      /**
+       * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
+       */
+      levelComparison?: "ASC" | "DESC";
+      /**
+       * A string prefixed to every message, including the ones of child loggers.
+       */
+      msgPrefix?: string;
+      /**
+       * The key under which any logged object is placed.
+       */
+      nestedKey?: string;
+      /**
+       * The key used for the serialized error in the log object. Defaults to err.
+       */
+      errorKey?: string;
+      /**
+       * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
+       */
+      depthLimit?: number;
+      /**
+       * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
+       */
+      edgeLimit?: number;
+      /**
+       * Terminate each log line with \r\n instead of \n. Defaults to false.
+       */
+      crlf?: boolean;
+      /**
+       * Set to false to disable logging entirely. Defaults to true.
+       */
+      enabled?: boolean;
       openTelemetryExporter?: {
         protocol: "grpc" | "http";
         url: string;

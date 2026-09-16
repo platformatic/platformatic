@@ -106,6 +106,10 @@ export const NoConfigFileFoundError = createError(
   `${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`,
   "No config file found for application '%s'"
 )
+export const ApplicationIdCollisionError = createError(
+  `${ERROR_PREFIX}_APPLICATION_ID_COLLISION`,
+  'The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.'
+)
 export const MissingDependencyError = createError(`${ERROR_PREFIX}_MISSING_DEPENDENCY`, 'Missing dependency: "%s"')
 export const InvalidApplicationModuleError = createError(
   `${ERROR_PREFIX}_INVALID_APPLICATION_MODULE`,

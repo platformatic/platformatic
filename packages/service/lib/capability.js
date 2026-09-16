@@ -21,6 +21,7 @@ import { randomUUID } from 'node:crypto'
 import { hostname } from 'node:os'
 import pino from 'pino'
 import { platformaticService } from './application.js'
+import { loadErrorHandler } from './error-handler.js'
 import { setupRoot } from './plugins/root.js'
 import { version } from './schema.js'
 
@@ -42,7 +43,7 @@ export class ServiceCapability extends BaseCapability {
 
     const config = this.config
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
-    const serverConfig = this.serverConfig
+    const { errorHandler, ...serverConfig } = this.serverConfig ?? {}
 
     // Create the application
     this.#app = fastify({
@@ -52,6 +53,10 @@ export class ServiceCapability extends BaseCapability {
         return randomUUID()
       }
     })
+
+    if (errorHandler) {
+      this.#app.setErrorHandler(await loadErrorHandler(errorHandler))
+    }
 
     // Add hook to set Connection: close during graceful shutdown.
     // This must be added BEFORE plugins are registered, because if a plugin

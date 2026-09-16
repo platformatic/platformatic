@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.67.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.69.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Gateway Config",
   "type": "object",
@@ -225,6 +225,10 @@
                     "censor": {
                       "type": "string",
                       "default": "[redacted]"
+                    },
+                    "remove": {
+                      "type": "boolean",
+                      "description": "Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false."
                     }
                   },
                   "required": [
@@ -249,6 +253,50 @@
                 "customLevels": {
                   "type": "object",
                   "additionalProperties": true
+                },
+                "levelVal": {
+                  "type": "integer",
+                  "description": "The numeric value of the level defined in level, when it is not one of the standard pino levels."
+                },
+                "useOnlyCustomLevels": {
+                  "type": "boolean",
+                  "description": "Only use the levels defined in customLevels and omit the standard pino ones."
+                },
+                "levelComparison": {
+                  "type": "string",
+                  "enum": [
+                    "ASC",
+                    "DESC"
+                  ],
+                  "description": "How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC."
+                },
+                "msgPrefix": {
+                  "type": "string",
+                  "description": "A string prefixed to every message, including the ones of child loggers."
+                },
+                "nestedKey": {
+                  "type": "string",
+                  "description": "The key under which any logged object is placed."
+                },
+                "errorKey": {
+                  "type": "string",
+                  "description": "The key used for the serialized error in the log object. Defaults to err."
+                },
+                "depthLimit": {
+                  "type": "integer",
+                  "description": "The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5."
+                },
+                "edgeLimit": {
+                  "type": "integer",
+                  "description": "The stringification limit of properties or elements when logging a circular object or array. Defaults to 100."
+                },
+                "crlf": {
+                  "type": "boolean",
+                  "description": "Terminate each log line with \\r\\n instead of \\n. Defaults to false."
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Set to false to disable logging entirely. Defaults to true."
                 },
                 "openTelemetryExporter": {
                   "type": "object",
@@ -1149,6 +1197,11 @@
               "type": "string",
               "description": "Base URL for the OpenAPI Swagger Documentation"
             },
+            "ui": {
+              "type": "boolean",
+              "default": true,
+              "description": "Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served."
+            },
             "path": {
               "type": "string",
               "description": "Path to an OpenAPI spec file",
@@ -1160,6 +1213,11 @@
           "type": "integer",
           "minimum": 0,
           "default": 1000
+        },
+        "restartOnApplicationChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Restart the gateway when an application is added to or removed from the runtime, so it can recompose its routes. Set to false for a gateway that does not route from the application registry — restarting it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port until the replacement worker boots."
         },
         "passthroughContentTypes": {
           "type": "array",
@@ -2016,6 +2074,10 @@
                 "censor": {
                   "type": "string",
                   "default": "[redacted]"
+                },
+                "remove": {
+                  "type": "boolean",
+                  "description": "Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false."
                 }
               },
               "required": [
@@ -2040,6 +2102,50 @@
             "customLevels": {
               "type": "object",
               "additionalProperties": true
+            },
+            "levelVal": {
+              "type": "integer",
+              "description": "The numeric value of the level defined in level, when it is not one of the standard pino levels."
+            },
+            "useOnlyCustomLevels": {
+              "type": "boolean",
+              "description": "Only use the levels defined in customLevels and omit the standard pino ones."
+            },
+            "levelComparison": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "description": "How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC."
+            },
+            "msgPrefix": {
+              "type": "string",
+              "description": "A string prefixed to every message, including the ones of child loggers."
+            },
+            "nestedKey": {
+              "type": "string",
+              "description": "The key under which any logged object is placed."
+            },
+            "errorKey": {
+              "type": "string",
+              "description": "The key used for the serialized error in the log object. Defaults to err."
+            },
+            "depthLimit": {
+              "type": "integer",
+              "description": "The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5."
+            },
+            "edgeLimit": {
+              "type": "integer",
+              "description": "The stringification limit of properties or elements when logging a circular object or array. Defaults to 100."
+            },
+            "crlf": {
+              "type": "boolean",
+              "description": "Terminate each log line with \\r\\n instead of \\n. Defaults to false."
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "Set to false to disable logging entirely. Defaults to true."
             },
             "openTelemetryExporter": {
               "type": "object",

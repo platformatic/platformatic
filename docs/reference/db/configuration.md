@@ -136,6 +136,8 @@ postgres://user:password@my-database:5432/db-name
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
+  - `swaggerPrefix` (`string`, default: `/documentation`) sets the path under which the spec (`/json`, `/yaml`) and the API reference UI are served.
+  - `ui` (`boolean`, default: `true`) serves the interactive API reference UI under `swaggerPrefix`. Set it to `false` to keep only the spec routes: the UI is then never loaded, which saves the memory it would occupy in every worker, noticeable in runtimes with many applications where nobody opens the documentation page.
 
   Enables OpenAPI
 

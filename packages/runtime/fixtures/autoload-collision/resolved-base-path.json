@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "resolvedApplicationsBasePath": "web",
+  "autoload": {
+    "path": "web"
+  },
+  "applications": [
+    {
+      "id": "api",
+      "url": "https://github.com/org/api"
+    }
+  ]
+}

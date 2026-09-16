@@ -94,7 +94,7 @@ test('Support packages without generator via importing (existing applications)',
 
   let runtimeConfig = JSON.parse(await readFile(resolve(join(baseProjectDir, 'watt.json')), 'utf8'))
   const originalEnvFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
-  runtimeConfig.web = [{ id: 'main', path: 'services/main' }]
+  runtimeConfig.web = [{ id: 'main', path: 'web/main' }]
   runtimeConfig.startTimeout = 12345
   await writeFile(resolve(join(baseProjectDir, 'watt.json')), JSON.stringify(runtimeConfig, null, 2))
 
@@ -120,7 +120,7 @@ test('Support packages without generator via importing (existing applications)',
   deepStrictEqual(runtimeConfig.web, [
     {
       id: 'main',
-      path: 'services/main'
+      path: 'web/main'
     },
     {
       id: 'alternate',
@@ -230,7 +230,7 @@ test('Support packages without generator via copy (existing applications)', asyn
   })
 
   let runtimeConfig = JSON.parse(await readFile(resolve(join(baseProjectDir, 'watt.json')), 'utf8'))
-  runtimeConfig.web = [{ id: 'main', path: 'services/main' }]
+  runtimeConfig.web = [{ id: 'main', path: 'web/main' }]
   runtimeConfig.startTimeout = 12345
   await writeFile(resolve(join(baseProjectDir, 'watt.json')), JSON.stringify(runtimeConfig, null, 2))
 

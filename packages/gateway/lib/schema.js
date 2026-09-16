@@ -189,6 +189,15 @@ export const gateway = {
     deduplication,
     openapi: openApiBase,
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
+    restartOnApplicationChange: {
+      type: 'boolean',
+      default: true,
+      description:
+        'Restart the gateway when an application is added to or removed from the runtime, so it can recompose ' +
+        'its routes. Set to false for a gateway that does not route from the application registry — restarting ' +
+        'it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port ' +
+        'until the replacement worker boots.'
+    },
     passthroughContentTypes: {
       type: 'array',
       items: { type: 'string' },

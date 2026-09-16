@@ -189,6 +189,11 @@ export const db = {
               type: 'string',
               description: 'Base URL for the OpenAPI Swagger Documentation'
             },
+            ui: {
+              type: 'boolean',
+              default: true,
+              description: 'Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served.'
+            },
             prefix: {
               type: 'string',
               description: 'Base URL for generated Platformatic DB routes'

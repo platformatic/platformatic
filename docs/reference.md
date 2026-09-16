@@ -65,6 +65,5 @@ Most Platformatic components follow consistent patterns:
 
 ## Getting Help
 
-- **Discord Community** - Join our [Discord server](https://discord.gg/platformatic)
 - **GitHub Issues** - Report bugs or request features
 - **Documentation** - Search or browse this reference section

@@ -33,7 +33,7 @@ export async function root (app, config) {
           if (swaggerPrefix) {
             return reply.type('text/html').send(await loadIndexPage())
           }
-          return reply.sendFile('./index.html')
+          return reply.sendFile('index.html')
         }
       }
       return { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }

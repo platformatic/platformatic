@@ -2,7 +2,6 @@ import { existsSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { request } from 'undici'
 import { hasJavascriptFiles } from './file-system.js'
 import { kFailedImport } from './symbols.js'
 
@@ -43,6 +42,7 @@ export const applicationTypes = [
 ]
 
 export async function getLatestNpmVersion (pkg) {
+  const { request } = await import('undici')
   const res = await request(`https://registry.npmjs.org/${pkg}`)
   if (res.statusCode === 200) {
     const json = await res.body.json()

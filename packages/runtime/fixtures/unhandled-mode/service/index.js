@@ -16,4 +16,15 @@ export default async function (fastify) {
 
     return { ok: true }
   })
+
+  fastify.get('/trigger-rejections', async () => {
+    setTimeout(() => {
+      // The first rejection stops the application successfully, which leaves its controller no
+      // longer started. The stop attempted for the second one therefore rejects.
+      Promise.reject(new Error('UNHANDLED'))
+      setTimeout(() => Promise.reject(new Error('UNHANDLED')), 50)
+    }, 500)
+
+    return { ok: true }
+  })
 }

@@ -250,6 +250,10 @@
 
 **Message:** No config file found for service '%s'
 
+### PLT_RUNTIME_APPLICATION_ID_COLLISION
+
+**Message:** The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.
+
 ### PLT_RUNTIME_INVALID_SERVICES_WITH_WEB
 
 **Message:** The "services" property cannot be used when the "web" property is also defined

@@ -481,7 +481,6 @@ Now that you understand Watt's unified approach, you can expand your application
 ### Get Help
 
 - Check the [Reference Documentation](../../reference/) for detailed configuration options
-- Join our [Community Discord](https://discord.gg/platformatic) for support
 - Browse [Example Applications](https://github.com/platformatic/examples) on GitHub
 
 Happy building! 🚀

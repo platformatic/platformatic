@@ -26,7 +26,8 @@ import {
   type ProfileCapturedEvent,
   type RuntimeHealthSignal,
   type WorkerCurrentHealth,
-  type HealthMetricsEvent
+  type HealthMetricsEvent,
+  type SchedulerJob
 } from '../../index.js'
 import type { PlatformaticRuntimeConfig } from '../../config.js'
 
@@ -151,6 +152,10 @@ test('Runtime.removeApplicationConfigPatch', () => {
 
 test('Runtime.getApplicationsIds', () => {
   expect(runtime.getApplicationsIds()).type.toBe<string[]>()
+})
+
+test('Runtime.getScheduler', () => {
+  expect(runtime.getScheduler()).type.toBe<SchedulerJob[]>()
 })
 
 test('Runtime.getApplications', () => {

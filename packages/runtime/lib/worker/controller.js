@@ -150,7 +150,7 @@ export class Controller extends EventEmitter {
         // Parse the configuration file the first time to obtain the schema
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
           onMissingEnv: this.#context.fetchApplicationUrl,
-          strictEnv: this.#context.strictEnv
+          strictEnv: false
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)

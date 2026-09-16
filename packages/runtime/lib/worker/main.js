@@ -4,7 +4,8 @@ import {
   disablePinoDirectWrite,
   ensureLoggableError,
   getPrivateSymbol,
-  parseMemorySize
+  parseMemorySize,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
 import { addPinoInstrumentation } from '@platformatic/tracing'
@@ -149,6 +150,8 @@ function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
   }
 }
 
+let compileCacheEnabled = false
+
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   // Normalize boolean shorthand: true -> { enabled: true }
@@ -187,8 +190,10 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
     const { compileCacheStatus } = moduleApi.constants ?? {}
 
     if (result.status === compileCacheStatus?.ENABLED) {
+      compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache enabled')
     } else if (result.status === compileCacheStatus?.ALREADY_ENABLED) {
+      compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache already enabled')
     } else if (result.status === compileCacheStatus?.FAILED) {
       logger.warn({ message: result.message }, 'Failed to enable module compile cache')
@@ -319,6 +324,12 @@ async function main () {
   updateGlobals({ itc })
 
   await controller.init(cleanup)
+
+  controller.on('started', () => {
+    if (compileCacheEnabled) {
+      scheduleCompileCacheFlush(logger)
+    }
+  })
 
   if (runtimeConfig.basePath) {
     const meta = await controller.capability.getMeta()
