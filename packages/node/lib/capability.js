@@ -17,6 +17,7 @@ import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import Module, { createRequire, findPackageJSON } from 'node:module'
 import { dirname, extname, resolve as resolvePath } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { version } from './schema.js'
 import { getTsconfig, ignoreDirs, isApplicationBuildable } from './utils.js'
 
@@ -80,7 +81,7 @@ async function isCommonJSEntrypoint (entrypoint) {
     return false
   }
 
-  const packageJsonPath = findPackageJSON(entrypoint, import.meta.url)
+  const packageJsonPath = findPackageJSON(pathToFileURL(entrypoint))
   if (!packageJsonPath) {
     return true
   }
