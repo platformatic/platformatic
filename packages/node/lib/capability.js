@@ -15,8 +15,9 @@ import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
-import { createRequire } from 'node:module'
-import { dirname, resolve as resolvePath } from 'node:path'
+import Module, { createRequire, findPackageJSON } from 'node:module'
+import { dirname, extname, resolve as resolvePath } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { version } from './schema.js'
 import { getTsconfig, ignoreDirs, isApplicationBuildable } from './utils.js'
 
@@ -67,6 +68,30 @@ function isKoa (app) {
   }
 
   return typeof app.callback === 'function'
+}
+
+async function isCommonJSEntrypoint (entrypoint) {
+  const extension = extname(entrypoint)
+
+  if (extension === '.cjs' || extension === '.cts') {
+    return true
+  }
+
+  if (extension === '.mjs' || extension === '.mts') {
+    return false
+  }
+
+  const packageJsonPath = findPackageJSON(pathToFileURL(entrypoint))
+  if (!packageJsonPath) {
+    return true
+  }
+
+  try {
+    const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+    return packageJson.type !== 'module'
+  } catch {
+    return true
+  }
 }
 
 async function getEntrypointInformation (root) {
@@ -182,8 +207,10 @@ export class NodeCapability extends BaseCapability {
     serverPromise.catch(() => {})
 
     try {
-      const require = createRequire(dirname(finalEntrypoint))
-      this.#module = require(finalEntrypoint)
+      // Only CommonJS uses require.main. Marking ESM as main would also set import.meta.main and run direct-execution code.
+      this.#module = (await isCommonJSEntrypoint(finalEntrypoint))
+        ? Module._load(finalEntrypoint, null, true)
+        : createRequire(dirname(finalEntrypoint))(finalEntrypoint)
     } catch (e) {
       // If there is top-leve await or unsupported TS syntax, we try to import the file instead
       if (e.code !== 'ERR_REQUIRE_ASYNC_MODULE' && e.code !== 'ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX') {
