@@ -142,11 +142,11 @@ Caches npm downloads between builds, significantly speeding up subsequent builds
 
 **Module Compile Cache:**
 
-Enable Node.js module compile cache in your `watt.json` for faster container startup times:
+Node.js module compile cache is enabled by default in your `watt.json`. To disable it:
 
 ```json
 {
-  "compileCache": true
+  "compileCache": false
 }
 ```
 

@@ -220,8 +220,12 @@ export class ChildProcess extends ITC {
   // accumulated while booting durable, as Node.js would otherwise only write it when the process
   // terminates.
   notify (name, message, options) {
-    if (name === 'url' && compileCacheEnabled) {
-      scheduleCompileCacheFlush()
+    if (name === 'url') {
+      if (compileCacheEnabled) {
+        scheduleCompileCacheFlush(undefined, 'child-process')
+      } else if (compileCacheRequested) {
+        super.notify('compile-cache:unavailable', { source: 'child-process' })
+      }
     }
 
     return super.notify(name, message, options)
@@ -794,6 +798,7 @@ function stripBasePath (basePath) {
 
 // Whether the module compile cache has been enabled in this process.
 let compileCacheEnabled = false
+let compileCacheRequested = false
 
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (contextData) {
@@ -810,6 +815,8 @@ async function setupCompileCache (contextData) {
   if (!normalizedConfig?.enabled) {
     return
   }
+
+  compileCacheRequested = true
 
   // Check if API is available (Node.js 22.1.0+)
   let moduleApi
