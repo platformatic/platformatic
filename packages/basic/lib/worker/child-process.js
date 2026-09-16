@@ -3,7 +3,8 @@ import {
   buildPinoTimestamp,
   disablePinoDirectWrite,
   ensureLoggableError,
-  mirrorGlobalDispatcherForBuiltinFetch
+  mirrorGlobalDispatcherForBuiltinFetch,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import {
   getAdditionalServerOptions,
@@ -216,6 +217,18 @@ export class ChildProcess extends ITC {
 
     // Initialize health signals API for child processes
     this.#initHealthSignalsApi()
+  }
+
+  // The URL notification is sent when the application server is listening, either detected via the
+  // tracing channel or reported by the application itself (urlFromScript). Make the compile cache
+  // accumulated while booting durable, as Node.js would otherwise only write it when the process
+  // terminates.
+  notify (name, message, options) {
+    if (name === 'url' && compileCacheEnabled) {
+      scheduleCompileCacheFlush()
+    }
+
+    return super.notify(name, message, options)
   }
 
   registerGlobals (globals) {
@@ -801,6 +814,9 @@ function stripBasePath (basePath) {
   }
 }
 
+// Whether the module compile cache has been enabled in this process.
+let compileCacheEnabled = false
+
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (contextData) {
   const config = contextData?.compileCache
@@ -841,6 +857,7 @@ async function setupCompileCache (contextData) {
 
   try {
     moduleApi.enableCompileCache(cacheDir)
+    compileCacheEnabled = true
   } catch {
     // Silently ignore - cache is optional optimization
   }
