@@ -71,9 +71,9 @@ export function applicationToSubgraphConfig (application) {
   }
 }
 
-export async function fetchGraphqlSubgraphs (applications, options, app) {
+export async function fetchGraphqlSubgraphs (applications, options, app, composeEndpointMissCache) {
   const subgraphs = applications.map(applicationToSubgraphConfig).filter(s => !!s)
-  const gateway = await compose({ ...toGatewayOptions(options, app), subgraphs })
+  const gateway = await compose({ ...toGatewayOptions(options, app), subgraphs, composeEndpointMissCache })
 
   return createSupergraph({
     logger: app.log,
