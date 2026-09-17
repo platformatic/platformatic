@@ -8,7 +8,7 @@ import {
   isValidApplicationId,
   stripPackageScope,
   topologyVariableName
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 
 test('the derivation is explicit id, then package name with the scope stripped, then directory', () => {
   deepStrictEqual(deriveApplicationId({ id: 'api', packageName: '@acme/frontend', directory: '/proj/web/x' }), {

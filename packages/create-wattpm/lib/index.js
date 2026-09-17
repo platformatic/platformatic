@@ -10,7 +10,7 @@ import {
   loadConfigurationFile,
   searchJavascriptFiles
 } from '@platformatic/foundation'
-import { isLegacyConfigurationFileName } from '@platformatic/foundation/lib/v4/index.js'
+import { isLegacyConfigurationFileName } from '@platformatic/foundation/lib/loader/index.js'
 import { findAnyConfigurationFile, ImportGenerator } from '@platformatic/generators'
 import { execa } from 'execa'
 import defaultInquirer from 'inquirer'

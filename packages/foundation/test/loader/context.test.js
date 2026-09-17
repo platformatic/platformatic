@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { createConfigurationContext, defaultMode, isProductionCommand } from '../../lib/v4/index.js'
+import { createConfigurationContext, defaultMode, isProductionCommand } from '../../lib/loader/index.js'
 
 test('production is true under start and build, and mode follows it', () => {
   // build produces production artifacts, which is why it carries the shortcut too.

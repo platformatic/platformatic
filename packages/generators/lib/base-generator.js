@@ -8,7 +8,7 @@ import {
   selectConfigurationFileNames,
   selectLegacyConfigurationFileNames,
   serializeConfiguration
-} from '@platformatic/foundation/lib/v4/index.js'
+} from '@platformatic/foundation/lib/loader/index.js'
 import { builders, generateCode, parseModule } from 'magicast'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'

@@ -1,7 +1,7 @@
 import { deepStrictEqual, rejects, strictEqual, throws } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadConfiguration, readAndStripSchemaStamp } from '../../lib/v4/index.js'
+import { loadConfiguration, readAndStripSchemaStamp } from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 test('the stamp is read for version detection and stripped', () => {

@@ -1,6 +1,6 @@
 import { deepStrictEqual, ok, strictEqual, throws } from 'node:assert'
 import { test } from 'node:test'
-import { canonicalize, formatPointer, isDeferredSlot } from '../../lib/v4/index.js'
+import { canonicalize, formatPointer, isDeferredSlot } from '../../lib/loader/index.js'
 
 function invalidAt (pointer, fragment) {
   return error => {

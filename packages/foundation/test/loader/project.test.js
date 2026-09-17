@@ -1,6 +1,6 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { test } from 'node:test'
-import { projectCapabilitySchema } from '../../lib/v4/project.js'
+import { projectCapabilitySchema } from '../../lib/loader/project.js'
 
 /*
   The block is v3's way of putting orchestration inside an application's own configuration so that

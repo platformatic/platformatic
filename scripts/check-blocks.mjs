@@ -336,7 +336,7 @@ async function loadConfigBlock (file, nested, env) {
 
   if (nested) {
     const { evaluateConfigurationFile } = await import(
-      pathToFileURL(join(root, 'packages/foundation/lib/v4/evaluate.js')).href
+      pathToFileURL(join(root, 'packages/foundation/lib/loader/evaluate.js')).href
     )
 
     await evaluateConfigurationFile({ path: file, env: realEnv, command: 'start', production: false })

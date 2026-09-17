@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadAdditionalApplications, loadConfiguration } from '../../lib/v4/index.js'
+import { loadAdditionalApplications, loadConfiguration } from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 function collector () {

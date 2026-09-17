@@ -10,7 +10,7 @@ import {
   listAncestorCandidatePaths,
   resolveNamedConfigurationFile,
   scanAncestorConfigurations
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 test('the deciding file is the nearest watt.config.* from the current directory upward', async t => {

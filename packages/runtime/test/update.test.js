@@ -1,5 +1,5 @@
 import { createDirectory, createEnvFileTool } from '@platformatic/foundation'
-import { evaluateConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
+import { evaluateConfigurationFile } from '@platformatic/foundation/lib/loader/index.js'
 import { envStringToObject } from '@platformatic/generators'
 import { Generator as ServiceGenerator } from '@platformatic/service'
 import assert from 'node:assert'

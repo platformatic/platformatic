@@ -5,7 +5,7 @@ import {
   checkCapabilityVersionSkew,
   compareCapabilityVersions,
   resolveCapabilityPackage
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 function fakePackage (name, version, extra = {}) {

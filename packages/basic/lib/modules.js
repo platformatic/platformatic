@@ -1,5 +1,5 @@
 import { detectApplicationType, findConfigurationFile } from '@platformatic/foundation'
-import { capabilityFactories, chooseConfigurationFileName } from '@platformatic/foundation/lib/v4/index.js'
+import { capabilityFactories, chooseConfigurationFileName } from '@platformatic/foundation/lib/loader/index.js'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'

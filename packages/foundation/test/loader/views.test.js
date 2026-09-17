@@ -6,7 +6,7 @@ import {
   resolveConfigurationEnvironment,
   resolveEnvFileSources,
   resolveWorkerEnvironment
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 // The plan names this test: for an application configured by a per-app file, the config-time and

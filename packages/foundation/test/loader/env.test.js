@@ -10,7 +10,7 @@ import {
   resolveEnvFileSources,
   resolveWorkerEnvironment,
   stripInjectedTopologyKeys
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 test('the recognized env files are the Vite set, most specific first', () => {

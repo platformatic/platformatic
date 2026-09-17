@@ -6,7 +6,7 @@ import {
   importCapabilitySchema,
   loadConfiguration,
   validateCapabilityConfiguration
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 const capabilitySchema = {

@@ -1,7 +1,7 @@
 import { rejects, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { loadConfiguration } from '../../lib/v4/index.js'
+import { loadConfiguration } from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 function load (root) {

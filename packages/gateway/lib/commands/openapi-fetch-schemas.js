@@ -1,4 +1,4 @@
-import { applyResolvedConfiguration, loadApplicationConfigurationFile } from '@platformatic/foundation/lib/v4/index.js'
+import { applyResolvedConfiguration, loadApplicationConfigurationFile } from '@platformatic/foundation/lib/loader/index.js'
 import { writeFile } from 'node:fs/promises'
 import { request } from 'undici'
 import { FailedToFetchOpenAPISchemaError } from '../errors.js'

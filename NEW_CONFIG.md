@@ -84,7 +84,7 @@ capability definition itself — the same expression a per-app file's default ex
 and a root entry's `config` hold. `application: next({ … })` is one application with
 the runtime options beside it; the shorthand wraps the bare definition into the
 entry's `config` slot the same way a bare definition exported at the root is wrapped
-(`foundation/lib/v4/topology.js:12-22`, `foundation/lib/v4/classify.js:40-42`).
+(`foundation/lib/loader/topology.js:12-22`, `foundation/lib/loader/classify.js:40-42`).
 
 **Per-app orchestration** (`workers`, `health`, per-app `env`, …) is not carried on
 the shorthand, and for a single application it rarely needs to be: every one of those
@@ -376,7 +376,7 @@ destination**, `resolvedApplicationsBasePath/<id>`. The second branch is what ke
 base: the first load passes (no clone, no clash), the clone arrives, and without it
 every load after that would throw. Anything else sharing the id is
 `PLT_AMBIGUOUS_APPLICATION_ID`, naming both sources
-(`foundation/lib/v4/topology.js:144-230`). An id is the mesh
+(`foundation/lib/loader/topology.js:144-230`). An id is the mesh
 hostname, the injected `PLT_<ID>_URL`, the metrics label and `wattpm inject`'s
 argument, so two distinct applications cannot share one. (Filed against the runtime
 as platformatic/platformatic#5079; v4 does not inherit it.) Capability configuration
@@ -1610,7 +1610,7 @@ configuration rather than becoming a hidden loader default; synthesis simply *is
 the configuration for a zero-config boot. It applies **only to a
 single-application project**, which is the only shape zero-config can produce:
 detection resolves one application type for the root directory
-(`foundation/lib/v4/load.js:469`). Multi-application projects get their ports from
+(`foundation/lib/loader/load.js:469`). Multi-application projects get their ports from
 their own configuration, never from a default.
 
 Synthesis is **not gated on what sits above**: running in an application directory of
@@ -4959,7 +4959,7 @@ runs multiple workers on a fixed port at all.
    decision rather than by surviving a refactor.
 
    **The v4 half of that reader is `applyResolvedConfiguration`**
-   (`foundation/lib/v4/application.js:68`), and its size is what the deletion is
+   (`foundation/lib/loader/application.js:68`), and its size is what the deletion is
    about: attach `kMetadata`, call the capability's `transform`, and stop. The v3
    reader did fourteen things at that position — read a document off disk, walk for
    `.env` files, substitute `{PLT_X}`, enforce `strictEnv`, upgrade by `$schema`
@@ -5019,13 +5019,13 @@ runs multiple workers on a fixed port at all.
    `port: process.env.PORT ?? ''` — a string in a number position, and the naive
    conversion of `{PORT}` — validated, and the block gate could not catch it because
    the schema said it was fine; the string branch is now on the projection's scalar
-   list (`server/port` in `foundation/lib/v4/project.js`), so a string port is refused
+   list (`server/port` in `foundation/lib/loader/project.js`), so a string port is refused
    as the type error it is. The second: the runtime had a v4
    projection (`v4Schema`, which drops `envfile`, `strictEnv`, `$schema`,
    `verticalScaler`, `services` and `web`) and the capabilities had none, so a capability configuration could
    still declare the whole wrapped `runtime` block — where every key validated,
    collected schema defaults, and did nothing, `workers: 3` starting one worker with no
-   diagnostic. `foundation/lib/v4/project.js` is the capability-side projection,
+   diagnostic. `foundation/lib/loader/project.js` is the capability-side projection,
    applied where the v4 loader obtains a capability's schema, which is the one place
    only v4 reaches; it removes the `runtime` block entirely, because the block was
    v3's input to `wrapInRuntimeConfig` and v4 has no hoisting step — the v4 spelling
@@ -5044,7 +5044,7 @@ runs multiple workers on a fixed port at all.
 
    **The audit's evidence heuristic keys on the property *name*, and two properties
    called `enabled` settle the question differently.** An application entry's is read
-   by `isApplicationEnabled` (`foundation/lib/v4/topology.js:288-290`), which treats a
+   by `isApplicationEnabled` (`foundation/lib/loader/topology.js:288-290`), which treats a
    string as *anything but `'false'` is true* — so its string branch is live v4
    behaviour and stays. `tracing.enabled` beside it is read as `config.tracing.enabled !== false`
    (`runtime/lib/runtime.js:2623`), a strict comparison against the boolean, so a string

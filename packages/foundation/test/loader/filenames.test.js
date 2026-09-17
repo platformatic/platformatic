@@ -10,7 +10,7 @@ import {
   isLegacyConfigurationFileName,
   legacyConfigurationFileNames,
   selectConfigurationFileNames
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 test('the recognized set is exactly the six configuration filenames', () => {

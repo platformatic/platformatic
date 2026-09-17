@@ -1,6 +1,6 @@
 import { deepStrictEqual } from 'node:assert'
 import { test } from 'node:test'
-import { serializeConfiguration, serializeString } from '../../lib/v4/index.js'
+import { serializeConfiguration, serializeString } from '../../lib/loader/index.js'
 
 test('serialized strings survive every character that could break the literal', () => {
   /*

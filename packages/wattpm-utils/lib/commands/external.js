@@ -10,7 +10,7 @@ import {
   safeRemove,
   saveConfigurationFile
 } from '@platformatic/foundation'
-import { chooseConfigurationFileName, serializeConfiguration } from '@platformatic/foundation/lib/v4/index.js'
+import { chooseConfigurationFileName, serializeConfiguration } from '@platformatic/foundation/lib/loader/index.js'
 import { appendApplications, findAnyConfigurationFile, importedConfiguration } from '@platformatic/generators'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'

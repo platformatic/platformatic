@@ -5,7 +5,7 @@ import {
   evaluateServesWithoutPort,
   loadConfiguration,
   willApplicationServe
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 // The matrix, as each capability's own start path behaves with no port and no command. It is

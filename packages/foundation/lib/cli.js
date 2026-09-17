@@ -7,7 +7,7 @@ import { pino } from 'pino'
 import pinoPretty from 'pino-pretty'
 import { findConfigurationFileRecursive } from './configuration.js'
 import { setPinoTimestamp } from './logger.js'
-import { findDecidingFile, isConfigurationFileName } from './v4/index.js'
+import { findDecidingFile, isConfigurationFileName } from './loader/index.js'
 
 /* c8 ignore next 4 - else branches */
 let verbose = false

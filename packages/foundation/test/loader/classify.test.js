@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import {
   autoWrapApplicationDefinition,
   classifyConfiguration
-} from '../../lib/v4/index.js'
+} from '../../lib/loader/index.js'
 
 const file = '/proj/watt.config.ts'
 

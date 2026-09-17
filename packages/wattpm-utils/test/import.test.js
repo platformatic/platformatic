@@ -1,5 +1,5 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { capabilityFactories } from '@platformatic/foundation/lib/v4/index.js'
+import { capabilityFactories } from '@platformatic/foundation/lib/loader/index.js'
 import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'

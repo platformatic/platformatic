@@ -5,12 +5,12 @@
       "head": "getEnvVarName (envVarName) {",
       "lines": 9
     },
-    "packages/foundation/lib/v4/topology.js:12-22": {
+    "packages/foundation/lib/loader/topology.js:12-22": {
       "sha": "24ab28d86fc2b2a0",
       "head": "// `application: node({ … })` rather than `application: { config: node({ … }) }`. A stamped factory",
       "lines": 11
     },
-    "packages/foundation/lib/v4/classify.js:40-42": {
+    "packages/foundation/lib/loader/classify.js:40-42": {
       "sha": "dec130ae3e9d8325",
       "head": "export function autoWrapApplicationDefinition (definition) {",
       "lines": 3
@@ -25,7 +25,7 @@
       "head": "const existingApplicationId = applications.findIndex(application => application.id === id)",
       "lines": 6
     },
-    "packages/foundation/lib/v4/topology.js:144-230": {
+    "packages/foundation/lib/loader/topology.js:144-230": {
       "sha": "80ea0345c8dd5dec",
       "head": "const claimant = applications.find(application => {",
       "lines": 87
@@ -495,7 +495,7 @@
       "head": "if (config.vite.ssr === true) {",
       "lines": 8
     },
-    "packages/foundation/lib/v4/load.js:469": {
+    "packages/foundation/lib/loader/load.js:469": {
       "sha": "38f06c935a15b4df",
       "head": "const { capability } = await detectCapability(cwd)",
       "lines": 1
@@ -1065,12 +1065,12 @@
       "head": "config.workers.scaleUpELU ??= config.verticalScaler.scaleUpELU",
       "lines": 1
     },
-    "packages/foundation/lib/v4/application.js:68": {
+    "packages/foundation/lib/loader/application.js:68": {
       "sha": "206d0aaf07c0443b",
       "head": "export async function applyResolvedConfiguration (root, config, { schema, transform, env = {}, context } = {}) {",
       "lines": 1
     },
-    "packages/foundation/lib/v4/application.js:20": {
+    "packages/foundation/lib/loader/application.js:20": {
       "sha": "373cc458d978e74c",
       "head": "export async function loadApplicationConfigurationFile (path, options = {}) {",
       "lines": 1
@@ -1080,7 +1080,7 @@
       "head": "export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig, context, capability) {",
       "lines": 1
     },
-    "packages/foundation/lib/v4/topology.js:288-290": {
+    "packages/foundation/lib/loader/topology.js:288-290": {
       "sha": "0df6dcc899c8f39b",
       "head": "if (typeof enabled === 'string') {",
       "lines": 3

@@ -9,7 +9,7 @@ import {
   configurationFileNames,
   isConfigurationFileName,
   loadApplicationConfigurationFile
-} from '@platformatic/foundation/lib/v4/index.js'
+} from '@platformatic/foundation/lib/loader/index.js'
 import jsonPatch from 'fast-json-patch'
 import { stat } from 'node:fs/promises'
 import { basename, dirname, resolve as resolvePath } from 'node:path'

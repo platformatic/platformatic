@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { evaluateConfigurationFile, evaluateConfigurationInProcess, loadConfiguration } from '../../lib/v4/index.js'
+import { evaluateConfigurationFile, evaluateConfigurationInProcess, loadConfiguration } from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
 
 test('the in-process mode produces what a worker produces', async t => {

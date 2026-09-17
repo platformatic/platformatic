@@ -1,4 +1,4 @@
-import { configurationFileNames } from '@platformatic/foundation/lib/v4/index.js'
+import { configurationFileNames } from '@platformatic/foundation/lib/loader/index.js'
 import {
   ensureLoggableError,
   FileWatcher,

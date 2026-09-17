@@ -7,7 +7,7 @@ import {
   logFatalError,
   parseArgs
 } from '@platformatic/foundation'
-import { deriveApplicationId, evaluateConfigurationFile, readPackageName } from '@platformatic/foundation/lib/v4/index.js'
+import { deriveApplicationId, evaluateConfigurationFile, readPackageName } from '@platformatic/foundation/lib/loader/index.js'
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { execa } from 'execa'
