@@ -8,7 +8,8 @@ import {
   errors,
   getServerUrl,
   importFile,
-  injectViaRequest
+  injectViaRequest,
+  servingState
 } from '@platformatic/basic'
 import { getEvents } from '@platformatic/globals'
 import inject from 'light-my-request'
@@ -251,14 +252,14 @@ export class NodeCapability extends BaseCapability {
   */
   getServingState () {
     if (this.#app?.isBackgroundApplication === true) {
-      return 'background'
+      return servingState.background
     }
 
     if (this.url) {
-      return 'listening'
+      return servingState.listening
     }
 
-    return this.#app ? 'mesh-only' : 'inactive'
+    return this.#app ? servingState.meshOnly : servingState.inactive
   }
 
   #hasServer () {

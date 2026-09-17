@@ -1,5 +1,5 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/schema'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation/schema'
+import { schemaComponents as utilsSchemaComponents, workerServesWithoutPort } from '@platformatic/foundation/schema'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -9,7 +9,7 @@ export const version = packageJson.version
 // Classified by the started worker: two of #hasServer()'s three inputs — the module's own
 // hasServer export and isBackgroundApplication on the factory's result — are known only once
 // the application's code has been imported and its factory called.
-export const servesWithoutPort = 'worker'
+export const servesWithoutPort = workerServesWithoutPort
 
 const node = {
   type: 'object',

@@ -1,3 +1,8 @@
+// The sentinel a capability's servesWithoutPort returns to defer the serving decision to the
+// started worker rather than deciding it at load. Defined here, in the light schema module, so the
+// capability schemas that declare it and the loader's serving predicate share one value.
+export const workerServesWithoutPort = 'worker'
+
 export function overridableValue (spec, defaultValue) {
   const res = {
     anyOf: [spec, { type: 'string' }]

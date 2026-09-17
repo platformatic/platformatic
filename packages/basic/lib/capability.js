@@ -31,6 +31,19 @@ import { NonZeroExitCode } from './errors.js'
 import { buildAdditionalServerOptions, cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
+/*
+  How a worker serves, as opposed to whether it is running: `listening` on a real port, `meshOnly`
+  reachable through the mesh with no port of its own, `background` serving no HTTP at all, and
+  `inactive` serving nothing when it was expected to. Reported by getServingState and collected by
+  the runtime; a capability that overrides getServingState returns one of these.
+*/
+export const servingState = Object.freeze({
+  listening: 'listening',
+  meshOnly: 'mesh-only',
+  background: 'background',
+  inactive: 'inactive'
+})
+
 export class BaseCapability extends EventEmitter {
   status
   type
@@ -410,9 +423,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   /*
-    How this worker serves, as opposed to whether it is running: 'listening' on a real port,
-    'mesh-only' reachable through the mesh with no port of its own, 'background' serving no HTTP at
-    all, 'inactive' serving nothing when it was expected to.
+    See servingState for what the values mean.
 
     getDispatchTarget cannot answer this — its fallback returns the capability whenever there is no
     URL, whether the start method built a dispatcher or returned without building anything — so this
@@ -424,7 +435,7 @@ export class BaseCapability extends EventEmitter {
     address that answers nothing.
   */
   getServingState () {
-    return this.url ? 'listening' : 'inactive'
+    return this.url ? servingState.listening : servingState.inactive
   }
 
   getDispatchFunc () {

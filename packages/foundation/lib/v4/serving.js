@@ -1,4 +1,15 @@
+import { workerServesWithoutPort } from '../schema.js'
 import { ApplicationStartsNothingError } from './errors.js'
+
+// Why willApplicationServe reached its verdict. Surfaced on the outcome so a caller (and a test)
+// reads a named cause rather than matching a message.
+export const servingReason = Object.freeze({
+  workerClassified: 'worker-classified',
+  servesWithoutPort: 'serves-without-port',
+  port: 'port',
+  command: 'command',
+  noPortNoCommand: 'no-port-no-command'
+})
 
 /*
   A declaration is a constant in the common case and a callable for the capability whose behaviour
@@ -12,11 +23,11 @@ import { ApplicationStartsNothingError } from './errors.js'
 export function evaluateServesWithoutPort (declaration, config) {
   const resolved = typeof declaration === 'function' ? declaration(config) : declaration
 
-  // Absent means 'worker', not false. A third-party capability that does not declare this is one
-  // the loader knows nothing about, and the two wrong answers are opposite: false rejects at load
-  // a capability that would have served the mesh perfectly well, and true prints a mesh URL that
-  // answers nothing. Deferring to the started worker does neither.
-  return resolved ?? 'worker'
+  // Absent means worker-classified, not false. A third-party capability that does not declare this
+  // is one the loader knows nothing about, and the two wrong answers are opposite: false rejects at
+  // load a capability that would have served the mesh perfectly well, and true prints a mesh URL
+  // that answers nothing. Deferring to the started worker does neither.
+  return resolved ?? workerServesWithoutPort
 }
 
 export function servingEnvironment (production) {
@@ -43,25 +54,25 @@ export function willApplicationServe ({ declaration, config, production }) {
   // Worker-classified rows are exempt in both modes, because nothing main-side can prove they
   // start nothing — which is what worker classification means. Reading "framework capability under
   // dev" as covering Vite SSR would reject exactly the configuration the matrix exists to admit.
-  if (resolved === 'worker') {
-    return { serves: true, reason: 'worker-classified' }
+  if (resolved === workerServesWithoutPort) {
+    return { serves: true, reason: servingReason.workerClassified }
   }
 
   const environment = servingEnvironment(production)
 
   if (resolved?.[environment]) {
-    return { serves: true, reason: 'serves-without-port' }
+    return { serves: true, reason: servingReason.servesWithoutPort }
   }
 
   if (config?.server?.port !== undefined) {
-    return { serves: true, reason: 'port' }
+    return { serves: true, reason: servingReason.port }
   }
 
   if (config?.application?.commands?.[environment]) {
-    return { serves: true, reason: 'command' }
+    return { serves: true, reason: servingReason.command }
   }
 
-  return { serves: false, reason: 'no-port-no-command' }
+  return { serves: false, reason: servingReason.noPortNoCommand }
 }
 
 // All three inputs are configuration, so the predicate is decidable before boot. An application

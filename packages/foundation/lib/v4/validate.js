@@ -2,6 +2,7 @@ import Ajv from 'ajv'
 import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { workerServesWithoutPort } from '../schema.js'
 import { rootOnlyKeys } from './classify.js'
 import { CapabilitySchemaNotFoundError, InvalidApplicationConfigurationError } from './errors.js'
 import { projectCapabilitySchema } from './project.js'
@@ -136,11 +137,11 @@ export async function importCapabilitySchema (module, applicationRoot, { runtime
           path: resolved,
           schema: projected ? projectCapabilitySchema(loaded.schema) : loaded.schema,
           // The package-level metadata main-side preparation needs besides the schema. An absent
-          // servesWithoutPort means 'worker', which is what the serving predicate reads.
+          // servesWithoutPort means worker-classified, which is what the serving predicate reads.
           metadata: {
             skipTracingHooks: loaded.skipTracingHooks ?? false,
             modulesToLoad: loaded.modulesToLoad ?? [],
-            servesWithoutPort: loaded.servesWithoutPort ?? 'worker'
+            servesWithoutPort: loaded.servesWithoutPort ?? workerServesWithoutPort
           }
         }
       }
