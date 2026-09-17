@@ -103,7 +103,6 @@ export class RemixCapability extends ViteCapability {
     return super.getMeta({
       includeConnection: true,
       prefix: this.basePath ?? this.#basePath,
-      childProcess: Boolean(this.childManager),
       wantsAbsoluteUrls: true,
       needsRootTrailingSlash: true
     })

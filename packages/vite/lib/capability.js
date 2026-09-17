@@ -183,7 +183,6 @@ export class ViteCapability extends BaseCapability {
       ...options,
       includeConnection: true,
       prefix: this.basePath ?? config?.base ?? options.prefix ?? this.#basePath,
-      childProcess: Boolean(this.childManager),
       wantsAbsoluteUrls: true,
       needsRootTrailingSlash: true
     })
@@ -477,7 +476,6 @@ export class ViteSSRCapability extends NodeCapability {
       gateway: {
         tcp: typeof this.url !== 'undefined',
         url: this.url,
-        childProcess: Boolean(this.childManager),
         prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
         wantsAbsoluteUrls: true,
         needsRootTrailingSlash: true

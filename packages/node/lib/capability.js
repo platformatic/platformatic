@@ -454,7 +454,6 @@ export class NodeCapability extends BaseCapability {
     const applicationMeta = super.getMeta({
       includeConnection: true,
       prefix: this.basePath ?? this.#basePath,
-      childProcess: Boolean(this.childManager),
       wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
       needsRootTrailingSlash: true
     })

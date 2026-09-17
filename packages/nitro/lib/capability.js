@@ -249,7 +249,6 @@ export class NitroCapability extends BaseCapability {
 
     return super.getMeta({
       includeConnection: true,
-      childProcess: Boolean(this.childManager),
       prefix: this.basePath ?? this.#basePath,
       wantsAbsoluteUrls: !!hasBasePath,
       needsRootTrailingSlash: false
@@ -503,7 +502,6 @@ export class NitroViteCapability extends ViteCapability {
 
     return super.getMeta({
       includeConnection: true,
-      childProcess: Boolean(this.childManager),
       prefix: this.basePath ?? this.#basePath,
       wantsAbsoluteUrls: !!hasBasePath,
       needsRootTrailingSlash: false

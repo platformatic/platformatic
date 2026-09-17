@@ -439,6 +439,10 @@ export class BaseCapability extends EventEmitter {
       gateway.url = this.url
     }
 
+    if (this.childManager) {
+      gateway.childProcess = true
+    }
+
     return {
       gateway: {
         wantsAbsoluteUrls: false,
