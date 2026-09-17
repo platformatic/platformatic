@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import { schemaComponents } from '@platformatic/foundation/lib/schema.js'
+import { schemaComponents } from '@platformatic/foundation/schema'
 import { version } from './version.js'
 
 const runtimeLogger = {

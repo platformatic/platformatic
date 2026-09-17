@@ -4,6 +4,15 @@
   "description": "Platformatic runtime",
   "main": "index.js",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./schema": "./lib/schema.js",
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "scripts": {
     "test": "npm run test:types && npm run test:main && npm run test:api && npm run test:cli && npm run test:start && npm run test:multiple-workers",
     "test:main": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/versions/*.test.js",

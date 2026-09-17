@@ -1,6 +1,6 @@
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/lib/schema.js'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation/lib/schema.js'
-import { schemaComponents as viteSchemaComponents } from '@platformatic/vite/lib/schema.js'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/schema'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation/schema'
+import { schemaComponents as viteSchemaComponents } from '@platformatic/vite/schema'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 

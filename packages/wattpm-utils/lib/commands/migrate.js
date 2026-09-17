@@ -19,7 +19,7 @@ import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
   loader is still in the tree.
 */
 import { extractLegacyModule as extractModuleFromSchemaUrl, loadLegacyConfigurationFile as loadRawConfigurationFile } from '../legacy/reader.js'
-import { v4Schema } from '@platformatic/runtime/lib/schema.js'
+import { v4Schema } from '@platformatic/runtime/schema'
 import { bold } from 'colorette'
 import { version } from '../version.js'
 import { execa } from 'execa'
