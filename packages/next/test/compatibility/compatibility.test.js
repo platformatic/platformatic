@@ -13,7 +13,7 @@ import {
   verifyDevelopmentFrontendWithPrefix,
   verifyDevelopmentMode,
   verifyFrontendOnPrefix,
-  ensureDependencies
+  ensureDependencies,
 } from '../../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
@@ -31,8 +31,8 @@ async function verifyMiddlewareContext (t, url) {
       status: 200,
       data: {
         hello: 'world',
-        intercepted: true
-      }
+        intercepted: true,
+      },
     })
   )
 }
@@ -71,7 +71,7 @@ const reactVersions = {
   [NEXT_VERSION_15_4]: [REACT_VERSION_18, REACT_VERSION_19],
   [NEXT_VERSION_15_5]: [REACT_VERSION_18, REACT_VERSION_19],
   [NEXT_VERSION_16_0]: [REACT_VERSION_18, REACT_VERSION_19],
-  [NEXT_VERSION_16_1]: [REACT_VERSION_18, REACT_VERSION_19]
+  [NEXT_VERSION_16_1]: [REACT_VERSION_18, REACT_VERSION_19],
 }
 
 const compatibilityVersions = [
@@ -85,7 +85,7 @@ const compatibilityVersions = [
   NEXT_VERSION_15_4,
   NEXT_VERSION_15_5,
   NEXT_VERSION_16_0,
-  NEXT_VERSION_16_1
+  NEXT_VERSION_16_1,
 ]
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
@@ -125,7 +125,7 @@ async function linkNext (nextVersion, reactVersion, root) {
         '--allow-build=sharp',
         `next@${nextVersion}`,
         `react@${reactVersion}`,
-        `react-dom@${reactVersion}`
+        `react-dom@${reactVersion}`,
       ],
       { cwd: frontendRoot }
     )
@@ -154,7 +154,15 @@ async function installDependencies (nextVersion, reactVersion) {
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
   await execa(
     'pnpm',
-    ['add', '-D', '--ignore-workspace', '--allow-build=sharp', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`],
+    [
+      'add',
+      '-D',
+      '--ignore-workspace',
+      '--allow-build=sharp',
+      `next@${nextVersion}`,
+      `react@${reactVersion}`,
+      `react-dom@${reactVersion}`,
+    ],
     { cwd: base }
   )
 }
@@ -167,7 +175,7 @@ async function combine (nextVersions, configuration) {
         ...configuration,
         tag: `next@${nextVersion}, react@${reactVersion}`,
         name: `Next.js ${nextVersion} React ${reactVersion}`,
-        additionalSetup: await boundLinkNext(nextVersion, reactVersion)
+        additionalSetup: await boundLinkNext(nextVersion, reactVersion),
       })
     }
   }
@@ -175,44 +183,52 @@ async function combine (nextVersions, configuration) {
 }
 
 async function run () {
-  const developmentConfigurations = [
-    ...(await combine(compatibilityVersions, {
-      id: 'compatibility',
-      check: verifyDevelopmentFrontendWithPrefix,
-      htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
-      hmrTriggerFile,
-      language: 'js'
-    })),
-    ...(await combine(compatibilityVersions, {
-      id: 'middleware',
-      files,
-      check: verifyDevelopmentMiddlewareContext,
-      htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
-      language: 'js'
-    }))
-  ]
+  const mode = process.env.PLATFORMATIC_NEXT_COMPATIBILITY_MODE
+  const runDevelopment = mode !== 'production'
+  const runProduction = mode !== 'development'
 
-  verifyDevelopmentMode(developmentConfigurations, '_next/webpack-hmr', undefined, websocketHMRHandler)
+  if (runDevelopment) {
+    const developmentConfigurations = [
+      ...(await combine(compatibilityVersions, {
+        id: 'compatibility',
+        check: verifyDevelopmentFrontendWithPrefix,
+        htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
+        hmrTriggerFile,
+        language: 'js'
+      })),
+      ...(await combine(compatibilityVersions, {
+        id: 'middleware',
+        files,
+        check: verifyDevelopmentMiddlewareContext,
+        htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
+        language: 'js'
+      }))
+    ]
 
-  const productionConfigurations = [
-    ...(await combine(compatibilityVersions, {
-      id: 'compatibility',
-      prefix: '/frontend',
-      files,
-      checks: [verifyFrontendOnPrefix],
-      htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
-      language: 'js'
-    })),
-    ...(await combine(compatibilityVersions, {
-      id: 'middleware',
-      files,
-      checks: [verifyMiddlewareContext],
-      htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
-      language: 'js'
-    }))
-  ]
+    verifyDevelopmentMode(developmentConfigurations, '_next/webpack-hmr', undefined, websocketHMRHandler)
+  }
 
-  verifyBuildAndProductionMode(productionConfigurations)
+  if (runProduction) {
+    const productionConfigurations = [
+      ...(await combine(compatibilityVersions, {
+        id: 'compatibility',
+        prefix: '/frontend',
+        files,
+        checks: [verifyFrontendOnPrefix],
+        htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
+        language: 'js'
+      })),
+      ...(await combine(compatibilityVersions, {
+        id: 'middleware',
+        files,
+        checks: [verifyMiddlewareContext],
+        htmlContents: [/<script src="\/frontend\/_next\/static\/chunks\/.*\.js/],
+        language: 'js'
+      }))
+    ]
+
+    verifyBuildAndProductionMode(productionConfigurations)
+  }
 }
 
 run()
