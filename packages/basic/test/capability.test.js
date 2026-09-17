@@ -165,18 +165,12 @@ test('BaseCapability - getDispatchTarget - "websocket" flag keeps in-thread disp
   deepStrictEqual(await capability.getDispatchTarget(), dispatchTarget)
 })
 
-test('BaseCapability - getDispatchTarget - "websocket" flag is ignored with "useHttp" or for the entrypoint', async t => {
+test('BaseCapability - getDispatchTarget - "websocket" flag is ignored with "useHttp"', async t => {
   const useHttpCapability = await create(t, { applicationConfig: { websocket: true, useHttp: true } })
   useHttpCapability.getDispatchFunc = async () => ({ inject () {} })
   useHttpCapability.url = 'http://127.0.0.1:1234'
 
   deepStrictEqual(await useHttpCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
-
-  const entrypointCapability = await create(t, { applicationConfig: { websocket: true }, isEntrypoint: true })
-  entrypointCapability.getDispatchFunc = async () => ({ inject () {} })
-  entrypointCapability.url = 'http://127.0.0.1:1234'
-
-  deepStrictEqual(await entrypointCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
 test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {

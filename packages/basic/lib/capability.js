@@ -422,7 +422,7 @@ export class BaseCapability extends EventEmitter {
     // inject is not implemented): the others dispatch via the bound TCP address,
     // as under "useHttp".
     const applicationConfig = this.context.applicationConfig
-    if (applicationConfig?.websocket && !applicationConfig.useHttp && !this.isEntrypoint) {
+    if (applicationConfig?.websocket && !applicationConfig.useHttp) {
       const dispatchFunc = await this.getDispatchFunc()
 
       if (dispatchFunc !== this) {

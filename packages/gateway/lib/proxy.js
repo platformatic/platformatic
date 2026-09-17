@@ -1,6 +1,6 @@
 import httpProxy from '@fastify/http-proxy'
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
-import { getGlobal, getITC, getPrometheus } from '@platformatic/globals'
+import { getITC, getPrometheus, getUndiciThreadInterceptor } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
@@ -225,6 +225,9 @@ async function proxyPlugin (app, opts) {
       })
     }
 
+    const threadInterceptor = getUndiciThreadInterceptor({ throwOnMissing: false })
+    // Resolve local upgrades through the mesh so replacement workers never leave a stale TCP upstream.
+    const wsOrigin = threadInterceptor?.createUpgradeAgent && isLocalApplication(application) ? origin : (url ?? origin)
     const proxyOptions = {
       prefix,
       rewritePrefix,
@@ -232,14 +235,14 @@ async function proxyPlugin (app, opts) {
       handler: proxyHandler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
-      wsClientOptions: getGlobal()?.undiciThreadInterceptor?.createUpgradeAgent
-        ? { agent: getGlobal().undiciThreadInterceptor.createUpgradeAgent() }
+      wsClientOptions: threadInterceptor?.createUpgradeAgent
+        ? { agent: threadInterceptor.createUpgradeAgent() }
         : undefined,
 
       websocket: true,
       // When getUpstream is provided and no explicit WebSocket upstream is configured,
       // leave wsUpstream undefined so that getUpstream is used to select the upstream per-connection
-      wsUpstream: ws?.upstream ?? (getUpstream ? undefined : (url ?? origin)),
+      wsUpstream: ws?.upstream ?? (getUpstream ? undefined : wsOrigin),
       wsReconnect: ws?.reconnect,
       wsHooks: {
         onConnect: (...args) => {

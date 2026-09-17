@@ -16,7 +16,6 @@ import {
 import { getTracerProvider } from '@platformatic/globals'
 import { addPinoInstrumentation, telemetry } from '@platformatic/tracing'
 import fastify from 'fastify'
-import { printSchema } from 'graphql'
 import { randomUUID } from 'node:crypto'
 import { hostname } from 'node:os'
 import pino from 'pino'
@@ -200,7 +199,13 @@ export class ServiceCapability extends BaseCapability {
   async getGraphqlSchema () {
     await this.init()
     await this.#app.ready()
-    return this.#app.graphql ? printSchema(this.#app.graphql.schema) : null
+    if (!this.#app.graphql) {
+      return null
+    }
+
+    // Keep GraphQL optional for applications that only expose HTTP routes.
+    const { printSchema } = await import('graphql')
+    return printSchema(this.#app.graphql.schema)
   }
 
   async updateContext (context) {

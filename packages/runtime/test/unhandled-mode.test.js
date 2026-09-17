@@ -198,7 +198,7 @@ test('should exit with the PROCESS_UNHANDLED_ERROR code on unhandled rejections 
 test('should exit with the PROCESS_UNHANDLED_ERROR code when an unhandled rejection follows a stop', async t => {
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
   const server = await createRuntime(configFile)
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   t.after(() => {
     return server.close()

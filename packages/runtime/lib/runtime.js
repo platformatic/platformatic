@@ -8,7 +8,8 @@ import {
   kEnvFileFallbackKeys,
   kMetadata,
   kTimeout,
-  parseMemorySize
+  parseMemorySize,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
@@ -461,6 +462,7 @@ export class Runtime extends EventEmitter {
 
     await this.#dynamicWorkersScaler?.start()
     this.#showUrls()
+    scheduleCompileCacheFlush(this.logger)
     return this.getUrls()
   }
 

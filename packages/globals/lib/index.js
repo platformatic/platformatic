@@ -25,6 +25,11 @@ export function getGlobal () {
   return state.initialized ? state.values : undefined
 }
 
+// Return a shallow selection without exposing the mutable globals container.
+export function getGlobals (...names) {
+  return Object.fromEntries(names.map(name => [name, getField(name)]))
+}
+
 export function updateGlobals (updates) {
   state.initialized = true
 
@@ -63,6 +68,22 @@ export function getExecutable (options) {
 
 export function getRuntimeId (options) {
   return getField('runtimeId', options)
+}
+
+export function getCompileCache (options) {
+  return getField('compileCache', options)
+}
+
+export function getResourceLimits (options) {
+  return getField('resourceLimits', options)
+}
+
+export function getUndiciThreadInterceptor (options) {
+  return getField('undiciThreadInterceptor', options)
+}
+
+export function setUndiciThreadInterceptor (interceptor) {
+  updateGlobals({ undiciThreadInterceptor: interceptor })
 }
 
 export function getNextVersion (options) {

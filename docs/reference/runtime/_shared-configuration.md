@@ -638,7 +638,7 @@ An object with the following settings:
   - **`level`** — The key that contains the numeric log level. Default: `level`.
   - **`time`** — The key that contains the log timestamp. Default: `time`.
   - **`message`** — The key that contains the log message. Default: `msg`.
-- **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
+- **`customLevels`** — Configuration for custom levels. Names defined here can also be used as the logger's `level`. See [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
 - **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `tracing` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.

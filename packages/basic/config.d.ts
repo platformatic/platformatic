@@ -51,13 +51,10 @@ export interface PlatformaticBasicConfig {
         };
     workersRestartDelay?: number | string;
     logger?: {
-      level?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
+      /**
+       * A standard Pino log level or a level defined in customLevels.
+       */
+      level?: string;
       transport?:
         | {
             target?: string;

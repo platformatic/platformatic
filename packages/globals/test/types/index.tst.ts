@@ -1,5 +1,7 @@
 import * as Client from '@platformatic/prom-client'
 import type { AsyncLocalStorage } from 'node:async_hooks'
+import type { Agent } from 'node:http'
+import type { ResourceLimits } from 'node:worker_threads'
 import type Pino from 'pino'
 import { expect, test } from 'tstyche'
 import * as globals from '../../lib/index.js'
@@ -18,8 +20,8 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.reuseTcpPorts).type.toBe<boolean>()
 
   // Service configuration
-  expect(platformatic.host).type.toBe<string>()
-  expect(platformatic.port).type.toBe<number>()
+  expect(platformatic.host).type.toBe<string | true>()
+  expect(platformatic.port).type.toBe<number | true>()
   expect(platformatic.additionalServerOptions).type.toBe<object>()
   expect(platformatic.tracingConfig).type.toBe<object>()
   expect(platformatic.config).type.toBe<object>()
@@ -49,6 +51,31 @@ test("updateGlobals", () => {
   expect(globals.updateGlobals({ config: {} })).type.toBe<PlatformaticGlobal>()
   expect(globals.updateGlobals).type.toBeCallableWith({ logger: {} as Pino.Logger })
   expect(globals.updateGlobals).type.not.toBeCallableWith({ unknown: true })
+})
+
+test('getGlobals', () => {
+  expect(globals.getGlobals()).type.toBe<Record<string, unknown>>()
+  expect(globals.getGlobals('logger', 'applicationId')).type.toBe<Record<string, unknown>>()
+  expect(globals.getGlobals).type.toBeCallableWith(...([] as string[]))
+  expect(globals.getGlobals).type.not.toBeCallableWith(['logger'])
+  expect(globals.getGlobals).type.not.toBeCallableWith(1)
+})
+
+test('interceptor and child context accessors', () => {
+  const interceptor = {} as globals.UndiciThreadInterceptor
+  expect(globals.setUndiciThreadInterceptor(interceptor)).type.toBe<void>()
+  expect(globals.setUndiciThreadInterceptor).type.not.toBeCallableWith({})
+  expect(globals.getUndiciThreadInterceptor()).type.toBe<globals.UndiciThreadInterceptor>()
+  expect(globals.getUndiciThreadInterceptor().createUpgradeAgent()).type.toBe<Agent>()
+  expect(globals.getUndiciThreadInterceptor({ throwOnMissing: false })).type.toBe<globals.UndiciThreadInterceptor | undefined>()
+  expect(globals.getUndiciThreadInterceptor({} as globals.GlobalGetterOptions)).type.toBe<globals.UndiciThreadInterceptor | undefined>()
+  expect(globals.updateGlobals).type.toBeCallableWith({ undiciThreadInterceptor: interceptor })
+  expect(globals.getCompileCache()).type.toBe<boolean | { enabled?: boolean; directory?: string } | undefined>()
+  expect(globals.getCompileCache({ throwOnMissing: false })).type.toBe<PlatformaticGlobal['compileCache']>()
+  expect(globals.getResourceLimits()).type.toBe<ResourceLimits | undefined>()
+  expect(globals.getResourceLimits({ throwOnMissing: false })).type.toBe<ResourceLimits | undefined>()
+  expect(globals.updateGlobals).type.toBeCallableWith({ host: true, port: true })
+  expect(globals.updateGlobals).type.not.toBeCallableWith({ host: false, port: false })
 })
 
 test("getters", () => {

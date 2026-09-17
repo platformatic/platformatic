@@ -82,7 +82,7 @@ test('should proxy WebSocket connections to a node application using the websock
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // The WebSocket upgrade must succeed with no manual proxy.ws wiring
   await connectAndEcho(address)
@@ -124,7 +124,7 @@ test('should proxy WebSocket connections to a service application using the webs
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // The WebSocket upgrade must succeed with no manual proxy.ws wiring
   await connectAndEcho(address)
@@ -168,7 +168,7 @@ test('should dial a fresh TCP port after the application is restarted', async t 
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   const portBefore = new URL((await runtime.getApplicationMeta('echo')).gateway.url).port
   await connectAndEcho(address)

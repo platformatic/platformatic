@@ -7,7 +7,7 @@ import {
   parseMemorySize,
   scheduleCompileCacheFlush
 } from '@platformatic/foundation'
-import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
+import { getITC, getLogger, setUndiciThreadInterceptor, updateGlobals } from '@platformatic/globals'
 import { addPinoInstrumentation } from '@platformatic/tracing'
 import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
@@ -274,7 +274,7 @@ async function main () {
   }
 
   const { threadDispatcher } = await setDispatcher(runtimeConfig)
-  updateGlobals({ undiciThreadInterceptor: threadDispatcher.interceptor })
+  setUndiciThreadInterceptor(threadDispatcher.interceptor)
 
   const inspectorOptions = workerData.inspectorOptions
 

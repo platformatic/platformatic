@@ -32,12 +32,16 @@ import {
 import { getApplicationUrl } from '../utils.js'
 import { installGlobalDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
-function fetchApplicationUrl (application, key) {
-  if (!key.endsWith('_URL') || !application.id) {
-    return null
+function fetchApplicationUrl (applications, key) {
+  // Only named application placeholders may fall back to a mesh URL.
+  for (const application of applications) {
+    const name = application.id.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')
+    if (key === `PLT_${name}_URL`) {
+      return getApplicationUrl(application.id)
+    }
   }
 
-  return getApplicationUrl(application.id)
+  return null
 }
 
 function handleUnhandled (app, event, listeners, timeout, err, ...args) {
@@ -57,7 +61,9 @@ function handleUnhandled (app, event, listeners, timeout, err, ...args) {
     }
   }
 
-  app.stop().catch()
+  app.stop().catch(err => {
+    logger.debug({ err: ensureLoggableError(err) }, `Stopping the ${label} after the ${event} event failed.`)
+  })
 }
 
 export class Controller extends EventEmitter {
@@ -96,7 +102,7 @@ export class Controller extends EventEmitter {
       worker: workerData?.worker,
       resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
-      fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig),
+      onMissingEnv: fetchApplicationUrl.bind(null, runtimeConfig.applications ?? [applicationConfig]),
       strictEnv: runtimeConfig.strictEnv
     }
   }
@@ -149,7 +155,7 @@ export class Controller extends EventEmitter {
       } else if (appConfig.config) {
         // Parse the configuration file the first time to obtain the schema
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.fetchApplicationUrl,
+          onMissingEnv: this.#context.onMissingEnv,
           strictEnv: false
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)

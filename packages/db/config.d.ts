@@ -25,6 +25,7 @@ export type CrudOperationAuth =
 export interface PlatformaticDatabaseConfig {
   basePath?: string;
   server?: {
+    errorHandler?: string;
     hostname?: string;
     port?: number | string;
     /**
@@ -57,13 +58,10 @@ export interface PlatformaticDatabaseConfig {
     logger?:
       | boolean
       | {
-          level?: (
-            | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-            | {
-                [k: string]: unknown;
-              }
-          ) &
-            string;
+          /**
+           * A standard Pino log level or a level defined in customLevels.
+           */
+          level?: string;
           transport?:
             | {
                 target?: string;
@@ -616,13 +614,10 @@ export interface PlatformaticDatabaseConfig {
         };
     workersRestartDelay?: number | string;
     logger?: {
-      level?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
+      /**
+       * A standard Pino log level or a level defined in customLevels.
+       */
+      level?: string;
       transport?:
         | {
             target?: string;

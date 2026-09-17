@@ -9,6 +9,8 @@ test('getGlobal should be undefined before initialization', async () => {
   const isolated = await import('../lib/index.js?uninitialized')
 
   strictEqual(isolated.getGlobal(), undefined)
+  deepStrictEqual(isolated.getGlobals(), {})
+  throws(() => isolated.getGlobals('logger'), { code: 'PLT_GLOBALS_MISSING_FIELD' })
 })
 
 test('getters should return global fields', () => {
@@ -186,4 +188,72 @@ test('separate module instances should share global values', async () => {
 
   strictEqual(globals.getLogger().isolated, true)
   strictEqual(isolated.getLogger().isolated, true)
+})
+
+test('getGlobals selects fields without exposing the globals container', t => {
+  const logger = { name: 'original' }
+  globals.updateGlobals({ logger, applicationId: 'app', config: {} })
+  t.after(() => globals.removeGlobals(['logger', 'applicationId', 'config']))
+
+  const selected = globals.getGlobals('logger', 'applicationId', 'logger')
+  deepStrictEqual(Object.keys(selected), ['logger', 'applicationId'])
+  strictEqual(selected.logger, logger)
+  strictEqual(selected.applicationId, 'app')
+
+  selected.logger = { name: 'replacement' }
+  delete selected.applicationId
+  strictEqual(globals.getLogger(), logger)
+  strictEqual(globals.getApplicationId(), 'app')
+  deepStrictEqual(globals.getGlobals(), {})
+})
+
+test('getGlobals distinguishes registered undefined values from missing fields', t => {
+  globals.updateGlobals({ config: undefined })
+  t.after(() => globals.removeGlobals(['config']))
+
+  deepStrictEqual(globals.getGlobals('config'), { config: undefined })
+  throws(() => globals.getGlobals('config', 'unknown'), { code: 'PLT_GLOBALS_MISSING_FIELD' })
+  throws(() => globals.getGlobals('constructor'), { code: 'PLT_GLOBALS_MISSING_FIELD' })
+
+  globals.removeGlobals(['config'])
+  throws(() => globals.getGlobals('config'), { code: 'PLT_GLOBALS_MISSING_FIELD' })
+})
+
+test('interceptor setter initializes and replaces the named global', async t => {
+  globals.removeGlobals(['undiciThreadInterceptor'])
+  t.after(() => globals.removeGlobals(['undiciThreadInterceptor']))
+  throws(() => globals.getUndiciThreadInterceptor(), { code: 'PLT_GLOBALS_MISSING_FIELD' })
+  strictEqual(globals.getUndiciThreadInterceptor({ throwOnMissing: false }), undefined)
+
+  const interceptor = { createUpgradeAgent () {} }
+  strictEqual(globals.setUndiciThreadInterceptor(interceptor), undefined)
+  strictEqual(globals.hasField('undiciThreadInterceptor'), true)
+  strictEqual(globals.getUndiciThreadInterceptor(), interceptor)
+
+  const isolated = await import('../lib/index.js?interceptor')
+  strictEqual(isolated.getUndiciThreadInterceptor(), interceptor)
+  const replacement = { createUpgradeAgent () {} }
+  isolated.setUndiciThreadInterceptor(replacement)
+  strictEqual(globals.getUndiciThreadInterceptor(), replacement)
+})
+
+test('child context getters support missing and registered values', t => {
+  const fields = ['compileCache', 'resourceLimits']
+  globals.removeGlobals(fields)
+  t.after(() => globals.removeGlobals(fields))
+
+  for (const getter of [globals.getCompileCache, globals.getResourceLimits]) {
+    throws(() => getter(), { code: 'PLT_GLOBALS_MISSING_FIELD' })
+    strictEqual(getter({ throwOnMissing: false }), undefined)
+  }
+
+  const compileCache = { enabled: true, directory: '.plt/compile-cache' }
+  const resourceLimits = { maxOldGenerationSizeMb: 256 }
+  globals.updateGlobals({ compileCache, resourceLimits })
+  strictEqual(globals.getCompileCache(), compileCache)
+  strictEqual(globals.getResourceLimits(), resourceLimits)
+
+  globals.updateGlobals({ compileCache: false, resourceLimits: undefined })
+  strictEqual(globals.getCompileCache(), false)
+  strictEqual(globals.getResourceLimits(), undefined)
 })

@@ -121,6 +121,7 @@ test('the mesh network stays in-memory for applications using the websocket flag
   const configFile = resolve(root, './platformatic.json')
 
   await updateConfigFile(configFile, contents => {
+    addIngress(contents)
     contents.services[0].websocket = true
     contents.services.push({
       id: 'service',
@@ -132,7 +133,7 @@ test('the mesh network stays in-memory for applications using the websocket flag
   })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
-  const entryUrl = await app.start()
+  const { 'ingress:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()

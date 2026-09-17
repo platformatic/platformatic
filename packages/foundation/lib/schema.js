@@ -263,12 +263,8 @@ export const logger = {
   properties: {
     level: {
       type: 'string',
-      oneOf: [
-        {
-          enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
-        },
-        { pattern: '^\\{.+\\}$' }
-      ]
+      minLength: 1,
+      description: 'A standard Pino log level or a level defined in customLevels.'
     },
     transport: {
       anyOf: [
@@ -556,6 +552,12 @@ export const server = {
 export const fastifyServer = {
   type: 'object',
   properties: {
+    errorHandler: {
+      anyOf: [
+        { type: 'string', resolveModule: true },
+        { type: 'string', resolvePath: true }
+      ]
+    },
     // TODO add support for level
     hostname: {
       type: 'string'
