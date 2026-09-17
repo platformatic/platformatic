@@ -11,10 +11,9 @@ The following runtime properties can be configured at the application level:
 - [**`preload`**](./runtime/configuration.md#preload): Files to load before the application code.
 - [**`workers`**](./runtime/configuration.md#workers): Worker configuration for this application.
 - [**`logger`**](./runtime/configuration.md#logger): Logger configuration.
-- [**`server`**](./runtime/configuration.md#server): Server configuration (hostname, port, HTTPS, HTTP/2).
 - [**`watch`**](./runtime/configuration.md#watch): Enable/disable file watching.
 - [**`health`**](./runtime/configuration.md#health): Health check configuration.
-- [**`telemetry`**](./runtime/configuration.md#telemetry): OpenTelemetry configuration.
+- [**`tracing`**](./runtime/configuration.md#tracing): OpenTelemetry configuration.
 - [**`undici`**](./runtime/configuration.md#undici): Undici HTTP client configuration.
 - [**`httpCache`**](./runtime/configuration.md#httpcache): HTTP caching configuration.
 - [**`metrics`**](./runtime/configuration.md#metrics): Prometheus metrics configuration.
@@ -36,7 +35,7 @@ Within the `runtime` property, you can also use the `application` sub-property t
 - **`nodeOptions`**: Node.js options.
 - **`execArgv`**: Arguments passed to worker threads.
 - **`permissions`**: File system permissions.
-- **`telemetry`**: Application-specific telemetry instrumentations.
+- **`tracing`**: Application-specific tracing instrumentations.
 - **`compileCache`**: Compile cache settings.
 
 ### Example

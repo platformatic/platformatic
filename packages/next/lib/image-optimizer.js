@@ -1,8 +1,8 @@
 import {
   BaseCapability,
   buildListenOptions,
-  errors as basicErrors,
   createServerListener,
+  errors as basicErrors,
   getServerUrl,
   importFile,
   resolvePackageViaCJS
@@ -72,37 +72,10 @@ export class NextImageOptimizerCapability extends BaseCapability {
     this.#queue = await this.#createQueue(imageOptimizerConfig)
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
+  async _start () {
     const config = this.config
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
-    await super._start({ listen })
-
-    if (this.#app && listen) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-        listenOptions.backlog = serverOptions.backlog
-      }
-
-      this.#server = await new Promise((resolve, reject) => {
-        return this.#app
-          .listen(listenOptions, function () {
-            resolve(this)
-          })
-          .on('error', reject)
-      })
-
-      this.url = getServerUrl(this.#server)
-
-      return this.url
-    }
+    await super._start()
 
     const { ImageOptimizerCache } = await importFile(resolvePath(this.#next, './dist/server/image-optimizer.js'))
     this.#validateParams = ImageOptimizerCache.validateParams.bind(ImageOptimizerCache)
@@ -118,10 +91,32 @@ export class NextImageOptimizerCapability extends BaseCapability {
     this.#app = createServer(this.#handleRequest.bind(this))
     this.#dispatcher = this.#app.listeners('request')[0]
     await this.#queue.start()
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    const [server] = await Promise.all([
+      new Promise((resolve, reject) => {
+        return this.#app
+          .listen(listenOptions, function () {
+            resolve(this)
+          })
+          .on('error', reject)
+      }),
+      serverPromise
+    ])
+    this.#server = server
+
+    this.url = getServerUrl(this.#server)
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
     await this.#queue?.stop()
 
     const events = getEvents()

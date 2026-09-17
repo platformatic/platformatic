@@ -148,10 +148,11 @@ test('buildListenOptions - does not inject a host when hostname is missing', () 
   deepStrictEqual(buildListenOptions({ port: 3000 }), { port: 3000 })
 })
 
-test('buildListenOptions - passes hostname and port through when both are set', () => {
-  deepStrictEqual(buildListenOptions({ hostname: '0.0.0.0', port: 3000 }), {
+test('buildListenOptions - passes hostname, port and backlog through when set', () => {
+  deepStrictEqual(buildListenOptions({ hostname: '0.0.0.0', port: 3000, backlog: 42 }), {
     host: '0.0.0.0',
-    port: 3000
+    port: 3000,
+    backlog: 42
   })
 })
 

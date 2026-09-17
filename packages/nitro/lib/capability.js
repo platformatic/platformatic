@@ -1,6 +1,5 @@
 import {
   BaseCapability,
-  buildAdditionalServerOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -170,13 +169,8 @@ export class NitroCapability extends BaseCapability {
     })
   }
 
-  async start ({ listen }) {
-    /* c8 ignore next 3 */
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     const command = this.config.application.commands[this.isProduction ? 'production' : 'development']
     if (command) {
@@ -187,6 +181,10 @@ export class NitroCapability extends BaseCapability {
       return this.startWithCommand(command)
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     if (this.isProduction) {
       await this.#startProduction()
     } else {
@@ -194,11 +192,10 @@ export class NitroCapability extends BaseCapability {
     }
 
     await this._collectMetrics()
-    return this.url
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.childManager) {
       return this.stopCommand()
@@ -250,15 +247,12 @@ export class NitroCapability extends BaseCapability {
   getMeta () {
     const hasBasePath = this.basePath || this.#basePath
 
-    return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: !!hasBasePath,
-        needsRootTrailingSlash: false
-      }
-    }
+    return super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      wantsAbsoluteUrls: !!hasBasePath,
+      needsRootTrailingSlash: false
+    })
   }
 
   /* c8 ignore next 5 */
@@ -360,11 +354,7 @@ export class NitroCapability extends BaseCapability {
     let serverPromise
 
     try {
-      serverPromise = createServerListener(
-        serverConfig?.port ?? true,
-        serverConfig?.hostname ?? true,
-        await buildAdditionalServerOptions(serverConfig)
-      )
+      serverPromise = createServerListener()
       await importFile(entrypointPath)
       this.#server = await serverPromise
       this.#dispatcher = this.#server.listeners('request')[0]
@@ -452,9 +442,9 @@ export class NitroViteCapability extends ViteCapability {
     this.registerGlobals({ basePath: this.#basePath })
   }
 
-  async stop () {
+  async _stop () {
     const commandWasRunning = !!this.childManager
-    await super.stop()
+    await super._stop()
 
     if (!commandWasRunning && this.isProduction && this.#server?.listening) {
       return this._closeServer(this.#server)
@@ -510,15 +500,12 @@ export class NitroViteCapability extends ViteCapability {
 
     const hasBasePath = this.basePath || this.#basePath
 
-    return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: !!hasBasePath,
-        needsRootTrailingSlash: false
-      }
-    }
+    return super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      wantsAbsoluteUrls: !!hasBasePath,
+      needsRootTrailingSlash: false
+    })
   }
 
   async getScheduledTasks () {
@@ -586,6 +573,10 @@ export class NitroViteCapability extends ViteCapability {
       )
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     const serverConfig = this.serverConfig
     const host = serverConfig?.hostname ?? '127.0.0.1'
     const port = serverConfig?.port ?? 0
@@ -611,11 +602,7 @@ export class NitroViteCapability extends ViteCapability {
     let serverPromise
 
     try {
-      serverPromise = createServerListener(
-        serverConfig?.port ?? true,
-        serverConfig?.hostname ?? true,
-        await buildAdditionalServerOptions(serverConfig)
-      )
+      serverPromise = createServerListener()
       await importFile(entrypointPath)
       this.#server = await serverPromise
       this.#dispatcher = this.#server.listeners('request')[0]

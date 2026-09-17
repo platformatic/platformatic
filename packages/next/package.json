@@ -10,6 +10,8 @@
     "test:main": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "test:caching": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/caching/*.test.js",
     "test:compatibility": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/compatibility/*.test.js",
+    "test:compatibility-development": "PLATFORMATIC_NEXT_COMPATIBILITY_MODE=development node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/compatibility/*.test.js",
+    "test:compatibility-production": "PLATFORMATIC_NEXT_COMPATIBILITY_MODE=production node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/compatibility/*.test.js",
     "test:integration": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/integration/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",

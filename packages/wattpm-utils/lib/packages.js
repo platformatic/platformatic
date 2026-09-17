@@ -29,7 +29,7 @@ export const packages = [
   '@platformatic/sql-mapper',
   '@platformatic/sql-openapi',
   '@platformatic/tanstack',
-  '@platformatic/telemetry',
+  '@platformatic/tracing',
   '@platformatic/vite',
   '@platformatic/wattpm-pprof-capture',
   'create-platformatic',

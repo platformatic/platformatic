@@ -1,6 +1,7 @@
 import { createDirectory, features, safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual } from 'node:assert'
-import { cp, symlink } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { join, resolve } from 'node:path'
 import { request } from 'undici'
@@ -57,6 +58,7 @@ function closeServer (server) {
   })
 }
 
+// Finds a range of `size` consecutive free ports and returns the first one
 export async function findAvailablePortRange ({ host, size, startPort }) {
   if (!Number.isInteger(size) || size < 1 || size > MAX_PORT) {
     throw new RangeError('size must be an integer between 1 and 65535')
@@ -118,6 +120,25 @@ export async function prepareRuntime (t, name, dependencies) {
   })
 
   await cp(resolve(fixturesDir, name), root, { recursive: true })
+
+  // Multiple-worker fixtures exercise externally reachable applications.
+  // Make that listener ownership explicit in each capability configuration.
+  for (const entry of await readdir(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue
+    }
+
+    const configPath = resolve(root, entry.name, 'platformatic.json')
+    if (!existsSync(configPath)) {
+      continue
+    }
+
+    const config = JSON.parse(await readFile(configPath, 'utf8'))
+    config.server ??= {}
+    config.server.hostname ??= '127.0.0.1'
+    config.server.port ??= 0
+    await writeFile(configPath, JSON.stringify(config, null, 2))
+  }
 
   for (const [application, deps] of Object.entries(dependencies)) {
     const depsRoot = resolve(root, application, 'node_modules/@platformatic')
@@ -230,17 +251,19 @@ export function formatEvent (event) {
     .join(', ')
 }
 
-export function getExpectedEvents (entrypoint, workers) {
+export function getExpectedEvents (workers) {
   const start = []
   const stop = []
 
   if (!features.node.reusePort) {
-    start.push({ event: 'application:started', application: entrypoint })
-    stop.push({ event: 'application:stopped', application: entrypoint })
+    for (const application of Object.keys(workers)) {
+      start.push({ event: 'application:started', application })
+      stop.push({ event: 'application:stopped', application })
+    }
   }
 
   for (const [application, count] of Object.entries(workers)) {
-    if (application === entrypoint && !features.node.reusePort) {
+    if (!features.node.reusePort) {
       continue
     }
 

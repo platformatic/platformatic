@@ -276,14 +276,12 @@ runtime. Each application object supports the following settings:
 - **`path`** (**required**, `string`) - The path to the directory containing
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
+- **`module`** (`string`) - The installed npm package that implements the application. When specified, `path` is also required and is used as the writable application root. The package itself is resolved from the Watt project's dependencies and is not modified by the runtime.
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
 - **`config`** (`string`) - The configuration file used to start
   the application.
-- **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
-  on `127.0.0.1`, and exposed to the other applications via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-- **`websocket`** (`boolean`) - The application will be started on a random HTTP port on `127.0.0.1` so that the gateway can proxy WebSocket connections to it, but, unlike `useHttp`, HTTP traffic between applications keeps using the in-memory mesh network when the capability supports in-thread dispatching (for example the service family); for the other capabilities it flows through the bound TCP port, as under `useHttp`. Set it to `true` when a non-entrypoint application behind the gateway needs to accept WebSocket connections. Default: `false`.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
-- **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
+- **`workers`** - The number of workers to start for this application. In development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
     - **`static`** (`number`) - A fixed number of workers
@@ -314,7 +312,7 @@ runtime. Each application object supports the following settings:
 
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
 - **`management`** (`boolean` or `object`): Grants the application access to runtime management operations via the ITC (Inter-Thread Communication) channel. See the [management](#management) section for details.
-- **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
+- **`tracing`** (`object`): containing an `instrumentations` array to optionally configure additional OpenTelemetry
   intrumentations per application, e.g.:
 
 ```json
@@ -322,7 +320,7 @@ runtime. Each application object supports the following settings:
     {
       "id": "api",
       "path": "./services/api",
-      "telemetry": {
+      "tracing": {
         "instrumentations": ["@opentelemetry/instrumentation-express"]
       }
     }
@@ -336,7 +334,7 @@ It's possible to specify the name of the export of the instrumentation and/or th
     {
       "id": "api",
       "path": "./services/api",
-      "telemetry": {
+      "tracing": {
         "instrumentations": [{
           "package": "@opentelemetry/instrumentation-express",
           "exportName": "ExpressInstrumentation",
@@ -356,7 +354,7 @@ It's also possible to disable the instrumentation by setting the `enabled` value
     {
       "id": "api",
       "path": "./services/api",
-      "telemetry": {
+      "tracing": {
         "enabled": "false",
         "instrumentations": [{
           "package": "@opentelemetry/instrumentation-express",
@@ -407,16 +405,11 @@ If `true`, source maps are enabled for all applications. Default: `false`. This 
 
 The base path, relative to the configuration file to store resolved applications. Each application will be saved in `{resolvedServicesBasePath}/{id}`. Default: `external`.
 
-### `entrypoint`
+### Capability `server` configuration
 
-The Platformatic Runtime's entrypoint is an application that is exposed
-publicly. This optional value must be the `ID` of an application defined via the `autoload` or
-`applications` configuration.
+The Runtime and Watt root configuration no longer provide `entrypoint` or `server` settings. Configure listeners in each capability's own configuration file instead. A capability-local `server` object controls its hostname, port, HTTPS, and backlog; it is not an `applications[]` descriptor option.
 
-If `entrypoint` is omitted, the runtime automatically selects one when there is a single
-application or exactly one Gateway application. If it cannot select a single entrypoint,
-the runtime starts without a public entrypoint; applications remain reachable through their
-internal `.plt.local` URLs and APIs such as `runtime.inject()`.
+Runtime does not choose ports, write port environment variables, or rewrite listener options. Managed capabilities start their own listeners only when their capability configuration defines `server.port`; a value of `0` requests an ephemeral port. Custom commands and black-box Node.js applications decide whether to call `listen()` themselves.
 
 ### `workers`
 
@@ -435,7 +428,9 @@ This can be specified as:
   - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `20000`.
   - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
 
-This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
+This value is hardcoded to `1` if the runtime is running in development mode.
+
+Multiple workers can listen on the same port only when the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) feature is available in the OS (see [`reuseTcpPorts`](#reusetcpports)). When it is not (for instance on macOS and Windows), an application configured to listen on a fixed `server.port` is started with a single worker (and dynamic scaling is disabled for it) with a warning, unless its capability configuration sets `server.portAssignment` to `perWorkerIncrement`, in which case each worker listens on its own port.
 
 ### `workersRestartDelay`
 
@@ -545,7 +540,7 @@ Use an object to configure the health probes server. Health probes are exposed o
 }
 ```
 
-### `telemetry`
+### `tracing`
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
@@ -579,7 +574,7 @@ For OTLP exporters:
 
 ```json title="Example JSON object"
 {
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-application",
     "diagLogger": true,
     "exporter": {
@@ -607,26 +602,11 @@ It can be a boolean or an object with the following settings:
 - **`cacheByDefault`** (`integer`) - Default cache duration in milliseconds for responses that don't have explicit expiration headers (like `Cache-Control` or `Expires`). If not set, responses without explicit expiration will not be cached.
 - **`type`** (`string`) - The type of cache. Can be `"shared"` (default) or `"private"`. A shared cache may store responses that can be shared between users, while a private cache is dedicated to a single user. Note that `s-maxage` directive only applies to shared caches, while `max-age` applies to both.
 
-### `server`
-
-This configures the Platformatic Runtime entrypoint `server`.
-
-If the entrypoint has also a `server` configured, then the runtime settings override the application settings.
-
-An object with the following settings:
-
-- **`hostname`** — Hostname where Platformatic Service server will listen for connections.
-- **`port`** — Port where Platformatic Service server will listen for connections. Provide a number or a string. When `portAssignment` is set to `perWorkerIncrement`, this is the first port assigned to worker 0.
-- **`portAssignment`** (`string`) — Sets how entrypoint server worker ports are assigned. Default: `shared`. Set it to `shared` or leave it unset to make all workers listen on the same `port`. Set it to `perWorkerIncrement` to give each worker its own incremental port, starting from `port`. Use `perWorkerIncrement` only with external load balancing, never on its own.
-- **`http2`** (`boolean`) — Enables HTTP/2 support. Default: `false`.
-- **`https`** (`object`) - Configuration for HTTPS supporting the following options. Requires `https`.
-  - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.
-  - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
-  - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
-
 ### `reuseTcpPorts`
 
 Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. This setting can be overridden at the application level.
+
+`reusePort` is what allows multiple workers of the same application to listen on the same port. It is not available on macOS and Windows: on those platforms, an application with a fixed `server.port` and multiple workers is clamped to a single worker with a warning, unless it sets `server.portAssignment` to `perWorkerIncrement` in its capability configuration, so that each worker listens on its own port (`port`, `port + 1`, and so on).
 
 ### `logger`
 
@@ -634,7 +614,7 @@ This configures the Platformatic Runtime `logger`, based on [pino](https://getpi
 
 An object with the following settings:
 
-- **`level`** — The log level. Default: `info`. Valid values are: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`, or any level defined in `customLevels`.
+- **`level`** — The log level. Default: `info`. Valid values are: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`.
 - **`transport`** — Configuration for logging transport, see [pino.transport](https://getpino.io/#/docs/transports) for more information. Can be configured in two ways:
   - As a single transport: An object with properties:
     - **`target`** — A string specifying the transport module.
@@ -651,7 +631,6 @@ An object with the following settings:
 - **`redact`** — Configuration for redacting sensitive information, see [pino.redact]https://getpino.io/#/docs/redaction) for more information. An object with properties:
   - **`paths`** (**required**) — An array of strings specifying paths to redact.
   - **`censor`** — A string to replace redacted values with. Default: `[redacted]`.
-  - **`remove`** — If `true`, the redacted keys are removed from the logs instead of having their values replaced with the censor. Default: `false`.
 - **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main application. Default: `false`.
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
@@ -659,22 +638,12 @@ An object with the following settings:
   - **`level`** — The key that contains the numeric log level. Default: `level`.
   - **`time`** — The key that contains the log timestamp. Default: `time`.
   - **`message`** — The key that contains the log message. Default: `msg`.
-- **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
-- **`levelVal`** — The numeric value of the level set in `level`, when it is not one of the standard pino levels, see [pino.levelVal](https://getpino.io/#/docs/api?id=levelval-number) for more information.
-- **`useOnlyCustomLevels`** — If `true`, only the levels defined in `customLevels` are available and the standard pino ones are omitted. Default: `false`.
-- **`levelComparison`** — How log levels are compared to the logger level. Valid values are `ASC` and `DESC`; use `DESC` when lower values are more severe. Default: `ASC`.
-- **`msgPrefix`** — A string prefixed to every message, including the ones of child loggers.
-- **`nestedKey`** — The key under which any logged object is placed, see [pino.nestedKey](https://getpino.io/#/docs/api?id=nestedkey-string) for more information.
-- **`errorKey`** — The key used for the serialized error in the log object. Default: `err`.
-- **`depthLimit`** — The stringification limit at a specific nesting depth when logging circular objects. Default: `5`.
-- **`edgeLimit`** — The stringification limit of properties or elements when logging a circular object or array. Default: `100`.
-- **`crlf`** — If `true`, each log line is terminated with `\r\n` instead of `\n`. Default: `false`.
-- **`enabled`** — If `false`, logging is disabled entirely. Default: `true`.
-- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
+- **`customLevels`** — Configuration for custom levels. Names defined here can also be used as the logger's `level`. See [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
+- **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `tracing` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
 
-  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
+  When used with tracing configuration, the service name and version from `tracing.applicationName` and `tracing.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
 
 ### `undici`
 
@@ -701,6 +670,10 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
   }
 }
 ```
+
+Custom interceptors must implement the Undici 8 dispatcher handler lifecycle. Interceptors using the legacy
+`onConnect`, `onHeaders`, `onData`, `onComplete`, or `onError` callbacks must be updated before upgrading to Runtime
+v4. See [Update custom Undici interceptors](../../guides/migrate-runtime-v4.md#update-custom-undici-interceptors).
 
 It's important to note that `IDP` stands for Identity Provider, and its token `url` is the URL that will be called to generate a new token.
 
@@ -738,7 +711,7 @@ The same server also exposes Kubernetes readiness and liveness probes when [`hea
 
 When `healthProbes` is an object with a different resolved `hostname` and `port`, the Prometheus server follows only the metrics configuration and health probes are exposed on their own server.
 
-- **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
+- **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Metrics are disabled by default when the `metrics` section is omitted. Set `metrics` to `true` or provide an object to enable them.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
 - **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
 - **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.
@@ -882,33 +855,6 @@ The value is inherited by all applications that do not explicitly set their own 
 
 The configuration format is the same as the per-application `management` setting (boolean or object with `enabled` and `operations`). See the [per-application management](#management) section for the full list of available operations.
 
-### `scheduler`
-
-An optional array of objects to configure HTTP call triggered by cron jobs.
-_Every object_ has:
-
-- **`enabled`** (`boolean` or `string`). Optional. If `false` the scheduler is disabled. Default: `true`.
-- **`name`** (`string`): The job name
-- **`cron`** (`string`): the crontab schedule expession. See https://crontab.guru/examples.html for some examples.
-- **`callbackUrl`** (`string`): the HTTP URL to be called
-- **`method`** (`string`): Optional, can be `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. Default: `GET`.
-- **`body`** (`string` or `object`). Optional.
-- **`headers`** (`object`). Optional. Headers added to the HTTP call.
-- **`maxRetry`** (`number`). Number of attempts for the HTTP call. Default: 3
-
-```json title="Example Scheduler"
-{
-  "scheduler": [
-    {
-      "name": "test",
-      "callbackUrl": "http://mytarget",
-      "cron": "0 * * * *",
-      "mehod": "GET"
-    }
-  ]
-}
-```
-
 ### verticalScaler
 
 :::warning
@@ -944,7 +890,7 @@ Configuration options:
 
 **Notes:**
 
-- Applications with a fixed `workers` configuration or entrypoint applications on systems without `reusePort` support will have their min/max workers automatically set to their current value to prevent scaling.
+- Applications with a fixed `workers` configuration will have their min/max workers automatically set to their current value to prevent scaling.
 - The scaler tracks heap memory usage and will not scale up if there is insufficient available memory, even if ELU thresholds are met.
 - By default, the scaler uses 90% of total system memory as the memory limit to provide a safety buffer and prevent out-of-memory situations.
 

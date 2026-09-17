@@ -1,24 +1,12 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-  "entrypoint": "service-1",
   "watch": false,
   "autoload": {
     "path": "./services"
   },
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 0
-  },
   "logger": {
     "level": "trace"
   },
-  "scheduler": [
-    {
-      "name": "control-test",
-      "cron": "0 0 1 1 *",
-      "callbackUrl": "http://service-1.plt.local/",
-      "method": "GET"
-    }
-  ],
+  "metrics": true,
   "managementApi": true
 }

@@ -14,10 +14,10 @@ The legacy `composer` type is still accepted as a deprecated alias for `gateway`
 import { create } from '@platformatic/runtime'
 
 const app = await create('path/to/platformatic.runtime.json')
-const entrypointUrl = await app.start()
+await app.start()
 
-const res = await fetch(entrypointUrl)
-console.log(await res.json())
+const res = await app.inject('api', { method: 'GET', url: '/' })
+console.log(res.json())
 
 await app.close()
 ```
@@ -36,8 +36,7 @@ When the configuration's `$schema` resolves to a non-runtime module (e.g. `@plat
 import { create } from '@platformatic/runtime'
 
 const app = await create({
-  $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/3.54.0.json',
-  entrypoint: 'main',
+  $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json',
   applications: [{ id: 'main', path: './main' }]
 })
 
@@ -47,11 +46,11 @@ await app.start()
 Equivalent `$schema` values that `create()` accepts and wraps transparently:
 
 ```text
-https://schemas.platformatic.dev/@platformatic/runtime/3.54.0.json
-https://schemas.platformatic.dev/@platformatic/service/3.54.0.json
-https://schemas.platformatic.dev/@platformatic/db/3.54.0.json
-https://schemas.platformatic.dev/@platformatic/gateway/3.54.0.json
-https://schemas.platformatic.dev/@platformatic/composer/3.54.0.json  # deprecated alias for gateway
+https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json
+https://schemas.platformatic.dev/@platformatic/service/4.0.0.json
+https://schemas.platformatic.dev/@platformatic/db/4.0.0.json
+https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json
+https://schemas.platformatic.dev/@platformatic/composer/4.0.0.json  # deprecated alias for gateway
 ```
 
 By default `create()` installs signal handlers (`SIGTERM`/`SIGINT` via `close-with-grace`, and `SIGUSR2` to trigger `runtime.restart()`). Pass `context: { setupSignals: false }` to opt out — recommended when embedding the runtime in tests or another process that owns its own signal handling.
@@ -88,10 +87,10 @@ Walks the applications declared in the nearest runtime configuration and aggrega
 
 ### Lifecycle
 
-- **`runtime.start(silent = false): Promise<string | undefined>`** — Starts all applications. Returns the entrypoint's external URL (or `undefined` if no entrypoint binds an external port). If `init()` hasn't been called yet, `start()` calls it.
-- **`runtime.stop(silent = false): Promise<void>`** — Stops all applications. If an entrypoint exists, it is stopped first so it stops accepting new requests immediately.
+- **`runtime.start(silent = false): Promise<Record<string, string>>`** — Starts all applications and returns observed listener URLs keyed by worker ID (`applicationId:workerId`). If `init()` hasn't been called yet, `start()` calls it.
+- **`runtime.stop(silent = false): Promise<void>`** — Stops all applications.
 - **`runtime.close(silent = false): Promise<void>`** — Stops applications and tears the runtime down completely (closes the management API, broadcast channels, dispatcher, etc.). After `close()` the runtime cannot be restarted; create a new instance.
-- **`runtime.restart(applications?: string[]): Promise<string | undefined>`** — Restarts every application (or only the IDs in `applications`). Returns the entrypoint URL once the restart completes.
+- **`runtime.restart(applications?: string[]): Promise<void>`** — Restarts every application (or only the IDs in `applications`).
 - **`runtime.init(): Promise<void>`** — Performs one-time setup (loads capabilities, prepares workers). Usually called transitively by `start()`; call it explicitly only if you need the runtime in `init`'ed state without starting applications.
 
 ### HTTP injection
@@ -173,15 +172,15 @@ test('handles ping messages', async t => {
 
 ### Introspection
 
-- **`runtime.getUrl(): string | undefined`** — The entrypoint's external URL once started, or `undefined` when there is no entrypoint.
 - **`runtime.getRuntimeStatus(): string`** — One of `starting`, `started`, `stopping`, `stopped`, `closed`.
-- **`runtime.getRuntimeMetadata(): Promise<RuntimeMetadata>`** — `pid`, `cwd`, `argv`, `uptimeSeconds`, `execPath`, `nodeVersion`, `projectDir`, `packageName`, `packageVersion`, `url`, `platformaticVersion`.
+- **`runtime.getRuntimeMetadata(): Promise<RuntimeMetadata>`** — `pid`, `cwd`, `argv`, `uptimeSeconds`, `execPath`, `nodeVersion`, `projectDir`, `packageName`, `packageVersion`, `platformaticVersion`, and `urls`. `urls` is a map of observed worker listener URLs keyed by `applicationId:workerId`.
 - **`runtime.getRuntimeConfig(includeMeta = false): object`** — The resolved configuration. When `includeMeta` is `true` the `[kMetadata]` symbol is preserved (needed by `prepareApplication()`).
 - **`runtime.getRuntimeEnv(): Record<string, string>`** — Environment variables visible to the runtime process.
+- **`runtime.getUrls(applicationId?): Record<string, string>`** — Observed listener URLs for running workers, keyed by `applicationId:workerId`. Pass an application ID to select only that application's workers.
 - **`runtime.getApplicationsIds(): string[]`** — IDs of all configured applications.
-- **`runtime.getApplications(allowUnloaded = false): Promise<{ entrypoint, production, applications }>`** — Runtime topology and per-application details. With `allowUnloaded: true`, applications without a worker are returned as `{ id, status: 'stopped' }`.
+- **`runtime.getApplications(allowUnloaded = false): Promise<{ production, applications }>`** — Runtime topology and per-application details. With `allowUnloaded: true`, applications without a worker are returned as `{ id, status: 'stopped' }`.
 - **`runtime.getWorkers(includeRaw = false): Promise<Record<string, WorkerDetails>>`** — Status, worker index and thread ID for each worker. `includeRaw` is for internal diagnostics and exposes the underlying worker in the direct Runtime API only.
-- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `entrypoint`, `workers`, `url`. With `allowUnloaded: true`, returns `{ id, status: 'stopped' }` when no worker is loaded.
+- **`runtime.getApplicationDetails(id, allowUnloaded = false): Promise<ApplicationDetails>`** — Per-application info: `type`, `status`, `dependencies`, `version`, `localUrl`, `workers`, `url`, and `urls`. `url` is the first observed URL, or `null` when the application has no listening server; `urls` contains every observed worker listener URL. With `allowUnloaded: true`, returns `{ id, status: 'stopped' }` when no worker is loaded.
 - **`runtime.getApplicationConfig(id, ensureStarted = true): Promise<object>`** — The resolved application configuration.
 - **`runtime.getApplicationEnv(id, ensureStarted = true): Promise<Record<string, string>>`** — The effective worker environment, including capability-provided variables. It requires a loaded worker: it throws `PLT_RUNTIME_APPLICATION_NOT_STARTED` if the worker exists but is stopped, `PLT_RUNTIME_WORKER_NOT_FOUND` after an application has been unloaded/stopped, and `PLT_RUNTIME_APPLICATION_NOT_FOUND` for an unknown ID.
 - **`runtime.getApplicationOpenapiSchema(id): Promise<unknown>`** and **`runtime.getApplicationGraphqlSchema(id): Promise<unknown>`** — The application's generated API schemas.
@@ -195,7 +194,7 @@ test('handles ping messages', async t => {
 - **`runtime.stopApplication(id, silent = false): Promise<void>`**
 - **`runtime.restartApplication(id): Promise<void>`**
 
-These act on a single application by `id`. If an entrypoint exists, it can be restarted but cannot be removed (see below).
+These act on a single application by `id`.
 
 ### Profiling
 
@@ -291,8 +290,6 @@ Stops the listed applications and removes them from the runtime. `applications` 
 await app.removeApplications(['analytics-service'])
 ```
 
-The entrypoint, when configured or automatically detected, cannot be removed; attempting to do so throws a `CannotRemoveEntrypointError`.
-
 ### Example: dynamic application management
 
 ```js
@@ -321,7 +318,7 @@ The package also exports:
 - **`Generator`**, **`WrappedGenerator`** — generators used by `create-platformatic` to scaffold new runtimes.
 - **`schema`** — the JSON Schema for runtime configuration.
 - **`transform`** — the configuration transform pipeline used internally.
-- **`errors`** — a namespace of `@fastify/error` constructors (`ApplicationNotFoundError`, `MissingEntrypointError`, `CannotRemoveEntrypointError`, etc.).
+- **`errors`** — a namespace of `@fastify/error` constructors for runtime operations.
 - **`symbols`** — internal symbols (`kConfig`, `kId`, `kITC`, ...) used to attach metadata to configuration and worker objects.
 - **`version`** — the package version string.
 

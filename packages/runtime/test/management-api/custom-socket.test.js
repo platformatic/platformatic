@@ -3,8 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { EventEmitter, once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { createServer } from 'node:net'
+import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { platform } from 'node:os'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { transform } from '../../index.js'
@@ -20,8 +20,8 @@ test('should use custom socket path when specified', async t => {
     return
   }
 
-  const tempDir = await createTemporaryDirectory(t, 'custom-socket')
-  const customSocketPath = join(tempDir, 'custom.sock')
+  await createTemporaryDirectory(t, 'custom-socket')
+  const customSocketPath = join(tmpdir(), `platformatic-${randomUUID()}.sock`)
 
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
   const configFile = join(projectDir, 'platformatic.json')
@@ -77,9 +77,10 @@ test('should use custom socket path when specified', async t => {
 })
 
 test('should throw when the custom socket remains in use after retries', async t => {
-  const tempDir = await createTemporaryDirectory(t, 'custom-socket-in-use')
   const customSocketPath =
-    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : join(tempDir, 'custom.sock')
+    platform() === 'win32'
+      ? `\\\\.\\pipe\\platformatic-${randomUUID()}`
+      : join(tmpdir(), `platformatic-${randomUUID()}.sock`)
   const server = createServer()
   server.listen(customSocketPath)
   await once(server, 'listening')

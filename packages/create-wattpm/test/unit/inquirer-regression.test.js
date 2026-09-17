@@ -12,10 +12,10 @@
  * until the issues are fixed upstream.
  *
  * Note: These tests require the Unix `script` command for PTY emulation.
- * On Linux/macOS, install util-linux if the `script` command is not available.
+ * On Linux, install util-linux if the `script` command is not available.
  *
- * Windows: These tests are skipped because Windows does not have a `script`
- * equivalent.
+ * Windows and macOS: These tests are skipped because the required PTY behavior
+ * is unavailable under the Node.js test runner.
  */
 
 import { test } from 'node:test'
@@ -25,6 +25,7 @@ import { platform } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const isWindows = platform() === 'win32'
+const hasUnsupportedPty = isWindows || platform() === 'darwin'
 const pkgRoot = fileURLToPath(new URL('../..', import.meta.url))
 const fixturesDir = fileURLToPath(new URL('../fixtures', import.meta.url))
 
@@ -70,7 +71,7 @@ async function runWithPty (scriptPath, input) {
   })
 }
 
-test('inquirer regression tests', { skip: isWindows && 'Windows not supported (see comment in file)' }, async (t) => {
+test('inquirer regression tests', { skip: hasUnsupportedPty && 'PTY emulation is only supported on Linux' }, async (t) => {
   assert.ok(
     hasScriptCommand(),
     'The `script` command is required to run these tests. Install util-linux package.'

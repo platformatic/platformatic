@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-  "entrypoint": "service-1",
   "watch": false,
   "applications": [
     {
@@ -8,10 +7,6 @@
       "path": "./services/service-1"
     }
   ],
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 0
-  },
   "managementApi": true,
   "httpCache": true,
   "logger": {

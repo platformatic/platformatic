@@ -11,7 +11,7 @@ test('should run the application with custom logger options on json', async t =>
 
   await runtime.init()
   await runtime.buildApplication('runtime')
-  const url = await runtime.start()
+  const { 'runtime:0': url } = await runtime.start()
 
   await request(url + '/', { method: 'GET' })
   await runtime.close()
@@ -37,7 +37,7 @@ test('should run the application with custom logger options on global this', asy
 
   await runtime.init()
   await runtime.buildApplication('runtime')
-  const url = await runtime.start()
+  const { 'runtime:0': url } = await runtime.start()
 
   await request(url + '/', { method: 'GET' })
   await runtime.close()

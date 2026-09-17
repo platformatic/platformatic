@@ -81,7 +81,7 @@ test('should inherit full logger options from runtime to a platformatic/applicat
   ok(
     logs.find(
       log =>
-        log.stdout.level === 'DEBUG' &&
+        log.stdout?.level === 'DEBUG' &&
         log.stdout.time.length === 24 && // isotime
         log.stdout.name === 'service' &&
         log.stdout.msg === 'Loading envfile...'
@@ -735,7 +735,7 @@ test('should export logs to OpenTelemetry', async t => {
   })
   t.after(() => app.close())
 
-  const entryUrl = await app.start()
+  const { 'node:0': entryUrl } = await app.start()
 
   {
     const { statusCode, body } = await request(entryUrl, { path: '/' })

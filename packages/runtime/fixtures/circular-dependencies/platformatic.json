@@ -8,7 +8,6 @@
     "application": 1000,
     "runtime": 1000
   },
-  "entrypoint": "application-1",
   "applications": [
     {
       "id": "application-1",

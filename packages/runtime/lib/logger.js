@@ -191,13 +191,13 @@ export async function createLogger (config) {
 
   const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level }])
 
-  if (config.telemetry && config.logger.openTelemetryExporter) {
+  if (config.tracing && config.logger.openTelemetryExporter) {
     const openTelemetryTransport = pino.transport({
       target: 'pino-opentelemetry-transport',
       options: {
         resourceAttributes: {
-          'service.name': config.telemetry.applicationName,
-          'service.version': config.telemetry.version
+          'service.name': config.tracing.applicationName,
+          'service.version': config.tracing.version
         },
         logRecordProcessorOptions: [
           {

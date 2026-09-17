@@ -37,11 +37,14 @@ test('should get applications topology', async t => {
 
   strictEqual(statusCode, 200)
 
-  const entrypointDetails = await app.getEntrypointDetails()
   const topology = await body.json()
+  const applications = topology.applications.map(({ url, urls, ...application }) => {
+    deepStrictEqual(urls, [url])
+    strictEqual(new URL(url).protocol, 'http:')
+    return application
+  })
 
-  deepStrictEqual(topology, {
-    entrypoint: 'service-1',
+  deepStrictEqual({ ...topology, applications }, {
     production: false,
     applications: [
       {
@@ -51,8 +54,6 @@ test('should get applications topology', async t => {
         config: resolve(projectDir, 'services/service-1', 'platformatic.json'),
         path: resolve(projectDir, 'services/service-1'),
         version,
-        entrypoint: true,
-        url: entrypointDetails.url,
         localUrl: 'http://service-1.plt.local',
         dependencies: [],
         sourceMaps: false
@@ -64,7 +65,6 @@ test('should get applications topology', async t => {
         config: resolve(projectDir, 'services/service-2', 'platformatic.json'),
         path: resolve(projectDir, 'services/service-2'),
         version,
-        entrypoint: false,
         localUrl: 'http://service-2.plt.local',
         dependencies: [],
         sourceMaps: false
@@ -76,7 +76,6 @@ test('should get applications topology', async t => {
         config: resolve(projectDir, 'services/service-db', 'platformatic.db.json'),
         path: resolve(projectDir, 'services/service-db'),
         version,
-        entrypoint: false,
         localUrl: 'http://service-db.plt.local',
         dependencies: [],
         sourceMaps: false

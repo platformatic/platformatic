@@ -1,25 +1,99 @@
+import { kMetadata } from '@platformatic/foundation'
 import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db'
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
+import { existsSync } from 'node:fs'
+import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { loadConfiguration, wrapInRuntimeConfig } from '../index.js'
-import { parseInspectorOptions } from '../lib/config.js'
-import { createRuntime } from './helpers.js'
+import { parseInspectorOptions, prepareApplication } from '../lib/config.js'
+import { createRuntime, createTemporaryDirectory } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
-
-test('throws if no entrypoint is found', async t => {
-  const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
-
-  await rejects(async () => {
-    await createRuntime(configFile)
-  }, /Invalid entrypoint: 'invalid' does not exist/)
-})
 
 test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
   throws(() => {
     parseInspectorOptions({}, 'true', 'true')
   }, /--inspect and --inspect-brk cannot be used together/)
+})
+
+test('prepareApplication - resolves module source separately from writable application root', async t => {
+  const root = await createTemporaryDirectory(t, 'module')
+  const applicationPath = join(root, 'applications', 'module-app')
+  const config = {
+    [kMetadata]: {
+      root: resolve(import.meta.dirname, '..')
+    },
+    watch: false
+  }
+
+  const application = await prepareApplication(
+    config,
+    {
+      id: 'module-app',
+      path: applicationPath,
+      module: '@platformatic/basic'
+    },
+    { static: 1, dynamic: false }
+  )
+
+  strictEqual(application.path, applicationPath)
+  ok(application.sourcePath !== application.path)
+  strictEqual(JSON.parse(await readFile(join(application.sourcePath, 'package.json'), 'utf8')).name, '@platformatic/basic')
+  ok(existsSync(application.path))
+})
+
+test('prepareApplication - reports missing application modules with a coded error', async () => {
+  await rejects(
+    prepareApplication(
+      {
+        [kMetadata]: { root: resolve(fixturesDir, 'missing') },
+        watch: false
+      },
+      {
+        id: 'missing-module',
+        path: resolve(fixturesDir, 'missing', 'application'),
+        module: '@platformatic/does-not-exist'
+      },
+      { static: 1, dynamic: false }
+    ),
+    error => error.code === 'PLT_RUNTIME_MISSING_DEPENDENCY'
+  )
+})
+
+test('module applications invoke create with a separate writable root', async t => {
+  const root = await createTemporaryDirectory(t, 'module-runtime')
+  const nodeModules = join(root, 'node_modules')
+  const packageScope = join(nodeModules, '@platformatic')
+  const applicationPath = join(root, 'applications', 'module-app')
+  const fixtureRoot = join(fixturesDir, 'module-application')
+  const configFile = join(root, 'watt.json')
+
+  await mkdir(packageScope, { recursive: true })
+  await symlink(join(fixtureRoot, 'mock-application'), join(nodeModules, 'mock-application'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../node_modules/@platformatic/basic'), join(packageScope, 'basic'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../node_modules/@platformatic/service'), join(packageScope, 'service'), 'dir')
+  await writeFile(
+    configFile,
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/3.67.0.json',
+      applications: [{ id: 'module-app', path: applicationPath, module: 'mock-application' }]
+    })
+  )
+
+  const runtime = await createRuntime(configFile)
+  t.after(() => runtime.close(true))
+
+  await runtime.init()
+  await runtime.start()
+
+  const created = JSON.parse(await readFile(join(applicationPath, 'module-created.json'), 'utf8'))
+  strictEqual(created.root, applicationPath)
+  strictEqual(created.sourcePath, join(nodeModules, 'mock-application'))
+
+  const response = await runtime.inject('module-app', { method: 'GET', url: '/module' })
+  strictEqual(response.statusCode, 200)
+  strictEqual(response.payload, JSON.stringify({ running: true }))
 })
 
 test('parseInspectorOptions - --inspect default settings', () => {
@@ -118,6 +192,71 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
   strictEqual(cm.inspectorOptions.port, 65535)
 })
 
+test('rejects root server configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], server: { port: 3042 } })
+  )
+
+  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+})
+
+test('rejects removed URL-based scheduler configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json',
+      applications: [{ id: 'main', path: '.' }],
+      scheduler: [{ name: 'legacy', cron: '0 * * * *', callbackUrl: 'http://localhost' }]
+    })
+  )
+
+  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+})
+
+test('rejects root entrypoint configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }], entrypoint: 'main' })
+  )
+
+  await rejects(() => loadConfiguration(configFile), /must NOT have additional properties/)
+})
+
+test('does not use application useHttp configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(
+    configFile,
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.', useHttp: true }] })
+  )
+
+  const config = await loadConfiguration(configFile)
+  strictEqual(config.applications[0].exposed, undefined)
+})
+
+test('does not add application listener configuration', async t => {
+  const directory = await createTemporaryDirectory(t, 'runtime-config-schema')
+  const configFile = join(directory, 'platformatic.runtime.json')
+
+  await writeFile(configFile, JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json', applications: [{ id: 'main', path: '.' }] }))
+
+  const config = await loadConfiguration(configFile)
+  strictEqual(config.applications[0].exposed, undefined)
+  strictEqual(config.applications[0].portEnv, undefined)
+  strictEqual(config.applications[0].server, undefined)
+})
+
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'true'
@@ -204,19 +343,13 @@ test('defaults name to `main` if package.json exists but has no name', async t =
   strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
-test('wrapInRuntimeConfig does not synthesize a server hostname when none is configured', async t => {
+test('wrapInRuntimeConfig does not copy server configuration to the runtime', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
   const config = await databaseLoadConfiguration(configFile, null, { validate: false })
-  // Simulate a project where neither the top-level nor the runtime config
-  // declare a server section. The wrapped runtime must not end up with a
-  // hardcoded hostname.
-  delete config.server
-  delete config.runtime.server
-
   const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  strictEqual(runtimeConfig.server?.hostname, undefined)
+  strictEqual(runtimeConfig.server, undefined)
 })
 
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
@@ -228,15 +361,12 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
   ok(typeof runtimeConfig.web, 'undefined')
   ok(typeof runtimeConfig.autoload, 'undefined')
   ok(runtimeConfig.watch === false)
-  // When the user only sets server.port (no hostname), we must not silently
-  // inject a hostname — the underlying framework's default should apply.
-  deepStrictEqual(runtimeConfig.server, { port: 1234 })
+  strictEqual(runtimeConfig.server, undefined)
   deepStrictEqual(runtimeConfig.applications, [
     {
       config: configFile,
       dependencies: [],
       enabled: true,
-      entrypoint: true,
       gitBranch: 'main',
       health: {},
       id: 'main',
@@ -245,7 +375,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       reuseTcpPorts: true,
       type: '@platformatic/db',
       watch: false,
-      skipTelemetryHooks: true,
+      skipTracingHooks: true,
       workers: {
         static: 1,
         dynamic: false
@@ -254,7 +384,6 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
     {
       dependencies: [],
       enabled: true,
-      entrypoint: false,
       gitBranch: 'main',
       health: {},
       id: 'another',
@@ -430,7 +559,6 @@ test('prepareApplication should not perform slow glob for services with url but 
       path: null,
       module: '@platformatic/runtime'
     },
-    entrypoint: 'service-with-url',
     watch: false
   }
 
@@ -455,7 +583,6 @@ test('prepareApplication should not perform slow glob for services with url but 
   strictEqual(result.type, 'unknown', 'Application type should be "unknown" when path is missing')
 
   // Verify other expected properties are set
-  strictEqual(result.entrypoint, true, 'Should be marked as entrypoint')
   deepStrictEqual(result.dependencies, [], 'Dependencies should default to empty array')
   strictEqual(result.localUrl, 'http://service-with-url.plt.local', 'localUrl should be set')
   strictEqual(result.watch, false, 'watch should inherit from config')
@@ -497,7 +624,6 @@ test('prepareApplication should handle multiple services with url but no path ef
       path: null,
       module: '@platformatic/runtime'
     },
-    entrypoint: 'service-1',
     watch: false
   }
 
@@ -535,7 +661,7 @@ test('prepareApplication should handle multiple services with url but no path ef
   ok(elapsed < 50, `Processing 16 url-only services should be fast (took ${elapsed.toFixed(2)}ms, expected < 50ms)`)
 })
 
-test('autoload - merges an explicit entry which points to the autoloaded directory', async t => {
+test('autoload - merges an explicit entry which points to the autoloaded directory', async () => {
   const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'same-path.json'))
 
   strictEqual(config.applications.length, 1)
@@ -544,7 +670,7 @@ test('autoload - merges an explicit entry which points to the autoloaded directo
   strictEqual(config.applications[0].workers.static, 3)
 })
 
-test('autoload - merges an external entry when the autoloaded directory is where it is resolved', async t => {
+test('autoload - merges an external entry when the autoloaded directory is where it is resolved', async () => {
   const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'resolved-base-path.json'))
 
   strictEqual(config.applications.length, 1)
@@ -553,17 +679,17 @@ test('autoload - merges an external entry when the autoloaded directory is where
   strictEqual(config.applications[0].url, 'https://github.com/org/api')
 })
 
-test('autoload - throws when the id of an autoloaded directory is used by an external application', async t => {
+test('autoload - throws when an autoloaded directory conflicts with an external application', async t => {
   await rejects(
     () => loadConfiguration(join(fixturesDir, 'autoload-collision', 'url-collision.json')),
-    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the URL "https:\/\/github.com\/org\/api"./
+    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the URL "https:\/\/github.com\/org\/api"\./
   )
 })
 
-test('autoload - throws when the id of an autoloaded directory is used by another local application', async t => {
+test('autoload - throws when an autoloaded directory conflicts with another local application', async t => {
   await rejects(
     () => loadConfiguration(join(fixturesDir, 'autoload-collision', 'path-collision.json')),
-    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the path ".+[\\/]elsewhere[\\/]api"./
+    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the path ".+[\\/]elsewhere[\\/]api"\./
   )
 })
 

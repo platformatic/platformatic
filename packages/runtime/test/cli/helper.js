@@ -22,8 +22,11 @@ export const startPath = join(import.meta.dirname, './start.js')
 
 export async function start (...args) {
   let execaOptions = {}
+  let applicationId
   if (typeof args.at(-1) === 'object') {
-    execaOptions = args.pop()
+    const { applicationId: requestedApplicationId, ...options } = args.pop()
+    applicationId = requestedApplicationId
+    execaOptions = options
   }
   const child = execa(process.execPath, [startPath, ...args], execaOptions)
   child.catch(() => {})
@@ -47,9 +50,13 @@ export async function start (...args) {
           const message = JSON.parse(line)
 
           // Ignore internal sockets (e.g. management API); only HTTP(S) app URLs count.
-          const mo =
-            message.msg?.match(/Platformatic is now listening at (https?:\/\/.+)/i) ??
-            message.msg?.match(/server listening at (https?:\/\/.+)/i)
+          const mo = applicationId
+            ? message.msg?.match(
+              new RegExp(
+                `Platformatic is now listening at (https?://\\S+) for worker \\d+ of the application "${applicationId}"`
+              )
+            )
+            : message.msg?.match(/Platformatic is now listening at (https?:\/\/\S+) for /i)
 
           if (!serverStarted && mo) {
             clearTimeout(errorTimeout)

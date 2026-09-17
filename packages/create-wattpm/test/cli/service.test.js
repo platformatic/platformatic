@@ -21,7 +21,6 @@ test('Creates a Platformatic Application with no Typescript', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -53,7 +52,6 @@ test('Creates a Platformatic Application with Typescript', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -101,7 +99,6 @@ test('Creates a Platformatic Application in a non empty directory', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'foo' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 

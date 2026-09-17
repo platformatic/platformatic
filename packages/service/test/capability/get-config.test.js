@@ -19,8 +19,7 @@ test('get service config via capability api', async t => {
       logger: {
         level: 'fatal'
       },
-      keepAliveTimeout: 5000,
-      trustProxy: true
+      keepAliveTimeout: 5000
     },
     plugins: {
       paths: [join(import.meta.dirname, '..', 'fixtures', 'directories', 'routes')]

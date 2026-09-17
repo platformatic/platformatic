@@ -8,8 +8,17 @@
 export interface PlatformaticComposerConfig {
   basePath?: string;
   server?: {
+    errorHandler?: string;
     hostname?: string;
     port?: number | string;
+    /**
+     * Configures how the port is assigned when the application runs multiple workers. When set to shared (the default), all workers listen on the same port (which requires SO_REUSEPORT support). When set to perWorkerIncrement, each worker listens on its own port, starting from port (worker 0) and incrementing by one for each additional worker.
+     */
+    portAssignment?: "shared" | "perWorkerIncrement";
+    /**
+     * The maximum length of the queue of pending connections
+     */
+    backlog?: number;
     pluginTimeout?: number;
     healthCheck?:
       | boolean
@@ -33,7 +42,7 @@ export interface PlatformaticComposerConfig {
       | boolean
       | {
           /**
-           * The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.
+           * A standard Pino log level or a level defined in customLevels.
            */
           level?: string;
           transport?:
@@ -213,10 +222,6 @@ export interface PlatformaticComposerConfig {
       strictPreflight?: boolean;
       hideOptionsRoute?: boolean;
     };
-    /**
-     * Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.
-     */
-    errorHandler?: string;
   };
   types?: {
     autogenerate?: boolean;
@@ -273,7 +278,7 @@ export interface PlatformaticComposerConfig {
     workersRestartDelay?: number | string;
     logger?: {
       /**
-       * The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.
+       * A standard Pino log level or a level defined in customLevels.
        */
       level?: string;
       transport?:
@@ -365,46 +370,6 @@ export interface PlatformaticComposerConfig {
         url: string;
       };
       [k: string]: unknown;
-    };
-    server?: {
-      hostname?: string;
-      port?: number | string;
-      /**
-       * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
-       */
-      portAssignment?: "shared" | "perWorkerIncrement";
-      /**
-       * The maximum length of the queue of pending connections
-       */
-      backlog?: number;
-      http2?: boolean;
-      https?: {
-        allowHTTP1?: boolean;
-        key:
-          | string
-          | {
-              path?: string;
-            }
-          | (
-              | string
-              | {
-                  path?: string;
-                }
-            )[];
-        cert:
-          | string
-          | {
-              path?: string;
-            }
-          | (
-              | string
-              | {
-                  path?: string;
-                }
-            )[];
-        requestCert?: boolean;
-        rejectUnauthorized?: boolean;
-      };
     };
     reuseTcpPorts?: boolean;
     startTimeout?: number;
@@ -704,7 +669,7 @@ export interface PlatformaticComposerConfig {
             default?: string;
           }[];
         };
-    telemetry?: {
+    tracing?: {
       enabled?: boolean | string;
       /**
        * The name of the application. Defaults to the folder name if not specified.
@@ -843,23 +808,6 @@ export interface PlatformaticComposerConfig {
     strictEnv?: boolean | string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
-    scheduler?: {
-      enabled?: boolean | string;
-      name: string;
-      cron: string;
-      callbackUrl: string;
-      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-      headers?: {
-        [k: string]: string;
-      };
-      body?:
-        | string
-        | {
-            [k: string]: unknown;
-          };
-      maxRetries?: number;
-      [k: string]: unknown;
-    }[];
     policies?: {
       deny: {
         /**
@@ -930,7 +878,7 @@ export interface PlatformaticComposerConfig {
           write?: string[];
         };
       };
-      telemetry?: {
+      tracing?: {
         /**
          * An array of instrumentations loaded if telemetry is enabled
          */
@@ -961,7 +909,7 @@ export interface PlatformaticComposerConfig {
           };
     };
   };
-  telemetry?: {
+  tracing?: {
     enabled?: boolean | string;
     /**
      * The name of the application. Defaults to the folder name if not specified.
@@ -1077,79 +1025,6 @@ export interface PlatformaticComposerConfig {
       openapi?: {
         [k: string]: unknown;
       };
-      graphql?:
-        | boolean
-        | {
-            host?: string;
-            name?: string;
-            graphqlEndpoint?: string;
-            composeEndpoint?: string;
-            entities?: {
-              /**
-               * This interface was referenced by `undefined`'s JSON-Schema definition
-               * via the `patternProperty` "^.*$".
-               */
-              [k: string]: {
-                pkey?: string;
-                resolver?: {
-                  name: string;
-                  argsAdapter?:
-                    | {
-                        [k: string]: unknown;
-                      }
-                    | string;
-                  partialResults?:
-                    | {
-                        [k: string]: unknown;
-                      }
-                    | string;
-                };
-                fkeys?: {
-                  type: string;
-                  field?: string;
-                  as?: string;
-                  pkey?: string;
-                  subgraph?: string;
-                  resolver?: {
-                    name: string;
-                    argsAdapter?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                    partialResults?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                  };
-                  [k: string]: unknown;
-                }[];
-                many?: {
-                  type: string;
-                  fkey: string;
-                  as?: string;
-                  pkey?: string;
-                  subgraph?: string;
-                  resolver: {
-                    name: string;
-                    argsAdapter?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                    partialResults?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                  };
-                  [k: string]: unknown;
-                }[];
-                [k: string]: unknown;
-              };
-            };
-          };
       proxy?:
         | false
         | {
@@ -1257,84 +1132,6 @@ export interface PlatformaticComposerConfig {
       path?: string;
       [k: string]: unknown;
     };
-    graphql?: {
-      graphiql?: boolean;
-      onSubgraphError?: {
-        [k: string]: unknown;
-      };
-      defaultArgsAdapter?:
-        | {
-            [k: string]: unknown;
-          }
-        | string;
-      entities?: {
-        /**
-         * This interface was referenced by `undefined`'s JSON-Schema definition
-         * via the `patternProperty` "^.*$".
-         */
-        [k: string]: {
-          pkey?: string;
-          resolver?: {
-            name: string;
-            argsAdapter?:
-              | {
-                  [k: string]: unknown;
-                }
-              | string;
-            partialResults?:
-              | {
-                  [k: string]: unknown;
-                }
-              | string;
-          };
-          fkeys?: {
-            type: string;
-            field?: string;
-            as?: string;
-            pkey?: string;
-            subgraph?: string;
-            resolver?: {
-              name: string;
-              argsAdapter?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-              partialResults?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-            };
-            [k: string]: unknown;
-          }[];
-          many?: {
-            type: string;
-            fkey: string;
-            as?: string;
-            pkey?: string;
-            subgraph?: string;
-            resolver: {
-              name: string;
-              argsAdapter?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-              partialResults?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-            };
-            [k: string]: unknown;
-          }[];
-          [k: string]: unknown;
-        };
-      };
-      addEntitiesResolvers?: boolean;
-    };
-    addEmptySchema?: boolean;
     refreshTimeout?: number;
     /**
      * Restart the gateway when an application is added to or removed from the runtime, so it can recompose its routes. Set to false for a gateway that does not route from the application registry — restarting it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port until the replacement worker boots.

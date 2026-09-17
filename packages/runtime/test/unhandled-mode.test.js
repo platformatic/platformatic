@@ -11,7 +11,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 test('should allow application to self-manage uncaught exceptions', async t => {
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.json')
   const server = await createRuntime(configFile)
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   let exited = false
   server.once('application:worker:exited', (code, signal) => {
@@ -36,7 +36,7 @@ test('should allow application to self-manage unhandled rejections', async t => 
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.json')
   const server = await createRuntime(configFile)
 
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   let exited = false
   server.once('application:worker:exited', (code, signal) => {
@@ -61,7 +61,7 @@ test('should invoke tracked uncaughtException listeners when exitOnUnhandledErro
   const context = {}
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
   const server = await createRuntime(configFile, null, context)
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   t.after(() => {
     return server.close()
@@ -94,7 +94,7 @@ test('should invoke tracked unhandledRejection listeners when exitOnUnhandledErr
   const context = {}
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
   const server = await createRuntime(configFile, null, context)
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   t.after(() => {
     return server.close()
@@ -127,7 +127,7 @@ test('should invoke tracked unhandledRejection listeners when exitOnUnhandledErr
 test('should exit with the PROCESS_UNHANDLED_ERROR code on uncaught exceptions raised after initialization', async t => {
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
   const server = await createRuntime(configFile)
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   t.after(() => {
     return server.close()
@@ -198,7 +198,7 @@ test('should exit with the PROCESS_UNHANDLED_ERROR code on unhandled rejections 
 test('should exit with the PROCESS_UNHANDLED_ERROR code when an unhandled rejection follows a stop', async t => {
   const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
   const server = await createRuntime(configFile)
-  const url = await server.start()
+  const { 'composer:0': url } = await server.start()
 
   t.after(() => {
     return server.close()

@@ -1,4 +1,4 @@
-import { deepStrictEqual, notStrictEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, match, notStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
 import { resolve } from 'node:path'
@@ -45,22 +45,28 @@ async function getOccupiedPortWithAvailablePreviousPort () {
   }
 }
 
+// Configures the application to use per-worker port assignment, starting from a free range of ports.
+// The port assignment lives in the capability configuration since ports are per-application in v4.
 async function preparePerWorkerPortRuntime (
   t,
-  { application = 'node', workerCount = 5, maxWorkerCount = workerCount } = {}
+  { application = 'node', workerCount = 5, maxWorkerCount = workerCount, additionalApplications = [] } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
-  await updateConfigFile(configFile, contents => {
+  await updateConfigFile(resolve(root, application, 'platformatic.json'), contents => {
     contents.server = {
+      ...contents.server,
       hostname: HOST,
       port: basePort,
       portAssignment: 'perWorkerIncrement'
     }
+  })
+
+  await updateConfigFile(configFile, contents => {
     contents.autoload = undefined
-    contents.entrypoint = application
+    contents.metrics = false
 
     let applicationConfig = contents.services.find(service => service.id === application)
     if (!applicationConfig) {
@@ -73,6 +79,10 @@ async function preparePerWorkerPortRuntime (
     }
 
     applicationConfig.workers = workerCount
+
+    for (const additional of additionalApplications) {
+      contents.services.push(additional)
+    }
   })
 
   if (application === 'service') {
@@ -87,7 +97,7 @@ async function preparePerWorkerPortRuntime (
     await app.close()
   })
 
-  return { app, basePort }
+  return { app, basePort, root }
 }
 
 async function requestWorkerPort (port, expectedFrom = 'node') {
@@ -184,14 +194,29 @@ test(
   }
 )
 
-test('assigns one incremental port per entrypoint worker', async t => {
+test('assigns one incremental port per worker of the application', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t)
 
-  await app.start()
+  const urls = await app.start()
 
   for (let offset = 0; offset < 5; offset++) {
     strictEqual(await requestWorkerPort(basePort + offset), offset)
+    strictEqual(new URL(urls[`node:${offset}`]).port, String(basePort + offset))
   }
+
+  deepStrictEqual(Object.keys(app.getUrls('node')).sort(), ['node:0', 'node:1', 'node:2', 'node:3', 'node:4'])
+
+  const details = await app.getApplicationDetails('node')
+  strictEqual(details.urls.length, 5)
+  strictEqual(details.url, urls['node:0'])
+})
+
+test('assigns one incremental port per worker of a service application', async t => {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t, { application: 'service', workerCount: 3 })
+
+  await app.start()
+
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [0, 1, 2])
 })
 
 test('assigns new incremental ports when scaling up and stops highest ports when scaling down', async t => {
@@ -213,6 +238,11 @@ test('assigns new incremental ports when scaling up and stops highest ports when
   await assertPortClosed(basePort + 4)
   await assertPortClosed(basePort + 5)
   await assertPortClosed(basePort + 6)
+
+  // Scaling up again reuses the lowest free ports
+  report = await app.updateApplicationsResources([{ application: 'node', workers: 5 }])
+  strictEqual(report.length, 1)
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 7, 8])
 })
 
 test('preserves incremental ports when restarting an application', async t => {
@@ -224,6 +254,22 @@ test('preserves incremental ports when restarting an application', async t => {
   await app.restartApplication('node')
 
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [5, 6, 7, 8, 9])
+})
+
+test('preserves incremental ports when stopping and starting an application', async t => {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t)
+
+  await app.start()
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
+
+  await app.stopApplication('node')
+
+  for (let offset = 0; offset < 5; offset++) {
+    await assertPortClosed(basePort + offset)
+  }
+
+  await app.startApplication('node')
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
 })
 
 test('preserves incremental ports when replacing workers after a health update', async t => {
@@ -261,4 +307,39 @@ test('preserves incremental port when restarting a crashed worker', async t => {
 
   await waitForWorkerOnPort(basePort, 3, 'service')
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [3, 1, 2])
+
+  // Crash the replacement worker as well: the new worker must inherit the port offset, not use its index
+  const secondEventsPromise = waitForEvents(
+    app,
+    { event: 'application:worker:error', application: 'service', worker: 3 },
+    20_000
+  )
+
+  const secondRes = await request(`http://${HOST}:${basePort}/crash`, { method: 'POST' })
+  await secondRes.body.text()
+  await secondEventsPromise
+
+  await waitForWorkerOnPort(basePort, 4, 'service')
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [4, 1, 2])
+})
+
+test('rejects another application listening on a port used by one of the workers', async t => {
+  const { app, basePort, root } = await preparePerWorkerPortRuntime(t, {
+    workerCount: 3,
+    additionalApplications: [{ id: 'service', path: './service', config: 'platformatic.json', workers: 1 }]
+  })
+
+  // The service listens on the port assigned to the second worker of node
+  await updateConfigFile(resolve(root, 'service/platformatic.json'), contents => {
+    contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
+  })
+
+  await rejects(
+    () => app.start(),
+    error => {
+      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE', error.message)
+      match(error.message, new RegExp(`${basePort + 1}`))
+      return true
+    }
+  )
 })

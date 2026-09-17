@@ -26,6 +26,7 @@ import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
 import { basename, dirname, isAbsolute, join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
@@ -33,14 +34,15 @@ import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
-import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { createCoordinator, createInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
 import {
+  AddressInUseError,
+  WorkerAddressInUseError,
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
-  CannotRemoveEntrypointError,
   DuplicateExtensionHealthCheckError,
   DuplicateITCHandlerNameError,
   ExtensionHealthRoutesUnavailableError,
@@ -56,14 +58,13 @@ import {
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
   RuntimeExtensionBuildAlreadyCalledError,
-  WorkerInterceptorJoinTimeoutError,
   WorkerNotFoundError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { createManagementHandlers } from './management-handlers.js'
 import { OpenTelemetryMetricsForwarder } from './opentelemetry-metrics.js'
-import { createChannelCreationHook } from './policies.js'
+import { createChannelCreationHook, createTargetPermissionHook } from './policies.js'
 import { startHealthProbesServer, startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
@@ -79,13 +80,15 @@ import {
   kFullId,
   kHealthCheckTimer,
   kId,
-  kInterceptorReadyPromise,
   kIsSubprocessHost,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
   kWorkerHealthSignals,
   kWorkerId,
+  kWorkerPortOffset,
+  kWorkerServerOptions,
+  kWorkerUrl,
   kWorkersBroadcast,
   kWorkerStartTime,
   kWorkerStatus
@@ -194,19 +197,20 @@ export class Runtime extends EventEmitter {
   #sharedContext
   #isProduction
   #concurrency
-  #entrypointId
-  #url
-  #entrypointPort
 
   #healthMetricsTimer
   #healthMetricsCollectionActive
 
   #meshInterceptor
+  #meshCoordinator
+  #meshId
   #dispatcher
 
   #managementApi
   #prometheusServer
   #healthProbesServer
+  #metricsServersInitialized
+  #metricsServersStartPromise
   #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
@@ -226,9 +230,9 @@ export class Runtime extends EventEmitter {
   #lastOverloadProfiles
   #restartingApplications
   #restartingWorkers
+  #workerPortOffsets
   #dynamicWorkersScaler
   #nextWorkerIndex
-  #workerPortOffsets
 
   #sharedHttpCache
   #scheduler
@@ -255,22 +259,14 @@ export class Runtime extends EventEmitter {
     this.#applications = new Map()
     this.#applicationRestartCounts = new Map()
     this.#workers = new RoundRobinMap()
-    this.#url = undefined
-    this.#entrypointPort = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
-    this.#meshInterceptor = createThreadInterceptor({
-      domain: '.plt.local',
-      timeout: this.#config.applicationTimeout,
-      meshTimeout: this.#context.meshTimeout ?? true,
-      onChannelCreation: this.#channelCreationHook,
-      onError: this.#onMeshInterceptorError.bind(this)
-    })
+    this.#meshId = `runtime-${randomUUID()}`
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingApplications = new Set()
     this.#restartingWorkers = new Map()
-    this.#nextWorkerIndex = new Map()
     this.#workerPortOffsets = new Map() // fullWorkerId => portOffset
+    this.#nextWorkerIndex = new Map()
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
 
@@ -299,6 +295,8 @@ export class Runtime extends EventEmitter {
     // Registered per-worker in #setupWorker, reserved so extensions cannot clobber it
     this.#reservedITCHandlerNames.add('profiling:started')
     this.#extensions = []
+    this.#metricsServersInitialized = false
+    this.#metricsServersStartPromise = null
     this.#extensionsWantHealthMetrics = false
     this.#extensionReadinessChecks = new Map()
     this.#extensionLivenessChecks = new Map()
@@ -330,10 +328,9 @@ export class Runtime extends EventEmitter {
       this.#metricsLabelName = 'applicationId'
     }
 
-    // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
+    // Initialize process-level metrics registry only when metrics are enabled.
     // These metrics are the same across all workers and only need to be collected once
-    // We need this for management API as it can request metrics even without explicit metrics config
-    if (config.metrics || config.managementApi) {
+    if (config.metrics && config.metrics.enabled !== false) {
       this.#processMetricsRegistry = new metricsClient.Registry()
       collectProcessMetrics(this.#processMetricsRegistry)
     }
@@ -369,18 +366,28 @@ export class Runtime extends EventEmitter {
     // readiness/liveness checks and probe routes before Fastify starts listening.
     await this.#loadExtensions()
 
-    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+    // A runtime without applications exits during start and must not briefly
+    // claim the default health-probe port. Applications added later, including
+    // by extension start hooks, initialize these servers in addApplications().
+    if (config.applications.length > 0) {
+      await this.#ensureMetricsServersStarted()
     }
 
-    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
-    this.#assertExtensionHealthRoutesApplied()
+    this.#meshCoordinator = createCoordinator({ meshId: this.#meshId })
+    this.#meshInterceptor = createInterceptor({
+      meshId: this.#meshId,
+      domain: '.plt.local',
+      connectTimeout: this.#config.applicationTimeout,
+      bootstrapTimeout: this.#config.applicationTimeout,
+      allowTarget: createTargetPermissionHook(this.#config)
+    })
+    await this.#meshInterceptor.ready
 
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
 
     if (!this.#context.build) {
-      this.#scheduler = startScheduler(config.scheduler ?? [], this.#dispatcher, logger)
+      this.#scheduler = startScheduler(logger)
     }
 
     this.#updateStatus('init')
@@ -407,7 +414,7 @@ export class Runtime extends EventEmitter {
       if (this.getApplicationsIds().length === 0) {
         this.#updateStatus('started')
         await this.close(silent)
-        return
+        return {}
       }
 
       if (this.#config.inspectorOptions) {
@@ -450,19 +457,13 @@ export class Runtime extends EventEmitter {
 
     this.#updateStatus('started')
 
-    // The CLI enables the module compile cache for this process. Node.js would only write it when
-    // the process terminates, so flush it now that the boot is complete to not lose it when the
-    // process is killed abruptly. This is a no-op when the compile cache is not enabled.
-    scheduleCompileCacheFlush()
-
     // Start the global health metrics timer for all workers if needed
     this.#startHealthMetricsCollectionIfNeeded()
 
     await this.#dynamicWorkersScaler?.start()
-    if (this.#url) {
-      this.#showUrl()
-    }
-    return this.#url
+    this.#showUrls()
+    scheduleCompileCacheFlush(this.logger)
+    return this.getUrls()
   }
 
   async stop (silent = false) {
@@ -491,18 +492,14 @@ export class Runtime extends EventEmitter {
 
     await this.#dynamicWorkersScaler?.stop()
 
-    // Stop the entrypoint first so that no new requests are accepted
-    if (this.#entrypointId) {
-      await this.stopApplication(this.#entrypointId, silent)
-    }
-
     // Await extension stop hooks before stopping remaining applications so that
     // control-plane extensions can settle work and hand off state first.
     await this.#stopExtensions()
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
-    await this.#meshInterceptor.close()
+    await this.#meshInterceptor?.close()
+    this.#meshCoordinator?.destroy()
     this.#workersBroadcastChannel?.close()
 
     this.#updateStatus('stopped')
@@ -520,8 +517,6 @@ export class Runtime extends EventEmitter {
     await this.restartApplications(toRestart)
 
     this.emitAndNotify('restarted')
-
-    return this.#url
   }
 
   async close (silent = false) {
@@ -673,25 +668,8 @@ export class Runtime extends EventEmitter {
 
   async addApplications (applications, start = false) {
     const setupInvocations = []
-    // Per-worker ports do not need SO_REUSEPORT because each worker binds a different port.
-    const usesPerWorkerPorts = this.#config.server?.portAssignment === 'perWorkerIncrement'
-
     const toStart = []
     for (const application of applications) {
-      const workers = application.workers
-
-      if (
-        (workers.static > 1 || workers.minimum > 1) &&
-        application.entrypoint &&
-        !features.node.reusePort &&
-        !usesPerWorkerPorts
-      ) {
-        this.logger.warn(
-          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
-        )
-        application.workers = { dynamic: false, static: 1 }
-      }
-
       this.#applications.set(application.id, application)
       this.#applicationRestartCounts.set(application.id, this.#applicationRestartCounts.get(application.id) ?? 0)
       setupInvocations.push([application])
@@ -700,8 +678,12 @@ export class Runtime extends EventEmitter {
 
     await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
 
+    if (applications.length > 0) {
+      await this.#ensureMetricsServersStarted()
+    }
+
     for (const application of applications) {
-      this.logger.debug(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
+      this.logger.debug(`Added application "${application.id}".`)
       this.emitAndNotify('application:added', application)
     }
 
@@ -719,10 +701,6 @@ export class Runtime extends EventEmitter {
   }
 
   async removeApplications (applications, silent = false) {
-    if (applications.includes(this.#entrypointId)) {
-      throw new CannotRemoveEntrypointError()
-    }
-
     const removed = []
     for (const application of applications) {
       if (!this.#applications.has(application)) {
@@ -773,8 +751,24 @@ export class Runtime extends EventEmitter {
     const levels = topologicalLevels(applications, dependencies)
 
     for (const level of levels) {
-      const startInvocations = level.map(app => [app, silent])
-      await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+      const applicationsWithPort = await Promise.all(
+        level.map(async applicationId => {
+          const worker = await this.#getWorkerByIdOrNext(applicationId)
+          const applicationConfig = await sendViaITC(worker, 'getApplicationConfig')
+          const port = Number(applicationConfig?.server?.port)
+          return { applicationId, hasPort: Number.isInteger(port) && port > 0 }
+        })
+      )
+
+      for (const hasPort of [true, false]) {
+        const startInvocations = applicationsWithPort
+          .filter(application => application.hasPort === hasPort)
+          .map(({ applicationId }) => [applicationId, silent])
+
+        if (startInvocations.length > 0) {
+          await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+        }
+      }
     }
   }
 
@@ -786,16 +780,21 @@ export class Runtime extends EventEmitter {
 
     if (!skipDependencies) {
       try {
-        const { applications } = await this.getApplications(true)
-        for (const application of applications) {
-          for (const dependency of application.dependencies ?? []) {
-            let applicationDependents = dependents[dependency]
-            if (!applicationDependents) {
-              applicationDependents = new Set()
-              dependents[dependency] = applicationDependents
-            }
+        const details = await executeWithTimeout(
+          this.getApplications(true),
+          this.#config.gracefulShutdown.application
+        )
+        if (details !== kTimeout) {
+          for (const application of details.applications) {
+            for (const dependency of application.dependencies ?? []) {
+              let applicationDependents = dependents[dependency]
+              if (!applicationDependents) {
+                applicationDependents = new Set()
+                dependents[dependency] = applicationDependents
+              }
 
-            applicationDependents.add(application.id)
+              applicationDependents.add(application.id)
+            }
           }
         }
       } catch (e) {
@@ -804,11 +803,6 @@ export class Runtime extends EventEmitter {
     }
 
     for (const application of applicationsToStop) {
-      // The entrypoint has been stopped above
-      if (application === this.#entrypointId) {
-        continue
-      }
-
       stopInvocations.push([application, silent, Array.from(dependents[application] ?? [])])
     }
 
@@ -816,13 +810,39 @@ export class Runtime extends EventEmitter {
   }
 
   async restartApplications (applicationsToRestart) {
-    const restartInvocations = []
+    const restartInvocations = applicationsToRestart.map(application => [application, true])
+    const restarts = await executeInParallel(
+      this.restartApplication.bind(this),
+      restartInvocations,
+      this.#concurrency,
+      false
+    )
+    const failed = restarts.filter(result => result instanceof Error)
+    const succeeded = restarts.filter(result => result && !(result instanceof Error))
 
-    for (const application of applicationsToRestart) {
-      restartInvocations.push([application])
+    if (failed.length > 0) {
+      await Promise.allSettled(succeeded.map(restart => restart.discard()))
+      throw failed[0]
     }
 
-    return executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
+    const results = await executeInParallel(
+      retirement => retirement.retire(),
+      succeeded.flatMap(({ retirements }) => retirements.map(retirement => [retirement])),
+      this.#concurrency,
+      false
+    )
+
+    const error = results.find(result => result instanceof Error)
+    if (error) {
+      for (const restart of succeeded) {
+        restart.release()
+      }
+      throw error
+    }
+
+    for (const restart of succeeded) {
+      restart.complete()
+    }
   }
 
   async startApplication (id, silent = false) {
@@ -879,7 +899,7 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:stopped', id)
   }
 
-  async restartApplication (id) {
+  async restartApplication (id, deferOldWorkerRetirement = false) {
     const applicationConfig = this.#applications.get(id)
 
     if (!applicationConfig) {
@@ -898,6 +918,8 @@ export class Runtime extends EventEmitter {
     }
 
     this.#restartingApplications.add(id)
+    const retirements = []
+    let deferred = false
 
     try {
       const config = this.#config
@@ -915,14 +937,45 @@ export class Runtime extends EventEmitter {
           await sleep(config.workersRestartDelay)
         }
 
-        await this.#replaceWorker(config, applicationConfig, workersCount, id, workerIndex, worker, true)
+        const retirement = await this.#replaceWorker(
+          config,
+          applicationConfig,
+          workersCount,
+          id,
+          workerIndex,
+          worker,
+          true,
+          deferOldWorkerRetirement
+        )
+        if (retirement) {
+          retirements.push(retirement)
+        }
+      }
+
+      if (deferOldWorkerRetirement) {
+        deferred = true
+        return {
+          retirements,
+          release: () => this.#restartingApplications.delete(id),
+          discard: async () => {
+            await Promise.allSettled(retirements.map(retirement => retirement.discard()))
+            this.#restartingApplications.delete(id)
+          },
+          complete: () => {
+            this.#incrementApplicationRestartCount(id)
+            this.emitAndNotify('application:restarted', id)
+            this.#restartingApplications.delete(id)
+          }
+        }
       }
 
       await this.#registerApplicationSchedulerJobs(id)
       this.#incrementApplicationRestartCount(id)
       this.emitAndNotify('application:restarted', id)
     } finally {
-      this.#restartingApplications.delete(id)
+      if (!deferred) {
+        this.#restartingApplications.delete(id)
+      }
     }
   }
 
@@ -1287,6 +1340,8 @@ export class Runtime extends EventEmitter {
       this.#healthProbesServer = null
     }
 
+    this.#metricsServersInitialized = false
+
     if (this.#opentelemetryMetricsForwarder) {
       await this.#opentelemetryMetricsForwarder.close()
       this.#opentelemetryMetricsForwarder = null
@@ -1300,10 +1355,7 @@ export class Runtime extends EventEmitter {
       entry.applied = false
     }
 
-    this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
-
-    this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
-    this.#assertExtensionHealthRoutesApplied()
+    await this.#ensureMetricsServersStarted()
 
     await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
 
@@ -1323,6 +1375,41 @@ export class Runtime extends EventEmitter {
 
     this.logger.info({ metricsConfig }, 'Metrics configuration updated')
     return { success: true, config: metricsConfig }
+  }
+
+  async #ensureMetricsServersStarted () {
+    if (this.#metricsServersInitialized) {
+      return
+    }
+
+    if (this.#metricsServersStartPromise) {
+      return this.#metricsServersStartPromise
+    }
+
+    this.#metricsServersStartPromise = (async () => {
+      const config = this.#config
+
+      try {
+        if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
+          this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+        }
+
+        this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
+        this.#assertExtensionHealthRoutesApplied()
+        this.#metricsServersInitialized = true
+      } catch (err) {
+        await Promise.allSettled([this.#prometheusServer?.close(), this.#healthProbesServer?.close()])
+        this.#prometheusServer = null
+        this.#healthProbesServer = null
+        throw err
+      }
+    })()
+
+    try {
+      await this.#metricsServersStartPromise
+    } finally {
+      this.#metricsServersStartPromise = null
+    }
   }
 
   async #startOpenTelemetryMetricsForwarder (config) {
@@ -1530,8 +1617,20 @@ export class Runtime extends EventEmitter {
     return this.#root
   }
 
-  getUrl () {
-    return this.#url
+  getUrls (applicationId) {
+    const urls = {}
+    const applicationIds = applicationId ? [applicationId] : this.#applications.keys()
+
+    for (const id of applicationIds) {
+      for (const workerId of this.#workers.getKeys(id)) {
+        const url = this.#workers.get(workerId)?.[kWorkerUrl]
+        if (url) {
+          urls[workerId] = url
+        }
+      }
+    }
+
+    return urls
   }
 
   getRuntimeStatus () {
@@ -1540,8 +1639,6 @@ export class Runtime extends EventEmitter {
 
   async getRuntimeMetadata () {
     const packageJson = await this.#getRuntimePackageJson()
-    const entrypointDetails = await this.getEntrypointDetails()
-
     return {
       pid: process.pid,
       cwd: process.cwd(),
@@ -1552,8 +1649,8 @@ export class Runtime extends EventEmitter {
       projectDir: this.#root,
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
-      url: entrypointDetails?.url ?? null,
-      platformaticVersion: version
+      platformaticVersion: version,
+      urls: this.getUrls()
     }
   }
 
@@ -1584,14 +1681,6 @@ export class Runtime extends EventEmitter {
 
   getManagementApiUrl () {
     return this.#managementApi?.server.address() ?? null
-  }
-
-  async getEntrypointDetails () {
-    if (!this.#entrypointId) {
-      return null
-    }
-
-    return this.getApplicationDetails(this.#entrypointId)
   }
 
   async getCustomHealthChecks () {
@@ -1745,7 +1834,7 @@ export class Runtime extends EventEmitter {
       // Drop any configured custom label that shares the name of the application
       // label (a config can set both `applicationLabel: 'serviceId'` and a static
       // `serviceId` label): keeping it would make these runtime-wide metrics look
-      // like they belong to an application, both here and in getFormattedMetrics().
+      // like they belong to an application during metrics aggregation.
       const processLabels = { ...this.#config.metrics?.labels }
       delete processLabels[this.#metricsLabelName]
       this.#applyLabelsToMetrics(processMetricsJson, processLabels, processMetrics)
@@ -1910,155 +1999,6 @@ export class Runtime extends EventEmitter {
     return output
   }
 
-  async getFormattedMetrics () {
-    try {
-      const { metrics } = await this.getMetrics()
-
-      if (metrics === null || metrics.length === 0) {
-        return null
-      }
-
-      const metricsNames = [
-        'process_cpu_percent_usage',
-        'process_resident_memory_bytes',
-        'nodejs_heap_size_total_bytes',
-        'nodejs_heap_size_used_bytes',
-        'nodejs_heap_space_size_total_bytes',
-        'nodejs_eventloop_utilization',
-        'http_request_all_summary_seconds'
-      ]
-
-      const applicationsMetrics = {}
-
-      // Process-level metrics are reported only once for the whole runtime, without
-      // an application label, since they are shared by all the applications running
-      // in worker threads (see issue #3332). Applications running as separate OS
-      // processes report their own labeled values, which take precedence below.
-      const runtimeProcessMetrics = {}
-      const applicationProcessMetrics = new Set()
-
-      for (const metric of metrics) {
-        const { name, values } = metric
-
-        if (!metricsNames.includes(name)) continue
-        if (!values || values.length === 0) continue
-
-        const labels = values[0].labels
-        // Use the configured label name (serviceId for v2 compatibility, applicationId for v3+)
-        const applicationId = labels?.[this.#metricsLabelName]
-
-        if (!applicationId) {
-          if (name === 'process_cpu_percent_usage') {
-            runtimeProcessMetrics.cpu = values[0].value
-            continue
-          }
-          if (name === 'process_resident_memory_bytes') {
-            runtimeProcessMetrics.rss = values[0].value
-            continue
-          }
-
-          throw new Error(`Missing ${this.#metricsLabelName} label in metrics`)
-        }
-
-        if (name === 'process_cpu_percent_usage' || name === 'process_resident_memory_bytes') {
-          applicationProcessMetrics.add(`${applicationId}:${name}`)
-        }
-
-        let applicationMetrics = applicationsMetrics[applicationId]
-        if (!applicationMetrics) {
-          applicationMetrics = {
-            cpu: 0,
-            rss: 0,
-            totalHeapSize: 0,
-            usedHeapSize: 0,
-            newSpaceSize: 0,
-            oldSpaceSize: 0,
-            elu: 0,
-            latency: {
-              p50: 0,
-              p90: 0,
-              p95: 0,
-              p99: 0
-            }
-          }
-          applicationsMetrics[applicationId] = applicationMetrics
-        }
-
-        parsePromMetric(applicationMetrics, metric)
-      }
-
-      // Apply the runtime-wide process-level values to every application that did
-      // not report its own (i.e. every application running in a worker thread).
-      for (const [applicationId, applicationMetrics] of Object.entries(applicationsMetrics)) {
-        if (
-          runtimeProcessMetrics.cpu !== undefined &&
-          !applicationProcessMetrics.has(`${applicationId}:process_cpu_percent_usage`)
-        ) {
-          applicationMetrics.cpu = runtimeProcessMetrics.cpu
-        }
-
-        if (
-          runtimeProcessMetrics.rss !== undefined &&
-          !applicationProcessMetrics.has(`${applicationId}:process_resident_memory_bytes`)
-        ) {
-          applicationMetrics.rss = runtimeProcessMetrics.rss
-        }
-      }
-
-      function parsePromMetric (applicationMetrics, promMetric) {
-        const { name } = promMetric
-
-        if (name === 'process_cpu_percent_usage') {
-          applicationMetrics.cpu = promMetric.values[0].value
-          return
-        }
-        if (name === 'process_resident_memory_bytes') {
-          applicationMetrics.rss = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_size_total_bytes') {
-          applicationMetrics.totalHeapSize = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_size_used_bytes') {
-          applicationMetrics.usedHeapSize = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_space_size_total_bytes') {
-          const newSpaceSize = promMetric.values.find(value => value.labels.space === 'new')
-          const oldSpaceSize = promMetric.values.find(value => value.labels.space === 'old')
-
-          applicationMetrics.newSpaceSize = newSpaceSize.value
-          applicationMetrics.oldSpaceSize = oldSpaceSize.value
-          return
-        }
-        if (name === 'nodejs_eventloop_utilization') {
-          applicationMetrics.elu = promMetric.values[0].value
-          return
-        }
-        if (name === 'http_request_all_summary_seconds') {
-          applicationMetrics.latency = {
-            p50: promMetric.values.find(value => value.labels.quantile === 0.5)?.value || 0,
-            p90: promMetric.values.find(value => value.labels.quantile === 0.9)?.value || 0,
-            p95: promMetric.values.find(value => value.labels.quantile === 0.95)?.value || 0,
-            p99: promMetric.values.find(value => value.labels.quantile === 0.99)?.value || 0
-          }
-        }
-      }
-
-      return {
-        version: 1,
-        date: new Date().toISOString(),
-        applications: applicationsMetrics
-      }
-    } catch (err) {
-      // If any metric is missing, return nothing
-      this.logger.warn({ err }, 'Cannot fetch metrics')
-
-      return null
-    }
-  }
-
   getSharedContext () {
     return this.#sharedContext
   }
@@ -2073,12 +2013,11 @@ export class Runtime extends EventEmitter {
   }
 
   getApplicationsIds () {
-    return Array.from(this.#applications.keys())
+    return Array.from(this.#applications.keys()).sort()
   }
 
   async getApplications (allowUnloaded = false) {
     return {
-      entrypoint: this.#entrypointId,
       production: this.#isProduction,
       applications: await Promise.all(
         this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
@@ -2124,7 +2063,7 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    const { entrypoint, localUrl, config, path } = application[kConfig]
+    const { localUrl, config, path } = application[kConfig]
 
     const sourceMaps = application[kConfig].sourceMaps ?? this.#config.sourceMaps
     const status = await sendViaITC(application, 'getStatus')
@@ -2139,7 +2078,6 @@ export class Runtime extends EventEmitter {
       dependencies,
       version,
       localUrl,
-      entrypoint,
       sourceMaps
     }
 
@@ -2147,9 +2085,9 @@ export class Runtime extends EventEmitter {
       applicationDetails.workers = this.#workers.getKeys(id).length
     }
 
-    if (entrypoint) {
-      applicationDetails.url = status === 'started' ? this.#url : null
-    }
+    const urls = status === 'started' ? Object.values(this.getUrls(id)) : []
+    applicationDetails.urls = urls
+    applicationDetails.url = urls[0] ?? null
 
     return applicationDetails
   }
@@ -2196,10 +2134,6 @@ export class Runtime extends EventEmitter {
 
   getSchedulerJobs () {
     return this.#scheduler?.getJobs() ?? []
-  }
-
-  getScheduler () {
-    return this.getSchedulerJobs()
   }
 
   pauseSchedulerJob (name) {
@@ -2270,6 +2204,7 @@ export class Runtime extends EventEmitter {
         worker: index,
         status: worker[kWorkerStatus],
         thread: worker.threadId,
+        url: worker[kWorkerUrl] ?? null,
         raw: includeRaw ? worker : undefined
       }
     }
@@ -2391,12 +2326,26 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify(status, args)
   }
 
-  #showUrl () {
-    if (!this.#url) {
-      return
-    }
+  #showUrls (workerIds) {
+    const whitelist = workerIds ? new Set(workerIds) : null
 
-    this.logger.info(`Platformatic is now listening at ${this.#url}`)
+    for (const applicationId of this.#applications.keys()) {
+      for (const workerId of this.#workers.getKeys(applicationId)) {
+        if (whitelist && !whitelist.has(workerId)) {
+          continue
+        }
+
+        const worker = this.#workers.get(workerId)
+        const url = worker?.[kWorkerUrl]
+        if (!url) {
+          continue
+        }
+
+        this.logger.info(
+          `Platformatic is now listening at ${url} for ${this.#workerExtendedLabel(applicationId, worker[kWorkerId])}`
+        )
+      }
+    }
   }
 
   async #setupApplication (applicationConfig) {
@@ -2432,11 +2381,37 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    const workers = applicationConfig.workers.static
+    let workers = applicationConfig.workers.static
     const setupInvocations = []
 
-    for (let i = 0; i < workers; i++) {
-      this.#workerPortOffsets.set(`${id}:${i}`, i)
+    // All the workers of the application are (re)created, so their port offsets match their indexes
+    for (const workerId of this.#workerPortOffsets.keys()) {
+      if (workerId.slice(0, workerId.lastIndexOf(':')) === id) {
+        this.#workerPortOffsets.delete(workerId)
+      }
+    }
+
+    let firstIndex = 0
+
+    // On platforms where reusePort is not available, multiple workers cannot listen on the same fixed port.
+    // The listener configuration is owned by the capability, so it can only be inspected after setting up the first
+    // worker: if the application would try to share a fixed port between workers, clamp it to a single worker.
+    if (!features.node.reusePort && (workers > 1 || applicationConfig.workers.dynamic)) {
+      const worker = await this.#setupWorker(config, applicationConfig, workers, id, 0)
+      firstIndex = 1
+
+      if (await this.#usesSharedFixedPort(worker)) {
+        this.logger.warn(
+          `The application "${id}" is configured to listen on a fixed port with multiple workers, but reusePort is not available in your OS. ${workers > 1 ? `Setting workers to 1 instead of ${workers}` : 'Disabling dynamic workers scaling'}. To run multiple workers, set "server.portAssignment" to "perWorkerIncrement" in the application configuration.`
+        )
+
+        applicationConfig.workers = { dynamic: false, static: 1 }
+        workers = 1
+        await sendViaITC(worker, 'updateWorkersCount', { applicationId: id, workers })
+      }
+    }
+
+    for (let i = firstIndex; i < workers; i++) {
       setupInvocations.push([config, applicationConfig, workers, id, i])
     }
 
@@ -2453,6 +2428,11 @@ export class Runtime extends EventEmitter {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
     const workerId = `${applicationId}:${index}`
 
+    // The port offset is the slot the worker occupies when the application uses server.portAssignment=perWorkerIncrement.
+    // It matches the worker index unless the worker was created to replace another one, in which case it inherits its offset.
+    const portOffset = this.#workerPortOffsets.get(workerId) ?? index
+    this.#workerPortOffsets.set(workerId, portOffset)
+
     // Handle inspector
     let inspectorOptions
 
@@ -2464,17 +2444,11 @@ export class Runtime extends EventEmitter {
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
     }
 
-    let serverConfigOverride
-    if (this.#config.server?.portAssignment === 'perWorkerIncrement') {
-      const portOffset = this.#workerPortOffsets.get(workerId)
-      serverConfigOverride = { port: Number(this.#config.server.port) + portOffset }
-    }
-
-    if (config.telemetry) {
-      applicationConfig.telemetry = {
-        ...config.telemetry,
-        ...applicationConfig.telemetry,
-        applicationName: `${config.telemetry.applicationName}-${applicationConfig.id}`
+    if (config.tracing) {
+      applicationConfig.tracing = {
+        ...config.tracing,
+        ...applicationConfig.tracing,
+        applicationName: `${config.tracing.applicationName}-${applicationConfig.id}`
       }
     }
 
@@ -2483,9 +2457,9 @@ export class Runtime extends EventEmitter {
 
     const execArgv = applicationConfig.execArgv ?? []
 
-    if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+    if (!applicationConfig.skipTracingHooks && config.tracing && config.tracing.enabled !== false) {
       const require = createRequire(import.meta.url)
-      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const telemetryPath = require.resolve('@platformatic/tracing')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
       const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
 
@@ -2533,21 +2507,12 @@ export class Runtime extends EventEmitter {
     const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
     const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
-    const workerConfig = {
-      ...config,
-      preload
-    }
-
-    if (config.server && serverConfigOverride) {
-      workerConfig.server = {
-        ...config.server,
-        ...serverConfigOverride
-      }
-    }
+    const workerConfig = { ...config, preload }
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config: workerConfig,
+        meshId: this.#meshId,
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,
@@ -2556,7 +2521,8 @@ export class Runtime extends EventEmitter {
         worker: {
           id: workerId,
           index,
-          count: workersCount
+          count: workersCount,
+          portOffset
         },
         resourceLimits: {
           maxOldGenerationSizeMb,
@@ -2599,7 +2565,6 @@ export class Runtime extends EventEmitter {
       worker[kWorkerStatus] = 'exited'
       this.emitAndNotify('application:worker:exited', eventPayload)
 
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
       this.#cleanupWorker(worker)
 
       if (this.#status === 'stopping') {
@@ -2624,11 +2589,18 @@ export class Runtime extends EventEmitter {
               this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms ...`)
             }
 
-            this.#restartCrashedWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, portOffset).catch(
-              err => {
-                this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
-              }
-            )
+            this.#restartCrashedWorker(
+              config,
+              applicationConfig,
+              workersCount,
+              applicationId,
+              index,
+              false,
+              0,
+              worker[kWorkerPortOffset]
+            ).catch(err => {
+              this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
+            })
           } else {
             this.emitAndNotify('application:worker:unvailable', eventPayload)
             this.logger.warn(`The ${errorLabel} is no longer available.`)
@@ -2641,6 +2613,7 @@ export class Runtime extends EventEmitter {
     worker[kFullId] = workerId
     worker[kApplicationId] = applicationId
     worker[kWorkerId] = index
+    worker[kWorkerPortOffset] = portOffset
     worker[kWorkerStatus] = 'boot'
 
     if (inspectorOptions) {
@@ -2681,6 +2654,10 @@ export class Runtime extends EventEmitter {
     // Forward events from the worker
     // Do not use emitAndNotify here since we don't want to forward unknown events
     worker[kITC].on('event', ({ event, payload }) => {
+      if (event === 'serverOptions') {
+        worker[kWorkerServerOptions] = payload[0]
+      }
+
       event = `application:worker:event:${event}`
 
       this.emit(event, ...payload, workerId, applicationId, index)
@@ -2854,9 +2831,7 @@ export class Runtime extends EventEmitter {
           this.logger.info(`The application "${applicationId}" has been successfully reloaded.`)
           this.emitAndNotify('application:worker:reloaded', eventPayload)
 
-          if (applicationConfig.entrypoint) {
-            this.#showUrl()
-          }
+          this.#showUrls(this.#workers.getKeys(applicationId))
         } catch (e) {
           this.logger.error(e)
         }
@@ -2867,25 +2842,6 @@ export class Runtime extends EventEmitter {
       // Store locally
       this.#workers.set(workerId, worker)
     }
-
-    // Setup the interceptor
-    // kInterceptorReadyPromise resolves when the worker
-    // is ready to receive requests: after calling the replaceServer method
-    //
-    // It is stored, not awaited: #startWorker awaits it later, and only if the
-    // worker is actually started. A worker that is discarded or torn down
-    // before that — a replacement abandoned because the runtime stopped
-    // mid-restart, for instance — leaves the promise with nobody to observe
-    // it. Closing the mesh interceptor rejects any routing still in flight
-    // ('The dispatcher has been closed.'), so that is a routine shutdown
-    // outcome, not an exotic one, and it surfaced as an unhandledRejection
-    // that could take the process down before graceful shutdown finished.
-    //
-    // Attaching a no-op handler marks the rejection observed WITHOUT
-    // swallowing it: the await in #startWorker still sees and reports it.
-    const interceptorReady = this.#meshInterceptor.route(applicationId, worker)
-    interceptorReady.catch(() => {})
-    worker[kInterceptorReadyPromise] = interceptorReady
 
     // Wait for initialization
     try {
@@ -2905,11 +2861,9 @@ export class Runtime extends EventEmitter {
       }
 
       this.#workers.delete(workerId)
+      // The exit handler of the failed worker might have removed the port offset, restore it for the next attempt
+      this.#workerPortOffsets.set(workerId, portOffset)
       return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled, attempt + 1)
-    }
-
-    if (applicationConfig.entrypoint) {
-      this.#entrypointId = applicationId
     }
 
     worker[kConfig] = { ...applicationConfig, health, workers: workersCount }
@@ -3326,29 +3280,8 @@ export class Runtime extends EventEmitter {
 
       const { url: workerUrl, scheduledTasks } = workerStartResult
       worker[kWorkerScheduledTasks] = scheduledTasks
-      if (workerUrl) {
-        this.#url = workerUrl
 
-        // Pin the entrypoint port so that subsequent restarts (especially with
-        // stopBeforeStart when reuseTcpPorts is false) bind to the same port
-        // instead of getting a new random one.
-        if (applicationConfig.entrypoint) {
-          try {
-            const boundPort = Number(new URL(workerUrl).port)
-            if (boundPort) {
-              this.#entrypointPort = boundPort
-            }
-          } catch {
-            // URL parsing failed, leave unchanged
-          }
-        }
-      }
-
-      // Wait for the interceptor to be ready
-      const interceptorResult = await executeWithTimeout(worker[kInterceptorReadyPromise], config.startTimeout)
-      if (interceptorResult === kTimeout) {
-        throw new WorkerInterceptorJoinTimeoutError(label, config.startTimeout)
-      }
+      this.#recordWorkerUrl(worker, id, workerUrl)
 
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
@@ -3372,12 +3305,21 @@ export class Runtime extends EventEmitter {
         ).unref()
       }
     } catch (err) {
-      const error = ensureError(err)
+      let error = ensureError(err)
       worker[kITC].notify('application:worker:start:processed')
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
 
-      // TODO: handle port allocation error here
-      if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
+      if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {
+        const port = Number(error.port)
+        const owner = this.#getPortOwner(port, id)
+
+        if (owner) {
+          error = new AddressInUseError(port, owner, id)
+        } else if (this.#getPortOwner(port, id, undefined, true)) {
+          error = new WorkerAddressInUseError(port, id)
+        }
+        // Otherwise the port is used by an external process: keep the original error, which already describes it
+      }
+      if (error.code === 'EACCES') throw error
 
       this.#cleanupWorker(worker)
 
@@ -3401,7 +3343,15 @@ export class Runtime extends EventEmitter {
 
       const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
-      if (disableRestartAttempts || !restartOnError) {
+      if (
+        disableRestartAttempts ||
+        !restartOnError ||
+        error.code === 'EACCES' ||
+        error.code === 'EADDRINUSE' ||
+        error.code === 'EADDRNOTAVAIL' ||
+        error.code === 'PLT_RUNTIME_EADDR_IN_USE' ||
+        error.code === 'PLT_RUNTIME_WORKER_EADDR_IN_USE'
+      ) {
         throw error
       }
 
@@ -3421,7 +3371,16 @@ export class Runtime extends EventEmitter {
         )
       }
 
-      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt, portOffset)
+      await this.#restartCrashedWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        id,
+        index,
+        silent,
+        bootstrapAttempt,
+        worker[kWorkerPortOffset]
+      )
     }
   }
 
@@ -3490,28 +3449,30 @@ export class Runtime extends EventEmitter {
     await this.#avoidOutOfOrderThreadLogs()
 
     worker[kWorkerStatus] = 'stopped'
+    worker[kWorkerUrl] = undefined
     this.emitAndNotify('application:worker:stopped', eventPayload)
     this.#broadcastWorkers()
   }
 
   #cleanupWorker (worker) {
     clearTimeout(worker[kHealthCheckTimer])
-    this.#workerPortOffsets.delete(worker[kFullId])
 
     const currentWorker = this.#workers.get(worker[kFullId])
 
     if (currentWorker === worker) {
       this.#workers.delete(worker[kFullId])
+      this.#workerPortOffsets.delete(worker[kFullId])
     }
 
     worker[kITC].close()
   }
 
   async #discardWorker (worker) {
-    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
     worker.removeAllListeners('exit')
     await worker.terminate()
 
+    // The worker might have never been registered, make sure its port offset is released
+    this.#workerPortOffsets.delete(worker[kFullId])
     return this.#cleanupWorker(worker)
   }
 
@@ -3523,6 +3484,42 @@ export class Runtime extends EventEmitter {
     const index = this.#nextWorkerIndex.get(applicationId) ?? 0
     this.#nextWorkerIndex.set(applicationId, index + 1)
     return index
+  }
+
+  // Returns the lowest port offset which is not used by any worker of the application
+  #getNextWorkerPortOffset (applicationId) {
+    const used = new Set()
+
+    for (const [workerId, offset] of this.#workerPortOffsets) {
+      if (workerId.slice(0, workerId.lastIndexOf(':')) === applicationId) {
+        used.add(offset)
+      }
+    }
+
+    let offset = 0
+    while (used.has(offset)) {
+      offset++
+    }
+
+    return offset
+  }
+
+  // Returns true if the application of the worker is configured to listen on a fixed port shared by all its workers
+  async #usesSharedFixedPort (worker) {
+    let server
+
+    try {
+      server = (await sendViaITC(worker, 'getApplicationConfig'))?.server
+    } catch {
+      return false
+    }
+
+    if (!server || server.portAssignment === 'perWorkerIncrement') {
+      return false
+    }
+
+    const port = Number(server.port)
+    return Number.isInteger(port) && port > 0
   }
 
   // Returns the effective restartOnError value for an application: the application-level
@@ -3541,7 +3538,16 @@ export class Runtime extends EventEmitter {
     return restartOnError
   }
 
-  async #restartCrashedWorker (config, applicationConfig, workersCount, id, oldIndex, silent, bootstrapAttempt, portOffset) {
+  async #restartCrashedWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    id,
+    oldIndex,
+    silent,
+    bootstrapAttempt,
+    portOffset
+  ) {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
     // Use oldIndex for tracking to prevent duplicate restarts of the same crashed worker
@@ -3560,17 +3566,26 @@ export class Runtime extends EventEmitter {
         // If some processes were scheduled to restart
         // but the runtime is stopped, ignore it
         if (!this.#status.startsWith('start')) {
+          resolve()
           return
         }
 
-        // Get a new unique index for the restarted worker
+        // Get a new unique index for the restarted worker, which inherits the port offset of the crashed one
         const newIndex = this.#getNextWorkerIndex(id)
         const newWorkerId = `${id}:${newIndex}`
-        this.#workerPortOffsets.set(newWorkerId, portOffset)
+        this.#workerPortOffsets.set(newWorkerId, portOffset ?? oldIndex)
 
         try {
           await this.#setupWorker(config, applicationConfig, workersCount, id, newIndex)
-          await this.#startWorker(config, applicationConfig, workersCount, id, newIndex, silent, bootstrapAttempt)
+          await this.#startWorker(
+            config,
+            applicationConfig,
+            workersCount,
+            id,
+            newIndex,
+            silent,
+            bootstrapAttempt
+          )
           this.#incrementApplicationRestartCount(id)
 
           this.logger.info(
@@ -3583,6 +3598,7 @@ export class Runtime extends EventEmitter {
           // The runtime was stopped while the restart was happening, ignore any error.
           if (!this.#status.startsWith('start')) {
             resolve()
+            return
           }
 
           reject(err)
@@ -3600,30 +3616,29 @@ export class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, applicationConfig, workersCount, applicationId, oldIndex, worker, silent) {
+  async #replaceWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    applicationId,
+    oldIndex,
+    worker,
+    silent,
+    deferOldWorkerRetirement = false
+  ) {
     const oldLabel = this.#workerExtendedLabel(applicationId, oldIndex, workersCount)
     let newWorker
 
-    // Get a new unique index for the replacement worker
+    // Get a new unique index for the replacement worker, which inherits the port offset of the replaced one
     const newIndex = this.#getNextWorkerIndex(applicationId)
     const newWorkerId = `${applicationId}:${newIndex}`
     const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
-    const portOffset = this.#workerPortOffsets.get(`${applicationId}:${oldIndex}`)
-    this.#workerPortOffsets.set(newWorkerId, portOffset)
+    this.#workerPortOffsets.set(newWorkerId, worker[kWorkerPortOffset] ?? oldIndex)
 
     const stopBeforeStart =
-      applicationConfig.entrypoint &&
+      Boolean(worker[kWorkerUrl]) &&
+      worker[kWorkerServerOptions]?.port !== 0 &&
       (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
-
-    // When we must stop before start (no reusePort available), pin the entrypoint
-    // port in the config so the replacement worker binds to the same port.
-    // We only do this for stopBeforeStart because when reusePort is available
-    // the new worker starts alongside the old one and must use port 0 to avoid
-    // SO_REUSEPORT routing requests to the stale old worker.
-    let configForNewWorker = config
-    if (stopBeforeStart && this.#entrypointPort && config.server) {
-      configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
-    }
 
     try {
       if (!silent) {
@@ -3634,8 +3649,14 @@ export class Runtime extends EventEmitter {
         await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
       }
 
-      // Create a new worker with a new index, preserving any pinned port when stopBeforeStart is required.
-      newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false)
+      newWorker = await this.#setupWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        newIndex,
+        false
+      )
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
@@ -3649,7 +3670,7 @@ export class Runtime extends EventEmitter {
 
       // Add the worker to the mesh
       await this.#startWorker(
-        configForNewWorker,
+        config,
         applicationConfig,
         workersCount,
         applicationId,
@@ -3665,17 +3686,23 @@ export class Runtime extends EventEmitter {
         return this.#discardWorker(newWorker)
       }
     } catch (e) {
-      this.#workerPortOffsets.delete(newWorkerId)
-
       if (this.#workers.get(newWorkerId) === newWorker) {
         this.#workers.delete(newWorkerId)
       }
 
+      this.#workerPortOffsets.delete(newWorkerId)
       newWorker?.terminate?.()
       throw e
     }
 
     if (!stopBeforeStart) {
+      if (deferOldWorkerRetirement) {
+        return {
+          discard: () => this.#discardWorker(newWorker),
+          retire: () => this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
+        }
+      }
+
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
   }
@@ -4256,13 +4283,14 @@ export class Runtime extends EventEmitter {
 
     if (currentWorkers < workers) {
       report.started = []
+
       let pendingWorkerId
 
       try {
         for (let i = currentWorkers; i < workers; i++) {
           const newIndex = this.#getNextWorkerIndex(applicationId)
           pendingWorkerId = `${applicationId}:${newIndex}`
-          this.#workerPortOffsets.set(pendingWorkerId, i)
+          this.#workerPortOffsets.set(pendingWorkerId, this.#getNextWorkerPortOffset(applicationId))
 
           await this.#setupWorker(config, applicationConfig, workers, applicationId, newIndex)
           await this.#startWorker(config, applicationConfig, workers, applicationId, newIndex, false, 0)
@@ -4273,7 +4301,9 @@ export class Runtime extends EventEmitter {
         }
         report.success = true
       } catch (err) {
-        pendingWorkerId && this.#workerPortOffsets.delete(pendingWorkerId)
+        if (pendingWorkerId) {
+          this.#workerPortOffsets.delete(pendingWorkerId)
+        }
 
         if (startedWorkersCount < 1) {
           this.logger.error({ err }, 'Cannot start application workers, no worker started')
@@ -4290,22 +4320,18 @@ export class Runtime extends EventEmitter {
       report.stopped = []
       try {
         const workersToStop = currentWorkers - workers
-        const allInOnePort = this.#config.server?.portAssignment !== 'perWorkerIncrement'
+        // Stop the workers with the highest port offsets (which are the most recent workers, unless some of them
+        // were replaced) first, so that applications using server.portAssignment=perWorkerIncrement keep listening
+        // on a contiguous range of ports starting from the configured one.
         const workerIdsToStop = this.#workers
           .getKeys(applicationId)
           .map(key => parseInt(key.split(':')[1], 10))
-
-        if (allInOnePort) {
-          // Stop most recent workers first.
-          workerIdsToStop.sort((a, b) => b - a)
-        } else {
-          // When port increment is enabled, disable the workers with the highest ports.
-          workerIdsToStop.sort((a, b) => {
+          .sort((a, b) => {
             const offsetA = this.#workerPortOffsets.get(`${applicationId}:${a}`) ?? a
             const offsetB = this.#workerPortOffsets.get(`${applicationId}:${b}`) ?? b
-            return offsetB - offsetA
+
+            return offsetB - offsetA || b - a
           })
-        }
 
         for (const workerIndex of workerIdsToStop.splice(0, workersToStop)) {
           const worker = this.#workers.get(`${applicationId}:${workerIndex}`)
@@ -4358,6 +4384,10 @@ export class Runtime extends EventEmitter {
       for (const p of read) {
         allows.add(`--allow-fs-read=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)
       }
+    }
+
+    if (applicationConfig.sourcePath) {
+      allows.add(`--allow-fs-read=${join(applicationConfig.sourcePath, '*')}`)
     }
 
     if (write?.length) {
@@ -4834,15 +4864,55 @@ export class Runtime extends EventEmitter {
     this.#loggerContext.updatePrefixes(ids)
   }
 
-  #onMeshInterceptorError (error) {
-    const worker = error.port
+  #getPortOwner (port, applicationId, hostname, includeSameApplication = false) {
+    if (!Number.isInteger(port) || port <= 0) {
+      return null
+    }
 
-    this.logger.error(
-      { err: ensureLoggableError(error.cause) },
-      `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup. Replacing it ...`
-    )
+    for (const worker of this.#workers.values()) {
+      if (!worker[kWorkerUrl] || (!includeSameApplication && worker[kApplicationId] === applicationId)) {
+        continue
+      }
 
-    this.emit('application:worker:init:failed', { application: worker[kApplicationId], worker: worker[kWorkerId] })
-    worker.terminate()
+      try {
+        const url = new URL(worker[kWorkerUrl])
+        const workerPort = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
+        const workerHost = url.hostname
+        if (workerPort === port && this.#listenersOverlap(hostname ?? workerHost, workerHost)) {
+          return worker[kApplicationId]
+        }
+      } catch {}
+    }
+
+    return null
+  }
+
+  #listenersOverlap (host, otherHost) {
+    host = host.toLowerCase()
+    const wildcards = new Set(['0.0.0.0', '::', '[::]'])
+    otherHost = otherHost.toLowerCase()
+    return host === otherHost || wildcards.has(host) || wildcards.has(otherHost)
+  }
+
+  #recordWorkerUrl (worker, applicationId, workerUrl) {
+    if (!workerUrl) {
+      worker[kWorkerUrl] = undefined
+      return
+    }
+
+    let hostname
+    let port
+    try {
+      const url = new URL(workerUrl)
+      hostname = url.hostname
+      port = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
+    } catch {}
+
+    const owner = this.#getPortOwner(port, applicationId, hostname)
+    if (owner) {
+      throw new AddressInUseError(port, owner, applicationId)
+    }
+
+    worker[kWorkerUrl] = workerUrl
   }
 }

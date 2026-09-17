@@ -3,7 +3,6 @@
   "watch": false,
   "managementApi": true,
   "restartOnError": 500,
-  "entrypoint": "entrypoint",
   "autoload": {
     "path": "."
   },

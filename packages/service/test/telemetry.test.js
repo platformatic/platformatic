@@ -45,7 +45,7 @@ test('should setup telemetry if configured', async t => {
         logger: { level: 'fatal' }
       },
 
-      telemetry: {
+      tracing: {
         applicationName: 'test-service',
         version: '1.0.0',
         exporter: {

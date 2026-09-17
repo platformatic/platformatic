@@ -263,8 +263,8 @@ export const logger = {
   properties: {
     level: {
       type: 'string',
-      description:
-        'The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.'
+      minLength: 1,
+      description: 'A standard Pino log level or a level defined in customLevels.'
     },
     transport: {
       anyOf: [
@@ -429,15 +429,6 @@ export const logger = {
       additionalProperties: false
     }
   },
-  // Custom levels can only be validated when customLevels is not set.
-  if: { not: { required: ['customLevels'] } },
-  then: {
-    properties: {
-      level: {
-        oneOf: [{ enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] }, { pattern: '^\\{.+\\}$' }]
-      }
-    }
-  },
   default: {},
   additionalProperties: true
 }
@@ -455,7 +446,7 @@ export const server = {
       type: 'string',
       enum: ['shared', 'perWorkerIncrement'],
       description:
-        'Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).'
+        'Configures how the port is assigned when the application runs multiple workers. When set to shared (the default), all workers listen on the same port (which requires SO_REUSEPORT support). When set to perWorkerIncrement, each worker listens on its own port, starting from port (worker 0) and incrementing by one for each additional worker.'
     },
     backlog: {
       type: 'integer',
@@ -561,11 +552,19 @@ export const server = {
 export const fastifyServer = {
   type: 'object',
   properties: {
+    errorHandler: {
+      anyOf: [
+        { type: 'string', resolveModule: true },
+        { type: 'string', resolvePath: true }
+      ]
+    },
     // TODO add support for level
     hostname: {
       type: 'string'
     },
     port: server.properties.port,
+    portAssignment: server.properties.portAssignment,
+    backlog: server.properties.backlog,
     pluginTimeout: {
       type: 'integer'
     },
@@ -693,15 +692,7 @@ export const fastifyServer = {
     },
     http2: server.properties.http2,
     https: server.properties.https,
-    cors,
-    errorHandler: {
-      description:
-        'Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.',
-      anyOf: [
-        { type: 'string', resolveModule: true },
-        { type: 'string', resolvePath: true }
-      ]
-    }
+    cors
   },
   additionalProperties: false
 }
@@ -812,7 +803,7 @@ export const openTelemetryExporter = {
   }
 }
 
-export const telemetry = {
+export const tracing = {
   type: 'object',
   properties: {
     enabled: {
@@ -926,7 +917,14 @@ export const compileCache = {
 
 export const application = {
   type: 'object',
-  anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
+  anyOf: [
+    { required: ['id', 'path'] },
+    { required: ['id', 'url'] }
+  ],
+  not: {
+    type: 'object',
+    required: ['module', 'url']
+  },
   properties: {
     id: {
       type: 'string'
@@ -954,15 +952,12 @@ export const application = {
     url: {
       type: 'string'
     },
+    module: {
+      type: 'string'
+    },
     gitBranch: {
       type: 'string',
       default: 'main'
-    },
-    useHttp: {
-      type: 'boolean'
-    },
-    websocket: {
-      type: 'boolean'
     },
     reuseTcpPorts: {
       type: 'boolean',
@@ -1062,7 +1057,7 @@ export const application = {
       },
       additionalProperties: false
     },
-    telemetry: {
+    tracing: {
       type: 'object',
       properties: {
         instrumentations: {
@@ -1125,9 +1120,6 @@ export const runtimeProperties = {
   },
   preload,
   extensions,
-  entrypoint: {
-    type: 'string'
-  },
   basePath: {
     type: 'string'
   },
@@ -1153,7 +1145,7 @@ export const runtimeProperties = {
           type: 'object',
           additionalProperties: false,
           required: ['id'],
-          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch'])
+          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch', 'module'])
         }
       }
     }
@@ -1173,7 +1165,6 @@ export const runtimeProperties = {
     default: 0
   },
   logger,
-  server,
   reuseTcpPorts: {
     type: 'boolean',
     default: true
@@ -1558,9 +1549,10 @@ export const runtimeProperties = {
         },
         additionalProperties: false
       }
-    ]
+    ],
+    default: false
   },
-  telemetry,
+  tracing,
   verticalScaler,
   inspectorOptions: {
     type: 'object',
@@ -1630,54 +1622,6 @@ export const runtimeProperties = {
     items: { type: 'string' },
     default: []
   },
-  scheduler: {
-    type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        enabled: {
-          anyOf: [
-            {
-              type: 'boolean'
-            },
-            {
-              type: 'string'
-            }
-          ],
-          default: true
-        },
-        name: {
-          type: 'string'
-        },
-        cron: {
-          type: 'string'
-        },
-        callbackUrl: {
-          type: 'string'
-        },
-        method: {
-          type: 'string',
-          enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-          default: 'GET'
-        },
-        headers: {
-          type: 'object',
-          additionalProperties: {
-            type: 'string'
-          }
-        },
-        body: {
-          anyOf: [{ type: 'string' }, { type: 'object', additionalProperties: true }]
-        },
-        maxRetries: {
-          type: 'number',
-          minimum: 0,
-          default: 3
-        }
-      },
-      required: ['name', 'cron', 'callbackUrl']
-    }
-  },
   policies,
   compileCache
 }
@@ -1685,6 +1629,7 @@ export const runtimeProperties = {
 export const runtimeUnwrappablePropertiesList = [
   '$schema',
   'entrypoint',
+  'server',
   'applications',
   'application',
   'autoload',
@@ -1699,10 +1644,9 @@ export const applicationsUnwrappablePropertiesList = [
   'path',
   'config',
   'url',
+  'module',
   'gitBranch',
   'dependencies',
-  'useHttp',
-  'websocket',
   'management'
 ]
 
@@ -1738,7 +1682,7 @@ export const schemaComponents = {
   health,
   healthWithoutDefaults,
   openTelemetryExporter,
-  telemetry,
+  tracing,
   policies,
   compileCache,
   applications,

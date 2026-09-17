@@ -1,4 +1,4 @@
-import { equal, ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, equal, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
@@ -37,8 +37,6 @@ test('should get the runtime metadata', async t => {
 
   strictEqual(statusCode, 200)
 
-  const entrypoint = await app.getEntrypointDetails()
-
   const metadata = await body.json()
   equal(metadata.pid, process.pid)
   equal(metadata.cwd, process.cwd())
@@ -47,8 +45,8 @@ test('should get the runtime metadata', async t => {
   equal(metadata.packageName, 'test-runtime-package')
   equal(metadata.packageVersion, '1.0.42')
   equal(metadata.projectDir, projectDir)
-  equal(metadata.url, entrypoint.url)
   equal(metadata.platformaticVersion, version)
+  deepStrictEqual(metadata.urls, app.getUrls())
 
   ok(metadata.uptimeSeconds >= 0)
   ok(metadata.uptimeSeconds < 10)

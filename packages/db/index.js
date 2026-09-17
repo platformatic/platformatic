@@ -24,7 +24,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
   return new DatabaseCapability(config[kMetadata].root, config, context)
 }
 
-export const skipTelemetryHooks = true
+export const skipTracingHooks = true
 
 export { platformaticDatabase } from './lib/application.js'
 export { DatabaseCapability } from './lib/capability.js'

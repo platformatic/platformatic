@@ -22,12 +22,8 @@ test('should get runtime application REPL WebSocket', async t => {
     await runtimeClient.close()
   })
 
-  // Get the application to use for the REPL
-  const applications = await runtimeClient.getRuntimeApplications(runtime.pid)
-  const applicationId = applications.entrypoint
-
   // Connect to the REPL
-  const ws = runtimeClient.getRuntimeApplicationRepl(runtime.pid, applicationId)
+  const ws = runtimeClient.getRuntimeApplicationRepl(runtime.pid, 'service-1')
 
   // Wait for connection
   await new Promise((resolve, reject) => {
@@ -72,10 +68,7 @@ test('should have access to platformatic in REPL context', async t => {
     await runtimeClient.close()
   })
 
-  const applications = await runtimeClient.getRuntimeApplications(runtime.pid)
-  const applicationId = applications.entrypoint
-
-  const ws = runtimeClient.getRuntimeApplicationRepl(runtime.pid, applicationId)
+  const ws = runtimeClient.getRuntimeApplicationRepl(runtime.pid, 'service-1')
 
   await new Promise((resolve, reject) => {
     ws.on('open', resolve)
@@ -112,10 +105,7 @@ test('should handle REPL exit', async t => {
     await runtimeClient.close()
   })
 
-  const applications = await runtimeClient.getRuntimeApplications(runtime.pid)
-  const applicationId = applications.entrypoint
-
-  const ws = runtimeClient.getRuntimeApplicationRepl(runtime.pid, applicationId)
+  const ws = runtimeClient.getRuntimeApplicationRepl(runtime.pid, 'service-1')
 
   await new Promise((resolve, reject) => {
     ws.on('open', resolve)

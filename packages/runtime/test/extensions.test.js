@@ -134,13 +134,13 @@ test('extensions receive the runtime, the ITC facade, the logger, the options an
 
   const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
-  const res = await request(entryUrl + '/context')
+  const res = await request(url + '/context')
   strictEqual(res.statusCode, 200)
 
   const context = await res.body.json()
@@ -159,14 +159,14 @@ test('workers can invoke custom commands registered by extensions, also after a 
 
   const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
   {
-    const res = await request(entryUrl + '/sum?x=1&y=2')
+    const res = await request(url + '/sum?x=1&y=2')
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { result: 3 })
   }
@@ -175,8 +175,8 @@ test('workers can invoke custom commands registered by extensions, also after a 
   await app.restartApplication('a')
 
   {
-    // The entrypoint may listen on a different port after the restart
-    const res = await request(app.getUrl() + '/sum?x=4&y=5')
+    const application = await app.getApplicationDetails('a')
+    const res = await request(application.url + '/sum?x=4&y=5')
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { result: 9 })
   }
@@ -188,7 +188,7 @@ test('extensions can notify workers', async t => {
 
   const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
@@ -198,7 +198,7 @@ test('extensions can notify workers', async t => {
 
   // The notification is fire-and-forget, poll for the result
   for (let i = 0; i < 10; i++) {
-    const res = await request(entryUrl + '/pings')
+    const res = await request(url + '/pings')
     strictEqual(res.statusCode, 200)
     const pings = await res.body.json()
 
@@ -262,7 +262,7 @@ test('close-only extensions keep their current behavior', async t => {
   ])
 })
 
-test('entrypoint stops before extension stop, remaining applications stop after', async t => {
+test('extension stop runs before the applications are stopped', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
@@ -273,15 +273,15 @@ test('entrypoint stops before extension stop, remaining applications stop after'
   await app.close()
 
   const events = globalThis.__pltExtensionEvents
-  const entrypointStopped = events.findIndex(e => e.event === 'application:stopped' && e.application === 'a')
   const extensionStop = events.findIndex(e => e.event === 'stop' && e.extension === 'tracker')
-  const remainingStopped = events.findIndex(e => e.event === 'application:stopped' && e.application === 'b')
+  const firstStopped = events.findIndex(e => e.event === 'application:stopped' && e.application === 'a')
+  const secondStopped = events.findIndex(e => e.event === 'application:stopped' && e.application === 'b')
 
-  ok(entrypointStopped !== -1)
   ok(extensionStop !== -1)
-  ok(remainingStopped !== -1)
-  ok(entrypointStopped < extensionStop)
-  ok(extensionStop < remainingStopped)
+  ok(firstStopped !== -1)
+  ok(secondStopped !== -1)
+  ok(extensionStop < firstStopped)
+  ok(extensionStop < secondStopped)
 })
 
 test('dynamic application started by an extension is not started twice', async t => {
@@ -502,13 +502,13 @@ test('extensions can be written in TypeScript', async t => {
 
   const configFile = join(fixturesDir, 'extensions', 'platformatic-ts.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
-  const res = await request(entryUrl + '/ts')
+  const res = await request(url + '/ts')
   strictEqual(res.statusCode, 200)
   deepStrictEqual(await res.body.json(), { language: 'typescript', options: {} })
 })
@@ -606,13 +606,19 @@ test('extensions receive the profiles captured by the continuous profiler, also 
   await app.stopApplicationProfiling(eventAfterRestart.id, { type: 'cpu' })
 })
 
+async function getEntryUrl (app) {
+  // A restart replaces the worker, so the URL must be re-read on each use.
+  const application = await app.getApplicationDetails('a')
+  return application.url
+}
+
 test('extensions can read and update the shared context, including newly started workers', async t => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
   const configFile = join(fixturesDir, 'extensions', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()
@@ -641,7 +647,7 @@ test('extensions can read and update the shared context, including newly started
   deepStrictEqual(sharedContext.get(), { foo: 'bar', bar: 'baz' })
 
   {
-    const res = await request(app.getUrl() + '/shared-context')
+    const res = await request((await getEntryUrl(app)) + '/shared-context')
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { foo: 'bar', bar: 'baz' })
   }
@@ -653,7 +659,7 @@ test('extensions can read and update the shared context, including newly started
   deepStrictEqual(app.getSharedContext(), { only: true })
 
   {
-    const res = await request(app.getUrl() + '/shared-context')
+    const res = await request((await getEntryUrl(app)) + '/shared-context')
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { only: true })
   }
@@ -667,7 +673,7 @@ test('extensions can read and update the shared context, including newly started
   deepStrictEqual(app.getSharedContext(), { nested: { value: 1 } })
 
   {
-    const res = await request(app.getUrl() + '/shared-context')
+    const res = await request((await getEntryUrl(app)) + '/shared-context')
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { nested: { value: 1 } })
   }
@@ -684,7 +690,7 @@ test('extensions can read and update the shared context, including newly started
   await app.restartApplication('a')
 
   {
-    const res = await request(app.getUrl() + '/shared-context')
+    const res = await request((await getEntryUrl(app)) + '/shared-context')
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { order: 2, first: true, second: true })
   }

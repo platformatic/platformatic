@@ -1,4 +1,4 @@
-import { deepStrictEqual, rejects } from 'node:assert'
+import { deepStrictEqual } from 'node:assert'
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -43,7 +43,6 @@ test('should exclude disabled applications', async () => {
 
   await writeJSON(cfgPath, {
     $schema: schema.$id,
-    entrypoint: 'enabled',
     applications: [
       { id: 'enabled', path: '.' },
       { id: 'disabled', path: '.', enabled: false }
@@ -191,40 +190,6 @@ test('should support environment variables in application enabled environment co
       ['from-env', 'always-enabled']
     )
   })
-})
-
-test('should reject a disabled entrypoint', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
-
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    entrypoint: 'disabled',
-    applications: [
-      { id: 'disabled', path: '.', enabled: false },
-      { id: 'enabled', path: '.' }
-    ]
-  })
-
-  await rejects(() => loadConfiguration(cfgPath), /Invalid entrypoint: 'disabled' does not exist/)
-})
-
-test('should ignore disabled applications when autodetecting the entrypoint', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
-  const cfgPath = join(dir, 'platformatic.runtime.json')
-
-  await writeJSON(cfgPath, {
-    $schema: schema.$id,
-    applications: [
-      { id: 'disabled', path: '.', enabled: false },
-      { id: 'enabled', path: '.' }
-    ]
-  })
-
-  const loaded = await loadConfiguration(cfgPath)
-
-  deepStrictEqual(loaded.entrypoint, 'enabled')
-  deepStrictEqual(loaded.applications[0].entrypoint, true)
 })
 
 test('should support disabling autoloaded applications via mappings', async () => {

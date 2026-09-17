@@ -188,7 +188,7 @@ export function execRuntime ({ configPath, onReady, done, timeout = 30_000, env 
         return
       }
 
-      const match = m.match(/Platformatic is now listening at (http:\/\/127\.0\.0\.1:\d+)/)
+      const match = m.match(/Platformatic is now listening at (http:\/\/(?:127\.0\.0\.1|\[::1\]):\d+)/)
       if (match) {
         result.url = match[1]
         Promise.resolve(onReady?.({ url: result.url, result })).then(() => {

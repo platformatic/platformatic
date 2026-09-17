@@ -1,13 +1,12 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.44.0.json",
-  "entrypoint": "composer",
   "services": [
     {
       "id": "service",
       "path": "./service",
       "config": "platformatic.json",
       "health": {
-        "maxELU": 0.3
+        "maxELU": 0.001
       }
     },
     {

@@ -16,8 +16,7 @@ import { ensureFileUrl, importFile } from '../utils.js'
 
 export const isWindows = platform() === 'win32'
 
-// In theory we could use the context.id to namespace even more, but due to
-// UNIX socket length limitation on MacOS, we don't.
+// Keep identifiers short to stay within the UNIX socket path limit on macOS.
 export function generateChildrenId () {
   return [process.pid, randomBytes(4).toString('hex')].join('-')
 }
@@ -172,10 +171,10 @@ export class ChildManager extends ITC {
     const childProcessInclude = `--import="${new URL('./child-process.js', import.meta.url)}"`
 
     let telemetryInclude = ''
-    if (this.#context.telemetryConfig && this.#context.telemetryConfig.enabled !== false) {
+    if (this.#context.tracingConfig && this.#context.tracingConfig.enabled !== false) {
       const require = createRequire(import.meta.url)
-      const telemetryPath = require.resolve('@platformatic/telemetry')
-      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
+      const tracingPath = require.resolve('@platformatic/tracing')
+      const openTelemetrySetupPath = join(tracingPath, '..', 'lib', 'node-telemetry.js')
       telemetryInclude = `--import="${pathToFileURL(openTelemetrySetupPath)}"`
     }
 

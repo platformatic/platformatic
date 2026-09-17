@@ -1,4 +1,4 @@
-import { deepStrictEqual, notEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, notEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
@@ -21,7 +21,7 @@ test('interceptors as undici options', async t => {
 
   const configFile = join(fixturesDir, 'interceptors', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await Promise.all([idpServer.close(), externalServer.close(), app.close()])
@@ -48,7 +48,7 @@ test('composable interceptors', async t => {
 
   const configFile = join(fixturesDir, 'interceptors-2', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await Promise.all([idpServer.close(), externalServer.close(), app.close()])
@@ -65,7 +65,7 @@ test('composable interceptors', async t => {
 test('mesh network works from external processes via ChildManager', async t => {
   const configFile = join(fixturesDir, 'interceptors-3', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'composer:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -92,7 +92,8 @@ test('mesh network works from external processes via ChildManager', async t => {
     })
 
     deepStrictEqual(body.responses[2].statusCode, 502)
-    deepStrictEqual(Object.keys(body.responses[2].body).sort(), ['message', 'stack'])
+    ok(body.responses[2].body.message)
+    ok(body.responses[2].body.stack)
 
     deepStrictEqual(body.responses[3], {
       body: `application/octet-stream:123:${'echo'.repeat(10)}`,
@@ -104,7 +105,7 @@ test('mesh network works from external processes via ChildManager', async t => {
 test('use client interceptors for internal requests', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -121,7 +122,7 @@ test('use client interceptors for internal requests', async t => {
 test('update undici interceptor config', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -170,7 +171,7 @@ test('interceptor readiness timeout handling', async t => {
   try {
     await app.start()
   } catch (err) {
-    strictEqual(err.message, 'The worker 0 of the application "main" failed to join the mesh network in 3000ms.')
+    strictEqual(err.message, "Application with id 'main' failed to start in 3000ms.")
   }
 
   t.after(() => app.close())

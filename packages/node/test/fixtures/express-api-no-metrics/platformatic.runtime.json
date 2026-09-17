@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.1.1.json",
-  "entrypoint": "api",
   "logger": {
     "level": "error"
   },
@@ -11,8 +10,7 @@
     },
     {
       "id": "internal",
-      "path": "./services/internal",
-      "useHttp": false
+      "path": "./services/internal"
     }
   ],
   "metrics": false 

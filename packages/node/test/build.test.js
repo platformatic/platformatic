@@ -158,7 +158,7 @@ test('should not hang if the runtime forcefully stops during start in case of er
   await startingEvent.promise
 
   await runtime.stopApplication('app-no-config')
-  await promise
+  await rejects(() => promise, /exited prematurely/)
 })
 
 for (const application of ['app-no-config', 'app-with-config']) {

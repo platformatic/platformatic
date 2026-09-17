@@ -9,10 +9,10 @@ test('missing config', async () => {
   await assert.rejects(execa(process.execPath, [startPath], { env: { PLT_USE_PLAIN_CREATE: 'true' } }))
 })
 
-test('no applications specified by config', async () => {
+test('allows a config with no applications', async () => {
   const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'no-services.config.json')
 
-  await assert.rejects(execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } }))
+  await execa(process.execPath, [startPath, config], { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 })
 
 test('no applications or autoload specified by config', async () => {

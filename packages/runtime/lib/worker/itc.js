@@ -2,6 +2,7 @@ import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } 
 import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
 import { ITC, initializeITCTelemetry } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
+import { createServer } from 'undici-thread-interceptor'
 import { once } from 'node:events'
 import { createRequire } from 'node:module'
 import { Duplex } from 'node:stream'
@@ -114,6 +115,7 @@ async function safeHandleInITC (worker, fn) {
 async function closeITC (dispatcher, itc, messaging) {
   try {
     await dispatcher.interceptor.close()
+    await dispatcher.server?.close()
     itc.close()
     messaging.close()
   } finally {
@@ -201,15 +203,35 @@ export async function setupITC (controller, application, dispatcher, sharedConte
               })
             })
 
-            throw ensureLoggableError(e)
+            // Errors are structured cloned when sent to the runtime, which drops all their custom properties (like the
+            // port and the address of listen errors): send a plain object instead so that the runtime can inspect them.
+            // eslint-disable-next-line no-throw-literal
+            throw { name: e.name, ...ensureLoggableError(e) }
           }
         }
 
-        if (application.entrypoint) {
-          await controller.listen()
+        const dispatchTarget = await controller.capability.getDispatchTarget()
+        if (dispatchTarget == null) {
+          await new Promise(() => {})
         }
 
-        dispatcher.replaceServer(await controller.capability.getDispatchTarget())
+        const serverTarget = dispatcher.serverHooks?.run
+          ? wrapDispatchTarget(dispatchTarget, dispatcher.serverHooks.run)
+          : dispatchTarget
+
+        dispatcher.server = createServer({
+          meshId: workerData.meshId,
+          serverId: workerData.worker.id,
+          domain: `${application.id}.plt.local`,
+          server: serverTarget,
+          bootstrapTimeout: workerData.config.applicationTimeout,
+          metadata: {
+            applicationId: application.id,
+            workerId: workerData.worker.id
+          },
+          ...dispatcher.serverHooks
+        })
+        await dispatcher.server.ready
 
         const scheduledTasks =
           typeof controller.capability.getScheduledTasks === 'function'
@@ -217,7 +239,7 @@ export async function setupITC (controller, application, dispatcher, sharedConte
             : []
 
         return {
-          url: application.entrypoint ? controller.capability.getUrl() : null,
+          url: controller.getUrl(),
           scheduledTasks
         }
       },
@@ -260,7 +282,8 @@ export async function setupITC (controller, application, dispatcher, sharedConte
       },
 
       async removeFromMesh () {
-        return dispatcher.interceptor.close()
+        await dispatcher.server?.close()
+        dispatcher.server = null
       },
 
       inject (injectParams) {
@@ -498,4 +521,21 @@ export async function setupITC (controller, application, dispatcher, sharedConte
 
   itc.listen()
   return itc
+}
+
+function wrapDispatchTarget (target, run) {
+  if (typeof target.inject === 'function') {
+    return {
+      inject: (req, callback) => run(req, () => target.inject(req, callback)),
+      server: target.server,
+      emit: target.emit?.bind(target),
+      listenerCount: target.listenerCount?.bind(target)
+    }
+  }
+
+  if (typeof target.emit === 'function') {
+    return target
+  }
+
+  return target
 }

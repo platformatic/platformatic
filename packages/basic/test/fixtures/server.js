@@ -13,10 +13,9 @@ import {
   getRoot,
   getRuntimeConfig,
   getRuntimeBasePath,
-  getTelemetryConfig,
+  getTracingConfig,
   getWantsAbsoluteUrls,
-  getWorkerId,
-  isEntrypoint
+  getWorkerId
 } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
@@ -34,14 +33,13 @@ function handler (_, res) {
     config: getConfig(),
     exitOnUnhandledErrors: getExitOnUnhandledErrors(),
     host: getHost(),
-    isEntrypoint: isEntrypoint(),
     logLevel: getLogLevel(),
     logger: getLogger(),
     port: getPort(),
     root: getRoot(),
     runtimeConfig: getRuntimeConfig(),
     runtimeBasePath: getRuntimeBasePath(),
-    telemetryConfig: getTelemetryConfig(),
+    tracingConfig: getTracingConfig(),
     wantsAbsoluteUrls: getWantsAbsoluteUrls(),
     workerId: getWorkerId()
   }

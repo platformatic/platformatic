@@ -11,14 +11,13 @@ import {
   injectViaRequest
 } from '@platformatic/basic'
 import { getEvents } from '@platformatic/globals'
-import { Unpromise } from '@watchable/unpromise'
 import inject from 'light-my-request'
-import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
-import { createRequire } from 'node:module'
-import { dirname, resolve as resolvePath } from 'node:path'
+import Module, { createRequire, findPackageJSON } from 'node:module'
+import { dirname, extname, resolve as resolvePath } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { version } from './schema.js'
 import { getTsconfig, ignoreDirs, isApplicationBuildable } from './utils.js'
 
@@ -69,6 +68,30 @@ function isKoa (app) {
   }
 
   return typeof app.callback === 'function'
+}
+
+async function isCommonJSEntrypoint (entrypoint) {
+  const extension = extname(entrypoint)
+
+  if (extension === '.cjs' || extension === '.cts') {
+    return true
+  }
+
+  if (extension === '.mjs' || extension === '.mts') {
+    return false
+  }
+
+  const packageJsonPath = findPackageJSON(pathToFileURL(entrypoint))
+  if (!packageJsonPath) {
+    return true
+  }
+
+  try {
+    const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+    return packageJson.type !== 'module'
+  } catch {
+    return true
+  }
 }
 
 async function getEntrypointInformation (root) {
@@ -136,22 +159,8 @@ export class NodeCapability extends BaseCapability {
     super('nodejs', version, root, config, context)
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
-
-    if (this.#app) {
-      // Listen if entrypoint
-      if (this.#hasServer() && listen) {
-        await this._listen()
-      }
-
-      return this.url
-    }
+  async _start () {
+    await super._start()
 
     const config = this.config
 
@@ -186,22 +195,22 @@ export class NodeCapability extends BaseCapability {
 
     this.registerGlobals({
       basePath: this.#basePath,
+      host: this.serverConfig?.hostname ?? true,
+      port: typeof this.serverConfig?.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig)
     })
 
-    // The server promise must be created before requiring the entrypoint even if it's not going to be used
-    // at all. Otherwise there is chance we miss the listen event.
-    const serverOptions = this.serverConfig
-
-    const serverPromise = createServerListener(
-      serverOptions?.port ?? true,
-      serverOptions?.hostname ?? true,
-      await buildAdditionalServerOptions(serverOptions)
-    )
+    // Create the promise before requiring the entrypoint so we do not miss its listen event.
+    const serverPromise = createServerListener()
+    // The promise is only awaited when the application does not export a factory: make sure that a listen error
+    // (like EADDRINUSE) is not reported as unhandled rejection in the other case, since it is thrown by _listen anyway.
+    serverPromise.catch(() => {})
 
     try {
-      const require = createRequire(dirname(finalEntrypoint))
-      this.#module = require(finalEntrypoint)
+      // Only CommonJS uses require.main. Marking ESM as main would also set import.meta.main and run direct-execution code.
+      this.#module = (await isCommonJSEntrypoint(finalEntrypoint))
+        ? Module._load(finalEntrypoint, null, true)
+        : createRequire(dirname(finalEntrypoint))(finalEntrypoint)
     } catch (e) {
       // If there is top-leve await or unsupported TS syntax, we try to import the file instead
       if (e.code !== 'ERR_REQUIRE_ASYNC_MODULE' && e.code !== 'ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX') {
@@ -243,9 +252,7 @@ export class NodeCapability extends BaseCapability {
           this.#dispatcher = this.#server.listeners('request')[0]
         }
 
-        if (listen) {
-          await this._listen()
-        }
+        await this._listen()
       }
     } else if (this.#hasServer()) {
       // User blackbox function, we wait for it to listen on a port
@@ -258,7 +265,7 @@ export class NodeCapability extends BaseCapability {
     await this._collectMetrics()
 
     // No need to keep the server promise around anymore, we either have the URL or we are a background service
-    serverPromise.cancel()
+    serverPromise?.cancel()
     return this.url
   }
 
@@ -294,8 +301,8 @@ export class NodeCapability extends BaseCapability {
     }
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     // Emit the close event so that an application can handle it
     const events = getEvents()
@@ -305,10 +312,6 @@ export class NodeCapability extends BaseCapability {
       this.logger.warn(
         `Please export a "close" function or register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
       )
-    }
-
-    if (this.status === 'starting') {
-      await Unpromise.race([once(this, 'started'), once(this, 'start:error')])
     }
 
     if (this.childManager) {
@@ -332,6 +335,11 @@ export class NodeCapability extends BaseCapability {
 
     if (this.#isFastify && this.#app) {
       return this.#app.close()
+    }
+
+    // Calling Server[Symbol.asyncDispose]() before the server has listened never resolves.
+    if (this.#server && !this.#server.listening) {
+      return
     }
 
     if (this.#app?.[Symbol.asyncDispose]) {
@@ -443,14 +451,15 @@ export class NodeCapability extends BaseCapability {
   }
 
   getMeta () {
+    const applicationMeta = super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
+      needsRootTrailingSlash: true
+    })
+
     return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
-        needsRootTrailingSlash: true
-      },
+      ...applicationMeta,
       connectionStrings: this.connectionString ? [this.connectionString] : []
     }
   }
@@ -460,6 +469,23 @@ export class NodeCapability extends BaseCapability {
 
     if (this.#useHttpForDispatch) {
       return this.getUrl()
+    }
+
+    if (this.#server) {
+      if (this.#isFastify) {
+        return this.#app
+      }
+
+      if (this.#server.listenerCount('upgrade') > 0) {
+        return {
+          inject: this.inject.bind(this),
+          emit: this.#server.emit.bind(this.#server),
+          listenerCount: this.#server.listenerCount.bind(this.#server),
+          server: this.#server
+        }
+      }
+
+      return this.getDispatchFunc()
     }
 
     return this.getDispatchFunc()
@@ -474,20 +500,15 @@ export class NodeCapability extends BaseCapability {
   }
 
   async _listen () {
-    // Make this idempotent
-    /* c8 ignore next 3 */
     if (this.url) {
       return this.url
     }
 
-    const serverOptions = this.serverConfig
-    const listenOptions = buildListenOptions(serverOptions)
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
 
-    createServerListener(
-      false,
-      false,
-      await buildAdditionalServerOptions(serverOptions)
-    )
+    const listenOptions = buildListenOptions(this.serverConfig)
 
     if (this.#isFastify) {
       await this.#app.listen(listenOptions)

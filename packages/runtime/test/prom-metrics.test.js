@@ -5,9 +5,44 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import getPort from 'get-port'
 import { Agent, request } from 'undici'
+import { transform } from '../index.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+
+test('starts the metrics server when applications are added after init', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const port = await getPort()
+  let deferredApplications
+
+  const app = await createRuntime(
+    projectDir,
+    {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+      watch: false,
+      autoload: { path: './services' },
+      metrics: { hostname: '127.0.0.1', port },
+      workers: 1
+    },
+    {
+      async transform (config, ...args) {
+        config = await transform(config, ...args)
+        deferredApplications = config.applications
+        config.applications = []
+        return config
+      }
+    }
+  )
+
+  t.after(() => app.close())
+
+  await app.init()
+  await app.addApplications(deferredApplications)
+
+  const { statusCode, body } = await request(`http://127.0.0.1:${port}`)
+  strictEqual(statusCode, 200)
+  await body.dump()
+})
 
 test('Hello', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
@@ -51,14 +86,9 @@ test('supports https options', async t => {
 
   const app = await createRuntime(projectDir, {
     $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    entrypoint: 'main',
     watch: false,
     autoload: {
       path: './services'
-    },
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
     },
     metrics: {
       hostname: '127.0.0.1',
@@ -292,7 +322,7 @@ test('should track http cache hits/misses', async t => {
   const projectDir = join(fixturesDir, 'http-cache')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -400,14 +430,9 @@ test('health probes use a standalone server when configured as an object', async
   const healthProbesPort = await getPort()
   const app = await createRuntime(projectDir, {
     $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    entrypoint: 'main',
     watch: false,
     autoload: {
       path: './services'
-    },
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
     },
     metrics: {
       hostname: '127.0.0.1',
@@ -514,14 +539,9 @@ test('health probes object uses the metrics server when the address is the same'
   const port = await getPort()
   const app = await createRuntime(projectDir, {
     $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    entrypoint: 'main',
     watch: false,
     autoload: {
       path: './services'
-    },
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
     },
     metrics: {
       hostname: '127.0.0.1',
@@ -601,14 +621,9 @@ test('health probes object can disable probes', async t => {
   const port = await getPort()
   const app = await createRuntime(projectDir, {
     $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    entrypoint: 'main',
     watch: false,
     autoload: {
       path: './services'
-    },
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
     },
     metrics: {
       hostname: '127.0.0.1',
@@ -658,14 +673,9 @@ test('health probes object starts a standalone server when metrics are disabled'
   const healthProbesPort = await getPort()
   const app = await createRuntime(projectDir, {
     $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
-    entrypoint: 'main',
     watch: false,
     autoload: {
       path: './services'
-    },
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
     },
     metrics: false,
     healthProbes: {
@@ -861,7 +871,7 @@ test('readiness - should expose readiness and get a success response when at lea
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
+  const { 'main:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1002,7 +1012,7 @@ test('liveness - should expose liveness and get a fail response when not all app
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1026,7 +1036,7 @@ test('liveness - should expose liveness and get a fail and success responses wit
   const configFile = join(projectDir, 'liveness-custom.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1064,7 +1074,7 @@ test('liveness - should respond to liveness with a custom content from setCustom
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1116,7 +1126,7 @@ test('liveness - should respond to liveness with the response from settings when
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1168,7 +1178,7 @@ test('readiness - should respond to readiness with a custom content from setCust
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1220,7 +1230,7 @@ test('readiness - should respond to readiness with the response from settings wh
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1272,7 +1282,7 @@ test('liveness - should respond to liveness with the custom readiness response f
   const configFile = join(projectDir, 'platformatic.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -1332,7 +1342,7 @@ test('liveness - should get a fail if the custom health check times out', async 
   const configFile = join(projectDir, 'liveness-timeout.json')
   const app = await createRuntime(configFile)
 
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(async () => {
     await app.close()

@@ -1,18 +1,10 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-  "entrypoint": "rival",
   "watch": true,
   "autoload": {
     "path": "services",
     "exclude": [
       "docs"
     ]
-  },
-  "server": {
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}",
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    }
   }
 }

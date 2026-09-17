@@ -1,7 +1,6 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.66.0.json",
   "watch": false,
-  "entrypoint": "node",
   "restartOnError": 100,
   "services": [
     {

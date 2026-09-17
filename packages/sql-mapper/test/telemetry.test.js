@@ -1,5 +1,5 @@
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
-import { telemetry } from '@platformatic/telemetry'
+import { telemetry } from '@platformatic/tracing'
 import fastify from 'fastify'
 import { deepEqual, equal, match, ok } from 'node:assert'
 import { test } from 'node:test'

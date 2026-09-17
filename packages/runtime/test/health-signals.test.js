@@ -10,7 +10,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 test('should send a custom health signal', async t => {
   const configFile = join(fixturesDir, 'health-signals', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'service-1:0': entryUrl } = await app.start()
 
   const healthChecks = []
   app.on('application:worker:health:metrics', (health) => {
@@ -54,7 +54,7 @@ test('should send a custom health signal', async t => {
 test('should send a batch of custom health signal', async t => {
   const configFile = join(fixturesDir, 'health-signals', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'service-1:0': entryUrl } = await app.start()
 
   const healthSignals = []
   app.on('application:worker:health:metrics', (health) => {
@@ -121,7 +121,7 @@ test('should send a batch of custom health signal', async t => {
 test('should throw if signal type is not a string', async t => {
   const configFile = join(fixturesDir, 'health-signals', 'platformatic.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'service-1:0': entryUrl } = await app.start()
 
   const receivedSignals = []
   app.on('application:worker:health:metrics', (health) => {

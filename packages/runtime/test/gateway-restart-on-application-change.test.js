@@ -71,7 +71,7 @@ test('a gateway with restartOnApplicationChange disabled keeps serving when an a
   const runtime = await createRuntime(join(fixturesDir, 'gateway-no-restart-on-change'), null)
   t.after(() => runtime.close())
 
-  const url = await runtime.start()
+  const { 'gateway:0': url } = await runtime.start()
   const originalPort = new URL(url).port
 
   const restarts = []
@@ -107,10 +107,10 @@ test('a gateway with restartOnApplicationChange disabled keeps serving when an a
     `${traffic.results.failures.length} of ${traffic.results.ok + traffic.results.failures.length} requests failed while an application was added`
   )
 
-  strictEqual(new URL(runtime.getUrl()).port, originalPort, 'the entrypoint never changed port')
+  strictEqual(new URL(runtime.getUrls('gateway')['gateway:0']).port, originalPort, 'the gateway never changed port')
 
   {
-    const res = await request(`${runtime.getUrl()}/frontend/hello`)
+    const res = await request(`${runtime.getUrls('gateway')['gateway:0']}/frontend/hello`)
     strictEqual(res.statusCode, 200, 'existing routes still work')
     deepStrictEqual(await res.body.json(), { from: 'frontend' })
   }
@@ -124,7 +124,7 @@ test('opting out means the new application is NOT composed until something else 
   const runtime = await createRuntime(join(fixturesDir, 'gateway-no-restart-on-change'), null)
   t.after(() => runtime.close())
 
-  const url = await runtime.start()
+  const { 'gateway:0': url } = await runtime.start()
 
   const started = once(runtime, 'application:started')
   await addExtraApplication(runtime)
@@ -145,7 +145,8 @@ test('opting out means the new application is NOT composed until something else 
   await runtime.restartApplication('gateway')
   await restarted
 
-  const afterRestart = await request(`${runtime.getUrl()}/extra-service/hello`)
+  const [restartedUrl] = Object.values(runtime.getUrls('gateway'))
+  const afterRestart = await request(`${restartedUrl}/extra-service/hello`)
   strictEqual(afterRestart.statusCode, 200, 'an explicit restart composes it')
   deepStrictEqual(await afterRestart.body.json(), { from: 'extra-service' })
 })
@@ -164,7 +165,8 @@ test('the default is unchanged: a gateway still restarts on an application chang
   await started
   await restarted
 
-  const res = await request(`${runtime.getUrl()}/extra-service/hello`)
+  const [restartedUrl] = Object.values(runtime.getUrls('gateway'))
+  const res = await request(`${restartedUrl}/extra-service/hello`)
   strictEqual(res.statusCode, 200, 'the default still composes a newly added application')
   deepStrictEqual(await res.body.json(), { from: 'extra-service' })
 })

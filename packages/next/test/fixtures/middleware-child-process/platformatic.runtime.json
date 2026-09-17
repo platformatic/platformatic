@@ -1,6 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
-  "entrypoint": "frontend",
   "services": [
     {
       "id": "frontend",
@@ -8,8 +7,7 @@
     },
     {
       "id": "service-1",
-      "path": "./services/service-1",
-      "useHttp": true
+      "path": "./services/service-1"
     }
   ],
   "logger": {

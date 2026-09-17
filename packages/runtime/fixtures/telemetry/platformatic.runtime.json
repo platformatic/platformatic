@@ -1,12 +1,11 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-  "entrypoint": "echo",
   "watch": true,
   "autoload": {
     "path": "services",
     "exclude": ["docs"]
   },
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-runtime",
     "version": "1.0.0",
     "exporter": {

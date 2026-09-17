@@ -1,5 +1,11 @@
 # Platformatic Errors
 
+## @platformatic/globals
+
+### PLT_GLOBALS_MISSING_FIELD
+
+**Message:** Global runtime API "%s" is not available
+
 ## @platformatic/basic
 
 ### PLT_BASIC_NON_ZERO_EXIT_CODE
@@ -43,10 +49,6 @@
 ### PLT_GATEWAY_VALIDATION_ERRORS
 
 **Message:** Validation errors: %s
-
-### PLT_GATEWAY_WS_NO_TCP_UPSTREAM
-
-**Message:** Cannot proxy a WebSocket connection to the "%s" application because it does not expose a TCP server. Set "websocket": true on the application, make it listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".
 
 ## @platformatic/control
 
@@ -158,7 +160,15 @@
 
 ### PLT_RUNTIME_EADDR_IN_USE
 
-**Message:** The current port is in use by another application
+**Message:** Port %d is already in use by applications "%s" and "%s"
+
+### PLT_RUNTIME_APPLICATIONS_PORTS_OVERLAP
+
+**Message:** The applications "%s" (%s) and "%s" (%s) are both configured to listen on port %d. Applications cannot share a port: change one of the ports or make them listen on different hostnames.
+
+### PLT_RUNTIME_WORKER_EADDR_IN_USE
+
+**Message:** Port %d is already in use by another worker of the application "%s". Multiple workers can share a port only when the reusePort feature is available in your OS, otherwise set "server.portAssignment" to "perWorkerIncrement" in the application configuration or use a single worker.
 
 ### PLT_RUNTIME_RUNTIME_EXIT
 
@@ -240,17 +250,9 @@
 
 **Message:** No config file found for service '%s'
 
-### PLT_RUNTIME_INVALID_ENTRYPOINT
-
-**Message:** Invalid entrypoint: '%s' does not exist
-
 ### PLT_RUNTIME_APPLICATION_ID_COLLISION
 
 **Message:** The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.
-
-### PLT_RUNTIME_MISSING_ENTRYPOINT
-
-**Message:** Missing application entrypoint.
 
 ### PLT_RUNTIME_INVALID_SERVICES_WITH_WEB
 
@@ -299,12 +301,6 @@
 ### PLT_RUNTIME_MESSAGING_ERROR
 
 **Message:** Cannot send a message to service "%s": %s
-
-## @platformatic/service
-
-### PLT_SERVICE_INVALID_ERROR_HANDLER
-
-**Message:** The module %s configured as server.errorHandler does not export a function.
 
 ## @platformatic/sql-events
 

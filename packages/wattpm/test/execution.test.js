@@ -12,16 +12,6 @@ import { request } from 'undici'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
-async function waitForRuntimeStarted (startProcess) {
-  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
-
-    if (parsed.event === 'started') {
-      return
-    }
-  }
-}
-
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
@@ -82,24 +72,6 @@ test('dev - should complain if no configuration file is found', async t => {
   )
 })
 
-test('dev - should start if no entrypoint is defined', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-
-  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
-    delete config.entrypoint
-  })
-
-  t.after(() => {
-    startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
-  })
-
-  const startProcess = wattpm('dev', rootDir)
-  await waitForRuntimeStarted(startProcess)
-
-  ok(startProcess.exitCode === null)
-})
-
 test('dev - should restart an application if files are changed', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const applicationDir = resolve(rootDir, 'web/main')
@@ -120,9 +92,10 @@ test('dev - should restart an application if files are changed', async t => {
 
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
+  const mainApplication = config.applications.find(application => application.id === 'main')
+
   ok(config.watch)
-  deepStrictEqual(config.applications[1].id, 'main')
-  ok(config.applications[0].watch)
+  ok(mainApplication.watch)
 
   const indexFile = resolve(applicationDir, 'index.js')
   const originalContents = await readFile(indexFile, 'utf-8')
@@ -139,7 +112,7 @@ test('dev - should restart an application if files are changed', async t => {
       continue
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
     if (mo) {
       url = mo[1]
       break
@@ -189,7 +162,7 @@ test('dev - should restart an application if the runtime configuration file is c
       continue
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
     if (mo) {
       url = mo[1]
       break
@@ -240,7 +213,7 @@ test('dev - should restart an application if the application configuration file 
       continue
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
     if (mo) {
       url = mo[1]
       break
@@ -285,7 +258,7 @@ test('dev - should restart an application if "rs" is typed', async t => {
       continue
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
     if (mo) {
       url = mo[1]
       break
@@ -325,7 +298,7 @@ test('dev - should load custom env file after runtime configuration file change 
   let url
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "main"/)
     if (mo) {
       url = mo[1]
       break
@@ -361,10 +334,10 @@ test('start - should start in production mode', async t => {
 
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
+  const mainApplication = config.applications.find(application => application.id === 'main')
 
   ok(config.watch === false)
-  deepStrictEqual(config.applications[1].id, 'main')
-  ok(config.applications[0].watch === false)
+  ok(mainApplication.watch === false)
 
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "main"')))
   ok(parsed.some(p => p.msg?.includes('Started the worker 0 of the application "alternative"')))
@@ -464,24 +437,6 @@ test('start - should throw an error when an application has no path and it is no
   )
 })
 
-test('start - should start if no entrypoint is defined', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-
-  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
-    delete config.entrypoint
-  })
-
-  t.after(() => {
-    startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
-  })
-
-  const startProcess = wattpm('start', rootDir)
-  await waitForRuntimeStarted(startProcess)
-
-  ok(startProcess.exitCode === null)
-})
-
 test('stop - should stop an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
@@ -522,13 +477,13 @@ test('restart - should restart an application', async t => {
   ok(restart.stdout.includes('Runtime main has been restarted.'))
 })
 
-test('restart - can restart the entrypoint when port is fixed and reusePort is disabled', async t => {
+test('restart - can restart an application when its port is fixed and reusePort is disabled', async t => {
   const port = await getPort()
 
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', (root, config) => {
-    return updateConfigFile(resolve(root, 'watt.json'), config => {
+    return updateConfigFile(resolve(root, 'web/main/watt.json'), config => {
       config.server = { port }
-      config.reuseTcpPorts = false
+      config.runtime = { reuseTcpPorts: false }
     })
   })
 

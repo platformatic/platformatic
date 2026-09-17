@@ -15,7 +15,7 @@ test('fetch globals should work with both string URL and Request object', async 
   })
 
   await app.init()
-  const entryUrl = await app.start()
+  const { 'frontend:0': entryUrl } = await app.start()
 
   // Test fetch with string URL
   {

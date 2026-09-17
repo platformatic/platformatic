@@ -1,12 +1,10 @@
 import {
-  convertApplicationNameToPrefix,
   ensureLoggableError,
   FileWatcher,
   kHandledError,
   listRecognizedConfigurationFiles,
   loadConfiguration,
-  loadConfigurationModule,
-  mirrorGlobalDispatcherForBuiltinFetch
+  loadConfigurationModule
 } from '@platformatic/foundation'
 import {
   getLogger,
@@ -24,32 +22,26 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
-import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } from '../errors.js'
+import { getGlobalDispatcher } from 'undici'
+import {
+  ApplicationAlreadyStartedError,
+  exitCodes,
+  InvalidApplicationModuleError,
+  RuntimeNotStartedError
+} from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
-import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
+import { installGlobalDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
-/**
- * Resolves {PLT_<APPLICATION>_URL} placeholders that no environment variable defines, so that
- * applications can reference each other without the user having to set a variable per pair.
- *
- * The mapping is built forwards, from the ids of the applications that actually exist in the runtime
- * to the variable name each of them owns. Parsing the variable name instead would be ambiguous, both
- * because the id to prefix conversion is not reversible ("with-logger" and "with_logger" share a
- * prefix) and because plenty of _URL variables do not name an application at all: a connection string
- * fragment like {VALKEY_URL} or a DSN like {PLT_DATABASE_URL} must keep resolving to nothing rather
- * than silently becoming an HTTP URL.
- */
-function buildApplicationUrlResolver (applications) {
-  const urls = new Map()
-
-  for (const { id } of applications ?? []) {
-    if (id) {
-      urls.set(`PLT_${convertApplicationNameToPrefix(id)}_URL`, getApplicationUrl(id))
+function fetchApplicationUrl (applications, key) {
+  // Only named application placeholders may fall back to a mesh URL.
+  for (const application of applications) {
+    const name = application.id.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')
+    if (key === `PLT_${name}_URL`) {
+      return getApplicationUrl(application.id)
     }
   }
 
-  return key => urls.get(key) ?? null
+  return null
 }
 
 function handleUnhandled (app, event, listeners, timeout, err, ...args) {
@@ -69,23 +61,20 @@ function handleUnhandled (app, event, listeners, timeout, err, ...args) {
     }
   }
 
-  // stop() rejects while the controller is not started. Left unobserved, that rejection re-enters
-  // this handler forever and starves the event loop, so the exit scheduled above never runs.
-  app.stop().catch(stopError => {
-    logger.debug({ err: ensureLoggableError(stopError) }, `Stopping the ${label} after the ${event} event failed.`)
+  app.stop().catch(err => {
+    logger.debug({ err: ensureLoggableError(err) }, `Stopping the ${label} after the ${event} event failed.`)
   })
 }
 
 export class Controller extends EventEmitter {
   #starting
   #started
-  #listening
   #watch
   #fileWatcher
   #debouncedRestart
   #context
 
-  constructor (runtimeConfig, applicationConfig, workerId, serverConfig, metricsConfig) {
+  constructor (runtimeConfig, applicationConfig, workerId, metricsConfig) {
     super()
     this.runtimeConfig = runtimeConfig
     this.applicationConfig = applicationConfig
@@ -94,11 +83,8 @@ export class Controller extends EventEmitter {
     this.#watch = !!runtimeConfig.watch
     this.#starting = false
     this.#started = false
-    this.#listening = false
     this.capability = null
     this.#fileWatcher = null
-
-    const onMissingEnv = buildApplicationUrlResolver(runtimeConfig.applications)
 
     this.#context = {
       controller: this,
@@ -107,20 +93,16 @@ export class Controller extends EventEmitter {
       applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.applicationConfig.path,
+      sourcePath: this.applicationConfig.sourcePath,
       dependencies: this.applicationConfig.dependencies,
-      isEntrypoint: this.applicationConfig.entrypoint,
       isProduction: this.applicationConfig.isProduction,
-      telemetryConfig: this.applicationConfig.telemetry,
+      tracingConfig: this.applicationConfig.tracing,
       loggerConfig: runtimeConfig.logger,
       metricsConfig,
-      serverConfig,
       worker: workerData?.worker,
       resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
-      fetchApplicationUrl: onMissingEnv,
-      // Capabilities spread the whole context into their loadConfiguration call, which is what makes
-      // the configuration they load resolve application references like the throwaway load below.
-      onMissingEnv,
+      onMissingEnv: fetchApplicationUrl.bind(null, runtimeConfig.applications ?? [applicationConfig]),
       strictEnv: runtimeConfig.strictEnv
     }
   }
@@ -156,7 +138,7 @@ export class Controller extends EventEmitter {
 
       // Before returning the base application, check if there is any file we recognize
       // and the user just forgot to specify in the configuration.
-      if (!appConfig.config) {
+      if (!appConfig.module && !appConfig.config) {
         const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
 
         if (candidate) {
@@ -164,13 +146,14 @@ export class Controller extends EventEmitter {
         }
       }
 
-      if (appConfig.config) {
-        // Parse the configuration file the first time to obtain the schema. This load is thrown away:
-        // the capability loads the configuration again below and that is the configuration the
-        // application actually runs on. This one only has to yield $schema and module, so it must not
-        // diverge from the second load in any way the user can observe: it resolves environment
-        // variables identically, and leaves the strictEnv report to the load the application is
-        // built from, which would otherwise be duplicated for every application.
+      if (appConfig.module) {
+        const pkg = await loadConfigurationModule(workerData.dirname, {}, appConfig.module)
+        if (typeof pkg.create !== 'function') {
+          throw new InvalidApplicationModuleError(appConfig.module)
+        }
+        this.capability = await pkg.create(appConfig.path, appConfig.config ?? {}, this.#context)
+      } else if (appConfig.config) {
+        // Parse the configuration file the first time to obtain the schema
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
           onMissingEnv: this.#context.onMissingEnv,
           strictEnv: false
@@ -219,6 +202,7 @@ export class Controller extends EventEmitter {
 
     try {
       await this.capability.init?.()
+
       this.emit('init')
     } catch (err) {
       this.#logAndThrow(err)
@@ -228,7 +212,6 @@ export class Controller extends EventEmitter {
       return
     }
 
-    this.#updateCapabilityStatus('starting')
     this.emit('starting')
 
     if (this.#watch) {
@@ -245,17 +228,13 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!(this.applicationConfig.useHttp || this.applicationConfig.websocket)
-
     try {
-      await this.capability.start({ listen })
+      await this.capability.start()
       if (refreshGlobalDispatcher()) {
         this.#updateDispatcher()
       }
-      this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
-      this.#updateCapabilityStatus('start:error')
       this.emit('start:error', err)
 
       this.capability.log({ message: err.message, level: 'debug' })
@@ -266,8 +245,11 @@ export class Controller extends EventEmitter {
     this.#started = true
     this.#starting = false
 
-    this.#updateCapabilityStatus('started')
     this.emit('started')
+  }
+
+  getUrl () {
+    return this.capability.getUrl()
   }
 
   async stop (force = false, dependents = []) {
@@ -276,9 +258,6 @@ export class Controller extends EventEmitter {
     }
 
     this.emit('stopping')
-    // Do not update status of the capability to "stopping" here otherwise
-    // if stop is called before start is finished, the capability will not
-    // be able to wait for start to finish and it will create a race condition.
 
     await this.#stopFileWatching()
     await this.capability.waitForDependentsStop(dependents)
@@ -286,24 +265,8 @@ export class Controller extends EventEmitter {
 
     this.#started = false
     this.#starting = false
-    this.#listening = false
 
-    this.#updateCapabilityStatus('stopped')
     this.emit('stopped')
-  }
-
-  async listen () {
-    // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (
-      !this.applicationConfig.entrypoint ||
-      this.applicationConfig.useHttp ||
-      this.applicationConfig.websocket ||
-      this.#listening
-    ) {
-      return
-    }
-
-    await this.capability.start({ listen: true })
   }
 
   async getMetrics ({ format }) {
@@ -311,8 +274,6 @@ export class Controller extends EventEmitter {
     const onHttpStatsFree = getOnHttpStatsFree({ throwOnMissing: false })
 
     if (onHttpStatsFree && dispatcher?.stats) {
-      // The capability might come from an older version of @platformatic/basic
-      // which registered these globals without the fields tracking, so never throw.
       const onHttpStatsConnected = getOnHttpStatsConnected({ throwOnMissing: false })
       const onHttpStatsPending = getOnHttpStatsPending({ throwOnMissing: false })
       const onHttpStatsQueued = getOnHttpStatsQueued({ throwOnMissing: false })
@@ -387,8 +348,8 @@ export class Controller extends EventEmitter {
   }
 
   #updateDispatcher () {
-    const telemetryConfig = this.#context.telemetryConfig
-    const telemetryId = telemetryConfig?.applicationName
+    const tracingConfig = this.#context.tracingConfig
+    const telemetryId = tracingConfig?.applicationName
 
     const interceptor = dispatch => {
       return function InterceptedDispatch (opts, handler) {
@@ -404,9 +365,7 @@ export class Controller extends EventEmitter {
 
     const dispatcher = getGlobalDispatcher().compose(interceptor)
 
-    markAsPlatformaticDispatcher(dispatcher)
-    setGlobalDispatcher(dispatcher)
-    mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
+    installGlobalDispatcher(dispatcher)
   }
 
   #setupHandlers (timeout) {
@@ -430,15 +389,5 @@ export class Controller extends EventEmitter {
         })
       }
     })
-  }
-
-  #updateCapabilityStatus (status) {
-    if (typeof this.capability.updateStatus === 'function') {
-      this.capability.updateStatus(status)
-    } else {
-      // This is horrible but needed for backward compatibility
-      this.capability.status = status
-      this.capability.emit(status)
-    }
   }
 }

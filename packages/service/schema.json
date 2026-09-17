@@ -10,6 +10,18 @@
     "server": {
       "type": "object",
       "properties": {
+        "errorHandler": {
+          "anyOf": [
+            {
+              "type": "string",
+              "resolveModule": true
+            },
+            {
+              "type": "string",
+              "resolvePath": true
+            }
+          ]
+        },
         "hostname": {
           "type": "string"
         },
@@ -22,6 +34,18 @@
               "type": "string"
             }
           ]
+        },
+        "portAssignment": {
+          "type": "string",
+          "enum": [
+            "shared",
+            "perWorkerIncrement"
+          ],
+          "description": "Configures how the port is assigned when the application runs multiple workers. When set to shared (the default), all workers listen on the same port (which requires SO_REUSEPORT support). When set to perWorkerIncrement, each worker listens on its own port, starting from port (worker 0) and incrementing by one for each additional worker."
+        },
+        "backlog": {
+          "type": "integer",
+          "description": "The maximum length of the queue of pending connections"
         },
         "pluginTimeout": {
           "type": "integer"
@@ -97,7 +121,8 @@
               "properties": {
                 "level": {
                   "type": "string",
-                  "description": "The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels."
+                  "minLength": 1,
+                  "description": "A standard Pino log level or a level defined in customLevels."
                 },
                 "transport": {
                   "anyOf": [
@@ -290,35 +315,6 @@
                     "url"
                   ],
                   "additionalProperties": false
-                }
-              },
-              "if": {
-                "not": {
-                  "required": [
-                    "customLevels"
-                  ]
-                }
-              },
-              "then": {
-                "properties": {
-                  "level": {
-                    "oneOf": [
-                      {
-                        "enum": [
-                          "fatal",
-                          "error",
-                          "warn",
-                          "info",
-                          "debug",
-                          "trace",
-                          "silent"
-                        ]
-                      },
-                      {
-                        "pattern": "^\\{.+\\}$"
-                      }
-                    ]
-                  }
                 }
               },
               "default": {},
@@ -623,19 +619,6 @@
             }
           },
           "additionalProperties": false
-        },
-        "errorHandler": {
-          "description": "Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.",
-          "anyOf": [
-            {
-              "type": "string",
-              "resolveModule": true
-            },
-            {
-              "type": "string",
-              "resolvePath": true
-            }
-          ]
         }
       },
       "additionalProperties": false
@@ -747,7 +730,7 @@
         }
       ]
     },
-    "telemetry": {
+    "tracing": {
       "type": "object",
       "properties": {
         "enabled": {
@@ -1243,6 +1226,13 @@
                 ]
               }
             ],
+            "not": {
+              "type": "object",
+              "required": [
+                "module",
+                "url"
+              ]
+            },
             "properties": {
               "id": {
                 "type": "string"
@@ -1275,15 +1265,12 @@
               "url": {
                 "type": "string"
               },
+              "module": {
+                "type": "string"
+              },
               "gitBranch": {
                 "type": "string",
                 "default": "main"
-              },
-              "useHttp": {
-                "type": "boolean"
-              },
-              "websocket": {
-                "type": "boolean"
               },
               "reuseTcpPorts": {
                 "type": "boolean",
@@ -1576,7 +1563,7 @@
                 },
                 "additionalProperties": false
               },
-              "telemetry": {
+              "tracing": {
                 "type": "object",
                 "properties": {
                   "instrumentations": {
@@ -1733,7 +1720,8 @@
           "properties": {
             "level": {
               "type": "string",
-              "description": "The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels."
+              "minLength": 1,
+              "description": "A standard Pino log level or a level defined in customLevels."
             },
             "transport": {
               "anyOf": [
@@ -1928,164 +1916,8 @@
               "additionalProperties": false
             }
           },
-          "if": {
-            "not": {
-              "required": [
-                "customLevels"
-              ]
-            }
-          },
-          "then": {
-            "properties": {
-              "level": {
-                "oneOf": [
-                  {
-                    "enum": [
-                      "fatal",
-                      "error",
-                      "warn",
-                      "info",
-                      "debug",
-                      "trace",
-                      "silent"
-                    ]
-                  },
-                  {
-                    "pattern": "^\\{.+\\}$"
-                  }
-                ]
-              }
-            }
-          },
           "default": {},
           "additionalProperties": true
-        },
-        "server": {
-          "type": "object",
-          "properties": {
-            "hostname": {
-              "type": "string"
-            },
-            "port": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "portAssignment": {
-              "type": "string",
-              "enum": [
-                "shared",
-                "perWorkerIncrement"
-              ],
-              "description": "Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0)."
-            },
-            "backlog": {
-              "type": "integer",
-              "description": "The maximum length of the queue of pending connections"
-            },
-            "http2": {
-              "type": "boolean"
-            },
-            "https": {
-              "type": "object",
-              "properties": {
-                "allowHTTP1": {
-                  "type": "boolean"
-                },
-                "key": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "resolvePath": true
-                        }
-                      },
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "path": {
-                                "type": "string",
-                                "resolvePath": true
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                },
-                "cert": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "resolvePath": true
-                        }
-                      },
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "path": {
-                                "type": "string",
-                                "resolvePath": true
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                },
-                "requestCert": {
-                  "type": "boolean"
-                },
-                "rejectUnauthorized": {
-                  "type": "boolean"
-                }
-              },
-              "additionalProperties": false,
-              "required": [
-                "key",
-                "cert"
-              ]
-            }
-          },
-          "additionalProperties": false
         },
         "reuseTcpPorts": {
           "type": "boolean",
@@ -3064,9 +2896,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "default": false
         },
-        "telemetry": {
+        "tracing": {
           "type": "object",
           "properties": {
             "enabled": {
@@ -3380,72 +3213,6 @@
             "type": "string"
           },
           "default": []
-        },
-        "scheduler": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "default": true
-              },
-              "name": {
-                "type": "string"
-              },
-              "cron": {
-                "type": "string"
-              },
-              "callbackUrl": {
-                "type": "string"
-              },
-              "method": {
-                "type": "string",
-                "enum": [
-                  "GET",
-                  "POST",
-                  "PUT",
-                  "PATCH",
-                  "DELETE"
-                ],
-                "default": "GET"
-              },
-              "headers": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "body": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "object",
-                    "additionalProperties": true
-                  }
-                ]
-              },
-              "maxRetries": {
-                "type": "number",
-                "minimum": 0,
-                "default": 3
-              }
-            },
-            "required": [
-              "name",
-              "cron",
-              "callbackUrl"
-            ]
-          }
         },
         "policies": {
           "type": "object",
@@ -3784,7 +3551,7 @@
               },
               "additionalProperties": false
             },
-            "telemetry": {
+            "tracing": {
               "type": "object",
               "properties": {
                 "instrumentations": {

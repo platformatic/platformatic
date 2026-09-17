@@ -20,7 +20,7 @@ This guide shows you how to create a multi-stage Docker build that optimizes you
 
 ## Step 1: Configure Your Application for Containers
 
-Ensure your `watt.json` or `platformatic.json` uses environment variables for hostname and port:
+Ensure the configuration file for the capability that serves your application uses environment variables for hostname and port:
 
 ```json
 {

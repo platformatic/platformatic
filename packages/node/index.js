@@ -5,7 +5,7 @@ import { schema } from './lib/schema.js'
 
 export async function transform (config, _schema, options) {
   config = await basicTransform(config, schema, options)
-  config.telemetry = { ...options.telemetryConfig, ...config.telemetry }
+  config.tracing = { ...options.tracingConfig, ...config.tracing }
 
   return config
 }

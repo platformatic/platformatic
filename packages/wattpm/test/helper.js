@@ -65,7 +65,7 @@ export async function prepareGitRepository (t, root) {
   return url.toString()
 }
 
-export async function waitForStart (startProcess) {
+export async function waitForStart (startProcess, application = 'main') {
   let url
   const raw = []
   const objects = []
@@ -95,8 +95,8 @@ export async function waitForStart (startProcess) {
       continue
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
-    if (mo) {
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "([^"]+)"/)
+    if (mo?.[2] === application) {
       url = mo[1]
       break
     }

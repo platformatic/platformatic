@@ -170,9 +170,6 @@ npm install -D @platformatic/tsconfig
   "runtime": {
     "application": {
       "execArgv": ["-r", "ts-node/register"]
-    },
-    "server": {
-      "port": 3000
     }
   }
 }
@@ -186,7 +183,6 @@ Key configuration details:
 - `node.disableBuildInDevelopment: true` ensures TypeScript runs directly in dev mode without needing to build first
 - `runtime.application.execArgv` configures how Node.js runs your TypeScript files:
   - `"-r", "ts-node/register"` registers ts-node for CommonJS module loading
-- `runtime.server.port: 3000` sets the default server port
 
 This configuration provides maximum compatibility - it works whether your TypeScript compiles to CommonJS or ESM, automatically handling both module systems.
 
@@ -301,10 +297,10 @@ Change the `execArgv` configuration to use ts-node's ESM loader:
   "runtime": {
     "application": {
       "execArgv": ["--loader", "ts-node/esm"]
-    },
-    "server": {
-      "port": 3000
     }
+  },
+  "server": {
+    "port": 3000
   }
 }
 ```
@@ -383,10 +379,8 @@ Node.js built-in type stripping only strips types and doesn't transpile TypeScri
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
-  "runtime": {
-    "server": {
-      "port": 3000
-    }
+  "server": {
+    "port": 3000
   }
 }
 ```
@@ -557,10 +551,8 @@ Use this configuration when your project uses `"type": "module"` in package.json
   "watch": {
     "enabled": true
   },
-  "runtime": {
-    "server": {
-      "port": 3000
-    }
+  "server": {
+    "port": 3000
   }
 }
 ```
@@ -632,10 +624,8 @@ Notice: No `"type": "module"` field — this keeps the project in CommonJS mode.
   "watch": {
     "enabled": true
   },
-  "runtime": {
-    "server": {
-      "port": 3000
-    }
+  "server": {
+    "port": 3000
   }
 }
 ```

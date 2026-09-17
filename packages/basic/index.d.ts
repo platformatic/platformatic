@@ -1,7 +1,7 @@
+import type { JSONSchemaType } from 'ajv'
 import type { ChildProcess } from 'node:child_process'
 import type { Server } from 'node:net'
 import type { URL } from 'node:url'
-import type { JSONSchemaType } from 'ajv'
 import type { PlatformaticBasicConfig } from './config.d.ts'
 
 export type { PlatformaticBasicConfig } from './config.d.ts'
@@ -20,13 +20,11 @@ type HealthCheck = () => boolean | Promise<boolean> | HealthCheckResult | Promis
 
 export type BaseContext = Partial<{
   applicationId: string
-  isEntrypoint: boolean
   isProduction: boolean
   isStandalone: boolean
   directory: string
-  telemetryConfig: object
+  tracingConfig: object
   metricsConfig: object
-  serverConfig: object
   hasManagementApi: boolean
 }>
 
@@ -54,6 +52,11 @@ export declare function resolve (
 ): Promise<{ root: string; source: string | Record<string, unknown> }>
 
 export declare function transform<Config extends Record<string, any> | undefined> (config: Config): Promise<Config>
+
+export declare function applyPortAssignment<ServerConfig extends Record<string, any> | undefined> (
+  serverConfig: ServerConfig,
+  worker?: { index?: number; portOffset?: number }
+): ServerConfig
 
 export declare const validationOptions: {
   useDefaults: true
@@ -98,9 +101,14 @@ export declare namespace errors {
 
 export declare function getServerUrl (server: Server): string
 
-export declare function buildListenOptions (serverConfig?: { port?: number | string; hostname?: string }): {
+export declare function buildListenOptions (serverConfig?: {
+  port?: number | string
+  hostname?: string
+  backlog?: number
+}): {
   port: number | string
   host?: string
+  backlog?: number
 }
 
 export declare function buildAdditionalServerOptions (
@@ -151,16 +159,16 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   root: string
   config: Config
   context: Options
+  applicationConfig: Record<string, unknown>
   standardStreams: Record<string, NodeJS.WritableStream>
   applicationId?: string
   workerId: number
-  telemetryConfig?: object
+  tracingConfig?: object
   serverConfig?: Record<string, unknown>
   openapiSchema: object | string | null
   graphqlSchema: unknown
   connectionString: string | null
   basePath: string | null
-  isEntrypoint?: boolean
   isProduction?: boolean
   dependencies: string[]
   customHealthCheck: HealthCheck | null

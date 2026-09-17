@@ -176,12 +176,12 @@ Watt uses a **configuration-driven approach** where each application declares it
 
 // web/api/platformatic.json - Express.js application
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json"
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json"
 }
 
 // web/frontend/watt.json - Next.js integration
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
   "application": {
     "basePath": "/app"
   }
@@ -257,7 +257,7 @@ export function build() {
 
 ```bash
 # 1. Add Watt configuration to existing Next.js app
-echo '{"$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json"}' > watt.json
+echo '{"$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json"}' > watt.json
 
 # 2. Create Watt project structure
 npm wattpm create

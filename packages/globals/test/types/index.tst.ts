@@ -1,9 +1,11 @@
 import * as Client from '@platformatic/prom-client'
 import type { AsyncLocalStorage } from 'node:async_hooks'
+import type { Agent } from 'node:http'
+import type { ResourceLimits } from 'node:worker_threads'
 import type Pino from 'pino'
 import { expect, test } from 'tstyche'
 import * as globals from '../../lib/index.js'
-import { type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
+import { type Management, type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
 
 test("PlatformaticGlobal", () => {
   const platformatic = {} as PlatformaticGlobal
@@ -18,17 +20,16 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.reuseTcpPorts).type.toBe<boolean>()
 
   // Service configuration
-  expect(platformatic.host).type.toBe<string>()
-  expect(platformatic.port).type.toBe<number>()
+  expect(platformatic.host).type.toBe<string | true>()
+  expect(platformatic.port).type.toBe<number | true>()
   expect(platformatic.additionalServerOptions).type.toBe<object>()
-  expect(platformatic.telemetryConfig).type.toBe<object>()
+  expect(platformatic.tracingConfig).type.toBe<object>()
   expect(platformatic.config).type.toBe<object>()
   expect(platformatic.runtimeConfig).type.toBe<object>()
   expect(platformatic.applicationConfig).type.toBe<object | null>()
   expect(platformatic.applicationId).type.toBe<string>()
   expect(platformatic.workerId).type.toBe<number | string>()
   expect(platformatic.root).type.toBe<string>()
-  expect(platformatic.isEntrypoint).type.toBe<boolean>()
   expect(platformatic.basePath).type.toBe<string | null>()
   expect(platformatic.runtimeBasePath).type.toBe<string | null>()
   expect(platformatic.wantsAbsoluteUrls).type.toBe<boolean>()
@@ -46,19 +47,35 @@ test("PlatformaticGlobal", () => {
   expect(platformatic.valkeyClients).type.toBe<Map<string, any>>()
 });
 
-test("ambient globalThis.platformatic", () => {
-  // updateGlobals() assigns a real, shared `globalThis.platformatic` object
-  // at worker/main-thread startup; consumers that read it directly (rather
-  // than via the getters below) need this ambient declaration.
-  expect(globalThis.platformatic).type.toBe<PlatformaticGlobal | undefined>()
-  expect(globalThis.platformatic?.sharedContext).type.toBe<PlatformaticGlobal['sharedContext'] | undefined>()
-  expect(globalThis.platformatic?.itc).type.toBe<PlatformaticGlobal['itc'] | undefined>()
-})
-
 test("updateGlobals", () => {
   expect(globals.updateGlobals({ config: {} })).type.toBe<PlatformaticGlobal>()
   expect(globals.updateGlobals).type.toBeCallableWith({ logger: {} as Pino.Logger })
   expect(globals.updateGlobals).type.not.toBeCallableWith({ unknown: true })
+})
+
+test('getGlobals', () => {
+  expect(globals.getGlobals()).type.toBe<Record<string, unknown>>()
+  expect(globals.getGlobals('logger', 'applicationId')).type.toBe<Record<string, unknown>>()
+  expect(globals.getGlobals).type.toBeCallableWith(...([] as string[]))
+  expect(globals.getGlobals).type.not.toBeCallableWith(['logger'])
+  expect(globals.getGlobals).type.not.toBeCallableWith(1)
+})
+
+test('interceptor and child context accessors', () => {
+  const interceptor = {} as globals.UndiciThreadInterceptor
+  expect(globals.setUndiciThreadInterceptor(interceptor)).type.toBe<void>()
+  expect(globals.setUndiciThreadInterceptor).type.not.toBeCallableWith({})
+  expect(globals.getUndiciThreadInterceptor()).type.toBe<globals.UndiciThreadInterceptor>()
+  expect(globals.getUndiciThreadInterceptor().createUpgradeAgent()).type.toBe<Agent>()
+  expect(globals.getUndiciThreadInterceptor({ throwOnMissing: false })).type.toBe<globals.UndiciThreadInterceptor | undefined>()
+  expect(globals.getUndiciThreadInterceptor({} as globals.GlobalGetterOptions)).type.toBe<globals.UndiciThreadInterceptor | undefined>()
+  expect(globals.updateGlobals).type.toBeCallableWith({ undiciThreadInterceptor: interceptor })
+  expect(globals.getCompileCache()).type.toBe<boolean | { enabled?: boolean; directory?: string } | undefined>()
+  expect(globals.getCompileCache({ throwOnMissing: false })).type.toBe<PlatformaticGlobal['compileCache']>()
+  expect(globals.getResourceLimits()).type.toBe<ResourceLimits | undefined>()
+  expect(globals.getResourceLimits({ throwOnMissing: false })).type.toBe<ResourceLimits | undefined>()
+  expect(globals.updateGlobals).type.toBeCallableWith({ host: true, port: true })
+  expect(globals.updateGlobals).type.not.toBeCallableWith({ host: false, port: false })
 })
 
 test("getters", () => {
@@ -71,14 +88,13 @@ test("getters", () => {
   expect(globals.getHost()).type.toBe<PlatformaticGlobal['host']>()
   expect(globals.getPort()).type.toBe<PlatformaticGlobal['port']>()
   expect(globals.getAdditionalServerOptions()).type.toBe<PlatformaticGlobal['additionalServerOptions']>()
-  expect(globals.getTelemetryConfig()).type.toBe<PlatformaticGlobal['telemetryConfig']>()
+  expect(globals.getTracingConfig()).type.toBe<PlatformaticGlobal['tracingConfig']>()
   expect(globals.getConfig()).type.toBe<PlatformaticGlobal['config']>()
   expect(globals.getRuntimeConfig()).type.toBe<PlatformaticGlobal['runtimeConfig']>()
   expect(globals.getApplicationConfig()).type.toBe<PlatformaticGlobal['applicationConfig']>()
   expect(globals.getApplicationId()).type.toBe<PlatformaticGlobal['applicationId']>()
   expect(globals.getWorkerId()).type.toBe<PlatformaticGlobal['workerId']>()
   expect(globals.getRoot()).type.toBe<PlatformaticGlobal['root']>()
-  expect(globals.isEntrypoint()).type.toBe<PlatformaticGlobal['isEntrypoint']>()
   expect(globals.getBasePath()).type.toBe<PlatformaticGlobal['basePath']>()
   expect(globals.getRuntimeBasePath()).type.toBe<PlatformaticGlobal['runtimeBasePath']>()
   expect(globals.getWantsAbsoluteUrls()).type.toBe<PlatformaticGlobal['wantsAbsoluteUrls']>()
@@ -116,9 +132,9 @@ test("getters", () => {
   expect(globals.getCapability()).type.toBe<PlatformaticGlobal['capability']>()
   expect(globals.getClosing()).type.toBe<PlatformaticGlobal['closing']>()
   expect(globals.getSharedContext()).type.toBe<PlatformaticGlobal['sharedContext']>()
-  expect(globals.getManagement()).type.toBe<PlatformaticGlobal['management']>()
+  expect(globals.getManagement()).type.toBe<Management>()
   expect(globals.getSendHealthSignal()).type.toBe<PlatformaticGlobal['sendHealthSignal']>()
-  expect(globals.getTelemetryReady()).type.toBe<PlatformaticGlobal['telemetryReady']>()
+  expect(globals.getTracingReady()).type.toBe<PlatformaticGlobal['tracingReady']>()
   expect(globals.getTracerProvider()).type.toBe<PlatformaticGlobal['tracerProvider']>()
   expect(globals.getNotifyConfig()).type.toBe<PlatformaticGlobal['notifyConfig']>()
 })

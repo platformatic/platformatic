@@ -46,6 +46,7 @@ test('should get application config', async t => {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
+      trustProxy: true,
       logger: {
         level: 'trace'
       }

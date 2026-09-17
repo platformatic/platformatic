@@ -123,8 +123,12 @@ export async function loadApplicationsCommands (executableName = '', configurati
 
   for (const application of config.applications) {
     try {
-      const applicationConfig = await utilsLoadConfiguration(application.config)
-      const pkg = await loadConfigurationModule(application.path, applicationConfig)
+      const applicationConfig = application.config ? await utilsLoadConfiguration(application.config) : {}
+      const pkg = await loadConfigurationModule(
+        application.moduleRoot ?? application.sourcePath ?? application.path,
+        applicationConfig,
+        application.module
+      )
 
       if (pkg.createCommands) {
         const definition = await pkg.createCommands(application.id)

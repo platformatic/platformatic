@@ -1,23 +1,17 @@
 import Swagger from '@fastify/swagger'
-import { create as createDatabaseCapability } from '@platformatic/db'
-import { createDirectory, executeWithTimeout, kTimeout, loadModule, safeRemove } from '@platformatic/foundation'
+import { createDirectory, executeWithTimeout, kTimeout, safeRemove } from '@platformatic/foundation'
 import fastify from 'fastify'
-import fs from 'fs'
-import { getIntrospectionQuery } from 'graphql'
-import mercurius from 'mercurius'
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { mkdtemp, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { promisify } from 'node:util'
-import path from 'path'
 import { Agent, request, setGlobalDispatcher } from 'undici'
 import why from 'why-is-node-running'
 import WebSocket from 'ws'
 import { createTemporaryDirectory } from '../../basic/test/helper.js'
-import { create as createRuntime, symbols } from '../../runtime/index.js'
+import { create as createRuntime } from '../../runtime/index.js'
 import { create } from '../index.js'
 
 if (process.env.WHY === 'true') {
@@ -132,33 +126,6 @@ export async function createBasicApplication (t, options = {}) {
   })
 
   return app
-}
-
-export async function createPlatformaticDatabaseApplication (t, { name, jsonFile }) {
-  try {
-    fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
-  } catch {}
-  try {
-    fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
-  } catch {}
-
-  const application = await createDatabaseCapability(
-    path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile)
-  )
-  await application.init()
-
-  application.getApplication().get('/.well-known/graphql-composition', async function (req, reply) {
-    const res = await reply.graphql(getIntrospectionQuery())
-    return res
-  })
-
-  t.after(async () => {
-    try {
-      await application.stop()
-    } catch {}
-  })
-
-  return application
 }
 
 export async function createOpenApiApplication (t, entitiesNames = [], options = {}) {
@@ -346,46 +313,6 @@ export async function createOpenApiApplication (t, entitiesNames = [], options =
   return app
 }
 
-export async function createGraphqlApplication (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
-  const app = fastify({ logger: false, port: 0 })
-  t.after(async () => {
-    await app.close()
-  })
-
-  if (file) {
-    const { schema, resolvers } = await loadModule(createRequire(import.meta.dirname), file)
-    await app.register(mercurius, { schema, resolvers })
-  } else {
-    await app.register(mercurius, { schema, resolvers })
-  }
-
-  if (extend) {
-    if (extend.file) {
-      const { schema, resolvers } = await import(extend.file)
-      if (schema) {
-        app.graphql.extendSchema(schema)
-      }
-      if (resolvers) {
-        app.graphql.defineResolvers(resolvers)
-      }
-    }
-    if (extend.schema) {
-      app.graphql.extendSchema(extend.schema)
-    }
-    if (extend.resolvers) {
-      app.graphql.defineResolvers(extend.resolvers)
-    }
-  }
-
-  if (exposeIntrospection) {
-    app.get('/.well-known/graphql-composition', async function (req, reply) {
-      return reply.graphql(getIntrospectionQuery())
-    })
-  }
-
-  return app
-}
-
 export async function createWebsocketApplication (t, wsServerOptions = {}, port) {
   const application = createServer()
   const wsServer = new WebSocket.Server({ server: application, ...wsServerOptions })
@@ -431,21 +358,21 @@ export async function createFromConfig (t, options, applicationFactory, creation
 
   const directory = await createTemporaryDirectory(t)
 
-  // Carry over just the pinned hostname when a caller overrides `server`
+  // Keep an explicit ephemeral listener when a caller overrides `server`
   // with only a few sub-fields (e.g. `server: { logger: { level: 'fatal' }}`).
-  // Without this, the shallow `Object.assign` below wipes out the default
-  // hostname and the framework binds to `::1` on dual-stack hosts.
-  // We deliberately merge only hostname to avoid accidentally carrying over
-  // other defaults like `keepAliveTimeout` that tests expect to be reset.
+  // Other defaults like `keepAliveTimeout` remain reset as expected by tests.
   const mergedConfig = Object.assign({}, defaultConfig, options)
-  if (options?.server && !options.server.hostname) {
-    mergedConfig.server = { hostname: defaultConfig.server.hostname, ...options.server }
+  if (options?.server) {
+    mergedConfig.server = {
+      hostname: defaultConfig.server.hostname,
+      port: defaultConfig.server.port,
+      ...options.server
+    }
   }
 
   const gateway = await create(directory, mergedConfig, {
     applicationFactory,
     isStandalone: true,
-    isEntrypoint: true,
     isProduction: creationOptions.production
   })
   t.after(() => gateway.stop())
@@ -479,7 +406,6 @@ export async function createGatewayInRuntime (
     runtimeConfigPath,
     JSON.stringify({
       $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
-      entrypoint: 'composer',
       watch: false,
       services: (applications ?? []).concat([
         {
@@ -512,23 +438,19 @@ export async function createGatewayInRuntime (
           }
         ]
       },
-      ...gatewayConfig
+      ...gatewayConfig,
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        ...gatewayConfig.server
+      }
     }),
     'utf-8'
   )
 
   await writeFile(
     pluginConfigPath,
-    `
-      import { getITC } from '@platformatic/globals'
-
-      export default async function (app) {
-        const itc = getITC()
-        itc.handle('getSchema', () => {
-          return app.graphqlSupergraph.sdl
-        })
-      }
-    `,
+    'export default async function () {}',
     'utf-8'
   )
 
@@ -552,15 +474,6 @@ export async function createGatewayInRuntime (
   return runtime
 }
 
-export async function startDatabaseApplications (t, names) {
-  return Promise.all(
-    names.map(async ({ name, jsonFile }) => {
-      const application = await createPlatformaticDatabaseApplication(t, { name, jsonFile })
-      return { name, host: await application.start() }
-    })
-  )
-}
-
 export async function waitForRestart (runtime) {
   const result = await executeWithTimeout(once(runtime, 'application:worker:reloaded'), REFRESH_TIMEOUT * 3)
 
@@ -568,31 +481,8 @@ export async function waitForRestart (runtime) {
     return Promise.reject(new Error('Timeout while waiting for application to restart'))
   }
 
-  const entrypoint = await runtime.getEntrypointDetails()
-  return entrypoint.url
-}
-
-export async function checkSchema (runtime, schema) {
-  const gateway = await runtime.getApplication('composer')
-  const sdl = await gateway[symbols.kITC].send('getSchema')
-  return sdl === schema
-}
-
-export async function graphqlRequest ({ query, variables, url, host }) {
-  const { body, statusCode } = await request(url || host + '/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ query, variables })
-  })
-
-  const content = await body.json()
-  if (statusCode !== 200) {
-    console.log(statusCode, content)
-  }
-
-  return content.errors ? content.errors : content.data
+  const application = await runtime.getApplicationDetails('composer')
+  return application.url
 }
 
 export async function testEntityRoutes (origin, entitiesRoutes) {

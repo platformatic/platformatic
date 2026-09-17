@@ -8,7 +8,7 @@ import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-test('gateway entrypoint should keep the same port after restart triggered by addApplications', async t => {
+test('gateway should remain reachable after restart triggered by addApplications', async t => {
   const configFile = join(fixturesDir, 'gateway-restart-port')
   const runtime = await createRuntime(configFile, null)
 
@@ -16,9 +16,7 @@ test('gateway entrypoint should keep the same port after restart triggered by ad
     await runtime.close()
   })
 
-  const url = await runtime.start()
-  const originalUrl = new URL(url)
-  const originalPort = originalUrl.port
+  const { 'gateway:0': url } = await runtime.start()
 
   // Verify initial routes work through the gateway proxy
   {
@@ -50,15 +48,9 @@ test('gateway entrypoint should keep the same port after restart triggered by ad
   await addPromise
   await restartPromise
 
-  // The gateway should have restarted on the SAME port
-  const newUrl = runtime.getUrl()
-  const newParsed = new URL(newUrl)
-
-  strictEqual(
-    newParsed.port,
-    originalPort,
-    `Port changed from ${originalPort} to ${newParsed.port} after gateway restart - port leak detected`
-  )
+  // The capability owns its listener, so an ephemeral port may change after restart.
+  const { url: newUrl } = await runtime.getApplicationDetails('gateway')
+  ok(newUrl)
 
   // All proxy routes should work after the restart, including the new service
   {
@@ -80,7 +72,7 @@ test('gateway entrypoint should keep the same port after restart triggered by ad
   }
 })
 
-test('gateway entrypoint should not exit prematurely when restartApplication is called during startup', async t => {
+test('gateway should not exit prematurely when restartApplication is called during startup', async t => {
   const configFile = join(fixturesDir, 'gateway-restart-port')
   const runtime = await createRuntime(configFile, null)
 
@@ -113,8 +105,7 @@ test('gateway entrypoint should not exit prematurely when restartApplication is 
     }
   })
 
-  const url = await runtime.start()
-  ok(url, 'runtime should start successfully')
+  await runtime.start()
 
   // Give time for any concurrent restart to settle
   await new Promise(resolve => setTimeout(resolve, 3000))
@@ -126,7 +117,7 @@ test('gateway entrypoint should not exit prematurely when restartApplication is 
   )
 
   // The runtime should be functional - gateway routes should work
-  const currentUrl = runtime.getUrl()
+  const { url: currentUrl } = await runtime.getApplicationDetails('gateway')
   ok(currentUrl, 'runtime should have a valid URL')
 
   {

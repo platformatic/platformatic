@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
 import { version } from '../../runtime/index.js'
 import { RuntimeApiClient } from '../lib/index.js'
@@ -17,34 +16,6 @@ function getRuntimeTmpDir (runtimeDir) {
   const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
   return join(platformaticTmpDir, runtimeDirHash)
 }
-
-test('should control runtime scheduler jobs', async t => {
-  const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
-  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await safeRemove(runtimeTmpDir)
-
-  const { runtime } = await startRuntime(configFile)
-  t.after(async () => {
-    await kill(runtime)
-    await safeRemove(runtimeTmpDir)
-  })
-
-  const runtimeClient = new RuntimeApiClient()
-  t.after(() => runtimeClient.close())
-  const { jobs } = await runtimeClient.getRuntimeSchedulerJobs(runtime.pid)
-  assert.equal(jobs.length, 1)
-  assert.equal(jobs[0].name, 'control-test')
-
-  const paused = await runtimeClient.pauseRuntimeSchedulerJob(runtime.pid, jobs[0].name)
-  assert.equal(paused.paused, true)
-
-  const result = await runtimeClient.runRuntimeSchedulerJob(runtime.pid, jobs[0].name)
-  assert.equal(result.success, true)
-
-  const resumed = await runtimeClient.resumeRuntimeSchedulerJob(runtime.pid, jobs[0].name)
-  assert.equal(resumed.paused, false)
-})
 
 test('should get runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
@@ -116,45 +87,6 @@ test('should get runtime metrics', async t => {
   }
 })
 
-test('should get runtime live metrics', async t => {
-  const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
-  const { runtime } = await startRuntime(configFile)
-  t.after(async () => {
-    await kill(runtime)
-  })
-
-  // Wait for the runtime to collect some metrics
-  await sleep(5000)
-
-  const runtimeClient = new RuntimeApiClient()
-  const runtimeMetricsStream = runtimeClient.getRuntimeLiveMetricsStream(runtime.pid)
-
-  let count = 0
-  await new Promise((resolve, reject) => {
-    runtimeMetricsStream.pipe(
-      split(record => {
-        if (count++ > 10) resolve()
-
-        const { applications } = JSON.parse(record)
-
-        assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2'].sort())
-
-        for (const applicationMetrics of Object.values(applications)) {
-          assert.deepStrictEqual(
-            Object.keys(applicationMetrics).sort(),
-            ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
-          )
-
-          const latencyMetrics = applicationMetrics.latency
-          const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-          assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
-        }
-      })
-    )
-  })
-})
-
 test('should get matching runtime', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
@@ -164,9 +96,8 @@ test('should get matching runtime', async t => {
   })
 
   const runtimeClient = new RuntimeApiClient()
-  const { pid, url } = await runtimeClient.getMatchingRuntime()
+  const { pid } = await runtimeClient.getMatchingRuntime()
   assert.strictEqual(typeof pid, 'number')
-  assert.strictEqual(typeof url, 'string')
 })
 
 test('should get runtime OpenAPI definition', async t => {
@@ -284,10 +215,12 @@ test('should be able to add and remove applications', async t => {
     }
   ])
 
-  assert.deepStrictEqual(added, [
+  const [{ url: addedUrl, urls: addedUrls, ...addedDetails }] = added
+  assert.deepStrictEqual(addedUrls, [addedUrl])
+  assert.ok(addedUrl)
+  assert.deepStrictEqual([addedDetails], [
     {
       dependencies: [],
-      entrypoint: false,
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),
@@ -299,10 +232,12 @@ test('should be able to add and remove applications', async t => {
   ])
 
   const removed = await runtimeClient.removeApplications(runtime.pid, ['service-2'])
-  assert.deepStrictEqual(removed, [
+  const [{ url: removedUrl, urls: removedUrls, ...removedDetails }] = removed
+  assert.deepStrictEqual(removedUrls, [removedUrl])
+  assert.ok(removedUrl)
+  assert.deepStrictEqual([removedDetails], [
     {
       dependencies: [],
-      entrypoint: false,
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),

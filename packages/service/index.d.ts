@@ -41,7 +41,7 @@ export declare function create (
   context?: ConfigurationOptions
 ): Promise<ServiceCapability>
 
-export declare const skipTelemetryHooks: boolean
+export declare const skipTracingHooks: boolean
 
 export declare function platformaticService (app: FastifyInstance, capability: ServiceCapability): Promise<void>
 

@@ -26,7 +26,7 @@ test('should compose openapi with prefixes', async t => {
         }
       ]
     },
-    telemetry: {
+    tracing: {
       applicationName: 'test-gateway',
       version: '1.0.0',
       exporter: {

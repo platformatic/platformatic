@@ -3,6 +3,7 @@ import { expect, test } from 'tstyche'
 import { errors } from '../../index.js'
 
 test('errors', () => {
+  expect(errors.AddressInUseError(3042, 'first', 'second')).type.toBe<FastifyError>()
   expect(errors.RuntimeExitedError()).type.toBe<FastifyError>()
   expect(errors.UnknownRuntimeAPICommandError('command')).type.toBe<FastifyError>()
   expect(errors.ApplicationNotFoundError('id')).type.toBe<FastifyError>()
@@ -12,8 +13,6 @@ test('errors', () => {
   expect(errors.RuntimeNotStartedError()).type.toBe<FastifyError>()
   expect(errors.ConfigPathMustBeStringError()).type.toBe<FastifyError>()
   expect(errors.NoConfigFileFoundError('id')).type.toBe<FastifyError>()
-  expect(errors.InvalidEntrypointError('entrypoint')).type.toBe<FastifyError>()
-  expect(errors.MissingEntrypointError()).type.toBe<FastifyError>()
   expect(errors.MissingDependencyError('dependency')).type.toBe<FastifyError>()
   expect(errors.InspectAndInspectBrkError()).type.toBe<FastifyError>()
   expect(errors.InspectorPortError()).type.toBe<FastifyError>()

@@ -49,25 +49,20 @@ export class AstroCapability extends BaseCapability {
     }
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     if (this.isProduction) {
-      await this.#startProduction(listen)
+      await this.#startProduction()
     } else {
-      await this.#startDevelopment(listen)
+      await this.#startDevelopment()
     }
 
     await this._collectMetrics()
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.childManager) {
       return this.stopCommand()
@@ -152,16 +147,13 @@ export class AstroCapability extends BaseCapability {
   getMeta () {
     const config = this.subprocessConfig ?? this.#app?.config
 
-    const gateway = {
-      tcp: typeof this.url !== 'undefined',
-      url: this.url,
+    return super.getMeta({
+      includeConnection: true,
       prefix: this.basePath ?? config?.base ?? this.#basePath,
       wantsAbsoluteUrls: true,
       needsRootTrailingSlash: true,
       needsRefererBasedRedirect: !this.isProduction
-    }
-
-    return { gateway }
+    })
   }
 
   // This is only used in non SSR production mode as in other modes a TCP server is started
@@ -179,11 +171,6 @@ export class AstroCapability extends BaseCapability {
   }
 
   async #startDevelopment () {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
     const config = this.config
     const command = this.config.application.commands.development
 
@@ -197,8 +184,12 @@ export class AstroCapability extends BaseCapability {
       return this.startWithCommand(command)
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     // Prepare options
-    const { hostname, port, https, backlog } = this.serverConfig ?? {}
+    const { hostname, port, https } = this.serverConfig ?? {}
     const httpsOptions = await sanitizeHTTPSOptions(https)
     const configFile = config.astro.configFile // Note: Astro expect this to be a relative path to the root
 
@@ -209,11 +200,7 @@ export class AstroCapability extends BaseCapability {
     }
 
     // Require Astro
-    const serverPromise = createServerListener(
-      (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-      typeof backlog === 'number' ? { backlog } : {}
-    )
+    const serverPromise = createServerListener()
     const { dev } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
     // Create the server and listen
@@ -257,7 +244,7 @@ export class AstroCapability extends BaseCapability {
     this.url = getServerUrl(this.#server)
   }
 
-  async #startProduction (listen) {
+  async #startProduction () {
     const config = this.config
     const command = this.config.application.commands.production
     const outputDirectory = config.application.outputDirectory
@@ -270,19 +257,6 @@ export class AstroCapability extends BaseCapability {
 
     if (command) {
       return this.startWithCommand(command)
-    }
-
-    if (this.#app && listen) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
-      return this.url
     }
 
     this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
@@ -326,5 +300,16 @@ export class AstroCapability extends BaseCapability {
     }
 
     await this.#app.ready()
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener()
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 }

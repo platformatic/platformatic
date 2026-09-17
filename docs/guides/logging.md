@@ -130,7 +130,7 @@ This logs all messages to console with pretty formatting, and errors to a file.
       "url": "http://localhost:4318/v1/logs"
     }
   },
-  "telemetry": {
+  "tracing": {
     "enabled": true,
     "applicationName": "my-app",
     "version": "1.0.0",
@@ -154,7 +154,7 @@ The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support
 
 ```json
 {
-  "telemetry": {
+  "tracing": {
     "exporter": {
       "type": "otlp",
       "options": {
@@ -591,7 +591,7 @@ A `platformatic.json` configuration file contains the following logger options w
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
   "logger": {
     "level": "debug",
     "formatters": {
@@ -662,11 +662,7 @@ The main `watt` application has a shared logger configuration that is used by al
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "server": {
-    "hostname": "{HOSTNAME}",
-    "port": "{PORT}"
-  },
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "logger": {
     "level": "info",
     "timestamp": "isoTime"
@@ -677,13 +673,25 @@ The main `watt` application has a shared logger configuration that is used by al
 }
 ```
 
-The other applications have their own logger configuration, for example the `backend` application has a redaction configuration
+The applications have their own configuration. The `gateway` application is the intended public ingress, while `backend` has a redaction configuration:
+
+`gateway/platformatic.json`
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}"
+  }
+}
+```
 
 `backend/platformatic.json`
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/4.0.0.json",
   "logger": {
     "level": "debug",
     "redact": {
@@ -713,7 +721,7 @@ The `next` application has a custom formatter that adds the `application` proper
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/4.0.0.json",
   "application": {
     "basePath": "/next"
   },

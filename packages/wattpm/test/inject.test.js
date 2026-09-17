@@ -24,11 +24,12 @@ test('inject - should send a request to an application', async t => {
     return startProcess.catch(() => {})
   })
 
-  const entrypointProcess = await wattpm('inject', 'main')
+  const mainApplicationProcess = await wattpm('inject', 'main', 'main')
 
   const applicationProcess = await wattpm(
     '-v',
     'inject',
+    'main',
     'main',
     '-m',
     'POST',
@@ -44,6 +45,7 @@ test('inject - should send a request to an application', async t => {
   await wattpm(
     'inject',
     'main',
+    'main',
     '-f',
     '-o',
     resolve(directory, 'output.txt'),
@@ -57,7 +59,7 @@ test('inject - should send a request to an application', async t => {
     resolve(directory, 'input.txt')
   )
 
-  ok(entrypointProcess.stdout, '{"production":true}')
+  ok(mainApplicationProcess.stdout, '{"production":true}')
 
   ok(applicationProcess.stdout.includes('> POST / HTTP/1.1'))
   ok(applicationProcess.stdout.includes('> Content-Type: text/plain'))
@@ -111,7 +113,7 @@ test('inject - should properly autodetect the runtime and use the first argument
     return startProcess.catch(() => {})
   })
 
-  const entrypointProcess = await wattpm('inject', 'main')
+  const mainApplicationProcess = await wattpm('inject', 'main', 'main')
 
   const applicationProcess = await wattpm(
     '-v',
@@ -144,7 +146,7 @@ test('inject - should properly autodetect the runtime and use the first argument
     resolve(directory, 'input.txt')
   )
 
-  ok(entrypointProcess.stdout, '{"production":true}')
+  ok(mainApplicationProcess.stdout, '{"production":true}')
 
   ok(applicationProcess.stdout.includes('> POST / HTTP/1.1'))
   ok(applicationProcess.stdout.includes('> Content-Type: text/plain'))
@@ -181,8 +183,8 @@ test('inject - should use the same shared memory HTTP cache of the runtime', asy
     return startProcess.catch(() => {})
   })
 
-  const request1 = await wattpm('inject', 'main', '-p', '/time')
-  const request2 = await wattpm('inject', 'main', '-p', '/time')
+  const request1 = await wattpm('inject', 'main', 'main', '-p', '/time')
+  const request2 = await wattpm('inject', 'main', 'main', '-p', '/time')
   const request3 = await wattpm('inject', 'alternative', '-p', '/main-time')
 
   deepStrictEqual(request1.stdout, request2.stdout)

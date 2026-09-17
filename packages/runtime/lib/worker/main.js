@@ -7,8 +7,8 @@ import {
   parseMemorySize,
   scheduleCompileCacheFlush
 } from '@platformatic/foundation'
-import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
-import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { getITC, getLogger, setUndiciThreadInterceptor, updateGlobals } from '@platformatic/globals'
+import { addPinoInstrumentation } from '@platformatic/tracing'
 import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
@@ -101,7 +101,7 @@ function createLogger () {
     pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
   }
 
-  if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.telemetry?.enabled !== false) {
+  if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.tracing?.enabled !== false) {
     addPinoInstrumentation(pinoOptions)
   }
 
@@ -150,7 +150,6 @@ function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
   }
 }
 
-// Whether the module compile cache has been enabled in this worker.
 let compileCacheEnabled = false
 
 // Enable compile cache if configured (Node.js 22.1.0+)
@@ -275,18 +274,7 @@ async function main () {
   }
 
   const { threadDispatcher } = await setDispatcher(runtimeConfig)
-
-  // If the application is an entrypoint and runtime server config is defined, use it.
-  let serverConfig = null
-  if (runtimeConfig.server && applicationConfig.entrypoint) {
-    serverConfig = runtimeConfig.server
-  } else if (applicationConfig.useHttp || applicationConfig.websocket) {
-    serverConfig = {
-      port: 0,
-      hostname: '127.0.0.1',
-      keepAliveTimeout: 5000
-    }
-  }
+  setUndiciThreadInterceptor(threadDispatcher.interceptor)
 
   const inspectorOptions = workerData.inspectorOptions
 
@@ -319,29 +307,10 @@ async function main () {
     runtimeConfig,
     applicationConfig,
     workerData.worker.index,
-    serverConfig,
     metricsConfig
   )
 
-  await controller.init(cleanup)
-
-  // Make the compile cache accumulated while booting durable, as Node.js would otherwise only write
-  // it when the worker terminates.
-  controller.on('started', () => {
-    if (compileCacheEnabled) {
-      scheduleCompileCacheFlush(logger)
-    }
-  })
-
-  if (applicationConfig.entrypoint && runtimeConfig.basePath) {
-    const meta = await controller.capability.getMeta()
-    if (!meta.gateway.wantsAbsoluteUrls) {
-      stripBasePath(runtimeConfig.basePath)
-    }
-  }
-
   const sharedContext = new SharedContext()
-  // Limit the amount of methods a user can call
   updateGlobals({
     sharedContext: {
       get: () => sharedContext.get(),
@@ -349,9 +318,25 @@ async function main () {
     }
   })
 
-  // Setup interaction with parent port
+  // Setup interaction with the parent before loading the application so plugins
+  // can register messaging handlers during their initialization.
   const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
   updateGlobals({ itc })
+
+  await controller.init(cleanup)
+
+  controller.on('started', () => {
+    if (compileCacheEnabled) {
+      scheduleCompileCacheFlush(logger)
+    }
+  })
+
+  if (runtimeConfig.basePath) {
+    const meta = await controller.capability.getMeta()
+    if (!meta.gateway?.wantsAbsoluteUrls) {
+      stripBasePath(runtimeConfig.basePath)
+    }
+  }
 
   // Setup management client for privileged applications
   if (applicationConfig.management) {
@@ -412,7 +397,9 @@ function stripBasePath (basePath) {
         request.url = '/' + request.url
       }
 
-      response[kBasePath] = basePath
+      if (response) {
+        response[kBasePath] = basePath
+      }
     }
   })
 
@@ -439,10 +426,8 @@ function stripBasePath (basePath) {
   }
 
   ServerResponse.prototype.setHeader = function (name, value) {
-    if (this[kBasePath]) {
-      if (name.toLowerCase() === 'location') {
-        value = prependBasePath(value)
-      }
+    if (this[kBasePath] && name.toLowerCase() === 'location') {
+      value = prependBasePath(value)
     }
     originSetHeader.call(this, name, value)
   }

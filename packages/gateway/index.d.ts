@@ -52,15 +52,11 @@ export declare const schema: JSONSchemaType<PlatformaticGatewayConfig>
 
 export declare const schemaComponents: {
   openApiApplication: JSONSchemaType<object>
-  entityResolver: JSONSchemaType<object>
-  entities: JSONSchemaType<object>
-  graphqlApplication: JSONSchemaType<object>
-  graphqlComposerOptions: JSONSchemaType<object>
   gateway: JSONSchemaType<object>
   types: JSONSchemaType<object>
 }
 
-export declare const skipTelemetryHooks: boolean
+export declare const skipTracingHooks: boolean
 
 export declare const version: string
 

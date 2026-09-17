@@ -1,5 +1,6 @@
 import { importCapabilityAndConfig, validationOptions } from '@platformatic/basic'
 import {
+  createDirectory,
   extractModuleFromSchemaUrl,
   findConfigurationFile,
   kMetadata,
@@ -11,16 +12,17 @@ import {
 } from '@platformatic/foundation'
 import { realpathSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
-import { isAbsolute, join, resolve as resolvePath } from 'node:path'
+import { createRequire, findPackageJSON } from 'node:module'
+import { dirname, isAbsolute, join, resolve as resolvePath } from 'node:path'
 
 import {
+  ApplicationsPortsOverlapError,
   ApplicationIdCollisionError,
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
   InvalidArgumentError,
-  InvalidEntrypointError
+  MissingDependencyError
 } from './errors.js'
 import { schema } from './schema.js'
 import { upgrade } from './upgrade.js'
@@ -143,17 +145,6 @@ export async function wrapInRuntimeConfig (config, context) {
     // on purpose, the package.json might be missing
   }
 
-  // Carry over only the server properties that the user actually set, so
-  // we do not end up with a `{ hostname: undefined, ... }` object that then
-  // gets populated by schema defaults or trips truthy checks downstream.
-  const server = {}
-  if (config.server) {
-    for (const key of ['hostname', 'port', 'http2', 'https']) {
-      if (config.server[key] !== undefined) {
-        server[key] = config.server[key]
-      }
-    }
-  }
   const production = context?.isProduction ?? context?.production
 
   const runtimeConfig = config.runtime ?? {}
@@ -162,10 +153,8 @@ export async function wrapInRuntimeConfig (config, context) {
   /* c8 ignore next */
   const wrapped = {
     $schema: schema.$id,
-    ...(Object.keys(server).length > 0 ? { server } : {}),
     watch: !production,
     ...omitProperties(runtimeConfig, runtimeUnwrappablePropertiesList),
-    entrypoint: applicationId,
     applications: [
       {
         id: applicationId,
@@ -228,11 +217,121 @@ export function parseInspectorOptions (config, inspect, inspectBreak) {
   config.watch = false
 }
 
+// Set by prepareApplication so that transform can check for port overlaps without loading the
+// application configurations a second time. Removed as soon as the check is done.
+const kDeclaredListener = Symbol('plt.runtime.config.declaredListener')
+
+const hostnameWildcards = new Set(['0.0.0.0', '::', '[::]'])
+
+// The listener an application declares in its own configuration, when it can be determined without
+// starting it. A port coming from an environment variable which was not replaced, an ephemeral port
+// and a missing server block all yield null, in which case only the start time check applies.
+function declaredListener (applicationConfig) {
+  const server = applicationConfig?.server
+
+  if (!server) {
+    return null
+  }
+
+  const port = Number(server.port)
+
+  if (!Number.isInteger(port) || port <= 0) {
+    return null
+  }
+
+  return { port, hostname: server.hostname, perWorker: server.portAssignment === 'perWorkerIncrement' }
+}
+
+// Two declared listeners can only be compared when both hostnames are known. When a hostname is
+// omitted the capability picks its own default, so unless the other side is a wildcard - which
+// overlaps with anything - the comparison is left to the start time check.
+function declaredListenersOverlap (first, second) {
+  const hostname = first.hostname?.toLowerCase()
+  const otherHostname = second.hostname?.toLowerCase()
+
+  // A wildcard overlaps with any other hostname, known or not
+  if (hostnameWildcards.has(hostname) || hostnameWildcards.has(otherHostname)) {
+    return true
+  }
+
+  // Both applications rely on the same capability default, so they do collide
+  if (typeof hostname === 'undefined' && typeof otherHostname === 'undefined') {
+    return true
+  }
+
+  // Only one of the two defaults is unknown, so nothing can be concluded here
+  if (typeof hostname === 'undefined' || typeof otherHostname === 'undefined') {
+    return false
+  }
+
+  return hostname === otherHostname
+}
+
+function describeDeclaredPorts (listener) {
+  const { port, last } = listener
+  return port === last ? `port ${port}` : `ports ${port}-${last}, one per worker`
+}
+
+// Rejects applications whose declared ports overlap before any of them is started, so that the
+// failure does not depend on which worker happens to report its URL first. This is best effort:
+// applications whose port cannot be determined here are checked when their workers start.
+function verifyApplicationsPorts (applications) {
+  const listeners = []
+
+  for (const application of applications) {
+    const listener = application[kDeclaredListener]
+    delete application[kDeclaredListener]
+
+    // Dynamic scaling changes how many ports the application ends up using, so leave it to the start time check
+    if (!listener || application.workers?.dynamic) {
+      continue
+    }
+
+    const workers = listener.perWorker ? (application.workers?.static ?? 1) : 1
+    listeners.push({ ...listener, id: application.id, last: listener.port + workers - 1 })
+  }
+
+  for (let i = 0; i < listeners.length; i++) {
+    for (let j = i + 1; j < listeners.length; j++) {
+      const first = listeners[i]
+      const second = listeners[j]
+
+      const port = Math.max(first.port, second.port)
+
+      if (port > Math.min(first.last, second.last) || !declaredListenersOverlap(first, second)) {
+        continue
+      }
+
+      throw new ApplicationsPortsOverlapError(
+        first.id,
+        describeDeclaredPorts(first),
+        second.id,
+        describeDeclaredPorts(second),
+        port
+      )
+    }
+  }
+}
+
 export async function prepareApplication (config, application, defaultWorkers) {
   // We need to have absolute paths here, ot the `loadConfig` will fail
   // Make sure we don't resolve if env var was not replaced
   if (application.path && !isAbsolute(application.path) && !application.path.match(/^\{.*\}$/)) {
     application.path = resolvePath(config[kMetadata].root, application.path)
+  }
+
+  if (application.module) {
+    if (!application.path) {
+      throw new InvalidArgumentError(`Application "${application.id}" must define path when module is set`)
+    }
+
+    try {
+      application.sourcePath = dirname(findPackageJSON(application.module, resolvePath(config[kMetadata].root, 'noop.js')))
+    } catch (error) {
+      throw new MissingDependencyError(application.module, { cause: error })
+    }
+    application.moduleRoot = config[kMetadata].root
+    await createDirectory(application.path)
   }
 
   if (application.path && application.config) {
@@ -242,18 +341,24 @@ export async function prepareApplication (config, application, defaultWorkers) {
   // Skip capability detection for external services (url without path)
   // These services will have their path resolved later in runtime.js #setupApplication
   // Attempting to detect capability here would cause slow glob operations on the cwd
-  if (application.url && !application.path) {
+  if (application.module) {
+    application.type = application.module
+  } else if (application.url && !application.path) {
     application.type = 'unknown'
   } else {
     try {
       let pkg
 
       if (application.config) {
-        const config = await loadConfiguration(application.config)
-        pkg = await loadConfigurationModule(application.path, config)
+        const applicationConfig = await loadConfiguration(application.config)
 
-        application.type = extractModuleFromSchemaUrl(config, true).module
-        application.skipTelemetryHooks = pkg.skipTelemetryHooks
+        // Recorded before loading the capability so that it survives a capability which cannot be resolved
+        application[kDeclaredListener] = declaredListener(applicationConfig)
+
+        pkg = await loadConfigurationModule(application.path, applicationConfig)
+
+        application.type = extractModuleFromSchemaUrl(applicationConfig, true).module
+        application.skipTracingHooks = pkg.skipTracingHooks
       } else {
         const { moduleName, capability } = await importCapabilityAndConfig(application.path)
         pkg = capability
@@ -261,12 +366,12 @@ export async function prepareApplication (config, application, defaultWorkers) {
         application.type = moduleName
       }
 
-      application.skipTelemetryHooks = pkg.skipTelemetryHooks
+      application.skipTracingHooks = pkg.skipTracingHooks
 
       // This is needed to work around Rust bug on dylibs:
       // https://github.com/rust-lang/rust/issues/91979
       // https://github.com/rollup/rollup/issues/5761
-      const _require = createRequire(application.path)
+      const _require = createRequire(application.sourcePath ?? application.path)
       for (const m of pkg.modulesToLoad ?? []) {
         const toLoad = _require.resolve(m)
         loadModule(_require, toLoad).catch(() => {})
@@ -282,7 +387,6 @@ export async function prepareApplication (config, application, defaultWorkers) {
   // Validate and coerce per-service workers
   parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
 
-  application.entrypoint = application.id === config.entrypoint
   application.dependencies ??= []
   application.localUrl = `http://${application.id}.plt.local`
 
@@ -295,40 +399,6 @@ export async function prepareApplication (config, application, defaultWorkers) {
   }
 
   return application
-}
-
-function canonicalPath (path) {
-  try {
-    return realpathSync(path)
-  } catch {
-    return resolvePath(path)
-  }
-}
-
-// An autoloaded directory and an explicitly configured entry with the same id are the same application
-// only when they point to the same place: either the configured path resolves to the autoloaded
-// directory, or the entry is external and the autoloaded directory is where "resolve" would put it.
-// When they don't, returns a description of the configured entry to report in the error.
-function conflictingApplicationSource (root, resolvedApplicationsPath, existing, entryPath) {
-  if (existing.path) {
-    // The path still contains a placeholder, which means the environment variable was not replaced.
-    // There is nothing to compare in that case.
-    if (existing.path.match(/^\{.*\}$/)) {
-      return null
-    }
-
-    const existingPath = isAbsolute(existing.path) ? existing.path : resolvePath(root, existing.path)
-
-    return canonicalPath(existingPath) === canonicalPath(entryPath) ? null : `the path "${existing.path}"`
-  }
-
-  if (existing.url) {
-    const resolvedPath = join(resolvedApplicationsPath, existing.id)
-
-    return canonicalPath(resolvedPath) === canonicalPath(entryPath) ? null : `the URL "${existing.url}"`
-  }
-
-  return null
 }
 
 function isApplicationEnabled (application, environment) {
@@ -347,6 +417,32 @@ function isApplicationEnabled (application, environment) {
   }
 
   return enabled
+}
+
+function canonicalPath (path) {
+  try {
+    return realpathSync(path)
+  } catch {
+    return resolvePath(path)
+  }
+}
+
+function conflictingApplicationSource (root, resolvedApplicationsPath, existing, entryPath) {
+  if (existing.path) {
+    if (existing.path.match(/^\{.*\}$/)) {
+      return null
+    }
+
+    const existingPath = isAbsolute(existing.path) ? existing.path : resolvePath(root, existing.path)
+    return canonicalPath(existingPath) === canonicalPath(entryPath) ? null : `the path "${existing.path}"`
+  }
+
+  if (existing.url) {
+    const resolvedPath = join(resolvedApplicationsPath, existing.id)
+    return canonicalPath(resolvedPath) === canonicalPath(entryPath) ? null : `the URL "${existing.url}"`
+  }
+
+  return null
 }
 
 export async function transform (config, _, context) {
@@ -393,7 +489,7 @@ export async function transform (config, _, context) {
         }
 
         const scaleConfig = config.verticalScaler.applications[appId]
-        const workersConfig = appConfig.workers
+        const workersConfig = appConfig.workers ??= {}
 
         workersConfig.minimum ??= scaleConfig.minWorkers ?? config.workers.minimum
         workersConfig.maximum ??= scaleConfig.maxWorkers ?? config.workers.maximum
@@ -413,8 +509,6 @@ export async function transform (config, _, context) {
   if (config.autoload) {
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
-
-    // Capture these before the loop, as config is shadowed in its body
     const root = config[kMetadata].root
     const resolvedApplicationsPath = resolvePath(root, config.resolvedApplicationsBasePath ?? 'external')
 
@@ -444,20 +538,14 @@ export async function transform (config, _, context) {
 
       if (existingApplicationId !== -1) {
         const existing = applications[existingApplicationId]
-
-        // Merging on the id alone can boot local code where the configuration named a repository, as
-        // the autoloaded path survives next to the configured url. Reject the duplicate instead: an id
-        // is the mesh hostname, the injected PLT_<ID>_URL name, the metrics label and the argument of
-        // "wattpm inject", so two different applications cannot share one.
         if (isApplicationEnabled(existing, environment)) {
           const source = conflictingApplicationSource(root, resolvedApplicationsPath, existing, entryPath)
-
           if (source) {
             throw new ApplicationIdCollisionError(id, entryPath, source)
           }
         }
 
-        applications[existingApplicationId] = { ...application, ...existing }
+        applications[existingApplicationId] = { ...application, ...applications[existingApplicationId] }
       } else {
         applications.push(application)
       }
@@ -473,52 +561,15 @@ export async function transform (config, _, context) {
   config.inspectorOptions = undefined
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
-  let hasValidEntrypoint = false
-
   // Root-level workers
   parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
-    const application = await prepareApplication(config, applications[i], defaultWorkers)
-
-    if (application.entrypoint) {
-      hasValidEntrypoint = true
-    }
+    await prepareApplication(config, applications[i], defaultWorkers)
   }
 
-  // If there is no entrypoint, autodetect one
-  if (!config.entrypoint) {
-    // If there is only one application, it becomes the entrypoint
-    if (applications.length === 1) {
-      applications[0].entrypoint = true
-      config.entrypoint = applications[0].id
-      hasValidEntrypoint = true
-    } else {
-      // Search if exactly application uses @platformatic/gateway
-      const gateways = []
-
-      for (const application of applications) {
-        if (!application.config) {
-          continue
-        }
-
-        if (application.type === '@platformatic/gateway') {
-          gateways.push(application.id)
-        }
-      }
-
-      if (gateways.length === 1) {
-        applications.find(s => s.id === gateways[0]).entrypoint = true
-        config.entrypoint = gateways[0]
-        hasValidEntrypoint = true
-      }
-    }
-  }
-
-  if (!hasValidEntrypoint && config.entrypoint && !context.allowMissingEntrypoint) {
-    throw new InvalidEntrypointError(config.entrypoint)
-  }
+  verifyApplicationsPorts(applications)
 
   if (typeof config.metrics === 'boolean') {
     config.metrics = {

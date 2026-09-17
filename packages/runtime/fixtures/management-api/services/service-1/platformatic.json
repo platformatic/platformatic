@@ -4,10 +4,14 @@
     "openapi": true
   },
   "plugins": {
-    "paths": ["plugin.js"]
+    "paths": [
+      "plugin.js"
+    ]
   },
   "watch": true,
   "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
     "logger": {
       "level": "trace"
     }

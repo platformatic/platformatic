@@ -31,14 +31,14 @@
     "@platformatic/globals": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
+    "@platformatic/tracing": "workspace:*",
     "execa": "^9.3.1",
     "fast-json-patch": "^3.1.1",
     "pino": "^9.9.0",
     "pino-abstract-transport": "^2.0.0",
     "semver": "^7.6.3",
     "split2": "^4.2.0",
-    "undici": "^7.27.2",
+    "undici": "^8.5.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

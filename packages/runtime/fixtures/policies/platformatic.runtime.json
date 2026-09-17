@@ -18,7 +18,6 @@
       "path": "./gateway"
     }
   ],
-  "entrypoint": "gateway",
   "policies": {
     "deny": {
       "application-1": "application-2"

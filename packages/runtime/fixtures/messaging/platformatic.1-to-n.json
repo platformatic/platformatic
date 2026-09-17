@@ -4,7 +4,6 @@
   "managementApi": true,
   "metrics": false,
   "restartOnError": 500,
-  "entrypoint": "composer",
   "logger": {
     "level": "info"
   },
@@ -25,5 +24,6 @@
     }
   ],
   "messagingTimeout": 2000,
-  "workers": 3
+  "workers": 3,
+  "healthProbes": false
 }

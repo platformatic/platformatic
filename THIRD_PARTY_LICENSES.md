@@ -207,7 +207,6 @@ different license expression, and is listed with the Platformatic packages that 
 | `@pinojs/redact` | 0.4.0 | MIT | [link](https://github.com/pinojs/redact) |
 | `@platformatic/dynamic-buffer` | 0.4.0 | Apache-2.0 | [link](https://github.com/platformatic/dynamic-buffer) |
 | `@platformatic/fastify-openapi-glue` | 5.1.0 | MIT | [link](https://github.com/platformatic/fastify-openapi-glue) |
-| `@platformatic/graphql-composer` | 0.11.0 | Apache-2.0 | [link](https://github.com/platformatic/graphql-composer) |
 | `@platformatic/http-metrics` | 0.3.0 | Apache-2.0 |  |
 | `@platformatic/image-optimizer` | 0.2.1 | Apache-2.0 | [link](https://github.com/platformatic/image-optimizer) |
 | `@platformatic/job-queue` | 0.4.1 | Apache-2.0 | [link](https://github.com/platformatic/job-queue) |

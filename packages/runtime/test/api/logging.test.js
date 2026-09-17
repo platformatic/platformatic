@@ -11,7 +11,7 @@ test('logs stdio from the application thread', async t => {
   const context = {}
   const app = await createRuntime(configFile, null, context)
 
-  const url = await app.start()
+  await app.start()
   const pid = process.pid
   const hostname = getHostname()
 
@@ -38,7 +38,9 @@ test('logs stdio from the application thread', async t => {
       .filter(m => m.msg !== 'Runtime event')
 
     const applicationMessages = messages.filter(m => m.name === 'stdio')
-    const runtimeMessages = messages.filter(m => m.name === undefined)
+    const runtimeMessages = messages
+      .filter(m => m.name === undefined)
+      .filter(m => m.msg !== 'Module compile cache flushed')
 
     deepStrictEqual(
       applicationMessages,
@@ -76,15 +78,6 @@ test('logs stdio from the application thread', async t => {
           hostname,
           name: 'stdio',
           msg: 'This is an error',
-          payload: undefined,
-          stdout: undefined
-        },
-        {
-          level: 30,
-          pid,
-          hostname,
-          name: 'stdio',
-          msg: `Server listening at ${url}`,
           payload: undefined,
           stdout: undefined
         },
@@ -161,7 +154,7 @@ test('logs stdio from the application thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: 'Added application "stdio" (entrypoint).',
+        msg: 'Added application "stdio".',
         payload: undefined,
         stdout: undefined
       },
@@ -180,15 +173,6 @@ test('logs stdio from the application thread', async t => {
         hostname,
         name: undefined,
         msg: 'Started the worker 0 of the application "stdio"...',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: undefined,
-        msg: `Platformatic is now listening at ${url}`,
         payload: undefined,
         stdout: undefined
       },

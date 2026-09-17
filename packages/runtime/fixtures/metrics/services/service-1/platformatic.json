@@ -1,7 +1,9 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/1.52.0.json",
   "plugins": {
-    "paths": ["plugin.js"]
+    "paths": [
+      "plugin.js"
+    ]
   },
   "gateway": {
     "services": [
@@ -12,6 +14,8 @@
   },
   "watch": true,
   "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
     "logger": {
       "level": "silent"
     }

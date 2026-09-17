@@ -194,7 +194,7 @@ my-cache-app/
 ├── watt.json
 ├── package.json
 └── web/
-    ├── gateway/           # API gateway (entrypoint)
+    ├── gateway/            # Public API gateway
     ├── api/                # Your main API service
     └── data-service/       # Backend data service
 ```
@@ -207,7 +207,7 @@ By default, this setup will expose the `api` service as `/api` and `data-service
 
 - Internal Service Mesh: Services communicate using `.plt.local` domains (e.g., `http://api.plt.local`, `http://data-service.plt.local`)
 - Zero Network Overhead: Internal calls don't go through the network stack
-- Reverse-Proxy: the `@platformatic/gateway` provide a reverse proxy layer that can enable caching, load-balancing, OpenAPI and GraphQL Composition.
+- Reverse-Proxy: the `@platformatic/gateway` provides a reverse proxy layer that can enable caching, load-balancing and OpenAPI composition.
 
 ## Step 3: Add Cache Headers to Your Responses
 
@@ -316,7 +316,7 @@ The gateway acts as your API gateway, routing external requests to internal serv
 ```js
 // web/gateway/watt.json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   "gateway": {
     "applications": [
       {
@@ -332,6 +332,9 @@ The gateway acts as your API gateway, routing external requests to internal serv
         }
       }
     ]
+  },
+  "server": {
+    "port": 3042
   }
 }
 ```
@@ -351,14 +354,13 @@ Add HTTP caching configuration to your root-level `watt.json` file:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags"
   },
   "autoload": {
     "path": "web"
-  },
-  "entrypoint": "api"
+  }
 }
 ```
 
@@ -366,8 +368,8 @@ Add HTTP caching configuration to your root-level `watt.json` file:
 
 - `httpCache`: Enables Watt's built-in HTTP caching layer
 - `cacheTagsHeader`: Defines the header name for cache tags (used for targeted invalidation)
-- `services`: Array of services that Watt will load and manage
-- `entrypoint`: The service that handles external traffic (other services are internal only)
+- `autoload`: Directory containing the applications that Watt loads and manages
+- The gateway's application-local `server` configuration exposes it on port `3042`
 
 **What this does:**
 
@@ -381,7 +383,7 @@ You can fine-tune the cache behavior with additional options:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/4.0.0.json",
   "httpCache": {
     "cacheTagsHeader": "X-Cache-Tags",
     "origins": [
@@ -396,8 +398,7 @@ You can fine-tune the cache behavior with additional options:
   },
   "autoload": {
     "path": "web"
-  },
-  "entrypoint": "api"
+  }
 }
 ```
 

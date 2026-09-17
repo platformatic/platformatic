@@ -4,6 +4,7 @@ import { createTemporaryDirectory } from '../../basic/test/helper.js'
 import { loadConfiguration, ServiceCapability } from '../index.js'
 
 const agent = new Agent({
+  allowH2: false,
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
@@ -26,7 +27,6 @@ export async function createFromConfig (t, options, applicationFactory, creation
   const context = {
     applicationFactory,
     isStandalone: true,
-    isEntrypoint: true,
     isProduction: creationOptions.production
   }
 

@@ -3,12 +3,16 @@
   "server": {
     "logger": {
       "level": "warn"
-    }
+    },
+    "hostname": "127.0.0.1",
+    "port": 0
   },
   "plugins": {
-    "paths": [{
-      "path": "plugin.js",
-      "encapsulate": false
-    }]
+    "paths": [
+      {
+        "path": "plugin.js",
+        "encapsulate": false
+      }
+    ]
   }
 }

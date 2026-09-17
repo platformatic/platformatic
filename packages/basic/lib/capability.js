@@ -7,7 +7,7 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
-import { getITC, getPrometheus, getTelemetryReady, updateGlobals } from '@platformatic/globals'
+import { getITC, getPrometheus, getTracingReady, updateGlobals } from '@platformatic/globals'
 import {
   clearRegistry,
   client,
@@ -16,7 +16,7 @@ import {
   openTelemetryITCMessage,
   setupOtlpExporter
 } from '@platformatic/metrics'
-import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { addPinoInstrumentation } from '@platformatic/tracing'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { tracingChannel } from 'node:diagnostics_channel'
@@ -42,14 +42,13 @@ export class BaseCapability extends EventEmitter {
 
   applicationId
   workerId
-  telemetryConfig
+  tracingConfig
   serverConfig
   reuseTcpPorts
   openapiSchema
   graphqlSchema
   connectionString
   basePath
-  isEntrypoint
   isProduction
   dependencies
   customHealthCheck
@@ -80,18 +79,18 @@ export class BaseCapability extends EventEmitter {
     this.root = root
     this.config = config
     this.context = context ?? {}
+    this.applicationConfig = this.context.applicationConfig ?? this.config.runtime?.application ?? {}
     this.context.worker ??= { count: 1, index: 0 }
     this.standardStreams = standardStreams
 
     this.applicationId = this.context.applicationId
     this.workerId = this.context.worker.index
-    this.telemetryConfig = this.context.telemetryConfig
-    this.serverConfig = deepmerge(this.context.serverConfig ?? {}, config.server ?? {})
+    this.tracingConfig = this.context.tracingConfig
+    this.serverConfig = deepmerge({}, config.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
     this.connectionString = null
     this.basePath = null
-    this.isEntrypoint = this.context.isEntrypoint
     this.isProduction = this.context.isProduction
     this.dependencies = this.context.dependencies ?? []
     this.customHealthCheck = null
@@ -103,7 +102,12 @@ export class BaseCapability extends EventEmitter {
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
-    this.reuseTcpPorts = (this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts) && features.node.reusePort
+    const reuseTcpPorts = [
+      this.config.reuseTcpPorts,
+      this.applicationConfig.reuseTcpPorts,
+      this.runtimeConfig.reuseTcpPorts
+    ]
+    this.reuseTcpPorts = !reuseTcpPorts.includes(false) && reuseTcpPorts.includes(true) && features.node.reusePort
     // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
     this.exitOnUnhandledErrors = true
 
@@ -137,7 +141,6 @@ export class BaseCapability extends EventEmitter {
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       notifyConfig: this.notifyConfig.bind(this),
       logger: this.logger,
-      isEntrypoint: this.isEntrypoint,
       reuseTcpPorts: this.reuseTcpPorts
     })
 
@@ -216,13 +219,42 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  start () {
-    throw new Error('BaseCapability.start must be overriden by the subclasses')
+  async start () {
+    if (this.status !== '' && this.status !== 'init') {
+      return
+    }
+
+    this.updateStatus('starting')
+
+    try {
+      await this.#setupSharedStartResources()
+      const result = await this._start()
+      this.updateStatus('started')
+      return result
+    } catch (error) {
+      // Do not emit Node.js' special "error" event without a listener.
+      this.status = 'error'
+      throw error
+    }
   }
 
-  // This is to allow grand-children to access the method without calling super.stop()
   async stop () {
-    return this._stop()
+    if (this.status !== 'started') {
+      return
+    }
+
+    this.updateStatus('stopping')
+
+    try {
+      await this.#cleanupSharedResources()
+      const result = await this._stop()
+      this.updateStatus('stopped')
+      return result
+    } catch (error) {
+      // Do not emit Node.js' special "error" event without a listener.
+      this.status = 'error'
+      throw error
+    }
   }
 
   build () {
@@ -309,7 +341,7 @@ export class BaseCapability extends EventEmitter {
     const pending = new Set()
 
     for (const worker of Object.values(workers)) {
-      if (dependents.includes(worker.application) && worker.status !== 'stopped') {
+      if (dependents.includes(worker.application) && worker.status !== 'stopped' && worker.status !== 'exited') {
         pending.add(worker.application)
       }
     }
@@ -390,7 +422,7 @@ export class BaseCapability extends EventEmitter {
     // inject is not implemented): the others dispatch via the bound TCP address,
     // as under "useHttp".
     const applicationConfig = this.context.applicationConfig
-    if (applicationConfig?.websocket && !applicationConfig.useHttp && !this.isEntrypoint) {
+    if (applicationConfig?.websocket && !applicationConfig.useHttp) {
       const dispatchFunc = await this.getDispatchFunc()
 
       if (dispatchFunc !== this) {
@@ -401,10 +433,20 @@ export class BaseCapability extends EventEmitter {
     return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
-  getMeta () {
+  getMeta ({ includeConnection = false, ...gateway } = {}) {
+    if (includeConnection) {
+      gateway.tcp = typeof this.url !== 'undefined'
+      gateway.url = this.url
+    }
+
+    if (this.childManager) {
+      gateway.childProcess = true
+    }
+
     return {
       gateway: {
-        wantsAbsoluteUrls: false
+        wantsAbsoluteUrls: false,
+        ...gateway
       }
     }
   }
@@ -653,15 +695,14 @@ export class BaseCapability extends EventEmitter {
       root: pathToFileURL(this.root).toString(),
       basePath,
       logLevel: this.logger.level,
-      isEntrypoint: this.isEntrypoint,
       reuseTcpPorts: this.reuseTcpPorts,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
-      host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
+      host: this.serverConfig?.hostname ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig, true),
-      telemetryConfig: this.telemetryConfig,
+      tracingConfig: this.tracingConfig,
       compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache,
       resourceLimits: this.context.resourceLimits
     }
@@ -802,14 +843,14 @@ export class BaseCapability extends EventEmitter {
       this.root
     )
 
-    if (loggerOptions.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
+    if (loggerOptions.openTelemetryExporter && this.tracingConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)
     }
 
     return pino(pinoOptions, this.standardStreams?.stdout)
   }
 
-  _start () {
+  #setupSharedStartResources () {
     if (this.reuseTcpPorts) {
       if (!features.node.reusePort) {
         this.reuseTcpPorts = false
@@ -825,7 +866,7 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  async _stop () {
+  async #cleanupSharedResources () {
     if (this.#pendingDependenciesWaits.size > 0) {
       await Promise.allSettled(this.#pendingDependenciesWaits)
     }
@@ -847,6 +888,10 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
+  async _start () {}
+
+  async _stop () {}
+
   async _collectMetrics () {
     if (this.#metricsCollected) {
       return
@@ -854,7 +899,7 @@ export class BaseCapability extends EventEmitter {
 
     this.#metricsCollected = true
 
-    if (this.context.metricsConfig === false || this.context.metricsConfig?.enabled === false) {
+    if (!this.context.metricsConfig || this.context.metricsConfig.enabled === false) {
       return
     }
 
@@ -1023,9 +1068,9 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
-    if (telemetryReady) {
-      await telemetryReady
+    const tracingReady = getTracingReady({ throwOnMissing: false })
+    if (tracingReady) {
+      await tracingReady
     }
 
     // Setup and start OTLP exporter bridge

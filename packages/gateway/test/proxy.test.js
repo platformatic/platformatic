@@ -1,11 +1,12 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { getEvents, getPrometheus, updateGlobals } from '@platformatic/globals'
+import { getEvents, getPrometheus, removeGlobals, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
 import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import openAPISchemaValidator from 'openapi-schema-validator'
 import client from 'prom-client'
 import selfCert from 'self-cert'
@@ -43,8 +44,6 @@ test('should increment and decrement activeWsConnections metric', async t => {
   }
 
   const { application, wsServer } = await createWebsocketApplication(t)
-  const events = new EventEmitter()
-  updateGlobals({ events })
   wsServer.on('connection', socket => {
     socket.on('message', message => {
       setTimeout(() => {
@@ -70,12 +69,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
           proxy: {
             prefix: '/',
             upstream,
-            ws: {
-              upstream: wsUpstream,
-              hooks: {
-                path: resolve(import.meta.dirname, './proxy/fixtures/ws/hooks.js')
-              }
-            }
+            ws: { upstream: wsUpstream }
           }
         }
       ]
@@ -87,8 +81,24 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   async function getActiveConnections () {
     const metrics = await prometheusRegistry.metrics()
-    const match = metrics.match(/active_ws_gateway_connections.+\s(\d+)$/m)
+    const match = metrics.match(/^active_ws_gateway_connections(?:\{[^}]*\})?\s+(\d+)$/m)
     return match ? parseInt(match[1]) : 0
+  }
+
+  // The gauge is updated when the upstream socket closes, which happens after the
+  // client observes its own 'close' event, so poll instead of sampling once.
+  async function waitForActiveConnections (expected) {
+    for (let i = 0; i < 100; i++) {
+      const current = await getActiveConnections()
+
+      if (current === expected) {
+        return current
+      }
+
+      await sleep(50)
+    }
+
+    return getActiveConnections()
   }
 
   // Test: Start with 0 connections
@@ -96,7 +106,6 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   // Test: Create first connection, should increment to 1
   const client1 = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
-  t.after(() => client1.close())
   await once(client1, 'open')
   client1.send('hello')
   const [response1] = await once(client1, 'message')
@@ -105,7 +114,6 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   // Test: Create second connection, should increment to 2
   const client2 = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
-  t.after(() => client2.close())
   await once(client2, 'open')
   client2.send('hello2')
   const [response2] = await once(client2, 'message')
@@ -113,18 +121,14 @@ test('should increment and decrement activeWsConnections metric', async t => {
   assert.equal(await getActiveConnections(), 2)
 
   // Test: Close first connection, should decrement to 1
-  const firstDisconnect = once(events, 'onDisconnect')
   client1.close()
   await once(client1, 'close')
-  await firstDisconnect
-  assert.equal(await getActiveConnections(), 1)
+  assert.equal(await waitForActiveConnections(1), 1)
 
   // Test: Close second connection, should decrement to 0
-  const secondDisconnect = once(events, 'onDisconnect')
   client2.close()
   await once(client2, 'close')
-  await secondDisconnect
-  assert.equal(await getActiveConnections(), 0)
+  assert.equal(await waitForActiveConnections(0), 0)
 
   await gateway.close()
   updateGlobals({ prometheus: initPromClient })
@@ -272,7 +276,7 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -325,7 +329,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -363,7 +367,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -413,7 +417,7 @@ test('should proxy all applications if none are defined', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -469,7 +473,6 @@ test('should fail with actionable error when a gateway application is missing fr
     runtimeConfigPath,
     JSON.stringify({
       $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
-      entrypoint: 'composer',
       watch: false,
       services: [
         {
@@ -568,7 +571,7 @@ test('should fix the path using the referer only if asked to', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -634,7 +637,7 @@ test('should rewrite Location headers for proxied applications', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const {
@@ -904,7 +907,7 @@ test('should rewrite Location headers that include full url of the running appli
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const {
@@ -976,7 +979,7 @@ test('should properly configure the frontends on their paths if no gateway confi
     resolve(import.meta.dirname, './proxy/fixtures/')
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1021,8 +1024,6 @@ test('should properly configure the frontends on their paths if no gateway confi
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { from: 'service' })
   }
-
-  await runtime.close()
 })
 
 test('should properly match applications by their hostname', async t => {
@@ -1065,7 +1066,7 @@ test('should properly match applications by their hostname', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // Hostname based access work without prefix
   {
@@ -1277,7 +1278,7 @@ test('should properly allow all domains when a application is the only one with 
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1397,7 +1398,7 @@ test('should properly generate OpenAPI routes when a frontend is exposed on /', 
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1502,7 +1503,7 @@ test('adds x-forwarded-proto', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body } = await request(address, {
@@ -1584,7 +1585,7 @@ test('should rewrite Location headers for proxied applications https', async t =
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const {
@@ -1644,7 +1645,7 @@ test('should properly strip runtime basePath from proxied applications', async t
     }
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   const { statusCode, body: rawBody } = await request(address, {
     method: 'GET',
@@ -1716,7 +1717,7 @@ test('should properly handle basePath root for generic applications', async t =>
     true
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, {
@@ -1829,7 +1830,10 @@ test('should proxy to a websocket application with reconnect options', async t =
   try {
     getEvents()
   } catch {
-    updateGlobals({ events: new EventEmitter() })
+    const events = new EventEmitter()
+    events.emitAndNotify = events.emit.bind(events)
+    updateGlobals({ events })
+    t.after(() => removeGlobals(['events']))
   }
 
   const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
@@ -1850,9 +1854,9 @@ test('should proxy to a websocket application with reconnect options', async t =
   await once(getEvents(), 'onReconnect')
   await once(getEvents(), 'onPong')
 
-  const disconnected = once(getEvents(), 'onDisconnect')
   client.close()
-  await disconnected
+
+  await once(getEvents(), 'onDisconnect')
 })
 
 test('should dynamically proxy a using custom logic', async t => {
@@ -1890,6 +1894,7 @@ test('should dynamically proxy a using custom logic', async t => {
 
   const gateway = await createFromConfig(t, {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -1987,6 +1992,7 @@ test('should support custom preRewrite hooks', async t => {
 
   const gateway = await createFromConfig(t, {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -2024,6 +2030,7 @@ test('should proxy to a remote service with external origin', async t => {
   // This tests that remote services work without being part of the runtime
   const config = {
     server: {
+      port: 0,
       logger: {
         level: 'fatal'
       }
@@ -2096,7 +2103,7 @@ test('should proxy to a remote service from gateway in runtime', async t => {
     [] // No local services - only remote external service
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // Test that requests are proxied to the remote external service
   await testEntityRoutes(address, ['/api/products/products'])
@@ -2146,7 +2153,7 @@ test('should proxy both local and remote services in same runtime', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // Test local service works (uses ITC for metadata)
   {
@@ -2224,7 +2231,7 @@ test('should handle methods and routes options', async t => {
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     const { statusCode, body: rawBody } = await request(address, { method: 'POST', path: '/first/abc/cde' })

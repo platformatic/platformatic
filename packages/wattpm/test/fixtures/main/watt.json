@@ -1,12 +1,8 @@
 {
   "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
-  "server": {
-    "hostname": "127.0.0.1"
-  },
   "logger": {
     "level": "trace"
   },
-  "entrypoint": "main",
   "autoload": {
     "path": "web"
   },

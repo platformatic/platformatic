@@ -5,7 +5,7 @@
 
 It's a pretty common solution to use Prometheus to collect and store monitoring data, and Grafana to visualize it.
 
-Platformatic can be configured to expose Prometheus metrics:
+Platformatic can be configured to expose Prometheus metrics. Metrics are disabled by default:
 
 ```json
 ...

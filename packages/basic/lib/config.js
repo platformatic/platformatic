@@ -70,7 +70,26 @@ export async function transform (config) {
     config.watch = { enabled: config.watch || false }
   }
 
+  applyPortAssignment(config.server, workerData?.worker)
+
   return config
+}
+
+// When server.portAssignment is set to perWorkerIncrement, each worker of the application listens on its own port:
+// worker with port offset N (which is the worker index unless the worker replaced another one) listens on port + N.
+export function applyPortAssignment (serverConfig, worker) {
+  if (serverConfig?.portAssignment !== 'perWorkerIncrement') {
+    return serverConfig
+  }
+
+  const port = Number(serverConfig.port)
+  const offset = worker?.portOffset ?? worker?.index ?? 0
+
+  if (Number.isInteger(port) && port > 0 && Number.isInteger(offset) && offset > 0) {
+    serverConfig.port = port + offset
+  }
+
+  return serverConfig
 }
 
 export const validationOptions = {

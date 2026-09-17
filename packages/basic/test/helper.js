@@ -1,4 +1,11 @@
-import { createDirectory, features, kMetadata, kTimeout, safeRemove } from '@platformatic/foundation'
+import {
+  createDirectory,
+  features,
+  kMetadata,
+  kTimeout,
+  listRecognizedConfigurationFiles,
+  safeRemove
+} from '@platformatic/foundation'
 import { execa } from 'execa'
 import * as getPort from 'get-port'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
@@ -11,7 +18,7 @@ import { basename, dirname, join, matchesGlob, resolve } from 'node:path'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
@@ -42,12 +49,87 @@ export const httpsFixtureRoot = fileURLToPath(
   new URL('../../node/test/fixtures/node-https-standalone', import.meta.url)
 )
 
-export function configureHTTPS (_root, config) {
-  config.server ??= {}
-  config.server.https = {
-    key: { path: resolve(httpsFixtureRoot, 'https.key') },
-    cert: { path: resolve(httpsFixtureRoot, 'https.crt') }
+function getTargetApplication (applications) {
+  return applications.find(application => application.id === 'external-proxy') ??
+    applications.find(application => application.id === 'composer') ??
+    applications.find(application => application.id === 'gateway') ??
+    applications.find(application => application.id === 'frontend') ??
+    applications[0]
+}
+
+const capabilities = new Set([
+  '@platformatic/astro',
+  '@platformatic/composer',
+  '@platformatic/db',
+  '@platformatic/gateway',
+  '@platformatic/nest',
+  '@platformatic/next',
+  '@platformatic/nitro',
+  '@platformatic/node',
+  '@platformatic/nuxt',
+  '@platformatic/react-router',
+  '@platformatic/remix',
+  '@platformatic/service',
+  '@platformatic/tanstack',
+  '@platformatic/vite'
+])
+
+async function updateApplicationConfig (application, update, required = false) {
+  if (!application?.path) {
+    if (required) {
+      throw new Error('Cannot find the target application configuration.')
+    }
+    return
   }
+
+  let configFile = application.config
+  if (!configFile) {
+    configFile = listRecognizedConfigurationFiles()
+      .map(file => resolve(application.path, file))
+      .find(file => existsSync(file))
+  }
+
+  if (!configFile) {
+    const packageJsonPath = [
+      resolve(application.path, 'package.json'),
+      resolve(application.path, '../..', 'package.json')
+    ].find(file => existsSync(file))
+    const packageJson = packageJsonPath ? JSON.parse(await readFile(packageJsonPath, 'utf-8')) : {}
+    const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies }
+    const capability = Object.keys(dependencies).find(name => capabilities.has(name))
+
+    if (!capability) {
+      if (required) {
+        throw new Error(`Cannot detect the capability for application "${application.id}".`)
+      }
+      return
+    }
+
+    configFile = resolve(application.path, 'platformatic.application.json')
+    await writeFile(configFile, JSON.stringify({ $schema: `https://schemas.platformatic.dev/${capability}/3.0.0.json` }, null, 2))
+  }
+
+  const applicationConfig = JSON.parse(await readFile(configFile, 'utf-8'))
+  await update(applicationConfig)
+  await writeFile(configFile, JSON.stringify(applicationConfig, null, 2), 'utf-8')
+
+  return applicationConfig
+}
+
+export async function updateTargetApplicationConfig (config, update) {
+  return updateApplicationConfig(getTargetApplication(config.applications ?? []), update, true)
+}
+
+export async function configureHTTPS (_root, config) {
+  await updateTargetApplicationConfig(config, applicationConfig => {
+    applicationConfig.server ??= {}
+    applicationConfig.server.hostname ??= '127.0.0.1'
+    applicationConfig.server.port ??= 0
+    applicationConfig.server.https = {
+      key: { path: resolve(httpsFixtureRoot, 'https.key') },
+      cert: { path: resolve(httpsFixtureRoot, 'https.crt') }
+    }
+  })
 }
 
 export function createHTTPSDispatcher (t) {
@@ -253,6 +335,37 @@ export async function ensureDependencies (configOrPaths) {
         await createDirectory(resolve(path, 'node_modules', dirname(dep)))
       }
 
+      if (dep === '@platformatic/globals') {
+        await createDirectory(moduleRoot)
+
+        // Turbopack follows workspace symlinks before applying serverExternalPackages, so use a
+        // physical proxy that represents the package layout consumers get from the registry.
+        const entrypoint = resolve(resolved, 'lib/index.js')
+        const esmEntrypoint = pathToFileURL(entrypoint).href
+        await writeFile(
+          resolve(moduleRoot, 'package.json'),
+          JSON.stringify({
+            name: dep,
+            private: true,
+            type: 'module',
+            types: './index.d.ts',
+            exports: { '.': { types: './index.d.ts', import: './index.js', require: './index.cjs' } }
+          })
+        )
+        await cp(resolve(resolved, 'lib/index.d.ts'), resolve(moduleRoot, 'index.d.ts'))
+        await writeFile(
+          resolve(moduleRoot, 'index.js'),
+          `export * from ${JSON.stringify(esmEntrypoint)}\nexport { default } from ${JSON.stringify(esmEntrypoint)}\n`
+        )
+        // The package is ESM only: CommonJS consumers reach it through
+        // require(esm), supported on every Node.js version we target.
+        await writeFile(
+          resolve(moduleRoot, 'index.cjs'),
+          `module.exports = require(${JSON.stringify(entrypoint)})\n`
+        )
+        continue
+      }
+
       // Symlink the dependency
       try {
         await symlink(resolved, moduleRoot, 'dir')
@@ -371,16 +484,6 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     async transform (config, ...args) {
       config = await transform(config, ...args)
       config.logger ??= {}
-      config.server ??= {}
-      // Pin hostname to IPv4 loopback for deterministic test URLs. Without
-      // this, modern Node/Fastify may bind to `::1` on dual-stack hosts and
-      // URL-based assertions that expect `http://127.0.0.1:PORT` fail.
-      config.server.hostname ??= '127.0.0.1'
-
-      // Assign the port
-      if (typeof port === 'number') {
-        config.server.port = port
-      }
 
       const debug = process.env.PLT_TESTS_DEBUG === 'true'
       const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
@@ -404,7 +507,29 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   })
 
   const config = await runtime.getRuntimeConfig(true)
+
   await additionalSetup?.(root, config)
+
+  if (typeof port === 'number') {
+    const target = getTargetApplication(config.applications ?? [])
+    const listeners = new Set([
+      target,
+      config.applications?.find(application => application.id === 'frontend'),
+      config.applications?.find(application => application.id === 'next')
+    ])
+
+    for (const application of listeners) {
+      if (!application) {
+        continue
+      }
+
+      await updateApplicationConfig(application, applicationConfig => {
+        applicationConfig.server ??= {}
+        applicationConfig.server.hostname ??= '127.0.0.1'
+        applicationConfig.server.port = application === target ? port : (applicationConfig.server.port ?? 0)
+      }, application === target)
+    }
+  }
 
   // Ensure dependencies again for updated config
   await ensureDependencies(config)
@@ -438,7 +563,8 @@ export async function startRuntime (t, runtime, pauseAfterCreation = false, appl
     }
   }
 
-  const url = await runtime.start()
+  const application = getTargetApplication(runtime.getRuntimeConfig(true).applications)
+  const { [`${application.id}:0`]: url } = await runtime.start()
 
   if (pauseAfterCreation) {
     await pause(t, runtime, url, pauseAfterCreation)
@@ -455,7 +581,10 @@ export async function createRuntime (
   configFile = 'platformatic.runtime.json',
   additionalSetup = null
 ) {
-  const { runtime, root, config } = await prepareRuntime(t, fixturePath, production, configFile, additionalSetup)
+  const preparationOptions = t.constructor.name === 'TestContext'
+    ? { t, root: resolve(fixturesDir, fixturePath), port: 0, production, configFile, additionalSetup }
+    : { ...t, port: t.port ?? 0 }
+  const { runtime, root, config } = await prepareRuntime(preparationOptions)
 
   if (t.constructor.name !== 'TestContext') {
     pauseAfterCreation = t.pauseAfterCreation ?? pauseAfterCreation
@@ -740,26 +869,28 @@ export async function prepareRuntimeWithApplications (
   additionalSetup
 ) {
   let args
-  const { runtime, root, config } = await prepareRuntime(t, configuration, production, null, async (
-    root,
-    config,
-    _args
-  ) => {
-    for (const type of ['backend', 'composer']) {
-      await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-        recursive: true
+  const { runtime, root, config } = await prepareRuntime({
+    t,
+    root: resolve(fixturesDir, configuration),
+    production,
+    port: 0,
+    additionalSetup: async (root, config, _args) => {
+      for (const type of ['backend', 'composer']) {
+        await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
+          recursive: true
+        })
+      }
+
+      await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
+        return contents.replace('$PREFIX', prefix)
       })
+
+      if (additionalSetup && !additionalSetup.runAfterPrepare) {
+        await additionalSetup?.(root, config, _args)
+      }
+
+      args = _args
     }
-
-    await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
-      return contents.replace('$PREFIX', prefix)
-    })
-
-    if (additionalSetup && !additionalSetup.runAfterPrepare) {
-      await additionalSetup?.(root, config, _args)
-    }
-
-    args = _args
   })
 
   if (additionalSetup && additionalSetup.runAfterPrepare) {
@@ -914,37 +1045,41 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
         let args
         const timeout = typeof only === 'number' ? only : pauseTimeout
 
-        const { runtime, root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
-          for (const type of ['backend', 'composer']) {
-            await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-              recursive: true
+        const { runtime, root, config } = await prepareRuntime({
+          t,
+          root: resolve(fixturesDir, id),
+          production: true,
+          port: 0,
+          additionalSetup: async (root, config, _args) => {
+            for (const type of ['backend', 'composer']) {
+              await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
+                recursive: true
+              })
+            }
+
+            await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
+              return contents.replace('$PREFIX', prefix)
             })
+
+            if (id.endsWith('without-prefix')) {
+              await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+                const json = JSON.parse(contents)
+                json.gateway.applications[1].proxy = { prefix: '' }
+                return JSON.stringify(json, null, 2)
+              })
+            }
+
+            if (additionalSetup && !additionalSetup.runAfterPrepare) {
+              await additionalSetup?.(root, config, _args)
+            }
+
+            args = _args
           }
-
-          await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
-            return contents.replace('$PREFIX', prefix)
-          })
-
-          if (id.endsWith('without-prefix')) {
-            await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-              const json = JSON.parse(contents)
-              json.gateway.applications[1].proxy = { prefix: '' }
-              return JSON.stringify(json, null, 2)
-            })
-          }
-
-          if (additionalSetup && !additionalSetup.runAfterPrepare) {
-            await additionalSetup?.(root, config, _args)
-          }
-
-          args = _args
         })
 
         if (additionalSetup && additionalSetup.runAfterPrepare) {
           await additionalSetup?.(root, config, args)
         }
-
-        const { hostname: runtimeHost, port: runtimePort } = config.server ?? {}
 
         // Build
         await buildRuntime(root)
@@ -957,16 +1092,6 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
         // Start the runtime
         const url = await startRuntime(t, runtime, timeout)
 
-        if (runtimeHost) {
-          const actualHost = new URL(url).hostname
-          strictEqual(actualHost, runtimeHost, `hostname should be ${runtimeHost}`)
-        }
-
-        if (runtimePort) {
-          const actualPort = new URL(url).port
-          strictEqual(actualPort.toString(), runtimePort.toString(), `port should be ${runtimePort}`)
-        }
-
         // Make sure all checks work properly
         for (const check of checks) {
           await check(t, url, runtime)
@@ -978,13 +1103,17 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
 
 export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup, requestOptions = {}) {
   const port = await getPort.default()
+  let protocol
 
   // Create the runtime
-  const { runtime, root, config } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
-    // Preserve the hostname already set by prepareRuntime's transform
-    // (127.0.0.1) — only override the port here.
-    config.server = { ...config.server, port }
-    config.applications[0].workers = { static: 5, dynamic: false }
+  const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
+    await updateTargetApplicationConfig(config, applicationConfig => {
+      applicationConfig.server ??= {}
+      applicationConfig.server.hostname ??= '127.0.0.1'
+      applicationConfig.server.port = port
+      protocol = applicationConfig.server.https ? 'https' : 'http'
+    })
+    config.applications[0].workers = { static: features.node.reusePort ? 5 : 1, dynamic: false }
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
 
     await additionalSetup?.(root, config)
@@ -996,7 +1125,6 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
   // Start the runtime
   const url = await startRuntime(t, runtime)
 
-  const protocol = config.server?.https ? 'https' : 'http'
   deepStrictEqual(url, `${protocol}://127.0.0.1:${port}`)
 
   // Check that we get the response from different workers

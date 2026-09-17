@@ -186,7 +186,11 @@ async function fixConfiguration (context, logger, root, configOption, skipDepend
   }
 
   // For each application, if there is no watt.json, create one and fix package dependencies
-  for (const { path } of applications) {
+  for (const { path, module } of applications) {
+    if (module) {
+      continue
+    }
+
     const wattConfiguration = await findConfigurationFile(path, 'application')
 
     const appType = await parseLocalFolder(resolve(root, path))
@@ -805,7 +809,6 @@ Example of the runtime \`watt.json\` configuration file:
 \`\`\`json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/wattpm/2.0.0.json",
-  "entrypoint": "application-1",
   "applications": [
     {
       "id": "application-1",

@@ -18,7 +18,6 @@ async function isCompileCacheAvailable () {
   }
 }
 
-// The cache directory is nested per Node.js version and platform, so count the files it contains.
 function countCacheEntries (cacheDir) {
   if (!existsSync(cacheDir)) {
     return 0
@@ -32,7 +31,6 @@ async function waitForCacheEntries (cacheDir, timeout = 10000) {
 
   while (Date.now() < deadline) {
     const entries = countCacheEntries(cacheDir)
-
     if (entries > 0) {
       return entries
     }
@@ -47,14 +45,14 @@ test('compileCache - runtime starts with compile cache enabled', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.json')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
   // Verify the runtime works correctly
-  const res = await request(entryUrl + '/hello')
+  const res = await request(url + '/hello')
   strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   strictEqual(body.hello, 'world')
@@ -73,22 +71,19 @@ test('compileCache - the cache is flushed to disk once the application has start
   const applicationDir = join(fixturesDir, 'compile-cache', 'services', 'a')
   const cacheDir = join(applicationDir, '.plt', 'compile-cache')
 
-  // Start from a clean cache so that the entries can only come from this run.
   rmSync(cacheDir, { recursive: true, force: true })
 
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
-  const res = await request(entryUrl + '/hello')
+  const res = await request(url + '/hello')
   strictEqual(res.statusCode, 200)
   await res.body.dump()
 
-  // Node.js only writes the compile cache when the worker exits, so without an explicit flush the
-  // cache would be lost whenever the process is killed abruptly.
   ok(await waitForCacheEntries(cacheDir), 'Compile cache has been flushed while the application is running')
 })
 
@@ -107,13 +102,13 @@ test('compileCache - the cache of an application running as a command is flushed
   rmSync(cacheDir, { recursive: true, force: true })
 
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': url } = await app.start()
 
   t.after(() => {
     return app.close()
   })
 
-  const res = await request(entryUrl + '/')
+  const res = await request(url + '/')
   strictEqual(res.statusCode, 200)
   await res.body.dump()
 

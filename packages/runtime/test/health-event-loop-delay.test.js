@@ -33,7 +33,7 @@ test(
       await app.close()
     })
 
-    const url = await app.start()
+    const { 'main:0': url } = await app.start()
 
     // Stall the worker: 200ms blocks every 400ms keep the ELU moderate while
     // producing long individual stalls
@@ -79,7 +79,7 @@ test(
       await app.close()
     })
 
-    const url = await app.start()
+    const { 'main:0': url } = await app.start()
 
     // 300ms blocks every 500ms: ELU stays around 0.6 (below the 0.99 maxELU
     // default) but the event loop delay exceeds the configured 100ms
@@ -112,7 +112,7 @@ test(
       await app.close()
     })
 
-    const url = await app.start()
+    const { 'main:0': url } = await app.start()
 
     // The p99-only threshold also activates the in-worker sampler. 300ms
     // blocks every 500ms make the per-second p99 track the stall magnitude,
@@ -144,7 +144,7 @@ test(
       await app.close()
     })
 
-    const url = await app.start()
+    const { 'main:0': url } = await app.start()
 
     await request(`${url}/stall/start?block=200&period=400`, { method: 'POST' })
 

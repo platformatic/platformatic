@@ -4,7 +4,6 @@
   "managementApi": true,
   "metrics": false,
   "restartOnError": 500,
-  "entrypoint": "first",
   "services": [
     {
       "id": "first",
@@ -15,5 +14,6 @@
   "logger": {
     "level": "info"
   },
-  "workers": 3
+  "workers": 3,
+  "healthProbes": false
 }

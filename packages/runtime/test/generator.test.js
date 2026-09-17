@@ -42,8 +42,6 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
   const secondApplication = new ApplicationGenerator()
   rg.addApplication(secondApplication, 'second-service')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043,
     logLevel: 'debug'
@@ -55,10 +53,14 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
     targetDirectory: '/tmp/runtime',
     env: {
       PLT_FIRST_SERVICE_FOO: 'foo',
-      PLT_SERVER_HOSTNAME: '127.0.0.1',
+      PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_FIRST_SERVICE_PORT: 3042,
+      PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_SECOND_SERVICE_PORT: 3043,
       PLT_SERVER_LOGGER_LEVEL: 'debug',
-      PLT_MANAGEMENT_API: true,
-      PORT: 3043
+      PLT_MANAGEMENT_API: true
     }
   })
 
@@ -85,11 +87,9 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
   const schemaJson = rg.getFileObject('platformatic.json')
   assert.deepStrictEqual(JSON.parse(schemaJson.contents), {
     $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
-    entrypoint: 'first-service',
     watch: true,
     autoload: { path: 'applications', exclude: ['docs'] },
     logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
-    server: { hostname: '{PLT_SERVER_HOSTNAME}', port: '{PORT}' },
     managementApi: '{PLT_MANAGEMENT_API}'
   })
 })
@@ -105,8 +105,6 @@ test('RuntimeGenerator - should have a valid package.json', async () => {
     isRuntimeContext: false
   })
   rg.addApplication(firstApplication, 'first-service')
-
-  rg.setEntryPoint('first-service')
 
   rg.setConfig({
     port: 3043,
@@ -140,8 +138,6 @@ test('RuntimeGenerator - should have applications plugin dependencies in package
   })
   rg.addApplication(firstApplication, 'first-service')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043,
     logLevel: 'debug'
@@ -155,10 +151,11 @@ test('RuntimeGenerator - should have applications plugin dependencies in package
   assert.deepEqual(output, {
     targetDirectory: '/tmp/runtime',
     env: {
-      PLT_SERVER_HOSTNAME: '127.0.0.1',
+      PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_FIRST_SERVICE_PORT: 3042,
       PLT_MANAGEMENT_API: true,
-      PLT_SERVER_LOGGER_LEVEL: 'debug',
-      PORT: 3043
+      PLT_SERVER_LOGGER_LEVEL: 'debug'
     }
   })
 })
@@ -186,8 +183,6 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
   })
   rg.addApplication(secondApplication, 'second-service')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043
   })
@@ -198,11 +193,15 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
     targetDirectory: '/tmp/runtime',
     env: {
       PLT_FIRST_SERVICE_APPLICATION_1: 'foo',
+      PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_FIRST_SERVICE_PORT: 3042,
       PLT_SECOND_SERVICE_APPLICATION_2: 'foo',
-      PLT_SERVER_HOSTNAME: '127.0.0.1',
+      PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_SECOND_SERVICE_PORT: 3043,
       PLT_MANAGEMENT_API: true,
-      PLT_SERVER_LOGGER_LEVEL: 'info',
-      PORT: 3043
+      PLT_SERVER_LOGGER_LEVEL: 'info'
     }
   })
 
@@ -240,8 +239,6 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
   const secondGateway = new GatewayGenerator()
   rg.addApplication(secondGateway, 'second-gateway')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043
   })
@@ -272,6 +269,37 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
   ])
 })
 
+test('RuntimeGenerator - should preserve explicit application ports', async () => {
+  const rg = new RuntimeGenerator({
+    targetDirectory: '/tmp/runtime'
+  })
+
+  const firstApplication = new ApplicationGenerator()
+  const secondApplication = new ApplicationGenerator()
+  const thirdApplication = new ApplicationGenerator()
+  secondApplication.setConfig({ port: 3000 })
+  thirdApplication.setConfig({ port: 0 })
+  rg.addApplication(firstApplication, 'first-service')
+  rg.addApplication(secondApplication, 'second-service')
+  rg.addApplication(thirdApplication, 'third-service')
+
+  const { env } = await rg.prepare()
+
+  assert.deepEqual(env, {
+    PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_FIRST_SERVICE_PORT: 3042,
+    PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_SECOND_SERVICE_PORT: 3000,
+    PLT_THIRD_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_THIRD_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_THIRD_SERVICE_PORT: 0,
+    PLT_MANAGEMENT_API: true,
+    PLT_SERVER_LOGGER_LEVEL: 'info'
+  })
+})
+
 test('RuntimeGenerator - add applications to an existing folder', async t => {
   const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
 
@@ -291,8 +319,6 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
     // adding another application
     const secondApplication = new ApplicationGenerator()
     rg.addApplication(secondApplication, 'second-service')
-
-    rg.setEntryPoint('first-service')
 
     rg.setConfig({
       port: 3043
@@ -316,10 +342,14 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
     assert.deepEqual(output, {
       targetDirectory,
       env: {
-        PLT_SERVER_HOSTNAME: '127.0.0.1',
+        PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_FIRST_SERVICE_PORT: 3042,
+        PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_SECOND_SERVICE_PORT: '3043',
         PLT_SERVER_LOGGER_LEVEL: 'info',
-        PLT_MANAGEMENT_API: 'true',
-        PORT: 3043
+        PLT_MANAGEMENT_API: 'true'
       }
     })
 
@@ -358,8 +388,6 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
     const secondApplication = new ApplicationGenerator()
     rg.addApplication(secondApplication, 'second-service')
 
-    rg.setEntryPoint('first-service')
-
     rg.setConfig({
       port: 3043
     })
@@ -382,10 +410,14 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
     assert.deepEqual(output, {
       targetDirectory,
       env: {
-        PLT_SERVER_HOSTNAME: '127.0.0.1',
+        PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_FIRST_SERVICE_PORT: 3042,
+        PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_SECOND_SERVICE_PORT: '3043',
         PLT_SERVER_LOGGER_LEVEL: 'info',
-        PLT_MANAGEMENT_API: 'true',
-        PORT: 3043
+        PLT_MANAGEMENT_API: 'true'
       }
     })
 
@@ -414,15 +446,11 @@ test('WrappedGenerator - should create valid environment files', async t => {
 
   assert.deepStrictEqual(env.contents.split(/\r?\n/), [
     'A=1',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
 
   assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -444,16 +472,12 @@ test('should support adding env variables only to .env and not .env.sample', asy
   assert.deepStrictEqual(env.contents.split(/\r?\n/), [
     'A=1',
     'FOO=A',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
 
   assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
     'FOO=1',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -471,13 +495,7 @@ test('WrappedGenerator - should create a valid watt.json', async t => {
   assert.deepStrictEqual(JSON.parse(wattJson.contents), {
     $schema: `https://schemas.platformatic.dev/@platformatic/next/${version}.json`,
     runtime: {
-      logger: {
-        level: '{PLT_SERVER_LOGGER_LEVEL}'
-      },
-      server: {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}'
-      },
+      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
       managementApi: '{PLT_MANAGEMENT_API}'
     }
   })

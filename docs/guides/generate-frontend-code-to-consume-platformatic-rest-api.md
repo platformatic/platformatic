@@ -42,7 +42,6 @@ Using existing configuration ...
 ? What is the name of the application? gateway
 ? Do you want to use TypeScript? no
 ? Do you want to create another application? no
-? Which application should be exposed? gateway
 ```
 
 ## Create a Front-end Application
@@ -92,7 +91,7 @@ Add your frontend `id` and DB application to your `watt.json` file in your `web/
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/4.0.0.json",
   "gateway": {
     "applications": [
       {

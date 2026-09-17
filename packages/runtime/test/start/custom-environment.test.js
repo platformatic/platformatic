@@ -18,8 +18,8 @@ test('can start with a custom environment', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
-  const res = await request(entryUrl + '/env')
+  const { 'serviceApp:0': url } = await app.start()
+  const res = await request(url + '/env')
 
   strictEqual(res.statusCode, 200)
   deepStrictEqual(await res.body.json(), {
@@ -93,7 +93,6 @@ test('should load custom env file when envfile is configured on the runtime conf
 
   const envFile = join(root, 'custom.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
   })
 
@@ -125,7 +124,6 @@ test('should prefer the config envfile over the envFile option', async t => {
   const envFile = join(root, 'custom.env')
   const overrideEnvFile = join(root, 'override.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
   })
 
@@ -158,7 +156,6 @@ test('should prefer the envfile of an application over a discovered .env file', 
   // The .env file of the runtime already defines FROM_ENV_FILE
   await writeFile(join(root, 'services/hello/custom.env'), 'FROM_ENV_FILE=application-envfile', 'utf8')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.services[0].envfile = 'services/hello/custom.env'
   })
 
@@ -187,10 +184,6 @@ test('should prefer the .env file of an application over a discovered .env file'
 
   // The .env file of the runtime already defines FROM_ENV_FILE
   await writeFile(join(root, 'services/hello/.env'), 'FROM_ENV_FILE=application-env-file', 'utf8')
-  await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
-  })
-
   const app = await createRuntime(root)
 
   t.after(async () => {
@@ -217,7 +210,6 @@ test('should prefer the .env file of an application over the envfile of the runt
   await writeFile(join(root, 'custom.env'), 'FROM_ENV_FILE=runtime-envfile', 'utf8')
   await writeFile(join(root, 'services/hello/.env'), 'FROM_ENV_FILE=application-env-file', 'utf8')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = 'custom.env'
   })
 
@@ -245,10 +237,6 @@ test('should prefer real environment variables over the .env file of an applicat
   await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
 
   await writeFile(join(root, 'services/hello/.env'), 'FROM_ENV_FILE=application-env-file', 'utf8')
-  await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
-  })
-
   process.env.FROM_ENV_FILE = 'process-env'
 
   const app = await createRuntime(root)
@@ -277,7 +265,6 @@ test('should not require a context when the configuration file defines envfile',
 
   const envFile = join(root, 'custom.env')
   await updateConfigFile(join(root, 'platformatic.json'), config => {
-    config.server.port = 0
     config.envfile = envFile
     config.logger = { level: 'fatal' }
   })

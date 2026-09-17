@@ -29,10 +29,10 @@ export interface RuntimeApplication {
   status: string
   version: string
   localUrl: string
-  entrypoint: boolean
-  url?: string
+  url: string | null
+  urls: string[]
   workers?: number
-  dependencies: Runtime
+  dependencies: string[]
 }
 
 export interface Runtime {
@@ -45,13 +45,12 @@ export interface Runtime {
   projectDir: string
   packageName: string | null
   packageVersion: string | null
-  url: string | null
   platformaticVersion: string
+  urls: Record<string, string>
   startTime?: number
 }
 
 export interface RuntimeApplications {
-  entrypoint: string
   production: boolean
   applications: (RuntimeApplication | RuntimeApplicationBase)[]
 }
@@ -97,14 +96,12 @@ export interface LogIndexes {
 export interface RuntimeSchedulerJob {
   name: string
   cron: string
-  source: 'config' | 'application'
+  source: 'application'
   paused: boolean
   maxRetries: number
   lastExecutedAt: string | null
   lastStatus: 'success' | 'failed' | null
   nextRunAt: string | null
-  callbackUrl?: string
-  method?: string
   applicationId?: string
   scheduleId?: string
   tasks?: string[]
@@ -141,7 +138,6 @@ export class RuntimeApiClient {
     pid: number,
     options?: T
   ): Promise<T extends { format: 'text' } ? string : Metric[]>
-  getRuntimeLiveMetricsStream (pid: number): WebSocketStream
   getRuntimeLiveLogsStream (pid: number, startLogIndex?: number): WebSocketStream
   getRuntimeLogsStream (pid: number, logsId: string, options?: { runtimePID?: number }): Promise<ReadableBody>
   getRuntimeAllLogsStream (pid: number, options?: { runtimePID?: number }): Promise<ReadableBody>

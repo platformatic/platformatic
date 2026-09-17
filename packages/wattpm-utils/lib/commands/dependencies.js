@@ -13,7 +13,6 @@ import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { isAbsolute, relative, resolve } from 'node:path'
-import { parseEnv } from 'node:util'
 import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 
@@ -22,9 +21,8 @@ async function executeCommand (root, ...args) {
   const npmrc = resolve(root, '.npmrc')
   if (existsSync(npmrc)) {
     try {
-      const env = parseEnv(await readFile(npmrc, 'utf-8'))
-
-      if (env['dry-run'] === 'true') {
+      const contents = await readFile(npmrc, 'utf-8')
+      if (contents.split(/\r?\n/).some(line => /^dry-run\s*=\s*true\s*$/.test(line))) {
         return
       }
       /* c8 ignore next 5 */
@@ -115,7 +113,12 @@ export async function installDependencies (logger, root, applications, productio
     )
   }
 
-  for (let { id, path, packageManager: applicationPackageManager } of applications) {
+  for (let { id, path, module, packageManager: applicationPackageManager } of applications) {
+    // Module applications use dependencies installed in the Watt root and their package is not writable.
+    if (module) {
+      continue
+    }
+
     const hasConfiguredPackageManager = !!applicationPackageManager
     applicationPackageManager ??= await getPackageManager(path, packageManager)
     const applicationPackageArgs = getInstallationCommand(applicationPackageManager, production)
@@ -351,6 +354,10 @@ export async function updateCommand (logger, args) {
 
   // Now, for all the applications in the configuration file, update the dependencies
   for (const application of applications) {
+    if (application.module) {
+      continue
+    }
+
     await updateDependencies(
       logger,
       latest,

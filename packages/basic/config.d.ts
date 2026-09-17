@@ -52,7 +52,7 @@ export interface PlatformaticBasicConfig {
     workersRestartDelay?: number | string;
     logger?: {
       /**
-       * The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.
+       * A standard Pino log level or a level defined in customLevels.
        */
       level?: string;
       transport?:
@@ -144,46 +144,6 @@ export interface PlatformaticBasicConfig {
         url: string;
       };
       [k: string]: unknown;
-    };
-    server?: {
-      hostname?: string;
-      port?: number | string;
-      /**
-       * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
-       */
-      portAssignment?: "shared" | "perWorkerIncrement";
-      /**
-       * The maximum length of the queue of pending connections
-       */
-      backlog?: number;
-      http2?: boolean;
-      https?: {
-        allowHTTP1?: boolean;
-        key:
-          | string
-          | {
-              path?: string;
-            }
-          | (
-              | string
-              | {
-                  path?: string;
-                }
-            )[];
-        cert:
-          | string
-          | {
-              path?: string;
-            }
-          | (
-              | string
-              | {
-                  path?: string;
-                }
-            )[];
-        requestCert?: boolean;
-        rejectUnauthorized?: boolean;
-      };
     };
     reuseTcpPorts?: boolean;
     startTimeout?: number;
@@ -483,7 +443,7 @@ export interface PlatformaticBasicConfig {
             default?: string;
           }[];
         };
-    telemetry?: {
+    tracing?: {
       enabled?: boolean | string;
       /**
        * The name of the application. Defaults to the folder name if not specified.
@@ -622,23 +582,6 @@ export interface PlatformaticBasicConfig {
     strictEnv?: boolean | string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
-    scheduler?: {
-      enabled?: boolean | string;
-      name: string;
-      cron: string;
-      callbackUrl: string;
-      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-      headers?: {
-        [k: string]: string;
-      };
-      body?:
-        | string
-        | {
-            [k: string]: unknown;
-          };
-      maxRetries?: number;
-      [k: string]: unknown;
-    }[];
     policies?: {
       deny: {
         /**
@@ -709,7 +652,7 @@ export interface PlatformaticBasicConfig {
           write?: string[];
         };
       };
-      telemetry?: {
+      tracing?: {
         /**
          * An array of instrumentations loaded if telemetry is enabled
          */

@@ -20,7 +20,7 @@ test('should fail to start application with a wrong id', async t => {
   } catch (err) {
     strictEqual(
       err.message,
-      'Application wrong-service-id not found. Available applications are: db-app, serviceApp, with-logger, multi-plugin-service'
+      'Application wrong-service-id not found. Available applications are: db-app, multi-plugin-service, serviceApp, with-logger'
     )
   }
 })

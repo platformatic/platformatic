@@ -14,10 +14,10 @@ test('gateway', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'composerApp:0': url } = await app.start()
 
   {
-    const res = await request(entryUrl)
+    const res = await request(url)
     strictEqual(res.statusCode, 200)
 
     const data = await res.body.json()
@@ -25,7 +25,7 @@ test('gateway', async t => {
   }
 
   {
-    const res = await request(entryUrl + '/service-app/')
+    const res = await request(url + '/service-app/')
     strictEqual(res.statusCode, 200)
 
     const data = await res.body.json()
@@ -41,7 +41,7 @@ test('gateway-proxy', async t => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'composer:0': url } = await app.start()
 
-  ok(entryUrl.startsWith('http://127.0.0.1'), 'entryUrl should start with http://127.0.0.1')
+  ok(url.startsWith('http://127.0.0.1'), 'url should start with http://127.0.0.1')
 })

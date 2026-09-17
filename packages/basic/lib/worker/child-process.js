@@ -7,23 +7,19 @@ import {
   scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import {
-  getAdditionalServerOptions,
   getApplicationId,
   getConfig,
   getEvents,
-  getHost,
   getITC,
   getLogger,
-  getPort,
   getPrometheus,
   getReuseTcpPorts,
   getRuntimeBasePath,
   getRuntimeConfig,
-  getTelemetryReady,
+  getTracingReady,
   getWantsAbsoluteUrls,
   getWorkerId,
   hasField,
-  isEntrypoint,
   updateGlobals
 } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
@@ -352,9 +348,9 @@ export class ChildProcess extends ITC {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
-    if (telemetryReady) {
-      await telemetryReady
+    const tracingReady = getTracingReady({ throwOnMissing: false })
+    if (tracingReady) {
+      await tracingReady
     }
 
     // Setup and start OTLP exporter bridge over the child's populated registry
@@ -629,28 +625,6 @@ export class ChildProcess extends ITC {
           return
         }
 
-        let port = getPort()
-        const host = getHost()
-        const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
-        const additionalOptions = getAdditionalServerOptions()
-
-        if (typeof port !== 'number' && port !== false) {
-          port = 0
-        }
-
-        // Check if we need to override the port only if a static port is being requested
-        if (port !== false && port !== 0) {
-          // The user application has requested a specific port, which is not the entrypoint one. Override it.
-          if (options.port !== port && isEntrypointApplication) {
-            options.port = port
-          }
-        }
-
-        if (typeof host === 'string') {
-          options.host = host
-        }
-
-        Object.assign(options, additionalOptions)
         const events = getEvents({ throwOnMissing: false })
         if (events) {
           events.emitAndNotify('serverOptions', options)
@@ -689,11 +663,10 @@ export class ChildProcess extends ITC {
 
     tracingChannel('net.server.listen').subscribe(subscribers)
 
-    const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
     const runtimeBasePath = getRuntimeBasePath({ throwOnMissing: false }) ?? ''
     const wantsAbsoluteUrls = getWantsAbsoluteUrls({ throwOnMissing: false })
 
-    if (isEntrypointApplication && runtimeBasePath && !wantsAbsoluteUrls) {
+    if (runtimeBasePath && !wantsAbsoluteUrls) {
       stripBasePath(runtimeBasePath)
     }
   }
@@ -709,7 +682,12 @@ export class ChildProcess extends ITC {
   #setupInterceptors () {
     const globalDispatcher = new Agent().compose(createInterceptor(this))
     setGlobalDispatcher(globalDispatcher)
-    mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher)
+    const legacyDispatcher = globalThis[Symbol.for('undici.globalDispatcher.1')]
+    const currentDispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
+    const legacyWrapper = legacyDispatcher && legacyDispatcher !== currentDispatcher && legacyDispatcher.constructor?.name === 'Dispatcher1Wrapper'
+      ? new legacyDispatcher.constructor(globalDispatcher)
+      : globalDispatcher
+    mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher, legacyWrapper)
   }
 
   #setupHandlers (timeout) {

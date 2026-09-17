@@ -115,7 +115,7 @@ test('ChildManager - inject - should not include telemetry when enabled is false
   delete process.env.NODE_OPTIONS
 
   const context = {
-    telemetryConfig: {
+    tracingConfig: {
       enabled: false,
       applicationName: 'test-application'
     }
@@ -129,7 +129,7 @@ test('ChildManager - inject - should not include telemetry when enabled is false
   try {
     await manager.inject()
 
-    ok(!process.env.NODE_OPTIONS.includes('@platformatic/telemetry'))
+    ok(!process.env.NODE_OPTIONS.includes('@platformatic/tracing'))
     ok(!process.env.NODE_OPTIONS.includes('node-telemetry.js'))
 
     ok(process.env.NODE_OPTIONS.includes('child-process.js'))
@@ -147,7 +147,7 @@ test('ChildManager - inject - should include telemetry when enabled is true', as
   delete process.env.NODE_OPTIONS
 
   const context = {
-    telemetryConfig: {
+    tracingConfig: {
       enabled: true,
       applicationName: 'test-application'
     }
@@ -161,7 +161,7 @@ test('ChildManager - inject - should include telemetry when enabled is true', as
   try {
     await manager.inject()
 
-    ok(process.env.NODE_OPTIONS.includes('telemetry/lib/node-telemetry.js'))
+    ok(process.env.NODE_OPTIONS.includes('tracing/lib/node-telemetry.js'))
     ok(process.env.NODE_OPTIONS.includes('node-telemetry.js'))
     ok(process.env.NODE_OPTIONS.includes('child-process.js'))
 
@@ -178,7 +178,7 @@ test('ChildManager - inject - should include telemetry when config exists withou
   delete process.env.NODE_OPTIONS
 
   const context = {
-    telemetryConfig: {
+    tracingConfig: {
       applicationName: 'test-application'
     }
   }
@@ -191,7 +191,7 @@ test('ChildManager - inject - should include telemetry when config exists withou
   try {
     await manager.inject()
 
-    ok(process.env.NODE_OPTIONS.includes('telemetry/lib/node-telemetry.js'))
+    ok(process.env.NODE_OPTIONS.includes('tracing/lib/node-telemetry.js'))
     ok(process.env.NODE_OPTIONS.includes('node-telemetry.js'))
     ok(process.env.NODE_OPTIONS.includes('child-process.js'))
 
@@ -217,7 +217,7 @@ test('ChildManager - inject - should not include telemetry when no config exists
   try {
     await manager.inject()
 
-    ok(!process.env.NODE_OPTIONS.includes('@platformatic/telemetry'))
+    ok(!process.env.NODE_OPTIONS.includes('@platformatic/tracing'))
     ok(!process.env.NODE_OPTIONS.includes('node-telemetry.js'))
     ok(process.env.NODE_OPTIONS.includes('child-process.js'))
 
