@@ -177,10 +177,12 @@ export class ViteCapability extends BaseCapability {
 
   getMeta (prefix) {
     const config = this.subprocessConfig ?? this.#app?.config
+    const options = prefix && typeof prefix === 'object' ? prefix : { prefix }
 
     return super.getMeta({
+      ...options,
       includeConnection: true,
-      prefix: this.basePath ?? config?.base ?? prefix ?? this.#basePath,
+      prefix: this.basePath ?? config?.base ?? options.prefix ?? this.#basePath,
       childProcess: Boolean(this.childManager),
       wantsAbsoluteUrls: true,
       needsRootTrailingSlash: true
@@ -471,12 +473,16 @@ export class ViteSSRCapability extends NodeCapability {
     const vite = this._getApplication()?.vite
     const applicationBasePath = vite?.config?.base
 
-    return super.getMeta({
-      includeConnection: true,
-      prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
-      wantsAbsoluteUrls: true,
-      needsRootTrailingSlash: true
-    })
+    return {
+      gateway: {
+        tcp: typeof this.url !== 'undefined',
+        url: this.url,
+        childProcess: Boolean(this.childManager),
+        prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
+        wantsAbsoluteUrls: true,
+        needsRootTrailingSlash: true
+      }
+    }
   }
 
   _findEntrypoint () {

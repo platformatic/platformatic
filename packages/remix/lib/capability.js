@@ -100,15 +100,13 @@ export class RemixCapability extends ViteCapability {
       return super.getMeta()
     }
 
-    return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: true,
-        needsRootTrailingSlash: true
-      }
-    }
+    return super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      childProcess: Boolean(this.childManager),
+      wantsAbsoluteUrls: true,
+      needsRootTrailingSlash: true
+    })
   }
 
   async #startDevelopment () {
