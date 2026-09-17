@@ -81,6 +81,7 @@ async function resolveApplicationProxyParameters (application, root) {
     methods: application.proxy?.methods,
     routes: application.proxy?.routes,
     url: meta.url,
+    childProcess: meta.childProcess === true,
     prefix,
     rewritePrefix,
     internalRewriteLocationHeader,
@@ -124,6 +125,7 @@ async function proxyPlugin (app, opts) {
       prefix,
       origin,
       url,
+      childProcess,
       routes,
       methods,
       rewritePrefix,
@@ -226,8 +228,8 @@ async function proxyPlugin (app, opts) {
     }
 
     const threadInterceptor = getUndiciThreadInterceptor({ throwOnMissing: false })
-    // Resolve local upgrades through the mesh so replacement workers never leave a stale TCP upstream.
-    const wsOrigin = threadInterceptor?.createUpgradeAgent && isLocalApplication(application) ? origin : (url ?? origin)
+    // Child-process applications expose a real TCP listener; the mesh interceptor only handles HTTP dispatch.
+    const wsOrigin = childProcess ? (url ?? origin) : origin
     const proxyOptions = {
       prefix,
       rewritePrefix,

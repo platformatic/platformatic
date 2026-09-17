@@ -178,14 +178,14 @@ export class ServiceCapability extends BaseCapability {
   }
 
   getMeta () {
+    const applicationMeta = super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      needsRootTrailingSlash: false
+    })
+
     return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: false,
-        needsRootTrailingSlash: false
-      },
+      ...applicationMeta,
       connectionStrings: [this.connectionString]
     }
   }

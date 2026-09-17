@@ -174,14 +174,12 @@ export class NextCapability extends BaseCapability {
   }
 
   getMeta () {
-    const gateway = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootTrailingSlash: false }
-
-    if (this.url) {
-      gateway.tcp = true
-      gateway.url = this.url
-    }
-
-    return { gateway }
+    return super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      wantsAbsoluteUrls: true,
+      needsRootTrailingSlash: false
+    })
   }
 
   async getChildManagerContext (basePath) {

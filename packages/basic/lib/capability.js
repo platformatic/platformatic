@@ -433,10 +433,16 @@ export class BaseCapability extends EventEmitter {
     return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
-  getMeta () {
+  getMeta ({ includeConnection = false, ...gateway } = {}) {
+    if (includeConnection) {
+      gateway.tcp = typeof this.url !== 'undefined'
+      gateway.url = this.url
+    }
+
     return {
       gateway: {
-        wantsAbsoluteUrls: false
+        wantsAbsoluteUrls: false,
+        ...gateway
       }
     }
   }

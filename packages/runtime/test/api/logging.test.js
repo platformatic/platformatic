@@ -38,7 +38,9 @@ test('logs stdio from the application thread', async t => {
       .filter(m => m.msg !== 'Runtime event')
 
     const applicationMessages = messages.filter(m => m.name === 'stdio')
-    const runtimeMessages = messages.filter(m => m.name === undefined)
+    const runtimeMessages = messages
+      .filter(m => m.name === undefined)
+      .filter(m => m.msg !== 'Module compile cache flushed')
 
     deepStrictEqual(
       applicationMessages,

@@ -451,14 +451,16 @@ export class NodeCapability extends BaseCapability {
   }
 
   getMeta () {
+    const applicationMeta = super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      childProcess: Boolean(this.childManager),
+      wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
+      needsRootTrailingSlash: true
+    })
+
     return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
-        needsRootTrailingSlash: true
-      },
+      ...applicationMeta,
       connectionStrings: this.connectionString ? [this.connectionString] : []
     }
   }
