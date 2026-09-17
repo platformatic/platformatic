@@ -13,10 +13,18 @@ import {
 } from '../../lib/v4/index.js'
 import { createTree } from './helper.js'
 
-test('the recognized set is exactly the four v4 filenames', () => {
-  deepStrictEqual(configurationFileNames, ['watt.config.ts', 'watt.config.mts', 'watt.config.js', 'watt.config.mjs'])
+test('the recognized set is exactly the six configuration filenames', () => {
+  deepStrictEqual(configurationFileNames, [
+    'watt.config.ts',
+    'watt.config.mts',
+    'watt.config.cts',
+    'watt.config.js',
+    'watt.config.mjs',
+    'watt.config.cjs'
+  ])
   ok(isConfigurationFileName('watt.config.mjs'))
-  ok(!isConfigurationFileName('watt.config.cjs'))
+  ok(isConfigurationFileName('watt.config.cjs'))
+  ok(isConfigurationFileName('watt.config.cts'))
   ok(!isConfigurationFileName('vite.config.ts'))
 })
 

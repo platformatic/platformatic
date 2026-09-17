@@ -26,6 +26,23 @@ test('a plain object export is returned as a snapshot with the applications norm
   deepStrictEqual(config.applications, [{ id: 'api', path: './web/api' }])
 })
 
+test('a CommonJS config assigns module.exports and is read through the default interop', async t => {
+  // .cjs and .cts force CommonJS regardless of the nearest package.json type, so the configuration
+  // is assigned to module.exports rather than exported as default; the loader imports the file and
+  // reads .default either way. .cts additionally exercises type stripping on a CommonJS file.
+  const root = await createTree(t, {
+    'watt.config.cjs': 'module.exports = { applications: [{ id: "cjs-api", path: "./web/api" }] }',
+    'watt.config.cts':
+      'const config: { applications: any[] } = { applications: [{ id: "cts-api", path: "./web/api" }] }\nmodule.exports = config'
+  })
+
+  const cjs = await evaluate(root, { path: join(root, 'watt.config.cjs') })
+  deepStrictEqual(cjs.config.applications, [{ id: 'cjs-api', path: './web/api' }])
+
+  const cts = await evaluate(root, { path: join(root, 'watt.config.cts') })
+  deepStrictEqual(cts.config.applications, [{ id: 'cts-api', path: './web/api' }])
+})
+
 test('a function export is called once with the context and its resolved value classified', async t => {
   const root = await createTree(t, {
     'watt.config.js': `

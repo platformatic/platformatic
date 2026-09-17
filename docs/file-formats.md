@@ -1,11 +1,13 @@
 # Configuration Files
 
-Platformatic detects and loads the configuration file in a directory. There are four names, and they differ only in language and module system:
+Platformatic detects and loads the configuration file in a directory. There are six names, and they differ only in language and module system:
 
 - `watt.config.ts`
 - `watt.config.mts`
+- `watt.config.cts`
 - `watt.config.js`
 - `watt.config.mjs`
+- `watt.config.cjs`
 
 **One configuration file per directory.** Two is an error rather than a precedence rule: a project that answers the same question twice has no answer.
 
@@ -24,14 +26,16 @@ export default defineConfig({
 
 The extension chooses the language and the module system. Which one you can write is decided by the package the file sits in, not by preference.
 
-| Extension | Language   | Requires `"type": "module"` |
-|-----------|------------|-----------------------------|
-| `.ts`     | TypeScript | Yes                         |
-| `.mts`    | TypeScript | No                          |
-| `.js`     | JavaScript | Yes                         |
-| `.mjs`    | JavaScript | No                          |
+| Extension | Language   | Module system                                  |
+|-----------|------------|------------------------------------------------|
+| `.ts`     | TypeScript | Follows the package (`"type": "module"` → ESM) |
+| `.mts`    | TypeScript | Always ESM                                     |
+| `.cts`    | TypeScript | Always CommonJS                                |
+| `.js`     | JavaScript | Follows the package (`"type": "module"` → ESM) |
+| `.mjs`    | JavaScript | Always ESM                                     |
+| `.cjs`    | JavaScript | Always CommonJS                                |
 
-The `m` prefix is not a style choice. A `watt.config.js` in a package that does not declare `"type": "module"` is CommonJS, and `export default` there is a syntax error — so that package writes `watt.config.mjs`, or `watt.config.mts` for TypeScript.
+The prefix is not a style choice, it settles the module system regardless of the nearest `package.json`. A bare `watt.config.js` (or `.ts`) in a package that does not declare `"type": "module"` is CommonJS, and `export default` there is a syntax error — so that package writes `watt.config.mjs` (or `.mts`) to force ESM, or uses a CommonJS file and assigns the configuration to `module.exports`. The loader imports the file and reads its default export either way: `export default …` in an ESM file, `module.exports = …` in a CommonJS one.
 
 TypeScript files are handled by Node's own type stripping, which erases annotations and runs what is left. Nothing is emitted and nothing is compiled, which has three consequences:
 

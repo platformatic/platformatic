@@ -2,8 +2,12 @@ import { readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { AmbiguousConfigurationFileError, LegacyConfigurationFileError } from './errors.js'
 
-// The four recognized v4 filenames. Exactly one may exist in a directory.
-export const configurationFileExtensions = ['ts', 'mts', 'js', 'mjs']
+// The recognized configuration filenames. Exactly one may exist in a directory. The extensions
+// differ only in language and module system: `ts`/`cts` are stripped by the runtime, and the
+// `m`/`c` prefixes force ESM/CommonJS regardless of the nearest package.json `type`. A bare `js`
+// or `ts` follows that `type`. The evaluator imports the file and reads its default export, so a
+// CommonJS file assigns `module.exports`; the interop makes the two spellings equivalent.
+export const configurationFileExtensions = ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs']
 export const configurationFileNames = configurationFileExtensions.map(extension => `watt.config.${extension}`)
 
 // The complete v3 candidate set. Legacy detection is unconditional and by filename alone —

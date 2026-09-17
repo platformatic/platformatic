@@ -84,7 +84,7 @@ test('a missing configuration can be reported rather than returned', async t => 
   await rejects(() => findDecidingFile(root, { throwOnMissing: true }), { code: 'PLT_CONFIGURATION_FILE_NOT_FOUND' })
 })
 
-test('--config names any of the four v4 files and refuses a v3 one with the migrate hint', async t => {
+test('--config names any of the six configuration files and refuses a v3 one with the migrate hint', async t => {
   const root = await createTree(t, { 'watt.config.mjs': '', 'watt.json': '{}' })
 
   const named = await resolveNamedConfigurationFile('watt.config.mjs', root)
