@@ -639,11 +639,13 @@ export class ChildProcess extends ITC {
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
 
+        // Nested workers may expose internal servers (for example Nitro's env
+        // runner). They must not replace the command's public entrypoint URL.
         // When a script reports the app URL itself (urlFromScript), ignore the
         // tracing-channel listen here (which fires for listhen/get-port-please's
         // throwaway probe) to avoid reporting a stale URL that races the real
         // server's startup.
-        if (this.#urlFromScript) {
+        if (!isMainThread || this.#urlFromScript) {
           return
         }
 
