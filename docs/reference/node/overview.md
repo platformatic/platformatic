@@ -258,21 +258,6 @@ export async function close () {
 }
 ```
 
-### `close` Event Handler
-
-Alternatively, you can register a close event handler using the Platformatic events getter. `getEvents()` returns `PlatformaticEvents`, an `EventEmitter` with an additional `emitAndNotify(event, ...args)` method for emitting locally and notifying the runtime.
-
-```js
-import { getEvents } from '@platformatic/globals'
-
-const events = getEvents()
-events.on('close', () => {
-  console.log('Received close event, cleaning up...')
-
-  // Perform your cleanup operations
-})
-```
-
 ### `closeServer`
 
 When using `NodeCapability` programmatically, call `closeServer()` to close the application's listening HTTP server without stopping the capability. It returns `undefined` when no server is listening, otherwise it returns a promise that resolves when the server is closed.
@@ -303,7 +288,7 @@ export function create () {
 }
 ```
 
-This follows the [TC39 Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) convention. The `Symbol.asyncDispose` method is called after the `close` event is emitted and before the server is closed.
+This follows the [TC39 Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) convention. The `Symbol.asyncDispose` method is called during application shutdown before the server is closed.
 
 ### Fastify Applications
 
@@ -316,13 +301,15 @@ Platformatic Node handles closing the main application components:
 - **Applications with `create` function**: It will invoke the `close` method on the server returned by the function.
 - **Applications without `create` function**: It will invoke the `close` method on the first `node:http` server that listened on a TCP port.
 
-However, **additional resources must be manually closed** using the mechanisms described above, otherwise the application will hang during shutdown and eventually timeout.
+However, **additional asynchronous cleanup should be registered with `registerCloseCallback()`**. These callbacks are awaited after the framework/server shutdown. `SIGINT` listeners are invoked afterward, without awaiting their return values.
 
-In applications launched via custom commands only the `close` event handler is available for cleanup and the `close` function is ignored.
+In applications launched via custom commands, cleanup runs in the child process. The application is responsible for closing its resources through `registerCloseCallback()` and/or `SIGINT` listeners; exported `close` functions are not invoked by this path.
 
-:::warn
-If your application needs to clean up some shared states (connection pool, etc), you must export a `close` function, handle the `close` event, or implement `Symbol.asyncDispose` on the object returned by your factory. If you don't, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts. The exception is Fastify.
+:::info
+The `close` event is not emitted anymore during application shutdown. Use `registerCloseCallback()` for application-owned resources.
 :::
+
+See [Application shutdown](../runtime/shutdown.md) for the complete sequence, signal handling, and shutdown deadlines.
 
 ### Typescript
 

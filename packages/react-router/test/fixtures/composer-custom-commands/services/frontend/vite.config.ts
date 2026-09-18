@@ -1,7 +1,11 @@
-import { getBasePath } from '@platformatic/globals'
+import { getBasePath, registerCloseCallback } from '@platformatic/globals'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
+
+registerCloseCallback(() => {
+  setTimeout(() => process.exit(0), 1000)
+})
 
 export default defineConfig({
   base: getBasePath({ throwOnMissing: false }) ?? '/',

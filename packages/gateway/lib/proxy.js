@@ -228,6 +228,14 @@ async function proxyPlugin (app, opts) {
     }
 
     const threadInterceptor = getUndiciThreadInterceptor({ throwOnMissing: false })
+    const upgradeAgent = threadInterceptor?.createUpgradeAgent?.()
+    if (upgradeAgent) {
+      app.addHook('onClose', async () => {
+        // Failed or unfinished upgrades can leave TCP sockets owned by the agent
+        // after the WebSocket proxy closes, preventing the worker from exiting.
+        upgradeAgent.destroy()
+      })
+    }
     // Child-process applications expose a real TCP listener; the mesh interceptor only handles HTTP dispatch.
     const wsOrigin = childProcess ? (url ?? origin) : origin
     const proxyOptions = {
@@ -237,8 +245,8 @@ async function proxyPlugin (app, opts) {
       handler: proxyHandler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
-      wsClientOptions: threadInterceptor?.createUpgradeAgent
-        ? { agent: threadInterceptor.createUpgradeAgent() }
+      wsClientOptions: upgradeAgent
+        ? { agent: upgradeAgent }
         : undefined,
 
       websocket: true,

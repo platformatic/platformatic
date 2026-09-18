@@ -257,3 +257,26 @@ test('child context getters support missing and registered values', t => {
   strictEqual(globals.getCompileCache(), false)
   strictEqual(globals.getResourceLimits(), undefined)
 })
+
+test('close callbacks should be registered and consumed in registration order', () => {
+  const first = async () => {}
+  const second = async () => {}
+
+  globals.registerCloseCallback(first)
+  globals.registerCloseCallback(second)
+
+  strictEqual(globals.hasCloseCallbacks(), true)
+  deepStrictEqual(globals.consumeCloseCallbacks(), [first, second])
+  strictEqual(globals.hasCloseCallbacks(), false)
+})
+
+test('registerCloseCallback should reject invalid callbacks with a code', () => {
+  throws(() => globals.registerCloseCallback('invalid'), { code: 'PLT_GLOBALS_INVALID_CLOSE_CALLBACK' })
+})
+
+test('registerCloseCallback should reject registrations after shutdown starts', () => {
+  globals.consumeCloseCallbacks()
+  throws(() => globals.registerCloseCallback(async () => {}), {
+    code: 'PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED'
+  })
+})

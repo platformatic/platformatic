@@ -441,7 +441,9 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   configFile ??= 'platformatic.runtime.json'
 
   if (port === 0) {
-    port = await getPort.default()
+    // Keep preselected entrypoint ports below the default OS ephemeral ranges
+    // so an application listening on port 0 cannot claim one before startup.
+    port = await getPort.default({ port: getPort.portNumbers(10000, 20000) })
   }
 
   const originalCwd = process.cwd()

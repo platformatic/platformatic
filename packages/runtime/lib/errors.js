@@ -98,6 +98,10 @@ export const ApplicationAlreadyStartedError = createError(
   'Application is already started'
 )
 export const RuntimeNotStartedError = createError(`${ERROR_PREFIX}_NOT_STARTED`, 'Application has not been started')
+export const ApplicationShutdownError = createError(
+  `${ERROR_PREFIX}_APPLICATION_SHUTDOWN`,
+  'Application shutdown failed: %s'
+)
 export const ConfigPathMustBeStringError = createError(
   `${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`,
   'Config path must be a string'

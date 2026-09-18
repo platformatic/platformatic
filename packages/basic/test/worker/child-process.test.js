@@ -45,6 +45,50 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
   deepStrictEqual(capability.stdout.messages.slice(1), ['IMPORTED', 'LOADED true'])
 })
 
+test('ChildProcess - duplicate shutdown waits for cleanup and exits naturally', async t => {
+  const capability = await create(t)
+  const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const execution = capability.buildWithCommand(['node', executablePath])
+  const manager = await getChildManager(capability)
+  const [, socket] = await once(manager, 'ready')
+  const started = once(manager, 'cleanup:started')
+  const finished = once(manager, 'finished')
+  const first = manager.send(socket, 'close')
+  await started
+  const second = manager.send(socket, 'close')
+  await manager.send(socket, 'release')
+  await Promise.all([first, second])
+  const [order] = await finished
+  deepStrictEqual(order, ['second:start', 'second:end', 'first', 'signal'])
+  await execution
+})
+
+test('ChildProcess - duplicate failures retain serializable errors and still run SIGINT', async t => {
+  const capability = await create(t)
+  const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const execution = capability.buildWithCommand(['node', executablePath, '--fail'])
+  const exited = rejects(execution, { code: 'PLT_BASIC_NON_ZERO_EXIT_CODE' })
+  const manager = await getChildManager(capability)
+  const [, socket] = await once(manager, 'ready')
+  const started = once(manager, 'cleanup:started')
+  const finished = once(manager, 'finished')
+  const check = error => {
+    equal(error.handlerErrorCode, 'PLT_BASIC_APPLICATION_SHUTDOWN')
+    const details = error.handlerError.errors
+    equal(details[0].message, 'Unprintable shutdown rejection')
+    equal(details.length, 1)
+    return true
+  }
+  const first = rejects(manager.send(socket, 'close'), check)
+  await started
+  const second = rejects(manager.send(socket, 'close'), check)
+  await manager.send(socket, 'release')
+  await Promise.all([first, second])
+  const [order] = await finished
+  deepStrictEqual(order, ['second:start', 'second:end', 'first', 'signal'])
+  await exited
+})
+
 test('ChildProcess - the process will close upon request', async t => {
   const capability = await create(t)
 
@@ -53,8 +97,11 @@ test('ChildProcess - the process will close upon request', async t => {
   const childManager = await getChildManager(capability)
 
   const [, socket] = await once(childManager, 'ready')
-  await childManager.send(socket, 'close')
-  await rejects(() => promise, /Process exited with non zero exit code/)
+  const processExit = rejects(() => promise, /Process exited with non zero exit code/)
+  await rejects(() => childManager.send(socket, 'close'), {
+    handlerErrorCode: 'PLT_BASIC_APPLICATION_SHUTDOWN'
+  })
+  await processExit
 })
 
 test('ChildProcess - the process exits in case of invalid messages', async t => {

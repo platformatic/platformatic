@@ -30,3 +30,13 @@ export const ScheduledTaskNotFound = createError(
   `${ERROR_PREFIX}_SCHEDULED_TASK_NOT_FOUND`,
   'Scheduled task "%s" not found'
 )
+
+export const ApplicationShutdownError = createError(
+  `${ERROR_PREFIX}_APPLICATION_SHUTDOWN`,
+  'Application shutdown failed: %s'
+)
+
+export const ApplicationShutdownTimeoutError = createError(
+  `${ERROR_PREFIX}_APPLICATION_SHUTDOWN_TIMEOUT`,
+  'Child process shutdown exceeded its deadline'
+)

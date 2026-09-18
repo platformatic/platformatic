@@ -1,6 +1,6 @@
-import { strictEqual, ok } from 'node:assert'
+import { deepStrictEqual, strictEqual, ok } from 'node:assert'
 import test from 'node:test'
-import { ensureLoggableError, ensureError } from '../index.js'
+import { ensureLoggableError, ensureError, getErrorMessage, serializeError } from '../index.js'
 
 test('ensureLoggableError - should make message enumerable', () => {
   const error = new Error('test message')
@@ -110,4 +110,23 @@ test('ensureError - should preserve all properties from error-like object', () =
   strictEqual(result.statusCode, 400)
   strictEqual(result.details.field, 'validation failed')
   strictEqual(result.nested.prop, 'value')
+})
+
+test('serializeError - should be safe for JSON and structured clone', () => {
+  const fallbackMessage = 'Unprintable value'
+  const error = new Error('failure')
+  error.code = 'TEST_FAILURE'
+  error.self = error
+
+  for (const value of [null, undefined, 'failure', error, Object.create(null), new Proxy({}, {
+    get () { throw error }
+  })]) {
+    const result = serializeError(value, fallbackMessage)
+    strictEqual(typeof result.message, 'string')
+    deepStrictEqual(JSON.parse(JSON.stringify(result)), structuredClone(result))
+  }
+
+  strictEqual(serializeError(error, fallbackMessage).code, 'TEST_FAILURE')
+  strictEqual(serializeError(Object.create(null), fallbackMessage).message, fallbackMessage)
+  strictEqual(getErrorMessage(Object.create(null), fallbackMessage), fallbackMessage)
 })

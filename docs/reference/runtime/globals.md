@@ -235,25 +235,34 @@ const currentContext = sharedContext.get()
 | API | Description |
 | --- | --- |
 | `getEvents(options?)` | Returns the application `PlatformaticEvents` event emitter. |
+| `registerCloseCallback(callback)` | Registers an asynchronous resource cleanup callback. |
 | `getSendHealthSignal(options?)` | Returns the function used to send a health signal from the application to the runtime. |
 | `setCustomHealthCheck(healthCheck)` | Sets a custom health check. |
 | `setCustomReadinessCheck(readinessCheck)` | Sets a custom readiness check. |
 
-`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `close` event is emitted when the application is stopping and gives listeners a chance to release resources. A `close` listener should finish graceful shutdown within the configured shutdown timeout. The `exit` event is emitted just before the worker exits, after its runtime communication channels have closed, for final synchronous cleanup.
+`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `exit` event is emitted just before the worker exits, after its runtime communication channels have closed, for final synchronous cleanup.
 
 ```js
 import { getEvents } from '@platformatic/globals'
 
 const events = getEvents()
 
-events.on('close', async () => {
-  // Close application resources.
-})
-
 events.on('exit', () => {
   // Perform final synchronous cleanup.
 })
 ```
+
+`registerCloseCallback(callback)` registers asynchronous application cleanup. Callbacks are awaited in reverse registration order after managed framework shutdown. Register them before callback execution begins.
+
+```js
+import { registerCloseCallback } from '@platformatic/globals'
+
+registerCloseCallback(async () => {
+  await database.close()
+})
+```
+
+See [Application shutdown](./shutdown.md) for the shutdown sequence, signal listeners, custom commands, errors, and deadlines.
 
 Custom health and readiness checks can return a boolean or an object with `status`, `statusCode`, and `body`, either directly or as a promise:
 

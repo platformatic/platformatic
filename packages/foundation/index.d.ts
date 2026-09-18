@@ -203,6 +203,11 @@ export declare function loadConfigurationModule (
 // Error types
 export declare const ERROR_PREFIX: string
 export declare function ensureLoggableError (error: Error): Error
+export declare function serializeError (
+  value: unknown,
+  fallbackMessage: string
+): { name: string; message: string; code?: string; stack?: string }
+export declare function getErrorMessage (error: unknown, fallbackMessage: string): string
 
 export declare const PathOptionRequiredError: FastifyError
 export declare const NoConfigFileFoundError: FastifyError

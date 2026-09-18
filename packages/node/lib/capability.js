@@ -10,7 +10,6 @@ import {
   importFile,
   injectViaRequest
 } from '@platformatic/basic'
-import { getEvents } from '@platformatic/globals'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -235,7 +234,7 @@ export class NodeCapability extends BaseCapability {
 
       if (application.isBackgroundApplication === true && typeof application.close === 'function') {
         this.#appClose = function appClose () {
-          application.close(application)
+          return application.close(application)
         }
       }
 
@@ -303,16 +302,6 @@ export class NodeCapability extends BaseCapability {
 
   async _stop () {
     await super._stop()
-
-    // Emit the close event so that an application can handle it
-    const events = getEvents()
-    const closeHandled = events.emit('close')
-
-    if (!this.#isFastify && !this.#appClose && !closeHandled && !this.#app?.[Symbol.asyncDispose]) {
-      this.logger.warn(
-        `Please export a "close" function or register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
-      )
-    }
 
     if (this.childManager) {
       return this.stopCommand()

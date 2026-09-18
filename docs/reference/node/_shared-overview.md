@@ -19,7 +19,8 @@ Common APIs include:
 - `getBasePath()` to read the application base path.
 - `getMessaging()` to exchange messages with other runtime applications.
 - `getPrometheus()` to register custom metrics in the runtime registry.
-- `getEvents()` to listen for lifecycle events such as `close`.
+- `registerCloseCallback()` to register asynchronous application cleanup.
+- `getEvents()` to listen for runtime lifecycle events.
 - `setCustomHealthCheck()` and `setCustomReadinessCheck()` to customize health and readiness checks.
 
 Use the typed APIs from [`@platformatic/globals`](/docs/reference/runtime/globals); the former `globalThis.platformatic` object is no longer available in v4.

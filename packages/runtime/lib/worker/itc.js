@@ -1,14 +1,22 @@
-import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
-import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
+import {
+  ensureLoggableError,
+  executeInParallel,
+  executeWithTimeout,
+  getErrorMessage,
+  kTimeout,
+  serializeError
+} from '@platformatic/foundation'
+import { consumeCloseCallbacks, getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
 import { ITC, initializeITCTelemetry } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
-import { createServer } from 'undici-thread-interceptor'
 import { once } from 'node:events'
 import { createRequire } from 'node:module'
 import { Duplex } from 'node:stream'
 import { parentPort, workerData } from 'node:worker_threads'
+import { createServer } from 'undici-thread-interceptor'
 import {
   ApplicationExitedError,
+  ApplicationShutdownError,
   FailedToPerformCustomHealthCheckError,
   FailedToPerformCustomReadinessCheckError,
   FailedToRetrieveGraphQLSchemaError,
@@ -16,6 +24,7 @@ import {
   FailedToRetrieveMetaError,
   FailedToRetrieveMetricsError,
   FailedToRetrieveOpenAPISchemaError,
+  RuntimeAbortedError,
   WorkerExitedError,
   exitCodes
 } from '../errors.js'
@@ -112,15 +121,126 @@ async function safeHandleInITC (worker, fn) {
   }
 }
 
-async function closeITC (dispatcher, itc, messaging) {
+async function closeResource (close, errors) {
   try {
-    await dispatcher.interceptor.close()
-    await dispatcher.server?.close()
-    itc.close()
-    messaging.close()
+    await close()
+  } catch (error) {
+    errors.push(error)
+  }
+}
+
+function closeChannels (context) {
+  context.internalClosePromise ??= closeITC(context.dispatcher, context.itc, context.messaging)
+  return context.internalClosePromise
+}
+
+async function stopApplication (controller, force, dependents, shutdownTimeout) {
+  const errors = []
+  let controllerError
+
+  if (force || controller.getStatus().startsWith('start')) {
+    try {
+      getEvents().emit('stop')
+    } catch (error) {
+      errors.push(error)
+    }
+
+    try {
+      await controller.stop(force, dependents, shutdownTimeout)
+    } catch (error) {
+      controllerError = error
+      errors.push(error)
+    }
+  }
+
+  errors.push(...(await runShutdownCallbacks()))
+
+  if (errors.length > 0) {
+    const fallbackMessage = 'Unprintable shutdown rejection'
+    const details = errors.map(error => serializeError(error, fallbackMessage))
+    const error = new ApplicationShutdownError(details.map(detail => detail.message).join('; '))
+    // Preserve identifiable capability failures without exposing arbitrary
+    // application properties to the IPC serializer.
+    if (errors.length === 1 && errors[0] === controllerError && details[0].code) {
+      error.code = details[0].code
+      error.message = details[0].message
+    }
+    error.errors = details
+    throw error
+  }
+}
+
+async function stopController (context, force, dependents, shutdownTimeout, stopProcessed) {
+  try {
+    if (context.controller.getStatus() === 'starting') {
+      // The start handler reports its own error and shares cleanup with us.
+      await context.controllerStartPromise.catch(() => {})
+    }
+    if (!context.applicationStopPromise) {
+      const { promise, resolve, reject } = Promise.withResolvers()
+      context.applicationStopPromise = promise
+      stopApplication(context.controller, force, dependents, shutdownTimeout).then(resolve, reject)
+    }
+    await context.applicationStopPromise
   } finally {
+    // Always schedule cleanup, even when stop throws. Otherwise the worker
+    // keeps open handles and runtime shutdown hangs until the grace timeout.
+    stopProcessed.then(() => {
+      closeChannels(context).catch(err => {
+        context.logger.error({ err: ensureLoggableError(err) }, 'Failed to close the worker ITC after stop.')
+      })
+    })
+  }
+}
+
+async function runShutdownCallbacks () {
+  const errors = []
+  const callbacks = consumeCloseCallbacks().reverse()
+
+  for (const callback of callbacks) {
+    try {
+      await callback()
+    } catch (error) {
+      errors.push(error)
+    }
+  }
+
+  const signalListeners = process.listeners('SIGINT')
+  for (const listener of signalListeners) {
+    process.removeListener('SIGINT', listener)
+  }
+
+  for (const listener of signalListeners) {
+    try {
+      // Like a signal emission, ignore return values without consuming rejected promises.
+      listener.call(process, 'SIGINT')
+    } catch (error) {
+      errors.push(error)
+    }
+  }
+
+  return errors
+}
+
+export async function closeITC (dispatcher, itc, messaging) {
+  const errors = []
+
+  await closeResource(() => dispatcher.interceptor.close(), errors)
+  await closeResource(() => dispatcher.server?.close(), errors)
+  await closeResource(() => itc.close(), errors)
+  await closeResource(() => messaging.close(), errors)
+
+  try {
     const events = getEvents()
     events.emit('exit')
+  } catch (error) {
+    errors.push(error)
+  }
+
+  if (errors.length > 0) {
+    throw new ApplicationShutdownError(
+      errors.map(error => getErrorMessage(error, 'Unprintable shutdown rejection')).join('; ')
+    )
   }
 }
 
@@ -171,7 +291,18 @@ export async function setupITC (controller, application, dispatcher, sharedConte
 
   // ITC handlers run concurrently, so later start/stop requests must wait for
   // the actual in-flight start operation rather than a controller event.
-  let controllerStartPromise
+  const context = {
+    controller,
+    dispatcher,
+    itc: null,
+    messaging,
+    logger,
+    controllerStartPromise: null,
+    controllerStopPromise: null,
+    abortStart: false,
+    applicationStopPromise: null,
+    internalClosePromise: null
+  }
 
   const itc = new ITC({
     name: controller.applicationConfig.id + '-worker',
@@ -181,27 +312,28 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         const status = controller.getStatus()
 
         if (status === 'starting') {
-          await controllerStartPromise
+          await context.controllerStartPromise
         } else {
           // This gives a chance to a capability to perform custom logic
           const events = getEvents()
           events.emit('start')
 
           try {
-            controllerStartPromise = controller.start()
-            await controllerStartPromise
+            context.controllerStartPromise = controller.start()
+            await context.controllerStartPromise
+            if (context.abortStart) {
+              throw new RuntimeAbortedError()
+            }
           } catch (e) {
-            await controller.stop(true)
-
-            // Reply to the runtime that the start failed, so it can cleanup
-            once(itc, 'application:worker:start:processed').then(() => {
-              closeITC(dispatcher, itc, messaging).catch(err => {
-                logger.error(
-                  { err: ensureLoggableError(err) },
-                  'Failed to close the worker ITC after a failed start.'
-                )
-              })
-            })
+            const startProcessed = once(itc, 'application:worker:start:processed')
+            try {
+              await stopController(context, true, [], undefined, startProcessed)
+            } catch (error) {
+              logger.error(
+                { err: ensureLoggableError(error) },
+                'Errors occurred while cleaning up a failed application start.'
+              )
+            }
 
             // Errors are structured cloned when sent to the runtime, which drops all their custom properties (like the
             // port and the address of listen errors): send a plain object instead so that the runtime can inspect them.
@@ -244,33 +376,23 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         }
       },
 
-      async stop ({ force, dependents }) {
-        try {
-          const status = controller.getStatus()
-
-          if (!force && status === 'starting') {
-            await controllerStartPromise
-          }
-
-          if (force || status.startsWith('start')) {
-            // This gives a chance to a capability to perform custom logic
-            const events = getEvents()
-            events.emit('stop')
-
-            await controller.stop(force, dependents)
-          }
-        } finally {
-          // Always schedule cleanup, even when stop throws. Otherwise the worker
-          // keeps open handles and runtime shutdown hangs until the grace timeout.
-          once(itc, 'application:worker:stop:processed').then(() => {
-            closeITC(dispatcher, itc, messaging).catch(err => {
-              logger.error(
-                { err: ensureLoggableError(err) },
-                'Failed to close the worker ITC after stop.'
-              )
-            })
-          })
+      async stop ({ force, dependents, shutdownTimeout }) {
+        if (context.controllerStopPromise) {
+          return context.controllerStopPromise
         }
+        context.abortStart = !!force
+
+        const stopProcessed = once(itc, 'application:worker:stop:processed')
+
+        context.controllerStopPromise = stopController(
+          context,
+          force,
+          dependents,
+          shutdownTimeout,
+          stopProcessed
+        )
+
+        return context.controllerStopPromise
       },
 
       async getDependencies () {
@@ -424,11 +546,11 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         const session = new Session()
         session.connect()
 
-        session.on('HeapProfiler.addHeapSnapshotChunk', (m) => {
+        session.on('HeapProfiler.addHeapSnapshotChunk', m => {
           port.postMessage({ type: 'chunk', chunk: m.params.chunk })
         })
 
-        session.post('HeapProfiler.takeHeapSnapshot', null, (err) => {
+        session.post('HeapProfiler.takeHeapSnapshot', null, err => {
           session.disconnect()
           if (err) {
             port.postMessage({ type: 'error', message: err.message })
@@ -518,6 +640,8 @@ export async function setupITC (controller, application, dispatcher, sharedConte
   controller.on('changed', () => {
     itc.notify('changed')
   })
+
+  context.itc = itc
 
   itc.listen()
   return itc

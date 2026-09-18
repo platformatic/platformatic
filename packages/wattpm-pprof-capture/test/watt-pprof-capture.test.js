@@ -540,31 +540,19 @@ test('profiling with eluThreshold should start when threshold is reached', async
   await app.sendCommandToApplication('service', 'stopProfiling')
 })
 
-test('profiling with eluThreshold should pause during rotation when below threshold', async t => {
-  const { app, url } = await createApp(t)
+test('profiling with eluThreshold should pause at the rotation boundary', async t => {
+  const { app } = await createApp(t)
 
-  // Start CPU intensive task first
-  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
-
-  // Stop the workload before the first rotation. Profile serialization adds
-  // enough ELU to obscure the workload transition this test is exercising.
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.9, durationMillis: 5000, maxELU: false })
-
-  // Wait for the runtime health cycle to observe the high ELU and resume the profiler
-  await waitForCondition(async () => {
-    const state = await app.sendCommandToApplication('service', 'getProfilingState')
-    return state.isProfilerRunning
-  }, 10000)
-
-  // Stop CPU intensive task so ELU drops below the threshold hysteresis.
-  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
-
-  // Apply the same gate transition directly so this test remains focused on
-  // pausing at the rotation boundary. Health-driven gate transitions are
-  // covered by the threshold tests above: relying on the measured ELU here is
-  // not reliable because the running profiler itself keeps the worker event
-  // loop busy, so the observed ELU never drops far enough below the threshold.
+  // Keep the runtime's ELU gate inactive while driving the transitions directly.
+  // Otherwise live health samples can resume the profiler and cancel the pause.
+  // The surrounding tests cover health-driven threshold transitions.
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 2, durationMillis: 5000, maxELU: false })
+  await app.sendCommandToApplication('service', 'resumeProfiling')
   await app.sendCommandToApplication('service', 'pauseProfiling', { reason: 'threshold' })
+
+  const pending = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(pending.isProfilerRunning, 'The current rotation should still be recording')
+  assert.ok(pending.isPausedBelowThreshold, 'The pause should be pending')
 
   // The profiler keeps running until the current rotation window completes,
   // then pauses at the rotation boundary.
