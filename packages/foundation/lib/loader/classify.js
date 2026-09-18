@@ -9,9 +9,20 @@ export const rootConfigurationKeys = ['application', 'applications', 'autoload']
 export const rootOnlyKeys = ['autoload', 'workers', 'managementApi', 'applications', 'application']
 
 /*
-  Four unconditional rules, read off the canonical snapshot and never off the raw export. Rule 1 —
-  the function call — has already happened by the time this runs; what is left is total over
-  objects, and everything that is not an object is refused ahead of them.
+  The four classification rules, in order. They are read off the canonical snapshot and never off
+  the raw export:
+
+    1. A function export is called once with the configuration context and its resolved value is
+       classified by the rules below. This happens in the evaluation pipeline before this runs, so
+       what reaches here is always the resolved object.
+    2. An object with a `module` key is an application definition (a capability factory result, or a
+       hand-written per-application config).
+    3. An object with a root key (`application`, `applications` or `autoload`) is a root config.
+    4. Any other object — including an empty one — is a root config: an empty file is a statement,
+       not an absence.
+
+  Rules 3 and 4 return the same answer, so the code distinguishes only rule 2 from the rest.
+  Everything that is not an object is refused ahead of them.
 
   null is the one worth spelling out: typeof null === 'object', so it would reach rule 2 as a
   property read on nothing, and the difference between a TypeError from one implementation and an
