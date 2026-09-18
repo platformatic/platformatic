@@ -502,14 +502,14 @@ test('import - a remote application in a v4 root records its branch', async t =>
   others by name -- so import fails on the load, before any edit, rather than growing a second
   list beside a key nothing reads.
 */
-test('import - a v4 root that lists its applications under a v3 alias is refused', async t => {
+test('import - a root that lists its applications under a legacy alias is refused', async t => {
   const root = await createTemporaryDirectory(t, 'import-v4-alias')
 
   await prepareRoot(t, root, "export default { web: [{ id: 'first', path: 'first' }] }\n")
   const process = await wattpmUtils('import', 'http://github.com/foo/bar.git', { reject: false })
 
   deepStrictEqual(process.exitCode, 1)
-  ok(process.stderr.includes("declares its applications under 'web', which is the v3 spelling"), process.stderr)
+  ok(process.stderr.includes("declares its applications under 'web', which is the legacy spelling"), process.stderr)
 })
 
 test('import - a v4 root it cannot edit is printed rather than rewritten', async t => {
