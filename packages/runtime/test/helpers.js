@@ -211,6 +211,10 @@ export async function requestAndDump (url, opts) {
 }
 
 export function execRuntime ({ configPath, onReady, done, timeout = 30_000, env = {} }) {
+  // A converted fixture is named with its legacy filename here too: redirect to the watt.config.*
+  // beside it, leaving a still-present legacy file (the upgrade chains) untouched.
+  configPath = resolveConfigurationPath(configPath)
+
   return new Promise((resolve, reject) => {
     if (!done && !onReady) {
       reject(new Error('done or onReady fn is required'))

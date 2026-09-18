@@ -147,7 +147,7 @@ test('should exit with the PROCESS_UNHANDLED_ERROR code on uncaught exceptions r
 
 test('should exit with the PROCESS_UNHANDLED_ERROR code on unhandled rejections raised while starting', async t => {
   const context = {}
-  const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.starting.json')
+  const configFile = join(fixturesDir, 'unhandled-mode', 'starting-mode', 'watt.config.js')
   const server = await createRuntime(configFile, null, context)
 
   t.after(() => {
@@ -196,7 +196,7 @@ test('should exit with the PROCESS_UNHANDLED_ERROR code on unhandled rejections 
 })
 
 test('should exit with the PROCESS_UNHANDLED_ERROR code when an unhandled rejection follows a stop', async t => {
-  const configFile = join(fixturesDir, 'unhandled-mode', 'platformatic.handled.json')
+  const configFile = join(fixturesDir, 'unhandled-mode', 'handled', 'watt.config.js')
   const server = await createRuntime(configFile)
   const { 'composer:0': url } = await server.start()
 
