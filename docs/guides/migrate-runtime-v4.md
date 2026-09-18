@@ -19,6 +19,10 @@ npx wattpm-utils migrate
 
 `migrate` reads the v3 configuration, decides every refusal before writing anything, and then writes the v4 files. It converts `{PLT_X}` placeholders to the expressions they stand for, moves the root listener into the capability that owned it, and reports what it could not decide for you. What follows is what it does, so that you can read its output — and do it by hand where you would rather.
 
+**Run it on a clean git tree.** There is no backup file and no `--keep`: version control is the undo mechanism, so review the result with `git diff` and undo it with `git restore` if needed. `migrate` refuses to run on a dirty tree (`--force` overrides, with a loud warning; the same flag is needed for a project with no VCS at all). An untracked or gitignored legacy config file — `platformatic.json` is often gitignored because it carries secrets — counts as dirty too, and blocks the run by name, because deleting a file git never tracked is unrecoverable; commit it or exclude it deliberately first.
+
+Legacy config files are **deleted** once the new ones are written and validated, not merely left in place. If the run is interrupted, `wattpm-utils migrate --resume` continues from where it left off, using a `.wattpm-migrate.json` manifest written for the life of the run (and removed on completion).
+
 ## Choosing the filename
 
 `.ts` and `.mts` are TypeScript, stripped by Node itself — types are annotations only, so no `enum`, no `namespace`, no parameter properties. `.js` and `.mjs` are plain JavaScript.

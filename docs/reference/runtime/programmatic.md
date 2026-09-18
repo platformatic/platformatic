@@ -283,6 +283,29 @@ Stops the listed applications and removes them from the runtime. `applications` 
 await app.removeApplications(['analytics-service'])
 ```
 
+### `runtime.setApplicationConfigPatch(id, ops)`
+
+Applies a [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) document against an
+application's raw configuration, before capability defaults are applied. The patch is stored on the
+runtime and reapplied whenever that application's worker (re)starts.
+
+```js
+app.setApplicationConfigPatch('api', [
+  { op: 'replace', path: '/server/port', value: 3043 }
+])
+```
+
+### `runtime.removeApplicationConfigPatch(id)`
+
+Clears a patch set by `setApplicationConfigPatch()`.
+
+```js
+app.removeApplicationConfigPatch('api')
+```
+
+This is the mechanism integration tooling uses to override an application's configuration without
+rewriting its `watt.config.*` file; there is no CLI equivalent.
+
 ### Example: dynamic application management
 
 ```js

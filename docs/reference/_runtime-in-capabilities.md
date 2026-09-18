@@ -1,8 +1,8 @@
 ## Runtime settings for a single application
 
-v3 let an application's own configuration file carry a `runtime` block, which was hoisted when that
-application was started on its own. There is no such block in v4, and no hoisting step: orchestration
-is written at the top level, in exactly the place a multi-application project writes it.
+An application's own configuration file cannot carry a `runtime` block, and there is no hoisting
+step: orchestration is written at the top level, in exactly the place a multi-application project
+writes it.
 
 A single application with orchestration to express is a runtime configuration with the singular
 `application` shorthand, whose `config` is the same factory call the file would otherwise export:
@@ -25,7 +25,7 @@ export default createWattConfig({
 
 The example uses `@platformatic/next`; the same shape applies to every capability.
 
-Where each v3 property went:
+Where each `runtime` property now lives:
 
 - What was directly under `runtime` — [`preload`](./runtime/configuration.md#preload),
   [`workers`](./runtime/configuration.md#workers), [`logger`](./runtime/configuration.md#logger),
@@ -39,9 +39,9 @@ Where each v3 property went:
 - What was under `runtime.application` — `workers`, `health`, `env`, `envfile`, `sourceMaps`,
   `preload`, `nodeOptions`, `execArgv`, `permissions`, `tracing` and `compileCache` — belongs to the
   [`application`](./runtime/configuration.md#applications) entry, beside `config`.
-- `runtime.server` has nowhere to go, because v4 has no runtime-level listener: the address is the
+- `runtime.server` has nowhere to go, because there is no runtime-level listener: the address is the
   application's own `server` block, inside the capability configuration.
 
 A configuration that still declares `runtime` is refused by name rather than accepted and ignored.
-[`wattpm-utils migrate`](../guides/migrate-runtime-v4.md) writes the form above for any v3 file that had
+[`wattpm-utils migrate`](../guides/migrate-runtime-v4.md) writes the form above for any legacy file that had
 a non-default block.

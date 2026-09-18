@@ -119,14 +119,15 @@ You can list environment variables for a running application by specifying eithe
 
 ### Printing the resolved configuration
 
-Configuration is a program in v4, so it is inspected where it is evaluated rather than fetched from
+Configuration is a program, so it is inspected where it is evaluated rather than fetched from
 a running server:
 
 ```bash
 wattpm start --debug-config
 ```
 
-This prints the fully resolved configuration and boots nothing.
+This prints the fully resolved configuration and boots nothing. There is no `wattpm config`
+command to fetch it from a running server — `--debug-config` is the way to inspect it.
 
 ### Injecting an HTTP request into a running application
 

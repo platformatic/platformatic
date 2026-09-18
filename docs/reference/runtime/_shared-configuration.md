@@ -27,10 +27,16 @@ The `autoload` configuration is intended to be used with monorepo applications.
   should not be processed.
 - **`mappings`** (`object`) - Each applicaiton is given an ID and is expected
   to have a Platformatic configuration file. By default, the ID is the
-  application's directory name, and the configuration file is expected to be a
-  well-known Platformatic configuration file. `mappings` can be used to override
-  these default values.
+  application's `package.json` `name` with any npm scope stripped (`@acme/frontend`
+  becomes `frontend`), or the directory name when the package declares no `name`.
+  The configuration file is expected to be a well-known Platformatic configuration
+  file. `mappings` can be used to override these default values.
   Supported properties are the same of entries in `application`, except `path`, `url`, and `gitBranch`.
+
+  An id must be a legal DNS label — it matches `^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$` — since
+  it is also the application's mesh hostname (`<id>.plt.local`). A derived id that is not (for
+  example a directory or package name containing `_` or `.`) is a configuration error; use
+  `mappings` to give that application a legal `id` explicitly.
 
 ### `preload`
 
@@ -274,7 +280,8 @@ restarted) and shipping the captured profiles — see the
 ### `applications`
 
 `applications` is an array of objects that defines the applications managed by the
-runtime. Each application object supports the following settings:
+runtime — it is the only key for this; there is no `web` or `services` alias. Each application
+object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the application.
 - **`enabled`** (`boolean`, `string` or `object`) - If `false`, the application
@@ -292,8 +299,8 @@ runtime. Each application object supports the following settings:
 - **`module`** (`string`) - The installed npm package that implements the application. When specified, `path` is also required and is used as the writable application root. The package itself is resolved from the Watt project's dependencies and is not modified by the runtime.
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
 - **`config`** (`object`) - The application's own configuration, inline: what a capability factory
-  returns, or a plain object naming its `module`. In v3 this was the path to a configuration file;
-  an application that has its own `watt.config.*` needs nothing here.
+  returns, or a plain object naming its `module`. An application that has its own `watt.config.*`
+  needs nothing here.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
 - **`workers`** - The number of workers to start for this application. In development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
@@ -304,7 +311,7 @@ runtime. Each application object supports the following settings:
     - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
 - **`health`** (object): Configures the health check and low-level resource defaults for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here override the values specified in the runtime.
 - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
-- **`envfile`** (`string`) - The path to an `.env` file to load for the application. By default, the `.env` file is loaded from the application directory.
+- **`envfile`** (`string`) - The path to an `.env` file to load for the application, resolved relative to the application's own directory. By default, the `.env` file is loaded from the application directory. Naming a file that does not exist is an error. Not valid on an entry that also carries an inline `config` — that application has no separate per-app evaluation step for `envfile` to apply to.
 - **`env`** (`object`) - An object containing environment variables to set for the application. Values set here takes precedence over values set in the `envfile`.
 - **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the application. Default: `false`.
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `wattpm-utils`. Default is to autodetect it, unless it is specified via command line.
@@ -371,10 +378,8 @@ export default createWattConfig({
 })
 ```
 
-An alias for `applications`. If both are present, their content will be merged.
-
 It's also possible to disable the instrumentation by setting the `enabled` property to `false`. It is
-a boolean, and v4 does not coerce — the string `'false'` is not `false`, so read the variable and
+a boolean, and there is no coercion — the string `'false'` is not `false`, so read the variable and
 compare:
 
 ```ts config
@@ -401,15 +406,20 @@ runtime. Any environment variables set in the `env` object will be merged with
 the environment variables set in the `envfile` and `env` properties of each
 application, with application-level environment variables taking precedence.
 
+A variable already set in the real process environment always wins over an `env` block, at either
+level — a block sets a default for a variable that isn't already there, it does not override one
+that is. This follows the same convention as env files: only the real environment is authoritative
+over everything.
+
 ### `envfile`
 
-**Removed at the root in v4.** Env files are discovered rather than named: every directory from the
+**Removed at the root.** Env files are discovered rather than named: every directory from the
 configuration file's own up to the project root contributes its `.env`, nearest first. An individual
 application entry may still set `envfile` to replace that set for itself.
 
 ### `strictEnv`
 
-**Removed in v4.** It controlled what happened when a `{PLT_*}` placeholder referenced an unset
+**Removed.** It controlled what happened when a `{PLT_*}` placeholder referenced an unset
 variable, and there are no placeholders — a configuration file reads `process.env` itself, so an
 unset variable is `undefined` and what happens next is written in the file:
 
@@ -975,12 +985,12 @@ export default createWattConfig({
 
 ### `verticalScaler`
 
-**Removed in v4.** It was the deprecated spelling of [`workers`](#workers), kept on the v3 schema
-with a transform that rewrote it. v4 has one spelling: a configuration that still says
+**Removed.** It was the deprecated spelling of [`workers`](#workers), previously kept alongside a
+transform that rewrote it. There is now one spelling: a configuration that still says
 `verticalScaler` is told so by the schema rather than being quietly rewritten, which is the only way
 the two cannot disagree about which of them a project meant.
 
-The v3 transform is the mapping to apply by hand:
+The mapping to apply by hand:
 
 | `verticalScaler`     | `workers`                     |
 | -------------------- | ----------------------------- |
@@ -994,7 +1004,7 @@ The v3 transform is the mapping to apply by hand:
 | `applications[<id>]` | that application's `workers`  |
 
 `scaleUpELU`, `scaleDownELU`, `timeWindowSec`, `scaleDownTimeWindowSec` and `scaleIntervalSec` were
-already unused on v3 — the thresholds and windows the scaler uses are fixed — so they carry across to
+already unused — the thresholds and windows the scaler uses are fixed — so they carry across to
 nothing.
 
 ### policies
@@ -1239,15 +1249,25 @@ export default createWattConfig({
 PLT_SERVER_LOGGER_LEVEL=debug
 ```
 
+Four names are recognized in each directory: `.env`, `.env.local`, `.env.<mode>` and
+`.env.<mode>.local` (`mode` is `'development'` under `wattpm dev`, `'production'` under
+`wattpm build`/`wattpm start`, or whatever `--mode <name>` set). Within one directory, a
+mode-specific file beats the generic one, and a `.local` file beats its committed counterpart:
+`.env.<mode>.local` > `.env.<mode>` > `.env.local` > `.env`.
+
 Every directory from the configuration file's own up to the project root is layered, nearest first, so an application's `.env` overrides the root's. Variables already set in the real environment win over every file, which is what makes this work on the command line:
 
 ```bash
 PLT_SERVER_LOGGER_LEVEL=trace npx wattpm start
 ```
 
+An `env` block configures the application that runs — it is not visible while configuration is
+being evaluated, at any position. A value that a config file itself needs to read must come from
+the real environment or an env file, not from an `env` block.
+
 ### Variables the runtime no longer sets
 
-`PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` were injected by v3 and are **removed**. This is a change to what application code sees, not only to what configuration can interpolate — an application reading `process.env.PLT_ROOT` loses it.
+`PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are no longer injected. An application reading `process.env.PLT_ROOT` (or either of the other two) gets `undefined`.
 
 There is no drop-in replacement, because `PLT_ROOT` meant two different directories depending on who read it: inside a configuration file it was that file's own directory, while application code received the runtime root. For a module that wants its own directory, use `import.meta.dirname`. For the branch that `PLT_DEV` used to carry, take it from the configuration context, which is typed:
 

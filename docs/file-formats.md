@@ -22,6 +22,14 @@ export default createWattConfig({
 })
 ```
 
+**A configuration file is trusted code.** It runs with the same privileges as the runtime itself —
+it can read any file the process can and open sockets, exactly as an application's own code can.
+Isolating each configuration file's evaluation protects one application's environment from leaking
+into another's, not against hostile configuration. Only add a `watt.config.*` — your own or a
+remote application's — that you trust as much as the code it configures. For the same reason, a
+resolved configuration can contain secrets that were read from the environment:
+`wattpm start --debug-config` and the management API print it as-is, unredacted.
+
 # Supported File Formats
 
 The extension chooses the language and the module system. Which one you can write is decided by the package the file sits in, not by preference.
@@ -49,7 +57,7 @@ Every format supports comments, because every format is source code. This is one
 
 ## The JSON formats
 
-`watt.json`, `platformatic.json`, and the JSON5, YAML and TOML variants were the v3 configuration files. They are not read, and one sitting beside a `watt.config.*` file is refused rather than merged — the two describe the same thing and would disagree.
+`watt.json`, `platformatic.json`, and the JSON5, YAML and TOML variants are the legacy configuration files. They are not read, and one sitting beside a `watt.config.*` file is refused rather than merged — the two describe the same thing and would disagree.
 
 To convert a project, run:
 

@@ -26,21 +26,30 @@ That is emitted as `'export default ' + JSON.stringify(config)`. It imports noth
 
 **A file that imports its dependencies does not need a marker, and a file that does not, does.**
 
-A `watt.config.ts` that says `import { createWattConfig } from 'wattpm'` is read by whichever major of `wattpm` is installed. That import is what identifies the format: a v5 loader reading a v4-shaped file fails v5's own validation with an actionable error, the same way v4 refuses a v3 JSON file. A plain object built from a string has no resolved package behind it and no capability call to carry a stamp, so it needs `$schema` for the same reason v3's JSON did.
+A `watt.config.ts` that says `import { createWattConfig } from 'wattpm'` is read by whichever major of `wattpm` is installed. That import is what identifies the format: a newer major's loader reading a config shaped for an older major fails its own validation with an actionable error, the same way the current loader refuses a legacy JSON configuration. A plain object built from a string has no resolved package behind it and no capability call to carry a stamp, so it needs `$schema` for the same reason legacy JSON configurations did.
 
 What the loader does with the stamp:
 
 - it reads it for **version detection only** — never to choose a module
-- it **strips it before validation**, because the v4 root schema does not admit `$schema`. Without the strip every generated configuration would fail to validate
-- a stale v3 URL is refused, with the hint to run `wattpm-utils migrate`
+- it **strips it before validation**, because the root schema does not admit `$schema`. Without the strip every generated configuration would fail to validate
+- a stale, legacy `$schema` URL is refused, with the hint to run `wattpm-utils migrate`
 
 `WattConfig` declares no `$schema`, so writing one in a TypeScript configuration is a type error. That is deliberate: the property is for the files that cannot identify themselves any other way.
 
 ## What not to reach for instead
 
-**Do not call `createWattConfig` or a capability factory to get a stamp.** Those run *installed* code. Under a v5 install it is v5's `createWattConfig` executing, so a file authored against v4 would be stamped `5` — a marker that is wrong in exactly the case it exists for, which is worse than no marker at all. Only a literal in the file can name the major it was authored against.
+**Do not call `createWattConfig` or a capability factory to get a stamp.** Those run *installed* code. Under a newer major's install it is that major's `createWattConfig` executing, so a file authored against an older major would be stamped with the newer major — a marker that is wrong in exactly the case it exists for, which is worse than no marker at all. Only a literal in the file can name the major it was authored against.
 
 **`ApplicationDefinition.version` is not this mechanism.** It exists for the root/application version-skew check, it is absent from hand-written `{ module }` objects by design, and a root whose applications are all remote or all autoload-detected carries no factory result to stamp. It says which copy of a capability produced an entry, not what shape the file is.
+
+The version-skew check compares the capability version a root-inline factory resolved against the
+version the application's own worker resolves — these can differ when the two resolve to different
+copies of the same package, for example under a strict layout where an application depends on a
+newer capability than the root does. A **major** mismatch is a boot error, naming both resolved
+paths and versions; a **minor** mismatch is a warning (legitimate mid-upgrade drift); a **patch**
+difference is ignored. A prerelease component on either side (`4.0.0-alpha.1` vs `4.0.0`) requires
+an exact match, since prerelease versions can disagree on shape while sharing a major, minor and
+patch. Hand-written `{ module }` definitions carry no stamp and skip the check.
 
 ## Writing an application's configuration
 

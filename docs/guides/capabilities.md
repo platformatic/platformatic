@@ -58,8 +58,29 @@ export default createWattConfig({
 })
 ```
 
-v3 accepted these settings under a `runtime` property inside the application's own file. That property
-does not exist in v4; see [Runtime settings for a single application](../reference/next/configuration.md#runtime-settings-for-a-single-application).
+These settings do not live under a `runtime` property inside the application's own file; see [Runtime settings for a single application](../reference/next/configuration.md#runtime-settings-for-a-single-application).
+
+#### Where the capability package must be resolvable from
+
+A capability factory called from an application's own `watt.config.*` (the usual, per-application
+style) resolves the same way any other import from that file does — the capability just needs to be
+a dependency of that application, exactly as before.
+
+When an application's own `watt.config.*` imports a capability, resolution checks the
+application's own dependencies first and falls back to the copy bundled with Watt. Under a
+hoisted dependency tree, an application that vendors its own copy of a capability the root also
+depends on gets its own copy, not the root's.
+
+Calling the factory **inline at the root**, as in the example above, is different: the import runs
+from the root configuration file, so the capability package must be resolvable from the *root*
+`package.json`. Under a strict dependency layout (for example pnpm), an application-local-only
+dependency is not visible from the root, and the loader reports it with a targeted error:
+
+```output
+✗ Cannot resolve '@platformatic/next' from watt.config.ts.
+  Add it to the root package.json, or configure the application in
+  web/frontend/watt.config.ts instead.
+```
 
 ### Available Capabilities
 

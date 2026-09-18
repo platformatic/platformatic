@@ -376,7 +376,7 @@ PLT_SERVER_LOGGER_LEVEL=debug wattpm dev
 
 ### PLT_ROOT
 
-**Removed in v4.** `{PLT_ROOT}` was set to the directory containing the configuration file and used
+**Removed.** `{PLT_ROOT}` was set to the directory containing the configuration file and used
 to build relative paths. Paths in a configuration file already resolve against that directory, so
 most uses of it need nothing. A module that wants its own directory uses `import.meta.dirname`.
 
