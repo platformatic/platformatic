@@ -2,7 +2,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { readdir, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
-import { changeWorkingDirectory, createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
+import { changeWorkingDirectory, createTemporaryDirectory, startAndWaitForUrl, wattpm } from './helper.js'
 
 /*
   Level 0. A directory with no configuration file of any kind boots on inferred defaults and
@@ -46,15 +46,10 @@ createServer((req, res) => {
     )
 
     changeWorkingDirectory(t, rootDir)
-    const startProcess = wattpm(command, rootDir)
-
-    t.after(() => {
-      startProcess.kill('SIGINT')
-      return startProcess.catch(() => {})
-    })
 
     // The synthesized application is named after the directory, which is also its mesh hostname.
-    const { url } = await waitForStart(startProcess, basename(rootDir))
+    // Retry the whole boot: a dev/start boot can exit before announcing on a loaded Windows runner.
+    const { url } = await startAndWaitForUrl(t, () => wattpm(command, rootDir), basename(rootDir))
     ok(url)
 
     deepStrictEqual(await readdir(rootDir), ['index.js'])

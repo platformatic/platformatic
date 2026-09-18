@@ -2,6 +2,7 @@ import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { on } from 'node:events'
 import { cp, mkdir, writeFile } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -103,6 +104,50 @@ export async function waitForStart (startProcess, application = 'main') {
   }
 
   return { url, raw, parsed: objects }
+}
+
+/*
+  Spawn a runtime and wait for it to announce a URL, retrying the whole boot if it exits or hangs
+  before doing so. A dev/start boot can fail transiently on a loaded runner -- a worker races its
+  port, or the process exits before printing the listening line -- which surfaced as an intermittent
+  `url` of undefined on the slowest matrix combos. `spawn` is called fresh for each attempt (so the
+  caller decides the command and directory); every spawned process is registered for cleanup, and
+  the last boot's output is included when all attempts are exhausted so a real failure is diagnosable
+  rather than a bare assertion on an undefined URL.
+*/
+export async function startAndWaitForUrl (t, spawn, application = 'main', { attempts = 3, timeoutMs = 90000 } = {}) {
+  let lastRaw = []
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const startProcess = spawn()
+    t.after(() => {
+      startProcess.kill('SIGINT')
+      return startProcess.catch(() => {})
+    })
+
+    let result
+    try {
+      result = await Promise.race([
+        waitForStart(startProcess, application),
+        sleep(timeoutMs).then(() => ({ url: undefined, raw: [Buffer.from('<timed out waiting for start>')] }))
+      ])
+    } catch (error) {
+      result = { url: undefined, raw: [Buffer.from(String(error?.stack ?? error))] }
+    }
+
+    if (result.url) {
+      return { startProcess, ...result }
+    }
+
+    lastRaw = result.raw ?? []
+    startProcess.kill('SIGINT')
+    await startProcess.catch(() => {})
+  }
+
+  throw new Error(
+    `Runtime did not announce a URL for application "${application}" after ${attempts} attempts. ` +
+      `Last boot output:\n${lastRaw.map(line => line.toString()).join('\n')}`
+  )
 }
 
 export function executeCommand (cmd, ...args) {

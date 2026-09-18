@@ -739,19 +739,47 @@ export async function getLogsFromFile (root) {
   return (await readFile(resolve(root, 'logs.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
 }
 
-// A freshly-started dev server can reset the first connections it receives -- notably on Windows,
-// where the listening socket races the accept loop -- so a transient connection error on the first
-// request is not a test failure. Retry a few times with a short backoff before giving up. A non-2xx
-// response is not retried: it is a real answer the caller asserts on.
-const transientRequestCodes = new Set(['ECONNRESET', 'ECONNREFUSED', 'UND_ERR_SOCKET', 'EPIPE', 'ECONNABORTED'])
+// A dev server takes a moment to become reachable, and on a loaded runner -- notably Windows and
+// bleeding-edge Node -- that moment can outlast the test's first connection: the HTTP port may not
+// be listening yet (ECONNREFUSED) or the freshly opened socket may be reset (ECONNRESET). Neither is
+// a test failure, so the two connect helpers below retry a transient connection error until a
+// generous deadline rather than assert on the race. A non-2xx *response* is a real answer and is
+// never retried.
+const transientRequestCodes = new Set(['ECONNRESET', 'ECONNREFUSED', 'UND_ERR_SOCKET', 'EPIPE', 'ECONNABORTED', 'ETIMEDOUT'])
 
-export async function requestWithRetry (url, options, attempts = 5, delay = 250) {
-  for (let attempt = 1; ; attempt++) {
+function isTransientConnectionError (error) {
+  return transientRequestCodes.has(error?.code ?? error?.cause?.code)
+}
+
+export async function requestWithRetry (url, options, timeoutMs = 15000, delay = 250) {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
     try {
       return await request(url, options)
     } catch (error) {
-      const code = error.code ?? error.cause?.code
-      if (attempt >= attempts || !transientRequestCodes.has(code)) {
+      if (Date.now() >= deadline || !isTransientConnectionError(error)) {
+        throw error
+      }
+      await sleep(delay)
+    }
+  }
+}
+
+// Open a WebSocket, retrying the connection while the server is still coming up. Returns an open
+// socket, or throws the last connection error once the deadline passes.
+export async function connectWebSocketWithRetry (wsUrl, protocol, timeoutMs = 20000, delay = 500) {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const ws = new WebSocket(wsUrl, protocol)
+    try {
+      await new Promise((resolve, reject) => {
+        ws.once('open', resolve)
+        ws.once('error', reject)
+      })
+      return ws
+    } catch (error) {
+      ws.terminate()
+      if (Date.now() >= deadline || !isTransientConnectionError(error)) {
         throw error
       }
       await sleep(delay)
@@ -854,13 +882,15 @@ export async function verifyHTMLViaInject (app, applicationId, url, contents) {
 export async function verifyHMR (root, runtime, url, path, protocol, handler) {
   const connection = Promise.withResolvers()
   const reload = Promise.withResolvers()
+
+  // The HMR server can take a moment to accept WebSocket connections after the app answers over
+  // HTTP -- longer on a loaded Windows runner than a fixed delay would allow -- so retry the connect
+  // until it opens instead of racing it with a single attempt after a fixed sleep. The HMR timeout
+  // below is started only once the socket is open, so the connect retry does not eat into it.
+  const webSocket = await connectWebSocketWithRetry(url.replace('http:', 'ws:') + path, protocol)
+
   const ac = new AbortController()
   const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
-
-  // Some delay to ensure the server is ready to accept WebSocket connections
-  await sleep(1000)
-
-  const webSocket = new WebSocket(url.replace('http:', 'ws:') + path, protocol)
 
   webSocket.on('error', err => {
     process._rawDebug('WebSocket error:', err)
