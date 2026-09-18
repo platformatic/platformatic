@@ -222,7 +222,9 @@ export class ChildProcess extends ITC {
   notify (name, message, options) {
     if (name === 'url') {
       if (compileCacheEnabled) {
-        scheduleCompileCacheFlush(undefined, 'child-process')
+        scheduleCompileCacheFlush(undefined, flushed => {
+          super.notify('compile-cache:flushed', { flushed, source: 'child-process' })
+        })
       } else if (compileCacheRequested) {
         super.notify('compile-cache:unavailable', { source: 'child-process' })
       }

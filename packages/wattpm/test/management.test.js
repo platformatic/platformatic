@@ -285,6 +285,7 @@ test('config - should list configuration for the runtime', async t => {
       exclude: []
     },
     sourceMaps: false,
+    compileCache: true,
     nodeModulesSourceMaps: [],
     reuseTcpPorts: true,
     restartOnError: 2,

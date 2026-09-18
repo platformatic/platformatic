@@ -1,12 +1,72 @@
 import { ok, strictEqual } from 'node:assert'
+import { once } from 'node:events'
 import { existsSync, readdirSync, rmSync } from 'node:fs'
+import { cp, mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime } from './helpers.js'
+import { createRuntime, createTemporaryDirectory } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+
+for (const command of [false, true]) {
+  for (const customDirectory of [false, true]) {
+    test(`compileCache - cache writes do not reload (command: ${command}, custom: ${customDirectory})`, async t => {
+      const root = await createTemporaryDirectory(t, 'compile-cache-watch')
+      await cp(join(fixturesDir, 'compile-cache-command'), root, {
+        recursive: true,
+        filter: source => !source.split(/[\\/]/).includes('.plt')
+      })
+      const platformaticModules = join(root, 'node_modules', '@platformatic')
+      await mkdir(platformaticModules, { recursive: true })
+      await symlink(join(import.meta.dirname, '../../node'), join(platformaticModules, 'node'), 'dir')
+      const applicationDir = join(root, 'services', 'main')
+      const cacheDir = join(applicationDir, customDirectory ? 'cache[1]' : '.plt/compile-cache')
+      const configFile = join(root, 'platformatic.json')
+      const config = JSON.parse(await readFile(configFile, 'utf8'))
+      config.watch = true
+      // Exercise the default-enabled path without the optional startup barrier.
+      delete config.compileCache
+      if (customDirectory) {
+        config.compileCache = { enabled: true, directory: cacheDir }
+      }
+      await writeFile(configFile, JSON.stringify(config))
+      if (!command) {
+        const appConfigFile = join(applicationDir, 'platformatic.json')
+        const appConfig = JSON.parse(await readFile(appConfigFile, 'utf8'))
+        delete appConfig.application.commands
+        await writeFile(appConfigFile, JSON.stringify(appConfig))
+      }
+
+      const app = await createRuntime(configFile)
+      t.after(() => app.close())
+      let restarts = 0
+      app.on('application:worker:changed', () => { restarts++ })
+      const flushed = once(app, 'application:worker:compile-cache:flushed', { signal: AbortSignal.timeout(10000) })
+      await Promise.all([app.start(), flushed])
+      ok(await waitForCacheEntries(cacheDir), 'Startup flushed the cache to disk')
+
+      // A late cache write must not reload the application either.
+      await writeFile(join(cacheDir, 'cache-write'), 'cache')
+      await sleep(1000)
+      strictEqual(restarts, 0)
+      const response = await app.inject('main', '/')
+      strictEqual(response.statusCode, 200)
+      strictEqual(JSON.parse(response.body).hello, 'world')
+
+      const sourceFile = join(applicationDir, 'index.mjs')
+      const restarted = once(app, 'application:worker:reloaded', { signal: AbortSignal.timeout(15000) })
+      const source = await readFile(sourceFile, 'utf8')
+      await writeFile(sourceFile, source.replace("hello: 'world'", "hello: 'updated'"))
+      await restarted
+      strictEqual(restarts, 1)
+      const updated = await app.inject('main', '/')
+      strictEqual(updated.statusCode, 200)
+      strictEqual(JSON.parse(updated.body).hello, 'updated')
+    })
+  }
+}
 
 // Check if compile cache API is available (Node.js 22.1.0+)
 async function isCompileCacheAvailable () {

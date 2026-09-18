@@ -24,7 +24,6 @@
   "dependencies": {
     "@fastify/deepmerge": "^3.0.0",
     "@fastify/error": "^4.0.0",
-    "@platformatic/globals": "workspace:*",
     "@iarna/toml": "^2.2.5",
     "@watchable/unpromise": "^1.0.2",
     "ajv": "^8.12.0",

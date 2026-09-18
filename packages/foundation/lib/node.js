@@ -1,6 +1,5 @@
 import { platform } from 'node:os'
 import { lt, satisfies } from 'semver'
-import { getITC } from '@platformatic/globals'
 
 const currentPlatform = platform()
 
@@ -97,7 +96,7 @@ export const features = {
   Flushing explicitly once the boot is complete, when most modules have been loaded, makes the cache
   durable. Repeated flushes are cheap as Node.js skips the entries which have already been persisted.
 */
-export function scheduleCompileCacheFlush (logger, source = 'worker') {
+export function scheduleCompileCacheFlush (logger, onFlushed) {
   // Defer the flush so that it never delays the caller.
   setImmediate(async () => {
     let flushed = false
@@ -120,8 +119,7 @@ export function scheduleCompileCacheFlush (logger, source = 'worker') {
     } catch (err) {
       logger?.warn({ err }, 'Error flushing module compile cache')
     } finally {
-      const itc = getITC({ throwOnMissing: false })
-      itc?.notify('compile-cache:flushed', { flushed, source })
+      onFlushed?.(flushed)
     }
   })
 }

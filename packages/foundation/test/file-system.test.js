@@ -70,6 +70,20 @@ test('FileWatcher - should not watch not allowed files', async t => {
   equal(false, fileWatcher.shouldFileBeWatched('another.file'))
 })
 
+test('FileWatcher - excludes literal cache directories without excluding similarly named source paths', () => {
+  const fileWatcher = new FileWatcher({
+    path: os.tmpdir(),
+    watchIgnorePaths: ['.plt/compile-cache', join(os.tmpdir(), 'cache[1]')]
+  })
+
+  for (const path of ['.plt/compile-cache', '.plt/compile-cache/version/entry', 'cache[1]/entry']) {
+    equal(fileWatcher.shouldFileBeWatched(path), false)
+  }
+  for (const path of ['.plt/compile-cache.js', 'cache1/entry', 'cache[1]-source/index.js', 'index.js']) {
+    equal(fileWatcher.shouldFileBeWatched(path), true)
+  }
+})
+
 test('FileWatcher - should emit event if file is updated', { skip: skipFsWatch }, async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')

@@ -249,6 +249,8 @@ export interface FileWatcherOptions {
   path: string
   allowToWatch?: string[]
   watchIgnore?: string[]
+  /** Literal paths to exclude together with their contents, relative to the watched path or absolute. */
+  watchIgnorePaths?: string[]
 }
 
 export declare class FileWatcher extends EventEmitter {
@@ -256,6 +258,7 @@ export declare class FileWatcher extends EventEmitter {
   path: string
   allowToWatch: string[] | null
   watchIgnore: string[] | null
+  watchIgnorePaths: string[]
   isWatching: boolean
   startWatching (): void
   stopWatching (): Promise<void>
@@ -325,7 +328,7 @@ export declare function loadModule (require: NodeRequire, path: string): Promise
 // Node types
 export declare function checkNodeVersionForApplications (): void
 export declare function mirrorGlobalDispatcherForBuiltinFetch (dispatcher: unknown): void
-export declare function scheduleCompileCacheFlush (logger?: Logger, source?: string): void
+export declare function scheduleCompileCacheFlush (logger?: Logger, onFlushed?: (flushed: boolean) => void): void
 export declare const features: {
   node: {
     reusePort: boolean

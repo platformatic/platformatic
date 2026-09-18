@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { access, chmod, glob, mkdir, rm, watch } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { platform, tmpdir } from 'node:os'
-import { join, matchesGlob, resolve } from 'node:path'
+import { join, matchesGlob, resolve, sep } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { PathOptionRequiredError } from './errors.js'
 
@@ -118,6 +118,7 @@ export class FileWatcher extends EventEmitter {
     this.path = opts.path
     this.allowToWatch = opts.allowToWatch?.map(removeDotSlash) || null
     this.watchIgnore = opts.watchIgnore?.map(removeDotSlash) || null
+    this.watchIgnorePaths = opts.watchIgnorePaths?.map(path => resolve(this.path, path)) || []
     this.handlePromise = null
     this.abortController = null
 
@@ -191,6 +192,12 @@ export class FileWatcher extends EventEmitter {
   }
 
   isFileIgnored (fileName) {
+    // Literal directory exclusions must also cover their contents without interpreting glob characters.
+    const path = resolve(this.path, fileName)
+    if (this.watchIgnorePaths.some(ignored => path === ignored || path.startsWith(ignored + sep))) {
+      return true
+    }
+
     // Always ignore the node_modules folder - This can be overriden by the allow list
     if (fileName.startsWith('node_modules')) {
       return true

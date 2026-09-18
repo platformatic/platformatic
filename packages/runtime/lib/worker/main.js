@@ -330,7 +330,9 @@ async function main () {
 
   controller.on('started', () => {
     if (compileCacheEnabled) {
-      scheduleCompileCacheFlush(logger)
+      scheduleCompileCacheFlush(logger, flushed => {
+        getITC().notify('compile-cache:flushed', { flushed, source: 'worker' })
+      })
     } else if (compileCacheRequested) {
       getITC().notify('compile-cache:unavailable', { source: 'worker' })
     }
