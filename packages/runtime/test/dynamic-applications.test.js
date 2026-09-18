@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { prepareApplication } from '../index.js'
+import { prepareAddedApplications } from '../index.js'
 import { createRuntime, sleep } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -46,12 +46,9 @@ test('should be able to add and remove applications with auto restart of compose
     const addPromise = once(runtime, 'application:started')
     const restartPromise = once(runtime, 'application:restarted')
     await runtime.addApplications(
-      [
-        await prepareApplication(runtime.getRuntimeConfig(true), {
-          id: 'application-2',
-          path: './application-2'
-        })
-      ],
+      await prepareAddedApplications(runtime.getRuntimeConfig(true), [
+        { id: 'application-2', path: './application-2' }
+      ]),
       true
     )
 
@@ -142,12 +139,9 @@ test('mesh network should work properly when adding and removing applications', 
     const addPromise = once(runtime, 'application:started')
     const restartPromise = once(runtime, 'application:restarted')
     await runtime.addApplications(
-      [
-        await prepareApplication(runtime.getRuntimeConfig(true), {
-          id: 'application-2',
-          path: './application-2'
-        })
-      ],
+      await prepareAddedApplications(runtime.getRuntimeConfig(true), [
+        { id: 'application-2', path: './application-2' }
+      ]),
       true
     )
 
@@ -229,12 +223,9 @@ test('metrics should work properly when adding and removing applications', async
     const addPromise = once(runtime, 'application:started')
     const restartPromise = once(runtime, 'application:restarted')
     await runtime.addApplications(
-      [
-        await prepareApplication(runtime.getRuntimeConfig(true), {
-          id: 'application-2',
-          path: './application-2'
-        })
-      ],
+      await prepareAddedApplications(runtime.getRuntimeConfig(true), [
+        { id: 'application-2', path: './application-2' }
+      ]),
       true
     )
 
@@ -295,21 +286,17 @@ test('vertical autoscaler should work properly when adding and removing applicat
     const config = runtime.getRuntimeConfig(true)
 
     await runtime.addApplications(
-      [
-        await prepareApplication(
-          config,
-          {
-            id: 'application-2',
-            path: './application-2',
-            workers: {
-              dynamic: true,
-              minimum: 2,
-              maximum: 3
-            }
-          },
-          config.workers
-        )
-      ],
+      await prepareAddedApplications(config, [
+        {
+          id: 'application-2',
+          path: './application-2',
+          workers: {
+            dynamic: true,
+            minimum: 2,
+            maximum: 3
+          }
+        }
+      ]),
       true
     )
 
@@ -397,13 +384,9 @@ test('should be able to remove an application whose worker crashed and was not r
   // Add application-2 with restartOnError disabled so that it stays down after crashing
   const restartPromise = once(runtime, 'application:restarted')
   await runtime.addApplications(
-    [
-      await prepareApplication(runtime.getRuntimeConfig(true), {
-        id: 'application-2',
-        path: './application-2',
-        restartOnError: 0
-      })
-    ],
+    await prepareAddedApplications(runtime.getRuntimeConfig(true), [
+      { id: 'application-2', path: './application-2', restartOnError: 0 }
+    ]),
     true
   )
   await restartPromise

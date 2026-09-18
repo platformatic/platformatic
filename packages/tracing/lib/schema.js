@@ -1,4 +1,4 @@
-import { schemaComponents } from '@platformatic/foundation'
+import { schemaComponents } from '@platformatic/foundation/schema'
 
 const schema = {
   ...schemaComponents.tracing,

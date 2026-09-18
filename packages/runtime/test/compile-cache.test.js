@@ -43,7 +43,7 @@ async function waitForCacheEntries (cacheDir, timeout = 10000) {
 
 test('compileCache - runtime starts with compile cache enabled', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'compile-cache', 'watt.config.js')
   const app = await createRuntime(configFile)
   const { 'a:0': url } = await app.start()
 
@@ -67,7 +67,7 @@ test('compileCache - the cache is flushed to disk once the application has start
   }
 
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'compile-cache', 'watt.config.js')
   const applicationDir = join(fixturesDir, 'compile-cache', 'services', 'a')
   const cacheDir = join(applicationDir, '.plt', 'compile-cache')
 
@@ -95,7 +95,7 @@ test('compileCache - the cache of an application running as a command is flushed
     return
   }
 
-  const configFile = join(fixturesDir, 'compile-cache-command', 'platformatic.json')
+  const configFile = join(fixturesDir, 'compile-cache-command', 'watt.config.js')
   const applicationDir = join(fixturesDir, 'compile-cache-command', 'services', 'main')
   const cacheDir = join(applicationDir, '.plt', 'compile-cache')
 

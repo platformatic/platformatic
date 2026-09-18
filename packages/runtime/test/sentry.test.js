@@ -44,7 +44,7 @@ test('logs all levels from the sentry fixture', async (t) => {
     '..',
     'fixtures',
     'sentry',
-    'platformatic.json'
+    'watt.config.mjs'
   )
   const levels = ['trace', 'debug', 'info', 'warn', 'error', 'fatal']
   const stdoutMessages = new Set()

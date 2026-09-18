@@ -26,7 +26,7 @@ test(
   'the event loop delay is sampled in the worker and reported as a health signal',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'event-loop-delay', 'platformatic-signals.json')
+    const configFile = join(fixturesDir, 'event-loop-delay', 'signals', 'watt.config.js')
     const app = await createRuntime(configFile)
 
     t.after(async () => {
@@ -72,7 +72,7 @@ test(
   'a worker exceeding maxEventLoopDelay is marked unhealthy and replaced',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'event-loop-delay', 'platformatic-restart.json')
+    const configFile = join(fixturesDir, 'event-loop-delay', 'restart', 'watt.config.js')
     const app = await createRuntime(configFile)
 
     t.after(async () => {
@@ -105,7 +105,7 @@ test(
   'a worker exceeding maxEventLoopDelayP99 is marked unhealthy and replaced',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'event-loop-delay', 'platformatic-restart-p99.json')
+    const configFile = join(fixturesDir, 'event-loop-delay', 'restart-p99', 'watt.config.js')
     const app = await createRuntime(configFile)
 
     t.after(async () => {
@@ -137,7 +137,7 @@ test(
   'the event loop delay is not sampled when maxEventLoopDelay is not configured',
   { skip: isWindows && 'Skipping on Windows' },
   async t => {
-    const configFile = join(fixturesDir, 'event-loop-delay', 'platformatic-disabled.json')
+    const configFile = join(fixturesDir, 'event-loop-delay', 'disabled', 'watt.config.js')
     const app = await createRuntime(configFile)
 
     t.after(async () => {

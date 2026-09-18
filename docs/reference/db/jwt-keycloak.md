@@ -124,29 +124,28 @@ Specify to use sqlite and the default migrations:
 
 ![npm create wattpm](./keycloak-images/watt-create.png)
 
-Go to `keycloak-test/services/db-service` folder and open `platformatic.json`.
-Add the `authorization` section with the `jwt` configuration:
+Go to `keycloak-test/web/db-service` folder and open `watt.config.ts`.
+Add the `authorization` section with the `jwt` configuration to the factory call:
 
-```json
-  "authorization": {
-    "jwt": {
-      "jwks": {
-        "allowedDomains": [
-          "http://127.0.0.1:8080/realms/plt"
-        ],
-        "providerDiscovery": true
-      }
-    },
-    "rolePath": "realm_access.roles",
-    "rules": [
-      {
-        "role": "movies:read",
-        "entity": "movie",
-        "find": true
-      }
-    ]
-  }
-
+```ts
+authorization: {
+  jwt: {
+    jwks: {
+      allowedDomains: [
+        'http://127.0.0.1:8080/realms/plt'
+      ],
+      providerDiscovery: true
+    }
+  },
+  rolePath: 'realm_access.roles',
+  rules: [
+    {
+      role: 'movies:read',
+      entity: 'movie',
+      find: true
+    }
+  ]
+}
 ```
 
 Note that the `rolePath` specify the  `realm_access.roles` path in the JWT token that is used to extract the roles from the token.

@@ -147,7 +147,7 @@ Outgoing HTTP client request duration metrics are disabled by default to avoid c
 This exposes `http_client_request_duration_seconds` with labels for the HTTP method, status code, dispatcher URL, and error type.
 
 :::caution
-Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
+Read credentials from the [environment](../reference/service/configuration.md#environment-variables) in your Platformatic DB configuration file rather than writing them into it.
 :::
 
 ## Custom Metrics

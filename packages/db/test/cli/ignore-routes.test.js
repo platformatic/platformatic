@@ -21,7 +21,7 @@ test('ignores openapi routes', async t => {
     await dropTestDB()
   })
 
-  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'ignore-routes.json')], {
+  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'ignore-routes', 'watt.config.js')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }

@@ -1,5 +1,5 @@
 {
-  "name": "gateway",
+  "name": "composer",
   "devDependencies": {
     "fastify": "^5.7.0"
   },

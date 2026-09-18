@@ -1,18 +1,26 @@
 #! /usr/bin/env node
 
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/schema'
 import {
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
-} from '@platformatic/foundation'
-import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
+} from '@platformatic/foundation/schema'
+import { schemaComponents as serviceSchemaComponents } from '@platformatic/service/schema'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
+
+// The application is built before _listen, which is the only thing the port guards.
+export const servesWithoutPort = { development: true, production: true }
+
+// Package-level metadata main-side preparation reads before any worker exists. It lives beside the
+// schema so the light /schema subpath carries it, which is what keeps boot from importing the full
+// capability package into the loader.
+export const skipTracingHooks = true
 
 const { plugins, openApiBase, $defs } = serviceSchemaComponents
 

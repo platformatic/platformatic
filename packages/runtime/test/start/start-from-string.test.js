@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('can start applications programmatically from string', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   const { 'serviceApp:0': url } = await app.start()
 

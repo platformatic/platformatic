@@ -1,13 +1,13 @@
 import Deepmerge from '@fastify/deepmerge'
 import { bgGreen, black, bold, green, isColorSupported } from 'colorette'
+import { stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { resolve } from 'node:path'
+import { basename, resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
-import { findConfigurationFileRecursive, loadConfigurationModule, saveConfigurationFile } from './configuration.js'
-import { hasJavascriptFiles } from './file-system.js'
+import { findConfigurationFileRecursive } from './configuration.js'
 import { setPinoTimestamp } from './logger.js'
-import { detectApplicationType, getPlatformaticVersion } from './module.js'
+import { findDecidingFile, isConfigurationFileName } from './loader/index.js'
 
 /* c8 ignore next 4 - else branches */
 let verbose = false
@@ -15,42 +15,42 @@ let prettyPrint = true
 let executableId = ''
 let executableName = ''
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function isVerbose () {
   return verbose
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function usePrettyPrint () {
   return prettyPrint
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function getExecutableId () {
   return executableId
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function getExecutableName () {
   return executableName
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setVerbose (value) {
   verbose = value
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setPrettyPrint (value) {
   prettyPrint = value
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setExecutableId (id) {
   executableId = id
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setExecutableName (name) {
   executableName = name
 }
@@ -214,6 +214,32 @@ export function applicationToEnvVariable (application) {
   return `PLT_APPLICATION_${application.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
 }
 
+/*
+  The same routing the runtime does, in the one other place a configuration is found: by an
+  explicit name, or by the walk from the directory. A legacy file found by the walk means the
+  project uses a legacy configuration, and the legacy lookups below are the ones that should answer.
+*/
+async function findConfigurationForSource (root, configurationFile) {
+  if (typeof configurationFile === 'string') {
+    const named = resolve(root, configurationFile)
+
+    // The extension decides for a name given outright: a current configuration is code, a legacy one is a document.
+    return isConfigurationFileName(basename(named)) || /\.(js|mjs|ts|mts)$/.test(named) ? named : null
+  }
+
+  try {
+    const deciding = await findDecidingFile(root, { throwOnMissing: false })
+
+    return deciding?.path ?? null
+  } catch (error) {
+    if (error.code === 'PLT_LEGACY_CONFIGURATION_FILE') {
+      return null
+    }
+
+    throw error
+  }
+}
+
 export async function findRuntimeConfigurationFile (
   logger,
   root,
@@ -223,6 +249,18 @@ export async function findRuntimeConfigurationFile (
   verifyPackages = true,
   executableName = ''
 ) {
+  /*
+    The current configuration first. Such a project has no legacy configuration file by
+    construction, so every lookup below fails and the fallback then auto-detects the directory and
+    writes a watt.json into it -- the
+    command silently builds something other than the project it was pointed at.
+  */
+  const decidingConfigurationFile = await findConfigurationForSource(root, configurationFile)
+
+  if (decidingConfigurationFile) {
+    return decidingConfigurationFile
+  }
+
   let configFile = await findConfigurationFileRecursive(root, configurationFile, '@platformatic/runtime')
 
   // If a runtime was not found, search for application file that we wrap in a runtime
@@ -230,61 +268,37 @@ export async function findRuntimeConfigurationFile (
     configFile = await findConfigurationFileRecursive(root, configurationFile)
   }
 
-  // No configuration yet, try to create a new one
+  /*
+    No configuration file anywhere. `fallback` used to mean "detect the application type and write
+    a watt.json into the user's tree so there is something to load"; it now means the caller can
+    load the directory itself, which the loader answers by synthesizing a configuration in
+    memory. Nothing is written to disk, so nothing is left behind to be committed by accident.
+  */
   if (!configFile) {
-    if (fallback) {
-      configurationFile = await fallbackToTemporaryConfigFile(logger, root, verifyPackages)
-
-      /* c8 ignore next - else */
-      if (configurationFile || configurationFile === false) {
-        return configurationFile
-      }
+    /*
+      Level 0 only applies to a directory that is actually there. A path that is not one has no
+      application to infer and no defaults to apply, and answering null would hand the caller a
+      root to synthesize from that does not exist — the legacy resolver then reports the missing file
+      by its legacy names, which is not what someone who typo'd a path needs to read.
+    */
+    if (fallback && (await stat(root).catch(() => null))?.isDirectory()) {
+      return null
     }
 
     if (throwOnError) {
       return logFatalError(
         logger,
-        `Cannot find a supported ${executableName} configuration file (like ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold(
-          'platformatic.json'
-        )}) in ${bold(resolve(root))}.`
+        /*
+          The current names first, because they are what someone reading this should create. The legacy
+          ones are still named -- this command reads them while the legacy format is supported -- but a
+          user told to write a `watt.json` would be told to write a file the loader refuses.
+        */
+        `Cannot find a supported ${executableName} configuration file (like ${bold('watt.config.ts')} or ${bold(
+          'watt.config.js'
+        )}, or a legacy ${bold('watt.json')}) in ${bold(resolve(root))}.`
       )
     }
   }
 
   return configFile
-}
-
-export async function fallbackToTemporaryConfigFile (logger, root, verifyPackages) {
-  const hasJsFiles = await hasJavascriptFiles(root)
-
-  if (!hasJsFiles) {
-    // Do not return false here, that is reserved below to signal that a file was created but no module was available.
-    return
-  }
-
-  const { name, label } = await detectApplicationType(root)
-
-  /* c8 ignore next - else */
-  const autodetectDescription = name === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
-
-  logger.warn(
-    `We have auto-detected that the current folder ${bold(autodetectDescription)} so we have created a ${bold('watt.json')} file for you automatically.`
-  )
-
-  const schema = `https://schemas.platformatic.dev/${name}/${await getPlatformaticVersion()}.json?autogenerated=true`
-  const configurationFile = resolve(root, 'watt.json')
-  await saveConfigurationFile(configurationFile, { $schema: schema })
-
-  // Try to load the module, if it is missing, we will throw an error
-  if (verifyPackages) {
-    try {
-      await loadConfigurationModule(root, { $schema: schema })
-      /* c8 ignore next 4 - covered */
-    } catch (error) {
-      logFatalError(logger, `Cannot load module ${bold(name)}. Please add it to your package.json and try again.`)
-      return false
-    }
-  }
-
-  return configurationFile
 }

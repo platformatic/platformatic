@@ -12,17 +12,14 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
-import { version } from '../index.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should inject Platformatic code by default when building', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
-      const json = JSON.parse(contents)
-      json.application = { commands: { build: 'node build.js' } }
-
-      return JSON.stringify(json, null, 2)
+    await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
+      contents.application = { commands: { build: 'node build.js' } }
     })
 
     return writeFile(
@@ -42,12 +39,9 @@ test('should inject Platformatic code by default when building', async t => {
 
 test('should not inject Platformatic code when building if asked to', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
-      const json = JSON.parse(contents)
-      json.application = { commands: { build: 'node build.js' } }
-      json.node = { disablePlatformaticInBuild: true }
-
-      return JSON.stringify(json, null, 2)
+    await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
+      contents.application = { commands: { build: 'node build.js' } }
+      contents.node = { disablePlatformaticInBuild: true }
     })
 
     return writeFile(
@@ -76,26 +70,26 @@ test('should build the applications on start in dev', async t => {
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))
 })
 
+// Only this needs the loaded configuration; everything else the setup does is files on disk.
+const setRestartOnError = async (root, config) => {
+  config.restartOnError = 0
+}
+
+setRestartOnError.runAfterPrepare = true
+
 test('should not try to stop the application when build failed on start in dev', async t => {
   const { root, runtime } = await prepareRuntime({
     t,
     root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
     production: false,
-    async additionalSetup (root, config) {
-      config.restartOnError = 0
+    additionalSetup: setRestartOnError,
+    async beforeLoad (root) {
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), () => 'this is not valid typescript')
 
       await writeFile(
-        resolve(root, 'services/app-no-config/platformatic.json'),
-        JSON.stringify(
-          {
-            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
-            logger: { timestamp: 'isoTime' }
-          },
-          null,
-          2
-        ),
+        resolve(root, 'services/app-no-config/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { timestamp: 'isoTime' } }, null, 2)}\n`,
         'utf-8'
       )
 
@@ -126,21 +120,14 @@ test('should not hang if the runtime forcefully stops during start in case of er
     root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
     production: false,
-    async additionalSetup (root, config) {
-      config.restartOnError = 0
+    additionalSetup: setRestartOnError,
+    async beforeLoad (root) {
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), content =>
         content.replace('app.listen({ port: 1 })', 'setTimeout(() => app.listen({ port: 1 }), 2000)'))
 
       await writeFile(
-        resolve(root, 'services/app-no-config/platformatic.json'),
-        JSON.stringify(
-          {
-            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
-            logger: { timestamp: 'isoTime' }
-          },
-          null,
-          2
-        ),
+        resolve(root, 'services/app-no-config/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { timestamp: 'isoTime' } }, null, 2)}\n`,
         'utf-8'
       )
     }
@@ -161,29 +148,64 @@ test('should not hang if the runtime forcefully stops during start in case of er
   await rejects(() => promise, /exited prematurely/)
 })
 
+// Wait for a runtime event about a specific application, but with a bound: a dev reload hinges on
+// a filesystem-watch notification, and the OS can drop one -- notably on Windows, where a single
+// write may never reach the watcher. An unbounded `once` there hangs the whole file until the job
+// timeout; this fails in seconds instead, and names what it was waiting for.
+async function waitForApplicationEvent (runtime, event, application, timeoutMs = 60000) {
+  const deadline = Date.now() + timeoutMs
+
+  for (;;) {
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) {
+      throw new Error(`Timed out after ${timeoutMs}ms waiting for ${event} on application ${application}`)
+    }
+
+    const ac = new AbortController()
+    const timer = setTimeout(() => ac.abort(), remaining)
+    let payload
+    try {
+      payload = await once(runtime, event, { signal: ac.signal })
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error(`Timed out after ${timeoutMs}ms waiting for ${event} on application ${application}`)
+      }
+      throw error
+    } finally {
+      clearTimeout(timer)
+    }
+
+    if (payload[0].application === application) {
+      return payload[0]
+    }
+  }
+}
+
 for (const application of ['app-no-config', 'app-with-config']) {
   test(`should rebuild the applications on reload in dev, application ${application}`, async t => {
     const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
     await startRuntime(t, runtime)
 
-    // write the file to trigger a reload
-    await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
+    // Trigger a reload, and keep re-touching the file until the change is picked up: a single
+    // filesystem-watch event can be dropped (seen on Windows), and without a fresh one the watcher
+    // never fires. Re-writing gives it another event rather than waiting forever on the first.
+    const triggerPath = resolve(root, `services/${application}/reload.ts`)
+    const retrigger = setInterval(() => {
+      writeFile(triggerPath, `// reload ${Date.now()}\n`, 'utf-8').catch(() => {})
+    }, 2000)
+    t.after(() => clearInterval(retrigger))
+
+    await writeFile(triggerPath, '// reload\n', 'utf-8')
 
     // reload the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:changed')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
-    }
+    const changed = await waitForApplicationEvent(runtime, 'application:worker:changed', application)
+    equal(changed.application, application)
+
+    // The change was seen; stop re-touching so the restart is not disturbed by another reload.
+    clearInterval(retrigger)
+
     // restart the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:started')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
-    }
+    const started = await waitForApplicationEvent(runtime, 'application:worker:started', application)
+    equal(started.application, application)
   })
 }

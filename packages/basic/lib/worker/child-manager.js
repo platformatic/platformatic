@@ -1,6 +1,6 @@
 import { createSharedTemporaryDirectory, ensureLoggableError } from '@platformatic/foundation'
 import { getLogger, updateGlobals } from '@platformatic/globals'
-import { ITC } from '@platformatic/itc/lib/index.js'
+import { ITC } from '@platformatic/itc'
 import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'

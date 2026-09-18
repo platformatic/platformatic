@@ -5,7 +5,6 @@ import {
   executeInParallel,
   executeWithTimeout,
   features,
-  kEnvFileFallbackKeys,
   kMetadata,
   kTimeout,
   parseMemorySize,
@@ -55,6 +54,7 @@ import {
   MessagingError,
   MetricFamilyCollisionError,
   MissingPprofCapture,
+  MixedServingStateError,
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
   RuntimeExtensionBuildAlreadyCalledError,
@@ -177,6 +177,56 @@ const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
 const DEFAULT_RESTART_ON_ERROR_DELAY = 5000
 
+/*
+  Both public payloads are built from a snapshot and frozen through. What a consumer could observe
+  could once observe was scalars and a file path, so handing out interior state was harmless in
+  practice; the payload now nests resolvedConfig -- an entire capability payload -- inside every
+  entry, and the getters read
+  straight off live state. A consumer mutating what it received would be editing the configuration
+  that later restarts and scale-up workers read, silently, and would make worker generations
+  disagree about what they are running. setApplicationConfigPatch exists precisely so that changing
+  a running application's configuration is explicit, patch-shaped and visible.
+
+  Only plain objects and arrays are copied. Anything carrying its own prototype -- a class
+  instance, a stream, a buffer -- is handed back as it is, because a copy of it would not be the
+  thing; the hazard this closes is a consumer editing configuration, not one editing a socket.
+*/
+function frozenSnapshot (value, seen = new Map()) {
+  if (value === null || typeof value !== 'object') {
+    return value
+  }
+
+  if (seen.has(value)) {
+    return seen.get(value)
+  }
+
+  if (Array.isArray(value)) {
+    const copy = []
+    seen.set(value, copy)
+
+    for (const entry of value) {
+      copy.push(frozenSnapshot(entry, seen))
+    }
+
+    return Object.freeze(copy)
+  }
+
+  const prototype = Object.getPrototypeOf(value)
+
+  if (prototype !== Object.prototype && prototype !== null) {
+    return value
+  }
+
+  const copy = {}
+  seen.set(value, copy)
+
+  for (const [key, entry] of Object.entries(value)) {
+    copy[key] = frozenSnapshot(entry, seen)
+  }
+
+  return Object.freeze(copy)
+}
+
 export class Runtime extends EventEmitter {
   logger
   error
@@ -228,6 +278,7 @@ export class Runtime extends EventEmitter {
   #extensionLivenessChecks
   #extensionHealthRoutes
   #lastOverloadProfiles
+  #servingStates
   #restartingApplications
   #restartingWorkers
   #workerPortOffsets
@@ -302,15 +353,19 @@ export class Runtime extends EventEmitter {
     this.#extensionLivenessChecks = new Map()
     this.#extensionHealthRoutes = []
     this.#lastOverloadProfiles = new Map()
+    this.#servingStates = new Map()
     this.#sharedContext = {}
 
-    if (this.#isProduction) {
-      this.#env.PLT_DEV = 'false'
-      this.#env.PLT_ENVIRONMENT = 'production'
-    } else {
-      this.#env.PLT_DEV = 'true'
-      this.#env.PLT_ENVIRONMENT = 'development'
-    }
+    /*
+      `PLT_DEV` and `PLT_ENVIRONMENT` are no longer injected here: an application branches on
+      its own variables, or the decision moves into the configuration, where the context carries
+      `production` and `mode` with types. `NODE_ENV` is the one the runtime still defaults, at the
+      bottom of the env ladder, so anything the project sets outranks it.
+
+      They were worse than redundant by the end -- the worker environment is the one the loader
+      resolved per application, and these were written onto the runtime's own copy, so under
+      `wattpm start` an application still read `PLT_ENVIRONMENT=development`.
+    */
   }
 
   async init () {
@@ -532,6 +587,7 @@ export class Runtime extends EventEmitter {
     clearTimeout(this.#healthMetricsTimer)
     this.#healthMetricsCollectionActive = false
     this.#lastOverloadProfiles.clear()
+    this.#servingStates.clear()
 
     await this.stop(silent)
     this.#updateStatus('closing')
@@ -693,7 +749,7 @@ export class Runtime extends EventEmitter {
 
     const created = []
     for (const { id } of applications) {
-      created.push(await this.getApplicationDetails(id))
+      created.push(await this.#buildApplicationDetails(id))
     }
 
     this.#updateLoggingPrefixes()
@@ -709,8 +765,13 @@ export class Runtime extends EventEmitter {
 
       // Use allowUnloaded so that applications without a live worker
       // (stopped or crashed with restartOnError: 0) can still be removed.
-      const details = await this.getApplicationDetails(application, true)
+      const details = await this.#buildApplicationDetails(application, true)
       details.status = 'removed'
+
+      // The snapshot is taken while the application is still up, but what it reports is an
+      // application about to be gone: it is not making a claim about how it would serve.
+      delete details.servingState
+
       removed.push(details)
     }
 
@@ -870,6 +931,7 @@ export class Runtime extends EventEmitter {
     }
 
     await this.#registerApplicationSchedulerJobs(id)
+    await this.#collectServingState(id)
 
     this.emitAndNotify('application:started', id)
     await this.#dynamicWorkersScaler?.applyPendingUpdate(id)
@@ -895,6 +957,11 @@ export class Runtime extends EventEmitter {
 
       await executeInParallel(this.#stopWorker.bind(this), stopInvocations, this.#concurrency)
     }
+
+    // Absent rather than 'inactive': a stopped application is not making a claim about how it
+    // would serve, and conflating "not started" with "started and serving nothing" is the exact
+    // distinction this field exists to draw.
+    this.#servingStates.delete(id)
 
     this.emitAndNotify('application:stopped', id)
   }
@@ -1647,6 +1714,14 @@ export class Runtime extends EventEmitter {
       execPath: process.execPath,
       nodeVersion: process.version,
       projectDir: this.#root,
+      /*
+        What `applications:add`/`remove --save` actually consume, so they can stop reading the whole
+        runtime configuration over HTTP to get at three values. `autoload` is the declaration as
+        authored, not the expansion: it is expanded in the eval worker, and --save has to edit what
+        the file says rather than what it produced.
+      */
+      configPath: this.#config[kMetadata]?.path ?? null,
+      autoload: this.#config.autoload ?? null,
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       platformaticVersion: version,
@@ -1658,13 +1733,31 @@ export class Runtime extends EventEmitter {
     return this.#env
   }
 
+  /*
+    What a watcher has to follow to know this configuration changed. The whole set the evaluation
+    read is reported; resolving per worker had no such set, so it was the deciding file alone --
+    which is what dev watched before either way.
+  */
+  getConfigurationWatchTargets () {
+    const metadata = this.#config[kMetadata]
+    const targets = metadata?.loader?.watchTargets
+
+    if (targets) {
+      return { files: [...targets.files], directories: [...targets.directories] }
+    }
+
+    return { files: metadata?.path ? [metadata.path] : [], directories: [] }
+  }
+
   getRuntimeConfig (includeMeta = false) {
+    // includeMeta is an internal contract and hands back live state, symbol key and all. It leaves
+    // the public surface with the DTO change; until then, its in-tree callers depend on identity.
     if (includeMeta) {
       return this.#config
     }
 
     const { [kMetadata]: _, ...config } = this.#config
-    return config
+    return frozenSnapshot(config)
   }
 
   getInterceptor () {
@@ -1681,6 +1774,41 @@ export class Runtime extends EventEmitter {
 
   getManagementApiUrl () {
     return this.#managementApi?.server.address() ?? null
+  }
+
+  /*
+    servingState is computed per worker: for a worker-classified capability it depends on what the
+    application's factory returned in *that* worker, and nothing stops arbitrary code from returning
+    a server from worker 0 and a background result from worker 1. Sampling one worker -- which is
+    what getApplicationDetails does for every other field -- would make the reported value depend on
+    which worker the selector picked, and, worse, would leave mesh dispatch routing a share of
+    requests to a worker that destroys them. So every worker answers and a mixed answer is refused,
+    naming each worker and the state it reported.
+  */
+  async #collectServingState (id) {
+    const invocations = this.#workers.getKeys(id).map(workerId => [workerId, this.#workers.get(workerId)])
+
+    if (invocations.length === 0) {
+      this.#servingStates.delete(id)
+      return
+    }
+
+    const states = await sendMultipleViaITC(invocations, 'getServingState', undefined, [], this.#concurrency)
+    const reported = Object.entries(states).filter(([, state]) => typeof state === 'string')
+
+    if (reported.length === 0) {
+      this.#servingStates.delete(id)
+      return
+    }
+
+    const distinct = new Set(reported.map(([, state]) => state))
+
+    if (distinct.size > 1) {
+      this.#servingStates.delete(id)
+      throw new MixedServingStateError(id, reported.map(([worker, state]) => `${worker} reported ${state}`).join(', '))
+    }
+
+    this.#servingStates.set(id, reported[0][1])
   }
 
   async getCustomHealthChecks () {
@@ -2017,12 +2145,16 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplications (allowUnloaded = false) {
-    return {
+    return frozenSnapshot({
       production: this.#isProduction,
       applications: await Promise.all(
-        this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
+        this.getApplicationsIds().map(id => this.#buildApplicationDetails(id, allowUnloaded))
       )
-    }
+    })
+  }
+
+  async getApplicationDetails (id, allowUnloaded = false) {
+    return frozenSnapshot(await this.#buildApplicationDetails(id, allowUnloaded))
   }
 
   async getApplicationMeta (id) {
@@ -2050,7 +2182,7 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  async getApplicationDetails (id, allowUnloaded = false) {
+  async #buildApplicationDetails (id, allowUnloaded = false) {
     let application
 
     try {
@@ -2063,7 +2195,7 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    const { localUrl, config, path } = application[kConfig]
+    const { localUrl, config, configPath, path } = application[kConfig]
 
     const sourceMaps = application[kConfig].sourceMaps ?? this.#config.sourceMaps
     const status = await sendViaITC(application, 'getStatus')
@@ -2072,13 +2204,33 @@ export class Runtime extends EventEmitter {
     const applicationDetails = {
       id,
       type,
-      config,
       path,
       status,
       dependencies,
       version,
       localUrl,
       sourceMaps
+    }
+
+    /*
+      The `config` key once held the application's configuration file path. That file is now
+      evaluated main-side and the worker receives the payload, so the path becomes `configPath` and the entry's own
+      `config` is no longer a path to report. Emitting the key that matches the dialect keeps a
+      consumer from reading one and silently getting the other.
+    */
+    if (typeof config === 'string') {
+      applicationDetails.config = config
+    } else if (configPath) {
+      applicationDetails.configPath = configPath
+    }
+
+    // status is worker lifecycle; servingState is how the thing serves. They are different
+    // questions, and the runtime gates URL emission on status === 'started', so they cannot share
+    // a field.
+    const servingState = this.#servingStates.get(id)
+
+    if (servingState) {
+      applicationDetails.servingState = servingState
     }
 
     if (this.#isProduction) {
@@ -2348,6 +2500,17 @@ export class Runtime extends EventEmitter {
     }
   }
 
+  async #refuseUnresolvedApplication (id) {
+    const executable = getExecutable() ?? 'platformatic'
+
+    this.logger.error(
+      `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
+      id
+    )
+
+    await this.closeAndThrow(new RuntimeAbortedError())
+  }
+
   async #setupApplication (applicationConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') {
       return
@@ -2363,13 +2526,7 @@ export class Runtime extends EventEmitter {
         applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)
 
         if (!existsSync(applicationConfig.path)) {
-          const executable = getExecutable() ?? 'platformatic'
-          this.logger.error(
-            `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
-            id
-          )
-
-          await this.closeAndThrow(new RuntimeAbortedError())
+          await this.#refuseUnresolvedApplication(id)
         }
       } else {
         this.logger.error(
@@ -2379,6 +2536,15 @@ export class Runtime extends EventEmitter {
 
         await this.closeAndThrow(new RuntimeAbortedError())
       }
+    } else if (applicationConfig.unresolved) {
+      /*
+        A remote application that declares where its clone belongs, and whose clone is not there --
+        either the directory is missing or it holds no application at all. The pathless case above
+        is the same state said differently, and both are what `resolve` exists to fix, so both get
+        the message that names it rather than the capability detector's report that the directory
+        holds nothing.
+      */
+      await this.#refuseUnresolvedApplication(id)
     }
 
     let workers = applicationConfig.workers.static
@@ -2484,7 +2650,10 @@ export class Runtime extends EventEmitter {
       preload = preload.filter(p => p !== pprofCapturePath)
     }
 
-    const workerEnv = structuredClone(this.#env)
+    // Each application's worker environment is resolved main-side, with its own env-file chain, the
+    // two env blocks and the injected topology URLs. Every worker used to be seeded from one loadEnv
+    // at the runtime root, which is what #env still holds.
+    const workerEnv = structuredClone(applicationConfig.workerEnv ?? this.#env)
 
     if (applicationConfig.nodeOptions?.trim().length > 0) {
       const originalNodeOptions = workerEnv.NODE_OPTIONS ?? ''
@@ -2530,10 +2699,7 @@ export class Runtime extends EventEmitter {
           codeRangeSizeMb
         },
         inspectorOptions,
-        dirname: this.#root,
-        // Keys of the worker environment which only come from an env file of the runtime:
-        // the env file of the application is allowed to override those.
-        envFileFallbackKeys: this.#env[kEnvFileFallbackKeys] ?? []
+        dirname: this.#root
       },
       argv: applicationConfig.arguments,
       execArgv,
@@ -3878,11 +4044,20 @@ export class Runtime extends EventEmitter {
   }
 
   async #getRuntimePackageJson () {
-    const runtimeDir = this.#root
-    const packageJsonPath = join(runtimeDir, 'package.json')
-    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
-    const packageJson = JSON.parse(packageJsonFile)
-    return packageJson
+    const packageJsonPath = join(this.#root, 'package.json')
+
+    /*
+      A project need not have one, and a runtime that cannot report its metadata without one is a
+      runtime whose `applications:add --save` stops working -- that command reads `projectDir`,
+      `configPath` and `autoload` from this, and has done since `GET /config` was removed. The
+      metadata already declares `packageName` and `packageVersion` as nullable, so absence is a
+      state its shape allows.
+    */
+    try {
+      return JSON.parse(await readFile(packageJsonPath, 'utf8'))
+    } catch {
+      return {}
+    }
   }
 
   #handleWorkerStandardStreams (worker, applicationId, workerId) {
@@ -4299,6 +4474,10 @@ export class Runtime extends EventEmitter {
           report.started.push(newIndex)
           startedWorkersCount++
         }
+
+        // A worker added after boot re-runs the application's code, so it can answer differently
+        // from the workers already running. Scale-up is the second place the answers must agree.
+        await this.#collectServingState(applicationId)
         report.success = true
       } catch (err) {
         if (pendingWorkerId) {

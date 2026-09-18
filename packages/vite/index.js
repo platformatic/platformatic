@@ -1,5 +1,5 @@
-import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { loadCapabilityConfiguration, transform as basicTransform, validationOptions } from '@platformatic/basic'
+import { kMetadata } from '@platformatic/foundation'
 import { ViteCapability, ViteSSRCapability } from './lib/capability.js'
 import { schema } from './lib/schema.js'
 
@@ -45,14 +45,12 @@ export async function transform (config, schema, options) {
 }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+  return loadCapabilityConfiguration(configOrRoot, sourceOrConfig, context, {
+    schema,
+    scope: import.meta.filename,
+    suffixes: 'application',
     validationOptions,
-    transform,
-    replaceEnv: true,
-    root,
-    ...context
+    transform
   })
 }
 
@@ -67,3 +65,5 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 export * from './lib/capability.js'
 export { addDeploymentId, deploymentIdEnv, platformaticSkewPlugin, skewPlugin } from './lib/skew-plugin.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+
+export * from './lib/factory.js'

@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { prepareApplication } from '../index.js'
+import { prepareAddedApplications } from '../index.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -23,12 +23,12 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function addExtraApplication (runtime) {
   return await runtime.addApplications(
-    [
-      await prepareApplication(runtime.getRuntimeConfig(true), {
+    await prepareAddedApplications(runtime.getRuntimeConfig(true), [
+      {
         id: 'extra-service',
         path: './extra-service'
-      })
-    ],
+      }
+    ]),
     true
   )
 }

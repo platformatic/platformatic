@@ -1,5 +1,5 @@
 {
-  "name": "node-service",
+  "name": "express",
   "type": "commonjs",
   "scripts": {
     "dev": "wattpm dev",

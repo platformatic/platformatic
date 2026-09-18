@@ -23,14 +23,15 @@ If you're only interested in the features available in Platformatic Runtime, you
 
 The following configuration file can be used to start a new Platformatic Runtime project. For more details on the configuration file, see the [configuration documentation](../runtime/configuration.md).
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/4.0.0.json",
-  "autoload": {
-    "path": "./packages",
-    "exclude": ["docs"]
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: './packages',
+    exclude: ['docs']
   }
-}
+})
 ```
 
 ## Platformatic Runtime context
@@ -63,6 +64,15 @@ of `http://awesome.plt.local`. The dispatcher packages module map that
 domain to the Fastify server running the `awesome` microservice. Any Node.js
 APIs based on Undici, such as `fetch()`, will then automatically route requests
 addressed to `awesome.plt.local` to the corresponding Fastify server.
+
+Every application's mesh address is also available at runtime as an environment
+variable: `PLT_<ID>_URL` (the application ID, uppercased) is injected into every
+worker and holds `http://<id>.plt.local` — for the application itself and for every
+sibling in the same runtime. This is useful where code needs the address as a
+build-time constant rather than computing it, for example a bundler that inlines
+`process.env.PLT_AWESOME_URL`. A standalone boot (an application started outside a
+root configuration) has no siblings, so no sibling `PLT_<ID>_URL` is injected; the
+application's own `PLT_<ID>_URL` still is.
 
 ### Internal Mesh Network Architecture
 

@@ -13,7 +13,6 @@ import {
   FailedToGetRuntimeApplicationConfig,
   FailedToGetRuntimeApplicationEnv,
   FailedToGetRuntimeApplications,
-  FailedToGetRuntimeConfig,
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeLogIndexes,
@@ -237,23 +236,6 @@ export class RuntimeApiClient {
     }
 
     return body.json()
-  }
-
-  async getRuntimeConfig (pid, metadata = false) {
-    const client = this.#getUndiciClient(pid)
-
-    const { statusCode, body } = await client.request({
-      path: `/api/v1/config?metadata=${metadata ? 'true' : 'false'}`,
-      method: 'GET'
-    })
-
-    if (statusCode !== 200) {
-      const error = await body.text()
-      throw new FailedToGetRuntimeConfig(error)
-    }
-
-    const runtimeConfig = await body.json()
-    return runtimeConfig
   }
 
   async getRuntimeApplicationConfig (pid, applicationId) {

@@ -7,6 +7,13 @@ import { assertMetric, expectedMetrics } from '../../metrics/test/helper.js'
 
 setAdditionalDependencies(['nitro', 'nitropack', 'vite'])
 
+// It reads the loaded configuration, so it runs after the load and before start.
+const enableMetrics = (_root, config) => {
+  config.metrics = true
+}
+
+enableMetrics.runAfterPrepare = true
+
 for (const fixture of ['standalone', 'standalone-nitro']) {
   for (const production of [false, true]) {
     test(`collects ${fixture} metrics in ${production ? 'production' : 'development'}`, async t => {
@@ -15,9 +22,7 @@ for (const fixture of ['standalone', 'standalone-nitro']) {
         root: resolve(import.meta.dirname, `./fixtures/${fixture}`),
         build: production,
         production,
-        additionalSetup (_root, config) {
-          config.metrics = true
-        }
+        additionalSetup: enableMetrics
       })
 
       const response = await request(`${url}/`)

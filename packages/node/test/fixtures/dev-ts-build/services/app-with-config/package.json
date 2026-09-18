@@ -1,5 +1,5 @@
 {
-  "name": "service",
+  "name": "app-with-config",
   "scripts": {
     "clean": "rm -fr ./dist",
     "build": "tsc -p ."

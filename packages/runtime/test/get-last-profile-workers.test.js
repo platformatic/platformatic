@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
-const configFile = join(fixturesDir, 'configs', 'monorepo-workers.json')
+const configFile = join(fixturesDir, 'configs', 'monorepo-workers', 'watt.config.mjs')
 
 // Continuous profiling completes a window every durationMillis: wait until
 // the given workers of the application have captured at least one window.
