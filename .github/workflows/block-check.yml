@@ -6,13 +6,11 @@ on:
       - main
       - master
     paths:
-      - 'NEW_CONFIG.md'
       - 'docs/**'
       - 'scripts/check-blocks.mjs'
       - 'packages/**'
   pull_request:
     paths:
-      - 'NEW_CONFIG.md'
       - 'docs/**'
       - 'scripts/check-blocks.mjs'
       - 'packages/**'

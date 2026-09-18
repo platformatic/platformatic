@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 
 /*
-  The gate for the fenced blocks in NEW_CONFIG.md and in the documentation pages that teach the
-  same format.
+  The gate for the fenced blocks in the documentation pages that teach the configuration format.
 
   Three rounds of review found invalid examples by hand, including the sole illustration of the
   callback form, so the scope is every block rather than the ones somebody thought to check. The
   category is an explicit marker on the fence rather than something inferred from the language tag:
   an unmarked block fails, which is what stops the gate from quietly narrowing as blocks are added.
 
-    ```ts config    a complete v4 configuration with a default export, standing alone, imports
-                    included. Loaded through the real v4 loader and typechecked.
+    ```ts config    a complete configuration with a default export, standing alone, imports
+                    included. Loaded through the real loader and typechecked.
     ```ts decl      interfaces, type aliases and bodiless factory overloads -- a SyntaxError after
                     type stripping, and they export nothing. Typechecked only.
     ```ts source    TypeScript that is not configuration -- an application's own code, quoted to
@@ -20,8 +19,7 @@
     ```output       terminal output, warnings, errors and directory trees. Checked for being fenced
                     and marked, which is all there is to check.
 
-  NEW_CONFIG.md is the specification, so every one of its fences must carry a marker. A
-  documentation page is not: it fences shell commands and v3 JSON and prose output that no marker
+  A documentation page fences shell commands and legacy JSON and prose output that no marker
   describes, and demanding one on each would be ceremony. What it must mark is every **TypeScript**
   block -- the ones that claim to be configuration a reader can copy. That is the narrow rule, and
   it is still a rule rather than a guess: an unmarked `ts` block in a checked page fails.
@@ -53,11 +51,10 @@ process.on('warning', warning => {
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 /*
-  `markEverything` is what separates the specification from a page about it: NEW_CONFIG.md fails on
-  any unmarked fence, a page fails only on an unmarked TypeScript one.
+  `markEverything`, when set, fails a page on any unmarked fence; without it a page fails only on an
+  unmarked TypeScript one.
 */
 const documents = [
-  { name: 'NEW_CONFIG.md', markEverything: true },
   { name: 'docs/guides/migrate-runtime-v4.md', markEverything: false },
   { name: 'docs/file-formats.md', markEverything: false },
   { name: 'docs/guides/generating-watt-configuration.md', markEverything: false },
