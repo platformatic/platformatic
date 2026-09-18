@@ -16,8 +16,7 @@ import { ensureFileUrl, importFile } from '../utils.js'
 
 export const isWindows = platform() === 'win32'
 
-// In theory we could use the context.id to namespace even more, but due to
-// UNIX socket length limitation on MacOS, we don't.
+// Keep identifiers short to stay within the UNIX socket path limit on macOS.
 export function generateChildrenId () {
   return [process.pid, randomBytes(4).toString('hex')].join('-')
 }

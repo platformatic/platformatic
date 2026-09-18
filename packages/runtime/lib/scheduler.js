@@ -1,37 +1,24 @@
 import { CronJob, validateCronExpression } from 'cron'
 import { setTimeout } from 'node:timers/promises'
-import { request } from 'undici'
-import { DuplicateSchedulerJobError, SchedulerJobNotFoundError } from './errors.js'
+import { DuplicateSchedulerJobError, InvalidSchedulerCronError, SchedulerJobNotFoundError } from './errors.js'
 
 export class SchedulerService {
-  constructor (schedulerConfig, dispatcher, logger) {
+  constructor (logger) {
     this.logger = logger
-    this.dispatcher = dispatcher
     this.jobs = new Map()
     this.started = false
-
-    for (const config of schedulerConfig) {
-      this.addJob({ ...config, source: 'config' })
-    }
   }
 
   addJob (config, executor) {
-    // Skip disabled schedulers
-    if (config.enabled === false) {
-      return null
-    }
-
     // Validate cron expression
     const validation = validateCronExpression(config.cron)
     if (!validation.valid) {
-      throw new Error(`Invalid cron expression "${config.cron}" for scheduler "${config.name}"`)
+      throw new InvalidSchedulerCronError(config.cron, config.name)
     }
 
     // Set defaults for optional fields
     const job = {
       ...config,
-      headers: config.headers || {},
-      body: config.body || {},
       maxRetries: config.maxRetries ?? 3,
       source: config.source ?? 'application',
       paused: false,
@@ -182,29 +169,7 @@ export class SchedulerService {
           )
           await setTimeout(delay)
         }
-        if (scheduler.executor) {
-          await scheduler.executor({ scheduledTime })
-        } else {
-          const headers = {
-            'x-retry-attempt': attempt + 1,
-            ...scheduler.headers
-          }
-
-          const bodyString = typeof scheduler.body === 'string' ? scheduler.body : JSON.stringify(scheduler.body)
-          const response = await request(scheduler.callbackUrl, {
-            method: scheduler.method,
-            headers,
-            body: bodyString,
-            dispatcher: this.dispatcher
-          })
-
-          // Consume the body to release the connection.
-          await response.body.dump()
-
-          if (response.statusCode < 200 || response.statusCode >= 300) {
-            throw new Error(`HTTP error ${response.statusCode}`)
-          }
-        }
+        await scheduler.executor({ scheduledTime })
 
         this.logger.info(`Scheduler "${scheduler.name}" executed successfully`)
         success = true
@@ -244,8 +209,8 @@ export class SchedulerService {
   }
 }
 
-export function startScheduler (config, interceptors, logger) {
-  const schedulerService = new SchedulerService(config, interceptors, logger)
+export function startScheduler (logger) {
+  const schedulerService = new SchedulerService(logger)
   schedulerService.start()
   return schedulerService
 }

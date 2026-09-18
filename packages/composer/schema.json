@@ -10,6 +10,18 @@
     "server": {
       "type": "object",
       "properties": {
+        "errorHandler": {
+          "anyOf": [
+            {
+              "type": "string",
+              "resolveModule": true
+            },
+            {
+              "type": "string",
+              "resolvePath": true
+            }
+          ]
+        },
         "hostname": {
           "type": "string"
         },
@@ -109,22 +121,8 @@
               "properties": {
                 "level": {
                   "type": "string",
-                  "oneOf": [
-                    {
-                      "enum": [
-                        "fatal",
-                        "error",
-                        "warn",
-                        "info",
-                        "debug",
-                        "trace",
-                        "silent"
-                      ]
-                    },
-                    {
-                      "pattern": "^\\{.+\\}$"
-                    }
-                  ]
+                  "minLength": 1,
+                  "description": "A standard Pino log level or a level defined in customLevels."
                 },
                 "transport": {
                   "anyOf": [
@@ -225,6 +223,10 @@
                     "censor": {
                       "type": "string",
                       "default": "[redacted]"
+                    },
+                    "remove": {
+                      "type": "boolean",
+                      "description": "Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false."
                     }
                   },
                   "required": [
@@ -249,6 +251,50 @@
                 "customLevels": {
                   "type": "object",
                   "additionalProperties": true
+                },
+                "levelVal": {
+                  "type": "integer",
+                  "description": "The numeric value of the level defined in level, when it is not one of the standard pino levels."
+                },
+                "useOnlyCustomLevels": {
+                  "type": "boolean",
+                  "description": "Only use the levels defined in customLevels and omit the standard pino ones."
+                },
+                "levelComparison": {
+                  "type": "string",
+                  "enum": [
+                    "ASC",
+                    "DESC"
+                  ],
+                  "description": "How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC."
+                },
+                "msgPrefix": {
+                  "type": "string",
+                  "description": "A string prefixed to every message, including the ones of child loggers."
+                },
+                "nestedKey": {
+                  "type": "string",
+                  "description": "The key under which any logged object is placed."
+                },
+                "errorKey": {
+                  "type": "string",
+                  "description": "The key used for the serialized error in the log object. Defaults to err."
+                },
+                "depthLimit": {
+                  "type": "integer",
+                  "description": "The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5."
+                },
+                "edgeLimit": {
+                  "type": "integer",
+                  "description": "The stringification limit of properties or elements when logging a circular object or array. Defaults to 100."
+                },
+                "crlf": {
+                  "type": "boolean",
+                  "description": "Terminate each log line with \\r\\n instead of \\n. Defaults to false."
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Set to false to disable logging entirely. Defaults to true."
                 },
                 "openTelemetryExporter": {
                   "type": "object",
@@ -1311,22 +1357,8 @@
           "properties": {
             "level": {
               "type": "string",
-              "oneOf": [
-                {
-                  "enum": [
-                    "fatal",
-                    "error",
-                    "warn",
-                    "info",
-                    "debug",
-                    "trace",
-                    "silent"
-                  ]
-                },
-                {
-                  "pattern": "^\\{.+\\}$"
-                }
-              ]
+              "minLength": 1,
+              "description": "A standard Pino log level or a level defined in customLevels."
             },
             "transport": {
               "anyOf": [
@@ -1427,6 +1459,10 @@
                 "censor": {
                   "type": "string",
                   "default": "[redacted]"
+                },
+                "remove": {
+                  "type": "boolean",
+                  "description": "Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false."
                 }
               },
               "required": [
@@ -1451,6 +1487,50 @@
             "customLevels": {
               "type": "object",
               "additionalProperties": true
+            },
+            "levelVal": {
+              "type": "integer",
+              "description": "The numeric value of the level defined in level, when it is not one of the standard pino levels."
+            },
+            "useOnlyCustomLevels": {
+              "type": "boolean",
+              "description": "Only use the levels defined in customLevels and omit the standard pino ones."
+            },
+            "levelComparison": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "description": "How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC."
+            },
+            "msgPrefix": {
+              "type": "string",
+              "description": "A string prefixed to every message, including the ones of child loggers."
+            },
+            "nestedKey": {
+              "type": "string",
+              "description": "The key under which any logged object is placed."
+            },
+            "errorKey": {
+              "type": "string",
+              "description": "The key used for the serialized error in the log object. Defaults to err."
+            },
+            "depthLimit": {
+              "type": "integer",
+              "description": "The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5."
+            },
+            "edgeLimit": {
+              "type": "integer",
+              "description": "The stringification limit of properties or elements when logging a circular object or array. Defaults to 100."
+            },
+            "crlf": {
+              "type": "boolean",
+              "description": "Terminate each log line with \\r\\n instead of \\n. Defaults to false."
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "Set to false to disable logging entirely. Defaults to true."
             },
             "openTelemetryExporter": {
               "type": "object",
@@ -2781,72 +2861,6 @@
           },
           "default": []
         },
-        "scheduler": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "default": true
-              },
-              "name": {
-                "type": "string"
-              },
-              "cron": {
-                "type": "string"
-              },
-              "callbackUrl": {
-                "type": "string"
-              },
-              "method": {
-                "type": "string",
-                "enum": [
-                  "GET",
-                  "POST",
-                  "PUT",
-                  "PATCH",
-                  "DELETE"
-                ],
-                "default": "GET"
-              },
-              "headers": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "body": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "object",
-                    "additionalProperties": true
-                  }
-                ]
-              },
-              "maxRetries": {
-                "type": "number",
-                "minimum": 0,
-                "default": 3
-              }
-            },
-            "required": [
-              "name",
-              "cron",
-              "callbackUrl"
-            ]
-          }
-        },
         "policies": {
           "type": "object",
           "properties": {
@@ -3523,196 +3537,6 @@
                 ],
                 "additionalProperties": false
               },
-              "graphql": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "host": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "graphqlEndpoint": {
-                        "type": "string",
-                        "default": "/graphql"
-                      },
-                      "composeEndpoint": {
-                        "type": "string",
-                        "default": "/.well-known/graphql-composition"
-                      },
-                      "entities": {
-                        "type": "object",
-                        "patternProperties": {
-                          "^.*$": {
-                            "type": "object",
-                            "properties": {
-                              "pkey": {
-                                "type": "string"
-                              },
-                              "resolver": {
-                                "type": "object",
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "argsAdapter": {
-                                    "anyOf": [
-                                      {
-                                        "typeof": "function"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  },
-                                  "partialResults": {
-                                    "anyOf": [
-                                      {
-                                        "typeof": "function"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "name"
-                                ],
-                                "additionalProperties": false
-                              },
-                              "fkeys": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string"
-                                    },
-                                    "field": {
-                                      "type": "string"
-                                    },
-                                    "as": {
-                                      "type": "string"
-                                    },
-                                    "pkey": {
-                                      "type": "string"
-                                    },
-                                    "subgraph": {
-                                      "type": "string"
-                                    },
-                                    "resolver": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string"
-                                        },
-                                        "argsAdapter": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        },
-                                        "partialResults": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "name"
-                                      ],
-                                      "additionalProperties": false
-                                    }
-                                  },
-                                  "required": [
-                                    "type"
-                                  ]
-                                }
-                              },
-                              "many": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string"
-                                    },
-                                    "fkey": {
-                                      "type": "string"
-                                    },
-                                    "as": {
-                                      "type": "string"
-                                    },
-                                    "pkey": {
-                                      "type": "string"
-                                    },
-                                    "subgraph": {
-                                      "type": "string"
-                                    },
-                                    "resolver": {
-                                      "type": "object",
-                                      "properties": {
-                                        "name": {
-                                          "type": "string"
-                                        },
-                                        "argsAdapter": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        },
-                                        "partialResults": {
-                                          "anyOf": [
-                                            {
-                                              "typeof": "function"
-                                            },
-                                            {
-                                              "type": "string"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "name"
-                                      ],
-                                      "additionalProperties": false
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "fkey",
-                                    "resolver"
-                                  ]
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                ]
-              },
               "proxy": {
                 "anyOf": [
                   {
@@ -4239,6 +4063,11 @@
               "type": "string",
               "description": "Base URL for the OpenAPI Swagger Documentation"
             },
+            "ui": {
+              "type": "boolean",
+              "default": true,
+              "description": "Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served."
+            },
             "path": {
               "type": "string",
               "description": "Path to an OpenAPI spec file",
@@ -4246,203 +4075,15 @@
             }
           }
         },
-        "graphql": {
-          "type": "object",
-          "properties": {
-            "graphiql": {
-              "type": "boolean"
-            },
-            "onSubgraphError": {
-              "typeof": "function"
-            },
-            "defaultArgsAdapter": {
-              "oneOf": [
-                {
-                  "typeof": "function"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "entities": {
-              "type": "object",
-              "patternProperties": {
-                "^.*$": {
-                  "type": "object",
-                  "properties": {
-                    "pkey": {
-                      "type": "string"
-                    },
-                    "resolver": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "argsAdapter": {
-                          "anyOf": [
-                            {
-                              "typeof": "function"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        },
-                        "partialResults": {
-                          "anyOf": [
-                            {
-                              "typeof": "function"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "fkeys": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string"
-                          },
-                          "field": {
-                            "type": "string"
-                          },
-                          "as": {
-                            "type": "string"
-                          },
-                          "pkey": {
-                            "type": "string"
-                          },
-                          "subgraph": {
-                            "type": "string"
-                          },
-                          "resolver": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "argsAdapter": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "partialResults": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "name"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      }
-                    },
-                    "many": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string"
-                          },
-                          "fkey": {
-                            "type": "string"
-                          },
-                          "as": {
-                            "type": "string"
-                          },
-                          "pkey": {
-                            "type": "string"
-                          },
-                          "subgraph": {
-                            "type": "string"
-                          },
-                          "resolver": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "argsAdapter": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              },
-                              "partialResults": {
-                                "anyOf": [
-                                  {
-                                    "typeof": "function"
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "name"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "fkey",
-                          "resolver"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "addEntitiesResolvers": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          "additionalProperties": false
-        },
-        "addEmptySchema": {
-          "type": "boolean",
-          "default": false
-        },
         "refreshTimeout": {
           "type": "integer",
           "minimum": 0,
           "default": 1000
+        },
+        "restartOnApplicationChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Restart the gateway when an application is added to or removed from the runtime, so it can recompose its routes. Set to false for a gateway that does not route from the application registry — restarting it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port until the replacement worker boots."
         },
         "passthroughContentTypes": {
           "type": "array",

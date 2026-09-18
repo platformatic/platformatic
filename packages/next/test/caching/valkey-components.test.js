@@ -17,9 +17,6 @@ import {
   valkeyUser,
   verifyValkeySequence
 } from './helper.js'
-
-process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 const configuration = 'caching-components'
 
@@ -102,7 +99,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
 })
 
 test('should properly use the Valkey cache handler in production to cache route handlers', async t => {
-  const { url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
   const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
@@ -122,8 +119,10 @@ test('should properly use the Valkey cache handler in production to cache route 
   let version
   let time
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     const data = await response.json()
+    await completed
 
     version = data.version
     time = data.time
@@ -132,8 +131,10 @@ test('should properly use the Valkey cache handler in production to cache route 
   }
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     const data = await response.json()
+    await completed
 
     deepStrictEqual(data.version, version)
     deepStrictEqual(data.time, time)
@@ -320,6 +321,7 @@ test('should handle deserialization error', async t => {
   const valkey1 = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   const valkey2 = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   const monitor = await valkey2.monitor()
+  const cacheCorrupted = Promise.withResolvers()
 
   await cleanupCache(valkey1)
 
@@ -331,20 +333,25 @@ test('should handle deserialization error', async t => {
 
   monitor.on('monitor', (_, args) => {
     if (args[0] === 'set' && args[2] !== 'invalid') {
-      valkey1.set(args[1], 'invalid')
+      valkey1.set(args[1], 'invalid').then(cacheCorrupted.resolve, cacheCorrupted.reject)
     }
   })
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
+    await cacheCorrupted.promise
   }
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
   }
 
   await runtime.close()
@@ -383,8 +390,10 @@ test('should handle read error', async t => {
     await valkey.disconnect()
   })
 
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   notDeepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
@@ -424,16 +433,20 @@ test('should handle refresh error', async t => {
   })
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
   }
 
   await valkey.acl('deluser', valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '+SET', '-EXPIRE')
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
   }
 
   await runtime.close()
@@ -472,8 +485,10 @@ test('should handle write error', async t => {
     await valkey.disconnect()
   })
 
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   notDeepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)

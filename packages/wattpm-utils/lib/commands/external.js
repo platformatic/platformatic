@@ -15,7 +15,7 @@ import { appendApplications, findAnyConfigurationFile, importedConfiguration } f
 import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { execa } from 'execa'
-import { existsSync } from 'node:fs'
+import { existsSync, lstatSync, realpathSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
@@ -24,6 +24,54 @@ import { version } from '../version.js'
 import { installDependencies, listApplicationDirectories } from './dependencies.js'
 
 const originCandidates = ['origin', 'upstream']
+
+// Checks the existence of a path without following symlinks, so that a dangling symlink is
+// reported as existing rather than as a free path to write into.
+function existsWithoutFollowing (path) {
+  try {
+    lstatSync(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// Returns the canonical form of a path which might not exist yet: the deepest existing ancestor is
+// resolved via realpath and the missing trailing segments are appended to it.
+function canonicalize (path) {
+  let current = resolve(path)
+  let suffix = ''
+
+  while (true) {
+    try {
+      const real = realpathSync(current)
+      return suffix ? resolve(real, suffix) : real
+      /* c8 ignore next 8 - The loop always terminates on the root, which exists */
+    } catch {
+      const parent = dirname(current)
+
+      if (parent === current) {
+        return resolve(path)
+      }
+
+      suffix = suffix ? join(basename(current), suffix) : basename(current)
+      current = parent
+    }
+  }
+}
+
+// Verifies that target is strictly contained in root. A prefix test is not enough as it lacks a path
+// segment boundary and thus considers /tmp/app-evil to be inside /tmp/app.
+function isPathInside (root, target) {
+  const relativePath = relative(root, target)
+  return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolute(relativePath)
+}
+
+// The containment of the application directory is verified again right before writing to it, as the
+// filesystem might have changed since the initial validation.
+function verifyApplicationDirectory (root, application) {
+  return isPathInside(canonicalize(root), canonicalize(resolve(root, application.path)))
+}
 
 function parseGitUrl (url) {
   const fragmentIndex = url.indexOf('#')
@@ -265,15 +313,6 @@ async function importApplicationIntoConfiguration (logger, configurationFile, { 
   Containment by path boundary, not by string prefix: /root/web-admin starts with /root/web as a
   string and is not inside it as a directory.
 */
-function isPathInsideDirectory (directory, path) {
-  const relativePath = relative(directory, path)
-  // Not a bare startsWith('..'): a directory legitimately named `..foo` relativizes to `..foo`.
-  return (
-    relativePath === '' ||
-    (relativePath !== '..' && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath))
-  )
-}
-
 async function importApplication (logger, configurationFile, id, path, url, branch) {
   const config = await loadConfiguration(configurationFile)
 
@@ -286,22 +325,34 @@ async function importApplication (logger, configurationFile, id, path, url, bran
 
   // If there is a locale path
   if (path) {
+    const canonicalPath = canonicalize(path)
     let autoloadPath = config.autoload?.path
 
-    // If we already autoload this path, there is nothing to do
+    // If we already autoload this path, there is nothing to do.
+    // Autoload only claims the direct children of its directory which are not excluded, so
+    // containment at any depth is not the right test.
     if (autoloadPath) {
-      autoloadPath = resolve(root, autoloadPath)
-      if (isPathInsideDirectory(autoloadPath, path)) {
+      autoloadPath = canonicalize(resolve(root, autoloadPath))
+
+      const isAutoloaded =
+        dirname(canonicalPath) === autoloadPath && !(config.autoload.exclude ?? []).includes(basename(canonicalPath))
+
+      if (isAutoloaded) {
         logger.warn('The path is already autoloaded as an application.')
         return
       }
     }
 
-    // If the path is within the application repository and already defined as an application,
-    // there is nothing to do
-    if (isPathInsideDirectory(root, path) && config.applications.some(s => s.path === path)) {
-      logger.warn('The path is already defined as an application.')
-      return
+    // If the path is within the application repository. The root itself qualifies, as the
+    // configuration file might be the application one rather than the runtime one.
+    const canonicalRoot = canonicalize(root)
+
+    if (canonicalPath === canonicalRoot || isPathInside(canonicalRoot, canonicalPath)) {
+      // If the path is already defined as an application, there is nothing to do
+      if (config.applications.some(s => s.path && canonicalize(s.path) === canonicalPath)) {
+        logger.warn('The path is already defined as an application.')
+        return
+      }
     }
 
     if (!url) {
@@ -608,8 +659,8 @@ export async function resolveApplications (
     const directory = resolve(root, application.path)
 
     // If the directory already exists, it's either external or already resolved, nothing to do in both cases
-    if (!existsSync(directory)) {
-      if (!isPathInsideDirectory(root, directory)) {
+    if (!existsWithoutFollowing(directory)) {
+      if (!verifyApplicationDirectory(root, application)) {
         logger.warn(
           `Skipping application ${bold(application.id)} as the non existent directory ${bold(
             application.path
@@ -642,6 +693,16 @@ export async function resolveApplications (
   for (const application of toResolve) {
     const childLogger = logger.child({ name: application.id })
 
+    // Revalidate right before writing, as the filesystem might have changed since the check above
+    if (!verifyApplicationDirectory(root, application)) {
+      return logFatalError(
+        childLogger,
+        `Cannot resolve application ${bold(application.id)} as the directory ${bold(
+          application.path
+        )} is outside the project directory.`
+      )
+    }
+
     let operation
     try {
       if (application.url.startsWith('npm')) {
@@ -662,6 +723,18 @@ export async function resolveApplications (
 
   // Install dependencies
   if (!skipDependencies) {
+    // Revalidate once more, as installing runs arbitrary lifecycle scripts from the resolved directories
+    for (const application of toResolve) {
+      if (!verifyApplicationDirectory(root, application)) {
+        return logFatalError(
+          logger.child({ name: application.id }),
+          `Cannot install dependencies of the application ${bold(application.id)} as the directory ${bold(
+            application.path
+          )} is outside the project directory.`
+        )
+      }
+    }
+
     return await installDependencies(logger, root, toResolve, false, packageManager)
   }
   /* c8 ignore next - Mistakenly reported as uncovered by C8 */

@@ -7,12 +7,12 @@ import { pathToFileURL } from 'node:url'
 import { safeRemove } from '@platformatic/foundation'
 
 /*
-  The end-to-end shape: a real watt.config.ts, authored with defineConfig and the capability
+  The end-to-end shape: a real watt.config.ts, authored with createWattConfig and the capability
   factories, evaluated by the loader.
 
   The fixtures live under this package's test directory so that a bare '@platformatic/node' import
   resolves through the workspace the way it does in a real project. wattpm itself is not
-  self-linked here, so defineConfig is imported by path; in a published project it is the bare
+  self-linked here, so createWattConfig is imported by path; in a published project it is the bare
   'wattpm' specifier, which is why the package entry is kept light.
 */
 const wattpmEntry = pathToFileURL(resolve(import.meta.dirname, '../index.js')).href
@@ -74,7 +74,7 @@ test('a Level 1 file is a bare factory call, auto-wrapped into a single-applicat
   deepStrictEqual(entry.serving, { serves: true, reason: 'worker-classified' })
 })
 
-test('a Level 1b file uses defineConfig with the singular application shorthand', async t => {
+test('a Level 1b file uses createWattConfig with the singular application shorthand', async t => {
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `

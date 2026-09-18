@@ -113,4 +113,4 @@ The database driver is automatically loaded based on the value [`connectionStrin
 ## Issues
 
 If you run into a bug or have a suggestion for improvement, please raise an
-[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
+[issue on GitHub](https://github.com/platformatic/platformatic/issues/new).

@@ -30,7 +30,6 @@ test('moves grouped scheduled tasks to the Platformatic runtime plugin', async (
 
   deepStrictEqual(nitroConfig.scheduledTasks, [])
   equal(nitroConfig.experimental.tasks, true)
-
   deepStrictEqual(nitroConfig.runtimeConfig.platformaticScheduler.scheduledTasks, [
     { id: '0', cron: '* * * * *', tasks: ['log'] },
     { id: '1', cron: '0 * * * *', tasks: ['a', 'b'] }

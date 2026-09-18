@@ -11,7 +11,7 @@ import { schemaComponents as applicationSchemaComponents } from '@platformatic/s
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const { $defs, graphqlBase, openApiBase, plugins } = applicationSchemaComponents
+const { $defs, openApiBase, plugins } = applicationSchemaComponents
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
@@ -33,96 +33,6 @@ export const openApiApplication = {
     config: { type: 'string', resolvePath: true }
   },
   anyOf: [{ required: ['url'] }, { required: ['file'] }],
-  additionalProperties: false
-}
-
-export const entityResolver = {
-  type: 'object',
-  properties: {
-    name: { type: 'string' },
-    argsAdapter: {
-      anyOf: [{ typeof: 'function' }, { type: 'string' }]
-    },
-    partialResults: {
-      anyOf: [{ typeof: 'function' }, { type: 'string' }]
-    }
-  },
-  required: ['name'],
-  additionalProperties: false
-}
-
-export const entities = {
-  type: 'object',
-  patternProperties: {
-    '^.*$': {
-      type: 'object',
-      properties: {
-        pkey: { type: 'string' },
-        resolver: entityResolver,
-        fkeys: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              type: { type: 'string' },
-              field: { type: 'string' },
-              as: { type: 'string' },
-              pkey: { type: 'string' },
-              subgraph: { type: 'string' },
-              resolver: entityResolver
-            },
-            required: ['type']
-          }
-        },
-        many: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              type: { type: 'string' },
-              fkey: { type: 'string' },
-              as: { type: 'string' },
-              pkey: { type: 'string' },
-              subgraph: { type: 'string' },
-              resolver: entityResolver
-            },
-            required: ['type', 'fkey', 'resolver']
-          }
-        }
-      }
-    }
-  }
-}
-
-export const graphqlApplication = {
-  anyOf: [
-    { type: 'boolean' },
-    {
-      type: 'object',
-      properties: {
-        host: { type: 'string' },
-        name: { type: 'string' },
-        graphqlEndpoint: { type: 'string', default: '/graphql' },
-        composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
-        entities
-      },
-      additionalProperties: false
-    }
-  ]
-}
-
-export const graphqlComposerOptions = {
-  type: 'object',
-  properties: {
-    ...graphqlBase.properties,
-    // TODO support subscriptions, subscriptions: { type: 'boolean', default: false },
-    onSubgraphError: { typeof: 'function' },
-    defaultArgsAdapter: {
-      oneOf: [{ typeof: 'function' }, { type: 'string' }]
-    },
-    entities,
-    addEntitiesResolvers: { type: 'boolean', default: false }
-  },
   additionalProperties: false
 }
 
@@ -209,7 +119,6 @@ export const gateway = {
           id: { type: 'string' },
           origin: { type: 'string' },
           openapi: openApiApplication,
-          graphql: graphqlApplication,
           proxy: {
             anyOf: [
               { type: 'boolean', const: false },
@@ -287,9 +196,16 @@ export const gateway = {
     handler: { type: 'string' },
     deduplication,
     openapi: openApiBase,
-    graphql: graphqlComposerOptions,
-    addEmptySchema: { type: 'boolean', default: false },
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
+    restartOnApplicationChange: {
+      type: 'boolean',
+      default: true,
+      description:
+        'Restart the gateway when an application is added to or removed from the runtime, so it can recompose ' +
+        'its routes. Set to false for a gateway that does not route from the application registry — restarting ' +
+        'it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port ' +
+        'until the replacement worker boots.'
+    },
     passthroughContentTypes: {
       type: 'array',
       items: { type: 'string' },
@@ -320,10 +236,6 @@ export const types = {
 
 export const schemaComponents = {
   openApiApplication,
-  entityResolver,
-  entities,
-  graphqlApplication,
-  graphqlComposerOptions,
   deduplicationRoute,
   deduplicationStorage,
   deduplication,

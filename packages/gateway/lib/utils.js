@@ -22,5 +22,5 @@ export function normalizePrefix (prefix) {
  * @returns {boolean}
  */
 export function isFetchable (application) {
-  return Boolean((application?.openapi && application.openapi.url) || application?.graphql)
+  return Boolean(application?.openapi && application.openapi.url)
 }

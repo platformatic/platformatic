@@ -268,7 +268,7 @@ test('migrate - puts the original back when the emitted configuration does not l
   strictEqual(restored.strictEnv, true)
 })
 
-test('migrate - unwraps a runtime block into defineConfig with the singular shorthand', async t => {
+test('migrate - unwraps a runtime block into createWattConfig with the singular shorthand', async t => {
   const root = await project(t, {
     'platformatic.json': {
       $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
@@ -999,7 +999,7 @@ test('migrate - requires the packages the emitted files import', async t => {
   const rootManifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))
   const apiManifest = JSON.parse(await readFile(join(root, 'services/api/package.json'), 'utf-8'))
 
-  // The root file imports defineConfig from wattpm, which an umbrella-platformatic project never had.
+  // The root file imports createWattConfig from wattpm, which an umbrella-platformatic project never had.
   strictEqual(rootManifest.dependencies.wattpm, requiredRange, JSON.stringify(rootManifest))
 
   strictEqual(apiManifest.devDependencies['@platformatic/node'], requiredRange, JSON.stringify(apiManifest))

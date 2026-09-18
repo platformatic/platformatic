@@ -1,10 +1,10 @@
 import Deepmerge from '@fastify/deepmerge'
 import { bgGreen, black, bold, green, isColorSupported } from 'colorette'
 import { stat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { basename, resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
-import pinoPretty from 'pino-pretty'
 import { findConfigurationFileRecursive } from './configuration.js'
 import { setPinoTimestamp } from './logger.js'
 import { findDecidingFile, isConfigurationFileName } from './loader/index.js'
@@ -120,6 +120,8 @@ export function createCliLogger (level, noPretty = false, loggerConfig = {}) {
   if (noPretty) {
     process.env.PLT_PRETTY_PRINT = 'false'
   } else {
+    // Loaded on first use: only CLI processes need the pretty printer
+    const pinoPretty = createRequire(import.meta.url)('pino-pretty')
     pretty = pinoPretty({
       colorize: process.env.NO_COLOR !== 'true',
       customPrettifiers: {

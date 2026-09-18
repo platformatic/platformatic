@@ -17,7 +17,6 @@ import {
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 // An application only starts its server when a port is configured.

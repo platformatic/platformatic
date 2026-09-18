@@ -33,7 +33,7 @@ Check out our full documentation at [docs.platformatic.dev](https://docs.platfor
 ## Support
 
 If you run into a bug, issues or have a suggestion for improvement, please raise an
-[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
+[issue on GitHub](https://github.com/platformatic/platformatic/issues/new).
 
 ## License
 

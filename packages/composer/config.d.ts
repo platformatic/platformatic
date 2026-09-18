@@ -12,6 +12,7 @@ export type ApplicationEntry = {
 export interface PlatformaticComposerConfig {
   basePath?: string;
   server?: {
+    errorHandler?: string;
     hostname?: string;
     port?: number | string;
     /**
@@ -185,23 +186,6 @@ export interface PlatformaticComposerConfig {
     strictEnv?: boolean | string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
-    scheduler?: {
-      enabled?: boolean | string;
-      name: string;
-      cron: string;
-      callbackUrl: string;
-      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-      headers?: {
-        [k: string]: string;
-      };
-      body?:
-        | string
-        | {
-            [k: string]: unknown;
-          };
-      maxRetries?: number;
-      [k: string]: unknown;
-    }[];
     policies?: {
       deny: {
         /**
@@ -247,79 +231,6 @@ export interface PlatformaticComposerConfig {
       openapi?: {
         [k: string]: unknown;
       };
-      graphql?:
-        | boolean
-        | {
-            host?: string;
-            name?: string;
-            graphqlEndpoint?: string;
-            composeEndpoint?: string;
-            entities?: {
-              /**
-               * This interface was referenced by `undefined`'s JSON-Schema definition
-               * via the `patternProperty` "^.*$".
-               */
-              [k: string]: {
-                pkey?: string;
-                resolver?: {
-                  name: string;
-                  argsAdapter?:
-                    | {
-                        [k: string]: unknown;
-                      }
-                    | string;
-                  partialResults?:
-                    | {
-                        [k: string]: unknown;
-                      }
-                    | string;
-                };
-                fkeys?: {
-                  type: string;
-                  field?: string;
-                  as?: string;
-                  pkey?: string;
-                  subgraph?: string;
-                  resolver?: {
-                    name: string;
-                    argsAdapter?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                    partialResults?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                  };
-                  [k: string]: unknown;
-                }[];
-                many?: {
-                  type: string;
-                  fkey: string;
-                  as?: string;
-                  pkey?: string;
-                  subgraph?: string;
-                  resolver: {
-                    name: string;
-                    argsAdapter?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                    partialResults?:
-                      | {
-                          [k: string]: unknown;
-                        }
-                      | string;
-                  };
-                  [k: string]: unknown;
-                }[];
-                [k: string]: unknown;
-              };
-            };
-          };
       proxy?:
         | false
         | {
@@ -418,90 +329,20 @@ export interface PlatformaticComposerConfig {
        */
       swaggerPrefix?: string;
       /**
+       * Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served.
+       */
+      ui?: boolean;
+      /**
        * Path to an OpenAPI spec file
        */
       path?: string;
       [k: string]: unknown;
     };
-    graphql?: {
-      graphiql?: boolean;
-      onSubgraphError?: {
-        [k: string]: unknown;
-      };
-      defaultArgsAdapter?:
-        | {
-            [k: string]: unknown;
-          }
-        | string;
-      entities?: {
-        /**
-         * This interface was referenced by `undefined`'s JSON-Schema definition
-         * via the `patternProperty` "^.*$".
-         */
-        [k: string]: {
-          pkey?: string;
-          resolver?: {
-            name: string;
-            argsAdapter?:
-              | {
-                  [k: string]: unknown;
-                }
-              | string;
-            partialResults?:
-              | {
-                  [k: string]: unknown;
-                }
-              | string;
-          };
-          fkeys?: {
-            type: string;
-            field?: string;
-            as?: string;
-            pkey?: string;
-            subgraph?: string;
-            resolver?: {
-              name: string;
-              argsAdapter?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-              partialResults?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-            };
-            [k: string]: unknown;
-          }[];
-          many?: {
-            type: string;
-            fkey: string;
-            as?: string;
-            pkey?: string;
-            subgraph?: string;
-            resolver: {
-              name: string;
-              argsAdapter?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-              partialResults?:
-                | {
-                    [k: string]: unknown;
-                  }
-                | string;
-            };
-            [k: string]: unknown;
-          }[];
-          [k: string]: unknown;
-        };
-      };
-      addEntitiesResolvers?: boolean;
-    };
-    addEmptySchema?: boolean;
     refreshTimeout?: number;
+    /**
+     * Restart the gateway when an application is added to or removed from the runtime, so it can recompose its routes. Set to false for a gateway that does not route from the application registry — restarting it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port until the replacement worker boots.
+     */
+    restartOnApplicationChange?: boolean;
     /**
      * Content types that should be passed through without parsing to enable proxying
      */
@@ -509,13 +350,10 @@ export interface PlatformaticComposerConfig {
   };
 }
 export interface AppLoggerOptions {
-  level?: (
-    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-    | {
-        [k: string]: unknown;
-      }
-  ) &
-    string;
+  /**
+   * A standard Pino log level or a level defined in customLevels.
+   */
+  level?: string;
   transport?:
     | {
         target?: string;
@@ -548,6 +386,10 @@ export interface AppLoggerOptions {
   redact?: {
     paths: string[];
     censor?: string;
+    /**
+     * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
+     */
+    remove?: boolean;
   };
   base?: {
     [k: string]: unknown;
@@ -556,6 +398,46 @@ export interface AppLoggerOptions {
   customLevels?: {
     [k: string]: unknown;
   };
+  /**
+   * The numeric value of the level defined in level, when it is not one of the standard pino levels.
+   */
+  levelVal?: number;
+  /**
+   * Only use the levels defined in customLevels and omit the standard pino ones.
+   */
+  useOnlyCustomLevels?: boolean;
+  /**
+   * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
+   */
+  levelComparison?: "ASC" | "DESC";
+  /**
+   * A string prefixed to every message, including the ones of child loggers.
+   */
+  msgPrefix?: string;
+  /**
+   * The key under which any logged object is placed.
+   */
+  nestedKey?: string;
+  /**
+   * The key used for the serialized error in the log object. Defaults to err.
+   */
+  errorKey?: string;
+  /**
+   * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
+   */
+  depthLimit?: number;
+  /**
+   * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
+   */
+  edgeLimit?: number;
+  /**
+   * Terminate each log line with \r\n instead of \n. Defaults to false.
+   */
+  crlf?: boolean;
+  /**
+   * Set to false to disable logging entirely. Defaults to true.
+   */
+  enabled?: boolean;
   openTelemetryExporter?: {
     protocol: "grpc" | "http";
     url: string;
@@ -617,13 +499,10 @@ export interface WorkersOptions {
   [k: string]: unknown;
 }
 export interface AppLoggerOptions1 {
-  level?: (
-    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-    | {
-        [k: string]: unknown;
-      }
-  ) &
-    string;
+  /**
+   * A standard Pino log level or a level defined in customLevels.
+   */
+  level?: string;
   transport?:
     | {
         target?: string;
@@ -656,6 +535,10 @@ export interface AppLoggerOptions1 {
   redact?: {
     paths: string[];
     censor?: string;
+    /**
+     * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
+     */
+    remove?: boolean;
   };
   base?: {
     [k: string]: unknown;
@@ -664,6 +547,46 @@ export interface AppLoggerOptions1 {
   customLevels?: {
     [k: string]: unknown;
   };
+  /**
+   * The numeric value of the level defined in level, when it is not one of the standard pino levels.
+   */
+  levelVal?: number;
+  /**
+   * Only use the levels defined in customLevels and omit the standard pino ones.
+   */
+  useOnlyCustomLevels?: boolean;
+  /**
+   * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
+   */
+  levelComparison?: "ASC" | "DESC";
+  /**
+   * A string prefixed to every message, including the ones of child loggers.
+   */
+  msgPrefix?: string;
+  /**
+   * The key under which any logged object is placed.
+   */
+  nestedKey?: string;
+  /**
+   * The key used for the serialized error in the log object. Defaults to err.
+   */
+  errorKey?: string;
+  /**
+   * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
+   */
+  depthLimit?: number;
+  /**
+   * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
+   */
+  edgeLimit?: number;
+  /**
+   * Terminate each log line with \r\n instead of \n. Defaults to false.
+   */
+  crlf?: boolean;
+  /**
+   * Set to false to disable logging entirely. Defaults to true.
+   */
+  enabled?: boolean;
   openTelemetryExporter?: {
     protocol: "grpc" | "http";
     url: string;

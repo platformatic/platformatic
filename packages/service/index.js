@@ -55,6 +55,8 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 
 export { platformaticService } from './lib/application.js'
 export { ServiceCapability } from './lib/capability.js'
+export * from './lib/errors.js'
+export * as errors from './lib/errors.js'
 export { applyTestHelperCustomizations, Generator } from './lib/generator.js'
 export { packageJson, schema, schemaComponents, skipTracingHooks, version } from './lib/schema.js'
 

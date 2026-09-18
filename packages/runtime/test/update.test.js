@@ -21,7 +21,7 @@ async function setupTemporaryDirectory (fixture) {
   await createDirectory(resolve(dir, 'node_modules/@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../service'), join(dir, 'node_modules/@platformatic/service'), 'dir')
   await symlink(resolve(import.meta.dirname, '../../db'), join(dir, 'node_modules/@platformatic/db'), 'dir')
-  // The scaffolded root config imports wattpm for its defineConfig, evaluated whenever it is read back.
+  // The scaffolded root config imports wattpm for its createWattConfig, evaluated whenever it is read back.
   await symlink(resolve(import.meta.dirname, '../../wattpm'), join(dir, 'node_modules/wattpm'), 'dir')
 
   return dir

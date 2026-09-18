@@ -367,7 +367,7 @@ test('an inline config alongside a per-app file is the configured-twice error', 
 })
 
 test('the deciding file is exempt from the configured-twice check', async t => {
-  // defineConfig({ application: { workers: 2 } }) in a bare repository has a defaulted path and no
+  // createWattConfig({ application: { workers: 2 } }) in a bare repository has a defaulted path and no
   // inline config; without the exemption it would discover its own root config.
   const root = await createTree(t, {
     'package.json': '{ "name": "solo", "dependencies": { "@platformatic/node": "3.0.0" } }',

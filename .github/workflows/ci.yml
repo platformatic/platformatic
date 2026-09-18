@@ -884,7 +884,7 @@ jobs:
       fail-fast: false
       matrix:
         node: [22, 24, 26]
-        suite: [main, caching, compatibility, integration]
+        suite: [main, caching, compatibility-development, compatibility-production, integration]
     env:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379

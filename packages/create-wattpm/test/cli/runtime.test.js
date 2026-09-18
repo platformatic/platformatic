@@ -138,7 +138,7 @@ test('Add another application to an existing application', async t => {
     equal(await isFileAccessible(join(applicationRoot, 'plugins', 'example.js')), true)
     equal(await isFileAccessible(join(applicationRoot, 'plt-env.d.ts')), true)
 
-    // The second run evaluates the scaffolded root config, which imports `defineConfig` from
+    // The second run evaluates the scaffolded root config, which imports `createWattConfig` from
     // `wattpm`; linking every workspace package supplies both that and the application capability an
     // install would otherwise provide.
     await linkWorkspacePackages(root)

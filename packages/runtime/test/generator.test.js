@@ -384,7 +384,7 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
     await rg.writeFiles()
   }
 
-  // The root config imports wattpm for its defineConfig, which reading it back to add an application
+  // The root config imports wattpm for its createWattConfig, which reading it back to add an application
   // evaluates -- so wattpm has to resolve, exactly as it does in a project whose dependencies were
   // installed after the scaffold.
   await createDirectory(join(targetDirectory, 'node_modules'))
@@ -458,7 +458,7 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
     await rg.writeFiles()
   }
 
-  // The root config imports wattpm for its defineConfig, which reading it back to add an application
+  // The root config imports wattpm for its createWattConfig, which reading it back to add an application
   // evaluates -- so wattpm has to resolve, exactly as it does in a project whose dependencies were
   // installed after the scaffold.
   await createDirectory(join(targetDirectory, 'node_modules'))
@@ -665,7 +665,7 @@ test('RuntimeGenerator - what it writes loads', async t => {
 
   await createDirectory(join(root, 'node_modules', '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../service'), join(root, 'node_modules/@platformatic/service'), 'dir')
-  // The root config imports wattpm for its defineConfig, so it has to resolve too.
+  // The root config imports wattpm for its createWattConfig, so it has to resolve too.
   await symlink(resolve(import.meta.dirname, '../../wattpm'), join(root, 'node_modules/wattpm'), 'dir')
 
   /*

@@ -12,7 +12,6 @@
 [![CI](https://github.com/platformatic/platformatic/actions/workflows/ci.yml/badge.svg)](https://github.com/platformatic/platformatic/actions/workflows/ci.yml)
 [![Documentation](https://github.com/platformatic/platformatic/actions/workflows/update-docs.yml/badge.svg)](https://github.com/platformatic/platformatic/actions/workflows/update-docs.yml)
 [![NPM version](https://img.shields.io/npm/v/platformatic.svg?style=flat)](https://www.npmjs.com/package/platformatic)
-[![Discord](https://img.shields.io/discord/1011258196905689118)](https://discord.gg/platformatic)
 
 </div>
 
@@ -109,7 +108,6 @@ Complete technical specifications for CLI, configuration, and APIs
 ## Get Support
 
 📖 **Documentation**: [docs.platformatic.dev](https://docs.platformatic.dev)  
-💬 **Community**: [Discord](https://discord.gg/platformatic)  
 🐛 **Issues**: [GitHub Issues](https://github.com/platformatic/platformatic/issues/new)  
 🏢 **Enterprise**: [PlatformaticHQ](https://www.platformatichq.com)
 

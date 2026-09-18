@@ -176,15 +176,12 @@ export class NestCapability extends BaseCapability {
   getMeta () {
     const hasBasePath = this.basePath || this.#basePath
 
-    return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: !!hasBasePath,
-        needsRootTrailingSlash: false
-      }
-    }
+    return super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      wantsAbsoluteUrls: !!hasBasePath,
+      needsRootTrailingSlash: false
+    })
   }
 
   /* c8 ignore next 5 */

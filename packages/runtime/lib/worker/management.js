@@ -74,6 +74,10 @@ export class ManagementClient {
     return this.#send('getSchedulerJobs')
   }
 
+  getScheduler () {
+    return this.getSchedulerJobs()
+  }
+
   pauseSchedulerJob (name) {
     return this.#send('pauseSchedulerJob', { name })
   }

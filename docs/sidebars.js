@@ -77,6 +77,7 @@ const sidebars = {
             'guides/migrate-runtime-v4',
             'guides/generating-watt-configuration',
             'guides/hand-writing-watt-configuration',
+            'guides/reproduce-graphql-composition',
             'guides/scheduler',
             'guides/dynamic-workers',
             'guides/nextjs-multi-zones',

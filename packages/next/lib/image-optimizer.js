@@ -5,9 +5,8 @@ import {
   errors as basicErrors,
   getServerUrl,
   importFile,
-  resolvePackageViaCJS
+  resolvePackageViaCJS, cleanBasePath
 } from '@platformatic/basic'
-import { cleanBasePath } from '@platformatic/basic'
 import { ensureLoggableError } from '@platformatic/foundation'
 import { getEvents } from '@platformatic/globals'
 import { createQueue } from '@platformatic/image-optimizer'

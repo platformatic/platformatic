@@ -7,7 +7,8 @@ import {
   features,
   kMetadata,
   kTimeout,
-  parseMemorySize
+  parseMemorySize,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
@@ -441,7 +442,7 @@ export class Runtime extends EventEmitter {
     await this.#setDispatcher(config.undici)
 
     if (!this.#context.build) {
-      this.#scheduler = startScheduler(config.scheduler ?? [], this.#dispatcher, logger)
+      this.#scheduler = startScheduler(logger)
     }
 
     this.#updateStatus('init')
@@ -516,6 +517,7 @@ export class Runtime extends EventEmitter {
 
     await this.#dynamicWorkersScaler?.start()
     this.#showUrls()
+    scheduleCompileCacheFlush(this.logger)
     return this.getUrls()
   }
 

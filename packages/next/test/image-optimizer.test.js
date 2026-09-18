@@ -1,5 +1,4 @@
-import { safeRemove } from '@platformatic/foundation'
-import { createDirectory } from '@platformatic/foundation'
+import { safeRemove, createDirectory } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { deepStrictEqual } from 'node:assert'
 import { symlink } from 'node:fs/promises'

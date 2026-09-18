@@ -1,7 +1,11 @@
-/* globals platformatic */
-
 import { kMetadata } from '@platformatic/foundation'
-import { updateGlobals } from '@platformatic/globals'
+import {
+  getReuseTcpPorts,
+  setBasePath,
+  setGraphqlSchema,
+  setOpenapiSchema,
+  updateGlobals
+} from '@platformatic/globals'
 import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { EventEmitter } from 'node:events'
@@ -62,15 +66,15 @@ test('BaseCapability - should properly setup globals', async t => {
     }
   )
 
-  platformatic.setOpenapiSchema('openapi')
-  platformatic.setGraphqlSchema('graphql')
-  platformatic.setBasePath('basePath')
+  setOpenapiSchema('openapi')
+  setGraphqlSchema('graphql')
+  setBasePath('basePath')
 
   deepStrictEqual(await capability.getOpenapiSchema(), 'openapi')
   deepStrictEqual(await capability.getGraphqlSchema(), 'graphql')
   deepStrictEqual(capability.logger.level, 'info')
   deepStrictEqual(capability.basePath, 'basePath')
-  deepStrictEqual(platformatic.reuseTcpPorts, capability.reuseTcpPorts)
+  deepStrictEqual(getReuseTcpPorts(), capability.reuseTcpPorts)
 })
 
 test('BaseCapability - other getters', async t => {
@@ -90,6 +94,32 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(await capability.getEnv(), { key2: 'value2' })
   deepStrictEqual(await capability.getInfo(), { dependencies: [], type: 'base', version: '1.0.0' })
   deepStrictEqual(await capability.getDispatchFunc(), capability)
+})
+
+test('BaseCapability - getDispatchTarget - "websocket" flag falls back to the TCP address without an in-thread dispatch target', async t => {
+  const capability = await create(t, { applicationConfig: { websocket: true } })
+
+  capability.url = 'http://127.0.0.1:1234'
+
+  deepStrictEqual(await capability.getDispatchTarget(), 'http://127.0.0.1:1234')
+})
+
+test('BaseCapability - getDispatchTarget - "websocket" flag keeps in-thread dispatching when the capability provides it', async t => {
+  const capability = await create(t, { applicationConfig: { websocket: true } })
+
+  const dispatchTarget = { inject () {} }
+  capability.getDispatchFunc = async () => dispatchTarget
+  capability.url = 'http://127.0.0.1:1234'
+
+  deepStrictEqual(await capability.getDispatchTarget(), dispatchTarget)
+})
+
+test('BaseCapability - getDispatchTarget - "websocket" flag is ignored with "useHttp"', async t => {
+  const useHttpCapability = await create(t, { applicationConfig: { websocket: true, useHttp: true } })
+  useHttpCapability.getDispatchFunc = async () => ({ inject () {} })
+  useHttpCapability.url = 'http://127.0.0.1:1234'
+
+  deepStrictEqual(await useHttpCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
 test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {

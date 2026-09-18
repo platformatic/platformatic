@@ -784,7 +784,6 @@ npm start
 
 **Community Support:**
 
-- [Discord Community](https://discord.gg/platformatic): Real-time discussion
 - [GitHub Discussions](https://github.com/platformatic/platformatic/discussions): Detailed questions
 - [Office Hours](https://platformatic.dev/office-hours): Direct guidance from the team
 

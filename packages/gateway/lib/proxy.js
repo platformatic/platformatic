@@ -1,6 +1,6 @@
 import httpProxy from '@fastify/http-proxy'
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
-import { getGlobal, getITC, getPrometheus } from '@platformatic/globals'
+import { getITC, getPrometheus, getUndiciThreadInterceptor } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
@@ -81,6 +81,7 @@ async function resolveApplicationProxyParameters (application, root) {
     methods: application.proxy?.methods,
     routes: application.proxy?.routes,
     url: meta.url,
+    childProcess: meta.childProcess === true,
     prefix,
     rewritePrefix,
     internalRewriteLocationHeader,
@@ -114,7 +115,7 @@ async function proxyPlugin (app, opts) {
     if (!application.proxy) {
       // When a application defines no expose config at all
       // we assume a proxy exposed with a prefix equals to its id or meta.prefix
-      if (application.proxy === false || application.openapi || application.graphql) {
+      if (application.proxy === false || application.openapi) {
         continue
       }
     }
@@ -124,6 +125,7 @@ async function proxyPlugin (app, opts) {
       prefix,
       origin,
       url,
+      childProcess,
       routes,
       methods,
       rewritePrefix,
@@ -225,6 +227,9 @@ async function proxyPlugin (app, opts) {
       })
     }
 
+    const threadInterceptor = getUndiciThreadInterceptor({ throwOnMissing: false })
+    // Child-process applications expose a real TCP listener; the mesh interceptor only handles HTTP dispatch.
+    const wsOrigin = childProcess ? (url ?? origin) : origin
     const proxyOptions = {
       prefix,
       rewritePrefix,
@@ -232,14 +237,14 @@ async function proxyPlugin (app, opts) {
       handler: proxyHandler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
-      wsClientOptions: getGlobal()?.undiciThreadInterceptor?.createUpgradeAgent
-        ? { agent: getGlobal().undiciThreadInterceptor.createUpgradeAgent() }
+      wsClientOptions: threadInterceptor?.createUpgradeAgent
+        ? { agent: threadInterceptor.createUpgradeAgent() }
         : undefined,
 
       websocket: true,
       // When getUpstream is provided and no explicit WebSocket upstream is configured,
       // leave wsUpstream undefined so that getUpstream is used to select the upstream per-connection
-      wsUpstream: ws?.upstream ?? (getUpstream ? undefined : (url ?? origin)),
+      wsUpstream: ws?.upstream ?? (getUpstream ? undefined : wsOrigin),
       wsReconnect: ws?.reconnect,
       wsHooks: {
         onConnect: (...args) => {

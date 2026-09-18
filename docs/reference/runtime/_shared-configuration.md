@@ -699,7 +699,7 @@ An object with the following settings:
   - **`level`** — The key that contains the numeric log level. Default: `level`.
   - **`time`** — The key that contains the log timestamp. Default: `time`.
   - **`message`** — The key that contains the log message. Default: `msg`.
-- **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
+- **`customLevels`** — Configuration for custom levels. Names defined here can also be used as the logger's `level`. See [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
 - **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `tracing` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
@@ -953,39 +953,7 @@ export default createWattConfig({
 
 The configuration format is the same as the per-application `management` setting (boolean or object with `enabled` and `operations`). See the [per-application management](#management) section for the full list of available operations.
 
-### `scheduler`
-
-An optional array of objects to configure HTTP call triggered by cron jobs.
-_Every object_ has:
-
-- **`enabled`** (`boolean` or `string`). Optional. If `false` the scheduler is disabled. Default: `true`.
-- **`name`** (`string`): The job name
-- **`cron`** (`string`): the crontab schedule expession. See https://crontab.guru/examples.html for some examples.
-- **`callbackUrl`** (`string`): the HTTP URL to be called
-- **`method`** (`string`): Optional, can be `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. Default: `GET`.
-- **`body`** (`string` or `object`). Optional.
-- **`headers`** (`object`). Optional. Headers added to the HTTP call.
-- **`maxRetry`** (`number`). Number of attempts for the HTTP call. Default: 3
-
-```ts config title="Example Scheduler"
-import { createWattConfig } from 'wattpm'
-
-export default createWattConfig({
-  autoload: {
-    path: 'web'
-  },
-  scheduler: [
-    {
-      name: 'test',
-      callbackUrl: 'http://mytarget',
-      cron: '0 * * * *',
-      method: 'GET'
-    }
-  ]
-})
-```
-
-### `verticalScaler`
+### verticalScaler
 
 **Removed.** It was the deprecated spelling of [`workers`](#workers), previously kept alongside a
 transform that rewrote it. There is now one spelling: a configuration that still says

@@ -1,5 +1,4 @@
 import { abstractLogger, kMetadata } from '@platformatic/foundation'
-import { printSchema as printGraphqlSchema } from 'graphql'
 import { create } from '../../index.js'
 import { resolveCommandConfiguration } from './configuration.js'
 
@@ -23,6 +22,8 @@ export async function printSchema (logger, configuration, args, context) {
     await app.start({ listen: true })
     output = JSON.stringify(app.getApplication().swagger(), null, 2)
   } else {
+    // graphql is only needed for this command: do not load it when the package is imported
+    const { printSchema: printGraphqlSchema } = await import('graphql')
     output = printGraphqlSchema(app.getApplication().graphql.schema)
   }
 

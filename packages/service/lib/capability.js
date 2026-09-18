@@ -16,11 +16,11 @@ import {
 import { getTracerProvider } from '@platformatic/globals'
 import { addPinoInstrumentation, telemetry } from '@platformatic/tracing'
 import fastify from 'fastify'
-import { printSchema } from 'graphql'
 import { randomUUID } from 'node:crypto'
 import { hostname } from 'node:os'
 import pino from 'pino'
 import { platformaticService } from './application.js'
+import { loadErrorHandler } from './error-handler.js'
 import { setupRoot } from './plugins/root.js'
 import { version } from './schema.js'
 
@@ -42,7 +42,7 @@ export class ServiceCapability extends BaseCapability {
 
     const config = this.config
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
-    const serverConfig = this.serverConfig
+    const { errorHandler, ...serverConfig } = this.serverConfig ?? {}
 
     // Create the application
     this.#app = fastify({
@@ -52,6 +52,10 @@ export class ServiceCapability extends BaseCapability {
         return randomUUID()
       }
     })
+
+    if (errorHandler) {
+      this.#app.setErrorHandler(await loadErrorHandler(errorHandler))
+    }
 
     // Add hook to set Connection: close during graceful shutdown.
     // This must be added BEFORE plugins are registered, because if a plugin
@@ -174,14 +178,14 @@ export class ServiceCapability extends BaseCapability {
   }
 
   getMeta () {
+    const applicationMeta = super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      needsRootTrailingSlash: false
+    })
+
     return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: false,
-        needsRootTrailingSlash: false
-      },
+      ...applicationMeta,
       connectionStrings: [this.connectionString]
     }
   }
@@ -195,7 +199,13 @@ export class ServiceCapability extends BaseCapability {
   async getGraphqlSchema () {
     await this.init()
     await this.#app.ready()
-    return this.#app.graphql ? printSchema(this.#app.graphql.schema) : null
+    if (!this.#app.graphql) {
+      return null
+    }
+
+    // Keep GraphQL optional for applications that only expose HTTP routes.
+    const { printSchema } = await import('graphql')
+    return printSchema(this.#app.graphql.schema)
   }
 
   async updateContext (context) {

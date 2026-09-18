@@ -177,16 +177,15 @@ export class ViteCapability extends BaseCapability {
 
   getMeta (prefix) {
     const config = this.subprocessConfig ?? this.#app?.config
+    const options = prefix && typeof prefix === 'object' ? prefix : { prefix }
 
-    const gateway = {
-      tcp: typeof this.url !== 'undefined',
-      url: this.url,
-      prefix: this.basePath ?? config?.base ?? prefix ?? this.#basePath,
+    return super.getMeta({
+      ...options,
+      includeConnection: true,
+      prefix: this.basePath ?? config?.base ?? options.prefix ?? this.#basePath,
       wantsAbsoluteUrls: true,
       needsRootTrailingSlash: true
-    }
-
-    return { gateway }
+    })
   }
 
   _getApp () {
@@ -254,7 +253,10 @@ export class ViteCapability extends BaseCapability {
       logLevel: this.logger.level,
       clearScreen: false,
       optimizeDeps: { force: false },
-      plugins: [platformaticHttp2HeadersPlugin(), ...(skewPlugin ? [skewPlugin] : [])],
+      plugins: [
+        platformaticHttp2HeadersPlugin(),
+        ...(skewPlugin ? [skewPlugin] : [])
+      ],
       server: serverOptions
     })
 
@@ -470,15 +472,15 @@ export class ViteSSRCapability extends NodeCapability {
     const vite = this._getApplication()?.vite
     const applicationBasePath = vite?.config?.base
 
-    const gateway = {
-      tcp: typeof this.url !== 'undefined',
-      url: this.url,
-      prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
-      wantsAbsoluteUrls: true,
-      needsRootTrailingSlash: true
+    return {
+      gateway: {
+        tcp: typeof this.url !== 'undefined',
+        url: this.url,
+        prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
+        wantsAbsoluteUrls: true,
+        needsRootTrailingSlash: true
+      }
     }
-
-    return { gateway }
   }
 
   _findEntrypoint () {

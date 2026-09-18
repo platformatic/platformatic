@@ -32,7 +32,7 @@ import { getBasePath } from '@platformatic/globals'
 const basePath = getBasePath({ throwOnMissing: false }) ?? ''
 ```
 
-Direct access through the legacy `globalThis.platformatic` object is still supported for compatibility, but deprecated. Use the typed getters and setters instead.
+Runtime state is shared through a non-enumerable global symbol so that duplicate package instances can access the same values. Use the typed getters and setters to access it.
 
 ## Documentation
 

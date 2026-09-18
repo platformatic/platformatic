@@ -40,7 +40,7 @@ export default createTanstackConfig({
 
 ## Preparing for production mode
 
-Add the following to your `vite.config.ts` plugins section:
+Add Nitro to `vite.config.ts`:
 
 ```javascript
 process.env.NODE_ENV === 'production' &&

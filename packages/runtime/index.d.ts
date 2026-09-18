@@ -164,14 +164,6 @@ export interface SchedulerJobBase {
   nextRunAt?: string | null
 }
 
-export interface ConfiguredSchedulerJob extends SchedulerJobBase {
-  source: 'config'
-  callbackUrl: string
-  method: string
-  headers?: Record<string, string>
-  body?: string | Record<string, unknown>
-}
-
 export interface ApplicationSchedulerJob extends SchedulerJobBase {
   source: 'application'
   applicationId: string
@@ -179,7 +171,7 @@ export interface ApplicationSchedulerJob extends SchedulerJobBase {
   tasks: string[]
 }
 
-export type SchedulerJob = ConfiguredSchedulerJob | ApplicationSchedulerJob
+export type SchedulerJob = ApplicationSchedulerJob
 
 export interface SchedulerRunResult {
   name: string
@@ -259,6 +251,7 @@ export interface ManagementClient {
   getApplicationOpenapiSchema (id: string): Promise<unknown>
   getApplicationGraphqlSchema (id: string): Promise<unknown>
   getMetrics (format?: string): Promise<{ metrics: unknown }>
+  getScheduler (): Promise<SchedulerJob[]>
   getSchedulerJobs (): Promise<SchedulerJob[]>
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
   resumeSchedulerJob (name: string): Promise<SchedulerJob>
@@ -471,6 +464,7 @@ export declare class Runtime extends EventEmitter {
   off (event: 'application:worker:health:metrics', listener: (event: HealthMetricsEvent) => void): this
   off (event: string | symbol, listener: (...args: any[]) => void): this
 
+  getScheduler (): SchedulerJob[]
   getSchedulerJobs (): SchedulerJob[]
   pauseSchedulerJob (name: string): Promise<SchedulerJob>
   resumeSchedulerJob (name: string): Promise<SchedulerJob>

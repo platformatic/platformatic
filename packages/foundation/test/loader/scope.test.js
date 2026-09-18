@@ -144,7 +144,7 @@ test('the standalone warning looks strictly above the application directory', as
 })
 
 test('per-app discovery skips the candidate that is the deciding file itself', async t => {
-  // Without that, defineConfig({ application: { workers: 2 } }) in a bare repository — whose entry
+  // Without that, createWattConfig({ application: { workers: 2 } }) in a bare repository — whose entry
   // has a defaulted path and no inline config — would discover its own root config.
   const root = await createTree(t, { 'watt.config.ts': '' })
   const deciding = join(root, 'watt.config.ts')

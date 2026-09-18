@@ -13,7 +13,6 @@ import {
 } from '../../basic/test/helper.js'
 import { updateConfigFile } from '../../runtime/test/helpers.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 function isTime (body) {

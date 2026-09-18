@@ -207,7 +207,7 @@ By default, this setup will expose the `api` service as `/api` and `data-service
 
 - Internal Service Mesh: Services communicate using `.plt.local` domains (e.g., `http://api.plt.local`, `http://data-service.plt.local`)
 - Zero Network Overhead: Internal calls don't go through the network stack
-- Reverse-Proxy: the `@platformatic/gateway` provide a reverse proxy layer that can enable caching, load-balancing, OpenAPI and GraphQL Composition.
+- Reverse-Proxy: the `@platformatic/gateway` provides a reverse proxy layer that can enable caching, load-balancing and OpenAPI composition.
 
 ## Step 3: Add Cache Headers to Your Responses
 

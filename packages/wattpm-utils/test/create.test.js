@@ -37,7 +37,7 @@ test('create - should create a new project using the configuration by default', 
     Evaluated rather than parsed: the scaffolded root is a module whose values are references into
     the project's own environment, and it carries no `$schema` -- the marker is a version
     declaration, and this line is still 3.x. Its default is TypeScript now, so the suffix is `.ts`,
-    and it imports `defineConfig` from `wattpm` -- what an install would provide is linked here instead so
+    and it imports `createWattConfig` from `wattpm` -- what an install would provide is linked here instead so
     the evaluation can resolve it.
   */
   await linkWorkspacePackages(resolve(temporaryFolder, 'root'))
@@ -79,7 +79,7 @@ test('create - should create a new project with two applications', async t => {
     Evaluated rather than parsed: the scaffolded root is a module whose values are references into
     the project's own environment, and it carries no `$schema` -- the marker is a version
     declaration, and this line is still 3.x. Its default is TypeScript now, so the suffix is `.ts`,
-    and it imports `defineConfig` from `wattpm` -- what an install would provide is linked here instead so
+    and it imports `createWattConfig` from `wattpm` -- what an install would provide is linked here instead so
     the evaluation can resolve it.
   */
   await linkWorkspacePackages(resolve(temporaryFolder, 'root'))
@@ -137,7 +137,7 @@ test('create - names the configuration by the selector, whatever -c says', async
   /*
     Exactly four filenames are recognized, so `-c` no longer names the output: the suffix comes from
     the selector -- TypeScript by default, so `.ts`. The flag still selects which file to *read*,
-    which is what it means everywhere else. The root imports `defineConfig` from `wattpm`, so what an
+    which is what it means everywhere else. The root imports `createWattConfig` from `wattpm`, so what an
     install would provide is linked here for the evaluation to resolve.
   */
   await linkWorkspacePackages(resolve(temporaryFolder, 'root'))
@@ -162,7 +162,7 @@ test('create - should create a new project using a different package manager', a
   /*
     This exercises the real install path (no `-s`), which installs the project's own dependencies and
     then evaluates the scaffolded root to discover the application directories -- and the root imports
-    `defineConfig` from `wattpm`. `fake-npm` is a no-op stand-in that installs nothing, so the
+    `createWattConfig` from `wattpm`. `fake-npm` is a no-op stand-in that installs nothing, so the
     workspace packages a real install would place are linked here first; the assertions below are on
     the package-manager messages the flow prints, which this leaves untouched.
   */
@@ -470,7 +470,7 @@ test('create - should not use a URL when importing a local application within th
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
-  // The scaffolded root defaults to TypeScript (`.ts`) and imports `defineConfig` from `wattpm`, and
+  // The scaffolded root defaults to TypeScript (`.ts`) and imports `createWattConfig` from `wattpm`, and
   // evaluating it expands into the imported application (which imports its own capability), so the
   // workspace packages an install would provide are linked here for the evaluation to resolve.
   await linkWorkspacePackages(temporaryFolder)

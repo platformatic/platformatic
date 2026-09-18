@@ -126,6 +126,11 @@
 ### PLT_GATEWAY_VALIDATION_ERRORS
 **Message:** Validation errors: %s 
 
+## @platformatic/globals 
+
+### PLT_GLOBALS_MISSING_FIELD
+**Message:** Global runtime API "%s" is not available 
+
 ## @platformatic/itc 
 
 ### PLT_ITC_HANDLER_FAILED
@@ -188,6 +193,9 @@
 
 ### PLT_RUNTIME_APPLICATION_EXIT
 **Message:** The application "%s" exited prematurely with error code %d 
+
+### PLT_RUNTIME_APPLICATION_ID_COLLISION
+**Message:** The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique. 
 
 ### PLT_RUNTIME_APPLICATION_NOT_FOUND
 **Message:** Application %s not found. Available applications are: %s 
@@ -285,6 +293,9 @@
 ### PLT_RUNTIME_INVALID_EXTENSION
 **Message:** The extension "%s" must export a setup function as its default export or as a named "setup" export 
 
+### PLT_RUNTIME_INVALID_SCHEDULER_CRON
+**Message:** Invalid cron expression "%s" for scheduler "%s" 
+
 ### PLT_RUNTIME_LAST_PROFILE_TIMEOUT
 **Message:** Timed out while retrieving the last profile from the application "%s" 
 
@@ -350,6 +361,11 @@
 
 ### PLT_RUNTIME_WORKER_NOT_FOUND
 **Message:** Worker %s of application %s not found. Available workers are: %s 
+
+## @platformatic/service 
+
+### PLT_SERVICE_INVALID_ERROR_HANDLER
+**Message:** The module %s configured as server.errorHandler does not export a function. 
 
 ## @platformatic/sql-events 
 

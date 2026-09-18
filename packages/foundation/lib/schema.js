@@ -268,12 +268,8 @@ export const logger = {
   properties: {
     level: {
       type: 'string',
-      oneOf: [
-        {
-          enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
-        },
-        { pattern: '^\\{.+\\}$' }
-      ]
+      minLength: 1,
+      description: 'A standard Pino log level or a level defined in customLevels.'
     },
     transport: {
       anyOf: [
@@ -359,6 +355,11 @@ export const logger = {
         censor: {
           type: 'string',
           default: '[redacted]'
+        },
+        remove: {
+          type: 'boolean',
+          description:
+            'Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.'
         }
       },
       required: ['paths'],
@@ -373,6 +374,50 @@ export const logger = {
     customLevels: {
       type: 'object',
       additionalProperties: true
+    },
+    levelVal: {
+      type: 'integer',
+      description: 'The numeric value of the level defined in level, when it is not one of the standard pino levels.'
+    },
+    useOnlyCustomLevels: {
+      type: 'boolean',
+      description: 'Only use the levels defined in customLevels and omit the standard pino ones.'
+    },
+    levelComparison: {
+      type: 'string',
+      enum: ['ASC', 'DESC'],
+      description:
+        'How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.'
+    },
+    msgPrefix: {
+      type: 'string',
+      description: 'A string prefixed to every message, including the ones of child loggers.'
+    },
+    nestedKey: {
+      type: 'string',
+      description: 'The key under which any logged object is placed.'
+    },
+    errorKey: {
+      type: 'string',
+      description: 'The key used for the serialized error in the log object. Defaults to err.'
+    },
+    depthLimit: {
+      type: 'integer',
+      description:
+        'The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.'
+    },
+    edgeLimit: {
+      type: 'integer',
+      description:
+        'The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.'
+    },
+    crlf: {
+      type: 'boolean',
+      description: 'Terminate each log line with \\r\\n instead of \\n. Defaults to false.'
+    },
+    enabled: {
+      type: 'boolean',
+      description: 'Set to false to disable logging entirely. Defaults to true.'
     },
     openTelemetryExporter: {
       type: 'object',
@@ -512,6 +557,12 @@ export const server = {
 export const fastifyServer = {
   type: 'object',
   properties: {
+    errorHandler: {
+      anyOf: [
+        { type: 'string', resolveModule: true },
+        { type: 'string', resolvePath: true }
+      ]
+    },
     // TODO add support for level
     hostname: {
       type: 'string'
@@ -1575,54 +1626,6 @@ export const runtimeProperties = {
     type: 'array',
     items: { type: 'string' },
     default: []
-  },
-  scheduler: {
-    type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        enabled: {
-          anyOf: [
-            {
-              type: 'boolean'
-            },
-            {
-              type: 'string'
-            }
-          ],
-          default: true
-        },
-        name: {
-          type: 'string'
-        },
-        cron: {
-          type: 'string'
-        },
-        callbackUrl: {
-          type: 'string'
-        },
-        method: {
-          type: 'string',
-          enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-          default: 'GET'
-        },
-        headers: {
-          type: 'object',
-          additionalProperties: {
-            type: 'string'
-          }
-        },
-        body: {
-          anyOf: [{ type: 'string' }, { type: 'object', additionalProperties: true }]
-        },
-        maxRetries: {
-          type: 'number',
-          minimum: 0,
-          default: 3
-        }
-      },
-      required: ['name', 'cron', 'callbackUrl']
-    }
   },
   policies,
   compileCache
