@@ -93,7 +93,7 @@ test('dev - should restart an application if files are changed', async t => {
 
   /*
     There was a `wattpm config <pid>` here, reading the running runtime's configuration to assert
-    that watching was on before waiting for a restart. v4 removed that command with the endpoint
+    that watching was on before waiting for a restart. That command was removed with the endpoint
     behind it, and the assertion was a precondition rather than the point: what follows observes the
     restart itself, which is the only evidence that watching works.
   */
@@ -153,7 +153,7 @@ test('dev - should restart an application if the runtime configuration file is c
   const originalContents = await readFile(configFile, 'utf-8')
 
   /*
-    Edited as source. A v4 configuration is a module, so it cannot be round-tripped through
+    Edited as source. A configuration is a module, so it cannot be round-tripped through
     `JSON.parse` -- and what this asserts is that a change to the file reloads the runtime, which
     any real edit demonstrates.
   */
@@ -191,9 +191,9 @@ test('dev - should restart an application if the runtime configuration file is c
 
 /*
   What `runtime/test/cli/do-not-crash-on-bad-config.test.js` used to assert, at the position the
-  subject moved to. v3 read an application's configuration in its worker, so a file that stopped
-  parsing broke that worker; v4 reads it main-side, once, and a file that stops evaluating breaks
-  the *reload* instead. The runtime has to survive it either way: report the failure and keep
+  subject moved to. The application's configuration is read main-side, once, and a file that stops
+  evaluating breaks the *reload* instead. The runtime has to survive it either way: report the
+  failure and keep
   serving what it already loaded.
 */
 test('dev - should survive an application configuration file that stops evaluating', async t => {
@@ -302,8 +302,7 @@ test('dev - should restart an application if the application configuration file 
   /*
     The runtime reloads, rather than the application restarting itself. An application's own
     configuration file is part of what the loader read to build the topology, so changing it is a
-    configuration change -- v3 did not watch it and left the application's worker to notice, which
-    is why this used to wait for "has been successfully reloaded".
+    configuration change.
   */
   let reloaded = false
   let lastListening = null
@@ -474,8 +473,7 @@ test('dev - should load custom env file after runtime configuration file change 
   const originalContents = await readFile(configFile, 'utf-8')
 
   /*
-    The level comes from the environment now. v3 wrote `{PLT_CUSTOM_LOGGER_LEVEL}` and let
-    interpolation replace it; a v4 configuration reads the variable itself.
+    The level comes from the environment. The configuration reads the variable itself.
   */
   await writeFile(
     configFile,
@@ -605,9 +603,9 @@ test('start - should throw an error when an application has no path and it is no
   await prepareGitRepository(t, rootDir)
 
   /*
-    A remote application that has not been fetched, which is what "no path" means in v4. v3 wrote an
-    empty string and the runtime refused it; v4 resolves `path: ''` against the configuration's own
-    directory, so an empty path is the project root rather than a missing one -- the state worth
+    A remote application that has not been fetched, which is what "no path" means. `path: ''`
+    resolves against the configuration's own directory, so an empty path is the project root rather
+    than a missing one -- the state worth
     refusing is an entry whose code is not on disk yet.
   */
   await writeFile(
@@ -697,7 +695,7 @@ test('restart - can restart an application when its port is fixed and reusePort 
       config.server = { port }
     })
 
-    // reuseTcpPorts is orchestration, so it moves to the root: v4 has no runtime block inside an
+    // reuseTcpPorts is orchestration, so it moves to the root: there is no runtime block inside an
     // application's own configuration.
     await updateConfigFile(resolve(root, 'watt.config.mjs'), config => {
       config.reuseTcpPorts = false
@@ -820,7 +818,7 @@ test('dev --debug-config - should print the resolved configuration without start
   ok(config.applications.some(application => application.id === 'main'))
 })
 
-test('start --debug-config - should resolve a v4 configuration through the eval worker', async t => {
+test('start --debug-config - should resolve a configuration through the eval worker', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'build', false, 'watt.config.mjs')
 
   const debugProcess = await wattpm('start', '--debug-config', rootDir)

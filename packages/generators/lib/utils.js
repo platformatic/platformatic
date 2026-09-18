@@ -190,7 +190,7 @@ export function getApplicationTemplateFromSchemaUrl (schemaUrl) {
 
 /*
   The configuration file in a directory, whichever dialect it is in. A generator reading an existing
-  project meets both: one it scaffolded under v4, and one that predates the switch.
+  project meets both: one it scaffolded itself, and one that predates the switch.
 */
 export async function findAnyConfigurationFile (directory) {
   const entries = await listDirectoryEntries(directory)
@@ -274,7 +274,7 @@ export function appendApplications (source, entries, resolveEntry = entry => ent
   return generateCode(module).code
 }
 
-// The applications a configuration lists. One spelling: the v3 aliases are refused by the loader.
+// The applications a configuration lists. One spelling: the legacy aliases are refused by the loader.
 export function listedApplications (config) {
   return config?.applications ?? []
 }
@@ -340,8 +340,7 @@ function collectEnvironmentReferences (node, path, found) {
 /*
   Which values in a configuration come from the environment, by their path in it.
 
-  A v3 configuration said this in its data: `"port": "{PORT}"` survives being read as JSON. A v4
-  configuration says it in its code, and reading the file gives you the value the expression
+  A configuration says this in its code, and reading the file gives you the value the expression
   produced -- `undefined`, for a variable that is not set in the process doing the reading. So a
   tool that needs to know *which* variable a setting reads has to look at the source.
 */

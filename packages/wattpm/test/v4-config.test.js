@@ -8,7 +8,7 @@ import { safeRemove } from '@platformatic/foundation'
 
 /*
   The end-to-end shape: a real watt.config.ts, authored with defineConfig and the capability
-  factories, evaluated by the v4 loader.
+  factories, evaluated by the loader.
 
   The fixtures live under this package's test directory so that a bare '@platformatic/node' import
   resolves through the workspace the way it does in a real project. wattpm itself is not
@@ -53,7 +53,7 @@ test('a Level 1 file is a bare factory call, auto-wrapped into a single-applicat
   strictEqual(entry.path, root)
 
   // The capability block is flattened in the authored form and nested in the result; the shared
-  // server block keeps its v3 position.
+  // server block keeps its position.
   // module and version are stripped into the entry envelope, so the payload the capability
   // validates carries no reserved properties.
   strictEqual(entry.module, '@platformatic/node')

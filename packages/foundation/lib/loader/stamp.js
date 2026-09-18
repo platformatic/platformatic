@@ -14,10 +14,10 @@ const stampPattern =
 
   The loader reads it for **version detection only**, never module selection: `module` selects the
   capability, and a URL that disagreed with it would be a second, quieter answer to a question that
-  already has one. It is stripped before validation, because the v4 schema does not admit it and
+  already has one. It is stripped before validation, because the schema does not admit it and
   without the strip every machine-generated configuration would fail.
 
-  A stale v3 URL refuses rather than being ignored. It is the one signal that a file was generated
+  A stale legacy URL refuses rather than being ignored. It is the one signal that a file was generated
   against a schema whose meaning has since changed, and this is exactly the class of file — machine
   written, nobody reading it — where a silent reinterpretation goes unnoticed.
 */

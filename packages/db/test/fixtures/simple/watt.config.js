@@ -1,4 +1,4 @@
-// A v4 configuration in its own directory: one per directory is the rule, so this fixture owns one.
+// A configuration in its own directory: one per directory is the rule, so this fixture owns one.
 // The migrations it points at stay where they were.
 export default {
   module: '@platformatic/db',

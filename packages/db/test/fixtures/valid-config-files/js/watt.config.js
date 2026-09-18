@@ -1,5 +1,5 @@
 /*
-  The same configuration in each of the four names v4 accepts. They differ only in language and
+  The same configuration in each of the four accepted names. They differ only in language and
   module system: `.ts`/`.mts` are TypeScript, and the `m` prefix is what lets a file be ESM in a
   package that does not declare "type": "module".
 */

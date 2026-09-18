@@ -327,13 +327,13 @@ export function validate (schema, config, validationOptions = {}, fixPaths = tru
 }
 
 /*
-  What remains of the v3 reader: parse a serialized configuration, run its capability's `upgrade`
+  What remains of the legacy reader: parse a serialized configuration, run its capability's `upgrade`
   chain, validate it, and hand it to `transform`.
 
   It does not resolve an environment and does not substitute `{PLT_X}`. Those went with the format:
-  a v4 configuration is a program that reads `process.env` itself, and the loader resolves every
+  a current configuration is a program that reads `process.env` itself, and the loader resolves every
   application's environment main-side, exactly once. What is left here reads the documents that are
-  deliberately still v3 -- the upgrade chains, which exist to be old -- and nothing else.
+  deliberately still legacy -- the upgrade chains, which exist to be old -- and nothing else.
 */
 export async function loadConfiguration (source, schema, options = {}) {
   const {

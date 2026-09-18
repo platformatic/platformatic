@@ -27,7 +27,7 @@ export async function fetchOpenApiSchemas (logger, configuration, _args, context
   const { bold } = context.colorette
 
   /*
-    v4 hands a command the application's already-resolved configuration as data: the loader
+    A command receives the application's already-resolved configuration as data: the loader
     evaluated it once, main-side, and validated it against this capability's schema. `resolved`
     says the reading is done, so what happens here is the transform and nothing else.
 

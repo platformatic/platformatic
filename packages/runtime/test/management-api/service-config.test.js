@@ -39,7 +39,7 @@ test('should get application config', async t => {
   const applicationConfig = await body.json()
 
   /*
-    No $schema: a v4 configuration is code, and the capability it selects is named by `module`,
+    No $schema: the configuration is code, and the capability it selects is named by `module`,
     which the loader consumes rather than passing on to the worker.
   */
   deepStrictEqual(applicationConfig, {

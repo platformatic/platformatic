@@ -24,8 +24,8 @@ test('can start with a custom environment', async t => {
 
   /*
     ignoreProcessEnv closes the environment, so what a worker sees is what the runtime put there:
-    the caller's variable and one PLT_<ID>_URL per application, its own included. v3's PLT_DEV,
-    PLT_ENVIRONMENT and PLT_ROOT are removed in v4 -- an application branches on its own variables,
+    the caller's variable and one PLT_<ID>_URL per application, its own included. PLT_DEV,
+    PLT_ENVIRONMENT and PLT_ROOT are removed -- an application branches on its own variables,
     or the decision moves into configuration where the typed context is.
   */
   deepStrictEqual(await res.body.json(), {
@@ -63,8 +63,8 @@ test('should pass global .env data to workers', async t => {
 })
 
 /*
-  The declared v4 breaking change: v3 applied env blocks over the real environment (they were
-  pins); v4 follows the dotenv convention and the real environment is always authoritative, over
+  The declared breaking change: env blocks used to be applied over the real environment (they were
+  pins); now the dotenv convention is followed and the real environment is always authoritative, over
   blocks and files alike. Blocks still apply where the real environment is silent.
 */
 test('the real environment is authoritative over both env blocks', async t => {
@@ -83,7 +83,7 @@ test('the real environment is authoritative over both env blocks', async t => {
   const { payload } = await app.inject('hello', { method: 'GET', url: '/' })
   const data = JSON.parse(payload)
 
-  // v3 pinned the entry block's 'service-override' over this; v4 inverts the top rung.
+  // The entry block's 'service-override' used to be pinned over this; the top rung is now inverted.
   strictEqual(data.OVERRIDE_TEST, 'from-real-env')
   strictEqual(data.FROM_SERVICE_CONFIG_FILE, 'true')
   strictEqual(data.FROM_MAIN_CONFIG_FILE, 'true')
@@ -126,8 +126,8 @@ test('should prefer the envfile of an application over a discovered .env file', 
   await createDirectory(join(root, 'node_modules/@platformatic'))
   await symlink(join(import.meta.dirname, '../../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
 
-  // The .env file of the runtime already defines FROM_ENV_FILE. The path is app-relative in
-  // v4; v3 resolved it against the runtime root.
+  // The .env file of the runtime already defines FROM_ENV_FILE. The path is app-relative; it used
+  // to be resolved against the runtime root.
   await writeFile(join(root, 'services/hello/custom.env'), 'FROM_ENV_FILE=application-envfile', 'utf8')
   await updateConfigFile(configurationFileIn(root), config => {
     config.applications[0].envfile = 'custom.env'
@@ -202,7 +202,7 @@ test('should prefer real environment variables over the .env file of an applicat
   strictEqual(data.FROM_ENV_FILE, 'process-env')
 })
 
-test('refuses a root envfile, which v4 does not implement', async t => {
+test('refuses a root envfile, which is not implemented', async t => {
   const root = await createTemporaryDirectory(t, 'custom-env')
   await cp(join(fixturesDir, 'env'), root, { recursive: true })
 
@@ -211,7 +211,7 @@ test('refuses a root envfile, which v4 does not implement', async t => {
   })
 
   /*
-    Accepting the key and ignoring it is what v3 validation would have done here, and it is the one
+    Accepting the key and ignoring it is what the legacy validation would have done here, and it is the one
     outcome a project migrating cannot detect: the file simply never loads. An entry may still
     declare an envfile -- it is only the root-level key that is gone.
   */

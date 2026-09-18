@@ -11,8 +11,8 @@ import { createRuntime, configurationFileIn } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 /*
-  The applications under prom-server are v4, so the runtime configuration that autoloads them is a
-  v4 object source: it goes through the same root pipeline a file does — autoload is expanded and
+  The applications under prom-server use the current format, so the runtime configuration that
+  autoloads them is an object source: it goes through the same root pipeline a file does — autoload is expanded and
   each application's watt.config is evaluated — while the blocks that cannot live in a file, because
   their ports are allocated at run time, are layered on top.
 */

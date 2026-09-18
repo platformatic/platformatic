@@ -49,7 +49,7 @@ async function getApplicationUrl (previousUrl) {
 }
 
 /*
-  What `--save` left behind. A v4 configuration is a module, so it is imported rather than parsed --
+  What `--save` left behind. A configuration is a module, so it is imported rather than parsed --
   and a cache-busting query is needed because the same path is written and re-read within one test
   run, and the ESM loader would otherwise hand back the first version it saw.
 */
@@ -323,9 +323,9 @@ test('applications:remove - should remove applications from an existing app', { 
 })
 
 /*
-  One spelling now. The three fixtures were `applications`, `services` and `web` -- v3's aliases for
-  the same list -- and converting them left all three saying `applications`, because that is what v4
-  calls it, so the loop over the three was testing one thing three times.
+  One spelling now. The three fixtures were `applications`, `services` and `web` -- aliases for
+  the same list -- and converting them left all three saying `applications`, because that is what it
+  is called, so the loop over the three was testing one thing three times.
 */
 test('applications:remove - should remove application from an existing app and save changes to the application config', async t => {
   const configFile = 'via-applications/watt.config.mjs'

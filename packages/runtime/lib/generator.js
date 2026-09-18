@@ -126,7 +126,7 @@ export class RuntimeGenerator extends BaseGenerator {
     }
     this._hasCheckedForExistingConfig = true
     /*
-      Whichever dialect the project is in: a v4 configuration is a module and is invisible to the
+      Whichever dialect the project is in: the configuration is a module and is invisible to the
       legacy lookup, so without this the wizard treats a project it scaffolded itself as a new one.
     */
     const existingConfigFile = await findAnyConfigurationFile(this.targetDirectory)
@@ -145,8 +145,8 @@ export class RuntimeGenerator extends BaseGenerator {
       this.existingConfigSource = await readFile(existingConfigPath, 'utf-8')
 
       /*
-        A legacy root is refused with the hint every other v4 entry point gives, rather than loaded
-        and rewritten: continuing wrote the v4 module form over the .json file, and migrate is the
+        A legacy root is refused with the hint every other entry point gives, rather than loaded
+        and rewritten: continuing wrote the module form over the .json file, and migrate is the
         tool whose whole job is that conversion -- with the refusals and divergence reports the
         wizard has no way to make.
       */
@@ -188,8 +188,8 @@ export class RuntimeGenerator extends BaseGenerator {
 
   setApplicationsConfigValues () {
     let newApplicationOrdinal = 0
-    // A runtime of exactly one application has no mesh of siblings to fall back on: with the v4
-    // entrypoint gone, a sole application that declares no port would bind nothing and be reachable
+    // A runtime of exactly one application has no mesh of siblings to fall back on: with the
+    // entrypoint field gone, a sole application that declares no port would bind nothing and be reachable
     // from nowhere. So the sole application is marked as the entrypoint here -- the one place the
     // whole application set is known -- and a capability that otherwise scaffolds no port reads the
     // flag and exposes itself on PORT/3042 (@platformatic/node does; the framework capabilities,
@@ -233,7 +233,7 @@ export class RuntimeGenerator extends BaseGenerator {
   serializeConfigFile (config) {
     /*
       Unstamped while this line is still 3.x. The marker is a version declaration, and the loader
-      refuses a v3 one outright -- correctly, since that is how it catches a configuration nobody
+      refuses a legacy one outright -- correctly, since that is how it catches a configuration nobody
       migrated. It becomes writable, and worth writing, at 4.0.0.
     */
     const { $schema, module: _module, ...rest } = config
@@ -316,7 +316,7 @@ export class RuntimeGenerator extends BaseGenerator {
       let basePath
       if (this.existingConfig) {
         /*
-          Resolved against the project, because the configuration says it relative to itself. The v3
+          Resolved against the project, because the configuration says it relative to itself. The legacy
           loader handed back an absolute path; reading the file directly hands back what it says.
         */
         basePath = resolve(this.targetDirectory, this.existingConfig.autoload.path)
@@ -732,9 +732,9 @@ export class WrappedGenerator extends BaseGenerator {
 
   async #createConfigFile () {
     /*
-      The wrapped single-app root. v3 spelled the runtime settings under a `runtime` key inside the
-      application's own configuration; v4 has no such block, so they are the root's own and the
-      application is the singular shorthand.
+      The wrapped single-app root. The runtime settings are no longer spelled under a `runtime` key
+      inside the application's own configuration; there is no such block, so they are the root's own
+      and the application is the singular shorthand.
     */
     /*
       The application is the root's own, named by the singular shorthand. Without it the root

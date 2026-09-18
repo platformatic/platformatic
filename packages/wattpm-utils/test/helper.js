@@ -125,7 +125,7 @@ export function wattpmUtils (...args) {
 }
 
 /*
-  A v4 configuration is a module whose values are expressions, so reading one means evaluating it --
+  A configuration is a module whose values are expressions, so reading one means evaluating it --
   against the project's own environment, which is where those expressions get their values.
 */
 export async function readConfiguration (path, role = 'root') {

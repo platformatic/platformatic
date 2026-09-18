@@ -53,8 +53,8 @@ test('intermediate directories layer, nearest winning', async t => {
 
   const environment = resolveConfigurationEnvironment({ realEnv: {}, fileSources: sources })
 
-  // web/.env participates because it is between the two ends. v3 read exactly one found file plus
-  // the app's own, so no file could shadow the ones above it.
+  // web/.env participates because it is between the two ends. Previously exactly one found file plus
+  // the app's own was read, so no file could shadow the ones above it.
   deepStrictEqual(environment, { SHARED: 'api', MIDDLE: 'web', FROM: 'root' })
 })
 
@@ -100,8 +100,8 @@ test('the real environment always wins, over blocks and files alike', async t =>
     fileSources: sources
   })
 
-  // This top rung is a deliberate inversion of v3, where env blocks were pins applied over the
-  // real environment. The entry block still beats the root block, matching v3's relative order.
+  // This top rung is a deliberate inversion of the previous behavior, where env blocks were pins applied over the
+  // real environment. The entry block still beats the root block, keeping that relative order.
   deepStrictEqual(worker, {
     SHARED: 'real',
     FROM_ENTRY: 'entry',

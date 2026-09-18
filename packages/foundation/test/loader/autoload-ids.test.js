@@ -19,8 +19,8 @@ test('two autoloaded directories resolving to one id are refused, naming both', 
   const root = await createTree(t, {
     'package.json': '{ "name": "root", "type": "module" }',
     'watt.config.js': 'export default { autoload: { path: "./web" } }',
-    // Copied from one another, so they carry the same package name. v3's ids were directory names
-    // and could not collide; v4 prefers the package name, which can.
+    // Copied from one another, so they carry the same package name. Directory names could not
+    // collide; the package name preferred now can.
     'web/first/package.json': '{ "name": "frontend", "type": "module" }',
     'web/first/watt.config.js': 'export default { module: "@platformatic/node" }',
     'web/second/package.json': '{ "name": "frontend", "type": "module" }',
@@ -70,7 +70,7 @@ test('an autoloaded entry still merges into an explicit one of the same id', asy
   const loaded = await load(root)
 
   /*
-    The shallow explicit-wins merge is v3 semantics with one narrowing: the two entries have to be
+    The shallow explicit-wins merge keeps the established semantics with one narrowing: the two entries have to be
     the same application by canonical path, because matching on id alone let an entry naming a
     different place absorb the autoloaded one silently (#5079).
   */

@@ -217,14 +217,14 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
   /*
     Before normalization, which is the only moment the question can still be asked: the very next
     step defaults `applications` to an empty list, after which every configuration looks like it
-    declared one. v3 drew the same line through its schema -- `services: []` was a statement and
+    declared one. The legacy schema drew the same line -- `services: []` was a statement and
     an absent key was a rejection -- and an empty root config here is a file that boots an empty
     runtime while looking like it configures something. Level 0 is the spelling for "no
     configuration": no file at all.
   */
   if (snapshot.application === undefined && snapshot.applications === undefined && snapshot.autoload === undefined) {
     /*
-      Named before the generic refusal: a v3 project renamed to the new file name lands exactly
+      Named before the generic refusal: a legacy project renamed to the new file name lands exactly
       here, and "declares no applications" reads as nonsense to an author staring at a services
       list. Beside an `applications` key the same spellings survive to the schema, which refuses
       them by name too.

@@ -54,7 +54,7 @@ test('Creates a Platformatic Runtime with two Applications', async t => {
   equal(await isFileAccessible(join(baseApplication1Dir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseApplication1Dir, 'plt-env.d.ts')), true)
 
-  // The scaffolded project loads through the full v4 runtime pipeline: autoload discovers both
+  // The scaffolded project loads through the full runtime pipeline: autoload discovers both
   // applications under applications/, each evaluating against the project's own environment. This is
   // what proves the wizard writes a bootable project rather than merely a plausible set of files.
   await linkWorkspacePackages(root)
@@ -96,7 +96,7 @@ test('Creates a single-application runtime that exposes its one application', as
   const env = await readFile(join(root, '.env'), 'utf-8')
   ok(env.includes('PLT_MAIN_PORT=3042'), env)
 
-  // And it is actually exposed when the scaffolded project loads through the full v4 pipeline.
+  // And it is actually exposed when the scaffolded project loads through the full pipeline.
   const runtimeConfig = await loadRuntimeConfiguration(join(root, await configurationFileIn(root)), null, {
     command: 'start'
   })

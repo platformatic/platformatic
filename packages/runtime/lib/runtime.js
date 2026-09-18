@@ -178,8 +178,9 @@ const DEFAULT_RESTART_ON_ERROR_DELAY = 5000
 
 /*
   Both public payloads are built from a snapshot and frozen through. What a consumer could observe
-  in v3 was scalars and a file path, so handing out interior state was harmless in practice; v4
-  nests resolvedConfig -- an entire capability payload -- inside every entry, and the getters read
+  could once observe was scalars and a file path, so handing out interior state was harmless in
+  practice; the payload now nests resolvedConfig -- an entire capability payload -- inside every
+  entry, and the getters read
   straight off live state. A consumer mutating what it received would be editing the configuration
   that later restarts and scale-up workers read, silently, and would make worker generations
   disagree about what they are running. setApplicationConfigPatch exists precisely so that changing
@@ -355,12 +356,12 @@ export class Runtime extends EventEmitter {
     this.#sharedContext = {}
 
     /*
-      v3 injected `PLT_DEV` and `PLT_ENVIRONMENT` here. v4 removes them: an application branches on
+      `PLT_DEV` and `PLT_ENVIRONMENT` are no longer injected here: an application branches on
       its own variables, or the decision moves into the configuration, where the context carries
       `production` and `mode` with types. `NODE_ENV` is the one the runtime still defaults, at the
       bottom of the env ladder, so anything the project sets outranks it.
 
-      They were worse than redundant by the end -- the v4 worker environment is the one the loader
+      They were worse than redundant by the end -- the worker environment is the one the loader
       resolved per application, and these were written onto the runtime's own copy, so under
       `wattpm start` an application still read `PLT_ENVIRONMENT=development`.
     */
@@ -1714,7 +1715,7 @@ export class Runtime extends EventEmitter {
       /*
         What `applications:add`/`remove --save` actually consume, so they can stop reading the whole
         runtime configuration over HTTP to get at three values. `autoload` is the declaration as
-        authored, not the expansion: v4 expands it in the eval worker, and --save has to edit what
+        authored, not the expansion: it is expanded in the eval worker, and --save has to edit what
         the file says rather than what it produced.
       */
       configPath: this.#config[kMetadata]?.path ?? null,
@@ -1731,8 +1732,8 @@ export class Runtime extends EventEmitter {
   }
 
   /*
-    What a watcher has to follow to know this configuration changed. v4 reports the whole set the
-    evaluation read; v3 resolves per worker and has no such set, so it is the deciding file alone --
+    What a watcher has to follow to know this configuration changed. The whole set the evaluation
+    read is reported; resolving per worker had no such set, so it was the deciding file alone --
     which is what dev watched before either way.
   */
   getConfigurationWatchTargets () {
@@ -2210,8 +2211,8 @@ export class Runtime extends EventEmitter {
     }
 
     /*
-      v3's `config` was the application's configuration file path. v4 evaluates that file main-side
-      and hands the worker the payload, so the path becomes `configPath` and the entry's own
+      The `config` key once held the application's configuration file path. That file is now
+      evaluated main-side and the worker receives the payload, so the path becomes `configPath` and the entry's own
       `config` is no longer a path to report. Emitting the key that matches the dialect keeps a
       consumer from reading one and silently getting the other.
     */
@@ -2647,9 +2648,9 @@ export class Runtime extends EventEmitter {
       preload = preload.filter(p => p !== pprofCapturePath)
     }
 
-    // v4 resolves each application's worker environment main-side, with its own env-file chain, the
-    // two env blocks and the injected topology URLs. v3 seeded every worker from one loadEnv at the
-    // runtime root, which is what #env still holds.
+    // Each application's worker environment is resolved main-side, with its own env-file chain, the
+    // two env blocks and the injected topology URLs. Every worker used to be seeded from one loadEnv
+    // at the runtime root, which is what #env still holds.
     const workerEnv = structuredClone(applicationConfig.workerEnv ?? this.#env)
 
     if (applicationConfig.nodeOptions?.trim().length > 0) {

@@ -9,8 +9,8 @@ test('the stamp is read for version detection and stripped', () => {
 
   strictEqual(readAndStripSchemaStamp(config, 'watt.config.js'), 'https://schemas.platformatic.dev/wattpm/4.0.0.json')
 
-  // Stripped, because the v4 schema does not admit it: a stamp that reached AJV would mean the
-  // loader had skipped the step that checks the file is not a v3 one.
+  // Stripped, because the schema does not admit it: a stamp that reached AJV would mean the
+  // loader had skipped the step that checks the file is not a legacy one.
   deepStrictEqual(config, { applications: [] })
 })
 
@@ -33,7 +33,7 @@ test('a prerelease version is a version, on both sides of the gate', () => {
   )
 })
 
-test('a stale v3 stamp refuses with the migrate hint', async t => {
+test('a stale legacy stamp refuses with the migrate hint', async t => {
   const root = await createTree(t, {
     'watt.config.js':
       'export default { $schema: "https://schemas.platformatic.dev/wattpm/3.65.0.json", applications: [] }',
@@ -62,7 +62,7 @@ test('a stale v3 stamp refuses with the migrate hint', async t => {
   )
 })
 
-test('a stamped v4 configuration loads', async t => {
+test('a stamped configuration loads', async t => {
   const root = await createTree(t, {
     'watt.config.js':
       'export default { $schema: "https://schemas.platformatic.dev/wattpm/4.0.0.json", applications: [] }',

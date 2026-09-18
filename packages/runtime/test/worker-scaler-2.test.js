@@ -12,7 +12,7 @@ import { createRuntime, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
-// Both sides of this pair are now directories, which v4 requires: the standalone application's
+// Both sides of this pair are now directories, which is required: the standalone application's
 // variant became an application of its own naming the shared routes, rather than a second
 // configuration sitting beside them.
 const configurations = {

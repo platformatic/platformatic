@@ -24,7 +24,7 @@ export function classifyConfiguration (snapshot, file) {
 
   // Rule 2 is unconditional and carries no key-collision check: capabilities legitimately use
   // option names that are also root keys, so any collision list would misclassify valid factory
-  // results. It is safe in the other direction because a v4 root config has no module key.
+  // results. It is safe in the other direction because a root config has no module key.
   if (applicationDefinitionKey in snapshot) {
     return 'application'
   }

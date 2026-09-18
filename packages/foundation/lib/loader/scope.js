@@ -74,7 +74,7 @@ export async function findDecidingFile (directory, { throwOnMissing = false } = 
 }
 
 // --config names the configuration and takes cwd out of the decision. It accepts any of the four
-// v4 names and nothing else: pointing it at a v3 file is the migrate hint, not a parse attempt.
+// current names and nothing else: pointing it at a legacy file is the migrate hint, not a parse attempt.
 export async function resolveNamedConfigurationFile (path, cwd = process.cwd()) {
   const resolved = isAbsolute(path) ? path : resolve(cwd, path)
   const name = basename(resolved)

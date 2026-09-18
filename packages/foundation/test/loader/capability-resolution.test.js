@@ -28,7 +28,7 @@ test('resolution is application-scoped first', async t => {
 })
 
 test('the runtime-bundled copy is the fallback, not the first choice', async t => {
-  // Inverting v3 is what makes the stamp check implementable: it compares the factory's copy
+  // Inverting the previous order is what makes the stamp check implementable: it compares the factory's copy
   // against the copy the worker will run, and a check resolving application-first against a worker
   // resolving lexically would compare a copy nobody executes.
   const root = await createTree(t, { 'package.json': '{ "name": "app" }' })

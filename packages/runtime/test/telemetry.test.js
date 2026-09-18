@@ -66,8 +66,8 @@ test('attach x-plt-telemetry-id header', async t => {
 
 test('disabled telemetry', async t => {
   /*
-    The same configuration file as the enabled case, with the variable it reads set. v3 kept a
-    second file beside the first that differed in one key; v4 allows one configuration per
+    The same configuration file as the enabled case, with the variable it reads set. A second file
+    used to be kept beside the first that differed in one key; one configuration is allowed per
     directory, and a configuration is a program that can read its environment.
   */
   const configFile = configurationFileIn(join(fixturesDir, 'telemetry'))

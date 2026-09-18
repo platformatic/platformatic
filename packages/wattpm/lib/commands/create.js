@@ -59,7 +59,7 @@ export async function createCommand (logger, args) {
       },
       // Keep following options in sync with the create command from wattpm-utils
       /*
-        No default: v4 recognizes exactly four filenames and the suffix comes from the selector, so
+        No default: exactly four filenames are recognized and the suffix comes from the selector, so
         this names an existing file to read rather than the one to write.
       */
       config: {
@@ -124,7 +124,7 @@ const createHelp = {
     },
     {
       usage: '-c, --config <config>',
-      description: 'Name of an existing configuration file to read (new files are named by the v4 rule)'
+      description: 'Name of an existing configuration file to read (new files are named by the rule)'
     },
     {
       usage: '-s, --skip-dependencies',

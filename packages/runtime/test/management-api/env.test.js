@@ -38,6 +38,6 @@ test('should get the runtime process env', async t => {
 
   const runtimeEnv = await body.json()
 
-  // v4 injects none of v3's PLT_ROOT, PLT_DEV or PLT_ENVIRONMENT, so this is the process env as-is.
+  // PLT_ROOT, PLT_DEV and PLT_ENVIRONMENT are no longer injected, so this is the process env as-is.
   deepEqual(runtimeEnv, { ...process.env })
 })

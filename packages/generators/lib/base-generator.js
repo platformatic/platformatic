@@ -328,19 +328,18 @@ class BaseGenerator extends FileGenerator {
   }
 
   /*
-    The v4 per-app form. A capability with a factory is spelled by calling it; one without keeps the
+    The per-app form. A capability with a factory is spelled by calling it; one without keeps the
     stamped plain-object form, which is what the `$schema` marker exists for.
 
-    The placeholders the generator writes are resolved here rather than left as text. v3 substituted
-    `{PLT_API_PORT}` before anything read it, and v4 has no interpolation -- so the scaffolded value
-    becomes the expression it stood for, with the default the generator was going to write into
-    `.env` anyway.
+    The placeholders the generator writes are resolved here rather than left as text. There is no
+    `{PLT_API_PORT}` interpolation -- so the scaffolded value becomes the expression it stood for,
+    with the default the generator was going to write into `.env` anyway.
   */
   /*
     An update touches one thing -- which packages the application loads -- and has to leave
     everything else exactly as the user left it.
 
-    For a v4 configuration that means editing the module rather than rewriting it: its values are
+    For a configuration that means editing the module rather than rewriting it: its values are
     expressions, so reading it back and re-emitting would bake `Number(process.env.PORT || 3042)`
     into whatever the port happens to be on this machine, and would drop every comment with it.
   */
@@ -366,7 +365,7 @@ class BaseGenerator extends FileGenerator {
     this.reset()
 
     if (existing.file.endsWith('.json')) {
-      // A v3 project being updated: it is data, and rewriting it loses nothing it carries.
+      // A JSON project being updated: it is data, and rewriting it loses nothing it carries.
       const current = JSON.parse(existing.contents)
 
       if (current.plugins) {
@@ -477,7 +476,7 @@ class BaseGenerator extends FileGenerator {
         editing one leaves the other saying something else.
       */
       /*
-        A boolean default becomes a comparison, because v4 validates without coercion: a bare
+        A boolean default becomes a comparison, because the schema validates without coercion: a bare
         reference hands the schema the string 'true', which is neither of the things a boolean
         position accepts. The comparison reproduces the scaffolded default when the variable is
         absent and lets its opposite flip it, which is what the value was there to express.
@@ -614,9 +613,9 @@ class BaseGenerator extends FileGenerator {
   }
 
   /*
-    Reads a configuration file whichever dialect it is in. A v3 file is data and parses; a v4 one is
-    a module whose values are expressions, so the only way to know what it says is to evaluate it --
-    which is what the loader does, in a worker with an explicit environment.
+    Reads a configuration file whichever dialect it is in. A JSON file is data and parses; a module
+    configuration has values that are expressions, so the only way to know what it says is to
+    evaluate it -- which is what the loader does, in a worker with an explicit environment.
   */
   async readConfigurationFile (path, role = 'root', envRoot = null) {
     if (path.endsWith('.json')) {
@@ -656,10 +655,9 @@ class BaseGenerator extends FileGenerator {
     const applicationNamePrefix = convertApplicationNameToPrefix(applicationName)
     /*
       Which options read the environment, taken from the source rather than from the loaded value.
-      A v3 configuration carried `"{PLT_X}"` in its data and survived being read as JSON; a v4 one
-      says `process.env.PLT_X` in its code, and reading it here gives whatever that produced in
-      *this* process -- `undefined`, since these are the scaffolded application's variables and not
-      ours. The name is in the file, so that is where it is read from.
+      A configuration says `process.env.PLT_X` in its code, and reading it here gives whatever that
+      produced in *this* process -- `undefined`, since these are the scaffolded application's
+      variables and not ours. The name is in the file, so that is where it is read from.
     */
     const applicationConfigurationFile = join(applicationRoot, await findAnyConfigurationFile(applicationRoot))
     const environmentReferences = readEnvironmentReferences(await readFile(applicationConfigurationFile, 'utf-8'))
@@ -693,8 +691,8 @@ class BaseGenerator extends FileGenerator {
     return {
       name: applicationName,
       /*
-        A v4 configuration says which capability it is outright -- the factory sets `module` -- and
-        a v3 one says it through the `$schema` URL, which is what that reader is for.
+        A configuration can say which capability it is outright -- the factory sets `module` -- or
+        say it through the `$schema` URL, which is what that reader is for.
       */
       template:
         applicationPkgJsonFileData.module ??

@@ -8,7 +8,7 @@ import { findAvailablePortRange } from './multiple-workers/helper.js'
 
 /*
   `server` is written as an expression rather than a value so a port can be an environment read --
-  the v4 spelling of what v3 wrote as a {HTTP_PORT} placeholder.
+  the current spelling of what was once written as a {HTTP_PORT} placeholder.
 */
 async function createApplication (root, id, server) {
   const directory = join(root, id)
@@ -44,9 +44,9 @@ test('applications use their configured port environment variable', async t => {
     'service',
     "{ hostname: '127.0.0.1', port: Number(process.env.HTTP_PORT) }"
   )
-  // v3 supplied the placeholder's value through the entry's env block. v4's entry env configures
-  // the running application, not the reading of configuration, so the value the file reads comes
-  // from the application's own env file -- the rung the evaluation ladder actually consults.
+  // The placeholder's value used to be supplied through the entry's env block. The entry env now
+  // configures the running application, not the reading of configuration, so the value the file reads
+  // comes from the application's own env file -- the rung the evaluation ladder actually consults.
   await writeFile(join(root, 'service', '.env'), `HTTP_PORT=${port}`)
 
   const runtime = await createTestRuntime(t, [application])

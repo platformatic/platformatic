@@ -251,20 +251,19 @@ export async function createApplication (
   let projectDir = process.cwd()
   /*
     The legacy lookup first, because it is the one whose search shape the flows below were written
-    against, then the v4-aware one -- which is what finds a project this wizard scaffolded, since a
-    `watt.config.*` is invisible to the other.
+    against, then the current-format one -- which is what finds a project this wizard scaffolded,
+    since a `watt.config.*` is invisible to the other.
   */
   /*
     The legacy lookup first, because it is the search shape the flows below were written against,
-    then the v4-aware one -- which is what finds a project this wizard scaffolded, since a
+    then the current-format one -- which is what finds a project this wizard scaffolded, since a
     `watt.config.*` is invisible to the other.
   */
   /*
-    Wrapping an application leaves a v4 configuration in the application's own directory, and v3
-    recognised that state by the `runtime` block it used to nest inside it. v4 has no such block --
-    those settings are the root's own -- so the signal is a v4 configuration sitting beside the
-    sources, which has to be read before the runtime lookup below claims the directory as an
-    ordinary project.
+    Wrapping an application leaves a configuration in the application's own directory. There is no
+    `runtime` block to nest those settings inside -- they are the root's own -- so the signal is a
+    configuration sitting beside the sources, which has to be read before the runtime lookup below
+    claims the directory as an ordinary project.
   */
   const wrapped = await findAnyConfigurationFile(projectDir)
 

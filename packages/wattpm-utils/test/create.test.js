@@ -15,7 +15,7 @@ const createEnv = {
   })
 }
 
-test('create - should create a new project using the v4 configuration by default', async t => {
+test('create - should create a new project using the configuration by default', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const userInputHandler = await setupUserInputHandler(t, [
@@ -116,7 +116,7 @@ test('create - should not install wattpm as it is already available', async t =>
   ok(!createProcess.stdout.includes('Installing wattpm'))
 })
 
-test('create - names the configuration by the v4 selector, whatever -c says', async t => {
+test('create - names the configuration by the selector, whatever -c says', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const userInputHandler = await setupUserInputHandler(t, [
@@ -135,7 +135,7 @@ test('create - names the configuration by the v4 selector, whatever -c says', as
   })
 
   /*
-    v4 recognizes exactly four filenames, so `-c` no longer names the output: the suffix comes from
+    Exactly four filenames are recognized, so `-c` no longer names the output: the suffix comes from
     the selector -- TypeScript by default, so `.ts`. The flag still selects which file to *read*,
     which is what it means everywhere else. The root imports `defineConfig` from `wattpm`, so what an
     install would provide is linked here for the evaluation to resolve.
@@ -273,8 +273,8 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
   })
 
   /*
-    The wrapped single-app root. v3 nested the runtime settings under a `runtime` key inside the
-    application's own configuration; v4 has no such block, so they are the root's own. Wrapping
+    The wrapped single-app root. There is no runtime block, so the runtime settings are the root's
+    own. Wrapping
     writes a TypeScript ESM root -- `.mts` -- whose body is a plain object, so there is nothing to
     resolve.
   */

@@ -110,8 +110,8 @@ for (const [name, file] of Object.entries(configurations)) {
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config = await transform(config, ...args)
-        // The v4 spelling of what verticalScaler.scaleUpELU said: a threshold no load reaches, so
-        // nothing scales. verticalScaler does not exist in v4 -- the transform carries no migration.
+        // The current spelling of what verticalScaler.scaleUpELU said: a threshold no load reaches, so
+        // nothing scales. verticalScaler no longer exists -- the transform carries no migration.
         config.workers.scaleUpELU = 1
         return config
       }
@@ -199,8 +199,8 @@ for (const [name, file] of Object.entries(configurations)) {
       async transform (config, ...args) {
         config = await transform(config, ...args)
 
-        // On the list the loader produced, not a replacement for it: v3's transform re-expanded
-        // autoload so a skeleton list grew paths back, and v4's transform deliberately does not.
+        // On the list the loader produced, not a replacement for it: the transform used to re-expand
+        // autoload so a skeleton list grew paths back, and the transform deliberately no longer does.
         for (const application of config.applications) {
           application.workers = { static: 1, dynamic: false }
         }
@@ -246,8 +246,8 @@ for (const [name, file] of Object.entries(configurations)) {
 /*
   The three tests below edit the configuration, so each copies the whole variant directory to a
   scratch sibling first -- a sibling, because the configuration autoloads `../services` and a copy
-  anywhere else would point at nothing. v3 could copy just the file under a second name; v4 allows
-  one configuration per directory.
+  anywhere else would point at nothing. A single file used to be copied under a second name; one
+  configuration is allowed per directory.
 */
 async function prepareScratchVariant (t) {
   const scratchDir = await mkdtemp(join(fixturesDir, 'worker-scaler', 'scratch-'))

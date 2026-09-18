@@ -15,7 +15,7 @@ async function boot (t) {
   return runtime
 }
 
-test('the runtime loads a watt.config.* project through the v4 loader', async () => {
+test('the runtime loads a watt.config.* project through the loader', async () => {
   const config = await loadConfiguration(fixture, null, { production: false })
 
   deepStrictEqual(

@@ -1,4 +1,4 @@
-// The light /schema subpath, part of the v4 capability contract. It carries the schema and the
+// The light /schema subpath, part of the capability contract. It carries the schema and the
 // package-level metadata main-side preparation needs, and imports nothing that would pull the
 // capability's implementation in with it — boot resolves this rather than the package entry.
 //

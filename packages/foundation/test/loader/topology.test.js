@@ -27,7 +27,7 @@ test('autoload expands directories and derives ids the same way every other posi
 
   const { config } = await evaluate(root)
 
-  // v3 used the directory name alone here. Stripping the scope is not cosmetic: the id becomes a
+  // The directory name alone was used here before. Stripping the scope is not cosmetic: the id becomes a
   // DNS label in http://<id>.plt.local, where @acme would parse as userinfo.
   deepStrictEqual(config.applications, [
     { id: 'api', path: join(root, 'web/api') },
@@ -66,7 +66,7 @@ test('an explicit entry wins over the autoloaded one and keeps its position', as
 
   const { config } = await evaluate(root)
 
-  // Shallow explicit-wins merge, v3 semantics; merging in place rather than reordering is what
+  // Shallow explicit-wins merge; merging in place rather than reordering is what
   // keeps a recorded deferred slot pointing at the entry it was recorded for.
   deepStrictEqual(config.applications, [
     { id: 'api', path: './web/api', workers: 5 },
@@ -76,8 +76,8 @@ test('an explicit entry wins over the autoloaded one and keeps its position', as
 })
 
 /*
-  The v3 rule matched on id alone, and an explicit { id, url } beside an autoloaded directory then
-  merged into an entry keeping the local path *and* the url -- resolve skipped the remote because
+  Matching on id alone let an explicit { id, url } beside an autoloaded directory merge into an
+  entry keeping the local path *and* the url -- resolve skipped the remote because
   its path existed, and the runtime booted local code while the configuration named a repository
   (#5079). A shared id merges only when the two are the same application: same resolved path, or
   an autoloaded directory that is the url entry's own clone destination. Anything else is two
@@ -105,7 +105,7 @@ test('a url-bearing entry does not merge with an autoloaded directory by id alon
   )
 })
 
-// The id-only override spelling died with v3's id-alone matching: an entry that names no place is
+// The id-only override spelling died with id-alone matching: an entry that names no place is
 // refused by the schema before expansion, and here by expansion for loads that skip validation.
 // The override channel for an autoloaded application is autoload.mappings.
 /*
@@ -413,15 +413,15 @@ test('disabled entries are dropped, and the object form is keyed by mode', async
   })
 
   // production and development remain the default mode names under start/build and dev, so every
-  // v3 configuration keeps its meaning.
+  // existing configuration keeps its meaning.
   const { config: inProduction } = await evaluate(root, { production: true, mode: 'production' })
   deepStrictEqual(inProduction.applications.map(entry => entry.id), ['always', 'staged'])
 
   const { config: inDevelopment } = await evaluate(root, { production: false, command: 'dev', mode: 'development' })
   deepStrictEqual(inDevelopment.applications.map(entry => entry.id), ['always', 'bymode', 'staged'])
 
-  // And enabled: { staging: false } now does what it looks like, where v3 silently ignored the key
-  // because it only ever compared against the two default names.
+  // And enabled: { staging: false } now does what it looks like, where the key used to be silently
+  // ignored because it only ever compared against the two default names.
   const { config: inStaging } = await evaluate(root, { production: true, mode: 'staging' })
   deepStrictEqual(inStaging.applications.map(entry => entry.id), ['always', 'bymode'])
 })

@@ -154,8 +154,8 @@ export function layerEnvironment (layers) {
 }
 
 // The bottom rung, and it belongs to both views. The test is non-empty rather than absent because
-// that is what v3 tested: a production build running with NODE_ENV='' is read by every bundler in
-// the ecosystem as "not production". This is the one place the ladder treats '' as missing.
+// a production build running with NODE_ENV='' is read by every bundler in the ecosystem as
+// "not production". This is the one place the ladder treats '' as missing.
 export function applyNodeEnvDefault (environment, production) {
   if (production && !environment.NODE_ENV) {
     environment.NODE_ENV = 'production'

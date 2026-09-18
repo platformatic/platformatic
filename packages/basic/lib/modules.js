@@ -21,9 +21,9 @@ export function isImportFailedError (error, pkg) {
 
 /*
   The canonical capability resolution order: the application's own dependencies first, with the
-  runtime-bundled copy as the fallback. v3 asked the other way round — a bare import(pkg), resolved
-  lexically from this package and so from the runtime's own position — and reached the application
-  directory only when that threw.
+  runtime-bundled copy as the fallback. The previous order asked the other way round — a bare
+  import(pkg), resolved lexically from this package and so from the runtime's own position — and
+  reached the application directory only when that threw.
 
   The inversion is what makes all three resolutions name the same copy by construction rather than
   by coincidence of layout: this implementation import, the main process's schema import, and the
@@ -106,7 +106,7 @@ export async function importCapabilityAndConfig (root, config, context) {
 
       logger.warn(`We have auto-detected that application "${context.applicationId}" ${autodetectDescription}.`)
       /*
-        The v4 form, which is what the suggestion has to be: a configuration identifies itself by
+        The current form, which is what the suggestion has to be: a configuration identifies itself by
         importing what it uses, and a `$schema` URL naming this version would be read as a stale
         stamp the moment the next major arrives.
       */

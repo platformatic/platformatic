@@ -38,7 +38,7 @@ export async function packCommand (logger, configFile, args, context) {
   let config
   try {
     /*
-      v4 hands a command the application's already-resolved configuration as data -- the loader
+      A command receives the application's already-resolved configuration as data -- the loader
       evaluated it once, main-side, and validated it against this capability's schema -- so
       `resolved` says the reading is done. A path is still accepted, which is what a caller outside
       a running project supplies, and it is loaded the way a boot loads one.

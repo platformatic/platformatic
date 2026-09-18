@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /*
-  Writing a v4 configuration file.
+  Writing a configuration file.
 
   Three machine writers produce one -- scaffolding, `wattpm import` and `wattpm-utils migrate` --
   and they are in different packages. Sharing the serializer and the suffix rule is what keeps them
@@ -12,7 +12,7 @@ import { join } from 'node:path'
 
 /*
   The factory each in-tree capability exports. A capability outside this table is spelled with the
-  plain object form, which stays part of v4 for capabilities that implement the contract without
+  plain object form, which is supported for capabilities that implement the contract without
   shipping a factory.
 
   Here rather than in each writer, because all three of them ask the same question and an answer
@@ -38,7 +38,7 @@ export const capabilityFactories = {
   A value that is already source. `config: next({ … })` is a call inside an object literal, and
   quoting it would emit the text of a call rather than the call.
 */
-const rawExpression = Symbol('plt.foundation.v4.raw')
+const rawExpression = Symbol('plt.foundation.raw')
 
 export function raw (source) {
   return { [rawExpression]: source }
@@ -89,7 +89,7 @@ export function serializeKey (key) {
 // not leave a seam showing where it touched.
 export function serializeString (value) {
   // \r escaped too: a carriage return is a LineTerminator inside a string literal, and one riding
-  // in from a v3 value would make the generated module a SyntaxError.
+  // in from a source value would make the generated module a SyntaxError.
   return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r')}'`
 }
 

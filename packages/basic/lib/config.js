@@ -17,14 +17,14 @@ import { workerData } from 'node:worker_threads'
 
 export async function findConfigurationFile (root, suffixes) {
   /*
-    v4 first, and by the same four names everywhere. A directory holding a `watt.config.ts` and no
-    v3 document would otherwise be reported as having no configuration at all -- which is what a
-    capability booted directly in a converted project would have been told.
+    The current configuration names first, and by the same names everywhere. A directory holding
+    a `watt.config.ts` and no legacy document would otherwise be reported as having no configuration
+    at all -- which is what a capability booted directly in a converted project would have been told.
   */
-  const v4 = await utilsFindConfigurationFile(root, null, null, configurationFileNames)
+  const currentConfigurationFile = await utilsFindConfigurationFile(root, null, null, configurationFileNames)
 
-  if (v4) {
-    return resolvePath(root, v4)
+  if (currentConfigurationFile) {
+    return resolvePath(root, currentConfigurationFile)
   }
 
   const file = await utilsFindConfigurationFile(root, suffixes)
@@ -44,7 +44,7 @@ export async function findConfigurationFile (root, suffixes) {
 
   The runtime hands over an object it has already resolved -- evaluated once, main-side, and
   validated against this capability's schema -- and `resolved` in the context says so. A person or a
-  test hands over a file instead, and a v4 file is a program: there is no document to parse, so it
+  test hands over a file instead, and a configuration file is a program: there is no document to parse, so it
   is evaluated by the same loader a boot uses and the answer is the one a boot would produce. Both
   forms arrive here as data, and what is left in either case is the capability's own transform and
   the metadata it reads its root from.
@@ -75,9 +75,9 @@ export async function loadCapabilityConfiguration (configOrRoot, sourceOrConfig,
   }
 
   /*
-    An object the runtime already resolved, or a v3 document. The first is the worker's path and
-    goes through the same v4 pipeline as a file; the second is a serialized configuration, which
-    only the v3 reader understands and which only the fixtures that exist to be v3 still are.
+    An object the runtime already resolved, or a legacy serialized document. The first is the worker's
+    path and goes through the same pipeline as a file; the second is a serialized configuration, which
+    only the legacy reader understands and which only the fixtures that exist to exercise it still are.
   */
   if (typeof source !== 'string' && context?.resolved) {
     return applyResolvedConfiguration(root, source, {

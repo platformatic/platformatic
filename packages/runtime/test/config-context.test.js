@@ -20,7 +20,7 @@ test('the command decides production when the caller does not', async t => {
 
   /*
     And the consequence: NODE_ENV is the lowest rung of the ladder and defaults to production when
-    the boot is one. v3's build left it unset, so bundlers and Babel configurations that branch on
+    the boot is one. The build once left it unset, so bundlers and Babel configurations that branch on
     it produced development artifacts from a production build.
   */
   strictEqual(built.startTimeout, 11111)

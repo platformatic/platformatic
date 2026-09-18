@@ -70,7 +70,7 @@ export async function readPackageName (directory) {
   Expansion is the only place autoload runs — the runtime transform consumes the already-expanded
   list. Orchestration drives filesystem access, which is why it is validated before it is acted on.
 
-  The id follows the same derivation as everywhere else, where v3 used the directory name alone. A
+  The id follows the same derivation as everywhere else, not the directory name alone. A
   default that varied by boot style would move the mesh hostname, the injected variable name, the
   metrics label, wattpm inject's argument and the dependencies spelling all at once.
 */
@@ -111,8 +111,8 @@ export async function expandAutoload (config, { root, stats }) {
   const resolvedBase = resolve(root, config.resolvedApplicationsBasePath ?? 'external')
 
   /*
-    v3's ids were directory names, unique by construction. v4 prefers the package.json name, which
-    is not: two directories copied from one another carry the same name. The shallow merge below is
+    Directory names were unique by construction; the package.json name preferred now is not:
+    two directories copied from one another carry the same name. The shallow merge below is
     a rule for an autoloaded entry meeting an *explicit* one, and applying it to two autoloaded
     directories would silently absorb the second — an application that never boots and nothing that
     says so.
@@ -176,7 +176,7 @@ export async function expandAutoload (config, { root, stats }) {
       }
 
       /*
-        Shallow explicit-wins merge, v3 semantics, applied to the explicit entry *in place*: a
+        Shallow explicit-wins merge, applied to the explicit entry *in place*: a
         deferred config slot recorded before expansion addresses this object by identity, and
         replacing it would leave the slot pointing at an entry the topology no longer holds -- the
         application would boot without the configuration its author wrote, and nothing would say so.
@@ -211,8 +211,8 @@ export async function expandAutoload (config, { root, stats }) {
     if (existing) {
       /*
         The entry shares the id and did not claim the directory by place, so it names a different
-        place -- or none. v3 matched on id alone, and an explicit { id, url } beside an autoloaded
-        directory then merged into an entry that kept the local path *and* carried the url --
+        place -- or none. Matching on id alone let an explicit { id, url } beside an autoloaded
+        directory merge into an entry that kept the local path *and* carried the url --
         resolve skipped the remote because its path existed, and the runtime booted local code
         while the configuration named a repository (#5079). An id is the mesh hostname, the
         injected variable, the metrics label and inject's argument, so two distinct applications
@@ -236,8 +236,8 @@ export async function expandAutoload (config, { root, stats }) {
 /*
   A remote application's directory, which exists only in memory until `resolve` fetches the clone.
   The loader needs it before that: per-app discovery, the detector and capability validation all
-  work from a directory, and v4 resolves every application when the root is read. v3 could defer
-  this to the runtime's `#setupApplication`, because per-app configuration was read worker-side.
+  work from a directory, and every application is resolved when the root is read. This used to be
+  deferred to the runtime's `#setupApplication`, because per-app configuration was read worker-side.
 
   It is relative, like an authored path, so the same resolution against the configuration's own
   directory applies to both. Applied after the resolve candidates are recorded: an entry that
@@ -273,9 +273,9 @@ export function recordResolveCandidates (applications) {
 
 /*
   The object form is keyed by mode, not by a separate binary environment. production and
-  development remain the default mode names under start/build and dev, so every v3 configuration
+  development remain the default mode names under start/build and dev, so every existing configuration
   keeps its meaning — and enabled: { staging: false } now does what it looks like under
-  --mode staging, where v3 silently ignored the key because it only ever compared against those
+  --mode staging, where the key used to be silently ignored because it only ever compared against those
   two names.
 */
 export function isApplicationEnabled (entry, mode) {

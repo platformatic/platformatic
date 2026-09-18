@@ -181,9 +181,9 @@ export function parseInspectorOptions (config, inspect, inspectBreak) {
   The one entry point for applications added while the runtime is running, shared by the HTTP route
   and the management ITC handler so the two cannot drift.
 
-  Under v4 an added application is evaluated exactly as boot evaluates one -- its configuration
+  An added application is evaluated exactly as boot evaluates one -- its configuration
   file is found in its own directory, its environment is resolved main-side, and it arrives with
-  resolvedConfig. Skipping that leaves the worker to look for a v3 file name that v4 never writes,
+  resolvedConfig. Skipping that leaves the worker to look for a config file name that is never written,
   which fails as an unhelpful "unable to initialize the worker".
 */
 export async function prepareAddedApplications (config, entries, existingIds = []) {
@@ -270,9 +270,9 @@ function verifyApplicationsPorts (applications) {
   const listeners = []
 
   for (const application of applications) {
-    // v4 keeps the validated capability configuration on the application (resolvedConfig), so the
+    // The validated capability configuration is kept on the application (resolvedConfig), so the
     // declared listener is read from it directly rather than being stashed on a symbol during a
-    // separate config-loading pass, as the v3 path did.
+    // separate config-loading pass, as it once was.
     const listener = declaredListener(application.resolvedConfig)
 
     // Dynamic scaling changes how many ports the application ends up using, so leave it to the start time check
@@ -306,9 +306,8 @@ function verifyApplicationsPorts (applications) {
   }
 }
 
-// Everything an application needs regardless of how its capability was determined. v3 discovers
-// that by loading the application's config file; v4 has it from the loader's envelope before any
-// worker exists.
+// Everything an application needs regardless of how its capability was determined, taken from the
+// loader's envelope before any worker exists rather than by loading the application's config file.
 export function finalizeApplication (config, application, defaultWorkers) {
   // Validate and coerce per-service workers
   parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
@@ -328,13 +327,13 @@ export function finalizeApplication (config, application, defaultWorkers) {
 }
 
 /*
-  The v4 preparation. The loader resolved the path, selected the capability and imported its schema
+  The preparation step. The loader resolved the path, selected the capability and imported its schema
   subpath — which carries skipTracingHooks and modulesToLoad — all main-side, before any worker
   existed. So there is nothing to discover here, and in particular no application config file to
   re-read: that is the whole point of evaluating configuration exactly once per load.
 */
 export async function prepareRuntimeApplication (config, application, defaultWorkers) {
-  // resolvedConfig replaces v3's config file path in workerData: the worker receives the validated
+  // resolvedConfig replaces the config file path in workerData: the worker receives the validated
   // capability payload as data and never re-reads a file.
   application.resolvedConfig = application.config ?? {}
   application.config = undefined
@@ -364,7 +363,7 @@ export async function prepareRuntimeApplication (config, application, defaultWor
   application.type = application.module ?? 'unknown'
   application.skipTracingHooks = application.capabilityMetadata?.skipTracingHooks ?? false
 
-  // This is needed to work around a Rust bug on dylibs, as in the v3 path.
+  // This is needed to work around a Rust bug on dylibs.
   const modulesToLoad = application.capabilityMetadata?.modulesToLoad ?? []
 
   if (modulesToLoad.length > 0 && application.path) {
@@ -384,7 +383,7 @@ export async function prepareRuntimeApplication (config, application, defaultWor
 }
 
 // The half of the transform the loader does not own: inspector options, worker counts, the
-// per-application preparation, and the runtime-level normalizations. v4 reaches this directly,
+// per-application preparation, and the runtime-level normalizations. This is reached directly,
 // having already expanded autoload and resolved enabled in the eval worker.
 export async function finalizeConfiguration (config, applications, context, production, prepare) {
   config.inspectorOptions = undefined
@@ -439,9 +438,9 @@ export async function finalizeConfiguration (config, applications, context, prod
 }
 
 /*
-  The v4 transform. What is absent is the point:
+  The transform. What is absent is the point:
 
-  - no alias merging, because `services` and `web` do not exist in v4;
+  - no alias merging, because `services` and `web` do not exist;
   - no autoload expansion and no `enabled` filtering, because both ran in the root eval worker,
     which is the only place either runs. Leaving them reachable here would let a second expansion
     re-merge entries and read the filesystem after the authoritative snapshot already exists;

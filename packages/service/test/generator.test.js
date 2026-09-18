@@ -319,10 +319,10 @@ test('emits the port as the expression it stood for', async () => {
   const emitted = svc.getFileObject(svc.configurationFileName()).contents
 
   /*
-    v3 substituted `{PLT_API_PORT}` before anything read it and v4 has no interpolation, so the
-    scaffolded value becomes the expression it stood for — with `||` rather than `??`, because an
-    env file carrying the ordinary empty assignment supplies '', which is present: `??` would not
-    fall back and `Number('')` is an ephemeral port where the reader of that line expects 3042.
+    Interpolation once substituted `{PLT_API_PORT}` before anything read it, and there is none now,
+    so the scaffolded value becomes the expression it stood for — with `||` rather than `??`,
+    because an env file carrying the ordinary empty assignment supplies '', which is present: `??`
+    would not fall back and `Number('')` is an ephemeral port where the reader of that line expects 3042.
   */
   assert.ok(emitted.includes('port: Number(process.env.PLT_API_PORT || 3042)'), emitted)
   assert.ok(emitted.includes("import { createServiceConfig } from '@platformatic/service'"), emitted)

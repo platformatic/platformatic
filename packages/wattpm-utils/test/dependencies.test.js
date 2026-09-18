@@ -201,8 +201,7 @@ test('update - scopes to the application when executed inside its folder', async
   /*
     web/main has its own package.json, and the configuration search stops at the nearest one --
     because it executes what it finds, and a configuration above your package belongs to something
-    else. So this updates the application rather than the runtime above it. v3 ignored package
-    boundaries and walked up, which is what this test used to assert.
+    else. So this updates the application rather than the runtime above it.
   */
   const updateProcess = await executeCommand(
     'node',

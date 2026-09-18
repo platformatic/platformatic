@@ -155,7 +155,7 @@ export class ImportGenerator extends BaseGenerator {
     const { module: pkg } = this.config
 
     /*
-      The v4 per-app form rather than a JSON stub. This is the path taken for a capability that
+      The per-app form rather than a JSON stub. This is the path taken for a capability that
       ships no generator of its own, so a stub here would leave the wizard writing the old dialect
       for exactly the applications least likely to be exercised by anything else.
     */
@@ -192,8 +192,8 @@ export class ImportGenerator extends BaseGenerator {
       a module now, and its values are expressions rather than the data this is about to add an
       entry to. It is written back through the same generator, which knows how to spell it.
 
-      One spelling: the list is `applications`, because the loader refuses the v3 aliases by name.
-      And a literal path rather than v3's `{PLT_APPLICATION_<ID>_PATH}` placeholder plus its `.env`
+      One spelling: the list is `applications`, because the loader refuses the legacy aliases by name.
+      And a literal path rather than a `{PLT_APPLICATION_<ID>_PATH}` placeholder plus its `.env`
       line -- the indirection bought nothing and left the entry pointing at the root itself in
       every clone missing the gitignored file the value lived in.
     */

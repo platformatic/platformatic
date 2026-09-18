@@ -15,42 +15,42 @@ let prettyPrint = true
 let executableId = ''
 let executableName = ''
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function isVerbose () {
   return verbose
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function usePrettyPrint () {
   return prettyPrint
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function getExecutableId () {
   return executableId
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function getExecutableName () {
   return executableName
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setVerbose (value) {
   verbose = value
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setPrettyPrint (value) {
   prettyPrint = value
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setExecutableId (id) {
   executableId = id
 }
 
-// TODO: Deprecated and currently unused. Remove in v4.
+// TODO: Deprecated and currently unused. Remove.
 export function setExecutableName (name) {
   executableName = name
 }
@@ -214,14 +214,14 @@ export function applicationToEnvVariable (application) {
 
 /*
   The same routing the runtime does, in the one other place a configuration is found: by an
-  explicit name, or by the walk from the directory. A legacy file found by the walk means "this
-  project is not v4", and the v3 lookups below are the ones that should answer.
+  explicit name, or by the walk from the directory. A legacy file found by the walk means the
+  project uses a legacy configuration, and the legacy lookups below are the ones that should answer.
 */
 async function findConfigurationForSource (root, configurationFile) {
   if (typeof configurationFile === 'string') {
     const named = resolve(root, configurationFile)
 
-    // The extension decides for a name given outright: v4 configuration is code, v3 is a document.
+    // The extension decides for a name given outright: a current configuration is code, a legacy one is a document.
     return isConfigurationFileName(basename(named)) || /\.(js|mjs|ts|mts)$/.test(named) ? named : null
   }
 
@@ -248,8 +248,9 @@ export async function findRuntimeConfigurationFile (
   executableName = ''
 ) {
   /*
-    v4 first. A v4 project has no v3 configuration file by construction, so every lookup below
-    fails and the fallback then auto-detects the directory and writes a watt.json into it -- the
+    The current configuration first. Such a project has no legacy configuration file by
+    construction, so every lookup below fails and the fallback then auto-detects the directory and
+    writes a watt.json into it -- the
     command silently builds something other than the project it was pointed at.
   */
   const decidingConfigurationFile = await findConfigurationForSource(root, configurationFile)
@@ -268,15 +269,15 @@ export async function findRuntimeConfigurationFile (
   /*
     No configuration file anywhere. `fallback` used to mean "detect the application type and write
     a watt.json into the user's tree so there is something to load"; it now means the caller can
-    load the directory itself, which the v4 loader answers by synthesizing a configuration in
+    load the directory itself, which the loader answers by synthesizing a configuration in
     memory. Nothing is written to disk, so nothing is left behind to be committed by accident.
   */
   if (!configFile) {
     /*
       Level 0 only applies to a directory that is actually there. A path that is not one has no
       application to infer and no defaults to apply, and answering null would hand the caller a
-      root to synthesize from that does not exist — the v3 resolver then reports the missing file
-      by its v3 names, which is not what someone who typo'd a path needs to read.
+      root to synthesize from that does not exist — the legacy resolver then reports the missing file
+      by its legacy names, which is not what someone who typo'd a path needs to read.
     */
     if (fallback && (await stat(root).catch(() => null))?.isDirectory()) {
       return null
@@ -286,9 +287,9 @@ export async function findRuntimeConfigurationFile (
       return logFatalError(
         logger,
         /*
-          The v4 names first, because they are what someone reading this should create. The legacy
-          ones are still named -- this command reads them while v3 is supported -- but a user told to
-          write a `watt.json` would be told to write a file v4 refuses.
+          The current names first, because they are what someone reading this should create. The legacy
+          ones are still named -- this command reads them while the legacy format is supported -- but a
+          user told to write a `watt.json` would be told to write a file the loader refuses.
         */
         `Cannot find a supported ${executableName} configuration file (like ${bold('watt.config.ts')} or ${bold(
           'watt.config.js'

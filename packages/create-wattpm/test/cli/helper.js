@@ -93,12 +93,12 @@ export async function linkDependencies (projectDir, dependencies) {
 }
 
 /*
-  A v4 configuration is a module whose values are expressions, so reading one means evaluating it --
+  A configuration is a module whose values are expressions, so reading one means evaluating it --
   against the project's own environment, which is where those expressions get their values.
 */
 export async function readConfiguration (path, root, role = 'root') {
   /*
-    A v4 configuration imports what it uses -- `wattpm` at the root, its capability in an application
+    A configuration imports what it uses -- `wattpm` at the root, its capability in an application
     -- and these runs scaffold without installing. What an install would have put there is linked
     here instead; the evaluation needs it either way.
   */

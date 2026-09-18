@@ -99,8 +99,8 @@ export class GatewayCapability extends ServiceCapability {
     }
 
     /*
-      The origin as configured. v4 resolves the configuration main-side, once, so there is no
-      `{PLT_X}` left for a request to substitute -- this ran the v3 interpolator at request time
+      The origin as configured. The configuration is resolved main-side, once, so there is no
+      `{PLT_X}` left for a request to substitute -- the interpolator no longer runs at request time
       over a value the loader had already produced.
     */
     return application.origin.endsWith('.plt.local')

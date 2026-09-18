@@ -179,7 +179,7 @@ test('copy - should generate config file for platformatic module', async t => {
   await gen.writeFiles()
 
   /*
-    The v4 per-app form: a capability with a factory is spelled by calling it. This is the path
+    The per-app form: a capability with a factory is spelled by calling it. This is the path
     taken for capabilities that ship no generator, so a JSON stub here would leave the wizard
     writing the old dialect for exactly the applications least likely to be exercised elsewhere.
   */
@@ -233,7 +233,7 @@ test('copy - should generate config file for non-platformatic module', async t =
   await gen._beforeWriteFiles(runtime)
   await gen.writeFiles()
 
-  // No factory to call, so the plain object form -- which stays part of v4 for capabilities that
+  // No factory to call, so the plain object form -- which stays supported for capabilities that
   // implement the contract without shipping one.
   const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
   ok(configContent.includes("module: 'custom-module'"), configContent)
@@ -341,7 +341,7 @@ test('import - should import application', async t => {
 
   await gen._beforeWriteFiles(runtime)
 
-  // One spelling, and a literal relative path rather than v3's env-variable indirection --
+  // One spelling, and a literal relative path rather than env-variable indirection --
   // relative even out of the root, exactly as wattpm import writes it.
   ok(Array.isArray(runtime.config.applications))
   deepStrictEqual(runtime.config.applications[0].id, 'test-application')
@@ -398,7 +398,7 @@ test('import - should not duplicate applications in runtime config', async t => 
 
 /*
   One spelling: the list is always `applications`, whatever the wizard's folder is called -- the
-  loader refuses the v3 aliases by name, so writing one scaffolded a project that cannot boot.
+  loader refuses the legacy aliases by name, so writing one scaffolded a project that cannot boot.
   The config deliberately holds no `applications` array: that was exactly the fixture the old
   key-scanning writer answered with a `web` list, so it is the one that tells the two apart.
 */

@@ -564,8 +564,8 @@ test('WrappedGenerator - should create a valid configuration', async t => {
   await generator.prepare()
 
   /*
-    The wrapped single-app root. v3 nested the runtime settings under a `runtime` key inside the
-    application's own configuration; v4 has no such block, so they are the root's own.
+    The wrapped single-app root. The runtime settings are no longer nested under a `runtime` key
+    inside the application's own configuration; there is no such block, so they are the root's own.
 
     The suffix is .mts, not .ts: wrapping an existing project must not force "type": "module" on it
     -- the code it wraps may be CommonJS -- so the module type is left unset and the unambiguous
@@ -678,7 +678,7 @@ test('RuntimeGenerator - what it writes loads', async t => {
   const application = config.applications.find(entry => entry.id === 'api')
 
   assert.deepStrictEqual(config.logger.level, 'info')
-  // A boolean position, and v4 validates without coercion: the string 'true' would not be accepted.
+  // A boolean position, and validation does not coerce: the string 'true' would not be accepted.
   assert.deepStrictEqual(config.managementApi, true)
   assert.deepStrictEqual(application.resolvedConfig.server.port, 3042)
   assert.deepStrictEqual(application.resolvedConfig.server.logger.level, 'info')
@@ -720,8 +720,8 @@ test('WrappedGenerator - what it writes loads, and runs the application it wrapp
 })
 
 /*
-  The wizard used to load a legacy root through the v3 reader and rewrite it -- the module form
-  over a .json file. It refuses now, with the hint every other v4 entry point gives: migrate owns
+  The wizard used to load a legacy root through the legacy reader and rewrite it -- the module form
+  over a .json file. It refuses now, with the hint every other entry point gives: migrate owns
   that conversion, refusals and divergence reports included.
 */
 /*

@@ -10,9 +10,9 @@ import { AmbiguousConfigurationFileError, LegacyConfigurationFileError } from '.
 export const configurationFileExtensions = ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs']
 export const configurationFileNames = configurationFileExtensions.map(extension => `watt.config.${extension}`)
 
-// The complete v3 candidate set. Legacy detection is unconditional and by filename alone —
+// The complete legacy candidate set. Legacy detection is unconditional and by filename alone —
 // no parsing, no shape heuristics — so this table is the whole of it. It is deliberately
-// duplicated from the v3 machinery rather than imported: that machinery leaves foundation.
+// duplicated from the legacy machinery rather than imported: that machinery leaves foundation.
 export const legacyConfigurationFileExtensions = ['json', 'json5', 'yaml', 'yml', 'toml', 'tml']
 export const legacyConfigurationFileSuffixes = [
   'runtime',
@@ -106,7 +106,7 @@ export function isLegacyConfigurationFileName (name) {
 }
 
 // Consulting a directory means both checks, in this order: a legacy file is an error even next
-// to a v4 one, so it is reported before the ambiguity check can shadow it.
+// to a current one, so it is reported before the ambiguity check can shadow it.
 export async function inspectDirectory (directory) {
   const entries = await listDirectoryEntries(directory)
   const legacy = selectLegacyConfigurationFileNames(entries)
@@ -125,7 +125,7 @@ export async function inspectDirectory (directory) {
 }
 
 // Synthesis is never refused on account of a configuration above, but it does say so — and the
-// scan looks for the complete candidate set rather than only the v4 names, because a v3 monorepo
+// scan looks for the complete candidate set rather than only the current names, because a legacy monorepo
 // is exactly where a configless subpackage is most likely to be found. Synthesizing there while an
 // ancestor platformatic.json describes the application is the same silence with an older filename.
 export async function findAnyConfigurationFile (directory) {

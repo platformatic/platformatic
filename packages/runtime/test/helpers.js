@@ -69,9 +69,9 @@ export function configurationFileIn (directory, fallback = 'platformatic.json') 
   }
 
   /*
-    A directory with no v4 configuration is a fixture deliberately left in v3 -- the format tests,
-    the upgrade chains, the ones wattpm import rewrites -- and they do not all spell it
-    platformatic.json, so the caller passes the name it was going to use.
+    A directory with no current-format configuration is a fixture deliberately left in the legacy
+    format -- the format tests, the upgrade chains, the ones wattpm import rewrites -- and they do
+    not all spell it platformatic.json, so the caller passes the name it was going to use.
   */
   return join(directory, fallback)
 }
@@ -88,7 +88,7 @@ export async function updateFile (path, update) {
 }
 
 /*
-  A test naming a v3 configuration file in a directory that now holds a v4 one is asking to update
+  A test naming a legacy configuration file in a directory that now holds a current one is asking to update
   that directory's configuration, not to create the file it named. Resolving it here keeps the
   callers -- which say platformatic.application.json in a good many places -- from having to know
   which dialect the fixture they were handed is written in.
@@ -113,7 +113,7 @@ function resolveConfigurationPath (path) {
 
 /*
   The read half of updateConfigFile, without its write-back. A reader that goes through the updater
-  serializes the file it only meant to inspect, and for a v4 configuration that bakes every
+  serializes the file it only meant to inspect, and for a code configuration that bakes every
   expression into the value it evaluated to on this machine -- which is how a fixture's
   process.env read once became a committed literal.
 */
@@ -133,7 +133,7 @@ export async function updateConfigFile (originalPath, update) {
   const path = resolveConfigurationPath(originalPath)
 
   /*
-    A v4 configuration is code, so it is imported rather than parsed. The cache-busting query is
+    The configuration is code, so it is imported rather than parsed. The cache-busting query is
     what makes a second update in the same process see the first one's result.
 
     Writing it back as a literal loses any expression the file contained — a process.env read

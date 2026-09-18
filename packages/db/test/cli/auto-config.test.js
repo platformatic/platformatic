@@ -6,7 +6,7 @@ import { getConnectionInfo } from '../helper.js'
 import { connectDB, safeKill, start } from './helper.js'
 
 /*
-  The four names v4 accepts, rather than the six serialized formats v3 read. They differ in language
+  The four names accepted, rather than the six serialized formats once read. They differ in language
   and module system and in nothing else, and the loader has to find and evaluate all four.
 */
 const fileTypes = ['ts', 'mts', 'js', 'mjs']

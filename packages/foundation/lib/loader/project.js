@@ -1,20 +1,20 @@
 /*
-  The v4 view of a capability's schema.
+  The narrowed view of a capability's schema.
 
-  A capability ships one schema and it validates both dialects, because the v3 loader still reads
-  v3 configurations with it. So v4's narrowing is applied as a **projection** over that object
-  rather than an edit to it: this returns a copy with what v4 does not implement removed, and the
-  original keeps validating v3 exactly as before. When v3 loading goes, the projection becomes the
+  A capability ships one schema and it validates both dialects, because the legacy loader still reads
+  legacy configurations with it. So the narrowing is applied as a **projection** over that object
+  rather than an edit to it: this returns a copy with what the loader does not implement removed, and the
+  original keeps validating the legacy dialect exactly as before. When legacy loading goes, the projection becomes the
   schema and this file goes with it.
 
-  It is applied where the v4 loader obtains a schema, which is the one place that only v4 reaches.
+  It is applied where the loader obtains a schema, which is the one place that only the loader reaches.
 */
 
 /*
   The placeholder branches, classified one at a time.
 
-  v3's `{PLT_X}` was a string, so almost every typed property grew a bare string branch beside its
-  real type to admit one. v4 has no placeholders, and since the worker stopped re-validating a
+  The legacy `{PLT_X}` was a string, so almost every typed property grew a bare string branch beside its
+  real type to admit one. There are no placeholders now, and since the worker stopped re-validating a
   resolved configuration there is no coercion left to turn a string back into what the property
   wanted -- so a surviving branch does not merely admit a dead spelling, it admits a value that
   reaches the capability as the wrong type.
@@ -32,7 +32,7 @@
   What is deliberately *not* here, besides the two `enabled` positions above: `https/key` and
   `https/cert`, whose string is the PEM itself (`sanitizeHTTPSArgument` returns a string argument
   untouched, and the object form beside it is the file alternative); and `workers`, which
-  `coercePositiveInteger` parses from a string on the v4 path, raising a named error when it will
+  `coercePositiveInteger` parses from a string, raising a named error when it will
   not convert.
 
   Three more the heuristic flags where removing the branch would be actively wrong.
@@ -71,7 +71,7 @@ const PLACEHOLDER_BRANCHES = new Set([
     Removed here: these are read as booleans and nothing else -- `!== false` for `health`,
     `telemetry` and `watch`, `=== false` for a scheduler job, `=== true` for `deduplication`.
     A string never reached any of those comparisons as anything but a surprise: `'false'` is not
-    `false`, so a v3 configuration that wrote one had a setting that validated and did nothing.
+    `false`, so a configuration that wrote one had a setting that validated and did nothing.
 
     Worse for Next's two, which test truthiness -- `if (httpsOptions.enabled)`. There `'false'`
     turns HTTPS *on*.
@@ -251,13 +251,13 @@ function projectPlaceholderBranches (node, parent = '(root)', name = null) {
   blocks, so rebuilding all of it to remove one key would allocate a second copy of the whole thing
   per load for no benefit.
 
-  The `runtime` block goes entirely. It is v3's way of putting orchestration inside an
-  application's own configuration so that `wrapInRuntimeConfig` could hoist it, and v4 has no
-  hoisting step: an autoloaded application's block is read by nobody, and a standalone one's is
+  The `runtime` block goes entirely. It was the legacy way of putting orchestration inside an
+  application's own configuration so that `wrapInRuntimeConfig` could hoist it, and there is no
+  hoisting step now: an autoloaded application's block is read by nobody, and a standalone one's is
   read by nobody either, because the auto-wrap makes the whole export the application's capability
   configuration. Leaving it in the schema meant it validated, collected defaults, and was then
   ignored -- a configuration asking for `workers: 3` got one worker and no diagnostic. Removing it
-  turns that into a refusal naming the property, and the v4 spelling is one level out: orchestration
+  turns that into a refusal naming the property, and the current spelling is one level out: orchestration
   is top-level beside `application`, which is Level 1b.
 */
 export function projectCapabilitySchema (schema) {

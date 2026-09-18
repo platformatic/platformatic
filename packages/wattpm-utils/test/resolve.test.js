@@ -9,10 +9,9 @@ import { prepareFixture, prepareRuntime, temporaryFolder } from '../../basic/tes
 import { changeWorkingDirectory, prepareGitRepository, wattpmUtils } from './helper.js'
 
 /*
-  Where a remote application is checked out. v3 put the destination in the environment, under
-  `PLT_APPLICATION_<ID>_PATH`, and the imported entry carried that variable's name as its path. v4
-  writes no such indirection: an entry either declares a literal path or declares none, and one
-  that declares none is checked out under `resolvedApplicationsBasePath` — `external/<id>`.
+  Where a remote application is checked out. There is no environment indirection: an entry either
+  declares a literal path or declares none, and one that declares none is checked out under
+  `resolvedApplicationsBasePath` — `external/<id>`.
 */
 function declarePath (rootDir, id, path) {
   return updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {

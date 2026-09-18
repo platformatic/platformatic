@@ -7,7 +7,7 @@ import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path
 /*
   Editing the configuration in place.
 
-  A v4 configuration is a module, so it cannot be round-tripped through `JSON.parse` and
+  A configuration is a module, so it cannot be round-tripped through `JSON.parse` and
   `JSON.stringify` -- that read a program as data and wrote data back over the program. magicast
   parses it, the caller edits the parsed object, and the printer keeps everything it did not touch:
   comments, references, the spelling of every value the edit did not name.
@@ -141,7 +141,7 @@ export async function applicationsRemoveCommand (logger, args) {
       const metadata = await client.getRuntimeMetadata(runtime.pid)
       /*
         Against the configuration's *directory*, not the file: `resolve('/a/watt.config.mjs', '../x')`
-        is `/a/x` only by accident of the file name having no slashes in it. v4 hands this back
+        is `/a/x` only by accident of the file name having no slashes in it. This is handed back
         already absolute, in which case resolve returns it untouched.
       */
       const absoluteAutoloadPath = metadata.autoload
@@ -150,7 +150,7 @@ export async function applicationsRemoveCommand (logger, args) {
 
       await updateConfigFile(metadata.configPath, async config => {
         for (const app of removed) {
-          // One spelling: the loader refuses the v3 aliases by name, so the list is `applications`.
+          // One spelling: the loader refuses the aliases by name, so the list is `applications`.
           if (Array.isArray(config.applications)) {
             config.applications = config.applications.filter(a => a.id !== app.id)
           }

@@ -46,7 +46,7 @@ async function getOccupiedPortWithAvailablePreviousPort () {
 }
 
 // Configures the application to use per-worker port assignment, starting from a free range of ports.
-// The port assignment lives in the capability configuration since ports are per-application in v4.
+// The port assignment lives in the capability configuration since ports are per-application.
 async function preparePerWorkerPortRuntime (
   t,
   {
@@ -97,7 +97,7 @@ async function preparePerWorkerPortRuntime (
   }
 
   /*
-    v4 evaluates every configuration once, when the runtime is loaded, so a test that wants a file
+    Every configuration is evaluated once, when the runtime is loaded, so a test that wants a file
     to say something different has to say it before this point -- editing it afterwards is a change
     to a file nothing will read again.
   */
@@ -337,7 +337,7 @@ test('preserves incremental port when restarting a crashed worker', async t => {
 
 test('rejects another application listening on a port used by one of the workers', async t => {
   // The service is set to the port node's second worker will take, and set before the runtime is
-  // created -- v4 evaluates every configuration once, at load. So the overlap is declared, and the
+  // created -- every configuration is evaluated once, at load. So the overlap is declared, and the
   // load time check rejects it when the configuration loads, earlier than the start time check and
   // naming both applications and the range they collide on.
   await rejects(

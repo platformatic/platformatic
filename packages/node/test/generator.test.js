@@ -100,7 +100,7 @@ test('should prepare a valid tsconfig.json file (Typescript)', async () => {
   deepStrictEqual(tsConfig, { extends: '@platformatic/tsconfig' })
 })
 
-test('should prepare exactly one configuration file, in the v4 form', async () => {
+test('should prepare exactly one configuration file', async () => {
   const generator = new Generator()
   await generator.prepare()
 

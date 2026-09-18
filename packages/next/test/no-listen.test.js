@@ -6,8 +6,8 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 /*
   `@platformatic/next` checks `server.port` before selecting a startup path, in development and in
   production alike, so an application declaring neither a port nor a command for the running mode
-  provably starts nothing. v3 booted it anyway and left the runtime one application short without
-  saying so; v4 decides it before boot, from configuration alone, and refuses.
+  provably starts nothing. That is decided before boot, from configuration alone, and the
+  application is refused rather than left to leave the runtime one application short.
 */
 for (const production of [false, true]) {
   const mode = production ? 'production' : 'development'

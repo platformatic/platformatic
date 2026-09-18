@@ -53,7 +53,7 @@ test('should get runtime logs via management api', async t => {
 
 test('should support custom use transport', async t => {
   /*
-    v4 allows exactly one configuration per directory, so this variant cannot be the sibling file
+    Exactly one configuration is allowed per directory, so this variant cannot be the sibling file
     it used to be. The fixture is copied and the copy is what gets the transport.
   */
   const root = await createTemporaryDirectory(t, 'management-api')

@@ -1,5 +1,5 @@
-// The v4 configuration loader. It is written new for v4 rather than carved out of the v3
-// configuration machinery, and it shares nothing with it: the v3 parsers, replaceEnv, the YAML
+// The configuration loader. It is written new rather than carved out of the legacy
+// configuration machinery, and it shares nothing with it: the legacy parsers, replaceEnv, the YAML
 // pre-pass, strictEnv and the $schema URL machinery move into wattpm-utils as migrate's private
 // legacy reader. Only deliberately-kept pieces are carried over, each by explicit decision.
 export * from './application.js'

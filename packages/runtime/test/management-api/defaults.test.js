@@ -31,7 +31,7 @@ test('should enable the management API by default', async t => {
 
   /*
     Any endpoint the management API serves answers the question this test asks, which is whether it
-    is listening at all. It used to ask `/api/v1/config`, which v4 removed -- and the runtime's
+    is listening at all. It used to ask `/api/v1/config`, which was removed -- and the runtime's
     metadata is a better probe anyway, since it is what the commands that talk to a running runtime
     actually read.
   */

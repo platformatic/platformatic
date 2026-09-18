@@ -52,12 +52,12 @@ export async function loadApplicationConfigurationFile (path, options = {}) {
 }
 
 /*
-  The capability half of a v4 load: everything that happens to an application's configuration after
+  The capability half of a load: everything that happens to an application's configuration after
   the loader has produced it.
 
-  It is deliberately small, and its size is the point. The v3 reader did fourteen things here --
+  It is deliberately small, and its size is the point. The legacy reader did fourteen things here --
   read a document off disk, walk for `.env` files, substitute `{PLT_X}`, enforce strictEnv, upgrade
-  by `$schema` version, validate with coercion on -- and under v4 every one of them has already
+  by `$schema` version, validate with coercion on -- and now every one of them has already
   happened, main-side, exactly once. What is left is the capability's own transform and the metadata
   it reads its root from.
 
@@ -77,7 +77,7 @@ export async function applyResolvedConfiguration (root, config, { schema, transf
   config[kMetadata] = {
     root,
     env: { ...env },
-    // A v4 configuration is not a file the capability reads, so there is no path to report.
+    // A configuration is not a file the capability reads, so there is no path to report.
     path: null,
     module: typeof config.module === 'string' ? config.module : null
   }

@@ -18,7 +18,7 @@ const workerPath = new URL('./eval-worker.js', import.meta.url)
   config file itself. It also isolates env mutation and config crashes and hangs from the loader.
 
   The workers isolate module caches, environments, crashes and hangs. They are not a sandbox: a
-  config file runs with the runtime's privileges, exactly as in v3, where an application's config
+  config file runs with the runtime's privileges, exactly as it always has, where an application's config
   selected a module the worker then imported and executed.
 */
 export async function evaluateConfigurationFile ({

@@ -71,7 +71,7 @@ test('the real environment still outranks the env file for the synthesized port'
   strictEqual(config.applications[0].config.server.port, 5000)
 })
 
-test('synthesis is never refused on account of a v4 configuration above, but it says so', async t => {
+test('synthesis is never refused on account of a configuration above, but it says so', async t => {
   const root = await createTree(t, {
     'watt.config.js': 'export default { applications: [] }',
     'web/api/package.json': '{ "name": "api", "dependencies": { "@platformatic/node": "3.0.0" } }',
@@ -89,8 +89,8 @@ test('synthesis is never refused on account of a v4 configuration above, but it 
   ok(warning.message.includes('none of what it says'))
 })
 
-test('a v3 configuration above names the upgrade instead', async t => {
-  // A v3 monorepo is exactly where a configless subpackage is most likely to be found, and
+test('a legacy configuration above names the upgrade instead', async t => {
+  // A legacy monorepo is exactly where a configless subpackage is most likely to be found, and
   // synthesizing there while an ancestor platformatic.json describes the application would be the
   // same silence with an older filename.
   const root = await createTree(t, {

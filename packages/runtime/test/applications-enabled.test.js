@@ -75,9 +75,9 @@ test('should support environment variables for application enabled configuration
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
 
   /*
-    A configuration reads its environment directly. v3 wrote `'{PLT_APPLICATION_ENABLED}'` and the
-    loader substituted it; the string branch of `enabled` survives because the expression below
-    still produces one, and anything but `'false'` is true.
+    A configuration reads its environment directly. A `'{PLT_APPLICATION_ENABLED}'` placeholder used
+    to be written and substituted by the loader; the string branch of `enabled` survives because the
+    expression below still produces one, and anything but `'false'` is true.
   */
   const cfgPath = await writeConfig(
     dir,
@@ -189,7 +189,7 @@ test('should support environment variables in application enabled environment co
   const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
 
   /*
-    The per-mode form takes booleans, and the configuration computes one. v3 accepted a string
+    The per-mode form takes booleans, and the configuration computes one. A string was once accepted
     there for the sole purpose of holding a `{PLT_X}` placeholder, and that branch is gone -- the
     top-level `enabled` keeps its string branch because anything but `'false'` is meaningfully
     true, which is not something a per-mode map needs.

@@ -25,7 +25,7 @@ test('should inject request via IPC even if a server is started', async t => {
         contents.logger.level = 'trace'
       })
 
-      // A v4 module: a legacy name in an application directory is refused by the loader on sight.
+      // A legacy name in an application directory is refused by the loader on sight.
       await writeFile(
         resolve(root, 'services/frontend/watt.config.mjs'),
         `export default ${JSON.stringify({ module: '@platformatic/node', logger: { level: 'trace' } }, null, 2)}\n`,

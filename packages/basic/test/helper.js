@@ -46,9 +46,9 @@ export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
 
-// One directory again: every package that copies these applications is v4, so there is no longer a
-// dialect to choose between. The function stays because it is also the one place that knows an
-// application is copied to services/<type>.
+// One directory again: every package that copies these applications uses the current format, so
+// there is no longer a dialect to choose between. The function stays because it is also the one
+// place that knows an application is copied to services/<type>.
 export async function copyCommonApplication (root, type, language = 'js') {
   await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
     recursive: true
@@ -60,8 +60,8 @@ export const httpsFixtureRoot = fileURLToPath(
 )
 
 /*
-  Assigning the listeners for a v4 project happens on the loaded configuration, not by rewriting a
-  file. v4 configurations are code, so there is nothing to JSON.parse and edit -- and by the time
+  Assigning the listeners for a project happens on the loaded configuration, not by rewriting a
+  file. Configurations are code, so there is nothing to JSON.parse and edit -- and by the time
   the runtime exists the applications have already been evaluated. The resolved payload is what the
   worker receives, so setting the port there is setting the port the application binds.
 */
@@ -120,7 +120,7 @@ async function updateApplicationConfig (application, update, required = false) {
   }
 
   /*
-    A v4 application carries its evaluated configuration rather than a path to one, and its worker
+    An application carries its evaluated configuration rather than a path to one, and its worker
     is handed that payload instead of re-reading a file. Editing a file here would therefore change
     nothing -- the runtime already holds the object the worker will receive, so the update belongs
     to it. This runs before start, which is when workerData is built.
@@ -155,7 +155,7 @@ async function updateApplicationConfig (application, update, required = false) {
 
     /*
       An application the detector resolved has no configuration file, and giving it one is how the
-      caller adjusts it. The file has to be v4: a legacy name in an application directory is
+      caller adjusts it. The file has to use a current name: a legacy name in an application directory is
       refused by the loader on sight, so writing one here made the project unbootable.
     */
     configFile = join(application.path, 'watt.config.mjs')
@@ -458,7 +458,7 @@ export async function buildRuntime (root) {
 
 /*
   beforeLoad exists for the setups that need both sides of the load: a file written into an
-  application directory has to be there before v4 resolves the applications, while a change to the
+  application directory has to be there before the applications are resolved, while a change to the
   loaded configuration can only happen once there is one. A single hook cannot do both.
 */
 async function copyFixture (source) {
@@ -494,8 +494,8 @@ async function copyFixture (source) {
 /*
   A copy of a fixture on disk, with its dependencies linked, and nothing loaded. It is what a test
   needs when the fixture deliberately does not load yet -- an application whose capability is
-  missing is exactly what `wattpm-utils import` exists to fix -- because v4 validates every
-  application's capability when the root is read, so merely creating a runtime over such a fixture
+  missing is exactly what `wattpm-utils import` exists to fix -- because every application's
+  capability is validated when the root is read, so merely creating a runtime over such a fixture
   fails before the command under test runs.
 */
 export async function prepareFixture (t, fixturePath) {
@@ -526,13 +526,14 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   build ??= false
   production ??= false
 
-  // Discover rather than assume, so a package whose fixtures have been converted to v4 and one
-  // whose fixtures are still v3 both work without every test naming its configuration. The v3
-  // fallback goes when the last fixture does.
+  // Discover rather than assume, so a package whose fixtures have been converted to the current
+  // format and one whose fixtures are still in the legacy format both work without every test
+  // naming its configuration. The legacy fallback goes when the last fixture does.
   /*
-    Discovery over both dialects, v4 first. A fixed fallback only worked while every fixture was
-    v3, and it stopped working the moment some were not -- the fixtures that stay v3 are the ones
-    whose readers still are, and a test naming none of this should not have to know which is which.
+    Discovery over both dialects, current format first. A fixed fallback only worked while every
+    fixture used the legacy format, and it stopped working the moment some were not -- the fixtures
+    that stay legacy are the ones whose readers still are, and a test naming none of this should
+    not have to know which is which.
   */
   configFile ??=
     [
@@ -561,10 +562,10 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   const root = await copyFixture(source)
 
   /*
-    Setup runs before the configuration is read, not after. v4 resolves every application when the
+    Setup runs before the configuration is read, not after. Every application is resolved when the
     root is loaded -- its directory, its capability, its own configuration -- so a setup that
-    copies applications into the project has to have finished by then. Under v3 the same setup
-    could run afterwards, because an application was not looked at until its worker started.
+    copies applications into the project has to have finished by then. It once could run afterwards,
+    because an application was not looked at until its worker started.
 
     A setup that needs the loaded configuration rather than the directory says so with
     runAfterPrepare, and still runs at the end.
@@ -578,11 +579,11 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   }
 
   /*
-    The root's dependencies are linked before the configuration is read, not after. v4 validates
-    each application's capability configuration main-side, against the schema imported from that
-    capability — so the capability has to be resolvable when the configuration is loaded, which is
-    earlier in the lifecycle than v3 ever needed it. Loading first and linking afterwards worked
-    only while nothing at load time went looking for the package.
+    The root's dependencies are linked before the configuration is read, not after. Each
+    application's capability configuration is validated main-side, against the schema imported from
+    that capability — so the capability has to be resolvable when the configuration is loaded, which
+    is earlier in the lifecycle than it once needed to be. Loading first and linking afterwards
+    worked only while nothing at load time went looking for the package.
   */
   await ensureDependencies([root])
 
@@ -622,7 +623,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
         }
       }
 
-      // The listeners are assigned here for v4, before any worker starts: there is no configuration
+      // The listeners are assigned here before any worker starts: there is no configuration
       // file to rewrite afterwards, and the resolved payload is what the worker is handed.
       if (typeof port === 'number' && config[kMetadata]?.loader) {
         applyListenerPorts(config, port)

@@ -461,7 +461,7 @@ async function synthesizeConfiguration ({ cwd, schema, report, ...shared }) {
       ancestor: ancestor.path,
       legacy: ancestor.legacy,
       message: ancestor.legacy
-        ? `${cwd} has no watt.config.* of its own and is booting with inferred defaults. A v3 configuration exists at ${ancestor.path}, which this version cannot read. Run npx wattpm-utils@4 migrate there, then run wattpm from that directory.`
+        ? `${cwd} has no watt.config.* of its own and is booting with inferred defaults. A legacy configuration exists at ${ancestor.path}, which this version cannot read. Run npx wattpm-utils@4 migrate there, then run wattpm from that directory.`
         : `${cwd} has no watt.config.* of its own and is booting with inferred defaults. A Watt configuration exists at ${ancestor.path}; if it describes this application, none of what it says — workers, health, env, telemetry, and the port it assigns — is applied here. Run wattpm there to start it with the runtime, or add a watt.config.ts here to configure it standalone.`
     })
   }
@@ -615,9 +615,9 @@ export function applyWorkerEnvironments (
     Object.defineProperty(entry, 'workerEnv', { value: workerEnv, enumerable: false })
 
     /*
-      The declared breaking change's only diagnostic: v3 applied env blocks over the real
-      environment, v4 inverts that, and a machine-generated configuration has no other channel to
-      learn a block value it carries is not the one its application sees. Reported once per key at
+      The declared breaking change's only diagnostic: env blocks no longer apply over the real
+      environment -- the real environment wins -- and a machine-generated configuration has no other
+      channel to learn a block value it carries is not the one its application sees. Reported once per key at
       boot, and only when the values actually differ -- an override that agrees is not a flip.
     */
     for (const block of [entry.env, rootEnv]) {
@@ -645,7 +645,7 @@ export function applyWorkerEnvironments (
   Applications added while the runtime is running -- POST /applications and the management ITC
   handler -- have to be evaluated the way boot evaluates them. An entry that skips this arrives
   without resolvedConfig, and the worker then falls back to discovering a configuration file by the
-  v3 names, which v4 does not write: the application fails to initialize rather than being told
+  legacy names, which the loader does not write: the application fails to initialize rather than being told
   what is wrong.
 
   The environment is resolved from disk again rather than reused from boot. The ladder is a

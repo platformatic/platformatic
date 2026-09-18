@@ -897,9 +897,9 @@ export const application = {
       resolvePath: true
     },
     config: {
-      // v4 entries carry an inline ApplicationDefinition here — the object a capability factory
-      // returns — where v3 carried a path to a configuration file. The union is transitional and
-      // narrows to the object alone when the v3 reader leaves foundation; it is listed for the
+      // Entries carry an inline ApplicationDefinition here — the object a capability factory
+      // returns — where the legacy format carried a path to a configuration file. The union is transitional and
+      // narrows to the object alone when the legacy reader leaves foundation; it is listed for the
       // schema audit rather than left to be rediscovered.
       anyOf: [{ type: 'string' }, { type: 'object' }]
     },
@@ -1657,7 +1657,7 @@ tracing.title = 'TelemetryOptions'
 /*
   Titled for the capability schemas, which list one application entry and generate it in full.
 
-  The runtime's own schema does not get the benefit: it lists three -- `applications` and the v3
+  The runtime's own schema does not get the benefit: it lists three -- `applications` and the legacy
   aliases `services` and `web` -- and the pinned generator, handed three copies of one 24-property
   object, gives up and emits `{ [k: string]: unknown }` for all three. Two copies generate
   correctly; three do not. Its next major fixes this, and a `$ref` for the aliases works there too,

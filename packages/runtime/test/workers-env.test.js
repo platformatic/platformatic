@@ -6,11 +6,11 @@ import { test } from 'node:test'
 import { loadConfiguration } from '../index.js'
 
 /*
-  v3 wrote `workers: '{PLT_WORKERS}'` and interpolated; v4's configuration file reads the
-  environment itself, and `workers` still admits the string that read produces because
-  `coercePositiveInteger` parses it on the way in, raising a named error when it will not convert.
-  The `?? ''` mirrors v3's fail-closed-to-empty for an unset variable, which is what makes the
-  missing-variable case an error rather than a silent default.
+  A `workers: '{PLT_WORKERS}'` placeholder used to be written and interpolated; the configuration
+  file now reads the environment itself, and `workers` still admits the string that read produces
+  because `coercePositiveInteger` parses it on the way in, raising a named error when it will not
+  convert. The `?? ''` mirrors the earlier fail-closed-to-empty for an unset variable, which is what
+  makes the missing-variable case an error rather than a silent default.
 */
 async function writeRootConfig (dir, workersExpression) {
   const path = join(dir, 'watt.config.mjs')

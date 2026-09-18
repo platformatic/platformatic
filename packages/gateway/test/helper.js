@@ -486,7 +486,7 @@ export async function createGatewayInRuntime (
 
   /*
     Written as a module rather than JSON, and the gateway entry no longer names its configuration
-    file: v4 discovers an application's configuration in its own directory, and config in an entry
+    file: an application's configuration is discovered in its own directory, and config in an entry
     means an inline definition rather than a path to one.
   */
   await writeFile(

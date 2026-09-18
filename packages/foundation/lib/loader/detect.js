@@ -6,7 +6,7 @@ import { AmbiguousCapabilityError, CapabilityNotDetectedError } from './errors.j
 /*
   The table is enumerated rather than pattern-matched on @platformatic/*, so companion packages
   like @platformatic/globals — which @platformatic/node's own generator writes alongside it —
-  cannot trip the ambiguity error, and the out-of-tree capabilities already in v3's table have a
+  cannot trip the ambiguity error, and the out-of-tree capabilities already in the table have a
   defined place. A capability outside the table, which is every third-party one, is never inferred:
   those applications declare an explicit config file.
 */
@@ -63,7 +63,7 @@ async function readPackageJson (directory) {
   One deterministic run against the application's package.json, for an entry with neither an inline
   config nor a per-app file.
 
-  The order inverts v3, which checked framework dependencies first and reached @platformatic/node
+  The order inverts the previous one, which checked framework dependencies first and reached @platformatic/node
   only through the terminal fallback. Under that order a generated Node application that later
   added Vite as unrelated tooling would silently switch capability on its next boot. Because
   scaffolding always adds the chosen capability to the application's dependencies, this order
@@ -101,7 +101,7 @@ export async function detectCapability (directory, { id, packageJson } = {}) {
     }
   }
 
-  // The terminal rule keeps v3's zero-config floor: a directory containing JavaScript or
+  // The terminal rule keeps the zero-config floor: a directory containing JavaScript or
   // TypeScript sources that matched nothing else is a generic Node application. A directory with
   // none is an error naming the application — there is no generic fallback beyond this one.
   if (await hasJavascriptFiles(directory)) {

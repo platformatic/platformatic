@@ -46,7 +46,7 @@ export async function cleanupCache (valkey, valkeyUser) {
 
 /*
   Through updateConfigFile, which reads and writes whichever dialect the fixture is in. These named
-  the v3 file, and a converted application does not have one.
+  the legacy file, and a converted application does not have one.
 */
 export async function getCacheSettings (root) {
   // Read-only on purpose: going through the updater would write the evaluated file back, baking

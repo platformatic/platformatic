@@ -6,7 +6,7 @@ test('serialized strings survive every character that could break the literal', 
   /*
     The writer emits a module, so a value that unbalances the quote or terminates the line is a
     SyntaxError in someone's generated watt.config.js. \r is the one that hid: a LineTerminator
-    inside a string literal, riding in from a v3 value with CRLF in it.
+    inside a string literal, riding in from a legacy value with CRLF in it.
   */
   for (const value of ["quo'te", 'back\\slash', 'multi\nline', 'carriage\r\nreturn', "all\\'of\r\nthem"]) {
     // eslint-disable-next-line no-eval

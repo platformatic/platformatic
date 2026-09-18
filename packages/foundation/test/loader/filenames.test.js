@@ -28,7 +28,7 @@ test('the recognized set is exactly the six configuration filenames', () => {
   ok(!isConfigurationFileName('vite.config.ts'))
 })
 
-test('legacy detection covers the complete v3 candidate set, not just .json', () => {
+test('legacy detection covers the complete candidate set, not just .json', () => {
   // The whole point of the unconditional check is that a watt.yaml-only project cannot fall
   // through to zero-config synthesis while its real configuration is ignored.
   for (const name of ['watt.json', 'watt.yaml', 'watt.toml', 'platformatic.json5', 'platformatic.db.yml']) {
@@ -86,7 +86,7 @@ test('a directory with no candidate resolves to null, and a missing directory is
   strictEqual(await hasConfigurationFile(join(root, 'nope')), false)
 })
 
-test('a legacy file is an error even next to a v4 file', async t => {
+test('a legacy file is an error even next to a current file', async t => {
   const root = await createTree(t, { 'watt.config.ts': '', 'watt.yaml': '' })
 
   await rejects(() => inspectDirectory(root), error => {

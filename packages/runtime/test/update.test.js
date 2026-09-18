@@ -44,7 +44,7 @@ function mockNpmJsRequestForPkgs (pkgs) {
 }
 
 /*
-  A v4 configuration is a module whose values are expressions, so reading one means evaluating it --
+  The configuration is a module whose values are expressions, so reading one means evaluating it --
   against the project's own environment, which is where those expressions get their values.
 */
 async function readConfiguration (path, root) {

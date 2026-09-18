@@ -10,7 +10,7 @@ import { configurationFileIn } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 /*
-  What the v4 loader hands a worker: the capability's validated configuration as data, plus the
+  What the loader hands a worker: the capability's validated configuration as data, plus the
   module that validated it. Controller no longer reads a configuration file -- that resolution
   moved main-side -- so a test that constructs one directly supplies what the loader would have.
 */
@@ -44,8 +44,8 @@ test('errors when starting an already started application (no logging)', async t
 
 test('errors when stopping an already stopped application', async t => {
   /*
-    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
-    a configuration file with the v3 loader, so it cannot serve both.
+    Not monorepo/serviceApp: that directory is autoloaded by the runtime, and Controller reads
+    a configuration file with the legacy loader, so it cannot serve both.
   */
   const appPath = join(fixturesDir, 'service-app-no-logging')
   const resolvedConfig = await resolvedConfigurationIn(appPath)
@@ -66,7 +66,7 @@ test('errors when stopping an already stopped application', async t => {
 })
 
 /*
-  There was a test here for the error a missing `{PLT_X}` produced. v4 has no placeholders: an unset
+  There was a test here for the error a missing `{PLT_X}` produced. There are no placeholders: an unset
   variable is `undefined` and what happens next is written in the configuration file, so there is no
   substitution left to fail. `docs/reference/service/configuration.md` shows the guard that replaces
   it.
@@ -135,8 +135,8 @@ test('returns application statuses', async t => {
 
 test('can update status of a capability with updateStatus support', async t => {
   /*
-    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
-    a configuration file with the v3 loader, so it cannot serve both.
+    Not monorepo/serviceApp: that directory is autoloaded by the runtime, and Controller reads
+    a configuration file with the legacy loader, so it cannot serve both.
   */
   const appPath = join(fixturesDir, 'service-app-no-logging')
   const resolvedConfig = await resolvedConfigurationIn(appPath)
@@ -161,8 +161,8 @@ test('can update status of a capability with updateStatus support', async t => {
 
 test('can update status of a capability without updateStatus support', async t => {
   /*
-    Not monorepo/serviceApp: that directory is autoloaded by v4 runtimes, and Controller reads
-    a configuration file with the v3 loader, so it cannot serve both.
+    Not monorepo/serviceApp: that directory is autoloaded by the runtime, and Controller reads
+    a configuration file with the legacy loader, so it cannot serve both.
   */
   const appPath = join(fixturesDir, 'service-app-no-logging')
   const resolvedConfig = await resolvedConfigurationIn(appPath)

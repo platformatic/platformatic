@@ -3,13 +3,13 @@ import { test } from 'node:test'
 import { projectCapabilitySchema } from '../../lib/loader/project.js'
 
 /*
-  The block is v3's way of putting orchestration inside an application's own configuration so that
-  `wrapInRuntimeConfig` could hoist it. v4 has no hoisting step, so nothing reads it -- and while
+  The block was the legacy way of putting orchestration inside an application's own configuration so that
+  `wrapInRuntimeConfig` could hoist it. There is no hoisting step now, so nothing reads it -- and while
   the schema admitted it, a configuration asking for `workers: 3` validated, collected defaults and
   got one worker with no diagnostic. Removing it from the projection makes that a refusal naming
   the property.
 */
-test('the runtime block is not part of a v4 capability configuration', () => {
+test('the runtime block is not part of a capability configuration', () => {
   const runtime = { type: 'object', properties: { workers: {}, logger: {} } }
   const schema = { type: 'object', properties: { runtime, module: { type: 'string' } } }
 
@@ -19,7 +19,7 @@ test('the runtime block is not part of a v4 capability configuration', () => {
 })
 
 /*
-  The capability ships one schema and the v3 loader reads v3 configurations with it, so v4's
+  The capability ships one schema and the legacy loader reads legacy configurations with it, so the
   narrowing cannot be an edit. Asserting the original is untouched is asserting that.
 */
 test('the shipped schema is not modified', () => {
@@ -29,7 +29,7 @@ test('the shipped schema is not modified', () => {
   const projected = projectCapabilitySchema(schema)
 
   ok(projected !== schema)
-  ok('runtime' in schema.properties, 'the original still validates v3')
+  ok('runtime' in schema.properties, 'the original still validates the legacy dialect')
   strictEqual(projected.properties.module, schema.properties.module, 'untouched branches are shared')
 })
 
@@ -41,8 +41,8 @@ test('a schema with no runtime block is returned as it is', () => {
 
 /*
   There is no environment discovery left to opt out of. This was a pair of tests about the
-  `resolved` flag -- v4 asking the v3 reader not to walk the tree for `.env` files or inject
-  `PLT_ROOT`, which it did to every v4 application until the flag existed. The reader no longer
+  `resolved` flag -- the loader asking the legacy reader not to walk the tree for `.env` files or inject
+  `PLT_ROOT`, which it did to every application until the flag existed. The reader no longer
   does either for anyone, so the flag is gone and what remains is the plain fact: it reports the
   environment it was handed and invents nothing.
 */
@@ -73,7 +73,7 @@ test('server.port loses its placeholder string branch', () => {
   const projected = projectCapabilitySchema(schema)
 
   deepStrictEqual(projected.properties.server.properties.port, { type: 'integer' })
-  // The shipped object still validates v3, where the branch is load-bearing.
+  // The shipped object still validates the legacy dialect, where the branch is load-bearing.
   deepStrictEqual(schema.properties.server.properties.port.anyOf.length, 2)
 })
 

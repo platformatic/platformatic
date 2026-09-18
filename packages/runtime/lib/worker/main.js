@@ -234,9 +234,10 @@ async function main () {
     this worker's entire environment main-side -- env-file chains, both env blocks, the injected
     topology URLs, with the real environment authoritative over all of them -- and the worker was
     *spawned* with that result. Re-reading a .env or re-applying an env block on top re-decides
-    what was already decided, with the opposite precedence: v3 treated blocks as pins over the real
-    environment, and v4 declares the inversion as a breaking change. The suppression of a block
-    value by the real environment is reported at boot, main-side, where the ladder is resolved.
+    what was already decided, with the opposite precedence: env blocks were once treated as pins over
+    the real environment, and that inversion is now a breaking change -- the real environment is
+    authoritative. The suppression of a block value by the real environment is reported at boot,
+    main-side, where the ladder is resolved.
   */
   getLogger().debug('Using the worker environment resolved by the loader.')
 

@@ -116,7 +116,7 @@ test('an entry with no file and no inline config is resolved by the detector', a
 })
 
 test('a capability dependency wins over an unrelated framework dependency', async t => {
-  // The inversion of v3: under the old order, a generated Node application that later added Vite
+  // The inversion of the earlier order: under the old order, a generated Node application that later added Vite
   // as unrelated tooling would silently switch capability on its next boot.
   const root = await createTree(t, {
     'package.json': '{ "name": "proj" }',
@@ -170,9 +170,9 @@ test('composer is an alias of gateway rather than a second capability', async t 
 })
 
 /*
-  The declared breaking change's diagnostic: v3 applied env blocks over the real environment, v4
-  inverts that, and a block value the real environment suppresses is reported at boot -- once per
-  key, and only when the values actually differ.
+  The declared breaking change's diagnostic: env blocks no longer apply over the real environment --
+  the real environment wins -- and a block value the real environment suppresses is reported at boot --
+  once per key, and only when the values actually differ.
 */
 test('a block value the real environment suppresses is reported once', async t => {
   const root = await createTree(t, {
@@ -319,8 +319,8 @@ test('a root that declares nothing to run is refused before normalization can hi
   })
 })
 
-test('a v3 spelling of the applications list is named, not reported as an absence', async t => {
-  // A v3 project renamed to the new file name lands on the topology check with a services list
+test('a legacy spelling of the applications list is named, not reported as an absence', async t => {
+  // A legacy project renamed to the new file name lands on the topology check with a services list
   // that reads as nothing declared; "declares no applications" would be nonsense to its author.
   for (const spelling of ['services', 'web']) {
     const root = await createTree(t, {
@@ -588,7 +588,7 @@ test('an application added after boot is evaluated the way boot evaluates one', 
   strictEqual(applications.length, 1)
 
   // The evaluated payload is what the worker receives instead of a file path: an entry that
-  // reached the worker without it would be told to find a configuration v4 never wrote.
+  // reached the worker without it would be told to find a configuration the loader never wrote.
   const [added] = applications
   strictEqual(added.module, '@platformatic/service')
   deepStrictEqual(added.config, { from: 'later' })

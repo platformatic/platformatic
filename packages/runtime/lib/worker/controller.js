@@ -130,7 +130,7 @@ export class Controller extends EventEmitter {
       }
 
       /*
-        v4: the configuration was evaluated exactly once, main-side, and this worker receives the
+        The configuration was evaluated exactly once, main-side, and this worker receives the
         validated capability payload as data. There is no file to re-read and no schema to
         rediscover — which is the whole point, since re-parsing per worker meant an application
         with workers: 4 evaluated user code five times and could reach five different answers.
@@ -162,11 +162,11 @@ export class Controller extends EventEmitter {
         })
       } else {
         /*
-          No payload at all, which the v4 loader does not produce -- `prepareRuntimeApplication` gives
+          No payload at all, which the loader does not produce -- `prepareRuntimeApplication` gives
           every entry a `resolvedConfig`, an empty object where there is nothing to say. What is
           left here is an embedder constructing a Controller by hand, and the bundled base
-          capability is the answer for that: there is no configuration file to look for, because v4
-          decides that main-side and hands the result over.
+          capability is the answer for that: there is no configuration file to look for, because the
+          runtime decides that main-side and hands the result over.
         */
         const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
         this.capability = await pkg.create(appConfig.path, {}, this.#context)

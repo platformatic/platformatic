@@ -73,7 +73,7 @@ test('extended class should generate config', async t => {
   deepEqual(configFile, {
     path: '',
     file: 'watt.config.ts',
-    // The v4 per-app form: a capability with a factory is spelled by calling it.
+    // The per-app form: a capability with a factory is spelled by calling it.
     contents: "import { createServiceConfig } from '@platformatic/service'\n\nexport default createServiceConfig({\n  foo: 'bar'\n})\n",
     options: {},
     tags: []
@@ -805,8 +805,7 @@ test('on update should just touch the packages configuration', async t => {
   equal(bg.files[0].path, '')
 
   /*
-    The application had no `plugins` block, and the added package is recorded in one. v3 wrote
-    nothing here -- adding a package to a configuration that declared none silently did not happen.
+    The application had no `plugins` block, and the added package is recorded in one.
   */
   const contents = bg.files[0].contents
   ok(contents.includes("name: '@fastify/foo-plugin'"), contents)

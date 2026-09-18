@@ -145,7 +145,7 @@ test('the loader resolves every application worker environment before any worker
   const [api, web] = config.applications
 
   // The entry block beats the root block, and both beat the files — but the real environment beats
-  // all of them, which is the deliberate inversion of v3, where blocks were pins.
+  // all of them, which is a deliberate inversion of the previous behavior, where blocks were pins.
   strictEqual(api.workerEnv.SHARED, 'entry')
   strictEqual(web.workerEnv.SHARED, 'root-block')
   strictEqual(api.workerEnv.FROM_ROOT_BLOCK, 'root')

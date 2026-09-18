@@ -1,7 +1,7 @@
 /*
-  The same configuration under each of the four names v4 accepts. v3 kept this fixture in six
-  serialized formats -- json, json5, yaml, yml, toml, tml -- and the test read one of each; a v4
-  configuration is a program, so what varies now is the language and the module system.
+  The same configuration under each of the four accepted names. This fixture was once kept in six
+  serialized formats -- json, json5, yaml, yml, toml, tml -- and the test read one of each; a
+  configuration is now a program, so what varies is the language and the module system.
 */
 export default {
   module: '@platformatic/db',

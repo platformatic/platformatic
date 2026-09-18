@@ -14,11 +14,10 @@ test('should execute applications commands with an explicit configuration file v
   const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.config.mjs')
 
   /*
-    What this asserts in v4 is that `--config` is honoured, and no longer that it rescues a file
-    discovery could not find. It used to rename the configuration to something arbitrary, which v3
-    accepted; v4's `--config` names *where* a configuration is and not what it may be called, so a
-    file in the project root under one of the four names is always discoverable and there is no
-    name that is both legal and hidden.
+    What this asserts is that `--config` is honoured, and not that it rescues a file
+    discovery could not find. `--config` names *where* a configuration is and not what it may be
+    called, so a file in the project root under one of the four names is always discoverable and
+    there is no name that is both legal and hidden.
 
     A name outside the four is refused rather than loaded, which the loader's own tests cover.
   */

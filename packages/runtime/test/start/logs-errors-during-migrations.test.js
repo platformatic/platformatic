@@ -11,12 +11,12 @@ test('logs errors during db migrations', async t => {
   const root = await getTempDir()
 
   /*
-    Built as an object rather than by wrapping a v3 configuration: v4 has no wrapping step, and a
+    Built as an object rather than by wrapping a legacy configuration: there is no wrapping step, and a
     root assembled in memory is a first-class source now that object configurations load through
-    the v4 pipeline.
+    the pipeline.
   */
   const runtimeConfig = await loadConfiguration(applicationDirectory, {
-    // No id: v4 derives it from the application's package.json, which is what the wrapping step it
+    // No id: it is derived from the application's package.json, which is what the wrapping step it
     // replaced used to do.
     applications: [{ path: applicationDirectory }],
     restartOnError: 1000,

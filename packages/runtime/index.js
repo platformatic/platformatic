@@ -67,13 +67,13 @@ function handleSignal (runtime, config) {
 }
 
 /*
-  v4 configuration is code, evaluated by the loader in foundation: it walks to the deciding file,
+  The configuration is code, evaluated by the loader in foundation: it walks to the deciding file,
   resolves both views of the env ladder, evaluates the root in a worker and fans out one worker per
   per-app file. Everything the runtime transform used to discover — the application list, each
   application's capability, its schema and its worker environment — arrives already resolved.
 
-  Routing by filename keeps the v3 path intact while the in-tree JSON fixtures are converted; the
-  v3 half is what a later commit deletes, not something this one has to keep working around.
+  Routing by filename keeps the legacy path intact while the in-tree JSON fixtures are converted; the
+  legacy half is what a later commit deletes, not something this one has to keep working around.
 */
 /*
   `--config` names a configuration; it does not widen what a configuration may be called. The four
@@ -88,7 +88,7 @@ function isNamedConfigurationPath (path) {
 }
 
 async function findConfigurationForSource (configOrRoot, sourceOrConfig) {
-  // A programmatic object source is not this path: the v4 object entry point is
+  // A programmatic object source is not this path: the object entry point is
   // loadObjectConfiguration, which skips the root eval worker entirely.
   if (sourceOrConfig && typeof sourceOrConfig !== 'string') {
     return null
@@ -112,8 +112,8 @@ async function findConfigurationForSource (configOrRoot, sourceOrConfig) {
   /*
     Only an actual directory is a place to search from. findDecidingFile walks toward the env root,
     so handing it a path that does not exist would answer with whatever project sits above it: a
-    typo'd --config would boot the parent rather than failing. v3 looks in the named directory and
-    nowhere else, and a wrong path has to stay an error.
+    typo'd --config would boot the parent rather than failing. Discovery looks in the named directory
+    and nowhere else, and a wrong path has to stay an error.
   */
   const stats = await stat(configOrRoot).catch(() => null)
 
@@ -122,8 +122,8 @@ async function findConfigurationForSource (configOrRoot, sourceOrConfig) {
   }
 
   /*
-    A v3 configuration found by the walk is refused, with the error that names migrate. It used to
-    be swallowed so the v3 loader below could answer instead; that loader is gone, and the refusal
+    A legacy configuration found by the walk is refused, with the error that names migrate. It used to
+    be swallowed so the legacy loader below could answer instead; that loader is gone, and the refusal
     is the correct answer again.
   */
   const deciding = await findDecidingFile(configOrRoot, { throwOnMissing: false })
@@ -132,7 +132,7 @@ async function findConfigurationForSource (configOrRoot, sourceOrConfig) {
 }
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  // Checked before the v3 resolver, which throws when it finds no v3 file — a v4-only project has
+  // Checked before the legacy resolver, which throws when it finds no legacy file — a project has
   // none by construction.
   const decidingConfigurationFile = await findConfigurationForSource(configOrRoot, sourceOrConfig)
 
@@ -142,7 +142,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
   /*
     Level 0. A directory with no configuration file of any kind is not an error: the loader
-    synthesizes one in memory from what the directory contains. Reaching the v3 resolver instead
+    synthesizes one in memory from what the directory contains. Reaching the legacy resolver instead
     made a configless project fail to load, which is what the removed temporary-file fallback --
     detect the type, write a watt.json into the user's tree, then load that -- existed to paper
     over. Nothing is written to disk now.
@@ -160,17 +160,16 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   /*
     A configuration handed over as an object rather than named as a file: what an embedder builds in
     memory, and what the ICC generates. There is nothing to evaluate, so it skips the root eval
-    worker and joins the v4 pipeline at validation.
+    worker and joins the pipeline at validation.
   */
   if (source && typeof source !== 'string') {
     return loadRuntimeConfiguration({ root, source }, context)
   }
 
   /*
-    Everything above this point is v4. A path that reaches here named a file the v4 walk did not
-    recognise as configuration, so the walk's own refusal is the answer -- it names the file and
-    tells the reader to run migrate, which is more use than loading a v3 configuration into a
-    runtime that no longer implements what it says.
+    A path that reaches here named a file the walk did not recognise as configuration, so the walk's
+    own refusal is the answer -- it names the file and tells the reader to run migrate, which is more
+    use than loading a legacy configuration into a runtime that no longer implements what it says.
   */
   throw new LegacyConfigurationFileError(source)
 }
@@ -195,8 +194,8 @@ async function loadRuntimeConfiguration (target, context) {
 
   /*
     The environment the loader treats as real. An embedder can add to it, and can ask for a
-    hermetic runtime that sees none of this process's -- v3 honours both through loadEnv, and a v4
-    runtime that ignored them would quietly hand every worker the parent's environment.
+    hermetic runtime that sees none of this process's -- the loader honours both through loadEnv, and
+    a runtime that ignored them would quietly hand every worker the parent's environment.
   */
   const realEnv = context?.ignoreProcessEnv ? { ...context?.env } : { ...process.env, ...context?.env }
 
@@ -225,7 +224,7 @@ async function loadRuntimeConfiguration (target, context) {
     /*
       Validation imports each capability's schema, so it needs the capability installed — not
       merely declared, which is all the detector needs. That moves the moment a capability must be
-      resolvable earlier than v3 ever needed it: v3 loaded fine and failed later, in the worker.
+      resolvable earlier than it once had to be: loading used to succeed and fail later, in the worker.
 
       A caller that is loading only to discover the topology — a tool about to install those
       dependencies, for instance — can say so rather than being made to install first.
@@ -285,8 +284,8 @@ async function loadRuntimeConfiguration (target, context) {
     /*
       The evaluation context, kept beside the envelope rather than inside it: applications added
       after boot are evaluated with the same command, mode and production flags the boot pass used,
-      and its presence is also what tells the add path this runtime is v4 at all. A v3 runtime has
-      no such context and keeps resolving configuration files worker-side.
+      and its presence is also what tells the add path this runtime resolves configuration main-side.
+      A legacy runtime has no such context and keeps resolving configuration files worker-side.
     */
     loader: {
       command,
@@ -318,7 +317,7 @@ async function loadRuntimeConfiguration (target, context) {
   }
 
   /*
-    A caller-supplied transform replaces the built-in one, exactly as it does on the v3 path where
+    A caller-supplied transform replaces the built-in one, exactly as it does on the legacy path where
     it arrives as part of ...context. Ignoring it here meant a test helper or an embedder that
     customized the configuration was silently not consulted.
   */
@@ -367,7 +366,7 @@ export async function loadApplicationsCommands (executableName = '', configurati
 
   for (const application of config.applications) {
     try {
-      // A v4 application arrives with its configuration already evaluated and its capability
+      // An application arrives with its configuration already evaluated and its capability
       // already named, so there is nothing to read and nothing to infer.
       const applicationConfig = application.resolvedConfig
       const pkg = application.module
@@ -425,14 +424,14 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 
 /*
   The one entry point for an application added while the runtime is running -- what an extension
-  calls before `addApplications`. It replaces the exported `prepareApplication`, which is the v3
-  half of the same job: under v4 an added application has to be evaluated the way boot evaluates
+  calls before `addApplications`. It replaces the exported `prepareApplication`, which is the legacy
+  half of the same job: an added application has to be evaluated the way boot evaluates
   one, and an entry that skips that arrives without `resolvedConfig` and fails as an unhelpful
   "unable to initialize the worker".
 */
 export { prepareAddedApplications } from './lib/config.js'
 
-// The one transform there is: the v3 one died with its last caller, the wizard's legacy-JSON
+// The one transform there is: the legacy one died with its last caller, the wizard's legacy-JSON
 // branch, and the dispatch that told the two apart went with it.
 export async function transform (config, schema, context) {
   return transformConfiguration(config, schema, context)

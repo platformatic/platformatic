@@ -129,11 +129,10 @@ export async function devCommand (logger, args) {
   let watchers = []
 
   /*
-    v4 reports everything the evaluation read -- the configuration files, their import graph minus
+    Everything the evaluation read is reported -- the configuration files, their import graph minus
     node_modules, the env files consulted, and the directories whose membership decides the
     application list. Watching only the deciding file meant a configuration split across a helper
-    module, or one reading a `.env`, reloaded for none of its own edits. v3 reports the deciding
-    file alone, which is exactly what this watched before.
+    module, or one reading a `.env`, reloaded for none of its own edits.
 
     They are re-armed after every reload, because the set is a property of the configuration that
     was just evaluated: an edit can add an import, and the watcher for it has to exist before the
@@ -243,9 +242,7 @@ export async function devCommand (logger, args) {
         A configuration that no longer evaluates -- a half-typed edit is the ordinary case -- must
         not take the dev server down with it. The failure is reported and the watchers are re-armed
         against the targets the last good configuration named, so saving a corrected file starts the
-        runtime again. v3 had the same guarantee for a different reason: it read an application's
-        configuration in that application's worker, so a file that stopped parsing broke one worker
-        rather than the process.
+        runtime again.
       */
       logger.error({ err: ensureLoggableError(error) }, `Cannot reload the application: ${error.message}`)
       watchConfiguration()

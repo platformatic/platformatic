@@ -53,7 +53,7 @@ test('Support packages without generator via importing (new application)', async
 
   /*
     Asserted as source, and as a literal: the importer writes the relative path itself rather than
-    v3's `{PLT_APPLICATION_<ID>_PATH}` placeholder plus a gitignored `.env` line to carry it.
+    a `{PLT_APPLICATION_<ID>_PATH}` placeholder plus a gitignored `.env` line to carry it.
   */
   const runtimeConfigSource = await readFile(resolve(baseProjectDir, 'watt.config.ts'), 'utf8')
   ok(runtimeConfigSource.includes("id: 'main'"), runtimeConfigSource)
@@ -101,13 +101,13 @@ test('Support packages without generator via importing (existing applications)',
 
   let runtimeConfig = await readConfiguration(join(baseProjectDir, 'watt.config.ts'), baseProjectDir)
   const originalEnvFile = await readFile(resolve(baseProjectDir, '.env'), 'utf-8')
-  // One spelling: v3's `web` alias is refused by the loader now, so the list the test plants uses
+  // One spelling: the `web` alias is refused by the loader, so the list the test plants uses
   // the name the editor keeps.
   // Not id 'main': the first run scaffolded applications/main, which autoload discovers under that
   // id, and a planted entry at another directory sharing it is the ambiguity the loader refuses (#5079).
   runtimeConfig.applications = [{ id: 'planted', path: 'applications/planted' }]
   runtimeConfig.startTimeout = 12345
-  // Written back as the module it is. The plain object form is a valid v4 root, which is what a
+  // Written back as the module it is. The plain object form is a valid root, which is what a
   // test editing a configuration wants: no imports to resolve.
   await writeFile(
     resolve(join(baseProjectDir, 'watt.config.ts')),
@@ -258,7 +258,7 @@ test('Support packages without generator via copy (existing applications)', asyn
     is the normalized topology -- entries already under `applications`, with their capability
     configuration resolved. Writing that back and adding a `web` alias beside it describes a project
     nobody has. This is the setup the test is after, spelled directly, in the plain object form that
-    a v4 root accepts without imports to resolve.
+    a root accepts without imports to resolve.
   */
   await writeFile(
     resolve(join(baseProjectDir, 'watt.config.ts')),

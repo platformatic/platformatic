@@ -41,7 +41,7 @@ function findPackageJson (require, module) {
 
 /*
   The canonical capability resolution order: application-scoped first, with the runtime-bundled
-  copy as the fallback. It inverts v3, whose worker tried a bare import resolved from
+  copy as the fallback. It inverts the previous behavior, whose worker tried a bare import resolved from
   @platformatic/basic — that is, from the runtime's own position — and only fell back to an
   application-scoped require when that threw.
 

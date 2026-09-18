@@ -6,7 +6,7 @@ import { createRuntime } from './helpers.js'
 const configFile = join(import.meta.dirname, '..', 'fixtures', 'configs', 'monorepo', 'watt.config.mjs')
 
 /*
-  v4 nests an entire capability payload inside every entry, and the getters used to read straight
+  An entire capability payload is nested inside every entry, and the getters used to read straight
   off live state. A consumer mutating what it received would have been editing the configuration
   that later restarts and scale-up workers read — silently, and only visible as worker generations
   disagreeing about what they are running.

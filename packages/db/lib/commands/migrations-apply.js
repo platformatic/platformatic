@@ -37,7 +37,7 @@ export async function applyMigrations (logger, configuration, args, context) {
 
     /*
       There used to be a `utimesSync` here, touching the configuration file so a watching runtime
-      would restart. v4 does not reload on a configuration file's mtime -- it watches the files the
+      would restart. The runtime does not reload on a configuration file's mtime -- it watches the files the
       evaluation actually read and reloads on a change to any of them -- and a command has no file
       to touch in any case, since it is handed the configuration as data.
     */

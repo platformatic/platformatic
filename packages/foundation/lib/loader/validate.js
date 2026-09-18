@@ -10,13 +10,13 @@ import { projectCapabilitySchema } from './project.js'
 /*
   The AJV custom keywords are one of the deliberately-kept pieces, carried over as code by explicit
   decision rather than by surviving a refactor. They are re-implemented here rather than imported
-  from the v3 configuration module, which leaves foundation with migrate's legacy reader.
+  from the legacy configuration module, which leaves foundation with migrate's legacy reader.
 
   The root they resolve against is the application's, not the runtime's: a capability's config is
   written where the application lives, so a relative path in it means a path from there.
 */
 export function createCapabilityValidator (schema, { root, fixPaths = true, useDefaults = true } = {}) {
-  // Coercion is disabled in v4. Its only justification was placeholder strings, and on the genuine
+  // Coercion is disabled. Its only justification was placeholder strings, and on the genuine
   // unions that survive the audit — boolean | number, boolean | object — AJV coercion is a
   // documented hazard in this very codebase.
   const ajv = new Ajv({ useDefaults, coerceTypes: false, allErrors: true, strict: false })
@@ -83,15 +83,15 @@ export function createCapabilityValidator (schema, { root, fixPaths = true, useD
   with the runtime-bundled fallback — the canonical capability resolution order, so the schema copy
   that validates is the same copy whose implementation the worker will load.
 
-  The subpath is part of the v4 capability contract, and it is light only in import cost: it
+  The subpath is part of the capability contract, and it is light only in import cost: it
   executes in the main process with full privileges, like any capability code. Falling back to the
   package's main entry is a transitional step: until every capability ships the subpath, boot would
   otherwise not be able to validate at all, and a validator that skips what it cannot import is not
   a validator. Removing the fallback is part of the capability work.
 
-  `projected: false` asks for the shipped schema instead of the v4 view of it. The one caller is
-  migrate, which reads v3 configurations: classifying a position in one against a schema with v3's
-  shape removed would report the `runtime` block as a position whose type migrate cannot determine,
+  `projected: false` asks for the shipped schema instead of the narrowed view of it. The one caller is
+  migrate, which reads legacy configurations: classifying a position in one against a schema with the
+  legacy shape removed would report the `runtime` block as a position whose type migrate cannot determine,
   and refuse a file it converts perfectly well.
 */
 export async function importCapabilitySchema (module, applicationRoot, { runtimeScope, projected = true } = {}) {

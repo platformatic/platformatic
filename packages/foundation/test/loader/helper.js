@@ -9,7 +9,7 @@ import { safeRemove } from '../../lib/file-system.js'
   created implicitly, so a tree is one literal.
 */
 export async function createTree (t, files) {
-  const root = await mkdtemp(join(tmpdir(), 'plt-v4-loader-'))
+  const root = await mkdtemp(join(tmpdir(), 'plt-loader-'))
 
   t.after(() => safeRemove(root))
 

@@ -18,9 +18,9 @@ test('should get application env when started', async t => {
   ok(env)
   strictEqual(typeof env, 'object')
   /*
-    v3 injected PLT_ENVIRONMENT and PLT_DEV into every worker. v4 does not: a worker's environment
-    is the one the loader resolved for it, and the mode is not an environment variable. PLT_ROOT
-    still arrives, from the capability's own configuration metadata rather than from the runtime.
+    PLT_ENVIRONMENT and PLT_DEV are not injected into workers: a worker's environment is the one the
+    loader resolved for it, and the mode is not an environment variable. PLT_ROOT still arrives, from
+    the capability's own configuration metadata rather than from the runtime.
   */
   strictEqual(env.PLT_ENVIRONMENT, undefined)
   strictEqual(env.PLT_DEV, undefined)

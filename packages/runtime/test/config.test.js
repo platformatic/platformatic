@@ -12,8 +12,8 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 /*
   The machine-generated plain-object form: a stamped configuration with no imports, which is what a
-  deployment tool or the ICC emits. It used to be written here as JSON, which v4 does not read --
-  the stamp said 4.0.0 and the file was a v3 document.
+  deployment tool or the ICC emits. It used to be written here as JSON, which is no longer read --
+  the stamp said 4.0.0 and the file was a legacy document.
 */
 async function writeStampedConfiguration (directory, configuration) {
   const file = join(directory, 'watt.config.js')
@@ -272,9 +272,9 @@ test('defaults graceful shutdown timeouts', async () => {
 })
 
 /*
-  `strictEnv` and the root `envfile` were removed in v4 -- there are no placeholders to be strict
+  `strictEnv` and the root `envfile` were removed -- there are no placeholders to be strict
   about, and env files are discovered by walking from the configuration to the project root rather
-  than named. The four tests that covered them went with the v3 loader that implemented them; what
+  than named. The four tests that covered them went with the legacy loader that implemented them; what
   replaces `strictEnv` is a guard the configuration writes for itself, which
   `docs/reference/service/configuration.md` shows.
 */

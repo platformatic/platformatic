@@ -21,7 +21,7 @@ const capabilitySchema = {
   additionalProperties: false
 }
 
-// A capability package as it appears on disk, with the light subpath the v4 contract requires.
+// A capability package as it appears on disk, with the light subpath the contract requires.
 // servesWithoutPortSource is emitted verbatim: the declaration is allowed to be a callable, and a
 // JSON-encoded one would be a string that only looks like a function.
 function capabilityPackage (name, version, { subpath = true, servesWithoutPort, servesWithoutPortSource } = {}) {

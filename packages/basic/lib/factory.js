@@ -5,7 +5,7 @@ import { CapabilityFactoryKeyCollisionError, CapabilityFactoryOptionsRequiredErr
 
   Factory options are the capability's per-app configuration with the capability's namespaced block
   flattened into the top level (next.trailingSlash -> trailingSlash), while the shared blocks —
-  logger, server, watch, application — keep their v3 positions. The application block deliberately
+  logger, server, watch, application — keep their own positions. The application block deliberately
   stays nested: several capabilities define their own outputDirectory alongside
   application.outputDirectory, and hoisting both would collide.
 

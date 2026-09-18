@@ -1,7 +1,7 @@
 import createError from '@fastify/error'
 import { ERROR_PREFIX } from '../errors.js'
 
-// The v4 loader carries its own error table rather than extending the v3 one: the v3
+// The loader carries its own error table rather than extending the legacy one: the legacy
 // configuration machinery moves out of foundation into wattpm-utils' migrate reader, and
 // an error shared between the two would follow it.
 
@@ -12,7 +12,7 @@ export const AmbiguousConfigurationFileError = createError(
 
 export const LegacyConfigurationFileError = createError(
   `${ERROR_PREFIX}_LEGACY_CONFIGURATION_FILE`,
-  '%s is a v3-era configuration. Watt v4 uses watt.config.ts.\n  Run:  npx wattpm-utils@4 migrate'
+  '%s is a legacy configuration. Watt uses watt.config.ts.\n  Run:  npx wattpm-utils@4 migrate'
 )
 
 export const ConfigurationFileNotFoundError = createError(
@@ -52,7 +52,7 @@ export const NoApplicationsDeclaredError = createError(
 
 export const LegacyApplicationsSpellingError = createError(
   `${ERROR_PREFIX}_LEGACY_APPLICATIONS_SPELLING`,
-  "%s declares its applications under '%s', which is the v3 spelling. Rename the key to 'applications'."
+  "%s declares its applications under '%s', which is the legacy spelling. Rename the key to 'applications'."
 )
 
 export const ApplicationShorthandConflictError = createError(
@@ -77,7 +77,7 @@ export const ApplicationStartsNothingError = createError(
 
 export const CapabilitySchemaNotFoundError = createError(
   `${ERROR_PREFIX}_CAPABILITY_SCHEMA_NOT_FOUND`,
-  'Cannot import the schema of %s from %s, nor from the copy bundled with the runtime. A v4 capability exports one from its /schema subpath.'
+  'Cannot import the schema of %s from %s, nor from the copy bundled with the runtime. A capability exports one from its /schema subpath.'
 )
 
 export const InvalidApplicationConfigurationError = createError(
@@ -157,7 +157,7 @@ export const InvalidSchemaStampError = createError(
 
 export const LegacySchemaStampError = createError(
   `${ERROR_PREFIX}_LEGACY_SCHEMA_STAMP`,
-  '%s is stamped with %s, which is a v3 schema. Run "wattpm-utils migrate" to bring it to v4.'
+  '%s is stamped with %s, which is a legacy schema. Run "wattpm-utils migrate" to bring it up to date.'
 )
 
 export const DuplicateAutoloadedApplicationIdError = createError(

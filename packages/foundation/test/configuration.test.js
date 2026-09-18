@@ -642,12 +642,12 @@ test('loadConfiguration - should throw on validation error', async t => {
 })
 
 /*
-  A placeholder is a string now, and stays one. v3 read the `.env` beside the configuration and
-  substituted `{DB_HOST}` here; v4 resolves every environment main-side and a configuration file
-  reads what it wants, so what is left of this reader parses the document and does nothing to its
-  values.
+  A placeholder is a string now, and stays one. The reader used to read the `.env` beside the
+  configuration and substitute `{DB_HOST}` here; now every environment is resolved main-side and a
+  configuration file reads what it wants, so what is left of this reader parses the document and does
+  nothing to its values.
 */
-test('loadConfiguration - leaves a v3 placeholder alone', async t => {
+test('loadConfiguration - leaves a placeholder alone', async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const configFile = join(tmpDir, 'config.json')
   const envFile = join(tmpDir, '.env')

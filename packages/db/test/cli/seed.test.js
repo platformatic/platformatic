@@ -190,7 +190,7 @@ test('seed command should throw an error if there are migrations to apply', asyn
 })
 
 /*
-  Each of the four names v4 accepts, rather than each of the six serialized formats v3 read. The
+  Each of the four names accepted, rather than each of the six serialized formats once read. The
   variants differ in language and module system and in nothing else, and a capability command has
   to load all four.
 */

@@ -218,7 +218,7 @@ export async function installDependencies (logger, root, applications, productio
 
   for (let { id, path, moduleApplication, packageManager: applicationPackageManager } of applications) {
     // A module application's dependencies are installed in the Watt root and its package is not
-    // writable. Keyed on moduleApplication, not module: every v4 application carries a module (its
+    // writable. Keyed on moduleApplication, not module: every application carries a module (its
     // capability), so module alone would skip them all.
     if (moduleApplication) {
       continue
@@ -464,7 +464,7 @@ export async function updateCommand (logger, args) {
   // Now, for all the applications in the configuration file, update the dependencies
   for (const application of applications) {
     // A module application has no writable package of its own. Keyed on moduleApplication, not
-    // module: every v4 application carries a module (its capability), so module alone would skip all.
+    // module: every application carries a module (its capability), so module alone would skip all.
     if (application.moduleApplication) {
       continue
     }

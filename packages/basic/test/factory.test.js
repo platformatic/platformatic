@@ -16,7 +16,7 @@ const nextLike = {
   additionalProperties: false
 }
 
-test('the capability block is flattened and the shared blocks keep their v3 positions', () => {
+test('the capability block is flattened and the shared blocks keep their positions', () => {
   const next = defineCapabilityFactory('@platformatic/next', nextLike, { version: '4.0.0', flatten: ['next'] })
 
   deepStrictEqual(
