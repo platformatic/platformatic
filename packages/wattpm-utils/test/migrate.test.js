@@ -1,4 +1,4 @@
-import { loadConfiguration } from '@platformatic/foundation/lib/loader/index.js'
+import { loadConfiguration } from '@platformatic/foundation/loader'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'

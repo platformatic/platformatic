@@ -21,7 +21,7 @@ import {
   hasField,
   updateGlobals
 } from '@platformatic/globals'
-import { ITC } from '@platformatic/itc/lib/index.js'
+import { ITC } from '@platformatic/itc'
 import {
   clearRegistry,
   client,

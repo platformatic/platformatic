@@ -1,5 +1,5 @@
 import { createDirectory, kMetadata, loadModule } from '@platformatic/foundation'
-import { loadAdditionalApplications } from '@platformatic/foundation/lib/loader/index.js'
+import { loadAdditionalApplications } from '@platformatic/foundation/loader'
 import { createRequire, findPackageJSON } from 'node:module'
 import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'

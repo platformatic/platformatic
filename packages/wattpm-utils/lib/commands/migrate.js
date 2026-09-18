@@ -11,7 +11,7 @@ import {
   serializeConfiguration as serializeValue,
   serializeString,
   topologyVariableName
-} from '@platformatic/foundation/lib/loader/index.js'
+} from '@platformatic/foundation/loader'
 import { loadConfiguration as loadRuntimeConfiguration } from '@platformatic/runtime'
 /*
   The v3 reader is migrate's own, not foundation's. Migrate must keep reading v3 for as long as

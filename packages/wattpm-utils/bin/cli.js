@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { checkNodeVersionForApplications } from '@platformatic/foundation'
-import { createCLIContext } from '@platformatic/foundation/lib/cli.js'
+import { createCLIContext } from '@platformatic/foundation'
 
 checkNodeVersionForApplications()
 

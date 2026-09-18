@@ -1,5 +1,5 @@
 import { createEnvFileTool, defaultPackageManager, generateDashedName, safeRemove } from '@platformatic/foundation'
-import { LegacyConfigurationFileError, serializeConfiguration } from '@platformatic/foundation/lib/loader/index.js'
+import { LegacyConfigurationFileError, serializeConfiguration } from '@platformatic/foundation/loader'
 import {
   BaseGenerator,
   appendApplications,

@@ -1,5 +1,5 @@
 import { findConfigurationFileRecursive, safeRemove } from '@platformatic/foundation'
-import { capabilityFactories } from '@platformatic/foundation/lib/loader/index.js'
+import { capabilityFactories } from '@platformatic/foundation/loader'
 import { spawnSync } from 'node:child_process'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'

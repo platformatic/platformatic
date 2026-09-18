@@ -13,7 +13,7 @@ import {
   loadConfiguration as loadFileConfiguration,
   loadObjectConfiguration,
   validateCapabilityConfiguration
-} from '@platformatic/foundation/lib/loader/index.js'
+} from '@platformatic/foundation/loader'
 import closeWithGrace from 'close-with-grace'
 import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'

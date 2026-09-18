@@ -1,5 +1,5 @@
 import { kMetadata } from '@platformatic/foundation'
-import { applyResolvedConfiguration, loadApplicationConfigurationFile } from '@platformatic/foundation/lib/loader/index.js'
+import { applyResolvedConfiguration, loadApplicationConfigurationFile } from '@platformatic/foundation/loader'
 import { transform } from '../config.js'
 import { schema } from '../schema.js'
 

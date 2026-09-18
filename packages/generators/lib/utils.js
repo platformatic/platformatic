@@ -2,7 +2,7 @@ import {
   listDirectoryEntries,
   selectConfigurationFileNames,
   selectLegacyConfigurationFileNames
-} from '@platformatic/foundation/lib/loader/index.js'
+} from '@platformatic/foundation/loader'
 import { builders, generateCode, parseModule } from 'magicast'
 import { readFile } from 'node:fs/promises'
 import { EOL } from 'node:os'

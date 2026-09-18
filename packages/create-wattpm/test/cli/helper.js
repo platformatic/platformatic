@@ -1,5 +1,5 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { evaluateConfigurationFile, selectConfigurationFileNames } from '@platformatic/foundation/lib/loader/index.js'
+import { evaluateConfigurationFile, selectConfigurationFileNames } from '@platformatic/foundation/loader'
 import { execa } from 'execa'
 import { promises as fs } from 'node:fs'
 import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'

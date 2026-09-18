@@ -7,8 +7,8 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
-import { cleanBasePath } from '@platformatic/basic/lib/utils.js'
-import { ensureLoggableError } from '@platformatic/foundation/lib/errors.js'
+import { cleanBasePath } from '@platformatic/basic'
+import { ensureLoggableError } from '@platformatic/foundation'
 import { getEvents } from '@platformatic/globals'
 import { createQueue } from '@platformatic/image-optimizer'
 import { FileStorage, MemoryStorage, RedisStorage } from '@platformatic/job-queue'
