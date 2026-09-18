@@ -20,7 +20,11 @@ async function createApp (t, config = 'fixtures/runtime-test/configs/default/wat
 }
 
 // Helper to wait for a condition to be true
-async function waitForCondition (checkFn, timeoutMs = 5000, pollMs = 100) {
+// Profiling capture is event-loop-utilization driven and writes files, so on a loaded CI runner it
+// can take well over the few seconds this used to allow -- which showed up as an intermittent
+// timeout on the slowest matrix combos. Give it a generous ceiling (the poll still returns as soon
+// as the condition holds, so a fast machine is not slowed down).
+async function waitForCondition (checkFn, timeoutMs = 30000, pollMs = 100) {
   const startTime = Date.now()
   while (Date.now() - startTime < timeoutMs) {
     if (await checkFn()) {
@@ -28,7 +32,7 @@ async function waitForCondition (checkFn, timeoutMs = 5000, pollMs = 100) {
     }
     await new Promise(resolve => setTimeout(resolve, pollMs))
   }
-  throw new Error('Timeout waiting for condition')
+  throw new Error(`Timeout waiting for condition after ${timeoutMs}ms`)
 }
 
 // Helper to compare Uint8Arrays

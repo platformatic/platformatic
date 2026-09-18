@@ -739,9 +739,29 @@ export async function getLogsFromFile (root) {
   return (await readFile(resolve(root, 'logs.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
 }
 
+// A freshly-started dev server can reset the first connections it receives -- notably on Windows,
+// where the listening socket races the accept loop -- so a transient connection error on the first
+// request is not a test failure. Retry a few times with a short backoff before giving up. A non-2xx
+// response is not retried: it is a real answer the caller asserts on.
+const transientRequestCodes = new Set(['ECONNRESET', 'ECONNREFUSED', 'UND_ERR_SOCKET', 'EPIPE', 'ECONNABORTED'])
+
+export async function requestWithRetry (url, options, attempts = 5, delay = 250) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await request(url, options)
+    } catch (error) {
+      const code = error.code ?? error.cause?.code
+      if (attempt >= attempts || !transientRequestCodes.has(code)) {
+        throw error
+      }
+      await sleep(delay)
+    }
+  }
+}
+
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
-  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -752,7 +772,7 @@ export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedCo
 }
 
 export async function verifyJSONViaHTTPS (baseUrl, path, expectedCode, expectedContent, dispatcher) {
-  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -775,7 +795,7 @@ export async function verifyJSONViaInject (app, applicationId, method, url, expe
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
-  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, headers, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)
@@ -794,7 +814,7 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
 }
 
 export async function verifyHTMLViaHTTPS (baseUrl, path, contents, dispatcher) {
-  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, headers, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)

@@ -10,7 +10,7 @@ import { createRuntime } from '../../runtime/test/helpers.js'
 const execAsync = promisify(exec)
 
 // Helper to wait for a condition to be true
-async function waitForCondition (checkFn, timeoutMs = 5000, pollMs = 100) {
+async function waitForCondition (checkFn, timeoutMs = 30000, pollMs = 100) {
   const startTime = Date.now()
   while (Date.now() - startTime < timeoutMs) {
     if (await checkFn()) {
