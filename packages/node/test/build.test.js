@@ -148,29 +148,64 @@ test('should not hang if the runtime forcefully stops during start in case of er
   await rejects(() => promise, /exited prematurely/)
 })
 
+// Wait for a runtime event about a specific application, but with a bound: a dev reload hinges on
+// a filesystem-watch notification, and the OS can drop one -- notably on Windows, where a single
+// write may never reach the watcher. An unbounded `once` there hangs the whole file until the job
+// timeout; this fails in seconds instead, and names what it was waiting for.
+async function waitForApplicationEvent (runtime, event, application, timeoutMs = 60000) {
+  const deadline = Date.now() + timeoutMs
+
+  for (;;) {
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) {
+      throw new Error(`Timed out after ${timeoutMs}ms waiting for ${event} on application ${application}`)
+    }
+
+    const ac = new AbortController()
+    const timer = setTimeout(() => ac.abort(), remaining)
+    let payload
+    try {
+      payload = await once(runtime, event, { signal: ac.signal })
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error(`Timed out after ${timeoutMs}ms waiting for ${event} on application ${application}`)
+      }
+      throw error
+    } finally {
+      clearTimeout(timer)
+    }
+
+    if (payload[0].application === application) {
+      return payload[0]
+    }
+  }
+}
+
 for (const application of ['app-no-config', 'app-with-config']) {
   test(`should rebuild the applications on reload in dev, application ${application}`, async t => {
     const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
     await startRuntime(t, runtime)
 
-    // write the file to trigger a reload
-    await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
+    // Trigger a reload, and keep re-touching the file until the change is picked up: a single
+    // filesystem-watch event can be dropped (seen on Windows), and without a fresh one the watcher
+    // never fires. Re-writing gives it another event rather than waiting forever on the first.
+    const triggerPath = resolve(root, `services/${application}/reload.ts`)
+    const retrigger = setInterval(() => {
+      writeFile(triggerPath, `// reload ${Date.now()}\n`, 'utf-8').catch(() => {})
+    }, 2000)
+    t.after(() => clearInterval(retrigger))
+
+    await writeFile(triggerPath, '// reload\n', 'utf-8')
 
     // reload the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:changed')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
-    }
+    const changed = await waitForApplicationEvent(runtime, 'application:worker:changed', application)
+    equal(changed.application, application)
+
+    // The change was seen; stop re-touching so the restart is not disturbed by another reload.
+    clearInterval(retrigger)
+
     // restart the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:started')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
-    }
+    const started = await waitForApplicationEvent(runtime, 'application:worker:started', application)
+    equal(started.application, application)
   })
 }
