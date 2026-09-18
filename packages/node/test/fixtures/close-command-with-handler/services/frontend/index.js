@@ -13,10 +13,5 @@ registerCloseCallback(async () => {
 })
 registerCloseCallback(async () => {
   events.emitAndNotify('close:callback:second')
-})
-
-events.on('close', () => {
-  const events = getEvents()
-  events.emitAndNotify('close:handler')
-  server.close()
+  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
 })

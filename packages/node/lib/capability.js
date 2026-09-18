@@ -10,7 +10,6 @@ import {
   importFile,
   injectViaRequest
 } from '@platformatic/basic'
-import { getEvents } from '@platformatic/globals'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -303,14 +302,6 @@ export class NodeCapability extends BaseCapability {
 
   async _stop () {
     await super._stop()
-
-    // Keep emitting the legacy event for compatibility. Resource cleanup is handled by registered callbacks.
-    const events = getEvents()
-    try {
-      events.emit('close')
-    } catch (error) {
-      this.logger.error({ err: error }, 'Legacy close event handler failed.')
-    }
 
     if (this.childManager) {
       return this.stopCommand()

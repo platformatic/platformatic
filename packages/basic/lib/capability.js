@@ -5,8 +5,7 @@ import {
   features,
   kHandledError,
   kMetadata,
-  kTimeout,
-  remainingTimeout
+  kTimeout
 } from '@platformatic/foundation'
 import { getITC, getPrometheus, getTracingReady, updateGlobals } from '@platformatic/globals'
 import {
@@ -644,10 +643,10 @@ export class BaseCapability extends EventEmitter {
     }
 
     const shutdownTimeout = this.shutdownTimeout ?? this.runtimeConfig.gracefulShutdown.application
-    const shutdownStart = this.shutdownStart ?? Date.now()
 
     this.#subprocessStarted = false
-    const exitPromise = once(this.subprocess, 'exit')
+    // Start the process-exit timeout before requesting application shutdown so the close request and exit share one budget.
+    const exitPromise = executeWithTimeout(once(this.subprocess, 'exit'), shutdownTimeout)
 
     // Ask the child process to run its own shutdown sequence.
     let closeError
@@ -655,7 +654,7 @@ export class BaseCapability extends EventEmitter {
     try {
       closeResult = await executeWithTimeout(
         this.childManager.send(this.clientWs, 'close', this.subprocessTerminationSignal),
-        remainingTimeout(shutdownTimeout, shutdownStart)
+        shutdownTimeout
       )
     } catch (error) {
       closeError = error.handlerError ?? error
@@ -663,19 +662,16 @@ export class BaseCapability extends EventEmitter {
 
     if (closeResult === kTimeout) {
       closeError = new ApplicationShutdownTimeoutError()
-      this.subprocess.kill('SIGKILL')
     }
 
     // The IPC cleanup and natural process exit share the runtime's shutdown budget.
     /* c8 ignore next 10 */
-    const res = await executeWithTimeout(exitPromise, remainingTimeout(shutdownTimeout, shutdownStart))
+    const res = await exitPromise
 
     if (res === kTimeout) {
       closeError ??= new ApplicationShutdownTimeoutError()
       this.subprocess.kill('SIGKILL')
     }
-
-    await exitPromise
 
     // Close the manager
     await this.childManager.close()

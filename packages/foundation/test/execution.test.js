@@ -1,6 +1,6 @@
 import { equal, rejects, strictEqual } from 'node:assert'
 import test from 'node:test'
-import { executeInParallel, executeWithTimeout, kCanceled, kTimeout, remainingTimeout } from '../index.js'
+import { executeInParallel, executeWithTimeout, kCanceled, kTimeout } from '../index.js'
 
 test('executeWithTimeout - should resolve promise before timeout', async () => {
   const promise = Promise.resolve('success')
@@ -34,11 +34,6 @@ test('executeWithTimeout - should abort timeout when promise resolves first', as
   const fastPromise = new Promise(resolve => setTimeout(() => resolve('fast'), 50))
   const result = await executeWithTimeout(fastPromise, 200)
   equal(result, 'fast')
-})
-
-test('remainingTimeout - should return the remaining time without going below zero', () => {
-  strictEqual(remainingTimeout(100, Date.now() - 25) <= 75, true)
-  strictEqual(remainingTimeout(100, Date.now() - 200), 0)
 })
 
 test('executeInParallel - should execute all tasks successfully', async () => {

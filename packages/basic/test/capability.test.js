@@ -51,7 +51,6 @@ test('stopCommand enforces the inherited shutdown timeout and reports its timeou
   }
   capability.subprocess = child
   capability.shutdownTimeout = 20
-  capability.shutdownStart = Date.now()
   let managerClosed = false
   capability.childManager = {
     send: () => new Promise(() => {}),

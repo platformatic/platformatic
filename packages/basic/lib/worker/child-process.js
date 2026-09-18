@@ -71,7 +71,8 @@ async function runShutdownCallbacks () {
 
   for (const listener of signalListeners) {
     try {
-      await listener.call(process, 'SIGINT')
+      // SIGINT listeners are compatibility hooks and do not extend the shutdown deadline.
+      Promise.resolve(listener.call(process, 'SIGINT')).catch(() => {})
     } catch (error) {
       errors.push(error)
     }
@@ -170,8 +171,8 @@ export class ChildProcess extends ITC {
           // Forward health signals to the parent (ChildManager)
           this.notify('healthSignals', { workerId, signals })
         },
-        close: signal => {
-          this._closePromise ??= this.close(signal)
+        close: () => {
+          this._closePromise ??= this.close()
           return this._closePromise
         },
         setClosing: () => {
@@ -238,16 +239,10 @@ export class ChildProcess extends ITC {
     return super.notify(name, message, options)
   }
 
-  async close (signal) {
+  async close () {
     const errors = []
 
     try {
-      try {
-        getEvents().emit('close', signal)
-      } catch (error) {
-        errors.push(error)
-      }
-
       errors.push(...await runShutdownCallbacks())
 
       if (errors.length > 0) {

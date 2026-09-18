@@ -76,7 +76,7 @@ for (const mode of ['normal', 'stop-error', 'child-hang', 'open-resource', 'work
       throws(() => process.kill(pid, 0), { code: 'ESRCH' })
     }
     if (mode === 'normal' || mode === 'stop-error') {
-      deepStrictEqual(steps, ['child:callback', 'child:signal', 'worker:callback', 'worker:signal'])
+      deepStrictEqual(steps, ['child:callback', 'worker:callback', 'worker:signal'])
     }
     if (mode === 'worker-slow') {
       strictEqual(exitTimeout, false, 'an acknowledgement received during cleanup must not be lost')
@@ -193,7 +193,7 @@ test('should invoke close function for apps without create', async t => {
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
 })
 
-test('should invoke close handler for apps without create and without close', async t => {
+test('should not invoke close handler for apps without create and without close', async t => {
   const { root, runtime } = await prepareRuntime(t, 'close-standalone-without-close')
   const url = await startRuntime(t, runtime)
   const eventsPromise = collectEvents(runtime)
@@ -205,7 +205,7 @@ test('should invoke close handler for apps without create and without close', as
   await runtime.close()
   const events = await eventsPromise
 
-  ok(events.find(m => m.event === 'application:worker:event:close:handler'))
+  ok(!events.find(m => m.event === 'application:worker:event:close:handler'))
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
   await checkWarningEmitted(root, false)
 })
@@ -226,7 +226,7 @@ test('should invoke close function for background apps', async t => {
   await checkWarningEmitted(root, false)
 })
 
-test('should invoke close handler for background apps without close', async t => {
+test('should not invoke close handler for background apps without close', async t => {
   const { root, runtime } = await prepareRuntime(t, 'close-background-without-close')
   await startRuntime(t, runtime)
   const eventsPromise = collectEvents(runtime)
@@ -237,7 +237,7 @@ test('should invoke close handler for background apps without close', async t =>
   const events = await eventsPromise
 
   ok(events.find(m => m.event === 'application:worker:event:work'))
-  ok(events.find(m => m.event === 'application:worker:event:close:handler'))
+  ok(!events.find(m => m.event === 'application:worker:event:close:handler'))
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
   await checkWarningEmitted(root, false)
 })
@@ -264,7 +264,7 @@ test('should support factory returned background apps', async t => {
   await checkWarningEmitted(root, false)
 })
 
-test('should invoke close handler for custom commands apps', async t => {
+test('should invoke registered close callbacks for custom commands apps', async t => {
   const { root, runtime } = await prepareRuntime(t, 'close-command-with-handler')
   const url = await startRuntime(t, runtime)
   const eventsPromise = collectEvents(runtime)
@@ -276,7 +276,7 @@ test('should invoke close handler for custom commands apps', async t => {
   await runtime.close()
   const events = await eventsPromise
 
-  ok(events.find(m => m.event === 'application:worker:event:close:handler'))
+  ok(!events.find(m => m.event === 'application:worker:event:close:handler'))
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
   deepStrictEqual(
     events
@@ -315,7 +315,7 @@ test('should not emit a warning when an background app has no close handler', as
 })
 
 for (const duplicate of [false, true, 'failure']) {
-  test(`should await reverse callbacks and SIGINT after server shutdown (duplicates: ${duplicate})`, async t => {
+  test(`should await reverse callbacks and invoke SIGINT after server shutdown (duplicates: ${duplicate})`, async t => {
     const { runtime } = await prepareRuntime(t, 'close-callbacks', false)
     const url = await startRuntime(t, runtime)
     const eventsPromise = collectEvents(runtime)

@@ -240,29 +240,25 @@ const currentContext = sharedContext.get()
 | `setCustomHealthCheck(healthCheck)` | Sets a custom health check. |
 | `setCustomReadinessCheck(readinessCheck)` | Sets a custom readiness check. |
 
-`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `close` event is emitted when the application is stopping and gives listeners a chance to release resources. A `close` listener should finish graceful shutdown within the configured shutdown timeout. The `exit` event is emitted just before the worker exits, after its runtime communication channels have closed, for final synchronous cleanup.
+`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `exit` event is emitted just before the worker exits, after its runtime communication channels have closed, for final synchronous cleanup.
 
 ```js
 import { getEvents } from '@platformatic/globals'
 
 const events = getEvents()
 
-events.on('close', async () => {
-  // Close application resources.
-})
-
 events.on('exit', () => {
   // Perform final synchronous cleanup.
 })
 ```
 
-`registerCloseCallback()` callbacks run after the framework or server has been closed, in reverse registration order. The runtime awaits each callback before invoking the application's `SIGINT` listeners. For applications started through a custom command, the callbacks run in the child process and the application is responsible for closing its server and other resources.
+`registerCloseCallback()` callbacks run after the framework or server has been closed, in reverse registration order. The runtime awaits each callback before invoking the application's `SIGINT` listeners. Applications started through a custom command run callbacks in the child process and are responsible for closing their server and other resources.
 
 Callbacks run sequentially, once per application instance, including cleanup after a failed start. A failed capability shutdown or callback does not skip subsequent callbacks or signal listeners. The shutdown deadline still bounds the operation: a callback that never settles can prevent later cleanup before forced termination.
 
 Register cleanup during initialization or framework shutdown, before the callback phase starts. Registering later throws `PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED`; passing a non-function throws `PLT_GLOBALS_INVALID_CLOSE_CALLBACK`. `consumeCloseCallbacks()` is an internal runtime operation, not an application API: it takes ownership of the callbacks and permanently closes registration.
 
-After callbacks complete, Watt removes the current `SIGINT` listeners from `process` and invokes them in registration order, passing `'SIGINT'` and awaiting returned promises. Listeners added or removed by a close callback are therefore respected. No OS signal is required, and callbacks must return their asynchronous work; Watt does not intercept `process.exit()`.
+After callbacks complete, Watt removes the current `SIGINT` listeners from `process` and invokes them in registration order, passing `'SIGINT'` without awaiting returned promises. Listeners added or removed by a close callback are therefore respected. No OS signal is required, and asynchronous cleanup must use `registerCloseCallback()`; Watt does not intercept `process.exit()`.
 
 :::warning Applications using `close-with-grace`
 Watt cannot prevent `close-with-grace` from calling `process.exit()`. If `close-with-grace` is used, it must be the **only mechanism for application resource cleanup**, with all resource cleanup in its callback. Combining `close-with-grace` with `registerCloseCallback()` or additional `SIGINT` listeners is **unsupported**: their invocation and completion are not guaranteed. This restriction applies to both worker and child-process mode.

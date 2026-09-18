@@ -3418,13 +3418,12 @@ export class Runtime extends EventEmitter {
     }
 
     const exitTimeout = this.#config.gracefulShutdown.application
-    const shutdownStart = Date.now()
     const exitPromise = once(worker, 'exit')
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
       const res = await executeWithTimeout(
-        sendViaITC(worker, 'stop', { force: !!this.error, dependents, shutdownTimeout: exitTimeout, shutdownStart }),
+        sendViaITC(worker, 'stop', { force: !!this.error, dependents, shutdownTimeout: exitTimeout }),
         exitTimeout
       )
 

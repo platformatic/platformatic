@@ -181,7 +181,6 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   stderr: NodeJS.WritableStream
   subprocessTerminationSignal: string
   shutdownTimeout?: number
-  shutdownStart?: number
   logger: object
   metricsRegistry: object
   otlpBridge: object | null

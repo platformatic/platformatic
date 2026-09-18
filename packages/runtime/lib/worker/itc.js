@@ -134,7 +134,7 @@ function closeChannels (context) {
   return context.internalClosePromise
 }
 
-async function stopApplication (controller, force, dependents, shutdownTimeout, shutdownStart) {
+async function stopApplication (controller, force, dependents, shutdownTimeout) {
   const errors = []
   let controllerError
 
@@ -146,7 +146,7 @@ async function stopApplication (controller, force, dependents, shutdownTimeout, 
     }
 
     try {
-      await controller.stop(force, dependents, shutdownTimeout, shutdownStart)
+      await controller.stop(force, dependents, shutdownTimeout)
     } catch (error) {
       controllerError = error
       errors.push(error)
@@ -170,7 +170,7 @@ async function stopApplication (controller, force, dependents, shutdownTimeout, 
   }
 }
 
-async function stopController (context, force, dependents, shutdownTimeout, shutdownStart, stopProcessed) {
+async function stopController (context, force, dependents, shutdownTimeout, stopProcessed) {
   try {
     if (context.controller.getStatus() === 'starting') {
       // The start handler reports its own error and shares cleanup with us.
@@ -179,7 +179,7 @@ async function stopController (context, force, dependents, shutdownTimeout, shut
     if (!context.applicationStopPromise) {
       const { promise, resolve, reject } = Promise.withResolvers()
       context.applicationStopPromise = promise
-      stopApplication(context.controller, force, dependents, shutdownTimeout, shutdownStart).then(resolve, reject)
+      stopApplication(context.controller, force, dependents, shutdownTimeout).then(resolve, reject)
     }
     await context.applicationStopPromise
   } finally {
@@ -212,7 +212,8 @@ async function runShutdownCallbacks () {
 
   for (const listener of signalListeners) {
     try {
-      await listener.call(process, 'SIGINT')
+      // SIGINT listeners are compatibility hooks and do not extend the shutdown deadline.
+      Promise.resolve(listener.call(process, 'SIGINT')).catch(() => {})
     } catch (error) {
       errors.push(error)
     }
@@ -326,7 +327,7 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           } catch (e) {
             const startProcessed = once(itc, 'application:worker:start:processed')
             try {
-              await stopController(context, true, [], undefined, undefined, startProcessed)
+              await stopController(context, true, [], undefined, startProcessed)
             } catch (error) {
               logger.error(
                 { err: ensureLoggableError(error) },
@@ -375,7 +376,7 @@ export async function setupITC (controller, application, dispatcher, sharedConte
         }
       },
 
-      async stop ({ force, dependents, shutdownTimeout, shutdownStart }) {
+      async stop ({ force, dependents, shutdownTimeout }) {
         if (context.controllerStopPromise) {
           return context.controllerStopPromise
         }
@@ -388,7 +389,6 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           force,
           dependents,
           shutdownTimeout,
-          shutdownStart,
           stopProcessed
         )
 

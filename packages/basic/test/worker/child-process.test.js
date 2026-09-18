@@ -76,7 +76,7 @@ test('ChildProcess - duplicate failures retain serializable errors and still run
     equal(error.handlerErrorCode, 'PLT_BASIC_APPLICATION_SHUTDOWN')
     const details = error.handlerError.errors
     equal(details[0].message, 'Unprintable shutdown rejection')
-    equal(details[1].code, 'TEST_SIGNAL')
+    equal(details.length, 1)
     return true
   }
   const first = rejects(manager.send(socket, 'close'), check)

@@ -190,11 +190,11 @@ Runtime v4 introduces `registerCloseCallback()` as the primary API for applicati
 
 Callbacks are awaited after the managed framework or server closes. Multiple callbacks run sequentially in reverse registration order, so resources created later are closed first. Cleanup errors are reported after all callbacks have run.
 
-The legacy `close` event is still emitted for compatibility, but its listeners are not awaited and it does not control shutdown. Use `registerCloseCallback()` for new code.
+The legacy `close` event is no longer emitted during application shutdown. Use `registerCloseCallback()` for new code.
 
 Applications started through custom commands run their callbacks inside the child process. In that mode Platformatic does not close the application server or invoke exported factories and `close()` functions. The application is responsible for closing every resource through `registerCloseCallback()` and/or `SIGINT` listeners.
 
-Remove the old `close` listener when migrating it, rather than registering the same cleanup through both APIs. `SIGINT` listeners run after the registered callbacks, in registration order. Return the cleanup promise from each callback or listener so Watt can await it. Do not register callbacks once callback execution has begun: late registration throws `PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED`.
+Remove the old `close` listener when migrating it, rather than registering the same cleanup through both APIs. `SIGINT` listeners run after the registered callbacks, in registration order, but Watt does not await their returned promises. Use `registerCloseCallback()` for asynchronous cleanup. Do not register callbacks once callback execution has begun: late registration throws `PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED`.
 
 See [the shutdown API contract](../reference/runtime/globals.md#health-checks-and-lifecycle) for error handling, child-process responsibilities, and timeout behavior.
 

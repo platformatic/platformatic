@@ -252,7 +252,7 @@ export class Controller extends EventEmitter {
     return this.capability.getUrl()
   }
 
-  async stop (force = false, dependents = [], shutdownTimeout, shutdownStart) {
+  async stop (force = false, dependents = [], shutdownTimeout) {
     if (!force && (!this.#started || this.#starting)) {
       throw new RuntimeNotStartedError()
     }
@@ -262,7 +262,6 @@ export class Controller extends EventEmitter {
     await this.#stopFileWatching()
     await this.capability.waitForDependentsStop(dependents)
     this.capability.shutdownTimeout = shutdownTimeout
-    this.capability.shutdownStart = shutdownStart
     await this.capability.stop()
 
     this.#started = false

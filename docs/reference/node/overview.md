@@ -258,21 +258,6 @@ export async function close () {
 }
 ```
 
-### Legacy `close` Event Handler
-
-For compatibility, applications can still register a `close` event handler using the Platformatic events getter. `getEvents()` returns `PlatformaticEvents`, an `EventEmitter` with an additional `emitAndNotify(event, ...args)` method for emitting locally and notifying the runtime. The event is not awaited and should not be used for new cleanup code.
-
-```js
-import { getEvents } from '@platformatic/globals'
-
-const events = getEvents()
-events.on('close', () => {
-  console.log('Received close event, cleaning up...')
-
-  // Perform your cleanup operations
-})
-```
-
 ### `closeServer`
 
 When using `NodeCapability` programmatically, call `closeServer()` to close the application's listening HTTP server without stopping the capability. It returns `undefined` when no server is listening, otherwise it returns a promise that resolves when the server is closed.
@@ -303,7 +288,7 @@ export function create () {
 }
 ```
 
-This follows the [TC39 Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) convention. The `Symbol.asyncDispose` method is called after the `close` event is emitted and before the server is closed.
+This follows the [TC39 Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) convention. The `Symbol.asyncDispose` method is called during application shutdown before the server is closed.
 
 ### Fastify Applications
 
@@ -321,7 +306,7 @@ However, **additional resources must be registered with `registerCloseCallback()
 In applications launched via custom commands, cleanup runs in the child process. The application is responsible for closing its resources through `registerCloseCallback()` and/or `SIGINT` listeners; exported `close` functions are not invoked by this path.
 
 :::info
-The legacy `close` event is retained for compatibility but is not the primary shutdown mechanism in v4. Use `registerCloseCallback()` for application-owned resources.
+The `close` event is not emitted anymore during application shutdown. Use `registerCloseCallback()` for application-owned resources.
 :::
 
 ### Applications using `close-with-grace`

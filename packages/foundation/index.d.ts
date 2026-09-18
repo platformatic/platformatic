@@ -222,7 +222,6 @@ export declare const MissingEnvVariablesError: FastifyError
 
 // Execution types
 export declare function executeWithTimeout<T> (promise: Promise<T>, timeout: number, timeoutValue?: any): Promise<T>
-export declare function remainingTimeout (timeout: number, start: number): number
 export declare function executeInParallel<T, Args extends any[]> (
   fn: (...args: Args) => Promise<T>,
   args: Args[],
