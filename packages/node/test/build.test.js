@@ -1,9 +1,10 @@
 import { equal, ok, rejects } from 'node:assert'
-import { once } from 'node:events'
+import { on } from 'node:events'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { executeWithTimeout, kTimeout } from '@platformatic/foundation'
 import {
   createRuntime,
   getLogsFromFile,
@@ -15,6 +16,14 @@ import {
 import { version } from '../index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
+
+async function waitForApplicationEvent (events, application) {
+  for await (const [event] of events) {
+    if (event.application === application) {
+      return event
+    }
+  }
+}
 
 test('should inject Platformatic code by default when building', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
@@ -166,24 +175,26 @@ for (const application of ['app-no-config', 'app-with-config']) {
     const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
     await startRuntime(t, runtime)
 
-    // write the file to trigger a reload
-    await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
+    const changedEvents = on(runtime, 'application:worker:changed')
+    const startedEvents = on(runtime, 'application:worker:started')
+    const events = executeWithTimeout(Promise.all([
+      waitForApplicationEvent(changedEvents, application),
+      waitForApplicationEvent(startedEvents, application)
+    ]), 30000)
 
-    // reload the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:changed')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
+    let result
+    try {
+      // write the file to trigger a reload
+      await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
+      result = await events
+    } finally {
+      await Promise.all([changedEvents.return(), startedEvents.return()])
     }
-    // restart the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:started')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
-    }
+
+    // Both listeners must be registered before the write because a cached restart can complete immediately.
+    ok(result !== kTimeout, `application ${application} did not reload within 30 seconds`)
+    const [changedEvent, startedEvent] = result
+    equal(changedEvent.application, application)
+    equal(startedEvent.application, application)
   })
 }
