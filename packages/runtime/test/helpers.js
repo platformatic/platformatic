@@ -305,6 +305,13 @@ export function execRuntime ({ configPath, onReady, done, timeout = 30_000, env 
 export async function createRuntime (configOrRoot, sourceOrConfig, context) {
   await createDirectory(tempPath)
 
+  // A fixture named with a legacy filename that no longer exists has been converted to the current
+  // format: redirect to the watt.config.* beside it. A legacy file that still exists is a fixture
+  // deliberately left legacy (the upgrade chains) and passes through untouched.
+  if (typeof configOrRoot === 'string') {
+    configOrRoot = resolveConfigurationPath(configOrRoot)
+  }
+
   const originalTransform = context?.transform ?? transform
   context ??= {}
   context.logsPath ??= resolve(tempPath, `log-${Date.now()}.txt`)

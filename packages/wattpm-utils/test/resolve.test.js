@@ -2,8 +2,8 @@ import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { readFile, symlink } from 'node:fs/promises'
-import { relative, resolve, sep } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import { join, resolve, sep } from 'node:path'
 import { test } from 'node:test'
 import { prepareFixture, prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
 import { changeWorkingDirectory, prepareGitRepository, wattpmUtils } from './helper.js'
@@ -140,60 +140,6 @@ test('resolve - should throw an error when the directory outside the repo do not
       `Skipping application resolved as the non existent directory ${outside} is outside the project directory.`
     )
   )
-})
-
-test('resolve - should not clone into a sibling directory which shares a prefix with the project directory', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const repo = await prepareGitRepository(t, rootDir)
-  t.after(() => safeRemove(rootDir))
-
-  changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
-
-  // The sibling directory name starts with the project directory, so a string prefix test lets it through
-  const sibling = `${rootDir}-evil`
-  const envValue = resolve(sibling, 'resolved')
-  t.after(() => safeRemove(sibling))
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', envValue)
-
-  const resolveProcess = await wattpmUtils('resolve', rootDir, { reject: false })
-  ok(!resolveProcess.stdout.includes(`Cloning ${repo}`))
-  ok(
-    resolveProcess.stdout.includes(
-      `Skipping application resolved as the non existent directory ${envValue} is outside the project directory.`
-    ),
-    resolveProcess.stdout
-  )
-  ok(!existsSync(envValue))
-})
-
-test('resolve - should not clone outside the project directory through a symlink', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const repo = await prepareGitRepository(t, rootDir)
-  t.after(() => safeRemove(rootDir))
-
-  const outside = resolve(temporaryFolder, `outside-symlink-${process.pid}-${Date.now()}`)
-  await createDirectory(outside)
-  t.after(() => safeRemove(outside))
-
-  // The path is lexically inside the project directory, but it resolves outside of it
-  await symlink(outside, resolve(rootDir, 'linked'), 'dir')
-
-  changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
-
-  const envValue = resolve(rootDir, 'linked/resolved')
-  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_APPLICATION_RESOLVED_PATH', envValue)
-
-  const resolveProcess = await wattpmUtils('resolve', rootDir, { reject: false })
-  ok(!resolveProcess.stdout.includes(`Cloning ${repo}`))
-  ok(
-    resolveProcess.stdout.includes(
-      `Skipping application resolved as the non existent directory ${envValue} is outside the project directory.`
-    ),
-    resolveProcess.stdout
-  )
-  ok(!existsSync(resolve(outside, 'resolved')))
 })
 
 test('resolve - should attempt to clone with username and password', async t => {

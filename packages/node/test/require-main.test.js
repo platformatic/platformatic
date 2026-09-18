@@ -19,11 +19,11 @@ test('should set require.main to the application entrypoint', async t => {
 })
 
 test('should not set import.meta.main for an ESM application entrypoint', async t => {
-  const { runtime, url } = await createRuntime(t, 'require-main', false, false, 'platformatic.runtime.json', async root => {
+  const { runtime, url } = await createRuntime(t, 'require-main', false, false, 'watt.config.mjs', async root => {
     await updateConfigFile(resolve(root, 'services/frontend/package.json'), config => {
       config.type = 'module'
     })
-    await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), config => {
+    await updateConfigFile(resolve(root, 'services/frontend/watt.config.mjs'), config => {
       config.node = { main: 'index.js' }
     })
   })
