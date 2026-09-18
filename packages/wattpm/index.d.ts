@@ -45,8 +45,8 @@ export type WattConfig = PlatformaticRuntimeConfig
   parameter its type, and a single signature taking `WattConfig | ((ctx) => WattConfig)` would leave
   the callback's parameter implicitly `any` — which is the one thing the callback form exists for.
 */
-export declare function defineConfig (config: WattConfig): WattConfig
-export declare function defineConfig (
+export declare function createWattConfig (config: WattConfig): WattConfig
+export declare function createWattConfig (
   callback: (context: ConfigContext) => WattConfig | Promise<WattConfig>
 ): (context: ConfigContext) => WattConfig | Promise<WattConfig>
 
