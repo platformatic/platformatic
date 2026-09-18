@@ -293,6 +293,7 @@ const sidebars = {
           items: [
             'reference/runtime/overview',
             'reference/runtime/globals',
+            'reference/runtime/shutdown',
             'reference/runtime/configuration',
             'reference/runtime/multithread-architecture',
             'reference/runtime/programmatic'

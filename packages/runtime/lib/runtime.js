@@ -3476,7 +3476,10 @@ export class Runtime extends EventEmitter {
       this.logger.debug({ pid }, 'Terminating application child process from the runtime.')
       process.kill(pid, 'SIGKILL')
     } catch (error) {
-      if (error.code !== 'ESRCH') {
+      if (error.code === 'ESRCH') {
+        // ESRCH means no such process: the child exited before the fallback signal arrived.
+        this.logger.debug({ pid }, 'Application child process already exited before termination.')
+      } else {
         this.logger.error({ err: ensureLoggableError(error) }, 'Failed to terminate application child process.')
       }
     }

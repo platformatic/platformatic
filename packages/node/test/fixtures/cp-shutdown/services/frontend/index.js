@@ -18,3 +18,7 @@ process.once('SIGINT', async () => {
   }
   events.emitAndNotify('shutdown:step', 'child:signal')
 })
+process.once('SIGINT', () => {
+  // A thenable return value is ignored, just as it is for an ordinary signal event.
+  return { then () { events.emitAndNotify('shutdown:step', 'child:then') } }
+})

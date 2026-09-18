@@ -338,5 +338,6 @@ for (const duplicate of [false, true, 'failure']) {
       'application:worker:event:signal'
     ])
     strictEqual(events.some(m => m.event === 'application:worker:stop:error'), duplicate === 'failure')
+    strictEqual(events.some(m => m.event === 'application:worker:event:signal:then'), false)
   })
 }

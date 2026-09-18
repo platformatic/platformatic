@@ -71,8 +71,8 @@ async function runShutdownCallbacks () {
 
   for (const listener of signalListeners) {
     try {
-      // SIGINT listeners are compatibility hooks and do not extend the shutdown deadline.
-      Promise.resolve(listener.call(process, 'SIGINT')).catch(() => {})
+      // Like a signal emission, ignore return values without consuming rejected promises.
+      listener.call(process, 'SIGINT')
     } catch (error) {
       errors.push(error)
     }

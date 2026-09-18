@@ -45,7 +45,5 @@ await app.all(
   handleRequest.bind(null, createRequestHandler(await import('./build/server/index.js'), process.env.NODE_ENV))
 )
 
-registerCloseCallback(() => {
-  setTimeout(() => process.exit(0), 1000)
-})
+registerCloseCallback(() => app.close())
 await app.listen({ port: 3000 })

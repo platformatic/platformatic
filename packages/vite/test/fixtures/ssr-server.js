@@ -93,8 +93,10 @@ export async function build () {
 // This is to use with custom commands
 if (import.meta.main) {
   const server = await build()
-  registerCloseCallback(() => {
-    setTimeout(() => process.exit(0), 1000)
+  registerCloseCallback(async () => {
+    // Close Vite first so upgraded HMR connections cannot hold the HTTP server open.
+    await server.vite.close()
+    await server[Symbol.asyncDispose]()
   })
   server.listen({ port: 0 })
   setTimeout(() => {

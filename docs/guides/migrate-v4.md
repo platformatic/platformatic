@@ -196,10 +196,4 @@ Applications started through custom commands run their callbacks inside the chil
 
 Remove the old `close` listener when migrating it, rather than registering the same cleanup through both APIs. `SIGINT` listeners run after the registered callbacks, in registration order, but Watt does not await their returned promises. Use `registerCloseCallback()` for asynchronous cleanup. Do not register callbacks once callback execution has begun: late registration throws `PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED`.
 
-See [the shutdown API contract](../reference/runtime/globals.md#health-checks-and-lifecycle) for error handling, child-process responsibilities, and timeout behavior.
-
-### Applications using `close-with-grace`
-
-Watt cannot prevent `close-with-grace` from calling `process.exit()`. If your application uses `close-with-grace`, it must be the **only mechanism for application resource cleanup**: put all resource cleanup in its callback.
-
-Combining `close-with-grace` with `registerCloseCallback()` or additional `SIGINT` listeners is **unsupported**. Their invocation and completion are not guaranteed. When migrating an application that retains `close-with-grace`, consolidate its cleanup into `close-with-grace` instead of adding close callbacks or separate signal listeners. This restriction applies to both worker and child-process mode.
+See [Application shutdown](../reference/runtime/shutdown.md) for the complete sequence, signal handling, child-process responsibilities, and timeout behavior.

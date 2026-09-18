@@ -4,10 +4,6 @@ import { defineConfig } from 'vite'
 
 const basePath = ensureTrailingSlash(getBasePath(false) ?? '/')
 
-registerCloseCallback(() => {
-  setTimeout(() => process.exit(0), 1000)
-})
-
 export default defineConfig({
   base: basePath,
   logLevel: getLogLevel(false) ?? 'info',
@@ -15,6 +11,9 @@ export default defineConfig({
     {
       name: 'platformatic',
       hooks: {
+        'astro:server:setup': ({ server }) => {
+          registerCloseCallback(() => server.close())
+        },
         'astro:config:setup': ({ config }) => {
           config.vite.server ??= {}
           config.vite.server.hmr ??= {}

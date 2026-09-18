@@ -16,6 +16,8 @@ registerCloseCallback(async () => {
   events.emitAndNotify('callback:second')
   process.once('SIGINT', () => {
     events.emitAndNotify('signal')
+    // Signal dispatch must not inspect or consume a listener's return value.
+    return { then () { events.emitAndNotify('signal:then') } }
   })
   if (failCleanup) {
     throw Object.assign(new Error('cleanup failed'), { code: 'TEST_CLEANUP' })

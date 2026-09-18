@@ -1,16 +1,18 @@
 import { getBasePath, getITC, getLogLevel, registerCloseCallback } from '@platformatic/globals'
 import { defineConfig } from 'vite'
 
-registerCloseCallback(() => {
-  setTimeout(() => process.exit(0), 1000)
-})
-
 export default defineConfig({
   base: getBasePath({ throwOnMissing: false }) ?? '/',
   logLevel: getLogLevel({ throwOnMissing: false }) ?? 'info',
   plugins: [
     {
       name: 'platformatic',
+      configureServer: server => {
+        registerCloseCallback(() => server.close())
+      },
+      configurePreviewServer: server => {
+        registerCloseCallback(() => server.httpServer[Symbol.asyncDispose]())
+      },
       configResolved: config => {
         const itc = getITC()
         itc.notify('config', config)

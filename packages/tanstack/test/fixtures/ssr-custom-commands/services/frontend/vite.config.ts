@@ -1,10 +1,9 @@
-import { getBasePath, getITC } from '@platformatic/globals'
+import { getBasePath, getITC, registerCloseCallback } from '@platformatic/globals'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite'
 import tsConfigPaths from 'vite-tsconfig-paths'
-import './shutdown.js'
 
 export default defineConfig({
   base: getBasePath({ throwOnMissing: false }) ?? '/',
@@ -13,7 +12,7 @@ export default defineConfig({
     tanstackStart(),
     process.env.NODE_ENV === 'production' &&
       nitro({
-        preset: 'node-server',
+        preset: 'node-middleware',
         output: {
           dir: 'dist'
         }
@@ -21,6 +20,9 @@ export default defineConfig({
     viteReact(),
     {
       name: 'platformatic',
+      configureServer: server => {
+        registerCloseCallback(() => server.close())
+      },
       configResolved: config => {
         const itc = getITC()
         itc.notify('config', config)

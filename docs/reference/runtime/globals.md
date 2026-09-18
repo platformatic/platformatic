@@ -252,23 +252,7 @@ events.on('exit', () => {
 })
 ```
 
-`registerCloseCallback()` callbacks run after the framework or server has been closed, in reverse registration order. The runtime awaits each callback before invoking the application's `SIGINT` listeners. Applications started through a custom command run callbacks in the child process and are responsible for closing their server and other resources.
-
-Callbacks run sequentially, once per application instance, including cleanup after a failed start. A failed capability shutdown or callback does not skip subsequent callbacks or signal listeners. The shutdown deadline still bounds the operation: a callback that never settles can prevent later cleanup before forced termination.
-
-Register cleanup during initialization or framework shutdown, before the callback phase starts. Registering later throws `PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED`; passing a non-function throws `PLT_GLOBALS_INVALID_CLOSE_CALLBACK`. `consumeCloseCallbacks()` is an internal runtime operation, not an application API: it takes ownership of the callbacks and permanently closes registration.
-
-After callbacks complete, Watt removes the current `SIGINT` listeners from `process` and invokes them in registration order, passing `'SIGINT'` without awaiting returned promises. Listeners added or removed by a close callback are therefore respected. No OS signal is required, and asynchronous cleanup must use `registerCloseCallback()`; Watt does not intercept `process.exit()`.
-
-:::warning Applications using `close-with-grace`
-Watt cannot prevent `close-with-grace` from calling `process.exit()`. If `close-with-grace` is used, it must be the **only mechanism for application resource cleanup**, with all resource cleanup in its callback. Combining `close-with-grace` with `registerCloseCallback()` or additional `SIGINT` listeners is **unsupported**: their invocation and completion are not guaranteed. This restriction applies to both worker and child-process mode.
-:::
-
-Worker and child-process registrations are independent. In custom-command mode, the worker waits for child shutdown and then runs its own callbacks and signal listeners. The child closes Watt's internal communication and telemetry resources after replying. Application resources, including HTTP servers, must be closed by the application's callbacks or signal listeners; otherwise the child is forcibly terminated at the deadline.
-
-Combined cleanup failures use `PLT_RUNTIME_APPLICATION_SHUTDOWN` in workers and `PLT_BASIC_APPLICATION_SHUTDOWN` in child processes. Error details are serialized as primitive fields for transport. Child shutdown exceeding its deadline uses `PLT_BASIC_APPLICATION_SHUTDOWN_TIMEOUT`; the runtime also reports its existing worker timeout events. The runtime retains a direct child PID fallback so a blocked supervising worker cannot prevent forced child termination.
-
-On Unix, a synchronously blocked worker may be unable to reap its killed child before the worker is terminated. The OS can retain a zombie entry until it is reaped or the parent process exits; the child is no longer executing. This fallback supervises the directly spawned process, not an arbitrary tree of descendants created by custom commands.
+`registerCloseCallback(callback)` registers asynchronous application cleanup. Callbacks are awaited in reverse registration order after managed framework shutdown. Register them before callback execution begins.
 
 ```js
 import { registerCloseCallback } from '@platformatic/globals'
@@ -277,6 +261,8 @@ registerCloseCallback(async () => {
   await database.close()
 })
 ```
+
+See [Application shutdown](./shutdown.md) for the shutdown sequence, signal listeners, custom commands, errors, and deadlines.
 
 Custom health and readiness checks can return a boolean or an object with `status`, `statusCode`, and `body`, either directly or as a promise:
 

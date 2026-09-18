@@ -2,16 +2,15 @@ import { getBasePath, getITC, registerCloseCallback } from '@platformatic/global
 import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
 
-registerCloseCallback(() => {
-  setTimeout(() => process.exit(0), 1000)
-})
-
 export default defineConfig({
   base: getBasePath({ throwOnMissing: false }) ?? '/',
   plugins: [
     remix({ basename: getBasePath({ throwOnMissing: false }) ?? '/' }),
     {
       name: 'platformatic',
+      configureServer: server => {
+        registerCloseCallback(() => server.close())
+      },
       configResolved: config => {
         const itc = getITC()
         itc.notify('config', config)

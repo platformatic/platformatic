@@ -14,7 +14,5 @@ await app.register(fastifyStatic, {
   schemaHide: true
 })
 
-registerCloseCallback(() => {
-  setTimeout(() => process.exit(0), 1000)
-})
+registerCloseCallback(() => app.close())
 await app.listen({ port: 3000 })
