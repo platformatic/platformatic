@@ -875,8 +875,12 @@ test('loadConfigurationModule - should fallback to import.meta.filename when roo
     await safeRemove(tmpDir)
   })
 
+  // A module that resolves from nowhere: not in the temporary directory, and -- unlike
+  // @platformatic/foundation, which the package can now self-reference through its exports map --
+  // not self-resolvable either, so both the root require and the import.meta.filename fallback fail
+  // and the fallback's require stack (this file) is what the error carries.
   try {
-    await loadConfigurationModule(tmpDir, { module: '@platformatic/foundation' })
+    await loadConfigurationModule(tmpDir, { module: '@platformatic/non-existent-capability' })
     throw new Error('Expected loadConfigurationModule to fail but it succeeded')
   } catch (error) {
     deepStrictEqual(error.stack.split('\n')[2], `- ${resolve(import.meta.dirname, '../lib/configuration.js')}`)
