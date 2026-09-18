@@ -341,7 +341,9 @@ test('migrate - types a placeholder inside the runtime block', async t => {
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
 
   ok(!migrateProcess.stdout.includes('cannot determine'), migrateProcess.stdout)
-  ok(emitted.includes("requiredEnum('PLT_LOG_LEVEL'"), emitted)
+  // logger.level is a string (so customLevels can name it) that minLength forbids from being empty,
+  // so a missing variable must throw rather than fall back to ''.
+  ok(emitted.includes("requiredEnv('PLT_LOG_LEVEL')"), emitted)
   ok(emitted.includes("Number(requiredEnv('PLT_APPLICATION_TIMEOUT'))"), emitted)
 })
 
@@ -1020,8 +1022,8 @@ test('migrate - converts a placeholder according to the type of the position it 
         // A string position: v3 replaced a missing variable with '' and the schema accepted it.
         hostname: '{HOSTNAME}'
       },
-      // An enum position. A string-returning guard would be wrong twice over: it would let a value
-      // outside the set through to fail at the schema two steps later.
+      // A string position that minLength forbids from being empty: a string so customLevels can
+      // name it, but never legitimately '', so a missing variable throws rather than falling back.
       logger: { level: '{LOG_LEVEL}' }
     }
   })
@@ -1034,13 +1036,10 @@ test('migrate - converts a placeholder according to the type of the position it 
 
   ok(emitted.includes("port: Number(requiredEnv('PORT'))"), emitted)
   ok(emitted.includes("hostname: process.env['HOSTNAME'] ?? ''"), emitted)
-  ok(emitted.includes("level: requiredEnum('LOG_LEVEL', ["), emitted)
-  ok(emitted.includes("'silent'"), emitted)
+  ok(emitted.includes("level: requiredEnv('LOG_LEVEL')"), emitted)
 
-  // The helpers are written into the file only where it has a position needing one, and requiredEnum
-  // is defined in terms of requiredEnv, so it never arrives alone.
+  // The helper is written into the file only where it has a position needing one.
   ok(emitted.includes('function requiredEnv (name)'), emitted)
-  ok(emitted.includes('function requiredEnum (name, allowed)'), emitted)
 })
 
 test('migrate - leaves a string position holding an interpolation as a template literal', async t => {
@@ -1553,9 +1552,9 @@ test('migrate - does not assume a variable the project supplies in an env file',
   ok(!migrateProcess.stdout.includes('PLT_LOG_LEVEL assumed'), migrateProcess.stdout)
   ok(!migrateProcess.stdout.includes('are not set here'), migrateProcess.stdout)
 
-  // And the conversion itself is unchanged: the enum position still guards the value.
+  // And the conversion itself is unchanged: the non-empty string position still guards the value.
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
-  ok(emitted.includes("requiredEnum('PLT_LOG_LEVEL'"), emitted)
+  ok(emitted.includes("requiredEnv('PLT_LOG_LEVEL')"), emitted)
 })
 
 /*

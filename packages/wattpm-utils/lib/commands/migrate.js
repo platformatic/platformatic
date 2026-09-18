@@ -436,7 +436,8 @@ function classifyNode (node) {
   const constraints = {
     maximum: node.maximum,
     minimum: node.minimum,
-    multipleOf: node.multipleOf
+    multipleOf: node.multipleOf,
+    minLength: node.minLength
   }
 
   if (Array.isArray(node.enum)) {
@@ -679,17 +680,29 @@ function convertPlaceholders (
       }
 
       switch (position.kind) {
-        case 'string':
+        case 'string': {
           /*
             v3 replaced a missing variable with the empty string, and the schema accepted it. A
             sample value becomes the fallback only when asked for: it is a suggestion, and v3 never
             read the file it came from.
           */
-          return raw(
-            `process.env[${serializeString(name)}] ?? ${
-              useSampleDefaults && sample[name] !== undefined ? serializeString(sample[name]) : "''"
-            }`
-          )
+          if (useSampleDefaults && sample[name] !== undefined) {
+            return raw(`process.env[${serializeString(name)}] ?? ${serializeString(sample[name])}`)
+          }
+
+          /*
+            A position with minLength rejects the empty string, so `?? ''` would emit a value that
+            fails the very schema this migration must keep valid — an unset variable has to throw
+            instead. `logger.level` is the common one: a string so that customLevels can name it,
+            but never legitimately empty.
+          */
+          if (position.constraints.minLength >= 1) {
+            helpers.add('requiredEnv')
+            return raw(`requiredEnv('${name}')`)
+          }
+
+          return raw(`process.env[${serializeString(name)}] ?? ''`)
+        }
         case 'number':
           helpers.add('requiredEnv')
           return raw(`Number(requiredEnv('${name}'))`)
