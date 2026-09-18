@@ -220,8 +220,14 @@ export class ChildProcess extends ITC {
   // accumulated while booting durable, as Node.js would otherwise only write it when the process
   // terminates.
   notify (name, message, options) {
-    if (name === 'url' && compileCacheEnabled) {
-      scheduleCompileCacheFlush()
+    if (name === 'url') {
+      if (compileCacheEnabled) {
+        scheduleCompileCacheFlush(undefined, flushed => {
+          super.notify('compile-cache:flushed', { flushed, source: 'child-process' })
+        })
+      } else if (compileCacheRequested) {
+        super.notify('compile-cache:unavailable', { source: 'child-process' })
+      }
     }
 
     return super.notify(name, message, options)
@@ -633,11 +639,13 @@ export class ChildProcess extends ITC {
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
 
+        // Nested workers may expose internal servers (for example Nitro's env
+        // runner). They must not replace the command's public entrypoint URL.
         // When a script reports the app URL itself (urlFromScript), ignore the
         // tracing-channel listen here (which fires for listhen/get-port-please's
         // throwaway probe) to avoid reporting a stale URL that races the real
         // server's startup.
-        if (this.#urlFromScript) {
+        if (!isMainThread || this.#urlFromScript) {
           return
         }
 
@@ -794,6 +802,7 @@ function stripBasePath (basePath) {
 
 // Whether the module compile cache has been enabled in this process.
 let compileCacheEnabled = false
+let compileCacheRequested = false
 
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (contextData) {
@@ -810,6 +819,8 @@ async function setupCompileCache (contextData) {
   if (!normalizedConfig?.enabled) {
     return
   }
+
+  compileCacheRequested = true
 
   // Check if API is available (Node.js 22.1.0+)
   let moduleApi

@@ -96,9 +96,11 @@ export const features = {
   Flushing explicitly once the boot is complete, when most modules have been loaded, makes the cache
   durable. Repeated flushes are cheap as Node.js skips the entries which have already been persisted.
 */
-export function scheduleCompileCacheFlush (logger) {
+export function scheduleCompileCacheFlush (logger, onFlushed) {
   // Defer the flush so that it never delays the caller.
   setImmediate(async () => {
+    let flushed = false
+
     try {
       const { flushCompileCache } = await import('node:module')
 
@@ -110,11 +112,14 @@ export function scheduleCompileCacheFlush (logger) {
 
       const start = process.hrtime.bigint()
       flushCompileCache()
+      flushed = true
       const duration = Number(process.hrtime.bigint() - start) / 1e6
 
       logger?.debug({ duration }, 'Module compile cache flushed')
     } catch (err) {
       logger?.warn({ err }, 'Error flushing module compile cache')
+    } finally {
+      onFlushed?.(flushed)
     }
   })
 }

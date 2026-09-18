@@ -151,6 +151,7 @@ function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
 }
 
 let compileCacheEnabled = false
+let compileCacheRequested = false
 
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
@@ -169,6 +170,8 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   if (!config.enabled) {
     return
   }
+
+  compileCacheRequested = true
 
   // Check if API is available (Node.js 22.1.0+)
   let moduleApi
@@ -327,7 +330,11 @@ async function main () {
 
   controller.on('started', () => {
     if (compileCacheEnabled) {
-      scheduleCompileCacheFlush(logger)
+      scheduleCompileCacheFlush(logger, flushed => {
+        getITC().notify('compile-cache:flushed', { flushed, source: 'worker' })
+      })
+    } else if (compileCacheRequested) {
+      getITC().notify('compile-cache:unavailable', { source: 'worker' })
     }
   })
 

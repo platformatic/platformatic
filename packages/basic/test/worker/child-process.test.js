@@ -129,6 +129,24 @@ test('ChildProcess - should not modify application-owned listen options', async 
   await capability.stopCommand()
 })
 
+test('ChildProcess - nested worker servers do not replace the public URL', async t => {
+  const capability = await create(t, { runtimeConfig: { gracefulShutdown: { application: 1000 } } })
+  const executablePath = fileURLToPath(new URL('../fixtures/server-with-worker.js', import.meta.url))
+  await capability.startWithCommand([process.execPath, executablePath])
+  t.after(() => capability.stopCommand())
+
+  const url = capability.url
+  const manager = capability.getChildManager()
+  const urls = []
+  manager.on('url', url => urls.push(url))
+  const listening = once(manager, 'internal:listening', { signal: AbortSignal.timeout(10000) })
+  await manager.send(capability.clientWs, 'startInternalServer')
+  await listening
+
+  deepStrictEqual(urls, [])
+  equal(capability.url, url)
+})
+
 test('ChildProcess - should intercept fetch calls', async t => {
   const server = createServer(serverHandler).listen({ host: '127.0.0.1', port: 0 })
   await once(server, 'listening')
