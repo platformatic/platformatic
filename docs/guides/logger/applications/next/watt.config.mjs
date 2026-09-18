@@ -1,6 +1,6 @@
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   application: {
     basePath: '/next'
   },

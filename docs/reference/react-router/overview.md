@@ -26,9 +26,9 @@ npm install @platformatic/react-router
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { reactRouter } from '@platformatic/react-router'
+import { createReactRouterConfig } from '@platformatic/react-router'
 
-export default reactRouter({
+export default createReactRouterConfig({
   application: {
     basePath: '/frontend'
   },

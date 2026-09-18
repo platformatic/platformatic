@@ -253,7 +253,7 @@ test('import - when launched without arguments, should fix the configuration of 
 
     deepStrictEqual(
       await readFile(resolve(rootDir, applicationPath, 'watt.config.mjs'), 'utf-8'),
-      "import { node } from '@platformatic/node'\n\nexport default node({})\n"
+      "import { createNodeConfig } from '@platformatic/node'\n\nexport default createNodeConfig({})\n"
     )
   }
 
@@ -350,7 +350,7 @@ test('import - when launched without arguments, should fix the configuration of 
 
     deepStrictEqual(
       await readFile(resolve(rootDir, applicationPath, 'watt.config.mjs'), 'utf-8'),
-      "import { node } from '@platformatic/node'\n\nexport default node({})\n"
+      "import { createNodeConfig } from '@platformatic/node'\n\nexport default createNodeConfig({})\n"
     )
   }
 
@@ -555,7 +555,7 @@ test('import - a local application inside a v4 root gets a relative path and a v
     `export default` this writes is a syntax error in a CommonJS `.js`.
   */
   const applicationSource = await readFile(resolve(applicationDirectory, 'watt.config.mjs'), 'utf-8')
-  deepStrictEqual(applicationSource, "import { node } from '@platformatic/node'\n\nexport default node({})\n")
+  deepStrictEqual(applicationSource, "import { createNodeConfig } from '@platformatic/node'\n\nexport default createNodeConfig({})\n")
 })
 
 test('import - a v4 root leaves an application that already has a configuration alone', async t => {
@@ -568,7 +568,7 @@ test('import - a v4 root leaves an application that already has a configuration 
   await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
   await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'main' }), 'utf-8')
 
-  const existing = "import { node } from '@platformatic/node'\n\nexport default node({ /* mine */ })\n"
+  const existing = "import { createNodeConfig } from '@platformatic/node'\n\nexport default createNodeConfig({ /* mine */ })\n"
   await writeFile(resolve(applicationDirectory, 'watt.config.mjs'), existing, 'utf-8')
 
   await wattpmUtils('import', applicationDirectory)

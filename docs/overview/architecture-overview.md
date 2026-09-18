@@ -237,9 +237,9 @@ const cached = await fetch('https://api.slow-application.com/data')
 **Note:** HTTP caching must be enabled in your configuration file to take advantage of automatic caching:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   httpCache: true,
   autoload: {
     path: 'web'

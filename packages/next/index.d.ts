@@ -78,7 +78,7 @@ export namespace errors {
 
 export type NextConfigOptions = CapabilityFactoryOptions<PlatformaticNextJsConfig, 'next', never>
 
-export declare function next (options?: NextConfigOptions): ApplicationDefinition
-export declare function next (
+export declare function createNextConfig (options?: NextConfigOptions): ApplicationDefinition
+export declare function createNextConfig (
   callback: (context: ConfigContext) => NextConfigOptions | Promise<NextConfigOptions>
 ): DeferredApplicationDefinition

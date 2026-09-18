@@ -55,7 +55,7 @@ export declare const supportedVersions: { nitro: string, nitropack: string }
 
 export type NitroConfigOptions = CapabilityFactoryOptions<PlatformaticNitroConfig, 'vite' | 'nitro', never>
 
-export declare function nitro (options?: NitroConfigOptions): ApplicationDefinition
-export declare function nitro (
+export declare function createNitroConfig (options?: NitroConfigOptions): ApplicationDefinition
+export declare function createNitroConfig (
   callback: (context: ConfigContext) => NitroConfigOptions | Promise<NitroConfigOptions>
 ): DeferredApplicationDefinition

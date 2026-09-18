@@ -9,7 +9,7 @@ To extend the functionality of an application in Platformatic, you can register 
 Specify the location of your plugin files in the configuration file, as shown in the example below. This path is relative to the config file path.
 
 ```ts
-export default gateway({
+export default createGatewayConfig({
   // ...
   plugins: {
     paths: ['./plugin/index.js']
@@ -72,7 +72,7 @@ By default, each folder will be added as a prefix to the routes defined within t
 To load multiple plugins in parallel, specify an array of paths in the configuration:
 
 ```ts
-export default gateway({
+export default createGatewayConfig({
   // ...
   plugins: {
     paths: [{

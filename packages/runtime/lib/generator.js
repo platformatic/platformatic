@@ -224,7 +224,7 @@ export class RuntimeGenerator extends BaseGenerator {
   }
 
   /*
-    The root is spelled the same way an application is: it imports `defineConfig` from wattpm and
+    The root is spelled the same way an application is: it imports `createWattConfig` from wattpm and
     calls it, so the editor types and checks the shape the loader would otherwise only reject at
     boot. The import means the file cannot be evaluated before its dependencies are installed --
     which is why `wattpm install`/`create` install the root's own dependencies before reading it to
@@ -242,12 +242,12 @@ export class RuntimeGenerator extends BaseGenerator {
     const resolved = this.resolveScaffoldedPlaceholders(rest)
 
     /*
-      The root is spelled the same way an application is: a factory call, `defineConfig` from
+      The root is spelled the same way an application is: a factory call, `createWattConfig` from
       wattpm, whose whole job is to type its argument so the editor completes and checks the shape
-      the loader would otherwise only reject at boot. wattpm's defineConfig imports nothing, so the
+      the loader would otherwise only reject at boot. wattpm's createWattConfig imports nothing, so the
       root evaluates in the eval worker without paying for the runtime it would otherwise pull in.
     */
-    return `import { defineConfig } from 'wattpm'\n\nexport default defineConfig(${serializeConfiguration(resolved)})\n`
+    return `import { createWattConfig } from 'wattpm'\n\nexport default createWattConfig(${serializeConfiguration(resolved)})\n`
   }
 
   async _getConfigFileContents () {

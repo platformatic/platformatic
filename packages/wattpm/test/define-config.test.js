@@ -1,11 +1,11 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { test } from 'node:test'
-import { defineConfig, version } from '../index.js'
+import { createWattConfig, version } from '../index.js'
 
 test('defineConfig returns its argument untouched', () => {
   const config = { applications: [{ id: 'api', path: './web/api' }] }
 
-  strictEqual(defineConfig(config), config)
+  strictEqual(createWattConfig(config), config)
 })
 
 test('defineConfig passes a function through for the loader to call', () => {
@@ -13,7 +13,7 @@ test('defineConfig passes a function through for the loader to call', () => {
   // classifies its resolved value, so the two forms behave identically at runtime.
   const callback = ctx => ({ watch: ctx.command === 'dev' })
 
-  strictEqual(defineConfig(callback), callback)
+  strictEqual(createWattConfig(callback), callback)
 })
 
 test('the package entry is light enough to sit in a config file', async () => {
@@ -25,7 +25,7 @@ test('the package entry is light enough to sit in a config file', async () => {
   const elapsed = performance.now() - started
 
   ok(elapsed < 500, `importing the package entry took ${Math.round(elapsed)}ms`)
-  deepStrictEqual(Object.keys(entry).sort(), ['defineConfig', 'main', 'version'])
+  deepStrictEqual(Object.keys(entry).sort(), ['createWattConfig', 'main', 'version'])
   ok(!Object.keys(globalThis).includes('__wattpmCliLoaded'))
 })
 

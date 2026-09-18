@@ -355,7 +355,7 @@ export function readEnvironmentReferences (source) {
     return found
   }
 
-  // The plain-object form exports the configuration; a factory or `defineConfig` passes it along.
+  // The plain-object form exports the configuration; a factory or `createWattConfig` passes it along.
   const configuration = declaration.type === 'CallExpression' ? declaration.arguments[0] : declaration
 
   collectEnvironmentReferences(configuration, [], found)

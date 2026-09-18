@@ -76,9 +76,9 @@ To add a framework to your Watt application:
 
 1. **Add the application to your configuration:**
    ```ts config
-   import { defineConfig } from 'wattpm'
+   import { createWattConfig } from 'wattpm'
 
-   export default defineConfig({
+   export default createWattConfig({
      applications: [
        {
          id: 'frontend',

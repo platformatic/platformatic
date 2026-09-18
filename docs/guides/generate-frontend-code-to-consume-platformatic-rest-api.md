@@ -90,9 +90,9 @@ This will also install the required dependencies. The command will output:
 Add your frontend `id` and DB application to the `watt.config.ts` file in your `web/gateway` application:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [
       {

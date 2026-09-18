@@ -340,7 +340,7 @@ To expose the Books application for testing, configure its application-local ser
 
 ```ts source
 // web/books-application/watt.config.ts
-export default db({
+export default createDbConfig({
   // ...
   server: {
     port: 3043
@@ -526,7 +526,7 @@ To expose the Movies application for testing, configure its application-local se
 
 ```ts source
 // web/movies-application/watt.config.ts
-export default db({
+export default createDbConfig({
   // ...
   server: {
     port: 3044
@@ -617,9 +617,9 @@ Let's open up `web/media-application/watt.config.ts` and replace the `applicatio
 
 ```ts config
 // web/media-application/watt.config.ts
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   server: {
     port: 3045
   },
@@ -803,7 +803,7 @@ Now let's open up `web/media-application/watt.config.ts` and configure the Media
 ```diff
 // web/media-application/watt.config.ts
 
-  export default gateway({
+  export default createGatewayConfig({
     // ...
     gateway: {
       applications: [
@@ -978,7 +978,7 @@ Now we can configure the Media application to load our new plugin. Let's open up
 
 ```ts source
 // web/media-application/watt.config.ts — the rest of the configuration is unchanged
-export default gateway({
+export default createGatewayConfig({
   // ...
   plugins: {
     paths: ['./plugin.js']
@@ -1056,7 +1056,7 @@ Let's try this out by adding another application to the `applications` in `watt.
 ```diff
 // web/media-application/watt.config.ts
 
-  export default gateway({
+  export default createGatewayConfig({
     // ...
     gateway: {
       applications: [
@@ -1107,7 +1107,7 @@ Although the Gateway service proxy is a helpful feature, we don't want to use th
 ```diff
 // web/media-application/watt.config.ts
 
-  export default gateway({
+  export default createGatewayConfig({
     // ...
     gateway: {
       applications: [

@@ -41,9 +41,9 @@ Configures Vite options used by the development server when Nitro is used as a V
 This is useful for development server settings such as allowing mesh-network hostnames:
 
 ```ts config
-import { nitro } from '@platformatic/nitro'
+import { createNitroConfig } from '@platformatic/nitro'
 
-export default nitro({
+export default createNitroConfig({
   server: { port: 3042 },
   vite: {
     devServer: {

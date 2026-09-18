@@ -66,7 +66,7 @@ export declare function MigrationsToApplyError (): FastifyError
 
 export type DbConfigOptions = CapabilityFactoryOptions<PlatformaticDatabaseConfig, 'db', 'cache'>
 
-export declare function db (options?: DbConfigOptions): ApplicationDefinition
-export declare function db (
+export declare function createDbConfig (options?: DbConfigOptions): ApplicationDefinition
+export declare function createDbConfig (
   callback: (context: ConfigContext) => DbConfigOptions | Promise<DbConfigOptions>
 ): DeferredApplicationDefinition

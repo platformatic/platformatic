@@ -20,7 +20,7 @@ async function updateConfigFile (path, update) {
   const source = await readFile(path, 'utf-8')
   const module = parseModule(source)
   const target = module.exports.default
-  // The plain-object form exports the configuration; `defineConfig` passes it as the first argument.
+  // The plain-object form exports the configuration; `createWattConfig` passes it as the first argument.
   const configuration = target?.$type === 'function-call' ? target.$args[0] : target
 
   if (configuration?.$type !== 'object') {

@@ -55,9 +55,9 @@ Why this matters:
 Enable Image Optimizer mode in `watt.config.ts`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   next: {
     imageOptimizer: {
       enabled: true,
@@ -90,9 +90,9 @@ A common production setup is to expose Gateway publicly and route only `/_next/i
 `web/gateway/watt.config.ts`:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [
       {

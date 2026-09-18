@@ -16,9 +16,9 @@ Each application gets its own folder, and the capability is the one the applicat
 For instance, to use `@platformatic/next`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: { port: Number(process.env.PORT ?? 3042) }
 })
 ```
@@ -44,14 +44,14 @@ and the rest are orchestration, and they belong to the runtime configuration —
 project, alongside the `application` shorthand:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-export default defineConfig({
+export default createWattConfig({
   logger: { level: 'debug' },
   workers: { dynamic: true, minimum: 1, maximum: 4 },
   application: {
-    config: next({
+    config: createNextConfig({
       server: { port: Number(process.env.PORT ?? 3042) }
     })
   }

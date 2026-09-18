@@ -68,9 +68,9 @@ writes no configuration file at all — the capability is inferred from your dep
 when you want to say something the defaults do not:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   logger: { level: 'info' },
   server: { port: Number(process.env.PORT ?? 3042) }
 })
@@ -198,9 +198,9 @@ The runtime configuration picks up everything under `web/` and names one applica
 entrypoint:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: { level: 'info' }
 })
@@ -211,9 +211,9 @@ that is publicly addressable is the one you point traffic at. Each application g
 `watt.config.ts` naming its capability:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   server: { port: Number(process.env.PORT ?? 3042) }
 })
 ```
@@ -244,9 +244,9 @@ When an Express application is not the entrypoint, it usually sits behind a
 Declare the prefix on the application:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: { basePath: '/orders' },
   server: { port: Number(process.env.PORT ?? 3042) }
 })
@@ -255,9 +255,9 @@ export default node({
 and let the gateway pick it up:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [{ id: 'orders' }],
     refreshTimeout: 1000
@@ -279,9 +279,9 @@ If your application genuinely needs the full path — because it builds absolute
 links that must include the prefix — set `absoluteUrl` and prefix your routes explicitly:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: { basePath: '/orders' },
   node: { absoluteUrl: true },
   server: { port: Number(process.env.PORT ?? 3042) }

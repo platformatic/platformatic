@@ -49,9 +49,9 @@ custom commands that applications can invoke from their worker threads.
 `extensions` can be a path, an object with `path`, `options`, and `build` properties, or an array of either:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -252,9 +252,9 @@ receive the build hooks above for every application, and are closed when the bui
 Their `start` and `stop` hooks are not called during a build.
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -330,9 +330,9 @@ runtime. Each application object supports the following settings:
   intrumentations per application, e.g.:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'api',
@@ -350,9 +350,9 @@ export default defineConfig({
 It's possible to specify the name of the export of the instrumentation and/or the options:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'api',
@@ -378,9 +378,9 @@ a boolean, and v4 does not coerce — the string `'false'` is not `false`, so re
 compare:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'api',
@@ -414,7 +414,7 @@ variable, and there are no placeholders — a configuration file reads `process.
 unset variable is `undefined` and what happens next is written in the file:
 
 ```ts config env=PLT_BASE_PATH=/api
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
 function requiredEnv (name: string): string {
   const value = process.env[name]
@@ -426,7 +426,7 @@ function requiredEnv (name: string): string {
   return value
 }
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   basePath: requiredEnv('PLT_BASE_PATH')
 })
@@ -561,9 +561,9 @@ Use an object to configure the health probes server. Health probes are exposed o
 - **`liveness`** (`object` or `boolean`). Optional liveness endpoint configuration. If omitted, `metrics.liveness` is used when present.
 
 ```ts config title="Example health probes on a standalone server"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -617,9 +617,9 @@ For OTLP exporters:
 :::
 
 ```ts config title="Example JSON object"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -701,9 +701,9 @@ This configures the [`undici`](https://undici.nodejs.org) global
 Allowing to configure the options in the agent as well as [interceptors](https://undici.nodejs.org/#/docs/api/Dispatcher?id=dispatchercomposeinterceptors-interceptor).
 
 ```ts config title="Example JSON object"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -754,9 +754,9 @@ Setting a lower value can be useful when:
 - Memory is constrained during startup
 
 ```ts config title="Example configuration"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -812,9 +812,9 @@ When `healthProbes` is an object with a different resolved `hostname` and `port`
   - **`default`** (`string`): Default value when the header is missing. Defaults to `"unknown"`.
 
 ```ts config title="Example httpCustomLabels Configuration"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -840,9 +840,9 @@ export default defineConfig({
   - **`serviceVersion`** (`string`): Service version for OTLP resource attributes. Optional.
 
 ```ts config title="Example OTLP Metrics Configuration"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -884,9 +884,9 @@ The runtime-level `management` configuration enables the ITC (Inter-Thread Commu
 The value is inherited by all applications that do not explicitly set their own `management` configuration. Individual applications can override or disable the runtime-level setting.
 
 ```ts config title="Enable management for all applications"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   management: true,
   applications: [
     {
@@ -902,9 +902,9 @@ export default defineConfig({
 ```
 
 ```ts config title="Enable management globally, disable for a specific application"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   management: true,
   applications: [
     {
@@ -921,9 +921,9 @@ export default defineConfig({
 ```
 
 ```ts config title="Restrict operations globally"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   management: {
     operations: [
       'getRuntimeStatus',
@@ -956,9 +956,9 @@ _Every object_ has:
 - **`maxRetry`** (`number`). Number of attempts for the HTTP call. Default: 3
 
 ```ts config title="Example Scheduler"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -1018,9 +1018,9 @@ This feature requires Node.js 22.1.0 or later. On older Node.js versions, this c
 The configuration can be a boolean or an object:
 
 ```ts config title="Simple boolean configuration"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -1029,9 +1029,9 @@ export default defineConfig({
 ```
 
 ```ts config title="Object configuration"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'web'
   },
@@ -1061,9 +1061,9 @@ Configuration options:
 This configuration can also be set at the application level to override the runtime-level setting:
 
 ```ts config title="Application-level override"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'my-app',
@@ -1087,9 +1087,9 @@ This setting can also be configured at the [runtime level](#management) to apply
 The configuration can be a boolean or an object:
 
 ```ts config title="Grant full management access"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'orchestrator',
@@ -1101,9 +1101,9 @@ export default defineConfig({
 ```
 
 ```ts config title="Restrict to specific operations"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'dashboard',
@@ -1188,9 +1188,9 @@ export function create () {
 A configuration file is a program, so it reads its environment directly. There are no `{PLT_X}` placeholders and nothing interpolates strings on your behalf:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [{ id: 'api', path: './api' }],
   basePath: process.env.PLT_BASE_PATH ?? '/'
 })
@@ -1210,7 +1210,7 @@ Because nothing coerces the result afterwards, what you write depends on what th
 An enum needs more than a fallback: `process.env.NAME ?? 'info'` has type `string`, and `string` is not one of `level`'s seven members. `wattpm-utils migrate` writes a helper into the file for this, and it is worth keeping:
 
 ```ts config env=PLT_SERVER_LOGGER_LEVEL=debug
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
 function requiredEnum <const T extends readonly string[]> (name: string, allowed: T): T[number] {
   const value = process.env[name]
@@ -1222,7 +1222,7 @@ function requiredEnum <const T extends readonly string[]> (name: string, allowed
   return value as T[number]
 }
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level: requiredEnum('PLT_SERVER_LOGGER_LEVEL',
@@ -1252,9 +1252,9 @@ PLT_SERVER_LOGGER_LEVEL=trace npx wattpm start
 There is no drop-in replacement, because `PLT_ROOT` meant two different directories depending on who read it: inside a configuration file it was that file's own directory, while application code received the runtime root. For a module that wants its own directory, use `import.meta.dirname`. For the branch that `PLT_DEV` used to carry, take it from the configuration context, which is typed:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig(context => ({
+export default createWattConfig(context => ({
   autoload: { path: 'web' },
   logger: { level: context.production ? 'warn' : 'debug' }
 }))

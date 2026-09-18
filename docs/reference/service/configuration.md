@@ -40,9 +40,9 @@ An object with the following settings:
   _Example_
 
   ```ts config
-  import { service } from '@platformatic/service'
+  import { createServiceConfig } from '@platformatic/service'
 
-  export default service({
+  export default createServiceConfig({
     server: {
       port: 3042,
       healthCheck: {
@@ -127,9 +127,9 @@ An optional object that defines the plugins loaded by Platformatic Service.
 _Example_
 
 ```ts config
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
-export default service({
+export default createServiceConfig({
   plugins: {
     packages: [
       {
@@ -167,9 +167,9 @@ It can also be customized with the following options:
   _Example_
 
   ```ts config
-  import { service } from '@platformatic/service'
+  import { createServiceConfig } from '@platformatic/service'
 
-  export default service({
+  export default createServiceConfig({
     watch: {
       ignore: [
         '*.mjs',
@@ -194,9 +194,9 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   Enables GraphQL support
 
   ```ts config
-  import { service } from '@platformatic/service'
+  import { createServiceConfig } from '@platformatic/service'
 
-  export default service({
+  export default createServiceConfig({
     service: {
       graphql: true
     }
@@ -206,9 +206,9 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   Enables GraphQL support with GraphiQL
 
   ```ts config
-  import { service } from '@platformatic/service'
+  import { createServiceConfig } from '@platformatic/service'
 
-  export default service({
+  export default createServiceConfig({
     service: {
       graphql: {
         graphiql: true
@@ -226,9 +226,9 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   Enables OpenAPI
 
   ```ts config
-  import { service } from '@platformatic/service'
+  import { createServiceConfig } from '@platformatic/service'
 
-  export default service({
+  export default createServiceConfig({
     service: {
       openapi: true
     }
@@ -238,9 +238,9 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   Enables OpenAPI with prefix
 
   ```ts config
-  import { service } from '@platformatic/service'
+  import { createServiceConfig } from '@platformatic/service'
 
-  export default service({
+  export default createServiceConfig({
     service: {
       openapi: {
         swaggerPrefix: '/api'
@@ -252,9 +252,9 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   Enables OpenAPI with options
 
   ```ts config
-  import { service } from '@platformatic/service'
+  import { createServiceConfig } from '@platformatic/service'
 
-  export default service({
+  export default createServiceConfig({
     service: {
       openapi: {
         info: {
@@ -295,9 +295,9 @@ For OTLP exporters:
 _Example_
 
 ```ts config
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
-export default service({
+export default createServiceConfig({
   tracing: {
     applicationName: 'test-application',
     diagLogger: true,
@@ -319,9 +319,9 @@ placeholders and nothing interpolates strings on your behalf.
 ### Example
 
 ```ts config env=PORT=8080
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
-export default service({
+export default createServiceConfig({
   server: {
     port: Number(process.env.PORT || 3042)
   }
@@ -337,7 +337,7 @@ happens when one is missing is written in the file. To fail at startup instead o
 what the removed `strictEnv` option did, but per setting:
 
 ```ts config env=DATABASE_URL=postgres://localhost/db
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
 function requiredEnv (name: string): string {
   const value = process.env[name]
@@ -349,7 +349,7 @@ function requiredEnv (name: string): string {
   return value
 }
 
-export default service({
+export default createServiceConfig({
   server: { port: 3042 },
   plugins: {
     paths: [{ path: './plugin.js', options: { connectionString: requiredEnv('DATABASE_URL') } }]

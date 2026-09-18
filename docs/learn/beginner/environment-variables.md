@@ -25,13 +25,13 @@ Applications built with Watt follow [the twelve-factor app methodology](https://
 A Watt configuration file is a module, so it reads `process.env` the way any other module does:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { node } from '@platformatic/node'
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
 
-export default defineConfig({
+export default createWattConfig({
   logger: { level: 'info' },
   application: {
-    config: node({
+    config: createNodeConfig({
       server: {
         port: Number(process.env.PORT ?? 3042),
         hostname: process.env.HOSTNAME ?? '127.0.0.1'
@@ -127,9 +127,9 @@ a silent skip.
 ### Database Configuration
 
 ```ts config
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
-export default db({
+export default createDbConfig({
   db: {
     connectionString: process.env.DATABASE_URL ?? 'sqlite://./dev.db',
     poolSize: Number(process.env.DB_POOL_SIZE ?? 10)
@@ -147,7 +147,7 @@ DB_POOL_SIZE=10
 A default is a choice, not an obligation. Where a missing value should stop the boot, say so:
 
 ```ts config env=DATABASE_URL=postgres://localhost:5432/myapp
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
 function requiredEnv (name: string): string {
   const value = process.env[name]
@@ -159,7 +159,7 @@ function requiredEnv (name: string): string {
   return value
 }
 
-export default db({
+export default createDbConfig({
   db: {
     connectionString: requiredEnv('DATABASE_URL')
   }

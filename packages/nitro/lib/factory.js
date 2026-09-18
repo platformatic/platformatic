@@ -6,7 +6,7 @@ import { schema, version } from './schema.js'
   from the capability's block while application.outputDirectory stays nested, which is why the
   application block is not flattened anywhere.
 */
-export const nitro = defineCapabilityFactory('@platformatic/nitro', schema, {
+export const createNitroConfig = defineCapabilityFactory('@platformatic/nitro', schema, {
   version,
   flatten: ['vite', 'nitro']
 })

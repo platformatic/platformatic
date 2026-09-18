@@ -44,7 +44,7 @@ export declare class NodeCapability extends BaseCapability<PlatformaticNodeJsCon
 
 export type NodeConfigOptions = CapabilityFactoryOptions<PlatformaticNodeJsConfig, 'node', never>
 
-export declare function node (options?: NodeConfigOptions): ApplicationDefinition
-export declare function node (
+export declare function createNodeConfig (options?: NodeConfigOptions): ApplicationDefinition
+export declare function createNodeConfig (
   callback: (context: ConfigContext) => NodeConfigOptions | Promise<NodeConfigOptions>
 ): DeferredApplicationDefinition

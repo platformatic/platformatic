@@ -37,9 +37,9 @@ postgres://user:password@my-database:5432/db-name
 - **`schema`** (array of `string`) - Defines the database schemas, only supported for PostgreSQL. Defaults to 'public' if unspecified.
 
 ```ts config title="Example Object"
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
-export default db({
+export default createDbConfig({
   db: {
     connectionString: 'postgres://user:password@my-database:5432/db-name',
     schema: ['schema1', 'schema2']
@@ -53,9 +53,9 @@ export default db({
   Enables GraphQL support
 
   ```ts config
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       graphql: true,
       connectionString: 'sqlite://./db.sqlite'
@@ -66,9 +66,9 @@ export default db({
   Enables GraphQL support with the `enabled` option
 
   ```ts config
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       graphql: {
         enabled: true
@@ -81,9 +81,9 @@ export default db({
   Enables GraphQL support with GraphiQL
 
   ```ts config
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       graphql: {
         graphiql: true
@@ -96,9 +96,9 @@ export default db({
   It's possible to selectively ignore entities:
 
   ```ts config
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       graphql: {
         ignore: {
@@ -113,9 +113,9 @@ export default db({
   It's possible to selectively ignore fields:
 
   ```ts config
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       graphql: {
         ignore: {
@@ -132,9 +132,9 @@ export default db({
   It's possible to add a custom GraphQL schema during the startup:
 
   ```ts config
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       connectionString: 'sqlite://./db.sqlite',
       graphql: {
@@ -151,9 +151,9 @@ export default db({
   Enables OpenAPI
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: true,
       connectionString: 'sqlite://./db.sqlite'
@@ -164,9 +164,9 @@ export default db({
   Enables OpenAPI using the `enabled` option
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         enabled: true
@@ -179,9 +179,9 @@ export default db({
   Enables OpenAPI with prefix
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         prefix: '/api'
@@ -194,9 +194,9 @@ export default db({
   Enables OpenAPI with options
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         info: {
@@ -214,9 +214,9 @@ export default db({
   We're adding a Bearer token in the form of a [JWT](./authorization/strategies.md#json-web-token-jwt) in the code block below:
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         security: [
@@ -242,9 +242,9 @@ export default db({
   You can selectively ignore entities:
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         ignore: {
@@ -259,9 +259,9 @@ export default db({
   Selectively ignore fields:
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         ignore: {
@@ -278,9 +278,9 @@ export default db({
   You can disable all reverse relationship and FK-navigation routes (e.g. `GET /owners/{id}/posts`, `GET /posts/{id}/owner`) with a single option:
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         ignoreAllReverseRoutes: true
@@ -293,9 +293,9 @@ export default db({
   You can explicitly identify tables to build an entity, **however all other tables will be ignored**:
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       openapi: {
         include: {
@@ -322,9 +322,9 @@ export default db({
 - **`limit`** (`object`) - Set the default and max limit for pagination. Default is 10, max is 1000.
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       limit: {
         default: 10,
@@ -338,9 +338,9 @@ export default db({
 - **`ignore`** (`object`) — Key/value object that defines which database tables should not be mapped as API entities.
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       connectionString: 'sqlite://./db.sqlite',
       ignore: {
@@ -353,9 +353,9 @@ export default db({
 - **`include`** (`object`) — Key/value object that defines which entities should be exposed.
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       include: {
         version: true
@@ -370,9 +370,9 @@ export default db({
   - Custom Broker: To use an external message broker, such as Valkey, provide the connection string as shown in the example below.
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       events: {
         enabled: true,
@@ -387,9 +387,9 @@ export default db({
   Enabling this feature (`true`) saves the database schema metadata in a `schema.lock` file, ensuring faster startup times and consistent schema enforcement across sessions. You can also customize the storage location of the `schema.lock` file by providing a specific file path:
 
   ```ts config title="Example Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       schemalock: {
         path: './dbmetadata'
@@ -404,9 +404,9 @@ export default db({
   Set `readOnly` to `true` (or the string `"true"`) to load the schema lock without ever writing it back, e.g. when the file is checked into version control and must not be rewritten at runtime:
 
   ```ts config title="Example Read-Only Object"
-  import { db } from '@platformatic/db'
+  import { createDbConfig } from '@platformatic/db'
 
-  export default db({
+  export default createDbConfig({
     db: {
       schemalock: {
         path: './schema.lock',
@@ -471,9 +471,9 @@ operations are allowed unless `adminSecret` is passed.
 #### Example
 
 ```ts config
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
-export default db({
+export default createDbConfig({
   authorization: {
     jwt: {
       secret: process.env.PLT_AUTHORIZATION_JWT_SECRET ?? ''
@@ -501,9 +501,9 @@ The example below is a basic setup for Platformatic DB using a local SQLite data
 The server is configured to listen on `http://127.0.0.1:3042`:
 
 ```ts config
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
-export default db({
+export default createDbConfig({
   server: {
     hostname: '127.0.0.1',
     port: 3042

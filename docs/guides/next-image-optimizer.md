@@ -84,9 +84,9 @@ In this setup:
 Create `my-runtime/watt.config.ts`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'gateway',
@@ -117,9 +117,9 @@ export default defineConfig({
 Create `my-runtime/web/gateway/watt.config.ts`:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   server: {
     port: 3042
   },
@@ -156,9 +156,9 @@ export default gateway({
 Create `my-runtime/web/optimizer/watt.config.ts`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   next: {
     imageOptimizer: {
       enabled: true,
@@ -185,9 +185,9 @@ export default next({
 Create `my-runtime/web/frontend/watt.config.ts`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: {
     port: Number(process.env.PORT ?? 3042)
   }
@@ -341,9 +341,9 @@ Example Gateway routing:
 `web/gateway/watt.config.ts`:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   server: {
     port: 3042
   },
@@ -372,9 +372,9 @@ export default gateway({
 `web/optimizer/watt.config.ts`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   next: {
     imageOptimizer: {
       enabled: true,

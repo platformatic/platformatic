@@ -145,7 +145,7 @@ Caches npm downloads between builds, significantly speeding up subsequent builds
 Enable Node.js module compile cache in your `watt.config.ts` for faster container startup times:
 
 ```ts
-export default defineConfig({
+export default createWattConfig({
   // ...
   compileCache: true
 })

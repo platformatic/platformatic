@@ -20,7 +20,7 @@ npm install @platformatic/wattpm-pprof-capture @aws-sdk/client-s3
 Register the extension in your `watt.config.ts` and pass its settings via `options`:
 
 ```ts
-export default defineConfig({
+export default createWattConfig({
   // ...
   extensions: [
     {

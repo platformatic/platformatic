@@ -137,17 +137,17 @@ The command will create a `watt.config.ts` for you and also install `@platformat
 
 By default, Watt will run on a random port. To choose a specific port, configure the Next.js capability's `server`
 property. Multithreading is orchestration, so it goes on the application entry rather than inside the
-capability configuration — which makes this file a `defineConfig` with the singular `application`
+capability configuration — which makes this file a `createWattConfig` with the singular `application`
 shorthand:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-export default defineConfig({
+export default createWattConfig({
   application: {
     workers: Number(process.env.PLT_NEXT_WORKERS ?? 1),
-    config: next({
+    config: createNextConfig({
       server: {
         hostname: '0.0.0.0',
         port: Number(process.env.PORT ?? 3042)
@@ -164,13 +164,13 @@ You will also need to configure the Valkey connection string. At the end, your `
 should match:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-export default defineConfig({
+export default createWattConfig({
   application: {
     workers: Number(process.env.PLT_NEXT_WORKERS ?? 1),
-    config: next({
+    config: createNextConfig({
       server: {
         hostname: '0.0.0.0',
         port: Number(process.env.PORT ?? 3042)
@@ -273,9 +273,9 @@ This is a standard Next.js package.json - no Watt dependencies needed. The `watt
 And a minimal `watt.config.ts`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   next: {
     standalone: true
   },

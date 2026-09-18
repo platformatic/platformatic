@@ -154,9 +154,9 @@ my-project/
 ```
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: { level: 'info' }
 })
@@ -167,9 +167,9 @@ that is publicly addressable is the one you point traffic at. Each Fastify appli
 Node.js capability:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   server: { port: Number(process.env.PORT ?? 3042) }
 })
 ```
@@ -196,9 +196,9 @@ exactly that ordering in the startup logs, without configuring anything.
 Declare the prefix on the application:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: { basePath: '/orders' },
   server: { port: Number(process.env.PORT ?? 3042) }
 })
@@ -207,9 +207,9 @@ export default node({
 and list it in the gateway:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [{ id: 'orders' }],
     refreshTimeout: 1000
@@ -237,9 +237,9 @@ If the application needs the full path — it builds absolute URLs, or serves an
 paths must match what clients see — set `absoluteUrl` and register routes under the base path:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: { basePath: '/orders' },
   node: { absoluteUrl: true },
   server: { port: Number(process.env.PORT ?? 3042) }

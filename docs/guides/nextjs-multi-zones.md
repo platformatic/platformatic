@@ -12,9 +12,9 @@ In this guide, you will configure two Next.js applications:
 Create a Watt runtime with Gateway as its entrypoint:
 
 ```ts config title="watt.config.ts"
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'gateway',
@@ -39,9 +39,9 @@ Each application runs independently. Gateway is the only public entrypoint — i
 List both Next.js applications in the Gateway configuration:
 
 ```ts config title="web/gateway/watt.config.ts"
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [
       {
@@ -71,9 +71,9 @@ Do not configure a separate Next.js `assetPrefix` for this layout. A base path m
 The root application does not need a base path:
 
 ```ts config title="web/frontend/watt.config.ts"
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: {
     port: Number(process.env.PORT ?? 3042)
   }
@@ -87,9 +87,9 @@ It serves its pages and Next.js assets from `/` and `/_next`.
 Set the blog application's public path with `application.basePath`:
 
 ```ts config title="web/blog/watt.config.ts"
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   application: {
     basePath: '/blog'
   },

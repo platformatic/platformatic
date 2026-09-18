@@ -26,9 +26,9 @@ npm install @platformatic/tanstack
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { tanstack } from '@platformatic/tanstack'
+import { createTanstackConfig } from '@platformatic/tanstack'
 
-export default tanstack({
+export default createTanstackConfig({
   application: {
     basePath: '/frontend'
   },

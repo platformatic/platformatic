@@ -79,9 +79,9 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 Open the `web/main/watt.config.ts` file and add the telemetry configuration to the factory call:
 
 ```ts config
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
-export default db({
+export default createDbConfig({
   db: {
     connectionString: process.env.DATABASE_URL ?? 'sqlite://./db.sqlite'
   },
@@ -131,9 +131,9 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 Open the `web/main/watt.config.ts` file and add the following telemetry configuration to the factory call (it's exactly the same as `DB`, but with a different `applicationName`)
 
 ```ts config
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
-export default service({
+export default createServiceConfig({
   server: {
     port: Number(process.env.PORT ?? 5043)
   },
@@ -216,9 +216,9 @@ Hello YOURNAME, welcome to Platformatic 3.0.0!
 Open `web/main/watt.config.ts` and change it to the following:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [
       {

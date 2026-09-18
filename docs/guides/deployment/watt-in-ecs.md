@@ -89,7 +89,7 @@ The first change to make is configuring the application to export logs. The
 logger needs a new timestamp format and an exporter added to _watt.config.ts_:
 
 ```ts
-export default defineConfig({
+export default createWattConfig({
   // ...
   logger: {
     timestamp: 'isoTime',
@@ -108,7 +108,7 @@ Next, a `tracing` block must be added to _watt.config.ts_ so that metrics flow i
 This example uses OTLP over HTTP. You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport": "grpc"`) and using `http://localhost:4317` without `/v1/traces`.
 
 ```ts
-export default defineConfig({
+export default createWattConfig({
   // ...
   tracing: {
     applicationName: 'the-app-name',

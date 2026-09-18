@@ -87,9 +87,9 @@ mkdir -p web/ external/
 Configure your `watt.config.ts` to include applications from multiple repositories:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'gateway',

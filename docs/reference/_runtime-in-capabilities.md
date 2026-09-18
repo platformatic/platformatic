@@ -8,15 +8,15 @@ A single application with orchestration to express is a runtime configuration wi
 `application` shorthand, whose `config` is the same factory call the file would otherwise export:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-export default defineConfig({
+export default createWattConfig({
   logger: { level: 'debug' },
   workers: { dynamic: true, minimum: 1, maximum: 4 },
   application: {
     execArgv: ['--max-old-space-size=4096'],
-    config: next({
+    config: createNextConfig({
       server: { port: Number(process.env.PORT ?? 3042) }
     })
   }

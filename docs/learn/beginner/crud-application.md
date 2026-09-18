@@ -387,9 +387,9 @@ Now add the CORS configuration to your **application's** configuration file, `we
 by adding a `server` section:
 
 ```ts config
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
-export default db({
+export default createDbConfig({
   db: {
     connectionString: process.env.DATABASE_URL ?? 'sqlite://./db.sqlite'
   },

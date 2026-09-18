@@ -26,9 +26,9 @@ npm install @platformatic/vite
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { vite } from '@platformatic/vite'
+import { createViteConfig } from '@platformatic/vite'
 
-export default vite({
+export default createViteConfig({
   application: {
     basePath: '/frontend'
   },

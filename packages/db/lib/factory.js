@@ -7,7 +7,7 @@ import { schema, version } from './schema.js'
   capabilities. That is a decision for the schema audit — rename, keep nested, or exclude — and
   until it is recorded the key stays nested, where it is unambiguous.
 */
-export const db = defineCapabilityFactory('@platformatic/db', schema, {
+export const createDbConfig = defineCapabilityFactory('@platformatic/db', schema, {
   version,
   flatten: ['db'],
   exclude: ['cache']

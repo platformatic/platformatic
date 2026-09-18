@@ -1,6 +1,6 @@
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   server: {
     hostname: process.env.HOSTNAME ?? '127.0.0.1',
     port: Number(process.env.PORT ?? 3042)

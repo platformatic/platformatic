@@ -40,7 +40,7 @@ test('should write file and dirs', async t => {
   // A generator with nothing to say still writes the factory call: owning the file is what declares
   // the application's scope.
   const configFile = await readFile(join(dir, 'watt.config.ts'), 'utf8')
-  equal(configFile, "import { service } from '@platformatic/service'\n\nexport default service({})\n")
+  equal(configFile, "import { createServiceConfig } from '@platformatic/service'\n\nexport default createServiceConfig({})\n")
 
   const gitignore = await readFile(join(dir, '.gitignore'), 'utf8')
   ok(gitignore.length > 0) // file is created and not empty
@@ -74,7 +74,7 @@ test('extended class should generate config', async t => {
     path: '',
     file: 'watt.config.ts',
     // The v4 per-app form: a capability with a factory is spelled by calling it.
-    contents: "import { service } from '@platformatic/service'\n\nexport default service({\n  foo: 'bar'\n})\n",
+    contents: "import { createServiceConfig } from '@platformatic/service'\n\nexport default createServiceConfig({\n  foo: 'bar'\n})\n",
     options: {},
     tags: []
   })

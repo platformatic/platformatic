@@ -33,9 +33,9 @@ Watt provides the `execArgv` configuration on each application to pass Node.js f
 Use the `execArgv` option on each application to configure OpenTelemetry:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'api',
@@ -57,9 +57,9 @@ Platformatic Service, Gateway, and DB applications declare their listener in the
 When you have multiple applications, each needs its own `execArgv` configuration:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'api',
@@ -134,9 +134,9 @@ The `workerData` object is automatically set by Watt for each worker thread and 
 To forward user-created OpenTelemetry metrics through Watt, configure the OTLP endpoint in the root runtime `watt.config.ts`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   metrics: {
     opentelemetry: {
@@ -226,9 +226,9 @@ Common issues:
 **watt.config.ts:**
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'api',

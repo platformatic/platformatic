@@ -315,9 +315,9 @@ The gateway acts as your API gateway, routing external requests to internal serv
 
 ```ts config
 // web/gateway/watt.config.ts
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [
       {
@@ -354,9 +354,9 @@ export default gateway({
 Add HTTP caching configuration to your root-level `watt.config.ts` file:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   httpCache: {
     cacheTagsHeader: 'X-Cache-Tags'
   },
@@ -384,9 +384,9 @@ export default defineConfig({
 You can fine-tune the cache behavior with additional options:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   httpCache: {
     cacheTagsHeader: 'X-Cache-Tags',
     origins: [

@@ -6,7 +6,7 @@ import { schema, version } from './schema.js'
   Classification rule 2 is unconditional precisely so that a definition carrying it is still read
   as an application definition rather than as a root configuration.
 */
-export const gateway = defineCapabilityFactory('@platformatic/gateway', schema, {
+export const createGatewayConfig = defineCapabilityFactory('@platformatic/gateway', schema, {
   version,
   flatten: ['gateway']
 })

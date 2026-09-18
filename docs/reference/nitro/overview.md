@@ -33,9 +33,9 @@ npm install @platformatic/nitro
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { nitro } from '@platformatic/nitro'
+import { createNitroConfig } from '@platformatic/nitro'
 
-export default nitro({
+export default createNitroConfig({
   application: {
     basePath: '/frontend'
   },

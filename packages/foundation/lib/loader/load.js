@@ -151,7 +151,7 @@ function reportMutatedEnv (report, source, keys) {
     type: 'mutated-env',
     source,
     keys,
-    message: `configuration evaluation mutated process.env; these keys do NOT propagate to applications: ${keys.join(', ')}. Use: defineConfig({ env: { … } })`
+    message: `configuration evaluation mutated process.env; these keys do NOT propagate to applications: ${keys.join(', ')}. Use: createWattConfig({ env: { … } })`
   })
 }
 

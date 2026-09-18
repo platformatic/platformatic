@@ -36,7 +36,7 @@ export declare const supportedVersions: string
 
 export type TanstackConfigOptions = CapabilityFactoryOptions<PlatformaticTanStackConfig, 'vite', never>
 
-export declare function tanstack (options?: TanstackConfigOptions): ApplicationDefinition
-export declare function tanstack (
+export declare function createTanstackConfig (options?: TanstackConfigOptions): ApplicationDefinition
+export declare function createTanstackConfig (
   callback: (context: ConfigContext) => TanstackConfigOptions | Promise<TanstackConfigOptions>
 ): DeferredApplicationDefinition

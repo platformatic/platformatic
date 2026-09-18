@@ -74,7 +74,7 @@ export namespace errors {
 
 export type GatewayConfigOptions = CapabilityFactoryOptions<PlatformaticGatewayConfig, 'gateway', never>
 
-export declare function gateway (options?: GatewayConfigOptions): ApplicationDefinition
-export declare function gateway (
+export declare function createGatewayConfig (options?: GatewayConfigOptions): ApplicationDefinition
+export declare function createGatewayConfig (
   callback: (context: ConfigContext) => GatewayConfigOptions | Promise<GatewayConfigOptions>
 ): DeferredApplicationDefinition

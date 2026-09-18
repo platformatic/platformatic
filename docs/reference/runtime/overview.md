@@ -24,9 +24,9 @@ If you're only interested in the features available in Platformatic Runtime, you
 The following configuration file can be used to start a new Platformatic Runtime project. For more details on the configuration file, see the [configuration documentation](../runtime/configuration.md).
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: './packages',
     exclude: ['docs']

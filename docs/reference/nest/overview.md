@@ -26,9 +26,9 @@ npm install @platformatic/nest
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { nest } from '@platformatic/nest'
+import { createNestConfig } from '@platformatic/nest'
 
-export default nest({
+export default createNestConfig({
   application: {
     basePath: '/frontend'
   },

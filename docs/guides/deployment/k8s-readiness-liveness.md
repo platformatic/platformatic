@@ -172,7 +172,7 @@ Readiness and liveness endpoints run on the metrics server, so enabling HTTPS (T
 For Kubernetes, store the certificate and private key in a Secret and mount it into the container. Then reference those files from `watt.config.ts`:
 
 ```ts
-export default defineConfig({
+export default createWattConfig({
   // ...
   metrics: {
     hostname: '0.0.0.0',
@@ -366,7 +366,7 @@ export async function create () {
 Configure the metrics server in your `watt.config.ts` file:
 
 ```ts
-export default defineConfig({
+export default createWattConfig({
   // ...
   metrics: {
     hostname: '0.0.0.0',

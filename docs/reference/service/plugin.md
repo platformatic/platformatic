@@ -9,7 +9,7 @@ To add more features to a Platformatic service, you will need to register a plug
 The config file specifies where the plugin file is located. The path is relative to the config file path.
 
 ```ts title="watt.config.ts"
-export default service({
+export default createServiceConfig({
   // ...
   plugins: {
     paths: ['./plugin/index.js']
@@ -59,7 +59,7 @@ See the [autoload](../runtime/configuration.md#autoload) documentation for all t
 Multiple plugins can be loaded in parallel by specifying an array:
 
 ```ts
-export default service({
+export default createServiceConfig({
   // ...
   plugins: {
     paths: [{

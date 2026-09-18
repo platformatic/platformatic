@@ -39,7 +39,7 @@ export declare const supportedVersions: string
 
 export type AstroConfigOptions = CapabilityFactoryOptions<PlatformaticAstroConfig, 'astro', never>
 
-export declare function astro (options?: AstroConfigOptions): ApplicationDefinition
-export declare function astro (
+export declare function createAstroConfig (options?: AstroConfigOptions): ApplicationDefinition
+export declare function createAstroConfig (
   callback: (context: ConfigContext) => AstroConfigOptions | Promise<AstroConfigOptions>
 ): DeferredApplicationDefinition

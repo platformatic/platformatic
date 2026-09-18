@@ -157,13 +157,13 @@ npm install -D @platformatic/tsconfig
 **Create `watt.config.ts` in your project root:**
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { node } from '@platformatic/node'
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
 
-export default defineConfig({
+export default createWattConfig({
   application: {
     execArgv: ['-r', 'ts-node/register'],
-    config: node({
+    config: createNodeConfig({
       application: {
         commands: {
           build: 'tsc -p .'
@@ -185,7 +185,7 @@ Key configuration details:
 - `node.disableBuildInDevelopment: true` ensures TypeScript runs directly in dev mode without needing to build first
 - `execArgv` on the application entry configures how Node.js runs your TypeScript files. It is
   orchestration rather than capability configuration, which is why the file wraps the factory call
-  in `defineConfig`:
+  in `createWattConfig`:
   - `"-r", "ts-node/register"` registers ts-node for CommonJS module loading
 
 This configuration provides maximum compatibility - it works whether your TypeScript compiles to CommonJS or ESM, automatically handling both module systems.
@@ -288,13 +288,13 @@ Key changes:
 Change the `execArgv` configuration to use ts-node's ESM loader:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { node } from '@platformatic/node'
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
 
-export default defineConfig({
+export default createWattConfig({
   application: {
     execArgv: ['--loader', 'ts-node/esm'],
-    config: node({
+    config: createNodeConfig({
       application: {
         commands: {
           build: 'tsc -p .'
@@ -383,9 +383,9 @@ Node.js built-in type stripping only strips types and doesn't transpile TypeScri
 **1. Update `watt.config.ts` to use Node.js built-in type stripping:**
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   server: {
     port: 3000
   }
@@ -473,13 +473,13 @@ npm install -D @swc-node/register @swc/core
 **Update `watt.config.ts` in your project root:**
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { node } from '@platformatic/node'
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
 
-export default defineConfig({
+export default createWattConfig({
   application: {
     execArgv: ['--import', '@swc-node/register/esm-register'],
-    config: node({
+    config: createNodeConfig({
       node: {
         disableBuildInDevelopment: true
       }
@@ -548,9 +548,9 @@ Use this configuration when your project uses `"type": "module"` in package.json
 **watt.config.ts:**
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: {
     commands: {
       development: 'node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts',
@@ -622,9 +622,9 @@ Notice: No `"type": "module"` field — this keeps the project in CommonJS mode.
 **watt.config.ts:**
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: {
     commands: {
       development: 'node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts',
@@ -648,13 +648,13 @@ The `--import tsx` flag works for both ESM and CommonJS projects — tsx automat
 Unlike ts-node and swc-node, tsx **cannot** be used with the `execArgv` configuration in Watt:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { node } from '@platformatic/node'
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
 
-export default defineConfig({
+export default createWattConfig({
   application: {
     execArgv: ['--import', 'tsx'],
-    config: node({})
+    config: createNodeConfig({})
   }
 })
 ```

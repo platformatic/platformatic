@@ -98,9 +98,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     **Example: Basic HTTP Proxy**
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         applications: [
           {
@@ -118,9 +118,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     **Example: Method/Route-based Proxy Selection**
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         applications: [
           {
@@ -143,9 +143,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     **Example: WebSocket Proxy with Reconnection**
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         applications: [
           {
@@ -175,9 +175,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     **Example: Custom Proxy Logic**
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         applications: [
           {
@@ -228,9 +228,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     origin is routed through the runtime mesh network.
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         applications: [
           {
@@ -301,9 +301,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     **Example: Hostname-based Routing**
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         applications: [
           {
@@ -359,9 +359,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   ```
 
   ```ts config
-  import { gateway } from '@platformatic/gateway'
+  import { createGatewayConfig } from '@platformatic/gateway'
 
-  export default gateway({
+  export default createGatewayConfig({
     gateway: {
       handler: './handler.js',
       applications: [
@@ -393,9 +393,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     Examples:
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         deduplication: {
           storage: {
@@ -407,9 +407,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     ```ts config
-    import { gateway } from '@platformatic/gateway'
+    import { createGatewayConfig } from '@platformatic/gateway'
 
-    export default gateway({
+    export default createGatewayConfig({
       gateway: {
         deduplication: {
           storage: {
@@ -435,9 +435,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   Default key computation uses the configured application `origin`, request method, rewritten proxy URL including query string, and the configured request headers.
 
   ```ts config
-  import { gateway } from '@platformatic/gateway'
+  import { createGatewayConfig } from '@platformatic/gateway'
 
-  export default gateway({
+  export default createGatewayConfig({
     gateway: {
       deduplication: {
         enabled: true,
@@ -470,9 +470,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 
   ```ts config
-  import { gateway } from '@platformatic/gateway'
+  import { createGatewayConfig } from '@platformatic/gateway'
 
-  export default gateway({
+  export default createGatewayConfig({
     gateway: {
       passthroughContentTypes: [
         'multipart/form-data',
@@ -550,9 +550,9 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
   Composition of two remote applications:
 
   ```ts config
-  import { gateway } from '@platformatic/gateway'
+  import { createGatewayConfig } from '@platformatic/gateway'
 
-  export default gateway({
+  export default createGatewayConfig({
     gateway: {
       applications: [
         {
@@ -579,9 +579,9 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
   Composition of two local applications inside Platformatic Runtime:
 
   ```ts config
-  import { gateway } from '@platformatic/gateway'
+  import { createGatewayConfig } from '@platformatic/gateway'
 
-  export default gateway({
+  export default createGatewayConfig({
     gateway: {
       applications: [
         {

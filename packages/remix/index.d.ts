@@ -39,7 +39,7 @@ export declare const supportedVersions: string
 
 export type RemixConfigOptions = CapabilityFactoryOptions<PlatformaticRemixConfig, 'vite' | 'remix', never>
 
-export declare function remix (options?: RemixConfigOptions): ApplicationDefinition
-export declare function remix (
+export declare function createRemixConfig (options?: RemixConfigOptions): ApplicationDefinition
+export declare function createRemixConfig (
   callback: (context: ConfigContext) => RemixConfigOptions | Promise<RemixConfigOptions>
 ): DeferredApplicationDefinition

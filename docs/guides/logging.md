@@ -31,9 +31,9 @@ The default configuration uses `level: info` with pretty-printed output in devel
 **Solution:** Configure the `level` property in your `watt.config.ts`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level: 'debug'
@@ -54,7 +54,7 @@ export default defineConfig({
 **Environment-specific example:**
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
 const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
 
@@ -62,7 +62,7 @@ const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as
 // level is caught while you type instead of at boot.
 const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: { level }
 })
@@ -77,9 +77,9 @@ Set `LOG_LEVEL=error` in production, `LOG_LEVEL=debug` in development.
 **Solution:** Configure a file transport in your `watt.config.ts`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     transport: {
@@ -100,9 +100,9 @@ export default defineConfig({
 **Multiple destinations example:**
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     transport: {
@@ -139,9 +139,9 @@ This logs all messages to console with pretty formatting, and errors to a file.
 ### OpenTelemetry (Recommended for Observability)
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     openTelemetryExporter: {
@@ -172,9 +172,9 @@ This automatically:
 The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support OTLP over gRPC with:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   tracing: {
     applicationName: 'my-app',
@@ -206,9 +206,9 @@ npm install pino-sentry-transport @sentry/node
 Then add a Sentry target to `logger.transport.targets`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level: 'info',
@@ -241,9 +241,9 @@ Options inside `options.sentry` are passed to `@sentry/node` initialization. Use
 Use `minLevel` if you also want `pino-sentry-transport` to filter records internally:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level: 'debug',
@@ -270,9 +270,9 @@ In this example, Watt emits `debug` and above, the Sentry transport target recei
 ### Elasticsearch
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     transport: {
@@ -298,9 +298,9 @@ AWS Cloudwatch can use the timestamp from logs in the Cloudwatch and Cloudwatch
 Insights dashboards. To do this, the timestamp format needs to be changed.
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     timestamp: 'isoTime'
@@ -315,9 +315,9 @@ export default defineConfig({
 **Solution:** Use the `redact` configuration to automatically hide sensitive fields:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     redact: {
@@ -365,9 +365,9 @@ export default defineConfig({
 **Solution:** Configure production-optimized logging:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level: 'info',
@@ -455,9 +455,9 @@ With default pino settings:
 With custom logger configuration, for example
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     captureStdio: false,
@@ -478,9 +478,9 @@ export default defineConfig({
 Set `logger.pino` to the keys emitted by your worker application logs:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     pino: {
@@ -545,9 +545,9 @@ The `captureStdio` option in `wattpm` can be set to `false` to disable the captu
 `watt.config.ts`
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     captureStdio: false
@@ -569,12 +569,12 @@ A configuration file is a program, so it reads the environment directly — ther
 `{PLACEHOLDER}` syntax:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
 const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
 const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level,
@@ -598,9 +598,9 @@ export default defineConfig({
 A `watt.config.ts` with those logger options looks like this:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   logger: {
     level: 'debug',
     formatters: {
@@ -671,9 +671,9 @@ The main `watt` application has a shared logger configuration that is used by al
 `watt.config.ts`
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   logger: {
     level: 'info',
     timestamp: 'isoTime'
@@ -689,9 +689,9 @@ The applications have their own configuration. The `gateway` application is the 
 `gateway/watt.config.ts`
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   server: {
     hostname: process.env.HOSTNAME ?? '127.0.0.1',
     port: Number(process.env.PORT ?? 3042)
@@ -702,9 +702,9 @@ export default gateway({
 `backend/watt.config.ts`
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   logger: {
     level: 'debug',
     redact: {
@@ -734,9 +734,9 @@ The `next` application has a custom formatter that adds the `application` proper
 `next/watt.config.ts`
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   application: {
     basePath: '/next'
   },

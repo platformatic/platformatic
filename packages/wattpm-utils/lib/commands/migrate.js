@@ -988,7 +988,7 @@ export function emitApplicationConfiguration (
 
   /*
     Level 1: nothing but capability configuration, so the factory call is the whole file. A
-    defineConfig wrapper around no runtime settings would be ceremony that says nothing.
+    createWattConfig wrapper around no runtime settings would be ceremony that says nothing.
 
     Unless the id has to be pinned, which is the one thing a bare factory call has nowhere to put:
     v4 would re-derive it from the package name and either reach a different hostname or refuse the
@@ -1022,10 +1022,10 @@ export function emitApplicationConfiguration (
 
   return (
     pathImport +
-    'import { defineConfig } from \'wattpm\'\n' +
+    'import { createWattConfig } from \'wattpm\'\n' +
     `import { ${factory} } from '${module}'\n\n` +
     preamble +
-    `export default defineConfig(${serializeValue({ ...root, application: shorthand })})\n`
+    `export default createWattConfig(${serializeValue({ ...root, application: shorthand })})\n`
   )
 }
 
@@ -1057,7 +1057,7 @@ export function emitRootConfiguration (
 
   // A root-inline entry calls its factory in this file, so the file has to import it. Sorted and
   // deduplicated because two inline entries may share a capability.
-  const imports = ["import { defineConfig } from 'wattpm'"]
+  const imports = ["import { createWattConfig } from 'wattpm'"]
 
   if (needsPath) {
     imports.unshift("import { join } from 'node:path'")
@@ -1067,7 +1067,7 @@ export function emitRootConfiguration (
     imports.push(`import { ${factories[module]} } from '${module}'`)
   }
 
-  return `${imports.join('\n')}\n\n${emitHelpers(helpers)}export default defineConfig(${serializeValue({ ...root, applications: entries })})\n`
+  return `${imports.join('\n')}\n\n${emitHelpers(helpers)}export default createWattConfig(${serializeValue({ ...root, applications: entries })})\n`
 }
 
 /*
@@ -2192,7 +2192,7 @@ async function reportBreakingChanges (root, directories, entries) {
 /*
   The dependencies the emitted files import.
 
-  A per-app file calls its capability's factory and the root imports `defineConfig` from `wattpm`,
+  A per-app file calls its capability's factory and the root imports `createWattConfig` from `wattpm`,
   and neither resolves from a v3 install: the installed copy has no factory export and follows a
   contract v4 does not. An umbrella-`platformatic` project never had `wattpm` at all.
 
@@ -2208,7 +2208,7 @@ async function auditDependencies (journal, root, plan, module) {
   const range = requiredRange()
   const edited = []
 
-  // The root file imports defineConfig, so the root needs wattpm whether or not it ever had it.
+  // The root file imports createWattConfig, so the root needs wattpm whether or not it ever had it.
   const needed = new Map([[canonicalize(root), new Set(plan ? ['wattpm'] : [])]])
 
   for (const application of plan?.applications ?? []) {

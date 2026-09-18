@@ -6,7 +6,7 @@ import { schema, version } from './schema.js'
   from the capability's block while application.outputDirectory stays nested, which is why the
   application block is not flattened anywhere.
 */
-export const remix = defineCapabilityFactory('@platformatic/remix', schema, {
+export const createRemixConfig = defineCapabilityFactory('@platformatic/remix', schema, {
   version,
   flatten: ['vite', 'remix']
 })

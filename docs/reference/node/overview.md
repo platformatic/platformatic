@@ -26,9 +26,9 @@ npm install @platformatic/node
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: {
     basePath: '/frontend'
   }
@@ -336,9 +336,9 @@ When configuring production mode instead, you have to configure both the `comman
 A complete typical setup for the application `watt.config.ts` file will be something like this:
 
 ```ts config
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   application: {
     commands: {
       development: 'node --import tsx server.ts',

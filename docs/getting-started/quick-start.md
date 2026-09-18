@@ -161,9 +161,9 @@ You can customize how the various applications are exposed by changing `web/gate
 Here is the equivalent of the default configuration when exposing a Node.js application:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [
       {
@@ -281,9 +281,9 @@ This will also install the required dependencies. The command will output:
 Then, we need to tell Watt to expose our `next` server on `/next` by modifying `web/next/watt.config.ts`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   application: {
     basePath: '/next'
   },

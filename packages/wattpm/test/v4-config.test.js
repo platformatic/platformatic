@@ -36,9 +36,9 @@ test('a Level 1 file is a bare factory call, auto-wrapped into a single-applicat
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `
-      import { node } from '@platformatic/node'
+      import { createNodeConfig } from '@platformatic/node'
 
-      export default node({ main: './server.js', server: { port: 3042 } })
+      export default createNodeConfig({ main: './server.js', server: { port: 3042 } })
     `,
     'server.js': 'export function create () {}'
   })
@@ -78,12 +78,12 @@ test('a Level 1b file uses defineConfig with the singular application shorthand'
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `
-      import { defineConfig } from '${wattpmEntry}'
-      import { node } from '@platformatic/node'
+      import { createWattConfig } from '${wattpmEntry}'
+      import { createNodeConfig } from '@platformatic/node'
 
-      export default defineConfig({
+      export default createWattConfig({
         logger: { level: 'warn' },
-        application: { workers: 2, config: node({ main: './server.js' }) }
+        application: { workers: 2, config: createNodeConfig({ main: './server.js' }) }
       })
     `,
     'server.js': ''
@@ -100,11 +100,11 @@ test('the functional form receives the config context, and TypeScript is strippe
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `
-      import { defineConfig } from '${wattpmEntry}'
+      import { createWattConfig } from '${wattpmEntry}'
 
       const level: string = 'debug'
 
-      export default defineConfig(({ command, mode, production }) => ({
+      export default createWattConfig(({ command, mode, production }) => ({
         watch: command === 'dev',
         logger: { level: production ? 'warn' : level },
         applications: [{ id: 'api', path: '.', config: { module: '@platformatic/node' } }],
@@ -130,9 +130,9 @@ test('the factory callback form is deferred and resolved by the loader', async t
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `
-      import { node } from '@platformatic/node'
+      import { createNodeConfig } from '@platformatic/node'
 
-      export default node(async ({ mode }) => ({ main: mode === 'production' ? './prod.js' : './dev.js' }))
+      export default createNodeConfig(async ({ mode }) => ({ main: mode === 'production' ? './prod.js' : './dev.js' }))
     `
   })
 
@@ -147,16 +147,16 @@ test('a monorepo evaluates each per-app file in its own worker under its own env
     'package.json': JSON.stringify({ name: 'proj', type: 'module' }),
     '.env': 'SHARED=root\n',
     'watt.config.ts': `
-      import { defineConfig } from '${wattpmEntry}'
+      import { createWattConfig } from '${wattpmEntry}'
 
-      export default defineConfig({ autoload: { path: 'web' } })
+      export default createWattConfig({ autoload: { path: 'web' } })
     `,
     'web/api/package.json': JSON.stringify({ name: '@acme/api', type: 'module' }),
     'web/api/.env': 'PORT=3001\n',
     'web/api/watt.config.ts': `
-      import { node } from '@platformatic/node'
+      import { createNodeConfig } from '@platformatic/node'
 
-      export default node({
+      export default createNodeConfig({
         main: './index.js',
         server: { port: Number(process.env.PORT), hostname: process.env.SHARED }
       })
@@ -164,9 +164,9 @@ test('a monorepo evaluates each per-app file in its own worker under its own env
     'web/frontend/package.json': JSON.stringify({ name: 'frontend', type: 'module' }),
     'web/frontend/.env': 'PORT=3002\n',
     'web/frontend/watt.config.ts': `
-      import { node } from '@platformatic/node'
+      import { createNodeConfig } from '@platformatic/node'
 
-      export default node({ main: './index.js', server: { port: Number(process.env.PORT) } })
+      export default createNodeConfig({ main: './index.js', server: { port: Number(process.env.PORT) } })
     `
   })
 
@@ -188,9 +188,9 @@ test('an option the capability schema does not have is rejected by that schema',
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `
-      import { node } from '@platformatic/node'
+      import { createNodeConfig } from '@platformatic/node'
 
-      export default node({ notAnOption: true })
+      export default createNodeConfig({ notAnOption: true })
     `
   })
 
@@ -209,9 +209,9 @@ test('a factory result is plain serializable data', async t => {
   const root = await createProject(t, {
     'package.json': JSON.stringify({ name: 'shop', type: 'module' }),
     'watt.config.ts': `
-      import { node } from '@platformatic/node'
+      import { createNodeConfig } from '@platformatic/node'
 
-      export default node({ main: './server.js' })
+      export default createNodeConfig({ main: './server.js' })
     `
   })
 

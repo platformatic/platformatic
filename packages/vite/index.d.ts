@@ -55,7 +55,7 @@ export declare const deploymentIdEnv: 'PLT_DEPLOYMENT_ID'
 
 export type ViteConfigOptions = CapabilityFactoryOptions<PlatformaticViteConfig, 'vite', never>
 
-export declare function vite (options?: ViteConfigOptions): ApplicationDefinition
-export declare function vite (
+export declare function createViteConfig (options?: ViteConfigOptions): ApplicationDefinition
+export declare function createViteConfig (
   callback: (context: ConfigContext) => ViteConfigOptions | Promise<ViteConfigOptions>
 ): DeferredApplicationDefinition

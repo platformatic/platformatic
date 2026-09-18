@@ -6,7 +6,7 @@ import { schema, version } from './schema.js'
   from the capability's block while application.outputDirectory stays nested, which is why the
   application block is not flattened anywhere.
 */
-export const reactRouter = defineCapabilityFactory('@platformatic/react-router', schema, {
+export const createReactRouterConfig = defineCapabilityFactory('@platformatic/react-router', schema, {
   version,
   flatten: ['vite', 'reactRouter']
 })

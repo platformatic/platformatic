@@ -18,7 +18,7 @@ runtime dialect. The distinction between "a single-app config with a nested `run
 block" and "a runtime config with nested applications" disappears. A single-app project
 and a 20-app monorepo use the same dialect; scaling from one to many means **the
 application definition moves unchanged** — a single app's entire `watt.config.ts`
-becomes that app's per-app file, and the `next({ … })` expression is
+becomes that app's per-app file, and the `createNextConfig({ … })` expression is
 syntactically identical in a single-app root, a root-inline entry, and a per-app
 file. Two things differ and neither is the shape: which directory's env files the
 evaluation sees (see "Env files"), and a port expression naming the global `PORT`,
@@ -26,9 +26,9 @@ which has to be scoped when siblings appear beside it (see the Summary).
 
 ```ts config
 // watt.config.ts — a complete single-app Next.js project
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: { port: Number(process.env.PORT || 3042) },
   cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 })
@@ -60,15 +60,15 @@ variable that means "the port" to the whole machine is not, and byte-identical i
 claim about the first.
 
 Runtime orchestration options, when a project needs them, come
-from `defineConfig`:
+from `createWattConfig`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-export default defineConfig({
+export default createWattConfig({
   logger: { level: 'info' },
-  application: next({
+  application: createNextConfig({
     server: { port: Number(process.env.PORT || 3042) },
     cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
   })
@@ -81,7 +81,7 @@ applications are exposed").
 
 The singular `application` key is the single-app shorthand, and its value is the
 capability definition itself — the same expression a per-app file's default export
-and a root entry's `config` hold. `application: next({ … })` is one application with
+and a root entry's `config` hold. `application: createNextConfig({ … })` is one application with
 the runtime options beside it; the shorthand wraps the bare definition into the
 entry's `config` slot the same way a bare definition exported at the root is wrapped
 (`foundation/lib/loader/topology.js:12-22`, `foundation/lib/loader/classify.js:40-42`).
@@ -91,7 +91,7 @@ the shorthand, and for a single application it rarely needs to be: every one of 
 settings has a runtime-level counterpart, and with one application "the runtime's
 setting" *is* "the application's setting", so it goes top-level. For the genuinely
 per-entry rest, the shorthand also accepts the full **entry** form — `application: {
-workers: 2, config: next({ … }) }`, the same `{ config, workers, … }` shape as one
+workers: 2, config: createNextConfig({ … }) }`, the same `{ config, workers, … }` shape as one
 element of `applications` — or drop to the `applications` array. The shorthand tells
 the two apart structurally: a value carrying an entry key (`config`, `path`, `url`,
 `id`) is an entry; a bare factory result is a definition.
@@ -244,7 +244,7 @@ auto-detected from `package.json` dependencies, defaults apply. Nothing is writt
 disk.
 
 **Level 1 — single app, capability options only.** One file at the project root
-whose default export is the bare factory call — `export default next({ … })` (see
+whose default export is the bare factory call — `export default createNextConfig({ … })` (see
 Summary above). The loader auto-wraps it as a single-app runtime with default
 orchestration, and the file is byte-identical to a monorepo per-app config file
 except for the port variable, which scopes when siblings exist (see the Summary).
@@ -254,8 +254,8 @@ export has no entry to carry an explicit `id`, so a project whose id would move 
 Level 1b instead (see "`wattpm-utils migrate`").
 
 **Level 1b — single app with runtime options.** When there is orchestration to
-express, `defineConfig` with the singular `application` shorthand carrying the bare
-capability definition: `application: next({ … })`. Every runtime option (`logger`,
+express, `createWattConfig` with the singular `application` shorthand carrying the bare
+capability definition: `application: createNextConfig({ … })`. Every runtime option (`logger`,
 `health`, `metrics`, `telemetry`, `undici`, `httpCache`, `gracefulShutdown`, …) is
 top-level — exactly where it is in a multi-app config — and applies to the one
 application, so per-app orchestration almost never needs the entry form here. **The
@@ -270,18 +270,18 @@ project would use, with the port variable scoped to the application:
 
 ```ts config
 // watt.config.ts (root)
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' }
 })
 ```
 
 ```ts config
 // web/frontend/watt.config.ts
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: { port: Number(process.env.PLT_FRONTEND_PORT || 3042) },
   cache: { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 })
@@ -302,12 +302,12 @@ layout means adding it to the root `package.json` (see "Dependency resolution"):
 
 ```ts config
 // watt.config.ts
-import { defineConfig } from 'wattpm'
-import { gateway } from '@platformatic/gateway'
-import { service } from '@platformatic/service'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createGatewayConfig } from '@platformatic/gateway'
+import { createServiceConfig } from '@platformatic/service'
+import { createNextConfig } from '@platformatic/next'
 
-export default defineConfig(({ env, production }) => ({
+export default createWattConfig(({ env, production }) => ({
   logger: { level: production ? 'warn' : 'info' },
   metrics: production ? { port: 9090 } : false,
 
@@ -315,7 +315,7 @@ export default defineConfig(({ env, production }) => ({
     {
       id: 'gateway',
       path: 'web/gateway',
-      config: gateway({
+      config: createGatewayConfig({
         server: { port: Number(env.PLT_GATEWAY_PORT || 3042) },
         applications: [
           { id: 'api', proxy: { prefix: '/api' } },
@@ -328,12 +328,12 @@ export default defineConfig(({ env, production }) => ({
       path: 'web/api',
       workers: production ? 4 : 1,
       telemetry: { instrumentations: ['pg'] },
-      config: service({ basePath: '/api' })
+      config: createServiceConfig({ basePath: '/api' })
     },
     {
       id: 'frontend',
       path: 'web/frontend',
-      config: next({ server: { port: 0 } })
+      config: createNextConfig({ server: { port: 0 } })
     }
   ]
 }))
@@ -410,14 +410,14 @@ test, no evaluation needed, and `migrate` never emits this state.
 
 ### Functional form and the config context
 
-`defineConfig` also accepts a function, sync or async — and so do **per-app config
+`createWattConfig` also accepts a function, sync or async — and so do **per-app config
 files**: a function export is called once with the context and its *resolved value*
 is classified (root config or application definition) by the normal rules.
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig(({ command, mode, production, env }) => ({
+export default createWattConfig(({ command, mode, production, env }) => ({
   watch: command === 'dev',
   logger: { level: mode === 'staging' ? 'debug' : production ? 'warn' : 'info' },
   applications: [/* … */]
@@ -426,9 +426,9 @@ export default defineConfig(({ command, mode, production, env }) => ({
 
 ```ts config
 // web/frontend/watt.config.ts — per-app conditionals, typed via the factory
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next(({ mode }) => ({
+export default createNextConfig(({ mode }) => ({
   cache: mode === 'test' ? undefined : { adapter: 'redis', url: process.env.REDIS_URL ?? '' }
 }))
 ```
@@ -437,7 +437,7 @@ Every factory's options parameter also accepts a **callback** (sync or async)
 receiving the typed `ConfigContext` — so per-app files get contextual autocomplete
 from the import they already have, without depending on `wattpm` (Node's `node_modules` walk-up
 usually does resolve it from an app directory, but the typing is the point). The implementation reuses classification
-rule 1: `next(cb)` returns the function `async ctx => next(await cb(ctx))`
+rule 1: `createNextConfig(cb)` returns the function `async ctx => createNextConfig(await cb(ctx))`
 (the `await` is what makes the async half of the contract work — the callback's
 promise must resolve *before* the factory sees the options), which the loader
 calls with the context and re-classifies — serializability is untouched (the
@@ -456,15 +456,15 @@ such worker (see "Object config sources"). An eager expression in a programmatic
 object is evaluated by the embedder before `create()` is called at all, so it reads
 the embedder's environment by construction — that is inherent to passing an
 already-built object, not something the loader could change.
-`config: next({ url: process.env.X })` and
-`config: next(ctx => ({ url: ctx.env.X }))` resolve `X` the same way — absent
+`config: createNextConfig({ url: process.env.X })` and
+`config: createNextConfig(ctx => ({ url: ctx.env.X }))` resolve `X` the same way — absent
 mutation during evaluation, since `ctx.env` is a snapshot taken at the start and
 `process.env` stays live (the diff-and-warn below exists for exactly that case). The callback
 exists to type its parameter and to allow asynchronous option construction, not to
 observe anything the eager form cannot; there is no position whose environment
 depends on the file having been unwrapped first, which is what keeps the loader
 free of a per-entry resolution pass. A
-bare function export (`export default (ctx) => next(…)`) remains legal — it is
+bare function export (`export default (ctx) => createNextConfig(…)`) remains legal — it is
 exactly what the callback form desugars to — but the callback form is the
 documented one because it types its parameter. The callback overload's declared
 return type widens accordingly (it returns a deferred definition, not an
@@ -525,7 +525,7 @@ export declare function next (
 **Two overloads, not a union parameter.** The callback form returns a
 `DeferredApplicationDefinition` — a function the loader awaits — so reading `.module`
 on it is a type error until it has run. A single signature returning
-`ApplicationDefinition` for both forms would typecheck `next(cb).module`, which is
+`ApplicationDefinition` for both forms would typecheck `createNextConfig(cb).module`, which is
 exactly the mistake the deferred type exists to prevent.
 
 Factory options are the capability's per-app configuration — what lived in the app's
@@ -628,9 +628,9 @@ resolved config as data). Capabilities that were never updated past the v3 contr
 in v4, factory or not:
 
 ```ts config refused
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [{ id: 'php', path: 'web/php', config: { module: '@platformatic/php' } }]
 })
 ```
@@ -643,9 +643,9 @@ Capabilities implement their factory with a helper from `@platformatic/basic`
 Non-capability orchestration entries keep working:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [{ id: 'legacy', url: 'https://github.com/org/legacy.git', gitBranch: 'main' }]
 })
 ```
@@ -923,7 +923,7 @@ export — after the walk, not before it (see "Loading mechanism", step 2):
 2. an object with `module` is an `ApplicationDefinition` (per-app) —
    **unconditionally**. There is no key-collision check: capabilities
    legitimately use option names that are also root keys
-   (`gateway({ applications: … })`, nitro's `entrypoint`, every capability's
+   (`createGatewayConfig({ applications: … })`, nitro's `entrypoint`, every capability's
    nested `application` block), so any collision list would misclassify valid
    factory results. The rule is safe in the other direction because v4 root
    configs never contain `module` — the root schema has no such key. Options
@@ -1225,14 +1225,14 @@ configuration**, and this section is the whole of the model. It applies uniforml
 to a full runtime boot and to a standalone one — the wrapped single-app runtime
 applies no *root* config settings (standalone means standalone), but there were
 never any exposure settings there to apply, so an application listens identically
-either way. `next({ server: { port: 8080 } })` listens on 8080 in a monorepo and
+either way. `createNextConfig({ server: { port: 8080 } })` listens on 8080 in a monorepo and
 listens on 8080 alone in its own directory; nothing is hoisted, merged or
 overridden on the way.
 
 The rules, in full:
 
 - **`server` is capability configuration only.** It lives inside the factory
-  (`next({ server: … })`), and every capability schema keeps its own top-level
+  (`createNextConfig({ server: … })`), and every capability schema keeps its own top-level
   `server` block — the shared five (`hostname`, `port`, `backlog`, `http2`,
   `https`) for the framework and node capabilities, the full Fastify set for
   service/db/gateway. `BaseCapability` builds `this.serverConfig` from
@@ -1296,7 +1296,7 @@ The rules, in full:
 - **`server.portAssignment` moves into the capability block and stays.** v3 had it
   on the *runtime* `server` because ports were entrypoint-wide; v4 ports are
   per-application, so it belongs where the port does:
-  `node({ server: { port: 3000, portAssignment: 'perWorkerIncrement' } })`. `shared`
+  `createNodeConfig({ server: { port: 3000, portAssignment: 'perWorkerIncrement' } })`. `shared`
   (the default) puts every worker on one port and therefore needs `SO_REUSEPORT`;
   `perWorkerIncrement` binds worker *i* at `port + i` and needs nothing. It is
   **required**, not optional: `features.node.reusePort` is `false` on macOS and
@@ -1442,7 +1442,7 @@ This is the scaffolding counterpart of the loader's own single-listener model �
 port lives in the generated configuration, visible and overridable, rather than
 becoming a hidden loader default.
 v4's code-first equivalent is the same thing spelled in the factory, with the
-variable scoped as v3 scoped it: `next({ server: { port:
+variable scoped as v3 scoped it: `createNextConfig({ server: { port:
 Number(process.env.PLT_API_PORT || 3043) } })`. v3's `getEnvVarName` returned a bare
 `PORT` only for a standalone project and `PLT_<PREFIX>_PORT` for anything in runtime
 context, the prefix derived from the application name
@@ -1568,7 +1568,7 @@ capability `transform` runs worker-side, later. So a callable sees whatever shap
 *schema* admits, and Vite's `ssr` is an `anyOf` of a boolean and an object
 (`vite/lib/schema.js:47-63`) that only `transform` normalizes to the object form
 (`vite/index.js:12-19`). Testing `ssr?.enabled` alone reads `undefined` for
-`vite({ ssr: true })` — a supported spelling — and classifies an SSR application as
+`createViteConfig({ ssr: true })` — a supported spelling — and classifies an SSR application as
 ordinary Vite: rejecting a valid in-process SSR factory under `dev`, and promising
 mesh availability under `start` for a module that may report no server. Any capability
 whose schema accepts a shorthand has the same trap, so the rule is stated once here:
@@ -2019,7 +2019,7 @@ serial scheme.
       only thing that path can hold there is a capability option that happens to be
       named `config`, and calling it would be the loader inventing a callback the
       author never declared. (The per-app deferred form is the factory callback —
-      `next(ctx => …)` — which is rule 1's function export, not a slot.)
+      `createNextConfig(ctx => …)` — which is rule 1's function export, not a slot.)
    3. **Validate the unexpanded root shape.** Orchestration keys only — ids, `path`,
       `url`, `enabled`, `autoload`, `workers` — since a pending `config` slot has
       nothing to validate yet and capability configuration is validated later,
@@ -2102,7 +2102,7 @@ serial scheme.
    candidate that is the deciding file itself**, whatever the entry's shape: an entry
    whose directory is the deciding file's own directory falls through to the detector
    rather than re-reading the file that produced it. Without that,
-   `defineConfig({ application: { workers: 2 } })` in a bare repository — whose entry
+   `createWattConfig({ application: { workers: 2 } })` in a bare repository — whose entry
    has a defaulted `path` and no inline `config` — would discover its own root config
    and fail with "a root config cannot nest inside an application entry". (Entries *with* an
    inline `config` still get a filename-presence check in their directory: a
@@ -2238,7 +2238,7 @@ serial scheme.
    ```output
    ⚠ configuration evaluation mutated process.env; these keys do NOT propagate
      to applications: CACHE_PREFIX, OTEL_EXPORTER_OTLP_ENDPOINT
-     Use: defineConfig({ env: { CACHE_PREFIX: … } })
+     Use: createWattConfig({ env: { CACHE_PREFIX: … } })
    ```
 
    The warning reports **keys only** — a snapshot diff cannot attribute writes to a
@@ -2437,7 +2437,7 @@ but the capability pipeline is split deliberately:**
   already does for CLI commands (see "CLI commands over config"). This keeps the
   *transform* — and the worker-only context it reads — off the eval worker's path
   and, crucially, preserves patch semantics (below). It does **not** keep
-  capability *imports* off that path: a per-app file exists to call `next(…)`, so
+  capability *imports* off that path: a per-app file exists to call `createNextConfig(…)`, so
   every eval worker loads the capability package, `@platformatic/basic`, and their
   transitive graph. That is the real per-file cost, and it is why the watcher
   filters `node_modules` out of the recorded import list. Because the
@@ -2790,7 +2790,7 @@ that (`worker/main.js:236-237` pre-`26954f3f7`), and root-inline entries already
 asymmetry.
 
 The second is the entry whose directory **is the deciding file's own directory** —
-`defineConfig({ application: { workers: 2, envfile: 'deploy.env' } })` in a bare
+`createWattConfig({ application: { workers: 2, envfile: 'deploy.env' } })` in a bare
 repository, where discovery skips the candidate that produced the configuration and
 falls through to the detector (see "Loading mechanism", step 2). That one is not a
 simplification but an ordering impossibility: the root worker's environment is
@@ -2970,7 +2970,7 @@ deliberately saner:
 
 ### Machine-generated configs
 
-There is no JSON config in v4, and none is needed: `defineConfig` is optional and the
+There is no JSON config in v4, and none is needed: `createWattConfig` is optional and the
 loader unwraps any plain-object default export, so a dependency-free generated config
 is JSON plus a prefix:
 
@@ -2992,9 +2992,9 @@ export default {
   **Files that import their dependencies need no marker; files that do not, do.**
   That is the whole of the rule, and it is why the requirement lands where it does.
 
-  A `watt.config.ts` naming `defineConfig` from `wattpm` and `next` from
+  A `watt.config.ts` naming `createWattConfig` from `wattpm` and `next` from
   `@platformatic/next` **is read by the major that is installed**: whichever `wattpm`
-  is installed supplies `defineConfig`, so a v5 loader reading a v4-shaped file fails
+  is installed supplies `createWattConfig`, so a v5 loader reading a v4-shaped file fails
   v5's own validation with an actionable error, exactly as v4 refuses a v3 JSON file.
   What the imports establish is the *installed* major, not the authored one, and the
   guarantee that makes that enough is a constraint on v5 rather than a property of the
@@ -3017,8 +3017,8 @@ export default {
   plain object is therefore possible, and v5 would have to identify it by its content.
   This is stated rather than closed, and the reason is narrower than "the
   alternatives are inconvenient". **Only a literal in the file can name the major it
-  was authored against.** A stamp applied by `defineConfig` or by a capability factory
-  is applied by *installed* code — under a v5 install it is v5's `defineConfig`
+  was authored against.** A stamp applied by `createWattConfig` or by a capability factory
+  is applied by *installed* code — under a v5 install it is v5's `createWattConfig`
   running, so a file authored for v4 would be stamped 5. That is the same fact the
   imports already carry, which packages are installed now, rewritten into the object
   as a claim about the past; a marker that is wrong in exactly the case it exists for
@@ -3062,7 +3062,7 @@ export default {
 
   **Scaffolding's root is the exception, and it takes exactly that cost.** The wizard
   writes the root before anything is installed and reads it back on a later run — adding
-  an application to an existing project is that run — so a root importing `defineConfig`
+  an application to an existing project is that run — so a root importing `createWattConfig`
   from `wattpm` cannot be read in the state that produced it, and a stamped one is
   refused on a `3.x` tree for the reason above. Unstamped plain object is the only form
   that both survives the gate and can be read pre-install, so that is what scaffolding
@@ -3072,7 +3072,7 @@ export default {
 
   **`migrate` is not in that set**, and the difference is the point of the marker rule
   rather than an exemption: what it emits imports what it uses — a factory call, or
-  `defineConfig` — so the file identifies itself and carries no stamp to go stale. The
+  `createWattConfig` — so the file identifies itself and carries no stamp to go stale. The
   same holds for any writer that emits the importing form.
 - **`getApplicationConfig()` is a different API with a different view, and it
   survives unchanged.** `runtime.getApplicationConfig(id)` is not part of the payload
@@ -3193,7 +3193,7 @@ export default {
   on-disk JSON spec file carries **orchestration only**; capability configuration
   comes from the app's own `watt.config.*` or the detector.
   **Requirement: `--save` is retained**, implemented on the same magicast machinery
-  as `wattpm import` — the canonical scaffolded shape (literal `defineConfig`
+  as `wattpm import` — the canonical scaffolded shape (literal `createWattConfig`
   object, literal `applications` array; for removal, also appending to a literal
   `autoload.exclude`) is edited in place, and non-static shapes get the paste-ready
   snippet fallback. Shipping magicast for `import` while dropping `--save` would be
@@ -3263,7 +3263,7 @@ export default {
     `config: { module: '@platformatic/next', server: { port:
     Number(process.env.PLT_FRONTEND_PORT || 3042) } }`, with the id normalized the way
     every other id is. This is generated **code**, not `JSON.stringify(resolvedConfig)`
-    — the stamped plain-object form means "no imported `defineConfig` or factory", not
+    — the stamped plain-object form means "no imported `createWattConfig` or factory", not
     "no expressions", and an object literal in a `.ts` module holds an expression
     perfectly well. The command's output **says the variable changed**, because a
     deployment setting `PORT` was reaching this application a moment ago and will not
@@ -3275,7 +3275,7 @@ export default {
     or `watt.config.mts` where the package is `"type": "commonjs"`, because
     `export default` in a CommonJS `.ts` is a syntax error (see "One dialect"). The
     content is the **stamped plain-object form** with its `$schema` marker, not an
-    imported `defineConfig`: a zero-config project need not have `wattpm` resolvable
+    imported `createWattConfig`: a zero-config project need not have `wattpm` resolvable
     from its root, and `--save` installs nothing. That is exactly the machine-writer
     case the marker rule exists for (see "Machine-generated configs").
   - **Programmatic object source**: `--save` **refuses**, before mutating, naming the
@@ -3337,7 +3337,7 @@ export default {
   goes and the one-line bare-factory form, so later customization is one
   copy-paste away.
 - **`wattpm import`**: edits the root config with **magicast** (AST edit preserving
-  formatting) when the shape is statically safe — literal `defineConfig` object,
+  formatting) when the shape is statically safe — literal `createWattConfig` object,
   literal `applications` array; otherwise prints a paste-ready snippet and exits 0
   with a notice. magicast is a dependency of **both** `wattpm-utils` (for `import`) and
   `wattpm` (for `applications:remove --save`, imported lazily so the cost is paid only
@@ -3489,7 +3489,7 @@ and every `?? ''` fallback are **trusted, not checked** — review the diff.
 Generation reads both views. Then:
 
 1. Emit the v4 files: for a v3 **single-app** project, one root file — the bare
-   factory export when the v3 config carried no runtime settings, `defineConfig`
+   factory export when the v3 config carried no runtime settings, `createWattConfig`
    with the singular `application` shorthand when it did (Levels 1/1b); for a
    **multi-app** project, a `watt.config.ts` for **every** application plus a thin
    root `watt.config.ts`.
@@ -3609,7 +3609,7 @@ Generation reads both views. Then:
    removes — today that is `application.entrypointPort` (see BC 19) — each with a
    requires-review note; leaving one in would fail step 3 on migrate's own output. A
    **renamed** module is written under its new name — a
-   `@platformatic/composer` app gets a `gateway(…)` file, and the
+   `@platformatic/composer` app gets a `createGatewayConfig(…)` file, and the
    superseded dependency is removed in step 2, the one sanctioned `package.json`
    edit beyond ranges and additions. A **`module`-identified** app — the canonical
    v3 spelling for a capability with no published `$schema` URL — gets the ordinary
@@ -4019,7 +4019,7 @@ Generation reads both views. Then:
    into `.env`, which the scaffolded template gitignores, so a clean clone — what CI
    and every new contributor has — never has the variable.
 2. **Audit and install v4 dependencies before validating anything.** The emitted
-   per-app files import v4 factories and the thin root imports `defineConfig`
+   per-app files import v4 factories and the thin root imports `createWattConfig`
    from `wattpm` — and validation must run against what those imports will
    *actually resolve*: editing a version range changes nothing on disk, and ESM
    resolution from an app-local file still finds the installed v3 package, which
@@ -5112,7 +5112,7 @@ runs multiple workers on a fixed port at all.
    `configPath`/`autoload` (`projectDir` is already there);
    shallow explicit-wins entry merge (v3 semantics); in-memory zero-config synthesis; lazy
    capability-command dispatch (no config evaluation on plain `wattpm help`).
-5. **wattpm**: export `defineConfig`, `WattConfig` and factory types generated from
+5. **wattpm**: export `createWattConfig`, `WattConfig` and factory types generated from
    the audited schemas; `wattpm dev` watches the eval worker's collected import
    graph; `--debug-config` via the eval-worker pipeline, with the single-file
    in-process `--inspect-brk` mode; `build` evaluates
@@ -5469,8 +5469,8 @@ export interface ApplicationEntryOptions {
   // …
 }
 
-export function defineConfig (config: WattConfig): WattConfig
-export function defineConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<WattConfig>): typeof fn
+export function createWattConfig (config: WattConfig): WattConfig
+export function createWattConfig (fn: (ctx: ConfigContext) => WattConfig | Promise<WattConfig>): typeof fn
 // ConfigContext and the definition types are declared in @platformatic/basic
 // (below) and re-exported here, so a root config needs one import
 ```
@@ -5566,8 +5566,8 @@ export function next (
 **v4 (one dialect, one format):**
 
 ```ts config env=PLT_SERVER_LOGGER_LEVEL=info,PORT=3042
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
 // emitted by migrate: these positions were implicitly required by their type in v3
 function requiredEnv (name: string): string {
@@ -5586,7 +5586,7 @@ function requiredEnum <const T extends readonly string[]> (name: string, allowed
   return value as T[number]
 }
 
-export default defineConfig({
+export default createWattConfig({
   logger: {
     level: requiredEnum('PLT_SERVER_LOGGER_LEVEL',
       ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
@@ -5595,7 +5595,7 @@ export default defineConfig({
   application: {
     id: 'main',
     workers: 2,
-    config: next({
+    config: createNextConfig({
       server: {
         hostname: process.env.PLT_SERVER_HOSTNAME ?? '',
         port: Number(requiredEnv('PORT'))
@@ -5644,7 +5644,7 @@ configuration and moves inside the factory, which is exactly where migrate puts 
 v3 root `server` (see "`wattpm-utils migrate`"). Note also `workers: 2` with a
 fixed port: that combination now depends on `SO_REUSEPORT` with no fallback.
 
-And when this project later joins a monorepo, the `next({ … })` expression moves
+And when this project later joins a monorepo, the `createNextConfig({ … })` expression moves
 into `web/frontend/watt.config.ts` as its default export — no dependency moves, no
 dialect change, and one edit: `process.env.PORT` becomes
 `process.env.PLT_FRONTEND_PORT`, because a global `PORT` read by every application

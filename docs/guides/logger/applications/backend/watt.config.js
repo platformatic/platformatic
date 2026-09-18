@@ -1,6 +1,6 @@
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   logger: {
     level: 'info',
     redact: {

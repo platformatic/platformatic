@@ -26,9 +26,9 @@ npm install @platformatic/next
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   application: {
     basePath: '/frontend'
   },
@@ -51,9 +51,9 @@ In this setup:
 `web/gateway/watt.config.ts`:
 
 ```ts config
-import { gateway } from '@platformatic/gateway'
+import { createGatewayConfig } from '@platformatic/gateway'
 
-export default gateway({
+export default createGatewayConfig({
   gateway: {
     applications: [
       {
@@ -78,9 +78,9 @@ export default gateway({
 `web/optimizer/watt.config.ts`:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   next: {
     imageOptimizer: {
       enabled: true,
@@ -102,9 +102,9 @@ The Next.js capability owns its managed listener and uses its capability-level `
 For development, configure HTTPS in this Next.js capability's `server.https` object:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: {
     port: Number(process.env.PORT ?? 3042),
     https: {

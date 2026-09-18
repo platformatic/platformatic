@@ -55,9 +55,9 @@ Supported object properties:
   Example using separate Valkey instances for default and remote cache:
 
   ```ts config
-  import { next } from '@platformatic/next'
+  import { createNextConfig } from '@platformatic/next'
 
-  export default next({
+  export default createNextConfig({
     server: { port: 3042 },
     cache: {
       adapter: 'valkey',

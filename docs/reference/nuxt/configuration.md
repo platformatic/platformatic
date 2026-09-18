@@ -41,9 +41,9 @@ Configures Vite options used by the Nuxt development server. Platformatic Nuxt s
 This is useful for development server settings such as allowing mesh-network hostnames:
 
 ```ts config
-import { nuxt } from '@platformatic/nuxt'
+import { createNuxtConfig } from '@platformatic/nuxt'
 
-export default nuxt({
+export default createNuxtConfig({
   server: { port: 3042 },
   vite: {
     devServer: {

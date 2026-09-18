@@ -83,7 +83,7 @@ export declare class ServiceCapability<Config = PlatformaticServiceConfig> exten
 
 export type ServiceConfigOptions = CapabilityFactoryOptions<PlatformaticServiceConfig, 'service', never>
 
-export declare function service (options?: ServiceConfigOptions): ApplicationDefinition
-export declare function service (
+export declare function createServiceConfig (options?: ServiceConfigOptions): ApplicationDefinition
+export declare function createServiceConfig (
   callback: (context: ConfigContext) => ServiceConfigOptions | Promise<ServiceConfigOptions>
 ): DeferredApplicationDefinition

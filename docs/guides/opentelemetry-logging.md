@@ -16,9 +16,9 @@ Watt supports exporting logs directly to OpenTelemetry-compatible collectors, pr
 Add OpenTelemetry log export to your `watt.config.ts`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level: 'info',
@@ -162,9 +162,9 @@ The `tracing` object provides service identity:
 ### Watt configuration file (`watt.config.ts`)
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   logger: {
     level: 'info',
@@ -495,9 +495,9 @@ done
 When using multiple applications in a Watt runtime, each inherits the logger configuration:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: {
     path: 'applications'
   },

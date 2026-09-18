@@ -12,7 +12,7 @@ import {
   create,
   enhanceNextConfig,
   getAdapterPath,
-  next,
+  createNextConfig,
   type NextConfigOptions,
   getCacheHandlerPath,
   loadConfiguration,
@@ -59,16 +59,16 @@ test('Next types', () => {
 })
 
 test('Next factory', () => {
-  expect(next({ trailingSlash: true })).type.toBe<ApplicationDefinition>()
+  expect(createNextConfig({ trailingSlash: true })).type.toBe<ApplicationDefinition>()
 
   /*
     The callback form returns a function the loader awaits, so reading a property of the definition
     on it is a type error until it has run. A single signature returning ApplicationDefinition for
     both forms would typecheck this, which is the mistake the deferred type exists to prevent.
   */
-  expect(next(() => ({ trailingSlash: true }))).type.toBe<DeferredApplicationDefinition>()
-  expect(next(async () => ({ trailingSlash: true }))).type.toBe<DeferredApplicationDefinition>()
-  expect(next(() => ({ trailingSlash: true }))).type.not.toHaveProperty('module')
+  expect(createNextConfig(() => ({ trailingSlash: true }))).type.toBe<DeferredApplicationDefinition>()
+  expect(createNextConfig(async () => ({ trailingSlash: true }))).type.toBe<DeferredApplicationDefinition>()
+  expect(createNextConfig(() => ({ trailingSlash: true }))).type.not.toHaveProperty('module')
 
   // The capability's own block is flattened into the top level; the shared blocks keep their
   // v3 positions.
@@ -78,7 +78,7 @@ test('Next factory', () => {
   expect<NextConfigOptions>().type.not.toHaveProperty('module')
 
   // The context a deferred definition is evaluated against.
-  expect(next((context: ConfigContext) => ({ trailingSlash: context.production }))).type.toBe<
+  expect(createNextConfig((context: ConfigContext) => ({ trailingSlash: context.production }))).type.toBe<
     DeferredApplicationDefinition
   >()
 })

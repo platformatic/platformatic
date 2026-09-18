@@ -81,9 +81,9 @@ app.listen(3000)
 
 ```ts config
 // Wrap existing Express app in Watt
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   node: {
     main: 'app.js'
   }

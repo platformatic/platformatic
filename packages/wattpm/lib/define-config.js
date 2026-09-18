@@ -1,5 +1,5 @@
 /*
-  defineConfig is an identity function: its whole job is to type its argument, which is what gives
+  createWattConfig is an identity function: its whole job is to type its argument, which is what gives
   a watt.config.ts editor completion and inline errors on a shape the loader will otherwise only
   reject at boot.
 
@@ -12,6 +12,6 @@
   boot and every dev reload, so anything reachable from this import is paid for there: reaching the
   CLI entry from here would have cost about a second and a half per load.
 */
-export function defineConfig (config) {
+export function createWattConfig (config) {
   return config
 }

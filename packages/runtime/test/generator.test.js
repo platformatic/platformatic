@@ -144,7 +144,7 @@ test('RuntimeGenerator - leaves portless applications on the mesh once there is 
   // stays reachable only through the mesh -- which is what keeps "expose the one" from exposing all.
   for (const application of [first, second]) {
     const config = application.files.find(file => /^watt\.config\./.test(file.file))
-    assert.ok(config.contents.includes('node({})'), config.contents)
+    assert.ok(config.contents.includes('createNodeConfig({})'), config.contents)
     assert.ok(!config.contents.includes('server'), config.contents)
   }
 

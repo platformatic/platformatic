@@ -164,9 +164,9 @@ and every application owns the file in its own directory:
 
 ```ts config
 // watt.config.ts — application orchestration
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     { id: 'api', path: './web/api' },
     { id: 'frontend', path: './web/frontend' }
@@ -176,18 +176,18 @@ export default defineConfig({
 
 ```ts config
 // web/api/watt.config.ts — an Express.js application
-import { node } from '@platformatic/node'
+import { createNodeConfig } from '@platformatic/node'
 
-export default node({
+export default createNodeConfig({
   server: { port: Number(process.env.PORT ?? 3042) }
 })
 ```
 
 ```ts config
 // web/frontend/watt.config.ts — Next.js
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   application: { basePath: '/app' },
   server: { port: Number(process.env.PORT ?? 3043) }
 })
@@ -202,7 +202,7 @@ A configuration file is a program, so it reads its environment directly — ther
 validate:
 
 ```ts config
-import { db } from '@platformatic/db'
+import { createDbConfig } from '@platformatic/db'
 
 const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
 
@@ -210,7 +210,7 @@ const levels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as
 // The editor is what makes this worth doing: an unknown level is caught while you type.
 const level = levels.find(candidate => candidate === process.env.LOG_LEVEL) ?? 'info'
 
-export default db({
+export default createDbConfig({
   db: {
     connectionString: process.env.DATABASE_URL ?? 'sqlite://./db.sqlite',
     poolSize: Number(process.env.DB_POOL_SIZE ?? 10)
@@ -261,9 +261,9 @@ export function build () {
 
 ```ts config
 // 2. Add it to the Watt configuration — watt.config.ts
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [{ id: 'api', path: './existing-express-app' }]
 })
 ```
@@ -282,9 +282,9 @@ npm create wattpm # Choose @platformatic/db
 Write a `watt.config.ts` only where the defaults are not what you want:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   application: { basePath: '/app' },
   server: { port: Number(process.env.PORT ?? 3042) }
 })

@@ -19,19 +19,19 @@ import { join } from 'node:path'
   that differs between them is a configuration that boots under one and not the other.
 */
 export const capabilityFactories = {
-  '@platformatic/astro': 'astro',
-  '@platformatic/db': 'db',
-  '@platformatic/gateway': 'gateway',
-  '@platformatic/nest': 'nest',
-  '@platformatic/next': 'next',
-  '@platformatic/nitro': 'nitro',
-  '@platformatic/node': 'node',
-  '@platformatic/nuxt': 'nuxt',
-  '@platformatic/react-router': 'reactRouter',
-  '@platformatic/remix': 'remix',
-  '@platformatic/service': 'service',
-  '@platformatic/tanstack': 'tanstack',
-  '@platformatic/vite': 'vite'
+  '@platformatic/astro': 'createAstroConfig',
+  '@platformatic/db': 'createDbConfig',
+  '@platformatic/gateway': 'createGatewayConfig',
+  '@platformatic/nest': 'createNestConfig',
+  '@platformatic/next': 'createNextConfig',
+  '@platformatic/nitro': 'createNitroConfig',
+  '@platformatic/node': 'createNodeConfig',
+  '@platformatic/nuxt': 'createNuxtConfig',
+  '@platformatic/react-router': 'createReactRouterConfig',
+  '@platformatic/remix': 'createRemixConfig',
+  '@platformatic/service': 'createServiceConfig',
+  '@platformatic/tanstack': 'createTanstackConfig',
+  '@platformatic/vite': 'createViteConfig'
 }
 
 /*

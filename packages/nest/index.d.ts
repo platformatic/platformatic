@@ -39,7 +39,7 @@ export declare const supportedVersions: string
 
 export type NestConfigOptions = CapabilityFactoryOptions<PlatformaticNestJSConfig, 'nest', never>
 
-export declare function nest (options?: NestConfigOptions): ApplicationDefinition
-export declare function nest (
+export declare function createNestConfig (options?: NestConfigOptions): ApplicationDefinition
+export declare function createNestConfig (
   callback: (context: ConfigContext) => NestConfigOptions | Promise<NestConfigOptions>
 ): DeferredApplicationDefinition

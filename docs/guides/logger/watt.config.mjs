@@ -1,6 +1,6 @@
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   logger: {
     level: 'info',
     timestamp: 'isoTime',

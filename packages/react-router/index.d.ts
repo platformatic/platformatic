@@ -45,7 +45,7 @@ export declare const supportedVersions: string
 
 export type ReactRouterConfigOptions = CapabilityFactoryOptions<PlatformaticReactRouterConfig, 'vite' | 'reactRouter', never>
 
-export declare function reactRouter (options?: ReactRouterConfigOptions): ApplicationDefinition
-export declare function reactRouter (
+export declare function createReactRouterConfig (options?: ReactRouterConfigOptions): ApplicationDefinition
+export declare function createReactRouterConfig (
   callback: (context: ConfigContext) => ReactRouterConfigOptions | Promise<ReactRouterConfigOptions>
 ): DeferredApplicationDefinition

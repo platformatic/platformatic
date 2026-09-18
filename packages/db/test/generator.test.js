@@ -82,7 +82,7 @@ test('generate correct .env file', async t => {
       (`"type": "module"`), so the config file is `watt.config.ts` rather than `.mts`.
     */
     const configFile = dbApp.getFileObject('watt.config.ts')
-    assert.ok(configFile.contents.startsWith("import { db } from '@platformatic/db'"), configFile.contents)
+    assert.ok(configFile.contents.startsWith("import { createDbConfig } from '@platformatic/db'"), configFile.contents)
   }
 
   {

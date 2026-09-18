@@ -91,7 +91,7 @@ export default {
 }
 ```
 
-The file is a program, so it reads `process.env` directly — there is no `{PLACEHOLDER}` interpolation. There is no `runtime` block either: orchestration settings like `logger` are the root's own, `application` is the shorthand for a project with exactly one application, and everything the capability itself understands — `server` included — sits under `application.config`. The wizard writes the plain-object form shown here so that the file can be read before anything is installed; once your dependencies are in place you can switch to `import { defineConfig } from 'wattpm'` and wrap the object in `defineConfig(...)` to get types.
+The file is a program, so it reads `process.env` directly — there is no `{PLACEHOLDER}` interpolation. There is no `runtime` block either: orchestration settings like `logger` are the root's own, `application` is the shorthand for a project with exactly one application, and everything the capability itself understands — `server` included — sits under `application.config`. The wizard writes the plain-object form shown here so that the file can be read before anything is installed; once your dependencies are in place you can switch to `import { createWattConfig } from 'wattpm'` and wrap the object in `createWattConfig(...)` to get types.
 
 ## Starting Your Application
 
@@ -123,9 +123,9 @@ The command installs `@platformatic/next` as part of your dependencies. It write
 By default, Watt will run on a random port. If you want to choose a specific port — or anything else the defaults do not cover — write a `watt.config.mjs` at the root of your application:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: { port: 3000 }
 })
 ```

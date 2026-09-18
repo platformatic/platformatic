@@ -28,9 +28,9 @@ Using the experimental adapter path provides several advantages:
 Enable the experimental adapter in your Platformatic Next configuration file:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   next: {
     useExperimentalAdapter: true
   },

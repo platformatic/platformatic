@@ -26,9 +26,9 @@ npm install @platformatic/remix
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { remix } from '@platformatic/remix'
+import { createRemixConfig } from '@platformatic/remix'
 
-export default remix({
+export default createRemixConfig({
   application: {
     basePath: '/frontend'
   },

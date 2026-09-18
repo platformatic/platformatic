@@ -184,8 +184,8 @@ test('copy - should generate config file for platformatic module', async t => {
     writing the old dialect for exactly the applications least likely to be exercised elsewhere.
   */
   const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
-  ok(configContent.includes("import { service } from '@platformatic/service'"), configContent)
-  ok(configContent.includes('export default service({})'), configContent)
+  ok(configContent.includes("import { createServiceConfig } from '@platformatic/service'"), configContent)
+  ok(configContent.includes('export default createServiceConfig({})'), configContent)
 })
 
 test('copy - the entrypoint application is exposed on the default port', async t => {
@@ -445,7 +445,7 @@ test('import - when importing folders already in the project root, should not cr
     {
       path: '',
       file: join(targetDir, 'my-app', 'watt.config.mjs'),
-      contents: "import { service } from '@platformatic/service'\n\nexport default service({})\n",
+      contents: "import { createServiceConfig } from '@platformatic/service'\n\nexport default createServiceConfig({})\n",
       options: {},
       tags: []
     },

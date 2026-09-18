@@ -20,9 +20,9 @@ You are all set, you can now start your runtime as usual via `wattpm dev` or `wa
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { astro } from '@platformatic/astro'
+import { createAstroConfig } from '@platformatic/astro'
 
-export default astro({
+export default createAstroConfig({
   application: {
     basePath: '/frontend'
   },

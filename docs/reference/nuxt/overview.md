@@ -26,9 +26,9 @@ npm install @platformatic/nuxt
 Create a `watt.config.ts` in the root folder of your application with the following contents:
 
 ```ts config
-import { nuxt } from '@platformatic/nuxt'
+import { createNuxtConfig } from '@platformatic/nuxt'
 
-export default nuxt({
+export default createNuxtConfig({
   application: {
     basePath: '/frontend'
   },

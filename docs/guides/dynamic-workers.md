@@ -98,9 +98,9 @@ Add a `workers` property to your runtime configuration:
 Example:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   autoload: { path: 'web' },
   workers: {
     dynamic: true,
@@ -124,9 +124,9 @@ Worker limits are orchestration, so they live in the runtime configuration rathe
 application's own file — in a monorepo, on the entry that names the application:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [
     {
       id: 'api',
@@ -140,13 +140,13 @@ export default defineConfig({
 A single-application project says the same thing with the singular `application` shorthand:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { node } from '@platformatic/node'
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
 
-export default defineConfig({
+export default createWattConfig({
   application: {
     workers: { dynamic: true, minimum: 2, maximum: 6 },
-    config: node({})
+    config: createNodeConfig({})
   }
 })
 ```

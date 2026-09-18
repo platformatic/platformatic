@@ -116,7 +116,7 @@ test('should prepare exactly one configuration file, in the v4 form', async () =
     configurations.map(file => file.file),
     ['watt.config.ts']
   )
-  ok(configurations[0].contents.startsWith("import { node } from '@platformatic/node'"), configurations[0].contents)
+  ok(configurations[0].contents.startsWith("import { createNodeConfig } from '@platformatic/node'"), configurations[0].contents)
 })
 
 test('a non-entrypoint application scaffolds no port and stays mesh-only', async () => {
@@ -128,7 +128,7 @@ test('a non-entrypoint application scaffolds no port and stays mesh-only', async
   // A Node capability binds no external socket without a declared port, which is exactly what keeps
   // a portless sibling in a multi-application runtime private.
   ok(!configuration.contents.includes('server'), configuration.contents)
-  ok(configuration.contents.includes('node({})'), configuration.contents)
+  ok(configuration.contents.includes('createNodeConfig({})'), configuration.contents)
 })
 
 test('the entrypoint application is exposed on the scaffolded port', async () => {

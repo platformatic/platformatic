@@ -44,7 +44,7 @@ Before, in `platformatic.runtime.json`:
 After, in `watt.config.ts`:
 
 ```ts config env=PLT_SERVER_LOGGER_LEVEL=info
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
 /*
   `level` is an enum, so a fallback is not enough: `process.env.X ?? 'info'` has type `string`, and
@@ -61,7 +61,7 @@ function requiredEnum <const T extends readonly string[]> (name: string, allowed
   return value as T[number]
 }
 
-export default defineConfig({
+export default createWattConfig({
   logger: {
     level: requiredEnum('PLT_SERVER_LOGGER_LEVEL',
       ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
@@ -77,7 +77,7 @@ A missing variable used to interpolate to the empty string. Now it is `undefined
 - **an enum** — `requiredEnum(...)` as above, because nothing narrows a `string` to the members
 - **a boolean** — by hand. v3's rules contradicted each other by position, so there is no single conversion to write
 
-`defineConfig` types the object; it does not transform it. Omitting it is legal and costs you the editor's help.
+`createWattConfig` types the object; it does not transform it. Omitting it is legal and costs you the editor's help.
 
 ## Rename tracing configuration and package
 
@@ -116,9 +116,9 @@ Before:
 After, in the root `watt.config.ts`:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   applications: [{ id: 'api', path: './api' }]
 })
 ```
@@ -126,9 +126,9 @@ export default defineConfig({
 and in `api/watt.config.ts`, the application that used to be the entrypoint:
 
 ```ts config
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
-export default service({
+export default createServiceConfig({
   server: {
     hostname: '127.0.0.1',
     port: 3042
@@ -149,9 +149,9 @@ Do not put `server` in an `applications` entry. It belongs to the capability con
 If the v3 entrypoint used `server.portAssignment: "perWorkerIncrement"` to run several workers on a fixed port without `SO_REUSEPORT` — on macOS or Windows, where nothing else does — move that setting with the rest. The `workers` count stays on the runtime's `applications` entry, and worker *N* listens on `port + N` exactly as before:
 
 ```ts config
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
-export default service({
+export default createServiceConfig({
   server: {
     hostname: '127.0.0.1',
     port: 3042,
@@ -171,9 +171,9 @@ Node.js applications without a `create()` or `build()` factory, and applications
 The runtime no longer uses an application-level port environment setting and does not write `PORT`. Read the variable where you want it:
 
 ```ts config
-import { service } from '@platformatic/service'
+import { createServiceConfig } from '@platformatic/service'
 
-export default service({
+export default createServiceConfig({
   server: { port: Number(process.env.HTTP_PORT || 3042) }
 })
 ```
@@ -183,9 +183,9 @@ export default service({
 A project with one application can be configured by that application's file alone — the bare factory export is auto-wrapped as a one-application runtime:
 
 ```ts config
-import { next } from '@platformatic/next'
+import { createNextConfig } from '@platformatic/next'
 
-export default next({
+export default createNextConfig({
   server: { port: Number(process.env.PORT || 3042) }
 })
 ```
@@ -193,14 +193,14 @@ export default next({
 Add a root only when you have something to say at the root. The singular `application` key is there for that case, so one application with runtime options never needs a one-element array:
 
 ```ts config
-import { defineConfig } from 'wattpm'
-import { next } from '@platformatic/next'
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-export default defineConfig({
+export default createWattConfig({
   logger: { level: 'info' },
   application: {
     workers: 2,
-    config: next({
+    config: createNextConfig({
       server: { port: Number(process.env.PORT || 3042) }
     })
   }

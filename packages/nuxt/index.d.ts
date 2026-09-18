@@ -44,7 +44,7 @@ export declare const supportedVersions: string
 
 export type NuxtConfigOptions = CapabilityFactoryOptions<PlatformaticNuxtConfig, 'vite' | 'nuxt', never>
 
-export declare function nuxt (options?: NuxtConfigOptions): ApplicationDefinition
-export declare function nuxt (
+export declare function createNuxtConfig (options?: NuxtConfigOptions): ApplicationDefinition
+export declare function createNuxtConfig (
   callback: (context: ConfigContext) => NuxtConfigOptions | Promise<NuxtConfigOptions>
 ): DeferredApplicationDefinition

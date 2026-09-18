@@ -48,7 +48,7 @@ HTTP requests to the Platformatic DB API should include a header like this `Auth
 Set up JWT by specifying a shared `secret` in the Platformatic DB configuration file as shown below:
 
 ```ts title="watt.config.ts"
-export default db({
+export default createDbConfig({
   // ...
   authorization: {
     jwt: {
@@ -66,7 +66,7 @@ for all the available configuration options.
 The JWT authorization strategy includes support for [JSON Web Key](https://www.rfc-editor.org/rfc/rfc7517) Sets. For enhanced security, configure JWT to use JWKS for dynamic public key fetching:
 
 ```ts title="watt.config.ts"
-export default db({
+export default createDbConfig({
   // ...
   authorization: {
     jwt: {
@@ -137,7 +137,7 @@ Authenticate API requests by configuring a webhook that Platformatic DB will cal
 Define the webhook URL in the authorization settings:
 
 ```ts title="watt.config.ts"
-export default db({
+export default createDbConfig({
   // ...
   authorization: {
     webhook: {

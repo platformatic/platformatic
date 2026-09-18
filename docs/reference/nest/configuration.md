@@ -125,9 +125,9 @@ bootstrap()
 Then, modify the `watt.config.ts` file like this:
 
 ```ts config
-import { nest } from '@platformatic/nest'
+import { createNestConfig } from '@platformatic/nest'
 
-export default nest({
+export default createNestConfig({
   nest: {
     setup: {
       path: 'setup',

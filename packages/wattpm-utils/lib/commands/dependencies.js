@@ -158,7 +158,7 @@ export async function listApplicationDirectories (configurationFile) {
 
 export async function installDependencies (logger, root, applications, production, packageManager) {
   // The path to the root configuration, resolved into the application list only after the root's own
-  // dependencies are installed below -- because the root config imports `defineConfig` from wattpm,
+  // dependencies are installed below -- because the root config imports `createWattConfig` from wattpm,
   // so evaluating it to discover where the applications are needs wattpm present, which the root
   // install is what provides. Reading it first is what fails in a freshly scaffolded, not-yet-
   // installed project.

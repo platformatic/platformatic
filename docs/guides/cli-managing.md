@@ -12,7 +12,7 @@ allow the CLI to communicate with your application.
 To enable the application management API, add the following configuration to your `watt.config.ts` file:
 
 ```ts
-export default defineConfig({
+export default createWattConfig({
   // ...
   managementApi: true
 })

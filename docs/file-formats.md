@@ -14,9 +14,9 @@ Platformatic detects and loads the configuration file in a directory. There are 
 A configuration file is a module that exports its configuration as the default export. Because it is a program, it reads its environment directly rather than through interpolation:
 
 ```ts config
-import { defineConfig } from 'wattpm'
+import { createWattConfig } from 'wattpm'
 
-export default defineConfig({
+export default createWattConfig({
   logger: { level: 'info' },
   autoload: { path: 'web' }
 })

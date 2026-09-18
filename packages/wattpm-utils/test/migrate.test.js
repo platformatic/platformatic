@@ -61,7 +61,7 @@ test('migrate - converts a single-application configuration into a file the load
 
   // It imports what it uses, which is what lets it carry no $schema stamp: the file identifies
   // itself, so there is nothing to go stale when the schema version moves.
-  ok(emitted.includes("import { next } from '@platformatic/next'"), emitted)
+  ok(emitted.includes("import { createNextConfig } from '@platformatic/next'"), emitted)
   ok(!emitted.includes('$schema'), emitted)
   ok(emitted.includes("adapter: 'redis'"), emitted)
 
@@ -110,7 +110,7 @@ test('migrate - writes the new name for a renamed module', async t => {
   const migrateProcess = await wattpmUtils('migrate', root)
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
 
-  ok(emitted.includes("import { gateway } from '@platformatic/gateway'"), emitted)
+  ok(emitted.includes("import { createGatewayConfig } from '@platformatic/gateway'"), emitted)
   ok(migrateProcess.stdout.includes('is now'), migrateProcess.stdout)
 })
 
@@ -290,7 +290,7 @@ test('migrate - unwraps a runtime block into defineConfig with the singular shor
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
 
   // The factory call sits inside the object as a call, not as the text of one.
-  ok(emitted.includes('config: next({'), emitted)
+  ok(emitted.includes('config: createNextConfig({'), emitted)
 
   const loaded = await loadConfiguration({
     cwd: root,
@@ -405,7 +405,7 @@ test('migrate - emits a file per application plus a thin root', async t => {
 
   // The application's own file, in its own directory.
   const application = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
-  ok(application.includes("import { node } from '@platformatic/node'"), application)
+  ok(application.includes("import { createNodeConfig } from '@platformatic/node'"), application)
   strictEqual(await fileExists(join(root, 'services/api/platformatic.json')), false)
 
   const emittedRoot = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
@@ -648,8 +648,8 @@ test('migrate - emits an application in the root directory inline', async t => {
   */
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
 
-  ok(emitted.includes("import { node } from '@platformatic/node'"), emitted)
-  ok(emitted.includes('config: node({'), emitted)
+  ok(emitted.includes("import { createNodeConfig } from '@platformatic/node'"), emitted)
+  ok(emitted.includes('config: createNodeConfig({'), emitted)
   strictEqual(await fileExists(join(root, 'platformatic.service.json')), false)
 
   // The sibling keeps the ordinary per-app emission: only the root directory has the collision.
