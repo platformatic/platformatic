@@ -5,7 +5,7 @@ import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { loadConfiguration } from '../index.js'
-import { parseInspectorOptions, prepareV4Application } from '../lib/config.js'
+import { parseInspectorOptions, prepareRuntimeApplication } from '../lib/config.js'
 import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -42,7 +42,7 @@ test('prepareApplication - resolves module source separately from writable appli
     watch: false
   }
 
-  const application = await prepareV4Application(
+  const application = await prepareRuntimeApplication(
     config,
     {
       id: 'module-app',
@@ -61,7 +61,7 @@ test('prepareApplication - resolves module source separately from writable appli
 
 test('prepareApplication - reports missing application modules with a coded error', async () => {
   await rejects(
-    prepareV4Application(
+    prepareRuntimeApplication(
       {
         [kMetadata]: { root: resolve(fixturesDir, 'missing') },
         watch: false

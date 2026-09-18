@@ -425,7 +425,7 @@ test('import - should find the nearest configuration file', async t => {
   ok(!existsSync(resolve(directory, 'web/next/watt.config.mjs')))
 })
 
-async function prepareV4Root (t, root, contents) {
+async function prepareRoot (t, root, contents) {
   await writeFile(resolve(root, 'package.json'), JSON.stringify({ name: 'root', type: 'module' }), 'utf-8')
   await writeFile(resolve(root, 'watt.config.js'), contents, 'utf-8')
   changeWorkingDirectory(t, root)
@@ -434,7 +434,7 @@ async function prepareV4Root (t, root, contents) {
 test('import - a remote application in a v4 root is written without a path', async t => {
   const root = await createTemporaryDirectory(t, 'import-v4')
 
-  await prepareV4Root(
+  await prepareRoot(
     t,
     root,
     [
@@ -470,7 +470,7 @@ test('import - a local application outside a v4 root is written as a relative pa
   const root = await createTemporaryDirectory(t, 'import-v4-outside')
   const applicationDirectory = await createTemporaryDirectory(t, 'import-v4-elsewhere')
 
-  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await prepareRoot(t, root, 'export default { applications: [] }\n')
   await writeFile(resolve(applicationDirectory, 'index.js'), '', 'utf-8')
   await writeFile(resolve(applicationDirectory, 'package.json'), JSON.stringify({ name: 'elsewhere' }), 'utf-8')
 
@@ -490,7 +490,7 @@ test('import - a local application outside a v4 root is written as a relative pa
 test('import - a remote application in a v4 root records its branch', async t => {
   const root = await createTemporaryDirectory(t, 'import-v4-branch')
 
-  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await prepareRoot(t, root, 'export default { applications: [] }\n')
   await wattpmUtils('import', '-b', 'another', 'http://github.com/foo/bar.git')
 
   const source = await readFile(resolve(root, 'watt.config.js'), 'utf-8')
@@ -505,7 +505,7 @@ test('import - a remote application in a v4 root records its branch', async t =>
 test('import - a v4 root that lists its applications under a v3 alias is refused', async t => {
   const root = await createTemporaryDirectory(t, 'import-v4-alias')
 
-  await prepareV4Root(t, root, "export default { web: [{ id: 'first', path: 'first' }] }\n")
+  await prepareRoot(t, root, "export default { web: [{ id: 'first', path: 'first' }] }\n")
   const process = await wattpmUtils('import', 'http://github.com/foo/bar.git', { reject: false })
 
   deepStrictEqual(process.exitCode, 1)
@@ -517,7 +517,7 @@ test('import - a v4 root it cannot edit is printed rather than rewritten', async
 
   // The configuration is behind a binding, so there is no literal to append to.
   const original = 'const configuration = { applications: [] }\n\nexport default configuration\n'
-  await prepareV4Root(t, root, original)
+  await prepareRoot(t, root, original)
 
   const process = await wattpmUtils('import', 'http://github.com/foo/bar.git')
 
@@ -529,7 +529,7 @@ test('import - a v4 root it cannot edit is printed rather than rewritten', async
 test('import - a local application inside a v4 root gets a relative path and a v4 file', async t => {
   const root = await createTemporaryDirectory(t, 'import-v4-local')
 
-  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await prepareRoot(t, root, 'export default { applications: [] }\n')
 
   const applicationDirectory = resolve(root, 'web/main')
   await createDirectory(applicationDirectory)
@@ -561,7 +561,7 @@ test('import - a local application inside a v4 root gets a relative path and a v
 test('import - a v4 root leaves an application that already has a configuration alone', async t => {
   const root = await createTemporaryDirectory(t, 'import-v4-configured')
 
-  await prepareV4Root(t, root, 'export default { applications: [] }\n')
+  await prepareRoot(t, root, 'export default { applications: [] }\n')
 
   const applicationDirectory = resolve(root, 'web/main')
   await createDirectory(applicationDirectory)

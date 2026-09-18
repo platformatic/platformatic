@@ -1737,7 +1737,7 @@ export class Runtime extends EventEmitter {
   */
   getConfigurationWatchTargets () {
     const metadata = this.#config[kMetadata]
-    const targets = metadata?.v4?.watchTargets
+    const targets = metadata?.loader?.watchTargets
 
     if (targets) {
       return { files: [...targets.files], directories: [...targets.directories] }

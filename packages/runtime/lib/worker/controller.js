@@ -162,7 +162,7 @@ export class Controller extends EventEmitter {
         })
       } else {
         /*
-          No payload at all, which the v4 loader does not produce -- `prepareV4Application` gives
+          No payload at all, which the v4 loader does not produce -- `prepareRuntimeApplication` gives
           every entry a `resolvedConfig`, an empty object where there is nothing to say. What is
           left here is an embedder constructing a Controller by hand, and the bundled base
           capability is the answer for that: there is no configuration file to look for, because v4

@@ -5,21 +5,21 @@ import {
   capabilityFactories as factories,
   chooseConfigurationFileName,
   getApplicationUrl,
-  loadConfiguration as loadV4Configuration,
+  loadConfiguration as loadFoundationConfiguration,
   raw,
   resolveEnvFileSources,
   serializeConfiguration as serializeValue,
   serializeString,
   topologyVariableName
 } from '@platformatic/foundation/lib/loader/index.js'
-import { loadConfiguration as loadV4Runtime } from '@platformatic/runtime'
+import { loadConfiguration as loadRuntimeConfiguration } from '@platformatic/runtime'
 /*
   The v3 reader is migrate's own, not foundation's. Migrate must keep reading v3 for as long as
   anyone has a v3 project, which outlives foundation's copy -- that one exists only while the v3
   loader is still in the tree.
 */
 import { extractLegacyModule as extractModuleFromSchemaUrl, loadLegacyConfigurationFile as loadRawConfigurationFile } from '../legacy/reader.js'
-import { v4Schema } from '@platformatic/runtime/schema'
+import { configurationSchema } from '@platformatic/runtime/schema'
 import { bold } from 'colorette'
 import { version } from '../version.js'
 import { execa } from 'execa'
@@ -142,7 +142,7 @@ const runtimeScope = fileURLToPath(import.meta.resolve('@platformatic/runtime'))
   beside it is two candidates in one directory -- which the loader rejects. So a `watt.config.js`
   where migrate would write `watt.config.mjs` is not a free pass; it is a reason to stop.
 */
-const v4Candidates = ['watt.config.ts', 'watt.config.mts', 'watt.config.js', 'watt.config.mjs']
+const configurationCandidates = ['watt.config.ts', 'watt.config.mts', 'watt.config.js', 'watt.config.mjs']
 
 /*
   The nearest existing ancestor, canonicalized, with the missing segments put back. Several of the
@@ -184,8 +184,8 @@ function legalId (id) {
   return id.replace(/[^a-zA-Z0-9-]/g, '-').replace(/^-+|-+$/g, '')
 }
 
-function existingV4Candidate (directory) {
-  return v4Candidates.find(candidate => existsSync(join(directory, candidate))) ?? null
+function existingConfigurationCandidate (directory) {
+  return configurationCandidates.find(candidate => existsSync(join(directory, candidate))) ?? null
 }
 
 /*
@@ -1335,7 +1335,7 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       .map(id => [topologyVariableName(id), id])
   )
 
-  const converted = convertPlaceholders(config, v4Schema, {
+  const converted = convertPlaceholders(config, configurationSchema, {
     module: '@platformatic/runtime',
     sample: readSampleEnv(root),
     urls,
@@ -1876,7 +1876,7 @@ function collectPlanRefusals (root, source, applications, resumed = new Set(), c
         producers.set(canonicalize(application.target), application.orchestration.id)
       }
 
-      const existing = existingV4Candidate(application.directory)
+      const existing = existingConfigurationCandidate(application.directory)
 
       if (existing) {
         refusals.push({
@@ -1913,7 +1913,7 @@ function collectPlanRefusals (root, source, applications, resumed = new Set(), c
     })
   }
 
-  const existing = existingV4Candidate(dirname(source))
+  const existing = existingConfigurationCandidate(dirname(source))
 
   if (existing && !resumed.has(join(dirname(source), existing))) {
     refusals.push({
@@ -2834,14 +2834,14 @@ export async function migrateCommand (logger, args) {
       exists to catch exactly that.
     */
     if (runtime) {
-      await loadV4Runtime(target, null, {
+      await loadRuntimeConfiguration(target, null, {
         command: 'start',
         env: seeded,
         production: true,
         validateCapabilities: true
       })
     } else {
-      await loadV4Configuration({
+      await loadFoundationConfiguration({
         cwd: dirname(target),
         configPath: target,
         command: 'start',

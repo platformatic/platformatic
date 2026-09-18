@@ -11,7 +11,7 @@ import { schema } from '../schema.js'
   to read from disk, and `resolved` says so: what is left to do is apply the capability's own
   `transform` and attach the metadata the command reads `root` from.
 
-  It used to take a path and load it. In v4 the entry carries no path -- `prepareV4Application`
+  It used to take a path and load it. In v4 the entry carries no path -- `prepareRuntimeApplication`
   moves the configuration into `resolvedConfig` and clears `config` -- so every one of these
   commands was calling the loader with `undefined` and failing on "Source missing" before it did
   anything.

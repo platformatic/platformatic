@@ -624,7 +624,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
 
       // The listeners are assigned here for v4, before any worker starts: there is no configuration
       // file to rewrite afterwards, and the resolved payload is what the worker is handed.
-      if (typeof port === 'number' && config[kMetadata]?.v4) {
+      if (typeof port === 'number' && config[kMetadata]?.loader) {
         applyListenerPorts(config, port)
       }
 
@@ -638,7 +638,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     await additionalSetup(root, config)
   }
 
-  if (typeof port === 'number' && !config[kMetadata]?.v4) {
+  if (typeof port === 'number' && !config[kMetadata]?.loader) {
     const target = getTargetApplication(config.applications ?? [])
     const listeners = new Set([
       target,

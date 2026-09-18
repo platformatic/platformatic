@@ -100,12 +100,12 @@ export const schema = platformaticRuntimeSchema
   transform. Alone they fail the pipeline's topology check by name; beside an `applications` key
   they would validate and be folded silently, so the schema refuses them instead.
 */
-const removedInV4 = ['envfile', 'strictEnv', '$schema', 'verticalScaler', 'services', 'web']
+const removedKeys = ['envfile', 'strictEnv', '$schema', 'verticalScaler', 'services', 'web']
 
-const { ...v4Properties } = platformaticRuntimeSchema.properties
+const { ...configurationProperties } = platformaticRuntimeSchema.properties
 
-for (const key of removedInV4) {
-  delete v4Properties[key]
+for (const key of removedKeys) {
+  delete configurationProperties[key]
 }
 
 /*
@@ -117,12 +117,12 @@ for (const key of removedInV4) {
   Copied rather than edited, because `applications.items` is shared with the v3 schema, where the
   requirement still holds.
 */
-const v4EntryItems = {
-  ...v4Properties.applications.items,
+const applicationEntryItems = {
+  ...configurationProperties.applications.items,
   anyOf: [{ required: ['path'] }, { required: ['url'] }]
 }
 
-v4Properties.applications = { ...v4Properties.applications, items: v4EntryItems }
+configurationProperties.applications = { ...configurationProperties.applications, items: applicationEntryItems }
 
 /*
   The singular shorthand: one application with runtime options, Level 1b. It is an application
@@ -130,14 +130,14 @@ v4Properties.applications = { ...v4Properties.applications, items: v4EntryItems 
   and the path defaults to the configuration file's own directory -- so it keeps the entry's
   properties and drops the anyOf entirely.
 */
-const { anyOf: _entryRequirements, ...applicationShorthand } = v4EntryItems
+const { anyOf: _entryRequirements, ...applicationShorthand } = applicationEntryItems
 
-v4Properties.application = applicationShorthand
+configurationProperties.application = applicationShorthand
 
-export const v4Schema = {
+export const configurationSchema = {
   ...platformaticRuntimeSchema,
-  $id: `https://schemas.platformatic.dev/@platformatic/runtime/${version}-v4.json`,
-  properties: v4Properties,
+  $id: `https://schemas.platformatic.dev/@platformatic/runtime/${version}-strict.json`,
+  properties: configurationProperties,
   /*
     The v3 anyOf listed the removed spellings, and it is decorative on the v4 path anyway -- by the
     time either validation pass runs, normalization has already defaulted `applications`. The gate

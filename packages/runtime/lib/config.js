@@ -194,11 +194,11 @@ export async function prepareAddedApplications (config, entries, existingIds = [
     entries,
     existingIds,
     rootEnvBlock: config.env,
-    command: metadata.v4.command,
-    mode: metadata.v4.mode,
-    production: metadata.v4.production,
-    realEnv: metadata.v4.realEnv,
-    customEnvFile: metadata.v4.customEnvFile,
+    command: metadata.loader.command,
+    mode: metadata.loader.mode,
+    production: metadata.loader.production,
+    realEnv: metadata.loader.realEnv,
+    customEnvFile: metadata.loader.customEnvFile,
     // The runtime is the fallback scope for capability resolution, the same as at boot.
     runtimeScope: runtimeScopePath
   })
@@ -206,7 +206,7 @@ export async function prepareAddedApplications (config, entries, existingIds = [
   const prepared = []
 
   for (const application of applications) {
-    prepared.push(await prepareV4Application(config, application, config.workers))
+    prepared.push(await prepareRuntimeApplication(config, application, config.workers))
   }
 
   return prepared
@@ -333,7 +333,7 @@ export function finalizeApplication (config, application, defaultWorkers) {
   existed. So there is nothing to discover here, and in particular no application config file to
   re-read: that is the whole point of evaluating configuration exactly once per load.
 */
-export async function prepareV4Application (config, application, defaultWorkers) {
+export async function prepareRuntimeApplication (config, application, defaultWorkers) {
   // resolvedConfig replaces v3's config file path in workerData: the worker receives the validated
   // capability payload as data and never re-reads a file.
   application.resolvedConfig = application.config ?? {}
@@ -451,7 +451,7 @@ export async function finalizeConfiguration (config, applications, context, prod
   and `applications:add --save` needs it to decide whether a new application belongs in a mapping
   or as an explicit entry. It is carried, never re-executed.
 */
-export async function transformV4 (config, _, context) {
+export async function transformConfiguration (config, _, context) {
   const production = context?.isProduction ?? context?.production
   const applications = config.applications ?? []
 
@@ -459,5 +459,5 @@ export async function transformV4 (config, _, context) {
     config.watch = !production
   }
 
-  return finalizeConfiguration(config, applications, context, production, prepareV4Application)
+  return finalizeConfiguration(config, applications, context, production, prepareRuntimeApplication)
 }

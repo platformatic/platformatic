@@ -843,7 +843,7 @@ async function prepareApplication ({
     detect — the detector run below would read the empty writable root and fail — so the loader
     records the module and its inline config, if any, and stops. The package is imported and its
     `create` invoked worker-side, which is where an absent factory or a missing dependency is
-    reported (see prepareV4Application). Nothing is validated against a schema here: a module
+    reported (see prepareRuntimeApplication). Nothing is validated against a schema here: a module
     application carries no per-capability schema subpath the way a detected capability does.
   */
   if (entry.module) {

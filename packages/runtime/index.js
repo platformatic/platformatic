@@ -10,18 +10,18 @@ import {
   findDecidingFile,
   isProductionCommand,
   LegacyConfigurationFileError,
-  loadConfiguration as loadV4Configuration,
-  loadObjectConfiguration as loadV4ObjectConfiguration,
+  loadConfiguration as loadFileConfiguration,
+  loadObjectConfiguration,
   validateCapabilityConfiguration
 } from '@platformatic/foundation/lib/loader/index.js'
 import closeWithGrace from 'close-with-grace'
 import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { dirname, resolve as resolvePath } from 'node:path'
-import { transformV4 } from './lib/config.js'
+import { transformConfiguration } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
-import { v4Schema } from './lib/schema.js'
+import { configurationSchema } from './lib/schema.js'
 
 async function restartRuntime (runtime) {
   runtime.logger.info('Received SIGUSR2, restarting all applications ...')
@@ -87,7 +87,7 @@ function isNamedConfigurationPath (path) {
   return /\.(json|json5|ya?ml|to?ml|js|mjs|ts|mts)$/.test(path)
 }
 
-async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
+async function findConfigurationForSource (configOrRoot, sourceOrConfig) {
   // A programmatic object source is not this path: the v4 object entry point is
   // loadObjectConfiguration, which skips the root eval worker entirely.
   if (sourceOrConfig && typeof sourceOrConfig !== 'string') {
@@ -134,10 +134,10 @@ async function findV4ConfigurationFile (configOrRoot, sourceOrConfig) {
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
   // Checked before the v3 resolver, which throws when it finds no v3 file — a v4-only project has
   // none by construction.
-  const v4ConfigurationFile = await findV4ConfigurationFile(configOrRoot, sourceOrConfig)
+  const decidingConfigurationFile = await findConfigurationForSource(configOrRoot, sourceOrConfig)
 
-  if (v4ConfigurationFile) {
-    return loadV4RuntimeConfiguration(v4ConfigurationFile, context)
+  if (decidingConfigurationFile) {
+    return loadRuntimeConfiguration(decidingConfigurationFile, context)
   }
 
   /*
@@ -151,7 +151,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     const stats = await stat(configOrRoot).catch(() => null)
 
     if (stats?.isDirectory()) {
-      return loadV4RuntimeConfiguration({ cwd: configOrRoot }, context)
+      return loadRuntimeConfiguration({ cwd: configOrRoot }, context)
     }
   }
 
@@ -163,7 +163,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     worker and joins the v4 pipeline at validation.
   */
   if (source && typeof source !== 'string') {
-    return loadV4RuntimeConfiguration({ root, source }, context)
+    return loadRuntimeConfiguration({ root, source }, context)
   }
 
   /*
@@ -181,7 +181,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   differ only in where the configuration comes from: an object skips the root eval worker, since
   there is nothing to evaluate, and everything after that is the same pipeline.
 */
-async function loadV4RuntimeConfiguration (target, context) {
+async function loadRuntimeConfiguration (target, context) {
   /*
     The command decides `production` when the caller did not, rather than the other way round:
     `build` produces production artifacts, so a build that evaluated as a development boot read the
@@ -212,7 +212,7 @@ async function loadV4RuntimeConfiguration (target, context) {
       acts on it -- without the schema that step is skipped, and a malformed `autoload` reaches the
       filesystem walk as a raw TypeError instead of a validation error naming the property.
     */
-    schema: context?.schema ?? v4Schema,
+    schema: context?.schema ?? configurationSchema,
     /*
       The evaluation deadline. A configuration that never resolves — an awaited fetch to a dead
       host, a forgotten promise — otherwise hangs the boot rather than failing it, and the default
@@ -250,13 +250,13 @@ async function loadV4RuntimeConfiguration (target, context) {
 
   let loaded
   if (objectSource) {
-    loaded = await loadV4ObjectConfiguration({ root: target.root, source: target.source, ...shared })
+    loaded = await loadObjectConfiguration({ root: target.root, source: target.source, ...shared })
   } else if (typeof target === 'string') {
-    loaded = await loadV4Configuration({ cwd: dirname(target), configPath: target, ...shared })
+    loaded = await loadFileConfiguration({ cwd: dirname(target), configPath: target, ...shared })
   } else {
     // No file was named and none was found: the loader searches from this directory and, finding
     // nothing, synthesizes.
-    loaded = await loadV4Configuration({ cwd: target.cwd, ...shared })
+    loaded = await loadFileConfiguration({ cwd: target.cwd, ...shared })
   }
 
   const config = loaded.config
@@ -267,7 +267,7 @@ async function loadV4RuntimeConfiguration (target, context) {
     projection carries authored values — so this is where the runtime schema's defaults arrive, and
     without it the runtime reaches for settings like gracefulShutdown that nothing supplied.
   */
-  validateCapabilityConfiguration(config, context?.schema ?? v4Schema, {
+  validateCapabilityConfiguration(config, context?.schema ?? configurationSchema, {
     id: 'runtime',
     module: '@platformatic/runtime',
     root: loaded.root
@@ -288,7 +288,7 @@ async function loadV4RuntimeConfiguration (target, context) {
       and its presence is also what tells the add path this runtime is v4 at all. A v3 runtime has
       no such context and keeps resolving configuration files worker-side.
     */
-    v4: {
+    loader: {
       command,
       mode: loaded.mode,
       production: loaded.production,
@@ -322,7 +322,7 @@ async function loadV4RuntimeConfiguration (target, context) {
     it arrives as part of ...context. Ignoring it here meant a test helper or an embedder that
     customized the configuration was silently not consulted.
   */
-  const apply = context?.transform ?? transformV4
+  const apply = context?.transform ?? transformConfiguration
 
   return apply(config, null, context)
 }
@@ -435,7 +435,7 @@ export { prepareAddedApplications } from './lib/config.js'
 // The one transform there is: the v3 one died with its last caller, the wizard's legacy-JSON
 // branch, and the dispatch that told the two apart went with it.
 export async function transform (config, schema, context) {
-  return transformV4(config, schema, context)
+  return transformConfiguration(config, schema, context)
 }
 export * as errors from './lib/errors.js'
 export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'

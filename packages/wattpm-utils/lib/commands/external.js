@@ -214,7 +214,7 @@ async function scaffoldAutoloadRoot (logger, root) {
   can be edited, the entry is printed for the user to paste and the command still succeeds: nothing
   was written, and there is nothing to undo.
 */
-async function importApplicationIntoV4 (logger, configurationFile, { id, path, url, branch }) {
+async function importApplicationIntoConfiguration (logger, configurationFile, { id, path, url, branch }) {
   const root = dirname(configurationFile)
   const entry = { id }
 
@@ -322,7 +322,7 @@ async function importApplication (logger, configurationFile, id, path, url, bran
     the migrate hint. The v3 half that wrote a `{PLT_APPLICATION_<ID>_PATH}` indirection and an
     .env line for it went with the legacy reader -- a v4 entry carries its path or url literally.
   */
-  return importApplicationIntoV4(logger, configurationFile, { id, path, url, branch })
+  return importApplicationIntoConfiguration(logger, configurationFile, { id, path, url, branch })
 }
 
 async function importURL (logger, _, configurationFile, rawUrl, id, http, branch) {
@@ -478,7 +478,7 @@ function unionApplications (logger, evaluations, root) {
       never arrives, and the boot that turns it on fails on a directory nobody fetched. v3 has no
       such record and its list is the one it always was.
     */
-    const entries = config[kMetadata]?.v4?.resolveCandidates ?? config.applications
+    const entries = config[kMetadata]?.loader?.resolveCandidates ?? config.applications
 
     for (const application of entries) {
       const destination = application.path

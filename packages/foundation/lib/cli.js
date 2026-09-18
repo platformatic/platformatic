@@ -217,7 +217,7 @@ export function applicationToEnvVariable (application) {
   explicit name, or by the walk from the directory. A legacy file found by the walk means "this
   project is not v4", and the v3 lookups below are the ones that should answer.
 */
-async function findV4ConfigurationFile (root, configurationFile) {
+async function findConfigurationForSource (root, configurationFile) {
   if (typeof configurationFile === 'string') {
     const named = resolve(root, configurationFile)
 
@@ -252,10 +252,10 @@ export async function findRuntimeConfigurationFile (
     fails and the fallback then auto-detects the directory and writes a watt.json into it -- the
     command silently builds something other than the project it was pointed at.
   */
-  const v4ConfigurationFile = await findV4ConfigurationFile(root, configurationFile)
+  const decidingConfigurationFile = await findConfigurationForSource(root, configurationFile)
 
-  if (v4ConfigurationFile) {
-    return v4ConfigurationFile
+  if (decidingConfigurationFile) {
+    return decidingConfigurationFile
   }
 
   let configFile = await findConfigurationFileRecursive(root, configurationFile, '@platformatic/runtime')
