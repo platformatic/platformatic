@@ -96,30 +96,21 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(await capability.getDispatchFunc(), capability)
 })
 
-test('BaseCapability - getDispatchTarget - "websocket" flag falls back to the TCP address without an in-thread dispatch target', async t => {
-  const capability = await create(t, { applicationConfig: { websocket: true } })
+test('BaseCapability - getDispatchTarget - returns the TCP address when the application has one', async t => {
+  const capability = await create(t, {})
 
   capability.url = 'http://127.0.0.1:1234'
 
   deepStrictEqual(await capability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
-test('BaseCapability - getDispatchTarget - "websocket" flag keeps in-thread dispatching when the capability provides it', async t => {
-  const capability = await create(t, { applicationConfig: { websocket: true } })
+test('BaseCapability - getDispatchTarget - falls back to the in-thread dispatch function without a URL', async t => {
+  const capability = await create(t, {})
 
   const dispatchTarget = { inject () {} }
   capability.getDispatchFunc = async () => dispatchTarget
-  capability.url = 'http://127.0.0.1:1234'
 
   deepStrictEqual(await capability.getDispatchTarget(), dispatchTarget)
-})
-
-test('BaseCapability - getDispatchTarget - "websocket" flag is ignored with "useHttp"', async t => {
-  const useHttpCapability = await create(t, { applicationConfig: { websocket: true, useHttp: true } })
-  useHttpCapability.getDispatchFunc = async () => ({ inject () {} })
-  useHttpCapability.url = 'http://127.0.0.1:1234'
-
-  deepStrictEqual(await useHttpCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
 test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {

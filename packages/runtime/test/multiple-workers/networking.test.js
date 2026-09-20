@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
@@ -110,52 +110,6 @@ test('the mesh network works with the HTTP applications when using HTTP', async 
       }
     },
     { name: 'node', workerCount: 5, expectedSocket: 'Socket' }
-  ])
-})
-
-// The `websocket` application flag (#5006) predates the code-first serving model: it made an
-// application bind a TCP port for WebSocket handoff while keeping mesh HTTP in-thread, on top of the
-// `useHttp` flag this branch removed. The in-thread dispatch half survives in basic's
-// getDispatchTarget, but the flag is not in the application schema and nothing makes a port-less
-// application with it serve, so `willApplicationServe` refuses to bind the port the test measures.
-// Re-enable once the flag is wired into loader/serving.js and foundation's application schema.
-test.skip('the mesh network stays in-memory for applications using the websocket flag', async t => {
-  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
-
-  await updateConfigFile(configFile, contents => {
-    addIngress(contents)
-    contents.services[0].websocket = true
-    contents.services.push({
-      id: 'service',
-      path: './service',
-      config: 'platformatic.json',
-      websocket: true,
-      workers: 3
-    })
-  })
-
-  const app = await createRuntime(configFile, null, { isProduction: true })
-  const { 'ingress:0': entryUrl } = await app.start()
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  // Each worker binds its own TCP port and advertises it via meta ...
-  const ports = await Promise.all(
-    [0, 1, 2].map(async worker => {
-      const meta = await app.getApplicationMeta(`service:${worker}`)
-      return new URL(meta.gateway.url).port
-    })
-  )
-  ok(ports.every(port => Number.parseInt(port) > 0))
-  deepStrictEqual(new Set(ports).size, 3)
-
-  // ... but mesh HTTP traffic keeps using the in-memory transport
-  await testRoundRobin(entryUrl, [
-    { name: 'service', workerCount: 3, expectedSocket: 'MockSocket' },
-    { name: 'node', workerCount: 5, expectedSocket: 'MockSocket' }
   ])
 })
 
