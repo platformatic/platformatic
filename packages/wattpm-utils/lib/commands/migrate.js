@@ -1109,7 +1109,7 @@ export async function planMigration (root, source, config, { useSampleDefaults =
   const sample = readSampleEnv(root)
 
   for (const entry of declaredEntries) {
-    let { config: _legacyPath, envfile, server: _server, useHttp: _useHttp, ...orchestration } = entry
+    let { config: _legacyPath, envfile, server: _server, useHttp: _useHttp, websocket: _websocket, ...orchestration } = entry
     const named = entry.id ?? entry.path ?? entry.url ?? 'an application'
 
     if (!entry.path) {

@@ -51,24 +51,24 @@ After, in `watt.config.ts`:
 import { createWattConfig } from 'wattpm'
 
 /*
-  `level` is an enum, so a fallback is not enough: `process.env.X ?? 'info'` has type `string`, and
-  `string` is not one of the seven levels. This is the helper `migrate` writes into the file for
-  you.
+  `level` is a string the schema forbids from being empty — a string so a custom level can name it,
+  but never legitimately `''`. A fallback is wrong: `process.env.X ?? ''` would leave the empty
+  string a missing variable interpolated to, which the schema rejects, so a missing variable must
+  throw instead. This is the helper `migrate` writes into the file for you.
 */
-function requiredEnum <const T extends readonly string[]> (name: string, allowed: T): T[number] {
+function requiredEnv (name: string): string {
   const value = process.env[name]
 
-  if (!value || !allowed.includes(value)) {
-    throw new Error(`${name} must be one of: ${allowed.join(', ')}`)
+  if (!value) {
+    throw new Error(`${name} is required.`)
   }
 
-  return value as T[number]
+  return value
 }
 
 export default createWattConfig({
   logger: {
-    level: requiredEnum('PLT_SERVER_LOGGER_LEVEL',
-      ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+    level: requiredEnv('PLT_SERVER_LOGGER_LEVEL')
   },
   applications: [{ id: 'api', path: './api' }]
 })
@@ -76,9 +76,10 @@ export default createWattConfig({
 
 A missing variable used to interpolate to the empty string. Now it is `undefined`, which is why what replaces a placeholder depends on what the position holds:
 
-- **a string** — `process.env.PLT_BASE_PATH ?? ''`
+- **a string that may be empty** — `process.env.PLT_BASE_PATH ?? ''`
+- **a string the schema forbids from being empty** — `requiredEnv(...)` as above, because the empty string a missing variable would leave fails the schema
 - **a number** — `Number(process.env.PORT || 3042)`, with `||` rather than `??`, because `PORT=` in an env file supplies the empty string and the empty string is present
-- **an enum** — `requiredEnum(...)` as above, because nothing narrows a `string` to the members
+- **an enum** — `requiredEnum(name, [...])`, a variant that also checks the value is one of a genuinely closed set, for a capability position that declares one
 - **a boolean** — by hand. v3's rules contradicted each other by position, so there is no single conversion to write
 
 `createWattConfig` types the object; it does not transform it. Omitting it is legal and costs you the editor's help.
@@ -195,6 +196,14 @@ export default createServiceConfig({
   server: { port: Number(process.env.HTTP_PORT || 3042) }
 })
 ```
+
+## The `useHttp` and `websocket` application flags are gone
+
+v3 had two application-entry flags that a listener now replaces or the mesh makes unnecessary. `migrate` drops both.
+
+`useHttp` made an application listen on TCP even when it was not the entrypoint. v4 has no `useHttp`: a capability that declares `server.port` is always a real listener, so the port moves into the capability configuration (see [Move listener configuration to the capability](#move-listener-configuration-to-the-capability)) and the flag disappears.
+
+`websocket` made an application bind a TCP port so the gateway could hand WebSocket upgrades off to it. v4 carries WebSocket connections over the in-memory application mesh, the same transport as mesh HTTP, so an application needs neither the flag nor a port to be reachable over WebSockets. Remove `websocket: true` from application entries; WebSocket proxying through the gateway works with no extra configuration.
 
 ## A single application needs no root
 
