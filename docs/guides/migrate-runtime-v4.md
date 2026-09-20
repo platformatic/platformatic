@@ -6,7 +6,7 @@ title: Migrate Runtime Configuration to v4
 
 v4 changes two things about configuration at once, and they are easier to do together than apart:
 
-- **The file is a program.** A project is configured by a `watt.config.ts` that exports its configuration, instead of a `platformatic.runtime.json` interpolated with `{PLT_X}` placeholders. The other three names are `watt.config.mts`, `watt.config.js` and `watt.config.mjs`; which one you write is decided by the package, not by preference (see [Choosing the filename](#choosing-the-filename)).
+- **The file is a program.** A project is configured by a `watt.config.ts` that exports its configuration, instead of a `platformatic.runtime.json` interpolated with `{PLT_X}` placeholders. The other five names are `watt.config.mts`, `watt.config.cts`, `watt.config.js`, `watt.config.mjs` and `watt.config.cjs`; which one you write is decided by the package, not by preference (see [Choosing the filename](#choosing-the-filename)).
 - **The runtime owns no listener.** `entrypoint` and the root `server` block are gone. Each application declares its own address in its own capability configuration. The runtime observes the servers that listen and reports their URLs; it does not select ports or rewrite listener options.
 
 The two dialects do not mix. A `watt.json` beside a `watt.config.ts` is refused rather than merged, so the switch is per project rather than per file.
@@ -25,9 +25,9 @@ Legacy config files are **deleted** once the new ones are written and validated,
 
 ## Choosing the filename
 
-`.ts` and `.mts` are TypeScript, stripped by Node itself — types are annotations only, so no `enum`, no `namespace`, no parameter properties. `.js` and `.mjs` are plain JavaScript.
+`.ts`, `.mts` and `.cts` are TypeScript, stripped by Node itself — types are annotations only, so no `enum`, no `namespace`, no parameter properties. `.js`, `.mjs` and `.cjs` are plain JavaScript.
 
-The `m` prefix is not a style choice: a `watt.config.js` in a package without `"type": "module"` is CommonJS, and `export default` there is a syntax error. In a package that declares `"type": "module"`, write `watt.config.ts` or `watt.config.js`; in one that does not, write `watt.config.mts` or `watt.config.mjs`.
+The prefix is not a style choice. A bare `.ts` or `.js` follows the package's `"type"`, so a `watt.config.js` in a package without `"type": "module"` is CommonJS, and `export default` there is a syntax error. The `m` and `c` prefixes force the module system regardless of the package: `.mts`/`.mjs` are always ESM, `.cts`/`.cjs` always CommonJS (write `module.exports = …` in those). In a package that declares `"type": "module"`, write `watt.config.ts` or `watt.config.js`; in one that does not, write `watt.config.mts` or `watt.config.mjs` (or a `.cts`/`.cjs` file with `module.exports`).
 
 One configuration file per directory. Two is an error, not a precedence rule.
 
