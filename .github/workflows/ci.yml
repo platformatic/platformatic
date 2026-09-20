@@ -451,7 +451,9 @@ jobs:
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 30
+    # The Windows runners are slow enough that this job brushes the shared cap; give them headroom
+    # while Linux keeps the tighter one.
+    timeout-minutes: ${{ matrix.os == 'windows-2025' && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:
@@ -879,7 +881,9 @@ jobs:
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'next' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The integration suite (Next.js builds under Playwright) runs close to the shared cap; give it
+    # headroom while the fast suites keep the tighter one.
+    timeout-minutes: ${{ matrix.suite == 'integration' && 45 || 30 }}
     strategy:
       fail-fast: false
       matrix:
