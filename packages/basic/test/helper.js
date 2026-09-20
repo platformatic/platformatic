@@ -37,6 +37,10 @@ let temporaryDirectoryCount = 0
 export const LOGS_TIMEOUT = 100
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 export const HMR_CONNECTION_TIMEOUT = 5000
+// A single WebSocket upgrade attempt that neither opens nor errors within this window is treated as
+// a transient failure and retried. Without it, an upgrade the server leaves open (an HMR path it
+// does not serve) hangs the connect forever.
+export const WS_CONNECT_ATTEMPT_TIMEOUT = process.env.CI ? 10000 : 5000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
 
 export let fixturesDir
@@ -805,13 +809,25 @@ export async function connectWebSocketWithRetry (wsUrl, protocol, timeoutMs = 20
     const ws = new WebSocket(wsUrl, protocol)
     try {
       await new Promise((resolve, reject) => {
-        ws.once('open', resolve)
-        ws.once('error', reject)
+        // Bound the individual attempt. An upgrade the dev server neither accepts nor refuses -- an
+        // HMR path it does not serve, which Next.js leaves open rather than closing -- never fires
+        // 'open' or 'error', and without this timer it would hang here forever, past the deadline the
+        // catch block checks, defeating the path fallback in verifyHMR.
+        const attemptTimer = setTimeout(() => reject(new Error('WS_CONNECT_ATTEMPT_TIMEOUT')), WS_CONNECT_ATTEMPT_TIMEOUT)
+        ws.once('open', () => {
+          clearTimeout(attemptTimer)
+          resolve()
+        })
+        ws.once('error', err => {
+          clearTimeout(attemptTimer)
+          reject(err)
+        })
       })
       return ws
     } catch (error) {
       ws.terminate()
-      if (Date.now() >= deadline || !isTransientConnectionError(error)) {
+      const retryable = error.message === 'WS_CONNECT_ATTEMPT_TIMEOUT' || isTransientConnectionError(error)
+      if (Date.now() >= deadline || !retryable) {
         throw error
       }
       await sleep(delay)
