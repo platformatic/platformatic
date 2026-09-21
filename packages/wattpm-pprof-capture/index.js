@@ -1,32 +1,34 @@
-import { time, heap, SourceMapper } from '@datadog/pprof'
-import { performance } from 'node:perf_hooks'
+import { heap, SourceMapper, time } from '@datadog/pprof'
+import { getITC, getLogger } from '@platformatic/globals'
 import { workerData } from 'node:worker_threads'
 import { NoProfileAvailableError, NotEnoughELUError, ProfilingAlreadyStartedError, ProfilingNotStartedError } from './lib/errors.js'
 import { SourceMapperWrapper } from './lib/source-mapper-wrapper.js'
 
-const kITC = Symbol.for('plt.runtime.itc')
+// @datadog/pprof >= 5.14.2 introduced a regression in the legacy time profiler
+// `stop()`: it now clears the internal source mapper (via handleStopNoRestart)
+// *before* serializing the profile, so transpiled frames (e.g. TypeScript) are
+// no longer mapped back to their original `.ts` sources. The `stopV2()` entry
+// point serializes the profile while the source mapper is still set — the
+// behaviour `stop()` had in earlier versions. It is not re-exported on the
+// public `time` facade, so resolve it from the internal module when available
+// and fall back to the public `stop()` otherwise (e.g. older versions).
+let stopTimeProfilerV2 = null
+try {
+  ;({ stopV2: stopTimeProfilerV2 } = await import('@datadog/pprof/out/src/time-profiler.js'))
+} catch {
+  // Internal module path not available; fall back to the public stop().
+}
 
 // SourceMapper for resolving transpiled code locations back to original source
 let sourceMapper = null
 let sourceMapperInitialized = false
 
-// Track ELU globally (shared across all profiler types)
-let lastELU = null
-let previousELU = performance.eventLoopUtilization()
-
-// Start continuous ELU tracking immediately
-const eluUpdateInterval = setInterval(() => {
-  lastELU = performance.eventLoopUtilization(previousELU)
-  previousELU = performance.eventLoopUtilization()
-
-  for (const type of ['cpu', 'heap']) {
-    const state = profilingState[type]
-    startIfOverThreshold(type, state)
-  }
-}, 1000)
-eluUpdateInterval.unref()
-
-// Track profiling state separately for each type
+// Track profiling state separately for each type. When an ELU threshold is
+// set the profiler is driven by the runtime main thread: its health metrics
+// cycle measures this worker's event loop utilization (without depending on
+// this thread's event loop being responsive) and toggles the profiler via the
+// resumeProfiling/pauseProfiling commands. The `paused` flag tracks whether
+// the profiler is currently gated off.
 const profilingState = {
   cpu: {
     isCapturing: false,
@@ -35,6 +37,8 @@ const profilingState = {
     captureInterval: null,
     durationMillis: null,
     eluThreshold: null,
+    paused: false,
+    pauseReason: null,
     options: null,
     profilerStarted: false,
     clearProfileTimeout: null,
@@ -47,6 +51,8 @@ const profilingState = {
     captureInterval: null,
     durationMillis: null,
     eluThreshold: null,
+    paused: false,
+    pauseReason: null,
     options: null,
     profilerStarted: false,
     clearProfileTimeout: null,
@@ -55,20 +61,45 @@ const profilingState = {
 }
 
 // Keep trying until ITC is available. This is needed because preloads run
-// before the app thread initialization, so globalThis.platformatic.messaging
-// and ITC don't exist yet.
+// before the app thread initialization, so messaging and ITC don't exist yet.
 const registerInterval = setInterval(() => {
-  if (globalThis[kITC]) {
-    globalThis[kITC].handle('getLastProfile', getLastProfile)
-    globalThis[kITC].handle('startProfiling', startProfiling)
-    globalThis[kITC].handle('stopProfiling', stopProfiling)
-    globalThis[kITC].handle('getProfilingState', getProfilingState)
+  const itc = getITC({ throwOnMissing: false })
+
+  if (itc) {
+    itc.handle('getLastProfile', getLastProfile)
+    itc.handle('startProfiling', startProfiling)
+    itc.handle('stopProfiling', stopProfiling)
+    itc.handle('getProfilingState', getProfilingState)
+    itc.handle('resumeProfiling', resumeProfiling)
+    itc.handle('pauseProfiling', pauseProfiling)
+
+    // The runtime main thread drives the ELU gating as part of its health
+    // metrics cycle and toggles the profiler with fire-and-forget
+    // notifications.
+    itc.on('resumeProfiling', resumeProfiling)
+    itc.on('pauseProfiling', pauseProfiling)
+
     clearInterval(registerInterval)
   }
 }, 10)
 
 function getProfiler (type) {
   return type === 'heap' ? heap : time
+}
+
+function serializeProfile (profile, options) {
+  // Return the latest profile if available, otherwise return an empty profile
+  // (e.g., when profiler never started due to ELU threshold not being exceeded)
+  const encodedProfile = profile ? profile.encode() : new Uint8Array(0)
+
+  if (options.includeSampleCount) {
+    return {
+      profile: encodedProfile,
+      sampleCount: profile?.sample.length ?? 0
+    }
+  }
+
+  return encodedProfile
 }
 
 function scheduleLastProfileCleanup (state) {
@@ -159,20 +190,12 @@ function stopProfiler (type, state) {
     state.latestProfile = (state.sourceMapsEnabled && sourceMapper) ? profiler.profile(undefined, sourceMapper) : profiler.profile()
     profiler.stop()
   } else {
-    // CPU time profiler returns the profile when stopping
-    // sourceMapper was already passed to start(), so it's applied automatically
-    state.latestProfile = profiler.stop()
+    // CPU time profiler returns the profile when stopping.
+    // sourceMapper was already passed to start(), so it's applied automatically.
+    // Use stopV2() when available so the source mapper is honoured during
+    // serialization (see the note next to stopTimeProfilerV2 above).
+    state.latestProfile = stopTimeProfilerV2 ? stopTimeProfilerV2() : profiler.stop()
   }
-}
-
-function isAboveThreshold (state) {
-  return lastELU != null && lastELU.utilization > state.eluThreshold
-}
-
-function isBelowStopThreshold (state) {
-  // Use hysteresis: stop at threshold - 0.1 to prevent rapid toggling
-  const stopThreshold = state.eluThreshold - 0.1
-  return lastELU != null && lastELU.utilization < stopThreshold
 }
 
 function rotateProfile (type) {
@@ -180,52 +203,126 @@ function rotateProfile (type) {
   const wasRunning = state.profilerStarted
 
   stopProfiler(type, state)
-  maybeStartProfiler(type, state, wasRunning)
-}
 
-function maybeStartProfiler (type, state, wasRunning) {
-  // Check if we should start profiling based on current ELU (updated by global interval)
-  if (state.eluThreshold != null) {
-    startIfOverThreshold(type, state, wasRunning)
-  } else if (state.isCapturing) {
-    // No threshold, always start profiling
-    startProfiler(type, state, state.options)
+  if (wasRunning && state.latestProfile) {
+    notifyProfileCaptured(type, state)
   }
+
+  // A pending pause takes effect here: the completed window was captured and
+  // announced above, and maybeStartProfiler leaves the profiler stopped.
+  maybeStartProfiler(type, state)
+  handleOverloadPause(type, state)
 }
 
-function startIfOverThreshold (type, state, wasRunning = state.profilerStarted) {
-  // Only check if profiling is active and has an ELU threshold
-  if (!state.isCapturing || state.eluThreshold == null) {
+function notifyMainThread (name, payload) {
+  const itc = getITC({ throwOnMissing: false })
+
+  if (!itc) {
     return
   }
 
-  const currentELU = lastELU?.utilization
+  try {
+    itc.notify(name, payload)
+  } catch (err) {
+    getLogger({ throwOnMissing: false })?.error({ err, name }, 'Failed to notify the main thread')
+  }
+}
 
-  // Hysteresis logic:
-  // - Start if ELU > threshold
-  // - Stop if ELU < threshold - 0.1
-  // - Between thresholds: maintain current state
-  const shouldRun = wasRunning
-    // Was running: only stop if ELU drops below stop threshold
-    ? !isBelowStopThreshold(state)
-    // Was not running: only start if ELU rises above start threshold
-    : isAboveThreshold(state)
+// Notify the main thread that the continuous profiler completed a profile
+// window. The profile itself is purposely not included as it can be big and
+// there might be no consumer: interested code can retrieve it on demand via
+// the getLastProfile command.
+function notifyProfileCaptured (type, state) {
+  notifyMainThread('profile:captured', {
+    type,
+    timestamp: state.latestProfileTimestamp,
+    sampleCount: state.latestProfile.sample.length
+  })
+}
 
-  if (shouldRun) {
-    // ELU is high enough, start/restart profiling
-    if (!wasRunning && !state.profilerStarted && globalThis.platformatic?.logger) {
-      globalThis.platformatic.logger.debug(
-        { type, eluThreshold: state.eluThreshold, currentELU },
-        'Starting profiler due to ELU threshold exceeded'
-      )
-    }
+function maybeStartProfiler (type, state) {
+  if (state.isCapturing && !state.paused) {
     startProfiler(type, state, state.options)
-  } else if (!shouldRun && wasRunning && globalThis.platformatic?.logger && state.eluThreshold != null) {
-    // Log when deciding not to restart after stopping (only in rotation context)
-    globalThis.platformatic.logger.debug(
-      { type, eluThreshold: state.eluThreshold, currentELU },
-      'Pausing profiler due to ELU below threshold'
-    )
+  }
+}
+
+// When the pause is due to the worker being overloaded, the final profile is
+// the evidence of what saturated the worker: keep it available for the whole
+// pause (consumers may retrieve it at any point during the overload) and push
+// an encoded copy to the main thread, so that it survives even if this worker
+// becomes unresponsive or is replaced by the health checks before anyone
+// pulls it. This is the only case where the profile payload crosses the
+// thread boundary unrequested, and it is bounded to one profile per overload
+// episode. Below-threshold pauses keep the regular expiry so that a stale
+// profile is not mistaken for a recent one.
+function handleOverloadPause (type, state) {
+  if (!state.paused || state.pauseReason !== 'overload') {
+    return
+  }
+
+  unscheduleLastProfileCleanup(state)
+
+  if (!state.latestProfile) {
+    return
+  }
+
+  try {
+    notifyMainThread('profile:overload', {
+      type,
+      timestamp: state.latestProfileTimestamp,
+      profile: state.latestProfile.encode(),
+      sampleCount: state.latestProfile.sample.length
+    })
+  } catch (err) {
+    getLogger({ throwOnMissing: false })?.error({ err, type }, 'Failed to preserve the overload profile')
+  }
+}
+
+// Invoked by the runtime main thread when the worker ELU rises above the
+// configured threshold. If a pending pause had not been applied yet (the
+// current window is still recording), it is simply cancelled.
+export function resumeProfiling (options = {}) {
+  const type = options.type || 'cpu'
+  const state = profilingState[type]
+
+  if (!state.isCapturing || !state.paused) {
+    return
+  }
+
+  state.paused = false
+  state.pauseReason = null
+  getLogger({ throwOnMissing: false })?.debug({ type, eluThreshold: state.eluThreshold }, 'Resuming profiler')
+  startProfiler(type, state, state.options)
+}
+
+// Invoked by the runtime main thread when the worker ELU drops below the
+// configured threshold or exceeds the maxELU overload cutoff. The pause takes
+// effect at the next rotation boundary, so that the current window completes
+// its full duration before being captured and announced like any other
+// rotation. Without rotation the profiler is stopped immediately.
+export function pauseProfiling (options = {}) {
+  const type = options.type || 'cpu'
+  const state = profilingState[type]
+
+  if (!state.isCapturing || state.paused) {
+    return
+  }
+
+  state.paused = true
+  state.pauseReason = options.reason ?? null
+  getLogger({ throwOnMissing: false })?.debug(
+    { type, eluThreshold: state.eluThreshold, reason: options.reason },
+    'Pausing profiler'
+  )
+
+  if (state.profilerStarted && !state.captureInterval) {
+    stopProfiler(type, state)
+
+    if (state.latestProfile) {
+      notifyProfileCaptured(type, state)
+    }
+
+    handleOverloadPause(type, state)
   }
 }
 
@@ -240,8 +337,9 @@ async function initializeSourceMapper (options = {}) {
     // Get the application directory from workerData
     const appPath = workerData?.applicationConfig?.path
     if (!appPath) {
-      if (globalThis.platformatic?.logger) {
-        globalThis.platformatic.logger.debug('No application path available for sourcemap resolution')
+      const logger = getLogger({ throwOnMissing: false })
+      if (logger) {
+        logger.debug('No application path available for sourcemap resolution')
       }
       return
     }
@@ -267,16 +365,18 @@ async function initializeSourceMapper (options = {}) {
     // Wrap the SourceMapper to fix Windows path normalization
     sourceMapper = new SourceMapperWrapper(innerMapper)
 
-    if (globalThis.platformatic?.logger) {
+    const logger = getLogger({ throwOnMissing: false })
+    if (logger) {
       const hasMappings = sourceMapper && typeof sourceMapper.hasMappingInfo === 'function'
-      globalThis.platformatic.logger.info(
+      logger.info(
         { appPath, hasSourceMapper: !!sourceMapper, hasMappingInfo: hasMappings },
         'SourceMapper initialized for profiling'
       )
     }
   } catch (err) {
-    if (globalThis.platformatic?.logger) {
-      globalThis.platformatic.logger.warn(
+    const logger = getLogger({ throwOnMissing: false })
+    if (logger) {
+      logger.warn(
         { err: err.message, stack: err.stack },
         'Failed to initialize SourceMapper'
       )
@@ -310,7 +410,62 @@ export async function startProfiling (options = {}) {
   state.eluThreshold = options.eluThreshold
   state.durationMillis = options.durationMillis
 
+  // Register the gating needs with the runtime main thread, which measures
+  // the worker ELU as part of its health metrics cycle: profiling only runs
+  // while the ELU is above the eluThreshold demand (if set) and below the
+  // maxELU overload cutoff (which defaults to the worker health.maxELU and
+  // can be overridden or disabled via the maxELU option).
+  const wantsGating =
+    options.eluThreshold != null ||
+    typeof options.maxELU === 'number' ||
+    (options.durationMillis != null && options.maxELU !== false)
+
+  const driven = wantsGating && (await registerProfilingGate(type, options))
+
+  // When an ELU threshold is set and the main thread drives the gating, the
+  // profiler starts paused: the runtime resumes it once it measures an ELU
+  // above the threshold. Without a driver the profiler runs ungated.
+  state.paused = driven && options.eluThreshold != null
+
   maybeStartProfiler(type, state)
+}
+
+// Gate registration is a request on purpose: a runtime without the
+// main-thread driver rejects it with PLT_ITC_HANDLER_NOT_FOUND, and the
+// profiler falls back to running ungated — with more overhead than the
+// caller asked for, but working, instead of starting paused forever waiting
+// for a resume that would never come. The same applies when the module is
+// used outside a Platformatic runtime.
+async function registerProfilingGate (type, options) {
+  const itc = getITC({ throwOnMissing: false })
+
+  if (!itc) {
+    return false
+  }
+
+  try {
+    await itc.send('profiling:started', {
+      type,
+      eluThreshold: options.eluThreshold ?? null,
+      maxELU: options.maxELU ?? null,
+      continuous: options.durationMillis != null
+    })
+
+    return true
+  } catch (err) {
+    const logger = getLogger({ throwOnMissing: false })
+
+    if (err?.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+      logger?.warn(
+        { type },
+        'The runtime does not support main-thread profiler gating: eluThreshold and maxELU are ignored and the profiler runs ungated. Upgrade @platformatic/runtime.'
+      )
+    } else {
+      logger?.error({ err, type }, 'Failed to register the profiler gate, the profiler runs ungated')
+    }
+
+    return false
+  }
 }
 
 export function stopProfiling (options = {}) {
@@ -327,16 +482,13 @@ export function stopProfiling (options = {}) {
   // Clean up state
   state.eluThreshold = null
   state.durationMillis = null
+  state.paused = false
   state.options = null
   state.sourceMapsEnabled = false
 
-  // Return the latest profile if available, otherwise return an empty profile
-  // (e.g., when profiler never started due to ELU threshold not being exceeded)
-  if (state.latestProfile) {
-    return state.latestProfile.encode()
-  } else {
-    return new Uint8Array(0)
-  }
+  notifyMainThread('profiling:stopped', { type })
+
+  return serializeProfile(state.latestProfile, options)
 }
 
 export function getLastProfile (options = {}) {
@@ -369,7 +521,20 @@ export function getLastProfile (options = {}) {
     }
   }
 
-  return state.latestProfile.encode()
+  const result = serializeProfile(state.latestProfile, options)
+
+  // Return metadata alongside the profile when requested. Pairing the
+  // timestamp with the profile avoids a race across rotations, while the
+  // sample count lets callers reject metadata-only protobufs without decoding
+  // them. The raw profile remains the default for backward compatibility.
+  if (options.includeTimestamp) {
+    return {
+      ...(options.includeSampleCount ? result : { profile: result }),
+      timestamp: state.latestProfileTimestamp
+    }
+  }
+
+  return result
 }
 
 export function getProfilingState (options = {}) {
@@ -380,8 +545,8 @@ export function getProfilingState (options = {}) {
     isCapturing: state.isCapturing,
     hasProfile: state.latestProfile != null,
     isProfilerRunning: state.profilerStarted,
-    isPausedBelowThreshold: state.eluThreshold != null && !state.profilerStarted,
-    lastELU: lastELU?.utilization,
+    isPaused: state.paused,
+    isPausedBelowThreshold: state.eluThreshold != null && state.paused,
     eluThreshold: state.eluThreshold,
     latestProfileTimestamp: state.latestProfileTimestamp
   }

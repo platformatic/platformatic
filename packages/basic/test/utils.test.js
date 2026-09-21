@@ -2,7 +2,16 @@ import { deepStrictEqual, rejects } from 'node:assert'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
 import { pathToFileURL } from 'node:url'
-import { cleanBasePath, ensureFileUrl, ensureTrailingSlash, getServerUrl, injectViaRequest } from '../lib/utils.js'
+import {
+  buildListenOptions,
+  buildAdditionalServerOptions,
+  buildFastifyOptions,
+  cleanBasePath,
+  ensureFileUrl,
+  ensureTrailingSlash,
+  getServerUrl,
+  injectViaRequest
+} from '../lib/utils.js'
 
 function defaultServerListener (_, res) {
   res.writeHead(200, {
@@ -35,9 +44,25 @@ test('getServerUrl - should return the correct IPv4 address', async t => {
 
 test('getServerUrl - should return the correct IPv6 address', async t => {
   const server = createHttpServer(t)
-  await listen(server, { host: '::1', port: 0 })
+  try {
+    await listen(server, { host: '::1', port: 0 })
+  } catch (err) {
+    if (err.code === 'EADDRNOTAVAIL') {
+      t.skip('IPv6 loopback is not available')
+      return
+    }
+
+    throw err
+  }
 
   deepStrictEqual(getServerUrl(server), `http://[::1]:${server.address().port}`)
+})
+
+test('getServerUrl - should normalize wildcard IPv6 address', async t => {
+  const server = createHttpServer(t)
+  await listen(server, { host: '::', port: 0 })
+
+  deepStrictEqual(getServerUrl(server), `http://127.0.0.1:${server.address().port}`)
 })
 
 test('injectViaRequest - should perform a request', async t => {
@@ -110,4 +135,89 @@ test('ensureTrailingSlash - should correctly append a trailing slash', async t =
   deepStrictEqual(ensureTrailingSlash(), '/')
   deepStrictEqual(ensureTrailingSlash('base/'), 'base/')
   deepStrictEqual(ensureTrailingSlash('base'), 'base/')
+})
+
+test('buildListenOptions - returns only port 0 when no server config is present', () => {
+  deepStrictEqual(buildListenOptions(), { port: 0 })
+  deepStrictEqual(buildListenOptions(undefined), { port: 0 })
+  deepStrictEqual(buildListenOptions(null), { port: 0 })
+  deepStrictEqual(buildListenOptions({}), { port: 0 })
+})
+
+test('buildListenOptions - does not inject a host when hostname is missing', () => {
+  deepStrictEqual(buildListenOptions({ port: 3000 }), { port: 3000 })
+})
+
+test('buildListenOptions - passes hostname and port through when both are set', () => {
+  deepStrictEqual(buildListenOptions({ hostname: '0.0.0.0', port: 3000 }), {
+    host: '0.0.0.0',
+    port: 3000
+  })
+})
+
+test('buildListenOptions - falls back to port 0 when port is not a number', () => {
+  deepStrictEqual(buildListenOptions({ hostname: '127.0.0.1' }), {
+    host: '127.0.0.1',
+    port: 0
+  })
+})
+
+test('buildAdditionalServerOptions - returns backlog and sanitized https options', async () => {
+  deepStrictEqual(
+    await buildAdditionalServerOptions({
+      backlog: 42,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }),
+    {
+      backlog: 42,
+      key: 'key',
+      cert: 'cert'
+    }
+  )
+})
+
+test('buildAdditionalServerOptions - can skip https options sanitization', async () => {
+  const https = {
+    key: { path: 'key' },
+    cert: { path: 'cert' }
+  }
+
+  deepStrictEqual(
+    await buildAdditionalServerOptions(
+      {
+        backlog: 42,
+        https
+      },
+      true
+    ),
+    {
+      backlog: 42,
+      ...https
+    }
+  )
+})
+
+test('buildFastifyOptions - returns http2 and sanitized https options', async () => {
+  deepStrictEqual(
+    await buildFastifyOptions({
+      hostname: '127.0.0.1',
+      port: 3042,
+      backlog: 42,
+      http2: true,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }),
+    {
+      http2: true,
+      https: {
+        key: 'key',
+        cert: 'cert'
+      }
+    }
+  )
 })

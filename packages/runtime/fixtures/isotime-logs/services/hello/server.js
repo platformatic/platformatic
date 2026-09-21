@@ -1,3 +1,4 @@
+import { getLogger } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 const {
@@ -9,7 +10,8 @@ const {
 
 export function build () {
   return createServer((req, res) => {
-    globalThis.platformatic.logger.info('Request received')
+    const logger = getLogger()
+    logger.info('Request received')
     res.writeHead(200, {
       'Content-Type': 'application/json'
     })

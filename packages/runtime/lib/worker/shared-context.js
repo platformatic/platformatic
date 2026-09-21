@@ -1,4 +1,4 @@
-import { kITC } from './symbols.js'
+import { getITC } from '@platformatic/globals'
 
 export class SharedContext {
   constructor () {
@@ -6,12 +6,14 @@ export class SharedContext {
   }
 
   update (context, options = {}) {
-    return globalThis[kITC].send('updateSharedContext', { ...options, context })
+    const itc = getITC()
+    return itc.send('updateSharedContext', { ...options, context })
   }
 
   get () {
     if (this.sharedContext === null) {
-      this.sharedContext = globalThis[kITC].send('getSharedContext')
+      const itc = getITC()
+      this.sharedContext = itc.send('getSharedContext')
     }
     return this.sharedContext
   }

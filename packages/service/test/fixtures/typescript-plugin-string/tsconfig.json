@@ -8,6 +8,7 @@
     "pretty": false,
     "noEmitOnError": true,
     "outDir": "dist",
+    "rootDir": ".",
     "skipLibCheck": true
   },
   "watchOptions": {

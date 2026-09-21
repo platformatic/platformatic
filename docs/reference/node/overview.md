@@ -36,7 +36,7 @@ Create a `watt.json` in the root folder of your application with the following c
 
 ## Specify application info
 
-Some info can be specified for the node applications. Currently for this few lines of code must be added.
+Some info can be specified for Node.js applications through the [`@platformatic/globals` Runtime APIs](../runtime/globals.md). Currently, a few lines of code must be added.
 
 ### OpenAPI and GraphQL schema
 
@@ -44,13 +44,14 @@ It's possible for the node applications to expose the OpenAPI or GraphQL schemas
 This can be done adding few lines of code, e.g. for fastify:
 
 ```javascript
+import { getLogger, setOpenapiSchema } from '@platformatic/globals'
 import fastify from 'fastify'
 import fastifySwagger from '@fastify/swagger'
 
 export async function build () {
 
   const server = fastify({
-    loggerInstance: globalThis.platformatic?.logger
+    loggerInstance: getLogger()
   })
 
   await server.register(fastifySwagger, {
@@ -66,7 +67,7 @@ export async function build () {
 
   server.addHook('onReady', async () => {
     const schema = server.swagger()
-    globalThis.platformatic.setOpenapiSchema(schema)
+    setOpenapiSchema(schema)
   })
 ```
 
@@ -76,16 +77,40 @@ It's possible to specify if a node application uses a connection string (and whi
 This is useful to map which application uses which database and to potentialy track database changes.
 
 ```javascript
+import { setConnectionString } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
-globalThis.platformatic.setConnectionString('postgres://dbuser:dbpass@mydbhost/apidb')
+setConnectionString('postgres://dbuser:dbpass@mydbhost/apidb')
 
 const server = createServer((_req, res) => {
   res.end(JSON.stringify({ ok: true }))
 })
 
-server.listen(1)
+server.listen(0)
 ```
+
+### Scheduled tasks
+
+Node applications can register scheduled tasks with [Watt's scheduler](../../guides/scheduler.md) by exporting
+`scheduledTasks` and `tasks` at the top level of their entrypoint. `scheduledTasks` maps cron expressions to one or
+more task names, and `tasks` maps those names to handlers:
+
+```js
+export const scheduledTasks = {
+  '0 */5 * * * *': ['cleanup']
+}
+
+export const tasks = {
+  async cleanup ({ scheduledTime, app }) {
+    // scheduledTime is the invocation timestamp in milliseconds.
+    // app is the application returned by create() or build(), or the Node HTTP server.
+  }
+}
+```
+
+Watt registers each cron expression as an application scheduler job and invokes its handlers through the Runtime.
+Handlers in a task group run concurrently. A failed handler marks the group as failed and lets the Runtime apply its
+configured retry policy.
 
 ## Architecture
 
@@ -99,22 +124,64 @@ If the application uses the `commands` property then it's always responsible to 
 
 In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
-If your application entrypoint exports a `hasServer` variable set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. Alternatively, you can set the `node.hasServer` property to false in your `watt.json` file.
-To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
+If your application entrypoint exports a `create` or `build` function that returns an object with `isBackgroundApplication` set to `true`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. If the returned object has a `close` function, it will be called upon application shutdown as `close(app)`, where `app` is the returned object.
+
+Alternatively, your application entrypoint can export a `hasServer` variable set to `false`, or you can set the `node.hasServer` property to false in your `watt.json` file. To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
+
+## HTTPS
+
+When a `@platformatic/node` application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
+  "entrypoint": "api",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042,
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  },
+  "applications": [
+    {
+      "id": "api",
+      "path": "./services/api"
+    }
+  ]
+}
+```
+
+Use `getAdditionalServerOptions()` in your Node.js application and pass the returned options to `node:https.createServer()`:
+
+```js
+import { getAdditionalServerOptions } from '@platformatic/globals'
+import { createServer } from 'node:https'
+
+const server = createServer(getAdditionalServerOptions(), (req, res) => {
+  res.end('ok')
+})
+
+server.listen(0)
+```
+
+Watt reads `key` and `cert` file paths before loading the application, so `getAdditionalServerOptions()` returns the sanitized TLS options that `node:https` expects. `reuseTcpPorts` remains enabled by default and HTTPS servers use `SO_REUSEPORT` when the current Node.js version and operating system support it.
 
 ## Example applications entrypoints
 
 ### Fastify with build function
 
 ```js
+import { getBasePath, getLogLevel } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
   const app = fastify({
-    logger: { level: globalThis.platformatic?.logLevel ?? 'info' }
+    logger: { level: getLogLevel({ throwOnMissing: false }) ?? 'info' }
   })
 
-  const prefix = globalThis.platformatic?.basePath ?? ''
+  const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
   app.get(`${prefix}/env`, async () => {
     return { production: process.env.NODE_ENV === 'production' }
@@ -127,11 +194,12 @@ export function create () {
 ### Express with no build function
 
 ```js
+import { getBasePath } from '@platformatic/globals'
 import express from 'express'
 
 const app = express()
 
-const prefix = globalThis.platformatic?.basePath ?? ''
+const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
 app.get(`${prefix}/env`, (req, res) => {
   res.send({ production: process.env.NODE_ENV === 'production' })
@@ -143,9 +211,28 @@ app.listen(3000)
 ### Background only application
 
 ```js
+export async function create () {
+  const id = setInterval(() => console.log('alive'), 10_000)
+
+  return {
+    isBackgroundApplication: true,
+    id,
+    async close (app) {
+      clearInterval(app.id)
+    }
+  }
+}
+```
+
+Alternatively, for modules that start background work when imported, export `hasServer` as `false`:
+
+```js
+import { getMessaging } from '@platformatic/globals'
+
 export const hasServer = false
 
-globalThis.platformatic.messaging.handle('ping', () => 'pong')
+const messaging = getMessaging()
+messaging.handle('ping', () => 'pong')
 
 const timeoutId = setTimeout(() => console.log('done'), 10_000)
 
@@ -185,15 +272,22 @@ export async function close () {
 
 ### `close` Event Handler
 
-Alternatively, you can register a close event handler using the global Platformatic events:
+Alternatively, you can register a close event handler using the Platformatic events getter. `getEvents()` returns `PlatformaticEvents`, an `EventEmitter` with an additional `emitAndNotify(event, ...args)` method for emitting locally and notifying the runtime.
 
 ```js
-globalThis.platformatic.events.on('close', () => {
+import { getEvents } from '@platformatic/globals'
+
+const events = getEvents()
+events.on('close', () => {
   console.log('Received close event, cleaning up...')
 
   // Perform your cleanup operations
 })
 ```
+
+### `closeServer`
+
+When using `NodeCapability` programmatically, call `closeServer()` to close the application's listening HTTP server without stopping the capability. It returns `undefined` when no server is listening, otherwise it returns a promise that resolves when the server is closed.
 
 ### `Symbol.asyncDispose`
 
@@ -214,7 +308,7 @@ export function create () {
     async [Symbol.asyncDispose] () {
       // Perform your cleanup operations
       await new Promise((resolve, reject) => {
-        server.close(err => err ? reject(err) : resolve())
+        server.close(err => (err ? reject(err) : resolve()))
       })
     }
   }

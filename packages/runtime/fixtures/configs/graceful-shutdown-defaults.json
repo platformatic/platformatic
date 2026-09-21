@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "serviceApp",
+  "watch": false,
+  "autoload": {
+    "path": "../monorepo",
+    "exclude": ["docs", "composerApp"],
+    "mappings": {
+      "serviceAppWithLogger": {
+        "id": "with-logger",
+        "config": "platformatic.service.json"
+      }
+    }
+  }
+}

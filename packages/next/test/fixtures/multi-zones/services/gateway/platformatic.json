@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
+  "gateway": {
+    "applications": [
+      {
+        "id": "blog"
+      },
+      {
+        "id": "frontend"
+      }
+    ]
+  }
+}

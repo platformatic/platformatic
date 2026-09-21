@@ -131,7 +131,7 @@ npm run build              # Build package
 - **wattpm**: Node.js application server (`watt` command) 
 - **db**: Database service with auto-generated APIs
 - **service**: HTTP service based on Fastify
-- **composer**: API gateway for aggregating services
+- **gateway**: API gateway for aggregating applications (formerly `composer`, deprecated alias kept until v4)
 - **runtime**: Microservice orchestration environment
 
 ### Capabilities (Frontend Framework Integration)
@@ -350,7 +350,6 @@ check out [this guide](https://github.com/src-d/guide/blob/master/developer-comm
 ## Getting Help
 
 - Check the [documentation](https://docs.platformatic.dev/)
-- Join our [Discord community](https://discord.gg/platformatic) for real-time help and discussions
 - Open an issue on GitHub
 
 Thank you for contributing to Platformatic! 🚀

@@ -1,4 +1,5 @@
 import { isKeyEnabled } from '@platformatic/foundation'
+import { getApplicationId, getITC, getRuntimeId } from '@platformatic/globals'
 import { platformaticService } from '@platformatic/service'
 import deepEqual from 'fast-deep-equal'
 import { fetchOpenApiSchema } from './commands/openapi-fetch-schemas.js'
@@ -10,7 +11,6 @@ import { openApiGateway, openApiGenerator } from './openapi-generator.js'
 import { proxy } from './proxy.js'
 import { isFetchable } from './utils.js'
 
-const kITC = Symbol.for('plt.runtime.itc')
 const EXPERIMENTAL_GRAPHQL_GATEWAY_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
 async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema, fetchGraphqlSubgraphs }) {
@@ -70,7 +70,10 @@ async function watchApplications (app, { config, capability }) {
     return
   }
 
-  if (!globalThis[Symbol.for('plt.runtime.id')]) {
+  try {
+    getRuntimeId()
+  } catch {
+    // Standalone gateway execution has no runtime id.
     app.log.warn('Watching applications is only supported when running within a Platformatic Runtime.')
     return
   }
@@ -84,7 +87,8 @@ async function watchApplications (app, { config, capability }) {
         clearInterval(timer)
         app.log.info('detected applications changes, restarting ...')
 
-        globalThis[Symbol.for('plt.runtime.itc')].notify('changed')
+        const itc = getITC()
+        itc.notify('changed')
       }
     } catch (error) {
       app.log.error(
@@ -109,12 +113,21 @@ export async function ensureApplications (gatewayId, config) {
     return
   }
 
-  gatewayId ??= globalThis.platformatic?.applicationId
+  if (!gatewayId) {
+    gatewayId = getApplicationId({ throwOnMissing: false }) ?? gatewayId
+  }
+
   config.gateway ??= {}
   config.gateway.applications ??= []
 
   // When no applications are defined, all applications are exposed in the gateway
-  const applications = await globalThis[kITC]?.send('listApplications')
+  let applications
+  try {
+    const itc = getITC()
+    applications = await itc.send('listApplications')
+  } catch {
+    // Standalone gateway execution has no ITC channel to list applications.
+  }
 
   if (applications) {
     config.gateway.applications = applications

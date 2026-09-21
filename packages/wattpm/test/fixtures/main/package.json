@@ -7,6 +7,6 @@
     "start": "wattpm start"
   },
   "dependencies": {
-    "wattpm": "^2.18.0"
+    "wattpm": ">=3.0.0"
   }
 }

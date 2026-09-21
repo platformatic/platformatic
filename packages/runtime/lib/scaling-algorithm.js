@@ -83,7 +83,7 @@ export class ScalingAlgorithm {
 
         const newWorkersCount = appMinWorkers - workersCount
         totalWorkersCount += newWorkersCount
-        totalAvailableMemory += newWorkersCount * avgHeapUsed
+        totalAvailableMemory -= newWorkersCount * avgHeapUsed
         continue
       }
 
@@ -96,7 +96,7 @@ export class ScalingAlgorithm {
 
         const removedWorkersCount = workersCount - appMaxWorkers
         totalWorkersCount -= removedWorkersCount
-        totalAvailableMemory -= removedWorkersCount * avgHeapUsed
+        totalAvailableMemory += removedWorkersCount * avgHeapUsed
         continue
       }
 
@@ -111,7 +111,7 @@ export class ScalingAlgorithm {
 
           const removedWorkersCount = 1
           totalWorkersCount -= removedWorkersCount
-          totalAvailableMemory -= removedWorkersCount * avgHeapUsed
+          totalAvailableMemory += removedWorkersCount * avgHeapUsed
         }
       }
     }

@@ -16,6 +16,10 @@ export interface SQLOpenApiPluginOptions extends Partial<OpenAPIV3.Document> {
       [fieldName: string]: boolean
     } | boolean
   },
+  /**
+   * Set true to disable all reverse relationship and FK-navigation routes.
+   */
+  ignoreAllReverseRoutes?: boolean,
 }
 
 declare const plugin: FastifyPluginAsync<SQLOpenApiPluginOptions>
@@ -24,7 +28,7 @@ export default plugin
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const UnableToCreateTheRouteForTheReverseRelationshipError: () => FastifyError
   export const UnableToCreateTheRouteForThePKColRelationshipError: () => FastifyError
   export const UnableToParseCursorStrError: () => FastifyError

@@ -1,8 +1,7 @@
-'use strict'
-
-const { client, registry } = globalThis.platformatic.prometheus
-
 module.exports = async function (app) {
+  const { getPrometheus } = require('@platformatic/globals')
+  const { client, registry } = getPrometheus()
+
   const metric = new client.Gauge({
     name: 'custom_metric',
     help: 'Custom Service 2',

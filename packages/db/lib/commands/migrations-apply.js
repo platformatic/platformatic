@@ -43,7 +43,7 @@ export async function applyMigrations (logger, configFile, args, context) {
 
     utimesSync(configFile, now, now)
   } catch (err) {
-    if (err.code === 'PTL_DB_MIGRATE_ERROR') {
+    if (err.code === 'PLT_DB_MIGRATE_ERROR') {
       logFatalError(logger, err.message)
       return
     }
@@ -59,5 +59,5 @@ folder defined in the configuration file. If you want to apply a specific migrat
 you can use the \`--to\` option (use \`000\` to reset to the initial state).
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 `

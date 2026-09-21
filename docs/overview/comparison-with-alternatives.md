@@ -103,7 +103,7 @@ npx wattpm create my-app
 ```json
 // Add database service alongside Express app
 {
-  "services": [
+  "applications": [
     { "path": "./existing-express-api", "id": "api" },
     { "path": "./database", "id": "db" }
   ]
@@ -146,7 +146,7 @@ Since Watt uses Fastify under the hood, the question is: **"What does Watt add t
 - **Service Orchestration**: Run multiple Fastify instances as unified application
 - **Auto-generated APIs**: Database schemas → REST/GraphQL endpoints
 - **Built-in Observability**: Structured logging, metrics, tracing without setup
-- **Framework Integration**: Native Next.js, Astro, Remix support
+- **Framework Integration**: Native support for ten frameworks, including Next.js, Astro, Nuxt, Remix and TanStack Start
 - **Unified Configuration**: Single configuration for entire application stack
 
 #### When to Choose Fastify
@@ -240,7 +240,7 @@ export default function ProductList ({ products }) {
 ```json
 // Full-stack application with auto-generated APIs
 {
-  "services": [
+  "applications": [
     { "path": "./database", "id": "db" }, // Auto-generated APIs
     { "path": "./business-logic", "id": "api" }, // Custom logic
     { "path": "./nextjs-frontend", "id": "web" } // Next.js UI
@@ -410,7 +410,7 @@ services:
 
 ```json
 {
-  "services": [
+  "applications": [
     { "path": "./user-service", "id": "users" },
     { "path": "./product-service", "id": "products" },
     { "path": "./api-gateway", "id": "gateway" }
@@ -767,7 +767,7 @@ npm start
 
 **Next Steps:**
 
-1. [Quick Start Guide](/docs/getting-started/quick-start-watt)
+1. [Quick Start Guide](/docs/getting-started/quick-start)
 2. [Architecture Overview](/docs/overview/architecture-overview)
 3. [Migration Guide](/docs/getting-started/port-your-app)
 
@@ -784,7 +784,6 @@ npm start
 
 **Community Support:**
 
-- [Discord Community](https://discord.gg/platformatic): Real-time discussion
 - [GitHub Discussions](https://github.com/platformatic/platformatic/discussions): Detailed questions
 - [Office Hours](https://platformatic.dev/office-hours): Direct guidance from the team
 

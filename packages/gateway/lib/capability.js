@@ -1,10 +1,9 @@
 import { kMetadata, replaceEnv } from '@platformatic/foundation'
+import { getEvents, getITC } from '@platformatic/globals'
 import { ServiceCapability } from '@platformatic/service'
 import { ensureApplications, platformaticGateway } from './application.js'
 import { notHostConstraints } from './not-host-constraints.js'
 import { packageJson } from './schema.js'
-
-const kITC = Symbol.for('plt.runtime.itc')
 
 export class GatewayCapability extends ServiceCapability {
   #meta
@@ -41,15 +40,22 @@ export class GatewayCapability extends ServiceCapability {
 
     const url = await super.start()
 
-    this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
-    globalThis[kITC]?.on('runtime:event', this.#runtimeEventHandler)
+    // Only register the runtime event handler once. start() can be called
+    // multiple times (first with listen:false, then listen:true) so guard
+    // against duplicate registrations.
+    const itc = getITC({ throwOnMissing: false })
+    if (!this.#runtimeEventHandler && itc) {
+      this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
+      itc.on('runtime:event', this.#runtimeEventHandler)
+    }
 
     return url
   }
 
   stop () {
-    if (this.#runtimeEventHandler) {
-      globalThis[kITC]?.removeListener('runtime:event', this.#runtimeEventHandler)
+    const itc = getITC({ throwOnMissing: false })
+    if (this.#runtimeEventHandler && itc) {
+      itc.removeListener('runtime:event', this.#runtimeEventHandler)
     }
 
     return super.stop()
@@ -72,7 +78,8 @@ export class GatewayCapability extends ServiceCapability {
   async isHealthy () {
     // If no dependencies (still booting), assume healthy
     if (this.dependencies) {
-      const workers = await globalThis[kITC].send('getWorkers')
+      const itc = getITC()
+      const workers = await itc.send('getWorkers')
 
       const unstarted = new Set(this.dependencies)
       for (const worker of Object.values(workers)) {
@@ -82,12 +89,14 @@ export class GatewayCapability extends ServiceCapability {
       }
 
       if (unstarted.size > 0) {
-        globalThis.platformatic.events.emitAndNotify('unhealthy')
+        const events = getEvents()
+        events.emitAndNotify('unhealthy')
         return false
       }
     }
 
-    globalThis.platformatic.events.emitAndNotify('healthy')
+    const events = getEvents()
+    events.emitAndNotify('healthy')
     return true
   }
 
@@ -99,9 +108,24 @@ export class GatewayCapability extends ServiceCapability {
     return replaceEnv(application.origin, this.config[kMetadata].env).endsWith('.plt.local')
   }
 
+  // The subscription is unconditional and the decision lives here, next to the
+  // behaviour it governs, so a future event handled from this method needs no
+  // change to start().
+  //
+  // The runtime resolves `request:restart` by replacing this application's
+  // workers one at a time. With two or more workers and SO_REUSEPORT that is
+  // seamless; with ONE — the default, and forced wherever reusePort is
+  // unavailable — the listening socket closes for the length of a worker boot.
+  // `restartOnApplicationChange: false` is how a gateway that does not route
+  // from the application registry opts out of paying that for nothing.
   #handleRuntimeEvent ({ event }) {
     if (event === 'application:added' || event === 'application:removed') {
-      globalThis[kITC].notify('request:restart')
+      if (this.config.gateway?.restartOnApplicationChange === false) {
+        return
+      }
+
+      const itc = getITC()
+      itc.notify('request:restart')
     }
   }
 }

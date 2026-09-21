@@ -3,7 +3,7 @@ import { execa } from 'execa'
 import * as getPort from 'get-port'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createRequire } from 'node:module'
 import { platform } from 'node:os'
@@ -28,6 +28,7 @@ let temporaryDirectoryCount = 0
 
 export const LOGS_TIMEOUT = 100
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
+export const HMR_CONNECTION_TIMEOUT = 5000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
 
 export let fixturesDir
@@ -37,6 +38,28 @@ export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
+export const httpsFixtureRoot = fileURLToPath(
+  new URL('../../node/test/fixtures/node-https-standalone', import.meta.url)
+)
+
+export function configureHTTPS (_root, config) {
+  config.server ??= {}
+  config.server.https = {
+    key: { path: resolve(httpsFixtureRoot, 'https.key') },
+    cert: { path: resolve(httpsFixtureRoot, 'https.crt') }
+  }
+}
+
+export function createHTTPSDispatcher (t) {
+  const dispatcher = new Agent({
+    connect: {
+      rejectUnauthorized: false
+    }
+  }).compose(interceptors.redirect({ maxRedirections: 1 }))
+
+  t.after(() => dispatcher.close())
+  return dispatcher
+}
 
 class MockedWritable extends Writable {
   constructor () {
@@ -58,8 +81,8 @@ class MockedWritable extends Writable {
   }
 }
 
-// These come from @platformatic/service, where they are not listed explicitly inside applications
-export const defaultDependencies = ['fastify', 'typescript']
+// These come from @platformatic/service and shared fixtures, where they are not listed explicitly inside applications
+export const defaultDependencies = ['@platformatic/globals', 'fastify', 'typescript']
 
 export const internalApplicationsFiles = [
   'services/composer/plugins/example.ts',
@@ -82,10 +105,17 @@ export async function create (t, context = {}, config = {}, name = 'base', versi
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseCapability(name, version, base, config, context, {
-    stdout: new MockedWritable(),
-    stderr: new MockedWritable()
-  })
+  return new BaseCapability(
+    name,
+    version,
+    base,
+    config,
+    { applicationId: 'test', ...context },
+    {
+      stdout: new MockedWritable(),
+      stderr: new MockedWritable()
+    }
+  )
 }
 
 export function getExecutedCommandLogMessage (command) {
@@ -302,15 +332,29 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   }
 
   const originalCwd = process.cwd()
-  const root = resolve(temporaryFolder, basename(source) + '-' + Date.now())
+  let root
+  let index = 0
+
+  await createDirectory(temporaryFolder)
+
+  while (!root) {
+    const candidate = resolve(temporaryFolder, `${basename(source)}-${index++}`)
+
+    try {
+      await mkdir(candidate)
+      root = candidate
+    } catch (error) {
+      if (error.code !== 'EEXIST') {
+        throw error
+      }
+    }
+  }
 
   if (process.env.PLT_TESTS_KEEP_TMP === 'true' || process.env.PLT_TESTS_PRINT_TMP === 'true') {
     process._rawDebug(`Runtime root: ${root}`)
   }
 
   currentWorkingDirectory = root
-
-  await createDirectory(root)
 
   // Copy the fixtures
   await cp(source, root, { recursive: true })
@@ -328,6 +372,10 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
       config = await transform(config, ...args)
       config.logger ??= {}
       config.server ??= {}
+      // Pin hostname to IPv4 loopback for deterministic test URLs. Without
+      // this, modern Node/Fastify may bind to `::1` on dual-stack hosts and
+      // URL-based assertions that expect `http://127.0.0.1:PORT` fail.
+      config.server.hostname ??= '127.0.0.1'
 
       // Assign the port
       if (typeof port === 'number') {
@@ -445,6 +493,17 @@ export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedCo
   deepStrictEqual(await body.json(), expectedContent)
 }
 
+export async function verifyJSONViaHTTPS (baseUrl, path, expectedCode, expectedContent, dispatcher) {
+  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
+  strictEqual(statusCode, expectedCode)
+
+  if (typeof expectedContent === 'function') {
+    return expectedContent(await body.json())
+  }
+
+  deepStrictEqual(await body.json(), expectedContent)
+}
+
 export async function verifyJSONViaInject (app, applicationId, method, url, expectedCode, expectedContent) {
   const { statusCode, body } = await app.inject(applicationId, { method, url })
   strictEqual(statusCode, expectedCode)
@@ -458,6 +517,25 @@ export async function verifyJSONViaInject (app, applicationId, method, url, expe
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
+  const html = await body.text()
+
+  deepStrictEqual(statusCode, 200)
+  ok(headers['content-type']?.startsWith('text/html'))
+
+  if (typeof contents === 'function') {
+    return contents(html)
+  }
+
+  for (const content of contents) {
+    ok(
+      content instanceof RegExp ? content.test(html) : html.includes(content),
+      `Pattern: ${content.toString()}, Actual: ${html}`
+    )
+  }
+}
+
+export async function verifyHTMLViaHTTPS (baseUrl, path, contents, dispatcher) {
   const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
   const html = await body.text()
 
@@ -488,15 +566,43 @@ export async function verifyHTMLViaInject (app, applicationId, url, contents) {
   }
 
   for (const content of contents) {
-    ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
+    ok(
+      content instanceof RegExp ? content.test(html) : html.includes(content),
+      `Pattern: ${content.toString()}, Actual: ${html}`
+    )
   }
 }
 
 export async function verifyHMR (root, runtime, url, path, protocol, handler) {
+  const paths = Array.isArray(path)
+    ? path
+    : [
+        path.replace('/_next/webpack-hmr', '/_next/hmr'),
+        path.replace('/_next/hmr', '/_next/webpack-hmr')
+      ]
+  let lastError
+
+  for (const currentPath of paths) {
+    try {
+      await verifyHMRPath(root, runtime, url, currentPath, protocol, handler)
+      return
+    } catch (err) {
+      lastError = err
+    }
+  }
+
+  throw lastError
+}
+
+async function verifyHMRPath (root, runtime, url, path, protocol, handler) {
   const connection = Promise.withResolvers()
   const reload = Promise.withResolvers()
   const ac = new AbortController()
-  const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
+  const connectionTimeout = sleep(HMR_CONNECTION_TIMEOUT, kTimeout, { signal: ac.signal })
+  let active = true
+
+  connection.promise.catch(() => {})
+  reload.promise.catch(() => {})
 
   // Some delay to ensure the server is ready to accept WebSocket connections
   await sleep(1000)
@@ -504,8 +610,11 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
   const webSocket = new WebSocket(url.replace('http:', 'ws:') + path, protocol)
 
   webSocket.on('error', err => {
-    process._rawDebug('WebSocket error:', err)
-    clearTimeout(timeout)
+    if (!active) {
+      return
+    }
+
+    active = false
     connection.reject(err)
     reload.reject(err)
   })
@@ -517,16 +626,18 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
   const hmrTriggerFile = resolve(currentWorkingDirectory, hmrTriggerFileRelative)
   const originalContents = await readFile(hmrTriggerFile, 'utf-8')
   try {
-    if ((await Promise.race([connection.promise, timeout])) === kTimeout) {
+    if ((await Promise.race([connection.promise, connectionTimeout])) === kTimeout) {
       throw new Error('Timeout while waiting for HMR connection')
     }
 
     await writeFile(hmrTriggerFile, originalContents.replace('const version = 123', 'const version = 456'), 'utf-8')
 
-    if ((await Promise.race([reload.promise, timeout])) === kTimeout) {
+    const reloadTimeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
+    if ((await Promise.race([reload.promise, reloadTimeout])) === kTimeout) {
       throw new Error('Timeout while waiting for HMR reload')
     }
   } finally {
+    active = false
     webSocket.terminate()
     ac.abort()
     await writeFile(hmrTriggerFile, originalContents, 'utf-8')
@@ -865,12 +976,14 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   }
 }
 
-export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup) {
+export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup, requestOptions = {}) {
   const port = await getPort.default()
 
   // Create the runtime
-  const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
-    config.server = { port }
+  const { runtime, root, config } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
+    // Preserve the hostname already set by prepareRuntime's transform
+    // (127.0.0.1) — only override the port here.
+    config.server = { ...config.server, port }
     config.applications[0].workers = { static: 5, dynamic: false }
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
 
@@ -883,7 +996,8 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
   // Start the runtime
   const url = await startRuntime(t, runtime)
 
-  deepStrictEqual(url, `http://127.0.0.1:${port}`)
+  const protocol = config.server?.https ? 'https' : 'http'
+  deepStrictEqual(url, `${protocol}://127.0.0.1:${port}`)
 
   // Check that we get the response from different workers
   const workers = features.node.reusePort ? 5 : 1
@@ -893,7 +1007,7 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
 
   // The round robin may take a few attempts to use all workers
   while (usedWorkers.size > 0 && attempts++ < workers * 5) {
-    const res = await request(url + '/')
+    const res = await request(url + '/', requestOptions)
     await integrityCheck?.(res)
 
     const worker = res.headers['x-plt-worker-id']

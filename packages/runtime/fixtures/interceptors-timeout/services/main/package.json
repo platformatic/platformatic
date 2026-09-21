@@ -1,3 +1,6 @@
 {
-  "main": "index.js"
+  "main": "index.js",
+  "dependencies": {
+    "@platformatic/globals": ">=3.0.0"
+  }
 }

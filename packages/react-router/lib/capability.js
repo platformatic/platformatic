@@ -1,5 +1,7 @@
 import fastifyStatic from '@fastify/static'
 import {
+  buildFastifyOptions,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -18,7 +20,7 @@ import { createRequestHandler } from 'react-router'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
-const supportedVersions = '^7.0.0'
+export const supportedVersions = '^7.0.0'
 
 export class ReactRouterCapability extends ViteCapability {
   #app
@@ -124,7 +126,7 @@ export class ReactRouterCapability extends ViteCapability {
     // Listen if entrypoint
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
-      const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+      const listenOptions = buildListenOptions(serverOptions)
 
       if (typeof serverOptions?.backlog === 'number') {
         createServerListener(false, false, { backlog: serverOptions.backlog })
@@ -146,7 +148,7 @@ export class ReactRouterCapability extends ViteCapability {
     const serverModule = await importFile(resolve(serverRoot, 'index.js'))
 
     // Setup fastify
-    this.#app = fastify({ loggerInstance: this.logger })
+    this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
     this._setApp(this.#app)
 
     let assetsRoot = clientRoot
@@ -219,7 +221,9 @@ export class ReactRouterCapability extends ViteCapability {
     let ended = false
 
     req.raw.on('aborted', () => ac.abort())
-    req.raw.on('end', () => { ended = true })
+    req.raw.on('end', () => {
+      ended = true
+    })
     req.raw.on('close', () => {
       if (!ended) {
         ac.abort()

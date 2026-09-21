@@ -19,6 +19,14 @@ module.exports = async function (app) {
     return { status: 'ok' }
   })
 
+  // Hard-blocks the event loop for the requested duration, shortly after
+  // replying, to simulate a completely unresponsive worker
+  app.post('/block', async request => {
+    const ms = parseInt(request.query.ms, 10) || 3000
+    setTimeout(() => atomicSleep(ms), 100)
+    return { message: `Blocking the event loop for ${ms}ms` }
+  })
+
   // CPU intensive endpoint to simulate high ELU
   app.post('/cpu-intensive/start', async () => {
     if (cpuIntensiveInterval) {

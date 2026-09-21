@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.57.0.json",
+  "entrypoint": "node",
+  "watch": false,
+  "services": [
+    {
+      "id": "node",
+      "path": "./node",
+      "config": "platformatic.json"
+    }
+  ],
+  "logger": {
+    "level": "trace",
+    "transport": {
+      "targets": [
+        {
+          "target": "pino/file"
+        },
+        {
+          "target": "pino-sentry-transport",
+          "options": {
+            "sentry": {
+              "dsn": "{PLT_SENTRY_DSN}",
+              "tunnel": "{PLT_SENTRY_TUNNEL}",
+              "enableLogs": true
+            },
+            "withLogRecord": true,
+            "tags": [
+              "level",
+              "name",
+              "worker",
+              "application",
+              "applicationId",
+              "operation"
+            ],
+            "context": [
+              "level",
+              "name",
+              "err",
+              "error",
+              "req",
+              "url",
+              "path",
+              "method",
+              "headers",
+              "application",
+              "applicationId",
+              "worker",
+              "event",
+              "payload",
+              "operation",
+              "topic",
+              "entity",
+              "key"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

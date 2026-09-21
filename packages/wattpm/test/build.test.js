@@ -1,6 +1,7 @@
 import { safeRemove, saveConfigurationFile } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
@@ -17,6 +18,15 @@ test('build - should build the application', async t => {
   await wattpm('build', buildDir)
 
   ok(existsSync(resolve(applicationDir, 'dist/index.js')))
+  deepStrictEqual(
+    (await readFile(resolve(buildDir, 'build-hooks.log'), 'utf8')).trim().split('\n'),
+    [
+      'preBuild:main',
+      'onBuild:before:main',
+      'onBuild:after:main',
+      'postBuild:main'
+    ]
+  )
 })
 
 test('build - should build the application from an application file', async t => {

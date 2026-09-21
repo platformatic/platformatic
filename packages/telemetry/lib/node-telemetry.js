@@ -7,9 +7,11 @@ import { W3CTraceContextPropagator } from '@opentelemetry/core'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
+import { updateGlobals } from '@platformatic/globals'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { readFileSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import { setupDiagLogger } from './diag-logger.js'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import util from 'node:util'
@@ -35,14 +37,14 @@ contextManager.enable()
 context.setGlobalContextManager(contextManager)
 
 const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
+  setupDiagLogger(opts)
+
   const { applicationName, instrumentations = [] } = opts
   const additionalInstrumentations = await getInstrumentations(instrumentations, applicationDir)
 
   const { spanProcessors } = getSpanProcessors(opts)
 
   const clientSpansAls = new AsyncLocalStorage()
-  globalThis.platformatic = globalThis.platformatic || {}
-  globalThis.platformatic.clientSpansAls = clientSpansAls
 
   const tracerProvider = new NodeTracerProvider({
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
@@ -50,7 +52,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
       [ATTR_SERVICE_NAME]: applicationName
     })
   })
-  globalThis.platformatic.tracerProvider = tracerProvider
+  updateGlobals({ clientSpansAls, tracerProvider })
 
   // Register instrumentations with our TracerProvider
   registerInstrumentations({
@@ -81,9 +83,8 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
 
 // Create a promise that will be resolved when telemetry is initialized
 // This allows other parts of the system to wait for telemetry to be ready
-globalThis.platformatic = globalThis.platformatic || {}
 const { promise: telemetryReadyPromise, resolve: resolveTelemetryReady } = Promise.withResolvers()
-globalThis.platformatic.telemetryReady = telemetryReadyPromise
+updateGlobals({ telemetryReady: telemetryReadyPromise })
 
 async function main () {
   let data = null

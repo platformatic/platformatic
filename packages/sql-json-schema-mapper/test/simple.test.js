@@ -3,7 +3,7 @@ import fastify from 'fastify'
 import { equal, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import { mapSQLEntityToJSONSchema } from '../index.js'
-import { clear, connInfo, isMariaDB, isPg, isSQLite } from './helper.js'
+import { clear, connInfo, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -65,6 +65,20 @@ async function createBasicGeneratedTests (db, sql) {
   }
 }
 
+async function createBasicUsers (db, sql) {
+  if (isSQLite) {
+    await db.query(sql`CREATE TABLE users (
+      id INTEGER PRIMARY KEY,
+      password_hash VARCHAR(255)
+    );`)
+  } else {
+    await db.query(sql`CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      password_hash VARCHAR(255)
+    );`)
+  }
+}
+
 test('simple db, simple rest API', async t => {
   const app = fastify()
   app.register(sqlMapper, {
@@ -92,11 +106,7 @@ test('simple db, simple rest API', async t => {
     same(pageJsonSchema.properties.title, { type: 'string' })
     same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
     same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
-    if (isMariaDB) {
-      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
-    } else {
-      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
-    }
+    same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     if (isPg) {
       same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
@@ -105,6 +115,43 @@ test('simple db, simple rest API', async t => {
       same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
     }
   }
+})
+
+test('output schemas stringify numeric primary and referencing foreign keys', () => {
+  const entity = {
+    name: 'Registration',
+    camelCasedFields: {
+      id: {
+        camelcase: 'id',
+        sqlType: 'integer',
+        isNullable: false,
+        primaryKey: true
+      },
+      contactId: {
+        camelcase: 'contactId',
+        sqlType: 'integer',
+        isNullable: false,
+        foreignKey: true,
+        stringifyOutput: true
+      },
+      externalCode: {
+        camelcase: 'externalCode',
+        sqlType: 'integer',
+        isNullable: false,
+        foreignKey: true
+      }
+    }
+  }
+
+  const inputSchema = mapSQLEntityToJSONSchema(entity)
+  same(inputSchema.properties.id, { type: 'integer' })
+  same(inputSchema.properties.contactId, { type: 'integer' })
+  same(inputSchema.properties.externalCode, { type: 'integer' })
+
+  const outputSchema = mapSQLEntityToJSONSchema(entity, {}, true, { output: true })
+  same(outputSchema.properties.id, { type: 'string', nullable: true })
+  same(outputSchema.properties.contactId, { type: 'string', nullable: true })
+  same(outputSchema.properties.externalCode, { type: 'integer', nullable: true })
 })
 
 test('noRequired = true', async t => {
@@ -134,11 +181,7 @@ test('noRequired = true', async t => {
     same(pageJsonSchema.properties.title, { type: 'string', nullable: true })
     same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
     same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
-    if (isMariaDB) {
-      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
-    } else {
-      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
-    }
+    same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     if (isPg) {
       same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
@@ -177,11 +220,7 @@ test('ignore one field', async t => {
     same(pageJsonSchema.properties.id, { type: 'integer' })
     equal(pageJsonSchema.properties.title, undefined)
     same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
-    if (isMariaDB) {
-      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
-    } else {
-      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
-    }
+    same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     if (isPg) {
       same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
@@ -218,6 +257,31 @@ test('stored and virtual generated columns should be read only', async t => {
       same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
       same(generatedTestJsonSchema.properties.testVirtual, { type: 'integer', nullable: true, readOnly: true })
     }
+  }
+})
+
+test('ignore one snake_case field using camelCase', async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicUsers(db, sql)
+    }
+  })
+  t.after(() => app.close())
+
+  await app.ready()
+
+  {
+    const user = app.platformatic.entities.user
+    const userJsonSchema = mapSQLEntityToJSONSchema(user, {
+      passwordHash: true
+    })
+
+    equal(userJsonSchema.properties.passwordHash, undefined)
   }
 })
 

@@ -19,7 +19,7 @@ export async function adminCommand (logger, args) {
     false
   )
 
-  return runDelegatedCommand(logger, packageManager, ['@platformatic/watt-admin' + (latest ? '@latest' : '')])
+  return runDelegatedCommand(this, logger, packageManager, ['@platformatic/watt-admin' + (latest ? '@latest' : '')])
 }
 
 export const help = {

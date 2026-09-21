@@ -22,6 +22,7 @@ The default configuration uses `level: info` with pretty-printed output in devel
 **Need to hide sensitive data?** → [Redact Sensitive Information](#redact-sensitive-information)
 **Need structured production logs?** → [Production Logging](#production-logging)
 **Need OpenTelemetry integration?** → [External System Integration](#external-system-integration) or [OpenTelemetry Logging Guide](./opentelemetry-logging.md)
+**Need Sentry integration?** → [Sentry](#sentry)
 
 ## Set Log Level
 
@@ -117,9 +118,9 @@ This logs all messages to console with pretty formatting, and errors to a file.
 
 **Problem:** You need to send logs to Elasticsearch, Splunk, OpenTelemetry collectors, or other logging systems.
 
-**Solution:** Use specialized transport targets:
+**Solution:** Use specialized transport targets.
 
-**OpenTelemetry (Recommended for Observability):**
+### OpenTelemetry (Recommended for Observability)
 
 ```json
 {
@@ -149,9 +150,95 @@ This automatically:
 - Includes trace context (trace ID, span ID, flags)
 - Adds service metadata for filtering
 
+The trace exporter shown here uses OTLP over HTTP. Telemetry traces also support OTLP over gRPC with:
+
+```json
+{
+  "telemetry": {
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "protocol": "grpc",
+        "url": "http://otel-collector:4317"
+      }
+    }
+  }
+}
+```
+
+When using gRPC, do not include `/v1/traces` in the URL.
+
 See the [OpenTelemetry Logging Guide](./opentelemetry-logging.md) for detailed configuration.
 
-**Elasticsearch:**
+### Sentry
+
+Watt can send runtime and application logs to [Sentry](https://sentry.io/) using [pino-sentry-transport](https://github.com/tomer-yechiel/pino-sentry-transport) as a Pino transport target.
+
+Install the transport and the Sentry SDK in your application:
+
+```bash
+npm install pino-sentry-transport @sentry/node
+```
+
+Then add a Sentry target to `logger.transport.targets`:
+
+```json
+{
+  "logger": {
+    "level": "info",
+    "transport": {
+      "targets": [
+        {
+          "target": "pino/file"
+        },
+        {
+          "target": "pino-sentry-transport",
+          "options": {
+            "sentry": {
+              "dsn": "{SENTRY_DSN}"              
+            },
+            "withLogRecord": true,
+            "tags": ["level", "name", "worker", "application"],
+            "context": ["err", "req", "url", "method", "application", "worker"]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+The top-level `logger.level` controls which logs Watt emits. Each transport target can also define its own `level`, which controls which emitted logs that target receives. Set the Sentry target level explicitly if it should differ from Pino's transport target default.
+
+Options inside `options.sentry` are passed to `@sentry/node` initialization. Use them for Sentry settings such as `dsn`, `environment`, `release`, or `tunnel`.
+
+Use `minLevel` if you also want `pino-sentry-transport` to filter records internally:
+
+```json
+{
+  "logger": {
+    "level": "debug",
+    "transport": {
+      "targets": [
+        {
+          "target": "pino-sentry-transport",
+          "level": "debug",
+          "options": {
+            "sentry": {
+              "dsn": "{SENTRY_DSN}"
+            },
+            "minLevel": 40
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+In this example, Watt emits `debug` and above, the Sentry transport target receives `debug` and above, and `pino-sentry-transport` sends only `warn` and above to Sentry.
+
+### Elasticsearch
 
 ```json
 {
@@ -173,6 +260,19 @@ See the [OpenTelemetry Logging Guide](./opentelemetry-logging.md) for detailed c
 
 Install the transport: `npm install pino-elasticsearch`
 
+### AWS Cloudwatch
+
+AWS Cloudwatch can use the timestamp from logs in the Cloudwatch and Cloudwatch
+Insights dashboards. To do this, the timestamp format needs to be changed.
+
+```json
+{
+    "logger": {
+        "timestamp": "isoTime",
+    }
+}
+```
+
 ## Redact Sensitive Information
 
 **Problem:** Your logs contain sensitive data (passwords, tokens, API keys) that shouldn't be stored.
@@ -185,6 +285,19 @@ Install the transport: `npm install pino-elasticsearch`
     "redact": {
       "paths": ["req.headers.authorization", "password", "apiKey", "req.body.creditCard"],
       "censor": "[REDACTED]"
+    }
+  }
+}
+```
+
+Set `remove` to `true` to drop the keys entirely instead of replacing their values with the censor:
+
+```json
+{
+  "logger": {
+    "redact": {
+      "paths": ["password", "apiKey"],
+      "remove": true
     }
   }
 }
@@ -295,11 +408,39 @@ This provides:
 
   See the [Pino customLevels documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#customlevels-object) for more details.
 
+  Once `customLevels` is set, `logger.level` can be set to one of them:
+
+  ```json
+  {
+    "logger": {
+      "customLevels": {
+        "verbose": 10
+      },
+      "level": "verbose"
+    }
+  }
+  ```
+
+- **Other Pino options**: `levelVal`, `useOnlyCustomLevels`, `levelComparison`, `msgPrefix`, `nestedKey`, `errorKey`,
+  `depthLimit`, `edgeLimit`, `crlf` and `enabled` are passed to Pino as they are. Like every other logger option, they
+  are inherited by all the applications.
+
+  ```json
+  {
+    "logger": {
+      "msgPrefix": "[my-app] ",
+      "nestedKey": "payload"
+    }
+  }
+  ```
+
+  See the [Pino options documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#options) for more details.
+
 ---
 
 ### Note on using custom logger configuration
 
-When using custom logger configuration that alterate the format of the output, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, the log entry from a thread application is not recognized as a `pino` entry log entry, so it is treated as a json log entry.
+When using custom logger configuration that changes the output keys, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, configure `logger.pino` so Watt can still recognize Pino log entries emitted by thread applications.
 
 For example, the difference between the default pino settings and a custom logger configuration that uses a custom `messageKey` is:
 
@@ -339,6 +480,22 @@ With custom logger configuration, for example
 }
 ```
 
+Set `logger.pino` to the keys emitted by your worker application logs:
+
+```json
+{
+  "logger": {
+    "pino": {
+      "level": "severity",
+      "time": "time",
+      "message": "message"
+    }
+  }
+}
+```
+
+By default, Watt uses `level`, `time` and `msg`. If the configured keys are not present, Watt treats the entry as a JSON log entry and wraps it in the `stdout` property:
+
 ```json
 {
   "severity": "INFO",
@@ -359,7 +516,7 @@ With custom logger configuration, for example
 }
 ```
 
-To avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Applications logs](#capture-thread-applications-logs) for more details); the result will be close to the default pino settings:
+When the keys match `logger.pino`, the log entry is not wrapped in the `stdout` property. Alternatively, to avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Applications logs](#capture-thread-applications-logs) for more details); the result will be close to the default pino settings:
 
 ```json
 {
@@ -466,11 +623,15 @@ In this example, the logger is configured to use a file transport and the `level
 
 ## Programmatic Usage
 
-When using Platformatic programmatically, you can derive from the `globalThis.platformatic.logger` object as follows:
+When using Platformatic programmatically, you can derive from the logger returned by [`getLogger()`](../reference/runtime/globals.md#logging-and-observability) as follows:
 
 ```js
+import { getLogger } from '@platformatic/globals'
+
+const logger = getLogger()
+
 const app = fastify({
-  loggerInstance: globalThis.platformatic.logger.child(
+  loggerInstance: logger.child(
     { application: 'app1' },
     {
       formatters: {
@@ -493,7 +654,7 @@ Note that the `timestamp` and `formatters.level` are not supported when using th
 
 ## Setting up a Watt application with logging configuration
 
-Let's see an example of a Watt configuration with `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
+Let's see an example of a Watt configuration with `gateway`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` applications, the application is available in the `docs/guides/logger` directory.
 
 The main `watt` application has a shared logger configuration that is used by all the applications, it sets the timestamp in ISO format and the level in uppercase. Setting it in the `watt` application ensures that the logs will be consistent across all the applications.
 
@@ -511,7 +672,7 @@ The main `watt` application has a shared logger configuration that is used by al
     "timestamp": "isoTime"
   },
   "autoload": {
-    "path": "services"
+    "path": "applications"
   }
 }
 ```
@@ -533,15 +694,16 @@ The other applications have their own logger configuration, for example the `bac
 }
 ```
 
-In the `node` application the logger is available as `globalThis.platformatic.logger`, for example
+In the `node` application the logger is available via [`getLogger()`](../reference/runtime/globals.md#logging-and-observability), for example
 
 `backend/src/app.js`
 
 ```js
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 
 const app = fastify({
-  loggerInstance: globalThis.platformatic.logger
+  loggerInstance: getLogger()
 })
 ```
 
@@ -561,13 +723,16 @@ The `next` application has a custom formatter that adds the `application` proper
 }
 ```
 
-Then in the `next` application the logger is available as `globalThis.platformatic.logger`, for example
+Then in the `next` application the logger is available via [`getLogger()`](../reference/runtime/globals.md#logging-and-observability), for example
 
 `next/src/app/page.jsx`
 
 ```jsx
+import { getLogger } from '@platformatic/globals'
+
 export default function Home () {
-  globalThis.platformatic.logger?.debug('Home page called')
+  const logger = getLogger()
+  logger.debug('Home page called')
 
   return (
     <main>

@@ -208,16 +208,16 @@ test('users can find only the authorized fields', async () => {
         Authorization: `Bearer ${token}`
       }
     })
-    equal(res.statusCode, 401, 'GET /pages status code (Unauthorized)')
+    equal(res.statusCode, 403, 'GET /pages status code (Forbidden)')
     deepEqual(
       res.json(),
       {
-        statusCode: 401,
-        error: 'Unauthorized',
+        statusCode: 403,
+        error: 'Forbidden',
         code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
         message: 'field not allowed: author'
       },
-      'GET /pages status response (Unauthorized)'
+      'GET /pages status response (Forbidden)'
     )
   }
 })
@@ -669,5 +669,277 @@ test('app should not start if there are not nullable and not allowed fields in s
     await app.ready()
   } catch (err) {
     deepEqual(err.message, 'missing not nullable field: "topic" in save rule for entity "page"')
+  }
+})
+
+test('users cannot filter or sort on fields they are not allowed to read', async () => {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      ok('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        },
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic']
+        },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        }
+      },
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
+  })
+  test.after(() => {
+    app.close()
+  })
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  const inject = (query) => app.inject({
+    method: 'POST',
+    url: '/graphql',
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: { query }
+  })
+
+  {
+    const res = await inject(`
+      mutation {
+        savePage(input: { title: "TITLE_1", author: "SECRET_AUTHOR", topic: "TOPIC_1", reviewedBy: "TEST" }) {
+          id
+        }
+      }
+    `)
+    equal(res.statusCode, 200, 'savePage status code')
+    deepEqual(res.json(), { data: { savePage: { id: 1 } } }, 'savePage response')
+  }
+
+  {
+    // The rule's own check is on userId, which the user cannot read.
+    // That must keep working, only the user's where is restricted.
+    const res = await inject(`
+      query {
+        pages(where: { title: { eq: "TITLE_1" } }, orderBy: { field: title, direction: ASC }) {
+          id
+          title
+        }
+        countPages(where: { title: { eq: "TITLE_1" } }) {
+          total
+        }
+      }
+    `)
+    equal(res.statusCode, 200, 'allowed where status code')
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          pages: [{ id: 1, title: 'TITLE_1' }],
+          countPages: { total: 1 }
+        }
+      },
+      'allowed where response'
+    )
+  }
+
+  {
+    const res = await inject(`
+      query {
+        pages(where: { author: { eq: "SECRET_AUTHOR" } }) {
+          id
+        }
+      }
+    `)
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          pages: null
+        },
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [{ line: 3, column: 9 }],
+            path: ['pages']
+          }
+        ]
+      },
+      'where on a hidden field response'
+    )
+  }
+
+  {
+    const res = await inject(`
+      query {
+        pages(where: { or: [{ title: { eq: "TITLE_1" } }, { author: { like: "SECRET%" } }] }) {
+          id
+        }
+      }
+    `)
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          pages: null
+        },
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [{ line: 3, column: 9 }],
+            path: ['pages']
+          }
+        ]
+      },
+      'where.or on a hidden field response'
+    )
+  }
+
+  {
+    const res = await inject(`
+      query {
+        countPages(where: { author: { like: "SECRET%" } }) {
+          total
+        }
+      }
+    `)
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          countPages: null
+        },
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [{ line: 3, column: 9 }],
+            path: ['countPages']
+          }
+        ]
+      },
+      'count where on a hidden field response'
+    )
+  }
+
+  {
+    const res = await inject(`
+      query {
+        pages(orderBy: { field: author, direction: ASC }) {
+          id
+        }
+      }
+    `)
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          pages: null
+        },
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [{ line: 3, column: 9 }],
+            path: ['pages']
+          }
+        ]
+      },
+      'orderBy on a hidden field response'
+    )
+  }
+
+  const forbidden = {
+    statusCode: 403,
+    error: 'Forbidden',
+    code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
+    message: 'field not allowed: author'
+  }
+
+  {
+    const res = await app.inject({
+      url: '/pages?fields=id,title&where.title.eq=TITLE_1',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, 'GET /pages allowed where status code')
+    deepEqual(res.json(), [{ id: 1, title: 'TITLE_1' }], 'GET /pages allowed where response')
+  }
+
+  {
+    const res = await app.inject({
+      url: '/pages?fields=id&where.author.eq=SECRET_AUTHOR',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 403, 'GET /pages where on a hidden field status code')
+    deepEqual(res.json(), forbidden, 'GET /pages where on a hidden field response')
+  }
+
+  {
+    const res = await app.inject({
+      url: '/pages?fields=id&where.or=(title.eq=TITLE_1|author.eq=SECRET_AUTHOR)',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 403, 'GET /pages where.or on a hidden field status code')
+    deepEqual(res.json(), forbidden, 'GET /pages where.or on a hidden field response')
+  }
+
+  {
+    const res = await app.inject({
+      url: '/pages?fields=id&orderby.author=asc',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 403, 'GET /pages orderby on a hidden field status code')
+    deepEqual(res.json(), forbidden, 'GET /pages orderby on a hidden field response')
+  }
+
+  {
+    const res = await app.inject({
+      url: '/pages?fields=id&totalCount=true&where.author.eq=SECRET_AUTHOR',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 403, 'GET /pages totalCount where on a hidden field status code')
+    deepEqual(res.json(), forbidden, 'GET /pages totalCount where on a hidden field response')
   }
 })

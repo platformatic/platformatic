@@ -3,7 +3,7 @@ import fastify from 'fastify'
 import { equal, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import sqlGraphQL from '../index.js'
-import { clear, connInfo, isMariaDB, isMysql, isPg, isSQLite } from './helper.js'
+import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -426,7 +426,7 @@ test('override resolver', async t => {
               ...args.input,
               id
             }
-          } else if (isMysql && !db.isMariaDB) {
+          } else if (isMysql) {
             const insert = sql`
               INSERT INTO pages (title)
               VALUES (${args.input.title})
@@ -968,11 +968,7 @@ test('deserialize JSON columns', { skip: isSQLite }, async t => {
     }
   })
   const json = res.json()
-  if (isMariaDB) {
-    same(json.data.getPageById.metadata, JSON.stringify(jsonData))
-  } else {
-    same(json.data.getPageById.metadata, jsonData)
-  }
+  same(json.data.getPageById.metadata, jsonData)
 })
 
 test('deserialize JSONB columns', { skip: !isPg }, async t => {
@@ -1025,9 +1021,5 @@ test('deserialize JSONB columns', { skip: !isPg }, async t => {
     }
   })
   const json = res.json()
-  if (isMariaDB) {
-    same(json.data.getPageById.metadata, JSON.stringify(jsonData))
-  } else {
-    same(json.data.getPageById.metadata, jsonData)
-  }
+  same(json.data.getPageById.metadata, jsonData)
 })

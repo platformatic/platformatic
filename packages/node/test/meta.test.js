@@ -13,9 +13,9 @@ test('should allow to setup connection string', async t => {
   const { runtime } = await createRuntime(t, 'node-set-connection-string')
 
   // The application set:
-  // globalThis.platformatic.setOpenapiSchema('TEST_OPEN_API_SCHEMA')
-  // globalThis.platformatic.setGraphqlSchema('TEST_GRAPHQL_SCHEMA')
-  // globalThis.platformatic.setConnectionString('TEST_CONNECTION_STRING')
+  // setOpenapiSchema('TEST_OPEN_API_SCHEMA')
+  // setGraphqlSchema('TEST_GRAPHQL_SCHEMA')
+  // setConnectionString('TEST_CONNECTION_STRING')
 
   const meta = await runtime.getApplicationMeta('api')
   const openapiSchema = await runtime.getApplicationOpenapiSchema('api')

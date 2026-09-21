@@ -17,18 +17,33 @@ function ensureCleanup (t, folders) {
 }
 
 function waitEventOnAllApplications (runtime, applications, event) {
-  const pending = new Set()
+  const pending = new Map()
+  const seen = new Map()
 
   for (const [application, workers] of Object.entries(applications)) {
-    for (let i = 0; i < workers; i++) {
-      pending.add(`${application}:${i}`)
-    }
+    pending.set(application, workers)
+    seen.set(application, new Set())
   }
 
   const { promise, resolve } = Promise.withResolvers()
 
   function listener ({ application, worker }) {
-    pending.delete(`${application}:${worker}`)
+    const remaining = pending.get(application)
+    if (remaining === undefined) {
+      return
+    }
+
+    const seenWorkers = seen.get(application)
+    if (seenWorkers.has(worker)) {
+      return
+    }
+    seenWorkers.add(worker)
+
+    if (remaining === 1) {
+      pending.delete(application)
+    } else {
+      pending.set(application, remaining - 1)
+    }
 
     if (pending.size === 0) {
       runtime.off(event, listener)

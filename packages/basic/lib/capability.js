@@ -7,11 +7,13 @@ import {
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
+import { getITC, getPrometheus, getTelemetryReady, updateGlobals } from '@platformatic/globals'
 import {
   clearRegistry,
   client,
   collectThreadMetrics,
   ensureMetricsGroup,
+  openTelemetryITCMessage,
   setupOtlpExporter
 } from '@platformatic/metrics'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
@@ -21,14 +23,13 @@ import { tracingChannel } from 'node:diagnostics_channel'
 import EventEmitter, { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { platform } from 'node:os'
+import { isAbsolute, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
-import { cleanBasePath } from './utils.js'
+import { buildAdditionalServerOptions, cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
-
-const kITC = Symbol.for('plt.runtime.itc')
 
 export class BaseCapability extends EventEmitter {
   status
@@ -63,6 +64,7 @@ export class BaseCapability extends EventEmitter {
   metricsRegistry
   otlpBridge
 
+  #processSpawner
   #subprocessStarted
   #metricsCollected
   #pendingDependenciesWaits
@@ -101,7 +103,7 @@ export class BaseCapability extends EventEmitter {
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
-    this.reuseTcpPorts = this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts
+    this.reuseTcpPorts = (this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts) && features.node.reusePort
     // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
     this.exitOnUnhandledErrors = true
 
@@ -127,16 +129,22 @@ export class BaseCapability extends EventEmitter {
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
+      runtimeConfig: this.runtimeConfig,
+      applicationConfig: this.context.applicationConfig ?? null,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       notifyConfig: this.notifyConfig.bind(this),
-      logger: this.logger
+      logger: this.logger,
+      isEntrypoint: this.isEntrypoint,
+      reuseTcpPorts: this.reuseTcpPorts
     })
 
-    if (globalThis.platformatic.prometheus) {
-      this.metricsRegistry = globalThis.platformatic.prometheus.registry
+    const prometheus = getPrometheus({ throwOnMissing: false })
+
+    if (prometheus) {
+      this.metricsRegistry = prometheus.registry
     } else {
       this.metricsRegistry = new client.Registry()
       this.registerGlobals({ prometheus: { client, registry: this.metricsRegistry } })
@@ -231,14 +239,15 @@ export class BaseCapability extends EventEmitter {
   }
 
   async waitForDependenciesStart (dependencies = []) {
-    if (!globalThis[kITC]) {
+    const itc = getITC({ throwOnMissing: false })
+    if (!itc) {
       return
     }
 
     const pending = new Set(dependencies)
 
     // Ask the runtime the status of the dependencies and don't wait if they are already started
-    const workers = await globalThis[kITC].send('getWorkers')
+    const workers = await itc.send('getWorkers')
 
     for (const worker of Object.values(workers)) {
       if (this.dependencies.includes(worker.application) && worker.status === 'started') {
@@ -277,12 +286,12 @@ export class BaseCapability extends EventEmitter {
     }
 
     const cleanupEvents = () => {
-      globalThis[kITC].removeListener('runtime:event', runtimeEventHandler)
+      itc.removeListener('runtime:event', runtimeEventHandler)
       this.context.controller.removeListener('stopping', stopHandler)
       this.#pendingDependenciesWaits.delete(promise)
     }
 
-    globalThis[kITC].on('runtime:event', runtimeEventHandler)
+    itc.on('runtime:event', runtimeEventHandler)
     this.context.controller.on('stopping', stopHandler)
     this.#pendingDependenciesWaits.add(promise)
 
@@ -290,18 +299,18 @@ export class BaseCapability extends EventEmitter {
   }
 
   async waitForDependentsStop (dependents = []) {
-    if (!globalThis[kITC]) {
+    const itc = getITC({ throwOnMissing: false })
+    if (!itc) {
       return
     }
 
-    const pending = new Set(dependents)
-
-    // Ask the runtime the status of the dependencies and don't wait if they are already stopped
-    const workers = await globalThis[kITC].send('getWorkers')
+    // Ask the runtime the status of the dependents and wait only for those that are not stopped
+    const workers = await itc.send('getWorkers')
+    const pending = new Set()
 
     for (const worker of Object.values(workers)) {
-      if (this.dependencies.includes(worker.application) && worker.status === 'started') {
-        pending.delete(worker.application)
+      if (dependents.includes(worker.application) && worker.status !== 'stopped') {
+        pending.add(worker.application)
       }
     }
 
@@ -321,12 +330,12 @@ export class BaseCapability extends EventEmitter {
       pending.delete(payload.application)
 
       if (pending.size === 0) {
-        globalThis[kITC].removeListener('runtime:event', runtimeEventHandler)
+        itc.removeListener('runtime:event', runtimeEventHandler)
         resolve()
       }
     }
 
-    globalThis[kITC].on('runtime:event', runtimeEventHandler)
+    itc.on('runtime:event', runtimeEventHandler)
     return promise
   }
 
@@ -373,6 +382,22 @@ export class BaseCapability extends EventEmitter {
   }
 
   async getDispatchTarget () {
+    // When an application binds a TCP server only for WebSocket handoff purposes
+    // ("websocket" flag without "useHttp"), mesh HTTP traffic keeps being served
+    // in-thread: the TCP port is only advertised to the gateway via getMeta().
+    // This only applies to capabilities providing a real in-thread dispatch target
+    // (getDispatchFunc returning something other than the capability itself, whose
+    // inject is not implemented): the others dispatch via the bound TCP address,
+    // as under "useHttp".
+    const applicationConfig = this.context.applicationConfig
+    if (applicationConfig?.websocket && !applicationConfig.useHttp && !this.isEntrypoint) {
+      const dispatchFunc = await this.getDispatchFunc()
+
+      if (dispatchFunc !== this) {
+        return dispatchFunc
+      }
+    }
+
     return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
@@ -444,7 +469,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   registerGlobals (globals) {
-    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+    updateGlobals(globals)
   }
 
   verifyOutputDirectory (path) {
@@ -472,12 +497,9 @@ export class BaseCapability extends EventEmitter {
 
   async buildWithCommand (command, basePath, opts = {}) {
     const { loader, scripts, context, disableChildManager } = opts
+    const displayCommand = Array.isArray(command) ? command.join(' ') : command
 
-    if (Array.isArray(command)) {
-      command = command.join(' ')
-    }
-
-    this.logger.debug(`Executing "${command}" ...`)
+    this.logger.debug(`Executing "${displayCommand}" ...`)
 
     const baseContext = await this.getChildManagerContext(basePath)
     this.childManager = disableChildManager
@@ -507,7 +529,7 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  async startWithCommand (command, loader, scripts) {
+  async startWithCommand (command, loader, scripts, { urlFromScript = false } = {}) {
     const config = this.config
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
@@ -516,7 +538,8 @@ export class BaseCapability extends EventEmitter {
       logger: this.logger,
       loader,
       context,
-      scripts
+      scripts,
+      urlFromScript
     })
 
     this.setupChildManagerEventsForwarding(this.childManager)
@@ -525,29 +548,56 @@ export class BaseCapability extends EventEmitter {
       await this.childManager.inject()
       this.subprocess = await this.spawn(command)
       this.#subprocessStarted = true
+      // Let the runtime know this worker hosts a child process so it reads
+      // health metrics via ITC instead of from the coordinator thread handle.
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify('subprocess:started')
+      }
     } catch (e) {
       this.childManager.close()
-      throw new Error(`Cannot execute command "${command}": executable not found`)
+
+      if (e.code === 'ENOENT') {
+        const displayCommand = Array.isArray(command) ? command.join(' ') : command
+        throw new Error(`Cannot execute command "${displayCommand}": executable not found`)
+      } else {
+        throw e
+      }
     } finally {
       await this.childManager.eject()
     }
 
-    // If the process exits prematurely, terminate the thread with the same code
-    this.subprocess.on('exit', code => {
-      if (this.#subprocessStarted && typeof code === 'number' && code !== 0) {
+    // If the process exits prematurely, terminate the thread with the same code.
+    // When the child is killed by a signal (V8 FATAL/SIGABRT, OOM SIGKILL, native
+    // segfault, etc.) Node invokes the listener with code=null and signal set —
+    // propagate those as a non-zero exit so the runtime can replace the worker
+    // promptly instead of waiting for ELU/heap monitoring to flag it unhealthy.
+    this.subprocess.on('exit', (code, signal) => {
+      if (!this.#subprocessStarted) {
+        return
+      }
+      if (typeof code === 'number' && code !== 0) {
         this.childManager.close()
         process.exit(code)
+      } else if (signal) {
+        this.childManager.close()
+        process.exit(1)
       }
     })
 
     const [url, clientWs] = await once(this.childManager, 'url')
-    this.url = url
+
+    this.url = this._getEntrypointUrl(url)
     this.clientWs = clientWs
 
     await this._collectMetrics()
   }
 
   async stopCommand () {
+    if (!this.subprocess) {
+      return
+    }
+
     const exitTimeout = this.runtimeConfig.gracefulShutdown.application
 
     this.#subprocessStarted = false
@@ -595,6 +645,8 @@ export class BaseCapability extends EventEmitter {
     return {
       id: this.id,
       config: this.config,
+      runtimeConfig: this.runtimeConfig,
+      applicationConfig: this.context.applicationConfig ?? null,
       applicationId: this.applicationId,
       workerId: this.workerId,
       // Always use URL to avoid serialization problem in Windows
@@ -606,17 +658,12 @@ export class BaseCapability extends EventEmitter {
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
-      /* c8 ignore next 2 - else */
-      port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      additionalServerOptions:
-        typeof this.serverConfig?.backlog === 'number'
-          ? {
-              backlog: this.serverConfig.backlog
-            }
-          : {},
+      port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
+      additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig, true),
       telemetryConfig: this.telemetryConfig,
-      compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache
+      compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache,
+      resourceLimits: this.context.resourceLimits
     }
   }
 
@@ -643,54 +690,99 @@ export class BaseCapability extends EventEmitter {
     })
 
     childManager.on('event', event => {
-      globalThis[kITC]?.notify('event', event)
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify('event', event)
+      }
+
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
     // Forward health signals from child process to runtime
     childManager.on('healthSignals', ({ workerId, signals }) => {
-      globalThis[kITC]?.send('sendHealthSignals', { workerId, signals })
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.send('sendHealthSignals', { workerId, signals })
+      }
+    })
+
+    childManager.on(openTelemetryITCMessage, resourceMetrics => {
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify(openTelemetryITCMessage, resourceMetrics)
+      }
     })
 
     // This is not really important for the URL but sometimes it also a sign
     // that the process has been replaced and thus we need to update the client WebSocket
     childManager.on('url', (url, clientWs) => {
-      this.url = url
+      this.url = this._getEntrypointUrl(url)
       this.clientWs = clientWs
     })
   }
 
   async spawn (command) {
-    let [executable, ...args] = parseCommandString(command)
-    const hasChainedCommands = command.includes('&&') || command.includes('||') || command.includes(';')
+    const isArrayCommand = Array.isArray(command)
+    let [executable, ...args] = isArrayCommand ? command : parseCommandString(command)
+    const hasChainedCommands = !isArrayCommand &&
+      (command.includes('&&') || command.includes('||') || command.includes(';'))
 
     // Use the current Node.js executable instead of relying on PATH lookup
     // This ensures subprocess uses the same Node.js version as the parent
     if (executable === 'node') {
       executable = process.execPath
+      // Search for the command in node_modules if needed
+    } else if (!isAbsolute(executable) && this.config.application?.preferLocalCommands) {
+      const applicationExecutable = resolve(this.root, 'node_modules', '.bin', executable)
+      const projectExecutable = resolve(process.cwd(), 'node_modules', '.bin', executable)
+
+      if (existsSync(applicationExecutable)) {
+        executable = applicationExecutable
+      } else if (existsSync(projectExecutable)) {
+        executable = projectExecutable
+      }
     }
 
-    /* c8 ignore next 3 */
-    const subprocess =
-      platform() === 'win32'
-        ? spawn(command.replace(/^node\b/, process.execPath), {
-          cwd: this.root,
-          shell: true,
-          windowsVerbatimArguments: true
-        })
-        : spawn(executable, args, { cwd: this.root, shell: hasChainedCommands })
+    const spawnOptions = { cwd: this.root }
 
-    subprocess.stdout.setEncoding('utf8')
-    subprocess.stderr.setEncoding('utf8')
+    if (platform() === 'win32' && !isArrayCommand) {
+      executable = command.replace(/^node\b/, process.execPath)
+      args = []
 
-    subprocess.stdout.pipe(this.stdout, { end: false })
-    subprocess.stderr.pipe(this.stderr, { end: false })
+      spawnOptions.shell = true
+      spawnOptions.windowsVerbatimArguments = true
+    } else if (!isArrayCommand) {
+      spawnOptions.shell = hasChainedCommands
+    }
 
-    // Wait for the process to be started
-    await new Promise((resolve, reject) => {
-      subprocess.on('spawn', resolve)
-      subprocess.on('error', reject)
-    })
+    let subprocess
+    if (this.config?.application?.processSpawner) {
+      if (!this.#processSpawner) {
+        const imported = await importFile(resolve(this.root, this.config.application.processSpawner))
+
+        this.#processSpawner = imported.spawn ?? imported.default ?? imported
+
+        if (typeof this.#processSpawner !== 'function') {
+          throw new Error('processSpawner must export a function or a spawn function')
+        }
+      }
+
+      subprocess = await this.#processSpawner(executable, args, spawnOptions, this.stdout, this.stderr)
+    } else {
+      subprocess = spawn(executable, args, spawnOptions)
+
+      subprocess.stdout.setEncoding('utf8')
+      subprocess.stderr.setEncoding('utf8')
+
+      subprocess.stdout.pipe(this.stdout, { end: false })
+      subprocess.stderr.pipe(this.stderr, { end: false })
+
+      // Wait for the process to be started
+      await new Promise((resolve, reject) => {
+        subprocess.on('spawn', resolve)
+        subprocess.on('error', reject)
+      })
+    }
 
     return subprocess
   }
@@ -743,6 +835,11 @@ export class BaseCapability extends EventEmitter {
       this.#reuseTcpPortsSubscribers = null
     }
 
+    if (this.metricsRegistry) {
+      clearRegistry(this.metricsRegistry)
+      this.#metricsCollected = false
+    }
+
     // Stop OTLP bridge if running
     if (this.otlpBridge) {
       this.otlpBridge.stop()
@@ -780,6 +877,22 @@ export class BaseCapability extends EventEmitter {
     return promise
   }
 
+  _getEntrypointUrl (raw) {
+    const url = new URL(raw)
+
+    if (url.hostname === '[::]' || url.hostname === '0.0.0.0') {
+      url.hostname = 'localhost'
+    }
+
+    const port = this.config.application?.entrypointPort
+
+    if (typeof port === 'number') {
+      url.port = port
+    }
+
+    return url.pathname === '/' && url.search === '' && url.hash === '' ? url.origin : url.toString()
+  }
+
   async #collectMetrics () {
     const metricsConfig = {
       defaultMetrics: true,
@@ -797,12 +910,13 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Use thread-specific metrics collection - process-level metrics are collected
-    // by the main runtime thread and duplicated with worker labels
+    // and reported only once by the main runtime thread, without application labels.
+    // See https://github.com/platformatic/platformatic/issues/3332.
     await collectThreadMetrics(this.applicationId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 
   #setHttpCacheMetrics () {
-    const { client, registry } = globalThis.platformatic.prometheus
+    const { client, registry } = getPrometheus()
 
     // Metrics already registered, no need to register them again
     if (ensureMetricsGroup(registry, 'http.cache')) {
@@ -821,79 +935,76 @@ export class BaseCapability extends EventEmitter {
       registers: [registry]
     })
 
-    globalThis.platformatic.onHttpCacheHit = () => {
-      cacheHitMetric.inc()
-    }
-    globalThis.platformatic.onHttpCacheMiss = () => {
-      cacheMissMetric.inc()
-    }
-
     const httpStatsFreeMetric = new client.Gauge({
       name: 'http_client_stats_free',
       help: 'Number of free (idle) http clients (sockets)',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsFree = (url, val) => {
-      httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsConnectedMetric = new client.Gauge({
       name: 'http_client_stats_connected',
       help: 'Number of open socket connections',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsConnected = (url, val) => {
-      httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsPendingMetric = new client.Gauge({
       name: 'http_client_stats_pending',
       help: 'Number of pending requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsPending = (url, val) => {
-      httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsQueuedMetric = new client.Gauge({
       name: 'http_client_stats_queued',
       help: 'Number of queued requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsQueued = (url, val) => {
-      httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsRunningMetric = new client.Gauge({
       name: 'http_client_stats_running',
       help: 'Number of currently active requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsRunning = (url, val) => {
-      httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const httpStatsSizeMetric = new client.Gauge({
       name: 'http_client_stats_size',
       help: 'Number of active, pending, or queued requests across all clients',
       labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsSize = (url, val) => {
-      httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
-    }
-
     const activeResourcesEventLoopMetric = new client.Gauge({
       name: 'active_resources_event_loop',
       help: 'Number of active resources keeping the event loop alive',
       registers: [registry]
     })
-    globalThis.platformatic.onActiveResourcesEventLoop = val => activeResourcesEventLoopMetric.set(val)
+    updateGlobals({
+      onHttpCacheHit () {
+        cacheHitMetric.inc()
+      },
+      onHttpCacheMiss () {
+        cacheMissMetric.inc()
+      },
+      onHttpStatsFree (url, val) {
+        httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsConnected (url, val) {
+        httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsPending (url, val) {
+        httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsQueued (url, val) {
+        httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsRunning (url, val) {
+        httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onHttpStatsSize (url, val) {
+        httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
+      },
+      onActiveResourcesEventLoop (val) {
+        activeResourcesEventLoopMetric.set(val)
+      }
+    })
   }
 
   async #setupOtlpExporter () {
@@ -902,9 +1013,19 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
+    // For command-based (childManager) capabilities, metric collection is delegated to the
+    // child process, which owns the populated registry (the parent's `metricsRegistry` stays
+    // empty). The OTLP exporter is therefore set up inside the child over that registry.
+    // Setting it up here would export the empty parent registry.
+    // See https://github.com/platformatic/platformatic/issues/4848
+    if (this.childManager && this.clientWs) {
+      return
+    }
+
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    if (globalThis.platformatic?.telemetryReady) {
-      await globalThis.platformatic.telemetryReady
+    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
+    if (telemetryReady) {
+      await telemetryReady
     }
 
     // Setup and start OTLP exporter bridge
@@ -923,6 +1044,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   async #invalidateHttpCache (opts = {}) {
-    await globalThis[kITC].send('invalidateHttpCache', opts)
+    const itc = getITC()
+    await itc.send('invalidateHttpCache', opts)
   }
 }

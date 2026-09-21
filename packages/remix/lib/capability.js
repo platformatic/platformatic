@@ -1,5 +1,7 @@
 import fastifyStatic from '@fastify/static'
 import {
+  buildFastifyOptions,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -8,6 +10,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
+import { updateGlobals } from '@platformatic/globals'
 import { ViteCapability } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/node'
 import fastify from 'fastify'
@@ -18,7 +21,7 @@ import { Readable } from 'node:stream'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
-const supportedVersions = '^2.0.0'
+export const supportedVersions = '^2.0.0'
 
 export class RemixCapability extends ViteCapability {
   #app
@@ -86,7 +89,7 @@ export class RemixCapability extends ViteCapability {
     const { viteBuild } = await importFile(resolve(this.#remix, 'dist/cli/commands.js'))
 
     try {
-      globalThis.platformatic.isBuilding = true
+      updateGlobals({ isBuilding: true })
 
       await viteBuild(this.root, {
         emptyOutDir: true,
@@ -95,7 +98,7 @@ export class RemixCapability extends ViteCapability {
         profile: false
       })
     } finally {
-      globalThis.platformatic.isBuilding = false
+      updateGlobals({ isBuilding: false })
     }
   }
 
@@ -139,7 +142,7 @@ export class RemixCapability extends ViteCapability {
     // Listen if entrypoint
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
-      const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+      const listenOptions = buildListenOptions(serverOptions)
 
       if (typeof serverOptions?.backlog === 'number') {
         createServerListener(false, false, { backlog: serverOptions.backlog })
@@ -157,7 +160,7 @@ export class RemixCapability extends ViteCapability {
     this.#basePath = ensureTrailingSlash(cleanBasePath(build.basename))
 
     // Setup fastify
-    this.#app = fastify({ loggerInstance: this.logger })
+    this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
     this._setApp(this.#app)
 
     // Since it uses the Fetch API, we don't need to parse the request body.
@@ -188,7 +191,9 @@ export class RemixCapability extends ViteCapability {
     let ended = false
 
     req.raw.on('aborted', () => ac.abort())
-    req.raw.on('end', () => { ended = true })
+    req.raw.on('end', () => {
+      ended = true
+    })
     req.raw.on('close', () => {
       if (!ended) {
         ac.abort()

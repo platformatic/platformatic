@@ -1,3 +1,13 @@
 import { schemaComponents } from '@platformatic/foundation'
 
-export default schemaComponents.telemetry
+const schema = {
+  ...schemaComponents.telemetry,
+  properties: {
+    ...schemaComponents.telemetry.properties,
+    module: {
+      type: 'string'
+    }
+  }
+}
+
+export default schema

@@ -14,11 +14,9 @@ try {
 }
 
 // Load wattpm via dynamic import so all modules benefit from compile cache
-const { checkNodeVersionForApplications, setExecutableId, setExecutableName } = await import('@platformatic/foundation')
+const { checkNodeVersionForApplications, createCLIContext } = await import('@platformatic/foundation')
 
 checkNodeVersionForApplications()
-setExecutableId('wattpm')
-setExecutableName('Watt')
 
 const { main } = await import('../index.js')
-await main()
+await main.call(createCLIContext('wattpm', 'Watt'))

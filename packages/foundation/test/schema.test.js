@@ -1,6 +1,6 @@
-import { deepEqual } from 'node:assert'
+import { deepEqual, strictEqual } from 'node:assert'
 import test from 'node:test'
-import { omitProperties, overridableValue, removeDefaults } from '../index.js'
+import { omitProperties, overridableValue, removeDefaults, server } from '../index.js'
 
 test('overridableValue - should create schema with anyOf and default', () => {
   const spec = { type: 'number', minimum: 0 }
@@ -68,4 +68,11 @@ test('omitProperties - should handle non-existent properties', () => {
   const result = omitProperties(obj, ['c', 'd'])
 
   deepEqual(result, { a: 1, b: 2 })
+})
+
+test('server schema - hostname must not have a default value', () => {
+  // If a default is set, ajv (configured with useDefaults: true) will inject it
+  // into every config even when the user did not set a hostname. That silently
+  // overrides whatever the underlying framework would pick as its default.
+  strictEqual(server.properties.hostname.default, undefined)
 })

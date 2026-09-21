@@ -1,4 +1,5 @@
-import { createDirectory, ensureLoggableError } from '@platformatic/foundation'
+import { createSharedTemporaryDirectory, ensureLoggableError } from '@platformatic/foundation'
+import { getLogger, updateGlobals } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc/lib/index.js'
 import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
@@ -6,7 +7,7 @@ import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createRequire, register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
@@ -17,11 +18,15 @@ export const isWindows = platform() === 'win32'
 
 // In theory we could use the context.id to namespace even more, but due to
 // UNIX socket length limitation on MacOS, we don't.
-export function generateChildrenId (context) {
+export function generateChildrenId () {
   return [process.pid, randomBytes(4).toString('hex')].join('-')
 }
 
 export function getSocketPath (id) {
+  if (process.env.PLT_CHILD_PROCESS_SOCKET_PATH) {
+    return process.env.PLT_CHILD_PROCESS_SOCKET_PATH
+  }
+
   let socketPath = null
 
   /* c8 ignore next 7 */
@@ -41,6 +46,7 @@ export class ChildManager extends ITC {
   #loader
   #context
   #scripts
+  #urlFromScript
   #logger
   #server
   #websocketServer
@@ -54,10 +60,11 @@ export class ChildManager extends ITC {
   #dataPath
 
   constructor (opts) {
-    let { loader, context, scripts, handlers, ...itcOpts } = opts
+    let { loader, context, scripts, urlFromScript, handlers, ...itcOpts } = opts
 
     context ??= {}
     scripts ??= []
+    urlFromScript ??= false
 
     super({
       ...itcOpts,
@@ -68,8 +75,9 @@ export class ChildManager extends ITC {
     this.#loader = loader
     this.#context = context
     this.#scripts = scripts
+    this.#urlFromScript = urlFromScript
     this.#originalNodeOptions = process.env.NODE_OPTIONS
-    this.#logger = globalThis.platformatic.logger
+    this.#logger = getLogger()
     this.#server = createServer(this.#childProcessFetchHandler.bind(this))
     this.#socketPath ??= getSocketPath(this.#id)
     this.#clients = new Set()
@@ -80,7 +88,7 @@ export class ChildManager extends ITC {
     super.listen()
 
     if (!isWindows) {
-      await createDirectory(dirname(this.#socketPath))
+      await createSharedTemporaryDirectory('platformatic', 'runtimes')
     }
 
     this.#websocketServer = new WebSocketServer({ server: this.#server })
@@ -140,21 +148,22 @@ export class ChildManager extends ITC {
 
     // Serialize data into a JSON file for the capability to use
     this.#dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${this.#id}.json`)
-    await createDirectory(dirname(this.#dataPath))
+    await createSharedTemporaryDirectory('platformatic', 'runtimes')
 
-    // We write all the data to a JSON file
+    // We write all the data to a JSON file, readable by the current user only
     await writeFile(
       this.#dataPath,
       JSON.stringify(
         {
           data: this.#context,
           loader: ensureFileUrl(this.#loader),
-          scripts: this.#scripts.map(s => ensureFileUrl(s))
+          scripts: this.#scripts.map(s => ensureFileUrl(s)),
+          urlFromScript: this.#urlFromScript
         },
         null,
         2
       ),
-      'utf-8'
+      { encoding: 'utf-8', mode: 0o600 }
     )
 
     process.env.PLT_MANAGER_ID = this.#id
@@ -170,7 +179,24 @@ export class ChildManager extends ITC {
       telemetryInclude = `--import="${pathToFileURL(openTelemetrySetupPath)}"`
     }
 
-    process.env.NODE_OPTIONS = `${telemetryInclude} ${childProcessInclude} ${nodeOptions}`.trim()
+    // Propagate V8 resource limits to the child process via NODE_OPTIONS.
+    // Note: --code-range-size is not allowed in NODE_OPTIONS, only via CLI args.
+    let v8Flags = ''
+    const limits = this.#context.resourceLimits
+    if (limits) {
+      const flags = []
+      if (limits.maxOldGenerationSizeMb > 0) {
+        flags.push(`--max-old-space-size=${limits.maxOldGenerationSizeMb}`)
+      }
+      if (limits.maxYoungGenerationSizeMb > 0) {
+        // --max-semi-space-size sets ONE semi-space; young gen has two.
+        // resourceLimits.maxYoungGenerationSizeMb is the total young gen size.
+        flags.push(`--max-semi-space-size=${Math.ceil(limits.maxYoungGenerationSizeMb / 2)}`)
+      }
+      v8Flags = flags.join(' ')
+    }
+
+    process.env.NODE_OPTIONS = `${v8Flags} ${telemetryInclude} ${childProcessInclude} ${nodeOptions}`.trim()
   }
 
   async eject () {
@@ -187,7 +213,7 @@ export class ChildManager extends ITC {
   }
 
   async register () {
-    Object.assign(globalThis.platformatic, this.#context)
+    updateGlobals(this.#context)
     register(this.#loader, { data: this.#context })
 
     for (const script of this.#scripts) {

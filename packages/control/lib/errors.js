@@ -28,6 +28,16 @@ export const FailedToGetRuntimeOpenapi = createError(
   'Failed to get runtime OpenAPI schema %s.'
 )
 
+export const FailedToGetRuntimeScheduler = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SCHEDULER`,
+  'Failed to get runtime scheduler %s.'
+)
+
+export const FailedToUpdateRuntimeScheduler = createError(
+  `${ERROR_PREFIX}_FAILED_TO_UPDATE_RUNTIME_SCHEDULER`,
+  'Failed to update runtime scheduler %s.'
+)
+
 export const FailedToStreamRuntimeLogs = createError(
   `${ERROR_PREFIX}_FAILED_TO_STREAM_RUNTIME_LOGS`,
   'Failed to stream runtime logs %s.'
@@ -96,6 +106,11 @@ export const FailedToStartProfiling = createError(
 export const FailedToStopProfiling = createError(
   `${ERROR_PREFIX}_FAILED_TO_STOP_PROFILING`,
   'Failed to stop profiling for service "%s": %s'
+)
+
+export const FailedToTakeHeapSnapshot = createError(
+  `${ERROR_PREFIX}_FAILED_TO_TAKE_HEAP_SNAPSHOT`,
+  'Failed to take heap snapshot for service "%s": %s'
 )
 
 export const FailedToAddApplications = createError(

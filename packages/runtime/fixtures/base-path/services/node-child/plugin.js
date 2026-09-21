@@ -13,7 +13,12 @@ const server = createServer((req, res) => {
     res.end()
     return
   }
+  if (req.url === '/redirect-external') {
+    res.writeHead(302, { Location: 'https://example.com/oauth/authorize?client_id=123' })
+    res.end()
+    return
+  }
   throw new Error(`Unexpected request: ${req.url}`)
 })
 
-server.listen(1)
+server.listen(0)

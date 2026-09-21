@@ -303,6 +303,91 @@ test('ScalingAlgorithm - should scale an application that has enough memory', as
   assert.strictEqual(recommendation.direction, 'up')
 })
 
+test('ScalingAlgorithm - should reserve memory when scaling an app to its minimum workers', () => {
+  const recommendations = getRecommendations({
+    applications: [
+      { applicationId: 'app-1', elu: 0.5, heapUsed: 100, workersCount: 1 },
+      { applicationId: 'app-2', elu: 1, heapUsed: 150, workersCount: 1 }
+    ],
+    appsConfigs: {
+      'app-1': { minWorkers: 3 }
+    },
+    availableMemory: 200
+  })
+
+  assert.deepStrictEqual(recommendations, [
+    {
+      applicationId: 'app-1',
+      workersCount: 3,
+      direction: 'up'
+    }
+  ])
+})
+
+test('ScalingAlgorithm - should reclaim memory when scaling an app down to its maximum workers', () => {
+  const recommendations = getRecommendations({
+    applications: [
+      { applicationId: 'app-1', elu: 0.5, heapUsed: 100, workersCount: 2 },
+      { applicationId: 'app-2', elu: 1, heapUsed: 80, workersCount: 1 }
+    ],
+    appsConfigs: {
+      'app-1': { maxWorkers: 1 }
+    },
+    availableMemory: 50
+  })
+
+  assert.deepStrictEqual(recommendations, [
+    {
+      applicationId: 'app-1',
+      workersCount: 1,
+      direction: 'down'
+    },
+    {
+      applicationId: 'app-2',
+      workersCount: 2,
+      direction: 'up'
+    }
+  ])
+})
+
+test('ScalingAlgorithm - should reclaim memory when scaling an app down based on ELU', () => {
+  const recommendations = getRecommendations({
+    applications: [
+      { applicationId: 'app-1', elu: 0.1, heapUsed: 100, workersCount: 2 },
+      { applicationId: 'app-2', elu: 1, heapUsed: 80, workersCount: 1 }
+    ],
+    availableMemory: 50
+  })
+
+  assert.deepStrictEqual(recommendations, [
+    {
+      applicationId: 'app-1',
+      workersCount: 1,
+      direction: 'down'
+    },
+    {
+      applicationId: 'app-2',
+      workersCount: 2,
+      direction: 'up'
+    }
+  ])
+})
+
+function getRecommendations ({ applications, appsConfigs = {}, availableMemory }) {
+  const scalingAlgorithm = new ScalingAlgorithm()
+
+  for (const application of applications) {
+    scalingAlgorithm.addApplication(application.applicationId, appsConfigs[application.applicationId])
+  }
+
+  const { appsWorkersInfo, healthInfo } = generateMetadata(applications)
+  for (const health of healthInfo) {
+    scalingAlgorithm.addWorkerHealthInfo(health)
+  }
+
+  return scalingAlgorithm.getRecommendations(appsWorkersInfo, { availableMemory })
+}
+
 function randomFloat (min, max) {
   return Math.random() * (max - min) + min
 }

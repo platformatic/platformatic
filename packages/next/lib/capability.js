@@ -9,16 +9,15 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
+import { getEvents, updateGlobals } from '@platformatic/globals'
 import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
-import { existsSync } from 'node:fs'
-import { glob, readFile, writeFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse, satisfies } from 'semver'
-import * as errors from './errors.js'
 import { version } from './schema.js'
+import { parseStandaloneNextConfig, requireStandaloneStartServer, resolveStandaloneEntrypoint } from './standalone.js'
 
 export const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
@@ -53,7 +52,7 @@ export class NextCapability extends BaseCapability {
     process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
 
     if (!building && this.isProduction && this.config.next?.standalone) {
-      this.#standaloneEntrypoint = await this.#resolveStandaloneEntrypoint()
+      this.#standaloneEntrypoint = await resolveStandaloneEntrypoint(this.root)
       this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.#standaloneEntrypoint, 'next')), '../..')
     } else {
       this.#next = resolvePath(dirname(await resolvePackageViaCJS(this.root, 'next')), '../..')
@@ -117,7 +116,8 @@ export class NextCapability extends BaseCapability {
       return this.stopCommand()
     }
 
-    globalThis.platformatic.events.emit('plt:next:close')
+    const events = getEvents()
+    events.emit('plt:next:close')
 
     if (this.isProduction && this.#server) {
       await this._closeServer(this.#server)
@@ -225,7 +225,7 @@ export class NextCapability extends BaseCapability {
     await this.#startDevelopmentNext(serverOptions)
 
     const [url, clientWs] = await promise
-    this.url = url
+    this.url = this._getEntrypointUrl(url)
     this.clientWs = clientWs
   }
 
@@ -245,7 +245,7 @@ export class NextCapability extends BaseCapability {
           _: [this.root]
         }
 
-        const httpsOptions = this.config.next?.https ?? {}
+        const httpsOptions = this.#getDevelopmentHTTPSOptions()
 
         if (httpsOptions.enabled) {
           devOptions['--experimental-https-key'] = true
@@ -265,8 +265,7 @@ export class NextCapability extends BaseCapability {
 
         await nextDev(devOptions)
       } else {
-        const nextConfig = this.config.next ?? {}
-        const httpsOptions = nextConfig.https ?? {}
+        const httpsOptions = this.#getDevelopmentHTTPSOptions()
 
         if (httpsOptions.enabled) {
           serverOptions.experimentalHttps = true
@@ -341,7 +340,7 @@ export class NextCapability extends BaseCapability {
 
   async #startProductionNext () {
     try {
-      globalThis.platformatic.config = this.config
+      updateGlobals({ config: this.config })
       await this.childManager.inject()
       const { nextStart } = await importFile(resolvePath(this.#next, './dist/cli/next-start.js'))
 
@@ -382,14 +381,7 @@ export class NextCapability extends BaseCapability {
 
     // Parse the server.js to extract the nextConfig.
     // For now we use simple regex parsing, if it breaks, we can switch to proper AST parsing.
-    let nextConfig
-    try {
-      const serverJsContent = await readFile(this.#standaloneEntrypoint, 'utf-8')
-      const nextConfigMatch = serverJsContent.match(/(?:const|let)\s*nextConfig\s*=\s*(\{.+)/)
-      nextConfig = JSON.parse(nextConfigMatch[1])
-    } catch (e) {
-      throw new errors.CannotParseStandaloneServer({ cause: e })
-    }
+    const nextConfig = await parseStandaloneNextConfig(this.#standaloneEntrypoint)
 
     // Fix cache handlers path
     if (nextConfig.env?.PLT_NEXT_MODIFICATIONS) {
@@ -400,6 +392,10 @@ export class NextCapability extends BaseCapability {
       } else if (pltNextModifications.componentsCache) {
         nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
         nextConfig.cacheHandlers.default = getCacheHandlerPath(`${pltNextModifications.componentsCache}-components`)
+
+        if (pltNextModifications.remoteComponentsCache) {
+          nextConfig.cacheHandlers.remote = getCacheHandlerPath(`${pltNextModifications.remoteComponentsCache}-components-remote`)
+        }
       }
     }
 
@@ -426,7 +422,7 @@ export class NextCapability extends BaseCapability {
 
       // This is needed by Next.js standalone server to pick up the correct configuration
       process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(nextConfig)
-      const { startServer } = this.#requireStandaloneEntrypoint(this.#standaloneEntrypoint)
+      const { startServer } = requireStandaloneStartServer(this.#standaloneEntrypoint)
 
       await startServer({
         dir: dirname(this.#standaloneEntrypoint),
@@ -453,6 +449,41 @@ export class NextCapability extends BaseCapability {
     }
 
     return scripts
+  }
+
+  #getDevelopmentHTTPSOptions () {
+    const nextHTTPSOptions = this.config.next?.https
+    if (nextHTTPSOptions?.enabled) {
+      return nextHTTPSOptions
+    }
+
+    const serverHTTPSOptions = this.serverConfig?.https
+    if (!serverHTTPSOptions) {
+      return {}
+    }
+
+    return {
+      enabled: true,
+      key: this.#getHTTPSPath(serverHTTPSOptions.key),
+      cert: this.#getHTTPSPath(serverHTTPSOptions.cert),
+      ca: this.#getHTTPSPath(serverHTTPSOptions.ca)
+    }
+  }
+
+  #getHTTPSPath (value) {
+    if (!value) {
+      return undefined
+    }
+
+    if (typeof value === 'string') {
+      return value
+    }
+
+    if (Array.isArray(value)) {
+      return this.#getHTTPSPath(value[0])
+    }
+
+    return value.path
   }
 
   // In development mode, Next.js starts the dev server using child_process.fork with stdio set to 'inherit'.
@@ -501,53 +532,28 @@ export class NextCapability extends BaseCapability {
       const requiredServerFilesPath = resolvePath(distDir, 'required-server-files.json')
       const requiredServerFiles = JSON.parse(await readFile(requiredServerFilesPath, 'utf-8'))
 
+      let modified = false
+
       if (requiredServerFiles.config.cacheHandler) {
         requiredServerFiles.config.cacheHandler = resolvePath(distDir, requiredServerFiles.config.cacheHandler)
+        modified = true
+      }
+
+      if (requiredServerFiles.config.cacheHandlers?.default) {
+        requiredServerFiles.config.cacheHandlers.default = resolvePath(distDir, requiredServerFiles.config.cacheHandlers.default)
+        modified = true
+      }
+
+      if (requiredServerFiles.config.cacheHandlers?.remote) {
+        requiredServerFiles.config.cacheHandlers.remote = resolvePath(distDir, requiredServerFiles.config.cacheHandlers.remote)
+        modified = true
+      }
+
+      if (modified) {
         await writeFile(requiredServerFilesPath, JSON.stringify(requiredServerFiles, null, 2))
       }
     }
 
     return distDir
-  }
-
-  async #resolveStandaloneEntrypoint () {
-    // If built in standalone mode, the generated standalone directory is not on the root of the project but somewhere
-    // inside .next/standalone due to turbopack limitations in determining the root of the project.
-    // In that case we search a server.js next to a .next folder inside the .next /standalone folder.
-    const serverEntrypoints = await Array.fromAsync(
-      glob(['**/server.js'], { cwd: this.root, ignore: ['node_modules', '**/node_modules/**'] })
-    )
-
-    let serverEntrypoint
-    for (const entrypoint of serverEntrypoints) {
-      if (existsSync(resolvePath(this.root, dirname(entrypoint), '.next'))) {
-        const candidate = resolvePath(this.root, entrypoint)
-        const contents = await readFile(candidate, 'utf-8')
-
-        if (contents.includes('process.env.__NEXT_PRIVATE_STANDALONE_CONFIG =')) {
-          serverEntrypoint = candidate
-          break
-        }
-      }
-    }
-
-    if (!serverEntrypoint) {
-      throw new errors.StandaloneServerNotFound()
-    }
-
-    return serverEntrypoint
-  }
-
-  #requireStandaloneEntrypoint (serverEntrypoint) {
-    let serverModule
-
-    try {
-      serverModule = createRequire(serverEntrypoint)('next/dist/server/lib/start-server.js')
-    } catch (e) {
-      // Fallback to bundled capability
-      serverModule = createRequire(import.meta.file)('next/dist/server/lib/start-server.js')
-    }
-
-    return serverModule.default ?? serverModule
   }
 }

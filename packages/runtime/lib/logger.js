@@ -1,4 +1,8 @@
-import { buildPinoFormatters, buildPinoTimestamp, usePrettyPrint } from '@platformatic/foundation'
+import {
+  buildPinoFormatters,
+  buildPinoTimestamp,
+  kMetadata,
+} from '@platformatic/foundation'
 import { isatty } from 'node:tty'
 import pino from 'pino'
 import pretty from 'pino-pretty'
@@ -60,9 +64,11 @@ const colors = [
   226 // bright yellow
 ]
 
-function createLoggerContext () {
+function createLoggerContext (config) {
+  const env = config[kMetadata].env
   const context = {
     colors: {},
+    closeables: [],
     maxLength: 0,
     updatePrefixes (ids) {
       context.colors = {}
@@ -72,7 +78,7 @@ function createLoggerContext () {
         context.maxLength = Math.max(context.maxLength, id.length)
         let hash = 0
 
-        if (!pretty.isColorSupported && process.env.FORCE_COLOR !== 'true') {
+        if (!pretty.isColorSupported && env.FORCE_COLOR !== 'true') {
           context.colors[id] = ''
           continue
         }
@@ -147,7 +153,8 @@ function createPrettifier (context) {
 
 // Create the runtime logger
 export async function createLogger (config) {
-  const context = createLoggerContext()
+  const env = config[kMetadata].env
+  const context = createLoggerContext(config)
 
   const loggerConfig = { ...config.logger, transport: undefined }
   if (config.logger.base === null) {
@@ -157,8 +164,14 @@ export async function createLogger (config) {
   let cliStream
 
   if (config.logger.transport) {
+    if (Array.isArray(config.logger.transport.targets)) {
+      for (const target of config.logger.transport.targets) {
+        target.level ??= config.logger.level
+      }
+    }
+
     cliStream = pino.transport(config.logger.transport)
-  } else if ((process.env.FORCE_TTY || isatty(1)) && usePrettyPrint()) {
+  } else if ((env.FORCE_TTY || isatty(1)) && env.PLT_PRETTY_PRINT !== 'false') {
     cliStream = createPrettifier(context)
   } else {
     cliStream = pino.destination(1)
@@ -179,28 +192,29 @@ export async function createLogger (config) {
   const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level }])
 
   if (config.telemetry && config.logger.openTelemetryExporter) {
-    multiStream.add(
-      pino.transport({
-        target: 'pino-opentelemetry-transport',
-        options: {
-          resourceAttributes: {
-            'service.name': config.telemetry.applicationName,
-            'service.version': config.telemetry.version
-          },
-          logRecordProcessorOptions: [
-            {
-              recordProcessorType: 'simple',
-              exporterOptions: {
-                protocol: config.logger.openTelemetryExporter.protocol,
-                httpExporterOptions: {
-                  url: config.logger.openTelemetryExporter.url
-                }
+    const openTelemetryTransport = pino.transport({
+      target: 'pino-opentelemetry-transport',
+      options: {
+        resourceAttributes: {
+          'service.name': config.telemetry.applicationName,
+          'service.version': config.telemetry.version
+        },
+        logRecordProcessorOptions: [
+          {
+            recordProcessorType: 'simple',
+            exporterOptions: {
+              protocol: config.logger.openTelemetryExporter.protocol,
+              httpExporterOptions: {
+                url: config.logger.openTelemetryExporter.url
               }
             }
-          ]
-        }
-      })
-    )
+          }
+        ]
+      }
+    })
+
+    context.closeables.push(openTelemetryTransport)
+    multiStream.add(openTelemetryTransport)
   }
 
   const logsFileMb = 5

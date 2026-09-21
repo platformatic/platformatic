@@ -1,26 +1,49 @@
-import toml from '@iarna/toml'
 import Ajv from 'ajv'
 import jsonPatch from 'fast-json-patch'
-import JSON5 from 'json5'
 import { readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, parse, resolve } from 'node:path'
 import { parseEnv } from 'node:util'
-import { parse as rawParseYAML, stringify as stringifyYAML } from 'yaml'
 import {
   AddAModulePropertyToTheConfigOrAddAKnownSchemaError,
   CannotParseConfigFileError,
   ConfigurationDoesNotValidateAgainstSchemaError,
   InvalidConfigFileExtensionError,
+  MissingEnvVariablesError,
   RootMissingError,
   SourceMissingError
 } from './errors.js'
 import { isFileAccessible } from './file-system.js'
 import { loadModule, splitModuleFromVersion } from './module.js'
-import { kMetadata } from './symbols.js'
+import { kEnvFileFallbackKeys, kMetadata } from './symbols.js'
 
-const { parse: parseJSON5, stringify: rawStringifyJSON5 } = JSON5
-const { parse: parseTOML, stringify: stringifyTOML } = toml
+// The parsers for the non JSON formats are loaded on first use so that
+// importing this module does not pay for formats that are never used.
+const lazyRequire = createRequire(import.meta.url)
+
+function parseJSON5 (...args) {
+  return lazyRequire('json5').parse(...args)
+}
+
+function rawStringifyJSON5 (...args) {
+  return lazyRequire('json5').stringify(...args)
+}
+
+function parseTOML (...args) {
+  return lazyRequire('@iarna/toml').parse(...args)
+}
+
+function stringifyTOML (...args) {
+  return lazyRequire('@iarna/toml').stringify(...args)
+}
+
+function rawParseYAML (...args) {
+  return lazyRequire('yaml').parse(...args)
+}
+
+function stringifyYAML (...args) {
+  return lazyRequire('yaml').stringify(...args)
+}
 
 const kReplaceEnvIgnore = Symbol('plt.foundation.replaceEnvIgnore')
 
@@ -382,11 +405,24 @@ export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {
   const baseEnv = ignoreProcessEnv ? {} : process.env
   const envFromFile = envFile ? parseEnv(await readFile(envFile, 'utf-8')) : {}
 
-  return {
+  // The env file provides fallback defaults: variables already set in the real
+  // environment (and explicit programmatic values) take precedence over it,
+  // matching the dotenv/docker-compose/Vite convention.
+  const env = {
+    ...envFromFile,
     ...baseEnv,
-    ...additionalEnv,
-    ...envFromFile
+    ...additionalEnv
   }
+
+  // Keys whose only source is the env file are not real environment variables, they are defaults:
+  // a more specific env file, like the one of a single application inside a runtime, must still be
+  // able to override them. The list is attached non enumerably, so spreading, Object.keys,
+  // JSON.stringify and structuredClone of the returned environment are all unchanged.
+  const fallbackKeys = Object.keys(envFromFile).filter(key => !(key in baseEnv) && !(key in additionalEnv))
+
+  Object.defineProperty(env, kEnvFileFallbackKeys, { value: fallbackKeys, enumerable: false })
+
+  return env
 }
 
 export function replaceEnv (config, env, onMissingEnv, ignore) {
@@ -442,6 +478,16 @@ export function replaceEnv (config, env, onMissingEnv, ignore) {
   return config
 }
 
+function normalizeStrictEnv (value) {
+  if (value === 'warn') {
+    return 'warn'
+  } else if (value === 'false' || value === '') {
+    return false
+  }
+
+  return Boolean(value)
+}
+
 export async function loadConfiguration (source, schema, options = {}) {
   const {
     validate: shouldValidate,
@@ -453,6 +499,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     replaceEnv: shouldReplaceEnv,
     replaceEnvIgnore,
     onMissingEnv,
+    strictEnv: strictEnvOption,
     fixPaths,
     logger,
     skipMetadata,
@@ -487,7 +534,62 @@ export async function loadConfiguration (source, schema, options = {}) {
   env.PLT_ROOT = root
 
   if (shouldReplaceEnv) {
-    config = replaceEnv(config, env, onMissingEnv, replaceEnvIgnore)
+    const missingEnv = new Set()
+    const fallbackEnv = new Set()
+
+    config = replaceEnv(
+      config,
+      env,
+      key => {
+        const value = onMissingEnv?.(key)
+
+        if (typeof value === 'undefined' || value === null) {
+          missingEnv.add(key)
+        } else {
+          // The variable is not set: it only has a value because onMissingEnv provided a fallback.
+          // Track it separately so that strictEnv can still report it, as a fallback can silently
+          // mask a misconfiguration.
+          fallbackEnv.add(key)
+        }
+
+        return value
+      },
+      replaceEnvIgnore
+    )
+
+    // strictEnv can be set programmatically or in the configuration file itself, either at the top level
+    // (runtime configurations) or in the runtime property (capabilities configurations).
+    const strictEnv = normalizeStrictEnv(strictEnvOption ?? config.strictEnv ?? config.runtime?.strictEnv)
+
+    function warn (message) {
+      if (logger) {
+        logger.warn(message)
+      } else {
+        process.emitWarning(message)
+      }
+    }
+
+    // Variables resolved by a fallback are always reported as a warning, never as an error: they did
+    // resolve to a value, so failing on them would change which configurations are able to boot.
+    // This is emitted before handling the missing ones so that a throw does not swallow it.
+    if (strictEnv && fallbackEnv.size > 0) {
+      const keys = Array.from(fallbackEnv).sort().join(', ')
+
+      warn(
+        'The configuration references the following environment variables which are not set ' +
+          `and have been replaced by a fallback value: ${keys}`
+      )
+    }
+
+    if (strictEnv && missingEnv.size > 0) {
+      const keys = Array.from(missingEnv).sort().join(', ')
+
+      if (strictEnv === 'warn') {
+        warn(`The configuration references the following environment variables which are not set: ${keys}`)
+      } else {
+        throw new MissingEnvVariablesError(keys)
+      }
+    }
   }
 
   const moduleInfo = extractModuleFromSchemaUrl(config)

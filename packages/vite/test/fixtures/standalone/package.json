@@ -6,11 +6,11 @@
   ],
   "devDependencies": {
     "fastify": "^5.7.0",
-    "typescript": "^5.5.4"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@platformatic/runtime": "^2.3.1",
-    "@platformatic/vite": "^2.3.1",
-    "platformatic": "^2.3.1"
+    "@platformatic/runtime": ">=3.0.0",
+    "@platformatic/vite": ">=3.0.0",
+    "wattpm": ">=3.0.0"
   }
 }

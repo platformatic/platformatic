@@ -19,6 +19,8 @@ CREATE TABLE pages (
 - `[PRIMARY_KEY]` is `id`
 - `fields` are `id`, `title`, `body`
 
+Numeric primary keys and foreign keys that reference them are serialized as strings in response bodies. Request bodies, path parameters, and query filters retain their native numeric types.
+
 ## GET and POST parameters
 
 Some APIs need the `GET` method, where parameters must be defined in the URL, or `POST/PUT` methods, where parameters can be defined in the `HTTP` request payload.
@@ -51,6 +53,9 @@ You can define many `WHERE` clauses in REST API, each clause includes a **field*
 | gte | `'>='` |
 | lt | `'<'` |
 | lte | `'<='` |
+| like | `'LIKE'` |
+| ilike | `'ILIKE'` |
+| isNull | `'IS NULL'` (use `false` for `IS NOT NULL`) |
 
 - **Value**: The value you want to compare the field to.
 
@@ -90,6 +95,8 @@ You can define the ordering of the returned rows within your REST API calls with
 - **Field**: One of the fields found in the schema.
 - **Value**: can be `asc` or `desc`.
 
+Multiple `orderby.[field]` parameters can be combined, and the rows are sorted by each of them in the order they appear in the query string, e.g. `?orderby.year=desc&orderby.title=asc`.
+
 **Example**
 
 To get the `pages` ordered alphabetically by their `titles`, make an HTTP request like this:
@@ -114,7 +121,7 @@ $ curl -v -X 'GET' \
 > x-total-count: 18
  (...)
 
-[{"id":1,"title":"Movie1"},{"id":2,"title":"Movie2"}]%
+[{"id":"1","title":"Movie1"},{"id":"2","title":"Movie2"}]%
 ```
 
 
@@ -135,7 +142,7 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 1,
+  "id": "1",
   "title": "Hello World",
   "body": "Welcome to Platformatic"
 }
@@ -173,7 +180,7 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 1,
+  "id": "1",
   "title": "Hello Platformatic!",
   "body": "Welcome to Platformatic"
 }
@@ -201,11 +208,11 @@ $ curl -X 'PUT' \
 }'
 
 [{
-  "id": 1,
+  "id": "1",
   "title": "Updated title!",
   "body": "Updated body!"
 },{
-  "id": 2,
+  "id": "2",
   "title": "Updated title!",
   "body": "Updated body!"
 }]
@@ -328,7 +335,18 @@ This returns the entity in the "join table", e.g. `GET /editors/page/1/user/1`.
 
 ### `POST [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
 
-Creates a new entity in the "join table", e.g. `POST /editors/page/1/user/1`.
+Creates a new entity in the "join table", e.g. `POST /editors/page/1/user/1`. The body contains the remaining fields of the join table (the two keys come from the URL):
+
+```bash
+$ curl -X 'POST' \
+  'http://localhost:3042/editors/page/1/user/1' \
+  -H 'Content-Type: application/json' \
+  -d '{ "role": "admin" }'
+
+{ "pageId": "1", "userId": "1", "role": "admin" }
+```
+
+`PUT` accepts the same body.
 
 ### `PUT [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
 
@@ -415,12 +433,12 @@ $ curl -X 'GET' 'http://localhost:3042/movies?limit=5&cursor=true&orderby.id=asc
 [
   {
     "title": "Terminator",
-    "id": 1
+    "id": "1"
   },
   ...
   {
     "title": "Star Trek",
-    "id": 5
+    "id": "5"
   }
 ]
 ```
@@ -436,7 +454,7 @@ $ curl -X 'GET' 'http://localhost:3042/movies?limit=5&startAfter=eyJpZCI6NX0=&or
 [
   {
     "title": "Star Wars",
-    "id": 6
+    "id": "6"
   },
   ...
 ]
@@ -503,7 +521,7 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 1,
+  "id": "1",
   "title": "Hello Platformatic!",
   "body": "Welcome to Platformatic"
   "statusCode": 400,
@@ -527,8 +545,27 @@ $ curl -X 'POST' \
 }'
 
 {
-  "id": 42,
+  "id": "42",
   "title": "Hello Platformatic!",
   "body": "Welcome to Platformatic"
 }
 ```
+
+
+## Standalone Usage
+
+`@platformatic/sql-openapi` can also be used directly in any Fastify application, together with `@platformatic/sql-mapper`:
+
+```js
+import fastify from 'fastify'
+import sqlMapper from '@platformatic/sql-mapper'
+import sqlOpenAPI from '@platformatic/sql-openapi'
+
+const app = fastify()
+await app.register(sqlMapper, { connectionString: 'postgres://...' })
+await app.register(sqlOpenAPI)
+
+await app.listen({ port: 3042 })
+```
+
+All the options described on this page (`prefix`, `ignore`, `ignoreRoutes`, `allowPrimaryKeysInInput`, ...) can be passed to the plugin registration.

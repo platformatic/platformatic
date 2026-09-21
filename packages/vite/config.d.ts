@@ -7,14 +7,12 @@
 
 export interface PlatformaticViteConfig {
   $schema?: string;
+  module?: string;
   logger?: {
-    level?: (
-      | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-      | {
-          [k: string]: unknown;
-        }
-    ) &
-      string;
+    /**
+     * The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.
+     */
+    level?: string;
     transport?:
       | {
           target?: string;
@@ -47,6 +45,10 @@ export interface PlatformaticViteConfig {
     redact?: {
       paths: string[];
       censor?: string;
+      /**
+       * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
+       */
+      remove?: boolean;
     };
     base?: {
       [k: string]: unknown;
@@ -55,6 +57,46 @@ export interface PlatformaticViteConfig {
     customLevels?: {
       [k: string]: unknown;
     };
+    /**
+     * The numeric value of the level defined in level, when it is not one of the standard pino levels.
+     */
+    levelVal?: number;
+    /**
+     * Only use the levels defined in customLevels and omit the standard pino ones.
+     */
+    useOnlyCustomLevels?: boolean;
+    /**
+     * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
+     */
+    levelComparison?: "ASC" | "DESC";
+    /**
+     * A string prefixed to every message, including the ones of child loggers.
+     */
+    msgPrefix?: string;
+    /**
+     * The key under which any logged object is placed.
+     */
+    nestedKey?: string;
+    /**
+     * The key used for the serialized error in the log object. Defaults to err.
+     */
+    errorKey?: string;
+    /**
+     * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
+     */
+    depthLimit?: number;
+    /**
+     * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
+     */
+    edgeLimit?: number;
+    /**
+     * Terminate each log line with \r\n instead of \n. Defaults to false.
+     */
+    crlf?: boolean;
+    /**
+     * Set to false to disable logging entirely. Defaults to true.
+     */
+    enabled?: boolean;
     openTelemetryExporter?: {
       protocol: "grpc" | "http";
       url: string;
@@ -64,6 +106,10 @@ export interface PlatformaticViteConfig {
   server?: {
     hostname?: string;
     port?: number | string;
+    /**
+     * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
+     */
+    portAssignment?: "shared" | "perWorkerIncrement";
     /**
      * The maximum length of the queue of pending connections
      */
@@ -118,9 +164,32 @@ export interface PlatformaticViteConfig {
       development?: string;
       production?: string;
     };
+    entrypointPort?: number;
+    changeDirectoryBeforeExecution?: boolean;
+    preferLocalCommands?: boolean;
+    processSpawner?: string;
   };
   runtime?: {
     preload?: string | string[];
+    extensions?:
+      | string
+      | {
+          path: string;
+          options?: {
+            [k: string]: unknown;
+          };
+          build?: boolean;
+        }
+      | (
+          | string
+          | {
+              path: string;
+              options?: {
+                [k: string]: unknown;
+              };
+              build?: boolean;
+            }
+        )[];
     basePath?: string;
     services?: {
       [k: string]: unknown;
@@ -170,13 +239,10 @@ export interface PlatformaticViteConfig {
         );
     workersRestartDelay?: number | string;
     logger?: {
-      level?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
+      /**
+       * The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.
+       */
+      level?: string;
       transport?:
         | {
             target?: string;
@@ -209,6 +275,10 @@ export interface PlatformaticViteConfig {
       redact?: {
         paths: string[];
         censor?: string;
+        /**
+         * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
+         */
+        remove?: boolean;
       };
       base?: {
         [k: string]: unknown;
@@ -217,6 +287,46 @@ export interface PlatformaticViteConfig {
       customLevels?: {
         [k: string]: unknown;
       };
+      /**
+       * The numeric value of the level defined in level, when it is not one of the standard pino levels.
+       */
+      levelVal?: number;
+      /**
+       * Only use the levels defined in customLevels and omit the standard pino ones.
+       */
+      useOnlyCustomLevels?: boolean;
+      /**
+       * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
+       */
+      levelComparison?: "ASC" | "DESC";
+      /**
+       * A string prefixed to every message, including the ones of child loggers.
+       */
+      msgPrefix?: string;
+      /**
+       * The key under which any logged object is placed.
+       */
+      nestedKey?: string;
+      /**
+       * The key used for the serialized error in the log object. Defaults to err.
+       */
+      errorKey?: string;
+      /**
+       * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
+       */
+      depthLimit?: number;
+      /**
+       * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
+       */
+      edgeLimit?: number;
+      /**
+       * Terminate each log line with \r\n instead of \n. Defaults to false.
+       */
+      crlf?: boolean;
+      /**
+       * Set to false to disable logging entirely. Defaults to true.
+       */
+      enabled?: boolean;
       openTelemetryExporter?: {
         protocol: "grpc" | "http";
         url: string;
@@ -226,6 +336,10 @@ export interface PlatformaticViteConfig {
     server?: {
       hostname?: string;
       port?: number | string;
+      /**
+       * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
+       */
+      portAssignment?: "shared" | "perWorkerIncrement";
       /**
        * The maximum length of the queue of pending connections
        */
@@ -262,7 +376,7 @@ export interface PlatformaticViteConfig {
     reuseTcpPorts?: boolean;
     startTimeout?: number;
     restartOnError?: boolean | number;
-    exitOnUnhandledErrors?: boolean;
+    exitOnUnhandledErrors?: boolean | number;
     gracefulShutdown?: {
       runtime: number | string;
       application: number | string;
@@ -277,11 +391,49 @@ export interface PlatformaticViteConfig {
       gracePeriod?: number | string;
       maxUnhealthyChecks?: number | string;
       maxELU?: number | string;
+      maxEventLoopDelay?: number | string;
+      maxEventLoopDelayP99?: number | string;
       maxHeapUsed?: number | string;
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
       codeRangeSize?: number | string;
+      bufferPoolSize?: number | string;
+      defaultHighWaterMark?: number | string;
     };
+    healthProbes?:
+      | boolean
+      | string
+      | {
+          enabled?: boolean | string;
+          hostname?: string;
+          port?: number | string;
+          readiness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+          liveness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+        };
     undici?: {
       agentOptions?: {
         [k: string]: unknown;
@@ -359,6 +511,12 @@ export interface PlatformaticViteConfig {
            */
           socket?: string;
         };
+    management?:
+      | boolean
+      | {
+          enabled?: boolean;
+          operations?: string[];
+        };
     metrics?:
       | boolean
       | {
@@ -366,6 +524,33 @@ export interface PlatformaticViteConfig {
           enabled?: boolean | string;
           hostname?: string;
           endpoint?: string;
+          https?: {
+            allowHTTP1?: boolean;
+            key:
+              | string
+              | {
+                  path?: string;
+                }
+              | (
+                  | string
+                  | {
+                      path?: string;
+                    }
+                )[];
+            cert:
+              | string
+              | {
+                  path?: string;
+                }
+              | (
+                  | string
+                  | {
+                      path?: string;
+                    }
+                )[];
+            requestCert?: boolean;
+            rejectUnauthorized?: boolean;
+          };
           auth?: {
             username: string;
             password: string;
@@ -377,6 +562,10 @@ export interface PlatformaticViteConfig {
            * The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)
            */
           applicationLabel?: string;
+          /**
+           * Enable outgoing HTTP client request duration metrics
+           */
+          httpClientMetrics?: boolean | string;
           readiness?:
             | boolean
             | {
@@ -403,6 +592,10 @@ export interface PlatformaticViteConfig {
                   body?: string;
                 };
               };
+          /**
+           * @deprecated
+           * Deprecated. Health probe timeout configuration is no longer used.
+           */
           healthChecksTimeouts?: number | string;
           plugins?: string[];
           timeout?: number | string;
@@ -436,6 +629,29 @@ export interface PlatformaticViteConfig {
              * Service version for OTLP resource attributes
              */
             serviceVersion?: string;
+          };
+          /**
+           * Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint
+           */
+          opentelemetry?: {
+            /**
+             * Enable or disable OpenTelemetry metrics forwarding
+             */
+            enabled?: boolean | string;
+            /**
+             * OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)
+             */
+            endpoint: string;
+            /**
+             * Interval in milliseconds between metric forwards
+             */
+            interval?: number | string;
+            /**
+             * Additional HTTP headers for authentication
+             */
+            headers?: {
+              [k: string]: string;
+            };
           };
           /**
            * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
@@ -500,6 +716,14 @@ export interface PlatformaticViteConfig {
                * The path to write the traces to. Only for file exporter.
                */
               path?: string;
+              /**
+               * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+               */
+              protocol?: "http" | "grpc";
+              /**
+               * Alias for protocol. Only for the otlp exporter. Defaults to http.
+               */
+              transport?: "http" | "grpc";
               [k: string]: unknown;
             };
             additionalProperties?: never;
@@ -525,11 +749,23 @@ export interface PlatformaticViteConfig {
                * The path to write the traces to. Only for file exporter.
                */
               path?: string;
+              /**
+               * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+               */
+              protocol?: "http" | "grpc";
+              /**
+               * Alias for protocol. Only for the otlp exporter. Defaults to http.
+               */
+              transport?: "http" | "grpc";
               [k: string]: unknown;
             };
             additionalProperties?: never;
             [k: string]: unknown;
           };
+      /**
+       * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
+       */
+      diagLogger?: boolean | string;
     };
     verticalScaler?: {
       enabled?: boolean;
@@ -567,6 +803,11 @@ export interface PlatformaticViteConfig {
     env?: {
       [k: string]: string;
     };
+    envfile?: string;
+    /**
+     * When set to true, the configuration loading fails if a {PLT_*} placeholder references an environment variable which is not set. When set to "warn", a warning listing the missing variables is logged but the placeholders are still replaced with an empty string. Defaults to false.
+     */
+    strictEnv?: boolean | string;
     sourceMaps?: boolean;
     nodeModulesSourceMaps?: string[];
     scheduler?: {
@@ -641,11 +882,19 @@ export interface PlatformaticViteConfig {
         gracePeriod?: number | string;
         maxUnhealthyChecks?: number | string;
         maxELU?: number | string;
+        maxEventLoopDelay?: number | string;
+        maxEventLoopDelayP99?: number | string;
         maxHeapUsed?: number | string;
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;
+        bufferPoolSize?: number | string;
+        defaultHighWaterMark?: number | string;
       };
+      /**
+       * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+       */
+      restartOnError?: boolean | number;
       arguments?: string[];
       env?: {
         [k: string]: string;

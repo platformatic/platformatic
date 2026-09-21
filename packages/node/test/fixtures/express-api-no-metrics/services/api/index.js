@@ -16,4 +16,4 @@ app.get('/internal', (_req, res) => {
     .catch(err => res.send(err))
 })
 
-app.listen(1)
+app.listen(0)

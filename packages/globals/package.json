@@ -1,14 +1,22 @@
 {
   "name": "@platformatic/globals",
-  "version": "3.39.0",
+  "version": "3.69.0",
   "description": "Platformatic Global Object Getter",
   "type": "module",
   "main": "./lib/index.js",
-  "exports": "./lib/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
+    }
+  },
   "types": "./lib/index.d.ts",
   "scripts": {
-    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
-    "lint": "eslint"
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test:types": "tstyche",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -19,17 +27,28 @@
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "homepage": "https://docs.platformatic.dev/docs/reference/runtime/globals",
+  "keywords": [
+    "platformatic",
+    "watt",
+    "runtime",
+    "globals",
+    "logger",
+    "metrics",
+    "messaging"
+  ],
   "devDependencies": {
     "@types/node": "^22.10.6",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "^9.18.0",
     "neostandard": "^0.12.0",
-    "typescript": "^5.7.3"
+    "tstyche": "^7.0.0",
+    "typescript": "~6.0.3"
   },
   "dependencies": {
-    "pino": "^9.9.0",
-    "@platformatic/prom-client": "^1.0.0"
+    "@opentelemetry/api": "^1.9.0",
+    "@platformatic/prom-client": "^1.0.0",
+    "pino": "^9.9.0"
   },
   "engines": {
     "node": ">=22.19.0"

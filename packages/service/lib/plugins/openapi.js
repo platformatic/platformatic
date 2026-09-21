@@ -1,5 +1,6 @@
 import Swagger from '@fastify/swagger'
 import { deepmerge } from '@platformatic/foundation'
+import { getRuntimeBasePath } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 
 // For some unknown reason, c8 is not detecting any of this
@@ -16,7 +17,7 @@ async function setupOpenAPIPlugin (app, options) {
         description: 'This is a service built on top of Platformatic',
         version: '1.0.0'
       },
-      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }]
+      servers: [{ url: getRuntimeBasePath({ throwOnMissing: false }) ?? '/' }]
     },
     typeof openapi === 'object' ? openapi : {}
   )
@@ -44,9 +45,6 @@ async function setupOpenAPIPlugin (app, options) {
 
   await app.register(Swagger, swaggerOptions)
 
-  const { default: scalarTheme } = await import('@platformatic/scalar-theme')
-  const { default: scalarApiReference } = await import('@scalar/fastify-api-reference')
-
   const routePrefix = openapi.swaggerPrefix || '/documentation'
 
   /** Serve spec file in yaml and json */
@@ -66,6 +64,14 @@ async function setupOpenAPIPlugin (app, options) {
     },
     async () => app.swagger({ yaml: true })
   )
+
+  // Imported below the guard on purpose: not loading the UI is what this option buys.
+  if (openapi.ui === false) {
+    return
+  }
+
+  const { default: scalarTheme } = await import('@platformatic/scalar-theme')
+  const { default: scalarApiReference } = await import('@scalar/fastify-api-reference')
 
   app.register(scalarApiReference, {
     ...options,

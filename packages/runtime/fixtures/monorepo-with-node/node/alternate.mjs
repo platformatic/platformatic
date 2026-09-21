@@ -5,4 +5,4 @@ const server = createServer((req, res) => {
   res.end(JSON.stringify({ alternate: true }))
 })
 
-server.listen(1)
+server.listen(0)

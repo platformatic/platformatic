@@ -1,15 +1,26 @@
 ---
 title: Overview
-label: Database Service
+label: Database Application
 ---
 
-# Database Service
+# Database Application
 
 The Database Service is a core application type that runs within Watt (the Node.js Application Server). It automatically generates GraphQL and REST APIs from your database schema, eliminating the need to write boilerplate CRUD operations.
 
 The Database Service supports PostgreSQL, MySQL, MariaDB, and SQLite, automatically introspecting your database schema to create type-safe, fully-featured APIs with support for relationships, filtering, pagination, and real-time subscriptions.
 
-For a high level overview of how Watt and its applications work, please reference the [Overview](../../overview.md) guide.
+For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
+
+## Using an Existing Database
+
+Platformatic DB works out of the box with an **existing database**: point `db.connectionString` at it and the schema is introspected automatically — no migrations are required. The `migrations` configuration is entirely optional and only needed if you want Platformatic to manage schema changes for you.
+
+A few conventions to be aware of when mapping an existing schema:
+
+- Table names are mapped to entities: `snake_case` names are converted to camelCase, and the entity gets both a singular (`movie`) and a plural (`movies`) form. A table named `movies` is exposed as `GET /movies` and the `Movie` GraphQL type.
+- Column names are camelCased in the same way (`created_at` → `createdAt`).
+- Relationships are discovered from foreign key constraints; join tables with composite primary keys are treated as many-to-many relationships.
+- Tables can be excluded (or explicitly included) with `db.ignore` / `db.include`, and `created_at`/`updated_at` handling can be disabled or renamed with `db.autoTimestamp`.
 
 ## Features
 
@@ -45,7 +56,7 @@ For a high level overview of how Watt and its applications work, please referenc
 
 ### Command Line usage (CLI)
 
-When using [Watt](../watt/overview.md), `@platformatic/db` applications will make some additional commands available on the terminal.
+When using [Watt](../wattpm/overview.md), `@platformatic/db` applications will make some additional commands available on the terminal.
 
 All the commands will be prefixed by the application id. For instance, if your application id is `movies`, then you will have the following commands available:
 
@@ -63,7 +74,7 @@ The easiest way to create a Database Service is within a Watt application:
 # Create a new Watt application
 wattpm create my-app
 
-# This will prompt you to add a Database Service
+# This will prompt you to add a Database Application
 cd my-app
 
 # Start in development mode
@@ -85,7 +96,7 @@ Database Service is perfect when you need:
 - **Enterprise Features**: Advanced authorization, migrations, and schema management
 
 :::info
-Ready to start? Check out our [Getting Started Guide](../../getting-started/quick-start-watt.md) to create your first Watt application with a Database Service! ⚡
+Ready to start? Check out our [Getting Started Guide](../../getting-started/quick-start.md) to create your first Watt application with a Database Service! ⚡
 :::
 
 ## Supported databases
@@ -102,4 +113,4 @@ The database driver is automatically loaded based on the value [`connectionStrin
 ## Issues
 
 If you run into a bug or have a suggestion for improvement, please raise an
-[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
+[issue on GitHub](https://github.com/platformatic/platformatic/issues/new).

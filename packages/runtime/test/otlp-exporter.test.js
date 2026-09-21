@@ -310,3 +310,73 @@ test('should not export metrics when OTLP exporter is disabled', async t => {
   // Verify no requests were made
   strictEqual(requestCount, 0, 'OTLP endpoint should not have received any requests when disabled')
 })
+
+test('should export non-empty metrics for command-based (childManager) services', async t => {
+  let otlpRequestCount = 0
+  let lastOtlpPayload = null
+
+  // Create a mock OTLP server
+  const otlpServer = createServer((req, res) => {
+    if (req.url === '/v1/metrics' && req.method === 'POST') {
+      let body = Buffer.alloc(0)
+      req.on('data', chunk => {
+        body = Buffer.concat([body, chunk])
+      })
+      req.on('end', () => {
+        otlpRequestCount++
+        lastOtlpPayload = body
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ partialSuccess: {} }))
+      })
+    } else {
+      res.writeHead(404)
+      res.end()
+    }
+  })
+
+  await new Promise(resolve => otlpServer.listen(0, '127.0.0.1', resolve))
+  const otlpPort = otlpServer.address().port
+
+  t.after(async () => {
+    otlpServer.close()
+  })
+
+  // Set environment variable for OTLP port
+  process.env.PLT_OTLP_PORT = otlpPort.toString()
+
+  const projectDir = join(fixturesDir, 'otlp-exporter-command')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+    delete process.env.PLT_OTLP_PORT
+  })
+
+  // Wait for the runtime to start
+  await sleep(1000)
+
+  // Make some requests to generate metrics
+  for (let i = 0; i < 5; i++) {
+    const res = await request(entryUrl)
+    strictEqual(res.statusCode, 200)
+  }
+
+  // Wait for OTLP export to happen (interval is 1000ms)
+  await sleep(2500)
+
+  // Verify that metrics were exported
+  ok(otlpRequestCount > 0, 'OTLP endpoint should have received at least one request')
+  ok(lastOtlpPayload !== null, 'Should have received OTLP payload')
+  ok(lastOtlpPayload.length > 0, 'OTLP payload should not be empty')
+
+  // The OTLP protobuf payload embeds metric names as UTF-8 strings. For command-based
+  // services the exporter must read the populated child registry; if it was wired to the
+  // empty parent registry (the bug in #4848), these series would be absent.
+  ok(
+    lastOtlpPayload.includes(Buffer.from('nodejs_heap_size_total_bytes')),
+    'OTLP payload should contain default nodejs_* metrics from the child registry'
+  )
+})

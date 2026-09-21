@@ -39,7 +39,7 @@ export const ApplicationNotFoundError = createError(
 )
 export const WorkerNotFoundError = createError(
   `${ERROR_PREFIX}_WORKER_NOT_FOUND`,
-  'Worker %s of application %s not found. Available applications are: %s'
+  'Worker %s of application %s not found. Available workers are: %s'
 )
 export const ApplicationNotStartedError = createError(
   `${ERROR_PREFIX}_APPLICATION_NOT_STARTED`,
@@ -48,6 +48,10 @@ export const ApplicationNotStartedError = createError(
 export const ApplicationStartTimeoutError = createError(
   `${ERROR_PREFIX}_APPLICATION_START_TIMEOUT`,
   "Application with id '%s' failed to start in %dms."
+)
+export const ApplicationDependencyNotFoundError = createError(
+  `${ERROR_PREFIX}_APPLICATION_DEPENDENCY_NOT_FOUND`,
+  'Application dependency %s not found. Available applications are: %s'
 )
 export const ApplicationsDependenciesCycleError = createError(
   `${ERROR_PREFIX}_APPLICATIONS_DEPENDENCIES_CYCLE`,
@@ -98,6 +102,10 @@ export const InvalidEntrypointError = createError(
   `${ERROR_PREFIX}_INVALID_ENTRYPOINT`,
   "Invalid entrypoint: '%s' does not exist"
 )
+export const ApplicationIdCollisionError = createError(
+  `${ERROR_PREFIX}_APPLICATION_ID_COLLISION`,
+  'The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.'
+)
 export const MissingEntrypointError = createError(
   `${ERROR_PREFIX}_MISSING_ENTRYPOINT`,
   'Missing application entrypoint.'
@@ -136,9 +144,80 @@ export const MessagingError = createError(
   'Cannot send a message to application "%s": %s'
 )
 
+export const SchedulerJobNotFoundError = createError(
+  `${ERROR_PREFIX}_SCHEDULER_JOB_NOT_FOUND`,
+  'Scheduler "%s" not found',
+  404
+)
+
+export const DuplicateSchedulerJobError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_SCHEDULER_JOB`,
+  'Scheduler "%s" is already registered'
+)
+
 export const MissingPprofCapture = createError(
   `${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`,
   'Please install @platformatic/wattpm-pprof-capture'
+)
+
+export const LastProfileTimeoutError = createError(
+  `${ERROR_PREFIX}_LAST_PROFILE_TIMEOUT`,
+  'Timed out while retrieving the last profile from the application "%s"'
+)
+
+export const FailedToLoadExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_LOAD_EXTENSION`,
+  'Failed to load the extension "%s": %s'
+)
+
+export const FailedToStartExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_START_EXTENSION`,
+  'Failed to start the extension "%s": %s'
+)
+
+export const FailedToStopExtensionError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_STOP_EXTENSION`,
+  'Failed to stop the extension "%s": %s'
+)
+
+export const InvalidExtensionError = createError(
+  `${ERROR_PREFIX}_INVALID_EXTENSION`,
+  'The extension "%s" must export a setup function as its default export or as a named "setup" export'
+)
+
+export const ReservedITCHandlerNameError = createError(
+  `${ERROR_PREFIX}_RESERVED_ITC_HANDLER_NAME`,
+  'The ITC command name "%s" is reserved by the runtime'
+)
+
+export const DuplicateITCHandlerNameError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_ITC_HANDLER_NAME`,
+  'The ITC command "%s" has already been registered'
+)
+
+export const RuntimeExtensionBuildAlreadyCalledError = createError(
+  `${ERROR_PREFIX}_EXTENSION_BUILD_ALREADY_CALLED`,
+  'The build function can only be called once by each runtime extension.'
+)
+
+export const MetricFamilyCollisionError = createError(
+  `${ERROR_PREFIX}_METRIC_FAMILY_COLLISION`,
+  'Extension "%s" registered metric family "%s" which collides with %s'
+)
+
+export const DuplicateExtensionHealthCheckError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_EXTENSION_HEALTH_CHECK`,
+  'The extension health %s check "%s" has already been registered by "%s"'
+)
+
+export const DuplicateExtensionHealthRouteError = createError(
+  `${ERROR_PREFIX}_DUPLICATE_EXTENSION_HEALTH_ROUTE`,
+  'The extension "%s" failed to register health route %s %s: %s'
+)
+
+export const ExtensionHealthRoutesUnavailableError = createError(
+  `${ERROR_PREFIX}_EXTENSION_HEALTH_ROUTES_UNAVAILABLE`,
+  'Extensions registered health routes but no health probes server is available'
 )
 
 export const FailedToSendHealthSignalsError = createError(

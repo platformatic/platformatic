@@ -254,7 +254,7 @@ test('env - should complain when an application is not found', async t => {
   ok(envProcess.stdout.includes('Cannot find a matching application.'))
 })
 
-test('config - should list configuration for an application', async t => {
+test('config - should list configuration for the runtime', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const alternativeApplicationDir = resolve(rootDir, 'web/alternative')
   const mainApplicationDir = resolve(rootDir, 'web/main')
@@ -276,7 +276,12 @@ test('config - should list configuration for an application', async t => {
     },
     logger: {
       captureStdio: true,
-      level: 'trace'
+      level: 'trace',
+      pino: {
+        level: 'level',
+        message: 'msg',
+        time: 'time'
+      }
     },
     entrypoint: 'main',
     autoload: {
@@ -333,7 +338,7 @@ test('config - should list configuration for an application', async t => {
     workersRestartDelay: 0,
     watch: false,
     gracefulShutdown: {
-      runtime: 10000,
+      runtime: 30000,
       application: 10000,
       closeConnections: true
     },
@@ -346,8 +351,11 @@ test('config - should list configuration for an application', async t => {
       maxHeapUsed: 0.99,
       maxUnhealthyChecks: 10,
       maxYoungGeneration: 134217728,
-      codeRangeSize: 268435456
+      codeRangeSize: 268435456,
+      bufferPoolSize: 262144,
+      defaultHighWaterMark: 262144
     },
+    healthProbes: true,
     resolvedApplicationsBasePath: 'external',
     metrics: {
       enabled: true,
@@ -377,7 +385,9 @@ test('config - should list configuration for an application', async t => {
       include: ['dist'],
       commands: {
         install: 'npm ci --omit-dev'
-      }
+      },
+      changeDirectoryBeforeExecution: false,
+      preferLocalCommands: true
     },
     node: {
       absoluteUrl: false,

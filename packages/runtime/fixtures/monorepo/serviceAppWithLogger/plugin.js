@@ -1,7 +1,7 @@
-'use strict'
-
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function (app) {
+  const { getSharedContext } = require('@platformatic/globals')
+
   app.get('/', async () => {
     return { hello: 'world' }
   })
@@ -9,6 +9,10 @@ module.exports = async function (app) {
   let crashOnClose = false
   app.get('/crash-on-close', { schema: { hide: true } }, async () => {
     crashOnClose = true
+  })
+
+  app.get('/keep-alive-on-close', { schema: { hide: true } }, async () => {
+    setInterval(() => {}, 1_000)
   })
 
   app.addHook('onClose', async () => {
@@ -19,12 +23,14 @@ module.exports = async function (app) {
   })
 
   app.get('/shared-context', { schema: { hide: true } }, async () => {
-    return globalThis.platformatic.sharedContext.get()
+    const sharedContext = getSharedContext()
+    return sharedContext.get()
   })
 
   app.patch('/shared-context', { schema: { hide: true } }, async (req, res) => {
     const { context, overwrite } = req.body
-    globalThis.platformatic.sharedContext.update(context, { overwrite })
+    const sharedContext = getSharedContext()
+    sharedContext.update(context, { overwrite })
     res.status(200).send()
   })
 }

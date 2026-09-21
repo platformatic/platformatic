@@ -1,13 +1,16 @@
+import { execa } from 'execa'
 import { deepStrictEqual, equal, ok, rejects } from 'node:assert'
 import { once } from 'node:events'
+import { mkdir } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Agent, Client, setGlobalDispatcher } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
-import { create, getExecutedCommandLogMessage } from '../helper.js'
+import { ChildManager } from '../../lib/worker/child-manager.js'
+import { create, createTemporaryDirectory, getExecutedCommandLogMessage } from '../helper.js'
 
 function serverHandler (_, res) {
   res.writeHead(200, {
@@ -173,6 +176,44 @@ test('ChildProcess - should intercept fetch calls', async t => {
   )
 })
 
+test('ChildProcess - should change directory before command execution when requested', async t => {
+  const capability = await create(t)
+  const root = await createTemporaryDirectory(t, 'plt-basic-child-root')
+  await mkdir(root, { recursive: true })
+  const manager = new ChildManager({
+    logger: capability.logger,
+    context: {
+      applicationId: 'application',
+      config: {
+        application: {
+          changeDirectoryBeforeExecution: true
+        }
+      },
+      exitOnUnhandledErrors: false,
+      host: true,
+      isEntrypoint: false,
+      logLevel: capability.logger.level,
+      port: true,
+      reuseTcpPorts: false,
+      root: pathToFileURL(root).toString(),
+      telemetryConfig: { enabled: false },
+      workerId: 0
+    }
+  })
+
+  await manager.inject()
+
+  try {
+    const executablePath = fileURLToPath(new URL('../fixtures/print-cwd.js', import.meta.url))
+    const { stderr } = await execa(process.execPath, [executablePath], { cwd: import.meta.dirname })
+
+    equal(stderr, root)
+  } finally {
+    await manager.eject()
+    await manager.close()
+  }
+})
+
 test('ChildProcess - should properly setup globals', async t => {
   const capability = await create(t)
 
@@ -250,8 +291,8 @@ test('ChildProcess - getHealth should return health metrics', async t => {
   const health = await childManager.send(socket, 'getHealth')
 
   // Verify health metrics structure
-  ok(typeof health.elu === 'number', 'Expected ELU to be a number')
-  ok(health.elu >= 0 && health.elu <= 1, `Expected ELU to be between 0 and 1, got ${health.elu}`)
+  ok(typeof health.currentELU === 'object', 'Expected currentELU to be an object')
+  ok(typeof health.currentELU.utilization === 'number', 'Expected currentELU.utilization to be a number')
   ok(typeof health.heapUsed === 'number', 'Expected heapUsed to be a number')
   ok(health.heapUsed > 0, 'Expected heapUsed to be positive')
   ok(typeof health.heapTotal === 'number', 'Expected heapTotal to be a number')

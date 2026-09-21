@@ -53,6 +53,29 @@ export const cache = {
           type: 'string'
         }
       ]
+    },
+    remote: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string'
+        },
+        prefix: {
+          type: 'string'
+        },
+        maxTTL: {
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 0
+            },
+            {
+              type: 'string'
+            }
+          ]
+        }
+      },
+      additionalProperties: false
     }
   },
   required: ['adapter', 'url'],
@@ -182,6 +205,19 @@ const next = {
             }
           ]
         },
+        ttl: {
+          default: 3600000, // 1 hour
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 0
+            },
+            {
+              type: 'string',
+              pattern: '^[0-9]+$'
+            }
+          ]
+        },
         maxAttempts: {
           default: 3,
           anyOf: [
@@ -213,6 +249,9 @@ export const schema = {
   type: 'object',
   properties: {
     $schema: {
+      type: 'string'
+    },
+    module: {
       type: 'string'
     },
     logger: utilsSchemaComponents.logger,

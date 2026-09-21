@@ -103,27 +103,27 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -142,7 +142,7 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         }
@@ -162,7 +162,7 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         }
@@ -182,12 +182,51 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
       ],
       'GET /posts?where.longText.eq=null Where NULL response'
+    )
+  }
+
+  // test isNull filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.longText.isNull=true&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.isNull=true status code')
+    same(
+      res.json(),
+      [
+        {
+          id: '5',
+          title: 'Bear',
+          longText: null
+        }
+      ],
+      'GET /posts?where.longText.isNull=true response'
+    )
+  }
+
+  // test isNull=false filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.longText.isNull=false&fields=id,title'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.isNull=false status code')
+    same(
+      res.json(),
+      [
+        { id: '1', title: 'Dog' },
+        { id: '2', title: 'Cat' },
+        { id: '3', title: 'Mouse' },
+        { id: '4', title: 'Duck' }
+      ],
+      'GET /posts?where.longText.isNull=false response'
     )
   }
 
@@ -202,22 +241,22 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         }
@@ -237,12 +276,12 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -262,27 +301,27 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -301,22 +340,22 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -335,22 +374,22 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -369,17 +408,17 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -398,17 +437,17 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -427,22 +466,22 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -461,12 +500,12 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -485,17 +524,17 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -514,12 +553,12 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -538,12 +577,12 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         }
@@ -563,27 +602,27 @@ test('list', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         },
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null
         }
@@ -832,22 +871,22 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         }
@@ -866,7 +905,7 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         }
@@ -885,17 +924,17 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         }
@@ -914,17 +953,17 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         }
@@ -943,17 +982,17 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -972,17 +1011,17 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -1001,17 +1040,17 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         }
@@ -1030,12 +1069,12 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -1054,12 +1093,12 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -1078,12 +1117,12 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         }
@@ -1102,12 +1141,12 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         }
@@ -1127,22 +1166,22 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         },
         {
-          id: 3,
+          id: '3',
           title: 'Mouse',
           longText: 'Baz'
         },
         {
-          id: 4,
+          id: '4',
           title: 'Duck',
           longText: 'A duck tale'
         }
@@ -1161,12 +1200,12 @@ test('list with NOT NULL', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Foo'
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Bar'
         }

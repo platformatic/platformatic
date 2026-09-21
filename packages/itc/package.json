@@ -1,14 +1,15 @@
 {
   "name": "@platformatic/itc",
-  "version": "3.39.0",
-  "description": "",
+  "version": "3.69.0",
+  "description": "Platformatic ITC",
   "main": "lib/index.js",
   "type": "module",
   "types": "lib/index.d.ts",
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
-    "test:types": "tsd",
-    "lint": "eslint"
+    "test:types": "tstyche",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
@@ -25,15 +26,14 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "neostandard": "^0.12.0",
-    "tsd": "^0.33.0",
-    "typescript": "^5.5.4"
+    "tstyche": "^7.0.0",
+    "typescript": "~6.0.3"
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@platformatic/globals": "workspace:*",
     "@watchable/unpromise": "^1.0.2"
-  },
-  "tsd": {
-    "directory": "test/types"
   },
   "engines": {
     "node": ">=22.19.0"

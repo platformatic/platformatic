@@ -144,3 +144,7 @@ packages/runtime/test/tmp
 packages/*/CLAUDE.md
 .githuman
 .plt
+
+# Pi
+.pi/
+AGENTS.md

@@ -159,8 +159,8 @@ CORS_ORIGIN=http://localhost:3000
 
 Now that you understand environment variables, you might want to:
 
-- **[Learn database configuration](/docs/guides/databases/)** - Apply environment variables to database setup
-- **[Explore deployment guides](/docs/guides/deployment/)** - Use environment variables in production
+- **[Learn database configuration](/docs/reference/db/overview)** - Apply environment variables to database setup
+- **[Explore deployment guides](/docs/guides/deployment/dockerize-a-watt-app)** - Use environment variables in production
 - **[Build a full application](/docs/learn/beginner/crud-application)** - Practice with a complete example
 
 ## Troubleshooting

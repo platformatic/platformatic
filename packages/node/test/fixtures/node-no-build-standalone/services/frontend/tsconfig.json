@@ -11,7 +11,9 @@
     "incremental": true,
     "strict": true,
     "outDir": "dist",
-    "skipLibCheck": true
+    "rootDir": "./src",
+    "skipLibCheck": true,
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",

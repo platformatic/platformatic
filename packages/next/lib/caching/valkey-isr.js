@@ -1,4 +1,5 @@
 import { ensureLoggableError } from '@platformatic/foundation'
+import { getConfig, getPrometheus, hasField } from '@platformatic/globals'
 import {
   createPlatformaticLogger,
   deserialize,
@@ -47,8 +48,10 @@ export class CacheHandler {
     this.#subprefix = options.subprefix
     this.#meta = options.meta
 
-    if (!this.#standalone && globalThis.platformatic?.config) {
-      this.#config ??= globalThis.platformatic.config.cache
+    const platformaticConfig = getConfig({ throwOnMissing: false })
+
+    if (!this.#standalone && platformaticConfig) {
+      this.#config ??= platformaticConfig.cache
       this.#logger ??= createPlatformaticLogger()
       this.#store ??= getConnection(this.#config.url)
       this.#maxTTL ??= this.#config.maxTTL
@@ -75,7 +78,7 @@ export class CacheHandler {
       throw new Error('Please provide a the "store" option.')
     }
 
-    if (globalThis.platformatic?.prometheus) {
+    if (hasField('prometheus')) {
       this.#registerMetrics()
     }
   }
@@ -146,7 +149,9 @@ export class CacheHandler {
         maxTTL: this.#maxTTL,
         ...this.#meta
       })
-      const expire = Math.min(revalidate, this.#maxTTL)
+      // revalidate === false means "cache forever" in Next.js (SSG/force-static pages).
+      // Use maxTTL as the expiration in that case.
+      const expire = revalidate === false ? this.#maxTTL : Math.min(revalidate, this.#maxTTL)
 
       if (expire < 1) {
         return
@@ -249,7 +254,11 @@ export class CacheHandler {
           }
         }
 
-        await this.#store.del(...toDelete)
+        // Spreading an empty Set would issue a DEL with no keys, which Valkey
+        // rejects. Only delete when there is something to delete.
+        if (toDelete.size) {
+          await this.#store.del(...toDelete)
+        }
         await this.#store.del(tagsKey)
       }
     } catch (e) {
@@ -284,7 +293,7 @@ export class CacheHandler {
   }
 
   #registerMetrics () {
-    const { client, registry } = globalThis.platformatic.prometheus
+    const { client, registry } = getPrometheus()
 
     this.#cacheHitMetric =
       registry.getSingleMetric(CACHE_HIT_METRIC.name) ??

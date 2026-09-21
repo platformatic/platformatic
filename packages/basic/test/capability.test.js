@@ -1,12 +1,19 @@
 /* globals platformatic */
 
 import { kMetadata } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
+import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
+import { EventEmitter } from 'node:events'
+import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
+import { join } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { create, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
+import { ensureTrailingSlash } from '../lib/utils.js'
+import { create, createTemporaryDirectory, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 const expectedLogger = {
   levels: {
@@ -55,6 +62,59 @@ test('BaseCapability - should properly setup globals', async t => {
   deepStrictEqual(await capability.getGraphqlSchema(), 'graphql')
   deepStrictEqual(capability.logger.level, 'info')
   deepStrictEqual(capability.basePath, 'basePath')
+  deepStrictEqual(platformatic.isEntrypoint, undefined)
+  deepStrictEqual(platformatic.reuseTcpPorts, undefined)
+})
+
+test('BaseCapability - startCommand - should expose the configured entrypoint port as url', async t => {
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: {
+        entrypointPort: 3042
+      }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await capability.startWithCommand(`node ${executablePath}`)
+
+  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
+  await capability.stopCommand()
+})
+
+test('BaseCapability - setupChildManagerEventsForwarding - should keep entrypoint port on child url updates', async t => {
+  const capability = await create(
+    t,
+    {},
+    {
+      application: {
+        entrypointPort: 3042
+      }
+    }
+  )
+  const childManager = new EventEmitter()
+
+  capability.setupChildManagerEventsForwarding(childManager)
+  childManager.emit('url', 'http://127.0.0.1:1234', 'client-ws')
+
+  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
+  deepStrictEqual(capability.clientWs, 'client-ws')
 })
 
 test('BaseCapability - other getters', async t => {
@@ -74,6 +134,56 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(await capability.getEnv(), { key2: 'value2' })
   deepStrictEqual(await capability.getInfo(), { dependencies: [], type: 'base', version: '1.0.0' })
   deepStrictEqual(await capability.getDispatchFunc(), capability)
+})
+
+test('BaseCapability - getDispatchTarget - "websocket" flag falls back to the TCP address without an in-thread dispatch target', async t => {
+  const capability = await create(t, { applicationConfig: { websocket: true } })
+
+  capability.url = 'http://127.0.0.1:1234'
+
+  deepStrictEqual(await capability.getDispatchTarget(), 'http://127.0.0.1:1234')
+})
+
+test('BaseCapability - getDispatchTarget - "websocket" flag keeps in-thread dispatching when the capability provides it', async t => {
+  const capability = await create(t, { applicationConfig: { websocket: true } })
+
+  const dispatchTarget = { inject () {} }
+  capability.getDispatchFunc = async () => dispatchTarget
+  capability.url = 'http://127.0.0.1:1234'
+
+  deepStrictEqual(await capability.getDispatchTarget(), dispatchTarget)
+})
+
+test('BaseCapability - getDispatchTarget - "websocket" flag is ignored with "useHttp" or for the entrypoint', async t => {
+  const useHttpCapability = await create(t, { applicationConfig: { websocket: true, useHttp: true } })
+  useHttpCapability.getDispatchFunc = async () => ({ inject () {} })
+  useHttpCapability.url = 'http://127.0.0.1:1234'
+
+  deepStrictEqual(await useHttpCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
+
+  const entrypointCapability = await create(t, { applicationConfig: { websocket: true }, isEntrypoint: true })
+  entrypointCapability.getDispatchFunc = async () => ({ inject () {} })
+  entrypointCapability.url = 'http://127.0.0.1:1234'
+
+  deepStrictEqual(await entrypointCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
+})
+
+test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {
+  const itc = new EventEmitter()
+  itc.send = async () => ({
+    'dependency:0': { application: 'dependency', status: 'started' }
+  })
+
+  updateGlobals({ itc })
+  t.after(() => updateGlobals({ itc: undefined }))
+
+  const capability = await create(t, { dependencies: ['dependency'] })
+  const result = await Promise.race([
+    capability.waitForDependentsStop(['dependent']).then(() => 'resolved'),
+    sleep(50, 'timeout')
+  ])
+
+  deepStrictEqual(result, 'resolved')
 })
 
 test('BaseCapability - getWatchConfig - disabled', async t => {
@@ -133,6 +243,19 @@ test('BaseCapability - buildWithCommand - should execute the requested command',
 
   ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(capability.stderr.messages[0], temporaryFolder)
+})
+
+test('BaseCapability - buildWithCommand - should preserve command array arguments without a shell', async t => {
+  const capability = await create(t, { isProduction: true })
+  const argument = 'value with spaces && shell syntax'
+
+  await capability.buildWithCommand(
+    ['node', '--input-type=module', '--eval', 'process.stdout.write(process.argv[1])', argument],
+    import.meta.dirname,
+    { disableChildManager: true }
+  )
+
+  deepStrictEqual(capability.stdout.messages[1], argument)
 })
 
 test('BaseCapability - buildWithCommand - should handle exceptions', async t => {
@@ -245,7 +368,6 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
   await capability.startWithCommand(`node ${executablePath}`)
 
   ok(capability.url.startsWith('http://127.0.0.1:'))
-  ok(!capability.url.endsWith(':10000'))
   deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
@@ -267,12 +389,250 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
+      additionalServerOptions: {},
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      exitOnUnhandledErrors: true,
+      logger: expectedLogger
+    })
+  }
+
+  await capability.stopCommand()
+})
+
+test('BaseCapability - startCommand and stopCommand - should execute the requested command using a custom spawner', async t => {
+  const processSpawner = fileURLToPath(new URL('./fixtures/spawner.js', import.meta.url))
+
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: { basePath: '/whatever', processSpawner },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await capability.startWithCommand(`node ${executablePath}`)
+
+  ok(capability.url.startsWith('http://127.0.0.1:'))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(capability.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever',
+          processSpawner
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
+      applicationId: 'application',
+      workerId: 0,
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: 0,
+      additionalServerOptions: {},
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      exitOnUnhandledErrors: true,
+      logger: expectedLogger
+    })
+  }
+
+  await capability.stopCommand()
+})
+
+test('BaseCapability - startCommand - should override the port set for the entrypoint', async t => {
+  const port = await getPort()
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: { basePath: '/whatever' },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await capability.startWithCommand(`node ${executablePath}`)
+
+  ok(capability.url.startsWith(`http://127.0.0.1:${port}`))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(capability.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever'
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
+      applicationId: 'application',
+      workerId: 0,
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port,
+      additionalServerOptions: {},
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      exitOnUnhandledErrors: true,
+      logger: expectedLogger
+    })
+  }
+
+  await capability.stopCommand()
+})
+
+test('BaseCapability - startCommand - should not override the port when unset for the entrypoint', async t => {
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1'
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: { basePath: '/whatever' },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await capability.startWithCommand(`node ${executablePath}`)
+
+  ok(capability.url.startsWith('http://127.0.0.1:'))
+  deepStrictEqual(capability.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(capability.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever'
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
+      applicationId: 'application',
+      workerId: 0,
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
       telemetryConfig: {},
@@ -323,7 +683,6 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
   await capability.startWithCommand(`node ${executablePath}`)
 
   ok(capability.url.startsWith('http://127.0.0.1:'))
-  ok(!capability.url.endsWith(':10000'))
   deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
@@ -345,6 +704,13 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          application: 1000
+        }
+      },
+      applicationConfig: null,
       applicationId: 'test-application-id',
       workerId: 0,
       basePath: '/whatever',
@@ -386,6 +752,81 @@ test(
   }
 )
 
+test(
+  'BaseCapability - buildWithCommand - should prefer local commands from the application root',
+  { skip: isWindows },
+  async t => {
+    const applicationRoot = await createTemporaryDirectory(t, 'plt-basic-app-root')
+    const projectRoot = await createTemporaryDirectory(t, 'plt-basic-project-root')
+    const applicationBin = join(applicationRoot, 'node_modules', '.bin')
+    const projectBin = join(projectRoot, 'node_modules', '.bin')
+
+    await mkdir(applicationBin, { recursive: true })
+    await mkdir(projectBin, { recursive: true })
+
+    const commandName = 'plt-local-command'
+    const applicationCommand = join(applicationBin, commandName)
+    const projectCommand = join(projectBin, commandName)
+
+    await writeFile(applicationCommand, '#!/usr/bin/env node\nprocess.stdout.write("application-root\\n")\n')
+    await writeFile(projectCommand, '#!/usr/bin/env node\nprocess.stdout.write("project-root\\n")\n')
+    await chmod(applicationCommand, 0o755)
+    await chmod(projectCommand, 0o755)
+
+    const originalCwd = process.cwd()
+    process.chdir(projectRoot)
+    t.after(() => process.chdir(originalCwd))
+
+    const capability = await create(
+      t,
+      {},
+      { application: { preferLocalCommands: true } },
+      'base',
+      '1.0.0',
+      applicationRoot
+    )
+
+    await capability.buildWithCommand(commandName)
+
+    deepStrictEqual(capability.stdout.messages.slice(1), ['application-root'])
+  }
+)
+
+test(
+  'BaseCapability - buildWithCommand - should resolve local commands from the current working directory',
+  { skip: isWindows },
+  async t => {
+    const applicationRoot = await createTemporaryDirectory(t, 'plt-basic-app-root')
+    const projectRoot = await createTemporaryDirectory(t, 'plt-basic-project-root')
+    const projectBin = join(projectRoot, 'node_modules', '.bin')
+
+    await mkdir(projectBin, { recursive: true })
+
+    const commandName = 'plt-local-command'
+    const projectCommand = join(projectBin, commandName)
+
+    await writeFile(projectCommand, '#!/usr/bin/env node\nprocess.stdout.write("project-root\\n")\n')
+    await chmod(projectCommand, 0o755)
+
+    const originalCwd = process.cwd()
+    process.chdir(projectRoot)
+    t.after(() => process.chdir(originalCwd))
+
+    const capability = await create(
+      t,
+      {},
+      { application: { preferLocalCommands: true } },
+      'base',
+      '1.0.0',
+      applicationRoot
+    )
+
+    await capability.buildWithCommand(commandName)
+
+    deepStrictEqual(capability.stdout.messages.slice(1), ['project-root'])
+  }
+)
+
 test('BaseCapability - startCommand - should kill the process on non-zero exit code', async t => {
   const capability = await create(t)
 
@@ -399,6 +840,30 @@ test('BaseCapability - startCommand - should kill the process on non-zero exit c
 
   deepStrictEqual(await promise, 123)
 })
+
+test(
+  'BaseCapability - startCommand - should kill the process when the child dies from a signal',
+  { skip: isWindows },
+  async t => {
+    const capability = await create(t)
+
+    const { promise, resolve, reject } = Promise.withResolvers()
+    t.mock.method(process, 'exit', code => {
+      resolve(code)
+    })
+
+    const timeout = setTimeout(() => {
+      reject(new Error('process.exit was not called within 5s after signal-induced child exit'))
+    }, 5000)
+    timeout.unref()
+    t.after(() => clearTimeout(timeout))
+
+    const executablePath = fileURLToPath(new URL('./fixtures/signal-exit.js', import.meta.url))
+    await capability.startWithCommand(`node ${executablePath}`)
+
+    deepStrictEqual(await promise, 1)
+  }
+)
 
 test('BaseCapability - stopCommand - should forcefully exit the process if it doesnt exit within the allowed timeout', async t => {
   const capability = await create(
@@ -428,7 +893,6 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
   await capability.startWithCommand(`node ${executablePath}`)
 
   ok(capability.url.startsWith('http://127.0.0.1:'))
-  ok(!capability.url.endsWith(':10000'))
   deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
@@ -451,6 +915,13 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
           ignore: ['second']
         }
       },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 10,
+          application: 10
+        }
+      },
+      applicationConfig: null,
       basePath: '/whatever',
       applicationId: 'application',
       workerId: 0,
@@ -469,6 +940,33 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
     })
   }
 
+  await capability.stopCommand()
+})
+
+test('BaseCapability - stopCommand - should not throw if subprocess was never assigned', async t => {
+  const capability = await create(
+    t,
+    {
+      applicationId: 'application',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 10,
+          application: 1000
+        }
+      }
+    },
+    {
+      application: { basePath: '/whatever' }
+    }
+  )
+
+  // subprocess is never set — stopCommand should return without throwing
   await capability.stopCommand()
 })
 

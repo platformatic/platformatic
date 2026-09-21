@@ -70,7 +70,16 @@ export async function waitForStart (startProcess) {
   const raw = []
   const objects = []
 
-  startProcess.stderr?.pipe(startProcess.stdout)
+  if (startProcess.stderr) {
+    startProcess.stderr.pipe(split2()).on('data', (log) => {
+      if (process.env.PLT_TESTS_DEBUG === 'true') {
+        process._rawDebug(log.toString())
+      }
+
+      raw.push(log)
+    })
+  }
+
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     if (process.env.PLT_TESTS_DEBUG === 'true') {
       process._rawDebug(log.toString())

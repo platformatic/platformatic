@@ -2,7 +2,6 @@ import { existsSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { request } from 'undici'
 import { hasJavascriptFiles } from './file-system.js'
 import { kFailedImport } from './symbols.js'
 
@@ -17,6 +16,11 @@ export const applicationTypes = [
   { name: '@platformatic/next', label: 'Next.js', dependencies: ['next'] },
   { name: '@platformatic/remix', label: 'Remix', dependencies: ['@remix-run/dev'] },
   { name: '@platformatic/astro', label: 'Astro', dependencies: ['astro'] },
+  { name: '@platformatic/react-router', label: 'React Router', dependencies: ['@react-router/dev'] },
+  { name: '@platformatic/nuxt', label: 'Nuxt', dependencies: ['nuxt'] },
+  { name: '@platformatic/tanstack', label: 'TanStack Start', dependencies: ['@tanstack/react-start'] },
+  // Nitro applications often use Vite, so Nitro must be checked first.
+  { name: '@platformatic/nitro', label: 'Nitro', dependencies: ['nitro', 'nitropack'] },
   // Since Vite is often used with other frameworks, we must check for Vite last amongst frontend frameworks
   { name: '@platformatic/vite', label: 'Vite', dependencies: ['vite'] },
   {
@@ -38,6 +42,7 @@ export const applicationTypes = [
 ]
 
 export async function getLatestNpmVersion (pkg) {
+  const { request } = await import('undici')
   const res = await request(`https://registry.npmjs.org/${pkg}`)
   if (res.statusCode === 200) {
     const json = await res.body.json()

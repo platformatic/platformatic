@@ -1,0 +1,15 @@
+import { defineNuxtConfig } from 'nuxt/config'
+
+export default defineNuxtConfig({
+  app: {
+    baseURL: '/nested/base/dir/'
+  },
+  compatibilityDate: '2026-06-15',
+  telemetry: false,
+  devtools: { enabled: false },
+  vite: {
+    server: {
+      allowedHosts: ['.plt.local']
+    }
+  }
+})

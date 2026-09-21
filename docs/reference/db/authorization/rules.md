@@ -11,12 +11,38 @@ Authorization rules in Platformatic DB define what operations users can perform 
 Every authorization rule must include the following:
 
 - `role` (required) — Specifies the user role name as a string, which must align with roles set by an external authentication service.
-- `entity` or `entities` (optional) — Defines one or more Platformatic DB entities the rule applies to. At least one of `entity` or `entities` must be specified.
+- `entity` or `entities` (optional) — Defines one or more Platformatic DB entities the rule applies to. At least one of `entity` or `entities` must be specified. Use `'*'` to apply the rule to all entities; rules are evaluated in order, so more specific rules for the same role must be defined before the wildcard one.
 - `defaults` (optional) — Sets default values for entity fields from [user metadata](#set-entity-fields-from-user-metadata).
+
+### How Roles Are Matched
+
+The roles of the requesting user are read from the user metadata under the key configured by `authorization.roleKey` (default `X-PLATFORMATIC-ROLE`, a comma-separated list) or from a nested property path configured with `authorization.rolePath` (e.g. `user.roles`). Unauthenticated requests get the single role configured by `authorization.anonymousRole` (default `anonymous`).
+
+For every operation on an entity, the rules of that entity are evaluated **in the order they are defined** and, by default, the first rule whose `role` matches one of the user's roles wins (`first-match`). For example, with:
+
+```json
+{
+  "authorization": {
+    "rules": [
+      { "role": "admin", "entity": "page", "find": true, "save": true, "delete": true },
+      { "role": "user", "entity": "page", "find": true, "save": true, "delete": false },
+      { "role": "anonymous", "entity": "page", "find": true, "save": false, "delete": false }
+    ]
+  }
+}
+```
+
+- a user with roles `admin,user` matches the first rule and can delete pages;
+- a user with role `user` matches the second rule and cannot delete;
+- an unauthenticated request matches the `anonymous` rule and can only read.
+
+If no rule matches the user's roles, the operation is rejected.
+
+With `authorization.roleMergeStrategy` set to `most-permissive` (default `first-match`), all the rules matching any of the user's roles are merged instead, and truthy permissions win over falsy ones.
 
 ### Supported Operations
 
-Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). Here's an example illustrating how these permissions are structured:
+Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). The `find` permission also governs counting: the `count` entity method, the `count<Entities>` GraphQL query and the `X-Total-Count` REST header apply the same checks as `find`. Here's an example illustrating how these permissions are structured:
 
 ```json title="Example JSON object"
 {
@@ -93,6 +119,8 @@ For `save` operations, it's important to include all not-nullable fields in the 
 
 In this configuration, a user with the `user` role can only access the `id` and `title` fields of the `page` entity.
 
+The `fields` list of a `find` rule also applies to the `where` and `orderBy` clauses of `find` and `count` operations: filtering or sorting on a field that is not in the list is rejected with a `PLT_DB_AUTH_FIELD_UNAUTHORIZED` error. Otherwise the value of a hidden field could be recovered through filters such as `where.secret.like=a%`. The rule's own `checks` are not affected by this limit, so in the example above the `userId` check keeps working even though `userId` cannot be selected, filtered or sorted on by the user.
+
 ## Set Entity Fields from User Metadata
 
 Defaults are used in database insert and are default fields added automatically populated from user metadata
@@ -111,18 +139,27 @@ When a new entity is created, the `userId` field is automatically populated with
 
 ## Programmatic Rules
 
-For advanced use cases involving authorization, Platformatic DB allows rules to be defined programmatically. 
+For advanced use cases, rules can be defined programmatically with JavaScript functions instead of declarative checks. The `find`, `save` and `delete` operations accept an async function receiving `{ user, ctx, where }` which must return the `where` clause to apply, and `defaults` values can be async functions receiving `{ user, ctx, input }`.
 
-```javascript 
+In a Platformatic DB application, register programmatic rules from a plugin using `app.platformatic.addRulesForRoles`, which appends rules to the ones defined in the configuration file:
 
-  app.register(auth, {
-    jwt: {
-      secret: 'supersecret'
-    },
-    rules: [{
+```js title="plugin.js"
+/// <reference path="./global.d.ts" />
+
+export default async function (app) {
+  app.platformatic.addRulesForRoles([
+    {
       role: 'user',
       entity: 'page',
       async find ({ user, ctx, where }) {
+        return {
+          ...where,
+          userId: {
+            eq: user['X-PLATFORMATIC-USER-ID']
+          }
+        }
+      },
+      async save ({ user, ctx, where }) {
         return {
           ...where,
           userId: {
@@ -140,53 +177,44 @@ For advanced use cases involving authorization, Platformatic DB allows rules to 
       },
       defaults: {
         userId: async function ({ user, ctx, input }) {
-          match(user, {
-            'X-PLATFORMATIC-USER-ID': generated.shift(),
-            'X-PLATFORMATIC-ROLE': 'user'
-          })
           return user['X-PLATFORMATIC-USER-ID']
         }
-
-      },
-      async save ({ user, ctx, where }) {
-        return {
-          ...where,
-          userId: {
-            eq: user['X-PLATFORMATIC-USER-ID']
-          }
-        }
       }
-    }]
-  })
+    }
+  ])
+}
 ```
 
-In this example, the `user` role can delete all the posts edited before yesterday:
+When building a service manually with `@platformatic/db-core`, the same rules can be passed directly to the `@platformatic/db-authorization` plugin:
 
 ```js
- app.register(auth, {
-    jwt: {
-      secret: 'supersecret'
-    },
-    roleKey: 'X-PLATFORMATIC-ROLE',
-    anonymousRole: 'anonymous',
-    rules: [{
-      role: 'user',
-      entity: 'page',
-      find: true,
-      save: true,
-      async delete ({ user, ctx, where }) {
-        return {
-          ...where,
-          editedAt: {
-            lt: yesterday
-          }
+import auth from '@platformatic/db-authorization'
+
+// In this example, the user role can only delete the pages edited before yesterday
+app.register(auth, {
+  jwt: {
+    secret: 'supersecret'
+  },
+  roleKey: 'X-PLATFORMATIC-ROLE',
+  anonymousRole: 'anonymous',
+  rules: [{
+    role: 'user',
+    entity: 'page',
+    find: true,
+    save: true,
+    async delete ({ user, ctx, where }) {
+      return {
+        ...where,
+        editedAt: {
+          lt: yesterday
         }
-      },
-      defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
       }
-    }]
-  })
+    },
+    defaults: {
+      userId: 'X-PLATFORMATIC-USER-ID'
+    }
+  }]
+})
 ```
 
 ## Access validation on `entity mapper` for plugins

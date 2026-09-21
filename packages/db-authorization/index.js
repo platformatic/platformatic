@@ -97,6 +97,14 @@ async function auth (app, opts) {
         throw new Error(`Missing entity in authorization rule ${i}`)
       }
 
+      // The '*' wildcard applies the rule to all the entities.
+      // Rules are evaluated in order, so more specific rules for the same
+      // role must be defined before the wildcard one.
+      if (ruleEntities.includes('*')) {
+        const allEntities = Object.keys(app.platformatic.entities)
+        ruleEntities = Array.from(new Set([...ruleEntities.filter(e => e !== '*'), ...allEntities]))
+      }
+
       for (const ruleEntity of ruleEntities) {
         const newRule = { ...rule, entity: ruleEntity, entities: undefined }
         if (!app.platformatic.entities[newRule.entity]) {
@@ -177,9 +185,26 @@ async function auth (app, opts) {
           const request = getRequestFromContext(ctx)
           const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
           checkFieldsFromRule(rule.find, fields || Object.keys(app.platformatic.entities[entityKey].fields))
+          // The where and orderBy sent by the user are checked before the rule's own
+          // checks are merged in: a rule may legitimately filter on a field (e.g. userId)
+          // that the user is not allowed to read.
+          checkWhereFromRule(rule.find, where)
+          checkOrderByFromRule(rule.find, restOpts.orderBy)
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
           return originalFind({ ...restOpts, where, ctx, fields })
+        },
+
+        async count (originalCount, { where, ctx, skipAuth, ...restOpts } = {}) {
+          if (useOriginal(skipAuth, ctx)) {
+            return originalCount({ ...restOpts, where, ctx })
+          }
+          const request = getRequestFromContext(ctx)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
+          checkWhereFromRule(rule.find, where)
+          where = await fromRuleToWhere(ctx, rule.find, where, request.user)
+
+          return originalCount({ ...restOpts, where, ctx })
         },
 
         async save (originalSave, { input, ctx, fields, skipAuth, ...restOpts }) {
@@ -382,6 +407,47 @@ function checkFieldsFromRule (rule, fields) {
       if (!fieldsFromRule.includes(field)) {
         throw new UnauthorizedField(field)
       }
+    }
+  }
+}
+
+// A `fields` list on a find rule must also cover the fields referenced by the
+// where clause, otherwise a hidden field can be read back through filters such
+// as `where: { secret: { like: 'a%' } }` even though it cannot be selected.
+function checkWhereFromRule (rule, where) {
+  if (!rule) {
+    throw new Unauthorized()
+  }
+  const { fields: fieldsFromRule } = rule
+  if (!fieldsFromRule || !where) {
+    return
+  }
+  for (const key of Object.keys(where)) {
+    if (key === 'or') {
+      for (const orPart of where[key]) {
+        checkWhereFromRule(rule, orPart)
+      }
+      continue
+    }
+    if (!fieldsFromRule.includes(key)) {
+      throw new UnauthorizedField(key)
+    }
+  }
+}
+
+// Sorting on a hidden field leaks its relative order, so orderBy is
+// restricted to the same fields as the selection and the where clause.
+function checkOrderByFromRule (rule, orderBy) {
+  if (!rule) {
+    throw new Unauthorized()
+  }
+  const { fields: fieldsFromRule } = rule
+  if (!fieldsFromRule || !orderBy) {
+    return
+  }
+  for (const { field } of orderBy) {
+    if (!fieldsFromRule.includes(field)) {
+      throw new UnauthorizedField(field)
     }
   }
 }

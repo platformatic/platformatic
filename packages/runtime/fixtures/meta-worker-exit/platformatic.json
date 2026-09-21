@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.63.0.json",
+  "watch": false,
+  "workers": 2,
+  "restartOnError": false,
+  "preload": "preload.js",
+  "applications": [
+    {
+      "id": "service",
+      "path": "./service"
+    },
+    {
+      "id": "dummy",
+      "path": "./service"
+    }
+  ]
+}

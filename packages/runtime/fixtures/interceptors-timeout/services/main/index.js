@@ -1,8 +1,10 @@
+import { getCapability } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 let server
 
-globalThis.platformatic.capability.getDispatchTarget = function () {
+const capability = getCapability()
+capability.getDispatchTarget = function () {
   return null
 }
 

@@ -3,39 +3,46 @@ import {
   buildPinoTimestamp,
   disablePinoDirectWrite,
   ensureLoggableError,
-  getPrivateSymbol
+  getPrivateSymbol,
+  parseMemorySize,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
+import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
+import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import inspector from 'node:inspector'
 import { hostname } from 'node:os'
 import { join, resolve } from 'node:path'
+import { setDefaultHighWaterMark } from 'node:stream'
 import { pathToFileURL } from 'node:url'
+import { parseEnv } from 'node:util'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { install as installUndiciGlobals } from 'undici'
 import { exitCodes } from '../errors.js'
 import { Controller } from './controller.js'
-import { initHealthSignalsApi } from './health-signals.js'
+import { initHealthSignalsApi, startEventLoopDelayMonitor } from './health-signals.js'
 import { setDispatcher } from './interceptors.js'
 import { setupITC } from './itc.js'
 import { SharedContext } from './shared-context.js'
-import { kId, kITC, kStderrMarker } from './symbols.js'
+import { kStderrMarker } from './symbols.js'
 
-function handlePreInitializationUnhandled (type, err) {
+function handlePreInitializationUnhandled (type, timeout, err) {
   const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
-  globalThis.platformatic.logger.error(
-    { err: ensureLoggableError(err) },
-    `The ${label} threw an ${type} before initialization.`
-  )
-  process.exit(exitCodes.PROCESS_UNHANDLED_ERROR)
+  const logger = getLogger()
+  logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type} before initialization.`)
+
+  setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), timeout)
 }
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
-    globalThis.platformatic.itc.notify('event', { event, payload: args })
+    const itc = getITC()
+    itc.notify('event', { event, payload: args })
     return this.emit(event, ...args)
   }
 }
@@ -62,9 +69,9 @@ function patchLogging () {
   }
 }
 
-function setupHandlers () {
-  const unhandledExceptionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught exception')
-  const unhandledRejectionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught rejection')
+function setupHandlers (timeout) {
+  const unhandledExceptionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught exception', timeout)
+  const unhandledRejectionHandler = handlePreInitializationUnhandled.bind(null, 'uncaught rejection', timeout)
   process.on('uncaughtException', unhandledExceptionHandler)
   process.on('unhandledRejection', unhandledRejectionHandler)
 
@@ -113,6 +120,39 @@ async function performPreloading (...sources) {
   }
 }
 
+function resolveHealthSize (runtimeConfig, applicationConfig, field, logger) {
+  const raw = applicationConfig.health?.[field] ?? runtimeConfig.health?.[field]
+  if (raw === undefined) {
+    return undefined
+  }
+
+  const size = typeof raw === 'string' ? parseMemorySize(raw) : raw
+
+  if (!Number.isInteger(size) || size < 0) {
+    logger.warn({ [field]: raw }, `Invalid health.${field}, ignoring`)
+    return undefined
+  }
+
+  return size
+}
+
+function setupBufferPool (runtimeConfig, applicationConfig, logger) {
+  const size = resolveHealthSize(runtimeConfig, applicationConfig, 'bufferPoolSize', logger)
+  if (size !== undefined) {
+    Buffer.poolSize = size
+  }
+}
+
+function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
+  const size = resolveHealthSize(runtimeConfig, applicationConfig, 'defaultHighWaterMark', logger)
+  if (size !== undefined) {
+    setDefaultHighWaterMark(false, size)
+  }
+}
+
+// Whether the module compile cache has been enabled in this worker.
+let compileCacheEnabled = false
+
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   // Normalize boolean shorthand: true -> { enabled: true }
@@ -151,8 +191,10 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
     const { compileCacheStatus } = moduleApi.constants ?? {}
 
     if (result.status === compileCacheStatus?.ENABLED) {
+      compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache enabled')
     } else if (result.status === compileCacheStatus?.ALREADY_ENABLED) {
+      compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache already enabled')
     } else if (result.status === compileCacheStatus?.FAILED) {
       logger.warn({ message: result.message }, 'Failed to enable module compile cache')
@@ -165,11 +207,21 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
 }
 
 async function main () {
-  const cleanup = setupHandlers()
+  let cleanup = null
+  let exitOnUnhandledErrors = workerData.config.exitOnUnhandledErrors
+
+  if (exitOnUnhandledErrors === true || typeof exitOnUnhandledErrors === 'undefined') {
+    exitOnUnhandledErrors = 100
+  }
+
+  if (typeof exitOnUnhandledErrors === 'number' && exitOnUnhandledErrors > 0) {
+    cleanup = setupHandlers(exitOnUnhandledErrors)
+  }
 
   installUndiciGlobals(globalThis)
-  globalThis[kId] = threadId
-  globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
+  updateGlobals({
+    runtimeId: threadId,
+    interceptors: {},
     logger: createLogger(),
     events: new ForwardingEventEmitter()
   })
@@ -177,8 +229,11 @@ async function main () {
   const runtimeConfig = workerData.config
   const applicationConfig = workerData.applicationConfig
 
+  setupBufferPool(runtimeConfig, applicationConfig, getLogger())
+  setupDefaultHighWaterMark(runtimeConfig, applicationConfig, getLogger())
+
   // Enable compile cache early before loading user modules
-  await setupCompileCache(runtimeConfig, applicationConfig, globalThis.platformatic.logger)
+  await setupCompileCache(runtimeConfig, applicationConfig, getLogger())
 
   await performPreloading(runtimeConfig, applicationConfig)
 
@@ -190,10 +245,24 @@ async function main () {
     envfile = resolve(workerData.applicationConfig.path, '.env')
   }
 
-  globalThis.platformatic.logger.debug({ envfile }, 'Loading envfile...')
+  const logger = getLogger()
+  logger.debug({ envfile }, 'Loading envfile...')
+
+  // Note that process.loadEnvFile is not used here as it never overrides an already defined
+  // variable. The worker environment is seeded from the environment the runtime resolved, which
+  // might contain values coming from an env file of the runtime. Those are only defaults, so the
+  // env file of this application, which is more specific, is allowed to override them. Real
+  // environment variables are never overridden.
+  const envFileFallbackKeys = new Set(workerData.envFileFallbackKeys ?? [])
 
   try {
-    process.loadEnvFile(envfile)
+    const applicationEnv = parseEnv(await readFile(envfile, 'utf-8'))
+
+    for (const [key, value] of Object.entries(applicationEnv)) {
+      if (!(key in process.env) || envFileFallbackKeys.has(key)) {
+        process.env[key] = value
+      }
+    }
   } catch {
     // Ignore if the file doesn't exist, similar to dotenv behavior
   }
@@ -211,7 +280,7 @@ async function main () {
   let serverConfig = null
   if (runtimeConfig.server && applicationConfig.entrypoint) {
     serverConfig = runtimeConfig.server
-  } else if (applicationConfig.useHttp) {
+  } else if (applicationConfig.useHttp || applicationConfig.websocket) {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',
@@ -256,6 +325,14 @@ async function main () {
 
   await controller.init(cleanup)
 
+  // Make the compile cache accumulated while booting durable, as Node.js would otherwise only write
+  // it when the worker terminates.
+  controller.on('started', () => {
+    if (compileCacheEnabled) {
+      scheduleCompileCacheFlush(logger)
+    }
+  })
+
   if (applicationConfig.entrypoint && runtimeConfig.basePath) {
     const meta = await controller.capability.getMeta()
     if (!meta.gateway.wantsAbsoluteUrls) {
@@ -265,26 +342,67 @@ async function main () {
 
   const sharedContext = new SharedContext()
   // Limit the amount of methods a user can call
-  globalThis.platformatic.sharedContext = {
-    get: () => sharedContext.get(),
-    update: (...args) => sharedContext.update(...args)
-  }
+  updateGlobals({
+    sharedContext: {
+      get: () => sharedContext.get(),
+      update: (...args) => sharedContext.update(...args)
+    }
+  })
 
   // Setup interaction with parent port
-  const itc = setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
-  globalThis[kITC] = itc
-  globalThis.platformatic.itc = itc
+  const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
+  updateGlobals({ itc })
 
-  initHealthSignalsApi({
+  // Setup management client for privileged applications
+  if (applicationConfig.management) {
+    const mgmtEnabled =
+      typeof applicationConfig.management === 'boolean'
+        ? applicationConfig.management
+        : applicationConfig.management.enabled !== false
+
+    if (mgmtEnabled) {
+      const { ManagementClient } = await import('./management.js')
+      const ops = typeof applicationConfig.management === 'object' ? applicationConfig.management.operations : undefined
+      updateGlobals({ management: new ManagementClient(ops) })
+    }
+  }
+
+  const sendHealthSignal = initHealthSignalsApi({
     workerId: workerData.worker.id,
     applicationId: applicationConfig.id
   })
+
+  // When health.maxEventLoopDelay or health.maxEventLoopDelayP99 are
+  // configured, sample the event loop delay and report it as a health
+  // signal: the main thread evaluates it as part of the health checks and it
+  // is exposed on the health metrics event.
+  const maxEventLoopDelay = Number(applicationConfig.health?.maxEventLoopDelay ?? runtimeConfig.health?.maxEventLoopDelay)
+  const maxEventLoopDelayP99 = Number(
+    applicationConfig.health?.maxEventLoopDelayP99 ?? runtimeConfig.health?.maxEventLoopDelayP99
+  )
+
+  if (
+    (Number.isFinite(maxEventLoopDelay) && maxEventLoopDelay > 0) ||
+    (Number.isFinite(maxEventLoopDelayP99) && maxEventLoopDelayP99 > 0)
+  ) {
+    startEventLoopDelayMonitor(sendHealthSignal)
+  }
 
   itc.notify('init')
 }
 
 function stripBasePath (basePath) {
   const kBasePath = Symbol('kBasePath')
+  const absoluteUrlPattern = /^https?:\/\//i
+
+  function prependBasePath (value) {
+    // Absolute and protocol-relative URLs (RFC 7231 Location) must not be rewritten
+    if (typeof value !== 'string' || absoluteUrlPattern.test(value) || value.startsWith('//') || value.startsWith(basePath)) {
+      return value
+    }
+
+    return basePath + value
+  }
 
   subscribe('http.server.request.start', ({ request, response }) => {
     if (request.url.startsWith(basePath)) {
@@ -310,8 +428,8 @@ function stripBasePath (basePath) {
 
       if (headers) {
         for (const key in headers) {
-          if (key.toLowerCase() === 'location' && !headers[key].startsWith(basePath)) {
-            headers[key] = basePath + headers[key]
+          if (key.toLowerCase() === 'location') {
+            headers[key] = prependBasePath(headers[key])
           }
         }
       }
@@ -322,8 +440,8 @@ function stripBasePath (basePath) {
 
   ServerResponse.prototype.setHeader = function (name, value) {
     if (this[kBasePath]) {
-      if (name.toLowerCase() === 'location' && !value.startsWith(basePath)) {
-        value = basePath + value
+      if (name.toLowerCase() === 'location') {
+        value = prependBasePath(value)
       }
     }
     originSetHeader.call(this, name, value)

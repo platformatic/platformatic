@@ -1,8 +1,19 @@
 import { ensureLoggableError, executeWithTimeout, kTimeout } from '@platformatic/foundation'
-import { errors, generateRequest, generateResponse, ITC, parseRequest, sanitize } from '@platformatic/itc'
+import {
+  errors,
+  generateRequest,
+  generateResponse,
+  ITC,
+  parseRequest,
+  sanitize,
+  startOutgoingMessagingSpan,
+  startOutgoingMessagingSpanSync,
+  traceIncomingMessagingHandler
+} from '@platformatic/itc'
+import { getITC } from '@platformatic/globals'
 import { MessagingError } from '../errors.js'
 import { RoundRobinMap } from './round-robin-map.js'
-import { kITC, kWorkersBroadcast } from './symbols.js'
+import { kWorkersBroadcast } from './symbols.js'
 
 const kPendingResponses = Symbol('plt.messaging.pendingResponses')
 
@@ -50,80 +61,120 @@ export class MessagingITC extends ITC {
   handle (message, handler) {
     if (typeof message === 'object') {
       for (const [name, fn] of Object.entries(message)) {
-        super.handle(name, fn)
+        super.handle(name, this.#wrapHandler(name, fn))
       }
     } else {
-      super.handle(message, handler)
+      super.handle(message, this.#wrapHandler(message, handler))
     }
   }
 
   async send (application, name, message, options) {
-    // Get the next worker for the application
-    const worker = this.#workers.next(application)
+    const telemetry = startOutgoingMessagingSpan('send', this.#id, application, name, {
+      telemetryContext: options?.telemetryContext,
+      telemetryMetadata: options?.telemetryMetadata
+    })
+    let error = null
 
-    if (!worker) {
-      throw new MessagingError(application, 'No workers available')
-    }
+    try {
+      // Get the next worker for the application
+      const worker = this._getNextWorker(application)
 
-    if (!worker.channel) {
-      // Use twice the value here as a fallback measure. The target handler in the main thread is forwarding
-      // the request to the worker, using executeWithTimeout with the user set timeout value.
-      const channel = await executeWithTimeout(
-        globalThis[kITC].send('getWorkerMessagingChannel', {
-          id: this.#id,
-          application: worker.application,
-          worker: worker.worker
-        }),
-        this.#timeout * 2
-      )
-
-      /* c8 ignore next 3 - Hard to test */
-      if (channel === kTimeout) {
-        throw new MessagingError(application, 'Timeout while waiting for a communication channel.')
+      if (!worker) {
+        throw new MessagingError(application, 'No workers available')
       }
 
-      worker.channel = channel
-      this.#setupChannel(channel)
+      if (!worker.channel) {
+        // Use twice the value here as a fallback measure. The target handler in the main thread is forwarding
+        // the request to the worker, using executeWithTimeout with the user set timeout value.
+        const itc = getITC()
+        const channel = await executeWithTimeout(
+          itc.send('getWorkerMessagingChannel', {
+            id: this.#id,
+            application: worker.application,
+            worker: worker.worker
+          }),
+          this.#timeout * 2
+        )
 
-      channel[kPendingResponses] = new Map()
-      channel.on('close', this.#handlePendingResponse.bind(this, channel))
+        /* c8 ignore next 3 - Hard to test */
+        if (channel === kTimeout) {
+          throw new MessagingError(application, 'Timeout while waiting for a communication channel.')
+        }
+
+        worker.channel = channel
+        this._setupChannel(channel)
+      }
+
+      const context = { ...options }
+      context.channel = worker.channel
+      context.application = worker.application
+      context.trackResponse = true
+
+      if (options?.meta || telemetry?.meta) {
+        context.meta = { ...options?.meta, ...telemetry?.meta }
+      }
+
+      const abortController = new AbortController()
+      const timeout = setTimeout(() => abortController.abort(), this.#timeout).unref()
+      context.signal = abortController.signal
+
+      try {
+        const send = () => super.send(name, message, context)
+        return telemetry ? await telemetry.run(send) : await send()
+      } catch (err) {
+        if (abortController.signal.aborted) {
+          throw new MessagingError(application, 'Timeout while waiting for a response.')
+        }
+        throw err
+      } finally {
+        clearTimeout(timeout)
+      }
+    } catch (err) {
+      error = err
+      throw err
+    } finally {
+      telemetry?.end(error)
     }
-
-    const context = { ...options }
-    context.channel = worker.channel
-    context.application = worker.application
-    context.trackResponse = true
-
-    const response = await executeWithTimeout(super.send(name, message, context), this.#timeout)
-
-    if (response === kTimeout) {
-      throw new MessagingError(application, 'Timeout while waiting for a response.')
-    }
-
-    return response
   }
 
-  notify (application, name, message) {
-    const request = generateRequest(name, message)
+  notify (application, name, message, options) {
+    const telemetry = startOutgoingMessagingSpanSync('notify', this.#id, application, name, {
+      telemetryContext: options?.telemetryContext,
+      telemetryMetadata: options?.telemetryMetadata
+    })
+    const metadata = options?.meta || telemetry?.meta ? { ...options?.meta, ...telemetry?.meta } : undefined
+    const request = generateRequest(name, message, metadata)
 
-    let channel = this.#notificationsChannels.get(application)
-    if (!channel) {
-      channel = new BroadcastChannel(`plt.messaging.notifications-${application}`)
-      this.#notificationsChannels.set(application, channel)
+    let error = null
+
+    try {
+      let channel = this.#notificationsChannels.get(application)
+      if (!channel) {
+        channel = new BroadcastChannel(`plt.messaging.notifications-${application}`)
+        this.#notificationsChannels.set(application, channel)
+      }
+
+      const postMessage = () => channel.postMessage(sanitize(request))
+      if (telemetry) {
+        telemetry.run(postMessage)
+      } else {
+        postMessage()
+      }
+    } catch (err) {
+      error = err
+      throw err
+    } finally {
+      telemetry?.end(error)
     }
-
-    channel.postMessage(sanitize(request))
   }
 
   async addSource (channel) {
     this.#sources.add(channel)
-    this.#setupChannel(channel)
+    this._setupChannel(channel)
+  }
 
-    // This has been closed on the other side.
-    // Pending messages will be silently discarded by Node (as postMessage does not throw) so we don't need to handle them.
-    channel.on('close', () => {
-      this.#sources.delete(channel)
-    })
+  _getNextWorker (application) {
+    return this.#workers.next(application)
   }
 
   _send (request, context) {
@@ -134,7 +185,13 @@ export class MessagingITC extends ITC {
       channel[kPendingResponses].set(request.reqId, { application, request })
     }
 
-    channel.postMessage(sanitize(request, transferList), { transferList })
+    channel.postMessage(sanitize(request, transferList), transferList)
+  }
+
+  _onRequestSettled (reqId, context) {
+    if (context.trackResponse) {
+      context.channel[kPendingResponses].delete(reqId)
+    }
   }
 
   _createClosePromise () {
@@ -162,10 +219,21 @@ export class MessagingITC extends ITC {
     this.#sources.clear()
   }
 
-  #setupChannel (channel) {
+  _setupChannel (channel) {
+    if (channel[kPendingResponses]) {
+      return
+    }
+
+    channel[kPendingResponses] = new Map()
+
     // Setup the message for processing
     channel.on('message', event => {
-      this.#listener(event, { channel })
+      this.#listener(event, { channel, message: event })
+    })
+
+    channel.on('close', () => {
+      this.#sources.delete(channel)
+      this.#handlePendingResponse(channel)
     })
   }
 
@@ -207,10 +275,14 @@ export class MessagingITC extends ITC {
         throw new errors.HandlerNotFoundError(request.name)
       }
 
-      await handler(request.data)
+      await handler(request.data, { application: this.#id, message: request, notification: true })
     } catch (error) {
       this.#logger.error({ error }, `"Handler for the "${request.name}" message failed.`)
     }
+  }
+
+  #wrapHandler (messageName, handler) {
+    return (data, context) => traceIncomingMessagingHandler(this.#id, messageName, handler, data, context)
   }
 
   #handlePendingResponse (channel) {

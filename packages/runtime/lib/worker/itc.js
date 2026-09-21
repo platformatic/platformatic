@@ -1,5 +1,6 @@
 import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
-import { ITC } from '@platformatic/itc'
+import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
+import { ITC, initializeITCTelemetry } from '@platformatic/itc'
 import { Unpromise } from '@watchable/unpromise'
 import { once } from 'node:events'
 import { createRequire } from 'node:module'
@@ -111,9 +112,14 @@ async function safeHandleInITC (worker, fn) {
 }
 
 async function closeITC (dispatcher, itc, messaging) {
-  await dispatcher.interceptor.close()
-  itc.close()
-  messaging.close()
+  try {
+    await dispatcher.interceptor.close()
+    itc.close()
+    messaging.close()
+  } finally {
+    const events = getEvents()
+    events.emit('exit')
+  }
 }
 
 export async function sendViaITC (worker, name, message, transferList) {
@@ -147,17 +153,23 @@ export async function waitEventFromITC (worker, event) {
   return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
-export function setupITC (controller, application, dispatcher, sharedContext) {
-  const logger = globalThis.platformatic.logger
+export async function setupITC (controller, application, dispatcher, sharedContext) {
+  await initializeITCTelemetry()
+
+  const logger = getLogger()
   const messaging = new MessagingITC(controller.applicationConfig.id, workerData.config, logger)
 
-  Object.assign(globalThis.platformatic ?? {}, {
+  updateGlobals({
     messaging: {
       handle: messaging.handle.bind(messaging),
       send: messaging.send.bind(messaging),
       notify: messaging.notify.bind(messaging)
     }
   })
+
+  // ITC handlers run concurrently, so later start/stop requests must wait for
+  // the actual in-flight start operation rather than a controller event.
+  let controllerStartPromise
 
   const itc = new ITC({
     name: controller.applicationConfig.id + '-worker',
@@ -167,19 +179,26 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         const status = controller.getStatus()
 
         if (status === 'starting') {
-          await once(controller, 'start')
+          await controllerStartPromise
         } else {
           // This gives a chance to a capability to perform custom logic
-          globalThis.platformatic.events.emit('start')
+          const events = getEvents()
+          events.emit('start')
 
           try {
-            await controller.start()
+            controllerStartPromise = controller.start()
+            await controllerStartPromise
           } catch (e) {
             await controller.stop(true)
 
             // Reply to the runtime that the start failed, so it can cleanup
             once(itc, 'application:worker:start:processed').then(() => {
-              closeITC(dispatcher, itc, messaging).catch(() => {})
+              closeITC(dispatcher, itc, messaging).catch(err => {
+                logger.error(
+                  { err: ensureLoggableError(err) },
+                  'Failed to close the worker ITC after a failed start.'
+                )
+              })
             })
 
             throw ensureLoggableError(e)
@@ -191,26 +210,45 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         }
 
         dispatcher.replaceServer(await controller.capability.getDispatchTarget())
-        return application.entrypoint ? controller.capability.getUrl() : null
+
+        const scheduledTasks =
+          typeof controller.capability.getScheduledTasks === 'function'
+            ? await controller.capability.getScheduledTasks()
+            : []
+
+        return {
+          url: application.entrypoint ? controller.capability.getUrl() : null,
+          scheduledTasks
+        }
       },
 
       async stop ({ force, dependents }) {
-        const status = controller.getStatus()
+        try {
+          const status = controller.getStatus()
 
-        if (!force && status === 'starting') {
-          await once(controller, 'start')
+          if (!force && status === 'starting') {
+            await controllerStartPromise
+          }
+
+          if (force || status.startsWith('start')) {
+            // This gives a chance to a capability to perform custom logic
+            const events = getEvents()
+            events.emit('stop')
+
+            await controller.stop(force, dependents)
+          }
+        } finally {
+          // Always schedule cleanup, even when stop throws. Otherwise the worker
+          // keeps open handles and runtime shutdown hangs until the grace timeout.
+          once(itc, 'application:worker:stop:processed').then(() => {
+            closeITC(dispatcher, itc, messaging).catch(err => {
+              logger.error(
+                { err: ensureLoggableError(err) },
+                'Failed to close the worker ITC after stop.'
+              )
+            })
+          })
         }
-
-        if (force || status.startsWith('start')) {
-          // This gives a chance to a capability to perform custom logic
-          globalThis.platformatic.events.emit('stop')
-
-          await controller.stop(force, dependents)
-        }
-
-        once(itc, 'application:worker:stop:processed').then(() => {
-          closeITC(dispatcher, itc, messaging).catch(() => {})
-        })
       },
 
       async getDependencies () {
@@ -281,6 +319,22 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         }
       },
 
+      async getApplicationScheduledTasks () {
+        if (typeof controller.capability.getScheduledTasks !== 'function') {
+          return []
+        }
+
+        return controller.capability.getScheduledTasks()
+      },
+
+      async runApplicationScheduledTasks ({ scheduleId, scheduledTime }) {
+        if (typeof controller.capability.runScheduledTasks !== 'function') {
+          throw new Error(`Application "${application.id}" does not support scheduled task execution`)
+        }
+
+        return controller.capability.runScheduledTasks(scheduleId, scheduledTime)
+      },
+
       async getApplicationMeta () {
         try {
           return await controller.capability.getMeta()
@@ -342,6 +396,28 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         messaging.addSource(channel)
       },
 
+      takeHeapSnapshot (port) {
+        const { Session } = createRequire(import.meta.url)('node:inspector')
+        const session = new Session()
+        session.connect()
+
+        session.on('HeapProfiler.addHeapSnapshotChunk', (m) => {
+          port.postMessage({ type: 'chunk', chunk: m.params.chunk })
+        })
+
+        session.post('HeapProfiler.takeHeapSnapshot', null, (err) => {
+          session.disconnect()
+          if (err) {
+            port.postMessage({ type: 'error', message: err.message })
+          } else {
+            port.postMessage({ type: 'end' })
+          }
+          port.close()
+        })
+
+        return { started: true }
+      },
+
       startRepl (port) {
         // Check if running in subprocess mode - forward through ChildManager
         const childManager = controller.capability?.getChildManager?.()
@@ -395,9 +471,16 @@ export function setupITC (controller, application, dispatcher, sharedContext) {
         // For service-based capabilities, expose the Fastify app
         replServer.context.app = controller.capability?.getApplication?.()
         replServer.context.capability = controller.capability
-        replServer.context.platformatic = globalThis.platformatic
+        replServer.context.platformatic = {
+          capability: controller.capability,
+          config: controller.config,
+          events: getEvents(),
+          itc,
+          logger: getLogger(),
+          messaging: getMessaging()
+        }
         replServer.context.config = controller.applicationConfig
-        replServer.context.logger = globalThis.platformatic?.logger
+        replServer.context.logger = getLogger()
 
         replServer.on('exit', () => {
           port.postMessage({ type: 'exit' })

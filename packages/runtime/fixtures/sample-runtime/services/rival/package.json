@@ -7,6 +7,6 @@
   },
   "dependencies": {
     "platformatic": "^2.0.0",
-    "@platformatic/service": "^2.0.0"
+    "@platformatic/service": ">=3.0.0"
   }
 }

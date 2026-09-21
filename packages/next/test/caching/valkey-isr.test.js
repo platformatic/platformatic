@@ -4,6 +4,7 @@ import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { once } from 'node:events'
 import { resolve } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { test } from 'node:test'
 import { parse } from 'semver'
 import { fixturesDir, getLogsFromFile, setFixturesDir, updateFile } from '../../../basic/test/helper.js'
@@ -505,6 +506,54 @@ test('should properly revalidate tags in Valkey', async t => {
   ])
 })
 
+test('should not issue an empty DEL when revalidating a tag with no entries', async t => {
+  const errors = []
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { errors.push({ msg, obj }) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey)
+  const monitor = await monitorCollection.monitor()
+  const valkeyCalls = []
+
+  const tagsKey = keyFor(valkeyPrefix, '', 'tags', 'missing')
+
+  const monitorPromise = Promise.withResolvers()
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+
+    if (args[0] === 'del' && args[1] === tagsKey) {
+      monitorPromise.resolve()
+    }
+  })
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await monitor.disconnect()
+    await valkey.disconnect()
+    await monitorCollection.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+
+  // The tag set has no live entries, so toDelete stays empty. Spreading it into
+  // DEL used to issue a keyless DEL, which Valkey rejects with
+  // "ERR wrong number of arguments for 'del' command".
+  await handler.revalidateTag('missing')
+  await monitorPromise.promise
+
+  verifyValkeySequence(valkeyCalls, [
+    ['sscan', tagsKey, '0'],
+    ['del', tagsKey]
+  ])
+
+  deepStrictEqual(errors, [])
+})
+
 test('should extend TTL when our limit is smaller than the user one', async t => {
   const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
@@ -548,12 +597,11 @@ test('should extend TTL when our limit is smaller than the user one', async t =>
     deepStrictEqual(mo[2], time)
   }
 
-  const key = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
+  // The exact hash Next.js uses to derive the cache key is an internal
+  // implementation detail that can change between Next.js versions, so we
+  // match its shape instead of a hardcoded value.
+  const key = new RegExp(
+    `^${keyFor(valkeyPrefix, 'development', 'values')}:[A-Za-z0-9_-]+$`
   )
   verifyValkeySequence(valkeyCalls, [
     ['get', key],
@@ -622,12 +670,11 @@ test('should not extend the TTL over the original intended one', async t => {
     deepStrictEqual(data.time, time)
   }
 
-  const key = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    'd6b87585b19fac215038c88425d68b057920faf4585fa91a7058ae1ce5d70d8f'
+  // The exact hash Next.js uses to derive the cache key is an internal
+  // implementation detail that can change between Next.js versions, so we
+  // match its shape instead of a hardcoded value.
+  const key = new RegExp(
+    `^${keyFor(valkeyPrefix, 'development', 'values')}:[A-Za-z0-9_-]+$`
   )
 
   const baseTTL = 11 - delay
@@ -661,23 +708,25 @@ test('should not extend the TTL over the original intended one', async t => {
 })
 
 test('should handle read error', async t => {
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
+
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
   })
 
-  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
-  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
-
   t.after(async () => {
     await valkey.acl('delUser', valkeyUser)
     await valkey.disconnect()
   })
 
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
@@ -695,25 +744,40 @@ test('should handle read error', async t => {
 test('should handle deserialization error', async t => {
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration)
 
-  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-
-  const fetchKey = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    'd6b87585b19fac215038c88425d68b057920faf4585fa91a7058ae1ce5d70d8f'
+  const valkey = new Redis(
+    await getValkeyUrl(resolve(fixturesDir, configuration))
   )
 
   await cleanupCache(valkey)
-  await valkey.set(fetchKey, 'invalid')
 
   t.after(async () => {
     await valkey.disconnect()
   })
 
+  // The exact hash Next.js uses to derive the cache key is an internal
+  // implementation detail that can change between Next.js versions. Rather
+  // than hardcoding it, warm the cache with a real request and then discover
+  // the key that was actually used, so we can corrupt the right entry.
+  const warmCompleted = once(runtime, 'application:worker:event:completed')
+  await fetch(url + '/route')
+  await warmCompleted
+
+  const keyPattern = `${keyFor(valkeyPrefix, 'development', 'values')}:*`
+  let fetchKey
+  for (let attempt = 0; attempt < 20 && !fetchKey; attempt++) {
+    [fetchKey] = await valkey.keys(keyPattern)
+    if (!fetchKey) {
+      await sleep(250)
+    }
+  }
+  ok(fetchKey, 'expected the route to have populated a cache entry in Valkey')
+
+  await valkey.set(fetchKey, 'invalid')
+
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   deepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
@@ -748,16 +812,20 @@ test('should handle refresh error', async t => {
   })
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
   }
 
   await valkey.acl('deluser', valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '+SET', '-EXPIRE')
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     notDeepStrictEqual((await response.json()).time, 0)
+    await completed
   }
 
   await runtime.close()
@@ -774,23 +842,25 @@ test('should handle refresh error', async t => {
 })
 
 test('should handle write error', async t => {
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '-SET')
+
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
       cache.url = cache.url.replace('://', '://plt-caching-test@')
     })
   })
 
-  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-  await cleanupCache(valkey)
-  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '-SET')
-
   t.after(async () => {
     await valkey.acl('delUser', valkeyUser)
     await valkey.disconnect()
   })
 
+  const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
   notDeepStrictEqual((await response.json()).time, 0)
+  await completed
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
@@ -997,6 +1067,130 @@ test('can be used without the runtime - standalone mode', async t => {
     { msg: 'cache get', key, value: undefined },
     { msg: 'cache remove', key, value: undefined }
   ])
+})
+
+test('should preserve Map identity for values like segmentData across the Valkey round trip', async t => {
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await valkey.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:segment-data`
+
+  const segmentData = new Map([
+    ['/foo', { rsc: Buffer.from('foo') }],
+    ['/bar', { rsc: Buffer.from('bar') }]
+  ])
+
+  await handler.set(key, { html: 'content', segmentData }, { revalidate: 120, tags: ['first'] })
+  const cached = await handler.get(key)
+
+  ok(cached.value.segmentData instanceof Map)
+  deepStrictEqual(Array.from(cached.value.segmentData.keys()), ['/foo', '/bar'])
+  deepStrictEqual(cached.value.segmentData.get('/foo').rsc, Buffer.from('foo'))
+  deepStrictEqual(cached.value.segmentData.get('/bar').rsc, Buffer.from('bar'))
+  deepStrictEqual(cached.value.html, 'content')
+})
+
+test('should cache static pages with revalidate: false (force-static / SSG)', async t => {
+  const logs = []
+  const logsPromise = Promise.withResolvers()
+  const logger = {
+    trace: (obj, msg) => {
+      logs.push({ msg, key: obj.key, value: obj.value })
+
+      if (msg === 'cache get') {
+        logsPromise.resolve()
+      }
+    },
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey)
+  const monitor = await monitorCollection.monitor()
+  const valkeyCalls = []
+
+  const monitorPromise = Promise.withResolvers()
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+
+    if (args[0] === 'get') {
+      monitorPromise.resolve()
+    }
+  })
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await monitor.disconnect()
+    await valkey.disconnect()
+    await monitorCollection.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:static-page`
+
+  // revalidate: false means "cache forever" in Next.js (SSG/force-static pages)
+  await handler.set(key, 'static-content', { revalidate: false, tags: ['static-tag'] }, true)
+  const cached = await handler.get(key, base64ValueMatcher, true)
+  await logsPromise.promise
+  await monitorPromise.promise
+
+  // The key should be stored with maxTTL (86400) as the expiration
+  verifyValkeySequence(valkeyCalls, [
+    ['set', key, base64ValueMatcher, 'EX', '86400'],
+    ['sadd', keyFor(valkeyPrefix, '', 'tags', 'static-tag'), key],
+    ['expire', keyFor(valkeyPrefix, '', 'tags', 'static-tag'), '86400'],
+    ['get', key]
+  ])
+
+  deepStrictEqual(
+    { ...cached, lastModified: 0 },
+    {
+      value: 'static-content',
+      lastModified: 0,
+      revalidate: false,
+      tags: ['static-tag'],
+      maxTTL: 86400
+    }
+  )
+})
+
+test('should not cache when revalidate is 0 (SSR / no-cache)', async t => {
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await valkey.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:ssr-page`
+
+  // revalidate: 0 means "do not cache" (SSR)
+  await handler.set(key, 'ssr-content', { revalidate: 0, tags: [] }, true)
+  const cached = await handler.get(key, base64ValueMatcher, true)
+
+  // Should not have been cached
+  deepStrictEqual(cached, undefined)
 })
 
 test('should track Next.js cache hit and miss ratio in Prometheus', async t => {

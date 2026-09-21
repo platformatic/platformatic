@@ -60,6 +60,9 @@ export const schema = {
     $schema: {
       type: 'string'
     },
+    module: {
+      type: 'string'
+    },
     logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
     watch: basicSchemaComponents.watch,

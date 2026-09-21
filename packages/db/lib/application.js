@@ -6,7 +6,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { execute as applyMigrations } from './migrator.js'
 import { root } from './root.js'
 import { execute as generateTypes } from './types.js'
-import { locateSchemaLock, updateSchemaLock, validateSchemaLockFormat } from './utils.js'
+import { isSchemaLockReadOnly, locateSchemaLock, serializeDbschema, updateSchemaLock, validateSchemaLockFormat } from './utils.js'
 
 async function healthCheck (app) {
   const { db, sql } = app.platformatic
@@ -38,8 +38,13 @@ export async function platformaticDatabase (app, capability) {
         createSchemaLock = false
       } catch (err) {
         app.log.trace({ err }, 'failed to load schema lock')
-        app.log.info('no schema lock found, will create one')
-        createSchemaLock = true
+
+        if (isSchemaLockReadOnly(config)) {
+          app.log.warn('no schema lock found, the schema lock is read-only so it will not be created')
+        } else {
+          app.log.info('no schema lock found, will create one')
+          createSchemaLock = true
+        }
       }
     }
   }
@@ -71,17 +76,19 @@ export async function platformaticDatabase (app, capability) {
     await capability.updateContext({ serverConfig })
   }
 
+  await app.register(core, config.db)
+
+  // This must happen after registering the core plugin, which populates
+  // app.platformatic.dbschema
   if (createSchemaLock) {
     try {
       const path = locateSchemaLock(config)
-      await writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
+      await writeFile(path, serializeDbschema(app.platformatic.dbschema))
       app.log.info({ path }, 'created schema lock')
     } catch (err) {
       app.log.trace({ err }, 'unable to save schema lock')
     }
   }
-
-  await app.register(core, config.db)
 
   if (config.authorization) {
     await app.register(auth, config.authorization)
@@ -92,7 +99,7 @@ export async function platformaticDatabase (app, capability) {
   if (Object.keys(app.platformatic.entities).length === 0) {
     app.log.warn(
       'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
-        'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
+        'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/reference/troubleshooting#database-connection-issues'
     )
   }
 

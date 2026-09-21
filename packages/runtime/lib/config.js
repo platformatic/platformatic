@@ -9,17 +9,18 @@ import {
   omitProperties,
   runtimeUnwrappablePropertiesList
 } from '@platformatic/foundation'
+import { realpathSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { isAbsolute, join, resolve as resolvePath } from 'node:path'
 
 import {
+  ApplicationIdCollisionError,
   InspectAndInspectBrkError,
   InspectorHostError,
   InspectorPortError,
   InvalidArgumentError,
-  InvalidEntrypointError,
-  MissingEntrypointError
+  InvalidEntrypointError
 } from './errors.js'
 import { schema } from './schema.js'
 import { upgrade } from './upgrade.js'
@@ -144,9 +145,17 @@ export async function wrapInRuntimeConfig (config, context) {
     // on purpose, the package.json might be missing
   }
 
-  // If the application supports its (so far, only @platformatic/service and descendants)
-  const { hostname, port, http2, https } = config.server ?? {}
-  const server = { hostname, port, http2, https }
+  // Carry over only the server properties that the user actually set, so
+  // we do not end up with a `{ hostname: undefined, ... }` object that then
+  // gets populated by schema defaults or trips truthy checks downstream.
+  const server = {}
+  if (config.server) {
+    for (const key of ['hostname', 'port', 'http2', 'https']) {
+      if (config.server[key] !== undefined) {
+        server[key] = config.server[key]
+      }
+    }
+  }
   const production = context?.isProduction ?? context?.production
 
   const runtimeConfig = config.runtime ?? {}
@@ -155,7 +164,7 @@ export async function wrapInRuntimeConfig (config, context) {
   /* c8 ignore next */
   const wrapped = {
     $schema: schema.$id,
-    server,
+    ...(Object.keys(server).length > 0 ? { server } : {}),
     watch: !production,
     ...omitProperties(runtimeConfig, runtimeUnwrappablePropertiesList),
     entrypoint: applicationId,
@@ -283,11 +292,68 @@ export async function prepareApplication (config, application, defaultWorkers) {
     application.watch = config.watch
   }
 
+  if (typeof application.management === 'undefined' && config.management) {
+    application.management = config.management
+  }
+
   return application
+}
+
+function canonicalPath (path) {
+  try {
+    return realpathSync(path)
+  } catch {
+    return resolvePath(path)
+  }
+}
+
+// An autoloaded directory and an explicitly configured entry with the same id are the same application
+// only when they point to the same place: either the configured path resolves to the autoloaded
+// directory, or the entry is external and the autoloaded directory is where "resolve" would put it.
+// When they don't, returns a description of the configured entry to report in the error.
+function conflictingApplicationSource (root, resolvedApplicationsPath, existing, entryPath) {
+  if (existing.path) {
+    // The path still contains a placeholder, which means the environment variable was not replaced.
+    // There is nothing to compare in that case.
+    if (existing.path.match(/^\{.*\}$/)) {
+      return null
+    }
+
+    const existingPath = isAbsolute(existing.path) ? existing.path : resolvePath(root, existing.path)
+
+    return canonicalPath(existingPath) === canonicalPath(entryPath) ? null : `the path "${existing.path}"`
+  }
+
+  if (existing.url) {
+    const resolvedPath = join(resolvedApplicationsPath, existing.id)
+
+    return canonicalPath(resolvedPath) === canonicalPath(entryPath) ? null : `the URL "${existing.url}"`
+  }
+
+  return null
+}
+
+function isApplicationEnabled (application, environment) {
+  const { enabled } = application
+
+  if (typeof enabled === 'undefined') {
+    return true
+  }
+
+  if (typeof enabled === 'string') {
+    return enabled !== 'false'
+  }
+
+  if (typeof enabled === 'object' && enabled !== null) {
+    return enabled[environment] ?? true
+  }
+
+  return enabled
 }
 
 export async function transform (config, _, context) {
   const production = context?.isProduction ?? context?.production
+  const environment = production ? 'production' : 'development'
   const applications = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])]
 
   const watchType = typeof config.watch
@@ -350,7 +416,11 @@ export async function transform (config, _, context) {
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
 
-    path = resolvePath(config[kMetadata].root, path)
+    // Capture these before the loop, as config is shadowed in its body
+    const root = config[kMetadata].root
+    const resolvedApplicationsPath = resolvePath(root, config.resolvedApplicationsBasePath ?? 'external')
+
+    path = resolvePath(root, path)
     const entries = await readdir(path, { withFileTypes: true })
 
     for (let i = 0; i < entries.length; ++i) {
@@ -375,10 +445,30 @@ export async function transform (config, _, context) {
       const existingApplicationId = applications.findIndex(application => application.id === id)
 
       if (existingApplicationId !== -1) {
-        applications[existingApplicationId] = { ...application, ...applications[existingApplicationId] }
+        const existing = applications[existingApplicationId]
+
+        // Merging on the id alone can boot local code where the configuration named a repository, as
+        // the autoloaded path survives next to the configured url. Reject the duplicate instead: an id
+        // is the mesh hostname, the injected PLT_<ID>_URL name, the metrics label and the argument of
+        // "wattpm inject", so two different applications cannot share one.
+        if (isApplicationEnabled(existing, environment)) {
+          const source = conflictingApplicationSource(root, resolvedApplicationsPath, existing, entryPath)
+
+          if (source) {
+            throw new ApplicationIdCollisionError(id, entryPath, source)
+          }
+        }
+
+        applications[existingApplicationId] = { ...application, ...existing }
       } else {
         applications.push(application)
       }
+    }
+  }
+
+  for (let i = applications.length - 1; i >= 0; --i) {
+    if (!isApplicationEnabled(applications[i], environment)) {
+      applications.splice(i, 1)
     }
   }
 
@@ -428,15 +518,8 @@ export async function transform (config, _, context) {
     }
   }
 
-  if (!hasValidEntrypoint && !context.allowMissingEntrypoint) {
-    if (config.entrypoint) {
-      throw new InvalidEntrypointError(config.entrypoint)
-    } else if (applications.length >= 1) {
-      throw new MissingEntrypointError()
-    }
-    // If there are no applications, and no entrypoint it's an empty app.
-    // It won't start, but we should be able to parse and operate on it,
-    // like adding other applications.
+  if (!hasValidEntrypoint && config.entrypoint && !context.allowMissingEntrypoint) {
+    throw new InvalidEntrypointError(config.entrypoint)
   }
 
   if (typeof config.metrics === 'boolean') {

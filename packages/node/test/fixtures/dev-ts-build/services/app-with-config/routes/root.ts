@@ -1,3 +1,4 @@
+import { getITC } from '@platformatic/globals'
 import { type FastifyInstance, type FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
@@ -12,8 +13,7 @@ export default async function  (fastify: FastifyInstance, opts: FastifyPluginOpt
   })
 
   fastify.get('/mesh', async () => {
-    // @ts-expect-error
-    const meta = await globalThis[Symbol.for('plt.runtime.itc')].send('getApplicationMeta', 'composer')
+    const meta = await getITC()!.send('getApplicationMeta', 'composer')
 
     const url = new URL(
       `${meta.gateway.proxies.frontend.rewritePrefix}/direct`.replaceAll(/\/+/g, '/'),

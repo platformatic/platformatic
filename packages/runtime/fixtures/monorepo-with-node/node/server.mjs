@@ -14,4 +14,4 @@ const server = createServer((req, res) => {
   res.end(JSON.stringify({ content: `from node:http createServer: ${count++}!` }))
 })
 
-server.listen(1)
+server.listen(0)

@@ -1,9 +1,9 @@
 {
   "name": "gateway",
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@platformatic/gateway": "^2.3.1"
+    "@platformatic/gateway": ">=3.0.0"
   }
 }

@@ -1,10 +1,9 @@
-import { createDirectory } from '@platformatic/foundation'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import assert from 'node:assert/strict'
 import { copyFile, mkdtemp, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import rimraf from 'rimraf'
 import { request } from 'undici'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { seed as seedCommand } from '../../lib/commands/seed.js'
@@ -227,7 +226,7 @@ test('valid config files', async t => {
     assert.match(seedOutput, /Seeding complete/)
 
     t.after(async () => {
-      rimraf.sync(cwd)
+      await safeRemove(cwd)
       await dropTestDB()
     })
   }

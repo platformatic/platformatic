@@ -5,13 +5,13 @@ label: Platformatic Service
 
 import Issues from '../../getting-started/issues.md';
 
-# HTTP Service
+# HTTP Application
 
 The HTTP Service is a core application type that runs within Watt (the Node.js Application Server). It provides a fast, flexible foundation for building custom APIs and web applications using Fastify.
 
 The HTTP Service handles custom application logic, business rules, and API endpoints that aren't automatically generated from your database schema. It's perfect for authentication, complex business logic, third-party integrations, and custom endpoints.
 
-For a high level overview of how Watt and its applications work, please reference the [Overview](../../overview.md) guide.
+For a high level overview of how Watt and its applications work, please reference the [Overview](../../Overview.md) guide.
 
 ## Features
 
@@ -47,7 +47,7 @@ The easiest way to create an HTTP Service is within a Watt application:
 # Create a new Watt application
 wattpm create my-app
 
-# This will create a workspace with HTTP Service included
+# This will create a workspace with HTTP Application included
 cd my-app
 
 # Start in development mode
@@ -61,7 +61,7 @@ For application-specific configuration and advanced usage, see the [Configuratio
 HTTP Services work seamlessly with other service types in your Watt application:
 
 - **Database Services**: Access auto-generated database APIs
-- **Gateway Services**: Expose your HTTP service through an API gateway
+- **Gateway**: Expose your HTTP application through an API gateway
 - **Frontend Capabilities**: Serve frontend applications alongside your APIs
 
 <Issues />

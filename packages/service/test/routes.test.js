@@ -277,8 +277,5 @@ test('ready in plugin', async t => {
     })
   )
 
-  t.after(async () => {
-    await app.stop()
-  })
   await app.start({ listen: true })
 })

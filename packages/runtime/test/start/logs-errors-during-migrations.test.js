@@ -39,11 +39,11 @@ test('logs errors during db migrations', async t => {
     async () => {
       await runtime.start()
     },
-    { code: 'SQLITE_ERROR' }
+    { code: 'PLT_DB_MIGRATE_ERROR' }
   )
 
   const messages = await readLogs(join(root, 'logs.txt'), 10000)
   ok(messages.some(m => m.msg.match(/running 001.do.sql/)))
   ok(messages.some(m => m.err?.message?.match(/near "fiddlesticks": syntax error/)))
-  ok(messages.some(m => m.msg?.match(/Failed to start worker 0 of the application "mysimplename" after 5 attempts./)))
+  ok(messages.some(m => m.msg?.match(/Failed to start worker 5 of the application "mysimplename" after 5 attempts./)))
 })

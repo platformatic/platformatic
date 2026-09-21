@@ -37,6 +37,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
+    - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
+    - **`rewriteLocationHeader`** (`boolean`) - Controls rewriting of relative `Location` response headers from the upstream. When enabled, the gateway rewrites redirects from `rewritePrefix` to `prefix`. Set to `false` to forward relative `Location` headers unchanged. The default is `true` unless overridden by the target capability.
     - **`methods`** (`array of string`, default: `['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']`) - HTTP methods handled by this proxy application. Useful when multiple applications share the same `prefix` and need method-based routing.
 
       :::note
@@ -47,7 +49,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     - **`hostname`** (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header. When a hostname is specified, the service is accessible without the prefix when the Host header matches.
     - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
     - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
-      - **`upstream`** (`string`, **required**) - The WebSocket upstream URL (e.g., `ws://localhost:3000`).
+      - **`upstream`** (`string`) - The WebSocket upstream URL (e.g., `ws://localhost:3000`). Required for external services. Not needed for Platformatic Runtime applications exposing a TCP server (started with the `useHttp` or `websocket` flags): the gateway resolves their WebSocket upstream automatically, re-resolving it on every new connection so that new connections keep working across application restarts. Note that a connection arriving in the short window between a worker going away and the gateway observing its replacement can still be dialed against the previous port; the next connection succeeds.
       - **`reconnect`** (`object`) - WebSocket reconnection settings:
         - **`pingInterval`** (`number`) - Interval in milliseconds between ping messages to keep the connection alive.
         - **`maxReconnectionRetries`** (`number`) - Maximum number of reconnection attempts.
@@ -58,13 +60,26 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - **`logs`** (`boolean`) - Enable logging for WebSocket reconnection events.
       - **`hooks`** (`object`) - WebSocket hooks configuration:
         - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports WebSocket lifecycle hooks (e.g., `onConnect`, `onReconnect`, `onDisconnect`, `onIncomingMessage`, `onOutgoingMessage`, `onPong`).
-    - **`custom`** (`object`) - Custom proxy logic configuration:
-      - **`path`** (`string`) - Path to a JavaScript/TypeScript file that exports custom proxy functions. The file should export an object with:
-        - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
-          - An async function: `(request, reply) => Promise<boolean>` - Return `false` to stop the request proxying and return an error. Return `true` or `undefined` to continue.
-          - A callback function: `(request, reply, done) => void` - Call `done()` to continue or `done(error)` to stop with an error.
+    - **`custom`** (`object`) - Custom proxy logic configuration. This is a supported public API: external modules and addons can rely on this contract to implement per-request routing, for example to route requests to different versions of the same application based on a header or a cookie. Supports the following options:
+      - **`path`** (**required**, `string`) - Path to a JavaScript/TypeScript file that exports the custom proxy hooks. The module can either export the hooks object directly (as the default export) or export a factory function `(options) => hooks` (synchronous or asynchronous) which receives the `options` value below and returns the hooks object.
+      - **`options`** (`object`) - An arbitrary JSON object which is passed to the factory function exported by the module referenced in `path`. It is ignored when the module exports the hooks object directly.
+
+      The hooks object supports the following properties, all optional:
+
+      - **`preRewrite`** (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
+      - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
+        - An async function: `(request, reply) => Promise<boolean>` - Return `false` to stop the request proxying and return an error. Return `true` or `undefined` to continue.
+        - A callback function: `(request, reply, done) => void` - Call `done()` to continue or `done(error)` to stop with an error.
           See [fastify preValidation hook](https://fastify.dev/docs/latest/Reference/Hooks/#prevalidation) for further information.
-        - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL based on the request. Receives the request object and the base upstream URL. Note: `request.body` is a readable stream by default. If you need to access the body content as JSON or string in `getUpstream`, use `preValidation` to parse the body first. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further information.
+      - **`getUpstream`** (`function`) - A function `(request, base) => string` that dynamically determines the upstream URL for each request. Receives the request object and the base upstream URL. Note: `request.body` is a readable stream by default. If you need to access the body content as JSON or string in `getUpstream`, use `preValidation` to parse the body first. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#getupstreamrequest-base) for further information.
+
+        When `getUpstream` is provided, the following guarantees apply:
+
+        - The `upstream` setting is ignored and `base` may be `undefined`, so the function must always return a full origin (for example `http://127.0.0.1:3042` or `http://my-application.plt.local`).
+        - When running inside Platformatic Runtime or Watt, the returned origin can be the internal mesh address `http://<application-id>.plt.local` of **any** application in the runtime, including applications which are **not** listed in the gateway `applications` configuration. Such requests are routed through the runtime mesh network. This makes it possible to keep a single logical entry in the gateway configuration and dispatch each request to one of several runtime applications (for example several versions of the same application) at runtime.
+        - When no `ws.upstream` is configured, `getUpstream` also selects the upstream for WebSocket connections. It is invoked once per connection with the upgrade request at upgrade time.
+      - **`rewriteHeaders`** (`function`) - A function `(headers, request) => headers` invoked with the response headers received from the upstream (after the gateway performed its internal `Location` header rewriting) and the original request. It must return the headers object to send back to the client. Use it, for example, to add a `Set-Cookie` header which pins a client to the upstream selected by `getUpstream`. Since both hooks receive the same request object, `getUpstream` can attach data to it (e.g. `request.selectedUpstream = ...`) and `rewriteHeaders` can read it back.
+      - **`onError`** (`function`) - A function `(reply, { error }) => void` invoked when proxying a request fails. The gateway first logs the error, then invokes this hook instead of its default handler (which forwards the error to the client). Use `reply` to send a custom response. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#onerrorreply-error) for further information.
 
     :::note
     If the prefix is not explicitly set, the gateway and the application will try to find the best prefix for the application.
@@ -79,6 +94,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     :::
 
     **Example: Basic HTTP Proxy**
+
     ```json
     {
       "id": "external-api",
@@ -90,6 +106,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     **Example: Method/Route-based Proxy Selection**
+
     ```json
     {
       "id": "public-read-api",
@@ -102,6 +119,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     **Example: WebSocket Proxy with Reconnection**
+
     ```json
     {
       "id": "ws-service",
@@ -125,12 +143,12 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     **Example: Custom Proxy Logic**
+
     ```json
     {
       "id": "dynamic-router",
       "proxy": {
         "prefix": "/",
-        "upstream": "http://default-service.com",
         "custom": {
           "path": "./custom-proxy.js"
         }
@@ -139,8 +157,12 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     ```
 
     Where `custom-proxy.js` exports:
+
     ```javascript
     export default {
+      preRewrite: url => {
+        return url.replace(/^\/admin/, '')
+      },
       preValidation: async (request, reply) => {
         // Validate request before proxying
         if (!request.headers['authorization']) {
@@ -154,12 +176,84 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         if (request.url.startsWith('/v2')) {
           return 'http://api-v2.example.com'
         }
-        return base
+        return 'http://api-v1.example.com'
+      }
+    }
+    ```
+
+    **Example: Per-Request Version Routing (header or cookie based)**
+
+    A single logical application is listed in the gateway configuration, while the requests
+    are dispatched at runtime to several applications running in the same runtime
+    (for example several versions of the same application). The target applications
+    do not need to be listed in the gateway configuration: any `http://<application-id>.plt.local`
+    origin is routed through the runtime mesh network.
+
+    ```json
+    {
+      "id": "main",
+      "proxy": {
+        "prefix": "/",
+        "custom": {
+          "path": "./version-router.js",
+          "options": {
+            "header": "x-app-version",
+            "cookie": "app-version",
+            "fallback": "main"
+          }
+        }
+      }
+    }
+    ```
+
+    Where `version-router.js` exports a factory function receiving `custom.options`:
+
+    ```javascript
+    function parseCookies (header) {
+      const cookies = {}
+
+      for (const part of (header ?? '').split(';')) {
+        const index = part.indexOf('=')
+
+        if (index !== -1) {
+          cookies[part.slice(0, index).trim()] = decodeURIComponent(part.slice(index + 1).trim())
+        }
+      }
+
+      return cookies
+    }
+
+    export default function createVersionRouter (options) {
+      return {
+        getUpstream (request) {
+          // Select the version via a request header or a cookie
+          const version =
+            request.headers[options.header] ?? parseCookies(request.headers.cookie)[options.cookie]
+
+          if (version) {
+            request.selectedVersion = version
+            return `http://${version}.plt.local`
+          }
+
+          return `http://${options.fallback}.plt.local`
+        },
+        rewriteHeaders (headers, request) {
+          // Pin the client to the selected version on subsequent requests
+          if (request.selectedVersion) {
+            headers['set-cookie'] = `${options.cookie}=${request.selectedVersion}; Path=/`
+          }
+
+          return headers
+        },
+        onError (reply, { error }) {
+          reply.code(503).send({ error: 'Selected version is unavailable' })
+        }
       }
     }
     ```
 
     **Example: Hostname-based Routing**
+
     ```json
     {
       "id": "multi-tenant",
@@ -195,18 +289,118 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the applications. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
 
-- **`addEmptySchema`** (`boolean`) - If true, the gateway will add an empty response schema to the composed OpenAPI specification. Default is `false`.
+- **`restartOnApplicationChange`** (`boolean`) - Whether to restart the Gateway when an application is added to or removed from the Runtime, so it can recompose its routes. Default is `true`, and that is what you want for a Gateway that proxies applications registered in the Runtime.
+
+  Set it to `false` only for a Gateway that does **not** route from the application registry — one that resolves its upstreams some other way, such as from shared state written by a Runtime extension. Restarting an application replaces its workers one at a time: with two or more workers and `SO_REUSEPORT` the listening socket survives, but with a single worker (the default, and the only option where `SO_REUSEPORT` is unavailable) the Runtime has no open port until the replacement worker has booted. For a Gateway that has nothing to recompose, that window is pure downtime.
+
+  Opting out means a newly added application is **not** proxied until the Gateway is restarted by something else. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
+
+- **`addEmptySchema`** (`boolean`) - Deprecated, it no longer has any effect. Responses which declare no body - a `204`, a `304`, or any other status code whose response object has no `content` - always keep their status code in the composed OpenAPI specification, and are documented without a body.
+
+- **`handler`** (`string`) - Path to a JavaScript or TypeScript module that exports a custom proxy handler, either as `handler` or as the default export. The handler receives `(request, reply, dest, options)`, where `dest` is the rewritten proxy destination and `options` are the reply options passed to `reply.from()`. By default, proxied requests call `reply.from(dest, options)`; use this option to customize that behavior.
+
+  ```js title="handler.js"
+  export function handler (request, reply, dest, options) {
+    if (request.headers['x-custom-response'] === 'true') {
+      return reply.send({ dest })
+    }
+
+    return reply.from(dest, options)
+  }
+  ```
+
+  ```json title="Example JSON object"
+  {
+    "gateway": {
+      "handler": "./handler.js",
+      "applications": [
+        {
+          "id": "api",
+          "proxy": {
+            "prefix": "/api",
+            "upstream": "http://localhost:3000"
+          }
+        }
+      ]
+    }
+  }
+  ```
+
+- **`deduplication`** (`object`) - Deduplicates concurrent proxied requests with the same computed key. The first request is sent upstream, while matching concurrent requests wait for the first response and replay it. This can be configured globally under `gateway.deduplication` or per application under `gateway.applications[].proxy.deduplication`. Application-level settings override global settings. If both `handler` and `deduplication` are configured, deduplication runs first and the winning request is delegated to the custom handler. See [Request Deduplication](./deduplication.md) for usage examples.
+
+  Supported options:
+
+  - **`enabled`** (`boolean` or `string`) - Enables deduplication. Default: `false`.
+  - **`storage`** (`object`) - Storage backend configuration.
+
+    Supported sub-options:
+
+    - **`adapter`** (`string`, default: `memory`) - Selects the storage backend. Storage keeps in-flight locks and replayable responses: use `memory` within one gateway instance, or `valkey` to coordinate across gateway workers, instances, or pods through a Redis-compatible Valkey server.
+    - **`url`** (`string`, required when `adapter` is `valkey`) - Redis-compatible Valkey connection URL. Example: `redis://127.0.0.1:6379`.
+    - **`prefix`** (`string`, optional, only used when `adapter` is `valkey`) - Prefix prepended to every gateway deduplication key stored in Valkey. Use this when multiple applications share the same Valkey instance.
+
+    Examples:
+
+    ```json
+    {
+      "adapter": "memory"
+    }
+    ```
+
+    ```json
+    {
+      "adapter": "valkey",
+      "url": "redis://127.0.0.1:6379",
+      "prefix": "my-app"
+    }
+    ```
+
+  - **`methods`** (`array of string`, default: `['GET', 'HEAD']`) - Methods eligible for deduplication when `routes` is not specified.
+  - **`headers`** (`array of string`, default: `['authorization', 'accept', 'accept-encoding', 'accept-language']`) - Request headers included in the default deduplication key.
+  - **`skipHeaders`** (`array of string`, default: `['cookie']`) - Request headers whose presence bypasses deduplication entirely. These headers are evaluated independently from the headers used to construct the key. Real-browser cookies are per user, so cookie-bearing requests skip the deduplication overhead by default.
+  - **`routes`** (`array`) - Optional route whitelist. When specified, routes decide whether deduplication applies instead of `methods` alone. Routes use `find-my-way` syntax and accept either `method` or `methods` plus `path`.
+  - **`key`** (`string`) - Path to a JavaScript or TypeScript module exporting a synchronous `computeDeduplicationKey(request, context)` function to customize key computation.
+  - **`timeout`** (`number`, default: `1000`) - Milliseconds a duplicate request waits for the leader response before retrying lock acquisition.
+  - **`retries`** (`number`, default: `3`) - Number of additional deduplication attempts before falling back to a normal proxied request.
+  - **`ttl`** (`number`, default: `10000`) - Milliseconds stored responses remain available for waiting requests.
+  - **`lockTtl`** (`number`, default: `500`) - Milliseconds before an in-flight lock expires.
+
+  Default key computation uses the configured application `origin`, request method, rewritten proxy URL including query string, and the configured request headers.
+
+  ```json
+  {
+    "gateway": {
+      "deduplication": {
+        "enabled": true,
+        "storage": {
+          "adapter": "valkey",
+          "url": "redis://127.0.0.1:6379",
+          "prefix": "my-app"
+        },
+        "routes": [
+          { "method": "GET", "path": "/blog/*" }
+        ]
+      }
+    }
+  }
+  ```
+
+  A custom key module receives the request and the default key context. The function must be synchronous:
+
+  ```js
+  export function computeDeduplicationKey (request, context) {
+    return `${context.origin}:${context.method}:${context.url}`
+  }
+  ```
+
+  Custom gateway handlers that override `onResponse` or `onError` can call `options.deduplicateResponse(request, reply, res)` and `options.deduplicateError(reply, error)` to keep duplicate requests coordinated. See [Request Deduplication](./deduplication.md#custom-gateway-handlers) for examples.
 
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 
   ```json title="Example JSON object"
   {
     "gateway": {
-      "passthroughContentTypes": [
-        "multipart/form-data",
-        "application/octet-stream",
-        "application/custom-binary"
-      ]
+      "passthroughContentTypes": ["multipart/form-data", "application/octet-stream", "application/custom-binary"]
     }
   }
   ```
@@ -337,7 +531,7 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
   - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
     - **`name`** (`string`, **required**) - The name of the resolver.
     - **`argsAdapter (partialResults)`** (`function` or `string`) - The function invoked with a subset of the result of the initial query, where `partialResults` is an array of the parent node. It should return an object to be used as argument for `resolver` query. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
-      **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](lib/utils.js#L3) will be used.
+      **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](https://github.com/platformatic/graphql-composer/blob/main/lib/utils.js) will be used.
     - **`partialResults`** (`function` or `string`) - The function to adapt the subset of the result to be passed to `argsAdapter` - usually is needed only on resolvers of `fkeys` and `many`. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
   - **`pkey`** (`string`, **required**) - The primary key field to identify the entity.
   - **`fkeys`** (`array of objects`) an array to describe the foreign keys of the entities, for example `fkeys: [{ type: 'Author', field: 'authorId' }]`.

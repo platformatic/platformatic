@@ -1,10 +1,13 @@
 module.exports = async function (fastify) {
+  const { getITC } = require('@platformatic/globals')
+
   fastify.get('/example', async () => {
     return { hello: fastify.example }
   })
 
   fastify.get('/mesh', async () => {
-    const meta = await globalThis[Symbol.for('plt.runtime.itc')].send('getApplicationMeta', 'composer')
+    const itc = getITC()
+    const meta = await itc.send('getApplicationMeta', 'composer')
 
     const url = new URL(
       `${meta.gateway.proxies.frontend.rewritePrefix}/direct`.replaceAll(/\/+/g, '/'),

@@ -1,8 +1,8 @@
-import generateName from 'boring-name-generator'
 import { EventEmitter } from 'node:events'
 import { existsSync } from 'node:fs'
-import { access, glob, mkdir, rm, watch } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { access, chmod, glob, mkdir, rm, watch } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import { platform, tmpdir } from 'node:os'
 import { join, matchesGlob, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { PathOptionRequiredError } from './errors.js'
@@ -15,6 +15,8 @@ export function removeDotSlash (path) {
 }
 
 export function generateDashedName () {
+  // Loaded on first use: only generators need it
+  const generateName = createRequire(import.meta.url)('boring-name-generator')
   return generateName().dashed.replace(/\s+/g, '')
 }
 
@@ -40,6 +42,27 @@ export async function createTemporaryDirectory (prefix) {
   const directory = join(tmpdir(), `plt-utils-${prefix}-${process.pid}-${tmpCount++}`)
 
   return createDirectory(directory)
+}
+
+// Directories under os.tmpdir() shared by every user running Platformatic must be
+// writable by all of them, like os.tmpdir() itself. The mode passed to mkdir is
+// masked with the process umask, so chmod each segment explicitly; chmod failures
+// are ignored as the segment might be owned by another user.
+export async function createSharedTemporaryDirectory (...segments) {
+  let directory = tmpdir()
+
+  for (const segment of segments) {
+    directory = join(directory, segment)
+    await mkdir(directory, { recursive: true, maxRetries: 10, retryDelay: 1000 })
+
+    if (platform() !== 'win32') {
+      try {
+        await chmod(directory, 0o1777)
+      } catch {}
+    }
+  }
+
+  return directory
 }
 
 export async function safeRemove (path) {

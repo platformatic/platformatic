@@ -1,12 +1,13 @@
 import { deepEqual, equal, match, ok, throws } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import { basename, join, sep } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import {
   createDirectory,
+  createSharedTemporaryDirectory,
   createTemporaryDirectory,
   FileWatcher,
   generateDashedName,
@@ -18,6 +19,11 @@ import {
   searchFilesWithExtensions,
   searchJavascriptFiles
 } from '../index.js'
+
+// fs.watch aborts the process on Windows + Node 24 with a libuv assertion
+// in src/win/fs-event.c. Tracked upstream at https://github.com/nodejs/node/issues/63638.
+const skipFsWatch =
+  process.platform === 'win32' && parseInt(process.versions.node.split('.')[0], 10) >= 24
 
 test('FileWatcher - should throw an error if there is no path argument', async t => {
   throws(() => new FileWatcher({}), { message: 'path option is required' })
@@ -64,7 +70,7 @@ test('FileWatcher - should not watch not allowed files', async t => {
   equal(false, fileWatcher.shouldFileBeWatched('another.file'))
 })
 
-test('FileWatcher - should emit event if file is updated', async t => {
+test('FileWatcher - should emit event if file is updated', { skip: skipFsWatch }, async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
@@ -85,7 +91,7 @@ test('FileWatcher - should emit event if file is updated', async t => {
   await Promise.race([sleep(5000), promise])
 })
 
-test('FileWatcher - should not call fs watch twice', async t => {
+test('FileWatcher - should not call fs watch twice', { skip: skipFsWatch }, async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
@@ -339,4 +345,30 @@ test('FileWatcher - should handle watchIgnore with duplicates', async t => {
   equal(fileWatcher.watchIgnore.length, 2)
   ok(fileWatcher.watchIgnore.includes('ignore.file'))
   ok(fileWatcher.watchIgnore.includes('ignore2.file'))
+})
+
+test('createSharedTemporaryDirectory - creates world-writable segments with the sticky bit', { skip: process.platform === 'win32' }, async t => {
+  const root = `plt-test-shared-${process.pid}-${generateDashedName()}`
+  t.after(() => safeRemove(join(os.tmpdir(), root)))
+
+  const directory = await createSharedTemporaryDirectory(root, 'nested')
+  equal(directory, join(os.tmpdir(), root, 'nested'))
+
+  const rootStat = await stat(join(os.tmpdir(), root))
+  equal(rootStat.mode & 0o7777, 0o1777)
+
+  const nestedStat = await stat(directory)
+  equal(nestedStat.mode & 0o7777, 0o1777)
+})
+
+test('createSharedTemporaryDirectory - fixes the permissions of existing directories', { skip: process.platform === 'win32' }, async t => {
+  const root = `plt-test-shared-${process.pid}-${generateDashedName()}`
+  t.after(() => safeRemove(join(os.tmpdir(), root)))
+
+  await mkdir(join(os.tmpdir(), root), { mode: 0o755 })
+
+  await createSharedTemporaryDirectory(root)
+
+  const rootStat = await stat(join(os.tmpdir(), root))
+  equal(rootStat.mode & 0o7777, 0o1777)
 })

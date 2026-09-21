@@ -1,10 +1,13 @@
 import { findNearestString } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
+import { access, constants } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { setupCache } from './lib/cache.js'
 import { buildCleanUp } from './lib/clean-up.js'
 import { getConnectionInfo } from './lib/connection-info.js'
 import { buildEntity } from './lib/entity.js'
 import {
+  CannotAccessDatabaseFileError,
   CannotFindEntityError,
   ConnectionStringRequiredError,
   SpecifyProtocolError,
@@ -13,6 +16,7 @@ import {
 import * as queriesFactory from './lib/queries/index.js'
 import { setupTelemetry } from './lib/telemetry.js'
 import { areSchemasSupported } from './lib/utils.js'
+import { parseVector } from './lib/vector.js'
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
@@ -76,6 +80,74 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
+function physicalEntityKey (schema, table) {
+  return `${schema ?? ''}\0${table}`
+}
+
+function markForeignKeysReferencingPrimaryKeys (entities) {
+  const entitiesByTable = new Map()
+
+  for (const entity of Object.values(entities)) {
+    entitiesByTable.set(physicalEntityKey(entity.schema, entity.table), entity)
+  }
+
+  for (const entity of Object.values(entities)) {
+    for (const relation of entity.relations) {
+      const foreignSchema = relation.foreign_table_schema ?? entity.schema
+      const foreignEntity = entitiesByTable.get(physicalEntityKey(foreignSchema, relation.foreign_table_name))
+
+      if (foreignEntity?.primaryKeys.has(relation.foreign_column_name)) {
+        entity.fields[relation.column_name].stringifyOutput = true
+      }
+    }
+  }
+}
+
+async function registerPostgreSQLExtensionTypes (db) {
+  try {
+    await db.registerTypeParser('vector', parseVector)
+  } catch {}
+
+  try {
+    await db.registerTypeParser('_vector', value => db.parseArray(value, parseVector))
+  } catch {}
+
+  // Return DATE columns as 'YYYY-MM-DD' strings: parsing them into local-time
+  // JS Dates shifts the value by the process time zone offset, changing the
+  // day. 1082 is the PostgreSQL oid for the DATE type.
+  try {
+    await db.registerTypeParser(1082, value => value)
+  } catch {}
+}
+
+// Provide a developer friendly error instead of the bare SQLITE_CANTOPEN
+// emitted when the database file cannot be opened or created.
+async function checkSQLiteFileAccess (path) {
+  const file = resolve(path)
+
+  try {
+    // SQLite falls back to read-only when the file exists but is not writable,
+    // so reading the file is all that is required here.
+    await access(file, constants.R_OK)
+    return
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      throw new CannotAccessDatabaseFileError(file, 'the file is not readable by the current user')
+    }
+  }
+
+  // The file does not exist, SQLite will create it: the directory must exist and be writable
+  const dir = dirname(file)
+  try {
+    await access(dir, constants.W_OK | constants.X_OK)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      throw new CannotAccessDatabaseFileError(file, `the directory "${dir}" does not exist`)
+    }
+    throw new CannotAccessDatabaseFileError(file, `the directory "${dir}" is not writable by the current user`)
+  }
+}
+
 export async function createConnectionPool ({
   log,
   connectionString,
@@ -102,6 +174,7 @@ export async function createConnectionPool ({
       queueTimeoutMilliseconds,
       acquireLockTimeoutMilliseconds
     )
+    await registerPostgreSQLExtensionTypes(db)
     sql = createConnectionPoolPg.sql
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {
@@ -119,13 +192,16 @@ export async function createConnectionPool ({
     sql = createConnectionPoolMysql.sql
     const version = (await db.query(sql`SELECT VERSION()`))[0]['VERSION()']
     db.version = version
-    db.isMariaDB = version.indexOf('maria') !== -1
+    db.isMariaDB = version.toLowerCase().indexOf('maria') !== -1
     if (!db.isMariaDB) {
       db.isMySql = true
     }
   } else if (connectionString.indexOf('sqlite') === 0) {
     const { default: sqlite } = await import('@matteo.collina/sqlite-pool')
     const path = connectionString.replace('sqlite://', '')
+    if (connectionString !== 'sqlite://:memory:') {
+      await checkSQLiteFileAccess(path)
+    }
     db = sqlite.default(
       connectionString === 'sqlite://:memory:' ? undefined : path,
       {},
@@ -223,12 +299,38 @@ export async function connect ({
     if (!dbschema) {
       dbschema = await queries.listTables(db, sql, schemaList)
 
+      // Also introspect database views
+      if (queries.listViews) {
+        const views = await queries.listViews(db, sql, schemaList)
+        dbschema = dbschema.concat(views)
+      }
+
       // TODO make this parallel or a single query
       for (const wrap of dbschema) {
         const { table, schema } = wrap
         const columns = await queries.listColumns(db, sql, table, schema)
         wrap.constraints = await queries.listConstraints(db, sql, table, schema)
         wrap.columns = columns
+
+        // MariaDB reports JSON columns as `longtext`; recover the JSON-ness
+        // from the auto-generated json_valid(...) CHECK constraint.
+        // Fail open: information_schema.CHECK_CONSTRAINTS (and its TABLE_NAME
+        // extension) is only present on MariaDB >= 10.2.1. On older MariaDB,
+        // or if permissions are restricted, just skip JSON-column detection
+        // instead of breaking introspection entirely.
+        if (db.isMariaDB && queries.listJsonColumns) {
+          try {
+            const jsonColumns = await queries.listJsonColumns(db, sql, table, schema)
+            for (const jsonColumn of jsonColumns) {
+              const column = columns.find(c => c.column_name === jsonColumn.column_name)
+              if (column) {
+                column.isJson = true
+              }
+            }
+          } catch {
+            // information_schema.CHECK_CONSTRAINTS not available/queryable; ignore.
+          }
+        }
 
         // To get enum values in pg
         /* istanbul ignore next */
@@ -271,7 +373,7 @@ export async function connect ({
       }
     }
 
-    for (const { table, schema, columns, constraints } of dbschema) {
+    for (const { table, schema, columns, constraints, isView } of dbschema) {
       // The following line is a safety net when developing this module,
       // it should never happen.
       /* istanbul ignore next */
@@ -298,10 +400,11 @@ export async function connect ({
         limit,
         schemaList,
         columns,
-        constraints
+        constraints,
+        isView
       )
-      // Check for primary key of all entities
-      if (entity.primaryKeys.size === 0) {
+      // Check for primary key of all entities (views are allowed without PKs)
+      if (entity.primaryKeys.size === 0 && !isView) {
         log.warn({ table }, 'Cannot find any primary keys for table')
         continue
       }
@@ -314,6 +417,8 @@ export async function connect ({
         addEntityHooks(entity.singularName, hooks[entity.singularName])
       }
     }
+
+    markForeignKeysReferencingPrimaryKeys(entities)
 
     const res = {
       db,
@@ -386,7 +491,19 @@ async function dropTable (db, sql, table) {
     }
     return table
   } catch (err) {
-    // ignore, it will be dropped on the next roundon the next roundon the next roundon the next round
+    // ignore, it will be dropped on the next round
+  }
+}
+
+async function dropView (db, sql, view) {
+  try {
+    if (db.isSQLite) {
+      await db.query(sql`DROP VIEW ${sql(view)};`)
+    } else {
+      await db.query(sql`DROP VIEW ${sql(view)} CASCADE;`)
+    }
+  } catch {
+    // ignore
   }
 }
 
@@ -401,6 +518,20 @@ export async function dropAllTables (db, sql, schemas) {
     queries = queriesFactory.mariadb
   } else if (db.isSQLite) {
     queries = queriesFactory.sqlite
+  }
+
+  // Drop views first since they may depend on tables
+  if (queries.listViews) {
+    const views = (await queries.listViews(db, sql, schemas)).map(v => {
+      /* istanbul ignore next */
+      if (v.schema) {
+        return `${v.schema}.${v.table}`
+      }
+      return v.table
+    })
+    for (const view of views) {
+      await dropView(db, sql, view)
+    }
   }
 
   const tables = new Set(

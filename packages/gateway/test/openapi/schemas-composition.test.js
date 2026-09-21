@@ -603,7 +603,10 @@ test('should throw an error if there are duplicates paths', async t => {
     ])
     assert.fail('should throw an error')
   } catch (err) {
-    assert.equal(err.message, 'Path "/books" already exists')
+    assert.equal(
+      err.message,
+      'Path "/books" is exposed by both the "api1" and the "api2" applications. Set a different openapi.prefix on one of them to resolve the conflict.'
+    )
   }
 })
 
@@ -647,6 +650,47 @@ test('should throw an error if there are duplicates paths with prefixes', async 
     ])
     assert.fail('should throw an error')
   } catch (err) {
-    assert.equal(err.message, 'Path "/api1/books" already exists')
+    assert.equal(
+      err.message,
+      'Path "/api1/books" is exposed by both the "api1" and the "api2" applications. Set a different openapi.prefix on one of them to resolve the conflict.'
+    )
   }
+})
+
+test('should apply document-level security only to operations without their own', async t => {
+  /* https://github.com/platformatic/platformatic/issues/1495 */
+  const schema = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    security: [{ defaultAuth: [] }],
+    components: {
+      securitySchemes: {
+        defaultAuth: { type: 'http', scheme: 'bearer' },
+        customAuth: { type: 'http', scheme: 'basic' }
+      }
+    },
+    paths: {
+      '/default': {
+        get: {
+          operationId: 'getDefault',
+          responses: {}
+        }
+      },
+      '/custom': {
+        get: {
+          operationId: 'getCustom',
+          security: [{ customAuth: [] }],
+          responses: {}
+        }
+      }
+    }
+  }
+
+  const composed = composeOpenApi([{ id: 'api1', schema }])
+
+  assert.deepEqual(composed.paths['/default'].get.security, [{ api1_defaultAuth: [] }])
+  assert.deepEqual(composed.paths['/custom'].get.security, [{ api1_customAuth: [] }])
 })

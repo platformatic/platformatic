@@ -43,7 +43,7 @@ export class RoundRobinMap extends Map {
   }
 
   getKeys (application) {
-    return this.#instances[application]?.keys ?? []
+    return [...(this.#instances[application]?.keys ?? [])]
   }
 
   next (application) {

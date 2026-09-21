@@ -46,16 +46,40 @@ test('should automatically detect the entrypoint if it there exacty a gateway', 
   deepStrictEqual(entrypoint, 'composer')
 })
 
-test('should throw an exception if there is no gateway', async t => {
+test('should allow no entrypoint if one cannot be automatically detected', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-no-composers.json')
+  const runtime = await createRuntime(configFile)
 
-  await rejects(() => createRuntime(configFile), /Cannot parse config file. Missing application entrypoint./)
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  const url = await runtime.start(true)
+  ifError(url)
+  const { entrypoint } = await runtime.getApplications()
+
+  const config = await runtime.getRuntimeConfig()
+  ifError(config.entrypoint)
+  deepStrictEqual(config.applications.some(s => s.entrypoint), false)
+  ifError(entrypoint)
 })
 
-test('should throw an exception if there are multiple gateway', async t => {
+test('should allow no entrypoint if there are multiple gateways', async t => {
   const configFile = join(fixturesDir, 'configs', 'no-entrypoint-multiple-composers.json')
+  const runtime = await createRuntime(configFile)
 
-  await rejects(() => createRuntime(configFile), /Cannot parse config file. Missing application entrypoint./)
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  const url = await runtime.start(true)
+  ifError(url)
+  const { entrypoint } = await runtime.getApplications()
+
+  const config = await runtime.getRuntimeConfig()
+  ifError(config.entrypoint)
+  deepStrictEqual(config.applications.some(s => s.entrypoint), false)
+  ifError(entrypoint)
 })
 
 test('should not throw if there are no applications', async t => {

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { MissingValueForPrimaryKeyError } from '../errors.js'
 import { tableName } from '../utils.js'
 import { insertPrep } from './shared.js'
@@ -5,6 +6,15 @@ import { insertPrep } from './shared.js'
 export * from './mysql-shared.js'
 
 export function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+  // last_insert_id() only reflects AUTO_INCREMENT columns. A single uuid
+  // primary key relying on a server-side DEFAULT (e.g. `DEFAULT UUID()` on
+  // MariaDB) can't be recovered that way, so generate it here instead and
+  // insert it explicitly - this also lets us fetch the row back by its
+  // known id, same as the "primary key provided" path below.
+  if (primaryKeys.length === 1 && primaryKeys[0].sqlType === 'uuid' && input[primaryKeys[0].key] === undefined) {
+    input = { ...input, [primaryKeys[0].key]: randomUUID() }
+  }
+
   const keysToSql = Object.keys(input).map(key => sql.ident(key))
   const keys = sql.join(keysToSql, sql`, `)
 

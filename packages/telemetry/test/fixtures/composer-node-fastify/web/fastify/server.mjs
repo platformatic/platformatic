@@ -1,8 +1,9 @@
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export async function build () {
   const server = fastify({
-    loggerInstance: globalThis.platformatic?.logger
+    loggerInstance: getLogger()
   })
 
   let count = 0

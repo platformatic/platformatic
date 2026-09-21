@@ -1,4 +1,5 @@
-import { createCliLogger, getExecutableId, logFatalError, parseArgs, setVerbose } from '@platformatic/foundation'
+import { createCliLogger, logFatalError, parseArgs } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 import { loadApplicationsCommands } from '@platformatic/runtime'
 import * as colorette from 'colorette'
 import { bold } from 'colorette'
@@ -14,13 +15,36 @@ import { applicationsCommand, configCommand, envCommand, psCommand } from './lib
 import { metricsCommand } from './lib/commands/metrics.js'
 import { pprofCommand } from './lib/commands/pprof.js'
 import { replCommand } from './lib/commands/repl.js'
+import { schedulerCommand, schedulerPauseCommand, schedulerResumeCommand, schedulerRunCommand } from './lib/commands/scheduler.js'
+import { heapSnapshotCommand } from './lib/commands/snapshot.js'
 import { version } from './lib/schema.js'
-import { setSocket } from './lib/utils.js'
 
 export * from './lib/schema.js'
 
+// Extract the -c/--config option from application command arguments, leaving
+// all the other arguments for the application command itself
+function extractConfigOption (args) {
+  const remaining = []
+  let config = null
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+
+    if (arg === '-c' || arg === '--config') {
+      config = args[i + 1]
+      i++
+    } else if (arg.startsWith('--config=')) {
+      config = arg.slice('--config='.length)
+    } else {
+      remaining.push(arg)
+    }
+  }
+
+  return { config, remaining }
+}
+
 export async function main () {
-  globalThis.platformatic = { executable: getExecutableId() }
+  updateGlobals({ executable: this.executableId })
 
   const options = {
     'no-pretty': {
@@ -48,6 +72,7 @@ export async function main () {
   const { values, unparsed } = parseArgs(process.argv.slice(2), options)
 
   const logger = createCliLogger('info', values['no-pretty'])
+  this.logger = logger
 
   if (values.version || unparsed[0] === 'version') {
     console.log(version)
@@ -55,24 +80,25 @@ export async function main () {
   }
 
   if (values.help) {
-    helpCommand(logger, [])
+    helpCommand.call(this, logger, [])
     return
   } else if (unparsed.includes('-h') || unparsed.includes('--help')) {
-    helpCommand(logger, unparsed)
+    helpCommand.call(this, logger, unparsed)
     return
   }
 
   if (values.verbose) {
-    setVerbose(true)
+    this.verbose = true
   }
 
   if (values.socket) {
-    setSocket(values.socket)
+    this.socket = values.socket
   }
 
   let command
   const requestedCommand = unparsed[0] || 'help'
   let applicationCommandContext
+  let applicationCommandArgs
   switch (requestedCommand) {
     case 'build':
       command = buildCommand
@@ -98,6 +124,18 @@ export async function main () {
     case 'applications':
       command = applicationsCommand
       break
+    case 'scheduler':
+      command = schedulerCommand
+      break
+    case 'scheduler:pause':
+      command = schedulerPauseCommand
+      break
+    case 'scheduler:resume':
+      command = schedulerResumeCommand
+      break
+    case 'scheduler:run':
+      command = schedulerRunCommand
+      break
     case 'config':
       command = configCommand
       break
@@ -115,6 +153,9 @@ export async function main () {
       break
     case 'pprof':
       command = pprofCommand
+      break
+    case 'heap-snapshot':
+      command = heapSnapshotCommand
       break
     case 'repl':
       command = replCommand
@@ -139,11 +180,14 @@ export async function main () {
       break
     default:
       if (requestedCommand) {
-        const applicationsCommands = await loadApplicationsCommands()
+        // Extract the -c/--config option, which selects the runtime configuration file
+        const { config: runtimeConfigFile, remaining } = extractConfigOption(unparsed.slice(1))
+        const applicationsCommands = await loadApplicationsCommands(this.executableName, runtimeConfigFile)
         const applicationCommand = applicationsCommands.commands[requestedCommand]
 
         if (applicationCommand) {
           applicationCommandContext = applicationsCommands.applications[requestedCommand]
+          applicationCommandArgs = remaining
           command = applicationCommand
         }
       }
@@ -154,16 +198,23 @@ export async function main () {
   if (!command) {
     logFatalError(
       logger,
-      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
+      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${this.executableId} help"`)} to see available commands.`
     )
 
     return
   }
 
   if (applicationCommandContext) {
+    const invocationCwd = process.cwd()
     process.chdir(applicationCommandContext.path)
-    return command(logger, applicationCommandContext.config, unparsed.slice(1), { colorette, parseArgs, logFatalError })
+    return command.call(this, logger, applicationCommandContext.config, applicationCommandArgs, {
+      application: applicationCommandContext,
+      cwd: invocationCwd,
+      colorette,
+      parseArgs,
+      logFatalError
+    })
   } else {
-    await command(logger, unparsed.slice(1))
+    await command.call(this, logger, unparsed.slice(1))
   }
 }

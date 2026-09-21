@@ -1,5 +1,6 @@
 import {
   BaseCapability,
+  buildListenOptions,
   errors as basicErrors,
   createServerListener,
   getServerUrl,
@@ -8,6 +9,7 @@ import {
 } from '@platformatic/basic'
 import { cleanBasePath } from '@platformatic/basic/lib/utils.js'
 import { ensureLoggableError } from '@platformatic/foundation/lib/errors.js'
+import { getEvents } from '@platformatic/globals'
 import { createQueue } from '@platformatic/image-optimizer'
 import { FileStorage, MemoryStorage, RedisStorage } from '@platformatic/job-queue'
 import inject from 'light-my-request'
@@ -82,7 +84,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
 
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
-      const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+      const listenOptions = buildListenOptions(serverOptions)
 
       if (typeof serverOptions?.backlog === 'number') {
         createServerListener(false, false, { backlog: serverOptions.backlog })
@@ -122,7 +124,8 @@ export class NextImageOptimizerCapability extends BaseCapability {
     await super.stop()
     await this.#queue?.stop()
 
-    globalThis.platformatic.events.emit('plt:next:close')
+    const events = getEvents()
+    events.emit('plt:next:close')
 
     if (!this.#app || !this.#server?.listening) {
       return
@@ -177,6 +180,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
   async #createQueue (imageOptimizerConfig) {
     const queueOptions = {
       visibilityTimeout: imageOptimizerConfig.timeout,
+      resultTTL: imageOptimizerConfig.ttl ?? 3600000, // 1 hour
       maxRetries: imageOptimizerConfig.maxAttempts,
       logger: this.logger
     }
@@ -216,7 +220,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
     const { pathname, searchParams } = new URL(request.url, 'http://localhost')
     const imagePath = `${this.#basePath}/_next/image`
 
-    if (request.method !== 'GET' || pathname !== imagePath) {
+    if (request.method !== 'GET' || cleanBasePath(pathname) !== cleanBasePath(imagePath)) {
       response.statusCode = 404
       response.end('Not Found')
       return

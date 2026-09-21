@@ -1,7 +1,9 @@
-const fastify = require('fastify')
+import { getEvents, getLogger } from '@platformatic/globals'
+import fastify from 'fastify'
 
+const logger = getLogger()
 const app = fastify({
-  loggerInstance: globalThis.platformatic?.logger?.child({}, { level: 'trace' })
+  loggerInstance: logger.child({}, { level: 'trace' })
 })
 
 app.get('/', async () => {
@@ -21,7 +23,7 @@ app.post('/', async request => {
 })
 app.log.trace('This is a trace')
 
-app.listen({ port: 1 }).then(() => {
+app.listen({ port: 0 }).then(() => {
   app.log.info('Service listening')
 })
 
@@ -32,4 +34,5 @@ app.get('/main-time', async (request, reply) => {
   return response.json()
 })
 
-globalThis.platformatic.events.on('close', () => app.close())
+const events = getEvents()
+events.on('close', () => app.close())

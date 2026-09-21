@@ -8,14 +8,17 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 - **[Build a Modular Monolith](./guides/build-modular-monolith.md)** - Create a comprehensive library application with multiple Platformatic DB and Gateway services, learn API composition and client generation
 - **[Generate Frontend Code for REST APIs](./guides/generate-frontend-code-to-consume-platformatic-rest-api.md)** - Auto-generate TypeScript clients for your Platformatic REST APIs
 - **[Using Watt with Node Config](./guides/using-watt-with-node-config.md)** - Integrate Node.js configuration management with Watt applications
+- **[Use Watt with AI Coding Agents](./guides/use-watt-with-ai-agents.md)** - Let an AI coding agent set up, configure, and deploy Watt using the official Agent Skill
 
 ### Caching & Performance
 - **[Cache with Platformatic Watt](./guides/cache-with-platformatic-watt.md)** - Implement caching strategies to improve application performance
 - **[Profiling with Watt](./guides/profiling-with-watt.md)** - Profile and optimize your Watt applications for better performance
+- **[Capture Flamegraphs on Health Events](./guides/capture-flamegraphs-on-health-events.md)** - Automatically capture CPU profiles when workers become unhealthy and upload them to S3
 - **[Debugging with REPL](./guides/debugging-with-repl.md)** - Debug applications interactively using the built-in REPL
 
 ### Multi-Repository & Scaling
 - **[Use Watt with Multiple Repositories](./guides/use-watt-multiple-repository.md)** - Manage Watt applications across multiple repositories
+- **[Watt Architecture Patterns](./guides/watt-architecture-patterns.md)** - Choose between pyramid and funnel architectures for Watt applications
 - **[Scheduler](./guides/scheduler.md)** - Implement scheduled tasks and background jobs in your applications
 
 ## Framework Integration
@@ -53,7 +56,6 @@ If you can't find what you're looking for in these guides:
 1. Check the [Reference Documentation](./reference.md) for detailed API specifications
 2. Try the [Getting Started tutorials](./getting-started/quick-start.md) for step-by-step learning
 3. Visit our [GitHub repository](https://github.com/platformatic/platformatic) for community support
-4. Join our [Discord community](https://discord.gg/platformatic) for real-time help
 
 ## Contributing
 

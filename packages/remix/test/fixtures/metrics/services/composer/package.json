@@ -1,6 +1,6 @@
 {
   "name": "gateway",
   "dependencies": {
-    "@platformatic/gateway": "^2.56.0"
+    "@platformatic/gateway": ">=3.0.0"
   }
 }

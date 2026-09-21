@@ -1,5 +1,6 @@
 import { BaseCapability } from '@platformatic/basic'
 import { abstractLogger } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 import { deepStrictEqual, notStrictEqual, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { utimes } from 'node:fs/promises'
@@ -60,7 +61,7 @@ test('logs errors if an env variable is missing', async t => {
   }
   const app = new Controller({}, config)
 
-  globalThis.platformatic = { logger: abstractLogger }
+  updateGlobals({ logger: abstractLogger })
 
   await rejects(async () => {
     await app.init()

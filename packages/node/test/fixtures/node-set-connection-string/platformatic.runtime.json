@@ -1,6 +1,9 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "entrypoint": "api",
+  "server": {
+    "port": 0
+  },
   "services": [
     {
       "id": "api",

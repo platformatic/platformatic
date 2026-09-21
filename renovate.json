@@ -23,6 +23,11 @@
         "digest"
       ],
       "automerge": true
+    },
+    {
+      "matchPackageNames": ["@opentelemetry/**"],
+      "groupName": "opentelemetry packages",
+      "groupSlug": "opentelemetry"
     }
   ],
   "lockFileMaintenance": {

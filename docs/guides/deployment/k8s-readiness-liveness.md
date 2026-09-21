@@ -66,13 +66,14 @@ cd web/api; npm install fastify @fastify/postgresql @fastify/autoload; cd ..
 Then replace the `web/api/index.js` file with:
 
 ```javascript
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 import autoload from '@fastify/autoload'
 import { join } from 'node:path'
 
 export async function create () {
   const app = fastify({
-    loggerIntance: globalThis.platformatic?.logger
+    loggerIntance: getLogger()
   })
 
   // Register PostgreSQL plugin
@@ -108,15 +109,52 @@ Watt provides built-in health check endpoints through its metrics server. The me
 - **`/ready`** (Readiness endpoint): Indicates if all services are started and ready to accept traffic
 - **`/status`** (Liveness endpoint): Indicates if all services are healthy and their custom health checks pass
 
+The top-level `healthProbes` setting controls these Kubernetes probe endpoints. It defaults to `true`. Set it to `false` to disable both `/ready` and `/status` while keeping Prometheus metrics enabled.
+
+```json
+{
+  "healthProbes": false,
+  "metrics": true
+}
+```
+
+To expose Kubernetes probes without Prometheus metrics, disable metrics collection but keep the metrics server configuration for the probe host and port:
+
+```json
+{
+  "healthProbes": true,
+  "metrics": {
+    "enabled": false,
+    "hostname": "0.0.0.0",
+    "port": 9090
+  }
+}
+```
+
+Use a `healthProbes` object to configure Kubernetes probes separately from metrics. When the resolved `hostname` and `port` differ from the Prometheus server, the metrics server does not expose `/ready` or `/status`:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090
+  },
+  "healthProbes": {
+    "hostname": "0.0.0.0",
+    "port": 9091
+  }
+}
+```
+
 ### Endpoint Customization
 
 You can customize the health check endpoints in your Watt configuration:
 
 ```json
 {
-  "metrics": {
+  "healthProbes": {
     "hostname": "0.0.0.0",
-    "port": 9090,
+    "port": 9091,
     "readiness": {
       "endpoint": "/health"
     },
@@ -126,6 +164,91 @@ You can customize the health check endpoints in your Watt configuration:
   }
 }
 ```
+
+### Serving Health Endpoints over HTTPS (SSL/TLS)
+
+Readiness and liveness endpoints run on the metrics server, so enabling HTTPS (TLS, often referred to as SSL) for `metrics` also enables HTTPS for `/ready`, `/status`, and `/metrics`.
+
+For Kubernetes, store the certificate and private key in a Secret and mount it into the container. Then reference those files from `watt.json`:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
+    "https": {
+      "key": { "path": "/etc/watt/tls/tls.key" },
+      "cert": { "path": "/etc/watt/tls/tls.crt" }
+    }
+  }
+}
+```
+
+You can also store the PEM values in environment variables and reference them with configuration placeholders. This is useful when your deployment platform injects secrets as environment variables instead of files:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
+    "https": {
+      "key": "{PLT_METRICS_TLS_KEY}",
+      "cert": "{PLT_METRICS_TLS_CERT}"
+    }
+  }
+}
+```
+
+In Kubernetes, create a TLS Secret:
+
+```bash
+kubectl create secret tls watt-metrics-tls --cert=./tls.crt --key=./tls.key
+```
+
+Then expose the Secret values as environment variables in your Deployment:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watt
+spec:
+  template:
+    spec:
+      containers:
+        - name: watt
+          env:
+            - name: PLT_METRICS_TLS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: watt-metrics-tls
+                  key: tls.key
+            - name: PLT_METRICS_TLS_CERT
+              valueFrom:
+                secretKeyRef:
+                  name: watt-metrics-tls
+                  key: tls.crt
+```
+
+The environment variables must contain the complete PEM private key and certificate, not paths to the files. Use file paths for production deployments if you want certificate rotation through mounted Secrets. Both `key` and `cert` also accept arrays if your TLS setup requires multiple keys or certificate chains.
+
+When the metrics server uses HTTPS, set `scheme: HTTPS` on Kubernetes HTTP probes:
+
+```yaml
+readinessProbe:
+  httpGet:
+    scheme: HTTPS
+    path: /ready
+    port: 9090
+
+livenessProbe:
+  httpGet:
+    scheme: HTTPS
+    path: /status
+    port: 9090
+```
+
+Kubernetes does not verify the certificate for HTTP probes that use `scheme: HTTPS`, so self-signed certificates work for probes. Prometheus or other external clients may still need CA configuration.
 
 ### Service Discovery and Autoload
 
@@ -140,8 +263,8 @@ This autoload behavior simplifies deployment and ensures all your services are a
 
 ### Custom Health Check Functions
 
-- **`setCustomHealthCheck`**: Sets a custom liveness check function that runs on the `/status` (or custom liveness) endpoint
-- **`setCustomReadinessCheck`**: Sets a custom readiness check function that runs on the `/ready` (or custom readiness) endpoint
+- **[`setCustomHealthCheck()`](../../reference/runtime/globals.md#health-checks-and-lifecycle)**: Sets a custom liveness check for the `/status` endpoint or custom liveness endpoint.
+- **[`setCustomReadinessCheck()`](../../reference/runtime/globals.md#health-checks-and-lifecycle)**: Sets a custom readiness check for the `/ready` endpoint or custom readiness endpoint.
 
 Both methods accept a function that returns:
 
@@ -158,13 +281,14 @@ Both methods accept a function that returns:
 Update your `web/api/index.js` to implements comprehensive health checks:
 
 ```javascript
+import { getLogger, setCustomHealthCheck, setCustomReadinessCheck } from '@platformatic/globals'
 import fastify from 'fastify'
 import autoload from '@fastify/autoload'
 import { join } from 'node:path'
 
 export async function create () {
   const app = fastify({
-    loggerIntance: globalThis.platformatic?.logger
+    loggerIntance: getLogger()
   })
 
   // Register PostgreSQL plugin
@@ -178,7 +302,7 @@ export async function create () {
   })
 
   // Register custom liveness check (for /status endpoint)
-  globalThis.platformatic.setCustomHealthCheck(async () => {
+  setCustomHealthCheck(async () => {
     try {
       // Check PostgreSQL database connectivity
       const client = await app.pg.connect()
@@ -200,7 +324,7 @@ export async function create () {
   })
 
   // Register custom readiness check (for /ready endpoint)
-  globalThis.platformatic.setCustomReadinessCheck(async () => {
+  setCustomReadinessCheck(async () => {
     try {
       // Check if PostgreSQL connection pool is ready
       if (!app.pg || !app.pg.pool) {
@@ -417,6 +541,37 @@ spec:
               cpu: '500m'
 ```
 
+If the metrics server uses HTTPS, add `scheme: HTTPS` under each `httpGet` block. If the certificate comes from a Kubernetes Secret, mount it into the container:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: watt-metrics-tls
+type: kubernetes.io/tls
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    ...
+    -----END PRIVATE KEY-----
+---
+# Add this to the watt-app container:
+volumeMounts:
+  - name: metrics-tls
+    mountPath: /etc/watt/tls
+    readOnly: true
+
+# Add this to the pod spec:
+volumes:
+  - name: metrics-tls
+    secret:
+      secretName: watt-metrics-tls
+```
+
 Key configuration points:
 
 - **Startup Probe**: Allows up to 100 seconds for application initialization
@@ -480,7 +635,7 @@ graph TB
             end
 
             subgraph "Services"
-                Gateway["Gateway Service<br/>(Composer)<br/>:3001"]
+                Gateway["Gateway Application<br/>:3001"]
                 API["API Service<br/>(Backend)<br/>:3002"]
                 Worker["Worker Service<br/>(Background)<br/>:3003"]
             end
@@ -526,15 +681,17 @@ graph TB
 1. **Kubernetes Health Probes** → Metrics server (`:9090/ready`, `:9090/status`)
 2. **Metrics Server** → Individual services for health verification
 3. **Inter-Service Health Checks** → Via `.plt.local` domain (e.g., `http://api.plt.local/health`)
-4. **External Traffic** → Gateway service (composer) for API aggregation
+4. **External Traffic** → Gateway application for API aggregation
 
 ### Internal Fetch with Automatic Service Discovery
 
 Services within a Watt application can communicate with each other using the automatic service discovery:
 
 ```javascript
+import { setCustomHealthCheck } from '@platformatic/globals'
+
 // Health check for internal services using Watt's service mesh
-globalThis.platformatic.setCustomHealthCheck(async () => {
+setCustomHealthCheck(async () => {
   try {
     const healthChecks = await Promise.allSettled([
       // Database service health check
@@ -543,7 +700,7 @@ globalThis.platformatic.setCustomHealthCheck(async () => {
       // Background worker service health check
       fetch('http://worker.plt.local/health', { timeout: 2000 }),
 
-      // Composer gateway health check
+      // Gateway health check
       fetch('http://gateway.plt.local/health', { timeout: 2000 })
     ])
 
@@ -598,6 +755,11 @@ curl -v http://localhost:9090/ready
 # Test liveness endpoint (includes database query)
 curl -v http://localhost:9090/status
 # Expected: 200 OK "Healthy" (or custom response)
+
+# If metrics.https is configured, use HTTPS instead.
+# Use -k for local self-signed certificates.
+curl -vk https://localhost:9090/ready
+curl -vk https://localhost:9090/status
 
 # Test the main application endpoint with database integration
 curl http://localhost:3042/
@@ -658,6 +820,11 @@ kubectl get events --field-selector reason=Unhealthy
 # Test health endpoints from within the pod
 kubectl exec <pod-name> -- curl -f http://localhost:9090/ready
 kubectl exec <pod-name> -- curl -f http://localhost:9090/status
+
+# If metrics.https is configured, use HTTPS.
+# Use -k when the pod uses a self-signed certificate.
+kubectl exec <pod-name> -- curl -fk https://localhost:9090/ready
+kubectl exec <pod-name> -- curl -fk https://localhost:9090/status
 
 # Watch Kubernetes pod status in real-time
 kubectl get pods -l app=watt-health-app -w
@@ -804,6 +971,10 @@ kubectl exec <pod-name> -- cat watt.json
 kubectl exec <pod-name> -- curl -v http://localhost:9090/ready
 kubectl exec <pod-name> -- curl -v http://localhost:9090/status
 
+# If metrics.https is configured, test HTTPS instead.
+kubectl exec <pod-name> -- curl -vk https://localhost:9090/ready
+kubectl exec <pod-name> -- curl -vk https://localhost:9090/status
+
 # Check application logs for errors
 kubectl logs <pod-name> --tail=100
 
@@ -859,7 +1030,7 @@ kubectl exec <pod-name> -- ps aux | grep node
 
 Now that you have robust Kubernetes health checks:
 
-- **[Configure monitoring](/docs/guides/monitoring)** - Track health check metrics with Prometheus
+- **[Configure monitoring](/docs/guides/metrics)** - Track health check metrics with Prometheus
 - **[Set up logging](/docs/guides/logging)** - Centralize health check logs for debugging
 - **[Container deployment guide](/docs/guides/deployment/dockerize-a-watt-app)** - Optimize your Docker setup
 - **[TypeScript compilation](/docs/guides/deployment/compiling-typescript)** - Production builds and optimization

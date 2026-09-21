@@ -1,6 +1,8 @@
+import { getLogger } from '@platformatic/globals'
 import type { Route } from './+types/home'
 
-globalThis.platformatic.logger?.info('Log from React Router App page')
+const logger = getLogger()
+logger.info('Log from React Router App page')
 const version = 123
 
 export async function clientLoader ({ params }: Route.LoaderArgs) {

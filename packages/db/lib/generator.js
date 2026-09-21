@@ -69,7 +69,7 @@ export class Generator extends ServiceGenerator {
     }
 
     this.questions.push({
-      type: 'list',
+      type: 'select',
       name: 'createMigrations',
       message: 'Do you want to create default migrations?',
       default: true,

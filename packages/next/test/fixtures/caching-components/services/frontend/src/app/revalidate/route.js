@@ -1,3 +1,4 @@
+import { getEvents } from '@platformatic/globals'
 import { revalidateTag } from 'next/cache'
 
 export async function GET () {
@@ -6,7 +7,8 @@ export async function GET () {
   revalidateTag('third', 'max')
 
   setTimeout(() => {
-    globalThis.platformatic.events.emitAndNotify('revalidated')
+    const events = getEvents()
+    events.emitAndNotify('revalidated')
   }, 100)
 
   return Response.json({ ok: true })

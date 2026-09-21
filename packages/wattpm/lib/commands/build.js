@@ -32,7 +32,7 @@ export async function buildCommand (logger, args) {
     )
     const root = getRoot(positionals)
 
-    configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+    configurationFile = await findRuntimeConfigurationFile(logger, root, config, true, true, true, this.executableName)
 
     /* c8 ignore next 3 - Hard to test */
     if (!configurationFile) {

@@ -1,12 +1,23 @@
 import {
+  convertApplicationNameToPrefix,
   ensureLoggableError,
-  executeWithTimeout,
   FileWatcher,
   kHandledError,
   listRecognizedConfigurationFiles,
   loadConfiguration,
-  loadConfigurationModule
+  loadConfigurationModule,
+  mirrorGlobalDispatcherForBuiltinFetch
 } from '@platformatic/foundation'
+import {
+  getLogger,
+  getOnActiveResourcesEventLoop,
+  getOnHttpStatsConnected,
+  getOnHttpStatsFree,
+  getOnHttpStatsPending,
+  getOnHttpStatsQueued,
+  getOnHttpStatsRunning,
+  getOnHttpStatsSize
+} from '@platformatic/globals'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
 import { existsSync } from 'node:fs'
@@ -14,27 +25,55 @@ import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, RuntimeNotStartedError } from '../errors.js'
+import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
+import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
-function fetchApplicationUrl (application, key) {
-  if (!key.endsWith('_URL') || !application.id) {
-    return null
+/**
+ * Resolves {PLT_<APPLICATION>_URL} placeholders that no environment variable defines, so that
+ * applications can reference each other without the user having to set a variable per pair.
+ *
+ * The mapping is built forwards, from the ids of the applications that actually exist in the runtime
+ * to the variable name each of them owns. Parsing the variable name instead would be ambiguous, both
+ * because the id to prefix conversion is not reversible ("with-logger" and "with_logger" share a
+ * prefix) and because plenty of _URL variables do not name an application at all: a connection string
+ * fragment like {VALKEY_URL} or a DSN like {PLT_DATABASE_URL} must keep resolving to nothing rather
+ * than silently becoming an HTTP URL.
+ */
+function buildApplicationUrlResolver (applications) {
+  const urls = new Map()
+
+  for (const { id } of applications ?? []) {
+    if (id) {
+      urls.set(`PLT_${convertApplicationNameToPrefix(id)}_URL`, getApplicationUrl(id))
+    }
   }
 
-  return getApplicationUrl(application.id)
+  return key => urls.get(key) ?? null
 }
 
-function handleUnhandled (app, type, err) {
+function handleUnhandled (app, event, listeners, timeout, err, ...args) {
   const label = `worker ${workerData.worker.index} of the application "${workerData.applicationConfig.id}"`
 
-  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${type}.`)
+  const logger = getLogger()
+  logger.error({ err: ensureLoggableError(err) }, `The ${label} threw an ${event} event.`)
 
-  executeWithTimeout(app?.stop(), 1000)
-    .catch()
-    .finally(() => {
-      process.exit(1)
-    })
+  // Give some time to the listeners, logger and ITC notifications to land before shutting down
+  setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), timeout)
+
+  for (const listener of listeners) {
+    try {
+      listener(err, ...args)
+    } catch (err) {
+      logger.error({ err: ensureLoggableError(err) }, `${event} error listener failed.`)
+    }
+  }
+
+  // stop() rejects while the controller is not started. Left unobserved, that rejection re-enters
+  // this handler forever and starves the event loop, so the exit scheduled above never runs.
+  app.stop().catch(stopError => {
+    logger.debug({ err: ensureLoggableError(stopError) }, `Stopping the ${label} after the ${event} event failed.`)
+  })
 }
 
 export class Controller extends EventEmitter {
@@ -45,7 +84,6 @@ export class Controller extends EventEmitter {
   #fileWatcher
   #debouncedRestart
   #context
-  #lastELU
 
   constructor (runtimeConfig, applicationConfig, workerId, serverConfig, metricsConfig) {
     super()
@@ -59,10 +97,13 @@ export class Controller extends EventEmitter {
     this.#listening = false
     this.capability = null
     this.#fileWatcher = null
-    this.#lastELU = performance.eventLoopUtilization()
+
+    const onMissingEnv = buildApplicationUrlResolver(runtimeConfig.applications)
 
     this.#context = {
       controller: this,
+      runtimeConfig: this.runtimeConfig,
+      applicationConfig: this.applicationConfig,
       applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.applicationConfig.path,
@@ -74,8 +115,13 @@ export class Controller extends EventEmitter {
       metricsConfig,
       serverConfig,
       worker: workerData?.worker,
+      resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
-      fetchApplicationUrl: fetchApplicationUrl.bind(null, applicationConfig)
+      fetchApplicationUrl: onMissingEnv,
+      // Capabilities spread the whole context into their loadConfiguration call, which is what makes
+      // the configuration they load resolve application references like the throwaway load below.
+      onMissingEnv,
+      strictEnv: runtimeConfig.strictEnv
     }
   }
 
@@ -119,9 +165,15 @@ export class Controller extends EventEmitter {
       }
 
       if (appConfig.config) {
-        // Parse the configuration file the first time to obtain the schema
+        // Parse the configuration file the first time to obtain the schema. This load is thrown away:
+        // the capability loads the configuration again below and that is the configuration the
+        // application actually runs on. This one only has to yield $schema and module, so it must not
+        // diverge from the second load in any way the user can observe: it resolves environment
+        // variables identically, and leaves the strictEnv report to the load the application is
+        // built from, which would otherwise be duplicated for every application.
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.fetchApplicationUrl
+          onMissingEnv: this.#context.onMissingEnv,
+          strictEnv: false
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
@@ -137,15 +189,19 @@ export class Controller extends EventEmitter {
         cleanupHandlers()
       }
 
-      if (this.capability.exitOnUnhandledErrors && this.runtimeConfig.exitOnUnhandledErrors) {
-        this.#setupHandlers()
+      let exitOnUnhandledErrors = this.runtimeConfig.exitOnUnhandledErrors
+
+      if (exitOnUnhandledErrors === true || typeof exitOnUnhandledErrors === 'undefined') {
+        exitOnUnhandledErrors = 100
+      }
+
+      if (typeof exitOnUnhandledErrors === 'number' && exitOnUnhandledErrors > 0) {
+        this.#setupHandlers(exitOnUnhandledErrors)
       }
     } catch (err) {
       if (err.validationErrors) {
-        globalThis.platformatic.logger.error(
-          { err: ensureLoggableError(err) },
-          'The application threw a validation error.'
-        )
+        const logger = getLogger()
+        logger.error({ err: ensureLoggableError(err) }, 'The application threw a validation error.')
 
         throw err
       } else {
@@ -189,10 +245,13 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!this.applicationConfig.useHttp
+    const listen = !!(this.applicationConfig.useHttp || this.applicationConfig.websocket)
 
     try {
       await this.capability.start({ listen })
+      if (refreshGlobalDispatcher()) {
+        this.#updateDispatcher()
+      }
       this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
@@ -235,7 +294,12 @@ export class Controller extends EventEmitter {
 
   async listen () {
     // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (!this.applicationConfig.entrypoint || this.applicationConfig.useHttp || this.#listening) {
+    if (
+      !this.applicationConfig.entrypoint ||
+      this.applicationConfig.useHttp ||
+      this.applicationConfig.websocket ||
+      this.#listening
+    ) {
       return
     }
 
@@ -244,30 +308,40 @@ export class Controller extends EventEmitter {
 
   async getMetrics ({ format }) {
     const dispatcher = getGlobalDispatcher()
-    if (globalThis.platformatic?.onHttpStatsFree && dispatcher?.stats) {
+    const onHttpStatsFree = getOnHttpStatsFree({ throwOnMissing: false })
+
+    if (onHttpStatsFree && dispatcher?.stats) {
+      // The capability might come from an older version of @platformatic/basic
+      // which registered these globals without the fields tracking, so never throw.
+      const onHttpStatsConnected = getOnHttpStatsConnected({ throwOnMissing: false })
+      const onHttpStatsPending = getOnHttpStatsPending({ throwOnMissing: false })
+      const onHttpStatsQueued = getOnHttpStatsQueued({ throwOnMissing: false })
+      const onHttpStatsRunning = getOnHttpStatsRunning({ throwOnMissing: false })
+      const onHttpStatsSize = getOnHttpStatsSize({ throwOnMissing: false })
+
       for (const url in dispatcher.stats) {
         const { free, connected, pending, queued, running, size } = dispatcher.stats[url]
-        globalThis.platformatic.onHttpStatsFree(url, free || 0)
-        globalThis.platformatic.onHttpStatsConnected(url, connected || 0)
-        globalThis.platformatic.onHttpStatsPending(url, pending || 0)
-        globalThis.platformatic.onHttpStatsQueued(url, queued || 0)
-        globalThis.platformatic.onHttpStatsRunning(url, running || 0)
-        globalThis.platformatic.onHttpStatsSize(url, size || 0)
+        onHttpStatsFree(url, free || 0)
+        onHttpStatsConnected?.(url, connected || 0)
+        onHttpStatsPending?.(url, pending || 0)
+        onHttpStatsQueued?.(url, queued || 0)
+        onHttpStatsRunning?.(url, running || 0)
+        onHttpStatsSize?.(url, size || 0)
       }
     }
-    globalThis.platformatic.onActiveResourcesEventLoop(getActiveResourcesInfo().length)
+    const onActiveResourcesEventLoop = getOnActiveResourcesEventLoop({ throwOnMissing: false })
+    if (onActiveResourcesEventLoop) {
+      onActiveResourcesEventLoop(getActiveResourcesInfo().length)
+    }
     return this.capability.getMetrics({ format })
   }
 
   async getHealth () {
     const currentELU = performance.eventLoopUtilization()
-    const elu = performance.eventLoopUtilization(currentELU, this.#lastELU).utilization
-    this.#lastELU = currentELU
-
     const { heapUsed, heapTotal } = process.memoryUsage()
 
     return {
-      elu,
+      currentELU,
       heapUsed,
       heapTotal
     }
@@ -303,7 +377,8 @@ export class Controller extends EventEmitter {
   }
 
   #logAndThrow (err) {
-    globalThis.platformatic.logger.error(
+    const logger = getLogger()
+    logger.error(
       { err: ensureLoggableError(err) },
       err[kHandledError] ? err.message : 'The application threw an error.'
     )
@@ -329,18 +404,30 @@ export class Controller extends EventEmitter {
 
     const dispatcher = getGlobalDispatcher().compose(interceptor)
 
+    markAsPlatformaticDispatcher(dispatcher)
     setGlobalDispatcher(dispatcher)
+    mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
   }
 
-  #setupHandlers () {
-    process.on('uncaughtException', handleUnhandled.bind(null, this, 'uncaught exception'))
-    process.on('unhandledRejection', handleUnhandled.bind(null, this, 'unhandled rejection'))
+  #setupHandlers (timeout) {
+    const unhandledListeners = { uncaughtException: [], unhandledRejection: [] }
 
-    process.on('newListener', event => {
+    process.on(
+      'uncaughtException',
+      handleUnhandled.bind(null, this, 'uncaughtException', unhandledListeners.uncaughtException, timeout)
+    )
+    process.on(
+      'unhandledRejection',
+      handleUnhandled.bind(null, this, 'unhandledRejection', unhandledListeners.unhandledRejection, timeout)
+    )
+
+    process.on('newListener', (event, listener) => {
       if (event === 'uncaughtException' || event === 'unhandledRejection') {
-        globalThis.platformatic.logger.warn(
-          `A listener has been added for the "process.${event}" event. This listener will be never triggered as Watt default behavior will kill the process before.\n To disable this behavior, set "exitOnUnhandledErrors" to false in the runtime config.`
-        )
+        unhandledListeners[event].push(listener)
+
+        process.nextTick(() => {
+          process.removeListener(event, listener)
+        })
       }
     })
   }

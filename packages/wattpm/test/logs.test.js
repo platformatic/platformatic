@@ -67,7 +67,7 @@ async function matchLogs (stream, requiresMainLog = true, requiresTraceLog = fal
   return { messages, mainLogFound, applicationLogFound, traceFound }
 }
 
-test('inject - should stream runtime logs', async t => {
+test('logs - should stream runtime logs', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {

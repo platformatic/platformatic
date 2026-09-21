@@ -60,6 +60,11 @@ export interface DBEntityField {
    */
   foreignKey?: boolean,
   /**
+   * An option that is true if a foreign key field is stringified in mapper output
+   * because it references a primary key.
+   */
+  stringifyOutput?: boolean,
+  /**
    * An option that is true if field is nullable.
    */
   isNullable: boolean,
@@ -136,7 +141,11 @@ export interface WhereCondition {
     /**
      * Overlaps with values
      */
-    overlaps?: any[]
+    overlaps?: any[],
+    /**
+     * IS NULL (true) or IS NOT NULL (false)
+     */
+    isNull?: boolean
   }
 }
 
@@ -514,14 +523,14 @@ export default plugin
 /**
  * An object that contains utility functions.
  */
-export module utils {
+export namespace utils {
   export function toSingular (str: string): string
 }
 
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const CannotFindEntityError: (entityName: string) => FastifyError
   export const SpecifyProtocolError: () => FastifyError
   export const ConnectionStringRequiredError: () => FastifyError

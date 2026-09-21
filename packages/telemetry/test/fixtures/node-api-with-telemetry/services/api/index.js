@@ -5,4 +5,4 @@ const server = createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json')
   res.end(JSON.stringify({ foo: 'bar' }))
 })
-server.listen(1)
+server.listen(0)

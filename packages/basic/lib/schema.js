@@ -57,6 +57,20 @@ const buildableApplication = {
       },
       default: {},
       additionalProperties: false
+    },
+    entrypointPort: {
+      type: 'number'
+    },
+    changeDirectoryBeforeExecution: {
+      type: 'boolean',
+      default: false
+    },
+    preferLocalCommands: {
+      type: 'boolean',
+      default: true
+    },
+    processSpawner: {
+      type: 'string'
     }
   },
   additionalProperties: false,
@@ -87,6 +101,9 @@ export const schema = {
   type: 'object',
   properties: {
     $schema: {
+      type: 'string'
+    },
+    module: {
       type: 'string'
     },
     runtime: utilsSchemaComponents.wrappedRuntime

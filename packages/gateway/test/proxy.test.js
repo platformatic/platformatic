@@ -1,5 +1,5 @@
-import { sleepImmediate } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { getEvents, getPrometheus, updateGlobals } from '@platformatic/globals'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
 import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
@@ -35,14 +35,16 @@ function ensureCleanup (t, folders) {
 }
 
 test('should increment and decrement activeWsConnections metric', async t => {
-  const initPromClient = globalThis.platformatic?.prometheus
+  const initPromClient = getPrometheus({ throwOnMissing: false })
   const prometheusRegistry = new client.Registry()
 
   if (!initPromClient) {
-    globalThis.platformatic = { ...globalThis.platformatic, prometheus: { registry: prometheusRegistry, client } }
+    updateGlobals({ prometheus: { registry: prometheusRegistry, client } })
   }
 
   const { application, wsServer } = await createWebsocketApplication(t)
+  const events = new EventEmitter()
+  updateGlobals({ events })
   wsServer.on('connection', socket => {
     socket.on('message', message => {
       setTimeout(() => {
@@ -68,7 +70,12 @@ test('should increment and decrement activeWsConnections metric', async t => {
           proxy: {
             prefix: '/',
             upstream,
-            ws: { upstream: wsUpstream }
+            ws: {
+              upstream: wsUpstream,
+              hooks: {
+                path: resolve(import.meta.dirname, './proxy/fixtures/ws/hooks.js')
+              }
+            }
           }
         }
       ]
@@ -89,6 +96,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   // Test: Create first connection, should increment to 1
   const client1 = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
+  t.after(() => client1.close())
   await once(client1, 'open')
   client1.send('hello')
   const [response1] = await once(client1, 'message')
@@ -97,6 +105,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   // Test: Create second connection, should increment to 2
   const client2 = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
+  t.after(() => client2.close())
   await once(client2, 'open')
   client2.send('hello2')
   const [response2] = await once(client2, 'message')
@@ -104,19 +113,21 @@ test('should increment and decrement activeWsConnections metric', async t => {
   assert.equal(await getActiveConnections(), 2)
 
   // Test: Close first connection, should decrement to 1
+  const firstDisconnect = once(events, 'onDisconnect')
   client1.close()
   await once(client1, 'close')
-  await sleepImmediate()
+  await firstDisconnect
   assert.equal(await getActiveConnections(), 1)
 
   // Test: Close second connection, should decrement to 0
+  const secondDisconnect = once(events, 'onDisconnect')
   client2.close()
   await once(client2, 'close')
-  await sleepImmediate()
+  await secondDisconnect
   assert.equal(await getActiveConnections(), 0)
 
   await gateway.close()
-  globalThis.platformatic.prometheus = initPromClient
+  updateGlobals({ prometheus: initPromClient })
 })
 
 test('should proxy openapi requests', async t => {
@@ -438,6 +449,79 @@ test('should proxy all applications if none are defined', async t => {
   }
 })
 
+test('should fail with actionable error when a gateway application is missing from the graph', async t => {
+  const tmpBaseDir = resolve(import.meta.dirname, '../tmp')
+
+  await createDirectory(tmpBaseDir)
+
+  const tmpDir = await mkdtemp(resolve(tmpBaseDir, 'plt-gateway-missing-app-'))
+  const gatewayDir = resolve(tmpDir, 'gateway')
+  const gatewayConfigPath = resolve(gatewayDir, 'platformatic.gateway.json')
+  const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await createDirectory(gatewayDir)
+
+  await writeFile(
+    runtimeConfigPath,
+    JSON.stringify({
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
+      entrypoint: 'composer',
+      watch: false,
+      services: [
+        {
+          id: 'composer',
+          path: gatewayDir,
+          config: gatewayConfigPath
+        }
+      ],
+      logger: {
+        level: 'fatal'
+      }
+    }),
+    'utf-8'
+  )
+
+  await writeFile(
+    gatewayConfigPath,
+    JSON.stringify({
+      module: resolve(import.meta.dirname, '../index.js'),
+      gateway: {
+        applications: [
+          {
+            id: 'missing',
+            proxy: {}
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    }),
+    'utf-8'
+  )
+
+  const runtime = await createRuntime(runtimeConfigPath)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await assert.rejects(
+    async () => {
+      await runtime.init()
+      await runtime.start()
+    },
+    error => {
+      assert.equal(error.code, 'PLT_RUNTIME_APPLICATION_DEPENDENCY_NOT_FOUND')
+      assert.match(error.message, /Application dependency missing not found. Available applications are: composer/)
+
+      return true
+    }
+  )
+})
+
 test('should fix the path using the referer only if asked to', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
   const astroModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/astro/node_modules')
@@ -568,6 +652,224 @@ test('should rewrite Location headers for proxied applications', async t => {
   }
 })
 
+test('should support gateway handler named export', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/api2/a',
+      handler: async () => {
+        return { upstream: true }
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      handler: resolve(import.meta.dirname, './proxy/fixtures/handler.js'),
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/api',
+            rewritePrefix: '/api2'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/api/a'
+  })
+
+  assert.equal(statusCode, 200)
+  assert.deepStrictEqual(await body.json(), {
+    url: '/api/a',
+    dest: '/api2/a',
+    hasRewriteHeaders: true
+  })
+})
+
+test('should support gateway handler default export delegating to reply.from()', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/api2/a',
+      handler: async () => {
+        return { upstream: true }
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      handler: resolve(import.meta.dirname, './proxy/fixtures/default-handler.js'),
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/api',
+            rewritePrefix: '/api2'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/api/a'
+  })
+
+  assert.equal(statusCode, 200)
+  assert.deepStrictEqual(await body.json(), { upstream: true })
+})
+
+test('should rewrite relative Location headers from rewritePrefix to prefix by default', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/internal/hello',
+      handler: async () => {
+        return { ok: true }
+      }
+    },
+    {
+      method: 'GET',
+      path: '/internal/redirect',
+      handler: async (_req, reply) => {
+        reply.redirect('/internal/hello')
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/whatever',
+            rewritePrefix: '/internal'
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  {
+    const { statusCode, body } = await request(gatewayOrigin, {
+      method: 'GET',
+      path: '/whatever/hello'
+    })
+    assert.equal(statusCode, 200)
+    assert.deepStrictEqual(await body.json(), { ok: true })
+  }
+
+  {
+    const {
+      statusCode,
+      body: rawBody,
+      headers
+    } = await request(gatewayOrigin, {
+      method: 'GET',
+      path: '/whatever/redirect'
+    })
+    assert.equal(statusCode, 302)
+    assert.equal(headers.location, '/whatever/hello')
+
+    rawBody.dump()
+  }
+})
+
+test('should not rewrite relative Location headers when proxy.rewriteLocationHeader is false', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/internal/hello',
+      handler: async () => {
+        return { ok: true }
+      }
+    },
+    {
+      method: 'GET',
+      path: '/internal/redirect',
+      handler: async (_req, reply) => {
+        reply.redirect('/internal/hello')
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'main',
+          origin,
+          proxy: {
+            prefix: '/whatever',
+            rewritePrefix: '/internal',
+            rewriteLocationHeader: false
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  {
+    const {
+      statusCode,
+      body: rawBody,
+      headers
+    } = await request(gatewayOrigin, {
+      method: 'GET',
+      path: '/whatever/redirect'
+    })
+    assert.equal(statusCode, 302)
+    assert.equal(headers.location, '/internal/hello')
+
+    rawBody.dump()
+  }
+})
+
 test('should rewrite Location headers that include full url of the running application', async t => {
   const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
@@ -657,7 +959,7 @@ test('should properly configure the frontends on their paths if no gateway confi
   await createDirectory(resolve(nextModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../next'), resolve(nextModulesRoot, '@platformatic/next'), 'dir')
 
-  // Make sure there is @platformatic/next available in the next application.
+  // Make sure there is @platformatic/remix available in the next application.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(remixModulesRoot, '@platformatic'))
   await symlink(resolve(import.meta.dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
@@ -719,6 +1021,8 @@ test('should properly configure the frontends on their paths if no gateway confi
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { from: 'service' })
   }
+
+  await runtime.close()
 })
 
 test('should properly match applications by their hostname', async t => {
@@ -1522,16 +1826,20 @@ test('should proxy to a websocket application with reconnect options', async t =
   })
 
   const gatewayOrigin = await gateway.start({ listen: true })
-  globalThis.platformatic.events ??= new EventEmitter()
+  try {
+    getEvents()
+  } catch {
+    updateGlobals({ events: new EventEmitter() })
+  }
 
   const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
   await once(client, 'open')
   client.send('hello')
 
-  await once(globalThis.platformatic.events, 'proxy:onIncomingMessage')
+  await once(getEvents(), 'proxy:onIncomingMessage')
 
-  await once(globalThis.platformatic.events, 'onConnect')
-  await once(globalThis.platformatic.events, 'onOutgoingMessage')
+  await once(getEvents(), 'onConnect')
+  await once(getEvents(), 'onOutgoingMessage')
 
   // close the target to cause reconnection
   await wsApplication.close()
@@ -1539,12 +1847,12 @@ test('should proxy to a websocket application with reconnect options', async t =
 
   await createWebsocketApplication(t, {}, port)
 
-  await once(globalThis.platformatic.events, 'onReconnect')
-  await once(globalThis.platformatic.events, 'onPong')
+  await once(getEvents(), 'onReconnect')
+  await once(getEvents(), 'onPong')
 
+  const disconnected = once(getEvents(), 'onDisconnect')
   client.close()
-
-  await once(globalThis.platformatic.events, 'onDisconnect')
+  await disconnected
 })
 
 test('should dynamically proxy a using custom logic', async t => {
@@ -1655,6 +1963,56 @@ test('should dynamically proxy a using custom logic', async t => {
     assert.deepStrictEqual(message.toString(), 'hello')
     client.close()
   }
+})
+
+test('should support custom preRewrite hooks', async t => {
+  const application = await createApplication(t, [
+    {
+      method: 'GET',
+      path: '/rewritten',
+      handler: async () => {
+        return { message: 'rewritten' }
+      }
+    },
+    {
+      method: 'GET',
+      path: '/original',
+      handler: async () => {
+        return { message: 'original' }
+      }
+    }
+  ])
+
+  const origin = await application.listen({ port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    gateway: {
+      applications: [
+        {
+          id: 'the-proxy',
+          origin,
+          proxy: {
+            prefix: '/api',
+            custom: { path: resolve(import.meta.dirname, './proxy/fixtures/custom-pre-rewrite.ts') }
+          }
+        }
+      ]
+    }
+  })
+
+  const gatewayOrigin = await gateway.start({ listen: true })
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'GET',
+    path: '/api/original'
+  })
+
+  assert.equal(statusCode, 200)
+  assert.deepStrictEqual(await body.json(), { message: 'rewritten' })
 })
 
 test('should proxy to a remote service with external origin', async t => {

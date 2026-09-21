@@ -53,6 +53,8 @@ server.listen(3000)
     'utf-8'
   )
 
+  await writeFile(resolve(rootDir, '.npmrc'), 'dry-run=true\n', 'utf-8')
+
   changeWorkingDirectory(t, rootDir)
   const wattProcess = await wattpmUtils('import', '-P', 'pnpm')
 
@@ -70,6 +72,7 @@ server.listen(3000)
 
   // Replace some dependences with symlinks to local packages
   const modulesDir = resolve(rootDir, 'node_modules/@platformatic')
+  await createDirectory(modulesDir)
   await safeRemove(resolve(modulesDir, 'basic'))
   await safeRemove(resolve(modulesDir, 'node'))
   await symlink(resolve(import.meta.dirname, '../../basic'), resolve(modulesDir, 'basic'), 'dir')

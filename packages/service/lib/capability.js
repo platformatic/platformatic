@@ -1,15 +1,21 @@
-import { BaseCapability, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
-import { buildPinoFormatters, buildPinoTimestamp, deepmerge, isKeyEnabled } from '@platformatic/foundation'
+import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import {
+  buildPinoFormatters,
+  buildPinoTimestamp,
+  deepmerge,
+  isKeyEnabled,
+  sanitizeHTTPSOptions
+} from '@platformatic/foundation'
+import { getTracerProvider } from '@platformatic/globals'
 import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
-import { printSchema } from 'graphql'
 import { randomUUID } from 'node:crypto'
 import { hostname } from 'node:os'
 import pino from 'pino'
 import { platformaticService } from './application.js'
+import { loadErrorHandler } from './error-handler.js'
 import { setupRoot } from './plugins/root.js'
 import { version } from './schema.js'
-import { sanitizeHTTPSArgument } from './utils.js'
 
 export class ServiceCapability extends BaseCapability {
   #app
@@ -31,13 +37,23 @@ export class ServiceCapability extends BaseCapability {
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
 
     // Create the application
+    const { errorHandler, ...serverOptions } = this.serverConfig ?? {}
+
     this.#app = fastify({
-      ...this.serverConfig,
+      ...serverOptions,
       ...this.fastifyOptions,
       genReqId () {
         return randomUUID()
       }
     })
+
+    // The error handler is installed on the root instance before anything else is registered so that
+    // every route inherits it, including the ones registered by the capability itself, like the
+    // auto-generated CRUD routes of @platformatic/db. Plugins can still override it in their own
+    // encapsulation context.
+    if (errorHandler) {
+      this.#app.setErrorHandler(await loadErrorHandler(errorHandler))
+    }
 
     // Add hook to set Connection: close during graceful shutdown.
     // This must be added BEFORE plugins are registered, because if a plugin
@@ -60,7 +76,7 @@ export class ServiceCapability extends BaseCapability {
     // openTelemetry decorator exists and then configure accordingly.
     // Skip manual telemetry plugin if automatic instrumentation is already active
     // (loaded via --import from node-telemetry.js)
-    const hasAutomaticInstrumentation = !!globalThis.platformatic?.tracerProvider
+    const hasAutomaticInstrumentation = !!getTracerProvider({ throwOnMissing: false })
     if (isKeyEnabled('telemetry', config) && !hasAutomaticInstrumentation) {
       await this.#app.register(telemetry, config.telemetry)
     }
@@ -191,7 +207,13 @@ export class ServiceCapability extends BaseCapability {
   async getGraphqlSchema () {
     await this.init()
     await this.#app.ready()
-    return this.#app.graphql ? printSchema(this.#app.graphql.schema) : null
+    if (!this.#app.graphql) {
+      return null
+    }
+
+    // graphql is already loaded by mercurius at this point, so the import is served from the module cache
+    const { printSchema } = await import('graphql')
+    return printSchema(this.#app.graphql.schema)
   }
 
   async updateContext (context) {
@@ -232,8 +254,7 @@ export class ServiceCapability extends BaseCapability {
     }
 
     if (config.server.https) {
-      config.server.https.key = await sanitizeHTTPSArgument(config.server.https.key)
-      config.server.https.cert = await sanitizeHTTPSArgument(config.server.https.cert)
+      config.server.https = await sanitizeHTTPSOptions(config.server.https)
     }
 
     // Assign the logger instance if it exists
@@ -297,7 +318,7 @@ export class ServiceCapability extends BaseCapability {
 
   async _listen () {
     const serverOptions = this.serverConfig
-    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+    const listenOptions = buildListenOptions(serverOptions)
 
     if (typeof serverOptions?.backlog === 'number') {
       listenOptions.backlog = serverOptions.backlog

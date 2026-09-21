@@ -14,6 +14,7 @@ import {
 } from './errors.js'
 import { wrapDB } from './telemetry.js'
 import { sanitizeLimit, tableName, toLowerFirst, toSingular, toUpperFirst } from './utils.js'
+import { isVectorType, parseVector, serializeVector } from './vector.js'
 
 function createMapper (
   defaultDb,
@@ -29,7 +30,8 @@ function createMapper (
   useSchemaInName,
   limitConfig,
   columns,
-  constraintsList
+  constraintsList,
+  isView
 ) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
   const entityName = useSchemaInName ? toUpperFirst(`${camelcase(schema)}${toSingular(table)}`) : toSingular(table)
@@ -64,7 +66,7 @@ function createMapper (
     return acc
   }, {})
 
-  const primaryKeysTypes = Array.from(primaryKeys).map(key => {
+  const primaryKeysTypes = Array.from(primaryKeys).map((key) => {
     return {
       key,
       sqlType: fields[key].sqlType
@@ -74,7 +76,7 @@ function createMapper (
   function fixInput (input) {
     const newInput = {}
     for (const key of Object.keys(input)) {
-      const value = input[key]
+      let value = input[key]
       let newKey = inputToFieldMap[key]
       if (newKey === undefined) {
         if (fields[key] !== undefined) {
@@ -83,6 +85,11 @@ function createMapper (
           throw new UnknownFieldError(key)
         }
       }
+
+      if (isVectorType(fields[newKey].sqlType)) {
+        value = serializeVector(value)
+      }
+
       newInput[newKey] = value
     }
     return newInput
@@ -92,15 +99,50 @@ function createMapper (
     if (!output) {
       return output
     }
+
     const newOutput = {}
+
     for (const key of Object.keys(output)) {
       let value = output[key]
       const newKey = fieldMapToRetrieve[key]
-      if (primaryKeys.has(key) && value !== null && value !== undefined) {
+
+      const isNativeJson =
+        fields[key]?.sqlType === 'json' || fields[key]?.sqlType === 'jsonb'
+
+      // MariaDB has no native JSON type: JSON columns are stored (and
+      // introspected) as `longtext`. We mark them at introspection time
+      // via the `isJson` flag (see index.js / lib/queries/mysql-shared.js).
+      const isJsonText = fields[key]?.isJson === true
+
+      if (isNativeJson || isJsonText) {
+        // The driver may already have deserialized the value (some MariaDB
+        // driver versions do this for longtext columns), or it may still be
+        // the raw JSON string - normalize to a parsed object either way.
+        if (typeof value === 'string') {
+          value = JSON.parse(value)
+        }
+
+        newOutput[newKey] = value
+        continue
+      }
+
+      if (
+        (primaryKeys.has(key) || fields[key]?.stringifyOutput) &&
+        value !== null &&
+        value !== undefined &&
+        !(value instanceof Date) &&
+        typeof value !== 'object'
+      ) {
         value = value.toString()
       }
+
+      if (newKey && isVectorType(fields[key].sqlType)) {
+        value = parseVector(value)
+      }
+
       newOutput[newKey] = value
     }
+
     return newOutput
   }
 
@@ -151,6 +193,12 @@ function createMapper (
     const db = getDB(args)
     const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
     const inputs = args.inputs
+    if (inputs === undefined || inputs === null) {
+      throw new InputNotProvidedError()
+    }
+    if (inputs.length === 0) {
+      return []
+    }
     // This else is skipped on MySQL because of https://github.com/ForbesLindesay/atdatabases/issues/221
     /* istanbul ignore else */
     if (autoTimestamp) {
@@ -272,6 +320,14 @@ function createMapper (
         throw new UnknownFieldError(key)
       }
       for (const key of Object.keys(value)) {
+        if (key === 'isNull') {
+          if (value[key] === true) {
+            criteria.push(sql`${sql.ident(field)} IS NULL`)
+          } else if (value[key] === false) {
+            criteria.push(sql`${sql.ident(field)} IS NOT NULL`)
+          }
+          continue
+        }
         const operator = whereMap[key]
         /* istanbul ignore next */
         if (!operator) {
@@ -326,6 +382,10 @@ function createMapper (
   }
 
   function computeCriteriaValue (fieldWrap, value) {
+    if (isVectorType(fieldWrap.sqlType)) {
+      return sql`${serializeVector(value)}`
+    }
+
     if (Array.isArray(value)) {
       return sql`(${sql.join(
         value.map(v => computeCriteriaValue(fieldWrap, v)),
@@ -430,7 +490,7 @@ function createMapper (
     return res.map(fixOutput)
   }
 
-  return {
+  const entity = {
     name: entityName,
     singularName,
     pluralName,
@@ -443,11 +503,17 @@ function createMapper (
     fixOutput,
     find,
     count,
-    insert,
-    save,
-    delete: _delete,
-    updateMany
+    isView: !!isView
   }
+
+  if (!isView) {
+    entity.insert = insert
+    entity.save = save
+    entity.delete = _delete
+    entity.updateMany = updateMany
+  }
+
+  return entity
 }
 
 export function buildEntity (
@@ -463,7 +529,8 @@ export function buildEntity (
   limitConfig,
   schemaList,
   columns,
-  constraintsList
+  constraintsList,
+  isView
 ) {
   const columnsNames = columns.map(c => c.column_name)
   for (const ignoredColumn of Object.keys(ignore)) {
@@ -479,7 +546,9 @@ export function buildEntity (
     acc[column.column_name] = {
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES',
-      isArray: column.isArray
+      isArray: column.isArray,
+      vectorDimensions: column.vectorDimensions,
+      isJson: column.isJson === true
     }
 
     // To get enum values in mysql and mariadb
@@ -523,7 +592,9 @@ export function buildEntity (
   /* istanbul ignore next */
   function checkSQLitePrimaryKey (constraint) {
     if (db.isSQLite) {
-      const validTypes = ['varchar', 'integer', 'uuid', 'serial']
+      // SQLite uses flexible typing: NUMBER, NUMERIC and BIGINT have the same
+      // affinity as INTEGER, while TEXT has the same affinity as VARCHAR
+      const validTypes = ['varchar', 'integer', 'uuid', 'serial', 'number', 'numeric', 'bigint', 'text']
       const pkType = fields[constraint.column_name].sqlType.toLowerCase()
       if (!validTypes.includes(pkType)) {
         throw new InvalidPrimaryKeyTypeError(pkType, validTypes.join(', '))
@@ -559,6 +630,16 @@ export function buildEntity (
       schemaList?.length > 0 ? schemaList.includes(constraint.foreign_table_schema) : true
     /* istanbul ignore if */
     if (constraint.constraint_type === 'FOREIGN KEY' && isForeignKeySchemaInConfig) {
+      /* istanbul ignore next */
+      if (!constraint.foreign_table_name) {
+        // The referenced side of the foreign key could not be resolved by the introspection
+        // query. Ignore the relation rather than failing the whole boot.
+        log.warn(
+          { constraint },
+          `Could not resolve the table referenced by the foreign key "${constraint.constraint_name}" on "${constraint.table_name}.${constraint.column_name}". The relation will be ignored.`
+        )
+        continue
+      }
       field.foreignKey = true
       const foreignEntityName = singularize(
         camelcase(
@@ -623,7 +704,10 @@ export function buildEntity (
     autoTimestamp,
     schema,
     useSchemaInName,
-    limitConfig
+    limitConfig,
+    undefined,
+    undefined,
+    isView
   )
   entity.relations = currentRelations
 

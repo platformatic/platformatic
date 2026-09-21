@@ -1,1 +1,1 @@
-Promise.reject(new Error('WTF'))
+throw new Error('WTF')

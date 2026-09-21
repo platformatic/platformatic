@@ -3,7 +3,6 @@ import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/fou
 import { bold } from 'colorette'
 import { createInterface } from 'node:readline'
 import { getBorderCharacters, table } from 'table'
-import { getSocket } from '../utils.js'
 
 const tableConfig = {
   /* c8 ignore next */
@@ -16,7 +15,7 @@ const tableConfig = {
 export async function replCommand (logger, args) {
   const { positionals: allPositionals } = parseArgs(args, {}, false)
 
-  const client = new RuntimeApiClient({ logger, socket: getSocket() })
+  const client = new RuntimeApiClient({ logger, socket: this.socket })
   try {
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
     let application = positionals[0]

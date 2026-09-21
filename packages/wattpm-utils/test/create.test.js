@@ -9,7 +9,10 @@ import { createTemporaryDirectory, executeCommand, wattpmUtils } from './helper.
 
 const createEnv = {
   NO_COLOR: 'true',
-  PLT_MODULES_PATHS: JSON.stringify({ '@platformatic/vite': resolve(import.meta.dirname, '../../vite') })
+  PLT_MODULES_PATHS: JSON.stringify({
+    '@platformatic/next': resolve(import.meta.dirname, '../../next'),
+    '@platformatic/vite': resolve(import.meta.dirname, '../../vite')
+  })
 }
 
 test('create - should create a new project using watt.json by default', async t => {
@@ -17,13 +20,13 @@ test('create - should create a new project using watt.json by default', async t 
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await wattpmUtils('create', '-s', {
@@ -54,18 +57,18 @@ test('create - should create a new project with two applications', async t => {
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'yes' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'yes' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'list', question: 'Which application should be exposed?', reply: 'alternate' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Which application should be exposed?', reply: 'alternate' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await wattpmUtils('create', '-s', {
@@ -97,13 +100,13 @@ test('create - should not install wattpm as it is already available', async t =>
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const createProcess = await wattpmUtils('create', '-s', {
@@ -119,13 +122,13 @@ test('create - should use a custom configuration file', async t => {
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await wattpmUtils('create', '-c', 'watt-alternative.json', '-s', {
@@ -156,13 +159,13 @@ test('create - should correctly set the chosen user entrypoint', async t => {
 
   const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await wattpmUtils('create', '-s', {
@@ -188,11 +191,11 @@ test('create - should correctly set the chosen user entrypoint', async t => {
   })
 
   const userInputHandler2 = await setupUserInputHandler(t, [
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'alternate' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'list', question: 'Which application should be exposed?', reply: 'alternate' }
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Which application should be exposed?', reply: 'alternate' }
   ])
 
   await wattpmUtils('create', '-P', 'pnpm', '-s', {
@@ -211,12 +214,12 @@ test('create - should create a new project using a different package manager', a
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const createProcess = await wattpmUtils('create', '-P', 'fake-npm', {
@@ -234,13 +237,13 @@ test('create - should support providing capability via command line', async t =>
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const createProcess = await wattpmUtils(
@@ -279,11 +282,10 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
 
   const userInputHandler = await setupUserInputHandler(t, [
     {
-      type: 'list',
+      type: 'select',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
       reply: 'yes'
     },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
   await wattpmUtils('create', '-s', {
@@ -294,15 +296,11 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
   const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
 
   deepStrictEqual(envFile.split(/\r?\n/), [
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
 
   deepStrictEqual(envSampleFile.split(/\r?\n/), [
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -332,10 +330,6 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       },
       managementApi: '{PLT_MANAGEMENT_API}',
-      server: {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}'
-      }
     }
   })
 })
@@ -347,11 +341,10 @@ test('create - should not attempt to wrap twice', async t => {
 
   const firstuserInputHandler = await setupUserInputHandler(t, [
     {
-      type: 'list',
+      type: 'select',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
       reply: 'yes'
-    },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' }
+    }
   ])
 
   const seconduserInputHandler = await setupUserInputHandler(t, [])
@@ -406,11 +399,10 @@ test('create - should wrap existing frontend applications into Watt', async t =>
 
   const userInputHandler = await setupUserInputHandler(t, [
     {
-      type: 'list',
+      type: 'select',
       question: 'This folder seems to already contain a Next.js application. Do you want to wrap into Watt?',
       reply: 'yes'
     },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
   await wattpmUtils('create', '-s', {
@@ -424,8 +416,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
   deepStrictEqual(envFile.split(/\r?\n/), [
     'A=B',
     'C=D',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -433,8 +423,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
   deepStrictEqual(envSampleFile.split(/\r?\n/), [
     'E=F',
     'G=H',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
     'PLT_MANAGEMENT_API=true'
   ])
@@ -470,10 +458,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       },
       managementApi: '{PLT_MANAGEMENT_API}',
-      server: {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}'
-      }
     }
   })
 })
@@ -486,19 +470,19 @@ test('create - correctly write package.json and watt.json when importing a local
 
   const userInputHandler = await setupUserInputHandler(t, [
     {
-      type: 'list',
+      type: 'select',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
       reply: 'no'
     },
     { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/next' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/next' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'input', question: 'Where is your application located?', reply: 'my-app' },
-    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to import or copy your application?', reply: 'import' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const { stdout } = await wattpmUtils('create', '-s', {
@@ -521,19 +505,19 @@ test('create - should not use a URL when importing a local application within th
 
   const userInputHandler = await setupUserInputHandler(t, [
     {
-      type: 'list',
+      type: 'select',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
       reply: 'no'
     },
     { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
-    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
-    { type: 'list', question: 'Which kind of application do you want to create?', reply: '@platformatic/next' },
+    { type: 'select', question: 'Which package manager do you want to use?', reply: 'npm' },
+    { type: 'select', question: 'Which kind of application do you want to create?', reply: '@platformatic/next' },
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'input', question: 'Where is your application located?', reply: 'my-app' },
-    { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
-    { type: 'list', question: 'Do you want to create another application?', reply: 'no' },
+    { type: 'select', question: 'Do you want to import or copy your application?', reply: 'import' },
+    { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   await wattpmUtils('create', '-s', {

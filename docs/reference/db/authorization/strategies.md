@@ -9,6 +9,10 @@ import Issues from "../../../getting-started/issues.md"
 
 Platformatic DB implements flexible, role-based authorization strategies that integrate seamlessly with external authentication services. This section outlines the available strategies and how to configure them.
 
+## Authentication vs Authorization
+
+Platformatic DB **validates** credentials on incoming requests (a JWT, or any credential your webhook understands) and enforces the configured authorization rules — it does not **issue** credentials. There is no built-in `/login` route or user database: tokens come from an external identity provider (like [Auth0](../jwt-auth0.md) or [Keycloak](../jwt-keycloak.md)), or from a login route you implement yourself in a [plugin](../plugin.md) and sign with the same JWT secret configured in `authorization.jwt`.
+
 <!-- TODO: Update diagrams with the updated versions I created for my API adventure talk -->
 
 ## Supported Authorization Strategies
@@ -147,12 +151,16 @@ the same body and headers, except for:
 - `host`
 - `connection`
 
-<!--
-TODO: Is this correct? Code looks like it's getting data from the response body:
-https://github.com/platformatic/platformatic/blob/main/packages/db-authorization/lib/webhook.js#L45-L46
--->
+If the webhook responds with a status code above 299, the request is rejected as unauthorized. Otherwise, the webhook must return the user metadata (including the roles) as a **JSON object in the response body**, e.g.:
 
-In the Webhook case, the HTTP response contains the roles/user information as HTTP headers.
+```json
+{
+  "X-PLATFORMATIC-USER-ID": 42,
+  "X-PLATFORMATIC-ROLE": "user"
+}
+```
+
+The returned object becomes the user metadata for the request, exactly as if it had been extracted from a JWT.
 
 ## HTTP headers (development only)
 

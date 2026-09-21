@@ -1,23 +1,70 @@
+import type { Context } from '@opentelemetry/api'
 import { EventEmitter } from 'node:events'
 import { MessagePort } from 'node:worker_threads'
 
-export type Handler = ((data: any) => any) | ((data: any) => Promise<any>)
+export type Handler = (data: any) => any | Promise<any>
 
 export interface ITCConstructorOptions {
-  port: MessagePort
+  port: MessagePort,
+  name: string,
+  handlers?: Record<string, Handler>
+  throwOnMissingHandler?: boolean
+}
+
+export interface ITCSendOptions extends Record<string, any> {
+  signal?: AbortSignal
+}
+
+export interface OutgoingMessagingSpanOptions {
+  telemetryContext?: Context
+  telemetryMetadata?: Record<string, string>
+}
+
+export interface OutgoingMessagingSpan {
+  meta: {
+    mode: string
+    sourceApplication?: string
+    targetApplication?: string
+    telemetry: Record<string, string>
+  } | null
+  run<T>(callback: () => T): T
+  end(error?: Error | null): void
 }
 
 export class ITC extends EventEmitter {
   constructor (options: ITCConstructorOptions)
 
-  send (name: string, message: any, options?: Record<string, any>): Promise<any>
+  send (name: string, message: any, options?: ITCSendOptions): Promise<any>
   notify (name: string, message: any, options?: Record<string, any>): void
+  process (name: string, message: any, context?: Record<string, any>): Promise<any>
   handle (message: string, handler: Handler): void
   getHandler (message: string): Handler | undefined
   listen (): void
   close (): void
 }
 
-declare module '@platformatic/itc' {
-  export { ITC }
-}
+export function initializeITCTelemetry (): Promise<any>
+
+export function startOutgoingMessagingSpan (
+  mode: string,
+  sourceApplication: string,
+  targetApplication: string,
+  messageName: string,
+  options?: OutgoingMessagingSpanOptions
+): OutgoingMessagingSpan | null
+
+export function startOutgoingMessagingSpanSync (
+  mode: string,
+  sourceApplication: string,
+  targetApplication: string,
+  messageName: string,
+  options?: OutgoingMessagingSpanOptions
+): OutgoingMessagingSpan | null
+
+export function traceIncomingMessagingHandler (
+  applicationId: string,
+  messageName: string,
+  handler: Handler,
+  data: any,
+  handlerContext?: Record<string, any>
+): any

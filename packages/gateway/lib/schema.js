@@ -118,6 +118,78 @@ export const graphqlComposerOptions = {
   additionalProperties: false
 }
 
+export const deduplicationRoute = {
+  type: 'object',
+  properties: {
+    method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] },
+    methods: {
+      type: 'array',
+      items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] }
+    },
+    path: { type: 'string' }
+  },
+  required: ['path'],
+  anyOf: [{ required: ['method'] }, { required: ['methods'] }],
+  additionalProperties: false
+}
+
+export const deduplicationStorage = {
+  anyOf: [
+    {
+      type: 'object',
+      properties: {
+        adapter: { type: 'string', const: 'memory', default: 'memory' }
+      },
+      additionalProperties: false
+    },
+    {
+      type: 'object',
+      properties: {
+        adapter: { type: 'string', const: 'valkey' },
+        url: { type: 'string' },
+        prefix: { type: 'string' }
+      },
+      required: ['adapter', 'url'],
+      additionalProperties: false
+    }
+  ]
+}
+
+export const deduplication = {
+  type: 'object',
+  properties: {
+    enabled: {
+      anyOf: [{ type: 'boolean' }, { type: 'string' }]
+    },
+    storage: deduplicationStorage,
+    methods: {
+      type: 'array',
+      items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] },
+      default: ['GET', 'HEAD']
+    },
+    headers: {
+      type: 'array',
+      items: { type: 'string' },
+      default: ['authorization', 'accept', 'accept-encoding', 'accept-language']
+    },
+    skipHeaders: {
+      type: 'array',
+      items: { type: 'string' },
+      default: ['cookie']
+    },
+    routes: {
+      type: 'array',
+      items: deduplicationRoute
+    },
+    key: { type: 'string', resolvePath: true },
+    timeout: { type: 'integer', minimum: 0, default: 1000 },
+    retries: { type: 'integer', minimum: 0, default: 3 },
+    ttl: { type: 'integer', minimum: 0, default: 10000 },
+    lockTtl: { type: 'integer', minimum: 0, default: 500 }
+  },
+  additionalProperties: false
+}
+
 export const gateway = {
   type: 'object',
   properties: {
@@ -149,15 +221,22 @@ export const gateway = {
                   },
                   upstream: { type: 'string' },
                   prefix: { type: 'string' },
+                  rewritePrefix: { type: 'string' },
+                  rewriteLocationHeader: { type: 'boolean' },
                   hostname: { type: 'string' },
                   custom: {
                     type: 'object',
                     properties: {
-                      path: { type: 'string' }
+                      path: { type: 'string' },
+                      options: {
+                        type: 'object',
+                        additionalProperties: true
+                      }
                     },
                     required: ['path'],
                     additionalProperties: false
                   },
+                  deduplication,
                   ws: {
                     type: 'object',
                     properties: {
@@ -197,10 +276,21 @@ export const gateway = {
         additionalProperties: false
       }
     },
+    handler: { type: 'string' },
+    deduplication,
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
     addEmptySchema: { type: 'boolean', default: false },
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
+    restartOnApplicationChange: {
+      type: 'boolean',
+      default: true,
+      description:
+        'Restart the gateway when an application is added to or removed from the runtime, so it can recompose ' +
+        'its routes. Set to false for a gateway that does not route from the application registry — restarting ' +
+        'it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port ' +
+        'until the replacement worker boots.'
+    },
     passthroughContentTypes: {
       type: 'array',
       items: { type: 'string' },
@@ -235,6 +325,9 @@ export const schemaComponents = {
   entities,
   graphqlApplication,
   graphqlComposerOptions,
+  deduplicationRoute,
+  deduplicationStorage,
+  deduplication,
   gateway,
   types
 }

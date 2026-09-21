@@ -1,28 +1,18 @@
-import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { kMetadata } from '@platformatic/foundation'
+import { getBasePath, getConfig, getLogger, getNextVersion, getNotifyConfig, isBuilding } from '@platformatic/globals'
 import { resolve as resolvePath } from 'node:path'
 import { getCacheHandlerPath, NextCapability } from './lib/capability.js'
+import { loadConfiguration } from './lib/config.js'
 import { NextImageOptimizerCapability } from './lib/image-optimizer.js'
-import { schema } from './lib/schema.js'
-
-/* c8 ignore next 9 */
-export async function transform (config, schema, options) {
-  config = await basicTransform(config, schema, options)
-  config.watch = { enabled: false }
-
-  if (config.cache?.adapter === 'redis') {
-    config.cache.adapter = 'valkey'
-  }
-
-  return config
-}
 
 export function getAdapterPath () {
   return resolvePath(import.meta.dirname, 'lib', 'adapter.js')
 }
 
 function enhanceNextCacheConfig (nextConfig, modifications) {
-  const { config, nextVersion, logger } = globalThis.platformatic
+  const config = getConfig()
+  const nextVersion = getNextVersion()
+  const logger = getLogger()
 
   if (!config.cache?.adapter || config.cache?.enabled === false) return
 
@@ -48,8 +38,17 @@ function enhanceNextCacheConfig (nextConfig, modifications) {
     nextConfig.cacheComponents = true
     nextConfig.cacheHandler = getCacheHandlerPath('null-isr')
     nextConfig.cacheHandlers = { default: getCacheHandlerPath(`${config.cache.adapter}-components`) }
+
+    if (config.cache.remote) {
+      nextConfig.cacheHandlers.remote = getCacheHandlerPath(`${config.cache.adapter}-components-remote`)
+    }
+
     nextConfig.cacheMaxMemorySize = 0
     modifications.push(['componentsCache', config.cache.adapter])
+
+    if (config.cache.remote) {
+      modifications.push(['remoteComponentsCache', config.cache.adapter])
+    }
   } else {
     delete nextConfig.cacheHandlers
     nextConfig.cacheHandler = getCacheHandlerPath(`${config.cache.adapter}-isr`)
@@ -66,7 +65,9 @@ export async function enhanceNextConfig (nextConfig, ...args) {
     nextConfig = await nextConfig(...args)
   }
 
-  const { basePath, config } = globalThis.platformatic
+  const basePath = getBasePath()
+  const config = getConfig()
+  const notifyConfig = getNotifyConfig()
 
   if (typeof nextConfig.basePath === 'undefined') {
     nextConfig.basePath = basePath
@@ -81,25 +82,18 @@ export async function enhanceNextConfig (nextConfig, ...args) {
     modifications.push(['trailingSlash', 'enabled'])
   }
 
+  if (typeof nextConfig.deploymentId === 'undefined' && process.env.PLT_DEPLOYMENT_ID && isBuilding({ throwOnMissing: false }) === true) {
+    nextConfig.deploymentId = process.env.PLT_DEPLOYMENT_ID
+    modifications.push(['deploymentId', 'PLT_DEPLOYMENT_ID'])
+  }
+
   if (modifications.length > 0) {
     nextConfig.env ??= {}
     nextConfig.env.PLT_NEXT_MODIFICATIONS = JSON.stringify(Object.fromEntries(modifications))
   }
 
-  globalThis.platformatic.notifyConfig(nextConfig)
+  notifyConfig(nextConfig)
   return nextConfig
-}
-
-export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
-
-  return utilsLoadConfiguration(source, context?.schema ?? schema, {
-    validationOptions,
-    transform,
-    replaceEnv: true,
-    root,
-    ...context
-  })
 }
 
 export async function create (configOrRoot, sourceOrConfig, context) {
@@ -110,6 +104,8 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 }
 
 export * from './lib/capability.js'
+export * from './lib/commands/index.js'
+export * from './lib/config.js'
 export * as errors from './lib/errors.js'
 export * from './lib/image-optimizer.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'

@@ -1,11 +1,12 @@
+import { getBasePath } from '@platformatic/globals'
 import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: globalThis.platformatic?.basePath ?? '/',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
   plugins: [
     remix({
-      basename: globalThis.platformatic?.basePath ?? '/',
+      basename: getBasePath({ throwOnMissing: false }) ?? '/',
       future: {
         v3_fetcherPersist: true,
         v3_relativeSplatPath: true,

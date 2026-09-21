@@ -2,7 +2,7 @@ import { loadConfiguration as databaseLoadConfiguration } from '@platformatic/db
 import { deepStrictEqual, ok, rejects, strictEqual, throws } from 'node:assert'
 import { dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { wrapInRuntimeConfig } from '../index.js'
+import { loadConfiguration, wrapInRuntimeConfig } from '../index.js'
 import { parseInspectorOptions } from '../lib/config.js'
 import { createRuntime } from './helpers.js'
 
@@ -132,6 +132,43 @@ test('correctly loads the watch value from a string', async () => {
   strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
+test('defaults graceful shutdown timeouts', async () => {
+  const configFile = join(fixturesDir, 'configs', 'graceful-shutdown-defaults.json')
+  const runtime = await createRuntime(configFile)
+  const { gracefulShutdown } = await runtime.getRuntimeConfig()
+
+  strictEqual(gracefulShutdown.runtime, 30000)
+  strictEqual(gracefulShutdown.application, 10000)
+})
+
+test('strictEnv should fail loading the configuration when environment variables are missing', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
+  delete process.env.PLT_STRICT_ENV_WATCH
+
+  await rejects(
+    async () => {
+      await createRuntime(configFile)
+    },
+    {
+      code: 'PLT_MISSING_ENV_VARIABLES',
+      message:
+        'The configuration references the following environment variables which are not set: PLT_STRICT_ENV_WATCH'
+    }
+  )
+})
+
+test('strictEnv should not fail loading the configuration when all environment variables are set', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-strict-env.json')
+  process.env.PLT_STRICT_ENV_WATCH = 'false'
+
+  t.after(() => {
+    delete process.env.PLT_STRICT_ENV_WATCH
+  })
+
+  const runtime = await createRuntime(configFile)
+  strictEqual((await runtime.getRuntimeConfig()).watch, false)
+})
+
 test('defaults the application name to `main` if there is no package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
   const config = await databaseLoadConfiguration(configFile)
@@ -167,6 +204,21 @@ test('defaults name to `main` if package.json exists but has no name', async t =
   strictEqual(runtimeConfig.applications[0].id, 'main')
 })
 
+test('wrapInRuntimeConfig does not synthesize a server hostname when none is configured', async t => {
+  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
+
+  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
+  // Simulate a project where neither the top-level nor the runtime config
+  // declare a server section. The wrapped runtime must not end up with a
+  // hardcoded hostname.
+  delete config.server
+  delete config.runtime.server
+
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  strictEqual(runtimeConfig.server?.hostname, undefined)
+})
+
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
@@ -176,11 +228,14 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
   ok(typeof runtimeConfig.web, 'undefined')
   ok(typeof runtimeConfig.autoload, 'undefined')
   ok(runtimeConfig.watch === false)
-  deepStrictEqual(runtimeConfig.server, { hostname: '127.0.0.1', port: 1234 })
+  // When the user only sets server.port (no hostname), we must not silently
+  // inject a hostname — the underlying framework's default should apply.
+  deepStrictEqual(runtimeConfig.server, { port: 1234 })
   deepStrictEqual(runtimeConfig.applications, [
     {
       config: configFile,
       dependencies: [],
+      enabled: true,
       entrypoint: true,
       gitBranch: 'main',
       health: {},
@@ -198,6 +253,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
     },
     {
       dependencies: [],
+      enabled: true,
       entrypoint: false,
       gitBranch: 'main',
       health: {},
@@ -477,4 +533,42 @@ test('prepareApplication should handle multiple services with url but no path ef
   // because they should skip capability detection entirely (no file operations)
   // With the bug, each service would trigger a glob operation on the temp directory
   ok(elapsed < 50, `Processing 16 url-only services should be fast (took ${elapsed.toFixed(2)}ms, expected < 50ms)`)
+})
+
+test('autoload - merges an explicit entry which points to the autoloaded directory', async t => {
+  const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'same-path.json'))
+
+  strictEqual(config.applications.length, 1)
+  strictEqual(config.applications[0].id, 'api')
+  strictEqual(config.applications[0].path, join(fixturesDir, 'autoload-collision', 'web', 'api'))
+  strictEqual(config.applications[0].workers.static, 3)
+})
+
+test('autoload - merges an external entry when the autoloaded directory is where it is resolved', async t => {
+  const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'resolved-base-path.json'))
+
+  strictEqual(config.applications.length, 1)
+  strictEqual(config.applications[0].id, 'api')
+  strictEqual(config.applications[0].path, join(fixturesDir, 'autoload-collision', 'web', 'api'))
+  strictEqual(config.applications[0].url, 'https://github.com/org/api')
+})
+
+test('autoload - throws when the id of an autoloaded directory is used by an external application', async t => {
+  await rejects(
+    () => loadConfiguration(join(fixturesDir, 'autoload-collision', 'url-collision.json')),
+    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the URL "https:\/\/github.com\/org\/api"./
+  )
+})
+
+test('autoload - throws when the id of an autoloaded directory is used by another local application', async t => {
+  await rejects(
+    () => loadConfiguration(join(fixturesDir, 'autoload-collision', 'path-collision.json')),
+    /The application id "api" is used by the autoloaded directory ".+" and by a different application defined in the configuration file via the path ".+[\\/]elsewhere[\\/]api"./
+  )
+})
+
+test('autoload - does not report a collision with a disabled application', async t => {
+  const config = await loadConfiguration(join(fixturesDir, 'autoload-collision', 'disabled-url.json'))
+
+  strictEqual(config.applications.length, 0)
 })

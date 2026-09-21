@@ -1,29 +1,98 @@
+import { getApplicationId, getITC, getWorkerId } from '@platformatic/globals'
 import collectHttpMetrics from '@platformatic/http-metrics'
+import client from '@platformatic/prom-client'
+import { subscribe, unsubscribe } from 'node:diagnostics_channel'
 import os from 'node:os'
 import { performance } from 'node:perf_hooks'
-import client from '@platformatic/prom-client'
 
 // Import individual metric collectors from prom-client
-import processCpuTotal from '@platformatic/prom-client/lib/metrics/processCpuTotal.js'
-import processStartTime from '@platformatic/prom-client/lib/metrics/processStartTime.js'
-import osMemoryHeap from '@platformatic/prom-client/lib/metrics/osMemoryHeap.js'
-import processOpenFileDescriptors from '@platformatic/prom-client/lib/metrics/processOpenFileDescriptors.js'
-import processMaxFileDescriptors from '@platformatic/prom-client/lib/metrics/processMaxFileDescriptors.js'
 import eventLoopLag from '@platformatic/prom-client/lib/metrics/eventLoopLag.js'
-import processHandles from '@platformatic/prom-client/lib/metrics/processHandles.js'
-import processRequests from '@platformatic/prom-client/lib/metrics/processRequests.js'
-import processResources from '@platformatic/prom-client/lib/metrics/processResources.js'
+import gc from '@platformatic/prom-client/lib/metrics/gc.js'
 import heapSizeAndUsed from '@platformatic/prom-client/lib/metrics/heapSizeAndUsed.js'
 import heapSpacesSizeAndUsed from '@platformatic/prom-client/lib/metrics/heapSpacesSizeAndUsed.js'
+import osMemoryHeap from '@platformatic/prom-client/lib/metrics/osMemoryHeap.js'
+import processCpuTotal from '@platformatic/prom-client/lib/metrics/processCpuTotal.js'
+import processHandles from '@platformatic/prom-client/lib/metrics/processHandles.js'
+import processMaxFileDescriptors from '@platformatic/prom-client/lib/metrics/processMaxFileDescriptors.js'
+import processOpenFileDescriptors from '@platformatic/prom-client/lib/metrics/processOpenFileDescriptors.js'
+import processRequests from '@platformatic/prom-client/lib/metrics/processRequests.js'
+import processResources from '@platformatic/prom-client/lib/metrics/processResources.js'
+import processStartTime from '@platformatic/prom-client/lib/metrics/processStartTime.js'
 import version from '@platformatic/prom-client/lib/metrics/version.js'
-import gc from '@platformatic/prom-client/lib/metrics/gc.js'
 
 export * as client from '@platformatic/prom-client'
 
 const { eventLoopUtilization } = performance
-const { Registry, Gauge, Counter, collectDefaultMetrics } = client
+const { Registry, Gauge, Counter, Histogram, collectDefaultMetrics } = client
 
 export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
+const kMetricsCleanups = Symbol('plt.metrics.MetricsCleanups')
+const kHttpClientRequestStart = Symbol('plt.metrics.HttpClientRequestStart')
+const kHttpClientRequestStatusCode = Symbol('plt.metrics.HttpClientRequestStatusCode')
+export const openTelemetryITCMessage = 'plt.metrics.itc.notification'
+
+export class OpenTelemetryExporter {
+  constructor (options = {}) {
+    this._shutdown = false
+    this.applicationId = options.applicationId
+    this.workerId = options.workerId
+    this.itc = options.itc
+  }
+
+  export (resourceMetrics, resultCallback) {
+    if (this._shutdown) {
+      resultCallback({ code: 1 })
+      return
+    }
+
+    try {
+      const itc = this.itc ?? getITC({ throwOnMissing: false })
+      if (!itc) {
+        resultCallback({ code: 1, error: new Error('Platformatic ITC is not available') })
+        return
+      }
+
+      const applicationId = this.applicationId ?? getApplicationId({ throwOnMissing: false })
+      const workerId = this.workerId ?? getWorkerId({ throwOnMissing: false })
+
+      itc.notify(openTelemetryITCMessage, this.#addPlatformaticAttributes(resourceMetrics, applicationId, workerId))
+      resultCallback({ code: 0 })
+    } catch (error) {
+      resultCallback({ code: 1, error })
+    }
+  }
+
+  async forceFlush () {}
+
+  async shutdown () {
+    this._shutdown = true
+  }
+
+  #addPlatformaticAttributes (resourceMetrics, applicationId, workerId) {
+    return {
+      ...resourceMetrics,
+      resource: {
+        ...resourceMetrics.resource,
+        attributes: {
+          ...this.#getResourceAttributes(resourceMetrics),
+          applicationId,
+          ...(typeof workerId !== 'undefined' ? { workerId } : {})
+        }
+      }
+    }
+  }
+
+  #getResourceAttributes (resourceMetrics) {
+    const resource = resourceMetrics.resource
+    const attributes = resource?.attributes ?? {}
+    return { ...attributes }
+  }
+}
+
+function getRegistrySet (registry, key) {
+  registry[key] ??= new Set()
+  return registry[key]
+}
 
 // Process-level metrics (same across all workers, collect once in main thread)
 export const PROCESS_LEVEL_METRICS = [
@@ -69,8 +138,7 @@ export const THREAD_LEVEL_METRICS = [
 ]
 
 export function registerMetricsGroup (registry, group) {
-  registry[kMetricsGroups] ??= new Set()
-  registry[kMetricsGroups].add(group)
+  getRegistrySet(registry, kMetricsGroups).add(group)
 }
 
 export function hasMetricsGroup (registry, group) {
@@ -80,21 +148,142 @@ export function hasMetricsGroup (registry, group) {
 // Use this method when dealing with metrics registration in async functions.
 // This will ensure that the group is registered only once.
 export function ensureMetricsGroup (registry, group) {
-  registry[kMetricsGroups] ??= new Set()
+  const groups = getRegistrySet(registry, kMetricsGroups)
 
-  if (registry[kMetricsGroups]?.has(group)) {
+  if (groups.has(group)) {
     return true
   }
 
-  registry[kMetricsGroups].add(group)
+  groups.add(group)
   return false
 }
 
+export function registerMetricsCleanup (registry, cleanup) {
+  getRegistrySet(registry, kMetricsCleanups).add(cleanup)
+}
+
 export function clearRegistry (registry) {
+  if (registry[kMetricsCleanups]) {
+    for (const cleanup of registry[kMetricsCleanups]) {
+      cleanup()
+    }
+    registry[kMetricsCleanups].clear()
+  }
+
   registry.clear()
   if (registry[kMetricsGroups]) {
     registry[kMetricsGroups].clear()
   }
+}
+
+function getHttpClientRequestOrigin (request) {
+  return typeof request.origin === 'string' && request.origin.length > 0 ? request.origin : 'unknown'
+}
+
+function getHttpClientErrorType (error) {
+  return error ? String(error.code ?? error.name ?? 'unknown') : ''
+}
+
+function isHttpClientMetricsEnabled (metricsConfig) {
+  return metricsConfig.httpClientMetrics === true || metricsConfig.httpClientMetrics === 'true'
+}
+
+export function collectHttpClientMetrics (registry) {
+  if (ensureMetricsGroup(registry, 'http-client')) {
+    return
+  }
+
+  const requestDurationMetric = new Histogram({
+    name: 'http_client_request_duration_seconds',
+    help: 'outgoing HTTP client request duration in seconds',
+    labelNames: ['method', 'status_code', 'dispatcher_stats_url', 'error_type'],
+    collect: function () {
+      process.nextTick(() => this.reset())
+    },
+    registers: [registry]
+  })
+
+  const onRequestCreate = ({ request }) => {
+    if (request && typeof request === 'object') {
+      request[kHttpClientRequestStart] = performance.now()
+    }
+  }
+
+  const onRequestHeaders = ({ request, response }) => {
+    if (request && typeof request === 'object') {
+      request[kHttpClientRequestStatusCode] = response?.statusCode ?? ''
+    }
+  }
+
+  const observeRequest = ({ request, response, error }) => {
+    if (!request || typeof request !== 'object') {
+      return
+    }
+
+    const start = request[kHttpClientRequestStart]
+    if (start === undefined) {
+      return
+    }
+
+    const duration = (performance.now() - start) / 1000
+    const method = request.method ?? 'unknown'
+    const statusCode = response?.statusCode ?? request[kHttpClientRequestStatusCode] ?? ''
+    const dispatcherStatsUrl = getHttpClientRequestOrigin(request)
+    const errorType = getHttpClientErrorType(error)
+
+    delete request[kHttpClientRequestStart]
+    delete request[kHttpClientRequestStatusCode]
+
+    requestDurationMetric.observe(
+      {
+        method,
+        status_code: statusCode,
+        dispatcher_stats_url: dispatcherStatsUrl,
+        error_type: errorType
+      },
+      duration
+    )
+  }
+
+  subscribe('undici:request:create', onRequestCreate)
+  subscribe('undici:request:headers', onRequestHeaders)
+  subscribe('undici:request:trailers', observeRequest)
+  subscribe('undici:request:error', observeRequest)
+
+  registerMetricsCleanup(registry, () => {
+    unsubscribe('undici:request:create', onRequestCreate)
+    unsubscribe('undici:request:headers', onRequestHeaders)
+    unsubscribe('undici:request:trailers', observeRequest)
+    unsubscribe('undici:request:error', observeRequest)
+  })
+}
+
+function collectHttpServerMetrics (registry, metricsConfig) {
+  if (ensureMetricsGroup(registry, 'http')) {
+    return
+  }
+
+  // Build custom labels configuration
+  const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
+
+  collectHttpMetrics(registry, {
+    customLabels,
+    getCustomLabels,
+    histogram: {
+      name: 'http_request_all_duration_seconds',
+      help: 'request duration in seconds summary for all requests',
+      collect: function () {
+        process.nextTick(() => this.reset())
+      }
+    },
+    summary: {
+      name: 'http_request_all_summary_seconds',
+      help: 'request duration in seconds histogram for all requests',
+      collect: function () {
+        process.nextTick(() => this.reset())
+      }
+    }
+  })
 }
 
 export async function collectThreadCpuMetrics (registry) {
@@ -283,28 +472,11 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
     await collectThreadCpuMetrics(registry)
   }
 
-  if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
-    // Build custom labels configuration
-    const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
-
-    collectHttpMetrics(registry, {
-      customLabels,
-      getCustomLabels,
-      histogram: {
-        name: 'http_request_all_duration_seconds',
-        help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      },
-      summary: {
-        name: 'http_request_all_summary_seconds',
-        help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      }
-    })
+  if (metricsConfig.httpMetrics) {
+    collectHttpServerMetrics(registry, metricsConfig)
+    if (isHttpClientMetricsEnabled(metricsConfig)) {
+      collectHttpClientMetrics(registry)
+    }
   }
 
   return {
@@ -365,28 +537,11 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
     await collectThreadCpuMetrics(registry)
   }
 
-  if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
-    // Build custom labels configuration
-    const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
-
-    collectHttpMetrics(registry, {
-      customLabels,
-      getCustomLabels,
-      histogram: {
-        name: 'http_request_all_duration_seconds',
-        help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      },
-      summary: {
-        name: 'http_request_all_summary_seconds',
-        help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      }
-    })
+  if (metricsConfig.httpMetrics) {
+    collectHttpServerMetrics(registry, metricsConfig)
+    if (isHttpClientMetricsEnabled(metricsConfig)) {
+      collectHttpClientMetrics(registry)
+    }
   }
 
   return {
@@ -408,13 +563,7 @@ export async function setupOtlpExporter (registry, otlpExporterConfig, applicati
   // Dynamically import PromClientBridge to defer loading until after telemetry is initialized
   const { PromClientBridge } = await import('@platformatic/promotel')
 
-  const {
-    endpoint,
-    headers,
-    interval = 60000,
-    serviceName = applicationId,
-    serviceVersion
-  } = otlpExporterConfig
+  const { endpoint, headers, interval = 60000, serviceName = applicationId, serviceVersion } = otlpExporterConfig
 
   const otlpEndpointOptions = {
     url: endpoint
@@ -437,7 +586,7 @@ export async function setupOtlpExporter (registry, otlpExporterConfig, applicati
     otlpEndpoint: otlpEndpointOptions,
     interval,
     conversionOptions,
-    onError: (error) => {
+    onError: error => {
       // Log error but don't crash the application
       console.error('OTLP metrics export error:', error)
     }

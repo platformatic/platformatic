@@ -1,6 +1,7 @@
 import { findNearestString } from '@platformatic/foundation'
 import camelcase from 'camelcase'
 import {
+  GraphQLBoolean,
   GraphQLEnumType,
   GraphQLID,
   GraphQLInputObjectType,
@@ -10,6 +11,7 @@ import {
   GraphQLObjectType,
   GraphQLScalarType
 } from 'graphql'
+import { GraphQLJSONObject } from 'graphql-type-json'
 import { UnableToGenerateGraphQLEnumTypeError } from './errors.js'
 import { fromSelectionSet, sqlTypeToGraphQL } from './utils.js'
 
@@ -27,10 +29,23 @@ const limitType = new GraphQLScalarType({
     'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
 })
 
+const RESERVED_TYPE_NAMES = ['Query', 'Mutation', 'Subscription']
+
 export function constructGraph (app, entity, opts, ignore) {
   const primaryKeys = Array.from(entity.primaryKeys).map(key => camelcase(key))
   const relationalFields = entity.relations.map(relation => relation.column_name)
-  const entityName = entity.name
+  let entityName = entity.name
+
+  // Tables like "queries" or "subscriptions" would generate a type with the
+  // same name as a GraphQL root operation type, which is not allowed
+  if (RESERVED_TYPE_NAMES.includes(entityName)) {
+    const renamed = `${entityName}Entity`
+    app.log.warn(
+      `The entity "${entityName}" conflicts with a reserved GraphQL root operation type name: ` +
+        `its GraphQL type has been renamed to "${renamed}"`
+    )
+    entityName = renamed
+  }
   const singular = entity.singularName
   const plural = entity.pluralName
   const { queryTopFields, mutationTopFields, resolvers, federationReplacements, federationMetadata, loaders } = opts
@@ -86,6 +101,12 @@ export function constructGraph (app, entity, opts, ignore) {
         app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
         throw new UnableToGenerateGraphQLEnumTypeError()
       }
+    } else if (field.isJson) {
+      // MariaDB has no native JSON type: JSON columns are introspected as
+      // `longtext` (see sql-mapper), so sqlTypeToGraphQL would otherwise
+      // fall back to GraphQLString and break serialization of the parsed
+      // JSON object returned by the resolver.
+      meta.type = GraphQLJSONObject
     } else {
       meta.type = sqlTypeToGraphQL(field.sqlType)
     }
@@ -107,20 +128,23 @@ export function constructGraph (app, entity, opts, ignore) {
   resolvers.Mutation = resolvers.Mutation || {}
   loaders.Query = loaders.Query || {}
 
-  const getBy = camelcase(
-    [
-      'get',
-      singular,
-      ...primaryKeys
-        .map((key, i) => {
-          if (i === 0) {
-            return ['by', key]
-          }
-          return ['and', key]
-        })
-        .flat()
-    ].join('_')
-  )
+  let getBy
+  if (primaryKeys.length > 0) {
+    getBy = camelcase(
+      [
+        'get',
+        singular,
+        ...primaryKeys
+          .map((key, i) => {
+            if (i === 0) {
+              return ['by', key]
+            }
+            return ['and', key]
+          })
+          .flat()
+      ].join('_')
+    )
+  }
 
   const whereFields = Object.keys(fields).reduce((acc, field) => {
     let graphqlFields
@@ -135,7 +159,8 @@ export function constructGraph (app, entity, opts, ignore) {
         lte: { type: fields[field].type },
         like: { type: fields[field].type },
         in: { type: new GraphQLList(fields[field].type) },
-        nin: { type: new GraphQLList(fields[field].type) }
+        nin: { type: new GraphQLList(fields[field].type) },
+        isNull: { type: GraphQLBoolean }
       }
     } else {
       graphqlFields = {
@@ -172,29 +197,31 @@ export function constructGraph (app, entity, opts, ignore) {
     }
   })
 
-  queryTopFields[getBy] = {
-    type,
-    args: {
-      ...primaryKeys.reduce((acc, primaryKey) => {
-        acc[primaryKey] = { type: new GraphQLNonNull(fields[primaryKey].type) }
-        return acc
-      }, {})
-    }
-  }
-  loaders.Query[getBy] = {
-    loader (queries, ctx) {
-      const keys = []
-      for (const query of queries) {
-        const pairs = []
-        for (const key of primaryKeys) {
-          pairs.push({ key, value: query.params[key] })
-        }
-        keys.push(pairs)
+  if (getBy) {
+    queryTopFields[getBy] = {
+      type,
+      args: {
+        ...primaryKeys.reduce((acc, primaryKey) => {
+          acc[primaryKey] = { type: new GraphQLNonNull(fields[primaryKey].type) }
+          return acc
+        }, {})
       }
-      return loadMany(keys, queries, ctx)
-    },
-    opts: {
-      cache: false
+    }
+    loaders.Query[getBy] = {
+      loader (queries, ctx) {
+        const keys = []
+        for (const query of queries) {
+          const pairs = []
+          for (const key of primaryKeys) {
+            pairs.push({ key, value: query.params[key] })
+          }
+          keys.push(pairs)
+        }
+        return loadMany(keys, queries, ctx)
+      },
+      opts: {
+        cache: false
+      }
     }
   }
 
@@ -275,68 +302,73 @@ export function constructGraph (app, entity, opts, ignore) {
     return { total }
   }
 
-  const save = camelcase(['save', singular])
+  // Views are read-only: skip all mutations
+  if (!entity.isView) {
+    const save = camelcase(['save', singular])
 
-  mutationTopFields[save] = {
-    type,
-    args: {
-      input: { type: new GraphQLNonNull(inputType) }
+    mutationTopFields[save] = {
+      type,
+      args: {
+        input: { type: new GraphQLNonNull(inputType) }
+      }
+    }
+
+    resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.save({ input, ctx, fields: [...fields, ...relationalFields] })
+    }
+
+    const insert = camelcase(['insert', plural])
+
+    mutationTopFields[insert] = {
+      type: new GraphQLList(type),
+      args: {
+        inputs: { type: new GraphQLNonNull(new GraphQLList(inputType)) }
+      }
+    }
+
+    resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.insert({ inputs, ctx, fields: [...fields, ...relationalFields] })
+    }
+
+    const deleteKey = camelcase(['delete', plural])
+    mutationTopFields[deleteKey] = {
+      type: new GraphQLList(type),
+      args: {
+        where: { type: whereArgType }
+      }
+    }
+
+    resolvers.Mutation[deleteKey] = (_, args, ctx, info) => {
+      const fields = info.fieldNodes[0].selectionSet.selections.map(s => s.name.value)
+      return entity.delete({ ...args, fields: [...fields, ...relationalFields], ctx })
     }
   }
 
-  resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
-    const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
-    return entity.save({ input, ctx, fields: [...fields, ...relationalFields] })
-  }
+  if (primaryKeys.length > 0) {
+    federationReplacements.push({
+      find: new RegExp(`type ${entityName}`),
+      replace: `type ${entityName} @key(fields: "${primaryKeys}")`
+    })
 
-  const insert = camelcase(['insert', plural])
-
-  mutationTopFields[insert] = {
-    type: new GraphQLList(type),
-    args: {
-      inputs: { type: new GraphQLNonNull(new GraphQLList(inputType)) }
-    }
-  }
-
-  resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
-    const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
-    return entity.insert({ inputs, ctx, fields: [...fields, ...relationalFields] })
-  }
-
-  const deleteKey = camelcase(['delete', plural])
-  mutationTopFields[deleteKey] = {
-    type: new GraphQLList(type),
-    args: {
-      where: { type: whereArgType }
-    }
-  }
-
-  resolvers.Mutation[deleteKey] = (_, args, ctx, info) => {
-    const fields = info.fieldNodes[0].selectionSet.selections.map(s => s.name.value)
-    return entity.delete({ ...args, fields: [...fields, ...relationalFields], ctx })
-  }
-
-  federationReplacements.push({
-    find: new RegExp(`type ${entityName}`),
-    replace: `type ${entityName} @key(fields: "${primaryKeys}")`
-  })
-
-  if (federationMetadata) {
-    loaders[entityName] = loaders[entityName] || {}
-    loaders[entityName].__resolveReference = {
-      loader (queries, ctx) {
-        const keys = []
-        for (const { obj } of queries) {
-          const pairs = []
-          for (const key of primaryKeys) {
-            pairs.push({ key, value: obj[key] })
+    if (federationMetadata) {
+      loaders[entityName] = loaders[entityName] || {}
+      loaders[entityName].__resolveReference = {
+        loader (queries, ctx) {
+          const keys = []
+          for (const { obj } of queries) {
+            const pairs = []
+            for (const key of primaryKeys) {
+              pairs.push({ key, value: obj[key] })
+            }
+            keys.push(pairs)
           }
-          keys.push(pairs)
+          return loadMany(keys, queries, ctx)
+        },
+        opts: {
+          cache: false
         }
-        return loadMany(keys, queries, ctx)
-      },
-      opts: {
-        cache: false
       }
     }
   }

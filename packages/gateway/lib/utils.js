@@ -5,6 +5,16 @@ export function prefixWithSlash (url) {
   return ''
 }
 
+// Normalize an application prefix so that it always starts with a slash and
+// never ends with one, avoiding double slashes in the composed paths.
+export function normalizePrefix (prefix) {
+  if (typeof prefix !== 'string') {
+    return ''
+  }
+
+  return prefixWithSlash(prefix).replace(/\/+$/, '')
+}
+
 /**
  * detect if a application if fetchable, so if it has configuration to retrieve schema info (openapi or gql)
  * a application can have openapi and/or gql either from a remote application or from file

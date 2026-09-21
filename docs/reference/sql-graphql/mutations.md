@@ -104,7 +104,19 @@ main()
 ## `delete[ENTITIES]`
 
 Deletes one or more entities from the database, based on the `where` clause
-passed as an input to the mutation.
+passed as an input to the mutation. All the rows matching the clause are
+deleted in a single mutation and returned in the response, e.g.:
+
+```graphql
+mutation {
+  deletePages(where: { status: { eq: "draft" } }) {
+    id
+    title
+  }
+}
+```
+
+deletes every draft page and returns them.
 
 ### Example
 

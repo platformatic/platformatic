@@ -431,7 +431,18 @@ export async function createFromConfig (t, options, applicationFactory, creation
 
   const directory = await createTemporaryDirectory(t)
 
-  const gateway = await create(directory, Object.assign({}, defaultConfig, options), {
+  // Carry over just the pinned hostname when a caller overrides `server`
+  // with only a few sub-fields (e.g. `server: { logger: { level: 'fatal' }}`).
+  // Without this, the shallow `Object.assign` below wipes out the default
+  // hostname and the framework binds to `::1` on dual-stack hosts.
+  // We deliberately merge only hostname to avoid accidentally carrying over
+  // other defaults like `keepAliveTimeout` that tests expect to be reset.
+  const mergedConfig = Object.assign({}, defaultConfig, options)
+  if (options?.server && !options.server.hostname) {
+    mergedConfig.server = { hostname: defaultConfig.server.hostname, ...options.server }
+  }
+
+  const gateway = await create(directory, mergedConfig, {
     applicationFactory,
     isStandalone: true,
     isEntrypoint: true,
@@ -509,8 +520,11 @@ export async function createGatewayInRuntime (
   await writeFile(
     pluginConfigPath,
     `
+      import { getITC } from '@platformatic/globals'
+
       export default async function (app) {
-        globalThis[Symbol.for('plt.runtime.itc')].handle('getSchema', () => {
+        const itc = getITC()
+        itc.handle('getSchema', () => {
           return app.graphqlSupergraph.sdl
         })
       }
@@ -528,8 +542,9 @@ export async function createGatewayInRuntime (
   await runtime.init()
 
   t.after(async () => {
+    await runtime.close()
+
     if (process.env.PLT_TESTS_KEEP_TMP !== 'true') {
-      await runtime.close()
       await safeRemove(tmpDir)
     }
   })

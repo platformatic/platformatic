@@ -3,7 +3,7 @@
   "main": "index.mjs",
   "dependencies": {
     "@opentelemetry/instrumentation-express": "^0.52.0",
-    "@platformatic/node": "^2.3.1",
+    "@platformatic/node": ">=3.0.0",
     "express": "^4.19.2"
   }
 }

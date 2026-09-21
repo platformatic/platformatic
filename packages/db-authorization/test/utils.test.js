@@ -105,4 +105,28 @@ test('should get roles from user with path', t => {
     }
     deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE, isRolePath), ['role1', 'role2', 'role3'])
   }
+
+  {
+    // Malformed path should not throw and should fall back to anonymous
+    const roleKey = 'resource_access.rest-api.roles'
+    const requestWithMalformedPath = {
+      user: {
+        resource_access: null
+      }
+    }
+    deepEqual(getRoles(requestWithMalformedPath, roleKey, ANONYMOUS_ROLE, isRolePath), [ANONYMOUS_ROLE])
+  }
+
+  {
+    // Primitive intermediate value should not throw and should fall back to anonymous
+    const roleKey = 'resource_access.rest-api.roles'
+    const requestWithPrimitiveInPath = {
+      user: {
+        resource_access: {
+          'rest-api': 'admin'
+        }
+      }
+    }
+    deepEqual(getRoles(requestWithPrimitiveInPath, roleKey, ANONYMOUS_ROLE, isRolePath), [ANONYMOUS_ROLE])
+  }
 })

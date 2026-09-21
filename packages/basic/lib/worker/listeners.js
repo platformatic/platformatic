@@ -1,8 +1,10 @@
+import { getEvents, isEntrypoint } from '@platformatic/globals'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
 export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {
   const { promise, resolve, reject } = Promise.withResolvers()
 
+  let completed = false
   const subscribers = {
     asyncStart ({ options }) {
       // Unix socket, do nothing
@@ -10,17 +12,27 @@ export function createServerListener (overridePort = true, overrideHost = false,
         return
       }
 
-      if (overridePort !== false) {
-        const hasFixedPort = typeof overridePort === 'number'
-        options.port = hasFixedPort ? overridePort : 0
+      if (typeof overridePort !== 'number' && overridePort !== false) {
+        overridePort = 0
       }
 
       if (typeof overrideHost === 'string') {
         options.host = overrideHost
       }
 
+      // Check if we need to override the port only if a static port is being requested
+      if (overridePort !== false && overridePort !== 0) {
+        // The user application has requested a specific port, which is not the entrypoint one. Override it.
+        if (options.port !== overridePort && isEntrypoint({ throwOnMissing: false })) {
+          options.port = overridePort
+        }
+      }
+
       Object.assign(options, additionalOptions)
-      globalThis.platformatic?.events?.emitAndNotify('serverOptions', options)
+      const events = getEvents({ throwOnMissing: false })
+      if (events) {
+        events.emitAndNotify('serverOptions', options)
+      }
     },
     asyncEnd ({ server }) {
       cancel()
@@ -33,11 +45,16 @@ export function createServerListener (overridePort = true, overrideHost = false,
   }
 
   function cancel () {
+    completed = true
     tracingChannel('net.server.listen').unsubscribe(subscribers)
   }
 
   tracingChannel('net.server.listen').subscribe(subscribers)
   promise.cancel = function () {
+    if (completed) {
+      return
+    }
+
     cancel()
     resolve(null)
   }

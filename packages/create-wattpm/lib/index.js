@@ -30,6 +30,7 @@ const internalCapabilities = [
   '@platformatic/next',
   '@platformatic/vite',
   '@platformatic/astro',
+  '@platformatic/nitro',
   '@platformatic/remix',
   '@platformatic/nest',
   '@platformatic/tanstack',
@@ -142,7 +143,7 @@ async function findApplicationRoot (projectDir) {
 
 export async function chooseCapability (inquirer, capabilities) {
   const options = await inquirer.prompt({
-    type: 'list',
+    type: 'select',
     name: 'type',
     message: 'Which kind of application do you want to create?',
     default: capabilities[0],
@@ -279,7 +280,7 @@ export async function createApplication (
         }
 
         const { shouldWrap } = await inquirer.prompt({
-          type: 'list',
+          type: 'select',
           name: 'shouldWrap',
           message: `This folder seems to already contain a ${label} application. Do you want to wrap into Watt?`,
           // default: 'yes',
@@ -302,7 +303,7 @@ export async function createApplication (
             install,
             process.cwd(),
             additionalGeneratorOptions,
-            { ...additionalGeneratorConfig, skipTypescript: true }
+            { ...additionalGeneratorConfig, skipTypescript: true, skipServer: true }
           )
         }
       } else {
@@ -332,7 +333,7 @@ export async function createApplication (
 
     if (!packageManager) {
       const p = await inquirer.prompt({
-        type: 'list',
+        type: 'select',
         name: 'packageManager',
         message: 'Which package manager do you want to use?',
         default: defaultPackageManager,
@@ -442,7 +443,7 @@ export async function createApplication (
 
     const { shouldBreak } = await inquirer.prompt([
       {
-        type: 'list',
+        type: 'select',
         name: 'shouldBreak',
         message: 'Do you want to create another application?',
         default: false,
@@ -464,7 +465,7 @@ export async function createApplication (
   if (chooseEntrypoint) {
     const results = await inquirer.prompt([
       {
-        type: 'list',
+        type: 'select',
         name: 'entrypoint',
         message: 'Which application should be exposed?',
         choices: names.map(name => ({ name, value: name }))
@@ -489,7 +490,7 @@ export async function createApplication (
   // Create project here
   if (!generator.existingConfigRaw) {
     const { initGitRepository } = await inquirer.prompt({
-      type: 'list',
+      type: 'select',
       name: 'initGitRepository',
       message: 'Do you want to init the git repository?',
       default: false,
@@ -517,6 +518,10 @@ export async function createApplication (
       if (application.config.pnpmWorkspacePath) {
         content += `\n- ${application.config.pnpmWorkspacePath}`
       }
+    }
+
+    if (generator.applications.some(({ application }) => application.module === '@platformatic/db' && application.config.database === 'sqlite')) {
+      content += '\nallowBuilds:\n  better-sqlite3: true'
     }
 
     await writeFile(pnpmWorkspacePath, content)

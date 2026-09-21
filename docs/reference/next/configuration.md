@@ -17,6 +17,8 @@ Supported object properties:
   - **`build`**: Command to build the application.
   - **`development`**: Command to start the application in development mode.
   - **`production`**: Command to start the application in production mode.
+- **`changeDirectoryBeforeExecution`**: If `true`, change the current working directory to the application root before running any of the commands above. Default: `false`.
+- **`preferLocalCommands`**: If `true`, resolve non-absolute commands from the application's `node_modules/.bin` before checking the current working directory. Default: `true`.
 
 ## `logger`
 
@@ -43,6 +45,38 @@ Supported object properties:
 - **`maxTTL`**: Maximum key lifetime (seconds). If Next.js `revalidate` is greater than this value, key expiry is refreshed while accessed at least every `maxTTL` seconds. Default: `604800` (one week).
 - **`cacheComponents`**: Use [Cache Components](https://nextjs.org/docs/app/getting-started/cache-components) instead of ISR cache handlers. Alternative to `cacheComponents: true` in `next.config.js`. Supported from Next.js 16.0.
 - **`ignoreNextConfig`**: Ignore cache-related values already defined in `next.config.js` and prefer Platformatic configuration.
+- **`remote`**: Optional configuration for the [`"use cache: remote"`](https://nextjs.org/docs/app/api-reference/directives/use-cache-remote) directive. When present, a separate `cacheHandlers.remote` is registered alongside `cacheHandlers.default`. All properties are optional and inherit from the parent `cache` config when omitted. Requires `cacheComponents: true`. Supported object properties:
+  - **`url`**: URL of the Valkey/Redis server for remote cache entries.
+  - **`prefix`**: Prefix for remote cache keys.
+  - **`maxTTL`**: Maximum key lifetime (seconds) for remote cache entries.
+
+  Example using separate Valkey instances for default and remote cache:
+
+  ```json
+  {
+    "cache": {
+      "adapter": "valkey",
+      "url": "valkey://localhost:6379",
+      "cacheComponents": true,
+      "remote": {
+        "url": "valkey://remote-server:6379",
+        "prefix": "plt:remote",
+        "maxTTL": 3600
+      }
+    }
+  }
+  ```
+
+  In this configuration, `"use cache"` entries are stored on `localhost:6379` while `"use cache: remote"` entries go to `remote-server:6379` with a separate prefix and a 1-hour TTL. If `remote.url` is omitted, both handlers share the same Valkey instance but use different key namespaces to avoid collisions.
+
+  When runtime metrics are enabled, Cache Components exposes these Prometheus counters:
+
+  - **`next_components_cache_valkey_hit_count`**: Successful reads from the default Cache Components cache.
+  - **`next_components_cache_valkey_miss_count`**: Missing, invalid, or failed reads from the default Cache Components cache.
+  - **`next_remote_components_cache_valkey_hit_count`**: Successful reads from the remote Cache Components cache.
+  - **`next_remote_components_cache_valkey_miss_count`**: Missing, invalid, or failed reads from the remote Cache Components cache.
+
+  The counters use the runtime's standard application, worker, and configured static labels. The remote counters are registered only when `remote` is configured. Hit ratios can be calculated in PromQL from the corresponding hit and miss counters.
 
 ## `next`
 
@@ -63,7 +97,7 @@ Configures Next.js. Supported object properties:
   }
   ```
 
-- **`standalone`**: Set to `true` when using [Next.js standalone mode](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output).
+- **`standalone`**: Set to `true` when using [Next.js standalone mode](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output). This also enables the Next-specific application command used to pack a self-contained bundle for deployment. Run `wattpm help` in your project to see the available `<app-id>:pack` command.
 - **`https`**: Enables HTTPS in development mode when Platformatic starts Next.js with the default development command.
   - **`enabled`** (`boolean` or `string`): Enables Next.js experimental HTTPS.
   - **`key`**: Path (relative to the application root) to the HTTPS private key file.
@@ -80,6 +114,16 @@ Configures Next.js. Supported object properties:
     - `{ "type": "valkey", "url": "redis://localhost:6379/0", "prefix": "my-app:" }` (or `redis`)
   - **`timeout`** (`number` or `string`): Timeout in milliseconds used for image fetch/optimization operations. Default: `30000`.
   - **`maxAttempts`** (`number` or `string`): Maximum retry attempts for optimization jobs. Default: `3`.
+
+## Skew protection
+
+When `PLT_DEPLOYMENT_ID` is set during the build, Platformatic sets Next.js `deploymentId` automatically unless it is already configured. You can also configure it directly in `next.config.js`:
+
+```js
+module.exports = {
+  deploymentId: process.env.PLT_DEPLOYMENT_ID
+}
+```
 
 <RuntimeInCapabilities />
 

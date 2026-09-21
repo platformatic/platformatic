@@ -35,6 +35,8 @@ interface AuthorizationRuleBase<T> {
   find?: Operation<T>
   save?: Operation<T>
   delete?: Operation<T>
+  insert?: Operation<T>
+  updateMany?: Operation<T>
 }
 export interface AuthorizationRuleEntity<T> extends AuthorizationRuleBase<T> {
   entity: string
@@ -75,7 +77,7 @@ export default auth
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const Unauthorized: () => FastifyError
   export const UnauthorizedField: (field: string) => FastifyError
   export const MissingNotNullableError: (field: string, entity: string) => FastifyError

@@ -103,15 +103,16 @@ test('throws if there is no migrations in the config', async t => {
   assert.match(errorMessage, /Missing "migrations" section in config file/)
 })
 
-test('throws if migrations directory does not exist', async t => {
+test('creates the migrations directory if it does not exist', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
-  const migrationsDirPath = join(cwd, 'migrations')
+  const migrationsDirPath = join(cwd, 'nested', 'migrations')
 
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      logger: { level: 'fatal' }
     },
     db: {
       connectionString: 'sqlite://db.sqlite'
@@ -124,16 +125,16 @@ test('throws if migrations directory does not exist', async t => {
   await writeFile(configFilePath, JSON.stringify(config))
 
   let errorMessage = ''
-  const logger = {
-    info: () => {},
-    warn: () => {},
-    debug: () => {},
-    trace: () => {},
-    error: (msg) => {
-      errorMessage += msg
-    }
+  const logger = pino({ level: 'fatal' })
+  logger.error = msg => {
+    errorMessage += msg
   }
 
   await createMigrations(logger, configFilePath, [], { colorette: { bold: (str) => str } })
-  assert.match(errorMessage, /Migrations directory (.*) does not exist/)
+  const newMigrations = await readdir(migrationsDirPath)
+
+  assert.equal(errorMessage, '')
+  assert.equal(newMigrations.length, 2)
+  assert.equal(newMigrations[0], '001.do.sql')
+  assert.equal(newMigrations[1], '001.undo.sql')
 })

@@ -96,6 +96,7 @@ input MovieWhereArgumentsid {
   like: ID
   in: [ID]
   nin: [ID]
+  isNull: Boolean
 }
 
 input MovieWhereArgumentstitle {
@@ -108,6 +109,7 @@ input MovieWhereArgumentstitle {
   like: String
   in: [String]
   nin: [String]
+  isNull: Boolean
 }
 
 input MovieWhereArgumentsOr {

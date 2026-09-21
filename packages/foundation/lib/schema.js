@@ -135,6 +135,41 @@ export const preload = {
   ]
 }
 
+const extension = {
+  anyOf: [
+    { type: 'string', resolvePath: true },
+    {
+      type: 'object',
+      additionalProperties: false,
+      required: ['path'],
+      properties: {
+        path: {
+          type: 'string',
+          resolvePath: true
+        },
+        options: {
+          type: 'object',
+          additionalProperties: true
+        },
+        build: {
+          type: 'boolean',
+          default: false
+        }
+      }
+    }
+  ]
+}
+
+export const extensions = {
+  anyOf: [
+    ...extension.anyOf,
+    {
+      type: 'array',
+      items: extension
+    }
+  ]
+}
+
 export const watch = {
   type: 'object',
   properties: {
@@ -267,12 +302,8 @@ export const logger = {
   properties: {
     level: {
       type: 'string',
-      oneOf: [
-        {
-          enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
-        },
-        { pattern: '^\\{.+\\}$' }
-      ]
+      description:
+        'The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.'
     },
     transport: {
       anyOf: [
@@ -358,6 +389,11 @@ export const logger = {
         censor: {
           type: 'string',
           default: '[redacted]'
+        },
+        remove: {
+          type: 'boolean',
+          description:
+            'Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.'
         }
       },
       required: ['paths'],
@@ -372,6 +408,50 @@ export const logger = {
     customLevels: {
       type: 'object',
       additionalProperties: true
+    },
+    levelVal: {
+      type: 'integer',
+      description: 'The numeric value of the level defined in level, when it is not one of the standard pino levels.'
+    },
+    useOnlyCustomLevels: {
+      type: 'boolean',
+      description: 'Only use the levels defined in customLevels and omit the standard pino ones.'
+    },
+    levelComparison: {
+      type: 'string',
+      enum: ['ASC', 'DESC'],
+      description:
+        'How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.'
+    },
+    msgPrefix: {
+      type: 'string',
+      description: 'A string prefixed to every message, including the ones of child loggers.'
+    },
+    nestedKey: {
+      type: 'string',
+      description: 'The key under which any logged object is placed.'
+    },
+    errorKey: {
+      type: 'string',
+      description: 'The key used for the serialized error in the log object. Defaults to err.'
+    },
+    depthLimit: {
+      type: 'integer',
+      description:
+        'The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.'
+    },
+    edgeLimit: {
+      type: 'integer',
+      description:
+        'The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.'
+    },
+    crlf: {
+      type: 'boolean',
+      description: 'Terminate each log line with \\r\\n instead of \\n. Defaults to false.'
+    },
+    enabled: {
+      type: 'boolean',
+      description: 'Set to false to disable logging entirely. Defaults to true.'
     },
     openTelemetryExporter: {
       type: 'object',
@@ -388,6 +468,15 @@ export const logger = {
       additionalProperties: false
     }
   },
+  // Custom levels can only be validated when customLevels is not set.
+  if: { not: { required: ['customLevels'] } },
+  then: {
+    properties: {
+      level: {
+        oneOf: [{ enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] }, { pattern: '^\\{.+\\}$' }]
+      }
+    }
+  },
   default: {},
   additionalProperties: true
 }
@@ -396,11 +485,16 @@ export const server = {
   type: 'object',
   properties: {
     hostname: {
-      type: 'string',
-      default: '127.0.0.1'
+      type: 'string'
     },
     port: {
       anyOf: [{ type: 'integer' }, { type: 'string' }]
+    },
+    portAssignment: {
+      type: 'string',
+      enum: ['shared', 'perWorkerIncrement'],
+      description:
+        'Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).'
     },
     backlog: {
       type: 'integer',
@@ -599,6 +693,18 @@ export const fastifyServer = {
         }
       }
     },
+    ajv: {
+      type: 'object',
+      description:
+        'Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.',
+      properties: {
+        customOptions: {
+          type: 'object',
+          additionalProperties: true
+        }
+      },
+      additionalProperties: false
+    },
     caseSensitive: {
       type: 'boolean'
     },
@@ -626,7 +732,15 @@ export const fastifyServer = {
     },
     http2: server.properties.http2,
     https: server.properties.https,
-    cors
+    cors,
+    errorHandler: {
+      description:
+        'Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.',
+      anyOf: [
+        { type: 'string', resolveModule: true },
+        { type: 'string', resolvePath: true }
+      ]
+    }
   },
   additionalProperties: false
 }
@@ -654,15 +768,48 @@ export const health = {
     gracePeriod: overridableValue({ type: 'number', minimum: 0 }, 30000),
     maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 10),
     maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
+    maxEventLoopDelay: overridableValue({ type: 'number', minimum: 0 }),
+    maxEventLoopDelayP99: overridableValue({ type: 'number', minimum: 0 }),
     maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)), // 4GB
     maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 }, 128 * Math.pow(1024, 2)), // 128MB,
-    codeRangeSize: overridableValue({ type: 'number', minimum: 0 }, 268435456)
+    codeRangeSize: overridableValue({ type: 'number', minimum: 0 }, 268435456),
+    bufferPoolSize: overridableValue({ type: 'number', minimum: 0 }, 256 * 1024), // 256KB
+    defaultHighWaterMark: overridableValue({ type: 'number', minimum: 0 }, 256 * 1024) // 256KB
   },
   additionalProperties: false
 }
 
 export const healthWithoutDefaults = removeDefaults(health)
+
+const healthProbeEndpoint = {
+  anyOf: [
+    { type: 'boolean' },
+    {
+      type: 'object',
+      properties: {
+        endpoint: { type: 'string' },
+        success: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number' },
+            body: { type: 'string' }
+          },
+          additionalProperties: false
+        },
+        fail: {
+          type: 'object',
+          properties: {
+            statusCode: { type: 'number' },
+            body: { type: 'string' }
+          },
+          additionalProperties: false
+        }
+      },
+      additionalProperties: false
+    }
+  ]
+}
 
 export const openTelemetryExporter = {
   type: 'object',
@@ -687,6 +834,16 @@ export const openTelemetryExporter = {
         path: {
           type: 'string',
           description: 'The path to write the traces to. Only for file exporter.'
+        },
+        protocol: {
+          type: 'string',
+          enum: ['http', 'grpc'],
+          description: 'The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.'
+        },
+        transport: {
+          type: 'string',
+          enum: ['http', 'grpc'],
+          description: 'Alias for protocol. Only for the otlp exporter. Defaults to http.'
         }
       }
     },
@@ -742,6 +899,18 @@ export const telemetry = {
         },
         openTelemetryExporter
       ]
+    },
+    diagLogger: {
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ],
+      description:
+        'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
     }
   },
   required: ['applicationName'],
@@ -801,6 +970,17 @@ export const application = {
     id: {
       type: 'string'
     },
+    enabled: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' },
+        {
+          type: 'object',
+          additionalProperties: { type: 'boolean' }
+        }
+      ],
+      default: true
+    },
     path: {
       type: 'string',
       // This is required for the resolve command to allow empty paths after environment variable replacement
@@ -818,6 +998,9 @@ export const application = {
       default: 'main'
     },
     useHttp: {
+      type: 'boolean'
+    },
+    websocket: {
       type: 'boolean'
     },
     reuseTcpPorts: {
@@ -864,6 +1047,17 @@ export const application = {
       ]
     },
     health: { ...healthWithoutDefaults },
+    restartOnError: {
+      description:
+        'Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.',
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'number',
+          minimum: 0
+        }
+      ]
+    },
     dependencies: {
       type: 'array',
       items: {
@@ -958,7 +1152,23 @@ export const application = {
         }
       }
     },
-    compileCache
+    compileCache,
+    management: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean', default: true },
+            operations: {
+              type: 'array',
+              items: { type: 'string' }
+            }
+          },
+          additionalProperties: false
+        }
+      ]
+    }
   }
 }
 
@@ -972,6 +1182,7 @@ export const runtimeProperties = {
     type: 'string'
   },
   preload,
+  extensions,
   entrypoint: {
     type: 'string'
   },
@@ -1042,7 +1253,7 @@ export const runtimeProperties = {
   },
   exitOnUnhandledErrors: {
     default: true,
-    type: 'boolean'
+    anyOf: [{ type: 'boolean' }, { type: 'number' }]
   },
   gracefulShutdown: {
     type: 'object',
@@ -1055,7 +1266,7 @@ export const runtimeProperties = {
           },
           { type: 'string' }
         ],
-        default: 10000
+        default: 30000
       },
       application: {
         anyOf: [
@@ -1078,6 +1289,35 @@ export const runtimeProperties = {
     additionalProperties: false
   },
   health,
+  healthProbes: {
+    anyOf: [
+      { type: 'boolean' },
+      { type: 'string' },
+      {
+        type: 'object',
+        properties: {
+          enabled: {
+            anyOf: [
+              {
+                type: 'boolean'
+              },
+              {
+                type: 'string'
+              }
+            ]
+          },
+          hostname: { type: 'string' },
+          port: {
+            anyOf: [{ type: 'integer' }, { type: 'string' }]
+          },
+          readiness: healthProbeEndpoint,
+          liveness: healthProbeEndpoint
+        },
+        additionalProperties: false
+      }
+    ],
+    default: true
+  },
   undici: {
     type: 'object',
     properties: {
@@ -1204,6 +1444,22 @@ export const runtimeProperties = {
     ],
     default: true
   },
+  management: {
+    anyOf: [
+      { type: 'boolean' },
+      {
+        type: 'object',
+        properties: {
+          enabled: { type: 'boolean', default: true },
+          operations: {
+            type: 'array',
+            items: { type: 'string' }
+          }
+        },
+        additionalProperties: false
+      }
+    ]
+  },
   metrics: {
     anyOf: [
       { type: 'boolean' },
@@ -1225,6 +1481,7 @@ export const runtimeProperties = {
           },
           hostname: { type: 'string' },
           endpoint: { type: 'string' },
+          https: server.properties.https,
           auth: {
             type: 'object',
             properties: {
@@ -1244,65 +1501,18 @@ export const runtimeProperties = {
             description:
               'The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)'
           },
-          readiness: {
-            anyOf: [
-              { type: 'boolean' },
-              {
-                type: 'object',
-                properties: {
-                  endpoint: { type: 'string' },
-                  success: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  },
-                  fail: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  }
-                },
-                additionalProperties: false
-              }
-            ]
+          httpClientMetrics: {
+            anyOf: [{ type: 'boolean' }, { type: 'string' }],
+            default: false,
+            description: 'Enable outgoing HTTP client request duration metrics'
           },
-          liveness: {
-            anyOf: [
-              { type: 'boolean' },
-              {
-                type: 'object',
-                properties: {
-                  endpoint: { type: 'string' },
-                  success: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  },
-                  fail: {
-                    type: 'object',
-                    properties: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                    additionalProperties: false
-                  }
-                },
-                additionalProperties: false
-              }
-            ]
-          },
+          readiness: healthProbeEndpoint,
+          liveness: healthProbeEndpoint,
           healthChecksTimeouts: {
             anyOf: [{ type: 'integer' }, { type: 'string' }],
-            default: 5000
+            default: 5000,
+            deprecated: true,
+            description: 'Deprecated. Health probe timeout configuration is no longer used.'
           },
           plugins: {
             type: 'array',
@@ -1348,6 +1558,32 @@ export const runtimeProperties = {
               serviceVersion: {
                 type: 'string',
                 description: 'Service version for OTLP resource attributes'
+              }
+            },
+            required: ['endpoint'],
+            additionalProperties: false
+          },
+          opentelemetry: {
+            type: 'object',
+            description: 'Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint',
+            properties: {
+              enabled: {
+                anyOf: [{ type: 'boolean' }, { type: 'string' }],
+                description: 'Enable or disable OpenTelemetry metrics forwarding'
+              },
+              endpoint: {
+                type: 'string',
+                description: 'OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)'
+              },
+              interval: {
+                anyOf: [{ type: 'integer' }, { type: 'string' }],
+                default: 60000,
+                description: 'Interval in milliseconds between metric forwards'
+              },
+              headers: {
+                type: 'object',
+                additionalProperties: { type: 'string' },
+                description: 'Additional HTTP headers for authentication'
               }
             },
             required: ['endpoint'],
@@ -1435,6 +1671,14 @@ export const runtimeProperties = {
     default: 'external'
   },
   env,
+  envfile: {
+    type: 'string'
+  },
+  strictEnv: {
+    anyOf: [{ type: 'boolean' }, { type: 'string' }],
+    description:
+      'When set to true, the configuration loading fails if a {PLT_*} placeholder references an environment variable which is not set. When set to "warn", a warning listing the missing variables is logged but the placeholders are still replaced with an empty string. Defaults to false.'
+  },
   sourceMaps: {
     type: 'boolean',
     default: false
@@ -1509,12 +1753,15 @@ export const runtimeUnwrappablePropertiesList = [
 
 export const applicationsUnwrappablePropertiesList = [
   'id',
+  'enabled',
   'path',
   'config',
   'url',
   'gitBranch',
   'dependencies',
-  'useHttp'
+  'useHttp',
+  'websocket',
+  'management'
 ]
 
 export const wrappedRuntimeProperties = omitProperties(runtimeProperties, runtimeUnwrappablePropertiesList)
@@ -1539,6 +1786,7 @@ export const schemaComponents = {
   env,
   workers,
   preload,
+  extensions,
   watch,
   cors,
   logger,

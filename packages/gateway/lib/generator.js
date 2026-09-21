@@ -58,7 +58,7 @@ declare module 'fastify' {
     const README = `
 # Platformatic Gateway API
 
-This is a generated [Platformatic Gateway](https://docs.platformatic.dev/docs/gateway/overview) application.
+This is a generated [Platformatic Gateway](https://docs.platformatic.dev/docs/reference/gateway/overview) application.
 
 ## Requirements
 

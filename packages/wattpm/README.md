@@ -5,7 +5,6 @@
 [![npm](https://img.shields.io/npm/v/wattpm)](https://www.npmjs.com/package/wattpm)
 [![CI](https://github.com/platformatic/platformatic/actions/workflows/ci.yml/badge.svg)](https://github.com/platformatic/platformatic/actions/workflows/ci.yml)
 [![NPM version](https://img.shields.io/npm/v/platformatic.svg?style=flat)](https://www.npmjs.com/package/platformatic)
-[![Discord](https://img.shields.io/discord/1011258196905689118)](https://discord.gg/platformatic)
 
 Watt, Platformatic's Node.js application server, allows you to run multiple Node.js applications that are centrally managed.
 
@@ -19,18 +18,19 @@ Watt supports the stacks you love most, including [Next.js](https://nextjs.org/)
 
 ```bash
 # Create a new application
-npx wattpm@latest init
+npx wattpm@latest create
 
 # Or install manually:
 npm install wattpm
 ```
 
 Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start)
-guide to get up and running with Platformatic.
+to get up and running with Watt.
 
 ## Documentation
 
-- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start)
+- [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start)
+- [Running Your Project in Watt](https://docs.platformatic.dev/docs/getting-started/port-your-app)
 - [Reference](https://docs.platformatic.dev/docs/reference/wattpm/overview)
 - [Guides](https://docs.platformatic.dev/docs/guides/build-modular-monolith)
 
@@ -39,7 +39,7 @@ Check out our full documentation at [platformatic.dev](https://platformatic.dev)
 ## Support
 
 If you run into a bug, issues or have a suggestion for improvement, please raise an
-[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
+[issue on GitHub](https://github.com/platformatic/platformatic/issues/new).
 
 ## License
 

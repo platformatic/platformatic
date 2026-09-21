@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.39.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/gateway/3.69.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Gateway Config",
   "type": "object",
@@ -97,22 +97,7 @@
               "properties": {
                 "level": {
                   "type": "string",
-                  "oneOf": [
-                    {
-                      "enum": [
-                        "fatal",
-                        "error",
-                        "warn",
-                        "info",
-                        "debug",
-                        "trace",
-                        "silent"
-                      ]
-                    },
-                    {
-                      "pattern": "^\\{.+\\}$"
-                    }
-                  ]
+                  "description": "The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels."
                 },
                 "transport": {
                   "anyOf": [
@@ -213,6 +198,10 @@
                     "censor": {
                       "type": "string",
                       "default": "[redacted]"
+                    },
+                    "remove": {
+                      "type": "boolean",
+                      "description": "Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false."
                     }
                   },
                   "required": [
@@ -238,6 +227,50 @@
                   "type": "object",
                   "additionalProperties": true
                 },
+                "levelVal": {
+                  "type": "integer",
+                  "description": "The numeric value of the level defined in level, when it is not one of the standard pino levels."
+                },
+                "useOnlyCustomLevels": {
+                  "type": "boolean",
+                  "description": "Only use the levels defined in customLevels and omit the standard pino ones."
+                },
+                "levelComparison": {
+                  "type": "string",
+                  "enum": [
+                    "ASC",
+                    "DESC"
+                  ],
+                  "description": "How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC."
+                },
+                "msgPrefix": {
+                  "type": "string",
+                  "description": "A string prefixed to every message, including the ones of child loggers."
+                },
+                "nestedKey": {
+                  "type": "string",
+                  "description": "The key under which any logged object is placed."
+                },
+                "errorKey": {
+                  "type": "string",
+                  "description": "The key used for the serialized error in the log object. Defaults to err."
+                },
+                "depthLimit": {
+                  "type": "integer",
+                  "description": "The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5."
+                },
+                "edgeLimit": {
+                  "type": "integer",
+                  "description": "The stringification limit of properties or elements when logging a circular object or array. Defaults to 100."
+                },
+                "crlf": {
+                  "type": "boolean",
+                  "description": "Terminate each log line with \\r\\n instead of \\n. Defaults to false."
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Set to false to disable logging entirely. Defaults to true."
+                },
                 "openTelemetryExporter": {
                   "type": "object",
                   "properties": {
@@ -257,6 +290,35 @@
                     "url"
                   ],
                   "additionalProperties": false
+                }
+              },
+              "if": {
+                "not": {
+                  "required": [
+                    "customLevels"
+                  ]
+                }
+              },
+              "then": {
+                "properties": {
+                  "level": {
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "fatal",
+                          "error",
+                          "warn",
+                          "info",
+                          "debug",
+                          "trace",
+                          "silent"
+                        ]
+                      },
+                      {
+                        "pattern": "^\\{.+\\}$"
+                      }
+                    ]
+                  }
                 }
               },
               "default": {},
@@ -316,6 +378,17 @@
               "default": "default"
             }
           }
+        },
+        "ajv": {
+          "type": "object",
+          "description": "Options for the Fastify request-validation Ajv instance (the Fastify `ajv` server option). Only `customOptions` is configurable from the config file; for example set `customOptions.coerceTypes` to `false` to reject empty strings on fields that allow the `null` type instead of coercing them to `null`.",
+          "properties": {
+            "customOptions": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
         },
         "caseSensitive": {
           "type": "boolean"
@@ -550,6 +623,19 @@
             }
           },
           "additionalProperties": false
+        },
+        "errorHandler": {
+          "description": "Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.",
+          "anyOf": [
+            {
+              "type": "string",
+              "resolveModule": true
+            },
+            {
+              "type": "string",
+              "resolvePath": true
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -837,6 +923,12 @@
                       "prefix": {
                         "type": "string"
                       },
+                      "rewritePrefix": {
+                        "type": "string"
+                      },
+                      "rewriteLocationHeader": {
+                        "type": "boolean"
+                      },
                       "hostname": {
                         "type": "string"
                       },
@@ -845,11 +937,184 @@
                         "properties": {
                           "path": {
                             "type": "string"
+                          },
+                          "options": {
+                            "type": "object",
+                            "additionalProperties": true
                           }
                         },
                         "required": [
                           "path"
                         ],
+                        "additionalProperties": false
+                      },
+                      "deduplication": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "storage": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "adapter": {
+                                    "type": "string",
+                                    "const": "memory",
+                                    "default": "memory"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "adapter": {
+                                    "type": "string",
+                                    "const": "valkey"
+                                  },
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "prefix": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "adapter",
+                                  "url"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "methods": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE",
+                                "PATCH",
+                                "OPTIONS",
+                                "HEAD"
+                              ]
+                            },
+                            "default": [
+                              "GET",
+                              "HEAD"
+                            ]
+                          },
+                          "headers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "default": [
+                              "authorization",
+                              "accept",
+                              "accept-encoding",
+                              "accept-language"
+                            ]
+                          },
+                          "skipHeaders": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "default": [
+                              "cookie"
+                            ]
+                          },
+                          "routes": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "method": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GET",
+                                    "POST",
+                                    "PUT",
+                                    "DELETE",
+                                    "PATCH",
+                                    "OPTIONS",
+                                    "HEAD"
+                                  ]
+                                },
+                                "methods": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GET",
+                                      "POST",
+                                      "PUT",
+                                      "DELETE",
+                                      "PATCH",
+                                      "OPTIONS",
+                                      "HEAD"
+                                    ]
+                                  }
+                                },
+                                "path": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "path"
+                              ],
+                              "anyOf": [
+                                {
+                                  "required": [
+                                    "method"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "methods"
+                                  ]
+                                }
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "key": {
+                            "type": "string",
+                            "resolvePath": true
+                          },
+                          "timeout": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 1000
+                          },
+                          "retries": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 3
+                          },
+                          "ttl": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 10000
+                          },
+                          "lockTtl": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 500
+                          }
+                        },
                         "additionalProperties": false
                       },
                       "ws": {
@@ -913,6 +1178,178 @@
             "additionalProperties": false
           }
         },
+        "handler": {
+          "type": "string"
+        },
+        "deduplication": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "storage": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "adapter": {
+                      "type": "string",
+                      "const": "memory",
+                      "default": "memory"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "adapter": {
+                      "type": "string",
+                      "const": "valkey"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "prefix": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "adapter",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "PATCH",
+                  "OPTIONS",
+                  "HEAD"
+                ]
+              },
+              "default": [
+                "GET",
+                "HEAD"
+              ]
+            },
+            "headers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "authorization",
+                "accept",
+                "accept-encoding",
+                "accept-language"
+              ]
+            },
+            "skipHeaders": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "cookie"
+              ]
+            },
+            "routes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH",
+                      "OPTIONS",
+                      "HEAD"
+                    ]
+                  },
+                  "methods": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS",
+                        "HEAD"
+                      ]
+                    }
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "anyOf": [
+                  {
+                    "required": [
+                      "method"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "methods"
+                    ]
+                  }
+                ],
+                "additionalProperties": false
+              }
+            },
+            "key": {
+              "type": "string",
+              "resolvePath": true
+            },
+            "timeout": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 1000
+            },
+            "retries": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 3
+            },
+            "ttl": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 10000
+            },
+            "lockTtl": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 500
+            }
+          },
+          "additionalProperties": false
+        },
         "openapi": {
           "type": "object",
           "properties": {
@@ -964,6 +1401,11 @@
             "swaggerPrefix": {
               "type": "string",
               "description": "Base URL for the OpenAPI Swagger Documentation"
+            },
+            "ui": {
+              "type": "boolean",
+              "default": true,
+              "description": "Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served."
             },
             "path": {
               "type": "string",
@@ -1170,6 +1612,11 @@
           "minimum": 0,
           "default": 1000
         },
+        "restartOnApplicationChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Restart the gateway when an application is added to or removed from the runtime, so it can recompose its routes. Set to false for a gateway that does not route from the application registry — restarting it closes its listening socket, which for a single-worker entrypoint means the runtime has no open port until the replacement worker boots."
+        },
         "passthroughContentTypes": {
           "type": "array",
           "items": {
@@ -1333,6 +1780,67 @@
             }
           ]
         },
+        "extensions": {
+          "anyOf": [
+            {
+              "type": "string",
+              "resolvePath": true
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "resolvePath": true
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "build": {
+                  "type": "boolean",
+                  "default": false
+                }
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "path"
+                    ],
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "resolvePath": true
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": true
+                      },
+                      "build": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
         "basePath": {
           "type": "string"
         },
@@ -1358,6 +1866,23 @@
               "id": {
                 "type": "string"
               },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "boolean"
+                    }
+                  }
+                ],
+                "default": true
+              },
               "path": {
                 "type": "string",
                 "allowEmptyPaths": true,
@@ -1374,6 +1899,9 @@
                 "default": "main"
               },
               "useHttp": {
+                "type": "boolean"
+              },
+              "websocket": {
                 "type": "boolean"
               },
               "reuseTcpPorts": {
@@ -1539,6 +2067,28 @@
                       }
                     ]
                   },
+                  "maxEventLoopDelay": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxEventLoopDelayP99": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
                   "maxHeapUsed": {
                     "anyOf": [
                       {
@@ -1583,9 +2133,43 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "bufferPoolSize": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "defaultHighWaterMark": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
+              },
+              "restartOnError": {
+                "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                ]
               },
               "dependencies": {
                 "type": "array",
@@ -1724,6 +2308,29 @@
                       "directory": {
                         "type": "string",
                         "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "management": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "operations": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "additionalProperties": false
@@ -1919,22 +2526,7 @@
           "properties": {
             "level": {
               "type": "string",
-              "oneOf": [
-                {
-                  "enum": [
-                    "fatal",
-                    "error",
-                    "warn",
-                    "info",
-                    "debug",
-                    "trace",
-                    "silent"
-                  ]
-                },
-                {
-                  "pattern": "^\\{.+\\}$"
-                }
-              ]
+              "description": "The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels."
             },
             "transport": {
               "anyOf": [
@@ -2035,6 +2627,10 @@
                 "censor": {
                   "type": "string",
                   "default": "[redacted]"
+                },
+                "remove": {
+                  "type": "boolean",
+                  "description": "Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false."
                 }
               },
               "required": [
@@ -2060,6 +2656,50 @@
               "type": "object",
               "additionalProperties": true
             },
+            "levelVal": {
+              "type": "integer",
+              "description": "The numeric value of the level defined in level, when it is not one of the standard pino levels."
+            },
+            "useOnlyCustomLevels": {
+              "type": "boolean",
+              "description": "Only use the levels defined in customLevels and omit the standard pino ones."
+            },
+            "levelComparison": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "description": "How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC."
+            },
+            "msgPrefix": {
+              "type": "string",
+              "description": "A string prefixed to every message, including the ones of child loggers."
+            },
+            "nestedKey": {
+              "type": "string",
+              "description": "The key under which any logged object is placed."
+            },
+            "errorKey": {
+              "type": "string",
+              "description": "The key used for the serialized error in the log object. Defaults to err."
+            },
+            "depthLimit": {
+              "type": "integer",
+              "description": "The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5."
+            },
+            "edgeLimit": {
+              "type": "integer",
+              "description": "The stringification limit of properties or elements when logging a circular object or array. Defaults to 100."
+            },
+            "crlf": {
+              "type": "boolean",
+              "description": "Terminate each log line with \\r\\n instead of \\n. Defaults to false."
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "Set to false to disable logging entirely. Defaults to true."
+            },
             "openTelemetryExporter": {
               "type": "object",
               "properties": {
@@ -2081,6 +2721,35 @@
               "additionalProperties": false
             }
           },
+          "if": {
+            "not": {
+              "required": [
+                "customLevels"
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "level": {
+                "oneOf": [
+                  {
+                    "enum": [
+                      "fatal",
+                      "error",
+                      "warn",
+                      "info",
+                      "debug",
+                      "trace",
+                      "silent"
+                    ]
+                  },
+                  {
+                    "pattern": "^\\{.+\\}$"
+                  }
+                ]
+              }
+            }
+          },
           "default": {},
           "additionalProperties": true
         },
@@ -2088,8 +2757,7 @@
           "type": "object",
           "properties": {
             "hostname": {
-              "type": "string",
-              "default": "127.0.0.1"
+              "type": "string"
             },
             "port": {
               "anyOf": [
@@ -2100,6 +2768,14 @@
                   "type": "string"
                 }
               ]
+            },
+            "portAssignment": {
+              "type": "string",
+              "enum": [
+                "shared",
+                "perWorkerIncrement"
+              ],
+              "description": "Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0)."
             },
             "backlog": {
               "type": "integer",
@@ -2227,7 +2903,14 @@
         },
         "exitOnUnhandledErrors": {
           "default": true,
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            }
+          ]
         },
         "gracefulShutdown": {
           "type": "object",
@@ -2242,7 +2925,7 @@
                   "type": "string"
                 }
               ],
-              "default": 10000
+              "default": 30000
             },
             "application": {
               "anyOf": [
@@ -2333,6 +3016,28 @@
               ],
               "default": 0.99
             },
+            "maxEventLoopDelay": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "maxEventLoopDelayP99": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
             "maxHeapUsed": {
               "anyOf": [
                 {
@@ -2381,9 +3086,153 @@
                 }
               ],
               "default": 268435456
+            },
+            "bufferPoolSize": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": 262144
+            },
+            "defaultHighWaterMark": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": 262144
             }
           },
           "additionalProperties": false
+        },
+        "healthProbes": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "hostname": {
+                  "type": "string"
+                },
+                "port": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "readiness": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        },
+                        "success": {
+                          "type": "object",
+                          "properties": {
+                            "statusCode": {
+                              "type": "number"
+                            },
+                            "body": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "fail": {
+                          "type": "object",
+                          "properties": {
+                            "statusCode": {
+                              "type": "number"
+                            },
+                            "body": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "liveness": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "endpoint": {
+                          "type": "string"
+                        },
+                        "success": {
+                          "type": "object",
+                          "properties": {
+                            "statusCode": {
+                              "type": "number"
+                            },
+                            "body": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "fail": {
+                          "type": "object",
+                          "properties": {
+                            "statusCode": {
+                              "type": "number"
+                            },
+                            "body": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "default": true
         },
         "undici": {
           "type": "object",
@@ -2579,6 +3428,29 @@
           ],
           "default": true
         },
+        "management": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "operations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
         "metrics": {
           "anyOf": [
             {
@@ -2613,6 +3485,99 @@
                 "endpoint": {
                   "type": "string"
                 },
+                "https": {
+                  "type": "object",
+                  "properties": {
+                    "allowHTTP1": {
+                      "type": "boolean"
+                    },
+                    "key": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "string",
+                              "resolvePath": true
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "path": {
+                                    "type": "string",
+                                    "resolvePath": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "cert": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "string",
+                              "resolvePath": true
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "path": {
+                                    "type": "string",
+                                    "resolvePath": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "requestCert": {
+                      "type": "boolean"
+                    },
+                    "rejectUnauthorized": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "key",
+                    "cert"
+                  ]
+                },
                 "auth": {
                   "type": "object",
                   "properties": {
@@ -2639,6 +3604,18 @@
                   "type": "string",
                   "default": "applicationId",
                   "description": "The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)"
+                },
+                "httpClientMetrics": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "default": false,
+                  "description": "Enable outgoing HTTP client request duration metrics"
                 },
                 "readiness": {
                   "anyOf": [
@@ -2729,7 +3706,9 @@
                       "type": "string"
                     }
                   ],
-                  "default": 5000
+                  "default": 5000,
+                  "deprecated": true,
+                  "description": "Deprecated. Health probe timeout configuration is no longer used."
                 },
                 "plugins": {
                   "type": "array",
@@ -2798,6 +3777,50 @@
                     "serviceVersion": {
                       "type": "string",
                       "description": "Service version for OTLP resource attributes"
+                    }
+                  },
+                  "required": [
+                    "endpoint"
+                  ],
+                  "additionalProperties": false
+                },
+                "opentelemetry": {
+                  "type": "object",
+                  "description": "Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint",
+                  "properties": {
+                    "enabled": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Enable or disable OpenTelemetry metrics forwarding"
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "description": "OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)"
+                    },
+                    "interval": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "default": 60000,
+                      "description": "Interval in milliseconds between metric forwards"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Additional HTTP headers for authentication"
                     }
                   },
                   "required": [
@@ -2916,6 +3939,22 @@
                           "path": {
                             "type": "string",
                             "description": "The path to write the traces to. Only for file exporter."
+                          },
+                          "protocol": {
+                            "type": "string",
+                            "enum": [
+                              "http",
+                              "grpc"
+                            ],
+                            "description": "The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http."
+                          },
+                          "transport": {
+                            "type": "string",
+                            "enum": [
+                              "http",
+                              "grpc"
+                            ],
+                            "description": "Alias for protocol. Only for the otlp exporter. Defaults to http."
                           }
                         }
                       },
@@ -2952,6 +3991,22 @@
                         "path": {
                           "type": "string",
                           "description": "The path to write the traces to. Only for file exporter."
+                        },
+                        "protocol": {
+                          "type": "string",
+                          "enum": [
+                            "http",
+                            "grpc"
+                          ],
+                          "description": "The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http."
+                        },
+                        "transport": {
+                          "type": "string",
+                          "enum": [
+                            "http",
+                            "grpc"
+                          ],
+                          "description": "Alias for protocol. Only for the otlp exporter. Defaults to http."
                         }
                       }
                     },
@@ -2959,6 +4014,17 @@
                   }
                 }
               ]
+            },
+            "diagLogger": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level."
             }
           },
           "required": [
@@ -3082,6 +4148,20 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "envfile": {
+          "type": "string"
+        },
+        "strictEnv": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "When set to true, the configuration loading fails if a {PLT_*} placeholder references an environment variable which is not set. When set to \"warn\", a warning listing the missing variables is logged but the placeholders are still replaced with an empty string. Defaults to false."
         },
         "sourceMaps": {
           "type": "boolean",
@@ -3376,6 +4456,28 @@
                     }
                   ]
                 },
+                "maxEventLoopDelay": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxEventLoopDelayP99": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
                 "maxHeapUsed": {
                   "anyOf": [
                     {
@@ -3420,9 +4522,43 @@
                       "type": "string"
                     }
                   ]
+                },
+                "bufferPoolSize": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "defaultHighWaterMark": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
                 }
               },
               "additionalProperties": false
+            },
+            "restartOnError": {
+              "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0
+                }
+              ]
             },
             "arguments": {
               "type": "array",
@@ -3646,6 +4782,22 @@
                       "path": {
                         "type": "string",
                         "description": "The path to write the traces to. Only for file exporter."
+                      },
+                      "protocol": {
+                        "type": "string",
+                        "enum": [
+                          "http",
+                          "grpc"
+                        ],
+                        "description": "The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http."
+                      },
+                      "transport": {
+                        "type": "string",
+                        "enum": [
+                          "http",
+                          "grpc"
+                        ],
+                        "description": "Alias for protocol. Only for the otlp exporter. Defaults to http."
                       }
                     }
                   },
@@ -3682,6 +4834,22 @@
                     "path": {
                       "type": "string",
                       "description": "The path to write the traces to. Only for file exporter."
+                    },
+                    "protocol": {
+                      "type": "string",
+                      "enum": [
+                        "http",
+                        "grpc"
+                      ],
+                      "description": "The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http."
+                    },
+                    "transport": {
+                      "type": "string",
+                      "enum": [
+                        "http",
+                        "grpc"
+                      ],
+                      "description": "Alias for protocol. Only for the otlp exporter. Defaults to http."
                     }
                   }
                 },
@@ -3689,6 +4857,17 @@
               }
             }
           ]
+        },
+        "diagLogger": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level."
         }
       },
       "required": [

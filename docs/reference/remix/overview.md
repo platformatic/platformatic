@@ -42,6 +42,39 @@ When running in production mode, a custom Fastify server will serve the built ap
 
 In both modes if the application uses the `commands` property then it's responsible to start a HTTP server. The Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
 
+## Skew protection
+
+Remix uses a user-provided Vite configuration. To tag assets, add the shared plugin:
+
+```ts
+import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
+
+export default defineConfig({
+  plugins: [platformaticSkewPlugin()]
+})
+```
+
+The plugin is enabled when `PLT_DEPLOYMENT_ID` is set during the build.
+
+## HTTPS
+
+When a Remix application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "server": {
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  }
+}
+```
+
+In development mode, Platformatic forwards the HTTPS options to the Vite development server used by Remix. In production mode, Platformatic uses the same HTTPS options for the Fastify server that serves the built Remix application.
+
+If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
+
 ### Using custom commands
 
 Due to [`CVE-2025-24010`](https://github.com/vitejs/vite/security/advisories/GHSA-vg6x-rcgg-rjx6), you need to set:
@@ -65,14 +98,14 @@ properly set the Vite's `base` property and the `remix.basename` property as fol
 ```js
 import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
-import { getGlobal } from '@platformatic/globals'
+import { getBasePath } from '@platformatic/globals'
 
 export default defineConfig({
-  base: getGlobal().basePath ?? '/',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
   /* ... */
   plugins: [
     remix({
-      basename: getGlobal().basePath ?? '/'
+      basename: getBasePath({ throwOnMissing: false }) ?? '/'
       /* ... */
     })
   ]

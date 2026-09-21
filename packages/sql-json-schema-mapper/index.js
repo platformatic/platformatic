@@ -58,8 +58,34 @@ export function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
-export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
-  const fields = entity.fields
+function mapSQLTypeToOpenAPISchema (field, output) {
+  if (field.sqlType === 'vector') {
+    const schema = {
+      type: 'array',
+      items: {
+        type: 'number'
+      }
+    }
+
+    if (field.vectorDimensions) {
+      schema.minItems = field.vectorDimensions
+      schema.maxItems = field.vectorDimensions
+    }
+
+    return schema
+  }
+
+  let type = mapSQLTypeToOpenAPIType(field.sqlType)
+  if (output && (field.primaryKey || field.stringifyOutput) && (type === 'integer' || type === 'number')) {
+    type = 'string'
+  }
+
+  return { type }
+}
+
+export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false, options = {}) {
+  const { output = false } = options
+  const fields = entity.camelCasedFields
   const properties = {}
   const required = []
   for (const name of Object.keys(fields)) {
@@ -77,13 +103,13 @@ export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = fals
           type
         }
       }
-    } else if (field.sqlType === 'json' || field.sqlType === 'jsonb') {
+    } else if (field.sqlType === 'json' || field.sqlType === 'jsonb' || field.isJson === true) {
       properties[field.camelcase] = {
         type: 'object',
         additionalProperties: true
       }
     } else {
-      properties[field.camelcase] = { type }
+      properties[field.camelcase] = mapSQLTypeToOpenAPISchema(field, output)
     }
     if (field.isNullable || noRequired || field.autoTimestamp) {
       properties[field.camelcase].nullable = true
@@ -166,6 +192,11 @@ function renderProperties (
       types = type
     } else {
       types = [type]
+    }
+
+    // The mapper returns primary keys and marked foreign keys as strings
+    if (fieldDefinitions[name]?.primaryKey || fieldDefinitions[name]?.stringifyOutput) {
+      types = Array.from(new Set(types.map(t => (t === 'integer' || t === 'number' ? 'string' : t))))
     }
 
     if (nullable && types.indexOf('null') === -1) {

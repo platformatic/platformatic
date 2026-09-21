@@ -1,3 +1,4 @@
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 import { setTimeout as sleep } from 'node:timers/promises'
 
@@ -6,8 +7,9 @@ if (process.env.PLT_TESTS_DELAY_START) {
   await sleep(parseInt(process.env.PLT_TESTS_DELAY_START))
 }
 
+const logger = getLogger()
 const app = fastify({
-  loggerInstance: globalThis.platformatic?.logger?.child({}, { level: 'trace' })
+  loggerInstance: logger.child({}, { level: 'trace' })
 })
 
 app.get('/', async () => {
@@ -32,6 +34,6 @@ app.post('/', async request => {
 })
 app.log.trace('This is a trace')
 
-app.listen({ port: 1 }).then(() => {
+app.listen({ port: 0 }).then(() => {
   app.log.info('Service listening')
 })

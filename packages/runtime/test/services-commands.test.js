@@ -1,8 +1,9 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
-import { writeFile } from 'node:fs/promises'
+import { cp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { ensureDependencies } from '../../basic/test/helper.js'
 import { loadApplicationsCommands } from '../index.js'
 
 async function createTmpDir (t) {
@@ -174,4 +175,25 @@ test('loadApplicationsCommands works with existing fixtures that have commands',
   const gatewayCommands = applicationKeys.filter(key => key.startsWith('service-1:'))
   ok(gatewayCommands.length > 0, 'Should have found Gateway application commands')
   ok(gatewayCommands.includes('service-1:fetch-openapi-schemas'))
+})
+
+test('loadApplicationsCommands discovers Next.js pack commands', async t => {
+  const originalCwd = process.cwd()
+  const fixtureDir = join(import.meta.dirname, '..', '..', 'next', 'test', 'fixtures', 'server-side-standalone')
+  const tmpDir = await createTmpDir(t)
+
+  await cp(fixtureDir, tmpDir, { recursive: true })
+  await ensureDependencies([tmpDir, join(tmpDir, 'services', 'frontend')])
+
+  t.after(() => {
+    process.chdir(originalCwd)
+  })
+
+  process.chdir(tmpDir)
+
+  const result = await loadApplicationsCommands()
+
+  ok(result.commands['frontend:pack'])
+  ok(result.help['frontend:pack'])
+  strictEqual(result.applications['frontend:pack'].id, 'frontend')
 })

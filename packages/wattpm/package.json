@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "3.39.0",
+  "version": "3.69.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -20,7 +20,8 @@
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "npm run gen-schema && npm run gen-types",
     "prepublishOnly": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "bin": {
     "watt": "./bin/cli.js",
@@ -36,6 +37,7 @@
     "@fastify/websocket": "^11.0.0",
     "@platformatic/control": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "colorette": "^2.0.20",
     "pino-pretty": "^13.0.0",
@@ -47,12 +49,12 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "execa": "^9.4.0",
-    "fastify": "5.7.4",
+    "fastify": "^5.0.0",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.12.0",
-    "typescript": "^5.5.4",
-    "undici": "^7.0.0"
+    "typescript": "~6.0.3",
+    "undici": "^7.27.2"
   },
   "engines": {
     "node": ">=22.19.0"

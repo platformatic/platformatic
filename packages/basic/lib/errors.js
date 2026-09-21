@@ -20,3 +20,13 @@ export const NonZeroExitCode = createError(
   `${ERROR_PREFIX}_NON_ZERO_EXIT_CODE`,
   'Process exited with non zero exit code %d.'
 )
+
+export const ScheduledTaskGroupNotFound = createError(
+  `${ERROR_PREFIX}_SCHEDULED_TASK_GROUP_NOT_FOUND`,
+  'Scheduled task group "%s" not found'
+)
+
+export const ScheduledTaskNotFound = createError(
+  `${ERROR_PREFIX}_SCHEDULED_TASK_NOT_FOUND`,
+  'Scheduled task "%s" not found'
+)

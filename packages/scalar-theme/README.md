@@ -1,6 +1,8 @@
 # @platformatic/scalar-theme
 
-Check out the full documentation on [our website](https://docs.platformatic.dev/docs/reference/sql-openapi/overview).
+Platformatic's [Scalar](https://scalar.com/) theme for `@scalar/fastify-api-reference`.
+
+Check out the full documentation on [our website](https://docs.platformatic.dev).
 
 ## Install
 

@@ -30,12 +30,14 @@ test('get application config via capability api', async t => {
       applications: [],
       refreshTimeout: 1000,
       addEmptySchema: false,
+      restartOnApplicationChange: true,
       passthroughContentTypes: ['multipart/form-data', 'application/octet-stream']
     },
     plugins: {
       paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
     },
     server: {
+      hostname: '127.0.0.1',
       keepAliveTimeout: 5000,
       logger: {
         level: 'fatal'

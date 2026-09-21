@@ -1,3 +1,4 @@
+import { getEvents } from '@platformatic/globals'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 export const dynamic = 'force-static'
@@ -30,7 +31,8 @@ export async function GET (request) {
   }
 
   setTimeout(() => {
-    globalThis.platformatic.events.emitAndNotify('completed')
+    const events = getEvents()
+    events.emitAndNotify('completed')
   }, 100)
 
   return Response.json({ delay, version, time })

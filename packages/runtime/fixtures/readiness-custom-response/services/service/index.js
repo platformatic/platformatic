@@ -1,3 +1,4 @@
+import { setCustomHealthCheck, setCustomReadinessCheck } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
@@ -14,11 +15,11 @@ export function create () {
     statusCode: 200
   }
 
-  globalThis.platformatic.setCustomReadinessCheck(async () => {
+  setCustomReadinessCheck(async () => {
     return readiness
   })
 
-  globalThis.platformatic.setCustomHealthCheck(async () => {
+  setCustomHealthCheck(async () => {
     return health
   })
 

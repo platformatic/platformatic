@@ -20,12 +20,15 @@ import {
   FailedToGetRuntimeMetadata,
   FailedToGetRuntimeMetrics,
   FailedToGetRuntimeOpenapi,
+  FailedToGetRuntimeScheduler,
   FailedToReloadRuntime,
   FailedToRemoveApplications,
   FailedToStartProfiling,
   FailedToStopProfiling,
   FailedToStopRuntime,
   FailedToStreamRuntimeLogs,
+  FailedToTakeHeapSnapshot,
+  FailedToUpdateRuntimeScheduler,
   ProfilingAlreadyStarted,
   ProfilingNotStarted,
   RuntimeNotFound
@@ -142,7 +145,7 @@ export class RuntimeApiClient {
 
       if (metadataRequest.status === 'rejected') {
         // If it is just a non running runtime, we can remove its tmp dir, otherwise we log the error
-        if (metadataRequest.reason.code !== 'ECONNREFUSED') {
+        if (metadataRequest.reason.code !== 'ECONNREFUSED' && metadataRequest.reason.code !== 'ENOENT') {
           this.#logger?.warn(
             { error: ensureLoggableError(metadataRequest.reason) },
             `Failed to retrieve metadata for runtime with PID ${runtimePID}.`
@@ -192,6 +195,50 @@ export class RuntimeApiClient {
     return runtimeApplications
   }
 
+  async getRuntimeSchedulerJobs (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/scheduler',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToGetRuntimeScheduler(error)
+    }
+
+    return body.json()
+  }
+
+  async pauseRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'pause')
+  }
+
+  async resumeRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'resume')
+  }
+
+  async runRuntimeSchedulerJob (pid, name) {
+    return this.#updateRuntimeSchedulerJob(pid, name, 'run')
+  }
+
+  async #updateRuntimeSchedulerJob (pid, name, action) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/scheduler/${encodeURIComponent(name)}/${action}`,
+      method: 'POST'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToUpdateRuntimeScheduler(error)
+    }
+
+    return body.json()
+  }
+
   async getRuntimeConfig (pid, metadata = false) {
     const client = this.#getUndiciClient(pid)
 
@@ -228,7 +275,7 @@ export class RuntimeApiClient {
 
       if (
         jsonError?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
-        jsonError?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
+        jsonError?.code === 'PLT_RUNTIME_WORKER_NOT_FOUND'
       ) {
         throw new ApplicationNotFound(error)
       }
@@ -293,7 +340,7 @@ export class RuntimeApiClient {
 
       if (
         jsonError?.code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' ||
-        jsonError?.code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND'
+        jsonError?.code === 'PLT_RUNTIME_WORKER_NOT_FOUND'
       ) {
         throw new ApplicationNotFound(error)
       }
@@ -329,7 +376,7 @@ export class RuntimeApiClient {
       const message = jsonError?.message || error
       const code = jsonError?.code
 
-      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_WORKER_NOT_FOUND') {
         throw new ApplicationNotFound(message)
       }
 
@@ -346,7 +393,7 @@ export class RuntimeApiClient {
   async stopApplicationProfiling (pid, applicationId, options = {}) {
     const client = this.#getUndiciClient(pid)
 
-    const { statusCode, body } = await client.request({
+    const { statusCode, headers, body } = await client.request({
       path: `/api/v1/applications/${applicationId}/pprof/stop`,
       method: 'POST',
       headers: {
@@ -367,7 +414,7 @@ export class RuntimeApiClient {
       const message = jsonError?.message || error
       const code = jsonError?.code
 
-      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_APPLICATION_WORKER_NOT_FOUND') {
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_WORKER_NOT_FOUND') {
         throw new ApplicationNotFound(message)
       }
 
@@ -378,8 +425,53 @@ export class RuntimeApiClient {
       throw new FailedToStopProfiling(applicationId, message)
     }
 
+    if (options.allWorkers) {
+      // One profile per worker, JSON encoded with base64 payloads
+      if (headers['content-type']?.includes('application/json')) {
+        const { profiles } = await body.json()
+        return profiles.map(({ workerIndex, profile }) => ({
+          workerIndex,
+          profile: Buffer.from(profile, 'base64')
+        }))
+      }
+
+      // Older runtimes ignore the allWorkers option and return a single
+      // binary profile from one of the workers.
+      return [{ workerIndex: null, profile: Buffer.from(await body.arrayBuffer()) }]
+    }
+
     // Return the binary profile data as ArrayBuffer
     return await body.arrayBuffer()
+  }
+
+  async takeApplicationHeapSnapshot (pid, applicationId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/applications/${applicationId}/heap-snapshot`,
+      method: 'POST'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      let jsonError
+      try {
+        jsonError = JSON.parse(error)
+      } catch {
+        // No-op
+      }
+
+      const message = jsonError?.message || error
+      const code = jsonError?.code
+
+      if (code === 'PLT_RUNTIME_APPLICATION_NOT_FOUND' || code === 'PLT_RUNTIME_WORKER_NOT_FOUND') {
+        throw new ApplicationNotFound(message)
+      }
+
+      throw new FailedToTakeHeapSnapshot(applicationId, message)
+    }
+
+    return body
   }
 
   async reloadRuntime (pid, options = {}) {

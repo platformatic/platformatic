@@ -90,7 +90,7 @@ test('allowPrimaryKeysInInput: false', async t => {
     same(
       res.json(),
       {
-        id: 1, // The passed in id is ignored
+        id: '1', // The passed in id is ignored
         title: 'Hello'
       },
       'POST /pages response'
@@ -140,7 +140,7 @@ test('allowPrimaryKeysInInput: true', async t => {
     same(
       res.json(),
       {
-        id: 42, // The passed in id is used
+        id: '42', // The passed in id is used
         title: 'Hello'
       },
       'POST /pages response'
@@ -188,7 +188,7 @@ test('allowPrimaryKeysInInput default', async t => {
     same(
       res.json(),
       {
-        id: 42, // The passed in id is used
+        id: '42', // The passed in id is used
         title: 'Hello'
       },
       'POST /pages response'

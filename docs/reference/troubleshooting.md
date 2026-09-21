@@ -96,10 +96,10 @@ npx wattpm --help
 
 **Solution:**
 
-````bash
+```bash
 # Apply pending migrations
 wattpm db:migrations:apply
-K```
+```
 
 ### Application Discovery and Communication Issues
 
@@ -114,7 +114,7 @@ K```
    ```bash
    wattpm ps
    wattpm applications
-````
+   ```
 
 2. **Verify application configuration:**
 
@@ -393,7 +393,7 @@ graph TD
     G --> I[Trace Context<br/>Propagation]
     H --> I
 
-    I --> J[OTLP Exporter]
+    I --> J[OTLP Exporter<br/>HTTP or gRPC]
     I --> K[Jaeger Exporter]
     I --> L[Zipkin Exporter]
 
@@ -492,7 +492,6 @@ graph LR
 
 ### Community Resources
 
-- **Discord:** Join our [Discord server](https://discord.gg/platformatic) for real-time help
 - **GitHub Issues:** Report bugs at [github.com/platformatic/platformatic](https://github.com/platformatic/platformatic/issues)
 - **Documentation:** Search this documentation for specific topics
 

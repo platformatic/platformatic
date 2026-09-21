@@ -10,6 +10,14 @@
 
 **Message:** %s version %s is not supported. Please use version %s.
 
+### PLT_BASIC_SCHEDULED_TASK_GROUP_NOT_FOUND
+
+**Message:** Scheduled task group "%s" not found
+
+### PLT_BASIC_SCHEDULED_TASK_NOT_FOUND
+
+**Message:** Scheduled task "%s" not found
+
 ## @platformatic/gateway
 
 ### PLT_GATEWAY_COULD_NOT_READ_OPENAPI_CONFIG
@@ -24,6 +32,10 @@
 
 **Message:** Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"!
 
+### PLT_GATEWAY_INVALID_OPENAPI_SCHEMA
+
+**Message:** Failed to compose OpenAPI schemas: %s
+
 ### PLT_GATEWAY_PATH_ALREADY_EXISTS
 
 **Message:** Path "%s" already exists
@@ -31,6 +43,10 @@
 ### PLT_GATEWAY_VALIDATION_ERRORS
 
 **Message:** Validation errors: %s
+
+### PLT_GATEWAY_WS_NO_TCP_UPSTREAM
+
+**Message:** Cannot proxy a WebSocket connection to the "%s" application because it does not expose a TCP server. Set "websocket": true on the application, make it listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".
 
 ## @platformatic/control
 
@@ -170,7 +186,7 @@
 
 ### PLT_RUNTIME_WORKER_NOT_FOUND
 
-**Message:** Worker %s of service %s not found. Available services are: %s
+**Message:** Worker %s of application %s not found. Available workers are: %s
 
 ### PLT_RUNTIME_SERVICE_NOT_STARTED
 
@@ -228,6 +244,10 @@
 
 **Message:** Invalid entrypoint: '%s' does not exist
 
+### PLT_RUNTIME_APPLICATION_ID_COLLISION
+
+**Message:** The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.
+
 ### PLT_RUNTIME_MISSING_ENTRYPOINT
 
 **Message:** Missing application entrypoint.
@@ -279,6 +299,12 @@
 ### PLT_RUNTIME_MESSAGING_ERROR
 
 **Message:** Cannot send a message to service "%s": %s
+
+## @platformatic/service
+
+### PLT_SERVICE_INVALID_ERROR_HANDLER
+
+**Message:** The module %s configured as server.errorHandler does not export a function.
 
 ## @platformatic/sql-events
 
@@ -425,6 +451,10 @@
 ### PLT_INVALID_CONFIG_FILE_EXTENSION
 
 **Message:** Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.
+
+### PLT_MISSING_ENV_VARIABLES
+
+**Message:** The configuration references the following environment variables which are not set: %s
 
 ### PLT_NO_CONFIG_FILE_FOUND
 

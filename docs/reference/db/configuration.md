@@ -136,6 +136,8 @@ postgres://user:password@my-database:5432/db-name
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
+  - `swaggerPrefix` (`string`, default: `/documentation`) sets the path under which the spec (`/json`, `/yaml`) and the API reference UI are served.
+  - `ui` (`boolean`, default: `true`) serves the interactive API reference UI under `swaggerPrefix`. Set it to `false` to keep only the spec routes: the UI is then never loaded, which saves the memory it would occupy in every worker, noticeable in runtimes with many applications where nobody opens the documentation page.
 
   Enables OpenAPI
 
@@ -247,6 +249,19 @@ postgres://user:password@my-database:5432/db-name
   }
   ```
 
+  You can disable all reverse relationship and FK-navigation routes (e.g. `GET /owners/{id}/posts`, `GET /posts/{id}/owner`) with a single option:
+
+  ```json title="Example Object"
+  {
+    "db": {
+      ...
+      "openapi": {
+        "ignoreAllReverseRoutes": true
+      }
+    }
+  }
+  ```
+
   You can explicitly identify tables to build an entity, **however all other tables will be ignored**:
 
   ```json title="Example Object"
@@ -346,6 +361,22 @@ postgres://user:password@my-database:5432/db-name
   ```
 
   Starting Platformatic DB or running a migration will automatically create the schemalock file.
+
+  Set `readOnly` to `true` (or the string `"true"`) to load the schema lock without ever writing it back, e.g. when the file is checked into version control and must not be rewritten at runtime:
+
+  ```json title="Example Read-Only Object"
+  {
+    "db": {
+      ...
+      "schemalock": {
+        "path": "./schema.lock",
+        "readOnly": true
+      }
+    }
+  }
+  ```
+
+  In read-only mode the file is never created or updated, not even when migrations are applied automatically.
 
 ### `migrations`
 

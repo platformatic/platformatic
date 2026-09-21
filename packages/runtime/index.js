@@ -67,6 +67,13 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
     root,
     envFile: context?.envFile
   })
+
+  if (config.envfile) {
+    // The context is optional, so it might not have been provided at all
+    context ??= {}
+    context.envFile = config.envfile
+  }
+
   const mod = extractModuleFromSchemaUrl(config)
   if (mod?.module !== '@platformatic/runtime') {
     return wrapInRuntimeConfig(config, context)
@@ -82,14 +89,22 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   })
 }
 
-export async function loadApplicationsCommands () {
+export async function loadApplicationsCommands (executableName = '', configurationFile = null) {
   const applications = {}
   const commands = {}
   const help = {}
 
   let config
   try {
-    const file = await findRuntimeConfigurationFile(abstractLogger, process.cwd(), null, false, false)
+    const file = await findRuntimeConfigurationFile(
+      abstractLogger,
+      process.cwd(),
+      configurationFile,
+      false,
+      false,
+      true,
+      executableName
+    )
 
     /* c8 ignore next 3 - Hard to test */
     if (!file) {
@@ -137,50 +152,23 @@ export async function create (configOrRoot, sourceOrConfig, context) {
     throw new NodeInspectorFlagsNotSupportedError()
   }
 
-  let runtime = new Runtime(config, context)
+  const runtime = new Runtime(config, context)
   if (setupSignals) {
     handleSignal(runtime, config)
   }
 
-  // Handle port handling
+  // Handle startup
   if (context?.start) {
-    let port = config.server?.port
-
     try {
       await runtime.init()
+      if (context.reloaded) {
+        runtime.logger.info('The application has been successfully reloaded.')
+      }
+
+      await runtime.start()
     } catch (err) {
       await runtime.close()
       throw err
-    }
-
-    if (context.reloaded) {
-      runtime.logger.info('The application has been successfully reloaded.')
-    }
-
-    while (true) {
-      try {
-        await runtime.start()
-        break
-      } catch (err) {
-        if ((err.code !== 'EADDRINUSE' && err.code !== 'EACCES') || context?.skipPortInUseHandling) {
-          throw err
-        }
-
-        await runtime.close()
-
-        // Get the actual port from the error message if original port was 0
-        if (!port) {
-          const mo = err.message.match(/ address already in use (.+)/)
-          const url = new URL(`http://${mo[1]}`)
-          port = Number(url.port)
-        }
-
-        config.server.port = ++port
-        runtime = new Runtime(config, context)
-        if (setupSignals) {
-          handleSignal(runtime, config)
-        }
-      }
     }
   }
 
@@ -190,6 +178,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 export { prepareApplication, transform, wrapInRuntimeConfig } from './lib/config.js'
 export * as errors from './lib/errors.js'
 export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'
+export { setupLoopbackMessaging } from './lib/loopback-messaging.js'
 export { Runtime } from './lib/runtime.js'
 export { schema } from './lib/schema.js'
 export * from './lib/version.js'

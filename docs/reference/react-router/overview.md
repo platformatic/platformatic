@@ -40,10 +40,10 @@ To properly work when using with in application where the entrypoint is a Platfo
 
 ```typescript
 import type { Config } from '@react-router/dev/config'
-import { getGlobal } from '@platformatic/globals'
+import { getBasePath } from '@platformatic/globals'
 
 export default {
-  basename: getGlobal().basePath ?? '/'
+  basename: getBasePath({ throwOnMissing: false }) ?? '/'
   ssr: true
 } satisfies Config
 ```
@@ -51,13 +51,13 @@ export default {
 You also need to adjust the `base` option in your `vite.config.ts`:
 
 ```typescript
-import { getGlobal } from '@platformatic/globals'
+import { getBasePath } from '@platformatic/globals'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-  base: getGlobal().basePath ?? '/',
+  base: getBasePath({ throwOnMissing: false }) ?? '/',
   plugins: [reactRouter(), tsconfigPaths()]
 })
 ```
@@ -69,12 +69,13 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 1. Modify your Vite configuration to properly handle SSR builds by making it dependent on the SSR flags:
 
    ```typescript
+   import { getBasePath } from '@platformatic/globals'
    import { reactRouter } from '@react-router/dev/vite'
    import { defineConfig } from 'vite'
    import tsconfigPaths from 'vite-tsconfig-paths'
 
    export default defineConfig(({ isSsrBuild }) => ({
-     base: globalThis.platformatic?.basePath ?? '/',
+     base: getBasePath({ throwOnMissing: false }) ?? '/',
      build: {
        rollupOptions: isSsrBuild ? { input: './app/server.ts' } : undefined
      },
@@ -96,9 +97,42 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
    This file serves as the SSR entrypoint for the server build and is referenced in the Vite configuration.
 
+## Skew protection
+
+React Router uses a user-provided Vite configuration. To tag assets, add the shared plugin:
+
+```ts
+import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
+
+export default defineConfig({
+  plugins: [platformaticSkewPlugin()]
+})
+```
+
+The plugin is enabled when `PLT_DEPLOYMENT_ID` is set during the build.
+
 ## Architecture
 
 When starting React Router in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.
+
+## HTTPS
+
+When a React Router application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+
+```json
+{
+  "server": {
+    "https": {
+      "key": { "path": "./certs/server.key" },
+      "cert": { "path": "./certs/server.crt" }
+    }
+  }
+}
+```
+
+In development mode, Platformatic forwards the HTTPS options to the Vite development server used by React Router. In production mode, Platformatic uses the same HTTPS options for the Fastify server that serves SSR applications, or for the static server used by non-SSR builds.
+
+If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
 
 ## Configuration
 

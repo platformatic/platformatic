@@ -7,6 +7,8 @@ export async function listTables (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.tables
       WHERE table_schema in (${schemaList})
+      AND TABLE_TYPE = 'BASE TABLE'
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   } else {
@@ -14,6 +16,8 @@ export async function listTables (db, sql, schemas) {
       SELECT TABLE_SCHEMA, TABLE_NAME
       FROM information_schema.tables
       WHERE table_schema = (SELECT DATABASE())
+      AND TABLE_TYPE = 'BASE TABLE'
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
     `)
     return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME }))
   }
@@ -25,6 +29,21 @@ export async function listColumns (db, sql, table, schema) {
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
+    ORDER BY ordinal_position
+  `
+  return db.query(query)
+}
+
+// MariaDB has no native JSON type: a `JSON` column is really a LONGTEXT
+// column with an automatically-generated CHECK (json_valid(`col`)) constraint.
+// We use that constraint to recognize which longtext columns are actually JSON.
+export async function listJsonColumns (db, sql, table, schema) {
+  const query = sql`
+    SELECT CONSTRAINT_NAME as column_name
+    FROM information_schema.CHECK_CONSTRAINTS
+    WHERE TABLE_NAME = ${table}
+    AND CONSTRAINT_SCHEMA = ${schema}
+    AND CHECK_CLAUSE LIKE 'json_valid(%'
   `
   return db.query(query)
 }
@@ -37,6 +56,7 @@ export async function listConstraints (db, sql, table, schema) {
     USING (constraint_name, table_schema, table_name)
     WHERE t.table_name = ${table}
     AND t.table_schema = ${schema}
+    ORDER BY k.constraint_name, k.ordinal_position
     `
   return db.query(query)
 }
@@ -104,6 +124,27 @@ export async function updateMany (db, sql, table, schema, criteria, input, field
   `
   const res = await db.query(select)
   return res
+}
+
+export async function listViews (db, sql, schemas) {
+  if (schemas) {
+    const schemaList = sql.__dangerous__rawValue(schemas.map(s => `'${s}'`))
+    const res = await db.query(sql`
+      SELECT TABLE_SCHEMA, TABLE_NAME
+      FROM information_schema.views
+      WHERE table_schema in (${schemaList})
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
+    `)
+    return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
+  } else {
+    const res = await db.query(sql`
+      SELECT TABLE_SCHEMA, TABLE_NAME
+      FROM information_schema.views
+      WHERE table_schema = (SELECT DATABASE())
+      ORDER BY TABLE_SCHEMA, TABLE_NAME
+    `)
+    return res.map(r => ({ schema: r.TABLE_SCHEMA, table: r.TABLE_NAME, isView: true }))
+  }
 }
 
 export const hasILIKE = false

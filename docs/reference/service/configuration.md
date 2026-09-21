@@ -70,14 +70,65 @@ An object with the following settings:
 - **`disableRequestLogging`** (`boolean`) -- if `true`, the request logger will be disabled
 - **`exposeHeadRoutes`** (`boolean`) -- if `true`, the router will expose HEAD routes
 - **`serializerOpts`** (`object`) -- the [serializer options](https://www.fastify.io/docs/latest/Reference/Server/#serializeropts)
+- **`ajv`** (`object`) -- options for the [request-validation Ajv instance](https://www.fastify.io/docs/latest/Reference/Server/#ajv). Only `customOptions` is configurable from the configuration file (Ajv `plugins` take functions, which cannot be expressed in a configuration file).
 - **`requestIdHeader`** (`string` or `false`) -- the name of the header that will contain the request id
 - **`requestIdLogLabel`** (`string`) -- Defines the label used for the request identifier when logging the request. default: `'reqId'`
 - **`jsonShorthand`** (`boolean`) -- default: `true` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#jsonshorthand) for more details
 - **`trustProxy`** (`boolean` or `integer` or `string` or `String[]`) -- default: `false` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details
+- **`errorHandler`** (`string`) -- path to a file (relative to the configuration file) or the name of an installed package whose default export is a [Fastify error handler](https://fastify.dev/docs/latest/Reference/Server/#seterrorhandler).
+
+  The handler is installed on the root instance before any route is registered, so it applies to every
+  route of the application, including the ones registered by the capability itself: the auto-generated
+  CRUD routes of [Platformatic DB](../db/configuration.md), the GraphQL endpoint and the health check.
+  Plugins can still call `setErrorHandler` to override it inside their own encapsulation context.
+
+  This is the supported way to enforce a single error envelope and to sanitize `5xx` bodies, which
+  otherwise expose the original `error.message` (including database driver messages) of the routes the
+  application did not write.
+
+  _Example_
+
+  ```json
+  {
+    "server": {
+      ...
+      "errorHandler": "./lib/error-handler.js"
+    }
+  }
+  ```
+
+  ```js
+  // lib/error-handler.js
+  export default function errorHandler (error, request, reply) {
+    const statusCode = error.statusCode ?? 500
+
+    request.log.error({ err: error }, 'request errored')
+
+    reply.status(statusCode).send({
+      statusCode,
+      code: error.code,
+      message: statusCode >= 500 ? 'Internal Server Error' : error.message
+    })
+  }
+  ```
+
+  A module exporting the handler as a named `errorHandler` export is supported as well.
 
 :::tip
 
 See the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server) for more details.
+
+:::
+
+:::note
+
+Fastify enables Ajv type coercion (`coerceTypes: 'array'`) for request validation by
+default. On a body/query field that allows the `null` type alongside a non-string type
+(for example `number | null`), an empty string, `0` or `false` is coerced to `null`
+before validation runs, so such a value is accepted as `null` instead of being rejected
+(string-only fields are unaffected, because an empty string is already a valid string).
+Set `server.ajv.customOptions.coerceTypes` to `false` to opt out of this coercion for the
+whole service.
 
 :::
 
@@ -189,6 +240,8 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 - **`openapi`** (`boolean` or `object`, default: `false`) — Enables OpenAPI REST support.
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic Service uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
+  - `swaggerPrefix` (`string`, default: `/documentation`) sets the path under which the spec (`/json`, `/yaml`) and the API reference UI are served.
+  - `ui` (`boolean`, default: `true`) serves the interactive API reference UI under `swaggerPrefix`. Set it to `false` to keep only the spec routes: the UI is then never loaded, which saves the memory it would occupy in every worker, noticeable in runtimes with many applications where nobody opens the documentation page.
 
   _Examples_
 
@@ -210,6 +263,18 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
     "service": {
       "openapi": {
         "prefix": "/api"
+      }
+    }
+  }
+  ```
+
+  Enables OpenAPI without the API reference UI (spec routes only)
+
+  ```json
+  {
+    "service": {
+      "openapi": {
+        "ui": false
       }
     }
   }
@@ -240,12 +305,20 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
   - `path`. e.g.: `/documentation/json`
 - **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
-  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes.
+  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin`, `memory`, and `file` (default: `console`). `memory` is only supported for testing purposes.
   - **`options`** (`object`) — These options are supported:
-    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
-    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console`, `memory`, and `file` exporters.
+    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console`, `memory`, and `file` exporters.
+    - **`path`** (`string`) — The path where spans are written when using the `file` exporter.
+    - **`protocol`** (`string`) — OTLP transport protocol. Supported values are `http` and `grpc`. Defaults to `http`.
+    - **`transport`** (`string`) — Alias for `protocol`. Supported values are `http` and `grpc`. Defaults to `http`.
+- **`diagLogger`** (`boolean`) — Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
 
 Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+
+For OTLP exporters:
+- Use HTTP with URLs like `http://localhost:4318/v1/traces`
+- Use gRPC with URLs like `http://localhost:4317` and do not include `/v1/traces`
 
 _Example_
 
@@ -253,6 +326,7 @@ _Example_
 {
   "telemetry": {
     "applicationName": "test-application",
+    "diagLogger": true,
     "exporter": {
       "type": "otlp",
       "options": {
@@ -286,6 +360,17 @@ variables of the same name.
 If no environment variable is found, then the placeholder will be replaced with an empty string.
 Note that this can lead to a schema validation error.
 
+To fail at startup (or log a warning) when a placeholder references an environment variable which
+is not set, use the [`strictEnv`](../runtime/configuration.md#strictenv) runtime option:
+
+```json title="platformatic.json"
+{
+  "runtime": {
+    "strictEnv": true
+  }
+}
+```
+
 ### Setting Environment Variables
 
 If a `.env` file exists it will automatically be loaded by Platformatic using
@@ -308,3 +393,30 @@ PLT_SERVER_LOGGER_LEVEL=debug wattpm dev
 ### PLT_ROOT
 
 The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.
+
+### Referencing another application
+
+Inside a runtime, `{PLT_<APPLICATION>_URL}` resolves to the internal URL of the named application even
+when no environment variable defines it, so applications can reach each other without a variable per
+pair. `<APPLICATION>` is the application id uppercased with dashes turned into underscores, which is
+the same prefix its generated variables use: the application `with-logger` owns `{PLT_WITH_LOGGER_URL}`
+and resolves to `http://with-logger.plt.local`.
+
+```json
+{
+  "clients": [
+    {
+      "serviceId": "with-logger",
+      "url": "{PLT_WITH_LOGGER_URL}"
+    }
+  ]
+}
+```
+
+Only applications that actually exist in the runtime are resolved this way, and setting the variable
+yourself always wins. Any other placeholder whose name happens to end in `_URL` is left alone and
+resolves to an empty string as usual, so a connection string such as `valkey://{VALKEY_URL}` or a DSN
+such as `{PLT_DATABASE_URL}` is never rewritten into an application URL.
+
+With [`strictEnv`](../runtime/configuration.md) enabled, a placeholder resolved this way is reported
+as replaced by a fallback value rather than as missing.

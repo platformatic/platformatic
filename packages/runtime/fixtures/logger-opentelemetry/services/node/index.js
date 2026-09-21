@@ -1,11 +1,14 @@
+import { getLogger } from '@platformatic/globals'
 import fastify from 'fastify'
 
+const logger = getLogger()
 const app = fastify({
-  loggerInstance: globalThis.platformatic.logger.child({})
+  loggerInstance: logger.child({})
 })
 
 app.get('/', async () => {
-  globalThis.platformatic.logger.info('Serving request')
+  const logger = getLogger()
+  logger.info('Serving request')
   return 'ok'
 })
 

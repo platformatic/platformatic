@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.70.0.json",
+  "entrypoint": "entrypoint",
+  "services": [
+    {
+      "id": "entrypoint",
+      "path": "./entrypoint",
+      "config": "platformatic.application.json"
+    },
+    {
+      "id": "ipc",
+      "path": "./ipc",
+      "config": "platformatic.application.json"
+    }
+  ],
+  "logger": {
+    "level": "error"
+  },
+  "messagingTimeout": 200,
+  "telemetry": {
+    "applicationName": "test-telemetry-messaging-runtime",
+    "version": "1.0.0",
+    "exporter": {
+      "type": "file",
+      "options": {
+        "path": "{PLT_TELEMETRY_SPANS_PATH}"
+      }
+    }
+  }
+}

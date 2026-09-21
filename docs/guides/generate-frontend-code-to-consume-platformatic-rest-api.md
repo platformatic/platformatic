@@ -6,7 +6,7 @@ import NewApiProjectInstructions from '../getting-started/new-api-project-instru
 
 Platformatic apps expose REST APIs that provide provide CRUD (Create, Read,
 Update, Delete) functionality for each entity (see the
-[Introduction to the REST API](https://docs.platformatic.dev/docs/reference/sql-openapi/overview)
+[Introduction to the REST API](/docs/reference/sql-openapi/overview)
 documentation for more information on the REST API) by default.
 
 In this guide, you will learn how to create a new Platformatic guide with Watt, Frontend Client, add a frontend to consume your Platformatic REST API.

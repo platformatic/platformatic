@@ -1,12 +1,16 @@
 import {
   BaseCapability,
+  buildAdditionalServerOptions,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
+  errors,
   getServerUrl,
   importFile,
   injectViaRequest
 } from '@platformatic/basic'
+import { getEvents } from '@platformatic/globals'
 import { Unpromise } from '@watchable/unpromise'
 import inject from 'light-my-request'
 import { once } from 'node:events'
@@ -33,6 +37,22 @@ const validFields = [
 ]
 
 const validFilesBasenames = ['index', 'main', 'app', 'application', 'server', 'start', 'bundle', 'run', 'entrypoint']
+
+function normalizeScheduledTasks (scheduledTasks) {
+  let schedules = []
+
+  if (Array.isArray(scheduledTasks)) {
+    schedules = scheduledTasks
+  } else if (scheduledTasks && typeof scheduledTasks === 'object') {
+    schedules = Object.entries(scheduledTasks).map(([cron, tasks]) => ({ cron, tasks }))
+  }
+
+  return schedules.map(({ cron, tasks }, index) => ({
+    id: String(index),
+    cron,
+    tasks: Array.isArray(tasks) ? tasks : [tasks]
+  }))
+}
 
 // Paolo: This is kinda hackish but there is no better way. I apologize.
 function isFastify (app) {
@@ -109,6 +129,8 @@ export class NodeCapability extends BaseCapability {
   #appClose
   #useHttpForDispatch
   #factory
+  #scheduledTasks
+  #tasks
 
   constructor (root, config, context) {
     super('nodejs', version, root, config, context)
@@ -122,9 +144,12 @@ export class NodeCapability extends BaseCapability {
 
     await super._start({ listen })
 
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      await this._listen()
+    if (this.#app) {
+      // Listen if entrypoint
+      if (this.#hasServer() && listen) {
+        await this._listen()
+      }
+
       return this.url
     }
 
@@ -160,7 +185,8 @@ export class NodeCapability extends BaseCapability {
       : undefined
 
     this.registerGlobals({
-      basePath: this.#basePath
+      basePath: this.#basePath,
+      additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig)
     })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
@@ -170,7 +196,7 @@ export class NodeCapability extends BaseCapability {
     const serverPromise = createServerListener(
       serverOptions?.port ?? true,
       serverOptions?.hostname ?? true,
-      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+      await buildAdditionalServerOptions(serverOptions)
     )
 
     try {
@@ -185,18 +211,26 @@ export class NodeCapability extends BaseCapability {
       this.#module = await importFile(finalEntrypoint)
     }
 
-    this.#module = this.#module.default || this.#module
+    const importedModule = this.#module
+    this.#module = importedModule.default || importedModule
+    this.#scheduledTasks = this.#module.scheduledTasks ?? importedModule.scheduledTasks
+    this.#tasks = this.#module.tasks ?? importedModule.tasks
 
     // Deal with application
     this.#factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
     this.#appClose = this.#module['close']
 
-    if (this.#hasServer()) {
-      if (this.#factory) {
-        // We have build function, this Capability will not use HTTP unless it is the entrypoint
-        serverPromise.cancel()
+    if (this.#factory) {
+      const application = await this.#module[this.#factory]()
+      this.#app = application
 
-        this.#app = await this.#module[this.#factory]()
+      if (application.isBackgroundApplication === true && typeof application.close === 'function') {
+        this.#appClose = function appClose () {
+          application.close(application)
+        }
+      }
+
+      if (this.#hasServer()) {
         this.#isFastify = isFastify(this.#app)
         this.#isKoa = isKoa(this.#app)
 
@@ -212,21 +246,28 @@ export class NodeCapability extends BaseCapability {
         if (listen) {
           await this._listen()
         }
-      } else {
-        // User blackbox function, we wait for it to listen on a port
-        this.#server = await serverPromise
-        this.#dispatcher = this.#server.listeners('request')[0]
-
-        this.url = getServerUrl(this.#server)
       }
+    } else if (this.#hasServer()) {
+      // User blackbox function, we wait for it to listen on a port
+      this.#server = await serverPromise
+      this.#dispatcher = this.#server.listeners('request')[0]
+
+      this.url = getServerUrl(this.#server)
     }
 
     await this._collectMetrics()
+
+    // No need to keep the server promise around anymore, we either have the URL or we are a background service
+    serverPromise.cancel()
     return this.url
   }
 
   #hasServer () {
-    return this.config.node?.hasServer !== false && this.#module?.hasServer !== false
+    return (
+      this.#app?.isBackgroundApplication !== true &&
+      this.config.node?.hasServer !== false &&
+      this.#module?.hasServer !== false
+    )
   }
 
   setClosing () {
@@ -257,11 +298,12 @@ export class NodeCapability extends BaseCapability {
     await super.stop()
 
     // Emit the close event so that an application can handle it
-    const closeHandled = globalThis.platformatic.events.emit('close')
+    const events = getEvents()
+    const closeHandled = events.emit('close')
 
     if (!this.#isFastify && !this.#appClose && !closeHandled && !this.#app?.[Symbol.asyncDispose]) {
       this.logger.warn(
-        `Please export a "close" function or register a "close" event handler in globalThis.platformatic.events for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
+        `Please export a "close" function or register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
       )
     }
 
@@ -293,9 +335,19 @@ export class NodeCapability extends BaseCapability {
     }
 
     if (this.#app?.[Symbol.asyncDispose]) {
+      // node:http.Server implements Symbol.asyncDispose(), but rejects with
+      // ERR_SERVER_NOT_RUNNING when a non-entrypoint server was never bound.
+      if (this.#app instanceof Server && !this.#server.listening) {
+        return
+      }
+
       return this.#app[Symbol.asyncDispose]()
     }
 
+    return this.closeServer()
+  }
+
+  closeServer () {
     /* c8 ignore next 3 */
     if (!this.#server?.listening) {
       return
@@ -353,6 +405,38 @@ export class NodeCapability extends BaseCapability {
     return { statusCode, headers, body, payload, rawPayload }
   }
 
+  async getScheduledTasks () {
+    return normalizeScheduledTasks(this.#scheduledTasks)
+  }
+
+  async runScheduledTasks (scheduleId, scheduledTime) {
+    const schedules = await this.getScheduledTasks()
+    const schedule = schedules.find(schedule => schedule.id === scheduleId)
+
+    if (!schedule) {
+      throw new errors.ScheduledTaskGroupNotFound(scheduleId)
+    }
+
+    const results = await Promise.allSettled(
+      schedule.tasks.map(async name => {
+        const task = this.#tasks?.[name]
+
+        if (typeof task !== 'function') {
+          throw new errors.ScheduledTaskNotFound(name)
+        }
+
+        return task({ scheduledTime, app: this.#app ?? this.#server })
+      })
+    )
+
+    const taskErrors = results.filter(result => result.status === 'rejected').map(result => result.reason)
+    if (taskErrors.length > 0) {
+      throw new AggregateError(taskErrors, `Scheduled task group "${scheduleId}" failed`)
+    }
+
+    return results.map(result => result.value)
+  }
+
   _getWantsAbsoluteUrls () {
     const config = this.config
     return config.node.absoluteUrl
@@ -397,12 +481,12 @@ export class NodeCapability extends BaseCapability {
     }
 
     const serverOptions = this.serverConfig
-    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+    const listenOptions = buildListenOptions(serverOptions)
 
     createServerListener(
       false,
       false,
-      typeof serverOptions?.backlog === 'number' ? { backlog: serverOptions.backlog } : {}
+      await buildAdditionalServerOptions(serverOptions)
     )
 
     if (this.#isFastify) {

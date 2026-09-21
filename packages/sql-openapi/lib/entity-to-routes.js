@@ -46,6 +46,7 @@ export async function entityPlugin (app, opts) {
   const entity = opts.entity
   const ignore = opts.ignore
   const ignoreRoutes = opts.ignoreRoutes
+  const ignoreAllReverseRoutes = opts.ignoreAllReverseRoutes || false
 
   const entitySchema = {
     $ref: entity.name + '#'
@@ -67,12 +68,35 @@ export async function entityPlugin (app, opts) {
     }
   }
 
+  const { whereArgs, orderByArgs } = generateArgs(entity, ignore)
+
+  // Views without primary keys only get a list route
+  if (entity.isView && entity.primaryKeys.size === 0) {
+    app.addHook('preValidation', async req => {
+      if (typeof req.query.fields === 'string') {
+        req.query.fields = req.query.fields.split(',')
+      }
+    })
+
+    const fields = getFieldsForEntity(entity, ignore)
+    rootEntityRoutes(
+      app,
+      entity,
+      whereArgs,
+      orderByArgs,
+      {},
+      entitySchema,
+      fields,
+      entitySchemaInput,
+      ignoreRoutes
+    )
+    return
+  }
+
   const primaryKey = entity.primaryKeys.values().next().value
   const primaryKeyParams = getPrimaryKeyParams(entity, ignore)
   const primaryKeyCamelcase = camelcase(primaryKey)
   const entityLinks = getEntityLinksForEntity(app, entity)
-
-  const { whereArgs, orderByArgs } = generateArgs(entity, ignore)
 
   app.addHook('preValidation', async req => {
     if (typeof req.query.fields === 'string') {
@@ -156,8 +180,13 @@ export async function entityPlugin (app, opts) {
     // e.g. getQuotesForMovie
     const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
 
+    // Only disambiguate the route name when the target entity has more than
+    // one relation pointing to this entity, not just any relation
+    const relationsToThisEntity = targetEntity.relations.filter(
+      relation => relation.foreignEntityName === entity.singularName
+    )
     let routePathName =
-      targetEntity.relations.length > 1
+      relationsToThisEntity.length > 1
         ? camelcase([reverseRelationship.sourceEntity, targetForeignKeyCamelcase])
         : targetEntity.pluralName
 
@@ -173,7 +202,7 @@ export async function entityPlugin (app, opts) {
       return ignoreRoute.path === reverseOpenapiPath && ignoreRoute.method === 'GET'
     })
 
-    if (!ignoredReversedGETRoute) {
+    if (!ignoredReversedGETRoute && !ignoreAllReverseRoutes) {
       try {
         app.get(
           `/:${camelcase(primaryKey)}/${routePathName}`,
@@ -300,7 +329,7 @@ export async function entityPlugin (app, opts) {
       return ignoreRoute.path === targetOpenapiPath && ignoreRoute.method === 'GET'
     })
 
-    if (!ignoredReversedGETRoute) {
+    if (!ignoredReversedGETRoute && !ignoreAllReverseRoutes) {
       try {
         app.get(
           `/:${camelcase(primaryKey)}/${targetRelation}`,
@@ -371,7 +400,7 @@ export async function entityPlugin (app, opts) {
   const ignoredPUTRoute = ignoreRoutes.find(ignoreRoute => {
     return ignoreRoute.path === openapiPath && ignoreRoute.method === 'PUT'
   })
-  if (!ignoredPUTRoute) {
+  if (!ignoredPUTRoute && !entity.isView) {
     app.route({
       url: `/:${primaryKeyCamelcase}`,
       method: 'PUT',
@@ -420,7 +449,7 @@ export async function entityPlugin (app, opts) {
   const ignoredDELETERoute = ignoreRoutes.find(ignoreRoute => {
     return ignoreRoute.path === openapiPath && ignoreRoute.method === 'DELETE'
   })
-  if (!ignoredDELETERoute) {
+  if (!ignoredDELETERoute && !entity.isView) {
     app.delete(
       `/:${primaryKeyCamelcase}`,
       {

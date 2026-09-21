@@ -39,12 +39,240 @@ Application Performance Monitoring (APM) agents. `preload` should contain
 a path or a list of paths pointing to a CommonJS or ES module that is loaded at the start of
 the app worker thread.
 
+### `extensions`
+
+While `preload` injects code in each application worker thread, `extensions` loads custom code
+in the **runtime main thread**. Extensions can observe and control the whole runtime: they receive
+the `Runtime` object and an ITC (Inter-Thread Communication) facade which allows them to register
+custom commands that applications can invoke from their worker threads.
+
+`extensions` can be a path, an object with `path`, `options`, and `build` properties, or an array of either:
+
+```json
+{
+  "extensions": [
+    {
+      "path": "./runtime-extension.js",
+      "options": {
+        "bucket": "{S3_BUCKET}"
+      }
+    }
+  ]
+}
+```
+
+Each file must export a setup function, which is invoked during the runtime initialization,
+before any application is started. TypeScript files are supported out of the box via
+[Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
+
+```js
+export default async function setup ({ runtime, itc, sharedContext, logger, options, root, metrics, health }) {
+  // React to runtime events
+  runtime.on('application:worker:started', payload => {
+    logger.info({ payload }, 'worker started')
+  })
+
+  // Publish state to every application worker
+  await sharedContext.update({ reconciler: { ready: true } })
+
+  // Register a custom command that applications can invoke via
+  // getITC().send('acme:hello', payload)
+  itc.handle('acme:hello', async payload => {
+    return { hello: payload.name }
+  })
+
+  // Register main-thread metrics with the shared Runtime metrics pipeline
+  const { client, registry } = metrics
+  const jobs = new client.Gauge({
+    name: 'acme_extension_jobs',
+    help: 'Number of jobs tracked by the extension',
+    registers: [registry]
+  })
+  jobs.set(0)
+
+  // Contribute readiness/liveness checks and diagnostic routes on the health probes server
+  health.registerReadinessCheck('dispatchable', async () => {
+    return { status: true }
+  })
+
+  health.registerLivenessCheck('control-plane', async () => true)
+
+  health.registerRoutes(async app => {
+    app.get('/inventory', async () => ({ ok: true }))
+  })
+
+  return {
+    async start () {
+      // Invoked after applications are prepared, before they accept traffic.
+      // Can add/start dynamic applications; Runtime will not start them again.
+    },
+    async stop () {
+      // Invoked during shutdown after the entrypoint stops and before remaining
+      // applications stop. Useful for control-plane handoff.
+    },
+    async close () {
+      // Invoked when the runtime is closed, after all applications have stopped.
+    }
+  }
+}
+```
+
+#### How the setup function is resolved
+
+The setup function can be exported either as the default export or as a named `setup` export, so
+both of the following are valid:
+
+```js
+// Default export
+export default async function setup (context) {}
+```
+
+```js
+// Named export
+export async function setup (context) {}
+```
+
+Extensions are also commonly shipped as CommonJS or as "faux ESM" modules, in which a transpiler or a
+bundler puts the real exports on `module.exports` together with an `__esModule` marker. In those
+modules Node.js exposes the whole `module.exports` object as the ESM default export, so the setup
+function ends up one level deeper. Runtime transparently unwraps that extra level, which means all of
+these work as well:
+
+```js
+// CommonJS, transpiled default export: module.exports.default is the setup function
+exports.__esModule = true
+exports.default = async function setup (context) {}
+```
+
+```js
+// CommonJS, named setup export: module.exports.setup is the setup function
+exports.setup = async function setup (context) {}
+```
+
+The resolution order is: the default export, the named `setup` export, then the same two properties
+of the default export. The first one that is a function wins, so a module exporting both a default
+function and a named `setup` function uses the default export. If none of them is a function, the
+runtime fails to start with `PLT_RUNTIME_INVALID_EXTENSION`.
+
+The setup function receives a context object with the following properties:
+
+- **`runtime`** - The [Runtime](./programmatic.md) instance. It is an `EventEmitter`, so extensions can
+  subscribe to all [runtime events](./programmatic.md#events) and invoke any public method, including
+  application and worker introspection (`getApplications()`, `getWorkers()`), application configuration and
+  environment (`getApplicationConfig(id)`, `getApplicationEnv(id)`), and metrics (`getMetrics()`).
+- **`itc`** - A facade over the runtime ITC:
+  - **`handle(name, handler)`** - Registers a custom command invocable from any application via
+    the [ITC API](./globals.md#communicating-with-runtime-extensions) returned by `getITC()` from
+    `@platformatic/globals`. The name must not clash with the commands reserved by the runtime or
+    with a command registered by another extension.
+  - **`send(target, name, payload)`** - Sends a request to a worker and awaits its response. `target` is
+    an application ID (a worker is chosen in round-robin) or `application:worker-index` for a specific worker.
+  - **`notify(target, name, payload)`** - Sends a fire-and-forget notification. When `target` is an
+    application ID, all its running workers are notified; use `application:worker-index` to target a
+    specific worker. Workers receive notifications via `getITC().on(name, handler)`.
+- **`sharedContext`** - The shared context API used by application workers. `get()` synchronously returns a
+  snapshot of the current context in main-thread extensions. `update(update, options?)` merges `update` into
+  the context and broadcasts the result to every running worker; pass `{ overwrite: true }` to replace the
+  context instead. Newly started workers receive the latest context. Use `update()` rather than mutating the
+  object returned by `get()`.
+- **`logger`** - A child of the runtime logger.
+- **`options`** - The `options` object specified in the configuration, if any.
+- **`root`** - The runtime project root directory.
+- **`metrics`** - A per-extension Prometheus client and registry:
+  - **`client`** - The `@platformatic/prom-client` module (same client used by application workers).
+  - **`registry`** - A dedicated `Registry` for this extension. Metrics registered here appear once in
+    `Runtime.getMetrics()`, the management metrics API, and the existing `/metrics` endpoint. They are
+    **not** duplicated per application worker.
+
+  **Label behavior:** extension metrics are main-thread metrics. Runtime never invents a `workerId` or
+  application ID label for them. Only static labels from the runtime `metrics.labels` configuration are
+  applied (the configured application label name is omitted, same as process-level metrics). Extensions
+  that need application- or worker-specific labels must set them explicitly when creating metrics.
+
+  Metric family names must be unique across extensions and must not collide with runtime process metrics,
+  restart metrics, or application worker metrics. Collisions fail with
+  `PLT_RUNTIME_METRIC_FAMILY_COLLISION`, identifying the extension and metric family. The registry is
+  cleared when the extension closes (including partial startup failures).
+- **`health`** - API for contributing readiness/liveness checks and diagnostic routes on Watt's health
+  probes server (the metrics server when probes are shared with it, or the dedicated health probes
+  server when configured separately):
+  - **`registerReadinessCheck(name, check)`** - Registers a named check that participates in `/ready`.
+    Check names must be unique across extensions. The check may return a boolean or
+    `{ status, statusCode?, body? }`. Rejected, timed-out, or malformed checks fail closed. Timeouts
+    use the configured health checks timeout. **Readiness-only failures do not fail `/status`**
+    (liveness), so a temporary control-plane condition can stop traffic without triggering a pod
+    restart loop. Returns an unregister function.
+  - **`registerLivenessCheck(name, check)`** - Same contract as readiness, but the check participates
+    in `/status`. Returns an unregister function.
+  - **`registerRoutes(plugin)`** - Registers a Fastify plugin on the health probes server before it
+    starts listening. Works for shared and separate probe servers. Route collisions fail startup with
+    a coded error identifying the extension and route. Returns an unregister function that disables
+    the routes. Closing the extension removes its checks and routes.
+
+The setup function can optionally return an object with awaited lifecycle hooks:
+
+- **`preBuild(context)`** - Called before an application capability is built. `context` contains
+  `applicationId` and the absolute `applicationPath`.
+- **`onBuild(context, build)`** - Wraps the application capability build. Call and await `build()` to
+  continue the build. The hook may perform work immediately before and after it, or omit the call to
+  replace the capability build. Its return value becomes the build result.
+- **`postBuild(context, result)`** - Called after a successful application build with the final result
+  returned by the `onBuild` hook chain.
+- **`start()`** - Called once applications have been prepared and registered, and **before** the
+  originally configured applications start accepting traffic. Runtime awaits every extension `start`
+  hook. An extension may add and start dynamic applications here; those applications are excluded from
+  the normal startup pass so they are not started twice. Runtime does not report `started` until
+  extension and application startup complete. If a later extension or application fails, Runtime stops
+  and closes already-started extensions during cleanup.
+- **`stop()`** - Called during shutdown **after** the entrypoint has been stopped and **before** the
+  remaining applications stop. Runtime awaits every extension `stop` hook so control-plane extensions
+  can settle work and hand off state.
+- **`close()`** - Called when the runtime is being closed, after applications have stopped. The
+  extension metrics registry is cleared after `close`.
+
+When multiple extensions are configured, they are set up and started in registration order.
+`preBuild` runs in registration order. `onBuild` hooks are nested middleware with the first registered
+extension outermost. `postBuild`, `stop`, and `close` run in reverse registration order. Each of `stop`
+and `close` is invoked at most once per Runtime life, including repeated `stop`/`close` calls and
+failed-start cleanup paths. Existing extensions that only return `close()` keep their previous
+behavior. Health checks and routes registered by an extension are cleaned up with it.
+
+Listening to Runtime `EventEmitter` events is not a substitute for these hooks: `emit()` does not await
+asynchronous listeners. Lifecycle ordering is enforced by Runtime itself so it covers signal handling,
+internal failure cleanup, and future lifecycle entry points.
+
+Extensions are not loaded when building applications unless their object configuration explicitly
+sets `"build": true`. Build-enabled extensions are set up before application workers are created,
+receive the build hooks above for every application, and are closed when the build Runtime closes.
+Their `start` and `stop` hooks are not called during a build.
+
+```json
+{
+  "extensions": [
+    {
+      "path": "./build-extension.js",
+      "build": true
+    }
+  ]
+}
+```
+
+For a complete worked example — enabling continuous profiling on every worker when it starts (or is
+restarted) and shipping the captured profiles — see the
+[Capture Flamegraphs on Health Events](../../guides/capture-flamegraphs-on-health-events.md) guide.
+
 ### `applications`
 
 `applications` is an array of objects that defines the applications managed by the
 runtime. Each application object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the application.
+- **`enabled`** (`boolean`, `string`, or `object`) - If `false`, the application
+  is disabled and will not be loaded by the runtime. Boolean strings and
+  environment variable placeholders are supported. It can also be an object where
+  each key is an environment name and each value is a boolean. If the current
+  environment does not match any key, the application is enabled. Default:
+  `true`.
 - **`path`** (**required**, `string`) - The path to the directory containing
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
@@ -53,6 +281,7 @@ runtime. Each application object supports the following settings:
   the application.
 - **`useHttp`** (`boolean`) - The application will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other applications via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+- **`websocket`** (`boolean`) - The application will be started on a random HTTP port on `127.0.0.1` so that the gateway can proxy WebSocket connections to it, but, unlike `useHttp`, HTTP traffic between applications keeps using the in-memory mesh network when the capability supports in-thread dispatching (for example the service family); for the other capabilities it flows through the bound TCP port, as under `useHttp`. Set it to `true` when a non-entrypoint application behind the gateway needs to accept WebSocket connections. Default: `false`.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
 - **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
@@ -61,7 +290,7 @@ runtime. Each application object supports the following settings:
     - **`dynamic`** (`boolean`) - Enable dynamic worker scaling. This is only meaningful when set to `false` to disable dynamic scaling for this application.
     - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
     - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
-- **`health`** (object): Configures the health check for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
+- **`health`** (object): Configures the health check and low-level resource defaults for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here override the values specified in the runtime.
 - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
 - **`envfile`** (`string`) - The path to an `.env` file to load for the application. By default, the `.env` file is loaded from the application directory.
 - **`env`** (`object`) - An object containing environment variables to set for the application. Values set here takes precedence over values set in the `envfile`.
@@ -84,6 +313,7 @@ runtime. Each application object supports the following settings:
   See the [Node.js Permission Model Constraints](https://nodejs.org/dist/latest/docs/api/permissions.html#permission-model-constraints) for complete details.
 
 - **`dependencies`** (`array` of `string`s): A list of applications that must be started before attempting to start the current application. Note that the runtime will not perform any attempt to detect or solve dependencies cycles.
+- **`management`** (`boolean` or `object`): Grants the application access to runtime management operations via the ITC (Inter-Thread Communication) channel. See the [management](#management) section for details.
 - **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
   intrumentations per application, e.g.:
 
@@ -143,6 +373,32 @@ runtime. Any environment variables set in the `env` object will be merged with
 the environment variables set in the `envfile` and `env` properties of each
 application, with application-level environment variables taking precedence.
 
+### `envfile`
+
+The path to an `.env` file to load for the runtime. By default, the `.env` file is loaded from the application directory.
+
+### `strictEnv`
+
+Controls what happens when a `{PLT_*}` environment variable placeholder references a variable which is not set:
+
+- `false` (the default): the placeholder is silently replaced with an empty string.
+- `true`: loading the configuration fails at startup with an error listing all the missing variables.
+- `"warn"`: a warning listing the missing variables is logged, but the placeholders are still replaced with an empty string.
+
+Not every unset variable is reported as missing. When loading the configuration of an application, the
+runtime resolves any variable whose name ends in `_URL` to the internal URL of that application, so such
+a variable gets a value even when it is not set. When `strictEnv` is enabled, these variables are listed
+in a separate warning. They are never turned into an error, not even when `strictEnv` is `true`, because
+they do resolve to a value and failing on them would change which configurations are able to boot.
+
+The value is also applied when loading the configuration files of the applications in the runtime.
+
+```json
+{
+  "strictEnv": true
+}
+```
+
 ### `sourceMaps`
 
 If `true`, source maps are enabled for all applications. Default: `false`. This setting can be overridden at the application level.
@@ -153,9 +409,14 @@ The base path, relative to the configuration file to store resolved applications
 
 ### `entrypoint`
 
-The Platformatic Runtime's entrypoint is an applicaiton that is exposed
-publicly. This value must be the `ID` of an application defined via the `autoload` or
+The Platformatic Runtime's entrypoint is an application that is exposed
+publicly. This optional value must be the `ID` of an application defined via the `autoload` or
 `applications` configuration.
+
+If `entrypoint` is omitted, the runtime automatically selects one when there is a single
+application or exactly one Gateway application. If it cannot select a single entrypoint,
+the runtime starts without a public entrypoint; applications remain reachable through their
+internal `.plt.local` URLs and APIs such as `runtime.inject()`.
 
 ### `workers`
 
@@ -209,10 +470,8 @@ Configures the amount of milliseconds to wait before forcefully killing an appli
 
 The object supports the following settings:
 
-- **`application`** (`number`) - The graceful shutdown timeout for an application.
-- **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime.
-
-For both the settings the default is `10000` (ten seconds).
+- **`application`** (`number`) - The graceful shutdown timeout for an application. Default: `10000` (ten seconds).
+- **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime. Default: `30000` (thirty seconds).
 
 ### `watch`
 
@@ -246,11 +505,15 @@ This setting is ignored in production, where applications are always restarted i
 
 When enabled (default), Platformatic automatically installs error handlers for [`uncaughtException`](https://nodejs.org/api/process.html#event-uncaughtexception) and [`unhandledRejection`](https://nodejs.org/api/process.html#event-unhandledrejection) events on each worker process. These handlers will automatically restart the affected worker when such errors occur.
 
-Setting this to `false` disables the automatic error handling, making you responsible for implementing proper error handling in your application code.
+If application code installs its own listeners for these events, Platformatic tracks them, removes them from `process`, and invokes them before terminating the worker. This keeps Platformatic in control of the shutdown while still allowing error reporting tools to observe fatal errors.
+
+Set this to `true` to terminate the worker after `100` milliseconds. Set this to a positive number to use that number of milliseconds instead.
+
+Setting this to `false`, `0`, or a negative number disables the automatic error handling, making you responsible for implementing proper error handling in your application code.
 
 ### `health`
 
-Configures the health check for each worker. This is enabled only if `restartOnError` is greater than zero.
+Configures per-worker health checks and low-level worker resource defaults. Health checks are enabled only if `restartOnError` is greater than zero; `bufferPoolSize` and `defaultHighWaterMark` are applied during worker startup regardless.
 
 The object supports the following settings:
 
@@ -259,10 +522,51 @@ The object supports the following settings:
 - `gracePeriod` (`number`): How long after the application started before starting to perform health checks. Default: `30000`.
 - `maxUnhealthyChecks` (`number`): The number of consecutive failed checks before killing the worker. Default: `10`.
 - `maxELU` (`number`): The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
+- `maxEventLoopDelay` (`number`): The maximum allowed event loop delay in milliseconds. When set, each worker samples its own event loop delay (via `perf_hooks.monitorEventLoopDelay`) and reports it once per second as an `eventLoopDelay` health signal; a worker whose maximum delay over a check window exceeds this value counts as unhealthy. This catches long individual stalls at low average utilization (a 150ms synchronous stall each second is an ELU of just 0.15), which are invisible to `maxELU`. Disabled by default.
+- `maxEventLoopDelayP99` (`number`): The maximum allowed p99 event loop delay in milliseconds. Same mechanism as `maxEventLoopDelay`, but evaluated against the worst per-second p99 reported over the check window instead of the absolute maximum, so single outlier stalls are smoothed out. Either option activates the sampler; they can be combined. Disabled by default.
 - `maxHeapUsed` (`number`): The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
 - `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units. Default: `4GB`.
 - `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. Default: `128MB`
 - `codeRangeSize` (`number` or `string`): The maximum amount of memory that can be used for code range (compiled code). The value must be an amount in bytes or in memory units. Default: `268435456` (256MB).
+- `bufferPoolSize` (`number` or `string`): Sets Node.js [`Buffer.poolSize`](https://nodejs.org/api/buffer.html#static-property-bufferpoolsize) for each application worker. The value must be an amount in bytes or in memory units. Default: `262144` (256KB).
+- `defaultHighWaterMark` (`number` or `string`): Sets the default high water mark for byte streams via Node.js [`stream.setDefaultHighWaterMark(false, value)`](https://nodejs.org/api/stream.html#streamsetdefaulthighwatermarkobjectmode-value). The value must be an amount in bytes or in memory units. Default: `262144` (256KB).
+
+`bufferPoolSize` is intentionally larger than the Node.js default and should be treated as an aggressive server-oriented default. Node.js pools [`Buffer.allocUnsafe()`](https://nodejs.org/api/buffer.html#static-method-bufferallocunsafesize) allocations only when `size < (Buffer.poolSize >>> 1)`, so the 256KB default serves allocations smaller than 128KB from the pool. This covers common server allocation sizes such as HTTP parser buffers, stream chunks, and small file reads in the 4KB-64KB range, reducing allocator work and Worker-thread contention. The trade-off is one larger pool per worker/realm, and RSS can stay higher while pooled slices are retained; lower this value for memory-constrained deployments.
+
+### `healthProbes`
+
+Enables the Kubernetes readiness and liveness probe endpoints. It can be a boolean, a string, or an object. Default: `true`.
+
+If `healthProbes` is `true`, unset, or a string, the probe endpoints are installed on the Prometheus server. Individual probe endpoints can still be configured with `metrics.readiness` and `metrics.liveness`.
+
+Set this to `false` to disable both probe endpoints globally.
+
+Use an object to configure the health probes server. Health probes are exposed on a standalone server only when the resolved `hostname` and `port` differ from the Prometheus server. Otherwise, they are installed on the Prometheus server.
+
+- **`enabled`** (`boolean` or `string`). Enables the health probe endpoints. Default: `true`.
+- **`hostname`** (`string`). The hostname where the health probes server will be listening. Default: `0.0.0.0`.
+- **`port`** (`number` or `string`). The port where the health probes server will be listening. Default: `9090`.
+- **`readiness`** (`object` or `boolean`). Optional readiness endpoint configuration. If omitted, `metrics.readiness` is used when present.
+- **`liveness`** (`object` or `boolean`). Optional liveness endpoint configuration. If omitted, `metrics.liveness` is used when present.
+
+```json title="Example health probes on a standalone server"
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090
+  },
+  "healthProbes": {
+    "hostname": "0.0.0.0",
+    "port": 9091,
+    "readiness": {
+      "endpoint": "/health"
+    },
+    "liveness": {
+      "endpoint": "/live"
+    }
+  }
+}
+```
 
 ### `telemetry`
 
@@ -274,10 +578,14 @@ The object supports the following settings:
   - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
   - `path`. e.g.: `/documentation/json`
 - **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
-  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes.
+  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin`, `memory`, and `file` (default: `console`). `memory` is only supported for testing purposes.
   - **`options`** (`object`) — These options are supported:
-    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
-    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console`, `memory`, and `file` exporters.
+    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console`, `memory`, and `file` exporters.
+    - **`path`** (`string`) — The path where spans are written when using the `file` exporter.
+    - **`protocol`** (`string`) — OTLP transport protocol. Supported values are `http` and `grpc`. Defaults to `http`.
+    - **`transport`** (`string`) — Alias for `protocol`. Supported values are `http` and `grpc`. Defaults to `http`.
+- **`diagLogger`** (`boolean`) — Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
 
 ### `basePath`
 
@@ -286,12 +594,17 @@ The runtime will automatically strip the base path from the incoming requests.
 
 :::important
 OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). See the full list [here](https://opentelemetry.io/ecosystem/vendors/).
+
+For OTLP exporters:
+- Use HTTP with URLs like `http://localhost:4318/v1/traces`
+- Use gRPC with URLs like `http://localhost:4317` and do not include `/v1/traces`
 :::
 
 ```json title="Example JSON object"
 {
   "telemetry": {
     "applicationName": "test-application",
+    "diagLogger": true,
     "exporter": {
       "type": "otlp",
       "options": {
@@ -326,7 +639,8 @@ If the entrypoint has also a `server` configured, then the runtime settings over
 An object with the following settings:
 
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
-- **`port`** — Port where Platformatic Service server will listen for connections.
+- **`port`** — Port where Platformatic Service server will listen for connections. Provide a number or a string. When `portAssignment` is set to `perWorkerIncrement`, this is the first port assigned to worker 0.
+- **`portAssignment`** (`string`) — Sets how entrypoint server worker ports are assigned. Default: `shared`. Set it to `shared` or leave it unset to make all workers listen on the same `port`. Set it to `perWorkerIncrement` to give each worker its own incremental port, starting from `port`. Use `perWorkerIncrement` only with external load balancing, never on its own.
 - **`http2`** (`boolean`) — Enables HTTP/2 support. Default: `false`.
 - **`https`** (`object`) - Configuration for HTTPS supporting the following options. Requires `https`.
   - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.
@@ -343,7 +657,7 @@ This configures the Platformatic Runtime `logger`, based on [pino](https://getpi
 
 An object with the following settings:
 
-- **`level`** — The log level. Default: `info`. Valid values are: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`.
+- **`level`** — The log level. Default: `info`. Valid values are: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`, or any level defined in `customLevels`.
 - **`transport`** — Configuration for logging transport, see [pino.transport](https://getpino.io/#/docs/transports) for more information. Can be configured in two ways:
   - As a single transport: An object with properties:
     - **`target`** — A string specifying the transport module.
@@ -360,15 +674,30 @@ An object with the following settings:
 - **`redact`** — Configuration for redacting sensitive information, see [pino.redact]https://getpino.io/#/docs/redaction) for more information. An object with properties:
   - **`paths`** (**required**) — An array of strings specifying paths to redact.
   - **`censor`** — A string to replace redacted values with. Default: `[redacted]`.
+  - **`remove`** — If `true`, the redacted keys are removed from the logs instead of having their values replaced with the censor. Default: `false`.
 - **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main application. Default: `false`.
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
+- **`pino`** — Configures the keys used to recognize Pino log entries emitted by worker applications before wrapping them in `stdout` or `stderr`. An object with properties:
+  - **`level`** — The key that contains the numeric log level. Default: `level`.
+  - **`time`** — The key that contains the log timestamp. Default: `time`.
+  - **`message`** — The key that contains the log message. Default: `msg`.
 - **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
+- **`levelVal`** — The numeric value of the level set in `level`, when it is not one of the standard pino levels, see [pino.levelVal](https://getpino.io/#/docs/api?id=levelval-number) for more information.
+- **`useOnlyCustomLevels`** — If `true`, only the levels defined in `customLevels` are available and the standard pino ones are omitted. Default: `false`.
+- **`levelComparison`** — How log levels are compared to the logger level. Valid values are `ASC` and `DESC`; use `DESC` when lower values are more severe. Default: `ASC`.
+- **`msgPrefix`** — A string prefixed to every message, including the ones of child loggers.
+- **`nestedKey`** — The key under which any logged object is placed, see [pino.nestedKey](https://getpino.io/#/docs/api?id=nestedkey-string) for more information.
+- **`errorKey`** — The key used for the serialized error in the log object. Default: `err`.
+- **`depthLimit`** — The stringification limit at a specific nesting depth when logging circular objects. Default: `5`.
+- **`edgeLimit`** — The stringification limit of properties or elements when logging a circular object or array. Default: `100`.
+- **`crlf`** — If `true`, each log line is terminated with `\r\n` instead of `\n`. Default: `false`.
+- **`enabled`** — If `false`, logging is disabled entirely. Default: `true`.
 - **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `telemetry` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
 
-  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `globalThis.platformatic.logger`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
+  When used with telemetry configuration, the service name and version from `telemetry.applicationName` and `telemetry.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
 
 ### `undici`
 
@@ -404,7 +733,7 @@ The number of milliseconds to wait when invoking another application using the i
 
 ### `messagingTimeout`
 
-The number of milliseconds to wait when invoking another application using the its `globalThis.platformatic.messaging.send` before considering the request timed out. Default: `300000` (5 minutes).
+The number of milliseconds to wait when invoking another application using the messaging API before considering the request timed out. Default: `300000` (5 minutes).
 
 ### `startupConcurrency`
 
@@ -428,10 +757,20 @@ Setting a lower value can be useful when:
 
 This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime applications.
 
+The same server also exposes Kubernetes readiness and liveness probes when [`healthProbes`](#healthprobes) is enabled without object overrides. If `metrics.enabled` is `false` and `healthProbes` is enabled without object overrides, the server exposes only the probe endpoints. If both `metrics.enabled` and `healthProbes` are `false`, the server is not started.
+
+When `healthProbes` is an object with a different resolved `hostname` and `port`, the Prometheus server follows only the metrics configuration and health probes are exposed on their own server.
+
 - **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
 - **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
 - **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.
+- **`https`** (`object`). Optional configuration for serving the Prometheus, readiness, and liveness endpoints over HTTPS. It supports the same certificate options as [`server.https`](#server):
+  - **`allowHTTP1`** (`boolean`). If `true`, the server will also accept HTTP/1.1 connections when HTTP/2 is enabled. Default: `false`.
+  - **`key`** (**required**, `string`, `object`, or `array`). A private key as an inline PEM string, an object with a `path` property pointing to a private key file, or an array of either form.
+  - **`cert`** (**required**, `string`, `object`, or `array`). A certificate as an inline PEM string, an object with a `path` property pointing to a certificate file, or an array of either form.
+  - **`requestCert`** (`boolean`). Request a client certificate.
+  - **`rejectUnauthorized`** (`boolean`). Reject clients without a valid certificate when `requestCert` is enabled.
 - **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
   - **`username`** (`string`). The username for the Prometheus server authentication.
   - **`password`** (`string`). The password for the Prometheus server authentication.
@@ -451,9 +790,10 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
   - **`fail`** (`object`). The failure criteria for the Prometheus server liveness checks.
     - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
     - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
-- **`healthChecksTimeouts`**: The number of milliseconds to wait for Prometheus liveness or readiness checks before considering them timed out. Default: `5000` (5 seconds).
+- **`healthChecksTimeouts`**: Deprecated. This setting is accepted for compatibility but is no longer used.
 - **`plugins`** (array of `string`): A list of Fastify plugin to add to the Prometheus server.
 - **`applicationLabel`** (`string`, default: `'applicationId'`): The label name to use for the application identifier in metrics (e.g., `'applicationId'`, `'serviceId'`, or any custom label name).
+- **`httpClientMetrics`** (`boolean` or `string`, default: `false`): Enable outgoing HTTP client request duration metrics (`http_client_request_duration_seconds`). This metric includes labels for the method, status code, dispatcher URL, and error type.
 - **`timeout`** (`number`, default: `10000`): The timeout to wait for each worker metrics before skipping it.
 - **`httpCustomLabels`** (array of `object`): Custom labels to add to HTTP metrics (`http_request_all_duration_seconds` and `http_request_all_summary_seconds`). Each label extracts its value from an HTTP request header. By default, no custom labels are added. Each object supports:
   - **`name`** (**required**, `string`): The label name to use in metrics.
@@ -509,6 +849,61 @@ inside the OS temporary folder.
 - **`logs`** (`object`). Optional configuration for the runtime logs.
   - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
 - **`socket`** (`string`). Optional custom path for the control socket. If not specified, the default platform-specific location is used (`platformatic/runtimes/<PID>/socket` on Unix, `\\.\pipe\platformatic-<PID>` on Windows).
+
+### `management`
+
+The runtime-level `management` configuration enables the ITC (Inter-Thread Communication) management client for **all** applications in the runtime. This is particularly useful for single-app deployments where you want every worker to have access to management operations without specifying `management` on each individual application.
+
+The value is inherited by all applications that do not explicitly set their own `management` configuration. Individual applications can override or disable the runtime-level setting.
+
+```json title="Enable management for all applications"
+{
+  "management": true,
+  "applications": [
+    {
+      "id": "app1",
+      "path": "./services/app1"
+    },
+    {
+      "id": "app2",
+      "path": "./services/app2"
+    }
+  ]
+}
+```
+
+```json title="Enable management globally, disable for a specific application"
+{
+  "management": true,
+  "applications": [
+    {
+      "id": "orchestrator",
+      "path": "./services/orchestrator"
+    },
+    {
+      "id": "worker",
+      "path": "./services/worker",
+      "management": false
+    }
+  ]
+}
+```
+
+```json title="Restrict operations globally"
+{
+  "management": {
+    "operations": ["getRuntimeStatus", "getApplicationsIds"]
+  },
+  "applications": [
+    {
+      "id": "app1",
+      "path": "./services/app1"
+    }
+  ]
+}
+```
+
+The configuration format is the same as the per-application `management` setting (boolean or object with `enabled` and `operations`). See the [per-application management](#management) section for the full list of available operations.
 
 ### `scheduler`
 
@@ -640,6 +1035,105 @@ This configuration can also be set at the application level to override the runt
       }
     }
   ]
+}
+```
+
+### management
+
+The `management` per-application configuration grants an application access to runtime management operations directly through the ITC (Inter-Thread Communication) channel. This allows orchestrator-style applications to list services, restart applications, inspect configuration, proxy requests, and more — without requiring the HTTP-based `managementApi` to be enabled.
+
+When enabled, a `ManagementClient` instance is available via `getManagement()` inside the application worker. Applications without `management` enabled have no access to these operations.
+
+This setting can also be configured at the [runtime level](#management) to apply to all applications at once.
+
+The configuration can be a boolean or an object:
+
+```json title="Grant full management access"
+{
+  "applications": [
+    {
+      "id": "orchestrator",
+      "path": "./services/orchestrator",
+      "management": true
+    }
+  ]
+}
+```
+
+```json title="Restrict to specific operations"
+{
+  "applications": [
+    {
+      "id": "dashboard",
+      "path": "./services/dashboard",
+      "management": {
+        "operations": ["getRuntimeStatus", "getApplicationsIds", "getApplicationDetails"]
+      }
+    }
+  ]
+}
+```
+
+Configuration options (object form):
+
+- **`enabled`** (`boolean`). Enable or disable management access. Default: `true` when the object form is used.
+- **`operations`** (`array` of `string`s). An optional whitelist of allowed operations. If omitted, all operations are available.
+
+**Available operations:**
+
+| Operation                              | Description                                  |
+| -------------------------------------- | -------------------------------------------- |
+| `getRuntimeStatus`                     | Get the current runtime status               |
+| `getRuntimeMetadata`                   | Get runtime metadata (pid, versions, uptime) |
+| `getRuntimeConfig`                     | Get the runtime configuration                |
+| `getRuntimeEnv`                        | Get the runtime environment variables        |
+| `getApplicationsIds`                   | List all application IDs                     |
+| `getApplications`                      | Get details for all applications             |
+| `getWorkers`                           | Get worker thread information                |
+| `getApplicationDetails(id)`            | Get details for a specific application       |
+| `getApplicationConfig(id)`             | Get an application's configuration           |
+| `getApplicationEnv(id)`                | Get an application's environment variables   |
+| `getApplicationOpenapiSchema(id)`      | Get an application's OpenAPI schema          |
+| `getApplicationGraphqlSchema(id)`      | Get an application's GraphQL schema          |
+| `getMetrics(format)`                   | Get runtime metrics                          |
+| `startApplication(id)`                 | Start an application                         |
+| `stopApplication(id)`                  | Stop an application                          |
+| `restartApplication(id)`               | Restart an application                       |
+| `restart(applications)`                | Restart selected applications                |
+| `addApplications(applications, start)` | Dynamically add applications                 |
+| `removeApplications(ids)`              | Remove applications                          |
+| `inject(id, injectParams)`             | Proxy an HTTP request to another application |
+
+**Usage example inside a privileged application:**
+
+Use [`getManagement()`](/docs/reference/runtime/globals#messaging-and-shared-context) from `@platformatic/globals` to access the management API.
+
+```javascript
+import { getManagement } from '@platformatic/globals'
+
+export function create () {
+  const app = fastify()
+  const management = getManagement()
+
+  app.get('/services', async () => {
+    const { applications } = await management.getApplications()
+    return applications
+  })
+
+  app.post('/services/:id/restart', async req => {
+    await management.restartApplication(req.params.id)
+    return { ok: true }
+  })
+
+  app.get('/proxy/:id/*', async req => {
+    const { id, '*': url } = req.params
+    return management.inject(id, {
+      method: 'GET',
+      url: '/' + url
+    })
+  })
+
+  return app
 }
 ```
 

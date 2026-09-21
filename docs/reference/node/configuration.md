@@ -1,5 +1,5 @@
 import Issues from '../../getting-started/issues.md';
-import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
+import RuntimeInCapabilities from '../\_runtime-in-capabilities.md';
 
 # Configuration
 
@@ -18,6 +18,17 @@ Supported object properties:
   - **`build`**: The command to execute to build the application.
   - **`development`**: The command to execute to start the application in development mode.
   - **`production`**: The command to execute to start the application in production mode.
+- **`changeDirectoryBeforeExecution`**: If set to `true`, change the current working directory to the application root before running any of the commands above. The default is `false`.
+- **`preferLocalCommands`**: If set to `true`, resolve non-absolute commands from the application's `node_modules/.bin` before checking the current working directory. The default is `true`.
+- **`entrypointPort`**: The main port the application will listen on. If not provided, it will use the port of the first TCP server that the application starts. This setting should be provided only if the application starts multiple TCP servers and the main one is not the first that actually listens on a port.
+- **`processSpawner`**: Path to a custom module used to spawn application processes.
+  The module must export an async or sync `spawn(executable, args, options, stdout, stderr)` function that will receive the following arguments:
+  - **`executable`**: Command executable.
+  - **`args`**: Array of command arguments.
+  - **`options`**: `child_process.spawn` options.
+  - **`stdout`** and **`stderr`**: Writable streams where process output should be piped with `{ end: false }` and set to UTF-8 encoding.
+
+  The function must return a `ChildProcess` instance (or a `Promise` that resolves to one), after the "spawn" event has been triggered.
 
 ## `node`
 
@@ -28,7 +39,7 @@ Configures Node. Supported object properties:
 - **`dispatchViaHttp`**: If set to `true`, then the application will serve requests coming from the mesh network via a TCP port.
 - **`disableBuildInDevelopment`**: If set to `true`, it will not automatically build an application in development mode.
 - **`disablePlatformaticInBuild`**: If set to `true`, then no Platformatic code will be started when running the `build` command.
-- **`hasServer`**: If set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port.
+- **`hasServer`**: If set to `false`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. Applications that export a `create` or `build` function can also return an object with `isBackgroundApplication: true` to select background mode at runtime.
 
 ## `logger`
 

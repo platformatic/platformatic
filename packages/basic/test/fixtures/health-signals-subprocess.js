@@ -1,6 +1,7 @@
+import { getSendHealthSignal } from '@platformatic/globals'
 // Send a health signal immediately after startup
 // The sendHealthSignal function batches signals with a 1000ms timeout
-globalThis.platformatic.sendHealthSignal({
+getSendHealthSignal()({
   type: 'test-signal',
   data: { test: true }
 }).then(() => {

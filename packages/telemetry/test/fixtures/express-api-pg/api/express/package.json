@@ -6,7 +6,8 @@
     "start": "wattpm start"
   },
   "dependencies": {
-    "@platformatic/node": "^2.18.0",
+    "@platformatic/globals": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0",
     "express": "^4.21.1",
     "pg": "^8.13.1",
     "postgrator": "^8.0.0"

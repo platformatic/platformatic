@@ -1,7 +1,8 @@
+import { setBasePath } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 export function build () {
-  globalThis.platformatic?.setBasePath('/nested/base/dir')
+  setBasePath('/nested/base/dir')
 
   return createServer((req, res) => {
     if (req.url === '/nested/base/dir/') {

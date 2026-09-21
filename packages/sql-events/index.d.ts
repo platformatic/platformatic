@@ -1,5 +1,6 @@
+import { Readable } from 'node:stream'
 import { FastifyInstance } from 'fastify'
-import { Readable } from 'stream'
+import { MQEmitter } from 'mqemitter'
 import { SQLMapperPluginInterface, Entities } from '@platformatic/sql-mapper'
 import { FastifyError } from '@fastify/error'
 
@@ -9,10 +10,8 @@ export interface SQLEventsPluginInterface {
 
 export interface SQLEventsPluginOptions<T extends Entities> {
   mapper?: SQLMapperPluginInterface<T>
-
-  // TODO mqemitter has no types
-  mq?: any
-  connectionString?: String
+  mq?: MQEmitter
+  connectionString?: string
 }
 
 /**
@@ -25,8 +24,8 @@ export function setupEmitter<T extends Entities> (options: SQLEventsPluginOption
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const ObjectRequiredUnderTheDataProperty: () => FastifyError
   export const PrimaryKeyIsNecessaryInsideData: () => FastifyError
-  export const NoSuchActionError: (actions: string) => FastifyError
+  export const NoSuchActionError: (action: string) => FastifyError
 }

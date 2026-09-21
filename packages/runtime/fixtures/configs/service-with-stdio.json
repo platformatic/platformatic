@@ -2,6 +2,9 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "stdio",
   "managementApi": {},
+  "server": {
+    "hostname": "127.0.0.1"
+  },
   "logger": {
     "level": "trace"
   },

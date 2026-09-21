@@ -14,12 +14,18 @@
 // /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   docs: [
-    // Overview - What Platformatic is and core concepts
+    // Overview - What Platformatic is and core concepts (Diátaxis: Discovery & orientation)
     {
       type: 'category',
       label: 'Overview',
       collapsed: false,
-      items: ['Overview']
+      items: [
+        'Overview',
+        'overview/what-is-watt',
+        'overview/architecture-overview',
+        'overview/use-cases-and-examples',
+        'overview/comparison-with-alternatives'
+      ]
     },
 
     // Learning - Tutorials and getting started (Diátaxis: Learning-oriented)
@@ -28,6 +34,7 @@ const sidebars = {
       label: 'Getting Started',
       collapsed: false,
       items: [
+        'overview/getting-started',
         'getting-started/quick-start',
         'getting-started/port-your-app',
         {
@@ -35,6 +42,12 @@ const sidebars = {
           label: 'Tutorials',
           collapsed: true,
           items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
+        },
+        {
+          type: 'category',
+          label: 'Migrations',
+          collapsed: true,
+          items: ['learn/migrations/from-express', 'learn/migrations/from-fastify']
         }
       ]
     },
@@ -51,14 +64,19 @@ const sidebars = {
           label: 'Application Development',
           collapsed: true,
           items: [
+            'guides/capabilities',
+            'guides/frameworks',
             'guides/build-modular-monolith',
             'guides/cache-with-platformatic-watt',
             'guides/generate-frontend-code-to-consume-platformatic-rest-api',
+            'guides/watt-architecture-patterns',
             'guides/using-watt-with-node-config',
             'guides/use-watt-multiple-repository',
             'guides/use-watt-with-ts-node',
+            'guides/use-watt-with-ai-agents',
             'guides/scheduler',
             'guides/dynamic-workers',
+            'guides/nextjs-multi-zones',
             'guides/next-image-optimizer'
           ]
         },
@@ -67,10 +85,12 @@ const sidebars = {
           label: 'Deployment & Operations',
           collapsed: true,
           items: [
+            'guides/cli-managing',
             'guides/deployment/dockerize-a-watt-app',
             'guides/deployment/k8s-readiness-liveness',
             'guides/deployment/compiling-typescript',
-            'guides/deployment/nextjs-in-k8s'
+            'guides/deployment/nextjs-in-k8s',
+            'guides/deployment/watt-in-ecs'
           ]
         },
         {
@@ -78,14 +98,31 @@ const sidebars = {
           label: 'Monitoring & Observability',
           collapsed: true,
           items: [
+            'guides/logging',
             'guides/metrics',
             'guides/distributed-tracing',
             'guides/logging-to-elasticsearch',
             'guides/opentelemetry-logging',
+            'guides/opentelemetry-sdk-setup',
             'guides/profiling-with-watt',
+            'guides/capture-flamegraphs-on-health-events',
+            'guides/heap-snapshots',
             'guides/debugging-with-repl'
           ]
         }
+      ]
+    },
+
+    // Concepts - Why Watt works the way it does (Diátaxis: Understanding-oriented)
+    {
+      type: 'category',
+      label: 'Concepts',
+      collapsed: true,
+      items: [
+        'concepts/watt-architecture',
+        'concepts/multithread-model',
+        'concepts/application-lifecycle',
+        'concepts/modular-monolith'
       ]
     },
 
@@ -110,12 +147,12 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'Services & APIs',
+          label: 'Applications & APIs',
           collapsed: true,
           items: [
             {
               type: 'category',
-              label: 'HTTP Service',
+              label: 'HTTP Application',
               collapsed: true,
               items: [
                 'reference/service/overview',
@@ -126,11 +163,12 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'API Gateway (Composer)',
+              label: 'API Gateway',
               collapsed: true,
               items: [
                 'reference/gateway/overview',
                 'reference/gateway/configuration',
+                'reference/gateway/deduplication',
                 'reference/gateway/api-modification',
                 'reference/gateway/plugin',
                 'reference/gateway/programmatic'
@@ -138,7 +176,7 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'Database Service',
+              label: 'Database Application',
               collapsed: true,
               items: [
                 'reference/db/overview',
@@ -210,6 +248,18 @@ const sidebars = {
             },
             {
               type: 'category',
+              label: 'Nitro',
+              collapsed: true,
+              items: ['reference/nitro/overview', 'reference/nitro/configuration']
+            },
+            {
+              type: 'category',
+              label: 'Nuxt',
+              collapsed: true,
+              items: ['reference/nuxt/overview', 'reference/nuxt/configuration']
+            },
+            {
+              type: 'category',
               label: 'React Router',
               collapsed: true,
               items: ['reference/react-router/overview', 'reference/react-router/configuration']
@@ -240,6 +290,7 @@ const sidebars = {
           collapsed: true,
           items: [
             'reference/runtime/overview',
+            'reference/runtime/globals',
             'reference/runtime/configuration',
             'reference/runtime/multithread-architecture',
             'reference/runtime/programmatic'

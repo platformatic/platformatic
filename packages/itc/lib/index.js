@@ -49,18 +49,24 @@ export function parseResponse (response) {
   return response
 }
 
-export function generateRequest (name, data) {
+export function generateRequest (name, data, meta) {
   if (typeof name !== 'string') {
     throw new RequestNameIsNotString(name.toString())
   }
 
-  return {
+  const request = {
     type: PLT_ITC_REQUEST_TYPE,
     version: PLT_ITC_VERSION,
     reqId: randomUUID(),
     name,
     data
   }
+
+  if (typeof meta !== 'undefined') {
+    request.meta = meta
+  }
+
+  return request
 }
 
 export function generateResponse (request, error, data) {
@@ -74,13 +80,19 @@ export function generateResponse (request, error, data) {
   }
 }
 
-export function generateNotification (name, data) {
-  return {
+export function generateNotification (name, data, meta) {
+  const notification = {
     type: PLT_ITC_NOTIFICATION_TYPE,
     version: PLT_ITC_VERSION,
     name,
     data
   }
+
+  if (typeof meta !== 'undefined') {
+    notification.meta = meta
+  }
+
+  return notification
 }
 
 export function generateUnhandledErrorResponse (error) {
@@ -295,29 +307,66 @@ export class ITC extends EventEmitter {
     }
 
     let reqId
+    let abortHandler
+    const signal = options?.signal
+
     try {
       this._enableKeepAlive()
+      signal?.throwIfAborted()
 
-      const request = generateRequest(name, message)
-      this._send(request, options)
-
+      const request = generateRequest(name, message, options?.meta)
       const promiseWithResolvers = Promise.withResolvers()
       reqId = request.reqId
       this.#waitingRequests.set(request.reqId, promiseWithResolvers)
 
-      const { error, data } = await Unpromise.race([promiseWithResolvers.promise, this.#closePromise])
+      const responses = [promiseWithResolvers.promise, this.#closePromise]
+      if (signal) {
+        const aborted = Promise.withResolvers()
+        abortHandler = () => {
+          const error = signal.reason ?? new DOMException('This operation was aborted', 'AbortError')
+          aborted.resolve({ error, data: null })
+        }
+
+        if (signal.aborted) {
+          abortHandler()
+        } else {
+          signal.addEventListener('abort', abortHandler, { once: true })
+        }
+
+        responses.push(aborted.promise)
+      }
+
+      this._send(request, options)
+
+      const { error, data } = await Unpromise.race(responses)
 
       if (error !== null) throw error
       return data
     } finally {
+      if (abortHandler) {
+        signal.removeEventListener('abort', abortHandler)
+      }
+
       // Clean up the waiting requests map even if an error occurred
       this.#waitingRequests.delete(reqId)
       this._manageKeepAlive()
+
+      if (reqId) {
+        this._onRequestSettled?.(reqId, options)
+      }
     }
   }
 
   notify (name, message, options) {
-    this._send(generateNotification(name, message), options)
+    this._send(generateNotification(name, message, options?.meta), options)
+  }
+
+  async process (name, message, context) {
+    const request = generateRequest(name, message, context?.meta)
+    const { error, data } = await this.#dispatchRequest(request, context)
+
+    if (error !== null) throw error
+    return data
   }
 
   handle (message, handler) {
@@ -387,6 +436,16 @@ export class ITC extends EventEmitter {
   }
 
   async #handleRequest (raw, context) {
+    const response = await this.#dispatchRequest(raw, context)
+
+    this._send(response, context)
+
+    if (this.#closeAfterCurrentRequest) {
+      this.close()
+    }
+  }
+
+  async #dispatchRequest (raw, context) {
     let request = null
     let handler = null
     let response = null
@@ -424,11 +483,7 @@ export class ITC extends EventEmitter {
       this.#handling = false
     }
 
-    this._send(response, context)
-
-    if (this.#closeAfterCurrentRequest) {
-      this.close()
-    }
+    return response
   }
 
   #handleResponse (response, context) {
@@ -471,3 +526,4 @@ export class ITC extends EventEmitter {
 }
 
 export * as errors from './errors.js'
+export * from './telemetry.js'

@@ -14,6 +14,9 @@ export const AuthSchema = {
       type: 'string',
       description: 'The path in the user object that contains the roles.'
     },
+    module: {
+      type: 'string'
+    },
     roleMergeStrategy: {
       type: 'string',
       enum: ['first-match', 'most-permissive'],

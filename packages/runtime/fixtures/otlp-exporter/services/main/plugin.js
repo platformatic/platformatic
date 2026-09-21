@@ -1,10 +1,10 @@
+import { getPrometheus } from '@platformatic/globals'
 /// <reference path="../../global.d.ts" />
-'use strict'
 
 /** @param {import('fastify').FastifyInstance} app */
 export default async function (app) {
   // Create some custom metrics
-  const { client, registry } = globalThis.platformatic.prometheus
+  const { client, registry } = getPrometheus()
 
   const requestCounter = new client.Counter({
     name: 'custom_requests_total',

@@ -1,14 +1,69 @@
 import { FastifyError } from '@fastify/error'
 import { JSONSchemaType } from 'ajv'
 import { EventEmitter } from 'node:events'
-import { Logger } from 'pino'
+import { ParseArgsOptionsConfig } from 'node:util'
+import { LevelWithSilentOrString, Logger } from 'pino'
+import type debug from 'debug';
 
 // Symbols
 export declare const kCanceled: unique symbol
+export declare const kEnvFileFallbackKeys: unique symbol
 export declare const kFailedImport: unique symbol
 export declare const kHandledError: unique symbol
 export declare const kMetadata: unique symbol
 export declare const kTimeout: unique symbol
+
+// Cli types
+export function createCLIContext<T = {}>(
+  executableId?: string,
+  executableName?: string,
+  verbose?: boolean,
+  prettyPrint?: boolean,
+  options?: T
+): {
+  executableId: string
+  executableName: string
+  verbose: boolean
+  prettyPrint: boolean
+} & T
+
+export function logo(color?: boolean, name?: string): string
+
+export function createCliLogger(level: LevelWithSilentOrString, noPretty: boolean): Logger
+
+export function logFatalError(logger: Logger, ...args: any[]): false
+
+export function parseArgs(
+  args: string[],
+  options: ParseArgsOptionsConfig,
+  stopAtFirstPositional?: boolean,
+  strict?: boolean
+): {
+  values: Record<string, any>
+  positionals: string[]
+  unparsed: string[]
+  tokens: any[]
+}
+
+export function getRoot(positionals?: string[]): string
+
+export function applicationToEnvVariable(application: string): string
+
+export function findRuntimeConfigurationFile(
+  logger: Logger,
+  root: string,
+  configurationFile?: string,
+  fallback?: boolean,
+  throwOnError?: boolean,
+  verifyPackages?: boolean,
+  executableName?: string
+): Promise<string | false | undefined>
+
+export function fallbackToTemporaryConfigFile(
+  logger: Logger,
+  root: string,
+  verifyPackages: boolean
+): Promise<string | false | undefined>
 
 // Configuration types
 export declare const envVariablePattern: RegExp
@@ -25,13 +80,24 @@ export interface ValidationError {
 export type ConfigurationOptions<T = {}> = Partial<{
   validate: boolean
   validationOptions: object
-  transform: (config: Configuration<T>) => Promise<Configuration<T>> | Configuration<T>
+  // Read directly off the context by every capability package (astro, basic,
+  // next, node, service, ...) to pick a development/production code path.
+  isProduction: boolean
+  // loadConfiguration() always invokes the caller-supplied transform hook
+  // with all three arguments (config, schema, options), mirroring the
+  // exported transform() function's own parameter list.
+  transform: (
+    config: Configuration<T>,
+    schema: object,
+    options: ConfigurationOptions<T>
+  ) => Promise<Configuration<T>> | Configuration<T>
   upgrade: (logger: Logger, config: RawConfiguration, version: string) => Promise<RawConfiguration> | RawConfiguration
   env: Record<string, string>
   ignoreProcessEnv: boolean
   replaceEnv: boolean
   replaceEnvIgnore: string[]
   onMissingEnv: (key: string) => string | undefined
+  strictEnv: boolean | 'warn'
   fixPaths: boolean
   logger: Logger
   root: string
@@ -101,9 +167,13 @@ export declare function replaceEnv (
   onMissingEnv?: (key: string) => string | undefined,
   ignore?: string[]
 ): RawConfiguration
+// `config` also accepts an array: the exported `applications` schema is a
+// JSONSchemaType<object[]> (an ARRAY schema), and validate() is called with
+// a matching array of application configs before they are handed to
+// prepareApplication()/addApplications().
 export declare function validate (
   schema: JSONSchemaType<any>,
-  config: RawConfiguration,
+  config: RawConfiguration | RawConfiguration[],
   validationOptions?: object,
   fixPaths?: boolean,
   root?: string
@@ -113,7 +183,22 @@ export declare function loadConfiguration (
   schema?: any,
   options?: ConfigurationOptions
 ): Promise<Configuration>
-export declare function loadConfigurationModule (root: string, config: RawConfiguration | ModuleWithVersion): any
+
+// The capability module object returned by loadConfigurationModule(): the
+// object a capability exports (its shape is otherwise capability-defined,
+// hence the index signature).
+export interface ConfigurationModule {
+  loadConfiguration?: (configPath: string) => Promise<unknown>
+  skipTelemetryHooks?: boolean
+  createCommands?: (applicationId: string) => unknown
+  modulesToLoad?: string[]
+  [key: string]: unknown
+}
+export declare function loadConfigurationModule (
+  root: string,
+  config: RawConfiguration | ModuleWithVersion,
+  pkg?: string
+): Promise<ConfigurationModule>
 
 // Error types
 export declare const ERROR_PREFIX: string
@@ -128,6 +213,7 @@ export declare const SourceMissingError: FastifyError
 export declare const RootMissingError: FastifyError
 export declare const SchemaMustBeDefinedError: FastifyError
 export declare const ConfigurationDoesNotValidateAgainstSchemaError: FastifyError
+export declare const MissingEnvVariablesError: FastifyError
 
 // Execution types
 export declare function executeWithTimeout<T> (promise: Promise<T>, timeout: number, timeoutValue?: any): Promise<T>
@@ -144,6 +230,7 @@ export declare function generateDashedName (): string
 export declare function isFileAccessible (filename: string, directory?: string): Promise<boolean>
 export declare function createDirectory (path: string, empty?: boolean): Promise<string | undefined>
 export declare function createTemporaryDirectory (prefix: string): Promise<string>
+export declare function createSharedTemporaryDirectory (...segments: string[]): Promise<string>
 export declare function safeRemove (path: string): Promise<void>
 export declare function searchFilesWithExtensions (
   root: string,
@@ -176,6 +263,23 @@ export declare class FileWatcher extends EventEmitter {
   isFileAllowed (fileName: string): boolean
   isFileIgnored (fileName: string): boolean
 }
+
+// HTTPS types
+export type HTTPSConfigArgument = string | { path: string } | Array<string | { path: string }>
+export type SanitizedHTTPSConfigArgument = string | Buffer | Array<string | Buffer>
+export interface HTTPSConfig {
+  key: HTTPSConfigArgument
+  cert: HTTPSConfigArgument
+  allowHTTP1?: boolean
+  requestCert?: boolean
+  rejectUnauthorized?: boolean
+}
+export interface SanitizedHTTPSConfig extends Omit<HTTPSConfig, 'key' | 'cert'> {
+  key: SanitizedHTTPSConfigArgument
+  cert: SanitizedHTTPSConfigArgument
+}
+export declare function sanitizeHTTPSArgument (arg: HTTPSConfigArgument): Promise<SanitizedHTTPSConfigArgument>
+export declare function sanitizeHTTPSOptions (https?: HTTPSConfig): Promise<SanitizedHTTPSConfig | undefined>
 
 // Logger types
 export declare function setPinoFormatters (options: any): void
@@ -220,11 +324,16 @@ export declare function loadModule (require: NodeRequire, path: string): Promise
 
 // Node types
 export declare function checkNodeVersionForApplications (): void
+export declare function mirrorGlobalDispatcherForBuiltinFetch (dispatcher: unknown): void
+export declare function scheduleCompileCacheFlush (logger?: Logger): void
 export declare const features: {
   node: {
     reusePort: boolean
     worker: {
       getHeapStatistics: boolean
+    }
+    permission: {
+      network: boolean
     }
   }
 }
@@ -262,5 +371,6 @@ export declare const schemaComponents: Record<string, JSONSchemaType<any>>
 // String types
 export declare function findNearestString (strings: string[], target: string): string | null
 export declare function match (actual: any, expected: any): boolean
+export declare function convertApplicationNameToPrefix (applicationName: string): string
 export declare function escapeRegexp (raw: string): string
 export declare function parseMemorySize (size: string): number

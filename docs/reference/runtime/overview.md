@@ -25,7 +25,7 @@ The following configuration file can be used to start a new Platformatic Runtime
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.54.0.json",
   "autoload": {
     "path": "./packages",
     "exclude": ["docs"]
@@ -42,8 +42,10 @@ or as a Platformatic Runtime application. Runtime application enables certain co
 ## Inter-application communication
 
 Platformatic Runtime allows multiple microservice applications to run
-within a single process. Only the entrypoint binds to an operating system
-port and can be reached from outside the runtime.
+within a single process. When an entrypoint is configured or automatically detected,
+only the entrypoint binds to an operating system port and can be reached from outside
+the runtime. If no entrypoint is configured or detected, the runtime starts without an
+external application URL.
 
 Within the runtime, all inter-application communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection
@@ -108,9 +110,9 @@ For detailed technical documentation about the mesh network implementation, thre
 By default, each application is executed in a separate and dedicated [Node.js Worker Thread](https://nodejs.org/dist/latest/docs/api/worker_threads.html) within the same process.
 This means that `worker.isMainThread` will return `false` and there are some limitations like the inability to use `process.chdir`.
 
-The application application runtime configuration is accessible via the `workerData` and `globalThis.platformatic` objects, which allows to bypass such limitations.
+The application runtime configuration is accessible via `workerData` and the typed getters from [`@platformatic/globals`](./globals.md), which allows bypassing such limitations.
 
-If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting `globalThis.platformatic` and the interapplication communication automatically.
+If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting the runtime APIs and the interapplication communication automatically.
 
 # TrustProxy
 

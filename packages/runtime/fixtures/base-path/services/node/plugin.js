@@ -14,6 +14,12 @@ function build () {
       res.end()
       return
     }
+    if (req.url === '/redirect-external') {
+      res.setHeader('Location', 'https://example.com/oauth/authorize?client_id=123')
+      res.writeHead(302)
+      res.end()
+      return
+    }
     throw new Error(`Unexpected request: ${req.url}`)
   })
 

@@ -19,7 +19,11 @@ const autodetect = {
   node: null,
   next: 'next',
   nest: '@nestjs/core',
+  nitro: 'nitro',
+  nuxt: 'nuxt',
+  'react-router': '@react-router/dev',
   remix: '@remix-run/dev',
+  tanstack: '@tanstack/react-start',
   vite: 'vite'
 }
 
@@ -213,6 +217,117 @@ test('import - should not do anything when the local folder is already an autolo
   ok(importProcess.stdout.includes('The path is already autoloaded as an application.'))
 })
 
+test('import - should import a sibling of the autoload directory', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
+
+  // web-legacy is not autoloaded, its name merely starts with the autoload directory
+  const path = join('web-legacy', 'other')
+  const absolute = resolve(rootDir, path)
+  await createDirectory(absolute)
+  await writeFile(resolve(absolute, 'index.js'), '', 'utf-8')
+
+  changeWorkingDirectory(t, rootDir)
+  const importProcess = await wattpmUtils('import', absolute)
+
+  ok(!importProcess.stdout.includes('The path is already autoloaded as an application.'))
+
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
+    ...originalFileContents,
+    web: [{ id: 'other', path }]
+  })
+})
+
+test('import - should import a directory nested deeper than the autoloaded applications', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
+
+  // Autoload only claims the direct children of web, not this
+  const path = join('web', 'main', 'nested')
+  const absolute = resolve(rootDir, path)
+  await createDirectory(absolute)
+  await writeFile(resolve(absolute, 'index.js'), '', 'utf-8')
+
+  changeWorkingDirectory(t, rootDir)
+  const importProcess = await wattpmUtils('import', absolute)
+
+  ok(!importProcess.stdout.includes('The path is already autoloaded as an application.'))
+
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
+    ...originalFileContents,
+    web: [{ id: 'nested', path }]
+  })
+})
+
+test('import - should import an excluded child of the autoload directory', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const contents = await loadRawConfigurationFile(configurationFile)
+  contents.autoload.exclude = ['excluded']
+  await saveConfigurationFile(configurationFile, contents)
+
+  const path = join('web', 'excluded')
+  const absolute = resolve(rootDir, path)
+  await createDirectory(absolute)
+  await writeFile(resolve(absolute, 'index.js'), '', 'utf-8')
+
+  changeWorkingDirectory(t, rootDir)
+  const importProcess = await wattpmUtils('import', absolute)
+
+  ok(!importProcess.stdout.includes('The path is already autoloaded as an application.'))
+
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
+    ...contents,
+    web: [{ id: 'excluded', path }]
+  })
+})
+
+test('import - should use an environment variable for a sibling of the project directory', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
+
+  // The sibling name starts with the project directory, so a string prefix test considers it inside
+  const directory = `${rootDir}-legacy`
+  t.after(() => safeRemove(directory))
+  await createDirectory(directory)
+  await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
+
+  await executeCommand('git', 'init', { cwd: directory })
+  await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: directory })
+
+  const id = basename(directory)
+  const envVariable = applicationToEnvVariable(id)
+
+  changeWorkingDirectory(t, rootDir)
+  await wattpmUtils('import', directory)
+
+  // The application is outside the project, so it must keep its URL and go through an env variable
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id,
+        path: `{${envVariable}}`,
+        url: 'git@github.com:hello/world.git'
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
+})
+
 test('import - should not do anything when the local folder is already a defined application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   t.after(() => safeRemove(rootDir))
@@ -220,7 +335,7 @@ test('import - should not do anything when the local folder is already a defined
   const configurationFile = resolve(rootDir, 'watt.json')
 
   const contents = await loadRawConfigurationFile(configurationFile)
-  contents.web = [{ id: 'main', path: 'main' }]
+  contents.web = [{ id: 'other', path: 'main' }]
   await saveConfigurationFile(configurationFile, contents)
   await createDirectory(resolve(rootDir, 'main'))
   await writeFile(resolve(rootDir, 'main/index.js'), '', 'utf-8')
@@ -429,6 +544,8 @@ test('import - when launched without arguments, should fix the configuration of 
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
+  await writeFile(resolve(rootDir, '.npmrc'), 'dry-run=true\n', 'utf-8')
+
   changeWorkingDirectory(t, rootDir)
   const importProcess = await wattpmUtils('import')
 
@@ -439,7 +556,6 @@ test('import - when launched without arguments, should fix the configuration of 
       dependencies: {
         '@platformatic/node': `^${version}`
       },
-      devDependencies: {}
     })
 
     deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'watt.json')), {
@@ -476,6 +592,38 @@ test('import - when launched without arguments, should fix the configuration of 
   ok(importProcess.stdout.includes('Installing dependencies for the application third using npm ...'))
 })
 
+test('import - should not install applications individually inside a pnpm workspace', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  await writeFile(resolve(rootDir, '.npmrc'), 'dry-run=true\n', 'utf-8')
+  await writeFile(
+    resolve(rootDir, 'pnpm-workspace.yaml'),
+    `packages:
+  - web-1/*
+  - web-2/*
+
+catalog:
+  vite: ^5.0.0
+`,
+    'utf-8'
+  )
+  await writeFile(
+    resolve(rootDir, 'web-1/fourth/package.json'),
+    JSON.stringify({ dependencies: { '@platformatic/globals': '>=3.0.0', vite: 'catalog:' } }),
+    'utf-8'
+  )
+
+  changeWorkingDirectory(t, rootDir)
+  const importProcess = await wattpmUtils('import', '-P', 'pnpm')
+
+  ok(importProcess.stdout.includes('Installing dependencies for the project using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application first using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application second using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application fourth using pnpm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the application third using pnpm ...'))
+})
+
 test('import - when launched without arguments, should fix the configuration of all known applications without installing dependencies', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
   t.after(() => safeRemove(rootDir))
@@ -492,8 +640,7 @@ test('import - when launched without arguments, should fix the configuration of 
     deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'package.json')), {
       dependencies: {
         '@platformatic/node': `^${version}`
-      },
-      devDependencies: {}
+      }
     })
 
     deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, applicationPath, 'watt.json')), {
@@ -544,7 +691,8 @@ test('import - when launched without arguments from an application file, should 
 
   deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json')), {
     dependencies: {
-      '@platformatic/node': '^2.3.1'
+      '@platformatic/globals': '>=3.0.0',
+      '@platformatic/node': '>=3.0.0'
     },
     type: 'module'
   })

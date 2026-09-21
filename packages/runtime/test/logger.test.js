@@ -1,122 +1,14 @@
 import { execa } from 'execa'
 import { fastify } from 'fastify'
 import { deepStrictEqual, ok } from 'node:assert'
+import { writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { transform } from '../index.js'
 import { startPath } from './cli/helper.js'
-import { createRuntime, isWindows, updateFile } from './helpers.js'
+import { createRuntime, execRuntime, isWindows, requestAndDump, stdioOutputToLogs, updateFile } from './helpers.js'
 import { prepareRuntime } from './multiple-workers/helper.js'
-
-function stdioOutputToLogs (data) {
-  const logs = data
-    .map(line => {
-      try {
-        return JSON.parse(line)
-      } catch {
-        return line
-          .trim()
-          .split('\n')
-          .map(l => {
-            try {
-              return JSON.parse(l)
-            } catch {}
-            return null
-          })
-          .filter(log => log)
-      }
-    })
-    .filter(log => log)
-
-  const lines = logs.flat()
-  return lines
-}
-
-async function requestAndDump (url, opts) {
-  try {
-    const { body } = await request(url, opts)
-    await body.text()
-  } catch {}
-}
-
-function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = false }) {
-  return new Promise((resolve, reject) => {
-    if (!done) {
-      reject(new Error('done fn is required'))
-    }
-
-    const result = {
-      stdout: [],
-      stderr: [],
-      url: null
-    }
-    let ready = false
-    let teardownCalled = false
-
-    async function teardown () {
-      if (teardownCalled) {
-        return
-      }
-      teardownCalled = true
-
-      timeoutId && clearTimeout(timeoutId)
-
-      if (!child) {
-        return
-      }
-      child.kill('SIGKILL')
-      child.catch(() => {})
-      child = null
-    }
-
-    let child = execa(process.execPath, [startPath, configPath], {
-      encoding: 'utf8',
-      env: { PLT_USE_PLAIN_CREATE: true }
-    })
-
-    const timeoutId = setTimeout(async () => {
-      clearTimeout(timeoutId)
-
-      await teardown()
-      reject(new Error('Timeout'))
-    }, timeout)
-
-    child.stdout.on('data', message => {
-      const m = message.toString()
-      result.stdout.push(m)
-
-      if (done(m)) {
-        teardown().then(() => {
-          resolve(result)
-        })
-        return
-      }
-
-      if (ready) {
-        return
-      }
-
-      const match = m.match(/Platformatic is now listening at (http:\/\/127\.0\.0\.1:\d+)/)
-      if (match) {
-        result.url = match[1]
-        try {
-          onReady?.({ url: result.url })
-        } catch (err) {
-          teardown().then(() => {
-            reject(new Error('Error calling onReady', { cause: err }))
-          })
-        }
-        ready = true
-      }
-    })
-
-    child.stderr.on('data', message => {
-      const msg = message.toString()
-      result.stderr.push(msg)
-    })
-  })
-}
 
 setGlobalDispatcher(new Agent({ keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }))
 
@@ -278,15 +170,20 @@ test('should inherit full logger options from runtime to different applications'
 test('should get json logs from thread applications when they are not pino default config', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
-  let requested = false
+  let incomingRequest = false
+  let requestCompleted = false
   const { stdout } = await execRuntime({
     configPath,
     onReady: async ({ url }) => {
       await requestAndDump(url, { path: '/' })
-      requested = true
     },
     done: message => {
-      return requested
+      for (const log of stdioOutputToLogs([message]).filter(log => log.caller === 'STDOUT')) {
+        incomingRequest ||= log.stdout.msg === 'incoming request'
+        requestCompleted ||= log.stdout.msg === 'request completed'
+      }
+
+      return incomingRequest && requestCompleted
     }
   })
   const logs = stdioOutputToLogs(stdout).filter(log => log.caller === 'STDOUT')
@@ -320,22 +217,19 @@ test(
   async t => {
     const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
-    let responses = 0
-    let requested = false
+    let serviceResponded = false
+    let nodeResponded = false
     const { stdout } = await execRuntime({
       configPath,
       onReady: async ({ url }) => {
         await requestAndDump(url, { path: '/service/' })
         await requestAndDump(url, { path: '/node/' })
-        requested = true
       },
       done: message => {
-        if (message.includes('call route / on service')) {
-          responses++
-        } else if (message.includes('call route / on node')) {
-          responses++
-        }
-        return requested && responses > 1
+        serviceResponded ||= message.includes('call route / on service')
+        nodeResponded ||= message.includes('call route / on node')
+
+        return serviceResponded && nodeResponded
       }
     })
     const logs = stdioOutputToLogs(stdout)
@@ -457,6 +351,63 @@ test('should use base and messageKey options', async t => {
   )
 })
 
+test('should use configured pino message key to detect thread application logs', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key-pino', 'platformatic.json')
+
+  let responses = 0
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
+    },
+    done: message => {
+      if (message.includes('call route / on service')) {
+        responses++
+      } else if (message.includes('call route / on node')) {
+        responses++
+      }
+      return responses > 1
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  ok(
+    logs.find(log => {
+      return log.name === 'service' && log.theMessage === 'call route / on service' && !log.stdout
+    })
+  )
+
+  ok(
+    logs.find(log => {
+      return log.name === 'node' && log.theMessage === 'call route / on node' && !log.stdout
+    })
+  )
+})
+
+test('should use configured pino keys to detect thread application logs', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-pino-keys', 'platformatic.json')
+
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/custom-pino-keys' })
+      requested = true
+    },
+    done: message => {
+      return requested && message.includes('custom pino keys')
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  ok(
+    logs.find(log => {
+      return log.severity === 'INFO' && typeof log.timestamp === 'number' && log.message === 'custom pino keys' && !log.stdout
+    })
+  )
+})
+
 test('should use null base in options', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
 
@@ -555,6 +506,80 @@ test('should use colors when printing applications logs', async t => {
   )
 })
 
+test('should use pretty logs when FORCE_TTY is set in .env', { skip: isWindows }, async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+
+  await writeFile(resolve(root, '.env'), 'FORCE_TTY=true', 'utf-8')
+
+  const child = execa(process.execPath, [startPath, configFile], {
+    env: { PLT_USE_PLAIN_CREATE: true },
+    cwd: root
+  })
+  child.catch(() => {})
+
+  t.after(() => {
+    child.kill('SIGKILL')
+  })
+
+  const promise = Promise.withResolvers()
+  let stdout = ''
+  child.stdout.on('data', chunk => {
+    stdout += chunk.toString()
+
+    if (stdout.includes('Platformatic is now listening')) {
+      child.kill('SIGKILL')
+      promise.resolve()
+    }
+  })
+
+  await promise.promise
+
+  ok(!stdout.trimStart().startsWith('{'))
+})
+
+test('should use colors when FORCE_COLOR is set in .env', { skip: isWindows }, async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+
+  await updateFile(configFile, data => {
+    const config = JSON.parse(data)
+    config.logger.level = 'info'
+    return JSON.stringify(config, null, 2)
+  })
+  await writeFile(resolve(root, '.env'), 'FORCE_TTY=true\nFORCE_COLOR=true', 'utf-8')
+
+  const child = execa(process.execPath, [startPath, configFile], {
+    env: { PLT_USE_PLAIN_CREATE: true },
+    cwd: root
+  })
+  child.catch(() => {})
+
+  t.after(() => {
+    child.kill('SIGKILL')
+  })
+
+  const promise = Promise.withResolvers()
+  let stdout = ''
+  child.stdout.on('data', chunk => {
+    stdout += chunk.toString()
+
+    if (stdout.includes('Platformatic is now listening')) {
+      child.kill('SIGKILL')
+      promise.resolve()
+    }
+  })
+
+  await promise.promise
+
+  ok(
+    stdout.match(
+      // eslint-disable-next-line no-control-regex
+      /\n\u001b\[38;5;\d+m\[\d{2}:\d{2}:\d{2}\.\d+\] \(\d+\) \w+:\d+ \|\u001b\[0m/
+    )
+  )
+})
+
 // Regression test for: TypeError: Cannot read properties of null (reading 'level')
 // This happens when a worker outputs the literal string "null" to stdout.
 // JSON.parse("null") returns null, and typeof null === 'object' (JS quirk),
@@ -640,6 +665,33 @@ test('should inherit logger level from runtime when node app does not specify lo
     levelResponse.level === 'debug',
     `Expected logger level to be 'debug' (inherited from runtime), but got '${levelResponse.level}'`
   )
+})
+
+test('should support additional pino options and inherit them in the applications', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-pino-options', 'platformatic.json')
+
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/logs' })
+      requested = true
+    },
+    done: message => {
+      return requested && message.includes('call route /logs')
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  // The runtime logger uses msgPrefix
+  ok(logs.find(log => log.msg?.startsWith('[PLT] Platformatic is now listening at http://127.0.0.1:')))
+
+  // The application logger inherits msgPrefix, nestedKey, customLevels and redact.remove
+  const applicationLog = logs.find(log => log.msg === '[PLT] call route /logs')
+  ok(applicationLog)
+  deepStrictEqual(applicationLog.level, 25)
+  deepStrictEqual(applicationLog.name, 'node-app')
+  deepStrictEqual(applicationLog.payload, { hello: 'world' })
 })
 
 // Same test but for @platformatic/node applications

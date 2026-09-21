@@ -1,3 +1,4 @@
+import { getEvents } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 export function create () {
@@ -10,7 +11,8 @@ export function create () {
       return server.listen(...args)
     },
     async [Symbol.asyncDispose] () {
-      globalThis.platformatic?.events.emitAndNotify('custom:asyncDispose')
+      const events = getEvents()
+      events.emitAndNotify('custom:asyncDispose')
       await new Promise((resolve, reject) => {
         server.close(err => err ? reject(err) : resolve())
       })

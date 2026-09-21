@@ -97,7 +97,7 @@ test('where clause with field names starting with "or" should not be confused wi
     equal(res.statusCode, 200, 'GET /products?where.orange.eq=citrus status code')
     same(
       res.json(),
-      [{ id: 2, name: 'Orange', orange: 'citrus' }],
+      [{ id: '2', name: 'Orange', orange: 'citrus' }],
       'GET /products?where.orange.eq=citrus response'
     )
   }
@@ -111,7 +111,7 @@ test('where clause with field names starting with "or" should not be confused wi
     equal(res.statusCode, 200, 'GET /products?where.orderCode.eq=ORD001 status code')
     same(
       res.json(),
-      [{ id: 1, name: 'Apple', orderCode: 'ORD001' }],
+      [{ id: '1', name: 'Apple', orderCode: 'ORD001' }],
       'GET /products?where.orderCode.eq=ORD001 response'
     )
   }
@@ -126,8 +126,8 @@ test('where clause with field names starting with "or" should not be confused wi
     same(
       res.json(),
       [
-        { id: 3, name: 'Carrot', organism: 'vegetable' },
-        { id: 4, name: 'Pumpkin', organism: 'vegetable' }
+        { id: '3', name: 'Carrot', organism: 'vegetable' },
+        { id: '4', name: 'Pumpkin', organism: 'vegetable' }
       ],
       'GET /products?where.organism.eq=vegetable response'
     )
@@ -143,9 +143,9 @@ test('where clause with field names starting with "or" should not be confused wi
     same(
       res.json(),
       [
-        { id: 2, name: 'Orange', orange: 'citrus' },
-        { id: 3, name: 'Carrot', orange: 'orange-color' },
-        { id: 4, name: 'Pumpkin', orange: 'orange-color' }
+        { id: '2', name: 'Orange', orange: 'citrus' },
+        { id: '3', name: 'Carrot', orange: 'orange-color' },
+        { id: '4', name: 'Pumpkin', orange: 'orange-color' }
       ],
       'GET /products?where.orange.in=orange-color,citrus response'
     )
@@ -161,8 +161,8 @@ test('where clause with field names starting with "or" should not be confused wi
     same(
       res.json(),
       [
-        { id: 1, name: 'Apple' },
-        { id: 2, name: 'Orange' }
+        { id: '1', name: 'Apple' },
+        { id: '2', name: 'Orange' }
       ],
       'GET /products?where.or=(name.eq=Apple|name.eq=Orange) response'
     )
@@ -181,7 +181,7 @@ test('where clause with field names starting with "or" should not be confused wi
     )
     same(
       res.json(),
-      [{ id: 2, name: 'Orange', orange: 'citrus', price: 150 }],
+      [{ id: '2', name: 'Orange', orange: 'citrus', price: 150 }],
       'GET /products?where.or=(price.eq=100|price.eq=150)&where.orange.eq=citrus response'
     )
   }
@@ -200,8 +200,8 @@ test('where clause with field names starting with "or" should not be confused wi
     same(
       res.json(),
       [
-        { id: 3, name: 'Carrot', orange: 'orange-color', organism: 'vegetable' },
-        { id: 4, name: 'Pumpkin', orange: 'orange-color', organism: 'vegetable' }
+        { id: '3', name: 'Carrot', orange: 'orange-color', organism: 'vegetable' },
+        { id: '4', name: 'Pumpkin', orange: 'orange-color', organism: 'vegetable' }
       ],
       'GET /products?where.orange.eq=orange-color&where.organism.eq=vegetable response'
     )
@@ -217,8 +217,8 @@ test('where clause with field names starting with "or" should not be confused wi
     same(
       res.json(),
       [
-        { id: 1, name: 'Apple', orderCode: 'ORD001' },
-        { id: 3, name: 'Carrot', orderCode: 'ORD003' }
+        { id: '1', name: 'Apple', orderCode: 'ORD001' },
+        { id: '3', name: 'Carrot', orderCode: 'ORD003' }
       ],
       'GET /products?where.orderCode.in=ORD001,ORD003 response'
     )

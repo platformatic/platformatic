@@ -152,6 +152,43 @@ test('can collect metrics with worker label', async t => {
   ])
 })
 
+test('text metrics contain a single HELP/TYPE block per metric family across all workers', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+  const app = await createRuntime(configFile, null, { isProduction: true })
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  const { metrics } = await app.getMetrics('text')
+
+  // The Prometheus exposition format requires all samples of a metric family
+  // to be grouped under a single HELP/TYPE header. Strict parsers (like the
+  // Dynatrace one) only ingest the first block for each metric name.
+  const typeCounts = new Map()
+  for (const line of metrics.split('\n')) {
+    if (line.startsWith('# TYPE ')) {
+      const name = line.split(' ')[2]
+      typeCounts.set(name, (typeCounts.get(name) ?? 0) + 1)
+    }
+  }
+
+  ok(typeCounts.size > 0, 'Expected at least one metric family')
+  for (const [name, count] of typeCounts) {
+    strictEqual(count, 1, `Expected metric family ${name} to be declared exactly once, found ${count} TYPE lines`)
+  }
+
+  // Samples from multiple workers of the same application must still be present
+  const nodeWorkerIds = new Set()
+  for (const match of metrics.matchAll(/applicationId="node",workerId="(\d+)"/g)) {
+    nodeWorkerIds.add(match[1])
+  }
+  ok(nodeWorkerIds.size > 1, `Expected metrics from multiple node workers, found ${nodeWorkerIds.size}`)
+})
+
 test('worker threads have correct threadName property set', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')

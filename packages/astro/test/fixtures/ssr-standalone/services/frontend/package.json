@@ -11,9 +11,9 @@
     "build": "astro build"
   },
   "dependencies": {
-    "@platformatic/astro": "^2.3.1",
-    "@astrojs/node": "^8.3.3",
-    "astro": "^4.1.4"
+    "@platformatic/astro": "^3.49.1",
+    "@astrojs/node": "^10.0.0",
+    "astro": "^6.1.4"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

@@ -1,7 +1,7 @@
 import inquirer from 'inquirer'
 
 const result = await inquirer.prompt({
-  type: 'list',
+  type: 'select',
   name: 'choice',
   message: 'Pick one',
   choices: [

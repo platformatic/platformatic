@@ -10,6 +10,7 @@ import {
 } from '../index.js'
 import { keyFor } from '../lib/caching/valkey-common.js'
 import { abstractLogger } from '@platformatic/foundation'
+import { updateGlobals } from '@platformatic/globals'
 
 const setupGlobal = (additionalSetup = (platformatic) => {}) => {
   const config = {
@@ -19,18 +20,18 @@ const setupGlobal = (additionalSetup = (platformatic) => {}) => {
     },
   }
   const nextVersion = { major: 16 }
-  globalThis.platformatic = {
+  updateGlobals({
     basePath: '',
     logger: abstractLogger,
     notifyConfig: () => {},
     config,
     nextVersion,
-  }
-  additionalSetup(globalThis.platformatic)
+  })
+  additionalSetup({ config, nextVersion })
 }
 
 afterEach(() => {
-  globalThis.platformatic = undefined
+  updateGlobals({ basePath: undefined, logger: undefined, notifyConfig: undefined, config: undefined, nextVersion: undefined })
 })
 
 const assertIsrCacheHandler = (nextConfig) => {
@@ -42,6 +43,13 @@ const assertComponentsCacheHandlers = (nextConfig) => {
   notStrictEqual(nextConfig.cacheComponents, false)
   ok(nextConfig.cacheHandler.includes('null-isr'))
   ok(nextConfig.cacheHandlers.default.includes('redis-components'))
+  strictEqual(nextConfig.cacheHandlers.remote, undefined)
+}
+const assertComponentsCacheHandlersWithRemote = (nextConfig) => {
+  notStrictEqual(nextConfig.cacheComponents, false)
+  ok(nextConfig.cacheHandler.includes('null-isr'))
+  ok(nextConfig.cacheHandlers.default.includes('redis-components'))
+  ok(nextConfig.cacheHandlers.remote.includes('redis-components-remote'))
 }
 const assertNoCacheHandlers = (nextConfig) => {
   strictEqual(nextConfig.cacheHandler, undefined)
@@ -91,6 +99,42 @@ describe('keyFor', () => {
 })
 
 describe('enhanceNextConfig with caching', () => {
+  test('sets deploymentId from the build environment', async () => {
+    const originalDeploymentId = process.env.PLT_DEPLOYMENT_ID
+    process.env.PLT_DEPLOYMENT_ID = 'dpl-test'
+
+    try {
+      setupGlobal()
+      updateGlobals({ isBuilding: true })
+      const nextConfig = await enhanceNextConfig({})
+      strictEqual(nextConfig.deploymentId, 'dpl-test')
+    } finally {
+      if (originalDeploymentId === undefined) {
+        delete process.env.PLT_DEPLOYMENT_ID
+      } else {
+        process.env.PLT_DEPLOYMENT_ID = originalDeploymentId
+      }
+    }
+  })
+
+  test('does not override an explicitly configured deploymentId', async () => {
+    const originalDeploymentId = process.env.PLT_DEPLOYMENT_ID
+    process.env.PLT_DEPLOYMENT_ID = 'dpl-test'
+
+    try {
+      setupGlobal()
+      updateGlobals({ isBuilding: true })
+      const nextConfig = await enhanceNextConfig({ deploymentId: 'dpl-explicit' })
+      strictEqual(nextConfig.deploymentId, 'dpl-explicit')
+    } finally {
+      if (originalDeploymentId === undefined) {
+        delete process.env.PLT_DEPLOYMENT_ID
+      } else {
+        process.env.PLT_DEPLOYMENT_ID = originalDeploymentId
+      }
+    }
+  })
+
   test('adds ISR caching handler', async () => {
     setupGlobal()
     const nextConfig = await enhanceNextConfig({})
@@ -214,5 +258,39 @@ describe('enhanceNextConfig with caching', () => {
     })
     assertIsrCacheHandler(nextConfig)
     strictEqual(nextConfig.cacheComponents, false)
+  })
+
+  test('adds remote Components caching handler when cache.remote is configured', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.cacheComponents = true
+      config.cache.remote = { url: 'redis://remote:6379' }
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertComponentsCacheHandlersWithRemote(nextConfig)
+  })
+
+  test('does not add remote handler when cache.remote is not configured', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.cacheComponents = true
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertComponentsCacheHandlers(nextConfig)
+  })
+
+  test('does not add remote handler without cacheComponents', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.remote = { url: 'redis://remote:6379' }
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertIsrCacheHandler(nextConfig)
+  })
+
+  test('adds remote handler with partial config (no url override)', async () => {
+    setupGlobal(({ config }) => {
+      config.cache.cacheComponents = true
+      config.cache.remote = { prefix: 'plt:remote' }
+    })
+    const nextConfig = await enhanceNextConfig({})
+    assertComponentsCacheHandlersWithRemote(nextConfig)
   })
 })

@@ -1,0 +1,16 @@
+{
+  "name": "nuxt",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --host 127.0.0.1 --port 0",
+    "build": "nuxt build",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@platformatic/nuxt": "^3.52.4",
+    "nuxt": "^4.4.8",
+    "vue": "^3.5.22"
+  }
+}

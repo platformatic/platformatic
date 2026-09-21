@@ -40,6 +40,11 @@ export const db = {
             path: {
               type: 'string',
               resolvePath: true
+            },
+            readOnly: {
+              anyOf: [{ type: 'boolean' }, { type: 'string' }],
+              default: false,
+              description: 'Never write the schema lock file at runtime, only read it.'
             }
           }
         }
@@ -184,9 +189,18 @@ export const db = {
               type: 'string',
               description: 'Base URL for the OpenAPI Swagger Documentation'
             },
+            ui: {
+              type: 'boolean',
+              default: true,
+              description: 'Serve the interactive API reference UI under the documentation prefix. The JSON and YAML spec routes are always served.'
+            },
             prefix: {
               type: 'string',
               description: 'Base URL for generated Platformatic DB routes'
+            },
+            ignoreAllReverseRoutes: {
+              type: 'boolean',
+              default: false
             }
           },
           additionalProperties: false
@@ -348,7 +362,7 @@ export const authorization = {
             properties: {
               entity: {
                 type: 'string',
-                description: 'the DB entity type to which the rule applies'
+                description: "the DB entity type to which the rule applies, use '*' to apply the rule to all entities"
               },
               ...sharedAuthorizationRule
             },
@@ -360,7 +374,7 @@ export const authorization = {
             properties: {
               entities: {
                 type: 'array',
-                description: 'the DB entity types to which the rule applies',
+                description: "the DB entity types to which the rule applies, use '*' to apply the rule to all entities",
                 items: {
                   type: 'string'
                 }
@@ -391,7 +405,10 @@ export const migrations = {
       default: 'versions'
     },
     validateChecksums: {
-      type: 'boolean'
+      type: 'boolean',
+      default: true,
+      description:
+        'Validate the checksums of already-applied migrations before running new ones. Matches the default of the underlying Postgrator library.'
     },
     autoApply: {
       description: 'Whether to automatically apply migrations when running the migrate command.',

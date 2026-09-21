@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.32.0.json",
+  "entrypoint": "a",
+  "autoload": {
+    "path": "./services"
+  },
+  "extensions": [
+    {
+      "path": "./extension-build-twice.js",
+      "build": true
+    }
+  ]
+}

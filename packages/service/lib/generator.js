@@ -181,6 +181,7 @@ const TS_CONFIG = `
     "incremental": true,
     "strict": true,
     "outDir": "dist",
+    "rootDir": "./src",
     "skipLibCheck": true
   },
   "watchOptions": {
@@ -207,7 +208,7 @@ declare module 'fastify' {
 const README = `
 # Platformatic Service API
 
-This is a generated [Platformatic Service](https://docs.platformatic.dev/docs/service/overview) application.
+This is a generated [Platformatic Service](https://docs.platformatic.dev/docs/reference/service/overview) application.
 
 ## Requirements
 
@@ -298,7 +299,7 @@ export class Generator extends BaseGenerator {
 
     if (!this.config.skipTypescript) {
       this.questions.push({
-        type: 'list',
+        type: 'select',
         name: 'typescript',
         message: 'Do you want to use TypeScript?',
         default: false,

@@ -1,7 +1,9 @@
+import { getMessaging } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 function invokeIPC (service, req, res) {
-  globalThis.platformatic.messaging
+  const messaging = getMessaging()
+  messaging
     .send(service, 'request', req.url)
     .then(url => {
       res.writeHead(200, { 'content-type': 'application/json' })

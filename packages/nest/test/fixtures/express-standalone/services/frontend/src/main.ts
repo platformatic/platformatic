@@ -1,8 +1,24 @@
 import { NestFactory } from '@nestjs/core'
+import { getAdditionalServerOptions } from '@platformatic/globals'
+import { readFile } from 'node:fs/promises'
 import { AppModule } from './app.module'
 
+type HTTPSOptions = {
+  key?: { path: string }
+  cert?: { path: string }
+}
+
 async function bootstrap () {
-  const app = await NestFactory.create(AppModule)
+  const options = (getAdditionalServerOptions({ throwOnMissing: false }) ?? {}) as HTTPSOptions
+  const key = options.key
+  const cert = options.cert
+  const app = await NestFactory.create(
+    AppModule,
+    key && cert
+      ? { httpsOptions: { key: (await readFile(key.path)) as Buffer, cert: (await readFile(cert.path)) as Buffer } }
+      : undefined
+  )
+
   await app.listen(process.env.PORT ?? 3000)
 }
 bootstrap()

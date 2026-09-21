@@ -225,14 +225,14 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
         title: 'Updated page title'
       }
     })
-    equal(res.statusCode, 401, 'updateMay status code')
+    equal(res.statusCode, 403, 'updateMay status code')
 
     deepEqual(
       res.json(),
       {
-        statusCode: 401,
+        statusCode: 403,
         code: 'PLT_DB_AUTH_UNAUTHORIZED',
-        error: 'Unauthorized',
+        error: 'Forbidden',
         message: 'operation not allowed'
       },
       'updateMany response'
@@ -505,14 +505,14 @@ test('if ctx is not present, skips permission check ', async () => {
         title: 'Updated page title'
       }
     })
-    equal(res.statusCode, 401, 'updateMay status code')
+    equal(res.statusCode, 403, 'updateMay status code')
 
     deepEqual(
       res.json(),
       {
-        statusCode: 401,
+        statusCode: 403,
         code: 'PLT_DB_AUTH_UNAUTHORIZED',
-        error: 'Unauthorized',
+        error: 'Forbidden',
         message: 'operation not allowed'
       },
       'updateMany response'

@@ -111,13 +111,13 @@ test('updateMany', async t => {
       res.json(),
       [
         {
-          id: 3,
+          id: '3',
           title: 'Updated title',
           longText: 'Baz',
           counter: 30
         },
         {
-          id: 4,
+          id: '4',
           title: 'Updated title',
           longText: 'A duck tale',
           counter: 40
@@ -140,13 +140,13 @@ test('updateMany', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Updated long text (1)',
           counter: 10
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Updated long text (1)',
           counter: 20
@@ -169,13 +169,13 @@ test('updateMany', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Dog',
           longText: 'Updated long text (2)',
           counter: 10
         },
         {
-          id: 2,
+          id: '2',
           title: 'Cat',
           longText: 'Updated long text (2)',
           counter: 20
@@ -198,7 +198,7 @@ test('updateMany', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Kitten',
           longText: 'Updated long text (2)',
           counter: 20
@@ -221,7 +221,7 @@ test('updateMany', async t => {
       res.json(),
       [
         {
-          id: 2,
+          id: '2',
           title: 'Cat'
         }
       ],
@@ -242,13 +242,13 @@ test('updateMany', async t => {
       res.json(),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Best pet friends',
           longText: 'Updated long text (2)',
           counter: 10
         },
         {
-          id: 2,
+          id: '2',
           title: 'Best pet friends',
           longText: 'Updated long text (2)',
           counter: 20
@@ -290,13 +290,13 @@ test('updateMany', async t => {
       res.json(),
       [
         {
-          id: 5,
+          id: '5',
           title: 'Bear',
           longText: null,
           counter: 99
         },
         {
-          id: 6,
+          id: '6',
           title: 'Goat',
           longText: null,
           counter: 99
@@ -320,25 +320,25 @@ test('updateMany', async t => {
       json.sort((recordA, recordB) => recordA.id - recordB.id),
       [
         {
-          id: 1,
+          id: '1',
           title: 'Best pet friends',
           longText: 'Updated long text (2)',
           counter: 2
         },
         {
-          id: 2,
+          id: '2',
           title: 'Best pet friends',
           longText: 'Updated long text (2)',
           counter: 2
         },
         {
-          id: 3,
+          id: '3',
           title: 'Updated title',
           longText: 'Baz',
           counter: 2
         },
         {
-          id: 4,
+          id: '4',
           title: 'Updated title',
           longText: 'A duck tale',
           counter: 2

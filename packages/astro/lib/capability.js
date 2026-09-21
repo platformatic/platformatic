@@ -2,6 +2,8 @@ import middie from '@fastify/middie'
 import fastifyStatic from '@fastify/static'
 import {
   BaseCapability,
+  buildFastifyOptions,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -10,7 +12,8 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
-import { ensureLoggableError } from '@platformatic/foundation'
+import { ensureLoggableError, sanitizeHTTPSOptions } from '@platformatic/foundation'
+import { getLogger, updateGlobals } from '@platformatic/globals'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -18,7 +21,7 @@ import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
 
-const supportedVersions = '^4.0.0 || ^5.0.0'
+export const supportedVersions = '^6.0.0'
 
 export class AstroCapability extends BaseCapability {
   #astro
@@ -108,7 +111,7 @@ export class AstroCapability extends BaseCapability {
     const { build } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
     try {
-      globalThis.platformatic.isBuilding = true
+      updateGlobals({ isBuilding: true })
 
       await build({
         root: this.root,
@@ -129,7 +132,7 @@ export class AstroCapability extends BaseCapability {
         ]
       })
     } finally {
-      globalThis.platformatic.isBuilding = false
+      updateGlobals({ isBuilding: false })
     }
 
     await writeFile(
@@ -195,12 +198,14 @@ export class AstroCapability extends BaseCapability {
     }
 
     // Prepare options
-    const { hostname, port, backlog } = this.serverConfig ?? {}
+    const { hostname, port, https, backlog } = this.serverConfig ?? {}
+    const httpsOptions = await sanitizeHTTPSOptions(https)
     const configFile = config.astro.configFile // Note: Astro expect this to be a relative path to the root
 
     const serverOptions = {
       host: hostname || '127.0.0.1',
-      port: port || 0
+      port: port || 0,
+      https: httpsOptions
     }
 
     // Require Astro
@@ -221,7 +226,8 @@ export class AstroCapability extends BaseCapability {
       server: serverOptions,
       vite: {
         server: {
-          allowedHosts: ['.plt.local']
+          allowedHosts: ['.plt.local'],
+          https: httpsOptions
         }
       },
       integrations: [
@@ -268,7 +274,7 @@ export class AstroCapability extends BaseCapability {
 
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
-      const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+      const listenOptions = buildListenOptions(serverOptions)
 
       if (typeof serverOptions?.backlog === 'number') {
         createServerListener(false, false, { backlog: serverOptions.backlog })
@@ -279,7 +285,7 @@ export class AstroCapability extends BaseCapability {
       return this.url
     }
 
-    this.#app = fastify({ loggerInstance: this.logger })
+    this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
 
     const root = resolve(this.root, outputDirectory)
     this.verifyOutputDirectory(root)
@@ -291,7 +297,8 @@ export class AstroCapability extends BaseCapability {
         const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
         this.#basePath = buildInfo.basePath
       } catch (e) {
-        globalThis.platformatic.logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
+        const logger = getLogger()
+        logger.error({ err: ensureLoggableError(e) }, 'Reading build info failed.')
       }
     }
 

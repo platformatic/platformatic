@@ -1,10 +1,9 @@
-import { getExecutableName, getPackageManager, parseArgs } from '@platformatic/foundation'
+import { getPackageManager, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { platform } from 'node:os'
-import { getSocket } from '../utils.js'
 
-export async function runDelegatedCommand (logger, packageManager, args) {
+export async function runDelegatedCommand (context, logger, packageManager, args) {
   if (!packageManager) {
     packageManager = await getPackageManager(process.cwd())
   }
@@ -16,7 +15,7 @@ export async function runDelegatedCommand (logger, packageManager, args) {
     args.unshift('-y')
   }
 
-  const socket = getSocket()
+  const socket = context.socket
   if (socket) {
     if (packageManager === 'pnpm') {
       args.push('--', '--socket', socket)
@@ -102,12 +101,12 @@ export async function createCommand (logger, args) {
     }
   }
 
-  return runDelegatedCommand(logger, packageManager, runArgs)
+  return runDelegatedCommand(this, logger, packageManager, runArgs)
 }
 
 const createHelp = {
   description () {
-    return `Creates a new ${getExecutableName()} project`
+    return `Creates a new ${this.executableName} project`
   },
   options: [
     {

@@ -23,7 +23,86 @@ In this case, we are exposing the metrics on port 9091 (defaults to `9090`), and
 We can also specify the IP address to bind to (defaults to `0.0.0.0`).
 Note that the metrics port is not the default in this configuration. This is because if you want to test the integration running both Prometheus and Platformatic on the same host, Prometheus starts on `9090` port too.
 
-All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../reference/runtime/_shared-configuration.md#metrics) for more details.
+All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../reference/runtime/configuration.md#metrics) for more details.
+
+The same server exposes Kubernetes readiness and liveness probes by default. Set the top-level `healthProbes` option to `false` to expose metrics without `/ready` and `/status`:
+
+```json
+{
+  "healthProbes": false,
+  "metrics": true
+}
+```
+
+Use an object to configure health probes separately from metrics. If the resolved `hostname` and `port` differ from the Prometheus server, health probes are exposed on a standalone server:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090
+  },
+  "healthProbes": {
+    "hostname": "0.0.0.0",
+    "port": 9091,
+    "readiness": {
+      "endpoint": "/health"
+    },
+    "liveness": {
+      "endpoint": "/live"
+    }
+  }
+}
+```
+
+In this case, `/metrics` is exposed only on port `9090`, while `/health` and `/live` are exposed only on port `9091`.
+
+## Serving metrics over HTTPS (SSL/TLS)
+
+The metrics server can use HTTPS (TLS, often referred to as SSL). This also applies to the readiness and liveness endpoints exposed by the same server.
+
+Use certificate files when running in production or in Kubernetes:
+
+```json
+{
+  "metrics": {
+    "hostname": "0.0.0.0",
+    "port": 9090,
+    "https": {
+      "key": { "path": "/etc/watt/tls/tls.key" },
+      "cert": { "path": "/etc/watt/tls/tls.crt" }
+    }
+  }
+}
+```
+
+You can also provide inline PEM strings. This is useful for local testing, but avoid committing certificates or private keys to source control:
+
+```json
+{
+  "metrics": {
+    "https": {
+      "key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+      "cert": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+    }
+  }
+}
+```
+
+When Prometheus scrapes an HTTPS metrics endpoint, set `scheme: https`. If you use a private CA or a self-signed certificate, configure `tls_config` accordingly:
+
+```yaml
+scrape_configs:
+  - job_name: 'platformatic'
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/ca.crt
+    static_configs:
+      - targets: ['192.168.69.195:9090']
+```
+
+For local testing with a self-signed certificate, use `curl -k https://localhost:9090/metrics`.
 
 ## Metrics Labels
 
@@ -53,6 +132,20 @@ You can also use completely custom label names:
 
 This will use `myCustomAppName="my-service"` as the label in metrics.
 
+## Outgoing HTTP Client Metrics
+
+Outgoing HTTP client request duration metrics are disabled by default to avoid creating labels for dependencies that do not need to be observed. Enable them with `httpClientMetrics`:
+
+```json
+{
+  "metrics": {
+    "httpClientMetrics": true
+  }
+}
+```
+
+This exposes `http_client_request_duration_seconds` with labels for the HTTP method, status code, dispatcher URL, and error type.
+
 :::caution
 Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
 :::
@@ -60,12 +153,14 @@ Use [environment variable placeholders](../reference/service/configuration.md#en
 ## Custom Metrics
 
 When running an application inside Platformatic, you can register and export custom metrics by accessing the application registry.
-Do to so, access it via `globalThis.platformatic.prometheus.registry`. In order to ensure the maximum compatibility between Platformatic metrics and custom metrics, there is also a `globalThis.platformatic.prometheus.client`, which uses `@platformatic/prom-client` internally. This is API compatible with the standard `prom-client` package but significantly faster.
+To do so, access the registry and client from the object returned by [`getPrometheus()`](../reference/runtime/globals.md#logging-and-observability). To ensure maximum compatibility between Platformatic metrics and custom metrics, the client uses `@platformatic/prom-client` internally. This is API compatible with the standard `prom-client` package but significantly faster.
 
 Putting everything together, here it is an example of how to register a custom metric:
 
 ```js
-const { client, registry } = globalThis.platformatic.prometheus
+import { getPrometheus } from '@platformatic/globals'
+
+const { client, registry } = getPrometheus()
 
 // Register the metric
 const customMetrics = new client.Counter({ name: 'custom', help: 'Custom Description', registers: [registry] })

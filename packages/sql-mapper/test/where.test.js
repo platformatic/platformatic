@@ -700,6 +700,20 @@ test('is NULL', async () => {
       title: 'Dog'
     }
   ])
+
+  deepEqual(await entity.find({ where: { title: { isNull: true } } }), [
+    {
+      id: '2',
+      title: null
+    }
+  ])
+
+  deepEqual(await entity.find({ where: { title: { isNull: false } } }), [
+    {
+      id: '1',
+      title: 'Dog'
+    }
+  ])
 })
 
 test('LIKE', async () => {

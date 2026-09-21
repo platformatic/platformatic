@@ -4,6 +4,7 @@ import { resourceFromAttributes } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 import fastUri from 'fast-uri'
 import { fastifyTextMapGetter, fastifyTextMapSetter } from './fastify-text-map.js'
+import { setupDiagLogger } from './diag-logger.js'
 import { PlatformaticContext } from './platformatic-context.js'
 import { PlatformaticTracerProvider } from './platformatic-trace-provider.js'
 import { getSpanProcessors } from './span-processors.js'
@@ -89,6 +90,8 @@ const initTelemetry = (opts, logger) => {
 }
 
 export function setupTelemetry (opts, logger) {
+  setupDiagLogger(opts, logger)
+
   const openTelemetryAPIs = initTelemetry(opts, logger)
   const { tracer, propagator, provider } = openTelemetryAPIs
   const skipOperations =

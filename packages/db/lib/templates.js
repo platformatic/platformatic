@@ -211,7 +211,7 @@ test('movies', async (t) => {
 export const README = `
 # Platformatic DB API
 
-This is a generated [Platformatic DB](https://docs.platformatic.dev/docs/db/overview) application.
+This is a generated [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/overview) application.
 
 ## Requirements
 

@@ -6,7 +6,7 @@
  * These tests verify that inquirer prompts work correctly.
  * They were added after inquirer v13 introduced breaking changes:
  * - https://github.com/SBoudrias/Inquirer.js/issues/1975 (numeric defaults on input)
- * - https://github.com/SBoudrias/Inquirer.js/issues/1976 (list prompts accepting free text)
+ * - https://github.com/SBoudrias/Inquirer.js/issues/1976 (select prompts accepting free text)
  *
  * If these tests fail after an inquirer upgrade, do NOT upgrade inquirer
  * until the issues are fixed upstream.
@@ -40,6 +40,7 @@ function hasScriptCommand () {
 
 async function runWithPty (scriptPath, input) {
   return new Promise((resolve, reject) => {
+    let inputWritten = false
     const proc = spawn('script', ['-q', '-c', `node ${scriptPath}`, '/dev/null'], {
       cwd: pkgRoot,
       env: { ...process.env, NO_COLOR: 'true' }
@@ -49,16 +50,17 @@ async function runWithPty (scriptPath, input) {
 
     proc.stdout.on('data', (data) => {
       output += data.toString()
+
+      if (input !== undefined && !inputWritten) {
+        inputWritten = true
+        proc.stdin.write(input)
+        proc.stdin.end()
+      }
     })
 
     proc.stderr.on('data', (data) => {
       output += data.toString()
     })
-
-    if (input !== undefined) {
-      proc.stdin.write(input)
-      proc.stdin.end()
-    }
 
     proc.on('close', (code) => {
       resolve({ code, output })
@@ -74,12 +76,12 @@ test('inquirer regression tests', { skip: isWindows && 'Windows not supported (s
     'The `script` command is required to run these tests. Install util-linux package.'
   )
 
-  await t.test('input prompt with numeric default should not throw', async () => {
+  await t.test('input prompt with stringified numeric default should not throw', async () => {
     const { output } = await runWithPty(`${fixturesDir}/inquirer-numeric-default.js`, '\n')
 
     assert.ok(
       !output.includes('ERR_INVALID_ARG_TYPE'),
-      'Should not throw ERR_INVALID_ARG_TYPE for numeric default'
+      'Should not throw ERR_INVALID_ARG_TYPE for stringified numeric default'
     )
     assert.ok(
       output.includes('SUCCESS:'),
@@ -87,12 +89,12 @@ test('inquirer regression tests', { skip: isWindows && 'Windows not supported (s
     )
   })
 
-  await t.test('list prompt should not accept invalid input', async () => {
+  await t.test('select prompt should not accept invalid input', async () => {
     const { output } = await runWithPty(`${fixturesDir}/inquirer-list-validation.js`, 'garbage\n')
 
     assert.ok(
       !output.includes('RESULT:string:garbage'),
-      'List prompt should not accept arbitrary text input'
+      'Select prompt should not accept arbitrary text input'
     )
   })
 })

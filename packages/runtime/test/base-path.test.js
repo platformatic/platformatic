@@ -71,6 +71,17 @@ test('should strip the runtime base path for an application as an entrypoint', a
   }
 
   {
+    // Redirect to an external absolute URL is not rewritten
+    const { statusCode, headers } = await request(entryUrl, {
+      path: '/base-path/redirect-external'
+    })
+    strictEqual(statusCode, 302)
+
+    const location = headers.location
+    strictEqual(location, 'https://example.com/oauth/authorize?client_id=123')
+  }
+
+  {
     // Check the openapi base path
     const { statusCode, body } = await request(entryUrl, {
       path: '/base-path/documentation/json'
@@ -125,6 +136,17 @@ test('should strip the runtime base path for a gateway as an entrypoint', async 
 
     const location = headers.location
     strictEqual(location, '/base-path/service/hello')
+  }
+
+  {
+    // Redirect to an external absolute URL is not rewritten
+    const { statusCode, headers } = await request(entryUrl, {
+      path: '/base-path/service/redirect-external'
+    })
+    strictEqual(statusCode, 302)
+
+    const location = headers.location
+    strictEqual(location, 'https://example.com/oauth/authorize?client_id=123')
   }
 
   {
@@ -183,6 +205,17 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
     const location = headers.location
     strictEqual(location, '/base-path/hello')
   }
+
+  {
+    // Redirect to an external absolute URL is not rewritten
+    const { statusCode, headers } = await request(entryUrl, {
+      path: '/base-path/redirect-external'
+    })
+    strictEqual(statusCode, 302)
+
+    const location = headers.location
+    strictEqual(location, 'https://example.com/oauth/authorize?client_id=123')
+  }
 })
 
 test('should strip the runtime base path for an express as an entrypoint', async t => {
@@ -229,6 +262,17 @@ test('should strip the runtime base path for an express as an entrypoint', async
     const location = headers.location
     strictEqual(location, '/base-path/hello')
   }
+
+  {
+    // Redirect to an external absolute URL is not rewritten
+    const { statusCode, headers } = await request(entryUrl, {
+      path: '/base-path/redirect-external'
+    })
+    strictEqual(statusCode, 302)
+
+    const location = headers.location
+    strictEqual(location, 'https://example.com/oauth/authorize?client_id=123')
+  }
 })
 
 test('should strip the runtime base path for a nodejs in a child process as an entrypoint', async t => {
@@ -274,6 +318,17 @@ test('should strip the runtime base path for a nodejs in a child process as an e
 
     const location = headers.location
     strictEqual(location, '/base-path/hello')
+  }
+
+  {
+    // Redirect to an external absolute URL is not rewritten
+    const { statusCode, headers } = await request(entryUrl, {
+      path: '/base-path/redirect-external'
+    })
+    strictEqual(statusCode, 302)
+
+    const location = headers.location
+    strictEqual(location, 'https://example.com/oauth/authorize?client_id=123')
   }
 })
 

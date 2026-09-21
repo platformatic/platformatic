@@ -350,6 +350,77 @@ CMD ["wattpm", "start"]
 docker build --build-arg PLT_VERSION=3.30.0 -t my-next-app .
 ```
 
+#### Alternative: keep Watt in `package.json`
+
+If you prefer to manage the runtime version through normal package-manager tooling, add `wattpm` and `@platformatic/next` to your app dependencies and start the local binary from the final image.
+
+Example production stage:
+
+```Dockerfile
+FROM node:24-slim
+
+WORKDIR /app
+COPY ./ ./
+RUN npm install && npm run build
+
+ENV PLT_SERVER_HOSTNAME=0.0.0.0
+ENV PORT=3042
+EXPOSE 3042
+CMD ["./node_modules/.bin/wattpm", "start"]
+```
+
+This keeps the Platformatic version in `package.json`, where tools such as Dependabot or Renovate can manage it.
+
+#### Alternative: pack a self-contained bundle
+
+Use the Next-specific application command exposed by Watt to create a deployable bundle that already includes the runtime pieces Watt needs.
+
+From the project root:
+
+```bash
+npx wattpm build
+npx wattpm <app-id>:pack --output .platformatic/next-bundle
+```
+
+Replace `<app-id>` with your application id. For a single imported app, it usually comes from `package.json`.
+
+The packed bundle contains:
+- the Next standalone output
+- `.next/static`
+- `public/` when present
+- a bundle-local `watt.json`
+- a bundle-local `./node_modules/.bin/wattpm`
+
+That means the production image only needs to copy the bundle and start it.
+
+Example Dockerfile:
+
+```Dockerfile
+# Stage 1: Build and pack
+FROM node:24-slim AS builder
+
+WORKDIR /app
+COPY ./ ./
+RUN npm install
+RUN npx wattpm build
+RUN npx wattpm my-next-app:pack --output .platformatic/next-bundle
+
+# Stage 2: Production
+FROM node:24-slim
+
+WORKDIR /app
+COPY --from=builder /app/.platformatic/next-bundle/ ./
+
+ENV PLT_SERVER_HOSTNAME=0.0.0.0
+ENV PORT=3042
+EXPOSE 3042
+CMD ["./node_modules/.bin/wattpm", "start"]
+```
+
+This flow has two advantages over installing Watt in the production image:
+- the final image does not run `npm install`
+- the Dockerfile does not need to hardcode a Platformatic version
+
 #### Verifying Standalone Mode
 
 After building, verify that standalone mode is working:
@@ -359,6 +430,13 @@ After building, verify that standalone mode is working:
 ls -la .next/standalone/
 
 # The directory should contain server.js and minimal dependencies
+```
+
+If you are using the packed-bundle flow, you can also verify the packed output directly:
+
+```bash
+ls -la .platformatic/next-bundle/
+ls -la .platformatic/next-bundle/node_modules/.bin/wattpm
 ```
 
 When Watt starts with a standalone build, it automatically detects and uses the standalone server internally while providing all the Watt runtime features.

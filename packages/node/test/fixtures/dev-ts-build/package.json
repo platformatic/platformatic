@@ -5,7 +5,7 @@
     "services/*"
   ],
   "dependencies": {
-    "@platformatic/runtime": "^2.56.0",
+    "@platformatic/runtime": ">=3.0.0",
     "platformatic": "^2.56.0"
   }
 }

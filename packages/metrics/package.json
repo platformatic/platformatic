@@ -1,12 +1,13 @@
 {
   "name": "@platformatic/metrics",
-  "version": "3.39.0",
+  "version": "3.69.0",
   "description": "Platformatic Capability Metrics",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
@@ -19,8 +20,9 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@platformatic/globals": "workspace:*",
     "@platformatic/http-metrics": "^0.3.0",
-    "@platformatic/promotel": "^0.1.0",
+    "@platformatic/promotel": "^0.2.0",
     "@platformatic/prom-client": "^1.0.0"
   },
   "devDependencies": {

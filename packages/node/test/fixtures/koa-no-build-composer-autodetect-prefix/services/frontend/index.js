@@ -1,6 +1,7 @@
+import { setBasePath } from '@platformatic/globals'
 import Koa from 'koa'
 
-globalThis.platformatic?.setBasePath('/nested/base/dir')
+setBasePath('/nested/base/dir')
 
 const app = new Koa()
 
@@ -18,4 +19,4 @@ app.use(async ctx => {
 })
 
 // This would likely fail if our code doesn't work
-app.listen(1)
+app.listen(0)

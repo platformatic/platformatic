@@ -1,3 +1,4 @@
+import { getMessaging } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
@@ -9,9 +10,11 @@ export function create () {
 
     let response = null
     if (notify) {
-      response = await globalThis.platformatic.messaging.notify('second', 'thread', { id: threadId })
+      const messaging = getMessaging()
+      response = await messaging.notify('second', 'thread', { id: threadId })
     } else {
-      response = await globalThis.platformatic.messaging.send('second', 'thread', { request: threadId })
+      const messaging = getMessaging()
+      response = await messaging.send('second', 'thread', { request: threadId })
     }
 
     return { thread: response }

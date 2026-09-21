@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "services": [
+    {
+      "id": "module",
+      "path": "./services/module"
+    },
+    {
+      "id": "factory",
+      "path": "./services/factory"
+    }
+  ],
+  "restartOnError": false
+}

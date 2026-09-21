@@ -1,5 +1,6 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
+import { existsSync } from 'node:fs'
 import { symlink, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { before } from 'node:test'
@@ -34,7 +35,9 @@ async function linkAstro (version, root) {
 
     await safeRemove(modulesFolder)
     await createDirectory(dirname(modulesFolder))
-    await symlink(resolve(temporaryFolder, `astro-${version}/node_modules/${mod}`), modulesFolder, 'dir')
+    if (existsSync(`astro-${version}/node_modules/${mod}`)) {
+      await symlink(resolve(temporaryFolder, `astro-${version}/node_modules/${mod}`), modulesFolder, 'dir')
+    }
   }
 }
 
@@ -45,8 +48,8 @@ function boundLinkAstro (astroVersion, viteVersion) {
 }
 
 const versions = {
-  5.7: ['5.7.2', '6.3.5'],
-  4.16: ['4.16.18', '5.4.0']
+  6.0: ['6.0.8', '7.3.2'],
+  6.1: ['6.1.4', '7.3.2']
 }
 
 before(async () => {
@@ -64,43 +67,43 @@ before(async () => {
 const developmentConfigurations = [
   {
     id: 'compatibility',
-    tag: '4.16.x',
-    name: 'Astro (standalone) 4.16.x',
+    tag: '6.0.x',
+    name: 'Astro (standalone) 6.0.x',
     check: verifyDevelopmentFrontendStandalone,
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('4.16', '5.4.0')
+    additionalSetup: boundLinkAstro('6.0.8', '7.3.2')
   },
   {
     id: 'compatibility',
-    tag: '5.7.x',
-    name: 'Astro (standalone) 5.7.x',
+    tag: '6.1.x',
+    name: 'Astro (standalone) 6.1.x',
     check: verifyDevelopmentFrontendStandalone,
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('5.7', '6.3.5')
+    additionalSetup: boundLinkAstro('6.1.4', '7.3.2')
   },
   {
     id: 'ssr-standalone',
-    tag: '4.16.x',
-    name: 'Astro SSR (standalone) 4.16.x',
+    tag: '6.0.x',
+    name: 'Astro SSR (standalone) 6.0.x',
     check: verifyDevelopmentFrontendStandalone,
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('4.16', '5.4.0')
+    additionalSetup: boundLinkAstro('6.0.8', '7.3.2')
   },
   {
     id: 'ssr-standalone',
-    tag: '5.7.x',
-    name: 'Astro SSR (standalone) 5.7.x',
+    tag: '6.1.x',
+    name: 'Astro SSR (standalone) 6.1.x',
     check: verifyDevelopmentFrontendStandalone,
     htmlContents,
     hmrTriggerFile,
     language: 'js',
-    additionalSetup: boundLinkAstro('5.7', '6.3.5')
+    additionalSetup: boundLinkAstro('6.1.4', '7.3.2')
   }
 ]
 
@@ -109,23 +112,23 @@ const files = ['services/frontend/dist/index.html']
 const productionConfigurations = [
   {
     id: 'standalone',
-    tag: '4.16.x',
-    name: 'Astro (standalone) 4.16.x',
+    tag: '6.0.x',
+    name: 'Astro (standalone) 6.0.x',
     files,
     checks: [verifyFrontendOnRoot],
     language: 'js',
     prefix: '',
-    additionalSetup: boundLinkAstro('4.16', '5.4.0')
+    additionalSetup: boundLinkAstro('6.0.8', '7.3.2')
   },
   {
     id: 'standalone',
-    tag: '5.7.x',
-    name: 'Astro (standalone) 5.7.x',
+    tag: '6.1.x',
+    name: 'Astro (standalone) 6.1.x',
     files,
     checks: [verifyFrontendOnRoot],
     language: 'js',
     prefix: '',
-    additionalSetup: boundLinkAstro('5.7', '6.3.5')
+    additionalSetup: boundLinkAstro('6.1.4', '7.3.2')
   }
 ]
 

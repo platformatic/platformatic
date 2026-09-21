@@ -28,6 +28,22 @@ async function createBasicPages (db, sql) {
   }
 }
 
+async function createUsersWithPasswordHash (db, sql) {
+  if (isSQLite) {
+    await db.query(sql`CREATE TABLE users (
+      id INTEGER PRIMARY KEY,
+      password_hash VARCHAR(255)
+    );`)
+    await db.query(sql`INSERT INTO users (id, password_hash) VALUES (1, 'hashed-secret');`)
+  } else {
+    await db.query(sql`CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      password_hash VARCHAR(255)
+    );`)
+    await db.query(sql`INSERT INTO users (password_hash) VALUES ('hashed-secret');`)
+  }
+}
+
 test('ignore a table', async t => {
   const app = fastify()
   app.register(sqlMapper, {
@@ -241,6 +257,57 @@ test('ignore a column in OpenAPI', async t => {
   })
 
   same(fieldsParameter.schema.items.enum, ['id'])
+})
+
+test('ignore a snake_case column in OpenAPI responses using camelCase', async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createUsersWithPasswordHash(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI, {
+    ignore: {
+      user: {
+        passwordHash: true
+      }
+    }
+  })
+  t.after(() => app.close())
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    equal(res.statusCode, 200, 'GET /documentation/json status code')
+    const data = res.json()
+    equal(data.components.schemas.User.properties.passwordHash, undefined, 'passwordHash property is ignored')
+
+    const fieldsParameter = data.paths['/users/'].get.parameters.find(parameter => {
+      return parameter.name === 'fields' && parameter.in === 'query'
+    })
+
+    same(fieldsParameter.schema.items.enum, ['id'])
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/users'
+    })
+    equal(res.statusCode, 200, 'GET /users status code')
+
+    const data = res.json()
+    same(data.map(user => Object.keys(user).sort()), [['id']])
+    ok(data[0].id !== undefined)
+  }
 })
 
 test('show a warning if there is no ignored entity field', async t => {

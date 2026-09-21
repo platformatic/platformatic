@@ -6,10 +6,10 @@
   ],
   "devDependencies": {
     "fastify": "^5.7.0",
-    "typescript": "^5.5.4"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@platformatic/runtime": "^2.56.0",
+    "@platformatic/runtime": ">=3.0.0",
     "platformatic": "^2.56.0"
   }
 }

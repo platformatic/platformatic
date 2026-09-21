@@ -1,4 +1,3 @@
-import { setExecutableId, setExecutableName } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
@@ -25,31 +24,35 @@ test('help - should show proper messages', async t => {
   ok(metricsHelp.stdout.startsWith('\nUsage: wattpm metrics'))
 })
 
+test('help - should print help for commands with options', async t => {
+  const heapSnapshotHelp = await wattpm('help', 'heap-snapshot')
+  ok(heapSnapshotHelp.stdout.startsWith('\nUsage: wattpm heap-snapshot'))
+  ok(heapSnapshotHelp.stdout.includes('--dir, -d'))
+
+  const pprofHelp = await wattpm('help', 'pprof')
+  ok(pprofHelp.stdout.startsWith('\nUsage: wattpm pprof'))
+  ok(pprofHelp.stdout.includes('--type, -t'))
+})
+
 test('help - should support embedding via API', async t => {
   const logs = []
   function logger (message) {
     logs.push(message)
   }
 
-  setExecutableId('wattpm')
-  setExecutableName('Watt')
-  await showGeneralHelp(logger)
+  await showGeneralHelp({ executableId: 'wattpm', executableName: 'Watt' }, logger)
   const originalLogs = logs.splice(0, logs.length).join('\n')
 
   originalLogs.includes('Usage: wattpm [options] [command]')
   originalLogs.includes('Watt')
 
-  setExecutableId('test-cli')
-  setExecutableName('Test CLI')
-  await showGeneralHelp(logger)
+  await showGeneralHelp({ executableId: 'test-cli', executableName: 'Test CLI' }, logger)
   const embeddedLogs = logs.splice(0, logs.length).join('\n')
 
   embeddedLogs.includes('Usage: test-cli [options] [command]')
   embeddedLogs.includes('Test CLI')
 
-  setExecutableId('wattpm')
-  setExecutableName('Watt')
-  await showGeneralHelp(logger)
+  await showGeneralHelp({ executableId: 'wattpm', executableName: 'Watt' }, logger)
   const restoredLogs = logs.splice(0, logs.length).join('\n')
 
   deepStrictEqual(originalLogs, restoredLogs)

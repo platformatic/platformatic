@@ -8,10 +8,10 @@
     "start": "wattpm start"
   },
   "dependencies": {
-    "@platformatic/runtime": "^2.5.5",
-    "@platformatic/next": "^2.5.5",
-    "@platformatic/node": "^2.5.5",
-    "wattpm": "^2.5.5"
+    "@platformatic/runtime": ">=3.0.0",
+    "@platformatic/next": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0",
+    "wattpm": ">=3.0.0"
   },
   "devDependencies": {
     "platformatic": "^2.5.5"

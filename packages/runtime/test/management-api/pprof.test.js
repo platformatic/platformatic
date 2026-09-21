@@ -99,6 +99,72 @@ test('should stop profiling and return profile data via management API', async t
   ok(profileData.byteLength > 0, 'Profile data should not be empty')
 })
 
+test('should start and stop profiling on all workers via management API', async t => {
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
+
+  t.after(async () => {
+    await Promise.all([client.close(), app.close()])
+  })
+
+  // Start profiling on all workers of service-1
+  const startResponse = await client.request({
+    method: 'POST',
+    path: '/api/v1/applications/service-1/pprof/start',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({ intervalMicros: 1000, allWorkers: true })
+  })
+
+  strictEqual(startResponse.statusCode, 200)
+
+  const started = await startResponse.body.json()
+  ok(Array.isArray(started.workers), 'Should return the list of profiled workers')
+  ok(started.workers.length > 0, 'Should profile at least one worker')
+
+  // Wait a bit for some profile data
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // Stop profiling on all workers and get one profile per worker
+  const stopResponse = await client.request({
+    method: 'POST',
+    path: '/api/v1/applications/service-1/pprof/stop',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({ allWorkers: true })
+  })
+
+  strictEqual(stopResponse.statusCode, 200)
+  ok(stopResponse.headers['content-type'].includes('application/json'), 'Should return JSON with allWorkers')
+
+  const { profiles } = await stopResponse.body.json()
+  ok(Array.isArray(profiles), 'Should return an array of profiles')
+  strictEqual(profiles.length, started.workers.length, 'Should return one profile per worker')
+
+  for (const { workerIndex, profile } of profiles) {
+    strictEqual(typeof workerIndex, 'number', 'Each profile should carry its worker index')
+    const decoded = Buffer.from(profile, 'base64')
+    ok(decoded.length > 0, `Worker ${workerIndex} profile should not be empty`)
+  }
+})
+
 test('should handle service not found error when starting profiling', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')

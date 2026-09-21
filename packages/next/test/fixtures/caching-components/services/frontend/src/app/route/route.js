@@ -1,3 +1,4 @@
+import { getEvents } from '@platformatic/globals'
 import { cacheLife, cacheTag } from 'next/cache'
 import { setTimeout as sleep } from 'node:timers/promises'
 
@@ -39,7 +40,8 @@ export async function GET (request) {
   const response = await getCachedResponse(url)
 
   setTimeout(() => {
-    globalThis.platformatic.events.emitAndNotify('completed')
+    const events = getEvents()
+    events.emitAndNotify('completed')
   }, 100)
 
   return Response.json(response, { status: response.ok === false ? 404 : 200 })

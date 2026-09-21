@@ -1,8 +1,9 @@
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
+import { getBasePath } from '@platformatic/globals'
 import Koa from 'koa'
 
 const app = new Koa()
-const prefix = globalThis.platformatic?.basePath ?? ''
+const prefix = getBasePath({ throwOnMissing: false }) ?? ''
 
 app.use(async ctx => {
   if (ctx.request.url === ensureTrailingSlash(cleanBasePath(prefix))) {
@@ -18,4 +19,4 @@ app.use(async ctx => {
 })
 
 // This would likely fail if our code doesn't work
-app.listen(1)
+app.listen(0)

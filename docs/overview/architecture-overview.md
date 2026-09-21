@@ -381,7 +381,7 @@ Watt uses [Pino](https://getpino.io/) for high-performance structured logging ac
 
 ### Distributed Tracing Architecture
 
-Watt implements distributed tracing using [OpenTelemetry](https://opentelemetry.io/) with support for multiple trace exporters:
+Watt implements distributed tracing using [OpenTelemetry](https://opentelemetry.io/) with support for multiple trace exporters, including OTLP over HTTP, OTLP over gRPC, Zipkin, console, memory, and file:
 
 ```ascii
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -558,9 +558,11 @@ Watt uses [Prometheus](https://prometheus.io/) client libraries for metrics coll
 
 ## Next Steps
 
-- **[Configuration Guide](../reference/watt/configuration.md)**: Learn how to configure Watt applications
-- **[Application Mesh Details](../guides/application-mesh.md)**: Deep dive into inter-application communication
-- **[Deployment Patterns](../guides/deployment/)**: Production deployment strategies
+- **[Watt Architecture](../concepts/watt-architecture.md)**: Why the platform is designed this way, and what it trades away
+- **[The Multithread Model](../concepts/multithread-model.md)**: What worker-thread isolation does and does not give you
+- **[Configuration Guide](../reference/wattpm/configuration.md)**: Learn how to configure Watt applications
+- **[Application Mesh Details](../reference/runtime/multithread-architecture.md)**: Deep dive into inter-application communication
+- **[Deployment Patterns](../guides/deployment/dockerize-a-watt-app.md)**: Production deployment strategies
 - **[Monitoring Setup](../guides/metrics.md)**: Setting up monitoring stack
 
 This architecture enables teams to build distributed applications with the simplicity of monoliths and the flexibility of microservices, making Watt ideal for teams who want to move fast without sacrificing architectural quality.

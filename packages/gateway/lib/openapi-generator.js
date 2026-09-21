@@ -1,14 +1,16 @@
 import fastifyReplyFrom from '@fastify/reply-from'
 import fastifySwagger from '@fastify/swagger'
+import { getRuntimeBasePath } from '@platformatic/globals'
+import { Validator } from '@platformatic/openapi-schema-validator'
 import fp from 'fastify-plugin'
 import { readFile } from 'node:fs/promises'
 import { getGlobalDispatcher, request } from 'undici'
-import { CouldNotReadOpenAPIConfigError } from './errors.js'
+import { CouldNotReadOpenAPIConfigError, InvalidOpenAPISchemaError } from './errors.js'
 import { composeOpenApi } from './openapi-composer.js'
 import { loadOpenApiConfig } from './openapi-load-config.js'
 import { modifyOpenApiSchema, originPathSymbol } from './openapi-modifier.js'
 import { openApiScalar } from './openapi-scalar.js'
-import { prefixWithSlash } from './utils.js'
+import { normalizePrefix, prefixWithSlash } from './utils.js'
 
 async function fetchOpenApiSchema (openApiUrl) {
   const { body } = await request(openApiUrl)
@@ -50,6 +52,93 @@ function generateRenamedPath (renamedOpenApiPath, routeParams) {
   return renamedOpenApiPath.replace(/{(.*?)}/g, () => routeParams.shift())
 }
 
+const MAX_REPORTED_VALIDATION_ERRORS = 5
+
+function escapeJsonPointerToken (token) {
+  return token.replaceAll('~', '~0').replaceAll('/', '~1')
+}
+
+function findNullTypeConstructs (node, path = '#', found = []) {
+  if (node === null || typeof node !== 'object') {
+    return found
+  }
+
+  if (Array.isArray(node)) {
+    for (let i = 0; i < node.length; i++) {
+      findNullTypeConstructs(node[i], `${path}/${i}`, found)
+    }
+    return found
+  }
+
+  if (node.type === 'null' || (Array.isArray(node.type) && node.type.includes('null'))) {
+    found.push(`${path}/type`)
+  }
+
+  for (const key of Object.keys(node)) {
+    findNullTypeConstructs(node[key], `${path}/${escapeJsonPointerToken(key)}`, found)
+  }
+
+  return found
+}
+
+function describeInvalidSchema (declaredVersion, errors, schema) {
+  // The most common reason a composed specification is rejected: the document
+  // declares OpenAPI 3.0.x but contains { "type": "null" }, which only exists
+  // in OpenAPI 3.1. Report the exact location instead of the raw Ajv errors,
+  // which only point at the enclosing anyOf/oneOf.
+  if (typeof declaredVersion === 'string' && declaredVersion.startsWith('3.0')) {
+    const nullTypes = findNullTypeConstructs(schema)
+
+    if (nullTypes.length > 0) {
+      return (
+        `the document declares OpenAPI ${declaredVersion} but uses "type": "null", which only exists in OpenAPI 3.1, ` +
+        `at ${nullTypes.join(', ')}. Replace it with "nullable": true or upgrade the document to OpenAPI 3.1.`
+      )
+    }
+  }
+
+  if (!Array.isArray(errors)) {
+    return String(errors)
+  }
+
+  const reported = errors.slice(0, MAX_REPORTED_VALIDATION_ERRORS).map(error => {
+    return `${error.instancePath || '#'} ${error.message}`
+  })
+
+  const remaining = errors.length - reported.length
+  if (remaining > 0) {
+    reported.push(`(${remaining} more errors)`)
+  }
+
+  return reported.join('; ')
+}
+
+async function findInvalidOpenApiSchemas (openApiSchemas, applications) {
+  const validator = new Validator()
+  const invalid = []
+
+  for (const { id, schema } of openApiSchemas) {
+    const result = await validator.validate(schema)
+
+    if (result.valid) {
+      continue
+    }
+
+    const application = applications.find(application => application.id === id)
+    const source = application?.openapi?.url
+      ? application.origin + prefixWithSlash(application.openapi.url)
+      : application?.openapi?.file
+    const declaredVersion = schema.openapi ?? schema.swagger
+
+    invalid.push(
+      `the schema of the "${id}" application (${source}) is not a valid OpenAPI document: ` +
+        describeInvalidSchema(declaredVersion, result.errors, schema)
+    )
+  }
+
+  return invalid
+}
+
 async function openApiGatewayPlugin (app, { opts, generated }) {
   const { apiByApiRoutes } = generated
 
@@ -60,9 +149,36 @@ async function openApiGatewayPlugin (app, { opts, generated }) {
     destroyAgent: false
   })
 
-  await app.register(await import('@platformatic/fastify-openapi-glue'), {
+  const openApiGlue = await import('@platformatic/fastify-openapi-glue')
+
+  try {
+    await registerOpenApiGlue(app, openApiGlue, apiByApiRoutes)
+  } catch (error) {
+    // The glue rejects the whole composed specification with a generic error.
+    // Re-validate each downstream schema separately so the error names the
+    // application and the source of the invalid document.
+    const invalidSchemas = await findInvalidOpenApiSchemas(app.openApiSchemas, opts.applications)
+
+    if (invalidSchemas.length === 0) {
+      throw error
+    }
+
+    const invalidSchemaError = new InvalidOpenAPISchemaError(invalidSchemas.join('\n'))
+    invalidSchemaError.cause = error
+    throw invalidSchemaError
+  }
+
+  app.addHook('preValidation', async req => {
+    if (typeof req.query.fields === 'string') {
+      req.query.fields = req.query.fields.split(',')
+    }
+  })
+}
+
+async function registerOpenApiGlue (app, openApiGlue, apiByApiRoutes) {
+  await app.register(openApiGlue, {
     specification: app.composedOpenApiSchema,
-    addEmptySchema: opts.addEmptySchema,
+    addEmptySchema: true,
     operationResolver: (operationId, method, openApiPath) => {
       const { origin, prefix, schema } = apiByApiRoutes[openApiPath]
       const originPath = schema[originPathSymbol]
@@ -121,12 +237,6 @@ async function openApiGatewayPlugin (app, { opts, generated }) {
       }
     }
   })
-
-  app.addHook('preValidation', async req => {
-    if (typeof req.query.fields === 'string') {
-      req.query.fields = req.query.fields.split(',')
-    }
-  })
 }
 
 export async function openApiGenerator (app, opts) {
@@ -139,30 +249,47 @@ export async function openApiGenerator (app, opts) {
   const openApiSchemas = []
   const apiByApiRoutes = {}
 
-  for (const { id, origin, openapi } of applications) {
-    if (!openapi) continue
+  // Fetch all the schemas in parallel, then process the results in the
+  // original applications order so that composition stays deterministic.
+  const fetchResults = await Promise.allSettled(
+    applications.map(async ({ id, origin, openapi }) => {
+      if (!openapi) return null
 
-    let openapiConfig = null
-    if (openapi.config) {
-      try {
-        openapiConfig = await loadOpenApiConfig(openapi.config)
-      } catch (error) {
-        app.log.error(error)
-        throw new CouldNotReadOpenAPIConfigError(id)
+      let openapiConfig = null
+      if (openapi.config) {
+        try {
+          openapiConfig = await loadOpenApiConfig(openapi.config)
+        } catch (error) {
+          app.log.error(error)
+          throw new CouldNotReadOpenAPIConfigError(id)
+        }
       }
-    }
 
-    let originSchema = null
-    try {
-      originSchema = await getOpenApiSchema(origin, openapi)
-    } catch (error) {
-      app.log.error(error, `failed to fetch schema for "${id} application"`)
-      continue
+      let originSchema = null
+      try {
+        originSchema = await getOpenApiSchema(origin, openapi)
+      } catch (error) {
+        app.log.error(error, `failed to fetch schema for "${id} application"`)
+        return null
+      }
+
+      return { openapiConfig, originSchema }
+    })
+  )
+
+  for (let i = 0; i < applications.length; i++) {
+    const result = fetchResults[i]
+    if (result.status === 'rejected') {
+      throw result.reason
     }
+    if (result.value === null) continue
+
+    const { id, origin, openapi } = applications[i]
+    const { openapiConfig, originSchema } = result.value
 
     const schema = modifyOpenApiSchema(app, originSchema, openapiConfig)
 
-    const prefix = openapi.prefix ? prefixWithSlash(openapi.prefix) : ''
+    const prefix = normalizePrefix(openapi.prefix)
     for (const path in schema.paths) {
       apiByApiRoutes[prefix + path] = {
         origin,
@@ -179,16 +306,22 @@ export async function openApiGenerator (app, opts) {
   app.decorate('openApiSchemas', openApiSchemas)
   app.decorate('composedOpenApiSchema', composedOpenApiSchema)
 
+  const swaggerOpenApi = {
+    info: {
+      title: opts.openapi?.title || 'Platformatic Gateway',
+      version: opts.openapi?.version || '1.0.0'
+    },
+    servers: [{ url: getRuntimeBasePath({ throwOnMissing: false }) ?? '/' }],
+    components: app.composedOpenApiSchema.components
+  }
+
+  if (app.composedOpenApiSchema.security) {
+    swaggerOpenApi.security = app.composedOpenApiSchema.security
+  }
+
   await app.register(fastifySwagger, {
     exposeRoute: true,
-    openapi: {
-      info: {
-        title: opts.openapi?.title || 'Platformatic Gateway',
-        version: opts.openapi?.version || '1.0.0'
-      },
-      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
-      components: app.composedOpenApiSchema.components
-    },
+    openapi: swaggerOpenApi,
     transform ({ schema, url }) {
       for (const application of opts.applications) {
         if (!application.proxy) continue

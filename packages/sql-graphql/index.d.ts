@@ -9,7 +9,7 @@ type IEnumResolver = {
 
 export interface IResolvers<TSource = any, TContext = MercuriusContext> {
   [key: string]:
-  | (() => any)
+  | ((args: any) => any)
   | IResolverObject<TSource, TContext>
   | IResolverOptions<TSource, TContext>
   | GraphQLScalarType
@@ -27,8 +27,8 @@ export interface SQLGraphQLPluginOptions {
    */
   federationMetadata?: boolean,
   /**
- * Object with graphql resolver functions.
- */
+   * Object with graphql resolver functions.
+   */
   resolvers?: IResolvers,
   /*
    * The graphql schema.
@@ -42,7 +42,7 @@ export default plugin
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
+export namespace errors {
   export const UnableToGenerateGraphQLEnumTypeError: () => FastifyError
   export const UnsupportedKindError: (kind: string) => FastifyError
   export const ErrorPrintingGraphQLSchema: () => FastifyError

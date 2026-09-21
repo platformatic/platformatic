@@ -2,8 +2,8 @@
   "main": "index.ts",
   "type": "module",
   "dependencies": {
-    "@platformatic/basic": "^2.3.1",
-    "@platformatic/globals": "^2.3.1",
-    "@platformatic/node": "^2.3.1"
+    "@platformatic/basic": ">=3.0.0",
+    "@platformatic/globals": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0"
   }
 }

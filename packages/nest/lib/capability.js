@@ -1,5 +1,7 @@
 import {
   BaseCapability,
+  buildFastifyOptions,
+  buildListenOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -8,6 +10,8 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
+import { sanitizeHTTPSOptions } from '@platformatic/foundation'
+import { getEvents } from '@platformatic/globals'
 import getPort from 'get-port'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
@@ -16,7 +20,7 @@ import { pinoHttp } from 'pino-http'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
 
-const supportedVersions = '^11.0.0'
+export const supportedVersions = '^11.0.0'
 
 export class NestCapability extends BaseCapability {
   #basePath
@@ -77,7 +81,8 @@ export class NestCapability extends BaseCapability {
 
       // We use url changing as a way to notify restarts
       this.childManager.on('url', () => {
-        globalThis.platformatic.events.emitAndNotify('url', this.url)
+        const events = getEvents()
+        events.emitAndNotify('url', this.url)
       })
     } else {
       return this.#startProduction(listen)
@@ -212,14 +217,18 @@ export class NestCapability extends BaseCapability {
 
     // Create the server
     if (this.#isFastify) {
-      this.#app = await NestFactory.create(appModule, new Adapter({ loggerInstance: this.logger }))
+      this.#app = await NestFactory.create(appModule, new Adapter({
+        loggerInstance: this.logger,
+        ...(await buildFastifyOptions(this.serverConfig))
+      }))
 
       setup?.(this.#app)
       await this.#app.init()
 
       this.#server = this.#app.getInstance()
     } else {
-      this.#app = await NestFactory.create(appModule, new Adapter())
+      const httpsOptions = await sanitizeHTTPSOptions(this.serverConfig?.https)
+      this.#app = await NestFactory.create(appModule, new Adapter(), httpsOptions ? { httpsOptions } : undefined)
 
       const instance = this.#app.getInstance()
       instance.disable('x-powered-by')
@@ -242,7 +251,7 @@ export class NestCapability extends BaseCapability {
 
   async #listen () {
     const serverOptions = this.serverConfig
-    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+    const listenOptions = buildListenOptions(serverOptions)
 
     if (typeof serverOptions?.backlog === 'number') {
       createServerListener(false, false, { backlog: serverOptions.backlog })

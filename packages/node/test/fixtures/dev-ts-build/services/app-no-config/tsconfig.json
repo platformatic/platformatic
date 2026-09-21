@@ -10,8 +10,10 @@
     "incremental": true,
     "strict": true,
     "outDir": "dist",
+    "rootDir": "./src",
     "skipLibCheck": true
   },
+  "include": ["src/**/*"],
   "watchOptions": {
     "watchFile": "fixedPollingInterval",
     "watchDirectory": "fixedPollingInterval",

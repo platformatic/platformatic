@@ -1,5 +1,5 @@
 import { loadConfigurationFile } from '@platformatic/foundation'
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { on } from 'node:events'
 import { writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
@@ -175,7 +175,7 @@ test('applications:add - fails if a path is not valid', async t => {
   // Now add the application
   const addProcess = await wattpm('applications:add', '-s', 'add.json', { reject: false })
 
-  ok(addProcess.exitCode, 1)
+  strictEqual(addProcess.exitCode, 1)
   ok(addProcess.stdout.includes('does not exist or is not valid JSON'))
 })
 

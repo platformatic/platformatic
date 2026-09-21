@@ -28,6 +28,7 @@ Applications that run within Watt to handle different aspects of your applicatio
 Framework integrations that let you run frontend applications alongside your APIs:
 
 - **Next.js** - React applications with SSR/SSG
+- **Nitro** - Standalone Nitro and Nitro-powered Vite applications
 - **Astro** - Multi-framework static sites
 - **Remix** - Full-stack React applications
 - **Vite** - Modern build tooling for any framework
@@ -35,6 +36,8 @@ Framework integrations that let you run frontend applications alongside your API
 
 ### ⚙️ Runtime & Orchestration
 Development and production runtime environment for managing multiple applications.
+
+- **Runtime APIs** - Typed getters and setters exposed by `@platformatic/globals`.
 
 ### 🗄️ SQL Data Layer
 Low-level components for database integration and API generation:
@@ -62,6 +65,5 @@ Most Platformatic components follow consistent patterns:
 
 ## Getting Help
 
-- **Discord Community** - Join our [Discord server](https://discord.gg/platformatic)
 - **GitHub Issues** - Report bugs or request features
 - **Documentation** - Search or browse this reference section

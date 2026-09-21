@@ -1,16 +1,18 @@
 import { context, propagation, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api'
+import { getTracerProvider } from '@platformatic/globals'
 import fastUri from 'fast-uri'
 import { formatSpanAttributes, formatSpanName } from './telemetry-config.js'
 import { name as moduleName, version as moduleVersion } from './version.js'
 
-// Get tracer from our isolated TracerProvider stored in globalThis.platformatic
+// Get tracer from our isolated TracerProvider.
 function getTracer () {
-  const tracerProvider = globalThis.platformatic?.tracerProvider
-  if (tracerProvider) {
+  try {
+    const tracerProvider = getTracerProvider()
     return tracerProvider.getTracer(moduleName, moduleVersion)
+  } catch {
+    // Fallback to global tracer if our provider isn't set up yet
+    return trace.getTracer(moduleName, moduleVersion)
   }
-  // Fallback to global tracer if our provider isn't set up yet
-  return trace.getTracer(moduleName, moduleVersion)
 }
 
 export function createTelemetryThreadInterceptorHooks () {
@@ -18,7 +20,8 @@ export function createTelemetryThreadInterceptorHooks () {
     const activeContext = propagation.extract(context.active(), req.headers)
 
     const route = req.routeOptions?.url ?? null
-    const span = getTracer().startSpan(
+    const tracer = getTracer()
+    const span = tracer.startSpan(
       formatSpanName(req, route),
       {
         attributes: formatSpanAttributes.request(req, route),
@@ -60,7 +63,8 @@ export function createTelemetryThreadInterceptorHooks () {
     } else {
       name = `${method} ${urlObj.scheme}://${urlObj.host}${urlObj.path}`
     }
-    const span = getTracer().startSpan(
+    const tracer = getTracer()
+    const span = tracer.startSpan(
       name,
       {
         attributes: {

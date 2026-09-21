@@ -173,6 +173,51 @@ test('pprof stop - should stop profiling on all services and create multiple pro
   ok(profileFiles.length > 0, 'Should create at least one profile file')
 })
 
+test('pprof --all-workers - should create one profile file per worker', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const tempDir = await mkdtemp(join(tmpdir(), 'pprof-test-'))
+
+  t.after(async () => {
+    startProcess.kill('SIGINT')
+    startProcess.catch(() => {})
+    await safeRemove(tempDir)
+  })
+
+  const startProcess = wattpm('start', rootDir)
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Platformatic is now listening')) {
+      break
+    }
+  }
+
+  // Start profiling on all workers
+  const pprofStartProcess = await wattpmInDir(tempDir, 'pprof', 'start', '--all-workers', 'main')
+  strictEqual(pprofStartProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Wait a bit for some profile data
+  await sleep(100)
+
+  // Stop profiling on all workers
+  const pprofStopProcess = await wattpmInDir(tempDir, 'pprof', 'stop', '--all-workers', 'main')
+  strictEqual(pprofStopProcess.exitCode, 0, 'Should exit with code 0')
+
+  // Each worker should get its own file, suffixed with the worker index
+  const files = await readdir(tempDir)
+  const profileFiles = files.filter(file => /^pprof-cpu-main-0-.*\.pb$/.test(file))
+  ok(profileFiles.length > 0, 'Should create a per-worker profile file')
+
+  const stats = await stat(join(tempDir, profileFiles[0]))
+  ok(stats.size > 0, 'Profile file should not be empty')
+
+  ok(
+    pprofStopProcess.stdout.includes('npx @platformatic/flame generate'),
+    'Should include flamegraph generation instruction'
+  )
+})
+
 test('pprof - should handle service not found error', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 

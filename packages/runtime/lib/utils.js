@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { ApplicationsDependenciesCycleError } from './errors.js'
+import { ApplicationDependencyNotFoundError, ApplicationsDependenciesCycleError } from './errors.js'
 
 export function getArrayDifference (a, b) {
   return a.filter(element => {
@@ -48,13 +48,22 @@ export function topologicalLevels (sorted, graph) {
   return levels
 }
 
-// Graph: Map<string, string[]>
-export function topologicalSort (graph) {
+// valid: string[] | Map<string, string[]>, graph?: Map<string, string[]>
+export function topologicalSort (valid, graph) {
+  if (!graph) {
+    graph = valid
+    valid = Array.from(graph.keys())
+  }
+
   const result = []
   const visited = new Set()
   const path = []
 
   function visit (node) {
+    if (!valid.includes(node)) {
+      throw new ApplicationDependencyNotFoundError(node, valid.join(', '))
+    }
+
     if (visited.has(node)) {
       return
     }

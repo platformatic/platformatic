@@ -1,3 +1,4 @@
+import { getLogger } from '@platformatic/globals'
 import { Controller, Get } from '@nestjs/common'
 import { AppService } from './app.service'
 
@@ -7,7 +8,8 @@ export class AppController {
 
   @Get()
   root (): object {
-    globalThis.platformatic.logger?.info('Log from Nest App page')
+    const logger = getLogger()
+    logger.info('Log from Nest App page')
     return this.appService.root()
   }
 }

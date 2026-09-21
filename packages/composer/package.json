@@ -1,7 +1,7 @@
 {
   "name": "@platformatic/composer",
-  "version": "3.39.0",
-  "description": "",
+  "version": "3.69.0",
+  "description": "Platformatic Composer",
   "main": "index.js",
   "types": "index.d.ts",
   "type": "module",
@@ -12,7 +12,8 @@
     "prepublishOnly": "npm run build",
     "lint": "eslint",
     "gen-schema": "node scripts/schema.js > schema.json",
-    "gen-types": "json2ts > config.d.ts < schema.json"
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "lint:fix": "eslint --fix"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
@@ -25,7 +26,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "c8": "^10.0.0",
+    "c8": "^11.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "neostandard": "^0.12.0",
@@ -33,6 +34,7 @@
   },
   "dependencies": {
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/globals": "workspace:*",
     "@platformatic/gateway": "workspace:*"
   },
   "engines": {

@@ -10,6 +10,25 @@ const runtimeLogger = {
     captureStdio: {
       type: 'boolean',
       default: true
+    },
+    pino: {
+      type: 'object',
+      default: {},
+      properties: {
+        level: {
+          type: 'string',
+          default: 'level'
+        },
+        time: {
+          type: 'string',
+          default: 'time'
+        },
+        message: {
+          type: 'string',
+          default: 'msg'
+        }
+      },
+      additionalProperties: false
     }
   }
 }
@@ -35,7 +54,12 @@ const platformaticRuntimeSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Runtime Config',
   type: 'object',
-  properties: schemaComponents.runtimeProperties,
+  properties: {
+    ...schemaComponents.runtimeProperties,
+    module: {
+      type: 'string'
+    }
+  },
   anyOf: [
     { required: ['autoload'] },
     { required: ['applications'] },

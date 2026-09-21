@@ -1,3 +1,4 @@
+import { setCustomHealthCheck } from '@platformatic/globals'
 import fastify from 'fastify'
 
 export function create () {
@@ -5,7 +6,7 @@ export function create () {
 
   let status = true
 
-  globalThis.platformatic.setCustomHealthCheck(async () => {
+  setCustomHealthCheck(async () => {
     return status
   })
 

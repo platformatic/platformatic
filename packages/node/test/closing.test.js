@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -27,8 +27,8 @@ function collectEvents (runtime, endEvent = 'closed') {
 
 async function checkWarningEmitted (root, expected, custom = false) {
   const message = custom
-    ? 'Please register a "close" event handler in globalThis.platformatic.events for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
-    : 'Please export a "close" function or register a "close" event handler in globalThis.platformatic.events for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
+    ? 'Please register a "close" event handler via getEvents() for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
+    : 'Please export a "close" function or register a "close" event handler via getEvents() for application "frontend" to make sure resources have been closed properly and avoid exit timeouts.'
 
   const logs = await getLogsFromFile(root)
   deepStrictEqual(
@@ -69,6 +69,38 @@ test('should invoke Symbol.asyncDispose on the app if defined', async t => {
   ok(events.find(m => m.event === 'application:worker:event:asyncDispose'))
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
   await checkWarningEmitted(root, false)
+})
+
+test('should close a non-listening raw HTTP server', async t => {
+  const { runtime } = await prepareRuntime(t, 'close-non-listening-server')
+  const eventsPromise = collectEvents(runtime)
+
+  await startRuntime(t, runtime)
+  await runtime.close()
+
+  const events = await eventsPromise
+  ok(!events.find(m => m.event === 'application:worker:stop:error'))
+  ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+})
+
+test('should log stop errors without hanging runtime close', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'close-throws')
+  const eventsPromise = collectEvents(runtime)
+
+  await startRuntime(t, runtime)
+  await runtime.close()
+
+  const events = await eventsPromise
+  ok(events.find(m => m.event === 'application:worker:stop:error'))
+  ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+
+  const logs = await getLogsFromFile(root)
+  const stopErrorLog = logs.find(
+    m => m.level === 50 && m.msg?.includes('Failed to stop worker 0 of the application "frontend"')
+  )
+  ok(stopErrorLog)
+  strictEqual(stopErrorLog.err?.code, 'TEST_CLOSE_FAILED')
+  strictEqual(stopErrorLog.err?.message, 'boom while closing')
 })
 
 test('should invoke Symbol.asyncDispose for custom objects returned by create', async t => {
@@ -150,6 +182,27 @@ test('should invoke close handler for background apps without close', async t =>
   ok(events.find(m => m.event === 'application:worker:event:work'))
   ok(events.find(m => m.event === 'application:worker:event:close:handler'))
   ok(!events.find(m => m.event === 'application:worker:exit:timeout'))
+  await checkWarningEmitted(root, false)
+})
+
+test('should support factory returned background apps', async t => {
+  const { root, runtime } = await prepareRuntime(t, 'close-background-with-factory')
+  const eventsPromise = collectEvents(runtime)
+
+  const url = await startRuntime(t, runtime)
+  strictEqual(url, undefined)
+
+  await runtime.close()
+  const events = await eventsPromise
+  const logs = await getLogsFromFile(root)
+
+  deepStrictEqual(events.filter(m => m.event === 'application:worker:event:create').length, 1)
+
+  const closeAppEvent = events.find(m => m.event === 'application:worker:event:close:app')
+  strictEqual(closeAppEvent.payload[0], 'factory-background-app')
+  ok(!events.find(m => m.event === 'application:worker:event:close:module'))
+
+  ok(!logs.find(m => m.msg === 'Platformatic is now listening at undefined'))
   await checkWarningEmitted(root, false)
 })
 

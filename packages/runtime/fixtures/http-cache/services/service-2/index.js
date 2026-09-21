@@ -1,9 +1,8 @@
-'use strict'
-
 const fastify = require('fastify')
 const { request } = require('undici')
 
-function build () {
+async function build () {
+  const { getInvalidateHttpCache } = require('@platformatic/globals')
   const app = fastify()
 
   let counter = 0
@@ -42,7 +41,7 @@ function build () {
 
   app.post('/invalidate-cache', async (req) => {
     const opts = req.body
-    await globalThis.platformatic.invalidateHttpCache(opts)
+    await getInvalidateHttpCache()(opts)
   })
 
   return app

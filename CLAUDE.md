@@ -17,6 +17,7 @@ pnpm run global-links  # Link CLI tools globally for development
 pnpm test              # Run all tests (uses Docker for databases)
 pnpm run build         # Build all packages
 pnpm run lint          # Lint all packages
+pnpm run lint:fix      # Auto-fix lint issues across all packages (runs eslint --fix)
 pnpm run gen-schema    # Generate JSON schemas
 pnpm run gen-types     # Generate TypeScript types
 
@@ -39,7 +40,7 @@ npm test               # Run tests for specific package
 - **wattpm**: Node.js application server (`watt` command) 
 - **db**: Database service with auto-generated APIs
 - **service**: HTTP service based on Fastify
-- **composer**: API gateway for aggregating services
+- **gateway**: API gateway for aggregating applications (formerly `composer`, deprecated alias kept until v4)
 - **runtime**: Microservice orchestration environment
 
 ### Capabilities (Frontend Framework Integration)
@@ -79,10 +80,9 @@ Supports PostgreSQL, MySQL, MariaDB, and SQLite. The codebase is database-agnost
 
 ## Git Commit Guidelines
 
-All commits must include a DCO (Developer Certificate of Origin) sign-off. Always use `git commit -s` to automatically add the human's sign-off, and manually include Claude's sign-off.
+All commits must include a DCO (Developer Certificate of Origin) sign-off. Always use `git commit -s` to automatically add the human's sign-off.
 
-When creating commits, the commit message should include:
-- `Co-Authored-By: Claude <noreply@anthropic.com>`
-- `Signed-off-by: Claude <noreply@anthropic.com>`
+When creating commits, the commit message should never include a `Co-Authored-By` an AI assistant. Instead, add:
+`Assisted-by: AGENT_NAME:MODEL_VERSION`.
 
 The `-s` flag will automatically add the human's `Signed-off-by` line, ensuring both contributors are properly signed off for DCO compliance.
