@@ -4,9 +4,16 @@
     "enabled": true,
     "awaitFirstWorker": true
   },
-  "autoload": {
-    "path": "./services"
-  },
+  "applications": [
+    {
+      "id": "a",
+      "path": "./services/a",
+      "config": "platformatic.service.json",
+      "compileCache": {
+        "enabled": true
+      }
+    }
+  ],
   "logger": {
     "level": "error"
   }

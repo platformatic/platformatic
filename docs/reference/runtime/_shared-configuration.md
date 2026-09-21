@@ -924,7 +924,8 @@ The configuration can be a boolean or an object:
 {
   "compileCache": {
     "enabled": true,
-    "directory": ".plt/compile-cache"
+    "directory": ".plt/compile-cache",
+    "awaitFirstWorker": true
   }
 }
 ```
@@ -933,6 +934,9 @@ Configuration options:
 
 - **`enabled`** (`boolean`). Enable or disable the compile cache. Default: `true` when the object form is used.
 - **`directory`** (`string`). The directory to store the compile cache. Default: `.plt/compile-cache` relative to the application root.
+- **`awaitFirstWorker`** (`boolean`). Wait for the first worker's compile cache to be flushed before starting additional workers. Default: `false`.
+
+Compile cache is enabled by default at runtime level. Set `compileCache` to `false`, or set `enabled` to `false` in the object form, to disable it.
 
 **Performance considerations:**
 

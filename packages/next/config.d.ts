@@ -763,6 +763,10 @@ export interface PlatformaticNextJsConfig {
            * Directory to store compile cache. Defaults to .plt/compile-cache in app root
            */
           directory?: string;
+          /**
+           * Wait for the first worker to start before starting the remaining workers
+           */
+          awaitFirstWorker?: boolean;
         };
     application?: {
       reuseTcpPorts?: boolean;
@@ -841,6 +845,10 @@ export interface PlatformaticNextJsConfig {
              * Directory to store compile cache. Defaults to .plt/compile-cache in app root
              */
             directory?: string;
+            /**
+             * Wait for the first worker to start before starting the remaining workers
+             */
+            awaitFirstWorker?: boolean;
           };
     };
   };
