@@ -214,6 +214,7 @@ export declare const RootMissingError: FastifyError
 export declare const SchemaMustBeDefinedError: FastifyError
 export declare const ConfigurationDoesNotValidateAgainstSchemaError: FastifyError
 export declare const MissingEnvVariablesError: FastifyError
+export declare const UnsupportedNodeVersionError: FastifyError
 
 // Execution types
 export declare function executeWithTimeout<T> (promise: Promise<T>, timeout: number, timeoutValue?: any): Promise<T>
@@ -332,9 +333,6 @@ export declare function scheduleCompileCacheFlush (logger?: Logger, onFlushed?: 
 export declare const features: {
   node: {
     reusePort: boolean
-    worker: {
-      getHeapStatistics: boolean
-    }
     permission: {
       network: boolean
     }

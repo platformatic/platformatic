@@ -565,7 +565,7 @@ test('WrappedGenerator - should create a valid package.json', async t => {
     rest: 'FOO',
     engines: {
       foo: 'bar',
-      node: '>=22.19.0'
+      node: '>=24.20.0'
     }
   }
 

@@ -86,7 +86,7 @@ test('should prepare a valid package.json file (Typescript)', async () => {
   deepStrictEqual(packageJson.dependencies['@platformatic/globals'], `^${version}`)
   deepStrictEqual(packageJson.dependencies['@platformatic/node'], `^${version}`)
   deepStrictEqual(packageJson.devDependencies['@platformatic/tsconfig'], '^0.1.0')
-  deepStrictEqual(packageJson.devDependencies['@types/node'], '^22.0.0')
+  deepStrictEqual(packageJson.devDependencies['@types/node'], '^24.0.0')
 })
 
 test('should prepare a valid tsconfig.json file (Typescript)', async () => {

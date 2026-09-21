@@ -20,7 +20,7 @@ Prefer to let an AI coding agent set this up? Platformatic ships an official Age
 
 Before starting, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v22.19.0+)
+- [Node.js](https://nodejs.org/) (v24.20.0+)
 - [npm](https://docs.npmjs.com/cli/) (comes with Node.js)
 - A code editor, (e.g., [Visual Studio Code](https://code.visualstudio.com/))
 

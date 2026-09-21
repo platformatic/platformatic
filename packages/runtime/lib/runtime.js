@@ -2247,10 +2247,6 @@ export class Runtime extends EventEmitter {
       elu = worker.performance.eventLoopUtilization(elu, previousELU)
     }
 
-    if (!features.node.worker.getHeapStatistics) {
-      return { elu: elu.utilization, currentELU }
-    }
-
     // Only refresh heap statistics every 60 health checks (once per minute).
     // This keeps the common path fully synchronous — no promise allocation.
     const counter = (worker[kHeapCheckCounter] ?? 0) + 1

@@ -48,7 +48,7 @@ Create a `Dockerfile` in your project root with this multi-stage build configura
 # syntax=docker/dockerfile:1.7-labs
 
 # Stage 1: Build
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24.20.0
 FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /app
@@ -153,7 +153,7 @@ Node.js module compile cache is enabled by default in your `watt.json`. To disab
 When enabled, the compile cache is populated during `npm run build` and baked into your Docker image. This means every container started from the image benefits from pre-compiled V8 code, significantly reducing startup time.
 
 :::note
-Module compile cache requires Node.js 22.1.0 or later.
+Module compile cache is available on all supported Node.js versions.
 :::
 
 **Workspace Handling:**

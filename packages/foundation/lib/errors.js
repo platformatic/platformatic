@@ -60,3 +60,7 @@ export const MissingEnvVariablesError = createError(
   `${ERROR_PREFIX}_MISSING_ENV_VARIABLES`,
   'The configuration references the following environment variables which are not set: %s'
 )
+export const UnsupportedNodeVersionError = createError(
+  `${ERROR_PREFIX}_UNSUPPORTED_NODE_VERSION`,
+  'Your current Node.js version is %s, while the minimum supported version is v%s. Please upgrade Node.js and try again.'
+)

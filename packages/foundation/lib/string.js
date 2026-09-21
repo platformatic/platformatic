@@ -66,9 +66,8 @@ export function convertApplicationNameToPrefix (applicationName) {
   return applicationName.replace(/-/g, '_').toUpperCase()
 }
 
-// Once we drop Node < 24, remove this in favor of Regexp.escape which is more accurate
 export function escapeRegexp (raw) {
-  return raw.replaceAll(/([!$()*+./:=?[\\\]^{|}])/g, '\\$1')
+  return RegExp.escape(raw)
 }
 
 /**

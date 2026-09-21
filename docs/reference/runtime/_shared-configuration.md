@@ -909,7 +909,7 @@ When policies are configured, `fetch` requests or messaging API calls between bl
 The `compileCache` configuration enables Node.js module compile cache to improve application startup performance. When enabled, V8 compiled code is stored on disk and reused on subsequent starts, significantly reducing startup time for applications with many dependencies.
 
 :::note
-This feature requires Node.js 22.1.0 or later. On older Node.js versions, this configuration is silently ignored.
+This feature is available on all supported Node.js versions.
 :::
 
 The configuration can be a boolean or an object:
