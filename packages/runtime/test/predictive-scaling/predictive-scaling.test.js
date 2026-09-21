@@ -49,15 +49,13 @@ test('MetricStore', async (t) => {
     w.push(2500, 0.3)
 
     const ticks = w.getEntries()
-    assert.strictEqual(ticks.length, 3)
+    assert.strictEqual(ticks.length, 2)
     assert.strictEqual(ticks[0].timestamp, 1000)
     assert.strictEqual(ticks[0].value, 0.1)
     assert.strictEqual(ticks[1].timestamp, 2000)
     // ratio = (2000 - 1500) / (2500 - 1500) = 0.5
     // value = 0.1 + (0.3 - 0.1) * 0.5 = 0.2
     assertClose(ticks[1].value, 0.2)
-    // projected entry at 3000
-    assert.strictEqual(ticks[2].timestamp, 3000)
   })
 
   await t.test('fills multiple grid ticks between distant samples', () => {
@@ -66,13 +64,11 @@ test('MetricStore', async (t) => {
     w.push(4500, 0.6)
 
     const ticks = w.getEntries()
-    assert.strictEqual(ticks.length, 5)
+    assert.strictEqual(ticks.length, 4)
     assert.strictEqual(ticks[0].timestamp, 1000)
     assert.strictEqual(ticks[1].timestamp, 2000)
     assert.strictEqual(ticks[2].timestamp, 3000)
     assert.strictEqual(ticks[3].timestamp, 4000)
-    // projected entry at 5000
-    assert.strictEqual(ticks[4].timestamp, 5000)
   })
 
   await t.test('two samples in same interval: only first creates a tick', () => {
@@ -93,11 +89,9 @@ test('MetricStore', async (t) => {
     w.push(4500, 0.4)
 
     const ticks = w.getEntries(3000)
-    assert.strictEqual(ticks.length, 3)
+    assert.strictEqual(ticks.length, 2)
     assert.strictEqual(ticks[0].timestamp, 3000)
     assert.strictEqual(ticks[1].timestamp, 4000)
-    // projected entry at 5000
-    assert.strictEqual(ticks[2].timestamp, 5000)
   })
 
   await t.test('sliding window expires old ticks', () => {
@@ -119,12 +113,10 @@ test('MetricStore', async (t) => {
     w.push(2500, 0.3)
 
     const ticks = w.getEntries()
-    assert.strictEqual(ticks.length, 4)
+    assert.strictEqual(ticks.length, 3)
     assert.strictEqual(ticks[0].timestamp, 1500)
     assert.strictEqual(ticks[1].timestamp, 2000)
     assert.strictEqual(ticks[2].timestamp, 2500)
-    // projected entry at 3000
-    assert.strictEqual(ticks[3].timestamp, 3000)
   })
 })
 

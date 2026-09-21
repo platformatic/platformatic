@@ -160,6 +160,9 @@ export class PredictiveScalingAlgorithm {
   }
 
   addSample (metricName, workerId, timestamp, value) {
+    // Invalid readings are missing samples; preserve the last valid value.
+    if (!Number.isFinite(value)) return
+
     const metric = this.#metrics.get(metricName)
     if (!metric) return
 
@@ -372,10 +375,9 @@ export class PredictiveScalingAlgorithm {
       const timeline = instance[metricName]
       if (!timeline) continue
 
-      for (const { timestamp, value } of timeline.getEntries(fromTick)) {
-        if (timestamp > toTick) break
+      const end = instance.endTime === null ? toTick : Math.min(toTick, instance.endTime - 1)
+      for (const { timestamp, value } of timeline.getEntries(fromTick, end)) {
         if (timestamp < instance.startTime) continue
-        if (instance.endTime !== null && timestamp >= instance.endTime) break
 
         let tick = ticks.get(timestamp)
         if (!tick) {
@@ -400,7 +402,7 @@ export class PredictiveScalingAlgorithm {
         if (!timeline || timeline.isExpired(now)) continue
 
         const fromTick = metric.lastProcessedTick + metric.config.sampleIntervalMs
-        if (timeline.getEntries(fromTick).some(({ timestamp }) =>
+        if (timeline.getEntries(fromTick, instance.endTime - 1).some(({ timestamp }) =>
           timestamp >= instance.startTime && timestamp < instance.endTime
         )) {
           hasPendingTicks = true
@@ -523,27 +525,31 @@ export class MetricStore extends SlidingWindow {
     this.#prevRawValue = value
   }
 
-  getEntries (start = 0) {
+  getEntries (startTs = 0, endTs = Infinity) {
     const entries = super.getEntries()
 
     let i = 0
-    if (start > 0) {
-      while (i < entries.length && entries[i].timestamp < start) i++
+    let j = entries.length
+
+    if (startTs > 0) {
+      while (i < entries.length && entries[i].timestamp < startTs) i++
     }
+    if (Number.isFinite(endTs)) {
+      j = i
+      while (j < entries.length && entries[j].timestamp <= endTs) j++
+    }
+    const result = entries.slice(i, j)
 
-    const result = entries.slice(i)
-    const prev = result.at(-2)
-    const last = result.at(-1)
+    if (this.#prevRawTs === null) return result
+    if (!Number.isFinite(endTs)) return result
 
-    if (prev && last && last.timestamp < this.#nextAlignedTs) {
-      const nextAlignedValue = interpolate(
-        prev.timestamp,
-        prev.value,
-        last.timestamp,
-        last.value,
-        this.#nextAlignedTs
-      )
-      result.push({ timestamp: this.#nextAlignedTs, value: nextAlignedValue })
+    const intervalMs = this.#sampleIntervalMs
+    const alignedStart = Math.ceil(startTs / intervalMs) * intervalMs
+
+    let timestamp = Math.max(this.#nextAlignedTs, alignedStart)
+    while (timestamp <= endTs) {
+      result.push({ timestamp, value: this.#prevRawValue })
+      timestamp += intervalMs
     }
 
     return result
