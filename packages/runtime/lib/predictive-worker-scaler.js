@@ -2,6 +2,7 @@ import { deepmerge, features } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
 import { PredictiveScalingAlgorithm } from './predictive-scaling.js'
+import { kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 
 // Ajv does not apply defaults inside anyOf branches, so the schema defaults
 // defined in foundation/lib/schema.js are only used for validation. Defaults
@@ -56,6 +57,16 @@ export class PredictiveWorkersScaler {
     this.#runtime.on('application:worker:health:metrics', this.#onHealthMetrics)
     this.#runtime.on('application:worker:started', this.#onWorkerStarted)
     this.#runtime.on('application:worker:exited', this.#onWorkerExited)
+
+    // Initial workers start before the scaler subscribes. Read their lifetimes
+    // from the runtime instead of inferring them from the first metric event.
+    const workers = await this.#runtime.getWorkers(true)
+    for (const [id, { application, raw }] of Object.entries(workers)) {
+      if (raw[kWorkerStatus] !== 'started' && raw[kWorkerStatus] !== 'stopping') continue
+      const startTime = raw[kWorkerStartTime]
+      if (startTime === undefined) continue
+      this.#apps.get(application)?.algorithm.addWorker(id, startTime)
+    }
 
     this.#processTimer = setInterval(
       () => this.#process(),
@@ -177,7 +188,7 @@ export class PredictiveWorkersScaler {
       if (!app) return
 
       const workerId = `${application}:${worker}`
-      app.algorithm.removeWorker(workerId)
+      app.algorithm.removeWorker(workerId, Date.now())
     } catch (err) {
       this.#runtime.logger.error({ err }, 'Failed to handle worker exited')
     }

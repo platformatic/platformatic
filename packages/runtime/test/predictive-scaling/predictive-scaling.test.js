@@ -1011,6 +1011,8 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('cold start: first samples produce a result', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
+    alg.addWorker('w2', 1000)
 
     alg.addSample('elu', 'w1', 1500, 0.3)
     alg.addSample('elu', 'w2', 1500, 0.4)
@@ -1023,6 +1025,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('no new ticks returns null', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
 
     alg.addSample('elu', 'w1', 1500, 0.3)
 
@@ -1034,6 +1037,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('processing cooldown: accumulates ticks before processing', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
 
     alg.addSample('elu', 'w1', 1500, 0.3)
     alg.addSample('elu', 'w1', 2500, 0.4)
@@ -1046,6 +1050,8 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('steady low load produces hold', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
+    alg.addWorker('w2', 1000)
 
     let result = null
     for (let tick = 1; tick <= 20; tick++) {
@@ -1060,6 +1066,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('rising load produces scale-up', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
 
     for (let tick = 1; tick <= 20; tick++) {
       const elu = Math.min(0.3 + tick * 0.05, 0.95)
@@ -1072,12 +1079,14 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('new worker appears mid-stream', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
 
     for (let tick = 1; tick <= 5; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.7)
       alg.process((tick + 1) * 1000 + 500)
     }
 
+    alg.addWorker('w2', 6500)
     for (let tick = 6; tick <= 15; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.4)
       alg.addSample('elu', 'w2', tick * 1000 + 500, 0.3)
@@ -1090,6 +1099,8 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('worker stops sending metrics', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
+    alg.addWorker('w2', 1000)
 
     for (let tick = 1; tick <= 5; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.3)
@@ -1097,7 +1108,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
       alg.process((tick + 1) * 1000 + 500)
     }
 
-    alg.removeWorker('w2')
+    alg.removeWorker('w2', 6500)
     for (let tick = 6; tick <= 10; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.5)
       alg.process((tick + 1) * 1000 + 500)
@@ -1109,6 +1120,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('redistribution filters new worker contribution', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
 
     for (let tick = 1; tick <= 10; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.5)
@@ -1116,6 +1128,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
     }
 
     alg.addSample('elu', 'w1', 11500, 0.5)
+    alg.addWorker('w2', 11500)
     alg.addSample('elu', 'w2', 11500, 0.05)
     const result = alg.process(12500)
 
@@ -1126,6 +1139,9 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('scale down when load drops significantly', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
+    alg.addWorker('w2', 1000)
+    alg.addWorker('w3', 1000)
 
     let tick = 1
     let prevTarget = 1
@@ -1166,6 +1182,8 @@ test('PredictiveScalingAlgorithm', async (t) => {
       min: 2,
       max: 2
     })
+    alg.addWorker('w1', 1000)
+    alg.addWorker('w2', 1000)
 
     let result = null
     for (let tick = 1; tick <= 20; tick++) {
@@ -1184,6 +1202,8 @@ test('PredictiveScalingAlgorithm', async (t) => {
       ...algorithmConfig,
       min: 2
     })
+    alg.addWorker('w1', 1000)
+    alg.addWorker('w2', 1000)
 
     let result = null
     for (let tick = 1; tick <= 30; tick++) {
@@ -1204,6 +1224,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
         heap: { ...metricConfig, threshold: 0.5 }
       }
     })
+    alg.addWorker('w1', 1000)
 
     // Feed both metrics — heap has lower threshold so it should trigger scale-up first
     for (let tick = 1; tick <= 20; tick++) {
@@ -1219,6 +1240,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
   await t.test('getSnapshot returns history and prediction data', () => {
     const alg = new PredictiveScalingAlgorithm(algorithmConfig)
+    alg.addWorker('w1', 1000)
 
     for (let tick = 1; tick <= 10; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.5)
@@ -1283,6 +1305,7 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
   }
 
   function feedTicks (alg, workers, startTick, count, elu) {
+    for (const worker of workers) alg.addWorker(worker, startTick * 1000)
     let result = null
     for (let tick = startTick; tick < startTick + count; tick++) {
       result = feedTick(alg, workers, tick, elu)
@@ -1519,17 +1542,17 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
       }
     }))
 
-    // Scale-up happens around tick 3: decisionAt ≈ 4000, scaleAt ≈ 9000
-    // Correct expiry (scaleAt-based): now > 9000 + 30000 = 39000
-    // Buggy expiry (decisionAt-based): now > 4000 + 30000 = 34000
-    feedTicks(alg, ['w1'], 1, 3, 0.95)
+    alg.addWorker('w1', 0)
+    // Scale-up happens at tick 4: decisionAt = 5000, scaleAt = 10000.
+    // Correct expiry: now > 40000; decisionAt-based expiry: now > 35000.
+    feedTicks(alg, ['w1'], 1, 4, 0.95)
     const targetAfterScaleUp = alg.getSnapshot('elu').targetCount
     assert.ok(targetAfterScaleUp > 1)
 
-    // Feed low ELU up to tick 36 (now = 37000)
-    // Past decisionAt-based expiry (34000), before scaleAt-based expiry (39000)
+    // Feed low ELU up to tick 37 (now = 38000).
+    // Past decisionAt-based expiry (35000), before scaleAt-based expiry (40000).
     // Scale-down should still be blocked with correct behavior
-    feedTicks(alg, ['w1'], 4, 33, 0.01)
+    feedTicks(alg, ['w1'], 5, 33, 0.01)
 
     assert.strictEqual(
       alg.getSnapshot('elu').targetCount,
@@ -1568,7 +1591,7 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
     )
   })
 
-  await t.test('instances are cleaned up when all metric timelines expire', () => {
+  await t.test('remaining worker continues after another worker exits', () => {
     const alg = new PredictiveScalingAlgorithm({
       scaleUpMargin: 0.2,
       scaleDownMargin: 0.3,
@@ -1604,11 +1627,10 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
       alg.process(tick * 1000 + 1000)
     }
 
-    // Worker w2 exits — removeWorker does NOT clean instances (by design)
-    alg.removeWorker('w2')
+    // Worker w2 exits after its buffered ticks have been processed.
+    alg.removeWorker('w2', 4000)
 
-    // Continue feeding only w1 for enough ticks that w2's timeline expires
-    // windowMs = 5000, so after 5+ seconds with no data, w2's timeline is expired
+    // Continue processing with only the remaining worker.
     for (let tick = 4; tick <= 15; tick++) {
       const ts = tick * 1000 + 500
       alg.addSample('elu', 'w1', ts, 0.5)

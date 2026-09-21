@@ -347,7 +347,7 @@ export interface PlatformaticComposerConfig {
       customLevels?: {
         [k: string]: unknown;
       };
-       /**
+      /**
        * The numeric value of the level defined in level, when it is not one of the standard pino levels.
        */
       levelVal?: number;
@@ -387,7 +387,7 @@ export interface PlatformaticComposerConfig {
        * Set to false to disable logging entirely. Defaults to true.
        */
       enabled?: boolean;
-       openTelemetryExporter?: {
+      openTelemetryExporter?: {
         protocol: "grpc" | "http";
         url: string;
       };

@@ -3,6 +3,8 @@ import { EventEmitter } from 'node:events'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { PredictiveWorkersScaler } from '../../lib/predictive-worker-scaler.js'
+import { PredictiveScalingAlgorithm } from '../../lib/predictive-scaling.js'
+import { kWorkerStartTime, kWorkerStatus } from '../../lib/worker/symbols.js'
 
 function createMockRuntime () {
   const runtime = new EventEmitter()
@@ -12,6 +14,7 @@ function createMockRuntime () {
     error: () => {}
   }
   runtime.updateApplicationsResources = async () => {}
+  runtime.getWorkers = async () => ({})
   return runtime
 }
 
@@ -23,7 +26,8 @@ function makeConfig (overrides = {}) {
     eluThreshold: 0.8,
     scaleUpMargin: 0.1,
     scaleDownMargin: 0.3,
-    redistributionMs: 30000,
+    // Exercise scaling with settled workers; redistribution is covered by unit tests.
+    redistributionMs: 1,
     alphaUp: 0.2,
     alphaDown: 0.1,
     betaUp: 0.2,
@@ -48,7 +52,7 @@ function makeApp (id, overrides = {}) {
 
 function emitHealthMetrics (runtime, application, workerId, workerIndex, elu) {
   runtime.emit('application:worker:health:metrics', {
-    id: workerId,
+    id: `${application}:${workerIndex}`,
     application,
     worker: workerIndex,
     currentHealth: { elu }
@@ -62,6 +66,52 @@ async function feedElu (runtime, application, workerId, workerIndex, elu, durati
     await sleep(intervalMs)
   }
 }
+
+test('scaler initializes existing lifetimes and timestamps exit notifications', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 10000 })
+  const runtime = createMockRuntime()
+  const existing = { [kWorkerStatus]: 'started', [kWorkerStartTime]: 1000 }
+  runtime.getWorkers = async includeRaw => {
+    assert.equal(includeRaw, true)
+    return {
+      'app1:0': { application: 'app1', raw: existing },
+      'app1:1': { application: 'app1', raw: { [kWorkerStatus]: 'exited', [kWorkerStartTime]: 1000 } }
+    }
+  }
+  const addWorker = t.mock.method(PredictiveScalingAlgorithm.prototype, 'addWorker')
+  const removeWorker = t.mock.method(PredictiveScalingAlgorithm.prototype, 'removeWorker')
+  const addSample = t.mock.method(PredictiveScalingAlgorithm.prototype, 'addSample')
+  const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
+  await scaler.add(makeApp('app1'))
+  await scaler.start()
+  t.after(() => scaler.stop())
+
+  assert.deepEqual(addWorker.mock.calls.map(call => call.arguments), [['app1:0', 1000]])
+  emitHealthMetrics(runtime, 'app1', 'app1:0', 0, 0.4)
+  assert.deepEqual(addSample.mock.calls[0].arguments, ['elu', 'app1:0', 10000, 0.4])
+
+  runtime.emit('application:worker:exited', { application: 'app1', worker: 0 })
+  assert.deepEqual(removeWorker.mock.calls[0].arguments, ['app1:0', 10000])
+  runtime.emit('application:worker:started', { application: 'app1', worker: 0 })
+  assert.deepEqual(addWorker.mock.calls.at(-1).arguments, ['app1:0', 10000])
+})
+
+test('scaler does not initialize a snapshot worker that exited while the snapshot was awaited', async t => {
+  const runtime = createMockRuntime()
+  const raw = { [kWorkerStatus]: 'started', [kWorkerStartTime]: 1000 }
+  runtime.getWorkers = async () => {
+    const snapshot = { 'app1:0': { application: 'app1', raw } }
+    raw[kWorkerStatus] = 'exited'
+    runtime.emit('application:worker:exited', { application: 'app1', worker: 0 })
+    return snapshot
+  }
+  const addWorker = t.mock.method(PredictiveScalingAlgorithm.prototype, 'addWorker')
+  const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
+  await scaler.add(makeApp('app1'))
+  await scaler.start()
+  t.after(() => scaler.stop())
+  assert.equal(addWorker.mock.callCount(), 0)
+})
 
 test('PredictiveWorkersScaler', async (t) => {
   await t.test('scales up when ELU is high', async (t) => {

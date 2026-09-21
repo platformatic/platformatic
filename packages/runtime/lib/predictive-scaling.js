@@ -11,7 +11,6 @@ export const HORIZONTAL_TREND_THRESHOLD = 10
 export const HORIZON_MULTIPLIER = 1.2
 export const MIN_HORIZON_MS = 7000
 export const MAX_HORIZON_MS = 30000
-export const RECONNECT_TIMEOUT_MS = 5000
 export const INIT_TIMEOUT_MS = 5000
 export const INIT_TIMEOUT_CONFIG = {
   stepRate: 0.1,
@@ -38,10 +37,7 @@ export class PredictiveScalingAlgorithm {
   /** @type {WorkerIdMapper} */
   #workerIdMapper
 
-  /** @type {Map<string, NodeJS.Timeout>} workerId -> reconnect timer */
-  #reconnectTimers
-
-  /** @type {Map<string, { startTime: number, [metricName]: MetricStore }>} instanceId -> instance */
+  /** @type {Map<string, { startTime: number, endTime: number | null, [metricName]: MetricStore }>} instanceId -> instance */
   #instances
 
   /**
@@ -115,7 +111,6 @@ export class PredictiveScalingAlgorithm {
     this.#horizonMs = this.#calculateHorizon()
 
     this.#workerIdMapper = new WorkerIdMapper()
-    this.#reconnectTimers = new Map()
     this.#instances = new Map()
 
     this.#metrics = new Map()
@@ -148,36 +143,31 @@ export class PredictiveScalingAlgorithm {
   }
 
   addWorker (workerId, startTime) {
-    const timer = this.#reconnectTimers.get(workerId)
-    if (timer) {
-      clearTimeout(timer)
-      this.#reconnectTimers.delete(workerId)
-    }
+    if (this.#workerIdMapper.get(workerId)) return
 
     const instanceId = this.#workerIdMapper.add(workerId)
-    this.#instances.set(instanceId, { startTime })
-    this.#lastWorkerStartTime = startTime
+    this.#instances.set(instanceId, { startTime, endTime: null })
+    this.#lastWorkerStartTime = Math.max(this.#lastWorkerStartTime, startTime)
     this.#resolvePendingScaleUp(startTime)
   }
 
-  removeWorker (workerId) {
-    const timer = setTimeout(() => {
-      this.#workerIdMapper.remove(workerId)
-      this.#reconnectTimers.delete(workerId)
-    }, RECONNECT_TIMEOUT_MS).unref()
-    this.#reconnectTimers.set(workerId, timer)
+  removeWorker (workerId, endTime) {
+    const instanceId = this.#workerIdMapper.get(workerId)
+    if (!instanceId) return
+
+    this.#instances.get(instanceId).endTime = endTime
+    this.#workerIdMapper.remove(workerId)
   }
 
   addSample (metricName, workerId, timestamp, value) {
     const metric = this.#metrics.get(metricName)
     if (!metric) return
 
-    if (!this.#workerIdMapper.get(workerId)) {
-      this.addWorker(workerId, timestamp)
-    }
-
     const instanceId = this.#workerIdMapper.get(workerId)
+    // Only lifecycle events register workers. A late metric must not revive one.
+    if (!instanceId) return
     const instance = this.#instances.get(instanceId)
+    if (timestamp < instance.startTime) return
 
     let timeline = instance[metricName]
     if (!timeline) {
@@ -224,9 +214,9 @@ export class PredictiveScalingAlgorithm {
       }
     }
 
-    if (!processed) return null
-
     this.#cleanupExpired(now)
+
+    if (!processed) return null
 
     if (maxTargetCount === this.#targetCount) return this.#targetCount
 
@@ -376,52 +366,48 @@ export class PredictiveScalingAlgorithm {
   }
 
   #getAlignedMetrics (metricName, fromTick, toTick) {
-    const metric = this.#metrics.get(metricName)
-    const result = []
-    const workersMetrics = {}
+    const ticks = new Map()
 
-    let firstTimestamp = Infinity
     for (const [instanceId, instance] of this.#instances) {
       const timeline = instance[metricName]
       if (!timeline) continue
 
-      const workerMetrics = timeline.getEntries(fromTick)
-      if (workerMetrics.length === 0) continue
-
-      workersMetrics[instanceId] = workerMetrics
-      firstTimestamp = Math.min(firstTimestamp, workerMetrics[0].timestamp)
-    }
-
-    fromTick = Math.max(fromTick, firstTimestamp)
-
-    for (const workerId in workersMetrics) {
-      const workerMetrics = workersMetrics[workerId]
-      const firstTimestamp = workerMetrics[0].timestamp
-
-      let i = (firstTimestamp - fromTick) / metric.config.sampleIntervalMs
-
-      for (const { timestamp, value } of workerMetrics) {
+      for (const { timestamp, value } of timeline.getEntries(fromTick)) {
         if (timestamp > toTick) break
-        result[i] ??= { timestamp, workerValues: {} }
-        result[i].workerValues[workerId] = value
-        i++
+        if (timestamp < instance.startTime) continue
+        if (instance.endTime !== null && timestamp >= instance.endTime) break
+
+        let tick = ticks.get(timestamp)
+        if (!tick) {
+          tick = { timestamp, workerValues: {} }
+          ticks.set(timestamp, tick)
+        }
+        tick.workerValues[instanceId] = value
       }
     }
 
-    return result
+    return [...ticks.values()].sort((a, b) => a.timestamp - b.timestamp)
   }
 
   #cleanupExpired (now) {
     for (const [instanceId, instance] of this.#instances) {
-      let alive = false
-      for (const metricName of this.#metrics.keys()) {
+      // Silence is not an exit. Keep the active lifetime even without samples.
+      if (instance.endTime === null) continue
+
+      let hasPendingTicks = false
+      for (const [metricName, metric] of this.#metrics) {
         const timeline = instance[metricName]
-        if (timeline && !timeline.isExpired(now)) {
-          alive = true
+        if (!timeline || timeline.isExpired(now)) continue
+
+        const fromTick = metric.lastProcessedTick + metric.config.sampleIntervalMs
+        if (timeline.getEntries(fromTick).some(({ timestamp }) =>
+          timestamp >= instance.startTime && timestamp < instance.endTime
+        )) {
+          hasPendingTicks = true
           break
         }
       }
-      if (!alive) this.#instances.delete(instanceId)
+      if (!hasPendingTicks) this.#instances.delete(instanceId)
     }
   }
 }
