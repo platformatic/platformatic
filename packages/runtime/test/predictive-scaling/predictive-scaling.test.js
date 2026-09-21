@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { test } from 'node:test'
+import { mock, test } from 'node:test'
 import {
   MetricStore,
   getStabilizationWeight,
@@ -13,6 +13,20 @@ import {
   SlidingWindow,
   PredictiveScalingAlgorithm
 } from '../../lib/predictive-scaling.js'
+
+// These scenarios model a coordinator that accepts the full recommendation.
+function processAndAccept (algorithm, now) {
+  const target = algorithm.process(now)
+  if (target !== null) {
+    const clock = mock.method(Date, 'now', () => now)
+    try {
+      algorithm.setTarget(target)
+    } finally {
+      clock.mock.restore()
+    }
+  }
+  return target
+}
 
 const REDIST_MS = 5000
 
@@ -1009,7 +1023,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
     alg.addSample('elu', 'w1', 1500, 0.3)
     alg.addSample('elu', 'w2', 1500, 0.4)
 
-    const result = alg.process(2500)
+    const result = processAndAccept(alg, 2500)
 
     assert.ok(result !== null)
     assert.strictEqual(typeof result, 'number')
@@ -1021,9 +1035,9 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
     alg.addSample('elu', 'w1', 1500, 0.3)
 
-    alg.process(2500)
+    processAndAccept(alg, 2500)
 
-    const result = alg.process(2600)
+    const result = processAndAccept(alg, 2600)
     assert.strictEqual(result, null)
   })
 
@@ -1035,7 +1049,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
     alg.addSample('elu', 'w1', 2500, 0.4)
     alg.addSample('elu', 'w1', 3500, 0.5)
 
-    const result = alg.process(4500)
+    const result = processAndAccept(alg, 4500)
 
     assert.ok(result !== null)
   })
@@ -1049,7 +1063,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
     for (let tick = 1; tick <= 20; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.2)
       alg.addSample('elu', 'w2', tick * 1000 + 500, 0.2)
-      result = alg.process((tick + 1) * 1000 + 500)
+      result = processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     assert.ok(result !== null)
@@ -1063,7 +1077,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
     for (let tick = 1; tick <= 20; tick++) {
       const elu = Math.min(0.3 + tick * 0.05, 0.95)
       alg.addSample('elu', 'w1', tick * 1000 + 500, elu)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     assert.strictEqual(alg.getSnapshot('elu').targetCount, 2)
@@ -1075,14 +1089,14 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
     for (let tick = 1; tick <= 5; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.7)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     alg.addWorker('w2', 6500)
     for (let tick = 6; tick <= 15; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.4)
       alg.addSample('elu', 'w2', tick * 1000 + 500, 0.3)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     const snapshot = alg.getSnapshot('elu')
@@ -1097,13 +1111,13 @@ test('PredictiveScalingAlgorithm', async (t) => {
     for (let tick = 1; tick <= 5; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.3)
       alg.addSample('elu', 'w2', tick * 1000 + 500, 0.3)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     alg.removeWorker('w2', 6500)
     for (let tick = 6; tick <= 10; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.5)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     const snapshot = alg.getSnapshot('elu')
@@ -1116,13 +1130,13 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
     for (let tick = 1; tick <= 10; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.5)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     alg.addSample('elu', 'w1', 11500, 0.5)
     alg.addWorker('w2', 11500)
     alg.addSample('elu', 'w2', 11500, 0.05)
-    const result = alg.process(12500)
+    const result = processAndAccept(alg, 12500)
 
     assert.ok(result !== null)
     const snapshot = alg.getSnapshot('elu')
@@ -1141,7 +1155,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.95)
       alg.addSample('elu', 'w2', tick * 1000 + 500, 0.95)
       alg.addSample('elu', 'w3', tick * 1000 + 500, 0.95)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
 
       const newTarget = alg.getSnapshot('elu').targetCount
       if (newTarget > prevTarget) {
@@ -1162,7 +1176,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.1)
       alg.addSample('elu', 'w2', tick * 1000 + 500, 0.1)
       alg.addSample('elu', 'w3', tick * 1000 + 500, 0.1)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     assert.strictEqual(alg.getSnapshot('elu').targetCount, 1)
@@ -1182,7 +1196,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
       const elu = Math.min(0.5 + tick * 0.03, 0.95)
       alg.addSample('elu', 'w1', tick * 1000 + 500, elu)
       alg.addSample('elu', 'w2', tick * 1000 + 500, elu)
-      result = alg.process((tick + 1) * 1000 + 500)
+      result = processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     assert.ok(result !== null)
@@ -1201,7 +1215,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
     for (let tick = 1; tick <= 30; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.01)
       alg.addSample('elu', 'w2', tick * 1000 + 500, 0.01)
-      result = alg.process((tick + 1) * 1000 + 500)
+      result = processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     assert.ok(result !== null)
@@ -1223,7 +1237,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
       const val = Math.min(0.2 + tick * 0.03, 0.95)
       alg.addSample('elu', 'w1', tick * 1000 + 500, val)
       alg.addSample('heap', 'w1', tick * 1000 + 500, val)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     // heap threshold (0.5) is lower than elu (0.8), so heap drives scale-up
@@ -1236,7 +1250,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
 
     for (let tick = 1; tick <= 10; tick++) {
       alg.addSample('elu', 'w1', tick * 1000 + 500, 0.5)
-      alg.process((tick + 1) * 1000 + 500)
+      processAndAccept(alg, (tick + 1) * 1000 + 500)
     }
 
     const snapshot = alg.getSnapshot('elu')
@@ -1293,7 +1307,7 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
     for (const w of workers) {
       alg.addSample('elu', w, ts, elu)
     }
-    return alg.process(tick * 1000 + 1000)
+    return processAndAccept(alg, tick * 1000 + 1000)
   }
 
   function feedTicks (alg, workers, startTick, count, elu) {
@@ -1616,7 +1630,7 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
       const ts = tick * 1000 + 500
       alg.addSample('elu', 'w1', ts, 0.5)
       alg.addSample('elu', 'w2', ts, 0.5)
-      alg.process(tick * 1000 + 1000)
+      processAndAccept(alg, tick * 1000 + 1000)
     }
 
     // Worker w2 exits after its buffered ticks have been processed.
@@ -1626,7 +1640,7 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
     for (let tick = 4; tick <= 15; tick++) {
       const ts = tick * 1000 + 500
       alg.addSample('elu', 'w1', ts, 0.5)
-      alg.process(tick * 1000 + 1000)
+      processAndAccept(alg, tick * 1000 + 1000)
     }
 
     // Verify the algorithm still works correctly — w2's stale data

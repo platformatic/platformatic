@@ -208,9 +208,10 @@ export class PredictiveScalingAlgorithm {
    * Cooldowns are enforced after computing the target.
    *
    * @param {number} now - current timestamp
-   * @returns {number | null} new targetCount, or null if no metrics had new ticks
+   * @returns {number | null} suggested targetCount, or null if no metrics had new ticks
    */
   process (now) {
+    this.#expirePendingScaleUps(now)
     let maxTargetCount = 0
     let processed = false
 
@@ -229,61 +230,67 @@ export class PredictiveScalingAlgorithm {
     if (maxTargetCount === this.#targetCount) return this.#targetCount
 
     if (maxTargetCount > this.#targetCount) {
-      this.#checkScaleUp(maxTargetCount, now)
-    } else {
-      this.#checkScaleDown(maxTargetCount, now)
+      return this.#checkScaleUp(now) ? maxTargetCount : this.#targetCount
     }
 
-    return this.#targetCount
+    return this.#checkScaleDown(now) ? maxTargetCount : this.#targetCount
   }
 
-  #checkScaleUp (newTargetCount, now) {
+  /** Record the coordinator's approved target before requesting workers. */
+  setTarget (targetCount) {
+    if (targetCount === this.#targetCount) return
+
+    const now = Date.now()
+
+    if (targetCount > this.#targetCount) {
+      const scaleAt = now + this.#initTimeoutMs
+      for (let i = this.#targetCount; i < targetCount; i++) {
+        this.#pendingScaleUps.push({ scaleAt, decisionAt: now })
+      }
+      this.#lastScaleUpTime = now
+    } else {
+      this.#lastScaleDownTime = now
+    }
+
+    this.#targetCount = targetCount
+  }
+
+  #checkScaleUp (now) {
     const {
       scaleUpAfterScaleUpMs = 5000,
       scaleUpAfterScaleDownMs = 5000
     } = this.#cooldowns
 
     if (this.#lastScaleUpTime && now - this.#lastScaleUpTime < scaleUpAfterScaleUpMs) {
-      return
+      return false
     }
 
     if (this.#lastScaleDownTime && now - this.#lastScaleDownTime < scaleUpAfterScaleDownMs) {
-      return
+      return false
     }
 
-    const scaleUpCount = newTargetCount - this.#targetCount
-    const scaleAt = now + this.#initTimeoutMs
-
-    for (let i = 0; i < scaleUpCount; i++) {
-      this.#pendingScaleUps.push({ scaleAt, decisionAt: now })
-    }
-
-    this.#lastScaleUpTime = now
-    this.#targetCount = newTargetCount
+    return true
   }
 
-  #checkScaleDown (newTargetCount, now) {
+  #checkScaleDown (now) {
     const {
       scaleDownAfterScaleUpMs = 30000,
       scaleDownAfterScaleDownMs = 20000
     } = this.#cooldowns
 
-    this.#expirePendingScaleUps(now)
-
     if (this.#pendingScaleUps.length > 0) {
-      return
+      return false
     }
 
     if (this.#lastWorkerStartTime && now - this.#lastWorkerStartTime < scaleDownAfterScaleUpMs) {
-      return
+      return false
     }
 
     if (this.#lastScaleDownTime && now - this.#lastScaleDownTime < scaleDownAfterScaleDownMs) {
-      return
+      return false
     }
 
-    this.#lastScaleDownTime = now
-    this.#targetCount = newTargetCount
+    return true
   }
 
   #expirePendingScaleUps (now) {

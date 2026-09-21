@@ -30,6 +30,7 @@ export class PredictiveWorkersScaler {
   #config
   #apps
   #processTimer
+  #isProcessing = false
   #maxTotalWorkers
   #maxTotalMemory
   #memoryInfo
@@ -195,8 +196,22 @@ export class PredictiveWorkersScaler {
   }
 
   async #process () {
+    if (this.#isProcessing) return
+    this.#isProcessing = true
+
+    try {
+      await this.#processApplications()
+    } catch (err) {
+      this.#runtime.logger.error({ err }, 'Failed to process predictive scaling')
+    } finally {
+      this.#isProcessing = false
+    }
+  }
+
+  async #processApplications () {
     const now = Date.now()
     const updates = []
+    let plannedWorkerCount = this.#getTotalWorkerCount()
     let scaleUpCandidate = null
     let scaleUpRatio = -1
 
@@ -208,7 +223,7 @@ export class PredictiveWorkersScaler {
         this.#runtime.logger.info(
           `Predictive scaling down the "${appId}" app to ${desiredTarget} workers`
         )
-        app.targetCount = desiredTarget
+        plannedWorkerCount -= app.targetCount - desiredTarget
         updates.push({ application: appId, workers: desiredTarget })
       } else {
         const ratio = (desiredTarget - app.targetCount) / app.targetCount
@@ -221,10 +236,9 @@ export class PredictiveWorkersScaler {
 
     if (scaleUpCandidate) {
       const { appId, app } = scaleUpCandidate
-      const totalWorkerCount = this.#getTotalWorkerCount()
       const hasAvailableMemory = await this.#hasAvailableMemory()
 
-      if (totalWorkerCount >= this.#maxTotalWorkers) {
+      if (plannedWorkerCount >= this.#maxTotalWorkers) {
         this.#runtime.logger.warn(
           `Cannot scale up the "${appId}" app. ` +
           `The maximum number of workers "${this.#maxTotalWorkers}" has been reached.`
@@ -239,9 +253,15 @@ export class PredictiveWorkersScaler {
         this.#runtime.logger.info(
           `Predictive scaling up the "${appId}" app to ${newTarget} workers`
         )
-        app.targetCount = newTarget
         updates.push({ application: appId, workers: newTarget })
       }
+    }
+
+    for (const update of updates) {
+      const app = this.#apps.get(update.application)
+      if (!app) continue
+      app.algorithm.setTarget(update.workers)
+      app.targetCount = update.workers
     }
 
     if (updates.length > 0) {
