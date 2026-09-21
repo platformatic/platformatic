@@ -10,6 +10,7 @@ import { kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 const V2_DEFAULTS = {
   eluThreshold: 0.8,
   processIntervalMs: 10000,
+  maxScaleUpStep: 1,
   scaleUpMargin: 0.1,
   scaleDownMargin: 0.3,
   redistributionMs: 30000,
@@ -229,13 +230,13 @@ export class PredictiveWorkersScaler {
         const ratio = (desiredTarget - app.targetCount) / app.targetCount
         if (ratio > scaleUpRatio) {
           scaleUpRatio = ratio
-          scaleUpCandidate = { appId, app }
+          scaleUpCandidate = { appId, app, desiredTarget }
         }
       }
     }
 
     if (scaleUpCandidate) {
-      const { appId, app } = scaleUpCandidate
+      const { appId, app, desiredTarget } = scaleUpCandidate
       const hasAvailableMemory = await this.#hasAvailableMemory()
 
       if (plannedWorkerCount >= this.#maxTotalWorkers) {
@@ -249,7 +250,12 @@ export class PredictiveWorkersScaler {
           `The memory limit "${this.#maxTotalMemory}" has been reached.`
         )
       } else {
-        const newTarget = app.targetCount + 1
+        const scaleUpCount = Math.min(
+          desiredTarget - app.targetCount,
+          this.#config.maxScaleUpStep,
+          this.#maxTotalWorkers - plannedWorkerCount
+        )
+        const newTarget = app.targetCount + scaleUpCount
         this.#runtime.logger.info(
           `Predictive scaling up the "${appId}" app to ${newTarget} workers`
         )

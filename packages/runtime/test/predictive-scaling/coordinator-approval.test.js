@@ -70,6 +70,43 @@ test('only the selected application records the approved single extra worker', a
   assert.deepEqual(updates[1], { application: 'app2', workers: 2 })
 })
 
+for (const [name, config, target] of [
+  ['configured step', { maxScaleUpStep: 2 }, 3],
+  ['requested target', { maxScaleUpStep: 10 }, 4],
+  ['total worker limit', { maxScaleUpStep: 10, total: 3 }, 2]
+]) {
+  test(`scale-up respects the ${name} and still selects only one application`, async t => {
+    const { updates, algorithms, setTarget } = await setup(t, config, ['app1', 'app2'])
+    t.mock.timers.tick(500)
+    await waitFor(() => updates.length === 1)
+    const [first, second] = algorithms
+    assert.deepEqual(updates, [{ application: 'app1', workers: target }])
+    assert.deepEqual(setTarget.mock.calls.map(call => call.arguments), [[target]])
+    assert.equal(first.getSnapshot('elu').targetCount, target)
+    assert.equal(second.getSnapshot('elu').targetCount, 1)
+  })
+}
+
+test('a larger approved step records every pending start', async t => {
+  const { runtime, algorithms, updates, process } = await setup(t, {
+    maxScaleUpStep: 3,
+    redistributionMs: 1,
+    cooldowns: { scaleDownAfterScaleUpMs: 0 }
+  })
+  t.mock.timers.tick(500)
+  await waitFor(() => updates.length === 1)
+  const [algorithm] = algorithms
+  process.mock.restore()
+  algorithm.addSample('elu', 'app1:0', 11000, 0.01)
+  assert.equal(algorithm.process(11000), 4)
+  for (const worker of [1, 2]) {
+    runtime.emit('application:worker:started', { application: 'app1', worker })
+  }
+  assert.equal(algorithm.process(12000), 4)
+  runtime.emit('application:worker:started', { application: 'app1', worker: 3 })
+  assert.equal(algorithm.process(13000), 1)
+})
+
 for (const [name, config] of [['worker limit', { total: 1 }], ['memory limit', { maxMemory: 1 }]]) {
   test(`${name} prevents approval bookkeeping`, async t => {
     const { algorithms, setTarget, warnings, updates } = await setup(t, config)
