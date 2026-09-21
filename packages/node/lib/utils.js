@@ -37,14 +37,15 @@ export async function getTsconfig (root, config) {
   try {
     const tsConfigPath = config?.plugins?.typescript?.tsConfig || path.resolve(root, 'tsconfig.json')
     const tsConfig = json5.parse(await readFile(tsConfigPath, 'utf8'))
+    tsConfig.compilerOptions = Object.assign(tsConfig.compilerOptions ?? {}, config?.plugins?.typescript)
 
-    return Object.assign(tsConfig.compilerOptions, config?.plugins?.typescript)
+    return tsConfig
   } catch {
     return null
   }
 }
 
-export function ignoreDirs (outDir, watchOptionsExcludeDirectories) {
+export function ignoreDirs (outDir, watchOptionsExcludeDirectories, tsBuildInfoFile) {
   const ignore = new Set()
 
   if (watchOptionsExcludeDirectories) {
@@ -62,7 +63,13 @@ export function ignoreDirs (outDir, watchOptionsExcludeDirectories) {
   }
 
   if (ignore.size === 0) {
-    return ['dist', 'dist/*', 'dist/**/*']
+    ignore.add('dist')
+    ignore.add('dist/*')
+    ignore.add('dist/**/*')
+  }
+
+  if (tsBuildInfoFile) {
+    ignore.add(tsBuildInfoFile)
   }
 
   return Array.from(ignore)
