@@ -44,7 +44,12 @@ export class PredictiveScalingAlgorithm {
    * Per-metric state, keyed by metric name.
    * @type {Map<string, {
    *   holtState: { level: number, trend: number } | null,
-   *   prevSum: number | null,
+   *   redistributionState: {
+   *     prevSum: number,
+   *     prevSumOfWeight: number,
+   *     prevNewAvgValue: number,
+   *     prevNewCount: number
+   *   } | null,
    *   lastProcessedTick: number,
    *   history: SlidingWindow,
    *   config: { sampleIntervalMs: number, windowMs: number, threshold: number,
@@ -118,7 +123,7 @@ export class PredictiveScalingAlgorithm {
       const mc = config.metrics[name]
       this.#metrics.set(name, {
         holtState: null,
-        prevSum: null,
+        redistributionState: null,
         lastProcessedTick: 0,
         history: new SlidingWindow(WINDOW_MS),
         config: {
@@ -318,11 +323,11 @@ export class PredictiveScalingAlgorithm {
     if (stateByTimestamp.length === 0) return null
 
     // Stage 1: Redistribution (mutates state entries in-place)
-    metric.prevSum = redistributeValues(
+    metric.redistributionState = redistributeValues(
       stateByTimestamp,
       this.#instances,
       config.redistributionConfig,
-      metric.prevSum
+      metric.redistributionState
     )
 
     // Stage 2: Holt smoothing (mutates state entries in-place)
@@ -603,18 +608,25 @@ export function getStabilizationWeight (age, redistributionMs, k) {
 /**
  * Redistribute aggregated values to filter out scaling artifacts.
  *
- * Processes an array of ticks, carrying prevSum forward for drop absorption.
+ * Processes ticks using the previous sum and startup weights as current state.
  * New workers (age < redistributionMs) contribute at partial weight.
  * The prevSum monotonicity guard prevents the sum from dropping during redistribution.
+ * newSumDelta reports weight-driven growth separately for Holt compensation.
  *
  * @param {Array<{ timestamp: number, workerValues: Object<string, number> }>} state
  * @param {Map<string, { startTime: number }>} workers - worker registry
  * @param {{ redistributionMs: number, k?: number }} config
- * @param {number | null} prevSum - previous tick's redistributed sum
- * @returns {number | null} updated prevSum
+ * @param {{ prevSum: number, prevSumOfWeight: number, prevNewAvgValue: number, prevNewCount: number } | null} prev
+ * @returns {{ prevSum: number, prevSumOfWeight: number, prevNewAvgValue: number, prevNewCount: number } | null}
  */
-export function redistributeValues (state, workers, config, prevSum) {
+export function redistributeValues (state, workers, config, prev) {
+  if (state.length === 0) return prev
+
   const { redistributionMs, k = 1 } = config
+  let prevSum = prev?.prevSum ?? null
+  let prevSumOfWeight = prev?.prevSumOfWeight ?? 0
+  let prevNewAvgValue = prev?.prevNewAvgValue ?? 0
+  let prevNewCount = prev?.prevNewCount ?? 0
 
   for (let i = 0; i < state.length; i++) {
     const entry = state[i]
@@ -647,11 +659,19 @@ export function redistributeValues (state, workers, config, prevSum) {
     }
 
     let sum, count
+    let newSumDelta = 0
+    let newAvgValue = 0
     if (newCount === 0) {
       sum = stableSum
       count = stableCount
     } else {
       const newVal = total - stableSum
+      // A graduating worker moves into stableSum. Add its full weight back
+      // when measuring weight growth, as in the original pod algorithm.
+      const graduatedCount = Math.max(0, prevNewCount - newCount)
+      const weightGrowth = sumOfWeights - prevSumOfWeight + graduatedCount
+      newSumDelta = weightGrowth * prevNewAvgValue
+      newAvgValue = newVal / newCount
       const baseShare = sumOfWeights / newCount
 
       count = stableCount + sumOfWeights
@@ -659,15 +679,19 @@ export function redistributeValues (state, workers, config, prevSum) {
 
       if (prevSum !== null && prevSum > sum) {
         sum = Math.min(total, prevSum)
+        newSumDelta = 0
       }
     }
 
     prevSum = sum
+    prevSumOfWeight = sumOfWeights
+    prevNewAvgValue = newAvgValue
+    prevNewCount = newCount
     const workerCount = Object.keys(workerValues).length
-    entry.redistribution = { sum, count, rawSum: total, workerCount }
+    entry.redistribution = { sum, count, rawSum: total, workerCount, newSumDelta }
   }
 
-  return prevSum
+  return { prevSum, prevSumOfWeight, prevNewAvgValue, prevNewCount }
 }
 
 // ---------------------------------------------------------------------------
@@ -679,9 +703,10 @@ export function redistributeValues (state, workers, config, prevSum) {
  *
  * Reads from entry.redistribution.sum, writes entry.holt = { level, trend }.
  * Uses asymmetric smoothing parameters (faster reaction to upward movement).
+ * Accounts for newSumDelta in the forecast and removes it from the trend update.
  * Includes trend dampening to prevent downward overshoot.
  *
- * @param {Array<{ redistribution: { sum: number } }>} state - entries with redistribution data
+ * @param {Array<{ redistribution: { sum: number, newSumDelta?: number } }>} state - entries with redistribution data
  * @param {{ alphaUp: number, alphaDown: number, betaUp: number, betaDown: number }} config
  * @param {{ level: number, trend: number } | null} prev - previous state, null for cold start
  * @returns {{ level: number, trend: number }}
@@ -695,6 +720,7 @@ export function holt (state, config, prev) {
   for (let i = 0; i < state.length; i++) {
     const entry = state[i]
     const input = entry.redistribution.sum
+    const newSumDelta = entry.redistribution.newSumDelta ?? 0
 
     if (level === null) {
       level = input
@@ -703,7 +729,7 @@ export function holt (state, config, prev) {
       continue
     }
 
-    const forecast = level + trend
+    const forecast = level + trend + newSumDelta
     const isAboveForecast = input > forecast
 
     const alpha = isAboveForecast ? alphaUp : alphaDown
@@ -714,7 +740,8 @@ export function holt (state, config, prev) {
 
     level = alpha * input + (1 - alpha) * forecast
 
-    const levelDiff = level - prevLevel
+    // Weight growth changes the level, but must not appear as demand growth.
+    const levelDiff = level - prevLevel - newSumDelta
     trend = beta * levelDiff + (1 - beta) * trend
 
     // Check if metric is saturated — only allow trend to increase, not decrease
