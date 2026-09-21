@@ -13,8 +13,5 @@
   "dependencies": {
     "@platformatic/runtime": "workspace:*",
     "platformatic": "workspace:*"
-  },
-  "engines": {
-    "node": "^18.8.0 || >=20.6.0"
   }
 }

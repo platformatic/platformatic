@@ -38,7 +38,7 @@
     "messaging"
   ],
   "devDependencies": {
-    "@types/node": "^22.10.6",
+    "@types/node": "^24.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "^9.18.0",
     "neostandard": "^0.12.0",
@@ -52,6 +52,6 @@
     "pino": "^9.9.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

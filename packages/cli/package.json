@@ -44,6 +44,6 @@
     "wattpm": "workspace:*"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

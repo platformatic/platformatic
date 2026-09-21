@@ -190,13 +190,6 @@ test('compileCache - does not block startup when Node disables the cache', async
 })
 
 test('compileCache - the cache is flushed to disk once the application has started', async t => {
-  const compileCacheAvailable = await isCompileCacheAvailable()
-
-  if (!compileCacheAvailable) {
-    t.skip('Compile cache API not available on this Node.js version')
-    return
-  }
-
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.json')
   const applicationDir = join(fixturesDir, 'compile-cache', 'services', 'a')
@@ -219,13 +212,6 @@ test('compileCache - the cache is flushed to disk once the application has start
 })
 
 test('compileCache - the cache of an application running as a command is flushed to disk', async t => {
-  const compileCacheAvailable = await isCompileCacheAvailable()
-
-  if (!compileCacheAvailable) {
-    t.skip('Compile cache API not available on this Node.js version')
-    return
-  }
-
   const configFile = join(fixturesDir, 'compile-cache-command', 'platformatic.json')
   const applicationDir = join(fixturesDir, 'compile-cache-command', 'services', 'main')
   const cacheDir = join(applicationDir, '.plt', 'compile-cache')

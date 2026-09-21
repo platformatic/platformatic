@@ -116,7 +116,7 @@ A few consequences worth knowing:
 
 Before starting, ensure you have:
 
-- [Node.js](https://nodejs.org/) (v22.19.0+)
+- [Node.js](https://nodejs.org/) (v24.20.0+)
 - [npm](https://docs.npmjs.com/cli/) (comes with Node.js)
 - Basic understanding of HTTP caching headers
 

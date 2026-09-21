@@ -130,7 +130,7 @@ In order to run our application inside ECS, we need to build our Docker image fi
 The most basic Dockerfile needed is:
 
 ```Dockerfile
-FROM node:22-alpine
+FROM node:24.20.0-alpine
 
 ENV APP_HOME=/home/app/node/
 RUN mkdir -p $APP_HOME/node_modules && chown -R node:node $APP_HOME

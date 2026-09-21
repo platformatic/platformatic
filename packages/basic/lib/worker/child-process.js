@@ -35,7 +35,7 @@ import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import { Server as HttpsServer } from 'node:https'
-import { createRequire, register } from 'node:module'
+import { createRequire, enableCompileCache, register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import { Duplex } from 'node:stream'
@@ -804,7 +804,6 @@ function stripBasePath (basePath) {
 let compileCacheEnabled = false
 let compileCacheRequested = false
 
-// Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (contextData) {
   const config = contextData?.compileCache
 
@@ -821,18 +820,6 @@ async function setupCompileCache (contextData) {
   }
 
   compileCacheRequested = true
-
-  // Check if API is available (Node.js 22.1.0+)
-  let moduleApi
-  try {
-    moduleApi = await import('node:module')
-    if (typeof moduleApi.enableCompileCache !== 'function') {
-      return
-    }
-  } catch {
-    return
-  }
-
   // Use root from context data (capability's this.root as URL)
   const root = contextData?.root ? fileURLToPath(contextData.root) : null
   if (!root) {
@@ -845,7 +832,7 @@ async function setupCompileCache (contextData) {
       : join(root, '.plt', 'compile-cache')
 
   try {
-    moduleApi.enableCompileCache(cacheDir)
+    enableCompileCache(cacheDir)
     compileCacheEnabled = true
   } catch {
     // Silently ignore - cache is optional optimization

@@ -49,7 +49,7 @@
     "@fastify/reply-from": "^12.0.0",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@types/node": "^22.5.0",
+    "@types/node": "^24.0.0",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
     "cleaner-spec-reporter": "^0.5.0",
@@ -64,6 +64,6 @@
     "ws": "^8.18.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

@@ -3,11 +3,6 @@ import { notEqual, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'
 import { mapOpenAPItoTypes } from '../index.js'
 
-let structuredClone = globalThis.structuredClone
-if (structuredClone === undefined) {
-  structuredClone = obj => JSON.parse(JSON.stringify(obj))
-}
-
 function referenceTest (name, obj, opts = {}) {
   const { only } = opts
   test(name, { only }, async t => {

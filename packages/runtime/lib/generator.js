@@ -19,7 +19,7 @@ import { schema } from './schema.js'
 import { getArrayDifference } from './utils.js'
 
 const engines = {
-  node: '>=22.19.0'
+  node: '>=24.20.0'
 }
 
 function getRuntimeWrappableProperties () {
