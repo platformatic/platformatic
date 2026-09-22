@@ -44,6 +44,7 @@ Welcome to the Platformatic guides! These practical guides help you solve specif
 ### Metrics & Monitoring
 - **[Metrics with Prometheus & Grafana](./guides/metrics.md)** - Set up monitoring dashboards with Prometheus and Grafana
 - **[Distributed Tracing](./guides/distributed-tracing.md)** - Implement distributed tracing across your microservices
+- **[Datadog Tracing](./guides/datadog.md)** - Trace requests across multiple Watt applications and worker threads with Datadog
 
 ## Management & Tools
 

@@ -299,6 +299,7 @@ runtime. Each application object supports the following settings:
 - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
 - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
 - **`execArgv`** (`array` of `string`s): Additional arguments to pass to application worker threads via the `execArgv` option. These arguments are passed to the Node.js executable when creating worker threads. See [Node.js Worker Threads documentation](https://nodejs.org/dist/latest/docs/api/worker_threads.html#new-workerfilename-options) for more information. Note that `execArgv` options are automatically inherited by any child worker threads created by the application.
+  For a complete example of early per-worker tracer initialization, see [Datadog tracing with multiple applications and workers](../../guides/datadog.md).
 - **`permissions`** (`object`): Configure application-level security permissions to restrict file system access. Supported properties are:
   - **`fs`**:
     - **`read`** (`array` of `string`s): Array of file system paths the application is permitted to read from. Uses the same syntax as Node.js [--allow-fs-read](https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-read).

@@ -101,6 +101,7 @@ const sidebars = {
             'guides/logging',
             'guides/metrics',
             'guides/distributed-tracing',
+            'guides/datadog',
             'guides/logging-to-elasticsearch',
             'guides/opentelemetry-logging',
             'guides/opentelemetry-sdk-setup',
