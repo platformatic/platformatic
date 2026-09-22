@@ -194,6 +194,7 @@ export declare const RootMissingError: FastifyError
 export declare const SchemaMustBeDefinedError: FastifyError
 export declare const ConfigurationDoesNotValidateAgainstSchemaError: FastifyError
 export declare const MissingEnvVariablesError: FastifyError
+export declare const UnsupportedNodeVersionError: FastifyError
 
 // Execution types
 export declare function executeWithTimeout<T> (promise: Promise<T>, timeout: number, timeoutValue?: any): Promise<T>
@@ -229,6 +230,8 @@ export interface FileWatcherOptions {
   path: string
   allowToWatch?: string[]
   watchIgnore?: string[]
+  /** Literal paths to exclude together with their contents, relative to the watched path or absolute. */
+  watchIgnorePaths?: string[]
 }
 
 export declare class FileWatcher extends EventEmitter {
@@ -236,6 +239,7 @@ export declare class FileWatcher extends EventEmitter {
   path: string
   allowToWatch: string[] | null
   watchIgnore: string[] | null
+  watchIgnorePaths: string[]
   isWatching: boolean
   startWatching (): void
   stopWatching (): Promise<void>
@@ -305,13 +309,10 @@ export declare function loadModule (require: NodeRequire, path: string): Promise
 // Node types
 export declare function checkNodeVersionForApplications (): void
 export declare function mirrorGlobalDispatcherForBuiltinFetch (dispatcher: unknown): void
-export declare function scheduleCompileCacheFlush (logger?: Logger): void
+export declare function scheduleCompileCacheFlush (logger?: Logger, onFlushed?: (flushed: boolean) => void): void
 export declare const features: {
   node: {
     reusePort: boolean
-    worker: {
-      getHeapStatistics: boolean
-    }
     permission: {
       network: boolean
     }

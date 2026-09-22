@@ -36,6 +36,8 @@ test('logs stdio from the application thread', async t => {
         return { level, pid, hostname, name, msg, payload, stdout }
       })
       .filter(m => m.msg !== 'Runtime event')
+      // Cache diagnostics are deferred and can be interleaved with application logs.
+      .filter(m => !['Module compile cache enabled', 'Module compile cache flushed'].includes(m.msg))
 
     const applicationMessages = messages.filter(m => m.name === 'stdio')
     // The metrics/health server, now started by default, logs a "Server listening at" line per

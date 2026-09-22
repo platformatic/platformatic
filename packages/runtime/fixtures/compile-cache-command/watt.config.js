@@ -2,7 +2,8 @@
 export default {
   watch: false,
   compileCache: {
-    enabled: true
+    enabled: true,
+    awaitFirstWorker: true
   },
   autoload: {
     path: './services'

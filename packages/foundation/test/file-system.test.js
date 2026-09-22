@@ -1,6 +1,8 @@
 import { deepEqual, equal, match, ok, throws } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, stat, writeFile } from 'node:fs/promises'
+import { once } from 'node:events'
+import fsPromises, { mkdir, mkdtemp, stat, writeFile } from 'node:fs/promises'
+import { syncBuiltinESMExports } from 'node:module'
 import os from 'node:os'
 import { basename, join, sep } from 'node:path'
 import { test } from 'node:test'
@@ -68,6 +70,41 @@ test('FileWatcher - should not watch not allowed files', async t => {
   equal(true, fileWatcher.shouldFileBeWatched('test3.file'))
   equal(true, fileWatcher.shouldFileBeWatched('test4.file'))
   equal(false, fileWatcher.shouldFileBeWatched('another.file'))
+})
+
+test('FileWatcher - excludes literal cache directories without excluding similarly named source paths', () => {
+  const fileWatcher = new FileWatcher({
+    path: os.tmpdir(),
+    watchIgnorePaths: ['.plt/compile-cache', join(os.tmpdir(), 'cache[1]')]
+  })
+
+  for (const path of ['.plt/compile-cache', '.plt/compile-cache/version/entry', 'cache[1]/entry']) {
+    equal(fileWatcher.shouldFileBeWatched(path), false)
+  }
+  for (const path of ['.plt/compile-cache.js', 'cache1/entry', 'cache[1]-source/index.js', 'index.js']) {
+    equal(fileWatcher.shouldFileBeWatched(path), true)
+  }
+})
+
+test('FileWatcher - keeps watching after an event without a filename', async t => {
+  const watch = t.mock.method(fsPromises, 'watch', async function * () {
+    yield { eventType: 'change', filename: null }
+    yield { eventType: 'change', filename: 'index.js' }
+  })
+  syncBuiltinESMExports()
+  t.after(() => {
+    watch.mock.restore()
+    syncBuiltinESMExports()
+  })
+
+  const fileWatcher = new FileWatcher({ path: os.tmpdir() })
+  t.after(() => fileWatcher.stopWatching())
+  const updated = once(fileWatcher, 'update', { signal: AbortSignal.timeout(5000) })
+  fileWatcher.startWatching()
+  // Keep the loop alive while the watcher's unref'ed debounce timer runs.
+  const timeout = setTimeout(() => {}, 5000)
+  t.after(() => clearTimeout(timeout))
+  deepEqual(await updated, ['index.js'])
 })
 
 test('FileWatcher - should emit event if file is updated', { skip: skipFsWatch }, async t => {

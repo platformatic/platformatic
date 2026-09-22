@@ -109,7 +109,7 @@ Several frameworks build on Vite (Nitro, React Router, TanStack Start, Remix, As
 
 ## Requirements
 
-- Node.js v22.19.0 or higher
+- Node.js v24.20.0 or higher
 - A skills-compatible agent (Claude Code, Cursor, GitHub Copilot, Gemini CLI, and others)
 
 ## Related skills

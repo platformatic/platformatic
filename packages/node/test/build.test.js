@@ -1,9 +1,10 @@
 import { equal, ok, rejects } from 'node:assert'
-import { once } from 'node:events'
+import { on } from 'node:events'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { executeWithTimeout, kTimeout } from '@platformatic/foundation'
 import {
   createRuntime,
   getLogsFromFile,
@@ -15,6 +16,14 @@ import {
 import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
+
+async function waitForApplicationEvent (events, application) {
+  for await (const [event] of events) {
+    if (event.application === application) {
+      return event
+    }
+  }
+}
 
 test('should inject Platformatic code by default when building', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
@@ -148,64 +157,39 @@ test('should not hang if the runtime forcefully stops during start in case of er
   await rejects(() => promise, /exited prematurely/)
 })
 
-// Wait for a runtime event about a specific application, but with a bound: a dev reload hinges on
-// a filesystem-watch notification, and the OS can drop one -- notably on Windows, where a single
-// write may never reach the watcher. An unbounded `once` there hangs the whole file until the job
-// timeout; this fails in seconds instead, and names what it was waiting for.
-async function waitForApplicationEvent (runtime, event, application, timeoutMs = 60000) {
-  const deadline = Date.now() + timeoutMs
-
-  for (;;) {
-    const remaining = deadline - Date.now()
-    if (remaining <= 0) {
-      throw new Error(`Timed out after ${timeoutMs}ms waiting for ${event} on application ${application}`)
-    }
-
-    const ac = new AbortController()
-    const timer = setTimeout(() => ac.abort(), remaining)
-    let payload
-    try {
-      payload = await once(runtime, event, { signal: ac.signal })
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new Error(`Timed out after ${timeoutMs}ms waiting for ${event} on application ${application}`)
-      }
-      throw error
-    } finally {
-      clearTimeout(timer)
-    }
-
-    if (payload[0].application === application) {
-      return payload[0]
-    }
-  }
-}
-
 for (const application of ['app-no-config', 'app-with-config']) {
   test(`should rebuild the applications on reload in dev, application ${application}`, async t => {
     const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
     await startRuntime(t, runtime)
 
-    // Trigger a reload, and keep re-touching the file until the change is picked up: a single
-    // filesystem-watch event can be dropped (seen on Windows), and without a fresh one the watcher
-    // never fires. Re-writing gives it another event rather than waiting forever on the first.
+    // Both listeners must be registered before the write because a cached restart can complete
+    // immediately -- more so now that the compile cache is on by default.
+    const changedEvents = on(runtime, 'application:worker:changed')
+    const startedEvents = on(runtime, 'application:worker:started')
+    const events = executeWithTimeout(Promise.all([
+      waitForApplicationEvent(changedEvents, application),
+      waitForApplicationEvent(startedEvents, application)
+    ]), 30000)
+
+    // Keep re-touching the file until the change is picked up: a single filesystem-watch event can
+    // be dropped (seen on Windows), and without a fresh one the watcher never fires.
     const triggerPath = resolve(root, `services/${application}/reload.ts`)
     const retrigger = setInterval(() => {
       writeFile(triggerPath, `// reload ${Date.now()}\n`, 'utf-8').catch(() => {})
     }, 2000)
-    t.after(() => clearInterval(retrigger))
 
-    await writeFile(triggerPath, '// reload\n', 'utf-8')
+    let result
+    try {
+      await writeFile(triggerPath, '// reload\n', 'utf-8')
+      result = await events
+    } finally {
+      clearInterval(retrigger)
+      await Promise.all([changedEvents.return(), startedEvents.return()])
+    }
 
-    // reload the application
-    const changed = await waitForApplicationEvent(runtime, 'application:worker:changed', application)
-    equal(changed.application, application)
-
-    // The change was seen; stop re-touching so the restart is not disturbed by another reload.
-    clearInterval(retrigger)
-
-    // restart the application
-    const started = await waitForApplicationEvent(runtime, 'application:worker:started', application)
-    equal(started.application, application)
+    ok(result !== kTimeout, `application ${application} did not reload within 30 seconds`)
+    const [changedEvent, startedEvent] = result
+    equal(changedEvent.application, application)
+    equal(startedEvent.application, application)
   })
 }

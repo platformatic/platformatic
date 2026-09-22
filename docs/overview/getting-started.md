@@ -210,7 +210,7 @@ Different developers learn best in different ways. Choose the path that matches 
 
 ### Required
 
-- **Node.js** 22.19.0+ (LTS versions recommended)
+- **Node.js** 24.20.0+ (LTS versions recommended)
 - **npm** 10.0+ or **pnpm** 8.0+ (pnpm recommended for performance)
 - **Operating System:** Windows, macOS, or Linux
 
@@ -223,7 +223,7 @@ Different developers learn best in different ways. Choose the path that matches 
 ### Quick Environment Check
 
 ```bash
-node --version    # Should be 22.19.0+
+node --version    # Should be 24.20.0+
 npm --version     # Should be 10.0+
 # or
 pnpm --version    # Should be 8.0+

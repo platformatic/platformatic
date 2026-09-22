@@ -14,6 +14,7 @@ import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
 import { ServerResponse } from 'node:http'
 import inspector from 'node:inspector'
+import { constants as moduleConstants, enableCompileCache } from 'node:module'
 import { hostname } from 'node:os'
 import { join } from 'node:path'
 import { setDefaultHighWaterMark } from 'node:stream'
@@ -149,8 +150,8 @@ function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
 }
 
 let compileCacheEnabled = false
+let compileCacheRequested = false
 
-// Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   // Normalize boolean shorthand: true -> { enabled: true }
   const normalizeConfig = cfg => {
@@ -168,34 +169,23 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
     return
   }
 
-  // Check if API is available (Node.js 22.1.0+)
-  let moduleApi
-  try {
-    moduleApi = await import('node:module')
-    if (typeof moduleApi.enableCompileCache !== 'function') {
-      return
-    }
-  } catch {
-    return
-  }
-
+  compileCacheRequested = true
   // Determine cache directory - use applicationConfig.path for the app root
   const cacheDir = config.directory ?? join(applicationConfig.path, '.plt', 'compile-cache')
 
   try {
-    const result = moduleApi.enableCompileCache(cacheDir)
+    const result = enableCompileCache(cacheDir)
+    const { compileCacheStatus } = moduleConstants
 
-    const { compileCacheStatus } = moduleApi.constants ?? {}
-
-    if (result.status === compileCacheStatus?.ENABLED) {
+    if (result.status === compileCacheStatus.ENABLED) {
       compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache enabled')
-    } else if (result.status === compileCacheStatus?.ALREADY_ENABLED) {
+    } else if (result.status === compileCacheStatus.ALREADY_ENABLED) {
       compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache already enabled')
-    } else if (result.status === compileCacheStatus?.FAILED) {
+    } else if (result.status === compileCacheStatus.FAILED) {
       logger.warn({ message: result.message }, 'Failed to enable module compile cache')
-    } else if (result.status === compileCacheStatus?.DISABLED) {
+    } else if (result.status === compileCacheStatus.DISABLED) {
       logger.debug('Module compile cache disabled via NODE_DISABLE_COMPILE_CACHE')
     }
   } catch (err) {
@@ -300,7 +290,11 @@ async function main () {
 
   controller.on('started', () => {
     if (compileCacheEnabled) {
-      scheduleCompileCacheFlush(getLogger())
+      scheduleCompileCacheFlush(getLogger(), flushed => {
+        getITC().notify('compile-cache:flushed', { flushed, source: 'worker' })
+      })
+    } else if (compileCacheRequested) {
+      getITC().notify('compile-cache:unavailable', { source: 'worker' })
     }
   })
 

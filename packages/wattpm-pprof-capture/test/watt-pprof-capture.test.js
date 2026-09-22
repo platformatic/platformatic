@@ -518,29 +518,21 @@ test('profiling with eluThreshold should start when threshold is reached', async
 })
 
 test('profiling with eluThreshold should pause during rotation when below threshold', async t => {
-  const { app, url } = await createApp(t)
+  const { app } = await createApp(t)
 
-  // Start CPU intensive task first
-  await request(`${url}/cpu-intensive/start`, { method: 'POST' })
+  // Drive both gate transitions directly to isolate rotation behavior. An
+  // unreachable threshold prevents health sampling from resuming the profiler
+  // after the explicit pause; health-driven transitions are covered above.
+  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 2.0, durationMillis: 5000, maxELU: false })
+  await app.sendCommandToApplication('service', 'resumeProfiling')
+  await app.sendCommandToApplication('service', 'pauseProfiling', { reason: 'threshold' })
 
-  // Stop the workload before the first rotation. Profile serialization adds
-  // enough ELU to obscure the workload transition this test is exercising.
-  await app.sendCommandToApplication('service', 'startProfiling', { eluThreshold: 0.9, durationMillis: 5000, maxELU: false })
+  const pending = await app.sendCommandToApplication('service', 'getProfilingState')
+  assert.ok(pending.isProfilerRunning, 'Pause should be deferred until the rotation boundary')
+  assert.ok(pending.isPausedBelowThreshold, 'The threshold pause should be pending')
 
-  // Wait for the runtime health cycle to observe the high ELU and resume the profiler. The window is
-  // generous because a loaded CI runner starves the worker of the CPU it needs to cross the
-  // threshold, and the health cycle only samples periodically.
-  await waitForCondition(async () => {
-    const state = await app.sendCommandToApplication('service', 'getProfilingState')
-    return state.isProfilerRunning
-  }, 30000)
-
-  // Stop CPU intensive task so ELU drops below the threshold hysteresis.
-  await request(`${url}/cpu-intensive/stop`, { method: 'POST' })
-
-  // Wait for the runtime health cycle to observe the low ELU and pause the profiler. This is the
-  // slower half: profile serialization keeps the event loop busy after the workload stops, so ELU
-  // takes longer to fall back under the threshold on a loaded runner.
+  // The profiler keeps running until the current rotation window completes,
+  // then pauses at the rotation boundary.
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return !state.isProfilerRunning && state.isPausedBelowThreshold

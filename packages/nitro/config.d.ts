@@ -793,6 +793,10 @@ export interface CompileCacheOptions {
    * Directory to store compile cache. Defaults to .plt/compile-cache in app root
    */
   directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
 }
 export interface ApplicationWorkersOptions {
   static?: number;
@@ -849,4 +853,8 @@ export interface CompileCacheOptions1 {
    * Directory to store compile cache. Defaults to .plt/compile-cache in app root
    */
   directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
 }

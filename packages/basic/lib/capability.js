@@ -752,6 +752,20 @@ export class BaseCapability extends EventEmitter {
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
+    childManager.on('compile-cache:flushed', payload => {
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify('compile-cache:flushed', payload)
+      }
+    })
+
+    childManager.on('compile-cache:unavailable', () => {
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify('compile-cache:unavailable')
+      }
+    })
+
     // Forward health signals from child process to runtime
     childManager.on('healthSignals', ({ workerId, signals }) => {
       const itc = getITC({ throwOnMissing: false })

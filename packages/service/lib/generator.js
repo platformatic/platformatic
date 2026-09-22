@@ -220,7 +220,7 @@ This is a generated [Platformatic Service](https://docs.platformatic.dev/docs/re
 ## Requirements
 
 Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
-You'll need to have [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
+You'll need to have [Node.js](https://nodejs.org/) >= v24.20.0
 
 ## Setup
 

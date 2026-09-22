@@ -913,6 +913,10 @@ export const compileCache = {
         directory: {
           type: 'string',
           description: 'Directory to store compile cache. Defaults to .plt/compile-cache in app root'
+        },
+        awaitFirstWorker: {
+          type: 'boolean',
+          description: 'Wait for the first worker to start before starting the remaining workers'
         }
       },
       additionalProperties: false
@@ -1628,7 +1632,10 @@ export const runtimeProperties = {
     default: []
   },
   policies,
-  compileCache
+  compileCache: {
+    ...compileCache,
+    default: true
+  }
 }
 
 /*

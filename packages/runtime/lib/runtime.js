@@ -121,6 +121,10 @@ const kLastProfileFallbackCodes = new Set([
 const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
 
+function normalizeCompileCache (value) {
+  return typeof value === 'boolean' ? { enabled: value } : value ?? {}
+}
+
 const MAX_LISTENERS_COUNT = 100
 
 function hasWorkerIndex (applicationId) {
@@ -926,7 +930,19 @@ export class Runtime extends EventEmitter {
 
     this.emitAndNotify('application:starting', id)
 
-    for (let i = 0; i < workers; i++) {
+    const compileCache = {
+      ...normalizeCompileCache(config.compileCache),
+      ...normalizeCompileCache(applicationConfig.compileCache)
+    }
+    const awaitFirstWorker =
+      typeof compileCache === 'object' && compileCache.enabled !== false && compileCache.awaitFirstWorker === true
+
+    if (awaitFirstWorker && workers > 0) {
+      await this.#startFirstWorkerWithCompileCache(config, applicationConfig, workers, id, silent)
+    }
+
+    // Keep the first worker separate so compile-cache startup can be made a barrier without changing this loop later.
+    for (let i = awaitFirstWorker ? 1 : 0; i < workers; i++) {
       await this.#startWorker(config, applicationConfig, workers, id, i, silent)
     }
 
@@ -2383,10 +2399,6 @@ export class Runtime extends EventEmitter {
       elu = worker.performance.eventLoopUtilization(elu, previousELU)
     }
 
-    if (!features.node.worker.getHeapStatistics) {
-      return { elu: elu.utilization, currentELU }
-    }
-
     // Only refresh heap statistics every 60 health checks (once per minute).
     // This keeps the common path fully synchronous — no promise allocation.
     const counter = (worker[kHeapCheckCounter] ?? 0) + 1
@@ -2828,6 +2840,25 @@ export class Runtime extends EventEmitter {
 
       this.emit(event, ...payload, workerId, applicationId, index)
       this.logger.trace({ event, payload, id: workerId, application: applicationId, worker: index }, 'Runtime event')
+    })
+
+    worker[kITC].on('compile-cache:flushed', ({ flushed, source }) => {
+      this.emit('application:worker:compile-cache:flushed', {
+        application: applicationId,
+        worker: index,
+        workersCount,
+        flushed,
+        source
+      })
+    })
+
+    worker[kITC].on('compile-cache:unavailable', ({ source }) => {
+      this.emit('application:worker:compile-cache:unavailable', {
+        application: applicationId,
+        worker: index,
+        workersCount,
+        source
+      })
     })
 
     // The worker notifies us when its capability has spawned a child process
@@ -3547,6 +3578,57 @@ export class Runtime extends EventEmitter {
         bootstrapAttempt,
         worker[kWorkerPortOffset]
       )
+    }
+  }
+
+  async #startFirstWorkerWithCompileCache (config, applicationConfig, workers, id, silent) {
+    const cacheFlushEvent = 'application:worker:compile-cache:flushed'
+    const cacheUnavailableEvent = 'application:worker:compile-cache:unavailable'
+    const { promise, resolve } = Promise.withResolvers()
+    const cacheEvents = []
+    const runtime = this
+    let expectedSource
+
+    function removeCacheFlushListener () {
+      runtime.off(cacheFlushEvent, cacheFlushListener)
+      runtime.off(cacheUnavailableEvent, cacheUnavailableListener)
+    }
+
+    function resolveIfReady () {
+      if (expectedSource && cacheEvents.some(function (event) {
+        return event.source === expectedSource
+      })) {
+        removeCacheFlushListener()
+        resolve()
+      }
+    }
+
+    function cacheFlushListener (event) {
+      if (event.application === id && event.worker === 0) {
+        cacheEvents.push(event)
+        resolveIfReady()
+      }
+    }
+
+    function cacheUnavailableListener (event) {
+      if (event.application === id && event.worker === 0) {
+        cacheEvents.push(event)
+        resolveIfReady()
+      }
+    }
+
+    runtime.on(cacheFlushEvent, cacheFlushListener)
+    runtime.on(cacheUnavailableEvent, cacheUnavailableListener)
+
+    try {
+      await this.#startWorker(config, applicationConfig, workers, id, 0, silent)
+      const firstWorker = this.#workers.get(`${id}:0`)
+      expectedSource = firstWorker?.[kIsSubprocessHost] === true ? 'child-process' : 'worker'
+      resolveIfReady()
+      await promise
+    } catch (err) {
+      removeCacheFlushListener()
+      throw err
     }
   }
 

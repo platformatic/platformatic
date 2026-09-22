@@ -15,6 +15,8 @@
     "lint:markdown": "markdownlint-cli2",
     "lint:updated-only": "node ./scripts/lint-updated-packages.js",
     "convert-fixtures": "node ./scripts/convert-fixtures.mjs",
+    "update-node-version": "node ./scripts/update-node-version.js",
+    "check-node-version": "node ./scripts/update-node-version.js --check",
     "license-check": "node ./scripts/license-check.js",
     "license-list": "node ./scripts/license-check.js --format=markdown --out=THIRD_PARTY_LICENSES.md",
     "gen-schemas-types": "node ./scripts/gen-schemas-types.js",
@@ -29,5 +31,8 @@
     "@fastify/pre-commit": "^2.1.0",
     "markdownlint-cli2": "^0.18.0"
   },
-  "pre-commit": "lint:updated-only, gen-schemas-types"
+  "pre-commit": "lint:updated-only, gen-schemas-types",
+  "engines": {
+    "node": ">=24.20.0"
+  }
 }

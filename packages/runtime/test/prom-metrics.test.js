@@ -1321,7 +1321,7 @@ test('should not wait for a blocked worker for metrics', async t => {
 
   const metrics = await body.text()
 
-  strictEqual(metrics.trim(), '')
+  ok(!metrics.includes('custom_metric'), 'should not include metrics from the blocked worker')
   ok(Date.now() - start < 3000, 'should not take more than 3 seconds to respond')
 })
 

@@ -39,7 +39,7 @@
     "@platformatic/gateway": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@types/node": "^22.5.0",
+    "@types/node": "^24.0.0",
     "c8": "^11.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "cross-env": "^7.0.3",
@@ -52,6 +52,6 @@
     "yaml": "^2.4.1"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

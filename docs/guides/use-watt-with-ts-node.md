@@ -62,7 +62,7 @@ my-app/
     "fastify": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
@@ -210,7 +210,7 @@ Update your package.json to use Watt commands:
   },
   "devDependencies": {
     "@platformatic/tsconfig": "^0.1.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
@@ -254,7 +254,7 @@ Add `"type": "module"` to tell Node.js to treat `.js` files as ESM:
   },
   "devDependencies": {
     "@platformatic/tsconfig": "^0.1.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
@@ -363,9 +363,9 @@ By default, ts-node checks your TypeScript for errors every time it runs. This i
 
 When using transpile-only mode, ts-node will just convert your TypeScript to JavaScript without checking for errors. You should run `npx tsc --noEmit` separately (e.g., in a pre-commit hook or CI pipeline) to catch type errors.
 
-## Node.js 22+ Built-in TypeScript Support
+## Node.js 24 Built-in TypeScript Support
 
-If you're using Node.js 22 or later and only need type stripping (similar to [transpile-only mode](#faster-development-startup)), you don't need ts-node at all! Node.js 22+ includes experimental built-in support for running TypeScript files directly.
+If you only need type stripping (similar to [transpile-only mode](#faster-development-startup)), you don't need ts-node at all. Supported Node.js versions can run TypeScript files directly.
 
 ### When is Native Type Stripping Available?
 
@@ -418,7 +418,7 @@ If your package.json referenced the `dist` folder for production builds, you can
   },
   "devDependencies": {
     "@platformatic/tsconfig": "^0.1.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "typescript": "^6.0.3"
   }
 }
@@ -456,7 +456,7 @@ const Environment = {
 - Works with both CommonJS and ESM (configured via your package.json and tsconfig.json as usual)
 - The `dist` folder is still created during production builds via `tsc`, so you don't need to update any deployment configurations
 
-This is the simplest approach if you're on Node.js 22+ and don't use advanced TypeScript features beyond type annotations.
+This is the simplest approach if you don't use advanced TypeScript features beyond type annotations.
 
 ## Using swc-node as an Alternative
 
@@ -500,7 +500,7 @@ export default createWattConfig({
 npm install -D tsx
 ```
 
-Ensure you are using **tsx v4.20.4 or later** for compatibility with Node.js 22.18+ and 24+, which have native type stripping enabled by default.
+Ensure you are using **tsx v4.20.4 or later** for compatibility with supported Node.js versions, which have native type stripping enabled by default.
 
 ### ESM Configuration
 
@@ -523,7 +523,7 @@ Use this configuration when your project uses `"type": "module"` in package.json
     "wattpm": "^3.25.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
@@ -570,7 +570,7 @@ export default createNodeConfig({
 Key configuration details:
 
 - `commands.development` runs tsx directly with Node.js flags to disable native type handling
-- `--no-experimental-strip-types` and `--no-experimental-transform-types` disable Node.js 22+/24+ built-in TypeScript processing, ensuring tsx handles all TypeScript compilation. This avoids conflicts between Node's native type stripping and tsx's own TypeScript handling
+- `--no-experimental-strip-types` and `--no-experimental-transform-types` disable Node.js built-in TypeScript processing, ensuring tsx handles all TypeScript compilation. This avoids conflicts between Node's native type stripping and tsx's own TypeScript handling
 - `--import tsx` registers tsx's ESM and CJS loaders
 - `commands.build` compiles TypeScript for production using `tsc`
 - `commands.production` runs the compiled JavaScript output
@@ -595,7 +595,7 @@ Use this configuration when your project does **not** have `"type": "module"` in
     "wattpm": "^3.25.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

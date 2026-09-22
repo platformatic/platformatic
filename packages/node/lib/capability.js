@@ -609,7 +609,12 @@ export class NodeCapability extends BaseCapability {
     if (!ignore) {
       const tsConfig = await getTsconfig(this.root, config)
       if (tsConfig) {
-        ignore = ignoreDirs(tsConfig?.compilerOptions?.outDir, tsConfig?.watchOptions?.excludeDirectories)
+        const compilerOptions = tsConfig.compilerOptions
+        const tsBuildInfoFile = compilerOptions.incremental || compilerOptions.composite
+          ? compilerOptions.tsBuildInfoFile ?? 'tsconfig.tsbuildinfo'
+          : undefined
+
+        ignore = ignoreDirs(compilerOptions.outDir, tsConfig.watchOptions?.excludeDirectories, tsBuildInfoFile)
       }
     }
 

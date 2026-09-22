@@ -86,7 +86,7 @@ export class Generator extends BaseGenerator {
       indexTemplate = indexFileTS
 
       devDependencies['@platformatic/tsconfig'] = '^0.1.0'
-      devDependencies['@types/node'] = '^22.0.0'
+      devDependencies['@types/node'] = '^24.0.0'
     }
 
     this.addFile({ path: indexPath, file: indexName, contents: indexTemplate.trim() + '\n' })

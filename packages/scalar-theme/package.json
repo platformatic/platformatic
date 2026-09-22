@@ -27,7 +27,7 @@
     "mercurius"
   ],
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   },
   "devDependencies": {
     "cleaner-spec-reporter": "^0.5.0"

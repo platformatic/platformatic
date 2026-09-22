@@ -38,7 +38,7 @@ Kubernetes uses [probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-
 
 Before implementing Kubernetes health checks, you need:
 
-- **Node.js 22.19.0+** installed on your development machine (or later)
+- **Node.js 24.20.0+** installed on your development machine
 - **Docker** for containerization
 - **Kubernetes cluster** access (local or cloud)
 - **kubectl** configured to access your cluster
@@ -593,7 +593,7 @@ Key configuration points:
 Create a `Dockerfile` for your Watt application:
 
 ```dockerfile
-FROM node:22-alpine
+FROM node:24.20.0-alpine
 
 WORKDIR /app
 

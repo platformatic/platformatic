@@ -18,6 +18,7 @@ import {
 import { importCapabilityPackage } from '@platformatic/basic'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
+import { getCompileCacheDir } from 'node:module'
 import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
@@ -338,7 +339,15 @@ export class Controller extends EventEmitter {
       path: watch.path,
       /* c8 ignore next 2 */
       allowToWatch: watch?.allow,
-      watchIgnore: [...(watch?.ignore || []), ...configurationFileNames]
+      watchIgnore: [...(watch?.ignore || []), ...configurationFileNames],
+      // Cache flushes are runtime output, not source edits. Cover both worker and command caches,
+      // including an already-enabled cache inherited from the environment.
+      watchIgnorePaths: [
+        getCompileCacheDir(),
+        resolve(this.applicationConfig.path, '.plt', 'compile-cache'),
+        this.applicationConfig.compileCache?.directory ?? this.runtimeConfig.compileCache?.directory,
+        this.capability.config?.compileCache?.directory
+      ].filter(Boolean)
     })
 
     fileWatcher.on('update', this.#debouncedRestart)
