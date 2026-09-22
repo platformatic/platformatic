@@ -273,6 +273,8 @@ Each metric (ELU, heap) is processed independently. When multiple metrics are us
 
 Startup time is measured from the approved scale-up request until worker lifecycle events show that the expected live worker count has been reached. A replacement that only restores the previous count does not complete a pending scale-up. This is an approximation when restarts overlap scaling: a replacement can temporarily raise the count before the old worker exits.
 
+If a pending scale-up expires, the remembered target is reconciled with live workers and requests still pending. Capacity that never appeared can then be requested again, subject to the usual cooldowns and resource limits.
+
 ### Global Arbitration
 
 When multiple applications are managed, the orchestrator coordinates scaling:

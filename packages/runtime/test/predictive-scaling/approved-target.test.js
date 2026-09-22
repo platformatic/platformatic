@@ -93,8 +93,9 @@ test('an approved worker that never starts stops blocking scale-down after expir
   // Expected startup at 15000 plus the existing 30000 ms expiry allowance.
   assert.equal(sample(algorithm, 45000, 0.1), 2)
   assert.equal(sample(algorithm, 46000, 0.1), 1)
-  // Expiry clears pending starts, but does not itself approve a new target.
-  assert.equal(algorithm.getSnapshot('elu').targetCount, 2)
+  // Expiry removes capacity that never appeared from the remembered target.
+  assert.equal(algorithm.targetCount, 1)
+  assert.equal(algorithm.getSnapshot('elu').targetCount, 1)
 })
 
 test('expiry removes only old requests and leaves newer pending starts', t => {
@@ -103,11 +104,10 @@ test('expiry removes only old requests and leaves newer pending starts', t => {
   algorithm.setTarget(2)
   t.mock.timers.setTime(20000)
   algorithm.setTarget(3)
-  assert.equal(sample(algorithm, 46000, 0.1), 3)
+  assert.equal(sample(algorithm, 46000, 0.1), 2)
+  assert.equal(algorithm.targetCount, 2)
   algorithm.addWorker('w2', 47000)
-  assert.equal(sample(algorithm, 48000, 0.1, ['w1', 'w2']), 3)
-  algorithm.addWorker('w3', 49000)
-  assert.equal(sample(algorithm, 50000, 0.1, ['w1', 'w2', 'w3']), 1)
+  assert.equal(sample(algorithm, 48000, 0.1, ['w1', 'w2']), 1)
 })
 
 test('pending requests expire during processing even without a scale-down recommendation', t => {
@@ -119,6 +119,64 @@ test('pending requests expire during processing even without a scale-down recomm
   algorithm.addWorker('w2', 47000)
   algorithm.addWorker('w3', 47000)
   assert.equal(algorithm.getSnapshot('elu').horizonMs, 7000)
+})
+
+test('expiry lets the algorithm request the same missing capacity again', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  assert.equal(sample(algorithm, 10000, 1.5), 2)
+  algorithm.setTarget(2)
+  assert.equal(sample(algorithm, 45000, 1.5), 2)
+  assert.equal(algorithm.targetCount, 2)
+  assert.equal(sample(algorithm, 46000, 1.5), 2)
+  assert.equal(algorithm.targetCount, 1)
+
+  t.mock.timers.setTime(46000)
+  algorithm.setTarget(2)
+  assert.equal(sample(algorithm, 47000, 0.1), 2)
+  algorithm.addWorker('w2', 48000)
+  assert.equal(sample(algorithm, 49000, 0.1, ['w1', 'w2']), 1)
+})
+
+test('expiry preserves workers that started while dropping missing capacity', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTarget(4)
+  algorithm.addWorker('w2', 15000)
+  sample(algorithm, 46000, 0.1, ['w1', 'w2'])
+  assert.equal(algorithm.targetCount, 2)
+})
+
+test('expiry reconciles the target even when there are no metric samples', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTarget(2)
+  assert.equal(algorithm.process(46000), null)
+  assert.equal(algorithm.targetCount, 1)
+})
+
+test('expiry does not restart or bypass scale-up cooldowns', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm({ scaleUpAfterScaleUpMs: 50000 })
+  algorithm.setTarget(2)
+  assert.equal(sample(algorithm, 46000, 1.5), 1)
+  assert.equal(algorithm.targetCount, 1)
+  assert.equal(sample(algorithm, 60000, 1.5), 2)
+})
+
+test('a later request can expire before an earlier request when the startup estimate decreases', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTarget(3) // Both starts expected at 15000.
+  algorithm.addWorker('w2', 10100) // Reduces the estimate from 5000 to 4500.
+  t.mock.timers.setTime(10200)
+  algorithm.setTarget(4) // This start is expected earlier, at 14700.
+  algorithm.process(44700)
+  assert.equal(algorithm.targetCount, 4)
+  algorithm.process(44701)
+  assert.equal(algorithm.targetCount, 3)
+  algorithm.addWorker('w3', 44800)
+  assert.equal(sample(algorithm, 45000, 0.1, ['w1', 'w2', 'w3']), 1)
 })
 
 for (const replacementId of ['w1', 'replacement']) {

@@ -188,6 +188,10 @@ export class PredictiveScalingAlgorithm {
     timeline.push(timestamp, value)
   }
 
+  get targetCount () {
+    return this.#targetCount
+  }
+
   getSnapshot (metricName) {
     const metric = this.#metrics.get(metricName)
     if (!metric) return null
@@ -295,8 +299,22 @@ export class PredictiveScalingAlgorithm {
 
   #expirePendingScaleUps (now) {
     const cutoff = now - PENDING_SCALE_UP_EXPIRY_MS
-    while (this.#pendingScaleUps.length > 0 && this.#pendingScaleUps[0].scaleAt < cutoff) {
-      this.#pendingScaleUps.shift()
+    let remaining = 0
+    for (const pending of this.#pendingScaleUps) {
+      if (pending.scaleAt >= cutoff) {
+        this.#pendingScaleUps[remaining++] = pending
+      }
+    }
+    if (remaining === this.#pendingScaleUps.length) return
+
+    this.#pendingScaleUps.length = remaining
+    const liveCount = this.#workerIdMapper.size
+    this.#targetCount = liveCount + remaining
+
+    // Remaining requests still represent one extra worker each. Remove the
+    // expired capacity from their expected counts as well as from the target.
+    for (let i = 0; i < remaining; i++) {
+      this.#pendingScaleUps[i].expectedCount = liveCount + i + 1
     }
   }
 

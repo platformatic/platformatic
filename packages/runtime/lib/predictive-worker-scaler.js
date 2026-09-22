@@ -112,7 +112,7 @@ export class PredictiveWorkersScaler {
     const algorithmConfig = this.#buildAlgorithmConfig(min, max, merged)
     const algorithm = new PredictiveScalingAlgorithm(algorithmConfig)
 
-    this.#apps.set(appId, { algorithm, targetCount: min })
+    this.#apps.set(appId, { algorithm })
   }
 
   #buildAlgorithmConfig (min, max, config) {
@@ -212,22 +212,24 @@ export class PredictiveWorkersScaler {
   async #processApplications () {
     const now = Date.now()
     const updates = []
-    let plannedWorkerCount = this.#getTotalWorkerCount()
+    let plannedWorkerCount = 0
     let scaleUpCandidate = null
     let scaleUpRatio = -1
 
     for (const [appId, app] of this.#apps) {
       const desiredTarget = app.algorithm.process(now)
-      if (desiredTarget === null || desiredTarget === app.targetCount) continue
+      const targetCount = app.algorithm.targetCount
+      plannedWorkerCount += targetCount
+      if (desiredTarget === null || desiredTarget === targetCount) continue
 
-      if (desiredTarget < app.targetCount) {
+      if (desiredTarget < targetCount) {
         this.#runtime.logger.info(
           `Predictive scaling down the "${appId}" app to ${desiredTarget} workers`
         )
-        plannedWorkerCount -= app.targetCount - desiredTarget
+        plannedWorkerCount -= targetCount - desiredTarget
         updates.push({ application: appId, workers: desiredTarget })
       } else {
-        const ratio = (desiredTarget - app.targetCount) / app.targetCount
+        const ratio = (desiredTarget - targetCount) / targetCount
         if (ratio > scaleUpRatio) {
           scaleUpRatio = ratio
           scaleUpCandidate = { appId, app, desiredTarget }
@@ -251,11 +253,11 @@ export class PredictiveWorkersScaler {
         )
       } else {
         const scaleUpCount = Math.min(
-          desiredTarget - app.targetCount,
+          desiredTarget - app.algorithm.targetCount,
           this.#config.maxScaleUpStep,
           this.#maxTotalWorkers - plannedWorkerCount
         )
-        const newTarget = app.targetCount + scaleUpCount
+        const newTarget = app.algorithm.targetCount + scaleUpCount
         this.#runtime.logger.info(
           `Predictive scaling up the "${appId}" app to ${newTarget} workers`
         )
@@ -267,7 +269,6 @@ export class PredictiveWorkersScaler {
       const app = this.#apps.get(update.application)
       if (!app) continue
       app.algorithm.setTarget(update.workers)
-      app.targetCount = update.workers
     }
 
     if (updates.length > 0) {
@@ -282,13 +283,5 @@ export class PredictiveWorkersScaler {
   async #hasAvailableMemory () {
     const mem = await getMemoryInfo({ scope: this.#memoryInfo.scope })
     return mem.used < this.#maxTotalMemory
-  }
-
-  #getTotalWorkerCount () {
-    let total = 0
-    for (const app of this.#apps.values()) {
-      total += app.targetCount
-    }
-    return total
   }
 }

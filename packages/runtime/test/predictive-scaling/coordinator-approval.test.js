@@ -162,6 +162,52 @@ test('a worker-start event during the runtime call resolves an already recorded 
   assert.equal(algorithm.process(12000), 1)
 })
 
+test('the coordinator retries an expired scale-up without exceeding the total limit', async t => {
+  const { runtime, updates, algorithms, process, setTarget } = await setup(t, {
+    total: 2,
+    redistributionMs: 1
+  })
+  t.mock.timers.tick(500)
+  await waitFor(() => updates.length === 1)
+  assert.deepEqual(updates[0], { application: 'app1', workers: 2 })
+  const [algorithm] = algorithms
+  process.mock.restore()
+  algorithm.addSample('elu', 'app1:0', 45000, 0.95)
+
+  // The runtime accepted the update, but no new worker ever started.
+  t.mock.timers.setTime(44500)
+  t.mock.timers.tick(500)
+  await setImmediate()
+  assert.equal(updates.length, 1)
+  assert.equal(algorithm.targetCount, 2)
+
+  t.mock.timers.setTime(45500)
+  t.mock.timers.tick(500)
+  await waitFor(() => updates.length === 2)
+  assert.deepEqual(updates[1], { application: 'app1', workers: 2 })
+  assert.deepEqual(setTarget.mock.calls.map(call => call.arguments), [[2], [2]])
+
+  runtime.emit('application:worker:started', { application: 'app1', worker: 1 })
+  algorithm.addSample('elu', 'app1:1', 47000, 0.1)
+  algorithm.addSample('elu', 'app1:0', 47000, 0.1)
+  assert.equal(algorithm.targetCount, 2)
+})
+
+test('expiry in an application without metrics frees capacity for another application', async t => {
+  const { updates, algorithms, process } = await setup(t, { total: 3, redistributionMs: 1 }, ['app1', 'app2'])
+  t.mock.timers.tick(500)
+  await waitFor(() => updates.length === 1)
+  const [first, second] = algorithms
+  process.mock.restore()
+  // app1 has no samples, but its pending request must still expire.
+  second.addSample('elu', 'app2:0', 46000, 0.95)
+  t.mock.timers.setTime(45500)
+  t.mock.timers.tick(500)
+  await waitFor(() => updates.length === 2)
+  assert.equal(first.targetCount, 1)
+  assert.deepEqual(updates[1], { application: 'app2', workers: 2 })
+})
+
 test('coordinator runs cannot overlap while applying an approved target', async t => {
   const { runtime, process, setTarget } = await setup(t)
   let finish
