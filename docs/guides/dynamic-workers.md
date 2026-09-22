@@ -275,6 +275,8 @@ Startup time is measured from the approved scale-up request until worker lifecyc
 
 If a pending scale-up expires, the remembered target is reconciled with live workers and requests still pending. Capacity that never appeared can then be requested again, subject to the usual cooldowns and resource limits.
 
+At startup, the scaler brings applications up to their configured minimum if their initial worker count is lower. The same setup runs after an application added later has started. This initial provisioning is separate from predictive scale-ups and does not use `maxScaleUpStep`.
+
 ### Global Arbitration
 
 When multiple applications are managed, the orchestrator coordinates scaling:
@@ -287,6 +289,18 @@ When multiple applications are managed, the orchestrator coordinates scaling:
   - Available system memory (`maxMemory`, defaults to 90% of system memory)
 
 The default adds one worker at a time because startup work, such as compilation and opening database connections, competes with other applications and workers in the same WATT. Increase `maxScaleUpStep` only when the application and container have enough spare resources to handle more worker starts in one cycle. The memory check uses current usage; it does not reserve memory for the workers being started.
+
+### Applications diagnostic page
+
+With v2 workers and the metrics server enabled, open `/scaler/` on the metrics server (by default, `http://localhost:9090/scaler/`). `/scaler/applications` opens the same page. It uses the metrics server's existing HTTPS and authentication settings.
+
+The page follows ICC's Applications layout: select an application on the left, inspect worker counts and smoothed ELU/heap charts in the centre, and inspect individual workers on the right. **Approved target** includes pending starts; it is the count the controller has approved, not an unapproved algorithm recommendation. Heap charts are available when `heapThresholdMb` is configured.
+
+The page polls a read-only `/scaler/snapshot` endpoint every five seconds. Polling pauses when the page is hidden or when **Pause** is selected. Requests copy existing algorithm state without processing samples, expiring pending requests, changing decisions, or retaining additional server-side history. All chart rendering and worker-count history recording happen in the browser. No new timers, metric subscriptions, or buffers are added to the scaling loop.
+
+Metric charts use the existing 60-second history. Worker-count history starts when the page opens and is bounded to 60 seconds in browser memory. Dashed metric lines show the current Holt level/trend projected over the horizon and divided by the approved target; they are a visual projection, not a replay of the scaling decision. Per-worker charts show retained measurements and their age, including the last valid reading from silent workers. Refreshing the page clears browser history.
+
+As in ICC, displayed ELU history and projections are bounded to 0–100%, with a fixed 0–100% application chart axis. A projection flattens where it reaches the bound. Heap has a zero lower bound and no fixed upper bound. These display limits do not cap the algorithm's internal forecast or change its worker recommendation.
 
 ### Configuration
 
@@ -306,7 +320,7 @@ The default adds one worker at a time because startup work, such as compilation 
     "maxScaleUpStep": 1,
     "scaleUpMargin": 0.1,
     "scaleDownMargin": 0.3,
-    "redistributionMs": 30000,
+    "redistributionMs": 10000,
 
     "alphaUp": 0.2,
     "alphaDown": 0.1,
@@ -337,7 +351,7 @@ The default adds one worker at a time because startup work, such as compilation 
 | `maxScaleUpStep` | `1` | Maximum extra workers requested for the selected application per processing run. Positive integer; global-only. Increase only when enough resources are available for the additional startup work |
 | `scaleUpMargin` | `0.1` | When the predicted load requires a fractional worker (e.g. 2.08 workers), the algorithm only provisions the extra worker if the fractional part exceeds this margin. Below the margin, the evidence for the extra worker is weak — the trend may not materialize — so the algorithm waits for the next cycle to confirm |
 | `scaleDownMargin` | `0.3` | After removing a worker, load redistributes across fewer workers, raising per-worker metrics. This margin ensures enough headroom to absorb that increase plus a safety buffer that prevents the removal from immediately triggering a scale-up |
-| `redistributionMs` | `30000` | Expected time for a new worker to fully absorb its share of traffic. During this period, the new worker's contribution is gradually weighted from 0 to 1 in the aggregate, preventing its initially low metrics from distorting the load signal |
+| `redistributionMs` | `10000` | Expected time for a new worker to fully absorb its share of traffic. During this period, the new worker's contribution is gradually weighted from 0 to 1 in the aggregate, preventing its initially low metrics from distorting the load signal |
 
 The algorithm uses Holt-Winters exponential smoothing with separate parameters for upward and downward movements. This asymmetry lets the algorithm react quickly to rising load while requiring sustained evidence before acting on drops.
 

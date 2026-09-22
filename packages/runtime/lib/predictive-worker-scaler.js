@@ -13,7 +13,7 @@ const V2_DEFAULTS = {
   maxScaleUpStep: 1,
   scaleUpMargin: 0.1,
   scaleDownMargin: 0.3,
-  redistributionMs: 30000,
+  redistributionMs: 10000,
   alphaUp: 0.2,
   alphaDown: 0.1,
   betaUp: 0.1,
@@ -31,6 +31,8 @@ export class PredictiveWorkersScaler {
   #config
   #apps
   #processTimer
+  #started = false
+  #initialUpdates = new Map()
   #isProcessing = false
   #maxTotalWorkers
   #maxTotalMemory
@@ -70,6 +72,12 @@ export class PredictiveWorkersScaler {
       this.#apps.get(application)?.algorithm.addWorker(id, startTime)
     }
 
+    const initialApplications = [...this.#initialUpdates.keys()]
+    this.#started = true
+    for (const id of initialApplications) {
+      await this.applyPendingUpdate(id)
+    }
+
     this.#processTimer = setInterval(
       () => this.#process(),
       this.#config.processIntervalMs
@@ -77,6 +85,7 @@ export class PredictiveWorkersScaler {
   }
 
   stop () {
+    this.#started = false
     clearInterval(this.#processTimer)
 
     this.#runtime.off('application:worker:health:metrics', this.#onHealthMetrics)
@@ -113,6 +122,27 @@ export class PredictiveWorkersScaler {
     const algorithm = new PredictiveScalingAlgorithm(algorithmConfig)
 
     this.#apps.set(appId, { algorithm })
+    this.#initialUpdates.delete(appId)
+    if (min > (application.workers.static ?? 1)) {
+      this.#initialUpdates.set(appId, { workers: min, promise: null })
+    }
+  }
+
+  async applyPendingUpdate (applicationId) {
+    if (!this.#started) return
+    const update = this.#initialUpdates.get(applicationId)
+    if (!update) return
+
+    // Startup provisioning is separate from predictive scaling. Share an
+    // in-flight request so repeated startup notifications cannot apply it twice.
+    update.promise ??= Promise.resolve().then(async () => {
+      if (this.#initialUpdates.get(applicationId) !== update) return
+      await this.#runtime.updateApplicationsResources([{ application: applicationId, workers: update.workers }])
+      if (this.#initialUpdates.get(applicationId) === update) {
+        this.#initialUpdates.delete(applicationId)
+      }
+    }).finally(() => { update.promise = null })
+    await update.promise
   }
 
   #buildAlgorithmConfig (min, max, config) {
@@ -154,6 +184,26 @@ export class PredictiveWorkersScaler {
   remove (application) {
     const appId = typeof application === 'string' ? application : application.id
     this.#apps.delete(appId)
+    this.#initialUpdates.delete(appId)
+  }
+
+  getDiagnostics () {
+    const now = Date.now()
+    return {
+      now,
+      processIntervalMs: this.#config.processIntervalMs,
+      maxScaleUpStep: this.#config.maxScaleUpStep,
+      maxTotalWorkers: this.#maxTotalWorkers,
+      applications: [...this.#apps].map(([id, { algorithm }]) => ({ id, ...algorithm.getDiagnostics(now) }))
+    }
+  }
+
+  async getMemoryDiagnostics () {
+    // Read only when the diagnostics page requests it, using the same scope
+    // and limit as the coordinator. Do not retain another memory sample.
+    if (!this.#memoryInfo) return null
+    const { used } = await getMemoryInfo({ scope: this.#memoryInfo.scope })
+    return { used, limit: this.#maxTotalMemory }
   }
 
   #handleHealthMetrics ({ id, application, currentHealth }) {
@@ -217,6 +267,12 @@ export class PredictiveWorkersScaler {
     let scaleUpRatio = -1
 
     for (const [appId, app] of this.#apps) {
+      // Reserve the configured minimum, but do not make a competing scaling
+      // decision while the application's startup update is pending.
+      if (this.#initialUpdates.has(appId)) {
+        plannedWorkerCount += app.algorithm.targetCount
+        continue
+      }
       const desiredTarget = app.algorithm.process(now)
       const targetCount = app.algorithm.targetCount
       plannedWorkerCount += targetCount

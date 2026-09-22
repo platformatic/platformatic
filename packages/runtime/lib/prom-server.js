@@ -5,6 +5,7 @@ import fastify from 'fastify'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { DuplicateExtensionHealthRouteError } from './errors.js'
+import { scalerUi } from './scaler-ui.js'
 
 const DEFAULT_HOSTNAME = '0.0.0.0'
 const DEFAULT_PORT = 9090
@@ -249,6 +250,10 @@ async function startServer (runtime, opts, metricsEnabled, healthProbesEnabled) 
   })
 
   if (metricsEnabled) {
+    if (typeof runtime.getDynamicWorkersScaler?.()?.getDiagnostics === 'function') {
+      scalerUi(promServer, { runtime, onRequest: onRequestHook })
+    }
+
     promServer.route({
       url: metricsEndpoint,
       method: 'GET',

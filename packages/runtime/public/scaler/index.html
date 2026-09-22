@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Autoscaler · Applications</title>
+    <link rel="stylesheet" href="./scaler.css">
+    <script type="module" src="./scaler.js"></script>
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="heading"><span class="brand-mark" aria-hidden="true">⬡</span><h1>Autoscaler</h1></div>
+      <div class="controls"><span id="connection" role="status">Connecting…</span><button id="refresh" type="button">Refresh</button><button id="pause" type="button" aria-pressed="false">Pause</button></div>
+    </header>
+    <nav class="tabs" aria-label="Autoscaler views"><a href="./" aria-current="page">APPLICATIONS</a></nav>
+    <p id="error" class="error" role="alert" hidden></p>
+    <div id="warnings" class="error" role="status" hidden></div>
+    <main class="applications-layout">
+      <aside class="application-sidebar" aria-label="Applications">
+        <h2 id="application-count">Applications</h2>
+        <label class="sr-only" for="search">Search applications</label>
+        <input id="search" type="search" placeholder="Search application..." autocomplete="off">
+        <div id="application-list" class="application-list"><p class="empty">Loading applications…</p></div>
+        <p class="sidebar-note">Workers: current → scheduled.</p>
+      </aside>
+      <section class="application-main" aria-label="Application scaling charts">
+        <div id="application-summary" class="application-summary"><h2>Select an application</h2></div>
+        <div id="charts" class="charts"><p class="empty">Loading…</p></div>
+        <p class="chart-note">Dashed lines show predicted usage and scheduled workers. Worker history is recorded while this page is open.</p>
+      </section>
+      <aside class="worker-panel" aria-label="Application workers">
+        <div class="worker-panel-heading"><h2 id="worker-title">Workers</h2><span class="subtle">ELU / HEAP</span></div>
+        <div id="worker-list" class="worker-list"><p class="empty">Select an application</p></div>
+      </aside>
+    </main>
+    <div id="tooltip" class="tooltip" hidden></div>
+    <noscript>This page needs JavaScript to display autoscaler metrics.</noscript>
+  </body>
+</html>

@@ -206,6 +206,50 @@ export class PredictiveScalingAlgorithm {
     }
   }
 
+  // Request-only diagnostics. Never process ticks, expire requests or retain a
+  // second copy of algorithm state for the UI.
+  getDiagnostics (now = Date.now()) {
+    const metrics = {}
+    for (const [name, metric] of this.#metrics) {
+      metrics[name] = {
+        ...this.getSnapshot(name),
+        lastProcessedTick: metric.lastProcessedTick,
+        sampleIntervalMs: metric.config.sampleIntervalMs,
+        redistributionMs: metric.config.redistributionConfig.redistributionMs,
+        history: metric.history.getEntries().filter(entry => entry.timestamp >= now - WINDOW_MS)
+      }
+    }
+
+    const workers = []
+    for (const [id, instance] of this.#instances) {
+      if (instance.endTime !== null) continue
+      const workerMetrics = {}
+      for (const name of this.#metrics.keys()) {
+        const timeline = instance[name]
+        if (!timeline) continue
+        workerMetrics[name] = timeline.getDiagnostics(Math.max(instance.startTime, now - WINDOW_MS))
+      }
+      workers.push({ id, startTime: instance.startTime, metrics: workerMetrics })
+    }
+
+    return structuredClone({
+      targetCount: this.#targetCount,
+      liveCount: this.#workerIdMapper.size,
+      min: this.#min,
+      max: this.#max,
+      initTimeoutMs: this.#initTimeoutMs,
+      horizonMs: this.#horizonMs,
+      pending: this.#pendingScaleUps.map(pending => ({
+        ...pending,
+        expiresAt: pending.scaleAt + PENDING_SCALE_UP_EXPIRY_MS
+      })),
+      scaleUpAllowed: this.#checkScaleUp(now),
+      scaleDownAllowed: this.#checkScaleDown(now),
+      metrics,
+      workers
+    })
+  }
+
   /**
    * Run the pipeline over all unprocessed ticks.
    * Each metric is processed independently; the final targetCount is the max.
@@ -592,6 +636,14 @@ export class MetricStore extends SlidingWindow {
     }
 
     return result
+  }
+
+  getDiagnostics (startTs) {
+    return {
+      lastSampleAt: this.#prevRawTs,
+      value: this.#prevRawValue,
+      history: super.getEntries().filter(entry => entry.timestamp >= startTs)
+    }
   }
 
   #alignTimestamp (timestamp) {
