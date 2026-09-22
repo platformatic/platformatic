@@ -23,7 +23,9 @@ test('build - when no configuration file exists, should boot on inferred default
   )
   ok(wattProcess.stdout.includes('All applications have been built.'))
 
-  deepStrictEqual(await readdir(rootDir), ['index.js'])
+  // The compile cache is enabled by default and writes `.plt/`; that is runtime output, not a
+  // configuration or source file, so it does not count against "nothing is written".
+  deepStrictEqual((await readdir(rootDir)).filter(entry => entry !== '.plt'), ['index.js'])
 })
 
 for (const command of ['start', 'dev']) {
@@ -52,6 +54,8 @@ createServer((req, res) => {
     const { url } = await startAndWaitForUrl(t, () => wattpm(command, rootDir), basename(rootDir))
     ok(url)
 
-    deepStrictEqual(await readdir(rootDir), ['index.js'])
+    // The compile cache is enabled by default and writes `.plt/`; that is runtime output, not a
+  // configuration or source file, so it does not count against "nothing is written".
+  deepStrictEqual((await readdir(rootDir)).filter(entry => entry !== '.plt'), ['index.js'])
   })
 }
