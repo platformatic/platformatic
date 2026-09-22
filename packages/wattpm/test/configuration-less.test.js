@@ -55,7 +55,7 @@ createServer((req, res) => {
     ok(url)
 
     // The compile cache is enabled by default and writes `.plt/`; that is runtime output, not a
-  // configuration or source file, so it does not count against "nothing is written".
-  deepStrictEqual((await readdir(rootDir)).filter(entry => entry !== '.plt'), ['index.js'])
+    // configuration or source file, so it does not count against "nothing is written".
+    deepStrictEqual((await readdir(rootDir)).filter(entry => entry !== '.plt'), ['index.js'])
   })
 }
