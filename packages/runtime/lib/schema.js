@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import { schemaComponents } from '@platformatic/foundation'
+import { schemaComponents } from '@platformatic/foundation/schema'
 import { version } from './version.js'
 
 const runtimeLogger = {
@@ -32,6 +32,12 @@ const runtimeLogger = {
     }
   }
 }
+
+/*
+  The root logger is not the application one: it carries `captureStdio` and the `pino` key mapping,
+  which only the runtime reads. Naming them apart is what lets a person write the type of either.
+*/
+runtimeLogger.title = 'RuntimeLoggerOptions'
 
 schemaComponents.runtimeProperties.logger = runtimeLogger
 
@@ -70,6 +76,76 @@ const platformaticRuntimeSchema = {
 }
 
 export const schema = platformaticRuntimeSchema
+
+/*
+  The keys this schema does not implement. Validating one of these configurations against the legacy
+  schema accepted them and then ignored them, which is the worst of both: `envfile: './deploy.env'`
+  at the root looked like it was doing something. They survive on the legacy schema, which still
+  serves legacy projects, and inside migrate's legacy reader.
+
+  Root `envfile` is removed, not renamed — an entry may still declare one, and that property lives
+  on the application schema rather than here.
+
+  `$schema` is different in kind: machine writers of the plain-object form still stamp it, and the
+  loader reads it for version detection and strips it before validation. The schema refusing it is
+  what makes the strip load-bearing rather than decorative — a stamp that reached AJV would mean the
+  loader had skipped the step that checks the file is not a legacy one.
+
+  `verticalScaler` is the deprecated spelling of `workers`, kept on the legacy schema with a transform
+  that migrates it. There is now one spelling: a configuration that still says `verticalScaler` is told
+  so by the schema rather than being quietly rewritten, which is the only way the two cannot
+  disagree about which of them a project meant.
+
+  `services` and `web` are the same story: the legacy spellings of `applications`, folded by the shared
+  transform. Alone they fail the pipeline's topology check by name; beside an `applications` key
+  they would validate and be folded silently, so the schema refuses them instead.
+*/
+const removedKeys = ['envfile', 'strictEnv', '$schema', 'verticalScaler', 'services', 'web']
+
+const { ...configurationProperties } = platformaticRuntimeSchema.properties
+
+for (const key of removedKeys) {
+  delete configurationProperties[key]
+}
+
+/*
+  The legacy entry anyOf required an id beside the path or url, because ids were derived only for
+  autoloaded applications. Ids are now derived at every position -- explicit entries included, from the
+  package name and then the directory -- so requiring one would refuse an entry the loader handles.
+  What an entry genuinely needs is a place: a path or a url.
+
+  Copied rather than edited, because `applications.items` is shared with the legacy schema, where the
+  requirement still holds.
+*/
+const applicationEntryItems = {
+  ...configurationProperties.applications.items,
+  anyOf: [{ required: ['path'] }, { required: ['url'] }]
+}
+
+configurationProperties.applications = { ...configurationProperties.applications, items: applicationEntryItems }
+
+/*
+  The singular shorthand: one application with runtime options, Level 1b. It is an application
+  entry whose identity and place the loader both supply -- the id derives from the package name
+  and the path defaults to the configuration file's own directory -- so it keeps the entry's
+  properties and drops the anyOf entirely.
+*/
+const { anyOf: _entryRequirements, ...applicationShorthand } = applicationEntryItems
+
+configurationProperties.application = applicationShorthand
+
+export const configurationSchema = {
+  ...platformaticRuntimeSchema,
+  $id: `https://schemas.platformatic.dev/@platformatic/runtime/${version}-strict.json`,
+  properties: configurationProperties,
+  /*
+    The legacy anyOf listed the removed spellings, and it is decorative here anyway -- by the
+    time either validation pass runs, normalization has already defaulted `applications`. The gate
+    that actually asks the question is the pipeline's topology check, before that default; this
+    matches it so the schema and the loader tell the same story.
+  */
+  anyOf: [{ required: ['autoload'] }, { required: ['applications'] }, { required: ['application'] }]
+}
 
 if (import.meta.main) {
   console.log(JSON.stringify(platformaticRuntimeSchema, null, 2))

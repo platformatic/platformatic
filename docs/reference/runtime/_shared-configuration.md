@@ -6,8 +6,8 @@ For detailed information on supported file formats and extensions, please visit 
 
 ## Settings
 
-Configuration settings containing sensitive data should be set using
-[environment variable placeholders](#environment-variable-placeholders).
+Configuration settings containing sensitive data should be read from the
+[environment](#environment-variables) rather than written into the file.
 
 :::info
 The `autoload` and `applications` settings can be used together, but at least one
@@ -27,10 +27,16 @@ The `autoload` configuration is intended to be used with monorepo applications.
   should not be processed.
 - **`mappings`** (`object`) - Each applicaiton is given an ID and is expected
   to have a Platformatic configuration file. By default, the ID is the
-  application's directory name, and the configuration file is expected to be a
-  well-known Platformatic configuration file. `mappings` can be used to override
-  these default values.
+  application's `package.json` `name` with any npm scope stripped (`@acme/frontend`
+  becomes `frontend`), or the directory name when the package declares no `name`.
+  The configuration file is expected to be a well-known Platformatic configuration
+  file. `mappings` can be used to override these default values.
   Supported properties are the same of entries in `application`, except `path`, `url`, and `gitBranch`.
+
+  An id must be a legal DNS label — it matches `^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$` — since
+  it is also the application's mesh hostname (`<id>.plt.local`). A derived id that is not (for
+  example a directory or package name containing `_` or `.`) is a configuration error; use
+  `mappings` to give that application a legal `id` explicitly.
 
 ### `preload`
 
@@ -48,17 +54,22 @@ custom commands that applications can invoke from their worker threads.
 
 `extensions` can be a path, an object with `path`, `options`, and `build` properties, or an array of either:
 
-```json
-{
-  "extensions": [
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  extensions: [
     {
-      "path": "./runtime-extension.js",
-      "options": {
-        "bucket": "{S3_BUCKET}"
+      path: './runtime-extension.js',
+      options: {
+        bucket: process.env.S3_BUCKET ?? ''
       }
     }
   ]
-}
+})
 ```
 
 Each file must export a setup function, which is invoked during the runtime initialization,
@@ -246,15 +257,20 @@ sets `"build": true`. Build-enabled extensions are set up before application wor
 receive the build hooks above for every application, and are closed when the build Runtime closes.
 Their `start` and `stop` hooks are not called during a build.
 
-```json
-{
-  "extensions": [
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  extensions: [
     {
-      "path": "./build-extension.js",
-      "build": true
+      path: './build-extension.js',
+      build: true
     }
   ]
-}
+})
 ```
 
 For a complete worked example — enabling continuous profiling on every worker when it starts (or is
@@ -264,22 +280,27 @@ restarted) and shipping the captured profiles — see the
 ### `applications`
 
 `applications` is an array of objects that defines the applications managed by the
-runtime. Each application object supports the following settings:
+runtime — it is the only key for this; there is no `web` or `services` alias. Each application
+object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the application.
-- **`enabled`** (`boolean`, `string`, or `object`) - If `false`, the application
-  is disabled and will not be loaded by the runtime. Boolean strings and
-  environment variable placeholders are supported. It can also be an object where
-  each key is an environment name and each value is a boolean. If the current
-  environment does not match any key, the application is enabled. Default:
-  `true`.
+- **`enabled`** (`boolean`, `string` or `object`) - If `false`, the application
+  is disabled and will not be loaded by the runtime. It can also be an object where
+  each key is a mode name and each value is a boolean. If the current
+  mode does not match any key, the application is enabled. Default: `true`.
+
+  This position reads a string, and reads it as *anything but `'false'` is true* — so
+  `enabled: process.env.PLT_API_ENABLED` works and needs no comparison. Note that this
+  is particular to this setting: `tracing.enabled` next to it is compared against the
+  boolean `false`, where the string `'false'` does not disable anything.
 - **`path`** (**required**, `string`) - The path to the directory containing
   the application. It can be omitted if `url` is provided.
 - **`url`** (**required**, `string`) - The URL of the application remote GIT repository, if it is a remote application. It can be omitted if `path` is provided. You can specify a branch using the URL fragment syntax: `https://github.com/user/repo.git#branch-name`.
 - **`module`** (`string`) - The installed npm package that implements the application. When specified, `path` is also required and is used as the writable application root. The package itself is resolved from the Watt project's dependencies and is not modified by the runtime.
 - **`gitBranch`** (`string`) - The branch of the application to resolve. Takes precedence over the branch specified in the URL fragment.
-- **`config`** (`string`) - The configuration file used to start
-  the application.
+- **`config`** (`object`) - The application's own configuration, inline: what a capability factory
+  returns, or a plain object naming its `module`. An application that has its own `watt.config.*`
+  needs nothing here.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
 - **`workers`** - The number of workers to start for this application. In development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
@@ -290,7 +311,7 @@ runtime. Each application object supports the following settings:
     - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
 - **`health`** (object): Configures the health check and low-level resource defaults for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here override the values specified in the runtime.
 - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
-- **`envfile`** (`string`) - The path to an `.env` file to load for the application. By default, the `.env` file is loaded from the application directory.
+- **`envfile`** (`string`) - The path to an `.env` file to load for the application, resolved relative to the application's own directory. By default, the `.env` file is loaded from the application directory. Naming a file that does not exist is an error. Not valid on an entry that also carries an inline `config` — that application has no separate per-app evaluation step for `envfile` to apply to.
 - **`env`** (`object`) - An object containing environment variables to set for the application. Values set here takes precedence over values set in the `envfile`.
 - **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the application. Default: `false`.
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `wattpm-utils`. Default is to autodetect it, unless it is specified via command line.
@@ -315,53 +336,67 @@ runtime. Each application object supports the following settings:
 - **`tracing`** (`object`): containing an `instrumentations` array to optionally configure additional OpenTelemetry
   intrumentations per application, e.g.:
 
-```json
-"applications": [
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
     {
-      "id": "api",
-      "path": "./services/api",
-      "tracing": {
-        "instrumentations": ["@opentelemetry/instrumentation-express"]
+      id: 'api',
+      path: './services/api',
+      tracing: {
+        instrumentations: [
+          '@opentelemetry/instrumentation-express'
+        ]
       }
     }
   ]
+})
 ```
 
 It's possible to specify the name of the export of the instrumentation and/or the options:
 
-```json
-"applications": [
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
     {
-      "id": "api",
-      "path": "./services/api",
-      "tracing": {
-        "instrumentations": [{
-          "package": "@opentelemetry/instrumentation-express",
-          "exportName": "ExpressInstrumentation",
-          "options": {}
-        }]
+      id: 'api',
+      path: './services/api',
+      tracing: {
+        instrumentations: [
+          {
+            package: '@opentelemetry/instrumentation-express',
+            exportName: 'ExpressInstrumentation',
+            options: {}
+          }
+        ]
       }
     }
   ]
+})
 ```
 
-An alias for `applications`. If both are present, their content will be merged.
+It's also possible to disable the instrumentation by setting the `enabled` property to `false`. It is
+a boolean, and there is no coercion — the string `'false'` is not `false`, so read the variable and
+compare:
 
-It's also possible to disable the instrumentation by setting the `enabled` value property to `false` (env variables are also supported):
+```ts config
+import { createWattConfig } from 'wattpm'
 
-```json
-"applications": [
+export default createWattConfig({
+  applications: [
     {
-      "id": "api",
-      "path": "./services/api",
-      "tracing": {
-        "enabled": "false",
-        "instrumentations": [{
-          "package": "@opentelemetry/instrumentation-express",
-        }]
+      id: 'api',
+      path: './services/api',
+      tracing: {
+        enabled: process.env.PLT_TELEMETRY_ENABLED === 'true',
+        instrumentations: [{ package: '@opentelemetry/instrumentation-express' }]
       }
     }
   ]
+})
 ```
 
 ### `env`
@@ -371,39 +406,53 @@ runtime. Any environment variables set in the `env` object will be merged with
 the environment variables set in the `envfile` and `env` properties of each
 application, with application-level environment variables taking precedence.
 
+A variable already set in the real process environment always wins over an `env` block, at either
+level — a block sets a default for a variable that isn't already there, it does not override one
+that is. This follows the same convention as env files: only the real environment is authoritative
+over everything.
+
 ### `envfile`
 
-The path to an `.env` file to load for the runtime. By default, the `.env` file is loaded from the application directory.
+**Removed at the root.** Env files are discovered rather than named: every directory from the
+configuration file's own up to the project root contributes its `.env`, nearest first. An individual
+application entry may still set `envfile` to replace that set for itself.
 
 ### `strictEnv`
 
-Controls what happens when a `{PLT_*}` environment variable placeholder references a variable which is not set:
+**Removed.** It controlled what happened when a `{PLT_*}` placeholder referenced an unset
+variable, and there are no placeholders — a configuration file reads `process.env` itself, so an
+unset variable is `undefined` and what happens next is written in the file:
 
-- `false` (the default): the placeholder is silently replaced with an empty string.
-- `true`: loading the configuration fails at startup with an error listing all the missing variables.
-- `"warn"`: a warning listing the missing variables is logged, but the placeholders are still replaced with an empty string.
+```ts config env=PLT_BASE_PATH=/api
+import { createWattConfig } from 'wattpm'
 
-Not every unset variable is reported as missing. When loading the configuration of an application, the
-runtime resolves any variable whose name ends in `_URL` to the internal URL of that application, so such
-a variable gets a value even when it is not set. When `strictEnv` is enabled, these variables are listed
-in a separate warning. They are never turned into an error, not even when `strictEnv` is `true`, because
-they do resolve to a value and failing on them would change which configurations are able to boot.
+function requiredEnv (name: string): string {
+  const value = process.env[name]
 
-The value is also applied when loading the configuration files of the applications in the runtime.
+  if (!value) {
+    throw new Error(`${name} is required but is not set`)
+  }
 
-```json
-{
-  "strictEnv": true
+  return value
 }
+
+export default createWattConfig({
+  autoload: { path: 'web' },
+  basePath: requiredEnv('PLT_BASE_PATH')
+})
 ```
+
+That is the `strictEnv: true` behaviour, per setting rather than per configuration — which is what
+makes it possible to require one variable and default another.
 
 ### `sourceMaps`
 
 If `true`, source maps are enabled for all applications. Default: `false`. This setting can be overridden at the application level.
 
-### `resolvedServicesBasePath`
+### `resolvedApplicationsBasePath`
 
-The base path, relative to the configuration file to store resolved applications. Each application will be saved in `{resolvedServicesBasePath}/{id}`. Default: `external`.
+The base path, relative to the configuration file, where resolved remote applications are stored.
+Each is saved in `<resolvedApplicationsBasePath>/<id>`. Default: `external`.
 
 ### Capability `server` configuration
 
@@ -427,6 +476,8 @@ This can be specified as:
   - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
   - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `20000`.
   - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
+  - **`scaleUpELU`** (`number`) - The Event Loop Utilization (ELU) threshold an application's average ELU must exceed before the scaler adds a worker. Must be between 0 and 1. It can be overridden at the application level. Default: `0.8`.
+  - **`scaleDownELU`** (`number`) - The ELU threshold an application's average ELU must fall below before the scaler removes a worker. Must be between 0 and 1. It can be overridden at the application level. Default: `0.2`.
 
 This value is hardcoded to `1` if the runtime is running in development mode.
 
@@ -521,23 +572,28 @@ Use an object to configure the health probes server. Health probes are exposed o
 - **`readiness`** (`object` or `boolean`). Optional readiness endpoint configuration. If omitted, `metrics.readiness` is used when present.
 - **`liveness`** (`object` or `boolean`). Optional liveness endpoint configuration. If omitted, `metrics.liveness` is used when present.
 
-```json title="Example health probes on a standalone server"
-{
-  "metrics": {
-    "hostname": "0.0.0.0",
-    "port": 9090
+```ts config title="Example health probes on a standalone server"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
   },
-  "healthProbes": {
-    "hostname": "0.0.0.0",
-    "port": 9091,
-    "readiness": {
-      "endpoint": "/health"
+  metrics: {
+    hostname: '0.0.0.0',
+    port: 9090
+  },
+  healthProbes: {
+    hostname: '0.0.0.0',
+    port: 9091,
+    readiness: {
+      endpoint: '/health'
     },
-    "liveness": {
-      "endpoint": "/live"
+    liveness: {
+      endpoint: '/live'
     }
   }
-}
+})
 ```
 
 ### `tracing`
@@ -572,19 +628,24 @@ For OTLP exporters:
 - Use gRPC with URLs like `http://localhost:4317` and do not include `/v1/traces`
 :::
 
-```json title="Example JSON object"
-{
-  "tracing": {
-    "applicationName": "test-application",
-    "diagLogger": true,
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+```ts config title="Example JSON object"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  tracing: {
+    applicationName: 'test-application',
+    diagLogger: true,
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   }
-}
+})
 ```
 
 ### `httpCache`
@@ -651,24 +712,31 @@ This configures the [`undici`](https://undici.nodejs.org) global
 [Dispatcher](https://undici.nodejs.org/#/docs/api/Dispatcher).
 Allowing to configure the options in the agent as well as [interceptors](https://undici.nodejs.org/#/docs/api/Dispatcher?id=dispatchercomposeinterceptors-interceptor).
 
-```json title="Example JSON object"
-{
-  "undici": {
-    "keepAliveTimeout": 1000,
-    "keepAliveMaxTimeout": 1000,
-    "interceptors": [
+```ts config title="Example JSON object"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  undici: {
+    keepAliveTimeout: 1000,
+    keepAliveMaxTimeout: 1000,
+    interceptors: [
       {
-        "module": "undici-oidc-interceptor",
-        "options": {
-          "clientId": "{PLT_CLIENT_ID}",
-          "clientSecret": "{PLT_CLIENT_SECRET}",
-          "idpTokenUrl": "{PLT_IDP_TOKEN_URL}",
-          "origins": ["{PLT_EXTERNAL_SERVICE}"]
+        module: 'undici-oidc-interceptor',
+        options: {
+          clientId: process.env.PLT_CLIENT_ID ?? '',
+          clientSecret: process.env.PLT_CLIENT_SECRET ?? '',
+          idpTokenUrl: process.env.PLT_IDP_TOKEN_URL ?? '',
+          origins: [
+            process.env.PLT_EXTERNAL_SERVICE ?? ''
+          ]
         }
       }
     ]
   }
-}
+})
 ```
 
 Custom interceptors must implement the Undici 8 dispatcher handler lifecycle. Interceptors using the legacy
@@ -697,10 +765,15 @@ Setting a lower value can be useful when:
 - You want more predictable startup ordering
 - Memory is constrained during startup
 
-```json title="Example configuration"
-{
-  "startupConcurrency": 4
-}
+```ts config title="Example configuration"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  startupConcurrency: 4
+})
 ```
 
 ### `metrics`
@@ -750,13 +823,24 @@ When `healthProbes` is an object with a different resolved `hostname` and `port`
   - **`header`** (**required**, `string`): The HTTP request header to extract the value from.
   - **`default`** (`string`): Default value when the header is missing. Defaults to `"unknown"`.
 
-```json title="Example httpCustomLabels Configuration"
-{
-  "metrics": {
-    "enabled": true,
-    "httpCustomLabels": [{ "name": "callerTelemetryId", "header": "x-plt-telemetry-id", "default": "" }]
+```ts config title="Example httpCustomLabels Configuration"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  metrics: {
+    enabled: true,
+    httpCustomLabels: [
+      {
+        name: 'callerTelemetryId',
+        header: 'x-plt-telemetry-id',
+        default: ''
+      }
+    ]
   }
-}
+})
 ```
 
 - **`otlpExporter`** (`object`): Optional configuration for exporting Prometheus metrics to an OpenTelemetry Protocol (OTLP) endpoint. This enables pushing metrics to OTLP-compatible collectors like OpenTelemetry Collector, Grafana Cloud, or other observability platforms. The object supports the following settings:
@@ -767,22 +851,27 @@ When `healthProbes` is an object with a different resolved `hostname` and `port`
   - **`serviceName`** (`string`): Service name for OTLP resource attributes. Defaults to the application ID.
   - **`serviceVersion`** (`string`): Service version for OTLP resource attributes. Optional.
 
-```json title="Example OTLP Metrics Configuration"
-{
-  "metrics": {
-    "enabled": true,
-    "port": 9090,
-    "otlpExporter": {
-      "endpoint": "http://otel-collector:4318/v1/metrics",
-      "interval": 30000,
-      "headers": {
-        "x-api-key": "{OTLP_API_KEY}"
+```ts config title="Example OTLP Metrics Configuration"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  metrics: {
+    enabled: true,
+    port: 9090,
+    otlpExporter: {
+      endpoint: 'http://otel-collector:4318/v1/metrics',
+      interval: 30000,
+      headers: {
+        'x-api-key': process.env.OTLP_API_KEY ?? ''
       },
-      "serviceName": "my-platformatic-app",
-      "serviceVersion": "1.0.0"
+      serviceName: 'my-platformatic-app',
+      serviceVersion: '1.0.0'
     }
   }
-}
+})
 ```
 
 If the `metrics` object is not provided, the Prometheus server will not be started.
@@ -806,93 +895,88 @@ The runtime-level `management` configuration enables the ITC (Inter-Thread Commu
 
 The value is inherited by all applications that do not explicitly set their own `management` configuration. Individual applications can override or disable the runtime-level setting.
 
-```json title="Enable management for all applications"
-{
-  "management": true,
-  "applications": [
+```ts config title="Enable management for all applications"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  management: true,
+  applications: [
     {
-      "id": "app1",
-      "path": "./services/app1"
+      id: 'app1',
+      path: './services/app1'
     },
     {
-      "id": "app2",
-      "path": "./services/app2"
+      id: 'app2',
+      path: './services/app2'
     }
   ]
-}
+})
 ```
 
-```json title="Enable management globally, disable for a specific application"
-{
-  "management": true,
-  "applications": [
+```ts config title="Enable management globally, disable for a specific application"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  management: true,
+  applications: [
     {
-      "id": "orchestrator",
-      "path": "./services/orchestrator"
+      id: 'orchestrator',
+      path: './services/orchestrator'
     },
     {
-      "id": "worker",
-      "path": "./services/worker",
-      "management": false
+      id: 'worker',
+      path: './services/worker',
+      management: false
     }
   ]
-}
+})
 ```
 
-```json title="Restrict operations globally"
-{
-  "management": {
-    "operations": ["getRuntimeStatus", "getApplicationsIds"]
+```ts config title="Restrict operations globally"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  management: {
+    operations: [
+      'getRuntimeStatus',
+      'getApplicationsIds'
+    ]
   },
-  "applications": [
+  applications: [
     {
-      "id": "app1",
-      "path": "./services/app1"
+      id: 'app1',
+      path: './services/app1'
     }
   ]
-}
+})
 ```
 
 The configuration format is the same as the per-application `management` setting (boolean or object with `enabled` and `operations`). See the [per-application management](#management) section for the full list of available operations.
 
 ### verticalScaler
 
-:::warning
-The `verticalScaler` configuration is deprecated and will be removed in a future version. These options are now mapped to the equivalent properties in the `workers` configuration. Please use the `workers` configuration instead.
-:::
+**Removed.** It was the deprecated spelling of [`workers`](#workers), previously kept alongside a
+transform that rewrote it. There is now one spelling: a configuration that still says
+`verticalScaler` is told so by the schema rather than being quietly rewritten, which is the only way
+the two cannot disagree about which of them a project meant.
 
-The `verticalScaler` configuration is used to enable the vertical scaling for the Platformatic Runtime. The vertical scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory.
+The mapping to apply by hand:
 
-The scaler operates in two modes:
+| `verticalScaler`     | `workers`                     |
+| -------------------- | ----------------------------- |
+| `enabled`            | `dynamic`                     |
+| `maxTotalWorkers`    | `total`                       |
+| `minWorkers`         | `minimum`                     |
+| `maxWorkers`         | `maximum`                     |
+| `maxTotalMemory`     | `maxMemory`                   |
+| `cooldownSec`        | `cooldown`, in milliseconds   |
+| `gracePeriod`        | `gracePeriod`                 |
+| `scaleUpELU`         | `scaleUpELU`                  |
+| `scaleDownELU`       | `scaleDownELU`                |
+| `applications[<id>]` | that application's `workers`  |
 
-- **Reactive Mode**: Triggers scaling checks immediately when any worker's ELU exceeds the `scaleUpELU` threshold
-- **Periodic Mode**: Runs scaling checks at regular intervals defined by `scaleIntervalSec`
-
-When scaling up, the algorithm ensures there is sufficient available memory to accommodate new workers based on the application's average heap usage. Available memory is calculated as `maxTotalMemory - currently used memory`, where used memory is obtained from cgroup files in containerized environments or from the operating system otherwise.
-
-Configuration options:
-
-- **`enabled`** (`boolean` or `string`). If `false` the vertical scaling is disabled. Default: `true`.
-- **`maxTotalWorkers`** (`number`). The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
-- **`maxTotalMemory`** (`number`). The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
-- **`minWorkers`** (`number`). The minimum number of workers that can be used for _each_ application. It can be overridden at application level. Default: `1`.
-- **`maxWorkers`** (`number`). The maximum number of workers that can be used for _each_ application. It can be overridden at application level. Default: global `maxTotalWorkers` value.
-- **`cooldownSec`** (`number`). The amount of seconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `60`.
-- **`scaleUpELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling up is hardcoded to `0.8`.
-- **`scaleDownELU`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The ELU threshold for scaling down is hardcoded to `0.2`.
-- **`timeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-up decisions is hardcoded to `10` seconds.
-- **`scaleDownTimeWindowSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The time window for scale-down decisions is hardcoded to `60` seconds.
-- **`gracePeriod`** (`number`). The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
-- **`scaleIntervalSec`** (**deprecated**, `number`). **This property is deprecated and currently unused.** The interval for periodic scaling checks is hardcoded to `60` seconds.
-- **`applications`** (`object`). An object with application-specific scaling configuration. Each key is an application ID, with an object value containing:
-  - **`minWorkers`** (`number`). The minimum number of workers that can be used for this application. Default: `1`.
-  - **`maxWorkers`** (`number`). The maximum number of workers that can be used for this application. Default: global `maxWorkers` value.
-
-**Notes:**
-
-- Applications with a fixed `workers` configuration will have their min/max workers automatically set to their current value to prevent scaling.
-- The scaler tracks heap memory usage and will not scale up if there is insufficient available memory, even if ELU thresholds are met.
-- By default, the scaler uses 90% of total system memory as the memory limit to provide a safety buffer and prevent out-of-memory situations.
+`timeWindowSec`, `scaleDownTimeWindowSec` and `scaleIntervalSec` were already unused — the
+windows and the check interval the scaler uses are fixed — so they carry across to nothing.
 
 ### policies
 
@@ -914,20 +998,30 @@ This feature is available on all supported Node.js versions.
 
 The configuration can be a boolean or an object:
 
-```json title="Simple boolean configuration"
-{
-  "compileCache": true
-}
+```ts config title="Simple boolean configuration"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  compileCache: true
+})
 ```
 
-```json title="Object configuration"
-{
-  "compileCache": {
-    "enabled": true,
-    "directory": ".plt/compile-cache",
-    "awaitFirstWorker": true
+```ts config title="Object configuration"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: 'web'
+  },
+  compileCache: {
+    enabled: true,
+    directory: '.plt/compile-cache',
+    awaitFirstWorker: true
   }
-}
+})
 ```
 
 Configuration options:
@@ -951,18 +1045,20 @@ Compile cache is enabled by default at runtime level. Set `compileCache` to `fal
 
 This configuration can also be set at the application level to override the runtime-level setting:
 
-```json title="Application-level override"
-{
-  "applications": [
+```ts config title="Application-level override"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
     {
-      "id": "my-app",
-      "path": "./services/my-app",
-      "compileCache": {
-        "enabled": false
+      id: 'my-app',
+      path: './services/my-app',
+      compileCache: {
+        enabled: false
       }
     }
   ]
-}
+})
 ```
 
 ### management
@@ -975,30 +1071,38 @@ This setting can also be configured at the [runtime level](#management) to apply
 
 The configuration can be a boolean or an object:
 
-```json title="Grant full management access"
-{
-  "applications": [
+```ts config title="Grant full management access"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
     {
-      "id": "orchestrator",
-      "path": "./services/orchestrator",
-      "management": true
+      id: 'orchestrator',
+      path: './services/orchestrator',
+      management: true
     }
   ]
-}
+})
 ```
 
-```json title="Restrict to specific operations"
-{
-  "applications": [
+```ts config title="Restrict to specific operations"
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
     {
-      "id": "dashboard",
-      "path": "./services/dashboard",
-      "management": {
-        "operations": ["getRuntimeStatus", "getApplicationsIds", "getApplicationDetails"]
+      id: 'dashboard',
+      path: './services/dashboard',
+      management: {
+        operations: [
+          'getRuntimeStatus',
+          'getApplicationsIds',
+          'getApplicationDetails'
+        ]
       }
     }
   ]
-}
+})
 ```
 
 Configuration options (object form):
@@ -1064,36 +1168,95 @@ export function create () {
 }
 ```
 
-## Setting and Using ENV placeholders
+## Environment variables
 
-The value for any configuration setting can be replaced with an environment
-variable by adding a placeholder in the configuration file, for example
-`{PLT_ENTRYPOINT}`.
+A configuration file is a program, so it reads its environment directly. There are no `{PLT_X}` placeholders and nothing interpolates strings on your behalf:
 
-If an `.env` file exists it will automatically be loaded by Platformatic using
-[`dotenv`](https://github.com/motdotla/dotenv). For example:
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [{ id: 'api', path: './api' }],
+  basePath: process.env.PLT_BASE_PATH ?? '/'
+})
+```
+
+Because nothing coerces the result afterwards, what you write depends on what the setting holds:
+
+| The setting is | Write |
+|----------------|-------|
+| a string       | `process.env.NAME ?? 'default'` |
+| a number       | `Number(process.env.NAME \|\| 3042)` |
+| an enum        | a check that narrows the value to the allowed members |
+| a boolean      | the comparison you mean — `process.env.NAME === 'true'` |
+
+`\|\|` rather than `??` for a number, because `NAME=` in an env file supplies the empty string, and the empty string is present.
+
+An enum needs more than a fallback: `process.env.NAME ?? 'info'` has type `string`, and `string` is not one of `level`'s seven members. `wattpm-utils migrate` writes a helper into the file for this, and it is worth keeping:
+
+```ts config env=PLT_SERVER_LOGGER_LEVEL=debug
+import { createWattConfig } from 'wattpm'
+
+function requiredEnum <const T extends readonly string[]> (name: string, allowed: T): T[number] {
+  const value = process.env[name]
+
+  if (!value || !allowed.includes(value)) {
+    throw new Error(`${name} must be one of: ${allowed.join(', ')}`)
+  }
+
+  return value as T[number]
+}
+
+export default createWattConfig({
+  autoload: { path: 'web' },
+  logger: {
+    level: requiredEnum('PLT_SERVER_LOGGER_LEVEL',
+      ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+  }
+})
+```
+
+### Env files
+
+`.env` files are still loaded, and their values are in `process.env` by the time the configuration file runs:
 
 ```plaintext title=".env"
-PLT_ENTRYPOINT=application
+PLT_SERVER_LOGGER_LEVEL=debug
 ```
 
-The `.env` file must be located in the same folder as the Platformatic
-configuration file or in the current working directory. Each application would
-also see their respective `.env` file loaded if they are located in a subdirectory.
-This can be configured by the `envfile` property in the application configuration.
+Four names are recognized in each directory: `.env`, `.env.local`, `.env.<mode>` and
+`.env.<mode>.local` (`mode` is `'development'` under `wattpm dev`, `'production'` under
+`wattpm build`/`wattpm start`, or whatever `--mode <name>` set). Within one directory, a
+mode-specific file beats the generic one, and a `.local` file beats its committed counterpart:
+`.env.<mode>.local` > `.env.<mode>` > `.env.local` > `.env`.
 
-Environment variables can also be set directly on the command line, for example:
+Every directory from the configuration file's own up to the project root is layered, nearest first, so an application's `.env` overrides the root's. Variables already set in the real environment win over every file, which is what makes this work on the command line:
 
 ```bash
-PLT_ENTRYPOINT=application npx wattpm start
+PLT_SERVER_LOGGER_LEVEL=trace npx wattpm start
 ```
 
-:::note
-Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
-:::
+An `env` block configures the application that runs — it is not visible while configuration is
+being evaluated, at any position. A value that a config file itself needs to read must come from
+the real environment or an env file, not from an `env` block.
 
-### PLT_ROOT
+### Variables the runtime no longer sets
 
-The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths. See our [documentation](../service/configuration.md#plt_root) to learn more on PLT_ROOT placeholders.
+`PLT_DEV`, `PLT_ENVIRONMENT` and `PLT_ROOT` are no longer injected. An application reading `process.env.PLT_ROOT` (or either of the other two) gets `undefined`.
+
+There is no drop-in replacement, because `PLT_ROOT` meant two different directories depending on who read it: inside a configuration file it was that file's own directory, while application code received the runtime root. For a module that wants its own directory, use `import.meta.dirname`. For the branch that `PLT_DEV` used to carry, take it from the configuration context, which is typed:
+
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig(context => ({
+  autoload: { path: 'web' },
+  logger: { level: context.production ? 'warn' : 'debug' }
+}))
+```
+
+`wattpm-utils migrate` reports every read of these three in your source, with the file and line, because it cannot rewrite them for you.
+
+`NODE_ENV` is the one variable the runtime still defaults, and it does so at the bottom of the layering — anything you set wins.
 
 <Issues />

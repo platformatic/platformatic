@@ -1,6 +1,0 @@
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.70.0.json",
-  "node": {
-    "absoluteUrl": true
-  }
-}

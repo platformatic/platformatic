@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, createTemporaryDirectory } from './helpers.js'
+import { createRuntime, createTemporaryDirectory, updateConfigFile } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
@@ -23,20 +23,19 @@ for (const command of [false, true]) {
       await symlink(join(import.meta.dirname, '../../node'), join(platformaticModules, 'node'), 'dir')
       const applicationDir = join(root, 'services', 'main')
       const cacheDir = join(applicationDir, customDirectory ? 'cache[1]' : '.plt/compile-cache')
-      const configFile = join(root, 'platformatic.json')
-      const config = JSON.parse(await readFile(configFile, 'utf8'))
-      config.watch = true
-      // Exercise the default-enabled path without the optional startup barrier.
-      delete config.compileCache
-      if (customDirectory) {
-        config.compileCache = { enabled: true, directory: cacheDir }
-      }
-      await writeFile(configFile, JSON.stringify(config))
+      const configFile = join(root, 'watt.config.js')
+      await updateConfigFile(configFile, config => {
+        config.watch = true
+        // Exercise the default-enabled path without the optional startup barrier.
+        delete config.compileCache
+        if (customDirectory) {
+          config.compileCache = { enabled: true, directory: cacheDir }
+        }
+      })
       if (!command) {
-        const appConfigFile = join(applicationDir, 'platformatic.json')
-        const appConfig = JSON.parse(await readFile(appConfigFile, 'utf8'))
-        delete appConfig.application.commands
-        await writeFile(appConfigFile, JSON.stringify(appConfig))
+        await updateConfigFile(join(applicationDir, 'watt.config.mjs'), config => {
+          delete config.application.commands
+        })
       }
 
       const app = await createRuntime(configFile)
@@ -151,7 +150,7 @@ test('compileCache - preserves runtime awaitFirstWorker with an application over
   }
 
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'compile-cache', 'platformatic.runtime.application-override.json')
+  const configFile = join(fixturesDir, 'compile-cache-app-override', 'watt.config.js')
   const app = await createRuntime(configFile)
   let flushSeen = false
   app.once('application:worker:compile-cache:flushed', () => {

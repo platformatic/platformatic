@@ -1,11 +1,11 @@
-import { deepStrictEqual, match, notStrictEqual, ok, rejects, strictEqual } from 'node:assert'
+import { deepStrictEqual, notStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
-import { resolve } from 'node:path'
+import { resolve, join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, updateConfigFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile } from '../helpers.js'
 import { findAvailablePortRange, prepareRuntime, waitForEvents } from './helper.js'
 
 const HOST = '127.0.0.1'
@@ -46,16 +46,22 @@ async function getOccupiedPortWithAvailablePreviousPort () {
 }
 
 // Configures the application to use per-worker port assignment, starting from a free range of ports.
-// The port assignment lives in the capability configuration since ports are per-application in v4.
+// The port assignment lives in the capability configuration since ports are per-application.
 async function preparePerWorkerPortRuntime (
   t,
-  { application = 'node', workerCount = 5, maxWorkerCount = workerCount, additionalApplications = [] } = {}
+  {
+    application = 'node',
+    workerCount = 5,
+    maxWorkerCount = workerCount,
+    additionalApplications = [],
+    beforeCreate
+  } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
-  await updateConfigFile(resolve(root, application, 'platformatic.json'), contents => {
+  await updateConfigFile(configurationFileIn(join(root, application)), contents => {
     contents.server = {
       ...contents.server,
       hostname: HOST,
@@ -68,28 +74,34 @@ async function preparePerWorkerPortRuntime (
     contents.autoload = undefined
     contents.metrics = false
 
-    let applicationConfig = contents.services.find(service => service.id === application)
+    let applicationConfig = contents.applications.find(service => service.id === application)
     if (!applicationConfig) {
       applicationConfig = {
         id: application,
         path: `./${application}`,
-        config: 'platformatic.json'
       }
-      contents.services.push(applicationConfig)
+      contents.applications.push(applicationConfig)
     }
 
     applicationConfig.workers = workerCount
 
     for (const additional of additionalApplications) {
-      contents.services.push(additional)
+      contents.applications.push(additional)
     }
   })
 
   if (application === 'service') {
-    await updateConfigFile(resolve(root, 'service/platformatic.json'), contents => {
+    await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
       contents.plugins.paths.push('./crash-plugin.js')
     })
   }
+
+  /*
+    Every configuration is evaluated once, when the runtime is loaded, so a test that wants a file
+    to say something different has to say it before this point -- editing it afterwards is a change
+    to a file nothing will read again.
+  */
+  await beforeCreate?.({ root, basePort })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
 
@@ -324,21 +336,24 @@ test('preserves incremental port when restarting a crashed worker', async t => {
 })
 
 test('rejects another application listening on a port used by one of the workers', async t => {
-  const { app, basePort, root } = await preparePerWorkerPortRuntime(t, {
-    workerCount: 3,
-    additionalApplications: [{ id: 'service', path: './service', config: 'platformatic.json', workers: 1 }]
-  })
-
-  // The service listens on the port assigned to the second worker of node
-  await updateConfigFile(resolve(root, 'service/platformatic.json'), contents => {
-    contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
-  })
-
+  // The service is set to the port node's second worker will take, and set before the runtime is
+  // created -- every configuration is evaluated once, at load. So the overlap is declared, and the
+  // load time check rejects it when the configuration loads, earlier than the start time check and
+  // naming both applications and the range they collide on.
   await rejects(
-    () => app.start(),
+    () =>
+      preparePerWorkerPortRuntime(t, {
+        workerCount: 3,
+        additionalApplications: [{ id: 'service', path: './service', workers: 1 }],
+        async beforeCreate ({ root, basePort }) {
+          await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
+            contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
+          })
+        }
+      }),
     error => {
-      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE', error.message)
-      match(error.message, new RegExp(`${basePort + 1}`))
+      strictEqual(error.code, 'PLT_RUNTIME_APPLICATIONS_PORTS_OVERLAP')
+      ok(error.message.includes('"node"') && error.message.includes('"service"'), error.message)
       return true
     }
   )

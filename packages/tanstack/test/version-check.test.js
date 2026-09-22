@@ -22,7 +22,9 @@ test('TanStack version is not checked in production', async t => {
     await swapVersion(t, import.meta.dirname, '@tanstack/react-start', '../..', '0.1.0')
   })
 
-  await runtime.start()
+  // Production without a build cannot start: the capability verifies its output
+  // directory. The point of the test is what is absent from the logs either way.
+  await rejects(runtime.start())
   const logs = await getLogsFromFile(root)
 
   ok(!logs.some(l => l.err?.message.includes('@tanstack/react-start version 0.1.0 is not supported')))

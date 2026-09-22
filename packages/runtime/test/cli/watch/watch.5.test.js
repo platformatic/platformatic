@@ -16,8 +16,8 @@ try {
 test('watches CommonJS files with watch', async t => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => safeRemove(tmpDir))
-  const configFileSrc = join(fixturesDir, 'configs', 'watch.json')
-  const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'watch', 'watt.config.mjs')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo', 'watt.config.mjs')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
   const cjsPluginFilePath = join(appDst, 'serviceAppWithLogger', 'plugin.js')

@@ -75,6 +75,8 @@ const sidebars = {
             'guides/use-watt-with-ts-node',
             'guides/use-watt-with-ai-agents',
             'guides/migrate-runtime-v4',
+            'guides/generating-watt-configuration',
+            'guides/hand-writing-watt-configuration',
             'guides/reproduce-graphql-composition',
             'guides/scheduler',
             'guides/dynamic-workers',

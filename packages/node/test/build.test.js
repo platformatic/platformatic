@@ -13,7 +13,7 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
-import { version } from '../index.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -27,11 +27,8 @@ async function waitForApplicationEvent (events, application) {
 
 test('should inject Platformatic code by default when building', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
-      const json = JSON.parse(contents)
-      json.application = { commands: { build: 'node build.js' } }
-
-      return JSON.stringify(json, null, 2)
+    await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
+      contents.application = { commands: { build: 'node build.js' } }
     })
 
     return writeFile(
@@ -51,12 +48,9 @@ test('should inject Platformatic code by default when building', async t => {
 
 test('should not inject Platformatic code when building if asked to', async t => {
   const { runtime, root } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
-      const json = JSON.parse(contents)
-      json.application = { commands: { build: 'node build.js' } }
-      json.node = { disablePlatformaticInBuild: true }
-
-      return JSON.stringify(json, null, 2)
+    await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
+      contents.application = { commands: { build: 'node build.js' } }
+      contents.node = { disablePlatformaticInBuild: true }
     })
 
     return writeFile(
@@ -85,26 +79,26 @@ test('should build the applications on start in dev', async t => {
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))
 })
 
+// Only this needs the loaded configuration; everything else the setup does is files on disk.
+const setRestartOnError = async (root, config) => {
+  config.restartOnError = 0
+}
+
+setRestartOnError.runAfterPrepare = true
+
 test('should not try to stop the application when build failed on start in dev', async t => {
   const { root, runtime } = await prepareRuntime({
     t,
     root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
     production: false,
-    async additionalSetup (root, config) {
-      config.restartOnError = 0
+    additionalSetup: setRestartOnError,
+    async beforeLoad (root) {
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), () => 'this is not valid typescript')
 
       await writeFile(
-        resolve(root, 'services/app-no-config/platformatic.json'),
-        JSON.stringify(
-          {
-            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
-            logger: { timestamp: 'isoTime' }
-          },
-          null,
-          2
-        ),
+        resolve(root, 'services/app-no-config/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { timestamp: 'isoTime' } }, null, 2)}\n`,
         'utf-8'
       )
 
@@ -135,21 +129,14 @@ test('should not hang if the runtime forcefully stops during start in case of er
     root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
     production: false,
-    async additionalSetup (root, config) {
-      config.restartOnError = 0
+    additionalSetup: setRestartOnError,
+    async beforeLoad (root) {
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), content =>
         content.replace('app.listen({ port: 1 })', 'setTimeout(() => app.listen({ port: 1 }), 2000)'))
 
       await writeFile(
-        resolve(root, 'services/app-no-config/platformatic.json'),
-        JSON.stringify(
-          {
-            $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
-            logger: { timestamp: 'isoTime' }
-          },
-          null,
-          2
-        ),
+        resolve(root, 'services/app-no-config/watt.config.mjs'),
+        `export default ${JSON.stringify({ module: '@platformatic/node', logger: { timestamp: 'isoTime' } }, null, 2)}\n`,
         'utf-8'
       )
     }
@@ -175,6 +162,8 @@ for (const application of ['app-no-config', 'app-with-config']) {
     const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
     await startRuntime(t, runtime)
 
+    // Both listeners must be registered before the write because a cached restart can complete
+    // immediately -- more so now that the compile cache is on by default.
     const changedEvents = on(runtime, 'application:worker:changed')
     const startedEvents = on(runtime, 'application:worker:started')
     const events = executeWithTimeout(Promise.all([
@@ -182,16 +171,22 @@ for (const application of ['app-no-config', 'app-with-config']) {
       waitForApplicationEvent(startedEvents, application)
     ]), 30000)
 
+    // Keep re-touching the file until the change is picked up: a single filesystem-watch event can
+    // be dropped (seen on Windows), and without a fresh one the watcher never fires.
+    const triggerPath = resolve(root, `services/${application}/reload.ts`)
+    const retrigger = setInterval(() => {
+      writeFile(triggerPath, `// reload ${Date.now()}\n`, 'utf-8').catch(() => {})
+    }, 2000)
+
     let result
     try {
-      // write the file to trigger a reload
-      await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
+      await writeFile(triggerPath, '// reload\n', 'utf-8')
       result = await events
     } finally {
+      clearInterval(retrigger)
       await Promise.all([changedEvents.return(), startedEvents.return()])
     }
 
-    // Both listeners must be registered before the write because a cached restart can complete immediately.
     ok(result !== kTimeout, `application ${application} did not reload within 30 seconds`)
     const [changedEvent, startedEvent] = result
     equal(changedEvent.application, application)

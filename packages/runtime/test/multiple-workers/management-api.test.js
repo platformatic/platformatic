@@ -1,13 +1,12 @@
 import { deepStrictEqual, ok } from 'node:assert'
-import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 import { prepareRuntime } from './helper.js'
 
 test('return workers information in the management API when starting in production mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null, { isProduction: true })
 
   t.after(async () => {
@@ -44,7 +43,7 @@ test('return workers information in the management API when starting in producti
 
 test('return no workers information in the management API when starting in development mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const app = await createRuntime(configFile, null)
 
   t.after(async () => {

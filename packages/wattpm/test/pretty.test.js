@@ -6,7 +6,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
 test('should use pretty printing by default', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -26,7 +26,7 @@ test('should use pretty printing by default', async t => {
 })
 
 test('should not use pretty printing if requested to', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')

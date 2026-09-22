@@ -1,3 +1,4 @@
+import { servingState } from '@platformatic/basic'
 import { ensureLoggableError, executeInParallel, executeWithTimeout, kTimeout } from '@platformatic/foundation'
 import { getEvents, getLogger, getMessaging, updateGlobals } from '@platformatic/globals'
 import { ITC, initializeITCTelemetry } from '@platformatic/itc'
@@ -313,6 +314,12 @@ export async function setupITC (controller, application, dispatcher, sharedConte
 
       getApplicationInfo () {
         return controller.capability.getInfo()
+      },
+
+      // How this worker serves, which only the worker can answer: for a worker-classified
+      // capability it depends on what the application's factory returned in this worker.
+      getServingState () {
+        return controller.capability?.getServingState?.() ?? servingState.inactive
       },
 
       async getApplicationConfig () {

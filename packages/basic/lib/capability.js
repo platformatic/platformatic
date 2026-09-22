@@ -31,6 +31,19 @@ import { NonZeroExitCode } from './errors.js'
 import { buildAdditionalServerOptions, cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
+/*
+  How a worker serves, as opposed to whether it is running: `listening` on a real port, `meshOnly`
+  reachable through the mesh with no port of its own, `background` serving no HTTP at all, and
+  `inactive` serving nothing when it was expected to. Reported by getServingState and collected by
+  the runtime; a capability that overrides getServingState returns one of these.
+*/
+export const servingState = Object.freeze({
+  listening: 'listening',
+  meshOnly: 'mesh-only',
+  background: 'background',
+  inactive: 'inactive'
+})
+
 export class BaseCapability extends EventEmitter {
   status
   type
@@ -409,27 +422,27 @@ export class BaseCapability extends EventEmitter {
     return { type: this.type, version: this.version, dependencies: this.dependencies }
   }
 
+  /*
+    See servingState for what the values mean.
+
+    getDispatchTarget cannot answer this — its fallback returns the capability whenever there is no
+    URL, whether the start method built a dispatcher or returned without building anything — so this
+    is a contract a capability implements rather than something the runtime can infer.
+
+    The default is deliberately pessimistic. A capability that neither declares servesWithoutPort
+    nor overrides this is one nothing in the system can vouch for, and of the two ways to be wrong,
+    under-reporting a working application is the recoverable one: over-reporting prints a mesh
+    address that answers nothing.
+  */
+  getServingState () {
+    return this.url ? servingState.listening : servingState.inactive
+  }
+
   getDispatchFunc () {
     return this
   }
 
   async getDispatchTarget () {
-    // When an application binds a TCP server only for WebSocket handoff purposes
-    // ("websocket" flag without "useHttp"), mesh HTTP traffic keeps being served
-    // in-thread: the TCP port is only advertised to the gateway via getMeta().
-    // This only applies to capabilities providing a real in-thread dispatch target
-    // (getDispatchFunc returning something other than the capability itself, whose
-    // inject is not implemented): the others dispatch via the bound TCP address,
-    // as under "useHttp".
-    const applicationConfig = this.context.applicationConfig
-    if (applicationConfig?.websocket && !applicationConfig.useHttp) {
-      const dispatchFunc = await this.getDispatchFunc()
-
-      if (dispatchFunc !== this) {
-        return dispatchFunc
-      }
-    }
-
     return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
@@ -941,12 +954,6 @@ export class BaseCapability extends EventEmitter {
 
     if (url.hostname === '[::]' || url.hostname === '0.0.0.0') {
       url.hostname = 'localhost'
-    }
-
-    const port = this.config.application?.entrypointPort
-
-    if (typeof port === 'number') {
-      url.port = port
     }
 
     return url.pathname === '/' && url.search === '' && url.hash === '' ? url.origin : url.toString()

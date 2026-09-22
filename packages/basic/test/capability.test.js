@@ -16,7 +16,6 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { ensureTrailingSlash } from '../lib/utils.js'
 import { create, createTemporaryDirectory, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 const expectedLogger = {
@@ -78,56 +77,6 @@ test('BaseCapability - should properly setup globals', async t => {
   deepStrictEqual(getReuseTcpPorts(), capability.reuseTcpPorts)
 })
 
-test('BaseCapability - startCommand - should expose the configured entrypoint port as url', async t => {
-  const capability = await create(
-    t,
-    {
-      applicationId: 'application',
-      serverConfig: {
-        hostname: '127.0.0.1',
-        port: 0
-      },
-      tracingConfig: {},
-      runtimeConfig: {
-        gracefulShutdown: {
-          runtime: 1000,
-          application: 1000
-        }
-      }
-    },
-    {
-      application: {
-        entrypointPort: 3042
-      }
-    }
-  )
-
-  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await capability.startWithCommand(`node ${executablePath}`)
-
-  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
-  await capability.stopCommand()
-})
-
-test('BaseCapability - setupChildManagerEventsForwarding - should keep entrypoint port on child url updates', async t => {
-  const capability = await create(
-    t,
-    {},
-    {
-      application: {
-        entrypointPort: 3042
-      }
-    }
-  )
-  const childManager = new EventEmitter()
-
-  capability.setupChildManagerEventsForwarding(childManager)
-  childManager.emit('url', 'http://127.0.0.1:1234', 'client-ws')
-
-  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
-  deepStrictEqual(capability.clientWs, 'client-ws')
-})
-
 test('BaseCapability - other getters', async t => {
   const capability = await create(
     t,
@@ -147,30 +96,21 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(await capability.getDispatchFunc(), capability)
 })
 
-test('BaseCapability - getDispatchTarget - "websocket" flag falls back to the TCP address without an in-thread dispatch target', async t => {
-  const capability = await create(t, { applicationConfig: { websocket: true } })
+test('BaseCapability - getDispatchTarget - returns the TCP address when the application has one', async t => {
+  const capability = await create(t, {})
 
   capability.url = 'http://127.0.0.1:1234'
 
   deepStrictEqual(await capability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
-test('BaseCapability - getDispatchTarget - "websocket" flag keeps in-thread dispatching when the capability provides it', async t => {
-  const capability = await create(t, { applicationConfig: { websocket: true } })
+test('BaseCapability - getDispatchTarget - falls back to the in-thread dispatch function without a URL', async t => {
+  const capability = await create(t, {})
 
   const dispatchTarget = { inject () {} }
   capability.getDispatchFunc = async () => dispatchTarget
-  capability.url = 'http://127.0.0.1:1234'
 
   deepStrictEqual(await capability.getDispatchTarget(), dispatchTarget)
-})
-
-test('BaseCapability - getDispatchTarget - "websocket" flag is ignored with "useHttp"', async t => {
-  const useHttpCapability = await create(t, { applicationConfig: { websocket: true, useHttp: true } })
-  useHttpCapability.getDispatchFunc = async () => ({ inject () {} })
-  useHttpCapability.url = 'http://127.0.0.1:1234'
-
-  deepStrictEqual(await useHttpCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
 test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {

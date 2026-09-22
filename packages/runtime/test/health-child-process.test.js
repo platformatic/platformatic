@@ -14,7 +14,7 @@ const isWindows = process.platform === 'win32'
 const HEAP_THRESHOLD = 40 * 1024 * 1024 // 40MB
 
 test('health metrics for child process should reflect subprocess memory, not coordinator thread', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+  const configFile = join(fixturesDir, 'child-process-health', 'watt.config.mjs')
 
   const app = await createRuntime(configFile)
 
@@ -50,7 +50,7 @@ test('health metrics for child process should reflect subprocess memory, not coo
 })
 
 test('child process should have V8 resource limits from health config', { skip: isWindows && 'Skipping on Windows' }, async t => {
-  const configFile = join(fixturesDir, 'child-process-health', 'platformatic.json')
+  const configFile = join(fixturesDir, 'child-process-health', 'watt.config.mjs')
 
   const app = await createRuntime(configFile)
 

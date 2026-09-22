@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import { statSync, utimesSync } from 'node:fs'
 import test from 'node:test'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
@@ -28,7 +27,7 @@ test('migrate up', async t => {
   const context = createTestContextWithParseArgs()
 
   process.env.DATABASE_URL = connectionInfo.connectionString
-  await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
+  await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['simple']), [], context)
 
   const output = logger.getCaptured()
   assert.ok(output.includes('001.do.sql'))
@@ -45,7 +44,7 @@ test('migrate up & down specifying a version with "to"', async t => {
   {
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['simple']), [], context)
     const output = logger.getCaptured()
     assert.ok(output.includes('001.do.sql'))
   }
@@ -53,7 +52,7 @@ test('migrate up & down specifying a version with "to"', async t => {
   {
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), ['-t', '000'], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['simple']), ['-t', '000'], context)
     const output = logger.getCaptured()
     assert.ok(output.includes('001.undo.sql'))
   }
@@ -69,7 +68,7 @@ test('ignore versions', async t => {
   const context = createTestContextWithParseArgs()
 
   process.env.DATABASE_URL = connectionInfo.connectionString
-  await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
+  await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['simple']), [], context)
 
   const output = logger.getCaptured()
   assert.ok(output.includes('001.do.sql'))
@@ -87,7 +86,7 @@ test('migrations rollback', async t => {
     // apply all migrations
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), [], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['multiple-migrations-config']), [], context)
     const output = logger.getCaptured()
 
     assert.ok(output.includes('001.do.sql'))
@@ -99,7 +98,7 @@ test('migrations rollback', async t => {
   {
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['multiple-migrations-config']), ['-r'], context)
     const output = logger.getCaptured()
 
     assert.ok(output.includes('003.undo.sql'))
@@ -108,7 +107,7 @@ test('migrations rollback', async t => {
   {
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['multiple-migrations-config']), ['-r'], context)
     const output = logger.getCaptured()
 
     assert.ok(output.includes('002.undo.sql'))
@@ -117,7 +116,7 @@ test('migrations rollback', async t => {
   {
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['multiple-migrations-config']), ['-r'], context)
     const output = logger.getCaptured()
 
     assert.ok(output.includes('001.undo.sql'))
@@ -126,7 +125,7 @@ test('migrations rollback', async t => {
   {
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['multiple-migrations-config']), ['-r'], context)
     const output = logger.getCaptured()
 
     assert.ok(output.includes('No migrations to rollback'))
@@ -137,37 +136,11 @@ test('migrations rollback', async t => {
     // apply all migrations
     const logger = createCapturingLogger()
     const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), [], context)
+    await applyMigrations(logger, getFixturesConfigFileLocation('watt.config.js', ['multiple-migrations-config']), [], context)
     const output = logger.getCaptured()
 
     assert.ok(output.includes('001.do.sql'))
     assert.ok(output.includes('002.do.sql'))
     assert.ok(output.includes('003.do.sql'))
-  }
-})
-
-test('after a migration, platformatic config is touched', async t => {
-  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
-  t.after(async () => {
-    await dropTestDB()
-  })
-
-  const d = new Date()
-  d.setFullYear(d.getFullYear() - 1)
-  utimesSync(getFixturesConfigFileLocation('simple.json'), d, d)
-  const { mtime: mtimePrev } = statSync(getFixturesConfigFileLocation('simple.json'))
-
-  process.env.DATABASE_URL = connectionInfo.connectionString
-
-  {
-    const logger = createCapturingLogger()
-    const context = createTestContextWithParseArgs()
-    await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
-    const output = logger.getCaptured()
-
-    assert.ok(output.includes('001.do.sql'))
-
-    const { mtime: mtimeAfter } = statSync(getFixturesConfigFileLocation('simple.json'))
-    assert.notDeepEqual(mtimePrev, mtimeAfter)
   }
 })

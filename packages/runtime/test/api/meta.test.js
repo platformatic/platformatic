@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get meta for db applications in runtime schema', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -29,7 +29,7 @@ test('should get meta for db applications in runtime schema', async t => {
 })
 
 test('should retry meta retrieval when the selected worker exits', async t => {
-  const configFile = join(fixturesDir, 'meta-worker-exit', 'platformatic.json')
+  const configFile = join(fixturesDir, 'meta-worker-exit', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   await app.start()

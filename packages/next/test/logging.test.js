@@ -1,10 +1,9 @@
 import { deepStrictEqual, ok } from 'node:assert'
-import { cp } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import {
-  commonFixturesRoot,
+  copyCommonApplication,
   ensureDependencies,
   getLogsFromFile,
   prepareRuntime,
@@ -12,6 +11,7 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -22,14 +22,12 @@ test('can properly show the logs the output', async t => {
     production: true,
     port: 0,
     additionalSetup: async root => {
-      await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-        const json = JSON.parse(contents)
-        json.workers = 3
-        return JSON.stringify(json, null, 2)
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.workers = 3
       })
 
-      await cp(resolve(commonFixturesRoot, 'composer-js'), resolve(root, 'services/composer'), { recursive: true })
-      await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), { recursive: true })
+      await copyCommonApplication(root, 'composer')
+      await copyCommonApplication(root, 'backend')
       await ensureDependencies([resolve(root, 'services/composer'), resolve(root, 'services/backend')])
 
       await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {

@@ -172,38 +172,6 @@ export async function envCommand (logger, args) {
   }
 }
 
-export async function configCommand (logger, args) {
-  const { positionals: allPositionals } = parseArgs(args, {}, false)
-
-  let application
-  const client = new RuntimeApiClient({ logger, socket: this.socket })
-  try {
-    const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
-    application = positionals[0]
-
-    const config = application
-      ? await client.getRuntimeApplicationConfig(runtime.pid, application)
-      : await client.getRuntimeConfig(runtime.pid)
-
-    console.log(JSON.stringify(config, null, 2))
-  } catch (error) {
-    if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      return logFatalError(logger, 'Cannot find a matching runtime.')
-    } else if (error.code === 'PLT_CTR_APPLICATION_NOT_FOUND') {
-      return logFatalError(logger, 'Cannot find a matching application.')
-      /* c8 ignore next 7 */
-    } else {
-      return logFatalError(
-        logger,
-        { error: ensureLoggableError(error) },
-        `Cannot get ${application ? 'application' : 'runtime'} configuration: ${error.message}`
-      )
-    }
-  } finally {
-    await client.close()
-  }
-}
-
 export const help = {
   ps: {
     usage: 'ps',
@@ -229,21 +197,6 @@ export const help = {
         description: 'Show variables in tabular way'
       }
     ],
-    args: [
-      {
-        name: 'id',
-        description:
-          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
-      },
-      {
-        name: 'application',
-        description: 'The application name'
-      }
-    ]
-  },
-  config: {
-    usage: 'config [id] [application]',
-    description: 'Show the configuration of a running Watt server or one of its applications',
     args: [
       {
         name: 'id',

@@ -40,7 +40,7 @@ test('removes root and application server configuration', async () => {
   strictEqual(warnings.length, 1)
   strictEqual(
     warnings[0],
-    'Runtime v4 no longer supports a root server configuration. Move it into the configuration of the capability that owns the listener.'
+    'This runtime no longer supports a root server configuration. Move it into the configuration of the capability that owns the listener.'
   )
 })
 

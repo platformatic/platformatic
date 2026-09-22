@@ -14,7 +14,7 @@ export async function upgrade (logger, config, version) {
 
   if (isRuntimeSchema && config.server && lt(version, '4.0.0')) {
     runtimeLogger.warn(
-      'Runtime v4 no longer supports a root server configuration. Move it into the configuration of the capability that owns the listener.'
+      'This runtime no longer supports a root server configuration. Move it into the configuration of the capability that owns the listener.'
     )
   }
 

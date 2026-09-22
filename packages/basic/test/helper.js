@@ -22,6 +22,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Agent, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 import { BaseCapability } from '../lib/capability.js'
 
 export { setTimeout as sleep, setImmediate as sleepImmediate } from 'node:timers/promises'
@@ -36,6 +37,10 @@ let temporaryDirectoryCount = 0
 export const LOGS_TIMEOUT = 100
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 export const HMR_CONNECTION_TIMEOUT = 5000
+// A single WebSocket upgrade attempt that neither opens nor errors within this window is treated as
+// a transient failure and retried. Without it, an upgrade the server leaves open (an HMR path it
+// does not serve) hangs the connect forever.
+export const WS_CONNECT_ATTEMPT_TIMEOUT = process.env.CI ? 10000 : 5000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
 
 export let fixturesDir
@@ -45,9 +50,46 @@ export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
+
+// One directory again: every package that copies these applications uses the current format, so
+// there is no longer a dialect to choose between. The function stays because it is also the one
+// place that knows an application is copied to services/<type>.
+export async function copyCommonApplication (root, type, language = 'js') {
+  await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
+    recursive: true
+  })
+}
+
 export const httpsFixtureRoot = fileURLToPath(
   new URL('../../node/test/fixtures/node-https-standalone', import.meta.url)
 )
+
+/*
+  Assigning the listeners for a project happens on the loaded configuration, not by rewriting a
+  file. Configurations are code, so there is nothing to JSON.parse and edit -- and by the time
+  the runtime exists the applications have already been evaluated. The resolved payload is what the
+  worker receives, so setting the port there is setting the port the application binds.
+*/
+function applyListenerPorts (config, port) {
+  const applications = config.applications ?? []
+  const target = getTargetApplication(applications)
+  const listeners = new Set([
+    target,
+    applications.find(application => application.id === 'frontend'),
+    applications.find(application => application.id === 'next')
+  ])
+
+  for (const application of listeners) {
+    if (!application) {
+      continue
+    }
+
+    const applicationConfig = (application.resolvedConfig ??= {})
+    applicationConfig.server ??= {}
+    applicationConfig.server.hostname ??= '127.0.0.1'
+    applicationConfig.server.port = application === target ? port : (applicationConfig.server.port ?? 0)
+  }
+}
 
 function getTargetApplication (applications) {
   return applications.find(application => application.id === 'external-proxy') ??
@@ -82,6 +124,17 @@ async function updateApplicationConfig (application, update, required = false) {
     return
   }
 
+  /*
+    An application carries its evaluated configuration rather than a path to one, and its worker
+    is handed that payload instead of re-reading a file. Editing a file here would therefore change
+    nothing -- the runtime already holds the object the worker will receive, so the update belongs
+    to it. This runs before start, which is when workerData is built.
+  */
+  if (application.resolvedConfig) {
+    await update(application.resolvedConfig)
+    return application.resolvedConfig
+  }
+
   let configFile = application.config
   if (!configFile) {
     configFile = listRecognizedConfigurationFiles()
@@ -105,13 +158,28 @@ async function updateApplicationConfig (application, update, required = false) {
       return
     }
 
-    configFile = resolve(application.path, 'platformatic.application.json')
-    await writeFile(configFile, JSON.stringify({ $schema: `https://schemas.platformatic.dev/${capability}/3.0.0.json` }, null, 2))
+    /*
+      An application the detector resolved has no configuration file, and giving it one is how the
+      caller adjusts it. The file has to use a current name: a legacy name in an application directory is
+      refused by the loader on sight, so writing one here made the project unbootable.
+    */
+    configFile = join(application.path, 'watt.config.mjs')
+    await writeFile(configFile, `export default ${JSON.stringify({ module: capability }, null, 2)}\n`, 'utf-8')
   }
 
-  const applicationConfig = JSON.parse(await readFile(configFile, 'utf-8'))
+  const applicationConfig = /\.(js|mjs|ts|mts)$/.test(configFile)
+    ? (await import(`${pathToFileURL(configFile).href}?update=${Date.now()}`)).default
+    : JSON.parse(await readFile(configFile, 'utf-8'))
   await update(applicationConfig)
-  await writeFile(configFile, JSON.stringify(applicationConfig, null, 2), 'utf-8')
+
+  // Written back in the dialect it was read in.
+  await writeFile(
+    configFile,
+    /\.(js|mjs|ts|mts)$/.test(configFile)
+      ? `export default ${JSON.stringify(applicationConfig, null, 2)}\n`
+      : JSON.stringify(applicationConfig, null, 2),
+    'utf-8'
+  )
 
   return applicationConfig
 }
@@ -131,6 +199,10 @@ export async function configureHTTPS (_root, config) {
     }
   })
 }
+
+// It reads the loaded configuration rather than the directory, so it belongs after the load. The
+// update still lands before start, which is when a worker is handed its configuration.
+configureHTTPS.runAfterPrepare = true
 
 export function createHTTPSDispatcher (t) {
   const dispatcher = new Agent({
@@ -420,31 +492,12 @@ export async function buildRuntime (root) {
   process.chdir(originalCwd)
 }
 
-export async function prepareRuntime (t, fixturePath, production, configFile, additionalSetup) {
-  let source
-  let port
-  let build
-
-  if (t.constructor.name !== 'TestContext') {
-    source = t.root
-    port = t.port
-    build = t.build
-    production = t.production ?? production
-    configFile = t.configFile ?? configFile
-    additionalSetup = t.additionalSetup || additionalSetup
-    t = t.t
-  }
-
-  source ??= resolve(fixturesDir, fixturePath)
-  build ??= false
-  production ??= false
-  configFile ??= 'platformatic.runtime.json'
-
-  if (port === 0) {
-    port = await getPort.default()
-  }
-
-  const originalCwd = process.cwd()
+/*
+  beforeLoad exists for the setups that need both sides of the load: a file written into an
+  application directory has to be there before the applications are resolved, while a change to the
+  loaded configuration can only happen once there is one. A single hook cannot do both.
+*/
+async function copyFixture (source) {
   let root
   let index = 0
 
@@ -469,12 +522,116 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
 
   currentWorkingDirectory = root
 
-  // Copy the fixtures
   await cp(source, root, { recursive: true })
 
-  const rawConfig = await loadConfiguration(root, configFile, { production, allowMissingEntrypoint: true })
+  return root
+}
+
+/*
+  A copy of a fixture on disk, with its dependencies linked, and nothing loaded. It is what a test
+  needs when the fixture deliberately does not load yet -- an application whose capability is
+  missing is exactly what `wattpm-utils import` exists to fix -- because every application's
+  capability is validated when the root is read, so merely creating a runtime over such a fixture
+  fails before the command under test runs.
+*/
+export async function prepareFixture (t, fixturePath) {
+  const root = await copyFixture(resolve(fixturesDir, fixturePath))
 
   await ensureDependencies([root])
+
+  return { root }
+}
+
+export async function prepareRuntime (t, fixturePath, production, configFile, additionalSetup, beforeLoad) {
+  let source
+  let port
+  let build
+
+  if (t.constructor.name !== 'TestContext') {
+    source = t.root
+    port = t.port
+    build = t.build
+    production = t.production ?? production
+    configFile = t.configFile ?? configFile
+    additionalSetup = t.additionalSetup || additionalSetup
+    beforeLoad = t.beforeLoad || beforeLoad
+    t = t.t
+  }
+
+  source ??= resolve(fixturesDir, fixturePath)
+  build ??= false
+  production ??= false
+
+  // Discover rather than assume, so a package whose fixtures have been converted to the current
+  // format and one whose fixtures are still in the legacy format both work without every test
+  // naming its configuration. The legacy fallback goes when the last fixture does.
+  /*
+    Discovery over both dialects, current format first. A fixed fallback only worked while every
+    fixture used the legacy format, and it stopped working the moment some were not -- the fixtures
+    that stay legacy are the ones whose readers still are, and a test naming none of this should
+    not have to know which is which.
+  */
+  configFile ??=
+    [
+      'watt.config.js',
+      'watt.config.mjs',
+      'watt.config.ts',
+      'watt.config.mts',
+      'watt.json',
+      'platformatic.json',
+      'watt.runtime.json',
+      'platformatic.runtime.json'
+    ].find(candidate => existsSync(resolve(source, candidate))) ?? 'platformatic.runtime.json'
+
+  if (port === 0) {
+    /*
+      Below the ephemeral range, deliberately. A reserved port is chosen here, released, and bound
+      by the runtime moments later — while sibling applications configured `port: 0` are being
+      handed ports by the OS from 32768-60999. Drawing the reserved one from that same range means
+      a sibling can be given it in the gap, which surfaces as PLT_RUNTIME_EADDR_IN_USE naming two
+      applications that never shared a port in any configuration.
+    */
+    port = await getPort.default({ port: getPort.portNumbers(10000, 30000) })
+  }
+
+  const originalCwd = process.cwd()
+  const root = await copyFixture(source)
+
+  /*
+    Setup runs before the configuration is read, not after. Every application is resolved when the
+    root is loaded -- its directory, its capability, its own configuration -- so a setup that
+    copies applications into the project has to have finished by then. It once could run afterwards,
+    because an application was not looked at until its worker started.
+
+    A setup that needs the loaded configuration rather than the directory says so with
+    runAfterPrepare, and still runs at the end.
+  */
+  if (beforeLoad) {
+    await beforeLoad(root)
+  }
+
+  if (additionalSetup && !additionalSetup.runAfterPrepare) {
+    await additionalSetup(root)
+  }
+
+  /*
+    The root's dependencies are linked before the configuration is read, not after. Each
+    application's capability configuration is validated main-side, against the schema imported from
+    that capability — so the capability has to be resolvable when the configuration is loaded, which
+    is earlier in the lifecycle than it once needed to be. Loading first and linking afterwards
+    worked only while nothing at load time went looking for the package.
+  */
+  await ensureDependencies([root])
+
+  // This load exists to find the application paths so their dependencies can be linked, so it
+  // deliberately skips capability validation: the capabilities are precisely what is not installed
+  // yet.
+  const rawConfig = await loadConfiguration(root, configFile, {
+    production,
+    allowMissingEntrypoint: true,
+    validateCapabilities: false
+  })
+
   await ensureDependencies(rawConfig)
 
   process.chdir(root)
@@ -502,15 +659,23 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
         }
       }
 
+      // The listeners are assigned here before any worker starts: there is no configuration
+      // file to rewrite afterwards, and the resolved payload is what the worker is handed.
+      if (typeof port === 'number' && config[kMetadata]?.loader) {
+        applyListenerPorts(config, port)
+      }
+
       return config
     }
   })
 
   const config = await runtime.getRuntimeConfig(true)
 
-  await additionalSetup?.(root, config)
+  if (additionalSetup?.runAfterPrepare) {
+    await additionalSetup(root, config)
+  }
 
-  if (typeof port === 'number') {
+  if (typeof port === 'number' && !config[kMetadata]?.loader) {
     const target = getTargetApplication(config.applications ?? [])
     const listeners = new Set([
       target,
@@ -578,7 +743,7 @@ export async function createRuntime (
   fixturePath,
   pauseAfterCreation = false,
   production = false,
-  configFile = 'platformatic.runtime.json',
+  configFile = undefined,
   additionalSetup = null
 ) {
   const preparationOptions = t.constructor.name === 'TestContext'
@@ -600,7 +765,7 @@ export async function createProductionRuntime (
   t,
   fixturePath,
   pauseAfterCreation = false,
-  configFile = 'platformatic.runtime.json',
+  configFile = undefined,
   additionalSetup = null
 ) {
   return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile, additionalSetup)
@@ -610,9 +775,69 @@ export async function getLogsFromFile (root) {
   return (await readFile(resolve(root, 'logs.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
 }
 
+// A dev server takes a moment to become reachable, and on a loaded runner -- notably Windows and
+// bleeding-edge Node -- that moment can outlast the test's first connection: the HTTP port may not
+// be listening yet (ECONNREFUSED) or the freshly opened socket may be reset (ECONNRESET). Neither is
+// a test failure, so the two connect helpers below retry a transient connection error until a
+// generous deadline rather than assert on the race. A non-2xx *response* is a real answer and is
+// never retried.
+const transientRequestCodes = new Set(['ECONNRESET', 'ECONNREFUSED', 'UND_ERR_SOCKET', 'EPIPE', 'ECONNABORTED', 'ETIMEDOUT'])
+
+function isTransientConnectionError (error) {
+  return transientRequestCodes.has(error?.code ?? error?.cause?.code)
+}
+
+export async function requestWithRetry (url, options, timeoutMs = 15000, delay = 250) {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    try {
+      return await request(url, options)
+    } catch (error) {
+      if (Date.now() >= deadline || !isTransientConnectionError(error)) {
+        throw error
+      }
+      await sleep(delay)
+    }
+  }
+}
+
+// Open a WebSocket, retrying the connection while the server is still coming up. Returns an open
+// socket, or throws the last connection error once the deadline passes.
+export async function connectWebSocketWithRetry (wsUrl, protocol, timeoutMs = 20000, delay = 500) {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const ws = new WebSocket(wsUrl, protocol)
+    try {
+      await new Promise((resolve, reject) => {
+        // Bound the individual attempt. An upgrade the dev server neither accepts nor refuses -- an
+        // HMR path it does not serve, which Next.js leaves open rather than closing -- never fires
+        // 'open' or 'error', and without this timer it would hang here forever, past the deadline the
+        // catch block checks, defeating the path fallback in verifyHMR.
+        const attemptTimer = setTimeout(() => reject(new Error('WS_CONNECT_ATTEMPT_TIMEOUT')), WS_CONNECT_ATTEMPT_TIMEOUT)
+        ws.once('open', () => {
+          clearTimeout(attemptTimer)
+          resolve()
+        })
+        ws.once('error', err => {
+          clearTimeout(attemptTimer)
+          reject(err)
+        })
+      })
+      return ws
+    } catch (error) {
+      ws.terminate()
+      const retryable = error.message === 'WS_CONNECT_ATTEMPT_TIMEOUT' || isTransientConnectionError(error)
+      if (Date.now() >= deadline || !retryable) {
+        throw error
+      }
+      await sleep(delay)
+    }
+  }
+}
+
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
-  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -623,7 +848,7 @@ export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedCo
 }
 
 export async function verifyJSONViaHTTPS (baseUrl, path, expectedCode, expectedContent, dispatcher) {
-  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -646,7 +871,7 @@ export async function verifyJSONViaInject (app, applicationId, method, url, expe
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
-  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, headers, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)
@@ -665,7 +890,7 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
 }
 
 export async function verifyHTMLViaHTTPS (baseUrl, path, contents, dispatcher) {
-  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, headers, body } = await requestWithRetry(baseUrl + path, { dispatcher })
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)
@@ -726,17 +951,19 @@ export async function verifyHMR (root, runtime, url, path, protocol, handler) {
 async function verifyHMRPath (root, runtime, url, path, protocol, handler) {
   const connection = Promise.withResolvers()
   const reload = Promise.withResolvers()
+
+  // The HMR server can take a moment to accept WebSocket connections after the app answers over
+  // HTTP -- longer on a loaded Windows runner than a fixed delay would allow -- so retry the connect
+  // until it opens instead of racing it with a single attempt after a fixed sleep. The HMR timeout
+  // below is started only once the socket is open, so the connect retry does not eat into it.
+  const webSocket = await connectWebSocketWithRetry(url.replace('http:', 'ws:') + path, protocol)
+
   const ac = new AbortController()
   const connectionTimeout = sleep(HMR_CONNECTION_TIMEOUT, kTimeout, { signal: ac.signal })
   let active = true
 
   connection.promise.catch(() => {})
   reload.promise.catch(() => {})
-
-  // Some delay to ensure the server is ready to accept WebSocket connections
-  await sleep(1000)
-
-  const webSocket = new WebSocket(url.replace('http:', 'ws:') + path, protocol)
 
   webSocket.on('error', err => {
     if (!active) {
@@ -876,9 +1103,7 @@ export async function prepareRuntimeWithApplications (
     port: 0,
     additionalSetup: async (root, config, _args) => {
       for (const type of ['backend', 'composer']) {
-        await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-          recursive: true
-        })
+        await copyCommonApplication(root, type, language)
       }
 
       await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
@@ -1052,9 +1277,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           port: 0,
           additionalSetup: async (root, config, _args) => {
             for (const type of ['backend', 'composer']) {
-              await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-                recursive: true
-              })
+              await copyCommonApplication(root, type, language)
             }
 
             await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
@@ -1062,10 +1285,10 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
             })
 
             if (id.endsWith('without-prefix')) {
-              await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-                const json = JSON.parse(contents)
-                json.gateway.applications[1].proxy = { prefix: '' }
-                return JSON.stringify(json, null, 2)
+              // Through updateConfigFile rather than a JSON.parse of a named file: the fixture may
+              // be written in either dialect, and only one of them is JSON.
+              await updateConfigFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+                contents.gateway.applications[1].proxy = { prefix: '' }
               })
             }
 
@@ -1102,11 +1325,12 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
 }
 
 export async function verifyReusePort (t, configuration, integrityCheck, additionalSetup, requestOptions = {}) {
-  const port = await getPort.default()
+  // Below the ephemeral range, for the reason given where the other reserved port is chosen.
+  const port = await getPort.default({ port: getPort.portNumbers(10000, 30000) })
   let protocol
 
-  // Create the runtime
-  const { runtime, root } = await prepareRuntime(t, configuration, true, null, async (root, config) => {
+  // Reads the loaded configuration, so it runs after the load and before start.
+  const setup = async (root, config) => {
     await updateTargetApplicationConfig(config, applicationConfig => {
       applicationConfig.server ??= {}
       applicationConfig.server.hostname ??= '127.0.0.1'
@@ -1117,7 +1341,12 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
 
     await additionalSetup?.(root, config)
-  })
+  }
+
+  setup.runAfterPrepare = true
+
+  // Create the runtime
+  const { runtime, root } = await prepareRuntime(t, configuration, true, null, setup)
 
   // Build
   await buildRuntime(root)

@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application details', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -23,10 +23,11 @@ test('should get application details', async t => {
     id: 'with-logger',
     type: 'service',
     status: 'started',
+    servingState: 'listening',
     version,
     localUrl: 'http://with-logger.plt.local',
-    config: resolve(configFile, '../../monorepo/serviceAppWithLogger/platformatic.service.json'),
-    path: resolve(configFile, '../../monorepo/serviceAppWithLogger'),
+    configPath: resolve(configFile, '../../../monorepo/serviceAppWithLogger/watt.config.mjs'),
+    path: resolve(configFile, '../../../monorepo/serviceAppWithLogger'),
     dependencies: [],
     sourceMaps: false
   })

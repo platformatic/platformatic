@@ -8,7 +8,8 @@ import {
   errors,
   getServerUrl,
   importFile,
-  injectViaRequest
+  injectViaRequest,
+  servingState
 } from '@platformatic/basic'
 import { getEvents } from '@platformatic/globals'
 import inject from 'light-my-request'
@@ -267,6 +268,25 @@ export class NodeCapability extends BaseCapability {
     // No need to keep the server promise around anymore, we either have the URL or we are a background service
     serverPromise?.cancel()
     return this.url
+  }
+
+  /*
+    Node knows three of these and two are only knowable after the application's code has run: a
+    factory that returned a background result, and a module-level hasServer export. The distinction
+    between background and mesh-only matters to the caller — a mesh-only application still answers
+    injected requests, a background one refuses them — so it is drawn here rather than collapsed
+    into the single boolean #hasServer needs.
+  */
+  getServingState () {
+    if (this.#app?.isBackgroundApplication === true) {
+      return servingState.background
+    }
+
+    if (this.url) {
+      return servingState.listening
+    }
+
+    return this.#app ? servingState.meshOnly : servingState.inactive
   }
 
   #hasServer () {

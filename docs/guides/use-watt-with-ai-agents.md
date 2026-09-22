@@ -2,9 +2,9 @@
 
 ## Problem
 
-You want an AI coding agent (Claude Code, Cursor, GitHub Copilot, Gemini CLI, and others) to set up and run Platformatic Watt for you, instead of writing `watt.json` and wiring up dependencies and deployment manifests by hand. You need the agent to:
+You want an AI coding agent (Claude Code, Cursor, GitHub Copilot, Gemini CLI, and others) to set up and run Platformatic Watt for you, instead of writing `watt.config.ts` and wiring up dependencies and deployment manifests by hand. You need the agent to:
 
-- Detect your framework and generate a correct `watt.json`
+- Detect your framework and generate a correct `watt.config.ts`
 - Install the right `wattpm` and `@platformatic/*` packages
 - Produce Docker, Kubernetes, and cloud deployment configuration
 - Guide you through `wattpm` CLI commands, observability, scheduling, and profiling
@@ -77,7 +77,7 @@ When the skill is loaded as a Claude Code plugin, it exposes argument-based slas
 | Capability | Description |
 |------------|-------------|
 | Framework detection | Identifies Next.js, Nuxt, Nitro, React Router, TanStack Start, Vite, Remix, Astro, NestJS, Express, Fastify, Koa, WordPress, Laravel, and PHP |
-| Configuration generation | Creates a `watt.json` tuned to the detected framework |
+| Configuration generation | Creates a `watt.config.ts` tuned to the detected framework |
 | Dependency installation | Installs `wattpm` and the matching `@platformatic/*` package |
 | Deployment automation | Generates Docker, Kubernetes, and cloud (Fly.io, Railway, Render) configuration |
 | CLI guidance | Explains `wattpm` commands such as `create`, `inject`, `logs`, `ps`, and `pprof` |
