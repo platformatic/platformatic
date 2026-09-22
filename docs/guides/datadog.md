@@ -27,8 +27,32 @@ npm install --save-exact dd-trace@6.16.0
 
 ## Configure the Agent
 
-If you already have a reachable Agent, use its URL in the next section. Otherwise,
-create `.env.agent` with your Datadog API key and site:
+Each application worker sends traces to a Datadog Agent. The Agent forwards them
+over HTTPS to Datadog's cloud intake, using `DD_API_KEY` to authenticate and
+`DD_SITE` to select your Datadog region (for example, `datadoghq.com` or
+`datadoghq.eu`). The API key belongs to the Agent, not the application's environment.
+
+### Cloud deployments
+
+Deploy an Agent with APM enabled alongside your workload, or use an existing
+reachable Agent. Follow [Datadog's Agent setup instructions](https://docs.datadoghq.com/agent/)
+for your infrastructure: a host Agent for a VM, a node Agent for Kubernetes, or
+an Agent sidecar for a container deployment such as ECS Fargate.
+
+Configure the Agent with your API key and site, and allow it outbound HTTPS access
+to Datadog. When applications connect from another container or host, configure
+the Agent to accept non-local APM traffic (`DD_APM_NON_LOCAL_TRAFFIC=true`) and
+make its APM port reachable from the applications on the private network.
+
+Set `DD_TRACE_AGENT_URL` in the Watt deployment's environment to the Agent's APM
+endpoint, for example `http://datadog-agent:8126`, replacing `datadog-agent` with
+the reachable Agent hostname or IP address. Use `127.0.0.1` only when Watt and the
+Agent share a host or network namespace. This URL points to the Agent, not to
+the Datadog website or cloud intake.
+
+### Optional local Agent
+
+To try the guide locally, create `.env.agent` with your Datadog API key and site:
 
 ```dotenv title=".env.agent"
 DD_API_KEY=replace-with-your-api-key
@@ -47,23 +71,31 @@ docker run -d --name watt-datadog-agent \
   gcr.io/datadoghq/agent:7
 ```
 
-The application runs on the host; the Agent accepts Docker-forwarded APM traffic.
-For a containerized application, use the Agent's network hostname instead of
-`127.0.0.1`.
+The application runs on the host; the Agent accepts Docker-forwarded APM traffic
+and forwards traces to your Datadog account. Even with this local setup, you view
+the traces in Datadog's cloud UI.
 
-Add these settings to the project's root `.env`:
+### Application environment
+
+For the local setup, add these settings to the project's root `.env`. In a cloud
+deployment, provide them through your deployment's environment configuration,
+using the Agent URL described above:
 
 ```dotenv
 DD_TRACE_AGENT_URL=http://127.0.0.1:8126
 DD_ENV=local
 DD_VERSION=1.0.0
-DD_TRACE_SAMPLE_RATE=1
-DD_PROFILING_ENABLED=false
-DD_RUNTIME_METRICS_ENABLED=false
 ```
 
-Full sampling is useful for verification; adjust it for production. The API key
-belongs to the Agent, not the application's environment.
+Set `DD_ENV` and `DD_VERSION` to your deployment environment and release version;
+the values above are examples for local verification. You can temporarily set
+`DD_TRACE_SAMPLE_RATE=1` to sample every trace while verifying the integration;
+use your normal sampling policy in production.
+
+Tracing does not require disabling profiling or runtime metrics. Configure those
+features independently according to your deployment's needs; see Datadog's
+[Node.js profiler setup](https://docs.datadoghq.com/profiler/enabling/nodejs/) and
+[Node.js runtime metrics configuration](https://docs.datadoghq.com/tracing/metrics/runtime_metrics/nodejs/).
 
 ## Initialize Datadog in every application worker
 
@@ -130,11 +162,14 @@ startup imports. Load shared tracer settings before starting Watt; set each
 application's service name in the initializer.
 :::
 
-Start from the project root, loading `.env` before Watt:
+For the local setup, start from the project root, loading `.env` before Watt:
 
 ```sh
 node --env-file=.env node_modules/wattpm/bin/cli.js start
 ```
+
+In a cloud deployment that already supplies the environment variables, omit
+`--env-file=.env`.
 
 Use `start`, not `dev`: development mode forces one worker per application.
 This configuration runs five application workers, plus any internal threads.
@@ -153,6 +188,8 @@ select a recent time window. Search for:
 ```text
 env:local service:watt-frontend
 ```
+
+Replace `local` with the `DD_ENV` value used by your deployment.
 
 Check the following:
 
@@ -179,18 +216,19 @@ not prove tracing works; separately verify Agent forwarding and Datadog ingestio
 
 ## Troubleshooting
 
-- **No traces:** run `docker exec watt-datadog-agent agent status`; check the APM
-  section, Agent URL, API key/site, and the time window in Datadog.
+- **No traces:** check the Agent's status and APM section (for the local Docker
+  example, run `docker exec watt-datadog-agent agent status`). Check connectivity
+  from Watt to the Agent, the Agent's outbound connectivity to Datadog, its API
+  key/site, and the environment filter and time window in Datadog.
 - **Missing or disconnected spans:** check the startup imports on every
   application and that the tracer loads before instrumented modules. Temporarily
-  set `DD_TRACE_DEBUG=true` in the root `.env` and restart.
+  set `DD_TRACE_DEBUG=true` in the root `.env` or deployment environment and restart.
 - **Only one replica per application:** use production mode with `wattpm start`.
 - **No logs in Datadog:** `logInjection` enriches application logs with correlation
   fields; shipping those logs requires separate log collection configuration.
 
 This guide uses native `dd-trace`, without Watt's built-in OpenTelemetry tracing.
-Combining tracing SDKs, enabling profiling, or collecting runtime metrics requires
-separate configuration and verification.
+Combining tracing SDKs requires separate configuration and verification.
 
 To remove the local Agent when finished:
 
