@@ -99,7 +99,7 @@ export class CacheHandler {
     } catch (e) {
       this.#cacheMissMetric?.inc()
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot read cache value from Valkey')
-      throw new Error('Cannot read cache value from Valkey', { cause: e })
+      return
     }
 
     let value

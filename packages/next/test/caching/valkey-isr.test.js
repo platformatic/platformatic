@@ -707,7 +707,7 @@ test('should not extend the TTL over the original intended one', async t => {
   ])
 })
 
-test('should handle read error', async t => {
+test('should treat read errors as cache misses', async t => {
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   await cleanupCache(valkey)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
@@ -725,8 +725,48 @@ test('should handle read error', async t => {
 
   const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
-  deepStrictEqual((await response.json()).time, 0)
+  deepStrictEqual(response.status, 200)
+  notDeepStrictEqual((await response.json()).time, 0)
   await completed
+
+  await runtime.close()
+  const logs = await getLogsFromFile(root)
+
+  ok(
+    logs.find(l => {
+      return (
+        l.msg === 'Cannot read cache value from Valkey' &&
+        l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'get' command"
+      )
+    })
+  )
+})
+
+test('should serve production pages when Valkey reads fail', async t => {
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', 'allcommands')
+
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
+    await setCacheSettings(root, cache => {
+      cache.url = cache.url.replace('://', '://plt-caching-test@')
+    })
+  })
+
+  t.after(async () => {
+    await valkey.acl('delUser', valkeyUser)
+    await valkey.disconnect()
+  })
+
+  let response = await fetch(url)
+  deepStrictEqual(response.status, 200)
+
+  await valkey.acl('deluser', valkeyUser)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
+
+  response = await fetch(url)
+  deepStrictEqual(response.status, 200)
+  ok((await response.text()).includes('Hello from v'))
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
