@@ -282,6 +282,7 @@ export interface PlatformaticComposerConfig {
               eluThreshold?: number;
               heapThresholdMb?: number;
               processIntervalMs?: number;
+              maxScaleUpStep?: number;
               scaleUpMargin?: number;
               scaleDownMargin?: number;
               redistributionMs?: number;

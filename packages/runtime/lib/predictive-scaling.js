@@ -245,7 +245,7 @@ export class PredictiveScalingAlgorithm {
     if (targetCount > this.#targetCount) {
       const scaleAt = now + this.#initTimeoutMs
       for (let i = this.#targetCount; i < targetCount; i++) {
-        this.#pendingScaleUps.push({ scaleAt, decisionAt: now })
+        this.#pendingScaleUps.push({ scaleAt, decisionAt: now, expectedCount: i + 1 })
       }
       this.#lastScaleUpTime = now
     } else {
@@ -305,8 +305,13 @@ export class PredictiveScalingAlgorithm {
   }
 
   #resolvePendingScaleUp (startTime) {
-    const pending = this.#pendingScaleUps.shift()
-    if (pending) {
+    // A replacement that only restores the previous count does not fulfil a
+    // scale-up. Measure when the requested number of live workers is reached.
+    while (this.#pendingScaleUps.length > 0) {
+      const pending = this.#pendingScaleUps[0]
+      if (this.#workerIdMapper.size < pending.expectedCount) break
+
+      this.#pendingScaleUps.shift()
       const initTime = startTime - pending.decisionAt
       this.#initTimeoutWindow.push(initTime)
       if (this.#initTimeoutWindow.length > INIT_TIMEOUT_CONFIG.windowSize) {
@@ -451,6 +456,10 @@ export class WorkerIdMapper {
 
   get (workerId) {
     return this.#map.get(workerId)
+  }
+
+  get size () {
+    return this.#map.size
   }
 }
 

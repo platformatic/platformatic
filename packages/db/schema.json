@@ -2158,6 +2158,10 @@
                       "type": "number",
                       "minimum": 0
                     },
+                    "maxScaleUpStep": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
                     "scaleUpMargin": {
                       "type": "number",
                       "minimum": 0

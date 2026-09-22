@@ -78,6 +78,7 @@ export const workers = {
             eluThreshold: { type: 'number', minimum: 0, maximum: 1 },
             heapThresholdMb: { type: 'number', minimum: 0 },
             processIntervalMs: { type: 'number', minimum: 0 },
+            maxScaleUpStep: { type: 'integer', minimum: 1 },
             scaleUpMargin: { type: 'number', minimum: 0 },
             scaleDownMargin: { type: 'number', minimum: 0 },
             redistributionMs: { type: 'number', minimum: 0 },

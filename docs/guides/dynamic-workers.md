@@ -271,16 +271,20 @@ Key properties:
 
 Each metric (ELU, heap) is processed independently. When multiple metrics are used, the highest target worker count wins.
 
+Startup time is measured from the approved scale-up request until worker lifecycle events show that the expected live worker count has been reached. A replacement that only restores the previous count does not complete a pending scale-up. This is an approximation when restarts overlap scaling: a replacement can temporarily raise the count before the old worker exits.
+
 ### Global Arbitration
 
 When multiple applications are managed, the orchestrator coordinates scaling:
 
 - **Scale-downs** are applied freely — all applications that need fewer workers are scaled down in the same cycle
-- **Scale-ups** are limited to one per processing cycle across all applications
+- **Scale-ups** select one application per processing cycle and add at most `maxScaleUpStep` workers (default: `1`), limited by its requested target and the total worker limit
 - When multiple applications need to scale up, the one with the **highest relative need** is chosen: `(desiredTarget - currentTarget) / currentTarget`. This favors applications with fewer workers relative to demand (scaling 1→2 has more impact than 4→5)
 - Scale-ups are gated by:
   - Total worker count limit (`total`)
   - Available system memory (`maxMemory`, defaults to 90% of system memory)
+
+The default adds one worker at a time because startup work, such as compilation and opening database connections, competes with other applications and workers in the same WATT. Increase `maxScaleUpStep` only when the application and container have enough spare resources to handle more worker starts in one cycle. The memory check uses current usage; it does not reserve memory for the workers being started.
 
 ### Configuration
 
@@ -297,6 +301,7 @@ When multiple applications are managed, the orchestrator coordinates scaling:
     "eluThreshold": 0.8,
     "heapThresholdMb": 500,
     "processIntervalMs": 10000,
+    "maxScaleUpStep": 1,
     "scaleUpMargin": 0.1,
     "scaleDownMargin": 0.3,
     "redistributionMs": 30000,
@@ -327,7 +332,7 @@ When multiple applications are managed, the orchestrator coordinates scaling:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `processIntervalMs` | `10000` | How often the algorithm runs. Samples that arrive between runs are accumulated and processed together |
-
+| `maxScaleUpStep` | `1` | Maximum extra workers requested for the selected application per processing run. Positive integer; global-only. Increase only when enough resources are available for the additional startup work |
 | `scaleUpMargin` | `0.1` | When the predicted load requires a fractional worker (e.g. 2.08 workers), the algorithm only provisions the extra worker if the fractional part exceeds this margin. Below the margin, the evidence for the extra worker is weak — the trend may not materialize — so the algorithm waits for the next cycle to confirm |
 | `scaleDownMargin` | `0.3` | After removing a worker, load redistributes across fewer workers, raising per-worker metrics. This margin ensures enough headroom to absorb that increase plus a safety buffer that prevents the removal from immediately triggering a scale-up |
 | `redistributionMs` | `30000` | Expected time for a new worker to fully absorb its share of traffic. During this period, the new worker's contribution is gradually weighted from 0 to 1 in the aggregate, preventing its initially low metrics from distorting the load signal |
@@ -369,5 +374,4 @@ Most v2 parameters can be overridden per application. Global values act as defau
 }
 ```
 
-The following properties are **global-only** and cannot be overridden per application: `version`, `processIntervalMs`, `dynamic`, `total`, `maxMemory`.
-
+The following properties are **global-only** and cannot be overridden per application: `version`, `processIntervalMs`, `maxScaleUpStep`, `dynamic`, `total`, `maxMemory`.

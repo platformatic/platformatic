@@ -25,6 +25,7 @@ test('v2 workers config accepts all v2 properties', () => {
       dynamic: true,
       eluThreshold: 0.9,
       processIntervalMs: 5000,
+      maxScaleUpStep: 3,
       scaleUpMargin: 0.05,
       scaleDownMargin: 0.4,
       redistributionMs: 20000,
@@ -43,6 +44,7 @@ test('v2 workers config accepts all v2 properties', () => {
 
   assert.strictEqual(config.workers.eluThreshold, 0.9)
   assert.strictEqual(config.workers.processIntervalMs, 5000)
+  assert.strictEqual(config.workers.maxScaleUpStep, 3)
   assert.strictEqual(config.workers.cooldowns.scaleUpAfterScaleUpMs, 1000)
 })
 
@@ -53,6 +55,9 @@ test('v2 workers config rejects invalid values', () => {
 
   assert.ok(!v({ workers: { version: 'v2', eluThreshold: 2 } }), 'eluThreshold > 1 should fail')
   assert.ok(!v({ workers: { version: 'v2', alphaUp: -1 } }), 'alphaUp < 0 should fail')
+  for (const maxScaleUpStep of [0, -1, 1.5]) {
+    assert.ok(!v({ workers: { version: 'v2', maxScaleUpStep } }), 'maxScaleUpStep must be a positive integer')
+  }
 })
 
 test('v1 workers config does not include v2 properties', () => {

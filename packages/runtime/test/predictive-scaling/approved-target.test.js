@@ -105,7 +105,9 @@ test('expiry removes only old requests and leaves newer pending starts', t => {
   algorithm.setTarget(3)
   assert.equal(sample(algorithm, 46000, 0.1), 3)
   algorithm.addWorker('w2', 47000)
-  assert.equal(sample(algorithm, 48000, 0.1, ['w1', 'w2']), 1)
+  assert.equal(sample(algorithm, 48000, 0.1, ['w1', 'w2']), 3)
+  algorithm.addWorker('w3', 49000)
+  assert.equal(sample(algorithm, 50000, 0.1, ['w1', 'w2', 'w3']), 1)
 })
 
 test('pending requests expire during processing even without a scale-down recommendation', t => {
@@ -117,4 +119,72 @@ test('pending requests expire during processing even without a scale-down recomm
   algorithm.addWorker('w2', 47000)
   algorithm.addWorker('w3', 47000)
   assert.equal(algorithm.getSnapshot('elu').horizonMs, 7000)
+})
+
+for (const replacementId of ['w1', 'replacement']) {
+  test(`replacement ${replacementId} does not fulfil a pending scale-up until the live count grows`, t => {
+    t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+    const algorithm = createAlgorithm()
+    algorithm.setTarget(2)
+    algorithm.removeWorker('w1', 11000)
+    algorithm.addWorker(replacementId, 12000)
+    assert.equal(sample(algorithm, 13000, 0.1, [replacementId]), 2)
+
+    algorithm.addWorker('extra', 14000)
+    assert.equal(sample(algorithm, 15000, 0.1, [replacementId, 'extra']), 1)
+  })
+}
+
+test('duplicate lifecycle events do not change the live count', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTarget(2)
+  algorithm.addWorker('w1', 11000)
+  assert.equal(sample(algorithm, 12000, 0.1), 2)
+  algorithm.removeWorker('w1', 13000)
+  algorithm.removeWorker('w1', 13000)
+  algorithm.removeWorker('unknown', 13000)
+  algorithm.addWorker('replacement', 14000)
+  assert.equal(sample(algorithm, 15000, 0.1, ['replacement']), 2)
+  algorithm.addWorker('extra', 16000)
+  assert.equal(sample(algorithm, 17000, 0.1, ['replacement', 'extra']), 1)
+})
+
+test('each pending scale-up waits for its own expected live count', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTarget(2)
+  t.mock.timers.setTime(11000)
+  algorithm.setTarget(3)
+  algorithm.addWorker('w2', 12000)
+  assert.equal(sample(algorithm, 13000, 0.1, ['w1', 'w2']), 3)
+
+  algorithm.removeWorker('w1', 14000)
+  algorithm.addWorker('replacement', 15000)
+  assert.equal(sample(algorithm, 16000, 0.1, ['replacement', 'w2']), 3)
+  algorithm.addWorker('w3', 17000)
+  assert.equal(sample(algorithm, 18000, 0.1, ['replacement', 'w2', 'w3']), 1)
+})
+
+test('startup estimates use the time when the requested capacity exists', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTarget(3)
+  algorithm.removeWorker('w1', 11000)
+  algorithm.addWorker('replacement', 12000)
+  algorithm.addWorker('w2', 20000)
+  algorithm.addWorker('w3', 22000)
+  // Both measured increases took longer than the initial five-second estimate.
+  assert.ok(algorithm.getSnapshot('elu').horizonMs > 7000)
+  assert.equal(algorithm.getSnapshot('heap').horizonMs, algorithm.getSnapshot('elu').horizonMs)
+})
+
+test('a replacement starting before the old worker exits can fulfil the requested count', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTarget(2)
+  // Accepted tradeoff: the count briefly reaches two during a rolling restart.
+  algorithm.addWorker('replacement', 11000)
+  algorithm.removeWorker('w1', 12000)
+  assert.equal(sample(algorithm, 13000, 0.1, ['replacement']), 1)
 })
