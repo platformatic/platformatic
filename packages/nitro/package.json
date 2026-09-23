@@ -57,7 +57,7 @@
     "nitropack": "^2.12.9",
     "tstyche": "^7.0.0",
     "typescript": "~6.0.3",
-    "vite": "^7.2.4",
+    "vite": "^8.2.2",
     "ws": "^8.18.0"
   },
   "engines": {
