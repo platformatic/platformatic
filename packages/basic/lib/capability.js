@@ -597,7 +597,6 @@ export class BaseCapability extends EventEmitter {
     })
 
     this.setupChildManagerEventsForwarding(this.childManager)
-
     try {
       await this.childManager.inject()
       this.subprocess = await this.spawn(command)

@@ -47,9 +47,11 @@ for (const warm of [false, true]) {
 }
 
 test('failed startup drains SIGINT mesh and messaging I/O before reporting the original error', async t => {
-  const { runtime } = await prepareRuntime(t, 'signal-io', false, null, async (root, config) => {
-    config.applications.find(application => application.id === 'frontend').env = { FAIL_START: 'true' }
-  })
+  const setup = async (root, config) => {
+    Object.assign(config.applications.find(application => application.id === 'frontend').workerEnv, { FAIL_START: 'true' })
+  }
+  setup.runAfterPrepare = true
+  const { runtime } = await prepareRuntime(t, 'signal-io', false, null, setup)
   const steps = []
   runtime.on('application:worker:event:signal:io:finished', () => steps.push('io:finished'))
   await rejects(runtime.start(), { code: 'TEST_SIGNAL_IO_START' })
@@ -58,9 +60,11 @@ test('failed startup drains SIGINT mesh and messaging I/O before reporting the o
 })
 
 test('shutdown waits for work scheduled by SIGINT before replying', async t => {
-  const { runtime } = await prepareRuntime(t, 'close-callbacks', false, null, async (root, config) => {
-    config.applications[0].env = { DELAYED_SIGNAL: 'true' }
-  })
+  const setup = async (root, config) => {
+    Object.assign(config.applications[0].workerEnv, { DELAYED_SIGNAL: 'true' })
+  }
+  setup.runAfterPrepare = true
+  const { runtime } = await prepareRuntime(t, 'close-callbacks', false, null, setup)
   await startRuntime(t, runtime)
   const steps = []
   runtime.on('application:worker:event:signal:finished', () => steps.push('signal:finished'))
@@ -81,9 +85,11 @@ test('startup failure preserves its error and completes async cleanup and SIGINT
 
 for (const mode of ['normal', 'stop-error', 'child-hang', 'open-resource', 'worker-hang', 'worker-busy', 'worker-slow']) {
   test(`CP shutdown supervises child and keeps worker cleanup separate: ${mode}`, async t => {
-    const { runtime } = await prepareRuntime(t, 'cp-shutdown', false, null, async (root, config) => {
-      config.applications[0].env = { SHUTDOWN_MODE: mode }
-    })
+    const setup = async (root, config) => {
+      Object.assign(config.applications[0].workerEnv, { SHUTDOWN_MODE: mode })
+    }
+    setup.runAfterPrepare = true
+    const { runtime } = await prepareRuntime(t, 'cp-shutdown', false, null, setup)
     const steps = []
     let exitTimeout = false
     runtime.on('application:worker:exit:timeout', () => { exitTimeout = true })

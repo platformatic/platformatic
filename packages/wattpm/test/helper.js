@@ -2,7 +2,6 @@ import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { on } from 'node:events'
 import { cp, mkdir, writeFile } from 'node:fs/promises'
-import { setTimeout as sleep } from 'node:timers/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -120,19 +119,29 @@ export async function startAndWaitForUrl (t, spawn, application = 'main', { atte
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     const startProcess = spawn()
+    const processExit = startProcess.then(
+      () => ({ url: undefined, raw: [Buffer.from('<process exited before announcing a URL>')] }),
+      error => ({ url: undefined, raw: [Buffer.from(String(error?.stack ?? error))] })
+    )
     t.after(() => {
       startProcess.kill('SIGINT')
       return startProcess.catch(() => {})
     })
 
     let result
+    let timeout
     try {
       result = await Promise.race([
         waitForStart(startProcess, application),
-        sleep(timeoutMs).then(() => ({ url: undefined, raw: [Buffer.from('<timed out waiting for start>')] }))
+        processExit,
+        new Promise(resolve => {
+          timeout = setTimeout(() => resolve({ url: undefined, raw: [Buffer.from('<timed out waiting for start>')] }), timeoutMs)
+        })
       ])
     } catch (error) {
       result = { url: undefined, raw: [Buffer.from(String(error?.stack ?? error))] }
+    } finally {
+      clearTimeout(timeout)
     }
 
     if (result.url) {
