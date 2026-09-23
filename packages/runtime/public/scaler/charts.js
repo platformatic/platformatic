@@ -39,9 +39,10 @@ function drawSeries (parent, points, x, y, color, { dashed = false, step = false
 export function drawChart (svg, { name, now, history, forecast = [], threshold, initTimeoutMs }) {
   const width = Math.max(280, svg.getBoundingClientRect().width)
   const height = Math.max(125, svg.getBoundingClientRect().height)
-  const left = name === 'heap' ? 64 : 46
+  // Share plot bounds so time markers align across all metric charts.
+  const left = 64
   const top = 28
-  const right = width - (name === 'workers' ? 46 : 12)
+  const right = width - 46
   const bottom = height - 24
   const color = COLORS[name]
   const id = `chart-${nextId++}`
@@ -112,10 +113,7 @@ export function drawChart (svg, { name, now, history, forecast = [], threshold, 
   if (!history.length && !forecast.length) {
     svg.append(svgNode('text', { x: (left + right) / 2, y: (top + bottom) / 2, 'text-anchor': 'middle' }, 'Waiting for measurements'))
   }
-  const tooltipPoints = [
-    ...history.map(point => ({ ...point, label: name === 'workers' ? 'Workers Usage' : 'Past' })),
-    ...forecast.map(point => ({ ...point, label: name === 'workers' ? 'Workers Scheduled' : 'Predicted' }))
-  ]
+  const tooltipPoints = [...history, ...forecast]
   installTooltip(svg, tooltipPoints, x, y, name, { left, right, top, bottom, width, height })
 }
 
@@ -140,7 +138,7 @@ function installTooltip (svg, points, x, y, name, bounds) {
     crosshair.setAttribute('x1', x(nearest.timestamp))
     crosshair.setAttribute('x2', x(nearest.timestamp))
     crosshair.setAttribute('visibility', 'visible')
-    tooltip.textContent = `${nearest.label}: ${formatMetric(name, nearest.value)}\n${new Date(nearest.timestamp).toLocaleTimeString()}`
+    tooltip.textContent = formatMetric(name, nearest.value)
     tooltip.hidden = false
     tooltip.style.left = `${Math.max(8, Math.min(event.clientX + 12, window.innerWidth - tooltip.offsetWidth - 8))}px`
     tooltip.style.top = `${Math.max(8, event.clientY - tooltip.offsetHeight - 12)}px`
