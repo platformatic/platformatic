@@ -43,11 +43,15 @@ export function establishRelations (app, relations, resolvers, loaders, queryTop
         current.fields[lowered] = { type: foreign.type }
         loaders[current.type] = loaders[current.type] || {}
         const key = camelcase(foreign_column_name)
+        // The loaded rows are matched by strict equality, so the key has to be
+        // built the same way the foreign column is exposed by the mapper.
+        const stringifyKey = foreign.entity.fields[foreign_column_name]?.stringifyOutput
         loaders[current.type][lowered] = {
           loader (queries, ctx) {
             const keys = []
             for (const { obj } of queries) {
-              const value = obj[originalField] != null ? obj[originalField].toString() : null
+              const raw = obj[originalField]
+              const value = raw == null ? null : stringifyKey ? raw.toString() : raw
 
               keys.push([{ key, value }])
             }
