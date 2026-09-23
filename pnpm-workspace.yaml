@@ -38,6 +38,12 @@ minimumReleaseAgeExclude:
   # Renovate security update: @fastify/static@10.1.2
   - "@fastify/static@10.1.2"
 nodeLinker: hoisted
+# With the hoisted linker, a tree containing several esbuild versions can end up with the
+# `esbuild` package and the hoisted `@esbuild/<platform>` binary at different versions, which
+# makes esbuild refuse to start ("Host version ... does not match binary version ...").
+# Keeping a single version avoids the mismatch.
+overrides:
+  esbuild: 0.28.2
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest
