@@ -50,7 +50,7 @@ export default createWattConfig({
 :::note
 Earlier versions interpolated `{PORT}` placeholders into JSON configuration files. There are no
 placeholders in Watt 4: the file reads the variable itself. See
-[Migrating a v3 runtime](../../guides/migrate-runtime-v4.md).
+[Migrating a v3 runtime](../../guides/migrate-v4.md).
 :::
 
 ## Step 2: Using .env Files for Local Development

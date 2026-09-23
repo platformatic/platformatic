@@ -43,5 +43,5 @@ Where each `runtime` property now lives:
   application's own `server` block, inside the capability configuration.
 
 A configuration that still declares `runtime` is refused by name rather than accepted and ignored.
-[`wattpm-utils migrate`](../guides/migrate-runtime-v4.md) writes the form above for any legacy file that had
+[`wattpm-utils migrate`](../guides/migrate-v4.md) writes the form above for any legacy file that had
 a non-default block.

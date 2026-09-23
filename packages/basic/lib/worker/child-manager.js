@@ -81,7 +81,6 @@ export class ChildManager extends ITC {
     this.#socketPath ??= getSocketPath(this.#id)
     this.#clients = new Set()
     this.#requests = new Map()
-
   }
 
   async listen () {
