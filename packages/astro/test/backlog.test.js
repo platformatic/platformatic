@@ -91,5 +91,12 @@ for (const [env, options] of Object.entries(envs)) {
     await runtime.start()
     const serverOptions = await promise
     deepStrictEqual(serverOptions.backlog, undefined)
+
+    // A leaked preview server can serve later development tests on the same port.
+    const shutdownErrors = []
+    runtime.on('application:worker:stop:error', error => shutdownErrors.push(error))
+    runtime.on('application:worker:exit:timeout', error => shutdownErrors.push(error))
+    await runtime.close()
+    deepStrictEqual(shutdownErrors, [])
   })
 }

@@ -65,6 +65,6 @@ To convert a project, run:
 npx wattpm-utils migrate
 ```
 
-See the [migration guide](./guides/migrate-runtime-v4.md) for what it changes and what it leaves for you.
+See the [migration guide](./guides/migrate-v4.md) for what it changes and what it leaves for you.
 
 #### [Back to docs](./reference/gateway/configuration.md#configuration-files)

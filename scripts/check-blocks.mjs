@@ -55,7 +55,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   unmarked TypeScript one.
 */
 const documents = [
-  { name: 'docs/guides/migrate-runtime-v4.md', markEverything: false },
+  { name: 'docs/guides/migrate-v4.md', markEverything: false },
   { name: 'docs/file-formats.md', markEverything: false },
   { name: 'docs/guides/generating-watt-configuration.md', markEverything: false },
   { name: 'docs/reference/runtime/_shared-configuration.md', markEverything: false },

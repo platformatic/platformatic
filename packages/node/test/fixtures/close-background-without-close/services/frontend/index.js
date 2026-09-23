@@ -1,4 +1,4 @@
-import { getEvents, getITC } from '@platformatic/globals'
+import { getEvents, getITC, registerCloseCallback } from '@platformatic/globals'
 let timeoutId
 const events = getEvents()
 const itc = getITC()
@@ -14,9 +14,7 @@ itc.on('runtime:event', e => {
   }
 })
 
-events.on('close', () => {
+registerCloseCallback(() => {
   // this and other alike clean ups
   clearTimeout(timeoutId)
-
-  events.emitAndNotify('close:handler')
 })

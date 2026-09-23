@@ -97,6 +97,11 @@ export declare namespace errors {
   }
   export function UnsupportedVersion (...args: any[]): Error
   export function NonZeroExitCode (...args: any[]): Error
+  export class ApplicationShutdownError extends AggregateError {
+    code: string
+    constructor (errors: unknown[])
+  }
+  export function ApplicationShutdownTimeoutError (...args: any[]): Error
 }
 
 export declare function getServerUrl (server: Server): string
@@ -177,8 +182,8 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   runtimeConfig: object
   stdout: NodeJS.WritableStream
   stderr: NodeJS.WritableStream
-  subprocessForceClose: boolean
   subprocessTerminationSignal: string
+  shutdownTimeout?: number
   logger: object
   metricsRegistry: object
   otlpBridge: object | null

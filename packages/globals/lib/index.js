@@ -1,10 +1,14 @@
-import { MissingGlobalError } from './errors.js'
+import {
+  CloseCallbackRegistrationClosedError,
+  InvalidCloseCallbackError,
+  MissingGlobalError
+} from './errors.js'
 
 const kState = Symbol.for('plt.globals.state')
 
 if (!globalThis[kState]) {
   Object.defineProperty(globalThis, kState, {
-    value: { values: {}, fields: new Set(), initialized: false },
+    value: { values: {}, fields: new Set(), closeCallbacks: [], closeCallbacksStarted: false, initialized: false },
     enumerable: false,
   })
 }
@@ -248,6 +252,35 @@ export function setCustomReadinessCheck (...args) {
 
 export function getEvents (options) {
   return getField('events', options)
+}
+
+export function registerCloseCallback (callback) {
+  if (callback !== null && typeof callback === 'object' && typeof callback[Symbol.asyncDispose] === 'function') {
+    // Preserve the resource receiver when the shutdown runner invokes the callback.
+    callback = callback[Symbol.asyncDispose].bind(callback)
+  }
+
+  if (typeof callback !== 'function') {
+    throw new InvalidCloseCallbackError()
+  }
+
+  if (state.closeCallbacksStarted) {
+    throw new CloseCallbackRegistrationClosedError()
+  }
+
+  state.closeCallbacks.push(callback)
+}
+
+// Runtime-only operation: take ownership of cleanup and close registration.
+export function consumeCloseCallbacks () {
+  state.closeCallbacksStarted = true
+  const callbacks = state.closeCallbacks
+  state.closeCallbacks = []
+  return callbacks
+}
+
+export function hasCloseCallbacks () {
+  return state.closeCallbacks.length > 0
 }
 
 export function getITC (options) {

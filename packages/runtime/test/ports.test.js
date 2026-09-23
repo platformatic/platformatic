@@ -27,11 +27,11 @@ async function createApplication (root, id, server) {
   return { id, path: directory }
 }
 
-async function createTestRuntime (t, applications) {
+async function createTestRuntime (t, applications, options = {}) {
   const root = await createTemporaryDirectory(t, 'ports')
   const config = join(root, 'watt.config.mjs')
   await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'ports-test' }))
-  await writeFile(config, `export default { applications: ${JSON.stringify(applications)} }\n`)
+  await writeFile(config, `export default ${JSON.stringify({ ...options, applications })}\n`)
 
   return createRuntime(config)
 }
@@ -174,18 +174,26 @@ test('ports which are not declared in the configuration are still checked when a
   const first = await createCommandApplication('first')
   const second = await createCommandApplication('second')
 
-  const runtime = await createTestRuntime(t, [first, second])
+  const runtime = await createTestRuntime(t, [first, second], { restartOnError: false })
 
   await rejects(
     () => runtime.start(true),
     error => {
       // When reusePort is available both applications can bind the port and the runtime detects the conflict when
-      // recording the URLs. Otherwise the second application fails to bind: the runtime can name the owner only if the
-      // first application already reported its URL, so the raw EADDRINUSE error is also acceptable.
-      ok(error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE', error.code)
-      // The port surfaces in the message when the runtime names the conflict and as error.port on a
-      // raw bind failure; a bare child-process bind error may carry no message at all.
-      match(`${error.message ?? ''} ${error.port ?? ''}`, new RegExp(`${port}`))
+      // recording the URLs. Otherwise the second command can exit on EADDRINUSE before the runtime receives its URL.
+      const hasPortError = error.code === 'EADDRINUSE' || error.code === 'PLT_RUNTIME_EADDR_IN_USE'
+      const hasApplicationExit =
+        error.code === 'PLT_RUNTIME_APPLICATION_EXIT' || error.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+      ok(hasPortError || hasApplicationExit, error.code)
+
+      if (hasPortError) {
+        // The port surfaces in the message when the runtime names the conflict and as error.port on a
+        // raw bind failure; a bare child-process bind error may carry no message at all.
+        match(`${error.message ?? ''} ${error.port ?? ''}`, new RegExp(`${port}`))
+      } else {
+        // Some platforms can only report that the command's child exited after the bind error.
+        match(error.message, /application .* exited prematurely|worker .* exited prematurely/)
+      }
       return true
     }
   )

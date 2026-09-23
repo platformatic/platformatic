@@ -58,8 +58,6 @@ export class NestCapability extends BaseCapability {
       : undefined
 
     this.registerGlobals({ basePath: this.#basePath })
-
-    this.subprocessForceClose = true
   }
 
   async _start () {

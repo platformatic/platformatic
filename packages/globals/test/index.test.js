@@ -257,3 +257,42 @@ test('child context getters support missing and registered values', t => {
   strictEqual(globals.getCompileCache(), false)
   strictEqual(globals.getResourceLimits(), undefined)
 })
+
+test('close callbacks and disposable resources preserve registration order and receiver', async () => {
+  const first = async () => {}
+  const second = async () => {}
+  let disposed = false
+  const resource = {
+    async [Symbol.asyncDispose] () {
+      strictEqual(this, resource)
+      await Promise.resolve()
+      disposed = true
+    }
+  }
+
+  globals.registerCloseCallback(first)
+  globals.registerCloseCallback(second)
+  globals.registerCloseCallback(resource)
+
+  strictEqual(globals.hasCloseCallbacks(), true)
+  const callbacks = globals.consumeCloseCallbacks()
+  deepStrictEqual(callbacks.slice(0, 2), [first, second])
+  await callbacks[2]()
+  strictEqual(disposed, true)
+  strictEqual(globals.hasCloseCallbacks(), false)
+})
+
+test('registerCloseCallback should reject invalid callbacks with a code', () => {
+  throws(() => globals.registerCloseCallback('invalid'), { code: 'PLT_GLOBALS_INVALID_CLOSE_CALLBACK' })
+  throws(() => globals.registerCloseCallback(null), { code: 'PLT_GLOBALS_INVALID_CLOSE_CALLBACK' })
+  throws(() => globals.registerCloseCallback({ [Symbol.asyncDispose]: true }), {
+    code: 'PLT_GLOBALS_INVALID_CLOSE_CALLBACK'
+  })
+})
+
+test('registerCloseCallback should reject registrations after shutdown starts', () => {
+  globals.consumeCloseCallbacks()
+  throws(() => globals.registerCloseCallback(async () => {}), {
+    code: 'PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED'
+  })
+})

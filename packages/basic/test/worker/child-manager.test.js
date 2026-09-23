@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { updateGlobals } from '@platformatic/globals'
 import { platform } from 'node:os'
 import { test } from 'node:test'
@@ -84,17 +84,20 @@ test('ChildManager - getSocketPath - should use path from environment override',
   }
 })
 
-test('ChildManager - send - should not fail when a client is missing', async t => {
+test('ChildManager - close rejects pending requests even when their client is missing', async t => {
   createLogger()
   const manager = new ChildManager({})
 
   await manager.listen()
 
-  manager.send(undefined, 'name', { reqId: 'foo' })
+  const rejected = rejects(manager.send(undefined, 'name', { reqId: 'foo' }), {
+    code: 'PLT_ITC_MESSAGE_PORT_CLOSED'
+  })
   manager._send({ reqId: 'foo' })
   manager._manageKeepAlive()
 
   await manager.close()
+  await rejected
 })
 
 test('ChildManager - register - can register a local loader', async t => {
