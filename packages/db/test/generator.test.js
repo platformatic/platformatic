@@ -21,13 +21,14 @@ test('should have default config', async () => {
     hostname: '0.0.0.0',
     plugin: true,
     tests: true,
-    typescript: false,
+    typescript: true,
     initGitRepository: false,
     dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
     devDependencies: {},
     isRuntimeContext: false,
     applicationName: '',
     envPrefix: '',
+    portEnv: 'PORT',
     env: {
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PLT_APPLY_MIGRATIONS: 'true',
@@ -76,8 +77,12 @@ test('generate correct .env file', async t => {
 
     await dbApp.prepare()
 
-    const configFile = dbApp.getFileObject('platformatic.json')
-    JSON.parse(configFile.contents)
+    /*
+      A TypeScript project gets the TypeScript suffix. The generated package is ESM
+      (`"type": "module"`), so the config file is `watt.config.ts` rather than `.mts`.
+    */
+    const configFile = dbApp.getFileObject('watt.config.ts')
+    assert.ok(configFile.contents.startsWith("import { createDbConfig } from '@platformatic/db'"), configFile.contents)
   }
 
   {
@@ -129,8 +134,7 @@ test('config', async t => {
     types: true
   })
   await dbApp.prepare()
-  const platformaticConfigFile = dbApp.getFileObject('platformatic.json')
-  const contents = JSON.parse(platformaticConfigFile.contents)
+  const contents = dbApp.generatedConfig
   assert.equal(contents.$schema, `https://schemas.platformatic.dev/@platformatic/db/${dbApp.platformaticVersion}.json`)
   assert.deepEqual(contents.server, {
     hostname: '{PLT_SERVER_HOSTNAME}',
@@ -338,8 +342,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       packages: [
@@ -373,8 +376,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       paths: [
@@ -417,7 +419,7 @@ test('runtime context should have env prefix', async t => {
   assert.equal(null, svc.getFileObject('.env'))
 })
 
-test('runtime context should not have server.config', async t => {
+test('runtime context should have server config', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
@@ -430,8 +432,12 @@ test('runtime context should not have server.config', async t => {
 
   await svc.prepare()
 
-  const configFile = svc.getFileObject('platformatic.json')
-  const configFileContents = JSON.parse(configFile.contents)
-  assert.strictEqual(undefined, configFileContents.server)
-  assert.ok(configFile.contents.match(/"connectionString": "{PLT_MY_DB_DATABASE_URL}"/))
+  const configFileContents = svc.generatedConfig
+  assert.deepStrictEqual(configFileContents.server, {
+    hostname: '{PLT_MY_DB_SERVER_HOSTNAME}',
+    port: '{PLT_MY_DB_PORT}',
+    logger: { level: '{PLT_MY_DB_SERVER_LOGGER_LEVEL}' }
+  })
+  // The connection string is a placeholder in the model and the expression it stands for in the file.
+  assert.strictEqual(configFileContents.db.connectionString, '{PLT_MY_DB_DATABASE_URL}')
 })

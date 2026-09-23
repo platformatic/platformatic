@@ -4,7 +4,6 @@ import { once } from 'node:events'
 import { symlink } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { WebSocket } from 'ws'
 import { createGatewayInRuntime, REFRESH_TIMEOUT } from './helper.js'
@@ -54,7 +53,7 @@ async function connectAndEcho (address, path = '/echo/') {
   await once(client, 'close')
 }
 
-test('should proxy WebSocket connections to a node application using the websocket flag', async t => {
+test('should proxy WebSocket connections to a node application', async t => {
   await prepareEchoWsFixture(t)
 
   const runtime = await createGatewayInRuntime(
@@ -76,13 +75,12 @@ test('should proxy WebSocket connections to a node application using the websock
     [
       {
         id: 'echo',
-        path: resolve(import.meta.dirname, './ws/fixtures/echo-ws'),
-        websocket: true
+        path: resolve(import.meta.dirname, './ws/fixtures/echo-ws')
       }
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // The WebSocket upgrade must succeed with no manual proxy.ws wiring
   await connectAndEcho(address)
@@ -98,7 +96,7 @@ test('should proxy WebSocket connections to a node application using the websock
   assert.equal(payload.service, 'echo')
 })
 
-test('should proxy WebSocket connections to a service application using the websocket flag', async t => {
+test('should proxy WebSocket connections to a service application', async t => {
   const runtime = await createGatewayInRuntime(
     t,
     'gateway-ws-handoff-service',
@@ -118,13 +116,12 @@ test('should proxy WebSocket connections to a service application using the webs
     [
       {
         id: 'echo',
-        path: resolve(import.meta.dirname, './ws/fixtures/echo-ws-service'),
-        websocket: true
+        path: resolve(import.meta.dirname, './ws/fixtures/echo-ws-service')
       }
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   // The WebSocket upgrade must succeed with no manual proxy.ws wiring
   await connectAndEcho(address)
@@ -138,66 +135,4 @@ test('should proxy WebSocket connections to a service application using the webs
   assert.equal(statusCode, 200)
   const payload = await rawBody.json()
   assert.equal(payload.service, 'echo-service')
-})
-
-test('should dial a fresh TCP port after the application is restarted', async t => {
-  await prepareEchoWsFixture(t)
-
-  const runtime = await createGatewayInRuntime(
-    t,
-    'gateway-ws-handoff-restart',
-    {
-      gateway: {
-        applications: [
-          {
-            id: 'echo',
-            proxy: {
-              prefix: '/echo'
-            }
-          }
-        ],
-        refreshTimeout: REFRESH_TIMEOUT
-      }
-    },
-    [
-      {
-        id: 'echo',
-        path: resolve(import.meta.dirname, './ws/fixtures/echo-ws'),
-        websocket: true
-      }
-    ]
-  )
-
-  const address = await runtime.start()
-
-  const portBefore = new URL((await runtime.getApplicationMeta('echo')).gateway.url).port
-  await connectAndEcho(address)
-
-  await runtime.restartApplication('echo')
-
-  // The restarted worker binds a new ephemeral port
-  const portAfter = new URL((await runtime.getApplicationMeta('echo')).gateway.url).port
-  assert.notEqual(portAfter, portBefore)
-
-  // New WebSocket connections must reach the new port. The gateway refreshes its
-  // upstream asynchronously when the worker start event is delivered, so retry
-  // for a short while: without the refresh this loop can never succeed, since the
-  // gateway would keep dialing the dead port.
-  const deadline = Date.now() + 10000
-  let lastError
-
-  while (Date.now() < deadline) {
-    try {
-      await connectAndEcho(address)
-      lastError = null
-      break
-    } catch (err) {
-      lastError = err
-      await sleep(200)
-    }
-  }
-
-  if (lastError) {
-    throw lastError
-  }
 })

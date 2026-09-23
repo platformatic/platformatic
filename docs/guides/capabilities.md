@@ -9,24 +9,25 @@ A capability is essentially a Node.js package that implements the Platformatic c
 - **Single Capability Applications**: Simple applications with one primary function (e.g., a Next.js frontend or a database API)
 - **Multi-Capability Applications**: Complex applications that combine multiple capabilities (e.g., a database backend with a React frontend and an API gateway)
 
-Each Watt project can define a set of application, each using its own capability by defining them in the main `watt.json` file via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#application) properties.
+Each Watt project can define a set of applications, each using its own capability, by declaring them in the root `watt.config.ts` via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#applications) properties.
 
-Each application gets its own folder and the capability is determined by looking at the `$schema` property of the application `watt.json`.
+Each application gets its own folder, and the capability is the one the application's own `watt.config.ts` imports and calls.
 
-For instance, to use the `@platformatic/next`, you set the `watt.json` (or `platformatic.json`) file as follows:
+For instance, to use `@platformatic/next`:
 
-```js
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
-  // ...
-}
+```ts config
+import { createNextConfig } from '@platformatic/next'
+
+export default createNextConfig({
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
-If no `watt.json` is present, then Watt will try to autodetect the right capability by looking at the dependencies in the `package.json` file.
+If the application has no configuration file, Watt autodetects the capability from the dependencies in its `package.json`.
 
 #### Role of Configuration Files
 
-The `watt.json` or `platformatic.json` configuration file serves as the authoritative source for:
+The `watt.config.ts` configuration file serves as the authoritative source for:
 
 - **Service Definition**: Explicitly specifies which capability to use (e.g., `@platformatic/next`, `@platformatic/db`)
 - **Application Entry Point**: Points to your application's main file or build output directory
@@ -36,29 +37,50 @@ The `watt.json` or `platformatic.json` configuration file serves as the authorit
 
 This configuration-first approach ensures predictable behavior and allows developers to override automatic detection when needed.
 
-#### Embedding Runtime Configuration
+#### Orchestration lives in the runtime configuration
 
-Each capability configuration file supports a `runtime` property that allows you to embed runtime-level settings directly in the application's configuration. This is useful for configuring workers, logging, health checks, and other runtime features specific to an application.
+An application's own file configures the capability and nothing else. Workers, logging, health checks
+and the rest are orchestration, and they belong to the runtime configuration — in a single-application
+project, alongside the `application` shorthand:
 
-For example:
+```ts config
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.31.0.json",
-  "runtime": {
-    "logger": {
-      "level": "debug"
-    },
-    "workers": {
-      "dynamic": true,
-      "minimum": 1,
-      "maximum": 4
-    }
+export default createWattConfig({
+  logger: { level: 'debug' },
+  workers: { dynamic: true, minimum: 1, maximum: 4 },
+  application: {
+    config: createNextConfig({
+      server: { port: Number(process.env.PORT ?? 3042) }
+    })
   }
-}
+})
 ```
 
-See the capability configuration documentation (e.g., [Next.js](../reference/next/configuration.md#runtime), [Node](../reference/node/configuration.md#runtime)) for the full list of available runtime properties.
+These settings do not live under a `runtime` property inside the application's own file; see [Runtime settings for a single application](../reference/next/configuration.md#runtime-settings-for-a-single-application).
+
+#### Where the capability package must be resolvable from
+
+A capability factory called from an application's own `watt.config.*` (the usual, per-application
+style) resolves the same way any other import from that file does — the capability just needs to be
+a dependency of that application, exactly as before.
+
+When an application's own `watt.config.*` imports a capability, resolution checks the
+application's own dependencies first and falls back to the copy bundled with Watt. Under a
+hoisted dependency tree, an application that vendors its own copy of a capability the root also
+depends on gets its own copy, not the root's.
+
+Calling the factory **inline at the root**, as in the example above, is different: the import runs
+from the root configuration file, so the capability package must be resolvable from the *root*
+`package.json`. Under a strict dependency layout (for example pnpm), an application-local-only
+dependency is not visible from the root, and the loader reports it with a targeted error:
+
+```output
+✗ Cannot resolve '@platformatic/next' from watt.config.ts.
+  Add it to the root package.json, or configure the application in
+  web/frontend/watt.config.ts instead.
+```
 
 ### Available Capabilities
 
@@ -199,9 +221,8 @@ When you run `npm create wattpm`, you'll be guided through:
 2. **Service Type**: Select the type of service you want to create
 3. **Service Configuration**: Configure service-specific options
 4. **Multi-Service Setup**: Optionally add additional services
-5. **Entry Point**: Choose which service should be exposed (for multi-service projects)
-6. **Package Manager**: Select npm, yarn, or pnpm
-7. **Git Initialization**: Optionally initialize a Git repository
+5. **Package Manager**: Select npm, yarn, or pnpm
+6. **Git Initialization**: Optionally initialize a Git repository
 
 ## Examples
 
@@ -244,7 +265,6 @@ During the interactive setup, you can choose to create multiple services:
 
 - First service: `@platformatic/db` (database API)
 - Second service: `@platformatic/next` (frontend)
-- Choose which service to expose as the main entry point
 
 ## Wrapping Existing Applications
 

@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, relative, sep } from 'node:path'
 import { test } from 'node:test'
 import { ImportGenerator } from '../lib/import-generator.js'
 import { fakeLogger, getTempDir } from './helpers.js'
@@ -20,9 +20,7 @@ function createGenerator (runtime, opts) {
 }
 function createMockedRuntimeGenerator (opts) {
   const runtime = {
-    getRuntimeConfigFileObject () {
-      return { contents: '{}' }
-    },
+    generatedConfig: {},
     getRuntimeEnvFileObject () {
       return { contents: '{}' }
     },
@@ -180,9 +178,48 @@ test('copy - should generate config file for platformatic module', async t => {
   await gen._beforeWriteFiles(runtime)
   await gen.writeFiles()
 
-  const configContent = await readFile(join(targetDir, 'platformatic.json'), 'utf-8')
-  const config = JSON.parse(configContent)
-  deepStrictEqual(config.$schema, 'https://schemas.platformatic.dev/@platformatic/service/1.0.0.json')
+  /*
+    The per-app form: a capability with a factory is spelled by calling it. This is the path
+    taken for capabilities that ship no generator, so a JSON stub here would leave the wizard
+    writing the old dialect for exactly the applications least likely to be exercised elsewhere.
+  */
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes("import { createServiceConfig } from '@platformatic/service'"), configContent)
+  ok(configContent.includes('export default createServiceConfig({})'), configContent)
+})
+
+test('copy - the entrypoint application is exposed on the default port', async t => {
+  const sourceDir = await createTemporaryDirectory(t)
+  const targetDir = await createTemporaryDirectory(t)
+
+  const runtime = createMockedRuntimeGenerator()
+  const gen = createGenerator(runtime, { targetDirectory: targetDir })
+  // The runtime generator marks the sole application the entrypoint; a framework/import capability
+  // writes no port of its own, so the entrypoint takes the default one.
+  gen.setConfig({ applicationPath: sourceDir, operation: 'copy', entrypoint: true })
+
+  await gen._beforeWriteFiles(runtime)
+  await gen.writeFiles()
+
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes('server: { port: Number(process.env.PORT || 3042) }'), configContent)
+})
+
+test('copy - the entrypoint takes the default port for a non-platformatic module too', async t => {
+  const sourceDir = await createTemporaryDirectory(t)
+  const targetDir = await createTemporaryDirectory(t)
+
+  const runtime = createMockedRuntimeGenerator()
+  const gen = createGenerator(runtime, { module: 'custom-module', targetDirectory: targetDir })
+  gen.setConfig({ applicationPath: sourceDir, operation: 'copy', entrypoint: true })
+
+  await gen._beforeWriteFiles(runtime)
+  await gen.writeFiles()
+
+  // A capability with no factory still takes the port when it is the entrypoint, beside its module.
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes("module: 'custom-module'"), configContent)
+  ok(configContent.includes('server: { port: Number(process.env.PORT || 3042) }'), configContent)
 })
 
 test('copy - should generate config file for non-platformatic module', async t => {
@@ -196,9 +233,10 @@ test('copy - should generate config file for non-platformatic module', async t =
   await gen._beforeWriteFiles(runtime)
   await gen.writeFiles()
 
-  const configContent = await readFile(join(targetDir, 'platformatic.json'), 'utf-8')
-  const config = JSON.parse(configContent)
-  deepStrictEqual(config.module, 'custom-module')
+  // No factory to call, so the plain object form -- which stays supported for capabilities that
+  // implement the contract without shipping one.
+  const configContent = await readFile(join(targetDir, 'watt.config.mjs'), 'utf-8')
+  ok(configContent.includes("module: 'custom-module'"), configContent)
 })
 
 test('copy - should not overwrite existing config file', async t => {
@@ -303,14 +341,12 @@ test('import - should import application', async t => {
 
   await gen._beforeWriteFiles(runtime)
 
-  // Check that runtime config was updated
-  ok(Array.isArray(runtime.config.web))
-  deepStrictEqual(runtime.config.web[0].id, 'test-application')
-  deepStrictEqual(runtime.config.web[0].path, '{PLT_APPLICATION_TEST_APPLICATION_PATH}')
-  deepStrictEqual(runtime.config.web[0].url, 'git@github.com:hello/world.git')
-
-  // Check that runtime env was updated
-  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
+  // One spelling, and a literal relative path rather than env-variable indirection --
+  // relative even out of the root, exactly as wattpm import writes it.
+  ok(Array.isArray(runtime.config.applications))
+  deepStrictEqual(runtime.config.applications[0].id, 'test-application')
+  deepStrictEqual(runtime.config.applications[0].path, relative('/foo', sourceDir).split(sep).join('/'))
+  deepStrictEqual(runtime.config.applications[0].url, 'git@github.com:hello/world.git')
 })
 
 test('import - should handle runtime with existing applications', async t => {
@@ -319,12 +355,8 @@ test('import - should handle runtime with existing applications', async t => {
 
   const runtime = createMockedRuntimeGenerator({
     applicationsBasePath: '/nonexistent/applications',
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          web: [{ id: 'existing-application', path: '/existing/path' }]
-        })
-      }
+    generatedConfig: {
+      applications: [{ id: 'existing-application', path: '/existing/path' }]
     },
     getRuntimeEnvFileObject () {
       return { contents: 'EXISTING_VAR=value' }
@@ -337,11 +369,9 @@ test('import - should handle runtime with existing applications', async t => {
   await gen._beforeWriteFiles(runtime)
   await gen._afterWriteFiles(runtime)
 
-  deepStrictEqual(runtime.config.web.length, 2)
-  deepStrictEqual(runtime.config.web[0].id, 'existing-application')
-  deepStrictEqual(runtime.config.web[1].id, 'test-application')
-  ok(runtime.env.includes('EXISTING_VAR=value'))
-  ok(runtime.env.includes('PLT_APPLICATION_TEST_APPLICATION_PATH=' + sourceDir))
+  deepStrictEqual(runtime.config.applications.length, 2)
+  deepStrictEqual(runtime.config.applications[0].id, 'existing-application')
+  deepStrictEqual(runtime.config.applications[1].id, 'test-application')
 })
 
 test('import - should not duplicate applications in runtime config', async t => {
@@ -349,12 +379,8 @@ test('import - should not duplicate applications in runtime config', async t => 
   const targetDir = await createTemporaryDirectory(t)
 
   const runtime = createMockedRuntimeGenerator({
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          applications: [{ id: 'test-application', path: '/existing/path' }]
-        })
-      }
+    generatedConfig: {
+      applications: [{ id: 'test-application', path: '/existing/path' }]
     },
     getRuntimeEnvFileObject () {
       return { contents: '' }
@@ -370,18 +396,18 @@ test('import - should not duplicate applications in runtime config', async t => 
   deepStrictEqual(runtime.config.applications[0].id, 'test-application')
 })
 
-test('import - should use different applications keys', async t => {
+/*
+  One spelling: the list is always `applications`, whatever the wizard's folder is called -- the
+  loader refuses the legacy aliases by name, so writing one scaffolded a project that cannot boot.
+  The config deliberately holds no `applications` array: that was exactly the fixture the old
+  key-scanning writer answered with a `web` list, so it is the one that tells the two apart.
+*/
+test('import - writes the list under applications whatever the applications folder is called', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
   const runtime = createMockedRuntimeGenerator({
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          applications: []
-        })
-      }
-    },
+    generatedConfig: {},
     getRuntimeEnvFileObject () {
       return { contents: '' }
     }
@@ -394,6 +420,7 @@ test('import - should use different applications keys', async t => {
 
   ok(Array.isArray(runtime.config.applications))
   deepStrictEqual(runtime.config.applications[0].id, 'test-application')
+  deepStrictEqual(runtime.config.web, undefined)
 })
 
 test('import - when importing folders already in the project root, should not create useless file and should update the right files', async t => {
@@ -401,12 +428,8 @@ test('import - when importing folders already in the project root, should not cr
   const sourceDir = join(targetDir, 'my-app')
 
   const runtime = createMockedRuntimeGenerator({
-    getRuntimeConfigFileObject () {
-      return {
-        contents: JSON.stringify({
-          applications: [{ id: 'test-application', path: '/existing/path' }]
-        })
-      }
+    generatedConfig: {
+      applications: [{ id: 'test-application', path: '/existing/path' }]
     },
     getRuntimeEnvFileObject () {
       return { contents: '' }
@@ -421,8 +444,8 @@ test('import - when importing folders already in the project root, should not cr
   deepStrictEqual(gen.files, [
     {
       path: '',
-      file: join(targetDir, 'my-app', 'platformatic.json'),
-      contents: '{\n' + '  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.0.0.json"\n' + '}',
+      file: join(targetDir, 'my-app', 'watt.config.mjs'),
+      contents: "import { createServiceConfig } from '@platformatic/service'\n\nexport default createServiceConfig({})\n",
       options: {},
       tags: []
     },

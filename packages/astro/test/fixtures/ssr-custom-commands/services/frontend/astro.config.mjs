@@ -1,6 +1,6 @@
 import node from '@astrojs/node'
 import { ensureTrailingSlash } from '@platformatic/basic'
-import { getBasePath, getITC, getLogLevel } from '@platformatic/globals'
+import { getBasePath, getITC, getLogLevel, registerCloseCallback } from '@platformatic/globals'
 import { defineConfig } from 'vite'
 
 const basePath = ensureTrailingSlash(getBasePath(false) ?? '/')
@@ -16,6 +16,9 @@ export default defineConfig({
     {
       name: 'platformatic',
       hooks: {
+        'astro:server:setup': ({ server }) => {
+          registerCloseCallback(() => server.close())
+        },
         'astro:config:setup': ({ config }) => {
           config.vite.server ??= {}
           config.vite.server.hmr ??= {}

@@ -1,10 +1,11 @@
 import Issues from '../../getting-started/issues.md';
 import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
+import ServerConfiguration from '../_server-in-capabilities.md';
 
 # Configuration
 
-Platformatic Vite is configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Vite is configured with a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 ## `application`
 
@@ -39,7 +40,7 @@ Configures the `logger`, see the [runtime](../runtime/configuration.md#logger) d
 
 ## `server`
 
-Configures the HTTP server, see the [runtime](../runtime/configuration.md#server) documentation.
+<ServerConfiguration />
 
 ## `watch`
 

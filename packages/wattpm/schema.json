@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/3.69.0.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/4.0.0-new-config.8.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Runtime Config",
   "type": "object",
@@ -47,7 +47,8 @@
               "type": "boolean",
               "default": false
             }
-          }
+          },
+          "title": "ExtensionEntry"
         },
         {
           "type": "array",
@@ -76,15 +77,13 @@
                     "type": "boolean",
                     "default": false
                   }
-                }
+                },
+                "title": "ExtensionEntry"
               }
             ]
           }
         }
       ]
-    },
-    "entrypoint": {
-      "type": "string"
     },
     "basePath": {
       "type": "string"
@@ -137,13 +136,14 @@
                 "default": true
               },
               "config": {
-                "type": "string"
-              },
-              "useHttp": {
-                "type": "boolean"
-              },
-              "websocket": {
-                "type": "boolean"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               },
               "reuseTcpPorts": {
                 "type": "boolean",
@@ -436,12 +436,12 @@
                 },
                 "additionalProperties": false
               },
-              "telemetry": {
+              "tracing": {
                 "type": "object",
                 "properties": {
                   "instrumentations": {
                     "type": "array",
-                    "description": "An array of instrumentations loaded if telemetry is enabled",
+                    "description": "An array of instrumentations loaded if tracing is enabled",
                     "items": {
                       "oneOf": [
                         {
@@ -486,6 +486,10 @@
                       "directory": {
                         "type": "string",
                         "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                      },
+                      "awaitFirstWorker": {
+                        "type": "boolean",
+                        "description": "Wait for the first worker to start before starting the remaining workers"
                       }
                     },
                     "additionalProperties": false
@@ -515,7 +519,8 @@
                   }
                 ]
               }
-            }
+            },
+            "title": "ApplicationEntryOverrides"
           }
         }
       }
@@ -565,20 +570,24 @@
             "resolvePath": true
           },
           "config": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
           },
           "url": {
+            "type": "string"
+          },
+          "module": {
             "type": "string"
           },
           "gitBranch": {
             "type": "string",
             "default": "main"
-          },
-          "useHttp": {
-            "type": "boolean"
-          },
-          "websocket": {
-            "type": "boolean"
           },
           "reuseTcpPorts": {
             "type": "boolean",
@@ -617,7 +626,8 @@
                     "minimum": 0,
                     "maximum": 1
                   }
-                }
+                },
+                "title": "ApplicationWorkersOptions"
               }
             ]
           },
@@ -770,7 +780,8 @@
                 ]
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "title": "ApplicationHealthOptions"
           },
           "restartOnError": {
             "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
@@ -869,14 +880,15 @@
                 "additionalProperties": false
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "title": "PermissionsOptions"
           },
-          "telemetry": {
+          "tracing": {
             "type": "object",
             "properties": {
               "instrumentations": {
                 "type": "array",
-                "description": "An array of instrumentations loaded if telemetry is enabled",
+                "description": "An array of instrumentations loaded if tracing is enabled",
                 "items": {
                   "oneOf": [
                     {
@@ -903,7 +915,8 @@
                   ]
                 }
               }
-            }
+            },
+            "title": "ApplicationTelemetryOverrides"
           },
           "compileCache": {
             "anyOf": [
@@ -921,9 +934,14 @@
                   "directory": {
                     "type": "string",
                     "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                  },
+                  "awaitFirstWorker": {
+                    "type": "boolean",
+                    "description": "Wait for the first worker to start before starting the remaining workers"
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "title": "CompileCacheOptions"
               }
             ]
           },
@@ -950,7 +968,8 @@
               }
             ]
           }
-        }
+        },
+        "title": "ApplicationEntry"
       }
     },
     "services": {
@@ -998,20 +1017,24 @@
             "resolvePath": true
           },
           "config": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
           },
           "url": {
+            "type": "string"
+          },
+          "module": {
             "type": "string"
           },
           "gitBranch": {
             "type": "string",
             "default": "main"
-          },
-          "useHttp": {
-            "type": "boolean"
-          },
-          "websocket": {
-            "type": "boolean"
           },
           "reuseTcpPorts": {
             "type": "boolean",
@@ -1050,7 +1073,8 @@
                     "minimum": 0,
                     "maximum": 1
                   }
-                }
+                },
+                "title": "ApplicationWorkersOptions"
               }
             ]
           },
@@ -1203,7 +1227,8 @@
                 ]
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "title": "ApplicationHealthOptions"
           },
           "restartOnError": {
             "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
@@ -1302,14 +1327,15 @@
                 "additionalProperties": false
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "title": "PermissionsOptions"
           },
-          "telemetry": {
+          "tracing": {
             "type": "object",
             "properties": {
               "instrumentations": {
                 "type": "array",
-                "description": "An array of instrumentations loaded if telemetry is enabled",
+                "description": "An array of instrumentations loaded if tracing is enabled",
                 "items": {
                   "oneOf": [
                     {
@@ -1336,7 +1362,8 @@
                   ]
                 }
               }
-            }
+            },
+            "title": "ApplicationTelemetryOverrides"
           },
           "compileCache": {
             "anyOf": [
@@ -1354,9 +1381,14 @@
                   "directory": {
                     "type": "string",
                     "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                  },
+                  "awaitFirstWorker": {
+                    "type": "boolean",
+                    "description": "Wait for the first worker to start before starting the remaining workers"
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "title": "CompileCacheOptions"
               }
             ]
           },
@@ -1383,7 +1415,8 @@
               }
             ]
           }
-        }
+        },
+        "title": "ApplicationEntry"
       }
     },
     "web": {
@@ -1431,20 +1464,24 @@
             "resolvePath": true
           },
           "config": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
           },
           "url": {
+            "type": "string"
+          },
+          "module": {
             "type": "string"
           },
           "gitBranch": {
             "type": "string",
             "default": "main"
-          },
-          "useHttp": {
-            "type": "boolean"
-          },
-          "websocket": {
-            "type": "boolean"
           },
           "reuseTcpPorts": {
             "type": "boolean",
@@ -1483,7 +1520,8 @@
                     "minimum": 0,
                     "maximum": 1
                   }
-                }
+                },
+                "title": "ApplicationWorkersOptions"
               }
             ]
           },
@@ -1636,7 +1674,8 @@
                 ]
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "title": "ApplicationHealthOptions"
           },
           "restartOnError": {
             "description": "Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.",
@@ -1735,14 +1774,15 @@
                 "additionalProperties": false
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "title": "PermissionsOptions"
           },
-          "telemetry": {
+          "tracing": {
             "type": "object",
             "properties": {
               "instrumentations": {
                 "type": "array",
-                "description": "An array of instrumentations loaded if telemetry is enabled",
+                "description": "An array of instrumentations loaded if tracing is enabled",
                 "items": {
                   "oneOf": [
                     {
@@ -1769,7 +1809,8 @@
                   ]
                 }
               }
-            }
+            },
+            "title": "ApplicationTelemetryOverrides"
           },
           "compileCache": {
             "anyOf": [
@@ -1787,9 +1828,14 @@
                   "directory": {
                     "type": "string",
                     "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+                  },
+                  "awaitFirstWorker": {
+                    "type": "boolean",
+                    "description": "Wait for the first worker to start before starting the remaining workers"
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "title": "CompileCacheOptions"
               }
             ]
           },
@@ -1816,7 +1862,8 @@
               }
             ]
           }
-        }
+        },
+        "title": "ApplicationEntry"
       }
     },
     "workers": {
@@ -1873,7 +1920,8 @@
               "minimum": 0,
               "maximum": 1
             }
-          }
+          },
+          "title": "WorkersOptions"
         }
       ]
     },
@@ -1894,7 +1942,8 @@
       "properties": {
         "level": {
           "type": "string",
-          "description": "The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels."
+          "minLength": 1,
+          "description": "A standard Pino log level or a level defined in customLevels."
         },
         "transport": {
           "anyOf": [
@@ -2112,164 +2161,9 @@
           "additionalProperties": false
         }
       },
-      "if": {
-        "not": {
-          "required": [
-            "customLevels"
-          ]
-        }
-      },
-      "then": {
-        "properties": {
-          "level": {
-            "oneOf": [
-              {
-                "enum": [
-                  "fatal",
-                  "error",
-                  "warn",
-                  "info",
-                  "debug",
-                  "trace",
-                  "silent"
-                ]
-              },
-              {
-                "pattern": "^\\{.+\\}$"
-              }
-            ]
-          }
-        }
-      },
       "default": {},
-      "additionalProperties": true
-    },
-    "server": {
-      "type": "object",
-      "properties": {
-        "hostname": {
-          "type": "string"
-        },
-        "port": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "portAssignment": {
-          "type": "string",
-          "enum": [
-            "shared",
-            "perWorkerIncrement"
-          ],
-          "description": "Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0)."
-        },
-        "backlog": {
-          "type": "integer",
-          "description": "The maximum length of the queue of pending connections"
-        },
-        "http2": {
-          "type": "boolean"
-        },
-        "https": {
-          "type": "object",
-          "properties": {
-            "allowHTTP1": {
-              "type": "boolean"
-            },
-            "key": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string",
-                      "resolvePath": true
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "path": {
-                            "type": "string",
-                            "resolvePath": true
-                          }
-                        },
-                        "additionalProperties": false
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            "cert": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string",
-                      "resolvePath": true
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "path": {
-                            "type": "string",
-                            "resolvePath": true
-                          }
-                        },
-                        "additionalProperties": false
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            "requestCert": {
-              "type": "boolean"
-            },
-            "rejectUnauthorized": {
-              "type": "boolean"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "key",
-            "cert"
-          ]
-        }
-      },
-      "additionalProperties": false
+      "additionalProperties": true,
+      "title": "RuntimeLoggerOptions"
     },
     "reuseTcpPorts": {
       "type": "boolean",
@@ -2341,7 +2235,8 @@
         "runtime",
         "application"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "title": "GracefulShutdownOptions"
     },
     "health": {
       "type": "object",
@@ -2503,7 +2398,8 @@
           "default": 262144
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "title": "HealthOptions"
     },
     "healthProbes": {
       "anyOf": [
@@ -2620,7 +2516,8 @@
               ]
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "HealthProbesOptions"
         }
       ],
       "default": true
@@ -2717,7 +2614,8 @@
             }
           ]
         }
-      }
+      },
+      "title": "UndiciOptions"
     },
     "httpCache": {
       "oneOf": [
@@ -2773,7 +2671,8 @@
               "default": "shared",
               "description": "Cache type. \"shared\" caches may be shared between users, \"private\" caches are user-specific."
             }
-          }
+          },
+          "title": "HttpCacheOptions"
         }
       ]
     },
@@ -2814,7 +2713,8 @@
               "description": "Custom path for the control socket. If not specified, uses the default platform-specific location."
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "ManagementApiOptions"
         }
       ],
       "default": true
@@ -2967,7 +2867,8 @@
               "required": [
                 "key",
                 "cert"
-              ]
+              ],
+              "title": "HttpsOptions"
             },
             "auth": {
               "type": "object",
@@ -3246,11 +3147,13 @@
               }
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "MetricsOptions"
         }
-      ]
+      ],
+      "default": false
     },
-    "telemetry": {
+    "tracing": {
       "type": "object",
       "properties": {
         "enabled": {
@@ -3421,7 +3324,8 @@
       "required": [
         "applicationName"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "title": "TelemetryOptions"
     },
     "verticalScaler": {
       "type": "object",
@@ -3596,72 +3500,6 @@
       },
       "default": []
     },
-    "scheduler": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "default": true
-          },
-          "name": {
-            "type": "string"
-          },
-          "cron": {
-            "type": "string"
-          },
-          "callbackUrl": {
-            "type": "string"
-          },
-          "method": {
-            "type": "string",
-            "enum": [
-              "GET",
-              "POST",
-              "PUT",
-              "PATCH",
-              "DELETE"
-            ],
-            "default": "GET"
-          },
-          "headers": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "body": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "object",
-                "additionalProperties": true
-              }
-            ]
-          },
-          "maxRetries": {
-            "type": "number",
-            "minimum": 0,
-            "default": 3
-          }
-        },
-        "required": [
-          "name",
-          "cron",
-          "callbackUrl"
-        ]
-      }
-    },
     "policies": {
       "type": "object",
       "properties": {
@@ -3706,11 +3544,17 @@
             "directory": {
               "type": "string",
               "description": "Directory to store compile cache. Defaults to .plt/compile-cache in app root"
+            },
+            "awaitFirstWorker": {
+              "type": "boolean",
+              "description": "Wait for the first worker to start before starting the remaining workers"
             }
           },
-          "additionalProperties": false
+          "additionalProperties": false,
+          "title": "CompileCacheOptions"
         }
-      ]
+      ],
+      "default": true
     },
     "module": {
       "type": "string"

@@ -1,17 +1,14 @@
-import {
-  createDirectory,
-  loadConfigurationFile as loadRawConfigurationFile,
-  saveConfigurationFile
-} from '@platformatic/foundation'
+import { createDirectory } from '@platformatic/foundation'
+import { generateCode, parseModule } from 'magicast'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
+import { createTemporaryDirectory, waitForStart, wattpm, wattpmNoRuntime } from './helper.js'
 
 test('inject - should send a request to an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
@@ -24,11 +21,12 @@ test('inject - should send a request to an application', async t => {
     return startProcess.catch(() => {})
   })
 
-  const entrypointProcess = await wattpm('inject', 'main')
+  const mainApplicationProcess = await wattpm('inject', 'main', 'main')
 
   const applicationProcess = await wattpm(
     '-v',
     'inject',
+    'main',
     'main',
     '-m',
     'POST',
@@ -44,6 +42,7 @@ test('inject - should send a request to an application', async t => {
   await wattpm(
     'inject',
     'main',
+    'main',
     '-f',
     '-o',
     resolve(directory, 'output.txt'),
@@ -57,7 +56,7 @@ test('inject - should send a request to an application', async t => {
     resolve(directory, 'input.txt')
   )
 
-  ok(entrypointProcess.stdout, '{"production":true}')
+  ok(mainApplicationProcess.stdout, '{"production":true}')
 
   ok(applicationProcess.stdout.includes('> POST / HTTP/1.1'))
   ok(applicationProcess.stdout.includes('> Content-Type: text/plain'))
@@ -74,14 +73,14 @@ test('inject - should send a request to an application', async t => {
 })
 
 test('inject - should complain when a runtime is not found', async t => {
-  const envProcess = await wattpm('inject', 'p-' + Date.now.toString(), { reject: false })
+  const envProcess = await wattpmNoRuntime(t, 'inject', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(envProcess.exitCode, 1)
   ok(envProcess.stdout.includes('Cannot find a matching runtime.'))
 })
 
 test('inject - should complain when an application is not found', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess)
@@ -98,7 +97,7 @@ test('inject - should complain when an application is not found', async t => {
 })
 
 test('inject - should properly autodetect the runtime and use the first argument as an application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
@@ -111,7 +110,7 @@ test('inject - should properly autodetect the runtime and use the first argument
     return startProcess.catch(() => {})
   })
 
-  const entrypointProcess = await wattpm('inject', 'main')
+  const mainApplicationProcess = await wattpm('inject', 'main', 'main')
 
   const applicationProcess = await wattpm(
     '-v',
@@ -144,7 +143,7 @@ test('inject - should properly autodetect the runtime and use the first argument
     resolve(directory, 'input.txt')
   )
 
-  ok(entrypointProcess.stdout, '{"production":true}')
+  ok(mainApplicationProcess.stdout, '{"production":true}')
 
   ok(applicationProcess.stdout.includes('> POST / HTTP/1.1'))
   ok(applicationProcess.stdout.includes('> Content-Type: text/plain'))
@@ -161,16 +160,18 @@ test('inject - should properly autodetect the runtime and use the first argument
 })
 
 test('inject - should use the same shared memory HTTP cache of the runtime', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
 
-  const configurationFile = resolve(rootDir, 'watt.json')
+  const configurationFile = resolve(rootDir, 'watt.config.mjs')
 
-  const contents = await loadRawConfigurationFile(configurationFile)
-  contents.httpCache = true
-  await saveConfigurationFile(configurationFile, contents)
+  // The configuration is a program, so it is edited as source rather than round-tripped through
+  // its loaded value -- there is no parser that reads one back as a document.
+  const source = parseModule(await readFile(configurationFile, 'utf-8'))
+  source.exports.default.httpCache = true
+  await writeFile(configurationFile, generateCode(source).code, 'utf-8')
 
   const startProcess = wattpm('start', rootDir)
   startProcess.stderr.pipe(process.stdout)
@@ -181,8 +182,8 @@ test('inject - should use the same shared memory HTTP cache of the runtime', asy
     return startProcess.catch(() => {})
   })
 
-  const request1 = await wattpm('inject', 'main', '-p', '/time')
-  const request2 = await wattpm('inject', 'main', '-p', '/time')
+  const request1 = await wattpm('inject', 'main', 'main', '-p', '/time')
+  const request2 = await wattpm('inject', 'main', 'main', '-p', '/time')
   const request3 = await wattpm('inject', 'alternative', '-p', '/main-time')
 
   deepStrictEqual(request1.stdout, request2.stdout)

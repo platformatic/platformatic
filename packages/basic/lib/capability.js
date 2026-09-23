@@ -1,13 +1,14 @@
 import {
   buildPinoOptions,
   deepmerge,
+  ensureError,
   executeWithTimeout,
   features,
   kHandledError,
   kMetadata,
   kTimeout
 } from '@platformatic/foundation'
-import { getITC, getPrometheus, getTelemetryReady, updateGlobals } from '@platformatic/globals'
+import { getITC, getPrometheus, getTracingReady, updateGlobals } from '@platformatic/globals'
 import {
   clearRegistry,
   client,
@@ -16,7 +17,7 @@ import {
   openTelemetryITCMessage,
   setupOtlpExporter
 } from '@platformatic/metrics'
-import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { addPinoInstrumentation } from '@platformatic/tracing'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { tracingChannel } from 'node:diagnostics_channel'
@@ -27,9 +28,22 @@ import { isAbsolute, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
-import { NonZeroExitCode } from './errors.js'
+import { ApplicationShutdownTimeoutError, NonZeroExitCode } from './errors.js'
 import { buildAdditionalServerOptions, cleanBasePath, importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
+
+/*
+  How a worker serves, as opposed to whether it is running: `listening` on a real port, `meshOnly`
+  reachable through the mesh with no port of its own, `background` serving no HTTP at all, and
+  `inactive` serving nothing when it was expected to. Reported by getServingState and collected by
+  the runtime; a capability that overrides getServingState returns one of these.
+*/
+export const servingState = Object.freeze({
+  listening: 'listening',
+  meshOnly: 'mesh-only',
+  background: 'background',
+  inactive: 'inactive'
+})
 
 export class BaseCapability extends EventEmitter {
   status
@@ -42,14 +56,13 @@ export class BaseCapability extends EventEmitter {
 
   applicationId
   workerId
-  telemetryConfig
+  tracingConfig
   serverConfig
   reuseTcpPorts
   openapiSchema
   graphqlSchema
   connectionString
   basePath
-  isEntrypoint
   isProduction
   dependencies
   customHealthCheck
@@ -58,7 +71,6 @@ export class BaseCapability extends EventEmitter {
   runtimeConfig
   stdout
   stderr
-  subprocessForceClose
   subprocessTerminationSignal
   logger
   metricsRegistry
@@ -80,18 +92,18 @@ export class BaseCapability extends EventEmitter {
     this.root = root
     this.config = config
     this.context = context ?? {}
+    this.applicationConfig = this.context.applicationConfig ?? this.config.runtime?.application ?? {}
     this.context.worker ??= { count: 1, index: 0 }
     this.standardStreams = standardStreams
 
     this.applicationId = this.context.applicationId
     this.workerId = this.context.worker.index
-    this.telemetryConfig = this.context.telemetryConfig
-    this.serverConfig = deepmerge(this.context.serverConfig ?? {}, config.server ?? {})
+    this.tracingConfig = this.context.tracingConfig
+    this.serverConfig = deepmerge({}, config.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
     this.connectionString = null
     this.basePath = null
-    this.isEntrypoint = this.context.isEntrypoint
     this.isProduction = this.context.isProduction
     this.dependencies = this.context.dependencies ?? []
     this.customHealthCheck = null
@@ -100,10 +112,14 @@ export class BaseCapability extends EventEmitter {
     this.runtimeConfig = deepmerge(this.context?.runtimeConfig ?? {}, workerData?.config ?? {})
     this.stdout = standardStreams?.stdout ?? process.stdout
     this.stderr = standardStreams?.stderr ?? process.stderr
-    this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
     this.logger = this._initializeLogger()
-    this.reuseTcpPorts = (this.config.reuseTcpPorts ?? this.runtimeConfig.reuseTcpPorts) && features.node.reusePort
+    const reuseTcpPorts = [
+      this.config.reuseTcpPorts,
+      this.applicationConfig.reuseTcpPorts,
+      this.runtimeConfig.reuseTcpPorts
+    ]
+    this.reuseTcpPorts = !reuseTcpPorts.includes(false) && reuseTcpPorts.includes(true) && features.node.reusePort
     // True by default, can be overridden in subclasses. If false, it takes precedence over the runtime configuration
     this.exitOnUnhandledErrors = true
 
@@ -137,7 +153,6 @@ export class BaseCapability extends EventEmitter {
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       notifyConfig: this.notifyConfig.bind(this),
       logger: this.logger,
-      isEntrypoint: this.isEntrypoint,
       reuseTcpPorts: this.reuseTcpPorts
     })
 
@@ -216,13 +231,42 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  start () {
-    throw new Error('BaseCapability.start must be overriden by the subclasses')
+  async start () {
+    if (this.status !== '' && this.status !== 'init') {
+      return
+    }
+
+    this.updateStatus('starting')
+
+    try {
+      await this.#setupSharedStartResources()
+      const result = await this._start()
+      this.updateStatus('started')
+      return result
+    } catch (error) {
+      // Do not emit Node.js' special "error" event without a listener.
+      this.status = 'error'
+      throw error
+    }
   }
 
-  // This is to allow grand-children to access the method without calling super.stop()
   async stop () {
-    return this._stop()
+    if (this.status !== 'started') {
+      return
+    }
+
+    this.updateStatus('stopping')
+
+    try {
+      await this.#cleanupSharedResources()
+      const result = await this._stop()
+      this.updateStatus('stopped')
+      return result
+    } catch (error) {
+      // Do not emit Node.js' special "error" event without a listener.
+      this.status = 'error'
+      throw error
+    }
   }
 
   build () {
@@ -309,7 +353,7 @@ export class BaseCapability extends EventEmitter {
     const pending = new Set()
 
     for (const worker of Object.values(workers)) {
-      if (dependents.includes(worker.application) && worker.status !== 'stopped') {
+      if (dependents.includes(worker.application) && worker.status !== 'stopped' && worker.status !== 'exited') {
         pending.add(worker.application)
       }
     }
@@ -377,34 +421,44 @@ export class BaseCapability extends EventEmitter {
     return { type: this.type, version: this.version, dependencies: this.dependencies }
   }
 
+  /*
+    See servingState for what the values mean.
+
+    getDispatchTarget cannot answer this — its fallback returns the capability whenever there is no
+    URL, whether the start method built a dispatcher or returned without building anything — so this
+    is a contract a capability implements rather than something the runtime can infer.
+
+    The default is deliberately pessimistic. A capability that neither declares servesWithoutPort
+    nor overrides this is one nothing in the system can vouch for, and of the two ways to be wrong,
+    under-reporting a working application is the recoverable one: over-reporting prints a mesh
+    address that answers nothing.
+  */
+  getServingState () {
+    return this.url ? servingState.listening : servingState.inactive
+  }
+
   getDispatchFunc () {
     return this
   }
 
   async getDispatchTarget () {
-    // When an application binds a TCP server only for WebSocket handoff purposes
-    // ("websocket" flag without "useHttp"), mesh HTTP traffic keeps being served
-    // in-thread: the TCP port is only advertised to the gateway via getMeta().
-    // This only applies to capabilities providing a real in-thread dispatch target
-    // (getDispatchFunc returning something other than the capability itself, whose
-    // inject is not implemented): the others dispatch via the bound TCP address,
-    // as under "useHttp".
-    const applicationConfig = this.context.applicationConfig
-    if (applicationConfig?.websocket && !applicationConfig.useHttp && !this.isEntrypoint) {
-      const dispatchFunc = await this.getDispatchFunc()
-
-      if (dispatchFunc !== this) {
-        return dispatchFunc
-      }
-    }
-
     return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
-  getMeta () {
+  getMeta ({ includeConnection = false, ...gateway } = {}) {
+    if (includeConnection) {
+      gateway.tcp = typeof this.url !== 'undefined'
+      gateway.url = this.url
+    }
+
+    if (this.childManager) {
+      gateway.childProcess = true
+    }
+
     return {
       gateway: {
-        wantsAbsoluteUrls: false
+        wantsAbsoluteUrls: false,
+        ...gateway
       }
     }
   }
@@ -543,7 +597,6 @@ export class BaseCapability extends EventEmitter {
     })
 
     this.setupChildManagerEventsForwarding(this.childManager)
-
     try {
       await this.childManager.inject()
       this.subprocess = await this.spawn(command)
@@ -552,7 +605,11 @@ export class BaseCapability extends EventEmitter {
       // health metrics via ITC instead of from the coordinator thread handle.
       const itc = getITC({ throwOnMissing: false })
       if (itc) {
-        itc.notify('subprocess:started')
+        const pid = this.subprocess.pid
+        itc.notify('subprocess:started', { pid })
+        this.subprocess.once('exit', () => {
+          itc.notify('subprocess:exited', { pid })
+        })
       }
     } catch (e) {
       this.childManager.close()
@@ -598,36 +655,43 @@ export class BaseCapability extends EventEmitter {
       return
     }
 
-    const exitTimeout = this.runtimeConfig.gracefulShutdown.application
+    const shutdownTimeout = this.shutdownTimeout ?? this.runtimeConfig.gracefulShutdown.application
 
     this.#subprocessStarted = false
-    const exitPromise = once(this.subprocess, 'exit')
+    // Start the process-exit timeout before requesting application shutdown so the close request and exit share one budget.
+    const exitPromise = executeWithTimeout(once(this.subprocess, 'exit'), shutdownTimeout)
 
-    // Attempt graceful close on the process
-    const handled = await this.childManager.send(this.clientWs, 'close', this.subprocessTerminationSignal)
-
-    if (!handled && this.subprocessForceClose) {
-      this.subprocess.kill(this.subprocessTerminationSignal)
+    // Ask the child process to run its own shutdown sequence.
+    let closeError
+    let closeResult
+    try {
+      closeResult = await executeWithTimeout(
+        this.childManager.send(this.clientWs, 'close', this.subprocessTerminationSignal),
+        shutdownTimeout
+      )
+    } catch (error) {
+      closeError = error.handlerError ? ensureError(error.handlerError) : error
     }
 
-    // If the process hasn't exited in X seconds, kill it in the polite way
+    if (closeResult === kTimeout) {
+      closeError = new ApplicationShutdownTimeoutError()
+    }
+
+    // The IPC cleanup and natural process exit share the runtime's shutdown budget.
     /* c8 ignore next 10 */
-    const res = await executeWithTimeout(exitPromise, exitTimeout)
+    const res = await exitPromise
 
     if (res === kTimeout) {
-      this.subprocess.kill(this.subprocessTerminationSignal)
-
-      // If the process hasn't exited in X seconds, kill it the hard way
-      const res = await executeWithTimeout(exitPromise, exitTimeout)
-      if (res === kTimeout) {
-        this.subprocess.kill('SIGKILL')
-      }
+      closeError ??= new ApplicationShutdownTimeoutError()
+      this.subprocess.kill('SIGKILL')
     }
-
-    await exitPromise
 
     // Close the manager
     await this.childManager.close()
+
+    if (closeError) {
+      throw closeError
+    }
   }
 
   getChildManager () {
@@ -653,15 +717,14 @@ export class BaseCapability extends EventEmitter {
       root: pathToFileURL(this.root).toString(),
       basePath,
       logLevel: this.logger.level,
-      isEntrypoint: this.isEntrypoint,
       reuseTcpPorts: this.reuseTcpPorts,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.gateway?.wantsAbsoluteUrls ?? false,
       exitOnUnhandledErrors: this.runtimeConfig.exitOnUnhandledErrors ?? true,
-      host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
+      host: this.serverConfig?.hostname ?? true,
       port: this.serverConfig && typeof this.serverConfig.port === 'number' ? this.serverConfig.port : true,
       additionalServerOptions: await buildAdditionalServerOptions(this.serverConfig, true),
-      telemetryConfig: this.telemetryConfig,
+      tracingConfig: this.tracingConfig,
       compileCache: this.config.compileCache ?? this.runtimeConfig?.compileCache,
       resourceLimits: this.context.resourceLimits
     }
@@ -698,6 +761,20 @@ export class BaseCapability extends EventEmitter {
       this.emit('application:worker:event:' + event.event, event.payload)
     })
 
+    childManager.on('compile-cache:flushed', payload => {
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify('compile-cache:flushed', payload)
+      }
+    })
+
+    childManager.on('compile-cache:unavailable', () => {
+      const itc = getITC({ throwOnMissing: false })
+      if (itc) {
+        itc.notify('compile-cache:unavailable')
+      }
+    })
+
     // Forward health signals from child process to runtime
     childManager.on('healthSignals', ({ workerId, signals }) => {
       const itc = getITC({ throwOnMissing: false })
@@ -724,8 +801,8 @@ export class BaseCapability extends EventEmitter {
   async spawn (command) {
     const isArrayCommand = Array.isArray(command)
     let [executable, ...args] = isArrayCommand ? command : parseCommandString(command)
-    const hasChainedCommands = !isArrayCommand &&
-      (command.includes('&&') || command.includes('||') || command.includes(';'))
+    const hasChainedCommands =
+      !isArrayCommand && (command.includes('&&') || command.includes('||') || command.includes(';'))
 
     // Use the current Node.js executable instead of relying on PATH lookup
     // This ensures subprocess uses the same Node.js version as the parent
@@ -745,7 +822,7 @@ export class BaseCapability extends EventEmitter {
 
     const spawnOptions = { cwd: this.root }
 
-    if (platform() === 'win32' && !isArrayCommand) {
+    if (platform() === 'win32' && !isArrayCommand && executable !== process.execPath) {
       executable = command.replace(/^node\b/, process.execPath)
       args = []
 
@@ -802,14 +879,14 @@ export class BaseCapability extends EventEmitter {
       this.root
     )
 
-    if (loggerOptions.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
+    if (loggerOptions.openTelemetryExporter && this.tracingConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)
     }
 
     return pino(pinoOptions, this.standardStreams?.stdout)
   }
 
-  _start () {
+  #setupSharedStartResources () {
     if (this.reuseTcpPorts) {
       if (!features.node.reusePort) {
         this.reuseTcpPorts = false
@@ -825,7 +902,7 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  async _stop () {
+  async #cleanupSharedResources () {
     if (this.#pendingDependenciesWaits.size > 0) {
       await Promise.allSettled(this.#pendingDependenciesWaits)
     }
@@ -847,6 +924,10 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
+  async _start () {}
+
+  async _stop () {}
+
   async _collectMetrics () {
     if (this.#metricsCollected) {
       return
@@ -854,7 +935,7 @@ export class BaseCapability extends EventEmitter {
 
     this.#metricsCollected = true
 
-    if (this.context.metricsConfig === false || this.context.metricsConfig?.enabled === false) {
+    if (!this.context.metricsConfig || this.context.metricsConfig.enabled === false) {
       return
     }
 
@@ -882,12 +963,6 @@ export class BaseCapability extends EventEmitter {
 
     if (url.hostname === '[::]' || url.hostname === '0.0.0.0') {
       url.hostname = 'localhost'
-    }
-
-    const port = this.config.application?.entrypointPort
-
-    if (typeof port === 'number') {
-      url.port = port
     }
 
     return url.pathname === '/' && url.search === '' && url.hash === '' ? url.origin : url.toString()
@@ -1023,9 +1098,9 @@ export class BaseCapability extends EventEmitter {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
-    if (telemetryReady) {
-      await telemetryReady
+    const tracingReady = getTracingReady({ throwOnMissing: false })
+    if (tracingReady) {
+      await tracingReady
     }
 
     // Setup and start OTLP exporter bridge

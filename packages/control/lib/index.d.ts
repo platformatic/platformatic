@@ -23,16 +23,26 @@ export interface RuntimeApplicationBase {
   status: string
 }
 
+export type ServingState = 'listening' | 'mesh-only' | 'background' | 'inactive'
+
 export interface RuntimeApplication {
   id: string
   type: string
   status: string
+  /** How the application serves, as opposed to whether it runs. Absent when it is not started. */
+  servingState?: ServingState
   version: string
   localUrl: string
-  entrypoint: boolean
-  url?: string
+  url: string | null
+  urls: string[]
   workers?: number
-  dependencies: Runtime
+  dependencies: string[]
+  path?: string
+  sourceMaps?: boolean
+  /** v3 only: the path to the application's configuration file. v4 reports configPath. */
+  config?: string
+  /** v4 only: the configuration file the loader decided on, absent for an inline definition. */
+  configPath?: string
 }
 
 export interface Runtime {
@@ -43,15 +53,18 @@ export interface Runtime {
   execPath: string
   nodeVersion: string
   projectDir: string
+  /** The configuration file the loader decided on. Null when the runtime was built from an object. */
+  configPath: string | null
+  /** The autoload declaration, with its path resolved. Null when the project does not autoload. */
+  autoload: { path: string, exclude?: string[], mappings?: Record<string, unknown> } | null
   packageName: string | null
   packageVersion: string | null
-  url: string | null
   platformaticVersion: string
+  urls: Record<string, string>
   startTime?: number
 }
 
 export interface RuntimeApplications {
-  entrypoint: string
   production: boolean
   applications: (RuntimeApplication | RuntimeApplicationBase)[]
 }
@@ -97,14 +110,12 @@ export interface LogIndexes {
 export interface RuntimeSchedulerJob {
   name: string
   cron: string
-  source: 'config' | 'application'
+  source: 'application'
   paused: boolean
   maxRetries: number
   lastExecutedAt: string | null
   lastStatus: 'success' | 'failed' | null
   nextRunAt: string | null
-  callbackUrl?: string
-  method?: string
   applicationId?: string
   scheduleId?: string
   tasks?: string[]
@@ -125,11 +136,6 @@ export class RuntimeApiClient {
   pauseRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   resumeRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   runRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerRunResult>
-  getRuntimeConfig (
-    pid: number
-  ): Promise<
-    Record<string, unknown> & { path?: string; configFile?: string; configPath?: string; server?: { path?: string } }
-  >
   getRuntimeApplicationConfig (pid: number, applicationId?: string): Promise<Record<string, unknown>>
   getRuntimeEnv (pid: number): Promise<Record<string, string>>
   getRuntimeOpenapi (pid: number, applicationId: string): Promise<Record<string, unknown>>
@@ -141,7 +147,6 @@ export class RuntimeApiClient {
     pid: number,
     options?: T
   ): Promise<T extends { format: 'text' } ? string : Metric[]>
-  getRuntimeLiveMetricsStream (pid: number): WebSocketStream
   getRuntimeLiveLogsStream (pid: number, startLogIndex?: number): WebSocketStream
   getRuntimeLogsStream (pid: number, logsId: string, options?: { runtimePID?: number }): Promise<ReadableBody>
   getRuntimeAllLogsStream (pid: number, options?: { runtimePID?: number }): Promise<ReadableBody>

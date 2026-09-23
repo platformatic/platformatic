@@ -14,7 +14,7 @@ import { platform, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createWebSocketStream } from 'ws'
-import { prepareApplication } from './config.js'
+import { prepareAddedApplications } from './config.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
@@ -99,18 +99,6 @@ export async function managementApiPlugin (app, opts) {
     return runtime.getRuntimeMetadata()
   })
 
-  app.get('/config', quiet, async request => {
-    const metadata = request.query.metadata === 'true'
-    const rawConfig = await runtime.getRuntimeConfig(metadata)
-
-    if (metadata) {
-      const { [kMetadata]: __metadata, ...config } = rawConfig
-      return { ...config, __metadata }
-    }
-
-    return rawConfig
-  })
-
   app.get('/env', quiet, async () => {
     return { ...process.env, ...runtime.getRuntimeEnv() }
   })
@@ -169,11 +157,9 @@ export async function managementApiPlugin (app, opts) {
       }
     }
 
-    for (let i = 0; i < applications.length; i++) {
-      applications[i] = await prepareApplication(config, applications[i], config.workers)
-    }
+    const prepared = await prepareAddedApplications(config, applications, runtime.getApplicationsIds())
 
-    const created = await runtime.addApplications(applications, request.query.start !== 'false')
+    const created = await runtime.addApplications(prepared, request.query.start !== 'false')
     reply.code(201)
     return created
   })
@@ -303,7 +289,10 @@ export async function managementApiPlugin (app, opts) {
   })
 
   app.get('/metrics', quiet, async (req, reply) => {
-    const config = await runtime.getRuntimeConfig()
+    // The live read: this needs one boolean, and the public getter builds a frozen snapshot of the
+    // whole configuration -- which is the right shape to hand a consumer and the wrong one to pay
+    // for on a scrape.
+    const config = runtime.getRuntimeConfig(true)
 
     if (config.metrics?.enabled === false) {
       reply.code(501)
@@ -324,53 +313,6 @@ export async function managementApiPlugin (app, opts) {
     reply.type('text/plain')
     const { metrics } = await runtime.getMetrics('text')
     return metrics
-  })
-
-  // TODO: Remove in next major version - deprecated endpoint
-  app.get('/metrics/live', { ...quiet, websocket: true }, async socket => {
-    const config = await runtime.getRuntimeConfig()
-
-    if (config.metrics?.enabled === false) {
-      socket.send(
-        JSON.stringify({
-          statusCode: 501,
-          error: 'Not Implemented',
-          message: 'Metrics are disabled.'
-        }),
-        () => {
-          socket.close()
-        }
-      )
-
-      return
-    }
-
-    const pollAndSendMetrics = async () => {
-      try {
-        const metrics = await runtime.getFormattedMetrics()
-        if (metrics) {
-          const serializedMetrics = JSON.stringify(metrics)
-          socket.send(serializedMetrics + '\n')
-        }
-      } catch (error) {
-        // If there's an error, stop polling and close the connection
-        clearInterval(pollingInterval)
-        socket.close()
-      }
-    }
-
-    // Poll every second
-    const pollingInterval = setInterval(pollAndSendMetrics, 1000)
-
-    // Send initial metrics immediately
-    await pollAndSendMetrics()
-
-    const cleanup = () => {
-      clearInterval(pollingInterval)
-    }
-
-    socket.on('error', cleanup)
-    socket.on('close', cleanup)
   })
 
   app.get('/logs/live', { ...quiet, websocket: true }, async socket => {

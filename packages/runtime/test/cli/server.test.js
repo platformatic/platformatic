@@ -7,18 +7,21 @@ import { test } from 'node:test'
 import { request } from 'undici'
 import { start, startPath } from './helper.js'
 
-test('autostart', async () => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start(config, { env: { PLT_USE_PLAIN_CREATE: 'true' } })
+test('autostart', async t => {
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'watt.config.mjs')
+  const { child, url } = await start(config, { applicationId: 'serviceApp', env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  t.after(async () => {
+    child.kill('SIGKILL')
+    await child.catch(() => {})
+  })
   const res = await request(url)
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
-  child.kill('SIGKILL')
 })
 
 test('handles startup errors', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'service-throws-on-start', 'watt.config.mjs')
   const child = execa(process.execPath, [startPath, config], {
     encoding: 'utf8',
     env: { PLT_USE_PLAIN_CREATE: 'true' }
@@ -51,7 +54,7 @@ test('handles startup errors', async t => {
 })
 
 test('does not start if node inspector flags are provided', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'watt.config.mjs')
   const child = execa(process.execPath, [startPath, config], {
     env: { NODE_OPTIONS: '--inspect', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
@@ -84,7 +87,7 @@ test('does not start if node inspector flags are provided', async t => {
 })
 
 test('does start if node inspector flag is provided by VS Code', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'watt.config.mjs')
   const child = execa(process.execPath, [startPath, config], {
     env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }', PLT_USE_PLAIN_CREATE: 'true' },
     encoding: 'utf8'
@@ -116,7 +119,7 @@ test('does start if node inspector flag is provided by VS Code', async t => {
 })
 
 test('starts the inspector', async t => {
-  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'configs', 'monorepo', 'watt.config.mjs')
   const child = execa(process.execPath, [startPath, config, '--inspect'], {
     encoding: 'utf8',
     env: { PLT_USE_PLAIN_CREATE: 'true' }
@@ -161,6 +164,15 @@ test('starts the inspector', async t => {
 
   assert(found)
 
+  /*
+    One inspector port per application worker, in the order the ports were assigned. The identity
+    check is the thread id, read relative to the first rather than pinned to 1: the loader
+    evaluates each configuration file in a worker of its own before any application starts, and
+    thread ids are process-global and never reused, so the first application worker is not thread 1
+    and how many threads precede it is an implementation detail of the loader.
+  */
+  const threadIds = []
+
   for (let i = 0; i < 4; i++) {
     const [data] = await (await fetch(`http://127.0.0.1:${9230 + i}/json/list`)).json()
     const { webSocketDebuggerUrl } = data
@@ -175,10 +187,16 @@ test('starts the inspector', async t => {
       awaitPromise: true
     })
 
-    assert.strictEqual(res.result.value, i + 1)
+    threadIds.push(res.result.value)
 
     await client.close()
   }
+
+  assert.deepStrictEqual(
+    threadIds,
+    [0, 1, 2, 3].map(offset => threadIds[0] + offset),
+    'each port belongs to the next application worker'
+  )
 
   child.kill('SIGKILL')
 

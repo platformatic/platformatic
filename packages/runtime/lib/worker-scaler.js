@@ -1,8 +1,13 @@
-import { features } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
 import { ScalingAlgorithm } from './scaling-algorithm.js'
-import { kApplicationId, kId, kLastWorkerScalerELU, kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
+import {
+  kApplicationId,
+  kId,
+  kLastWorkerScalerELU,
+  kWorkerStartTime,
+  kWorkerStatus
+} from './worker/symbols.js'
 
 const healthCheckInterval = 1000
 export const kOriginalWorkers = Symbol('plt.runtime.application.dynamicWorkersScalerOriginalWorkers')
@@ -93,14 +98,7 @@ export class DynamicWorkersScaler {
   async add (application) {
     const config = {}
 
-    if (application.entrypoint && !features.node.reusePort) {
-      this.#runtime.logger.warn(
-        `The "${application.id}" application cannot be scaled because it is an entrypoint and the "reusePort" feature is not available in your OS.`
-      )
-
-      config.minWorkers = 1
-      config.maxWorkers = 1
-    } else if (application.workers.dynamic === false) {
+    if (application.workers.dynamic === false) {
       this.#runtime.logger.warn(
         `The "${application.id}" application cannot be scaled because it has a fixed number of workers (${application.workers.static}).`
       )

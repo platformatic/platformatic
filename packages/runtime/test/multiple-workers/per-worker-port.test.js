@@ -1,11 +1,11 @@
-import { deepStrictEqual, notStrictEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, notStrictEqual, ok, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
-import { resolve } from 'node:path'
+import { resolve, join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import { createRuntime, updateConfigFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, updateConfigFile } from '../helpers.js'
 import { findAvailablePortRange, prepareRuntime, waitForEvents } from './helper.js'
 
 const HOST = '127.0.0.1'
@@ -45,41 +45,63 @@ async function getOccupiedPortWithAvailablePreviousPort () {
   }
 }
 
+// Configures the application to use per-worker port assignment, starting from a free range of ports.
+// The port assignment lives in the capability configuration since ports are per-application.
 async function preparePerWorkerPortRuntime (
   t,
-  { application = 'node', workerCount = 5, maxWorkerCount = workerCount } = {}
+  {
+    application = 'node',
+    workerCount = 5,
+    maxWorkerCount = workerCount,
+    additionalApplications = [],
+    beforeCreate
+  } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
+  const configFile = configurationFileIn(root)
   const basePort = await findAvailablePortRange({ host: HOST, size: maxWorkerCount })
 
-  await updateConfigFile(configFile, contents => {
+  await updateConfigFile(configurationFileIn(join(root, application)), contents => {
     contents.server = {
+      ...contents.server,
       hostname: HOST,
       port: basePort,
       portAssignment: 'perWorkerIncrement'
     }
-    contents.autoload = undefined
-    contents.entrypoint = application
+  })
 
-    let applicationConfig = contents.services.find(service => service.id === application)
+  await updateConfigFile(configFile, contents => {
+    contents.autoload = undefined
+    contents.metrics = false
+
+    let applicationConfig = contents.applications.find(service => service.id === application)
     if (!applicationConfig) {
       applicationConfig = {
         id: application,
         path: `./${application}`,
-        config: 'platformatic.json'
       }
-      contents.services.push(applicationConfig)
+      contents.applications.push(applicationConfig)
     }
 
     applicationConfig.workers = workerCount
+
+    for (const additional of additionalApplications) {
+      contents.applications.push(additional)
+    }
   })
 
   if (application === 'service') {
-    await updateConfigFile(resolve(root, 'service/platformatic.json'), contents => {
+    await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
       contents.plugins.paths.push('./crash-plugin.js')
     })
   }
+
+  /*
+    Every configuration is evaluated once, when the runtime is loaded, so a test that wants a file
+    to say something different has to say it before this point -- editing it afterwards is a change
+    to a file nothing will read again.
+  */
+  await beforeCreate?.({ root, basePort })
 
   const app = await createRuntime(configFile, null, { isProduction: true })
 
@@ -87,7 +109,7 @@ async function preparePerWorkerPortRuntime (
     await app.close()
   })
 
-  return { app, basePort }
+  return { app, basePort, root }
 }
 
 async function requestWorkerPort (port, expectedFrom = 'node') {
@@ -184,14 +206,29 @@ test(
   }
 )
 
-test('assigns one incremental port per entrypoint worker', async t => {
+test('assigns one incremental port per worker of the application', async t => {
   const { app, basePort } = await preparePerWorkerPortRuntime(t)
 
-  await app.start()
+  const urls = await app.start()
 
   for (let offset = 0; offset < 5; offset++) {
     strictEqual(await requestWorkerPort(basePort + offset), offset)
+    strictEqual(new URL(urls[`node:${offset}`]).port, String(basePort + offset))
   }
+
+  deepStrictEqual(Object.keys(app.getUrls('node')).sort(), ['node:0', 'node:1', 'node:2', 'node:3', 'node:4'])
+
+  const details = await app.getApplicationDetails('node')
+  strictEqual(details.urls.length, 5)
+  strictEqual(details.url, urls['node:0'])
+})
+
+test('assigns one incremental port per worker of a service application', async t => {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t, { application: 'service', workerCount: 3 })
+
+  await app.start()
+
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [0, 1, 2])
 })
 
 test('assigns new incremental ports when scaling up and stops highest ports when scaling down', async t => {
@@ -213,6 +250,11 @@ test('assigns new incremental ports when scaling up and stops highest ports when
   await assertPortClosed(basePort + 4)
   await assertPortClosed(basePort + 5)
   await assertPortClosed(basePort + 6)
+
+  // Scaling up again reuses the lowest free ports
+  report = await app.updateApplicationsResources([{ application: 'node', workers: 5 }])
+  strictEqual(report.length, 1)
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 7, 8])
 })
 
 test('preserves incremental ports when restarting an application', async t => {
@@ -224,6 +266,22 @@ test('preserves incremental ports when restarting an application', async t => {
   await app.restartApplication('node')
 
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [5, 6, 7, 8, 9])
+})
+
+test('preserves incremental ports when stopping and starting an application', async t => {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t)
+
+  await app.start()
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
+
+  await app.stopApplication('node')
+
+  for (let offset = 0; offset < 5; offset++) {
+    await assertPortClosed(basePort + offset)
+  }
+
+  await app.startApplication('node')
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
 })
 
 test('preserves incremental ports when replacing workers after a health update', async t => {
@@ -261,4 +319,42 @@ test('preserves incremental port when restarting a crashed worker', async t => {
 
   await waitForWorkerOnPort(basePort, 3, 'service')
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [3, 1, 2])
+
+  // Crash the replacement worker as well: the new worker must inherit the port offset, not use its index
+  const secondEventsPromise = waitForEvents(
+    app,
+    { event: 'application:worker:error', application: 'service', worker: 3 },
+    20_000
+  )
+
+  const secondRes = await request(`http://${HOST}:${basePort}/crash`, { method: 'POST' })
+  await secondRes.body.text()
+  await secondEventsPromise
+
+  await waitForWorkerOnPort(basePort, 4, 'service')
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [4, 1, 2])
+})
+
+test('rejects another application listening on a port used by one of the workers', async t => {
+  // The service is set to the port node's second worker will take, and set before the runtime is
+  // created -- every configuration is evaluated once, at load. So the overlap is declared, and the
+  // load time check rejects it when the configuration loads, earlier than the start time check and
+  // naming both applications and the range they collide on.
+  await rejects(
+    () =>
+      preparePerWorkerPortRuntime(t, {
+        workerCount: 3,
+        additionalApplications: [{ id: 'service', path: './service', workers: 1 }],
+        async beforeCreate ({ root, basePort }) {
+          await updateConfigFile(configurationFileIn(resolve(root, 'service')), contents => {
+            contents.server = { ...contents.server, hostname: HOST, port: basePort + 1 }
+          })
+        }
+      }),
+    error => {
+      strictEqual(error.code, 'PLT_RUNTIME_APPLICATIONS_PORTS_OVERLAP')
+      ok(error.message.includes('"node"') && error.message.includes('"service"'), error.message)
+      return true
+    }
+  )
 })

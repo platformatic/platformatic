@@ -102,11 +102,12 @@ stream, already tagged with the application id and worker index. Traces propagat
 mesh, so a request that touches four applications produces one connected trace rather than four
 disconnected ones.
 
-**One public surface.** Exactly one application is the entrypoint. Everything else is reachable only
-from inside the mesh. This is a genuine security property, not just a routing convention: a
-non-entrypoint application does not open a listening socket, so it cannot be reached from outside the
-process even by mistake. (An application can opt back in with `useHttp` when it genuinely needs a
-real port — but that is a decision you make, not a default you inherit.)
+**One public surface.** Only the applications you expose listen on a port; everything else is
+reachable only from inside the mesh. This is a genuine security property, not just a routing
+convention: an application without a configured `server.port` does not open a listening socket, so it
+cannot be reached from outside the process even by mistake. (An application opts in by configuring
+`server.port` when it genuinely needs a real port — but that is a decision you make, not a default
+you inherit.)
 
 ## Capabilities: the framework adapter layer
 

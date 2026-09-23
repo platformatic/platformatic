@@ -1,5 +1,4 @@
 import {
-  buildAdditionalServerOptions,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -53,25 +52,23 @@ export class TanstackCapability extends ViteCapability {
     this.subprocessTerminationSignal = 'SIGKILL'
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    /* c8 ignore next 3 */
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
-
+  async _start () {
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
 
     if (command) {
       return this.startWithCommand(command)
-    } else if (!this.isProduction) {
-      return super.start({ listen })
     }
 
-    await this.#startProduction({ listen })
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    if (!this.isProduction) {
+      return super._start()
+    }
+
+    await this.#startProduction()
   }
 
   async #startProduction () {
@@ -81,28 +78,31 @@ export class TanstackCapability extends ViteCapability {
     this.#basePath = await this._getBasePathFromBuildInfo()
 
     const serverOptions = this.serverConfig
-    const serverPromise = createServerListener(
-      serverOptions?.port ?? true,
-      serverOptions?.hostname ?? true,
-      await buildAdditionalServerOptions(serverOptions)
-    )
+    const serverPromise = createServerListener()
 
     const httpsOptions = await sanitizeHTTPSOptions(serverOptions?.https)
+    const environment = {
+      NITRO_HOST: serverOptions?.hostname ?? '127.0.0.1',
+      NITRO_PORT: serverOptions?.port ?? 0,
+      NITRO_SSL_CERT: httpsOptions?.cert && this.#serializeCertificateValue(httpsOptions.cert),
+      NITRO_SSL_KEY: httpsOptions?.key && this.#serializeCertificateValue(httpsOptions.key)
+    }
+    const originalEnvironment = new Map()
 
-    if (!httpsOptions?.cert && !httpsOptions?.key) {
+    for (const [key, value] of Object.entries(environment)) {
+      if (typeof value === 'undefined') {
+        continue
+      }
+
+      originalEnvironment.set(key, process.env[key])
+      process.env[key] = value.toString()
+    }
+
+    try {
       await this.#importProductionNitro(outputDirectory)
-    } else {
-      const originalCert = process.env.NITRO_SSL_CERT
-      const originalKey = process.env.NITRO_SSL_KEY
-
-      process.env.NITRO_SSL_CERT = this.#serializeCertificateValue(httpsOptions.cert)
-      process.env.NITRO_SSL_KEY = this.#serializeCertificateValue(httpsOptions.key)
-
-      try {
-        await this.#importProductionNitro(outputDirectory)
-      } finally {
-        this.#restoreEnvironmentVariables('NITRO_SSL_CERT', originalCert)
-        this.#restoreEnvironmentVariables('NITRO_SSL_KEY', originalKey)
+    } finally {
+      for (const [key, value] of originalEnvironment) {
+        this.#restoreEnvironmentVariables(key, value)
       }
     }
 
@@ -114,9 +114,9 @@ export class TanstackCapability extends ViteCapability {
     return this.url
   }
 
-  async stop () {
+  async _stop () {
     const hasChildrenManager = !!this.childManager
-    await super.stop()
+    await super._stop()
 
     // ViteCapability.stop already stops child processs
     if (hasChildrenManager || !this.isProduction) {

@@ -3,13 +3,13 @@ import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { version } from '../../lib/version.js'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application details', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -37,17 +37,17 @@ test('should get application details', async t => {
 
   strictEqual(statusCode, 200)
 
-  const entrypointDetails = await app.getEntrypointDetails()
-  const applicationDetails = await body.json()
+  const { url, urls, ...applicationDetails } = await body.json()
+  deepStrictEqual(urls, [url])
+  strictEqual(new URL(url).protocol, 'http:')
   deepStrictEqual(applicationDetails, {
     id: 'service-1',
     type: 'service',
     status: 'started',
+    servingState: 'listening',
     version,
-    entrypoint: true,
-    url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',
-    config: resolve(configFile, '../../management-api/services/service-1/platformatic.json'),
+    configPath: resolve(configFile, '../../management-api/services/service-1/watt.config.mjs'),
     path: resolve(configFile, '../../management-api/services/service-1'),
     dependencies: [],
     sourceMaps: false

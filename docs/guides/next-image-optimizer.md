@@ -29,7 +29,7 @@ Before starting, make sure you have:
 
 You will create a runtime with three applications:
 
-1. **gateway** (entrypoint)
+1. **gateway** (public listener)
    - runs `@platformatic/gateway`
    - routes only `GET /_next/image` to `optimizer` using `proxy.routes`; everything else goes to `frontend`
 2. **frontend**
@@ -53,13 +53,13 @@ Create this structure:
 
 ```text
 my-runtime/
-  watt.json
+  watt.config.ts
   web/
     gateway/
-      watt.json
+      watt.config.ts
       package.json
     frontend/
-      watt.json
+      watt.config.ts
       package.json
       next.config.js
       public/
@@ -68,76 +68,81 @@ my-runtime/
         app/
           page.jsx
     optimizer/
-      watt.json
+      watt.config.ts
       package.json
       next.config.js
 ```
 
 In this setup:
 
-- `gateway` is the external-facing entrypoint
+- `gateway` exposes the external-facing server
 - `frontend` is where relative assets are fetched from
 - `optimizer` handles only `/_next/image`
 
 ## 2) Configure the runtime
 
-Create `my-runtime/watt.json`:
+Create `my-runtime/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
-  "entrypoint": "gateway",
-  "applications": [
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
     {
-      "id": "gateway",
-      "path": "./web/gateway"
+      id: 'gateway',
+      path: './web/gateway'
     },
     {
-      "id": "frontend",
-      "path": "./web/frontend"
+      id: 'frontend',
+      path: './web/frontend'
     },
     {
-      "id": "optimizer",
-      "path": "./web/optimizer"
+      id: 'optimizer',
+      path: './web/optimizer'
     }
   ]
-}
+})
 ```
 
 ### Why this configuration?
 
-- `entrypoint: "gateway"` means incoming runtime traffic goes first to Gateway.
+- Gateway's application-local `server` configuration accepts incoming traffic.
 - Gateway routes by method + path (via `proxy.methods` and `proxy.routes`).
 - `frontend` and `optimizer` are in the same runtime, so service discovery works automatically.
+- Gateway remains the intended deployment ingress; publish only its configured listener.
 - `frontend` is reachable from `optimizer` as `http://frontend.plt.local`.
 
 ## 3) Configure Gateway with route-based proxying
 
-Create `my-runtime/web/gateway/watt.json`:
+Create `my-runtime/web/gateway/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { createGatewayConfig } from '@platformatic/gateway'
+
+export default createGatewayConfig({
+  server: {
+    port: 3042
+  },
+  gateway: {
+    applications: [
       {
-        "id": "frontend",
-        "proxy": {
-          "prefix": "/",
-          "routes": ["/*"]
+        id: 'frontend',
+        proxy: {
+          prefix: '/',
+          routes: ['/*']
         }
       },
       {
-        "id": "optimizer",
-        "proxy": {
-          "prefix": "/",
-          "routes": ["/_next/image"],
-          "methods": ["GET"]
+        id: 'optimizer',
+        proxy: {
+          prefix: '/',
+          routes: ['/_next/image'],
+          methods: ['GET']
         }
       }
     ]
   }
-}
+})
 ```
 
 ### Why use `proxy.routes`?
@@ -148,20 +153,24 @@ Create `my-runtime/web/gateway/watt.json`:
 
 ## 4) Configure the optimizer application
 
-Create `my-runtime/web/optimizer/watt.json`:
+Create `my-runtime/web/optimizer/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json",
-  "next": {
-    "imageOptimizer": {
-      "enabled": true,
-      "fallback": "frontend",
-      "timeout": 30000,
-      "maxAttempts": 3
+```ts config
+import { createNextConfig } from '@platformatic/next'
+
+export default createNextConfig({
+  next: {
+    imageOptimizer: {
+      enabled: true,
+      fallback: 'frontend',
+      timeout: 30000,
+      maxAttempts: 3
     }
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ### What these options mean
@@ -173,12 +182,16 @@ Create `my-runtime/web/optimizer/watt.json`:
 
 ## 5) Configure the frontend application
 
-Create `my-runtime/web/frontend/watt.json`:
+Create `my-runtime/web/frontend/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json"
-}
+```ts config
+import { createNextConfig } from '@platformatic/next'
+
+export default createNextConfig({
+  server: {
+    port: Number(process.env.PORT ?? 3042)
+  }
+})
 ```
 
 Then place a test image here:
@@ -276,7 +289,7 @@ From `my-runtime/`, run:
 npx wattpm start
 ```
 
-By default, Runtime listens on `http://127.0.0.1:3042` unless you configure a different host/port.
+The Gateway application listens on `http://127.0.0.1:3042` as configured in its `server` object.
 
 ## 8) Test the optimizer endpoint
 
@@ -318,52 +331,60 @@ A common production setup is:
 
 - one **frontend** Next.js application for pages and APIs
 - one dedicated **optimizer** application
-- one **gateway** entrypoint routing traffic between them
+- one public **gateway** routing traffic between them
 
 Example Gateway routing:
 
 - `GET /_next/image` -> `optimizer`
 - `/*` -> `frontend`
 
-`web/gateway/watt.json`:
+`web/gateway/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { createGatewayConfig } from '@platformatic/gateway'
+
+export default createGatewayConfig({
+  server: {
+    port: 3042
+  },
+  gateway: {
+    applications: [
       {
-        "id": "frontend",
-        "proxy": {
-          "prefix": "/",
-          "routes": ["/*"]
+        id: 'frontend',
+        proxy: {
+          prefix: '/',
+          routes: ['/*']
         }
       },
       {
-        "id": "optimizer",
-        "proxy": {
-          "prefix": "/",
-          "routes": ["/_next/image"],
-          "methods": ["GET"]
+        id: 'optimizer',
+        proxy: {
+          prefix: '/',
+          routes: ['/_next/image'],
+          methods: ['GET']
         }
       }
     ]
   }
-}
+})
 ```
 
-`web/optimizer/watt.json`:
+`web/optimizer/watt.config.ts`:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.38.1.json",
-  "next": {
-    "imageOptimizer": {
-      "enabled": true,
-      "fallback": "frontend"
+```ts config
+import { createNextConfig } from '@platformatic/next'
+
+export default createNextConfig({
+  next: {
+    imageOptimizer: {
+      enabled: true,
+      fallback: 'frontend'
     }
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 In this model, relative image URLs are fetched from `frontend.plt.local`, while optimization workloads are isolated in the dedicated optimizer application.

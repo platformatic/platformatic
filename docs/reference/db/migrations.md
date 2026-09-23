@@ -78,7 +78,7 @@ _Example_
 
 For manual migration management:
 
-- Define a correct `migrations.dir` folder under the config on `platformatic.json`.
+- Define a correct `migrations.dir` folder in your `watt.config.ts`.
 - Identify the migration number from the file name (e.g., `002` for `002.do.sql` migration file).
 - Execute the migration using the command:
 

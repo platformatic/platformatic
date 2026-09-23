@@ -1,7 +1,7 @@
 'use strict'
 
 import { createRequire } from 'node:module'
-import { getGlobalDispatcher } from 'undici'
+import { fetch, getGlobalDispatcher } from 'undici'
 
 // Next.js runs middlewares in it's own patched vm context. So the global dispatcher in
 // the middleware context is different from an application global dispatcher. This
@@ -16,12 +16,16 @@ export function patchVmCreateContext () {
     const globalDispatcher = getGlobalDispatcher()
     const context = originalCreateContext(contextObject, opts)
     queueMicrotask(() => {
-      if (contextObject.fetch === undefined) return
+      if (context.fetch === undefined) return
 
-      const originalFetch = contextObject.fetch
-      contextObject.fetch = (input, init = {}) => {
-        init.dispatcher = globalDispatcher
-        return originalFetch(input, init)
+      const originalFetch = context.fetch
+      context.fetch = (input, init = {}) => {
+        const url = typeof input === 'string' ? input : input?.url
+        if (!url?.startsWith('http://') && !url?.startsWith('https://')) {
+          return originalFetch(input, init)
+        }
+
+        return fetch(input, { ...init, dispatcher: globalDispatcher })
       }
     })
     return context

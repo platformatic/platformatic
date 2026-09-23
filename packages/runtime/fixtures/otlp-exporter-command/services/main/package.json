@@ -1,5 +1,5 @@
 {
-  "name": "otlp-exporter-command-main",
+  "name": "main",
   "main": "index.mjs",
   "dependencies": {
     "@platformatic/globals": "workspace:*",

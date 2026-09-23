@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should fail to start application with a wrong id', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   await app.init()
 
@@ -20,7 +20,7 @@ test('should fail to start application with a wrong id', async t => {
   } catch (err) {
     strictEqual(
       err.message,
-      'Application wrong-service-id not found. Available applications are: db-app, serviceApp, with-logger, multi-plugin-service'
+      'Application wrong-service-id not found. Available applications are: db-app, multi-plugin-service, serviceApp, with-logger'
     )
   }
 })

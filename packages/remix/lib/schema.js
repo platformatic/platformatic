@@ -1,11 +1,14 @@
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
-import { schemaComponents as viteSchemaComponents } from '@platformatic/vite'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/schema'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation/schema'
+import { schemaComponents as viteSchemaComponents } from '@platformatic/vite/schema'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
+
+// Production builds an in-thread application and awaits ready() before the port check.
+export const servesWithoutPort = { development: false, production: true }
 
 export const remix = {
   type: 'object',

@@ -1,4 +1,4 @@
-import { deepStrictEqual } from 'node:assert'
+import { deepStrictEqual, strictEqual } from 'node:assert'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { version } from '../../lib/version.js'
@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application details', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -16,16 +16,18 @@ test('should get application details', async t => {
     await app.close()
   })
 
-  const applicationDetails = await app.getApplicationDetails('with-logger')
+  const { url, urls, ...applicationDetails } = await app.getApplicationDetails('with-logger')
+  deepStrictEqual(urls, [url])
+  strictEqual(new URL(url).protocol, 'http:')
   deepStrictEqual(applicationDetails, {
     id: 'with-logger',
     type: 'service',
     status: 'started',
+    servingState: 'listening',
     version,
-    entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
-    config: resolve(configFile, '../../monorepo/serviceAppWithLogger/platformatic.service.json'),
-    path: resolve(configFile, '../../monorepo/serviceAppWithLogger'),
+    configPath: resolve(configFile, '../../../monorepo/serviceAppWithLogger/watt.config.mjs'),
+    path: resolve(configFile, '../../../monorepo/serviceAppWithLogger'),
     dependencies: [],
     sourceMaps: false
   })

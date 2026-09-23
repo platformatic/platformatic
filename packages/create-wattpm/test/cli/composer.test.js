@@ -1,13 +1,8 @@
-import { deepStrictEqual, equal } from 'node:assert'
+import { deepStrictEqual, equal, ok } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../lib/utils.js'
-import {
-  createTemporaryDirectory,
-  executeCreatePlatformatic,
-  getApplications,
-  setupUserInputHandler
-} from './helper.js'
+import { configurationFileIn, createTemporaryDirectory, executeCreatePlatformatic, getApplications, setupUserInputHandler } from './helper.js'
 
 test('Creates a Platformatic Gateway', async t => {
   const root = await createTemporaryDirectory(t, 'composer')
@@ -19,7 +14,6 @@ test('Creates a Platformatic Gateway', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -29,13 +23,13 @@ test('Creates a Platformatic Gateway', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'watt.json')), true)
+  ok(await configurationFileIn(baseProjectDir))
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'web'))
+  const applications = await getApplications(join(baseProjectDir, 'applications'))
   deepStrictEqual(applications, ['main'])
-  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
-  equal(await isFileAccessible(join(baseApplicationDir, 'watt.json')), true)
+  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
+  ok(await configurationFileIn(baseApplicationDir))
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'routes', 'root.js')), false)
   equal(await isFileAccessible(join(baseApplicationDir, 'plugins', 'example.js')), false)
@@ -51,7 +45,6 @@ test('Creates a Platformatic Gateway (TypeScript)', async t => {
     { type: 'input', question: 'What is the name of the application?', reply: 'main' },
     { type: 'select', question: 'Do you want to use TypeScript?', reply: 'yes' },
     { type: 'select', question: 'Do you want to create another application?', reply: 'no' },
-    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'select', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
@@ -61,13 +54,13 @@ test('Creates a Platformatic Gateway (TypeScript)', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'watt.json')), true)
+  ok(await configurationFileIn(baseProjectDir))
 
   // Here check the generated application
-  const applications = await getApplications(join(baseProjectDir, 'web'))
+  const applications = await getApplications(join(baseProjectDir, 'applications'))
   deepStrictEqual(applications, ['main'])
-  const baseApplicationDir = join(baseProjectDir, 'web', applications[0])
-  equal(await isFileAccessible(join(baseApplicationDir, 'watt.json')), true)
+  const baseApplicationDir = join(baseProjectDir, 'applications', applications[0])
+  ok(await configurationFileIn(baseApplicationDir))
   equal(await isFileAccessible(join(baseApplicationDir, 'tsconfig.json')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseApplicationDir, 'routes', 'root.ts')), false)

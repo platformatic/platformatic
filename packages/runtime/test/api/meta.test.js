@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime } from '../helpers.js'
@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get meta for db applications in runtime schema', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -17,20 +17,19 @@ test('should get meta for db applications in runtime schema', async t => {
 
   const dbMeta = await app.getApplicationMeta('db-app')
   const database = join(fixturesDir, 'monorepo', 'dbApp', 'db.sqlite')
-  deepStrictEqual(dbMeta, {
-    gateway: {
-      needsRootTrailingSlash: false,
-      prefix: '/db-app/',
-      wantsAbsoluteUrls: false,
-      tcp: false,
-      url: undefined
-    },
-    connectionStrings: [`sqlite://${database}`]
+  deepStrictEqual(dbMeta.connectionStrings, [`sqlite://${database}`])
+  deepStrictEqual(dbMeta.gateway, {
+    needsRootTrailingSlash: false,
+    prefix: '/db-app/',
+    wantsAbsoluteUrls: false,
+    tcp: true,
+    url: dbMeta.gateway.url
   })
+  strictEqual(new URL(dbMeta.gateway.url).hostname, '127.0.0.1')
 })
 
 test('should retry meta retrieval when the selected worker exits', async t => {
-  const configFile = join(fixturesDir, 'meta-worker-exit', 'platformatic.json')
+  const configFile = join(fixturesDir, 'meta-worker-exit', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   await app.start()

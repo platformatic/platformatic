@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "A data mapper utility for SQL databases",
   "main": "index.js",
   "type": "module",
@@ -44,13 +44,13 @@
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.7.0",
     "@platformatic/foundation": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
+    "@platformatic/tracing": "workspace:*",
     "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^6.0.0",
     "inflected": "^2.1.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

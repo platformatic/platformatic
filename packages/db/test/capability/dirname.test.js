@@ -6,7 +6,7 @@ import { create } from '../../index.js'
 
 test('get application info via capability api', async t => {
   const projectRoot = join(import.meta.dirname, '..', 'fixtures', 'sqlite-basic')
-  const config = join(projectRoot, 'platformatic.db.json')
+  const config = join(projectRoot, 'watt.config.js')
 
   process.env.DATABASE_URL = 'sqlite://:memory:'
   const capability = await create(projectRoot, config)

@@ -27,6 +27,8 @@ export class MessagingITC extends ITC {
   #workers
   #sources
   #logger
+  #referenced = true
+  #activeHandlers = 0
 
   constructor (id, runtimeConfig, logger) {
     super({
@@ -56,6 +58,34 @@ export class MessagingITC extends ITC {
 
   _setupListener (listener) {
     this.#listener = listener
+  }
+
+  unref () {
+    this.#referenced = false
+    this.#updateRefs()
+    return this
+  }
+
+  ref () {
+    this.#referenced = true
+    this.#updateRefs()
+    return this
+  }
+
+  #updateRefs () {
+    // Outgoing ITC requests own their keep-alive timer; incoming handlers need a
+    // reference until their response is ready, even if their work is remote I/O.
+    this.#broadcastChannel[this.#referenced || this.#activeHandlers > 0 ? 'ref' : 'unref']()
+    const method = this.#referenced ? 'ref' : 'unref'
+    for (const channel of this.#notificationsChannels.values()) {
+      channel[method]()
+    }
+    for (const channel of this.#sources) {
+      channel[method]()
+    }
+    for (const worker of this.#workers.values()) {
+      worker.channel?.[method]()
+    }
   }
 
   handle (message, handler) {
@@ -152,6 +182,7 @@ export class MessagingITC extends ITC {
       if (!channel) {
         channel = new BroadcastChannel(`plt.messaging.notifications-${application}`)
         this.#notificationsChannels.set(application, channel)
+        this.#updateRefs()
       }
 
       const postMessage = () => channel.postMessage(sanitize(request))
@@ -235,6 +266,7 @@ export class MessagingITC extends ITC {
       this.#sources.delete(channel)
       this.#handlePendingResponse(channel)
     })
+    this.#updateRefs()
   }
 
   #updateWorkers (event) {
@@ -282,7 +314,16 @@ export class MessagingITC extends ITC {
   }
 
   #wrapHandler (messageName, handler) {
-    return (data, context) => traceIncomingMessagingHandler(this.#id, messageName, handler, data, context)
+    return async (data, context) => {
+      this.#activeHandlers++
+      this.#updateRefs()
+      try {
+        return await traceIncomingMessagingHandler(this.#id, messageName, handler, data, context)
+      } finally {
+        this.#activeHandlers--
+        this.#updateRefs()
+      }
+    }
   }
 
   #handlePendingResponse (channel) {

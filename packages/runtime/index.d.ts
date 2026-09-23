@@ -37,6 +37,8 @@ export interface LoopbackMessagingOptions {
 }
 
 export namespace errors {
+  export const AddressInUseError: (port: number, firstApplication: string, secondApplication: string) => FastifyError
+  export const WorkerAddressInUseError: (port: number, application: string) => FastifyError
   export const RuntimeExitedError: () => FastifyError
   export const UnknownRuntimeAPICommandError: (command: string) => FastifyError
   export const ApplicationNotFoundError: (id: string) => FastifyError
@@ -46,8 +48,6 @@ export namespace errors {
   export const RuntimeNotStartedError: () => FastifyError
   export const ConfigPathMustBeStringError: () => FastifyError
   export const NoConfigFileFoundError: (id: string) => FastifyError
-  export const InvalidEntrypointError: (entrypoint: string) => FastifyError
-  export const MissingEntrypointError: () => FastifyError
   export const MissingDependencyError: (dependency: string) => FastifyError
   export const InspectAndInspectBrkError: () => FastifyError
   export const InspectorPortError: () => FastifyError
@@ -89,6 +89,7 @@ export namespace symbols {
   export const kLastWorkerScalerELU: unique symbol
   export const kWorkerStatus: unique symbol
   export const kWorkerHealthSignals: unique symbol
+  export const kWorkerUrl: unique symbol
   export const kStderrMarker: string
   export const kWorkersBroadcast: unique symbol
 }
@@ -110,23 +111,29 @@ export interface InjectResponse {
   rawPayload: ArrayBuffer
 }
 
+export type ServingState = 'listening' | 'mesh-only' | 'background' | 'inactive'
+
 export interface ApplicationDetails {
   id: string
   type?: string
+  /** v3 only: the path to the application's configuration file. v4 reports configPath. */
   config?: string
+  /** v4 only: the configuration file the loader decided on, absent for an inline definition. */
+  configPath?: string
   path?: string
   status?: string
+  /** How the application serves, as opposed to whether it runs. Absent when it is not started. */
+  servingState?: ServingState
   dependencies?: string[]
   version?: string
   localUrl?: string
-  entrypoint?: boolean
   sourceMaps?: boolean
   workers?: number
   url?: string | null
+  urls?: string[]
 }
 
 export interface ApplicationsTopology {
-  entrypoint: string
   production: boolean
   applications: ApplicationDetails[]
 }
@@ -157,14 +164,6 @@ export interface SchedulerJobBase {
   nextRunAt?: string | null
 }
 
-export interface ConfiguredSchedulerJob extends SchedulerJobBase {
-  source: 'config'
-  callbackUrl: string
-  method: string
-  headers?: Record<string, string>
-  body?: string | Record<string, unknown>
-}
-
 export interface ApplicationSchedulerJob extends SchedulerJobBase {
   source: 'application'
   applicationId: string
@@ -172,7 +171,7 @@ export interface ApplicationSchedulerJob extends SchedulerJobBase {
   tasks: string[]
 }
 
-export type SchedulerJob = ConfiguredSchedulerJob | ApplicationSchedulerJob
+export type SchedulerJob = ApplicationSchedulerJob
 
 export interface SchedulerRunResult {
   name: string
@@ -194,10 +193,14 @@ export interface RuntimeMetadata {
   execPath: string
   nodeVersion: string
   projectDir: string
+  /** The configuration file the loader decided on. Null when the runtime was built from an object. */
+  configPath: string | null
+  /** The autoload declaration, with its path resolved. Null when the project does not autoload. */
+  autoload: { path: string, exclude?: string[], mappings?: Record<string, unknown> } | null
   packageName: string | null
   packageVersion: string | null
-  url: string | null
   platformaticVersion: string
+  urls: Record<string, string>
 }
 
 export interface WorkerLifecycleEvent {
@@ -234,9 +237,7 @@ export interface HealthMetricsEvent extends WorkerLifecycleEvent {
   healthSignals: RuntimeHealthSignal[]
 }
 
-export declare class ManagementClient {
-  constructor (allowedOperations?: string[])
-
+export interface ManagementClient {
   getRuntimeStatus (): Promise<string>
   getRuntimeMetadata (): Promise<RuntimeMetadata>
   getRuntimeConfig (): Promise<Record<string, unknown>>
@@ -258,7 +259,7 @@ export declare class ManagementClient {
   startApplication (id: string): Promise<void>
   stopApplication (id: string): Promise<void>
   restartApplication (id: string): Promise<void>
-  restart (applications?: string[]): Promise<string>
+  restart (applications?: string[]): Promise<void>
   addApplications (applications: unknown[], start?: boolean): Promise<ApplicationDetails[]>
   removeApplications (ids: string[]): Promise<ApplicationDetails[]>
   inject (id: string, injectParams: InjectParams): Promise<InjectResponse>
@@ -370,12 +371,11 @@ export type RuntimeExtension = (
 
 export declare class Runtime extends EventEmitter {
   init (): Promise<void>
-  start (silent?: boolean): Promise<string | undefined>
+  start (silent?: boolean): Promise<Record<string, string>>
   stop (silent?: boolean): Promise<void>
   close (silent?: boolean): Promise<void>
-  restart (applications?: string[]): Promise<string | undefined>
+  restart (applications?: string[]): Promise<void>
   inject (id: string, injectParams: InjectParams): Promise<InjectResponse>
-  getUrl (): string | undefined
   getRuntimeStatus (): string
   getRuntimeMetadata (): Promise<RuntimeMetadata>
   getRuntimeEnv (): Record<string, string>
@@ -386,6 +386,7 @@ export declare class Runtime extends EventEmitter {
   getRuntimeConfig (includeMeta: true): RuntimeConfiguration
   getRuntimeConfig (includeMeta?: boolean): Record<string, unknown>
   getApplicationsIds (): string[]
+  getUrls (applicationId?: string): Record<string, string>
   /**
    * Returns topology for every configured application.
    * When `allowUnloaded` is `true`, applications without running workers are
@@ -471,11 +472,6 @@ export declare class Runtime extends EventEmitter {
   getApplicationScheduledTasks (id: string): Promise<ApplicationSchedule[]>
   runApplicationScheduledTasks (id: string, scheduleId: string, scheduledTime: number): Promise<unknown>
 }
-
-export function wrapInRuntimeConfig (
-  config: Configuration<unknown>,
-  context?: ConfigurationOptions
-): Promise<RuntimeConfiguration>
 
 export declare const version: string
 

@@ -1,12 +1,14 @@
-import { getPlatformaticVersion, safeRemove } from '@platformatic/foundation'
+import { createDirectory, getPlatformaticVersion, safeRemove } from '@platformatic/foundation'
 import assert from 'node:assert'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { basename, join } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import test from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { Generator as GatewayGenerator } from '../../gateway/lib/generator.js'
+import { Generator as NodeGenerator } from '../../node/index.js'
 import { Generator as ApplicationGenerator } from '../../service/lib/generator.js'
+import { loadConfiguration as loadRuntimeConfiguration } from '../index.js'
 import { RuntimeGenerator, WrappedGenerator } from '../lib/generator.js'
 
 const mockAgent = new MockAgent()
@@ -42,8 +44,6 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
   const secondApplication = new ApplicationGenerator()
   rg.addApplication(secondApplication, 'second-service')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043,
     logLevel: 'debug'
@@ -55,16 +55,20 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
     targetDirectory: '/tmp/runtime',
     env: {
       PLT_FIRST_SERVICE_FOO: 'foo',
-      PLT_SERVER_HOSTNAME: '127.0.0.1',
+      PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_FIRST_SERVICE_PORT: 3042,
+      PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_SECOND_SERVICE_PORT: 3043,
       PLT_SERVER_LOGGER_LEVEL: 'debug',
-      PLT_MANAGEMENT_API: true,
-      PORT: 3043
+      PLT_MANAGEMENT_API: true
     }
   })
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
+  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.ts', '.env', '.env.sample', '.gitignore'])
 
   // applications have correct target directory
   assert.equal(
@@ -82,16 +86,70 @@ test('RuntimeGenerator - should create a runtime with 2 applications', async () 
 
   assert.notDeepStrictEqual(env.contents.split(/\r?\n/), envSample.contents.split(/\r?\n/))
 
-  const schemaJson = rg.getFileObject('platformatic.json')
-  assert.deepStrictEqual(JSON.parse(schemaJson.contents), {
+  // The configuration the generator built. The file spells its values as expressions, and this is
+  // about which settings it carries.
+  assert.deepStrictEqual(rg.generatedConfig, {
     $schema: `https://schemas.platformatic.dev/wattpm/${version}.json`,
-    entrypoint: 'first-service',
     watch: true,
     autoload: { path: 'applications', exclude: ['docs'] },
     logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
-    server: { hostname: '{PLT_SERVER_HOSTNAME}', port: '{PORT}' },
     managementApi: '{PLT_MANAGEMENT_API}'
   })
+})
+
+test('RuntimeGenerator - exposes the sole application on the default port', async () => {
+  const rg = new RuntimeGenerator({ targetDirectory: '/tmp/runtime-single' })
+
+  const only = new NodeGenerator()
+  rg.addApplication(only, 'api')
+
+  await rg.prepare()
+
+  // A Node capability writes no port of its own, so without the entrypoint rule the runtime's one
+  // application would bind nothing and be reachable from nowhere.
+  const config = only.files.find(file => /^watt\.config\./.test(file.file))
+  assert.ok(config.contents.includes('port: Number(process.env.PLT_API_PORT || 3042)'), config.contents)
+
+  const env = rg.getFileObject('.env')
+  assert.ok(env.contents.includes('PLT_API_PORT=3042'), env.contents)
+})
+
+test('RuntimeGenerator - still exposes the sole application when the wizard seeded its name into existingApplications', async () => {
+  // The create wizard tracks used names in the array it reads from generator.existingApplications and
+  // pushes each new name back into it, so a freshly scaffolded application ends up in both
+  // existingApplications and applications. The entrypoint count must not double-count it.
+  const rg = new RuntimeGenerator({ targetDirectory: '/tmp/runtime-single-wizard' })
+
+  const only = new NodeGenerator()
+  rg.addApplication(only, 'api')
+  rg.existingApplications.push('api')
+
+  await rg.prepare()
+
+  const config = only.files.find(file => /^watt\.config\./.test(file.file))
+  assert.ok(config.contents.includes('port: Number(process.env.PLT_API_PORT || 3042)'), config.contents)
+})
+
+test('RuntimeGenerator - leaves portless applications on the mesh once there is more than one', async () => {
+  const rg = new RuntimeGenerator({ targetDirectory: '/tmp/runtime-multi' })
+
+  const first = new NodeGenerator()
+  rg.addApplication(first, 'api')
+  const second = new NodeGenerator()
+  rg.addApplication(second, 'web')
+
+  await rg.prepare()
+
+  // The count is the whole gate: with a sibling present, a Node application declares no port and
+  // stays reachable only through the mesh -- which is what keeps "expose the one" from exposing all.
+  for (const application of [first, second]) {
+    const config = application.files.find(file => /^watt\.config\./.test(file.file))
+    assert.ok(config.contents.includes('createNodeConfig({})'), config.contents)
+    assert.ok(!config.contents.includes('server'), config.contents)
+  }
+
+  const env = rg.getFileObject('.env')
+  assert.ok(!env.contents.includes('PORT'), env.contents)
 })
 
 test('RuntimeGenerator - should have a valid package.json', async () => {
@@ -105,8 +163,6 @@ test('RuntimeGenerator - should have a valid package.json', async () => {
     isRuntimeContext: false
   })
   rg.addApplication(firstApplication, 'first-service')
-
-  rg.setEntryPoint('first-service')
 
   rg.setConfig({
     port: 3043,
@@ -140,8 +196,6 @@ test('RuntimeGenerator - should have applications plugin dependencies in package
   })
   rg.addApplication(firstApplication, 'first-service')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043,
     logLevel: 'debug'
@@ -155,10 +209,11 @@ test('RuntimeGenerator - should have applications plugin dependencies in package
   assert.deepEqual(output, {
     targetDirectory: '/tmp/runtime',
     env: {
-      PLT_SERVER_HOSTNAME: '127.0.0.1',
+      PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_FIRST_SERVICE_PORT: 3042,
       PLT_MANAGEMENT_API: true,
-      PLT_SERVER_LOGGER_LEVEL: 'debug',
-      PORT: 3043
+      PLT_SERVER_LOGGER_LEVEL: 'debug'
     }
   })
 })
@@ -186,8 +241,6 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
   })
   rg.addApplication(secondApplication, 'second-service')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043
   })
@@ -198,17 +251,21 @@ test('RuntimeGenerator - should create a runtime with 1 application and 1 db', a
     targetDirectory: '/tmp/runtime',
     env: {
       PLT_FIRST_SERVICE_APPLICATION_1: 'foo',
+      PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_FIRST_SERVICE_PORT: 3042,
       PLT_SECOND_SERVICE_APPLICATION_2: 'foo',
-      PLT_SERVER_HOSTNAME: '127.0.0.1',
+      PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+      PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+      PLT_SECOND_SERVICE_PORT: 3043,
       PLT_MANAGEMENT_API: true,
-      PLT_SERVER_LOGGER_LEVEL: 'info',
-      PORT: 3043
+      PLT_SERVER_LOGGER_LEVEL: 'info'
     }
   })
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
+  assert.deepEqual(runtimeFileList, ['package.json', 'watt.config.ts', '.env', '.env.sample', '.gitignore'])
 
   // applications have correct target directory
   assert.equal(
@@ -240,8 +297,6 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
   const secondGateway = new GatewayGenerator()
   rg.addApplication(secondGateway, 'second-gateway')
 
-  rg.setEntryPoint('first-service')
-
   rg.setConfig({
     port: 3043
   })
@@ -249,8 +304,7 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
   await rg.prepare()
 
   // double check config files
-  const firstGatewayConfigFile = firstGateway.getFileObject('platformatic.json')
-  const firstGatewayConfigFileJson = JSON.parse(firstGatewayConfigFile.contents)
+  const firstGatewayConfigFileJson = firstGateway.generatedConfig
   assert.deepEqual(firstGatewayConfigFileJson.gateway.applications, [
     {
       id: 'first-service'
@@ -260,8 +314,7 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
     }
   ])
 
-  const secondGatewayConfigFile = secondGateway.getFileObject('platformatic.json')
-  const secondGatewayConfigFileJson = JSON.parse(secondGatewayConfigFile.contents)
+  const secondGatewayConfigFileJson = secondGateway.generatedConfig
   assert.deepEqual(secondGatewayConfigFileJson.gateway.applications, [
     {
       id: 'first-service'
@@ -270,6 +323,37 @@ test('RuntimeGenerator - should create a runtime with 2 applications and 2 gatew
       id: 'second-service'
     }
   ])
+})
+
+test('RuntimeGenerator - should preserve explicit application ports', async () => {
+  const rg = new RuntimeGenerator({
+    targetDirectory: '/tmp/runtime'
+  })
+
+  const firstApplication = new ApplicationGenerator()
+  const secondApplication = new ApplicationGenerator()
+  const thirdApplication = new ApplicationGenerator()
+  secondApplication.setConfig({ port: 3000 })
+  thirdApplication.setConfig({ port: 0 })
+  rg.addApplication(firstApplication, 'first-service')
+  rg.addApplication(secondApplication, 'second-service')
+  rg.addApplication(thirdApplication, 'third-service')
+
+  const { env } = await rg.prepare()
+
+  assert.deepEqual(env, {
+    PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_FIRST_SERVICE_PORT: 3042,
+    PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_SECOND_SERVICE_PORT: 3000,
+    PLT_THIRD_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_THIRD_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_THIRD_SERVICE_PORT: 0,
+    PLT_MANAGEMENT_API: true,
+    PLT_SERVER_LOGGER_LEVEL: 'info'
+  })
 })
 
 test('RuntimeGenerator - add applications to an existing folder', async t => {
@@ -292,8 +376,6 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
     const secondApplication = new ApplicationGenerator()
     rg.addApplication(secondApplication, 'second-service')
 
-    rg.setEntryPoint('first-service')
-
     rg.setConfig({
       port: 3043
     })
@@ -301,6 +383,12 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
     await rg.prepare()
     await rg.writeFiles()
   }
+
+  // The root config imports wattpm for its createWattConfig, which reading it back to add an application
+  // evaluates -- so wattpm has to resolve, exactly as it does in a project whose dependencies were
+  // installed after the scaffold.
+  await createDirectory(join(targetDirectory, 'node_modules'))
+  await symlink(resolve(import.meta.dirname, '../../wattpm'), join(targetDirectory, 'node_modules/wattpm'), 'dir')
 
   {
     const rg = new RuntimeGenerator({
@@ -316,16 +404,20 @@ test('RuntimeGenerator - add applications to an existing folder', async t => {
     assert.deepEqual(output, {
       targetDirectory,
       env: {
-        PLT_SERVER_HOSTNAME: '127.0.0.1',
+        PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_FIRST_SERVICE_PORT: 3042,
+        PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_SECOND_SERVICE_PORT: '3043',
         PLT_SERVER_LOGGER_LEVEL: 'info',
-        PLT_MANAGEMENT_API: 'true',
-        PORT: 3043
+        PLT_MANAGEMENT_API: 'true'
       }
     })
 
     // should list only runtime files
     const runtimeFileList = rg.listFiles()
-    assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
+    assert.deepEqual(runtimeFileList, ['watt.config.ts', '.env', '.env.sample'])
 
     // applications have correct target directory
     assert.equal(
@@ -358,8 +450,6 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
     const secondApplication = new ApplicationGenerator()
     rg.addApplication(secondApplication, 'second-service')
 
-    rg.setEntryPoint('first-service')
-
     rg.setConfig({
       port: 3043
     })
@@ -367,6 +457,12 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
     await rg.prepare()
     await rg.writeFiles()
   }
+
+  // The root config imports wattpm for its createWattConfig, which reading it back to add an application
+  // evaluates -- so wattpm has to resolve, exactly as it does in a project whose dependencies were
+  // installed after the scaffold.
+  await createDirectory(join(targetDirectory, 'node_modules'))
+  await symlink(resolve(import.meta.dirname, '../../wattpm'), join(targetDirectory, 'node_modules/wattpm'), 'dir')
 
   {
     const rg = new RuntimeGenerator({
@@ -382,16 +478,20 @@ test('RuntimeGenerator - add applications to an existing folder (web/)', async t
     assert.deepEqual(output, {
       targetDirectory,
       env: {
-        PLT_SERVER_HOSTNAME: '127.0.0.1',
+        PLT_FIRST_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_FIRST_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_FIRST_SERVICE_PORT: 3042,
+        PLT_SECOND_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_SECOND_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+        PLT_SECOND_SERVICE_PORT: '3043',
         PLT_SERVER_LOGGER_LEVEL: 'info',
-        PLT_MANAGEMENT_API: 'true',
-        PORT: 3043
+        PLT_MANAGEMENT_API: 'true'
       }
     })
 
     // should list only runtime files
     const runtimeFileList = rg.listFiles()
-    assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
+    assert.deepEqual(runtimeFileList, ['watt.config.ts', '.env', '.env.sample'])
 
     // applications have correct target directory
     assert.equal(
@@ -412,19 +512,19 @@ test('WrappedGenerator - should create valid environment files', async t => {
   const env = generator.getFileObject('.env')
   const envSample = generator.getFileObject('.env.sample')
 
+  // A wrapped project is a runtime of one application, so the wrapped application is exposed on the
+  // default port -- PORT is registered for it and carries the 3042 default into both env files.
   assert.deepStrictEqual(env.contents.split(/\r?\n/), [
     'A=1',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 })
 
@@ -444,43 +544,42 @@ test('should support adding env variables only to .env and not .env.sample', asy
   assert.deepStrictEqual(env.contents.split(/\r?\n/), [
     'A=1',
     'FOO=A',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 
   assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
     'FOO=1',
-    'PLT_SERVER_HOSTNAME=127.0.0.1',
-    'PORT=3042',
     'PLT_SERVER_LOGGER_LEVEL=info',
-    'PLT_MANAGEMENT_API=true'
+    'PLT_MANAGEMENT_API=true',
+    'PORT=3042'
   ])
 })
 
-test('WrappedGenerator - should create a valid watt.json', async t => {
-  const version = await getPlatformaticVersion()
+test('WrappedGenerator - should create a valid configuration', async t => {
   const root = await createTemporaryDirectory(t)
 
   const generator = new WrappedGenerator({ module: '@platformatic/next', targetDirectory: root })
   await generator.prepare()
 
-  const wattJson = generator.getFileObject('watt.json')
+  /*
+    The wrapped single-app root. The runtime settings are no longer nested under a `runtime` key
+    inside the application's own configuration; there is no such block, so they are the root's own.
 
-  assert.deepStrictEqual(JSON.parse(wattJson.contents), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/next/${version}.json`,
-    runtime: {
-      logger: {
-        level: '{PLT_SERVER_LOGGER_LEVEL}'
-      },
-      server: {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}'
-      },
-      managementApi: '{PLT_MANAGEMENT_API}'
-    }
-  })
+    The suffix is .mts, not .ts: wrapping an existing project must not force "type": "module" on it
+    -- the code it wraps may be CommonJS -- so the module type is left unset and the unambiguous
+    TypeScript-ESM suffix is the one that does not need the answer.
+  */
+  const wattJson = generator.getFileObject('watt.config.mts')
+
+  assert.ok(wattJson.contents.includes('export default {'), wattJson.contents)
+  assert.ok(wattJson.contents.includes('level: process.env.PLT_SERVER_LOGGER_LEVEL'), wattJson.contents)
+  assert.ok(!wattJson.contents.includes('runtime:'), wattJson.contents)
+  // The capability definition sits directly under `application`, with no `config` wrapper: the loader
+  // wraps a bare definition into the entry's config slot on its own.
+  assert.ok(wattJson.contents.includes("application: {\n    module: '@platformatic/next'"), wattJson.contents)
+  assert.ok(!wattJson.contents.includes('config:'), wattJson.contents)
 })
 
 test('WrappedGenerator - should create a valid package.json', async t => {
@@ -547,9 +646,186 @@ test('WrappedGenerator - should create a valid package.json', async t => {
     rest: 'FOO',
     engines: {
       foo: 'bar',
-      node: '>=22.19.0'
+      node: '>=24.20.0'
     }
   }
 
   assert.deepStrictEqual(packageJson.contents.split(/\r?\n/), JSON.stringify(expected, null, 2).split(/\r?\n/))
+})
+
+test('RuntimeGenerator - what it writes loads', async t => {
+  const root = await createTemporaryDirectory(t)
+  const rg = new RuntimeGenerator({ targetDirectory: root })
+
+  rg.addApplication(new ApplicationGenerator(), 'api')
+  rg.setConfig({ targetDirectory: root })
+
+  await rg.prepare()
+  await rg.writeFiles()
+
+  await createDirectory(join(root, 'node_modules', '@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../service'), join(root, 'node_modules/@platformatic/service'), 'dir')
+  // The root config imports wattpm for its createWattConfig, so it has to resolve too.
+  await symlink(resolve(import.meta.dirname, '../../wattpm'), join(root, 'node_modules/wattpm'), 'dir')
+
+  /*
+    Through the real loader, because that is the only thing that says the output is right. Every
+    value in these files is an expression reading the .env written beside them, so this is also what
+    checks that the two agree: a scaffolded project whose configuration cannot be read, or reads
+    back as the text of a placeholder, is what this asserts against.
+  */
+  const config = await loadRuntimeConfiguration(join(root, 'watt.config.ts'), null, { command: 'start' })
+  const application = config.applications.find(entry => entry.id === 'api')
+
+  assert.deepStrictEqual(config.logger.level, 'info')
+  // A boolean position, and validation does not coerce: the string 'true' would not be accepted.
+  assert.deepStrictEqual(config.managementApi, true)
+  assert.deepStrictEqual(application.resolvedConfig.server.port, 3042)
+  assert.deepStrictEqual(application.resolvedConfig.server.logger.level, 'info')
+})
+
+test('WrappedGenerator - what it writes loads, and runs the application it wrapped', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(
+    join(root, 'package.json'),
+    JSON.stringify({ name: 'wrapped-app', type: 'module', main: 'index.js' }),
+    'utf-8'
+  )
+  await writeFile(join(root, 'index.js'), 'export default {}\n', 'utf-8')
+
+  const generator = new WrappedGenerator({ module: '@platformatic/node', targetDirectory: root })
+  await generator.prepare()
+  await generator.writeFiles()
+
+  await createDirectory(join(root, 'node_modules', '@platformatic'))
+  await symlink(resolve(import.meta.dirname, '../../node'), join(root, 'node_modules/@platformatic/node'), 'dir')
+
+  const config = await loadRuntimeConfiguration(join(root, 'watt.config.ts'), null, { command: 'start' })
+
+  /*
+    The application is the point. A wrapped root carrying only the runtime settings loads perfectly
+    well and describes a runtime with nothing in it -- it would start none of the code it was
+    wrapped around, and nothing about the file would say so.
+  */
+  assert.deepStrictEqual(
+    config.applications.map(entry => entry.id),
+    ['wrapped-app']
+  )
+  assert.deepStrictEqual(config.logger.level, 'info')
+  // A wrapped project is a runtime of one, so its application is exposed: the port reads back from
+  // the .env written beside it rather than as the text of a placeholder.
+  const application = config.applications.find(entry => entry.id === 'wrapped-app')
+  assert.deepStrictEqual(application.resolvedConfig.server.port, 3042)
+})
+
+/*
+  The wizard used to load a legacy root through the legacy reader and rewrite it -- the module form
+  over a .json file. It refuses now, with the hint every other entry point gives: migrate owns
+  that conversion, refusals and divergence reports included.
+*/
+/*
+  The evaluated configuration arrives with autoload expanded into explicit entries carrying this
+  machine's absolute paths. Editing an autoload-based root must not append them: the next boot
+  discovers those directories again, and an absolute path baked into the file breaks on the next
+  machine.
+*/
+test('RuntimeGenerator - editing an autoload root does not bake the expanded entries in', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'existing', type: 'commonjs' }), 'utf-8')
+  await writeFile(join(root, '.env'), '', 'utf-8')
+  await writeFile(
+    join(root, 'watt.config.mjs'),
+    "export default {\n  autoload: { path: 'web' },\n  applications: []\n}\n",
+    'utf-8'
+  )
+  await mkdir(join(root, 'web/present'), { recursive: true })
+  await writeFile(join(root, 'web/present/package.json'), JSON.stringify({ name: 'present', type: 'module' }), 'utf-8')
+  await writeFile(join(root, 'web/present/watt.config.js'), "export default { module: '@platformatic/node' }\n", 'utf-8')
+
+  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+  rg.setConfig({ targetDirectory: root })
+
+  await rg.populateFromExistingConfig()
+  rg.updateRuntimeConfig({
+    ...rg.generatedConfig,
+    autoload: { path: 'web' },
+    applications: [
+      { id: 'present', path: join(root, 'web/present') },
+      { id: 'outside', path: './elsewhere' }
+    ]
+  })
+
+  const written = rg.files.find(file => file.file === 'watt.config.mjs').contents
+
+  assert.ok(!written.includes("id: 'present'"), written)
+  assert.ok(written.includes("id: 'outside'"), written)
+})
+
+test('RuntimeGenerator - a legacy root is refused with the migrate hint', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'legacy' }), 'utf-8')
+  await writeFile(
+    join(root, 'watt.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/wattpm/2.65.0.json', autoload: { path: 'web' } }),
+    'utf-8'
+  )
+
+  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+  rg.setConfig({ targetDirectory: root })
+
+  await assert.rejects(
+    () => rg.populateFromExistingConfig(),
+    error => {
+      assert.strictEqual(error.code, 'PLT_LEGACY_CONFIGURATION_FILE')
+      assert.ok(error.message.includes('migrate'), error.message)
+      return true
+    }
+  )
+})
+
+test('RuntimeGenerator - editing an existing root keeps what it says', async t => {
+  const root = await createTemporaryDirectory(t)
+
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'existing', type: 'commonjs' }), 'utf-8')
+  await writeFile(join(root, '.env'), 'PLT_SERVER_LOGGER_LEVEL=info\n', 'utf-8')
+  await writeFile(
+    join(root, 'watt.config.mjs'),
+    [
+      'export default {',
+      '  // a comment the user wrote',
+      '  logger: {',
+      '    level: process.env.PLT_SERVER_LOGGER_LEVEL',
+      '  },',
+      "  applications: [{ id: 'first', path: './first' }]",
+      '}',
+      ''
+    ].join('\n'),
+    'utf-8'
+  )
+
+  const rg = new RuntimeGenerator({ targetDirectory: root, applicationsFolder: 'web' })
+  rg.setConfig({ targetDirectory: root })
+
+  await rg.populateFromExistingConfig()
+  rg.updateRuntimeConfig({
+    ...rg.generatedConfig,
+    applications: [
+      { id: 'first', path: './first' },
+      { id: 'second', path: './second' }
+    ]
+  })
+
+  /*
+    An edit, not a re-rendering. Re-emitting from the evaluated configuration would write the level
+    this machine resolves -- 'info' -- where the user wrote a reference, and drop their comment with
+    it: their configuration would silently stop reading its own environment.
+  */
+  const written = rg.files.find(file => file.file === 'watt.config.mjs').contents
+
+  assert.ok(written.includes('level: process.env.PLT_SERVER_LOGGER_LEVEL'), written)
+  assert.ok(written.includes('a comment the user wrote'), written)
+  assert.ok(written.includes("id: 'second'"), written)
 })

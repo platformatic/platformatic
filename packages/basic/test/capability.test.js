@@ -1,10 +1,14 @@
-/* globals platformatic */
-
 import { kMetadata } from '@platformatic/foundation'
-import { updateGlobals } from '@platformatic/globals'
+import {
+  getReuseTcpPorts,
+  setBasePath,
+  setGraphqlSchema,
+  setOpenapiSchema,
+  updateGlobals
+} from '@platformatic/globals'
 import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
-import { EventEmitter } from 'node:events'
+import { EventEmitter, once } from 'node:events'
 import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { join } from 'node:path'
@@ -12,7 +16,6 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { ensureTrailingSlash } from '../lib/utils.js'
 import { create, createTemporaryDirectory, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 const expectedLogger = {
@@ -36,9 +39,43 @@ const expectedLogger = {
   }
 }
 
+test('stopCommand enforces the inherited shutdown timeout and reports its timeout', async t => {
+  const capability = await create(t)
+  capability.runtimeConfig.gracefulShutdown = { application: 1000 }
+  const signals = []
+  const child = new EventEmitter()
+  child.kill = signal => {
+    signals.push(signal)
+    setImmediate(() => child.emit('exit', null, signal))
+  }
+  capability.subprocess = child
+  capability.shutdownTimeout = 20
+  let managerClosed = false
+  capability.childManager = {
+    send: () => new Promise(() => {}),
+    close: async () => { managerClosed = true }
+  }
+  const stopping = rejects(capability.stopCommand(), { code: 'PLT_BASIC_APPLICATION_SHUTDOWN_TIMEOUT' })
+  // Keep the loop alive while the unref'ed deadline timer supervises the fake child.
+  await Promise.all([stopping, sleep(50)])
+  deepStrictEqual(signals, ['SIGKILL'])
+  ok(managerClosed)
+  capability.childManager = null
+  capability.subprocess = null
+})
+
 test('BaseCapability - should properly initialize', async t => {
   const capability = await create(t, { applicationId: 'application' })
   deepStrictEqual(capability.logger.level, 'trace')
+})
+
+test('BaseCapability - should honor application reuseTcpPorts configuration', async t => {
+  const capability = await create(t, {
+    applicationConfig: { reuseTcpPorts: false },
+    runtimeConfig: { reuseTcpPorts: true }
+  })
+
+  deepStrictEqual(capability.reuseTcpPorts, false)
 })
 
 test('BaseCapability - should properly setup globals', async t => {
@@ -54,67 +91,15 @@ test('BaseCapability - should properly setup globals', async t => {
     }
   )
 
-  platformatic.setOpenapiSchema('openapi')
-  platformatic.setGraphqlSchema('graphql')
-  platformatic.setBasePath('basePath')
+  setOpenapiSchema('openapi')
+  setGraphqlSchema('graphql')
+  setBasePath('basePath')
 
   deepStrictEqual(await capability.getOpenapiSchema(), 'openapi')
   deepStrictEqual(await capability.getGraphqlSchema(), 'graphql')
   deepStrictEqual(capability.logger.level, 'info')
   deepStrictEqual(capability.basePath, 'basePath')
-  deepStrictEqual(platformatic.isEntrypoint, undefined)
-  deepStrictEqual(platformatic.reuseTcpPorts, undefined)
-})
-
-test('BaseCapability - startCommand - should expose the configured entrypoint port as url', async t => {
-  const capability = await create(
-    t,
-    {
-      applicationId: 'application',
-      isEntrypoint: true,
-      serverConfig: {
-        hostname: '127.0.0.1',
-        port: 0
-      },
-      telemetryConfig: {},
-      runtimeConfig: {
-        gracefulShutdown: {
-          runtime: 1000,
-          application: 1000
-        }
-      }
-    },
-    {
-      application: {
-        entrypointPort: 3042
-      }
-    }
-  )
-
-  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await capability.startWithCommand(`node ${executablePath}`)
-
-  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
-  await capability.stopCommand()
-})
-
-test('BaseCapability - setupChildManagerEventsForwarding - should keep entrypoint port on child url updates', async t => {
-  const capability = await create(
-    t,
-    {},
-    {
-      application: {
-        entrypointPort: 3042
-      }
-    }
-  )
-  const childManager = new EventEmitter()
-
-  capability.setupChildManagerEventsForwarding(childManager)
-  childManager.emit('url', 'http://127.0.0.1:1234', 'client-ws')
-
-  deepStrictEqual(ensureTrailingSlash(capability.url), 'http://127.0.0.1:3042/')
-  deepStrictEqual(capability.clientWs, 'client-ws')
+  deepStrictEqual(getReuseTcpPorts(), capability.reuseTcpPorts)
 })
 
 test('BaseCapability - other getters', async t => {
@@ -136,36 +121,21 @@ test('BaseCapability - other getters', async t => {
   deepStrictEqual(await capability.getDispatchFunc(), capability)
 })
 
-test('BaseCapability - getDispatchTarget - "websocket" flag falls back to the TCP address without an in-thread dispatch target', async t => {
-  const capability = await create(t, { applicationConfig: { websocket: true } })
+test('BaseCapability - getDispatchTarget - returns the TCP address when the application has one', async t => {
+  const capability = await create(t, {})
 
   capability.url = 'http://127.0.0.1:1234'
 
   deepStrictEqual(await capability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
-test('BaseCapability - getDispatchTarget - "websocket" flag keeps in-thread dispatching when the capability provides it', async t => {
-  const capability = await create(t, { applicationConfig: { websocket: true } })
+test('BaseCapability - getDispatchTarget - falls back to the in-thread dispatch function without a URL', async t => {
+  const capability = await create(t, {})
 
   const dispatchTarget = { inject () {} }
   capability.getDispatchFunc = async () => dispatchTarget
-  capability.url = 'http://127.0.0.1:1234'
 
   deepStrictEqual(await capability.getDispatchTarget(), dispatchTarget)
-})
-
-test('BaseCapability - getDispatchTarget - "websocket" flag is ignored with "useHttp" or for the entrypoint', async t => {
-  const useHttpCapability = await create(t, { applicationConfig: { websocket: true, useHttp: true } })
-  useHttpCapability.getDispatchFunc = async () => ({ inject () {} })
-  useHttpCapability.url = 'http://127.0.0.1:1234'
-
-  deepStrictEqual(await useHttpCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
-
-  const entrypointCapability = await create(t, { applicationConfig: { websocket: true }, isEntrypoint: true })
-  entrypointCapability.getDispatchFunc = async () => ({ inject () {} })
-  entrypointCapability.url = 'http://127.0.0.1:1234'
-
-  deepStrictEqual(await entrypointCapability.getDispatchTarget(), 'http://127.0.0.1:1234')
 })
 
 test('BaseCapability - waitForDependentsStop - should not wait for stopped dependents', async t => {
@@ -345,12 +315,11 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -399,13 +368,12 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
-      isEntrypoint: true,
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -423,12 +391,11 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -478,13 +445,12 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
-      isEntrypoint: true,
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -495,18 +461,17 @@ test('BaseCapability - startCommand and stopCommand - should execute the request
   await capability.stopCommand()
 })
 
-test('BaseCapability - startCommand - should override the port set for the entrypoint', async t => {
+test('BaseCapability - startCommand - should not override an application-owned listener port', async t => {
   const port = await getPort()
   const capability = await create(
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -523,7 +488,7 @@ test('BaseCapability - startCommand - should override the port set for the entry
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
   await capability.startWithCommand(`node ${executablePath}`)
 
-  ok(capability.url.startsWith(`http://127.0.0.1:${port}`))
+  ok(capability.url.startsWith('http://127.0.0.1:'))
   deepStrictEqual(capability.subprocessConfig, { production: false })
 
   {
@@ -555,13 +520,12 @@ test('BaseCapability - startCommand - should override the port set for the entry
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
-      isEntrypoint: true,
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -577,11 +541,10 @@ test('BaseCapability - startCommand - should not override the port when unset fo
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1'
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 1000,
@@ -630,13 +593,12 @@ test('BaseCapability - startCommand - should not override the port when unset fo
       applicationId: 'application',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
       port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
-      isEntrypoint: true,
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -652,12 +614,11 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
     t,
     {
       applicationId: 'test-application-id',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {
+      tracingConfig: {
         applicationName: 'test-telemetry',
         exporter: {
           type: 'otlp',
@@ -714,12 +675,12 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
       applicationId: 'test-application-id',
       workerId: 0,
       basePath: '/whatever',
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {
+      tracingConfig: {
         applicationName: 'test-telemetry',
         exporter: {
           type: 'otlp',
@@ -728,7 +689,6 @@ test('BaseCapability - should import and setup open telemetry HTTP instrumentati
           }
         }
       },
-      isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       exitOnUnhandledErrors: true,
@@ -870,12 +830,11 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 10,
@@ -890,7 +849,7 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
   )
 
   const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
-  await capability.startWithCommand(`node ${executablePath}`)
+  await capability.startWithCommand(`node ${executablePath} --hang-on-close`)
 
   ok(capability.url.startsWith('http://127.0.0.1:'))
   deepStrictEqual(capability.subprocessConfig, { production: false })
@@ -925,13 +884,12 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
       basePath: '/whatever',
       applicationId: 'application',
       workerId: 0,
-      host: '127.0.0.1',
+      host: true,
       logLevel: 'trace',
-      port: 0,
+      port: true,
       additionalServerOptions: {},
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetryConfig: {},
-      isEntrypoint: true,
+      tracingConfig: {},
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
       events: undefined,
@@ -940,7 +898,10 @@ test('BaseCapability - stopCommand - should forcefully exit the process if it do
     })
   }
 
-  await capability.stopCommand()
+  const exited = once(capability.subprocess, 'exit')
+  await rejects(capability.stopCommand(), { code: 'PLT_BASIC_APPLICATION_SHUTDOWN_TIMEOUT' })
+  const [, signal] = await exited
+  deepStrictEqual(signal, 'SIGKILL')
 })
 
 test('BaseCapability - stopCommand - should not throw if subprocess was never assigned', async t => {
@@ -948,12 +909,11 @@ test('BaseCapability - stopCommand - should not throw if subprocess was never as
     t,
     {
       applicationId: 'application',
-      isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {},
+      tracingConfig: {},
       runtimeConfig: {
         gracefulShutdown: {
           runtime: 10,

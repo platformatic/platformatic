@@ -1,12 +1,9 @@
+import { configurationFileNames } from '@platformatic/foundation/loader'
 import {
-  convertApplicationNameToPrefix,
   ensureLoggableError,
   FileWatcher,
   kHandledError,
-  listRecognizedConfigurationFiles,
-  loadConfiguration,
-  loadConfigurationModule,
-  mirrorGlobalDispatcherForBuiltinFetch
+  loadConfigurationModule
 } from '@platformatic/foundation'
 import {
   getLogger,
@@ -18,38 +15,33 @@ import {
   getOnHttpStatsRunning,
   getOnHttpStatsSize
 } from '@platformatic/globals'
+import { importCapabilityPackage } from '@platformatic/basic'
 import debounce from 'debounce'
 import { EventEmitter } from 'node:events'
-import { existsSync } from 'node:fs'
+import { getCompileCacheDir } from 'node:module'
 import { resolve } from 'node:path'
 import { getActiveResourcesInfo } from 'node:process'
 import { workerData } from 'node:worker_threads'
-import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
-import { ApplicationAlreadyStartedError, exitCodes, RuntimeNotStartedError } from '../errors.js'
+import { getGlobalDispatcher } from 'undici'
+import {
+  ApplicationAlreadyStartedError,
+  exitCodes,
+  InvalidApplicationModuleError,
+  RuntimeNotStartedError
+} from '../errors.js'
 import { getApplicationUrl } from '../utils.js'
-import { markAsPlatformaticDispatcher, refreshGlobalDispatcher } from './interceptors.js'
+import { installGlobalDispatcher, refreshGlobalDispatcher } from './interceptors.js'
 
-/**
- * Resolves {PLT_<APPLICATION>_URL} placeholders that no environment variable defines, so that
- * applications can reference each other without the user having to set a variable per pair.
- *
- * The mapping is built forwards, from the ids of the applications that actually exist in the runtime
- * to the variable name each of them owns. Parsing the variable name instead would be ambiguous, both
- * because the id to prefix conversion is not reversible ("with-logger" and "with_logger" share a
- * prefix) and because plenty of _URL variables do not name an application at all: a connection string
- * fragment like {VALKEY_URL} or a DSN like {PLT_DATABASE_URL} must keep resolving to nothing rather
- * than silently becoming an HTTP URL.
- */
-function buildApplicationUrlResolver (applications) {
-  const urls = new Map()
-
-  for (const { id } of applications ?? []) {
-    if (id) {
-      urls.set(`PLT_${convertApplicationNameToPrefix(id)}_URL`, getApplicationUrl(id))
+function fetchApplicationUrl (applications, key) {
+  // Only named application placeholders may fall back to a mesh URL.
+  for (const application of applications) {
+    const name = application.id.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')
+    if (key === `PLT_${name}_URL`) {
+      return getApplicationUrl(application.id)
     }
   }
 
-  return key => urls.get(key) ?? null
+  return null
 }
 
 function handleUnhandled (app, event, listeners, timeout, err, ...args) {
@@ -69,23 +61,20 @@ function handleUnhandled (app, event, listeners, timeout, err, ...args) {
     }
   }
 
-  // stop() rejects while the controller is not started. Left unobserved, that rejection re-enters
-  // this handler forever and starves the event loop, so the exit scheduled above never runs.
-  app.stop().catch(stopError => {
-    logger.debug({ err: ensureLoggableError(stopError) }, `Stopping the ${label} after the ${event} event failed.`)
+  app.stop().catch(err => {
+    logger.debug({ err: ensureLoggableError(err) }, `Stopping the ${label} after the ${event} event failed.`)
   })
 }
 
 export class Controller extends EventEmitter {
   #starting
   #started
-  #listening
   #watch
   #fileWatcher
   #debouncedRestart
   #context
 
-  constructor (runtimeConfig, applicationConfig, workerId, serverConfig, metricsConfig) {
+  constructor (runtimeConfig, applicationConfig, workerId, metricsConfig) {
     super()
     this.runtimeConfig = runtimeConfig
     this.applicationConfig = applicationConfig
@@ -94,11 +83,8 @@ export class Controller extends EventEmitter {
     this.#watch = !!runtimeConfig.watch
     this.#starting = false
     this.#started = false
-    this.#listening = false
     this.capability = null
     this.#fileWatcher = null
-
-    const onMissingEnv = buildApplicationUrlResolver(runtimeConfig.applications)
 
     this.#context = {
       controller: this,
@@ -107,20 +93,16 @@ export class Controller extends EventEmitter {
       applicationId: this.applicationId,
       workerId: this.workerId,
       directory: this.applicationConfig.path,
+      sourcePath: this.applicationConfig.sourcePath,
       dependencies: this.applicationConfig.dependencies,
-      isEntrypoint: this.applicationConfig.entrypoint,
       isProduction: this.applicationConfig.isProduction,
-      telemetryConfig: this.applicationConfig.telemetry,
+      tracingConfig: this.applicationConfig.tracing,
       loggerConfig: runtimeConfig.logger,
       metricsConfig,
-      serverConfig,
       worker: workerData?.worker,
       resourceLimits: workerData?.resourceLimits,
       hasManagementApi: !!runtimeConfig.managementApi,
-      fetchApplicationUrl: onMissingEnv,
-      // Capabilities spread the whole context into their loadConfiguration call, which is what makes
-      // the configuration they load resolve application references like the throwaway load below.
-      onMissingEnv,
+      onMissingEnv: fetchApplicationUrl.bind(null, runtimeConfig.applications ?? [applicationConfig]),
       strictEnv: runtimeConfig.strictEnv
     }
   }
@@ -154,31 +136,45 @@ export class Controller extends EventEmitter {
         process.env.NODE_ENV = 'production'
       }
 
-      // Before returning the base application, check if there is any file we recognize
-      // and the user just forgot to specify in the configuration.
-      if (!appConfig.config) {
-        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
+      /*
+        The configuration was evaluated exactly once, main-side, and this worker receives the
+        validated capability payload as data. There is no file to re-read and no schema to
+        rediscover — which is the whole point, since re-parsing per worker meant an application
+        with workers: 4 evaluated user code five times and could reach five different answers.
 
-        if (candidate) {
-          appConfig.config = resolve(appConfig.path, candidate)
-        }
-      }
-
-      if (appConfig.config) {
-        // Parse the configuration file the first time to obtain the schema. This load is thrown away:
-        // the capability loads the configuration again below and that is the configuration the
-        // application actually runs on. This one only has to yield $schema and module, so it must not
-        // diverge from the second load in any way the user can observe: it resolves environment
-        // variables identically, and leaves the strictEnv report to the load the application is
-        // built from, which would otherwise be duplicated for every application.
-        const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
-          onMissingEnv: this.#context.onMissingEnv,
-          strictEnv: false
+        The capability is imported through the canonical resolution order, application-scoped first,
+        so the copy that runs here is the copy whose schema validated the payload main-side. When the
+        entry names an npm module, that module is the capability, resolved the same way.
+      */
+      if (appConfig.resolvedConfig) {
+        const pkg = await importCapabilityPackage(appConfig.path, appConfig.module, {
+          runtimeScope: import.meta.filename
         })
-        const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
-        this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)
-        // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
+
+        // A module application names its capability directly. If that package exports no `create`,
+        // name it rather than letting the call below throw a bare "pkg.create is not a function".
+        if (appConfig.module && typeof pkg.create !== 'function') {
+          throw new InvalidApplicationModuleError(appConfig.module)
+        }
+
+        /*
+          `resolved` says this object has already been through the loader: its environment was
+          layered main-side, it holds no placeholders, and it has been validated against this
+          capability's schema. It is what tells the capability apart from an embedder handing over
+          an object nobody has checked, which still gets validated on the way in.
+        */
+        this.capability = await pkg.create(appConfig.path, appConfig.resolvedConfig, {
+          ...this.#context,
+          resolved: true
+        })
       } else {
+        /*
+          No payload at all, which the loader does not produce -- `prepareRuntimeApplication` gives
+          every entry a `resolvedConfig`, an empty object where there is nothing to say. What is
+          left here is an embedder constructing a Controller by hand, and the bundled base
+          capability is the answer for that: there is no configuration file to look for, because the
+          runtime decides that main-side and hands the result over.
+        */
         const pkg = await loadConfigurationModule(resolve(import.meta.dirname, '../..'), {}, '@platformatic/basic')
         this.capability = await pkg.create(appConfig.path, {}, this.#context)
       }
@@ -219,6 +215,7 @@ export class Controller extends EventEmitter {
 
     try {
       await this.capability.init?.()
+
       this.emit('init')
     } catch (err) {
       this.#logAndThrow(err)
@@ -228,7 +225,6 @@ export class Controller extends EventEmitter {
       return
     }
 
-    this.#updateCapabilityStatus('starting')
     this.emit('starting')
 
     if (this.#watch) {
@@ -245,17 +241,13 @@ export class Controller extends EventEmitter {
       }
     }
 
-    const listen = !!(this.applicationConfig.useHttp || this.applicationConfig.websocket)
-
     try {
-      await this.capability.start({ listen })
+      await this.capability.start()
       if (refreshGlobalDispatcher()) {
         this.#updateDispatcher()
       }
-      this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
-      this.#updateCapabilityStatus('start:error')
       this.emit('start:error', err)
 
       this.capability.log({ message: err.message, level: 'debug' })
@@ -266,44 +258,29 @@ export class Controller extends EventEmitter {
     this.#started = true
     this.#starting = false
 
-    this.#updateCapabilityStatus('started')
     this.emit('started')
   }
 
-  async stop (force = false, dependents = []) {
+  getUrl () {
+    return this.capability.getUrl()
+  }
+
+  async stop (force = false, dependents = [], shutdownTimeout) {
     if (!force && (!this.#started || this.#starting)) {
       throw new RuntimeNotStartedError()
     }
 
     this.emit('stopping')
-    // Do not update status of the capability to "stopping" here otherwise
-    // if stop is called before start is finished, the capability will not
-    // be able to wait for start to finish and it will create a race condition.
 
     await this.#stopFileWatching()
     await this.capability.waitForDependentsStop(dependents)
+    this.capability.shutdownTimeout = shutdownTimeout
     await this.capability.stop()
 
     this.#started = false
     this.#starting = false
-    this.#listening = false
 
-    this.#updateCapabilityStatus('stopped')
     this.emit('stopped')
-  }
-
-  async listen () {
-    // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (
-      !this.applicationConfig.entrypoint ||
-      this.applicationConfig.useHttp ||
-      this.applicationConfig.websocket ||
-      this.#listening
-    ) {
-      return
-    }
-
-    await this.capability.start({ listen: true })
   }
 
   async getMetrics ({ format }) {
@@ -311,8 +288,6 @@ export class Controller extends EventEmitter {
     const onHttpStatsFree = getOnHttpStatsFree({ throwOnMissing: false })
 
     if (onHttpStatsFree && dispatcher?.stats) {
-      // The capability might come from an older version of @platformatic/basic
-      // which registered these globals without the fields tracking, so never throw.
       const onHttpStatsConnected = getOnHttpStatsConnected({ throwOnMissing: false })
       const onHttpStatsPending = getOnHttpStatsPending({ throwOnMissing: false })
       const onHttpStatsQueued = getOnHttpStatsQueued({ throwOnMissing: false })
@@ -352,11 +327,28 @@ export class Controller extends EventEmitter {
       return
     }
 
+    /*
+      The application's own configuration file is not the worker's to watch. The runtime evaluates
+      configuration once, main-side, and watches every file that evaluation read -- so a change to
+      one is a configuration change and the runtime reloads for it.
+
+      Watching it here as well meant both fired for a single edit: the runtime tore itself down and
+      rebuilt while this worker restarted the same application, and the rebuilt runtime could not
+      bind its management socket because the one it replaced had not released it yet.
+    */
     const fileWatcher = new FileWatcher({
       path: watch.path,
       /* c8 ignore next 2 */
       allowToWatch: watch?.allow,
-      watchIgnore: watch?.ignore || []
+      watchIgnore: [...(watch?.ignore || []), ...configurationFileNames],
+      // Cache flushes are runtime output, not source edits. Cover both worker and command caches,
+      // including an already-enabled cache inherited from the environment.
+      watchIgnorePaths: [
+        getCompileCacheDir(),
+        resolve(this.applicationConfig.path, '.plt', 'compile-cache'),
+        this.applicationConfig.compileCache?.directory ?? this.runtimeConfig.compileCache?.directory,
+        this.capability.config?.compileCache?.directory
+      ].filter(Boolean)
     })
 
     fileWatcher.on('update', this.#debouncedRestart)
@@ -387,8 +379,8 @@ export class Controller extends EventEmitter {
   }
 
   #updateDispatcher () {
-    const telemetryConfig = this.#context.telemetryConfig
-    const telemetryId = telemetryConfig?.applicationName
+    const tracingConfig = this.#context.tracingConfig
+    const telemetryId = tracingConfig?.applicationName
 
     const interceptor = dispatch => {
       return function InterceptedDispatch (opts, handler) {
@@ -404,9 +396,7 @@ export class Controller extends EventEmitter {
 
     const dispatcher = getGlobalDispatcher().compose(interceptor)
 
-    markAsPlatformaticDispatcher(dispatcher)
-    setGlobalDispatcher(dispatcher)
-    mirrorGlobalDispatcherForBuiltinFetch(dispatcher)
+    installGlobalDispatcher(dispatcher)
   }
 
   #setupHandlers (timeout) {
@@ -430,15 +420,5 @@ export class Controller extends EventEmitter {
         })
       }
     })
-  }
-
-  #updateCapabilityStatus (status) {
-    if (typeof this.capability.updateStatus === 'function') {
-      this.capability.updateStatus(status)
-    } else {
-      // This is horrible but needed for backward compatibility
-      this.capability.status = status
-      this.capability.emit(status)
-    }
   }
 }

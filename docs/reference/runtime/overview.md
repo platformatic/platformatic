@@ -23,15 +23,15 @@ If you're only interested in the features available in Platformatic Runtime, you
 
 The following configuration file can be used to start a new Platformatic Runtime project. For more details on the configuration file, see the [configuration documentation](../runtime/configuration.md).
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.54.0.json",
-  "autoload": {
-    "path": "./packages",
-    "exclude": ["docs"]
-  },
-  "entrypoint": "entrypointApp"
-}
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  autoload: {
+    path: './packages',
+    exclude: ['docs']
+  }
+})
 ```
 
 ## Platformatic Runtime context
@@ -41,11 +41,18 @@ or as a Platformatic Runtime application. Runtime application enables certain co
 
 ## Inter-application communication
 
-Platformatic Runtime allows multiple microservice applications to run
-within a single process. When an entrypoint is configured or automatically detected,
-only the entrypoint binds to an operating system port and can be reached from outside
-the runtime. If no entrypoint is configured or detected, the runtime starts without an
-external application URL.
+Platformatic Runtime allows multiple microservice applications to run within a single process. Each capability or application owns its HTTP listener. A managed capability opens a listener only when its capability-level configuration defines `server.port`; custom commands and black-box Node.js applications are responsible for deciding whether to call `listen()` themselves.
+
+Runtime observes listening servers so that management APIs can report their URLs, but it does not choose ports, write `PORT`, or rewrite listener options. Applications can reference environment variables directly from their capability configuration:
+
+```json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "{HTTP_PORT}"
+  }
+}
+```
 
 Within the runtime, all inter-application communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection
@@ -57,6 +64,15 @@ of `http://awesome.plt.local`. The dispatcher packages module map that
 domain to the Fastify server running the `awesome` microservice. Any Node.js
 APIs based on Undici, such as `fetch()`, will then automatically route requests
 addressed to `awesome.plt.local` to the corresponding Fastify server.
+
+Every application's mesh address is also available at runtime as an environment
+variable: `PLT_<ID>_URL` (the application ID, uppercased) is injected into every
+worker and holds `http://<id>.plt.local` — for the application itself and for every
+sibling in the same runtime. This is useful where code needs the address as a
+build-time constant rather than computing it, for example a bundler that inlines
+`process.env.PLT_AWESOME_URL`. A standalone boot (an application started outside a
+root configuration) has no siblings, so no sibling `PLT_<ID>_URL` is injected; the
+application's own `PLT_<ID>_URL` still is.
 
 ### Internal Mesh Network Architecture
 
@@ -113,9 +129,5 @@ This means that `worker.isMainThread` will return `false` and there are some lim
 The application runtime configuration is accessible via `workerData` and the typed getters from [`@platformatic/globals`](./globals.md), which allows bypassing such limitations.
 
 If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting the runtime APIs and the interapplication communication automatically.
-
-# TrustProxy
-
-For each application in the runtime **except the entrypoint**, Platformatic will set the Fastify's `trustProxy` option to true. This will change the ip/hostname in the request object to match the one coming from the entrypoint, rather than the internal `xyz.plt.local` name.This is useful for applications behind a proxy, ensuring the original client's IP address is preserved. Visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details.
 
 <Issues />

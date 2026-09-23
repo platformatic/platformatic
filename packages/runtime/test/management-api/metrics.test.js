@@ -2,7 +2,7 @@ import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -55,7 +55,7 @@ const expectedMetricNames = [
 
 test('should get prom metrics from the management api', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -96,7 +96,7 @@ test('should get prom metrics from the management api', async t => {
 
 test('should get prom metrics from the management api in the json format', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'default', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -137,7 +137,7 @@ test('should get prom metrics from the management api in the json format', async
 
 test('should only receive an error message if the metrics are disabled', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -170,4 +170,32 @@ test('should only receive an error message if the metrics are disabled', async t
 
   const metrics = await body.json()
   deepStrictEqual(metrics, { statusCode: 501, error: 'Not Implemented', message: 'Metrics are disabled.' })
+})
+
+test('should disable metrics when no metrics configuration is provided', async t => {
+  const projectDir = join(fixturesDir, 'management-api-without-metrics-omitted')
+  const app = await createRuntime(projectDir)
+
+  await app.start()
+
+  const client = new Client(
+    { hostname: 'localhost', protocol: 'http:' },
+    { socketPath: app.getManagementApiUrl(), keepAliveTimeout: 10, keepAliveMaxTimeout: 10 }
+  )
+
+  t.after(async () => {
+    await client.close()
+    await app.close()
+  })
+
+  const config = await app.getRuntimeConfig()
+  strictEqual(config.metrics.enabled, false)
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/metrics',
+    headers: { Accept: 'application/json' }
+  })
+  strictEqual(statusCode, 501)
+  deepStrictEqual(await body.json(), { statusCode: 501, error: 'Not Implemented', message: 'Metrics are disabled.' })
 })

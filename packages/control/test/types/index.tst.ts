@@ -2,7 +2,6 @@ import { FastifyError } from '@fastify/error';
 import { expect, test } from 'tstyche';
 import {
   FailedToGetRuntimeAllLogs,
-  FailedToGetRuntimeConfig,
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeOpenapi,
@@ -13,6 +12,7 @@ import type {
   Metric,
   ReadableBody,
   Runtime,
+  RuntimeApplication,
   RuntimeApplications,
   RuntimeSchedulerJob,
   RuntimeSchedulerRunResult
@@ -76,9 +76,9 @@ test('RuntimeApiClient / RuntimeApplications types', () => {
   expect(runtime.argv).type.toBe<string[]>();
   expect(runtime.uptimeSeconds).type.toBe<number>();
   expect(runtime.packageVersion).type.toBe<string | null>();
+  expect(runtime.urls).type.toBe<Record<string, string>>();
   expect(api.getRuntimeApplications(45)).type.toBe<
     Promise<{
-      entrypoint: string;
       production: boolean;
       applications: RuntimeApplications['applications'];
     }>
@@ -88,8 +88,10 @@ test('RuntimeApiClient / RuntimeApplications types', () => {
 });
 
 if ('url' in application1) {
-  test('application1 optional url/workers', () => {
-    expect(application1.url).type.toBe<string | undefined>();
+  test('application1 url/workers', () => {
+    expect(application1.url).type.toBe<string | null>();
+    expect(application1.urls).type.toBe<string[]>();
+    expect(application1.dependencies).type.toBe<string[]>();
     expect(application1.workers).type.toBe<number | undefined>();
   });
 }
@@ -119,8 +121,7 @@ test('Metric type', () => {
 // errors
 test('error factories', () => {
   expect(FailedToGetRuntimeAllLogs).type.toBe<(arg: string) => FastifyError>();
-  expect(FailedToGetRuntimeConfig).type.toBe<(arg: string) => FastifyError>();
-  expect(FailedToGetRuntimeEnv).type.toBe<(arg: string) => FastifyError>();
+    expect(FailedToGetRuntimeEnv).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToGetRuntimeOpenapi).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToGetRuntimeScheduler).type.toBe<(arg: string) => FastifyError>();
   expect(FailedToUpdateRuntimeScheduler).type.toBe<
@@ -132,4 +133,18 @@ test('error factories', () => {
 
   expect(FailedToGetRuntimeHistoryLogs).type.not.toBeAssignableTo<string>();
   expect(FailedToGetRuntimeHistoryLogs).type.not.toBeAssignableTo<number>();
+});
+
+test('payload fields the CLI reads through this client', () => {
+  /*
+    `applications:add` and `remove --save` read these off GET /metadata rather than fetching the
+    whole runtime configuration. They were reaching for fields nothing declared, which typechecks
+    as `any` and stops being a contract.
+  */
+  expect<Runtime>().type.toHaveProperty('configPath');
+  expect<Runtime>().type.toHaveProperty('autoload');
+
+  // How an application serves, as opposed to whether it runs.
+  expect<RuntimeApplication>().type.toHaveProperty('servingState');
+  expect<RuntimeApplication>().type.toHaveProperty('configPath');
 });

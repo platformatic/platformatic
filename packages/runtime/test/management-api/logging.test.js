@@ -4,13 +4,13 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import WebSocket from 'ws'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should log management api requests using the runtime logger', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.init()

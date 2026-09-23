@@ -69,8 +69,7 @@ test('config', async t => {
     typescript: true
   })
   await svc.prepare()
-  const platformaticConfigFile = svc.getFileObject('platformatic.json')
-  const contents = JSON.parse(platformaticConfigFile.contents)
+  const contents = svc.generatedConfig
   assert.equal(
     contents.$schema,
     `https://schemas.platformatic.dev/@platformatic/service/${svc.platformaticVersion}.json`
@@ -115,8 +114,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       packages: [
@@ -150,8 +148,7 @@ test('support packages', async t => {
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
+    const contents = svc.generatedConfig
 
     assert.deepEqual(contents.plugins, {
       paths: [
@@ -262,11 +259,14 @@ test('runtime context should have env prefix', async t => {
   assert.equal(null, svc.getFileObject('.env'))
   assert.deepEqual(svc.config.env, {
     PLT_MY_SERVICE_FOO: 'bar',
-    PLT_MY_SERVICE_BAZ: 'baz'
+    PLT_MY_SERVICE_BAZ: 'baz',
+    PLT_MY_SERVICE_SERVER_HOSTNAME: '0.0.0.0',
+    PLT_MY_SERVICE_SERVER_LOGGER_LEVEL: 'info',
+    PLT_MY_SERVICE_PORT: 3042
   })
 })
 
-test('runtime context should not have server.config', async t => {
+test('runtime context should retain local server config', async t => {
   const svc = new Generator()
   svc.setConfig({
     isRuntimeContext: true,
@@ -275,9 +275,12 @@ test('runtime context should not have server.config', async t => {
 
   await svc.prepare()
 
-  const configFile = svc.getFileObject('platformatic.json')
-  const configFileContents = JSON.parse(configFile.contents)
-  assert.strictEqual(undefined, configFileContents.server)
+  const configFileContents = svc.generatedConfig
+  assert.deepEqual(configFileContents.server, {
+    hostname: '{PLT_MY_SERVICE_SERVER_HOSTNAME}',
+    port: '{PLT_MY_SERVICE_PORT}',
+    logger: { level: '{PLT_MY_SERVICE_SERVER_LOGGER_LEVEL}' }
+  })
 })
 
 test('runtime context should not generate .env file', async t => {
@@ -289,7 +292,44 @@ test('runtime context should not generate .env file', async t => {
 
   await svc.prepare()
 
-  const configFile = svc.getFileObject('platformatic.json')
-  const configFileContents = JSON.parse(configFile.contents)
-  assert.strictEqual(undefined, configFileContents.server)
+  assert.equal(null, svc.getFileObject('.env'))
+})
+
+test('supports a custom port environment variable', async () => {
+  const svc = new Generator()
+  svc.setConfig({
+    isRuntimeContext: true,
+    applicationName: 'my-service',
+    portEnv: 'HTTP_PORT'
+  })
+
+  await svc.prepare()
+
+  const config = svc.generatedConfig
+  assert.equal(config.server.port, '{PLT_MY_SERVICE_HTTP_PORT}')
+  assert.equal(svc.config.env.PLT_MY_SERVICE_HTTP_PORT, 3042)
+})
+
+test('emits the port as the expression it stood for', async () => {
+  const svc = new Generator()
+  svc.setConfig({ isRuntimeContext: true, applicationName: 'api' })
+
+  await svc.prepare()
+
+  const emitted = svc.getFileObject(svc.configurationFileName()).contents
+
+  /*
+    Interpolation once substituted `{PLT_API_PORT}` before anything read it, and there is none now,
+    so the scaffolded value becomes the expression it stood for — with `||` rather than `??`,
+    because an env file carrying the ordinary empty assignment supplies '', which is present: `??`
+    would not fall back and `Number('')` is an ephemeral port where the reader of that line expects 3042.
+  */
+  assert.ok(emitted.includes('port: Number(process.env.PLT_API_PORT || 3042)'), emitted)
+  assert.ok(emitted.includes("import { createServiceConfig } from '@platformatic/service'"), emitted)
+  /*
+    A bare reference, not a copy of the default: the value lives in `.env`, and writing it into the
+    configuration as well would put the same fact in two places. The port is the exception the
+    document spells out.
+  */
+  assert.ok(emitted.includes('hostname: process.env.PLT_API_SERVER_HOSTNAME,'), emitted)
 })

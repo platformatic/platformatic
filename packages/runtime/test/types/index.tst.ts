@@ -12,6 +12,7 @@ import {
   type ApplicationDetails,
   type InjectParams,
   type InjectResponse,
+  type ManagementClient,
   type RuntimeExtension,
   type RuntimeExtensionBuild,
   type RuntimeExtensionBuildContext,
@@ -81,14 +82,18 @@ test('loadConfiguration', () => {
 })
 
 const runtime = {} as Runtime
+const metadata = {} as RuntimeMetadata
+const management = {} as ManagementClient
 
 test('Runtime.init', () => {
   expect(runtime.init()).type.toBe<Promise<void>>()
 })
 
 test('Runtime.start', () => {
-  expect(runtime.start()).type.toBe<Promise<string | undefined>>()
-  expect(runtime.start(true)).type.toBe<Promise<string | undefined>>()
+  expect(runtime.start()).type.toBe<Promise<Record<string, string>>>()
+  expect(runtime.start(true)).type.toBe<Promise<Record<string, string>>>()
+  expect(runtime.getUrls()).type.toBe<Record<string, string>>()
+  expect(runtime.getUrls('api')).type.toBe<Record<string, string>>()
 })
 
 test('Runtime.stop', () => {
@@ -102,8 +107,13 @@ test('Runtime.close', () => {
 })
 
 test('Runtime.restart', () => {
-  expect(runtime.restart()).type.toBe<Promise<string | undefined>>()
-  expect(runtime.restart(['api', 'worker'])).type.toBe<Promise<string | undefined>>()
+  expect(runtime.restart()).type.toBe<Promise<void>>()
+  expect(runtime.restart(['api', 'worker'])).type.toBe<Promise<void>>()
+})
+
+test('ManagementClient.restart', () => {
+  expect(management.restart()).type.toBe<Promise<void>>()
+  expect(management.restart(['api', 'worker'])).type.toBe<Promise<void>>()
 })
 
 test('Runtime.inject', () => {
@@ -112,16 +122,13 @@ test('Runtime.inject', () => {
   expect(runtime.inject('api', { method: 'POST', url: '/seed', body: {} })).type.toBe<Promise<InjectResponse>>()
 })
 
-test('Runtime.getUrl', () => {
-  expect(runtime.getUrl()).type.toBe<string | undefined>()
-})
-
 test('Runtime.getRuntimeStatus', () => {
   expect(runtime.getRuntimeStatus()).type.toBe<string>()
 })
 
 test('Runtime.getRuntimeMetadata', () => {
   expect(runtime.getRuntimeMetadata()).type.toBe<Promise<RuntimeMetadata>>()
+  expect(metadata.urls).type.toBe<Record<string, string>>()
 })
 
 test('Runtime.getRuntimeEnv', () => {

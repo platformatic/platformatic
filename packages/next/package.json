@@ -1,15 +1,23 @@
 {
   "name": "@platformatic/next",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "Platformatic Next.js Capability",
   "main": "index.js",
   "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./schema": "./schema.js",
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "scripts": {
     "test": "npm run test:types && npm run test:main && npm run test:caching && npm run test:compatibility && npm run test:integration",
     "test:types": "tstyche",
     "test:main": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "test:caching": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/caching/*.test.js",
     "test:compatibility": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/compatibility/*.test.js",
+    "test:compatibility-development": "PLATFORMATIC_NEXT_COMPATIBILITY_MODE=development node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/compatibility/*.test.js",
+    "test:compatibility-production": "PLATFORMATIC_NEXT_COMPATIBILITY_MODE=production node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/compatibility/*.test.js",
     "test:integration": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/integration/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
@@ -47,7 +55,7 @@
     "@fastify/reply-from": "^12.0.0",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@types/node": "^22.5.0",
+    "@types/node": "^24.0.0",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
     "cleaner-spec-reporter": "^0.5.0",
@@ -62,6 +70,6 @@
     "ws": "^8.18.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

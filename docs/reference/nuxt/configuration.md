@@ -1,9 +1,11 @@
 import Issues from '../../getting-started/issues.md';
 import RuntimeInCapabilities from '../_runtime-in-capabilities.md';
+import ServerConfiguration from '../_server-in-capabilities.md';
 
 # Configuration
 
-Platformatic Nuxt is configured through a configuration file. It supports environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Nuxt is configured through a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 ## `application`
 
@@ -38,14 +40,17 @@ Configures Vite options used by the Nuxt development server. Platformatic Nuxt s
 
 This is useful for development server settings such as allowing mesh-network hostnames:
 
-```json
-{
-  "vite": {
-    "devServer": {
-      "strict": false
+```ts config
+import { createNuxtConfig } from '@platformatic/nuxt'
+
+export default createNuxtConfig({
+  server: { port: 3042 },
+  vite: {
+    devServer: {
+      strict: false
     }
   }
-}
+})
 ```
 
 For Nuxt's own Vite options, use `nuxt.config` as usual:
@@ -66,7 +71,7 @@ Configures the `logger`. See [runtime logger](../runtime/configuration.md#logger
 
 ## `server`
 
-Configures the HTTP server. See [runtime server](../runtime/configuration.md#server).
+<ServerConfiguration />
 
 ## `watch`
 

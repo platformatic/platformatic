@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "Platformatic DB authorization",
   "main": "index.js",
   "type": "module",
@@ -39,9 +39,9 @@
     "fastify-plugin": "^6.0.0",
     "fastify-user": "^1.0.2",
     "leven": "~3.1.0",
-    "undici": "^7.27.2"
+    "undici": "^8.5.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

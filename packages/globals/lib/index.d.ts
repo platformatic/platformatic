@@ -2,6 +2,8 @@ import { type TracerProvider } from '@opentelemetry/api'
 import * as Client from '@platformatic/prom-client'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { type EventEmitter } from 'node:events'
+import { type Agent } from 'node:http'
+import { type ResourceLimits } from 'node:worker_threads'
 import { type Level, type Logger } from 'pino'
 
 export type Handler = (data: any, context?: Record<string, any>) => any | Promise<any>
@@ -23,7 +25,26 @@ export interface SharedContext {
   update (contextUpdate: object, options?: { overwrite?: boolean }): any
 }
 
-export type Management = Record<string, (...args: any[]) => any>
+export interface Management {
+  getRuntimeConfig (): Promise<Record<string, unknown>>
+  getRuntimeEnv (): Promise<Record<string, string>>
+  getApplicationsIds (): Promise<string[]>
+  getApplications (): Promise<{ production: boolean; applications: unknown[] }>
+  getWorkers (): Promise<Record<string, unknown>>
+  getApplicationDetails (id: string): Promise<unknown>
+  getApplicationConfig (id: string): Promise<Record<string, unknown>>
+  getApplicationEnv (id: string): Promise<Record<string, string>>
+  getApplicationOpenapiSchema (id: string): Promise<unknown>
+  getApplicationGraphqlSchema (id: string): Promise<unknown>
+  getMetrics (format?: string): Promise<{ metrics: unknown }>
+  startApplication (id: string): Promise<void>
+  stopApplication (id: string): Promise<void>
+  restartApplication (id: string): Promise<void>
+  restart (applications?: string[]): Promise<void>
+  addApplications (applications: unknown[], start?: boolean): Promise<unknown[]>
+  removeApplications (ids: string[]): Promise<unknown[]>
+  inject (id: string, injectParams: unknown): Promise<unknown>
+}
 
 export interface GlobalGetterOptions {
   throwOnMissing?: boolean
@@ -59,27 +80,35 @@ export interface PlatformaticEvents extends EventEmitter {
   emitAndNotify: EventEmitter['emit']
 }
 
+// Describe the API used by globals consumers without depending on the interceptor package.
+export interface UndiciThreadInterceptor {
+  createUpgradeAgent (): Agent
+}
+
+export type CloseCallback = () => void | Promise<void>
 export interface PlatformaticGlobal {
   // Runtime
   isBuilding: boolean
   executable: string
   runtimeId: number
+  compileCache: boolean | { enabled?: boolean; directory?: string } | undefined
+  resourceLimits: ResourceLimits | undefined
+  undiciThreadInterceptor: UndiciThreadInterceptor
   nextVersion: { major: number, minor?: number }
   exitOnUnhandledErrors: boolean | number
   reuseTcpPorts: boolean
 
   // Service configuration
-  host: string
-  port: number
+  host: string | true
+  port: number | true
   additionalServerOptions: object
-  telemetryConfig: object
+  tracingConfig: object
   config: object
   runtimeConfig: object
   applicationConfig: object | null
   applicationId: string
   workerId: number | string
   root: string
-  isEntrypoint: boolean
   basePath: string | null
   runtimeBasePath: string | null
   wantsAbsoluteUrls: boolean
@@ -139,7 +168,7 @@ export interface PlatformaticGlobal {
   sharedContext: SharedContext
   management: Management
   sendHealthSignal (signal: HealthSignal): Promise<void>
-  telemetryReady: Promise<void>
+  tracingReady: Promise<void>
   tracerProvider: TracerProvider
   notifyConfig (config: object): void
 }
@@ -147,16 +176,9 @@ export interface PlatformaticGlobal {
 /** @deprecated Use `PlatformaticGlobal` instead. */
 export type PlatformaticGlobalInterface = PlatformaticGlobal
 
-// updateGlobals() (see lib/index.js) assigns a real, shared
-// `globalThis.platformatic` object at worker/main-thread startup. Consumers
-// that read the global directly (rather than via the getters below) need an
-// ambient declaration to type it.
-declare global {
-  // eslint-disable-next-line no-var
-  var platformatic: PlatformaticGlobal | undefined
-}
-
 export declare function getGlobal<T extends {}> (): (PlatformaticGlobal & T) | undefined
+/** Returns a shallow selection. Throws PLT_GLOBALS_MISSING_FIELD for unregistered names. */
+export declare function getGlobals (...names: string[]): Record<string, unknown>
 export declare function updateGlobals (updates: Partial<PlatformaticGlobal>): PlatformaticGlobal
 export declare function removeGlobals (fields: string[]): PlatformaticGlobal | undefined
 export declare function hasField (name: string): boolean
@@ -169,6 +191,16 @@ export declare function getExecutable (options: GlobalGetterOptions): Platformat
 export declare function getRuntimeId (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['runtimeId']
 export declare function getRuntimeId (options: OptionalGlobalGetterOptions): PlatformaticGlobal['runtimeId'] | undefined
 export declare function getRuntimeId (options: GlobalGetterOptions): PlatformaticGlobal['runtimeId'] | undefined
+export declare function getCompileCache (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['compileCache']
+export declare function getCompileCache (options: OptionalGlobalGetterOptions): PlatformaticGlobal['compileCache'] | undefined
+export declare function getCompileCache (options: GlobalGetterOptions): PlatformaticGlobal['compileCache'] | undefined
+export declare function getResourceLimits (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['resourceLimits']
+export declare function getResourceLimits (options: OptionalGlobalGetterOptions): PlatformaticGlobal['resourceLimits'] | undefined
+export declare function getResourceLimits (options: GlobalGetterOptions): PlatformaticGlobal['resourceLimits'] | undefined
+export declare function getUndiciThreadInterceptor (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['undiciThreadInterceptor']
+export declare function getUndiciThreadInterceptor (options: OptionalGlobalGetterOptions): PlatformaticGlobal['undiciThreadInterceptor'] | undefined
+export declare function getUndiciThreadInterceptor (options: GlobalGetterOptions): PlatformaticGlobal['undiciThreadInterceptor'] | undefined
+export declare function setUndiciThreadInterceptor (interceptor: UndiciThreadInterceptor): void
 export declare function getNextVersion (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['nextVersion']
 export declare function getNextVersion (options: OptionalGlobalGetterOptions): PlatformaticGlobal['nextVersion'] | undefined
 export declare function getNextVersion (options: GlobalGetterOptions): PlatformaticGlobal['nextVersion'] | undefined
@@ -187,9 +219,9 @@ export declare function getPort (options: GlobalGetterOptions): PlatformaticGlob
 export declare function getAdditionalServerOptions (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['additionalServerOptions']
 export declare function getAdditionalServerOptions (options: OptionalGlobalGetterOptions): PlatformaticGlobal['additionalServerOptions'] | undefined
 export declare function getAdditionalServerOptions (options: GlobalGetterOptions): PlatformaticGlobal['additionalServerOptions'] | undefined
-export declare function getTelemetryConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['telemetryConfig']
-export declare function getTelemetryConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['telemetryConfig'] | undefined
-export declare function getTelemetryConfig (options: GlobalGetterOptions): PlatformaticGlobal['telemetryConfig'] | undefined
+export declare function getTracingConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['tracingConfig']
+export declare function getTracingConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['tracingConfig'] | undefined
+export declare function getTracingConfig (options: GlobalGetterOptions): PlatformaticGlobal['tracingConfig'] | undefined
 export declare function getConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['config']
 export declare function getConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['config'] | undefined
 export declare function getConfig (options: GlobalGetterOptions): PlatformaticGlobal['config'] | undefined
@@ -208,9 +240,6 @@ export declare function getWorkerId (options: GlobalGetterOptions): Platformatic
 export declare function getRoot (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['root']
 export declare function getRoot (options: OptionalGlobalGetterOptions): PlatformaticGlobal['root'] | undefined
 export declare function getRoot (options: GlobalGetterOptions): PlatformaticGlobal['root'] | undefined
-export declare function isEntrypoint (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['isEntrypoint']
-export declare function isEntrypoint (options: OptionalGlobalGetterOptions): PlatformaticGlobal['isEntrypoint'] | undefined
-export declare function isEntrypoint (options: GlobalGetterOptions): PlatformaticGlobal['isEntrypoint'] | undefined
 export declare function getBasePath (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['basePath']
 export declare function getBasePath (options: OptionalGlobalGetterOptions): PlatformaticGlobal['basePath'] | undefined
 export declare function getBasePath (options: GlobalGetterOptions): PlatformaticGlobal['basePath'] | undefined
@@ -283,6 +312,10 @@ export declare const setCustomReadinessCheck: PlatformaticGlobal['setCustomReadi
 export declare function getEvents (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['events']
 export declare function getEvents (options: OptionalGlobalGetterOptions): PlatformaticGlobal['events'] | undefined
 export declare function getEvents (options: GlobalGetterOptions): PlatformaticGlobal['events'] | undefined
+export declare function registerCloseCallback (callback: CloseCallback | AsyncDisposable): void
+/** @internal Consumes registered callbacks and permanently closes registration. */
+export declare function consumeCloseCallbacks (): CloseCallback[]
+export declare function hasCloseCallbacks (): boolean
 export declare function getITC (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['itc']
 export declare function getITC (options: OptionalGlobalGetterOptions): PlatformaticGlobal['itc'] | undefined
 export declare function getITC (options: GlobalGetterOptions): PlatformaticGlobal['itc'] | undefined
@@ -304,13 +337,14 @@ export declare function getManagement (options: GlobalGetterOptions): Platformat
 export declare function getSendHealthSignal (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['sendHealthSignal']
 export declare function getSendHealthSignal (options: OptionalGlobalGetterOptions): PlatformaticGlobal['sendHealthSignal'] | undefined
 export declare function getSendHealthSignal (options: GlobalGetterOptions): PlatformaticGlobal['sendHealthSignal'] | undefined
-export declare function getTelemetryReady (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['telemetryReady']
-export declare function getTelemetryReady (options: OptionalGlobalGetterOptions): PlatformaticGlobal['telemetryReady'] | undefined
-export declare function getTelemetryReady (options: GlobalGetterOptions): PlatformaticGlobal['telemetryReady'] | undefined
+export declare function getTracingReady (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['tracingReady']
+export declare function getTracingReady (options: OptionalGlobalGetterOptions): PlatformaticGlobal['tracingReady'] | undefined
+export declare function getTracingReady (options: GlobalGetterOptions): PlatformaticGlobal['tracingReady'] | undefined
 export declare function getTracerProvider (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['tracerProvider']
 export declare function getTracerProvider (options: OptionalGlobalGetterOptions): PlatformaticGlobal['tracerProvider'] | undefined
 export declare function getTracerProvider (options: GlobalGetterOptions): PlatformaticGlobal['tracerProvider'] | undefined
 export declare function getNotifyConfig (options?: RequiredGlobalGetterOptions): PlatformaticGlobal['notifyConfig']
 export declare function getNotifyConfig (options: OptionalGlobalGetterOptions): PlatformaticGlobal['notifyConfig'] | undefined
 export declare function getNotifyConfig (options: GlobalGetterOptions): PlatformaticGlobal['notifyConfig'] | undefined
+export * as errors from './errors.js'
 export default getGlobal

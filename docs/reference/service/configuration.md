@@ -2,14 +2,14 @@ import Issues from '../../getting-started/issues.md';
 
 # Configuration
 
-Platformatic Service configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Service is configured with a configuration file. The file is a module that exports its
+configuration, so it reads [environment variables](#environment-variables) directly.
 
 ## Configuration Files
 
-The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../../file-formats.md#configuration-files).
+The Platformatic CLI automatically detects and loads the configuration file in the current working directory. There are four names, listed [here](../../file-formats.md#configuration-files), and one file per directory.
 
-Alternatively, you can specify a configuration file path using the `--config` option for most `wattpm` CLI commands. The configuration examples in this reference use the JSON format.
+Alternatively, you can specify a configuration file path using the `--config` option for most `wattpm` CLI commands. The examples in this reference are written as `watt.config.ts`; the same configuration in JavaScript differs only in carrying no type annotations.
 
 ### Supported File Formats
 
@@ -17,7 +17,7 @@ For detailed information on supported file formats and extensions, please visit 
 
 ## Settings
 
-Configuration settings containing sensitive data, such as database connection URLs and passwords, should be set using [configuration placeholders](#configuration-placeholders).
+Configuration settings containing sensitive data, such as database connection URLs and passwords, should be read from the [environment](#environment-variables) rather than written into the file.
 
 ### `basePath`
 
@@ -30,22 +30,26 @@ If not specified, the application will be exposed on the application or a value 
 An object with the following settings:
 
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
-- **`port`** — Port where Platformatic Service server will listen for connections.
+- **`port`** — Port where Platformatic Service server will listen for connections. When `portAssignment` is set to `perWorkerIncrement`, this is the port assigned to worker 0.
+- **`portAssignment`** (`string`) — Sets how the port is assigned when the application runs multiple workers. Default: `shared`. Set it to `shared` or leave it unset to make all workers listen on the same `port`, which requires `SO_REUSEPORT` support (available on Linux; not available on macOS and Windows). Set it to `perWorkerIncrement` to give each worker its own port, starting from `port` (worker 0) and incrementing by one for each additional worker: use it when `SO_REUSEPORT` is not available or when you want to address each worker individually, typically behind an external load balancer.
+- **`backlog`** (`number`) — Maximum length of the pending connection queue.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)
 
   _Example_
 
-  ```json
-  {
-    "server": {
-      ...
-      "healthCheck": {
-        "interval": 2000
+  ```ts config
+  import { createServiceConfig } from '@platformatic/service'
+
+  export default createServiceConfig({
+    server: {
+      port: 3042,
+      healthCheck: {
+        interval: 2000
       }
     }
-  }
+  })
   ```
 
 - **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
@@ -160,27 +164,29 @@ An optional object that defines the plugins loaded by Platformatic Service.
 
 _Example_
 
-```json
-{
-  "plugins": {
-    "packages": [
+```ts config
+import { createServiceConfig } from '@platformatic/service'
+
+export default createServiceConfig({
+  plugins: {
+    packages: [
       {
-        "name": "@fastify/compress",
-        "options": {
-          "threshold": 1
+        name: '@fastify/compress',
+        options: {
+          threshold: 1
         }
       }
     ],
-    "paths": [
+    paths: [
       {
-        "path": "./my-plugin.js",
-        "options": {
-          "foo": "bar"
+        path: './my-plugin.js',
+        options: {
+          foo: 'bar'
         }
       }
     ]
   }
-}
+})
 ```
 
 ### `watch`
@@ -198,13 +204,21 @@ It can also be customized with the following options:
 
   _Example_
 
-  ```json
-  {
-    "watch": {
-      "ignore": ["*.mjs", "**/*.mjs"],
-      "allow": ["my-plugin.js", "plugins/*.js"]
+  ```ts config
+  import { createServiceConfig } from '@platformatic/service'
+
+  export default createServiceConfig({
+    watch: {
+      ignore: [
+        '*.mjs',
+        '**/*.mjs'
+      ],
+      allow: [
+        'my-plugin.js',
+        'plugins/*.js'
+      ]
     }
-  }
+  })
   ```
 
 ### `service`
@@ -217,24 +231,28 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 
   Enables GraphQL support
 
-  ```json
-  {
-    "service": {
-      "graphql": true
+  ```ts config
+  import { createServiceConfig } from '@platformatic/service'
+
+  export default createServiceConfig({
+    service: {
+      graphql: true
     }
-  }
+  })
   ```
 
   Enables GraphQL support with GraphiQL
 
-  ```json
-  {
-    "service": {
-      "graphql": {
-        "graphiql": true
+  ```ts config
+  import { createServiceConfig } from '@platformatic/service'
+
+  export default createServiceConfig({
+    service: {
+      graphql: {
+        graphiql: true
       }
     }
-  }
+  })
   ```
 
 - **`openapi`** (`boolean` or `object`, default: `false`) — Enables OpenAPI REST support.
@@ -247,25 +265,28 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 
   Enables OpenAPI
 
-  ```json
-  {
-    "service": {
-      ...
-      "openapi": true
+  ```ts config
+  import { createServiceConfig } from '@platformatic/service'
+
+  export default createServiceConfig({
+    service: {
+      openapi: true
     }
-  }
+  })
   ```
 
   Enables OpenAPI with prefix
 
-  ```json
-  {
-    "service": {
-      "openapi": {
-        "prefix": "/api"
+  ```ts config
+  import { createServiceConfig } from '@platformatic/service'
+
+  export default createServiceConfig({
+    service: {
+      openapi: {
+        swaggerPrefix: '/api'
       }
     }
-  }
+  })
   ```
 
   Enables OpenAPI without the API reference UI (spec routes only)
@@ -282,20 +303,23 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 
   Enables OpenAPI with options
 
-  ```json
-  {
-    "service": {
-      "openapi": {
-        "info": {
-          "title": "Platformatic Service",
-          "description": "Exposing a SQL database as REST"
+  ```ts config
+  import { createServiceConfig } from '@platformatic/service'
+
+  export default createServiceConfig({
+    service: {
+      openapi: {
+        info: {
+          title: 'Platformatic Service',
+          version: '1.0.0',
+          description: 'Exposing a SQL database as REST'
         }
       }
     }
-  }
+  })
   ```
 
-### `telemetry`
+### `tracing`
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
@@ -322,69 +346,81 @@ For OTLP exporters:
 
 _Example_
 
-```json
-{
-  "telemetry": {
-    "applicationName": "test-application",
-    "diagLogger": true,
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+```ts config
+import { createServiceConfig } from '@platformatic/service'
+
+export default createServiceConfig({
+  tracing: {
+    applicationName: 'test-application',
+    diagLogger: true,
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   }
-}
+})
 ```
 
-## Environment variable placeholders
+## Environment variables
 
-The value for any configuration setting can be replaced with an environment variable
-by adding a placeholder in the configuration file, for example `{PLT_SERVER_LOGGER_LEVEL}`.
-
-The value for any configuration setting can be replaced with an environment variable placeholder in a configuration file, such as `{PORT}`.
+A configuration file is a module, so it reads its environment directly. There are no `{PLT_X}`
+placeholders and nothing interpolates strings on your behalf.
 
 ### Example
 
-```json title="platformatic.json"
-{
-  "server": {
-    "port": "{PORT}"
+```ts config env=PORT=8080
+import { createServiceConfig } from '@platformatic/service'
+
+export default createServiceConfig({
+  server: {
+    port: Number(process.env.PORT || 3042)
   }
-}
+})
 ```
 
-Platformatic will replace the placeholders in this example with the environment
-variables of the same name.
+`port` is a number, and nothing coerces the value after the file runs — so it is converted here.
+`||` rather than `??`, because `PORT=` in an env file supplies the empty string, and the empty
+string is present.
 
-If no environment variable is found, then the placeholder will be replaced with an empty string.
-Note that this can lead to a schema validation error.
+An unset variable is `undefined` rather than the empty string it used to interpolate to, so what
+happens when one is missing is written in the file. To fail at startup instead of falling back —
+what the removed `strictEnv` option did, but per setting:
 
-To fail at startup (or log a warning) when a placeholder references an environment variable which
-is not set, use the [`strictEnv`](../runtime/configuration.md#strictenv) runtime option:
+```ts config env=DATABASE_URL=postgres://localhost/db
+import { createServiceConfig } from '@platformatic/service'
 
-```json title="platformatic.json"
-{
-  "runtime": {
-    "strictEnv": true
+function requiredEnv (name: string): string {
+  const value = process.env[name]
+
+  if (!value) {
+    throw new Error(`${name} is required but is not set`)
   }
+
+  return value
 }
+
+export default createServiceConfig({
+  server: { port: 3042 },
+  plugins: {
+    paths: [{ path: './plugin.js', options: { connectionString: requiredEnv('DATABASE_URL') } }]
+  }
+})
 ```
 
 ### Setting Environment Variables
 
-If a `.env` file exists it will automatically be loaded by Platformatic using
-[`dotenv`](https://github.com/motdotla/dotenv). For example:
+If a `.env` file exists it is loaded automatically:
 
 ```plaintext title=".env"
 PLT_SERVER_LOGGER_LEVEL=info
 PORT=8080
 ```
 
-The `.env` file must be located in the same folder as the Platformatic configuration
-file or in the current working directory.
-
-Environment variables can also be set directly on the command line, for example:
+Every directory from the configuration file's own up to the project root contributes its `.env`,
+nearest first, so an application's file overrides the project's. Variables already present in the
+real environment beat every file, which is what makes this work:
 
 ```bash
 PLT_SERVER_LOGGER_LEVEL=debug wattpm dev
@@ -392,31 +428,12 @@ PLT_SERVER_LOGGER_LEVEL=debug wattpm dev
 
 ### PLT_ROOT
 
-The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.
+**Removed.** `{PLT_ROOT}` was set to the directory containing the configuration file and used
+to build relative paths. Paths in a configuration file already resolve against that directory, so
+most uses of it need nothing. A module that wants its own directory uses `import.meta.dirname`.
 
-### Referencing another application
+Note that the two are not equivalent for application *code*: `process.env.PLT_ROOT` gave a worker
+the runtime root, while `import.meta.dirname` is the reading module's own directory.
+`wattpm-utils migrate` reports every read of `PLT_ROOT` in your sources, with file and line, for
+exactly that reason.
 
-Inside a runtime, `{PLT_<APPLICATION>_URL}` resolves to the internal URL of the named application even
-when no environment variable defines it, so applications can reach each other without a variable per
-pair. `<APPLICATION>` is the application id uppercased with dashes turned into underscores, which is
-the same prefix its generated variables use: the application `with-logger` owns `{PLT_WITH_LOGGER_URL}`
-and resolves to `http://with-logger.plt.local`.
-
-```json
-{
-  "clients": [
-    {
-      "serviceId": "with-logger",
-      "url": "{PLT_WITH_LOGGER_URL}"
-    }
-  ]
-}
-```
-
-Only applications that actually exist in the runtime are resolved this way, and setting the variable
-yourself always wins. Any other placeholder whose name happens to end in `_URL` is left alone and
-resolves to an empty string as usual, so a connection string such as `valkey://{VALKEY_URL}` or a DSN
-such as `{PLT_DATABASE_URL}` is never rewritten into an application URL.
-
-With [`strictEnv`](../runtime/configuration.md) enabled, a placeholder resolved this way is reported
-as replaced by a fallback value rather than as missing.

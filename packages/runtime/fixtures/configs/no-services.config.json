@@ -1,9 +1,0 @@
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-  "entrypoint": "doesNotExist",
-  "services": [],
-  "gracefulShutdown": {
-    "runtime": 1000,
-    "service": 1000
-  }
-}

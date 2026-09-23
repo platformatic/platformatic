@@ -1,4 +1,4 @@
-import { BaseCapability } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import {
   ServiceCapability,
@@ -52,15 +52,11 @@ export declare const schema: JSONSchemaType<PlatformaticGatewayConfig>
 
 export declare const schemaComponents: {
   openApiApplication: JSONSchemaType<object>
-  entityResolver: JSONSchemaType<object>
-  entities: JSONSchemaType<object>
-  graphqlApplication: JSONSchemaType<object>
-  graphqlComposerOptions: JSONSchemaType<object>
   gateway: JSONSchemaType<object>
   types: JSONSchemaType<object>
 }
 
-export declare const skipTelemetryHooks: boolean
+export declare const skipTracingHooks: boolean
 
 export declare const version: string
 
@@ -71,3 +67,10 @@ export namespace errors {
   export const PathAlreadyExistsError: () => FastifyError
   export const CouldNotReadOpenAPIConfigError: () => FastifyError
 }
+
+export type GatewayConfigOptions = CapabilityFactoryOptions<PlatformaticGatewayConfig, 'gateway', never>
+
+export declare function createGatewayConfig (options?: GatewayConfigOptions): ApplicationDefinition
+export declare function createGatewayConfig (
+  callback: (context: ConfigContext) => GatewayConfigOptions | Promise<GatewayConfigOptions>
+): DeferredApplicationDefinition

@@ -13,10 +13,10 @@ specific optional dependencies are listed for the platform the report was genera
 
 | License | Packages |
 | ------- | -------: |
-| MIT | 420 |
-| Apache-2.0 | 71 |
+| MIT | 416 |
+| Apache-2.0 | 69 |
 | ISC | 36 |
-| BSD-3-Clause | 23 |
+| BSD-3-Clause | 21 |
 | BlueOak-1.0.0 | 12 |
 | (BSD-2-Clause OR MIT OR Apache-2.0) | 1 |
 | (MIT OR CC0-1.0) | 1 |
@@ -26,7 +26,7 @@ specific optional dependencies are listed for the platform the report was genera
 | LGPL-3.0-or-later | 1 |
 | Python-2.0 | 1 |
 
-**Total:** 569 packages
+**Total:** 561 packages
 
 ## Licenses outside the base allow list
 
@@ -73,14 +73,14 @@ different license expression, and is listed with the Platformatic packages that 
 | Package | Version | License | Repository |
 | ------- | ------- | ------- | ---------- |
 | `@babel/code-frame` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
-| `@babel/generator` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
+| `@babel/generator` | 7.29.8 | MIT | [link](https://github.com/babel/babel) |
 | `@babel/helper-globals` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
 | `@babel/helper-string-parser` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
 | `@babel/helper-validator-identifier` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
-| `@babel/parser` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
+| `@babel/parser` | 7.29.8 | MIT | [link](https://github.com/babel/babel) |
 | `@babel/template` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
-| `@babel/traverse` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
-| `@babel/types` | 7.29.7 | MIT | [link](https://github.com/babel/babel) |
+| `@babel/traverse` | 7.29.8 | MIT | [link](https://github.com/babel/babel) |
+| `@babel/types` | 7.29.8 | MIT | [link](https://github.com/babel/babel) |
 | `@databases/connection-pool` | 1.1.0 | MIT | [link](https://github.com/ForbesLindesay/atdatabases/tree/master/packages/connection-pool) |
 | `@databases/escape-identifier` | 1.0.3 | MIT | [link](https://github.com/ForbesLindesay/atdatabases/tree/master/packages/escape-identifier) |
 | `@databases/lock` | 2.1.0 | MIT | [link](https://github.com/ForbesLindesay/atdatabases/tree/master/packages/lock) |
@@ -97,29 +97,28 @@ different license expression, and is listed with the Platformatic packages that 
 | `@databases/split-sql-query` | 1.0.4 | MIT | [link](https://github.com/ForbesLindesay/atdatabases/tree/master/packages/split-sql-query) |
 | `@databases/sql` | 3.3.0 | MIT | [link](https://github.com/ForbesLindesay/atdatabases/tree/master/packages/sql) |
 | `@databases/validate-unicode` | 1.0.0 | MIT | [link](https://github.com/ForbesLindesay/atdatabases/tree/master/packages/validate-unicode) |
-| `@datadog/pprof` | 5.16.0 | Apache-2.0 | [link](https://github.com/DataDog/pprof-nodejs) |
+| `@datadog/pprof` | 5.17.0 | Apache-2.0 | [link](https://github.com/DataDog/pprof-nodejs) |
 | `@fastify/accept-negotiator` | 2.0.1 | MIT | [link](https://github.com/fastify/accept-negotiator) |
 | `@fastify/accepts` | 5.0.4 | MIT | [link](https://github.com/fastify/fastify-accepts) |
 | `@fastify/ajv-compiler` | 4.0.5 | MIT | [link](https://github.com/fastify/ajv-compiler) |
-| `@fastify/autoload` | 6.4.0 | MIT | [link](https://github.com/fastify/fastify-autoload) |
+| `@fastify/autoload` | 6.5.0 | MIT | [link](https://github.com/fastify/fastify-autoload) |
 | `@fastify/basic-auth` | 6.2.0 | MIT | [link](https://github.com/fastify/fastify-basic-auth) |
 | `@fastify/cors` | 11.3.0 | MIT | [link](https://github.com/fastify/fastify-cors) |
-| `@fastify/deepmerge` | 1.3.0 | MIT | [link](https://github.com/fastify/deepmerge) |
 | `@fastify/deepmerge` | 3.2.1 | MIT | [link](https://github.com/fastify/deepmerge) |
 | `@fastify/error` | 4.2.0 | MIT | [link](https://github.com/fastify/fastify-error) |
 | `@fastify/fast-json-stringify-compiler` | 5.1.0 | MIT | [link](https://github.com/fastify/fast-json-stringify-compiler) |
-| `@fastify/forwarded` | 3.0.1 | MIT | [link](https://github.com/fastify/forwarded) |
-| `@fastify/http-proxy` | 11.5.0 | MIT | [link](https://github.com/fastify/fastify-http-proxy) |
-| `@fastify/jwt` | 10.2.0 | MIT | [link](https://github.com/fastify/fastify-jwt) |
+| `@fastify/forwarded` | 3.0.2 | MIT | [link](https://github.com/fastify/forwarded) |
+| `@fastify/http-proxy` | 11.6.0 | MIT | [link](https://github.com/fastify/fastify-http-proxy) |
+| `@fastify/jwt` | 10.2.1 | MIT | [link](https://github.com/fastify/fastify-jwt) |
 | `@fastify/jwt` | 9.1.0 | MIT | [link](https://github.com/fastify/fastify-jwt) |
 | `@fastify/merge-json-schemas` | 0.1.1 | MIT | [link](https://github.com/fastify/merge-json-schemas) |
 | `@fastify/merge-json-schemas` | 0.2.1 | MIT | [link](https://github.com/fastify/merge-json-schemas) |
 | `@fastify/middie` | 9.3.3 | MIT | [link](https://github.com/fastify/middie) |
 | `@fastify/proxy-addr` | 5.1.0 | MIT | [link](https://github.com/fastify/proxy-addr) |
-| `@fastify/reply-from` | 12.6.3 | MIT | [link](https://github.com/fastify/fastify-reply-from) |
+| `@fastify/reply-from` | 12.6.4 | MIT | [link](https://github.com/fastify/fastify-reply-from) |
 | `@fastify/send` | 4.1.0 | MIT | [link](https://github.com/fastify/send) |
-| `@fastify/static` | 9.3.0 | MIT | [link](https://github.com/fastify/fastify-static) |
-| `@fastify/swagger` | 9.8.0 | MIT | [link](https://github.com/fastify/fastify-swagger) |
+| `@fastify/static` | 10.1.2 | MIT | [link](https://github.com/fastify/fastify-static) |
+| `@fastify/swagger` | 9.8.1 | MIT | [link](https://github.com/fastify/fastify-swagger) |
 | `@fastify/under-pressure` | 9.1.0 | MIT | [link](https://github.com/fastify/under-pressure) |
 | `@fastify/view` | 12.0.0 | MIT | [link](https://github.com/fastify/point-of-view) |
 | `@fastify/websocket` | 11.3.0 | MIT | [link](https://github.com/fastify/fastify-websocket) |
@@ -149,6 +148,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `@inquirer/select` | 5.2.1 | MIT | [link](https://github.com/SBoudrias/Inquirer.js) |
 | `@inquirer/type` | 4.0.7 | MIT | [link](https://github.com/SBoudrias/Inquirer.js) |
 | `@ioredis/commands` | 1.10.0 | MIT | [link](https://github.com/ioredis/commands) |
+| `@ioredis/commands` | 1.11.0 | MIT | [link](https://github.com/ioredis/commands) |
 | `@iovalkey/commands` | 0.1.0 | MIT | [link](https://github.com/iovalkey/commands) |
 | `@isaacs/cliui` | 9.0.0 | BlueOak-1.0.0 | [link](ssh://git@github.com:isaacs/cliui) |
 | `@isaacs/fs-minipass` | 4.0.1 | ISC | [link](https://github.com/npm/fs-minipass) |
@@ -206,8 +206,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `@opentelemetry/semantic-conventions` | 1.41.1 | Apache-2.0 | [link](open-telemetry/opentelemetry-js) |
 | `@pinojs/redact` | 0.4.0 | MIT | [link](https://github.com/pinojs/redact) |
 | `@platformatic/dynamic-buffer` | 0.4.0 | Apache-2.0 | [link](https://github.com/platformatic/dynamic-buffer) |
-| `@platformatic/fastify-openapi-glue` | 5.1.0 | MIT | [link](https://github.com/platformatic/fastify-openapi-glue) |
-| `@platformatic/graphql-composer` | 0.11.0 | Apache-2.0 | [link](https://github.com/platformatic/graphql-composer) |
+| `@platformatic/fastify-openapi-glue` | 5.2.0 | MIT | [link](https://github.com/platformatic/fastify-openapi-glue) |
 | `@platformatic/http-metrics` | 0.3.0 | Apache-2.0 |  |
 | `@platformatic/image-optimizer` | 0.2.1 | Apache-2.0 | [link](https://github.com/platformatic/image-optimizer) |
 | `@platformatic/job-queue` | 0.4.1 | Apache-2.0 | [link](https://github.com/platformatic/job-queue) |
@@ -237,13 +236,12 @@ different license expression, and is listed with the Platformatic packages that 
 | `@sec-ant/readable-stream` | 0.4.1 | MIT | [link](https://github.com/Sec-ant/readable-stream) |
 | `@sindresorhus/merge-streams` | 4.0.0 | MIT | [link](sindresorhus/merge-streams) |
 | `@types/better-sqlite3` | 7.6.13 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped) |
-| `@types/luxon` | 3.7.2 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped) |
-| `@types/node` | 22.20.1 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped) |
+| `@types/luxon` | 3.7.3 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped) |
+| `@types/node` | 24.13.6 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped) |
 | `@types/ws` | 8.18.1 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped) |
 | `@watchable/unpromise` | 1.0.2 | MIT | [link](https://github.com/cefn/watchable) |
 | `a-sync-waterfall` | 1.0.1 | MIT | [link](git@github.com:hydiak/a-sync-waterfall) |
 | `abort-controller` | 3.0.0 | MIT | [link](https://github.com/mysticatea/abort-controller) |
-| `abstract-logger` | 0.2.5 | MIT | [link](https://github.com/snowyu/abstract-logger.js) |
 | `abstract-logging` | 2.0.1 | MIT | [link](https://github.com/jsumners/abstract-logging) |
 | `accepts` | 1.3.8 | MIT | [link](jshttp/accepts) |
 | `acquerello` | 4.0.3 | ISC | [link](https://github.com/ShogunPanda/acquerello) |
@@ -251,7 +249,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `ajv` | 8.20.0 | MIT | [link](ajv-validator/ajv) |
 | `ajv-draft-04` | 1.0.0 | MIT | [link](https://github.com/ajv-validator/ajv-draft-04) |
 | `ajv-formats` | 3.0.1 | MIT | [link](https://github.com/ajv-validator/ajv-formats) |
-| `amaro` | 1.1.10 | MIT | [link](https://github.com/nodejs/amaro) |
+| `amaro` | 1.1.11 | MIT | [link](https://github.com/nodejs/amaro) |
 | `ansi-regex` | 5.0.1 | MIT | [link](chalk/ansi-regex) |
 | `ansi-regex` | 6.2.2 | MIT | [link](chalk/ansi-regex) |
 | `ansi-styles` | 4.3.0 | MIT | [link](chalk/ansi-styles) |
@@ -262,7 +260,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `astral-regex` | 2.0.0 | MIT | [link](kevva/astral-regex) |
 | `async-cache-dedupe` | 2.2.0 | MIT | [link](https://github.com/mcollina/async-cache-dedupe) |
 | `atomic-sleep` | 1.0.0 | MIT | [link](https://github.com/davidmarkclements/atomic-sleep) |
-| `avvio` | 9.2.0 | MIT | [link](https://github.com/fastify/avvio) |
+| `avvio` | 9.3.0 | MIT | [link](https://github.com/fastify/avvio) |
 | `aws-ssl-profiles` | 1.1.2 | MIT | [link](https://github.com/mysqljs/aws-ssl-profiles) |
 | `balanced-match` | 4.0.4 | MIT | [link](https://github.com/juliangruber/balanced-match) |
 | `base64-js` | 1.5.1 | MIT | [link](https://github.com/beatgammit/base64-js) |
@@ -273,7 +271,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `bl` | 5.1.0 | MIT | [link](https://github.com/rvagg/bl) |
 | `bn.js` | 4.12.5 | MIT | [link](git@github.com:indutny/bn.js) |
 | `boring-name-generator` | 1.0.3 | ISC | [link](https://github.com/boringprotocol/boring-name-generator) |
-| `brace-expansion` | 5.0.7 | MIT | [link](https://github.com/juliangruber/brace-expansion) |
+| `brace-expansion` | 5.0.9 | MIT | [link](https://github.com/juliangruber/brace-expansion) |
 | `brorand` | 1.1.0 | MIT | [link](git@github.com:indutny/brorand) |
 | `buffer` | 5.7.1 | MIT | [link](https://github.com/feross/buffer) |
 | `buffer` | 6.0.3 | MIT | [link](https://github.com/feross/buffer) |
@@ -304,7 +302,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `commander` | 5.1.0 | MIT | [link](https://github.com/tj/commander.js) |
 | `commander` | 6.2.1 | MIT | [link](https://github.com/tj/commander.js) |
 | `console-table-printer` | 2.16.1 | MIT | [link](https://github.com/console-table-printer/console-table-printer) |
-| `content-disposition` | 1.1.0 | MIT | [link](jshttp/content-disposition) |
+| `content-disposition` | 2.0.1 | MIT | [link](jshttp/content-disposition) |
 | `cookie` | 1.1.1 | MIT | [link](jshttp/cookie) |
 | `cosmiconfig` | 8.3.6 | MIT | [link](https://github.com/cosmiconfig/cosmiconfig) |
 | `cron` | 4.4.0 | MIT | [link](https://github.com/kelektiv/node-cron) |
@@ -344,22 +342,19 @@ different license expression, and is listed with the Platformatic packages that 
 | `fast-json-stringify` | 6.4.0 | MIT | [link](https://github.com/fastify/fast-json-stringify) |
 | `fast-json-stringify` | 7.0.1 | MIT | [link](https://github.com/fastify/fast-json-stringify) |
 | `fast-jwt` | 5.0.6 | Apache-2.0 | [link](https://github.com/nearform/fast-jwt) |
-| `fast-jwt` | 6.2.4 | Apache-2.0 | [link](https://github.com/nearform/fast-jwt) |
+| `fast-jwt` | 6.3.1 | Apache-2.0 | [link](https://github.com/nearform/fast-jwt) |
 | `fast-querystring` | 1.1.2 | MIT | [link](https://github.com/anonrig/fast-querystring) |
 | `fast-safe-stringify` | 2.1.1 | MIT | [link](https://github.com/davidmarkclements/fast-safe-stringify) |
 | `fast-string-truncated-width` | 3.0.3 | MIT | [link](https://github.com/fabiospampinato/fast-string-truncated-width) |
 | `fast-string-width` | 3.0.2 | MIT | [link](https://github.com/fabiospampinato/fast-string-width) |
-| `fast-uri` | 2.4.3 | MIT | [link](https://github.com/fastify/fast-uri) |
-| `fast-uri` | 3.1.3 | BSD-3-Clause | [link](https://github.com/fastify/fast-uri) |
-| `fast-uri` | 3.1.4 | BSD-3-Clause | [link](https://github.com/fastify/fast-uri) |
-| `fast-uri` | 4.1.0 | BSD-3-Clause | [link](https://github.com/fastify/fast-uri) |
-| `fast-uri` | 4.1.1 | BSD-3-Clause | [link](https://github.com/fastify/fast-uri) |
+| `fast-uri` | 2.4.4 | MIT | [link](https://github.com/fastify/fast-uri) |
+| `fast-uri` | 3.1.5 | BSD-3-Clause | [link](https://github.com/fastify/fast-uri) |
+| `fast-uri` | 4.1.2 | BSD-3-Clause | [link](https://github.com/fastify/fast-uri) |
 | `fast-wrap-ansi` | 0.2.2 | MIT | [link](https://github.com/43081j/fast-wrap-ansi) |
 | `fast-write-atomic` | 0.4.0 | MIT | [link](https://github.com/mcollina/fast-write-atomic) |
 | `fastest-levenshtein` | 1.0.16 | MIT | [link](https://github.com/ka-weihe/fastest-levenshtein) |
 | `fastfall` | 1.5.1 | MIT | [link](https://github.com/mcollina/fastfall) |
-| `fastify` | 5.10.0 | MIT | [link](https://github.com/fastify/fastify) |
-| `fastify` | 5.8.5 | MIT | [link](https://github.com/fastify/fastify) |
+| `fastify` | 5.11.0 | MIT | [link](https://github.com/fastify/fastify) |
 | `fastify-metrics` | 12.1.0 | MIT | [link](https://github.com/SkeLLLa/fastify-metrics) |
 | `fastify-plugin` | 4.5.1 | MIT | [link](https://github.com/fastify/fastify-plugin) |
 | `fastify-plugin` | 5.1.0 | MIT | [link](https://github.com/fastify/fastify-plugin) |
@@ -371,7 +366,6 @@ different license expression, and is listed with the Platformatic packages that 
 | `fastseries` | 1.7.2 | ISC | [link](https://github.com/mcollina/fastseries) |
 | `figures` | 6.1.0 | MIT | [link](sindresorhus/figures) |
 | `file-uri-to-path` | 1.0.0 | MIT | [link](https://github.com/TooTallNate/file-uri-to-path) |
-| `find-my-way` | 9.6.0 | MIT | [link](https://github.com/delvedor/find-my-way) |
 | `find-my-way` | 9.7.0 | MIT | [link](https://github.com/delvedor/find-my-way) |
 | `foreground-child` | 3.3.1 | ISC | [link](https://github.com/tapjs/foreground-child) |
 | `forwarded-parse` | 2.1.2 | MIT | [link](lpinca/forwarded-parse) |
@@ -388,7 +382,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `glob` | 11.1.0 | BlueOak-1.0.0 | [link](git@github.com:isaacs/node-glob) |
 | `glob` | 13.0.6 | BlueOak-1.0.0 | [link](git@github.com:isaacs/node-glob) |
 | `graphql` | 16.14.2 | MIT | [link](https://github.com/graphql/graphql-js) |
-| `graphql-jit` | 0.8.7 | MIT | [link](https://github.com/zalando-incubator/graphql-jit) |
+| `graphql-jit` | 0.8.8 | MIT | [link](https://github.com/zalando-incubator/graphql-jit) |
 | `graphql-scalars` | 1.25.0 | MIT | [link](https://github.com/Urigo/graphql-scalars) |
 | `graphql-type-json` | 0.3.2 | MIT | [link](https://github.com/taion/graphql-type-json) |
 | `hash.js` | 1.1.7 | MIT | [link](git@github.com:indutny/hash.js) |
@@ -399,14 +393,14 @@ different license expression, and is listed with the Platformatic packages that 
 | `http-errors-enhanced` | 4.0.2 | ISC | [link](https://github.com/ShogunPanda/http-errors-enhanced) |
 | `human-signals` | 8.0.1 | Apache-2.0 | [link](https://github.com/ehmicky/human-signals) |
 | `hyperid` | 3.3.0 | MIT | [link](https://github.com/mcollina/hyperid) |
+| `hyperid` | 4.0.0 | MIT | [link](https://github.com/mcollina/hyperid) |
 | `iconv-lite` | 0.7.3 | MIT | [link](https://github.com/pillarjs/iconv-lite) |
 | `ieee754` | 1.2.1 | BSD-3-Clause | [link](https://github.com/feross/ieee754) |
 | `import-fresh` | 3.3.1 | MIT | [link](sindresorhus/import-fresh) |
-| `import-in-the-middle` | 3.3.1 | Apache-2.0 | [link](ssh://git@github.com/nodejs/import-in-the-middle) |
+| `import-in-the-middle` | 3.3.3 | Apache-2.0 | [link](ssh://git@github.com/nodejs/import-in-the-middle) |
 | `indent-string` | 4.0.0 | MIT | [link](sindresorhus/indent-string) |
 | `inflected` | 2.1.0 | MIT | [link](martinandert/inflected) |
 | `inherits` | 2.0.4 | ISC | [link](https://github.com/isaacs/inherits) |
-| `inherits-ex` | 1.6.0 | MIT | [link](https://github.com/snowyu/inherits-ex.js) |
 | `ini` | 1.3.8 | ISC | [link](https://github.com/isaacs/ini) |
 | `inquirer` | 13.4.3 | MIT | [link](https://github.com/SBoudrias/Inquirer.js) |
 | `int64-buffer` | 0.1.10 | MIT | [link](https://github.com/kawanet/int64-buffer) |
@@ -430,7 +424,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `jackspeak` | 4.2.3 | BlueOak-1.0.0 | [link](https://github.com/isaacs/jackspeak) |
 | `joycon` | 3.1.1 | MIT | [link](egoist/joycon) |
 | `js-tokens` | 4.0.0 | MIT | [link](lydell/js-tokens) |
-| `js-yaml` | 4.3.0 | MIT | [link](nodeca/js-yaml) |
+| `js-yaml` | 4.3.1 | MIT | [link](nodeca/js-yaml) |
 | `jsesc` | 3.1.0 | MIT | [link](https://github.com/mathiasbynens/jsesc) |
 | `json-parse-even-better-errors` | 2.3.1 | MIT | [link](https://github.com/npm/json-parse-even-better-errors) |
 | `json-schema-ref-resolver` | 1.0.1 | MIT | [link](https://github.com/fastify/json-schema-ref-resolver) |
@@ -457,8 +451,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `lru-cache` | 11.5.2 | BlueOak-1.0.0 | [link](ssh://git@github.com/isaacs/node-lru-cache) |
 | `lru.min` | 1.1.4 | MIT | [link](https://github.com/wellwelwel/lru.min) |
 | `luxon` | 3.7.2 | MIT | [link](https://github.com/moment/luxon) |
-| `mercurius` | 16.9.0 | MIT | [link](https://github.com/mercurius-js/mercurius) |
-| `metaline` | 1.1.0 | Apache-2.0 |  |
+| `mercurius` | 16.10.0 | MIT | [link](https://github.com/mercurius-js/mercurius) |
 | `mime` | 3.0.0 | MIT | [link](https://github.com/broofa/mime) |
 | `mime-db` | 1.52.0 | MIT | [link](jshttp/mime-db) |
 | `mime-types` | 2.1.35 | MIT | [link](jshttp/mime-types) |
@@ -466,7 +459,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `mimic-response` | 3.1.0 | MIT | [link](sindresorhus/mimic-response) |
 | `minimalistic-assert` | 1.0.1 | ISC | [link](https://github.com/calvinmetcalf/minimalistic-assert) |
 | `minimalistic-crypto-utils` | 1.0.1 | MIT | [link](ssh://git@github.com/indutny/minimalistic-crypto-utils) |
-| `minimatch` | 10.2.5 | BlueOak-1.0.0 | [link](git@github.com:isaacs/minimatch) |
+| `minimatch` | 10.2.6 | BlueOak-1.0.0 | [link](git@github.com:isaacs/minimatch) |
 | `minimist` | 1.2.8 | MIT | [link](https://github.com/minimistjs/minimist) |
 | `minipass` | 7.1.3 | BlueOak-1.0.0 | [link](https://github.com/isaacs/minipass) |
 | `minizlib` | 3.1.0 | MIT | [link](https://github.com/isaacs/minizlib) |
@@ -482,7 +475,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `msgpackr-extract` | 3.0.4 | MIT | [link](http://github.com/kriszyp/msgpackr-extract) |
 | `mute-stream` | 3.0.0 | ISC | [link](https://github.com/npm/mute-stream) |
 | `my-ua-parser` | 2.0.4 | MIT | [link](https://github.com/mcollina/my-ua-parser) |
-| `mysql2` | 3.22.6 | MIT | [link](https://github.com/sidorares/node-mysql2) |
+| `mysql2` | 3.23.2 | MIT | [link](https://github.com/sidorares/node-mysql2) |
 | `named-placeholders` | 1.1.6 | MIT | [link](https://github.com/mysqljs/named-placeholders) |
 | `nanoid` | 5.1.16 | MIT | [link](ai/nanoid) |
 | `napi-build-utils` | 2.0.0 | MIT | [link](https://github.com/inspiredware/napi-build-utils) |
@@ -533,12 +526,12 @@ different license expression, and is listed with the Platformatic packages that 
 | `postgres-bytea` | 1.0.1 | MIT | [link](bendrucker/postgres-bytea) |
 | `postgres-date` | 1.0.7 | MIT | [link](bendrucker/postgres-date) |
 | `postgres-interval` | 1.2.0 | MIT | [link](bendrucker/postgres-interval) |
-| `pprof-format` | 2.2.2 | MIT | [link](https://github.com/DataDog/pprof-format) |
+| `pprof-format` | 2.3.0 | MIT | [link](https://github.com/DataDog/pprof-format) |
 | `prebuild-install` | 7.1.3 | MIT | [link](https://github.com/prebuild/prebuild-install) |
 | `pretty-ms` | 9.3.0 | MIT | [link](sindresorhus/pretty-ms) |
 | `process` | 0.11.10 | MIT | [link](https://github.com/shtylman/node-process) |
 | `process-warning` | 4.0.1 | MIT | [link](https://github.com/fastify/process-warning) |
-| `process-warning` | 5.0.0 | MIT | [link](https://github.com/fastify/process-warning) |
+| `process-warning` | 5.1.0 | MIT | [link](https://github.com/fastify/process-warning) |
 | `prom-client` | 15.1.3 | Apache-2.0 | [link](git@github.com:siimon/prom-client) |
 | `protobufjs` | 7.6.5 | BSD-3-Clause | [link](protobufjs/protobuf.js) |
 | `protobufjs` | 8.7.1 | BSD-3-Clause | [link](protobufjs/protobuf.js) |
@@ -585,7 +578,7 @@ different license expression, and is listed with the Platformatic packages that 
 | `single-user-cache` | 2.1.0 | MIT | [link](https://github.com/mcollina/single-user-cache) |
 | `slice-ansi` | 4.0.0 | MIT | [link](chalk/slice-ansi) |
 | `sonic-boom` | 4.2.1 | MIT | [link](https://github.com/pinojs/sonic-boom) |
-| `source-map` | 0.7.6 | BSD-3-Clause | [link](http://github.com/mozilla/source-map) |
+| `source-map` | 0.8.0 | BSD-3-Clause | [link](ssh://git@github.com/mozilla/source-map) |
 | `split2` | 4.2.0 | ISC | [link](https://github.com/mcollina/split2) |
 | `sponge-case` | 2.0.3 | MIT | [link](https://github.com/blakeembrey/change-case) |
 | `sql-escaper` | 1.5.1 | MIT | [link](https://github.com/mysqljs/sql-escaper) |
@@ -603,10 +596,10 @@ different license expression, and is listed with the Platformatic packages that 
 | `strip-json-comments` | 5.0.3 | MIT | [link](sindresorhus/strip-json-comments) |
 | `supports-preserve-symlinks-flag` | 1.0.0 | MIT | [link](https://github.com/inspect-js/node-supports-preserve-symlinks-flag) |
 | `swap-case` | 3.0.3 | MIT | [link](https://github.com/blakeembrey/change-case) |
-| `systeminformation` | 5.31.17 | MIT | [link](https://github.com/sebhildebrandt/systeminformation) |
+| `systeminformation` | 5.33.1 | MIT | [link](https://github.com/sebhildebrandt/systeminformation) |
 | `table` | 6.9.0 | BSD-3-Clause | [link](https://github.com/gajus/table) |
 | `tagged-tag` | 1.0.0 | MIT | [link](sindresorhus/tagged-tag) |
-| `tar` | 7.5.20 | BlueOak-1.0.0 | [link](https://github.com/isaacs/node-tar) |
+| `tar` | 7.5.22 | BlueOak-1.0.0 | [link](https://github.com/isaacs/node-tar) |
 | `tar-fs` | 2.1.5 | MIT | [link](https://github.com/mafintosh/tar-fs) |
 | `tar-stream` | 2.2.0 | MIT | [link](https://github.com/mafintosh/tar-stream) |
 | `tdigest` | 0.1.2 | MIT | [link](https://github.com/welch/tdigest) |
@@ -619,12 +612,11 @@ different license expression, and is listed with the Platformatic packages that 
 | `tslib` | 2.8.1 | 0BSD | [link](https://github.com/Microsoft/tslib) |
 | `tunnel-agent` | 0.6.0 | Apache-2.0 | [link](https://github.com/mikeal/tunnel-agent) |
 | `type-fest` | 5.8.0 | (MIT OR CC0-1.0) | [link](sindresorhus/type-fest) |
-| `undici` | 7.28.0 | MIT | [link](https://github.com/nodejs/undici) |
-| `undici-thread-interceptor` | 1.4.0 | MIT | [link](https://github.com/platformatic/undici-thread-interceptor) |
-| `undici-types` | 6.21.0 | MIT | [link](https://github.com/nodejs/undici) |
+| `undici` | 8.10.0 | MIT | [link](https://github.com/nodejs/undici) |
+| `undici-thread-interceptor` | 2.1.1 | MIT | [link](https://github.com/platformatic/undici-thread-interceptor) |
+| `undici-types` | 7.18.2 | MIT | [link](https://github.com/nodejs/undici) |
 | `unicorn-magic` | 0.3.0 | MIT | [link](sindresorhus/unicorn-magic) |
 | `util-deprecate` | 1.0.2 | MIT | [link](https://github.com/TooTallNate/util-deprecate) |
-| `util-ex` | 0.3.18 | MIT | [link](https://github.com/snowyu/util-ex.js) |
 | `uuid` | 8.3.2 | MIT | [link](https://github.com/uuidjs/uuid) |
 | `uuid-parse` | 1.1.0 | MIT | [link](https://github.com/zefferus/uuid-parse) |
 | `wcwidth` | 1.0.1 | MIT | [link](https://github.com/timoxley/wcwidth) |
@@ -632,12 +624,12 @@ different license expression, and is listed with the Platformatic packages that 
 | `which` | 3.0.1 | ISC | [link](https://github.com/npm/node-which) |
 | `wrap-ansi` | 7.0.0 | MIT | [link](chalk/wrap-ansi) |
 | `wrappy` | 1.0.2 | ISC | [link](https://github.com/npm/wrappy) |
-| `ws` | 8.21.0 | MIT | [link](https://github.com/websockets/ws) |
+| `ws` | 8.21.1 | MIT | [link](https://github.com/websockets/ws) |
 | `xtend` | 4.0.2 | MIT | [link](https://github.com/Raynos/xtend) |
 | `y18n` | 5.0.8 | ISC | [link](yargs/y18n) |
 | `yallist` | 5.0.0 | BlueOak-1.0.0 | [link](https://github.com/isaacs/yallist) |
 | `yaml` | 2.9.0 | ISC | [link](https://github.com/eemeli/yaml) |
 | `yargs` | 17.7.3 | MIT | [link](https://github.com/yargs/yargs) |
 | `yargs-parser` | 21.1.1 | ISC | [link](https://github.com/yargs/yargs-parser) |
-| `yoctocolors` | 2.1.2 | MIT | [link](sindresorhus/yoctocolors) |
+| `yoctocolors` | 2.2.0 | MIT | [link](sindresorhus/yoctocolors) |
 | `zod` | 4.4.3 | MIT | [link](https://github.com/colinhacks/zod) |

@@ -1,10 +1,16 @@
 {
   "name": "@platformatic/db",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "Platformatic DB",
   "main": "index.js",
   "types": "index.d.ts",
   "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./schema": "./schema.js",
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "scripts": {
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
@@ -41,7 +47,7 @@
     "split2": "^4.2.0",
     "tstyche": "^7.0.0",
     "typescript": "~6.0.3",
-    "undici": "^7.27.2",
+    "undici": "^8.5.0",
     "vscode-json-languageservice": "^5.3.9",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.4.1"
@@ -64,7 +70,7 @@
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
+    "@platformatic/tracing": "workspace:*",
     "camelcase": "^6.3.0",
     "close-with-grace": "^2.0.0",
     "code-block-writer": "^13.0.1",
@@ -87,6 +93,6 @@
     "semgrator": "^0.3.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

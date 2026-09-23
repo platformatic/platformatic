@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/control",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "Platformatic Control",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -39,10 +39,10 @@
     "pino": "^9.9.0",
     "pino-pretty": "^13.0.0",
     "table": "^6.8.1",
-    "undici": "^7.27.2",
+    "undici": "^8.5.0",
     "ws": "^8.16.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

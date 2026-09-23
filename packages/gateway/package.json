@@ -1,10 +1,16 @@
 {
   "name": "@platformatic/gateway",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "Platformatic Gateway",
   "main": "index.js",
   "types": "index.d.ts",
   "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./schema": "./schema.js",
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "scripts": {
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",
@@ -57,11 +63,10 @@
     "@platformatic/fastify-openapi-glue": "^5.2.0",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
-    "@platformatic/graphql-composer": "^0.11.0",
     "@platformatic/openapi-schema-validator": "^3.0.0",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
+    "@platformatic/tracing": "workspace:*",
     "@scalar/fastify-api-reference": "1.62.5",
     "ajv": "^8.12.0",
     "console-table-printer": "^2.12.0",
@@ -70,11 +75,9 @@
     "fastify": "^5.0.0",
     "fastify-plugin": "^6.0.0",
     "find-my-way": "^9.0.0",
-    "graphql": "^16.8.1",
     "help-me": "^5.0.0",
     "iovalkey": "^0.3.0",
     "json-schema-traverse": "^1.0.0",
-    "mercurius": "^16.0.0",
     "minimist": "^1.2.8",
     "msgpackr": "^1.11.2",
     "my-ua-parser": "^2.0.2",
@@ -85,9 +88,9 @@
     "rfdc": "^1.3.1",
     "safe-stable-stringify": "^2.5.0",
     "semgrator": "^0.3.0",
-    "undici": "^7.27.2"
+    "undici": "^8.5.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

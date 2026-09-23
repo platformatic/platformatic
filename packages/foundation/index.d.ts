@@ -7,7 +7,6 @@ import type debug from 'debug';
 
 // Symbols
 export declare const kCanceled: unique symbol
-export declare const kEnvFileFallbackKeys: unique symbol
 export declare const kFailedImport: unique symbol
 export declare const kHandledError: unique symbol
 export declare const kMetadata: unique symbol
@@ -59,14 +58,7 @@ export function findRuntimeConfigurationFile(
   executableName?: string
 ): Promise<string | false | undefined>
 
-export function fallbackToTemporaryConfigFile(
-  logger: Logger,
-  root: string,
-  verifyPackages: boolean
-): Promise<string | false | undefined>
-
 // Configuration types
-export declare const envVariablePattern: RegExp
 export declare const knownConfigurationFilesExtensions: string[]
 export declare const knownConfigurationFilesSchemas: RegExp[]
 
@@ -93,11 +85,6 @@ export type ConfigurationOptions<T = {}> = Partial<{
   ) => Promise<Configuration<T>> | Configuration<T>
   upgrade: (logger: Logger, config: RawConfiguration, version: string) => Promise<RawConfiguration> | RawConfiguration
   env: Record<string, string>
-  ignoreProcessEnv: boolean
-  replaceEnv: boolean
-  replaceEnvIgnore: string[]
-  onMissingEnv: (key: string) => string | undefined
-  strictEnv: boolean | 'warn'
   fixPaths: boolean
   logger: Logger
   root: string
@@ -160,13 +147,6 @@ export declare function createValidator (
   validationOptions?: object,
   context?: ConfigurationOptions
 ): (data: any) => boolean
-export declare function loadEnv (root: string): Promise<Record<string, string>>
-export declare function replaceEnv (
-  config: RawConfiguration,
-  env: Record<string, string>,
-  onMissingEnv?: (key: string) => string | undefined,
-  ignore?: string[]
-): RawConfiguration
 // `config` also accepts an array: the exported `applications` schema is a
 // JSONSchemaType<object[]> (an ARRAY schema), and validate() is called with
 // a matching array of application configs before they are handed to
@@ -189,7 +169,7 @@ export declare function loadConfiguration (
 // hence the index signature).
 export interface ConfigurationModule {
   loadConfiguration?: (configPath: string) => Promise<unknown>
-  skipTelemetryHooks?: boolean
+  skipTracingHooks?: boolean
   createCommands?: (applicationId: string) => unknown
   modulesToLoad?: string[]
   [key: string]: unknown
@@ -214,6 +194,7 @@ export declare const RootMissingError: FastifyError
 export declare const SchemaMustBeDefinedError: FastifyError
 export declare const ConfigurationDoesNotValidateAgainstSchemaError: FastifyError
 export declare const MissingEnvVariablesError: FastifyError
+export declare const UnsupportedNodeVersionError: FastifyError
 
 // Execution types
 export declare function executeWithTimeout<T> (promise: Promise<T>, timeout: number, timeoutValue?: any): Promise<T>
@@ -249,6 +230,8 @@ export interface FileWatcherOptions {
   path: string
   allowToWatch?: string[]
   watchIgnore?: string[]
+  /** Literal paths to exclude together with their contents, relative to the watched path or absolute. */
+  watchIgnorePaths?: string[]
 }
 
 export declare class FileWatcher extends EventEmitter {
@@ -256,6 +239,7 @@ export declare class FileWatcher extends EventEmitter {
   path: string
   allowToWatch: string[] | null
   watchIgnore: string[] | null
+  watchIgnorePaths: string[]
   isWatching: boolean
   startWatching (): void
   stopWatching (): Promise<void>
@@ -325,13 +309,10 @@ export declare function loadModule (require: NodeRequire, path: string): Promise
 // Node types
 export declare function checkNodeVersionForApplications (): void
 export declare function mirrorGlobalDispatcherForBuiltinFetch (dispatcher: unknown): void
-export declare function scheduleCompileCacheFlush (logger?: Logger): void
+export declare function scheduleCompileCacheFlush (logger?: Logger, onFlushed?: (flushed: boolean) => void): void
 export declare const features: {
   node: {
     reusePort: boolean
-    worker: {
-      getHeapStatistics: boolean
-    }
     permission: {
       network: boolean
     }

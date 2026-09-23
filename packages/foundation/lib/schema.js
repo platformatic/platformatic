@@ -1,3 +1,8 @@
+// The sentinel a capability's servesWithoutPort returns to defer the serving decision to the
+// started worker rather than deciding it at load. Defined here, in the light schema module, so the
+// capability schemas that declare it and the loader's serving predicate share one value.
+export const workerServesWithoutPort = 'worker'
+
 export function overridableValue (spec, defaultValue) {
   const res = {
     anyOf: [spec, { type: 'string' }]
@@ -263,8 +268,8 @@ export const logger = {
   properties: {
     level: {
       type: 'string',
-      description:
-        'The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.'
+      minLength: 1,
+      description: 'A standard Pino log level or a level defined in customLevels.'
     },
     transport: {
       anyOf: [
@@ -429,15 +434,6 @@ export const logger = {
       additionalProperties: false
     }
   },
-  // Custom levels can only be validated when customLevels is not set.
-  if: { not: { required: ['customLevels'] } },
-  then: {
-    properties: {
-      level: {
-        oneOf: [{ enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] }, { pattern: '^\\{.+\\}$' }]
-      }
-    }
-  },
   default: {},
   additionalProperties: true
 }
@@ -455,7 +451,7 @@ export const server = {
       type: 'string',
       enum: ['shared', 'perWorkerIncrement'],
       description:
-        'Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).'
+        'Configures how the port is assigned when the application runs multiple workers. When set to shared (the default), all workers listen on the same port (which requires SO_REUSEPORT support). When set to perWorkerIncrement, each worker listens on its own port, starting from port (worker 0) and incrementing by one for each additional worker.'
     },
     backlog: {
       type: 'integer',
@@ -561,11 +557,19 @@ export const server = {
 export const fastifyServer = {
   type: 'object',
   properties: {
+    errorHandler: {
+      anyOf: [
+        { type: 'string', resolveModule: true },
+        { type: 'string', resolvePath: true }
+      ]
+    },
     // TODO add support for level
     hostname: {
       type: 'string'
     },
     port: server.properties.port,
+    portAssignment: server.properties.portAssignment,
+    backlog: server.properties.backlog,
     pluginTimeout: {
       type: 'integer'
     },
@@ -693,15 +697,7 @@ export const fastifyServer = {
     },
     http2: server.properties.http2,
     https: server.properties.https,
-    cors,
-    errorHandler: {
-      description:
-        'Path to a file or name of a package whose default export is a Fastify error handler. It is installed on the root instance before any route is registered, so it also covers the routes registered by the capability itself, such as the auto generated CRUD routes of @platformatic/db. Plugins can still override it for their own encapsulation context.',
-      anyOf: [
-        { type: 'string', resolveModule: true },
-        { type: 'string', resolvePath: true }
-      ]
-    }
+    cors
   },
   additionalProperties: false
 }
@@ -812,7 +808,7 @@ export const openTelemetryExporter = {
   }
 }
 
-export const telemetry = {
+export const tracing = {
   type: 'object',
   properties: {
     enabled: {
@@ -917,6 +913,10 @@ export const compileCache = {
         directory: {
           type: 'string',
           description: 'Directory to store compile cache. Defaults to .plt/compile-cache in app root'
+        },
+        awaitFirstWorker: {
+          type: 'boolean',
+          description: 'Wait for the first worker to start before starting the remaining workers'
         }
       },
       additionalProperties: false
@@ -926,7 +926,10 @@ export const compileCache = {
 
 export const application = {
   type: 'object',
-  anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
+  anyOf: [
+    { required: ['id', 'path'] },
+    { required: ['id', 'url'] }
+  ],
   properties: {
     id: {
       type: 'string'
@@ -949,20 +952,21 @@ export const application = {
       resolvePath: true
     },
     config: {
-      type: 'string'
+      // Entries carry an inline ApplicationDefinition here — the object a capability factory
+      // returns — where the legacy format carried a path to a configuration file. The union is transitional and
+      // narrows to the object alone when the legacy reader leaves foundation; it is listed for the
+      // schema audit rather than left to be rediscovered.
+      anyOf: [{ type: 'string' }, { type: 'object' }]
     },
     url: {
+      type: 'string'
+    },
+    module: {
       type: 'string'
     },
     gitBranch: {
       type: 'string',
       default: 'main'
-    },
-    useHttp: {
-      type: 'boolean'
-    },
-    websocket: {
-      type: 'boolean'
     },
     reuseTcpPorts: {
       type: 'boolean',
@@ -1062,12 +1066,12 @@ export const application = {
       },
       additionalProperties: false
     },
-    telemetry: {
+    tracing: {
       type: 'object',
       properties: {
         instrumentations: {
           type: 'array',
-          description: 'An array of instrumentations loaded if telemetry is enabled',
+          description: 'An array of instrumentations loaded if tracing is enabled',
           items: {
             oneOf: [
               {
@@ -1125,9 +1129,6 @@ export const runtimeProperties = {
   },
   preload,
   extensions,
-  entrypoint: {
-    type: 'string'
-  },
   basePath: {
     type: 'string'
   },
@@ -1153,7 +1154,7 @@ export const runtimeProperties = {
           type: 'object',
           additionalProperties: false,
           required: ['id'],
-          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch'])
+          properties: omitProperties(applications.items.properties, ['path', 'url', 'gitBranch', 'module'])
         }
       }
     }
@@ -1173,7 +1174,6 @@ export const runtimeProperties = {
     default: 0
   },
   logger,
-  server,
   reuseTcpPorts: {
     type: 'boolean',
     default: true
@@ -1558,9 +1558,10 @@ export const runtimeProperties = {
         },
         additionalProperties: false
       }
-    ]
+    ],
+    default: false
   },
-  telemetry,
+  tracing,
   verticalScaler,
   inspectorOptions: {
     type: 'object',
@@ -1630,61 +1631,69 @@ export const runtimeProperties = {
     items: { type: 'string' },
     default: []
   },
-  scheduler: {
-    type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        enabled: {
-          anyOf: [
-            {
-              type: 'boolean'
-            },
-            {
-              type: 'string'
-            }
-          ],
-          default: true
-        },
-        name: {
-          type: 'string'
-        },
-        cron: {
-          type: 'string'
-        },
-        callbackUrl: {
-          type: 'string'
-        },
-        method: {
-          type: 'string',
-          enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-          default: 'GET'
-        },
-        headers: {
-          type: 'object',
-          additionalProperties: {
-            type: 'string'
-          }
-        },
-        body: {
-          anyOf: [{ type: 'string' }, { type: 'object', additionalProperties: true }]
-        },
-        maxRetries: {
-          type: 'number',
-          minimum: 0,
-          default: 3
-        }
-      },
-      required: ['name', 'cron', 'callbackUrl']
-    }
-  },
   policies,
-  compileCache
+  compileCache: {
+    ...compileCache,
+    default: true
+  }
 }
+
+/*
+  The names the generated types carry.
+
+  `json-schema-to-typescript` hoists a subschema that has a `title` into an interface of that name
+  and inlines one that does not, so without this every capability's `config.d.ts` spells `health` as
+  an anonymous object literal -- eighteen copies of the same shape, none of which a person can name
+  in their own code. With it, the document, the editor and the generated types use one vocabulary.
+
+  Assigned here rather than written at each site because several of these objects are copies of
+  another: the application `health` is the runtime `health` with its defaults removed, and a `title`
+  written into the shared literal would name both the same thing. Assignment also keeps the table
+  readable as a table, which is what it is.
+
+  A `title` is annotation only -- AJV ignores it -- so this changes what is generated and nothing
+  about what validates.
+*/
+workers.anyOf[2].title = 'WorkersOptions'
+extension.anyOf[1].title = 'ExtensionEntry'
+compileCache.anyOf[1].title = 'CompileCacheOptions'
+watch.title = 'WatchOptions'
+logger.title = 'AppLoggerOptions'
+server.title = 'AppServerOptions'
+server.properties.https.title = 'HttpsOptions'
+health.title = 'HealthOptions'
+tracing.title = 'TelemetryOptions'
+
+/*
+  Titled for the capability schemas, which list one application entry and generate it in full.
+
+  The runtime's own schema does not get the benefit: it lists three -- `applications` and the legacy
+  aliases `services` and `web` -- and the pinned generator, handed three copies of one 24-property
+  object, gives up and emits `{ [k: string]: unknown }` for all three. Two copies generate
+  correctly; three do not. Its next major fixes this, and a `$ref` for the aliases works there too,
+  but that release is hours old and this repository will not install a package that new. So the
+  runtime entry and the four option types nested in it stay anonymous for now, recorded in
+  `scripts/check-blocks.mjs` rather than worked around.
+*/
+application.title = 'ApplicationEntry'
+
+application.properties.health.title = 'ApplicationHealthOptions'
+application.properties.workers.anyOf[2].title = 'ApplicationWorkersOptions'
+application.properties.permissions.title = 'PermissionsOptions'
+application.properties.tracing.title = 'ApplicationTelemetryOverrides'
+
+runtimeProperties.autoload.properties.mappings.additionalProperties.title = 'ApplicationEntryOverrides'
+runtimeProperties.gracefulShutdown.title = 'GracefulShutdownOptions'
+runtimeProperties.healthProbes.anyOf[2].title = 'HealthProbesOptions'
+runtimeProperties.undici.title = 'UndiciOptions'
+runtimeProperties.httpCache.oneOf[1].title = 'HttpCacheOptions'
+runtimeProperties.managementApi.anyOf[2].title = 'ManagementApiOptions'
+runtimeProperties.metrics.anyOf[1].title = 'MetricsOptions'
 
 export const runtimeUnwrappablePropertiesList = [
   '$schema',
   'entrypoint',
+  'server',
   'applications',
   'application',
   'autoload',
@@ -1699,10 +1708,9 @@ export const applicationsUnwrappablePropertiesList = [
   'path',
   'config',
   'url',
+  'module',
   'gitBranch',
   'dependencies',
-  'useHttp',
-  'websocket',
   'management'
 ]
 
@@ -1738,7 +1746,7 @@ export const schemaComponents = {
   health,
   healthWithoutDefaults,
   openTelemetryExporter,
-  telemetry,
+  tracing,
   policies,
   compileCache,
   applications,

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-openapi",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "Map a SQL database to OpenAPI, for Fastify",
   "main": "index.js",
   "type": "module",
@@ -57,6 +57,6 @@
     "secure-json-parse": "^4.1.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

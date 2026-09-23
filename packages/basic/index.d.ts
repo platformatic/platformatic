@@ -1,7 +1,7 @@
+import type { JSONSchemaType } from 'ajv'
 import type { ChildProcess } from 'node:child_process'
 import type { Server } from 'node:net'
 import type { URL } from 'node:url'
-import type { JSONSchemaType } from 'ajv'
 import type { PlatformaticBasicConfig } from './config.d.ts'
 
 export type { PlatformaticBasicConfig } from './config.d.ts'
@@ -20,13 +20,11 @@ type HealthCheck = () => boolean | Promise<boolean> | HealthCheckResult | Promis
 
 export type BaseContext = Partial<{
   applicationId: string
-  isEntrypoint: boolean
   isProduction: boolean
   isStandalone: boolean
   directory: string
-  telemetryConfig: object
+  tracingConfig: object
   metricsConfig: object
-  serverConfig: object
   hasManagementApi: boolean
 }>
 
@@ -54,6 +52,11 @@ export declare function resolve (
 ): Promise<{ root: string; source: string | Record<string, unknown> }>
 
 export declare function transform<Config extends Record<string, any> | undefined> (config: Config): Promise<Config>
+
+export declare function applyPortAssignment<ServerConfig extends Record<string, any> | undefined> (
+  serverConfig: ServerConfig,
+  worker?: { index?: number; portOffset?: number }
+): ServerConfig
 
 export declare const validationOptions: {
   useDefaults: true
@@ -94,13 +97,23 @@ export declare namespace errors {
   }
   export function UnsupportedVersion (...args: any[]): Error
   export function NonZeroExitCode (...args: any[]): Error
+  export class ApplicationShutdownError extends AggregateError {
+    code: string
+    constructor (errors: unknown[])
+  }
+  export function ApplicationShutdownTimeoutError (...args: any[]): Error
 }
 
 export declare function getServerUrl (server: Server): string
 
-export declare function buildListenOptions (serverConfig?: { port?: number | string; hostname?: string }): {
+export declare function buildListenOptions (serverConfig?: {
+  port?: number | string
+  hostname?: string
+  backlog?: number
+}): {
   port: number | string
   host?: string
+  backlog?: number
 }
 
 export declare function buildAdditionalServerOptions (
@@ -151,16 +164,16 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   root: string
   config: Config
   context: Options
+  applicationConfig: Record<string, unknown>
   standardStreams: Record<string, NodeJS.WritableStream>
   applicationId?: string
   workerId: number
-  telemetryConfig?: object
+  tracingConfig?: object
   serverConfig?: Record<string, unknown>
   openapiSchema: object | string | null
   graphqlSchema: unknown
   connectionString: string | null
   basePath: string | null
-  isEntrypoint?: boolean
   isProduction?: boolean
   dependencies: string[]
   customHealthCheck: HealthCheck | null
@@ -169,8 +182,8 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
   runtimeConfig: object
   stdout: NodeJS.WritableStream
   stderr: NodeJS.WritableStream
-  subprocessForceClose: boolean
   subprocessTerminationSignal: string
+  shutdownTimeout?: number
   logger: object
   metricsRegistry: object
   otlpBridge: object | null
@@ -308,3 +321,81 @@ export declare function createServerListener (
 ): CancellablePromise<Server | null>
 
 export declare function createChildProcessListener (): CancellablePromise<ChildProcess | null>
+
+/*
+  How a capability serves when no listener is configured, declared per capability beside its schema
+  so main-side preparation can read it before any worker exists. A constant is the common case; the
+  callable exists for the capability whose own configuration selects the class, which is the shape a
+  per-package constant cannot express.
+*/
+export type ServesWithoutPort =
+  | 'worker'
+  | { development: boolean, production: boolean }
+  | ((config: Record<string, unknown>) => 'worker' | { development: boolean, production: boolean })
+
+/*
+  The configuration context a deferred definition is evaluated against: the command the boot was
+  started with, the mode selected for it, whether it is a production boot, and the environment the
+  loader resolved for config evaluation — which is not the worker's runtime environment.
+*/
+export interface ConfigContext {
+  command: string
+  mode?: string
+  production: boolean
+  env: Record<string, string | undefined>
+}
+
+/*
+  What a factory returns: the capability's per-app configuration with `module` — and `version`, when
+  the capability stamps one — as loader metadata the loader strips into the entry's envelope before
+  validation.
+*/
+export interface ApplicationDefinition {
+  module: string
+  version?: string
+  [key: string]: unknown
+}
+
+/*
+  The callback form returns a function the loader awaits, so reading `.module` on it is a type error
+  until it has run. A single signature returning ApplicationDefinition for both forms would
+  typecheck `next(cb).module`, which is exactly the mistake this type exists to prevent.
+*/
+export type DeferredApplicationDefinition = (context: ConfigContext) => Promise<ApplicationDefinition>
+
+type UnionToIntersection<Union> = (Union extends unknown ? (value: Union) => void : never) extends (
+  value: infer Intersection
+) => void
+  ? Intersection
+  : never
+
+/*
+  Factory options are the capability's per-app configuration with its namespaced blocks flattened
+  into the top level (`next.trailingSlash` -> `trailingSlash`), while the shared blocks — logger,
+  server, watch, application — keep their v3 positions. `Excluded` names the keys a capability
+  deliberately keeps nested, which is how two capabilities meaning structurally different things at
+  one flattened key are kept apart.
+*/
+export type CapabilityFactoryOptions<
+  Config,
+  Blocks extends keyof Config,
+  Excluded extends string = never
+> = Omit<Config, '$schema' | 'module' | Blocks> &
+  Partial<Pick<Config, Extract<Blocks, keyof Config>>> &
+  Omit<UnionToIntersection<{ [Block in Blocks]-?: NonNullable<Config[Block]> }[Blocks]>, Excluded>
+
+export declare function buildFlatteningPlan (
+  module: string,
+  schema: Record<string, unknown>,
+  flatten: string[],
+  exclude?: string[]
+): Map<string, string>
+
+export declare function defineCapabilityFactory<Options> (
+  module: string,
+  schema: Record<string, unknown>,
+  options?: { version?: string, flatten?: string[], exclude?: string[], mapOptions?: (options: Options) => Options }
+): {
+  (options?: Options): ApplicationDefinition
+  (callback: (context: ConfigContext) => Options | Promise<Options>): DeferredApplicationDefinition
+}

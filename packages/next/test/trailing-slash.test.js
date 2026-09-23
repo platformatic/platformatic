@@ -2,12 +2,17 @@ import { deepStrictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
+import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('when trailingSlash is false, request with a trailing slash are redirected', async t => {
-  const { runtime } = await prepareRuntime(t, 'server-side-standalone', false)
+  const { runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/server-side-standalone'),
+    port: 0
+  })
   const url = await startRuntime(t, runtime)
 
   {
@@ -32,12 +37,15 @@ test('when trailingSlash is false, request with a trailing slash are redirected'
 })
 
 test('when trailingSlash is true, request without a trailing slash are redirected', async t => {
-  const { runtime } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
-    await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
-      const json = JSON.parse(contents)
-      json.next = { trailingSlash: true }
-      return JSON.stringify(json, null, 2)
-    })
+  const { runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/server-side-standalone'),
+    port: 0,
+    additionalSetup: async root => {
+      await updateConfigFile(resolve(root, 'services/frontend/watt.config.mjs'), contents => {
+        contents.next = { trailingSlash: true }
+      })
+    }
   })
 
   const url = await startRuntime(t, runtime)

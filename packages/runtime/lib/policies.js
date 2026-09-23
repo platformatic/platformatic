@@ -21,3 +21,30 @@ export function createChannelCreationHook (config) {
     return !forbidden.has(`${first.toLowerCase()}:${second.toLowerCase()}`)
   }
 }
+
+export function createTargetPermissionHook (config) {
+  const denyList = config.policies?.deny
+
+  if (typeof denyList === 'undefined') {
+    return undefined
+  }
+
+  const forbidden = new Set()
+
+  for (let [first, unalloweds] of Object.entries(denyList)) {
+    for (let second of unalloweds) {
+      first = first.toLowerCase()
+      second = second.toLowerCase()
+
+      forbidden.add(`${first}:${second}`)
+      forbidden.add(`${second}:${first}`)
+    }
+  }
+
+  return function targetPermissionHook (req, target) {
+    const source = config.applicationId ?? req?.headers?.['x-plt-application-id']
+    const destination = target?.metadata?.applicationId
+
+    return !source || !destination || !forbidden.has(`${source.toLowerCase()}:${destination.toLowerCase()}`)
+  }
+}

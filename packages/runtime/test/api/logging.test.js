@@ -7,11 +7,11 @@ import { createRuntime, readLogs } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('logs stdio from the application thread', async t => {
-  const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
+  const configFile = join(fixturesDir, 'configs', 'service-with-stdio', 'watt.config.mjs')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 
-  const url = await app.start()
+  await app.start()
   const pid = process.pid
   const hostname = getHostname()
 
@@ -36,9 +36,17 @@ test('logs stdio from the application thread', async t => {
         return { level, pid, hostname, name, msg, payload, stdout }
       })
       .filter(m => m.msg !== 'Runtime event')
+      // Cache diagnostics are deferred and can be interleaved with application logs.
+      .filter(m => !['Module compile cache enabled', 'Module compile cache flushed'].includes(m.msg))
 
     const applicationMessages = messages.filter(m => m.name === 'stdio')
-    const runtimeMessages = messages.filter(m => m.name === undefined)
+    // The metrics/health server, now started by default, logs a "Server listening at" line per
+    // network interface -- addresses that vary by machine. The compile-cache flush logs a line
+    // whose timing is not deterministic. Both are internal-server noise for a test about application
+    // stdio, so they are dropped rather than pinned.
+    const runtimeMessages = messages.filter(
+      m => m.name === undefined && !m.msg?.startsWith('Server listening at') && m.msg !== 'Module compile cache flushed'
+    )
 
     deepStrictEqual(
       applicationMessages,
@@ -48,7 +56,7 @@ test('logs stdio from the application thread', async t => {
           pid,
           hostname,
           name: 'stdio',
-          msg: 'Loading envfile...',
+          msg: 'Using the worker environment resolved by the loader.',
           payload: undefined,
           stdout: undefined
         },
@@ -76,15 +84,6 @@ test('logs stdio from the application thread', async t => {
           hostname,
           name: 'stdio',
           msg: 'This is an error',
-          payload: undefined,
-          stdout: undefined
-        },
-        {
-          level: 30,
-          pid,
-          hostname,
-          name: 'stdio',
-          msg: `Server listening at ${url}`,
           payload: undefined,
           stdout: undefined
         },
@@ -161,7 +160,7 @@ test('logs stdio from the application thread', async t => {
         pid,
         hostname,
         name: undefined,
-        msg: 'Added application "stdio" (entrypoint).',
+        msg: 'Added application "stdio".',
         payload: undefined,
         stdout: undefined
       },
@@ -180,15 +179,6 @@ test('logs stdio from the application thread', async t => {
         hostname,
         name: undefined,
         msg: 'Started the worker 0 of the application "stdio"...',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: undefined,
-        msg: `Platformatic is now listening at ${url}`,
         payload: undefined,
         stdout: undefined
       },
@@ -215,7 +205,7 @@ test('logs stdio from the application thread', async t => {
 })
 
 test('logs with caller info', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'watt.config.mjs')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 
@@ -260,7 +250,7 @@ test('logs with caller info', async t => {
 })
 
 test('isoTime support', async t => {
-  const configFile = join(fixturesDir, 'isotime-logs', 'platformatic.json')
+  const configFile = join(fixturesDir, 'isotime-logs', 'watt.config.mjs')
   const context = {}
   const app = await createRuntime(configFile, null, context)
 

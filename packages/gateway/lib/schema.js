@@ -1,20 +1,28 @@
 #! /usr/bin/env node
 
-import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic/schema'
 import {
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
-} from '@platformatic/foundation'
-import { schemaComponents as applicationSchemaComponents } from '@platformatic/service'
+} from '@platformatic/foundation/schema'
+import { schemaComponents as applicationSchemaComponents } from '@platformatic/service/schema'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const { $defs, graphqlBase, openApiBase, plugins } = applicationSchemaComponents
+const { $defs, openApiBase, plugins } = applicationSchemaComponents
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
 export const version = packageJson.version
+
+// The application is built before _listen, which is the only thing the port guards.
+export const servesWithoutPort = { development: true, production: true }
+
+// Package-level metadata main-side preparation reads before any worker exists. It lives beside the
+// schema so the light /schema subpath carries it, which is what keeps boot from importing the full
+// capability package into the loader.
+export const skipTracingHooks = true
 
 export const openApiApplication = {
   type: 'object',
@@ -25,96 +33,6 @@ export const openApiApplication = {
     config: { type: 'string', resolvePath: true }
   },
   anyOf: [{ required: ['url'] }, { required: ['file'] }],
-  additionalProperties: false
-}
-
-export const entityResolver = {
-  type: 'object',
-  properties: {
-    name: { type: 'string' },
-    argsAdapter: {
-      anyOf: [{ typeof: 'function' }, { type: 'string' }]
-    },
-    partialResults: {
-      anyOf: [{ typeof: 'function' }, { type: 'string' }]
-    }
-  },
-  required: ['name'],
-  additionalProperties: false
-}
-
-export const entities = {
-  type: 'object',
-  patternProperties: {
-    '^.*$': {
-      type: 'object',
-      properties: {
-        pkey: { type: 'string' },
-        resolver: entityResolver,
-        fkeys: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              type: { type: 'string' },
-              field: { type: 'string' },
-              as: { type: 'string' },
-              pkey: { type: 'string' },
-              subgraph: { type: 'string' },
-              resolver: entityResolver
-            },
-            required: ['type']
-          }
-        },
-        many: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              type: { type: 'string' },
-              fkey: { type: 'string' },
-              as: { type: 'string' },
-              pkey: { type: 'string' },
-              subgraph: { type: 'string' },
-              resolver: entityResolver
-            },
-            required: ['type', 'fkey', 'resolver']
-          }
-        }
-      }
-    }
-  }
-}
-
-export const graphqlApplication = {
-  anyOf: [
-    { type: 'boolean' },
-    {
-      type: 'object',
-      properties: {
-        host: { type: 'string' },
-        name: { type: 'string' },
-        graphqlEndpoint: { type: 'string', default: '/graphql' },
-        composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
-        entities
-      },
-      additionalProperties: false
-    }
-  ]
-}
-
-export const graphqlComposerOptions = {
-  type: 'object',
-  properties: {
-    ...graphqlBase.properties,
-    // TODO support subscriptions, subscriptions: { type: 'boolean', default: false },
-    onSubgraphError: { typeof: 'function' },
-    defaultArgsAdapter: {
-      oneOf: [{ typeof: 'function' }, { type: 'string' }]
-    },
-    entities,
-    addEntitiesResolvers: { type: 'boolean', default: false }
-  },
   additionalProperties: false
 }
 
@@ -201,7 +119,6 @@ export const gateway = {
           id: { type: 'string' },
           origin: { type: 'string' },
           openapi: openApiApplication,
-          graphql: graphqlApplication,
           proxy: {
             anyOf: [
               { type: 'boolean', const: false },
@@ -279,8 +196,6 @@ export const gateway = {
     handler: { type: 'string' },
     deduplication,
     openapi: openApiBase,
-    graphql: graphqlComposerOptions,
-    addEmptySchema: { type: 'boolean', default: false },
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
     restartOnApplicationChange: {
       type: 'boolean',
@@ -321,10 +236,6 @@ export const types = {
 
 export const schemaComponents = {
   openApiApplication,
-  entityResolver,
-  entities,
-  graphqlApplication,
-  graphqlComposerOptions,
   deduplicationRoute,
   deduplicationStorage,
   deduplication,
@@ -347,7 +258,7 @@ export const schema = {
     plugins,
     application: basicSchemaComponents.application,
     runtime: wrappedRuntime,
-    telemetry: utilsSchemaComponents.telemetry,
+    tracing: utilsSchemaComponents.tracing,
     watch: {
       anyOf: [
         watch,

@@ -13,10 +13,10 @@ import {
   getRoot,
   getRuntimeConfig,
   getRuntimeBasePath,
-  getTelemetryConfig,
+  getTracingConfig,
   getWantsAbsoluteUrls,
   getWorkerId,
-  isEntrypoint
+  registerCloseCallback
 } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
@@ -34,14 +34,13 @@ function handler (_, res) {
     config: getConfig(),
     exitOnUnhandledErrors: getExitOnUnhandledErrors(),
     host: getHost(),
-    isEntrypoint: isEntrypoint(),
     logLevel: getLogLevel(),
     logger: getLogger(),
     port: getPort(),
     root: getRoot(),
     runtimeConfig: getRuntimeConfig(),
     runtimeBasePath: getRuntimeBasePath(),
-    telemetryConfig: getTelemetryConfig(),
+    tracingConfig: getTracingConfig(),
     wantsAbsoluteUrls: getWantsAbsoluteUrls(),
     workerId: getWorkerId()
   }
@@ -49,7 +48,13 @@ function handler (_, res) {
   res.end(JSON.stringify(platformatic))
 }
 
-createServer(handler).listen({ host: '127.0.0.1', port: 0 })
+const server = createServer(handler).listen({ host: '127.0.0.1', port: 0 })
+registerCloseCallback(async () => {
+  if (process.argv.includes('--hang-on-close')) {
+    await new Promise(() => {})
+  }
+  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+})
 
 const itc = getITC()
 itc.notify('config', { production: process.env.NODE_ENV === 'production' })

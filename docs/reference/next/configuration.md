@@ -1,9 +1,11 @@
 import Issues from '../../getting-started/issues.md';
 import RuntimeInCapabilities from '../\_runtime-in-capabilities.md';
+import ServerConfiguration from '../_server-in-capabilities.md';
 
 # Configuration
 
-Platformatic Next is configured through a configuration file. It supports environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Next is configured through a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 ## `application`
 
@@ -26,7 +28,7 @@ Configures the `logger`. See [runtime logger](../runtime/configuration.md#logger
 
 ## `server`
 
-Configures the HTTP server. See [runtime server](../runtime/configuration.md#server).
+<ServerConfiguration />
 
 ## `watch`
 
@@ -52,19 +54,22 @@ Supported object properties:
 
   Example using separate Valkey instances for default and remote cache:
 
-  ```json
-  {
-    "cache": {
-      "adapter": "valkey",
-      "url": "valkey://localhost:6379",
-      "cacheComponents": true,
-      "remote": {
-        "url": "valkey://remote-server:6379",
-        "prefix": "plt:remote",
-        "maxTTL": 3600
+  ```ts config
+  import { createNextConfig } from '@platformatic/next'
+
+  export default createNextConfig({
+    server: { port: 3042 },
+    cache: {
+      adapter: 'valkey',
+      url: 'valkey://localhost:6379',
+      cacheComponents: true,
+      remote: {
+        url: 'valkey://remote-server:6379',
+        prefix: 'plt:remote',
+        maxTTL: 3600
       }
     }
-  }
+  })
   ```
 
   In this configuration, `"use cache"` entries are stored on `localhost:6379` while `"use cache: remote"` entries go to `remote-server:6379` with a separate prefix and a 1-hour TTL. If `remote.url` is omitted, both handlers share the same Valkey instance but use different key namespaces to avoid collisions.

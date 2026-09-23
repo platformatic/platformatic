@@ -1,4 +1,4 @@
-import { getEvents, getLogger } from '@platformatic/globals'
+import { getLogger, registerCloseCallback } from '@platformatic/globals'
 import fastify from 'fastify'
 
 const logger = getLogger()
@@ -34,5 +34,4 @@ app.get('/main-time', async (request, reply) => {
   return response.json()
 })
 
-const events = getEvents()
-events.on('close', () => app.close())
+registerCloseCallback(() => app.close())

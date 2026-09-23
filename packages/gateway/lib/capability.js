@@ -1,4 +1,3 @@
-import { kMetadata, replaceEnv } from '@platformatic/foundation'
 import { getEvents, getITC } from '@platformatic/globals'
 import { ServiceCapability } from '@platformatic/service'
 import { ensureApplications, platformaticGateway } from './application.js'
@@ -33,16 +32,10 @@ export class GatewayCapability extends ServiceCapability {
     return this.dependencies
   }
 
-  async start () {
-    if (this.url) {
-      return this.url
-    }
+  async _start () {
+    const url = await super._start()
 
-    const url = await super.start()
-
-    // Only register the runtime event handler once. start() can be called
-    // multiple times (first with listen:false, then listen:true) so guard
-    // against duplicate registrations.
+    // Only register the runtime event handler once.
     const itc = getITC({ throwOnMissing: false })
     if (!this.#runtimeEventHandler && itc) {
       this.#runtimeEventHandler = this.#handleRuntimeEvent.bind(this)
@@ -52,13 +45,13 @@ export class GatewayCapability extends ServiceCapability {
     return url
   }
 
-  stop () {
+  _stop () {
     const itc = getITC({ throwOnMissing: false })
     if (this.#runtimeEventHandler && itc) {
       itc.removeListener('runtime:event', this.#runtimeEventHandler)
     }
 
-    return super.stop()
+    return super._stop()
   }
 
   registerMeta (meta) {
@@ -105,7 +98,12 @@ export class GatewayCapability extends ServiceCapability {
       return true
     }
 
-    return replaceEnv(application.origin, this.config[kMetadata].env).endsWith('.plt.local')
+    /*
+      The origin as configured. The configuration is resolved main-side, once, so there is no
+      `{PLT_X}` left for a request to substitute -- the interpolator no longer runs at request time
+      over a value the loader had already produced.
+    */
+    return application.origin.endsWith('.plt.local')
   }
 
   // The subscription is unconditional and the decision lives here, next to the

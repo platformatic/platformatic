@@ -7,7 +7,7 @@ import { createCapturingLogger, createTestContext, withTestEnvironment } from '.
 
 test('print the graphql schema to stdout', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const configFile = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'platformatic.db.json')
+  const configFile = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'watt.config.js')
   t.after(() => dropTestDB())
 
   await withTestEnvironment({
@@ -28,7 +28,7 @@ test('print the graphql schema to stdout', async t => {
 
 test('print the openapi schema to stdout', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const configFile = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'platformatic.db.json')
+  const configFile = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'watt.config.js')
   t.after(() => dropTestDB())
 
   await withTestEnvironment({

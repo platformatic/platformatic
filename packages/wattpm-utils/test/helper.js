@@ -1,9 +1,10 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { evaluateConfigurationFile } from '@platformatic/foundation/loader'
 import { execa } from 'execa'
 import { on } from 'node:events'
-import { cp, mkdir, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import split2 from 'split2'
 import { setFixturesDir, temporaryFolder } from '../../basic/test/helper.js'
@@ -99,7 +100,7 @@ export async function waitForStart (startProcess) {
       continue
     }
 
-    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (\S+) for worker \d+ of the application "[^"]+"/)
     if (mo) {
       url = mo[1]
       break
@@ -121,4 +122,29 @@ export function wattpm (...args) {
 
 export function wattpmUtils (...args) {
   return executeCommand(process.argv[0], wattUtilsCliPath, ...args)
+}
+
+/*
+  A configuration is a module whose values are expressions, so reading one means evaluating it --
+  against the project's own environment, which is where those expressions get their values.
+*/
+export async function readConfiguration (path, role = 'root') {
+  const root = dirname(path)
+  const env = { ...process.env }
+
+  try {
+    for (const line of (await readFile(join(root, '.env'), 'utf-8')).split(/\r?\n/)) {
+      const separator = line.indexOf('=')
+
+      if (separator > 0 && !line.startsWith('#')) {
+        env[line.slice(0, separator)] = line.slice(separator + 1)
+      }
+    }
+  } catch {
+    // A project without one simply has nothing to layer.
+  }
+
+  const { config } = await evaluateConfigurationFile({ path, env, command: 'start', production: false, role })
+
+  return config
 }

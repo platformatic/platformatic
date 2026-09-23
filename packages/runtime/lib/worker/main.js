@@ -7,19 +7,18 @@ import {
   parseMemorySize,
   scheduleCompileCacheFlush
 } from '@platformatic/foundation'
-import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
-import { addPinoInstrumentation } from '@platformatic/telemetry'
+import { getITC, getLogger, setUndiciThreadInterceptor, updateGlobals } from '@platformatic/globals'
+import { addPinoInstrumentation } from '@platformatic/tracing'
 import { Buffer } from 'node:buffer'
 import { subscribe } from 'node:diagnostics_channel'
 import { EventEmitter } from 'node:events'
-import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import inspector from 'node:inspector'
+import { constants as moduleConstants, enableCompileCache } from 'node:module'
 import { hostname } from 'node:os'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import { setDefaultHighWaterMark } from 'node:stream'
 import { pathToFileURL } from 'node:url'
-import { parseEnv } from 'node:util'
 import { threadId, workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { install as installUndiciGlobals } from 'undici'
@@ -101,7 +100,7 @@ function createLogger () {
     pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
   }
 
-  if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.telemetry?.enabled !== false) {
+  if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.tracing?.enabled !== false) {
     addPinoInstrumentation(pinoOptions)
   }
 
@@ -150,10 +149,9 @@ function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
   }
 }
 
-// Whether the module compile cache has been enabled in this worker.
 let compileCacheEnabled = false
+let compileCacheRequested = false
 
-// Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   // Normalize boolean shorthand: true -> { enabled: true }
   const normalizeConfig = cfg => {
@@ -171,34 +169,23 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
     return
   }
 
-  // Check if API is available (Node.js 22.1.0+)
-  let moduleApi
-  try {
-    moduleApi = await import('node:module')
-    if (typeof moduleApi.enableCompileCache !== 'function') {
-      return
-    }
-  } catch {
-    return
-  }
-
+  compileCacheRequested = true
   // Determine cache directory - use applicationConfig.path for the app root
   const cacheDir = config.directory ?? join(applicationConfig.path, '.plt', 'compile-cache')
 
   try {
-    const result = moduleApi.enableCompileCache(cacheDir)
+    const result = enableCompileCache(cacheDir)
+    const { compileCacheStatus } = moduleConstants
 
-    const { compileCacheStatus } = moduleApi.constants ?? {}
-
-    if (result.status === compileCacheStatus?.ENABLED) {
+    if (result.status === compileCacheStatus.ENABLED) {
       compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache enabled')
-    } else if (result.status === compileCacheStatus?.ALREADY_ENABLED) {
+    } else if (result.status === compileCacheStatus.ALREADY_ENABLED) {
       compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache already enabled')
-    } else if (result.status === compileCacheStatus?.FAILED) {
+    } else if (result.status === compileCacheStatus.FAILED) {
       logger.warn({ message: result.message }, 'Failed to enable module compile cache')
-    } else if (result.status === compileCacheStatus?.DISABLED) {
+    } else if (result.status === compileCacheStatus.DISABLED) {
       logger.debug('Module compile cache disabled via NODE_DISABLE_COMPILE_CACHE')
     }
   } catch (err) {
@@ -237,56 +224,20 @@ async function main () {
 
   await performPreloading(runtimeConfig, applicationConfig)
 
-  // Load env file and mixin env vars from application config
-  let envfile
-  if (applicationConfig.envfile) {
-    envfile = resolve(workerData.dirname, applicationConfig.envfile)
-  } else {
-    envfile = resolve(workerData.applicationConfig.path, '.env')
-  }
-
-  const logger = getLogger()
-  logger.debug({ envfile }, 'Loading envfile...')
-
-  // Note that process.loadEnvFile is not used here as it never overrides an already defined
-  // variable. The worker environment is seeded from the environment the runtime resolved, which
-  // might contain values coming from an env file of the runtime. Those are only defaults, so the
-  // env file of this application, which is more specific, is allowed to override them. Real
-  // environment variables are never overridden.
-  const envFileFallbackKeys = new Set(workerData.envFileFallbackKeys ?? [])
-
-  try {
-    const applicationEnv = parseEnv(await readFile(envfile, 'utf-8'))
-
-    for (const [key, value] of Object.entries(applicationEnv)) {
-      if (!(key in process.env) || envFileFallbackKeys.has(key)) {
-        process.env[key] = value
-      }
-    }
-  } catch {
-    // Ignore if the file doesn't exist, similar to dotenv behavior
-  }
-
-  if (runtimeConfig.env) {
-    Object.assign(process.env, runtimeConfig.env)
-  }
-  if (applicationConfig.env) {
-    Object.assign(process.env, applicationConfig.env)
-  }
+  /*
+    Nothing is layered onto process.env here, and that absence is load-bearing. The loader resolved
+    this worker's entire environment main-side -- env-file chains, both env blocks, the injected
+    topology URLs, with the real environment authoritative over all of them -- and the worker was
+    *spawned* with that result. Re-reading a .env or re-applying an env block on top re-decides
+    what was already decided, with the opposite precedence: env blocks were once treated as pins over
+    the real environment, and that inversion is now a breaking change -- the real environment is
+    authoritative. The suppression of a block value by the real environment is reported at boot,
+    main-side, where the ladder is resolved.
+  */
+  getLogger().debug('Using the worker environment resolved by the loader.')
 
   const { threadDispatcher } = await setDispatcher(runtimeConfig)
-
-  // If the application is an entrypoint and runtime server config is defined, use it.
-  let serverConfig = null
-  if (runtimeConfig.server && applicationConfig.entrypoint) {
-    serverConfig = runtimeConfig.server
-  } else if (applicationConfig.useHttp || applicationConfig.websocket) {
-    serverConfig = {
-      port: 0,
-      hostname: '127.0.0.1',
-      keepAliveTimeout: 5000
-    }
-  }
+  setUndiciThreadInterceptor(threadDispatcher.interceptor)
 
   const inspectorOptions = workerData.inspectorOptions
 
@@ -319,29 +270,10 @@ async function main () {
     runtimeConfig,
     applicationConfig,
     workerData.worker.index,
-    serverConfig,
     metricsConfig
   )
 
-  await controller.init(cleanup)
-
-  // Make the compile cache accumulated while booting durable, as Node.js would otherwise only write
-  // it when the worker terminates.
-  controller.on('started', () => {
-    if (compileCacheEnabled) {
-      scheduleCompileCacheFlush(logger)
-    }
-  })
-
-  if (applicationConfig.entrypoint && runtimeConfig.basePath) {
-    const meta = await controller.capability.getMeta()
-    if (!meta.gateway.wantsAbsoluteUrls) {
-      stripBasePath(runtimeConfig.basePath)
-    }
-  }
-
   const sharedContext = new SharedContext()
-  // Limit the amount of methods a user can call
   updateGlobals({
     sharedContext: {
       get: () => sharedContext.get(),
@@ -349,9 +281,29 @@ async function main () {
     }
   })
 
-  // Setup interaction with parent port
+  // Setup interaction with the parent before loading the application so plugins
+  // can register messaging handlers during their initialization.
   const itc = await setupITC(controller, applicationConfig, threadDispatcher, sharedContext)
   updateGlobals({ itc })
+
+  await controller.init(cleanup)
+
+  controller.on('started', () => {
+    if (compileCacheEnabled) {
+      scheduleCompileCacheFlush(getLogger(), flushed => {
+        getITC().notify('compile-cache:flushed', { flushed, source: 'worker' })
+      })
+    } else if (compileCacheRequested) {
+      getITC().notify('compile-cache:unavailable', { source: 'worker' })
+    }
+  })
+
+  if (runtimeConfig.basePath) {
+    const meta = await controller.capability.getMeta()
+    if (!meta.gateway?.wantsAbsoluteUrls) {
+      stripBasePath(runtimeConfig.basePath)
+    }
+  }
 
   // Setup management client for privileged applications
   if (applicationConfig.management) {
@@ -412,7 +364,9 @@ function stripBasePath (basePath) {
         request.url = '/' + request.url
       }
 
-      response[kBasePath] = basePath
+      if (response) {
+        response[kBasePath] = basePath
+      }
     }
   })
 
@@ -439,10 +393,8 @@ function stripBasePath (basePath) {
   }
 
   ServerResponse.prototype.setHeader = function (name, value) {
-    if (this[kBasePath]) {
-      if (name.toLowerCase() === 'location') {
-        value = prependBasePath(value)
-      }
+    if (this[kBasePath] && name.toLowerCase() === 'location') {
+      value = prependBasePath(value)
     }
     originSetHeader.call(this, name, value)
   }

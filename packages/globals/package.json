@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/globals",
-  "version": "3.69.0",
+  "version": "4.0.0-new-config.8",
   "description": "Platformatic Global Object Getter",
   "type": "module",
   "main": "./lib/index.js",
@@ -38,7 +38,7 @@
     "messaging"
   ],
   "devDependencies": {
-    "@types/node": "^22.10.6",
+    "@types/node": "^24.0.0",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "^9.18.0",
     "neostandard": "^0.12.0",
@@ -47,10 +47,11 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
+    "@fastify/error": "^4.0.0",
     "@platformatic/prom-client": "^1.0.0",
     "pino": "^9.9.0"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

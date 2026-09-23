@@ -13,7 +13,6 @@ import {
   FailedToGetRuntimeApplicationConfig,
   FailedToGetRuntimeApplicationEnv,
   FailedToGetRuntimeApplications,
-  FailedToGetRuntimeConfig,
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeLogIndexes,
@@ -237,23 +236,6 @@ export class RuntimeApiClient {
     }
 
     return body.json()
-  }
-
-  async getRuntimeConfig (pid, metadata = false) {
-    const client = this.#getUndiciClient(pid)
-
-    const { statusCode, body } = await client.request({
-      path: `/api/v1/config?metadata=${metadata ? 'true' : 'false'}`,
-      method: 'GET'
-    })
-
-    if (statusCode !== 200) {
-      const error = await body.text()
-      throw new FailedToGetRuntimeConfig(error)
-    }
-
-    const runtimeConfig = await body.json()
-    return runtimeConfig
   }
 
   async getRuntimeApplicationConfig (pid, applicationId) {
@@ -585,17 +567,6 @@ export class RuntimeApiClient {
     const metrics = format === 'json' ? await body.json() : await body.text()
 
     return metrics
-  }
-
-  getRuntimeLiveMetricsStream (pid) {
-    const socketPath = this.#getSocketPathFromPid(pid)
-
-    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/metrics/live'
-    const webSocketStream = new WebSocketStream(webSocketUrl)
-    this.#webSockets.add(webSocketStream.ws)
-
-    return webSocketStream
   }
 
   getRuntimeLiveLogsStream (pid) {

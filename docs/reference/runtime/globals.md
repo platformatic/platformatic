@@ -7,7 +7,7 @@ label: Runtime APIs (@platformatic/globals)
 
 `@platformatic/globals` exposes typed accessors for the runtime APIs that Watt injects into each application at execution time. Applications use these APIs to read their runtime context, use the shared logger, register metrics, exchange messages, customize health checks, and publish metadata to the runtime.
 
-The package replaces direct access to `globalThis.platformatic`. Direct access remains available for compatibility, but typed getters and setters are preferred.
+The package provides the supported interface for runtime APIs. The former `globalThis.platformatic` object is not available in v4.
 
 ## Install
 
@@ -41,7 +41,7 @@ import { getBasePath } from '@platformatic/globals'
 const basePath = getBasePath()
 ```
 
-All typed getters, except `getGlobal()`, accept an optional options object. The `throwOnMissing` option defaults to `true`. Pass `{ throwOnMissing: false }` to return `undefined` instead of throwing:
+All field-specific getters accept an optional options object. The `throwOnMissing` option defaults to `true`. Pass `{ throwOnMissing: false }` to return `undefined` instead of throwing:
 
 ```js
 import { getBasePath } from '@platformatic/globals'
@@ -55,12 +55,23 @@ Setter functions, such as `setCustomHealthCheck()`, throw when the corresponding
 
 | API | Description |
 | --- | --- |
-| `getGlobal<T>()` | Returns the complete legacy global object, optionally extended with the generic type `T`. Prefer the specific getters below. |
+| `getGlobal<T>()` | Returns the complete runtime API object, optionally extended with the generic type `T`. Prefer the specific getters below. |
+| `getGlobals(...names)` | Returns a new `Record<string, unknown>` containing only the requested fields. Throws `PLT_GLOBALS_MISSING_FIELD` if any name is not registered. |
 | `hasField(name)` | Returns whether the runtime API identified by `name` is available. |
-| `updateGlobals(updates)` | Updates the legacy global object with the values in `updates` and returns the updated global object. This helper is intended for Platformatic internals and tests. |
-| `removeGlobals(fields)` | Removes fields from the legacy global object and returns the updated global object. This helper is intended for Platformatic internals and tests. |
+| `updateGlobals(updates)` | Updates the private runtime API object with the values in `updates` and returns the updated object. This helper is intended for Platformatic internals and tests. |
+| `removeGlobals(fields)` | Removes fields from the private runtime API object and returns the updated object. This helper is intended for Platformatic internals and tests. |
 
 The default export is `getGlobal`.
+
+Use `getGlobals()` to select several fields without exposing the globals container:
+
+```js
+import { getGlobals } from '@platformatic/globals'
+
+const { logger, applicationId } = getGlobals('logger', 'applicationId')
+```
+
+The result is shallow: object values keep their original references, but assigning or deleting properties on the result does not change which values are registered. Registered `undefined` values are included. Duplicate names appear once, and calling `getGlobals()` without names returns `{}`. This helper does not accept getter options; use individual getters for optional fields or precise field types.
 
 ## Application context getters
 
@@ -72,9 +83,8 @@ The default export is `getGlobal`.
 | `getApplicationId(options?)` | Returns the application id as a string. |
 | `getWorkerId(options?)` | Returns the current application worker id as a number or string. |
 | `getRoot(options?)` | Returns the application root directory as a string. |
-| `isEntrypoint(options?)` | Returns a boolean indicating whether the application is the runtime entrypoint. |
-| `getHost(options?)` | Returns the application host as a string. |
-| `getPort(options?)` | Returns the application port as a number. |
+| `getHost(options?)` | Returns the application host as a string, or `true` when no hostname is configured. |
+| `getPort(options?)` | Returns the application port as a number, or `true` when no numeric port is configured. |
 | `getBasePath(options?)` | Returns the application base path in the gateway as a string, or `null` when no base path is configured. |
 | `getRuntimeBasePath(options?)` | Returns the runtime base path as a string, or `null` when no runtime base path is configured. |
 | `getWantsAbsoluteUrls(options?)` | Returns a boolean indicating whether the application expects absolute URLs. |
@@ -87,6 +97,14 @@ The default export is `getGlobal`.
 | `getClosing(options?)` | Returns a boolean indicating whether the application is currently closing. |
 | `getExitOnUnhandledErrors(options?)` | Returns a boolean indicating whether the runtime exits on unhandled errors. |
 | `getReuseTcpPorts(options?)` | Returns a boolean indicating whether TCP port reuse is enabled. |
+| `getCompileCache(options?)` | Returns the child context's compile-cache configuration: a boolean, an object with optional `enabled` and `directory` fields, or `undefined`. |
+| `getResourceLimits(options?)` | Returns the child context's Node.js worker `ResourceLimits`, or `undefined`. |
+
+## Internal mesh accessors
+
+`getUndiciThreadInterceptor(options?)` returns the interceptor registered for the current worker. Its `createUpgradeAgent()` method returns a Node.js HTTP agent that routes local WebSocket upgrades through the mesh. Use `{ throwOnMissing: false }` when running outside a runtime worker is supported.
+
+`setUndiciThreadInterceptor(interceptor)` registers or replaces that interceptor and returns `void`. It is intended for runtime initialization. Unlike capability callback setters such as `setBasePath()`, it writes the globals store directly and does not require a previously registered callback.
 
 ## Logging and observability
 
@@ -95,8 +113,8 @@ The default export is `getGlobal`.
 | `getLogger(options?)` | Returns the application Pino logger instance. See the [logging guide](../../guides/logging.md). |
 | `getLogLevel(options?)` | Returns the configured application log level. |
 | `getInterceptLogging(options?)` | Returns a boolean indicating whether logging interception is enabled. |
-| `getTelemetryConfig(options?)` | Returns the telemetry configuration as an object. |
-| `getTelemetryReady(options?)` | Returns the promise that resolves when telemetry is ready. |
+| `getTracingConfig(options?)` | Returns the tracing configuration as an object. |
+| `getTracingReady(options?)` | Returns the promise that resolves when tracing is ready. |
 | `getTracerProvider(options?)` | Returns the OpenTelemetry tracer provider. |
 | `getClientSpansAls(options?)` | Returns the async local storage instance used for client spans. |
 | `getPrometheus(options?)` | Returns an object containing the Prometheus client and registry used by the runtime. |
@@ -146,7 +164,7 @@ messaging.handle('time', async ({ offset }) => {
 ```
 
 ```js
-// web/entrypoint/index.js
+// web/api/index.js
 import { getMessaging } from '@platformatic/globals'
 
 const messaging = getMessaging()
@@ -217,25 +235,34 @@ const currentContext = sharedContext.get()
 | API | Description |
 | --- | --- |
 | `getEvents(options?)` | Returns the application `PlatformaticEvents` event emitter. |
+| `registerCloseCallback(callback)` | Registers an asynchronous resource cleanup callback. |
 | `getSendHealthSignal(options?)` | Returns the function used to send a health signal from the application to the runtime. |
 | `setCustomHealthCheck(healthCheck)` | Sets a custom health check. |
 | `setCustomReadinessCheck(readinessCheck)` | Sets a custom readiness check. |
 
-`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `close` event is emitted when the application is stopping and gives listeners a chance to release resources. A `close` listener should finish graceful shutdown within the configured shutdown timeout. The `exit` event is emitted just before the worker exits, after its runtime communication channels have closed, for final synchronous cleanup.
+`PlatformaticEvents` extends Node.js `EventEmitter` and adds `emitAndNotify(event, ...args)` to emit locally and notify the runtime. The `exit` event is emitted just before the worker exits, after its runtime communication channels have closed, for final synchronous cleanup.
 
 ```js
 import { getEvents } from '@platformatic/globals'
 
 const events = getEvents()
 
-events.on('close', async () => {
-  // Close application resources.
-})
-
 events.on('exit', () => {
   // Perform final synchronous cleanup.
 })
 ```
+
+`registerCloseCallback(callback)` registers asynchronous application cleanup. It also accepts an object implementing `Symbol.asyncDispose`, such as `registerCloseCallback(server)`, and invokes the method with that object as its receiver. Callbacks and disposable resources are awaited in reverse registration order after managed framework shutdown. Register them before callback execution begins.
+
+```js
+import { registerCloseCallback } from '@platformatic/globals'
+
+registerCloseCallback(async () => {
+  await database.close()
+})
+```
+
+See [Application shutdown](./shutdown.md) for the shutdown sequence, signal listeners, custom commands, errors, and deadlines.
 
 Custom health and readiness checks can return a boolean or an object with `status`, `statusCode`, and `body`, either directly or as a promise:
 
@@ -321,23 +348,3 @@ invalidateHttpCache({ tags: ['products'] })
 | --- | --- |
 | `getInterceptors(options?)` | Returns the runtime worker interceptor registry as an object. Intended for Platformatic internals. |
 | `getValkeyClients(options?)` | Returns the Valkey clients map. Intended for framework integrations and caching internals. |
-
-## Legacy `globalThis.platformatic` API
-
-During application execution some APIs are also available on `globalThis.platformatic`. This API is deprecated. Prefer the typed getters and setters exported by `@platformatic/globals`.
-
-| Legacy API | Preferred API |
-| --- | --- |
-| `globalThis.platformatic.applicationId` | `getApplicationId()` |
-| `globalThis.platformatic.applicationConfig` | `getApplicationConfig()` |
-| `globalThis.platformatic.runtimeConfig` | `getRuntimeConfig()` |
-| `globalThis.platformatic.workerId` | `getWorkerId()` |
-| `globalThis.platformatic.root` | `getRoot()` |
-| `globalThis.platformatic.basePath` | `getBasePath()` |
-| `globalThis.platformatic.logLevel` | `getLogLevel()` |
-| `globalThis.platformatic.events` | `getEvents()` |
-| `globalThis.platformatic.sharedContext` | `getSharedContext()` |
-| `globalThis.platformatic.sendHealthSignal` | `getSendHealthSignal()` |
-| `globalThis.platformatic.setBasePath(path)` | `setBasePath(path)` |
-| `globalThis.platformatic.setCustomHealthCheck(fn)` | `setCustomHealthCheck(fn)` |
-| `globalThis.platformatic.setCustomReadinessCheck(fn)` | `setCustomReadinessCheck(fn)` |

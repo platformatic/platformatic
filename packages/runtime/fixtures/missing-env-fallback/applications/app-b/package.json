@@ -1,8 +1,0 @@
-{
-  "name": "app-b",
-  "type": "module",
-  "private": true,
-  "dependencies": {
-    "@platformatic/service": "workspace:*"
-  }
-}

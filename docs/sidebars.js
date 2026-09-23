@@ -74,6 +74,10 @@ const sidebars = {
             'guides/use-watt-multiple-repository',
             'guides/use-watt-with-ts-node',
             'guides/use-watt-with-ai-agents',
+            'guides/migrate-v4',
+            'guides/generating-watt-configuration',
+            'guides/hand-writing-watt-configuration',
+            'guides/reproduce-graphql-composition',
             'guides/scheduler',
             'guides/dynamic-workers',
             'guides/nextjs-multi-zones',
@@ -292,6 +296,7 @@ const sidebars = {
           items: [
             'reference/runtime/overview',
             'reference/runtime/globals',
+            'reference/runtime/shutdown',
             'reference/runtime/configuration',
             'reference/runtime/multithread-architecture',
             'reference/runtime/programmatic'

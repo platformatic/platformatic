@@ -4,9 +4,6 @@ import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
-
-process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should allow to setup connection string', async t => {

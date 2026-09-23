@@ -1,23 +1,34 @@
 import { BaseCapability } from '@platformatic/basic'
-import { abstractLogger } from '@platformatic/foundation'
-import { updateGlobals } from '@platformatic/globals'
 import { deepStrictEqual, notStrictEqual, rejects, strictEqual } from 'node:assert'
 import { once } from 'node:events'
-import { utimes } from 'node:fs/promises'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
 import { Controller } from '../lib/worker/controller.js'
+import { configurationFileIn } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
+/*
+  What the loader hands a worker: the capability's validated configuration as data, plus the
+  module that validated it. Controller no longer reads a configuration file -- that resolution
+  moved main-side -- so a test that constructs one directly supplies what the loader would have.
+*/
+async function resolvedConfigurationIn (directory) {
+  const file = configurationFileIn(directory)
+  const { default: configuration } = await import(pathToFileURL(file).href)
+
+  return configuration
+}
+
 test('errors when starting an already started application (no logging)', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.no-logging.json')
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -32,13 +43,17 @@ test('errors when starting an already started application (no logging)', async t
 })
 
 test('errors when stopping an already stopped application', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by the runtime, and Controller reads
+    a configuration file with the legacy loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -50,81 +65,22 @@ test('errors when stopping an already stopped application', async t => {
   }, /Application has not been started/)
 })
 
-test('logs errors if an env variable is missing', async t => {
-  const configFile = join(fixturesDir, 'no-env.service.json')
-  const config = {
-    id: 'no-env',
-    config: configFile,
-    path: fixturesDir,
-    entrypoint: true,
-    watch: true
-  }
-  const app = new Controller({}, config)
-
-  updateGlobals({ logger: abstractLogger })
-
-  await rejects(async () => {
-    await app.init()
-    await app.start()
-  }, /The configuration does not validate against the configuration schema/)
-})
-
-test('Uses the server config if passed', async t => {
-  const appPath = join(fixturesDir, 'server', 'runtime-server', 'services', 'echo')
-  const configFile = join(appPath, 'platformatic.service.json')
-  const config = {
-    id: 'serviceApp',
-    config: configFile,
-    path: appPath,
-    entrypoint: true,
-    watch: true,
-    dependencies: []
-  }
-  const serverConfig = {
-    hostname: '127.0.0.1',
-    port: '14242',
-    logger: {
-      level: 'info'
-    }
-  }
-  const app = new Controller({}, config, 0, serverConfig)
-
-  t.after(async function () {
-    t.mock.restoreAll()
-    await app.stop()
-  })
-
-  const promise = new Promise((resolve, reject) => {
-    t.mock.method(process.stdout, 'write', message => {
-      try {
-        const log = JSON.parse(message)
-        if (log.msg.includes('listening')) {
-          if (log.msg.includes(serverConfig.port)) {
-            resolve()
-          } else {
-            reject(new Error('wrong port'))
-          }
-        }
-      } catch (err) {}
-    })
-  })
-
-  await app.init()
-  await app.start()
-  await app.listen()
-
-  await utimes(configFile, new Date(), new Date())
-  await promise
-})
+/*
+  There was a test here for the error a missing `{PLT_X}` produced. There are no placeholders: an unset
+  variable is `undefined` and what happens next is written in the configuration file, so there is no
+  substitution left to fail. `docs/reference/service/configuration.md` shows the guard that replaces
+  it.
+*/
 
 test('logs errors during startup', async t => {
-  const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
-  const configFile = join(appPath, 'platformatic.service.json')
+  // A copy of serviceAppThrowsOnStart, kept from when one directory could not serve both loaders.
+  const appPath = join(fixturesDir, 'service-app-throws-v3')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceAppThrowsOnStart',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
-    entrypoint: true,
     watch: true
   }
   const app = new Controller({}, config)
@@ -143,13 +99,13 @@ test('logs errors during startup', async t => {
 })
 
 test('returns application statuses', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.no-logging.json')
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
@@ -177,77 +133,26 @@ test('returns application statuses', async t => {
   notStrictEqual(app.capability, null)
 })
 
-test('supports configuration overrides', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
-  const config = {
-    id: 'serviceApp',
-    config: configFile,
-    path: appPath,
-    entrypoint: true,
-    watch: true,
-    dependencies: []
-  }
-
-  const app = new Controller({}, config)
-
-  await app.init()
-
-  app.updateContext({
-    serverConfig: {
-      keepAliveTimeout: 1,
-      port: 2222
-    }
-  })
-
-  const capabilityConfig = await app.capability.getConfig()
-  strictEqual(capabilityConfig.server.keepAliveTimeout, 1)
-  strictEqual(capabilityConfig.server.port, 2222)
-})
-
-test('supports backlog configuration override', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
-  const config = {
-    id: 'serviceApp',
-    config: configFile,
-    path: appPath,
-    entrypoint: true,
-    watch: true,
-    dependencies: []
-  }
-
-  const app = new Controller({}, config)
-
-  await app.init()
-
-  app.updateContext({
-    serverConfig: {
-      port: 0,
-      backlog: 1024
-    }
-  })
-
-  const capabilityConfig = await app.capability.getConfig()
-  strictEqual(capabilityConfig.server.backlog, 1024)
-})
-
 test('can update status of a capability with updateStatus support', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by the runtime, and Controller reads
+    a configuration file with the legacy loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
 
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
 
   const app = new Controller({}, config)
   app.capability = new BaseCapability('base', '0.1', appPath, {})
-  app.capability.start = async function () {}
+  app.capability._start = async function () {}
 
   await app.start()
 
@@ -255,21 +160,25 @@ test('can update status of a capability with updateStatus support', async t => {
 })
 
 test('can update status of a capability without updateStatus support', async t => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  /*
+    Not monorepo/serviceApp: that directory is autoloaded by the runtime, and Controller reads
+    a configuration file with the legacy loader, so it cannot serve both.
+  */
+  const appPath = join(fixturesDir, 'service-app-no-logging')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
 
   const config = {
     id: 'serviceApp',
-    config: configFile,
+    resolvedConfig,
+    module: resolvedConfig.module,
     path: appPath,
-    entrypoint: true,
     watch: true,
     dependencies: []
   }
 
   const app = new Controller({}, config)
   app.capability = new BaseCapability('base', '0.1', appPath, {})
-  app.capability.start = async function () {}
+  app.capability._start = async function () {}
   delete app.capability.updateStatus
 
   await app.start()

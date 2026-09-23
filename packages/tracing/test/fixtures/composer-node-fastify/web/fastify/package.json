@@ -1,0 +1,6 @@
+{
+  "name": "fastify",
+  "dependencies": {
+    "@platformatic/globals": ">=3.0.0"
+  }
+}
