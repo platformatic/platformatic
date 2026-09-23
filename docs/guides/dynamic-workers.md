@@ -1,310 +1,220 @@
 # Dynamic Workers
 
-## Overview
+A fixed worker count has to cover both quiet periods and busy ones. Too few workers leave requests waiting as traffic grows; keeping enough workers for peak traffic uses memory even when most of them are idle. Dynamic scaling adjusts the worker count of each application inside a WATT as its load changes.
 
-Dynamic Workers is an automatic resource allocation system that dynamically adjusts the number of workers for applications based on health metrics. It intelligently balances computational resources across multiple applications while respecting system constraints.
+To decide when another worker would help, the scaler needs to understand where the application is running out of capacity. For Node.js, two useful signals are event loop utilization (ELU) and JavaScript heap usage.
 
-Two scaling algorithms are available:
+## Why event loop utilization matters
 
-- **v1** (default) — Threshold-based scaling using averaged ELU metrics over time windows
-- **v2** — Predictive scaling using Holt-Winters trend forecasting for proactive capacity management
+We’ll start with a quick review of some Node.js and JavaScript basics. The heart of Node.js is the event loop, which runs JavaScript callbacks one at a time on a single thread. It cycles through different phases, picking up ready callbacks and running them in order.
 
-Select the algorithm using the `version` field in the `workers` configuration:
+A typical HTTP request shows how this works. When a request comes in, the event loop runs the handler callback, which parses data, checks the input, and runs business logic. This part is synchronous, so nothing else can happen in the loop at the same time. If the handler needs to access a database or call an external API, Node.js hands off that work to the operating system or a background thread pool, and the event loop moves on to other callbacks. When the I/O finishes, a new callback is added to the queue, and the event loop picks it up later to finish processing, like reading the database result and sending the response.
+
+This design is what makes Node.js efficient. At any time, an app might have hundreds of requests in progress, but most are just waiting for I/O and not using the event loop. One thread can handle thousands of connections with little overhead, since there's no context switching or lock contention. This efficiency relies on the event loop having some idle time between callbacks.
+
+As traffic grows, the synchronous parts of handling requests—like parsing bodies, serializing JSON, running business logic, or rendering server-side React—start to use up more of the idle time. While this code runs, nothing else can happen. Eventually, those idle gaps disappear.
+
+[Event Loop Utilization (ELU)](https://nodesource.com/blog/event-loop-utilization-nodejs) measures this effect. It's a value from 0 to 1 that shows how much time the event loop spends running code versus being idle. An ELU of 0.5 means the loop is active half the time, while 0.9 means there's almost no idle time left.
+
+<img src="./images/event-loop-latency-cliff.png" alt="Traffic rises steadily while ELU reaches 100% and average response time increases sharply at saturation." style="zoom:33%;" />
+
+
+
+WATT provides two scaling algorithms. **Threshold-based scaling (v1)**, the default, reacts to recent ELU averages and uses heap usage to check whether another worker fits in memory. **Predictive scaling (v2)** forecasts demand from ELU and, optionally, heap usage so it can request capacity before the current workers become overloaded.
+
+## Threshold-based scaling (v1)
+
+Threshold-based scaling adds capacity when an application's recent average ELU exceeds an upper threshold and removes capacity when it falls below a lower threshold. Separate thresholds leave room for normal fluctuations without repeatedly adding and removing a worker.
+
+For example, with the defaults, an application whose workers average 85% ELU over the last 10 seconds qualifies for an extra worker. If its average falls below 20% over the last minute, it qualifies to lose a worker. The longer scale-down window avoids removing capacity in response to a brief drop in traffic.
+
+### How a decision works
+
+The threshold-based scaler samples eligible workers approximately once per second. It ignores a new worker's metrics during its startup grace period, which defaults to 30 seconds. For each application, it averages each worker's readings over the relevant window, then averages those worker values:
+
+| Decision | ELU window | Default threshold |
+| --- | --- | --- |
+| Scale up | Last 10 seconds | Above `0.8` |
+| Scale down | Last 60 seconds | Below `0.2` |
+
+The threshold-based scaler checks for scaling when a sampled worker exceeds its application's scale-up threshold. It also checks every 60 seconds, so low-load applications can scale down without a high-load trigger.
+
+Each scaling check looks at all applications and can:
+
+- Remove one worker from each application whose average ELU is below the scale-down threshold, without going below its minimum worker count.
+- Add one worker to one application whose average ELU is above the scale-up threshold, if worker and memory limits allow it.
+
+If an application's worker count is already outside its configured minimum or maximum, the scaler can add or remove multiple workers to bring it back within those limits.
+
+After applying scaling updates, the threshold-based scaler waits for a global cooldown before making another decision. The default is 20 seconds, and it blocks both directions across all applications. Metric collection continues during the cooldown.
+
+### Sharing capacity between applications
+
+Assume the default thresholds, a minimum of one worker per application, no active cooldown, and sufficient memory unless stated otherwise. ELU values below are the averages for the relevant decision window.
+
+| Situation | Result |
+| --- | --- |
+| A has two workers at 85% ELU; no other app needs scaling; worker and memory limits allow growth | A receives one additional worker |
+| A has two workers at 90%; B has two at 30%; `total` is four | No change: A cannot grow, and B is above the 20% scale-down threshold |
+| A has two workers at 50%; B has three at 10% | B loses one worker |
+| A has three workers at 15%; B has two at 18% | Each loses one worker |
+| A needs to grow, but its average worker heap is 1.5 GB and only 1 GB remains below `maxMemory` | A does not grow |
+
+The scaler does not remove a worker from an application solely to make room for another one. The application must qualify for scale-down itself.
+
+### Configuration
+
+#### Global configuration
+
+Enable threshold-based scaling by setting `dynamic` to `true` and `version` to `"v1"` in the runtime-level `workers` object. This algorithm is also selected when `version` is omitted. Durations are in milliseconds.
 
 ```json
 {
   "workers": {
     "dynamic": true,
-    "version": "v2"
-  }
-}
-```
-
----
-
-## v1: Threshold-Based Scaling (Default)
-
-### How It Works
-
-### Health Metrics
-
-The algorithm uses two primary health metrics:
-
-#### Event Loop Utilization (ELU)
-ELU measures how busy the Node.js event loop is:
-- **0.0** = Event loop is completely idle
-- **1.0** = Event loop is fully saturated
-
-ELU values are collected continuously from all workers and averaged over a configurable time window to smooth out temporary spikes and make stable scaling decisions.
-
-#### Memory Usage
-The algorithm tracks heap memory usage (`heapUsed` and `heapTotal`) for each worker. When making scaling decisions, it considers:
-- **Total memory limit**: A configured maximum total memory (`maxTotalMemory`), defaulting to 90% of the system's total memory
-- **Available memory**: Calculated as `maxTotalMemory - currently used memory`
-- **Average heap usage**: The average memory consumed by workers of each application
-
-The system memory information is obtained from cgroup files when running in containerized environments (Docker, Kubernetes), or from the operating system otherwise. This ensures that new workers are only started when there's sufficient memory available to accommodate them based on the application's average heap usage.
-
-#### Time Windows
-The algorithm uses different time windows for scale-up and scale-down decisions:
-- **Scale-up time window** (`timeWindowSec`): A shorter window (default: 10 seconds) for detecting high utilization and scaling up quickly
-- **Scale-down time window** (`scaleDownTimeWindowSec`): A longer window (default: 60 seconds) for detecting sustained low utilization before scaling down, preventing premature worker removal
-
-### Scaling Logic
-
-The algorithm operates in two modes:
-
-1. **Reactive Mode**: Triggers immediately when any worker's ELU exceeds the scale-up threshold
-2. **Periodic Mode**: Runs at regular intervals (default: every 60 seconds) regardless of metrics
-
-Both modes analyze all applications and generate scaling recommendations:
-
-#### 1. Metric Collection
-- Collects ELU and heap memory metrics from all active workers every second
-- Only collects metrics from workers that have been running for at least the grace period (default: 30 seconds)
-- Maintains a rolling time window of metrics for both scale-up (default: 10 seconds) and scale-down (default: 60 seconds) decisions
-- Calculates average ELU and heap usage per application across all its workers using the appropriate time window
-- Checks available memory by calculating `maxTotalMemory - currently used memory`
-
-#### 2. Application Prioritization
-Applications are prioritized based on:
-- Primary: ELU value (lower ELU = higher priority for scaling down)
-- Secondary: Worker count (more workers = higher priority for scaling down when ELU is equal)
-
-#### 3. Scaling Decisions
-
-The algorithm makes decisions in this order:
-
-**Scale Down (Low Utilization)**
-- Any application with ELU below the scale-down threshold (averaged over the longer `scaleDownTimeWindowSec` window) is reduced by 1 worker
-- Applications must have more workers than their configured minimum (default: 1 worker)
-- Multiple applications can scale down in the same cycle
-
-**Scale Up (High Utilization)**
-- Among applications that haven't been scaled in this cycle, find the best candidate for scaling up
-- The candidate selection prioritizes:
-  - Primary: Highest ELU value (apps with higher load get priority)
-  - Secondary: Fewest workers (smaller apps get priority when ELU is equal)
-- The selected application receives 1 additional worker if:
-  - Its ELU is at or above the scale-up threshold (averaged over the shorter `timeWindowSec` window)
-  - It hasn't reached its configured maximum workers
-  - Total workers across all apps is below `maxTotalWorkers`
-  - There is sufficient available system memory (based on the application's average heap usage)
-- Only one application scales up per cycle
-
-**Important Note on Scaling Limits**
-Unlike previous versions, the current algorithm does **not** perform worker reallocation between applications. If the maximum worker limit (`maxTotalWorkers`) is reached or there is insufficient memory, scaling up will not occur even if some applications have low utilization. Applications must be manually configured with appropriate min/max worker limits to ensure critical applications can scale when needed.
-
-### Cooldown Period
-
-After each scaling operation, the algorithm enters a cooldown period to prevent rapid oscillations. No scaling decisions are executed during cooldown, even if triggers occur.
-
-## Configuration
-
-### Global Workers Configuration
-
-Add a `workers` property to your runtime configuration (`platformatic.json` or `watt.json`):
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| **dynamic** | Enable dynamic worker scaling | `false` |
-| **total** | Maximum total workers across all applications | `os.availableParallelism()` |
-| **maxMemory** | Maximum total memory that can be used by all workers (bytes) | 90% of system total memory |
-| **cooldown** | Cooldown period between scaling operations (milliseconds) | 20000 |
-| **gracePeriod** | Delay after worker startup before collecting metrics (milliseconds) | 30000 |
-| **scaleUpELU** | ELU threshold to trigger scaling up (0-1) | 0.8 |
-| **scaleDownELU** | ELU threshold to trigger scaling down (0-1) | 0.2 |
-
-Example:
-```json
-{
-  "workers": {
-    "dynamic": true,
-    "total": 10,
+    "version": "v1",
+    "minimum": 1,
+    "maximum": 4,
+    "total": 8,
+    "scaleUpELU": 0.8,
+    "scaleDownELU": 0.2,
+    "cooldown": 20000,
     "gracePeriod": 30000
   }
 }
 ```
 
-### Per-Application Configuration
+This gives each dynamically scaled application between one and four workers, with a total budget of eight across the runtime.
 
-Individual applications can configure their worker limits using the `workers` property in the application config or the `runtime` section:
+For a framework application running directly through WATT, put the settings inside its configuration's `runtime` section instead:
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| **dynamic** | Enable dynamic worker scaling for this application | Global setting |
-| **minimum** | Minimum workers for this application | 1 |
-| **maximum** | Maximum workers for this application | Global total |
-
-Example (in application's `platformatic.json`):
 ```json
 {
   "runtime": {
     "workers": {
       "dynamic": true,
-      "minimum": 2,
-      "maximum": 6
+      "version": "v1",
+      "minimum": 1,
+      "maximum": 4,
+      "total": 4
     }
   }
 }
 ```
 
-## Behavior Examples
+These are configuration fragments; keep your existing application and server settings. Start the application through WATT, for example with `wattpm start`. Starting a framework directly, such as with `next start`, does not run the WATT scaler. The algorithm version is selected for the whole runtime.
 
-### Example 1: Scale Up (Under Limit, Sufficient Memory)
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `dynamic` | `false` | Enable automatic worker scaling |
+| `version` | `"v1"` | Use `"v1"` or omit this setting to select threshold-based scaling |
+| `static` | `1` | Initial worker count; also the fixed count when dynamic scaling is disabled |
+| `minimum` | `1` | Default minimum workers per application |
+| `maximum` | `total` | Default maximum workers per application |
+| `total` | `os.availableParallelism()` | Runtime-wide worker limit for load-driven scale-ups, including fixed applications |
+| `maxMemory` | 90% of detected total memory | Memory usage limit, in bytes, used when considering scale-ups |
+| `scaleUpELU` | `0.8` | Scale-up threshold for the 10-second application average |
+| `scaleDownELU` | `0.2` | Scale-down threshold for the 60-second application average |
+| `cooldown` | `20000` | Global delay after scaling updates before another decision |
+| `gracePeriod` | `30000` | Time after each worker starts before the threshold-based scaler uses its metrics |
 
-**Initial State:**
-- App A: 2 workers, ELU = 0.85, avg heap = 500MB
-- App B: 1 worker, ELU = 0.3, avg heap = 300MB
-- Total: 3 workers, Max: 10
-- Available memory: 4GB
+Memory usage and capacity come from cgroup files when available, otherwise from the host operating system. On a host, the check therefore includes memory used outside this WATT. `maxMemory` is a scaling constraint; setting it does not impose an operating-system memory limit.
 
-**Analysis:**
-- App A exceeds scale-up threshold (0.85 > 0.8)
-- Under max worker limit (3 < 10)
-- Sufficient memory available (4GB > 500MB needed for new worker)
+The threshold-based scaler estimates whether there is room for another worker using the application's average heap usage. Heap usage constrains whether a new worker can be started; it does not independently trigger threshold-based scaling.
 
-**Decision:** Scale up App A to 3 workers
+Choose application minima and fixed counts that fit within `total` and the available memory. Provisioning the configured minimum is separate from the checks for load-driven scale-ups. A runtime can otherwise start above its intended budget.
 
-**Result:**
-- App A: 3 workers
-- App B: 1 worker
+On platforms without the required `reusePort` support, the scaler limits an entrypoint application to one worker and logs a warning.
 
----
+#### Per-application configuration
 
-### Example 2: At Worker Limit - No Scaling
+In a multi-application runtime, set overrides in `applications[].workers`. Threshold-based scaling supports `minimum`, `maximum`, `scaleUpELU`, and `scaleDownELU` per application. Omitted values use the runtime-level settings.
 
-**Initial State:**
-- App A: 2 workers, ELU = 0.9, avg heap = 600MB
-- App B: 2 workers, ELU = 0.3, avg heap = 400MB
-- Total: 4 workers, Max: 4
-- Available memory: 2GB
+```json
+{
+  "workers": {
+    "dynamic": true,
+    "version": "v1",
+    "minimum": 1,
+    "maximum": 4,
+    "total": 8
+  },
+  "applications": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "workers": {
+        "minimum": 2,
+        "maximum": 6,
+        "scaleUpELU": 0.7
+      }
+    },
+    {
+      "id": "jobs",
+      "path": "./services/jobs",
+      "workers": 1
+    }
+  ]
+}
+```
 
-**Analysis:**
-- App A needs scaling (ELU = 0.9 > 0.8)
-- At max worker limit (4 = 4)
-- App B is below scale-down threshold (0.3 > 0.2)
+Here, `api` can scale between two and six workers. `jobs` stays at one worker, which still counts toward `total`. Cooldown and grace-period settings apply across the runtime.
 
-**Decision:** No scaling (at max worker limit)
+## Predictive scaling (v2)
 
-**Result:**
-- App A: 2 workers (unchanged)
-- App B: 2 workers (unchanged)
+Starting a worker takes time: it must load the application and initialize its dependencies before handling requests. During that time, the existing workers continue to carry the traffic. Waiting until average ELU exceeds the configured limit can leave them overloaded before the new worker is ready.
 
----
+Predictive scaling accounts for this delay by tracking the application's load and how quickly it changes. It estimates the capacity needed when a new worker is expected to be ready, so a rising trend can trigger a scale-up while current ELU is still below the threshold. The underlying method is described in the [algorithm whitepaper](https://arxiv.org/abs/2604.19705).
 
-### Example 3: Scale Down Only
+<img src="./images/predictive-scaling-forecast.png" alt="A rising metric is currently below the threshold, but its projected trend crosses it before the forecast horizon H." style="zoom:33%;" />
 
-**Initial State:**
-- App A: 2 workers, ELU = 0.5
-- App B: 3 workers, ELU = 0.1
-- Total: 5 workers, Max: 10
+In the chart, ELU has risen to 73%, still below the 75% threshold. The threshold-based scaler would not request another worker yet. But the dashed purple line shows that, if the trend continues, ELU will reach 78% by the forecast horizon, `H`, when extra capacity is expected to be ready.
 
-**Decision:** Scale down App B to 2 workers (ELU below threshold)
+That forecast lets predictive scaling request workers before the measured load crosses the limit. Starting them earlier gives them a chance to take traffic before the existing workers become overloaded and requests begin to queue.
 
-**Result:**
-- App A: 2 workers (unchanged)
-- App B: 2 workers
+The rest of this section explains how the algorithm builds this prediction.
 
----
+**The core idea.** The algorithm takes per-worker metric values, combines them into a single number for the application, predicts where that number is heading, and converts the prediction back into a per-worker value to compare against the threshold. Each application has its own forecast and worker recommendation.
 
-### Example 4: Multiple Scale Downs
+**Why predict on an aggregate?** Per-worker metrics change for two reasons: incoming traffic changes and the scaler's own actions. When another worker starts handling requests, ELU on the existing workers drops, even though traffic has not changed. Predicting directly from those readings could make the algorithm interpret this as falling demand and delay further scaling when it is still needed.
 
-**Initial State:**
-- App A: 3 workers, ELU = 0.15
-- App B: 2 workers, ELU = 0.18
-- App C: 2 workers, ELU = 0.6
+Combining ELU across the application's workers gives a more stable view of demand. Once traffic has redistributed, roughly the same work is spread across more workers. Their individual readings change, but the combined load is less affected by the change in worker count.
 
-**Decision:** Scale down both App A and App B
+**Cleaning the data.** Runtime collects worker measurements approximately once per second. Missing readings and the temporary changes caused by starting workers need to be accounted for before those measurements can support a forecast.
 
-**Result:**
-- App A: 2 workers
-- App B: 1 worker
-- App C: 2 workers
+Alignment places samples onto a common one-second time grid, interpolating between readings so that workers can be compared at the same points in time.
 
----
+Imputation fills gaps by carrying a live worker's last valid measurement forward. A worker contributes only after its first measurement, and runtime lifecycle events determine when it has exited. Processing moves forward from the current state; late readings do not cause past predictions to be recomputed.
 
+Redistribution accounts for the transition after a scale-up. New workers' measurements are included gradually as they take on traffic. At the same time, the algorithm compensates for the drop on existing workers as they shed load. This reduces the distortion caused by scaling while still allowing increases in demand to pass through.
 
-### Example 5: No Action (Insufficient Memory)
+**Predicting the trend.** The resulting aggregate enters Holt's double exponential smoothing. This maintains two values: the level, a smoothed estimate of the current load, and the trend, an estimate of how quickly it is changing. Each new measurement updates both. Smoothing reduces the effect of individual noisy readings while allowing sustained changes to shape the forecast.
 
-**Initial State:**
-- App A: 2 workers, ELU = 0.85, avg heap = 1.5GB
-- App B: 1 worker, ELU = 0.3, avg heap = 500MB
-- Total: 3 workers, Max: 10
-- maxTotalMemory: 10GB
-- Currently used memory: 9GB
-- Available memory: 1GB (10GB - 9GB)
+**Asymmetric reaction.** The algorithm can respond differently to measurements above and below its forecast. By default, the load level responds faster to higher readings and more slowly to lower ones. Missing a sustained increase can leave workers overloaded; reacting too quickly to a brief drop can cause unnecessary scaling down and then back up. Separate settings control how quickly the level and trend adjust in each direction.
 
-**Analysis:**
-- App A needs scaling (ELU = 0.85 > 0.8)
-- Under max worker limit (3 < 10)
-- Insufficient memory for new worker (1GB available < 1.5GB needed for new worker)
-- App B cannot be scaled down (already at minWorkers = 1)
+**The prediction horizon.** The horizon, `H`, determines how far ahead the algorithm looks. It follows observed worker startup times, so an application that takes longer to initialize is given more time to prepare for rising traffic. The estimate adapts as workers start. A small safety buffer extends the forecast beyond the estimated startup time, and fixed lower and upper bounds keep it within a useful range.
 
-**Decision:** No scaling (insufficient memory and no workers to reallocate)
+**Handling metric saturation.** ELU cannot exceed 100%. Once the workers' event loops are saturated, more traffic can arrive without the metric increasing. Normally, a flat measurement would make the estimated trend fade toward zero. During saturation, the algorithm preserves that trend, allowing it to continue requesting capacity even though ELU cannot show how much demand has grown.
 
----
+**The scaling decision.** The forecast estimates the application's total load at the horizon. Dividing it by the approved worker target, including workers already requested, gives the expected load per worker. If that exceeds the threshold, the algorithm calculates a higher worker count, with margins to avoid reacting to small differences. If the trend is flat or falling and current load fits, it considers scaling down while keeping spare capacity. Recommendations remain subject to application limits, cooldowns, and the runtime controller's resource checks.
 
-## v2: Predictive Scaling
+### Coordinating applications
 
-### The Problem with Reactive Scaling
+Applications share the WATT's CPU and memory. A recommendation from one application cannot assume that all spare resources are available to it. The runtime controller compares the desired worker counts and decides which updates to approve:
 
-Threshold-based scalers react when a metric crosses a limit — but by the time a new worker starts and begins absorbing traffic, the system may already be degraded. The scaler has no memory of prior state and no understanding of whether the metric is rising, falling, or stable. It cannot distinguish a sustained rise from a momentary spike, and it cannot right-size the response because it doesn't know how fast the metric is changing.
+- It accepts scale-down recommendations for all eligible applications in the same cycle.
+- For scale-up, it selects the application with the largest relative increase: `(desiredTarget - approvedTarget) / approvedTarget`.
+- It adds at most `maxScaleUpStep` workers to that application, limited by its requested count, the total worker budget, and the memory check.
 
-### The Core Idea
+For example, a request from two to four workers has a relative increase of 100%; a request from four to five has an increase of 25%. The first application gets priority. The controller uses worker counts, so this choice does not depend on whether ELU or heap produced the request.
 
-The predictive scaler uses time-series forecasting to estimate where the load will be in the near future — specifically, by the time a new worker would start and absorb its share of the traffic. If the predicted load at that future point exceeds the capacity of the current workers, the scaler adds workers *now*, so they are ready exactly when the extra capacity is needed.
-
-This shifts the scaling decision from "we are overloaded, add capacity" to "we will be overloaded in T seconds, add capacity now so it's ready in time."
-
-The algorithm tracks the **total load across all workers** (a sum, not a per-worker average). This is critical: a per-worker metric is corrupted by the algorithm's own scaling actions — adding a worker redistributes load and changes every worker's metric, even if external traffic is unchanged. The cluster-wide sum remains approximately invariant under scaling, allowing the algorithm to distinguish real traffic changes from internal redistribution artifacts.
-
-### How It Works
-
-The algorithm takes per-worker metric samples, combines them into a cluster-wide aggregate, smooths the signal to separate trend from noise, predicts where the aggregate is heading, and converts the prediction back into a worker count.
-
-Key properties:
-- **Asymmetric response** — reacts aggressively to rising load (fast smoothing) while remaining conservative on drops (slow smoothing), because the cost of being late on scale-up is higher than the cost of being late on scale-down
-- **Redistribution awareness** — newly added workers haven't absorbed their share of load yet; the algorithm gradually includes them to avoid prediction artifacts during the transition period
-- **Adaptive horizon** — the prediction look-ahead is tied to observed worker startup times, so the algorithm automatically adjusts how far ahead it looks based on the actual environment
-- **Hysteresis** — scale-down requires a larger margin than scale-up, preventing oscillation near the threshold
-
-Each metric (ELU, heap) is processed independently. When multiple metrics are used, the highest target worker count wins.
-
-Startup time is measured from the approved scale-up request until worker lifecycle events show that the expected live worker count has been reached. A replacement that only restores the previous count does not complete a pending scale-up. This is an approximation when restarts overlap scaling: a replacement can temporarily raise the count before the old worker exits.
-
-If a pending scale-up expires, the remembered target is reconciled with live workers and requests still pending. Capacity that never appeared can then be requested again, subject to the usual cooldowns and resource limits.
-
-At startup, the scaler brings applications up to their configured minimum if their initial worker count is lower. The same setup runs after an application added later has started. This initial provisioning is separate from predictive scale-ups and does not use `maxScaleUpStep`.
-
-### Global Arbitration
-
-When multiple applications are managed, the orchestrator coordinates scaling:
-
-- **Scale-downs** are applied freely — all applications that need fewer workers are scaled down in the same cycle
-- **Scale-ups** select one application per processing cycle and add at most `maxScaleUpStep` workers (default: `1`), limited by its requested target and the total worker limit
-- When multiple applications need to scale up, the one with the **highest relative need** is chosen: `(desiredTarget - currentTarget) / currentTarget`. This favors applications with fewer workers relative to demand (scaling 1→2 has more impact than 4→5)
-- Scale-ups are gated by:
-  - Total worker count limit (`total`)
-  - Available system memory (`maxMemory`, defaults to 90% of system memory)
-
-The default adds one worker at a time because startup work, such as compilation and opening database connections, competes with other applications and workers in the same WATT. Increase `maxScaleUpStep` only when the application and container have enough spare resources to handle more worker starts in one cycle. The memory check uses current usage; it does not reserve memory for the workers being started.
-
-### Applications diagnostic page
-
-With v2 workers and the metrics server enabled, open `/scaler/` on the metrics server (by default, `http://localhost:9090/scaler/`). `/scaler/applications` opens the same page. It uses the metrics server's existing HTTPS and authentication settings.
-
-The page follows ICC's Applications layout: select an application on the left, inspect worker counts and smoothed ELU/heap charts in the centre, and inspect individual workers on the right. **Approved target** includes pending starts; it is the count the controller has approved, not an unapproved algorithm recommendation. Heap charts are available when `heapThresholdMb` is configured.
-
-The page polls a read-only `/scaler/snapshot` endpoint every five seconds. Polling pauses when the page is hidden or when **Pause** is selected. Requests copy existing algorithm state without processing samples, expiring pending requests, changing decisions, or retaining additional server-side history. All chart rendering and worker-count history recording happen in the browser. No new timers, metric subscriptions, or buffers are added to the scaling loop.
-
-Metric charts use the existing 60-second history. Worker-count history starts when the page opens and is bounded to 60 seconds in browser memory. Dashed metric lines show the current Holt level/trend projected over the horizon and divided by the approved target; they are a visual projection, not a replay of the scaling decision. Per-worker charts show retained measurements and their age, including the last valid reading from silent workers. Refreshing the page clears browser history.
-
-As in ICC, displayed ELU history and projections are bounded to 0–100%, with a fixed 0–100% application chart axis. A projection flattens where it reaches the bound. Heap has a zero lower bound and no fixed upper bound. These display limits do not cap the algorithm's internal forecast or change its worker recommendation.
+The default is one extra worker per cycle. Starting workers can involve compilation, database connections, and memory allocation that compete with the other applications in the WATT. Increase `maxScaleUpStep` only when the workload and container have enough spare resources for several starts at once.
 
 ### Configuration
 
-#### Global Configuration
+#### Global configuration
+
+Enable predictive scaling by setting `version` to `"v2"` in the runtime-level `workers` object. This example scales on ELU; add `heapThresholdMb` when heap usage should also influence worker count. Durations are in milliseconds.
 
 ```json
 {
@@ -315,79 +225,139 @@ As in ICC, displayed ELU history and projections are bounded to 0–100%, with a
     "maximum": 4,
     "total": 8,
     "eluThreshold": 0.8,
-    "heapThresholdMb": 500,
     "processIntervalMs": 10000,
-    "maxScaleUpStep": 1,
-    "scaleUpMargin": 0.1,
-    "scaleDownMargin": 0.3,
-    "redistributionMs": 10000,
-
-    "alphaUp": 0.2,
-    "alphaDown": 0.1,
-    "betaUp": 0.2,
-    "betaDown": 0.1,
-    "cooldowns": {
-      "scaleUpAfterScaleUpMs": 5000,
-      "scaleUpAfterScaleDownMs": 5000,
-      "scaleDownAfterScaleUpMs": 30000,
-      "scaleDownAfterScaleDownMs": 20000
-    }
+    "maxScaleUpStep": 1
   }
 }
 ```
 
-**Metric thresholds:**
+For a framework application running directly through WATT, put this `workers` object inside its configuration's `runtime` section. Start it through WATT, for example with `wattpm start`; a framework's own start command does not run the scaler. The version applies to the whole runtime.
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `eluThreshold` | `0.8` | The per-worker ELU value above which a worker is considered overloaded. The algorithm uses this as the capacity limit when converting its load forecast into a worker count |
-| `heapThresholdMb` | — | Per-worker heap overload threshold in MB. When set, heap is tracked as an independent metric alongside ELU — the highest worker count across all metrics wins. Disabled if absent |
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `dynamic` | `false` | Enable automatic worker scaling |
+| `version` | `"v1"` | Set to `"v2"` to select predictive scaling |
+| `static` | `1` | Initial worker count; also the fixed count when dynamic scaling is disabled |
+| `minimum` | `1` | Default minimum workers per application |
+| `maximum` | `os.availableParallelism()` | Default maximum workers per application |
+| `total` | `os.availableParallelism()` | Runtime-wide worker limit for load-driven scale-ups, including fixed applications |
+| `maxMemory` | 90% of detected total memory | Memory usage limit, in bytes, used when considering scale-ups |
 
-**Prediction tuning:**
+Memory usage and capacity come from cgroup files when available, otherwise from the host operating system. On a host, the check therefore includes memory used outside this WATT. `maxMemory` is a scaling constraint; setting it does not impose an operating-system memory limit.
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `processIntervalMs` | `10000` | How often the algorithm runs. Samples that arrive between runs are accumulated and processed together |
-| `maxScaleUpStep` | `1` | Maximum extra workers requested for the selected application per processing run. Positive integer; global-only. Increase only when enough resources are available for the additional startup work |
-| `scaleUpMargin` | `0.1` | When the predicted load requires a fractional worker (e.g. 2.08 workers), the algorithm only provisions the extra worker if the fractional part exceeds this margin. Below the margin, the evidence for the extra worker is weak — the trend may not materialize — so the algorithm waits for the next cycle to confirm |
-| `scaleDownMargin` | `0.3` | After removing a worker, load redistributes across fewer workers, raising per-worker metrics. This margin ensures enough headroom to absorb that increase plus a safety buffer that prevents the removal from immediately triggering a scale-up |
-| `redistributionMs` | `10000` | Expected time for a new worker to fully absorb its share of traffic. During this period, the new worker's contribution is gradually weighted from 0 to 1 in the aggregate, preventing its initially low metrics from distorting the load signal |
+The predictive scaler checks whether current memory usage is below `maxMemory`; it does not reserve an estimated amount for new workers. Allow enough headroom for startup work and other memory allocations.
 
-The algorithm uses Holt-Winters exponential smoothing with separate parameters for upward and downward movements. This asymmetry lets the algorithm react quickly to rising load while requiring sustained evidence before acting on drops.
+Choose application minima and fixed counts that fit within `total` and the available memory. Provisioning the configured minimum is separate from the checks for load-driven scale-ups. A runtime can otherwise start above its intended budget.
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `alphaUp` | `0.2` | Controls how much each data point moves the smoothed level when load is rising. Higher values track spikes faster but are more sensitive to noise |
-| `alphaDown` | `0.1` | Same as `alphaUp` but for falling load. A lower value means the algorithm requires several ticks of sustained decrease before the level drops significantly |
-| `betaUp` | `0.2` | Controls how quickly the trend changes direction when load is rising. Higher values pivot the trend immediately on reversal; lower values keep extrapolating until sustained change accumulates |
-| `betaDown` | `0.1` | Same as `betaUp` but for falling trends. A lower value means the algorithm is slow to conclude that a downward trend is real |
+On platforms without the required `reusePort` support, the scaler limits an entrypoint application to one worker and logs a warning.
 
-**Cooldowns:**
+#### Thresholds and decision timing
 
-Cooldowns are optional safety guards. The core algorithm already prevents cascading scale-ups by tracking pending workers that have been requested but haven't started yet. Cooldowns add additional spacing between decisions.
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `eluThreshold` | `0.8` | Per-worker ELU capacity used to convert aggregate load into a worker count |
+| `heapThresholdMb` | Disabled | Per-worker heap capacity in MB, where 1 MB is 1,048,576 bytes. Enables an independent heap-based recommendation |
+| `processIntervalMs` | `10000` | Time between processing runs. Samples arriving between runs are processed together. Runtime-level only |
+| `maxScaleUpStep` | `1` | Maximum workers added to the selected application per run. Positive integer; runtime-level only |
+| `redistributionMs` | `10000` | Expected time for a new worker to absorb its share of traffic; controls how its contribution is introduced into the aggregate |
+| `scaleUpMargin` | `0.1` | Fractional-worker margin for rounding up a forecast-based request. Current overload bypasses this margin |
+| `scaleDownMargin` | `0.3` | Extra capacity retained when calculating a lower worker count |
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `cooldowns.scaleUpAfterScaleUpMs` | `5000` | Minimum time since the last scale-up decision before another scale-up is allowed |
-| `cooldowns.scaleUpAfterScaleDownMs` | `5000` | Minimum time since the last scale-down decision before a scale-up. Prevents rapid back-and-forth oscillation |
-| `cooldowns.scaleDownAfterScaleUpMs` | `30000` | Minimum time since a worker actually started (not since the decision). The clock starts when the worker registers, not when the decision was made — what matters is how long the worker has been running and absorbing load |
-| `cooldowns.scaleDownAfterScaleDownMs` | `20000` | Minimum time since the last scale-down decision. Limits how quickly capacity is removed |
+For example, an adjusted forecast requiring 2.08 workers does not pass a `0.1` scale-up margin by itself. Current overload can still justify rounding up. Scale-down uses the current smoothed load with additional headroom; it does not simply reverse the scale-up calculation.
 
-#### Per-Application Overrides
+#### Trend detecting
 
-Most v2 parameters can be overridden per application. Global values act as defaults; per-app values take precedence when specified:
+Holt smoothing maintains a load level and a trend. These parameters control how much new measurements change that state. Higher values respond more quickly but also follow noise more closely.
+
+| Setting | Default | Applied when |
+| --- | --- | --- |
+| `alphaUp` | `0.2` | Updating the level when the measurement is above the one-step forecast |
+| `alphaDown` | `0.1` | Updating the level when the measurement is at or below the one-step forecast |
+| `betaUp` | `0.1` | Updating the trend when the measurement is above the one-step forecast |
+| `betaDown` | `0.1` | Updating the trend when the measurement is at or below the one-step forecast |
+
+The default level smoothing reacts more quickly to measurements above the forecast. ELU also has saturation handling: near 100% utilization, a flat measurement may mean that the event loop has reached its reporting limit, rather than that demand has stopped growing.
+
+#### Cooldowns
+
+Predictive scaling cooldowns apply independently to each application. They are enabled with the following defaults; set a duration to `0` to remove that particular delay. Processing intervals and pending-worker checks still apply.
+
+| Setting | Default | What it delays |
+| --- | --- | --- |
+| `cooldowns.scaleUpAfterScaleUpMs` | `5000` | Another scale-up after the last approved scale-up |
+| `cooldowns.scaleUpAfterScaleDownMs` | `5000` | A scale-up after the last approved scale-down |
+| `cooldowns.scaleDownAfterScaleUpMs` | `30000` | A scale-down after the most recent worker start, including initial and replacement workers |
+| `cooldowns.scaleDownAfterScaleDownMs` | `20000` | Another scale-down after the last approved scale-down |
+
+The predictive scaler does not use the `cooldown` or `gracePeriod` settings of threshold-based scaling. It starts using a worker's valid measurements as they arrive and accounts for its startup through redistribution and pending-worker tracking.
+
+#### Per-application configuration
+
+In a multi-application runtime, set overrides in `applications[].workers`. Predictive scaling supports `minimum`, `maximum`, metric thresholds, margins, redistribution time, smoothing parameters, and cooldowns per application. Omitted values use the runtime-level settings.
 
 ```json
 {
-  "runtime": {
-    "workers": {
-      "minimum": 2,
-      "maximum": 8,
-      "eluThreshold": 0.7,
-      "scaleUpMargin": 0.05
+  "workers": {
+    "dynamic": true,
+    "version": "v2",
+    "minimum": 1,
+    "maximum": 4,
+    "total": 8
+  },
+  "applications": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "workers": {
+        "minimum": 2,
+        "maximum": 6,
+        "eluThreshold": 0.7
+      }
+    },
+    {
+      "id": "jobs",
+      "path": "./services/jobs",
+      "workers": 1
     }
+  ]
+}
+```
+
+Here, `api` can scale between two and six workers using a 70% ELU threshold. `jobs` stays at one worker, which still counts toward `total`.
+
+The algorithm version, processing interval, scale-up step, total worker limit, and memory budget are runtime-level settings. For a standalone framework application, use `runtime.workers`.
+
+### Applications dashboard
+
+Enable the metrics server alongside predictive scaling in the runtime configuration:
+
+```json
+{
+  "workers": {
+    "dynamic": true,
+    "version": "v2"
+  },
+  "metrics": {
+    "enabled": true,
+    "hostname": "127.0.0.1",
+    "port": 9090
   }
 }
 ```
 
-The following properties are **global-only** and cannot be overridden per application: `version`, `processIntervalMs`, `maxScaleUpStep`, `dynamic`, `total`, `maxMemory`.
+For a standalone framework application, put both properties inside `runtime`. Open **http://127.0.0.1:9090/scaler/** on the metrics server. This is separate from the application's HTTP port. The page uses the metrics server's existing HTTPS and authentication settings and is available only when predictive scaling is active.
+
+Select an application to see its worker counts, aggregated metrics, forecasts, and individual worker charts. Heap charts require `heapThresholdMb`. The page also reports current worker and memory constraints and workers taking longer than expected to start.
+
+#### Reading the charts
+
+- **Current workers** are registered live workers. **Scheduled workers** are the controller's approved target, including pending starts. The page does not retain unapproved recommendations or a decision log.
+- **Past metric values** come from the algorithm's existing 60-second history. **Dashed projections** show its current smoothed level and trend divided by the approved target. These lines are a display of the current state, not a second execution of the decision algorithm.
+- **NOW** marks the snapshot time. **INIT** marks the estimated startup delay when it fits in the chart. The chart shows 20 seconds into the future; metric projections can extend beyond the algorithm's forecast horizon to fill that display window.
+- **Displayed ELU** is bounded to 0–100%. Heap has a zero lower bound. These display bounds do not cap the algorithm's internal forecast or worker recommendation.
+
+Worker-count history is recorded only while the page receives snapshots and is cleared on refresh. Individual worker charts can include a silent worker's last valid measurement.
+
+The page polls every five seconds and pauses polling when hidden or when **Pause** is selected. The UI can refresh between algorithm runs; this does not trigger another scaling decision. Snapshot requests read existing state and add no history buffers or metric collection to the scaling loop. Worker-count history and chart rendering stay in the browser.
+
+![Predictive scaling dashboard showing application worker counts, ELU and heap forecasts, and individual worker metrics.](./images/predictive-scaling-dashboard.png)
