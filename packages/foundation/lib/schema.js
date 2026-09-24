@@ -72,7 +72,6 @@ export const workers = {
             dynamic: { type: 'boolean' },
             minimum: { type: 'number', minimum: 1 },
             maximum: { type: 'number', minimum: 0 },
-            static: { type: 'number', minimum: 1 },
             total: { type: 'number', minimum: 1 },
             maxMemory: { type: 'number', minimum: 0 },
             eluThreshold: { type: 'number', minimum: 0, maximum: 1 },

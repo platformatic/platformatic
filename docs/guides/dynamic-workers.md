@@ -237,8 +237,7 @@ For a framework application running directly through WATT, put this `workers` ob
 | --- | --- | --- |
 | `dynamic` | `false` | Enable automatic worker scaling |
 | `version` | `"v1"` | Set to `"v2"` to select predictive scaling |
-| `static` | `1` | Initial worker count; also the fixed count when dynamic scaling is disabled |
-| `minimum` | `1` | Default minimum workers per application |
+| `minimum` | `1` | Initial and minimum worker count for each dynamically scaled application |
 | `maximum` | `os.availableParallelism()` | Default maximum workers per application |
 | `total` | `os.availableParallelism()` | Runtime-wide worker limit for load-driven scale-ups, including fixed applications |
 | `maxMemory` | 90% of detected total memory | Memory usage limit, in bytes, used when considering scale-ups |
@@ -294,6 +293,8 @@ The predictive scaler does not use the `cooldown` or `gracePeriod` settings of t
 #### Per-application configuration
 
 In a multi-application runtime, set overrides in `applications[].workers`. Predictive scaling supports `minimum`, `maximum`, metric thresholds, margins, redistribution time, smoothing parameters, and cooldowns per application. Omitted values use the runtime-level settings.
+
+An application inherits the runtime’s `dynamic` setting unless it explicitly overrides it, just as in v1. Setting `static` alone does not disable dynamic scaling. To keep an application at four workers, use `"workers": { "dynamic": false, "static": 4 }` or the numeric shorthand `"workers": 4`. With v2 dynamic scaling enabled, whether explicitly or inherited, `static` is ignored and the application starts at its effective `minimum`.
 
 ```json
 {

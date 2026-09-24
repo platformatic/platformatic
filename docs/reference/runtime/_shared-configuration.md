@@ -286,7 +286,7 @@ runtime. Each application object supports the following settings:
 - **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
-    - **`static`** (`number`) - A fixed number of workers
+    - **`static`** (`number`) - A fixed worker count when `dynamic: false`, or the initial count with v1 dynamic scaling. Setting `static` alone does not override inherited dynamic scaling. With predictive scaling (`v2`) enabled, whether explicitly or inherited, `static` is ignored and the effective `minimum` determines the initial worker count.
     - **`dynamic`** (`boolean`) - Enable dynamic worker scaling. This is only meaningful when set to `false` to disable dynamic scaling for this application.
     - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
     - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
@@ -427,7 +427,7 @@ This can be specified as:
 - **`number`** - A fixed number of workers (minimum 1)
 - **`object`** - Advanced worker configuration with the following properties:
   - **`version`** (`string`) - The scaling algorithm version. `"v1"` (default) uses threshold-based scaling, `"v2"` uses predictive scaling with Holt-Winters trend forecasting. See the [Dynamic Workers guide](../../guides/dynamic-workers.md) for details.
-  - **`static`** (`number`) - A fixed number of workers
+  - **`static`** (`number`) - A fixed or initial number of workers for v1. This property is not supported in the runtime-level v2 workers object. For a fixed runtime worker count, use a number such as `"workers": 4`; dynamically scaled v2 applications start at their effective `minimum`.
   - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`). The dynamic worker scaler automatically adjusts the number of workers for each application based on health metrics. It can be overridden at the application level.
   - **`minimum`** (`number`) - The minimum number of workers that can be used for each application. Default: `1`.
   - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: global `total` value.

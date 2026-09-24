@@ -68,9 +68,11 @@ const config = await loadConfiguration('/path/to/platformatic.config.json')
 
 Use this when you need to inspect or mutate the resolved configuration before passing it to `create()`.
 
-### `prepareApplication(runtimeConfig, application)`
+### `prepareApplication(runtimeConfig, application, defaultWorkers?)`
 
 Normalizes an application descriptor (resolving paths, detecting the capability type, applying defaults for `watch`, `management`, `workers`, `localUrl`, etc.) so it is ready to be passed to `runtime.addApplications()`.
+
+Pass `runtimeConfig.workers` as the third argument to inherit the runtime’s worker settings. When this argument is omitted, worker defaults are `{ static: 1, dynamic: false }`; an application can still explicitly enable dynamic scaling. This behavior is the same for v1 and v2. The runtime selects the scaling algorithm in both cases.
 
 You must call `prepareApplication()` before adding an application at runtime — see [Adding and removing applications at runtime](#adding-and-removing-applications-at-runtime).
 

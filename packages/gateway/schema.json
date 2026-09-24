@@ -2423,10 +2423,6 @@
                       "type": "number",
                       "minimum": 0
                     },
-                    "static": {
-                      "type": "number",
-                      "minimum": 1
-                    },
                     "total": {
                       "type": "number",
                       "minimum": 1

@@ -107,7 +107,7 @@ test('a running v2 runtime serves its actual workers and retained metrics', asyn
     entrypoint: 'main',
     watch: false,
     autoload: { path: './services' },
-    applications: [{ id: 'service-1', path: './services/service-1', workers: { minimum: 3, maximum: 3, static: 1 } }],
+    applications: [{ id: 'service-1', path: './services/service-1', workers: { minimum: 3, maximum: 3 } }],
     server: { hostname: '127.0.0.1', port: 0 },
     metrics: { hostname: '127.0.0.1', port },
     workers: { dynamic: true, version: 'v2', minimum: 1, maximum: 1, processIntervalMs: 1000, heapThresholdMb: 128 }
@@ -145,12 +145,24 @@ test('a running v2 runtime serves its actual workers and retained metrics', asyn
     id: 'later',
     path: join(import.meta.dirname, '../fixtures/prom-server/services/service-1'),
     config: 'platformatic.json',
-    workers: { dynamic: true, static: 1, minimum: 2, maximum: 2 }
+    workers: { static: 4, minimum: 2, maximum: 2 }
   }, config.workers)
-  await runtime.addApplications([later], true)
+  const fixed = await prepareApplication(config, {
+    id: 'fixed',
+    path: join(import.meta.dirname, '../fixtures/prom-server/services/service-1'),
+    config: 'platformatic.json',
+    workers: { dynamic: false, static: 2 }
+  }, config.workers)
+  await runtime.addApplications([later, fixed], true)
   const response = await request(`${origin}/scaler/snapshot`)
-  const added = (await response.body.json()).applications.find(app => app.id === 'later')
+  const applications = (await response.body.json()).applications
+  const added = applications.find(app => app.id === 'later')
   assert.equal(added.targetCount, 2)
   assert.equal(added.liveCount, 2)
   assert.equal(added.workers.length, 2)
+  const fixedApp = applications.find(app => app.id === 'fixed')
+  assert.equal(fixedApp.targetCount, 2)
+  assert.equal(fixedApp.liveCount, 2)
+  assert.equal(fixedApp.min, 2)
+  assert.equal(fixedApp.max, 2)
 })
