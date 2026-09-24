@@ -175,17 +175,27 @@ async function openApiGatewayPlugin (app, { opts, generated }) {
   })
 }
 
+// Used for the routes of an application configured with `validation: "none"`:
+// no validator is compiled for them and requests are forwarded without being
+// matched against the operation schema, the upstream stays responsible for
+// validating them. Deferring the compilation itself to the first request is
+// a Fastify concern, see https://github.com/fastify/fastify/pull/6977.
+function skipValidatorCompiler () {
+  return () => true
+}
+
 async function registerOpenApiGlue (app, openApiGlue, apiByApiRoutes) {
   await app.register(openApiGlue, {
     specification: app.composedOpenApiSchema,
     addEmptySchema: true,
     operationResolver: (operationId, method, openApiPath) => {
-      const { origin, prefix, schema } = apiByApiRoutes[openApiPath]
+      const { origin, prefix, schema, validation } = apiByApiRoutes[openApiPath]
       const originPath = schema[originPathSymbol]
 
       const mapRoutePath = createPathMapper(originPath, openApiPath, prefix)
 
       return {
+        ...(validation === 'none' ? { validatorCompiler: skipValidatorCompiler } : {}),
         config: { openApiPath },
         handler: (req, reply) => {
           const routePath = req.raw.url.split('?')[0]
@@ -294,7 +304,8 @@ export async function openApiGenerator (app, opts) {
       apiByApiRoutes[prefix + path] = {
         origin,
         prefix,
-        schema: schema.paths[path]
+        schema: schema.paths[path],
+        validation: openapi.validation ?? 'full'
       }
     }
 
