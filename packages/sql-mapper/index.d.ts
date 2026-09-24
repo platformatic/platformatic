@@ -263,6 +263,28 @@ interface Save<EntityFields> {
   }): Promise<Partial<EntityFields>>
 }
 
+interface Update<EntityFields> {
+  (options: {
+    /**
+     * Entity to update. All the primary keys must be present.
+     */
+    input: EntityFields,
+    /**
+     * List of fields to be returned for each object
+     */
+    fields?: string[],
+    /**
+     * If present, the entity participates in transaction
+     */
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
+  }): Promise<Partial<EntityFields> | null>
+}
+
 interface Delete<EntityFields> {
   (options?: {
     /**
@@ -369,6 +391,10 @@ export interface Entity<EntityFields = any> {
    */
   save: Save<EntityFields>,
   /**
+   * Updates an entity by its primary keys. It never inserts: it resolves to `null` if no row matches.
+   */
+  update: Update<EntityFields>,
+  /**
    * Deletes entities from the database.
    */
   delete: Delete<EntityFields>,
@@ -388,6 +414,7 @@ export interface EntityHooks<EntityFields = any> {
   find?: EntityHook<Find<EntityFields>>,
   insert?: EntityHook<Insert<EntityFields>>,
   save?: EntityHook<Save<EntityFields>>,
+  update?: EntityHook<Update<EntityFields>>,
   delete?: EntityHook<Delete<EntityFields>>,
   count?: EntityHook<Count>,
   updateMany?: EntityHook<UpdateMany<EntityFields>>
@@ -447,6 +474,12 @@ export interface SQLMapperPluginOptions extends BasePoolOptions {
    */
   autoTimestamp?: boolean,
   /**
+   * Set to true to make `save` dispatch to `update` (when all the primary keys are present)
+   * and then to `insert` (when no row was updated), so that their hooks are applied.
+   * @default false
+   */
+  saveDispatch?: boolean,
+  /**
    * Database table to ignore when mapping to entities.
    */
   ignore?: {
@@ -497,6 +530,11 @@ export interface SQLMapperPluginInterface<T extends Entities> {
    * Clean up all the data in all entities
    */
   cleanUpAllEntities(): Promise<void>
+
+  /**
+   * Whether `save` dispatches to `update` and `insert`.
+   */
+  saveDispatch: boolean
 }
 
 export interface PlatformaticContext {

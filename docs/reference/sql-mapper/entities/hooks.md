@@ -9,7 +9,7 @@ The Platformatic DB SQL Mapper provides an `addEntityHooks(entityName, spec)` fu
 `addEntityHooks` accepts two arguments:
 
 1. A string representing the entity name (singularized), for example `'page'`.
-1. A key/value object where the key is one of the API methods (`find`, `count`, `insert`, `save`, `delete`, `updateMany`) and the value is a callback function. The callback will be called with the _original_ API method and the options that were passed to that method. See the example below.
+1. A key/value object where the key is one of the API methods (`find`, `count`, `insert`, `save`, `update`, `delete`, `updateMany`) and the value is a callback function. The callback will be called with the _original_ API method and the options that were passed to that method. See the example below.
 
 ### Usage
 
@@ -64,6 +64,43 @@ async function main() {
 main()
 ```
 
+
+## `save`, `update` and `insert` hooks
+
+`save` is an upsert: it runs an `UPDATE` when all the primary keys are present and the row exists, and an `INSERT` otherwise. A `save` hook runs before that decision is taken, so by default it cannot tell a create from an update, and `insert` hooks do not see the rows created through `save`.
+
+Set the `saveDispatch` option of [`connect`](../overview.md) (or `db.saveDispatch` in the Platformatic DB [configuration](../../db/configuration.md)) to `true` to make `save` a dispatcher. It calls `entity.update` when all the primary keys are present and, if no row was updated, `entity.insert`. Their hooks are therefore applied:
+
+| Call | `saveDispatch: false` (default) | `saveDispatch: true` |
+|---|---|---|
+| `save` without primary keys | `save` | `save` → `insert` |
+| `save` with primary keys, row exists | `save` | `save` → `update` |
+| `save` with primary keys, row missing | `save` | `save` → `update` (returns `null`) → `insert` |
+| `update` | `update` | `update` |
+| `insert` | `insert` | `insert` |
+
+`update` hooks run in both modes, but with the default settings they only fire on direct `entity.update` calls.
+
+`update` resolves to `null` when no row matches the primary keys, so `update` hooks must handle it:
+
+```js
+mapper.addEntityHooks('page', {
+  async update (originalUpdate, opts) {
+    const res = await originalUpdate(opts)
+    if (res) {
+      // the row was updated
+    }
+    return res
+  }
+})
+```
+
+With `saveDispatch` enabled:
+
+- `insert` hooks also see the rows created through `save`. They are called with `{ inputs: [input], ...opts }`, and only the first element of the returned array is returned by `save`. If you hook both `save` and `insert`, a create through `save` fires both.
+- As before, `save` ignores user-provided values for the `autoTimestamp` fields: they are removed from the input passed to `insert`.
+- `save` hooks still wrap the whole call, so they run before the `update` and `insert` hooks.
+- Plugins such as `@platformatic/db-authorization` and `@platformatic/sql-events` do not register a `save` hook. Their logic lives in the `update` and `insert` hooks. In particular, the authorization `defaults` are applied inside `update` or `insert`, after your `save` hooks have run.
 
 ## Multiple Hooks
 

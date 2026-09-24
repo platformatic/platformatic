@@ -38,6 +38,7 @@ test('sql mapper plugin types', async () => {
   expect(pluginOptions.entities).type.toBe<{ [entityName: string]: Entity }>()
 
   expect(pluginOptions.cleanUpAllEntities()).type.toBe<Promise<void>>()
+  expect(pluginOptions.saveDispatch).type.toBe<boolean>()
 
   expect(
     await connect<Entities>({
@@ -95,6 +96,8 @@ test('sql mapper plugin types', async () => {
   expect(await entity.find()).type.toBe<Partial<EntityFields>[]>()
   expect(await entity.insert({ inputs: [{ id: 1, name: 'test' }] })).type.toBe<Partial<EntityFields>[]>()
   expect(await entity.save({ input: { id: 1, name: 'test' } })).type.toBe<Partial<EntityFields>>()
+  expect(await entity.update({ input: { id: 1, name: 'test' } })).type.toBe<Partial<EntityFields> | null>()
+  expect(await entity.update({ input: { id: 1, name: 'test' }, tx: pluginOptions.db, ctx })).type.toBe<Partial<EntityFields> | null>()
   expect(await entity.delete()).type.toBe<Partial<EntityFields>[]>()
   expect(await entity.count()).type.toBe<number>()
   expect(await entity.find({ tx: pluginOptions.db })).type.toBe<Partial<EntityFields>[]>()
@@ -163,6 +166,12 @@ test('sql mapper plugin types', async () => {
     ): ReturnType<typeof entity.save> {
       return {}
     },
+    async update (
+      originalUpdate: typeof entity.update,
+      ...options: Parameters<typeof entity.update>
+    ): ReturnType<typeof entity.update> {
+      return null
+    },
     async delete (
       originalDelete: typeof entity.delete,
       ...options: Parameters<typeof entity.delete>
@@ -187,6 +196,9 @@ test('sql mapper plugin types', async () => {
   expect(await connect<Entities>({ connectionString: '', log })).type.toBe<SQLMapperPluginInterface<Entities>>()
   expect(
     await connect<Entities>({ connectionString: '', autoTimestamp: true, log })
+  ).type.toBe<SQLMapperPluginInterface<Entities>>()
+  expect(
+    await connect<Entities>({ connectionString: '', saveDispatch: true, log })
   ).type.toBe<SQLMapperPluginInterface<Entities>>()
   expect(await connect<Entities>({ connectionString: '', hooks: {}, log })).type.toBe<SQLMapperPluginInterface<Entities>>()
   expect(

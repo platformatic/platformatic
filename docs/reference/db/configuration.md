@@ -279,6 +279,8 @@ postgres://user:password@my-database:5432/db-name
 
 - **`autoTimestamp`** (`boolean` or `object`) - Generate timestamp automatically when inserting/updating records.
 
+- **`saveDispatch`** (`boolean`, default: `false`) - Make `save` call `update` and then, if no row was updated, `insert`, so that entity hooks on `update` and `insert` apply to it. See [Hooks](../sql-mapper/entities/hooks.md#save-update-and-insert-hooks).
+
 - **`allowPrimaryKeysInInput`** (`boolean`) - Allow the user to set the primary keys when creating new entities.
 
 - **`poolSize`** (`number`, default: `10`) — Maximum number of connections in the connection pool.

@@ -259,6 +259,7 @@ export interface PlatformaticDatabaseConfig {
           [k: string]: unknown;
         }
       | boolean;
+    saveDispatch?: boolean;
     graphql?:
       | boolean
       | {

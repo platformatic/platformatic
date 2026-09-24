@@ -245,6 +245,7 @@ export async function connect ({
   include = {},
   ignore = {},
   autoTimestamp = true,
+  saveDispatch = false,
   hooks = {},
   schema,
   limit = {},
@@ -401,7 +402,8 @@ export async function connect ({
         schemaList,
         columns,
         constraints,
-        isView
+        isView,
+        saveDispatch
       )
       // Check for primary key of all entities (views are allowed without PKs)
       if (entity.primaryKeys.size === 0 && !isView) {
@@ -426,7 +428,8 @@ export async function connect ({
       entities,
       cleanUpAllEntities: buildCleanUp(db, sql, log, entities, queries),
       addEntityHooks,
-      dbschema
+      dbschema,
+      saveDispatch
     }
 
     if (cache) {

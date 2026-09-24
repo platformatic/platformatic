@@ -309,6 +309,8 @@ Create a new entity row in the database or update an existing one.
 To update an existing entity, the `id` field (or equivalent primary key) must be included in the `input` object. 
 `save` actually behaves as an `upsert`, allowing both behaviours depending on the presence of the primary key field.
 
+When the mapper is created with `saveDispatch: true`, `save` calls [`update`](#update) and then, if no row was updated, [`insert`](#insert), so that their [hooks](./hooks.md#save-update-and-insert-hooks) are applied.
+
 #### Options
 
 | Name | Type | Description
@@ -340,6 +342,46 @@ async function main() {
 }
 main()
 ```
+
+### `update`
+
+Update an existing entity row, identified by its primary keys. All the primary keys must be included in the `input` object, otherwise a `PLT_SQL_MAPPER_MISSING_VALUE_FOR_PRIMARY_KEY` error is thrown.
+
+Unlike `save`, `update` never inserts: it resolves to `null` if no row matches the primary keys. It is not available on views.
+
+#### Options
+
+| Name | Type | Description
+|---|---|---|
+| `fields` | Array of `string` | List of fields to be returned |
+| `input` | `Object` | The row to update, including its primary keys
+| `tx` | `Object` | Transaction to run the query in
+
+#### Usage
+
+```js
+'use strict'
+const { connect } = require('@platformatic/sql-mapper')
+const { pino } = require('pino')
+const pretty = require('pino-pretty')
+const logger = pino(pretty())
+
+async function main() {
+  const connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
+  const mapper = await connect({
+    connectionString: connectionString,
+    log: logger,
+  })
+  const res = await mapper.entities.page.update({
+    fields: ['id', 'title'],
+    input: { id: 1, title: 'FizzBuzz' },
+  })
+  logger.info(res) // null if there is no page with id 1
+  await mapper.db.dispose()
+}
+main()
+```
+
 ### `delete`
 
 Delete one or more entity rows from the database, depending on the `where` option. Returns the data for all deleted objects.
