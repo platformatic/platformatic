@@ -16,6 +16,8 @@ export const CACHE_HIT_METRIC = { name: 'next_cache_valkey_hit_count', help: 'Ne
 export const CACHE_MISS_METRIC = { name: 'next_cache_valkey_miss_count', help: 'Next.js Cache (Valkey) Miss Count' }
 export const MAX_BATCH_SIZE = 100
 
+const NEXT_CACHE_TAGS_HEADER = 'x-next-cache-tags'
+
 export const sections = {
   values: 'values',
   tags: 'tags'
@@ -132,7 +134,7 @@ export class CacheHandler {
   }
 
   async set (cacheKey, value, ctx, isRedisKey) {
-    const tags = ctx.tags
+    const tags = this.#getTags(ctx.tags, value)
     const revalidate = ctx.revalidate ?? ctx.cacheControl?.revalidate ?? value.revalidate ?? 0
 
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
@@ -265,6 +267,25 @@ export class CacheHandler {
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot expire cache tags in Valkey')
       throw new Error('Cannot expire cache tags in Valkey', { cause: e })
     }
+  }
+
+  #getTags (tags, value) {
+    // Next.js stores page and route tags in this header instead of ctx.tags.
+    const tagsHeader = value?.headers?.[NEXT_CACHE_TAGS_HEADER]
+
+    if (typeof tagsHeader !== 'string') {
+      return tags
+    }
+
+    const combinedTags = new Set(tags)
+
+    for (const tag of tagsHeader.split(',')) {
+      if (tag) {
+        combinedTags.add(tag)
+      }
+    }
+
+    return [...combinedTags]
   }
 
   async #refreshKey (key, value) {
