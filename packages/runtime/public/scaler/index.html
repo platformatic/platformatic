@@ -16,6 +16,11 @@
     <nav class="tabs" aria-label="Autoscaler views"><a href="./" aria-current="page">APPLICATIONS</a></nav>
     <p id="error" class="error" role="alert" hidden></p>
     <div id="warnings" class="error" role="status" hidden></div>
+    <section class="resource-limits" aria-labelledby="resource-limits-title">
+      <div class="resource-heading"><h2 id="resource-limits-title">Resource limits</h2><span class="subtle">ALL APPLICATIONS</span></div>
+      <div id="resource-rows"><p class="resource-note">Loading resource usage…</p></div>
+      <p class="resource-note">Select a worker segment to view its application. Striped worker slots are scheduled. The memory bar shows worker heaps and remaining scale-up headroom, shared across applications.</p>
+    </section>
     <main class="applications-layout">
       <aside class="application-sidebar" aria-label="Applications">
         <h2 id="application-count">Applications</h2>

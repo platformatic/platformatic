@@ -203,10 +203,10 @@ Redistribution accounts for the transition after a scale-up. New workers' measur
 Applications share the WATT's CPU and memory. A recommendation from one application cannot assume that all spare resources are available to it. The runtime controller compares the desired worker counts and decides which updates to approve:
 
 - It accepts scale-down recommendations for all eligible applications in the same cycle.
-- For scale-up, it selects the application with the largest relative increase: `(desiredTarget - approvedTarget) / approvedTarget`.
+- For scale-up, it considers applications in order of relative increase: `(desiredTarget - approvedTarget) / approvedTarget`, selecting the first application with enough memory for at least one additional worker.
 - It adds at most `maxScaleUpStep` workers to that application, limited by its requested count, the total worker budget, and the memory check.
 
-For example, a request from two to four workers has a relative increase of 100%; a request from four to five has an increase of 25%. The first application gets priority. The controller uses worker counts, so this choice does not depend on whether ELU or heap produced the request.
+For example, a request from two to four workers has a relative increase of 100%; a request from four to five has an increase of 25%. The first application gets priority if an additional worker fits in memory; otherwise the controller considers the next application. The controller uses worker counts, so this choice does not depend on whether ELU or heap produced the request.
 
 The default is one extra worker per cycle. Starting workers can involve compilation, database connections, and memory allocation that compete with the other applications in the WATT. Increase `maxScaleUpStep` only when the workload and container have enough spare resources for several starts at once.
 
@@ -244,7 +244,7 @@ For a framework application running directly through WATT, put this `workers` ob
 
 Memory usage and capacity come from cgroup files when available, otherwise from the host operating system. On a host, the check therefore includes memory used outside this WATT. `maxMemory` is a scaling constraint; setting it does not impose an operating-system memory limit.
 
-The predictive scaler checks whether current memory usage is below `maxMemory`; it does not reserve an estimated amount for new workers. Allow enough headroom for startup work and other memory allocations.
+The predictive scaler always processes heap measurements, even without `heapThresholdMb`. It divides each application’s current smoothed heap level by its live worker count to estimate heap per additional worker. The available memory (`maxMemory` minus current usage) limits how many workers can be added in a cycle. An application without a positive heap measurement waits for data; an application that cannot fit one additional worker does not block other applications that can. This check uses the current level, not a forecast or the target worker count. Heap does not include every memory allocation, so allow headroom for startup and other memory usage.
 
 Choose application minima and fixed counts that fit within `total` and the available memory. Provisioning the configured minimum is separate from the checks for load-driven scale-ups. A runtime can otherwise start above its intended budget.
 
@@ -255,7 +255,7 @@ On platforms without the required `reusePort` support, the scaler limits an entr
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `eluThreshold` | `0.8` | Per-worker ELU capacity used to convert aggregate load into a worker count |
-| `heapThresholdMb` | Disabled | Per-worker heap capacity in MB, where 1 MB is 1,048,576 bytes. Enables an independent heap-based recommendation |
+| `heapThresholdMb` | Not set | Per-worker heap capacity in MB, where 1 MB is 1,048,576 bytes. Enables an independent heap-based recommendation; heap is always measured for memory checks and charts |
 | `processIntervalMs` | `10000` | Time between processing runs. Samples arriving between runs are processed together. Runtime-level only |
 | `maxScaleUpStep` | `1` | Maximum workers added to the selected application per run. Positive integer; runtime-level only |
 | `redistributionMs` | `10000` | Expected time for a new worker to absorb its share of traffic; controls how its contribution is introduced into the aggregate |
@@ -348,7 +348,7 @@ Enable the metrics server alongside predictive scaling in the runtime configurat
 
 For a standalone framework application, put both properties inside `runtime`. Open **http://127.0.0.1:9090/scaler/** on the metrics server. This is separate from the application's HTTP port. The page uses the metrics server's existing HTTPS and authentication settings and is available only when predictive scaling is active.
 
-Select an application to see its worker counts, aggregated metrics, forecasts, and individual worker charts. Heap charts require `heapThresholdMb`. The page also reports current worker and memory constraints and workers taking longer than expected to start.
+Select an application to see its worker counts, aggregated metrics, forecasts, and individual worker charts. Heap charts are always available. When `heapThresholdMb` is absent, the page warns that heap is monitored and used for memory checks but does not trigger scaling. The page also reports current worker and memory constraints and workers taking longer than expected to start.
 
 #### Reading the charts
 

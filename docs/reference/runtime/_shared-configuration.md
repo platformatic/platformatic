@@ -442,7 +442,7 @@ This can be specified as:
 
   **v2-specific properties:**
   - **`eluThreshold`** (`number`) - Per-worker ELU overload threshold (0-1). Default: `0.8`.
-  - **`heapThresholdMb`** (`number`) - Per-worker heap threshold in MB. Heap metric is disabled if absent.
+  - **`heapThresholdMb`** (`number`) - Per-worker heap threshold in MB. If absent, heap measurements remain available for charts and scale-up memory checks, but do not produce scaling recommendations.
   - **`processIntervalMs`** (`number`) - How often the algorithm runs in milliseconds. Default: `10000`.
   - **`maxScaleUpStep`** (`integer`, minimum `1`) - Maximum extra workers requested for the selected application per processing run. Global-only. Default: `1`. Increase only when the application and container have enough spare resources for the additional startup work.
   - **`scaleUpMargin`** (`number`) - Fractional overload margin required before adding a worker. Default: `0.1`.

@@ -22,6 +22,9 @@ export function scalingWarnings (snapshot, selected) {
     warnings.push(`${selected.id}: application worker limit reached (${selected.targetCount}/${selected.max} scheduled). Increase its workers.maximum to allow more workers.`)
   }
   if (selected) {
+    if (selected.metrics?.heap && !Number.isFinite(selected.metrics.heap.threshold)) {
+      warnings.push(`${selected.id}: heap scaling threshold not configured. Heap is monitored and used for memory checks, but does not trigger scaling. Set workers.heapThresholdMb to enable heap-based scaling.`)
+    }
     const overdue = selected.pending.filter(pending => pending.scaleAt < snapshot.now).length
     if (overdue) warnings.push(`${selected.id}: ${overdue} scheduled worker${overdue === 1 ? ' is' : 's are'} taking longer than expected to start.`)
   }

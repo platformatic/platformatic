@@ -24,8 +24,10 @@ function success (updates) {
 async function setup (t, config = {}, applications = ['app1']) {
   t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 10000 })
   const algorithms = new Set()
-  const process = t.mock.method(PredictiveScalingAlgorithm.prototype, 'process', function () {
+  const originalProcess = PredictiveScalingAlgorithm.prototype.process
+  const process = t.mock.method(PredictiveScalingAlgorithm.prototype, 'process', function (now) {
     algorithms.add(this)
+    originalProcess.call(this, now)
     return 4
   })
   const setTarget = t.mock.method(PredictiveScalingAlgorithm.prototype, 'setTarget')
@@ -52,6 +54,11 @@ async function setup (t, config = {}, applications = ['app1']) {
     await scaler.add({ id, entrypoint: false, workers: { dynamic: true } })
   }
   await scaler.start()
+  for (const application of applications) {
+    runtime.emit('application:worker:health:metrics', {
+      application, id: `${application}:0`, currentHealth: { heapUsed: 1024 * 1024 }
+    })
+  }
   t.after(() => scaler.stop())
   return { runtime, updates, algorithms, process, setTarget, warnings, errors }
 }

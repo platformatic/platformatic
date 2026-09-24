@@ -14,6 +14,7 @@ export function scalerUi (app, { runtime, onRequest }) {
     ['/scaler/scaler.js', 'scaler.js', 'text/javascript'],
     ['/scaler/charts.js', 'charts.js', 'text/javascript'],
     ['/scaler/model.js', 'model.js', 'text/javascript'],
+    ['/scaler/resources.js', 'resources.js', 'text/javascript'],
     ['/scaler/inter.ttf', 'inter.ttf', 'font/ttf']
   ]) {
     app.get(path, options, async (_request, reply) => {

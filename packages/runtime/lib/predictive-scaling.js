@@ -52,7 +52,7 @@ export class PredictiveScalingAlgorithm {
    *   } | null,
    *   lastProcessedTick: number,
    *   history: SlidingWindow,
-   *   config: { sampleIntervalMs: number, windowMs: number, threshold: number,
+   *   config: { sampleIntervalMs: number, windowMs: number, threshold: number | null,
    *     redistributionConfig: { redistributionMs: number, k: number },
    *     holtConfig: {
    *       alphaUp: number,
@@ -129,7 +129,7 @@ export class PredictiveScalingAlgorithm {
         config: {
           sampleIntervalMs: SAMPLE_INTERVAL_MS,
           windowMs: WINDOW_MS,
-          threshold: mc.threshold,
+          threshold: mc.threshold ?? null,
           redistributionConfig: {
             redistributionMs: mc.redistributionMs,
             k: REDISTRIBUTION_K
@@ -190,6 +190,17 @@ export class PredictiveScalingAlgorithm {
 
   get targetCount () {
     return this.#targetCount
+  }
+
+  getMetricStats (metricName) {
+    const metric = this.#metrics.get(metricName)
+    if (!metric) return null
+
+    return {
+      level: metric.holtState?.level ?? null,
+      trend: metric.holtState?.trend ?? 0,
+      count: this.#workerIdMapper.size
+    }
   }
 
   getSnapshot (metricName) {
@@ -429,6 +440,10 @@ export class PredictiveScalingAlgorithm {
         entry.holt.level / entry.redistribution.count
       )
     }
+
+    // Metrics without a threshold are still processed for diagnostics and
+    // resource checks, but cannot recommend either direction of scaling.
+    if (config.threshold === null) return null
 
     // Stage 3: Decision
     return makeScalingDecision({

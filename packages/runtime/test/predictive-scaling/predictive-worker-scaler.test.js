@@ -55,7 +55,7 @@ function emitHealthMetrics (runtime, application, workerId, workerIndex, elu) {
     id: `${application}:${workerIndex}`,
     application,
     worker: workerIndex,
-    currentHealth: { elu }
+    currentHealth: { elu, heapUsed: 1024 * 1024 }
   })
 }
 

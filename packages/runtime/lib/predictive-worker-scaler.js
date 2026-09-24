@@ -163,12 +163,15 @@ export class PredictiveWorkersScaler {
       }
     }
 
+    let heapThreshold = null
     if (config.heapThresholdMb != null) {
-      metrics.heap = {
-        threshold: config.heapThresholdMb * 1024 * 1024,
-        redistributionMs: config.redistributionMs,
-        ...holtConfig
-      }
+      heapThreshold = config.heapThresholdMb * 1024 * 1024
+    }
+
+    metrics.heap = {
+      threshold: heapThreshold,
+      redistributionMs: config.redistributionMs,
+      ...holtConfig
     }
 
     return {
@@ -263,8 +266,7 @@ export class PredictiveWorkersScaler {
     const now = Date.now()
     const updates = []
     let plannedWorkerCount = 0
-    let scaleUpCandidate = null
-    let scaleUpRatio = -1
+    const scaleUpCandidates = []
 
     for (const [appId, app] of this.#apps) {
       // Reserve the configured minimum, but do not make a competing scaling
@@ -286,38 +288,51 @@ export class PredictiveWorkersScaler {
         updates.push({ application: appId, workers: desiredTarget })
       } else {
         const ratio = (desiredTarget - targetCount) / targetCount
-        if (ratio > scaleUpRatio) {
-          scaleUpRatio = ratio
-          scaleUpCandidate = { appId, app, desiredTarget }
-        }
+        scaleUpCandidates.push({ appId, app, desiredTarget, ratio })
       }
     }
 
-    if (scaleUpCandidate) {
-      const { appId, app, desiredTarget } = scaleUpCandidate
-      const hasAvailableMemory = await this.#hasAvailableMemory()
-
+    if (scaleUpCandidates.length > 0) {
       if (plannedWorkerCount >= this.#maxTotalWorkers) {
         this.#runtime.logger.warn(
-          `Cannot scale up the "${appId}" app. ` +
           `The maximum number of workers "${this.#maxTotalWorkers}" has been reached.`
         )
-      } else if (!hasAvailableMemory) {
-        this.#runtime.logger.warn(
-          `Cannot scale up the "${appId}" app. ` +
-          `The memory limit "${this.#maxTotalMemory}" has been reached.`
-        )
       } else {
-        const scaleUpCount = Math.min(
-          desiredTarget - app.algorithm.targetCount,
-          this.#config.maxScaleUpStep,
-          this.#maxTotalWorkers - plannedWorkerCount
-        )
-        const newTarget = app.algorithm.targetCount + scaleUpCount
-        this.#runtime.logger.info(
-          `Predictive scaling up the "${appId}" app to ${newTarget} workers`
-        )
-        updates.push({ application: appId, workers: newTarget })
+        const availableMemory = await this.#getAvailableMemory()
+        scaleUpCandidates.sort((a, b) => b.ratio - a.ratio)
+
+        for (const { appId, app, desiredTarget } of scaleUpCandidates) {
+          const heap = app.algorithm.getMetricStats('heap')
+          let heapPerWorker = null
+          if (heap?.level != null && heap.count > 0) {
+            heapPerWorker = heap.level / heap.count
+          }
+
+          if (!Number.isFinite(heapPerWorker) || heapPerWorker <= 0) {
+            this.#runtime.logger.warn(`Cannot scale up the "${appId}" app until heap measurements are available.`)
+            continue
+          }
+
+          const workersWithinMemory = Math.floor(availableMemory / heapPerWorker)
+          if (!(workersWithinMemory > 0)) {
+            this.#runtime.logger.warn(`Not enough available memory to scale up the "${appId}" app.`)
+            continue
+          }
+
+          const scaleUpCount = Math.min(
+            desiredTarget - app.algorithm.targetCount,
+            this.#config.maxScaleUpStep,
+            this.#maxTotalWorkers - plannedWorkerCount,
+            workersWithinMemory
+          )
+
+          const newTarget = app.algorithm.targetCount + scaleUpCount
+          this.#runtime.logger.info(
+            `Predictive scaling up the "${appId}" app to ${newTarget} workers`
+          )
+          updates.push({ application: appId, workers: newTarget })
+          break
+        }
       }
     }
 
@@ -336,8 +351,8 @@ export class PredictiveWorkersScaler {
     }
   }
 
-  async #hasAvailableMemory () {
+  async #getAvailableMemory () {
     const mem = await getMemoryInfo({ scope: this.#memoryInfo.scope })
-    return mem.used < this.#maxTotalMemory
+    return this.#maxTotalMemory - mem.used
   }
 }

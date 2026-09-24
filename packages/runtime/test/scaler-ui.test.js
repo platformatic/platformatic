@@ -27,7 +27,8 @@ test('UI assets are local, snapshot reads are uncached, and reads do not run the
   for (const [path, contentType] of [
     ['/scaler/', 'text/html'], ['/scaler/applications', 'text/html'],
     ['/scaler/scaler.js', 'text/javascript'], ['/scaler/charts.js', 'text/javascript'],
-    ['/scaler/model.js', 'text/javascript'], ['/scaler/scaler.css', 'text/css'], ['/scaler/inter.ttf', 'font/ttf']
+    ['/scaler/model.js', 'text/javascript'], ['/scaler/resources.js', 'text/javascript'],
+    ['/scaler/scaler.css', 'text/css'], ['/scaler/inter.ttf', 'font/ttf']
   ]) {
     const result = await app.inject(path)
     assert.equal(result.statusCode, 200, path)
@@ -61,7 +62,7 @@ test('metrics server protects every scaler route with its configured authenticat
     getDynamicWorkersScaler: () => ({ getDiagnostics: () => ({ applications: [] }), getMemoryDiagnostics: async () => null })
   }, { hostname: '127.0.0.1', port: 0, auth: { username: 'debug', password: 'secret' } }, false)
   t.after(() => server.close())
-  for (const url of ['/scaler', '/scaler/', '/scaler/applications', '/scaler/snapshot', '/scaler/scaler.js', '/scaler/charts.js', '/scaler/model.js', '/scaler/scaler.css', '/scaler/inter.ttf']) {
+  for (const url of ['/scaler', '/scaler/', '/scaler/applications', '/scaler/snapshot', '/scaler/scaler.js', '/scaler/charts.js', '/scaler/model.js', '/scaler/resources.js', '/scaler/scaler.css', '/scaler/inter.ttf']) {
     assert.equal((await server.inject(url)).statusCode, 401, url)
     const response = await server.inject({ url, headers: { authorization: `Basic ${Buffer.from('debug:secret').toString('base64')}` } })
     assert.equal(response.statusCode, url === '/scaler' ? 302 : 200, url)
@@ -107,23 +108,25 @@ test('a running v2 runtime serves its actual workers and retained metrics', asyn
     entrypoint: 'main',
     watch: false,
     autoload: { path: './services' },
-    applications: [{ id: 'service-1', path: './services/service-1', workers: { minimum: 3, maximum: 3 } }],
+    applications: [{ id: 'service-1', path: './services/service-1', workers: { minimum: 3, maximum: 3, heapThresholdMb: 128 } }],
     server: { hostname: '127.0.0.1', port: 0 },
     metrics: { hostname: '127.0.0.1', port },
-    workers: { dynamic: true, version: 'v2', minimum: 1, maximum: 1, processIntervalMs: 1000, heapThresholdMb: 128 }
+    workers: { dynamic: true, version: 'v2', minimum: 1, maximum: 1, processIntervalMs: 1000 }
   })
   t.after(() => runtime.close())
   await runtime.start()
   const origin = `http://127.0.0.1:${port}`
   const html = await request(`${origin}/scaler/`)
   assert.equal(html.statusCode, 200)
-  assert.match(await html.body.text(), /APPLICATIONS/)
+  const page = await html.body.text()
+  assert.match(page, /APPLICATIONS/)
+  assert.match(page, /id="resource-limits-title">Resource limits/)
   let snapshot
   for (let i = 0; i < 50; i++) {
     const response = await request(`${origin}/scaler/snapshot`)
     assert.equal(response.statusCode, 200)
     snapshot = await response.body.json()
-    if (snapshot.applications[0]?.metrics.elu.history.length) break
+    if (snapshot.applications.every(app => app.metrics.elu.history.length && app.metrics.heap.history.length)) break
     await sleep(100)
   }
   const application = snapshot.applications.find(app => app.id === 'main')
@@ -135,10 +138,13 @@ test('a running v2 runtime serves its actual workers and retained metrics', asyn
   assert.equal(application.workers.length, 1)
   assert.ok(application.metrics.elu.history.length)
   assert.ok(Number.isFinite(application.workers[0].metrics.heap.value))
-  assert.equal(application.metrics.heap.threshold, 128 * 1024 * 1024)
+  assert.ok(application.metrics.heap.history.length)
+  assert.ok(application.metrics.heap.level > 0)
+  assert.equal(application.metrics.heap.threshold, null)
   const initial = snapshot.applications.find(app => app.id === 'service-1')
   assert.equal(initial.targetCount, 3)
   assert.equal(initial.liveCount, 3)
+  assert.equal(initial.metrics.heap.threshold, 128 * 1024 * 1024)
 
   const config = runtime.getRuntimeConfig(true)
   const later = await prepareApplication(config, {

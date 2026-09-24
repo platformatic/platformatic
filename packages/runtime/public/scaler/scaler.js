@@ -1,5 +1,6 @@
 import { drawChart, drawMiniChart, svgNode } from './charts.js'
 import { COLORS, formatMetric, metricView, scalingWarnings, WorkerHistory } from './model.js'
+import { renderResourceLimits } from './resources.js'
 
 const POLL_MS = 5000
 const counts = new WorkerHistory()
@@ -53,7 +54,7 @@ function renderApplications () {
       if (!view) continue
       values.push(`${name.toUpperCase()}: ${formatMetric(name, view.current)}`)
       const future = view.forecast.at(-1)?.value
-      if (future > view.threshold) predictions.push(`${name.toUpperCase()} predicted to → ${formatMetric(name, future)}`)
+      if (Number.isFinite(view.threshold) && future > view.threshold) predictions.push(`${name.toUpperCase()} predicted to → ${formatMetric(name, future)}`)
     }
     item.append(title, element('span', 'item-metrics', values.join('  |  ')))
     if (predictions.length) item.append(element('span', 'item-status overloaded', predictions.join(' · ')))
@@ -117,22 +118,14 @@ function chartCard (app, name) {
   } else {
     chart = metricView(app, name, snapshot.now)
     if (!chart) {
-      const message = element('p', 'empty', `${name.toUpperCase()} scaling is not configured for this application.`)
-      if (name === 'heap') {
-        message.append(
-          element('br'),
-          document.createTextNode('Set '),
-          element('code', '', 'workers.heapThresholdMb'),
-          document.createTextNode(' in your runtime configuration (or the application’s workers configuration) and restart WATT.'),
-          element('br'),
-          document.createTextNode('Choose a per-worker threshold in MB. This enables heap-based scaling as well as the charts.')
-        )
-      }
+      const message = element('p', 'empty', `No ${name.toUpperCase()} measurements available for this application.`)
       card.append(header, message)
       return card
     }
-    header.append(element('span', 'chart-values', `${formatMetric(name, chart.current)} · threshold ${formatMetric(name, chart.threshold)}`))
-    legend.append(legendItem('Past', COLORS[name]), legendItem('Predicted', COLORS.forecast, true), legendItem('Threshold', '#cc2222', true))
+    const threshold = Number.isFinite(chart.threshold) ? `threshold ${formatMetric(name, chart.threshold)}` : 'threshold not configured'
+    header.append(element('span', 'chart-values', `${formatMetric(name, chart.current)} · ${threshold}`))
+    legend.append(legendItem('Past', COLORS[name]), legendItem('Predicted', COLORS.forecast, true))
+    if (Number.isFinite(chart.threshold)) legend.append(legendItem('Threshold', '#cc2222', true))
   }
   card.append(header, svg, legend)
   chartDraws.push(() => drawChart(svg, { ...chart, name, now: snapshot.now, initTimeoutMs: app.initTimeoutMs, horizonMs: app.horizonMs }))
@@ -149,7 +142,7 @@ function renderWorkers (app) {
     const row = element('article', 'worker-row')
     const header = element('div', 'worker-header')
     header.append(element('span', '', workerLabel))
-    const overloaded = ['elu', 'heap'].some(name => worker.metrics[name]?.value > app.metrics[name]?.threshold)
+    const overloaded = ['elu', 'heap'].some(name => Number.isFinite(app.metrics[name]?.threshold) && worker.metrics[name]?.value > app.metrics[name].threshold)
     if (overloaded) {
       const dot = element('span', 'status-dot')
       dot.setAttribute('aria-label', 'Last measurement above threshold')
@@ -188,6 +181,7 @@ function render () {
   const warnings = scalingWarnings(snapshot, selected)
   byId('warnings').replaceChildren(...warnings.map(message => element('p', '', message)))
   byId('warnings').hidden = !warnings.length || !byId('error').hidden
+  renderResourceLimits(byId('resource-rows'), snapshot, selectApplication)
   renderApplications()
   chartDraws = []
   if (!selected) {
