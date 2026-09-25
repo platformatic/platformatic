@@ -2,6 +2,7 @@ import { getPackageManager, parseArgs } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { platform } from 'node:os'
+import { version } from '../schema.js'
 
 export async function runDelegatedCommand (context, logger, packageManager, args) {
   if (!packageManager) {
@@ -83,7 +84,7 @@ export async function createCommand (logger, args) {
     false
   )
 
-  const runArgs = ['wattpm-utils' + (latest ? '@latest' : ''), '--', 'create']
+  const runArgs = ['wattpm-utils' + (latest ? '@latest' : `@${version}`), '--', 'create']
 
   runArgs.push('-c', config)
 
