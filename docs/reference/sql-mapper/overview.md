@@ -37,6 +37,7 @@ The valid options are:
 - `ignore` — An object used to ignore specified tables from building entities (i.e. `{ 'versions': true }` will ignore the `versions` table).
 - `include` — An object used to explicitly identify tables for which you would like entities built (i.e. `{ 'versions': true }` will build a `versions` entity from the `versions` table and ignore all other tables).
 - `autoTimestamp` — Flag to enable automatic generation of a timestamp when inserting or updating records.
+- `saveDispatch` — Flag to make `save` call `update` and then, if no row was updated, `insert`, so that their hooks are applied (default is `false`). See [Hooks](./entities/hooks.md#save-update-and-insert-hooks).
 - `hooks` — An object to customize entity API functions for each entity. Your custom function will receive the original function as the first parameter and all other parameters passed to it.
 - `cache` — Flag to enable cache and dedupe features (default is `false`, i.e. disabled). This is currently only supported during schema enumeration.
 

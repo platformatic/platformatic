@@ -46,13 +46,31 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
       return res
     }
 
-    mapper.addEntityHooks(entityName, {
-      async save (original, data) {
+    const hooks = {
+      update: singleElement('save'),
+      delete: multiElement('delete'),
+      insert: multiElement('save'),
+      updateMany: multiElement('save')
+    }
+
+    // With saveDispatch, save goes through the update and insert hooks above
+    if (!mapper.saveDispatch) {
+      hooks.save = singleElement('save')
+    }
+
+    mapper.addEntityHooks(entityName, hooks)
+
+    function singleElement (action) {
+      return async function (original, data) {
         const ctx = data.ctx
         /* istanbul ignore next */
         const _log = ctx?.reply?.request?.log || log
         const res = await original(ensurePrimaryKeyField(data))
-        const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx })
+        // update returns null when no row matched
+        if (!res) {
+          return res
+        }
+        const topic = await entity.getPublishTopic({ action, data: res, ctx })
         if (topic) {
           const payload = {
             [primaryKey]: res[primaryKey]
@@ -69,12 +87,8 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
           })
         }
         return stripPrimaryKey(res, data.fields)
-      },
-
-      delete: multiElement('delete'),
-      insert: multiElement('save'),
-      updateMany: multiElement('save')
-    })
+      }
+    }
 
     function multiElement (action) {
       return async function (original, data) {

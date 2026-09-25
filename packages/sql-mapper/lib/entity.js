@@ -5,6 +5,7 @@ import { buildCursorCondition } from './cursor.js'
 import {
   InputNotProvidedError,
   InvalidPrimaryKeyTypeError,
+  MissingValueForPrimaryKeyError,
   MissingWhereClauseError,
   ParamNotAllowedError,
   UnknownFieldError,
@@ -31,7 +32,8 @@ function createMapper (
   limitConfig,
   columns,
   constraintsList,
-  isView
+  isView,
+  saveDispatch
 ) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
   const entityName = useSchemaInName ? toUpperFirst(`${camelcase(schema)}${toSingular(table)}`) : toSingular(table)
@@ -147,6 +149,71 @@ function createMapper (
   }
 
   async function save (args) {
+    if (!saveDispatch) {
+      return legacySave(args)
+    }
+
+    if (args.input === undefined) {
+      throw new InputNotProvidedError()
+    }
+
+    const input = fixInput(args.input)
+    let hasPrimaryKeys = true
+    for (const key of primaryKeys) {
+      if (input[key] === undefined) {
+        hasPrimaryKeys = false
+        break
+      }
+    }
+
+    // Go through the entity so that update and insert hooks are applied
+    if (hasPrimaryKeys) {
+      const updated = await entity.update(args)
+      if (updated) {
+        return updated
+      }
+    }
+
+    // save has always ignored user-provided timestamps, while insert may keep them
+    // (e.g. with insertMany), so drop them to preserve the save behaviour
+    const insertInput = { ...args.input }
+    if (autoTimestamp) {
+      for (const field of [autoTimestamp.createdAt, autoTimestamp.updatedAt]) {
+        if (fields[field]) {
+          delete insertInput[field]
+          delete insertInput[fields[field].camelcase]
+        }
+      }
+    }
+
+    const { input: _input, ...rest } = args
+    const [inserted] = await entity.insert({ ...rest, inputs: [insertInput] })
+    return inserted
+  }
+
+  async function update (args) {
+    if (args.input === undefined) {
+      throw new InputNotProvidedError()
+    }
+    const db = getDB(args)
+    const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
+    const input = fixInput(args.input)
+
+    for (const key of primaryKeys) {
+      if (input[key] === undefined) {
+        throw new MissingValueForPrimaryKeyError(key)
+      }
+    }
+
+    if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
+      input[autoTimestamp.updatedAt] = new Date()
+    }
+
+    const res = await queries.updateOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
+    return res ? fixOutput(res) : null
+  }
+
+  async function legacySave (args) {
     const db = getDB(args)
     if (args.input === undefined) {
       throw new InputNotProvidedError()
@@ -509,6 +576,7 @@ function createMapper (
   if (!isView) {
     entity.insert = insert
     entity.save = save
+    entity.update = update
     entity.delete = _delete
     entity.updateMany = updateMany
   }
@@ -530,7 +598,8 @@ export function buildEntity (
   schemaList,
   columns,
   constraintsList,
-  isView
+  isView,
+  saveDispatch
 ) {
   const columnsNames = columns.map(c => c.column_name)
   for (const ignoredColumn of Object.keys(ignore)) {
@@ -707,7 +776,8 @@ export function buildEntity (
     limitConfig,
     undefined,
     undefined,
-    isView
+    isView,
+    saveDispatch
   )
   entity.relations = currentRelations
 

@@ -177,7 +177,59 @@ async function auth (app, opts) {
         return skipAuth || !ctx
       }
 
-      app.platformatic.addEntityHooks(entityKey, {
+      // Shared by save, update and insert: finds the rule, checks the save permission
+      // and applies the rule defaults to the input(s)
+      async function authorizeSave (ctx, fields, inputs) {
+        const request = getRequestFromContext(ctx)
+        const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
+
+        if (!rule.save) {
+          throw new Unauthorized()
+        }
+        checkFieldsFromRule(rule.save, fields || Object.keys(type.fields))
+        checkInputFromRuleFields(rule.save, inputs)
+
+        /* istanbul ignore else */
+        if (rule.defaults) {
+          for (const input of Array.isArray(inputs) ? inputs : [inputs]) {
+            for (const key of Object.keys(rule.defaults)) {
+              const defaults = rule.defaults[key]
+              if (typeof defaults === 'function') {
+                input[key] = await defaults({ user: request.user, ctx, input })
+              } else {
+                input[key] = request.user[defaults]
+              }
+            }
+          }
+        }
+
+        return { request, rule }
+      }
+
+      // type.primaryKeys holds the column names, while the input and the where
+      // conditions use the camel-cased field names
+      const primaryKeyFields = Array.from(type.primaryKeys, key => type.fields[key].camelcase)
+
+      function hasAllPrimaryKeys (input) {
+        return primaryKeyFields.every(key => input[key] !== undefined)
+      }
+
+      // The row to be updated must be visible through the save rule
+      async function checkRowIsSavable (ctx, request, rule, input, fields, tx) {
+        const whereConditions = {}
+        for (const key of primaryKeyFields) {
+          whereConditions[key] = { eq: input[key] }
+        }
+
+        const where = await fromRuleToWhere(ctx, rule.save, whereConditions, request.user)
+        const found = await type.find({ where, ctx, fields, tx })
+
+        if (found.length === 0) {
+          throw new Unauthorized()
+        }
+      }
+
+      const hooks = {
         async find (originalFind, { where, ctx, fields, skipAuth, ...restOpts } = {}) {
           if (useOriginal(skipAuth, ctx)) {
             return originalFind({ ...restOpts, where, ctx, fields })
@@ -207,84 +259,23 @@ async function auth (app, opts) {
           return originalCount({ ...restOpts, where, ctx })
         },
 
-        async save (originalSave, { input, ctx, fields, skipAuth, ...restOpts }) {
-          if (useOriginal(skipAuth, ctx)) {
-            return originalSave({ ctx, input, fields, ...restOpts })
+        async update (originalUpdate, { input, ctx, fields, skipAuth, ...restOpts }) {
+          // The mapper rejects a missing input or primary key with its own errors
+          if (useOriginal(skipAuth, ctx) || !input || !hasAllPrimaryKeys(input)) {
+            return originalUpdate({ ctx, input, fields, ...restOpts })
           }
-          const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
+          const { request, rule } = await authorizeSave(ctx, fields, input)
+          await checkRowIsSavable(ctx, request, rule, input, fields, restOpts.tx)
 
-          if (!rule.save) {
-            throw new Unauthorized()
-          }
-          checkFieldsFromRule(rule.save, fields)
-          checkInputFromRuleFields(rule.save, input)
-
-          if (rule.defaults) {
-            for (const key of Object.keys(rule.defaults)) {
-              const defaults = rule.defaults[key]
-              if (typeof defaults === 'function') {
-                input[key] = await defaults({ user: request.user, ctx, input })
-              } else {
-                input[key] = request.user[defaults]
-              }
-            }
-          }
-
-          let hasAllPrimaryKeys = false
-          const whereConditions = {}
-          for (const key of type.primaryKeys) {
-            hasAllPrimaryKeys = hasAllPrimaryKeys || input[key] !== undefined
-            whereConditions[key] = { eq: input[key] }
-          }
-
-          if (hasAllPrimaryKeys) {
-            const where = await fromRuleToWhere(ctx, rule.save, whereConditions, request.user)
-
-            const found = await type.find({
-              where,
-              ctx,
-              fields,
-              tx: restOpts.tx
-            })
-
-            if (found.length === 0) {
-              throw new Unauthorized()
-            }
-
-            return originalSave({ input, ctx, fields, ...restOpts })
-          }
-
-          return originalSave({ input, ctx, fields, ...restOpts })
+          return originalUpdate({ input, ctx, fields, ...restOpts })
         },
 
         async insert (originalInsert, { inputs, ctx, fields, skipAuth, ...restOpts }) {
-          if (useOriginal(skipAuth, ctx)) {
+          // The mapper rejects a missing input with its own error
+          if (useOriginal(skipAuth, ctx) || !inputs) {
             return originalInsert({ inputs, ctx, fields, ...restOpts })
           }
-          const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
-
-          if (!rule.save) {
-            throw new Unauthorized()
-          }
-
-          checkFieldsFromRule(rule.save, fields)
-          checkInputFromRuleFields(rule.save, inputs)
-
-          /* istanbul ignore else */
-          if (rule.defaults) {
-            for (const input of inputs) {
-              for (const key of Object.keys(rule.defaults)) {
-                const defaults = rule.defaults[key]
-                if (typeof defaults === 'function') {
-                  input[key] = await defaults({ user: request.user, ctx, input })
-                } else {
-                  input[key] = request.user[defaults]
-                }
-              }
-            }
-          }
+          await authorizeSave(ctx, fields, inputs)
 
           return originalInsert({ inputs, ctx, fields, ...restOpts })
         },
@@ -338,7 +329,26 @@ async function auth (app, opts) {
 
           return originalTopic
         }
-      })
+      }
+
+      // With saveDispatch, save goes through the update and insert hooks above
+      if (!app.platformatic.saveDispatch) {
+        hooks.save = async function save (originalSave, { input, ctx, fields, skipAuth, ...restOpts }) {
+          // The mapper rejects a missing input with its own error
+          if (useOriginal(skipAuth, ctx) || !input) {
+            return originalSave({ ctx, input, fields, ...restOpts })
+          }
+          const { request, rule } = await authorizeSave(ctx, fields, input)
+
+          if (hasAllPrimaryKeys(input)) {
+            await checkRowIsSavable(ctx, request, rule, input, fields, restOpts.tx)
+          }
+
+          return originalSave({ input, ctx, fields, ...restOpts })
+        }
+      }
+
+      app.platformatic.addEntityHooks(entityKey, hooks)
     }
   })
 }
