@@ -248,7 +248,8 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       skipTelemetryHooks: true,
       workers: {
         static: 1,
-        dynamic: false
+        dynamic: false,
+        version: 'v1'
       }
     },
     {
@@ -265,7 +266,8 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       watch: false,
       workers: {
         static: 1,
-        dynamic: false
+        dynamic: false,
+        version: 'v1'
       }
     }
   ])

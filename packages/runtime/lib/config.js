@@ -47,7 +47,7 @@ function raiseInvalidWorkersError (location, received, hint) {
   throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
-function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: false }) {
+function parseWorkers (config, prefix, globalWorkers, defaultWorkers = { static: 1, dynamic: false }) {
   if (typeof config.workers !== 'undefined') {
     // Number
     if (typeof config.workers !== 'object') {
@@ -81,6 +81,8 @@ function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: fa
     config.workers = {}
   }
 
+  config.workers.version ??= 'v1'
+
   // Fill missing values from defaults
   for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
     if (typeof config.workers[key] === 'undefined' && typeof defaultWorkers[key] !== 'undefined') {
@@ -95,7 +97,10 @@ function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: fa
     config.workers.maximum = t
   }
 
-  if (typeof config.workers.static === 'undefined') {
+  if (globalWorkers?.version === 'v2' && config.workers.dynamic) {
+    config.workers.minimum ??= 1
+    config.workers.static = config.workers.minimum
+  } else if (typeof config.workers.static === 'undefined') {
     config.workers.static = config.workers.minimum
   }
 }
@@ -280,7 +285,7 @@ export async function prepareApplication (config, application, defaultWorkers) {
   }
 
   // Validate and coerce per-service workers
-  parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
+  parseWorkers(application, `Service "${application.id}"`, config.workers, defaultWorkers)
 
   application.entrypoint = application.id === config.entrypoint
   application.dependencies ??= []
@@ -476,7 +481,7 @@ export async function transform (config, _, context) {
   let hasValidEntrypoint = false
 
   // Root-level workers
-  parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
+  parseWorkers(config, 'Runtime', config.workers)
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {

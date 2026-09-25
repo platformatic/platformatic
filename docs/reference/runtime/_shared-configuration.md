@@ -286,7 +286,7 @@ runtime. Each application object supports the following settings:
 - **`workers`** - The number of workers to start for this application. If the application is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
-    - **`static`** (`number`) - A fixed number of workers
+    - **`static`** (`number`) - A fixed worker count when `dynamic: false`, or the initial count with v1 dynamic scaling. Setting `static` alone does not override inherited dynamic scaling. With predictive scaling (`v2`) enabled, whether explicitly or inherited, `static` is ignored and the effective `minimum` determines the initial worker count.
     - **`dynamic`** (`boolean`) - Enable dynamic worker scaling. This is only meaningful when set to `false` to disable dynamic scaling for this application.
     - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
     - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
@@ -427,14 +427,38 @@ This can be specified as:
 
 - **`number`** - A fixed number of workers (minimum 1)
 - **`object`** - Advanced worker configuration with the following properties:
-  - **`static`** (`number`) - A fixed number of workers
-  - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`). The dynamic worker scaler automatically adjusts the number of workers for each application based on Event Loop Utilization (ELU) and available system memory. It can be overridden at the application level.
+  - **`version`** (`string`) - The scaling algorithm version. `"v1"` (default) uses threshold-based scaling, `"v2"` uses predictive scaling with Holt-Winters trend forecasting. See the [Dynamic Workers guide](../../guides/dynamic-workers.md) for details.
+  - **`static`** (`number`) - A fixed or initial number of workers for v1. This property is not supported in the runtime-level v2 workers object. For a fixed runtime worker count, use a number such as `"workers": 4`; dynamically scaled v2 applications start at their effective `minimum`.
+  - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`). The dynamic worker scaler automatically adjusts the number of workers for each application based on health metrics. It can be overridden at the application level.
   - **`minimum`** (`number`) - The minimum number of workers that can be used for each application. Default: `1`.
   - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: global `total` value.
   - **`total`** (`number`) - The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
   - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
+
+  **v1-specific properties:**
   - **`cooldown`** (`number`) - The amount of milliseconds the scaling algorithm will wait after making a change before scaling up or down again. This prevents rapid oscillations. Default: `20000`.
   - **`gracePeriod`** (`number`) - The amount of milliseconds after a worker is started before the scaling algorithm will start collecting metrics for it. This allows workers to stabilize after startup. Default: `30000`.
+  - **`scaleUpELU`** (`number`) - ELU threshold to trigger scaling up (0-1). Default: `0.8`.
+  - **`scaleDownELU`** (`number`) - ELU threshold to trigger scaling down (0-1). Default: `0.2`.
+
+  **v2-specific properties:**
+  - **`eluThreshold`** (`number`) - Per-worker ELU overload threshold (0-1). Default: `0.8`.
+  - **`heapThresholdMb`** (`number`) - Per-worker heap threshold in MB. If absent, heap measurements remain available for charts and scale-up memory checks, but do not produce scaling recommendations.
+  - **`processIntervalMs`** (`number`) - How often the algorithm runs in milliseconds. Default: `10000`.
+  - **`maxScaleUpStep`** (`integer`, minimum `1`) - Maximum extra workers requested for the selected application per processing run. Global-only. Default: `1`. Increase only when the application and container have enough spare resources for the additional startup work.
+  - **`scaleUpMargin`** (`number`) - Fractional overload margin required before adding a worker. Default: `0.1`.
+  - **`scaleDownMargin`** (`number`) - Hysteresis margin for scale-down safety. Default: `0.3`.
+  - **`redistributionMs`** (`number`) - Expected time in ms for a new worker to absorb its share of load. Default: `30000`.
+
+  - **`alphaUp`** (`number`) - Holt level smoothing factor for upward movement (0-1). Default: `0.2`.
+  - **`alphaDown`** (`number`) - Holt level smoothing factor for downward movement (0-1). Default: `0.1`.
+  - **`betaUp`** (`number`) - Holt trend smoothing factor for upward movement (0-1). Default: `0.2`.
+  - **`betaDown`** (`number`) - Holt trend smoothing factor for downward movement (0-1). Default: `0.1`.
+  - **`cooldowns`** (`object`) - Cooldown timers between scaling decisions:
+    - **`scaleUpAfterScaleUpMs`** (`number`) - Default: `5000`.
+    - **`scaleUpAfterScaleDownMs`** (`number`) - Default: `5000`.
+    - **`scaleDownAfterScaleUpMs`** (`number`) - Default: `30000`.
+    - **`scaleDownAfterScaleDownMs`** (`number`) - Default: `20000`.
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 

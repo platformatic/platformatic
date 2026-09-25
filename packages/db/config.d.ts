@@ -594,19 +594,46 @@ export interface PlatformaticDatabaseConfig {
     workers?:
       | number
       | string
-      | {
-          static?: number;
-          dynamic?: boolean;
-          minimum?: number;
-          maximum?: number;
-          total?: number;
-          maxMemory?: number;
-          cooldown?: number;
-          gracePeriod?: number;
-          scaleUpELU?: number;
-          scaleDownELU?: number;
-          [k: string]: unknown;
-        };
+      | (
+          | {
+              version?: "v1";
+              dynamic?: boolean;
+              minimum?: number;
+              maximum?: number;
+              static?: number;
+              total?: number;
+              maxMemory?: number;
+              cooldown?: number;
+              gracePeriod?: number;
+              scaleUpELU?: number;
+              scaleDownELU?: number;
+            }
+          | {
+              version: "v2";
+              dynamic?: boolean;
+              minimum?: number;
+              maximum?: number;
+              total?: number;
+              maxMemory?: number;
+              eluThreshold?: number;
+              heapThresholdMb?: number;
+              processIntervalMs?: number;
+              maxScaleUpStep?: number;
+              scaleUpMargin?: number;
+              scaleDownMargin?: number;
+              redistributionMs?: number;
+              alphaUp?: number;
+              alphaDown?: number;
+              betaUp?: number;
+              betaDown?: number;
+              cooldowns?: {
+                scaleUpAfterScaleUpMs?: number;
+                scaleUpAfterScaleDownMs?: number;
+                scaleDownAfterScaleUpMs?: number;
+                scaleDownAfterScaleDownMs?: number;
+              };
+            }
+        );
     workersRestartDelay?: number | string;
     logger?: {
       /**
@@ -1229,6 +1256,21 @@ export interface PlatformaticDatabaseConfig {
             maximum?: number;
             scaleUpELU?: number;
             scaleDownELU?: number;
+            eluThreshold?: number;
+            heapThresholdMb?: number;
+            scaleUpMargin?: number;
+            scaleDownMargin?: number;
+            redistributionMs?: number;
+            alphaUp?: number;
+            alphaDown?: number;
+            betaUp?: number;
+            betaDown?: number;
+            cooldowns?: {
+              scaleUpAfterScaleUpMs?: number;
+              scaleUpAfterScaleDownMs?: number;
+              scaleDownAfterScaleUpMs?: number;
+              scaleDownAfterScaleDownMs?: number;
+            };
             [k: string]: unknown;
           };
       health?: {

@@ -264,8 +264,11 @@ test('should properly apply runtime workers configuration to the applications (n
 
   const config = await app.getRuntimeConfig()
 
-  deepStrictEqual(config.applications[0].workers, { dynamic: false, static: features.node.reusePort ? 3 : 1 }) // Entrypoint
-  deepStrictEqual(config.applications[1].workers, { dynamic: false, static: 3 })
+  const expectedWorkers = { dynamic: false, static: 3, version: 'v1' }
+  let expectedEntrypoint = { dynamic: false, static: 1 }
+  if (features.node.reusePort) expectedEntrypoint = expectedWorkers
+  deepStrictEqual(config.applications[0].workers, expectedEntrypoint)
+  deepStrictEqual(config.applications[1].workers, expectedWorkers)
 })
 
 test('should properly apply runtime workers configuration to the applications (object)', async t => {
@@ -294,12 +297,11 @@ test('should properly apply runtime workers configuration to the applications (o
 
   const config = await app.getRuntimeConfig()
 
-  // Entrypoint
-  deepStrictEqual(
-    config.applications[0].workers,
-    features.node.reusePort ? { dynamic: true, static: 2, minimum: 2, maximum: 3 } : { dynamic: false, static: 1 }
-  )
-  deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 2, minimum: 2, maximum: 3 })
+  const expectedWorkers = { dynamic: true, static: 2, minimum: 2, maximum: 3, version: 'v1' }
+  let expectedEntrypoint = { dynamic: false, static: 1 }
+  if (features.node.reusePort) expectedEntrypoint = expectedWorkers
+  deepStrictEqual(config.applications[0].workers, expectedEntrypoint)
+  deepStrictEqual(config.applications[1].workers, expectedWorkers)
 })
 
 test('should ensure the right order for minimum and maximum', async t => {
@@ -328,12 +330,11 @@ test('should ensure the right order for minimum and maximum', async t => {
 
   const config = await app.getRuntimeConfig()
 
-  // Entrypoint
-  deepStrictEqual(
-    config.applications[0].workers,
-    features.node.reusePort ? { dynamic: true, static: 3, minimum: 3, maximum: 4 } : { dynamic: false, static: 1 }
-  )
-  deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 3, minimum: 3, maximum: 4 })
+  const expectedWorkers = { dynamic: true, static: 3, minimum: 3, maximum: 4, version: 'v1' }
+  let expectedEntrypoint = { dynamic: false, static: 1 }
+  if (features.node.reusePort) expectedEntrypoint = expectedWorkers
+  deepStrictEqual(config.applications[0].workers, expectedEntrypoint)
+  deepStrictEqual(config.applications[1].workers, expectedWorkers)
 })
 
 test('should apply application scaleUpELU and scaleDownELU', async t => {
