@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import auth from '../index.js'
 import { clear, connInfo, createBasicPages } from './helper.js'
 
-test('save with primary keys passes tx to authorization check', async (t) => {
+test('update passes tx to authorization check', async (t) => {
   const app = fastify()
 
   app.register(core, {
@@ -43,15 +43,13 @@ test('save with primary keys passes tx to authorization check', async (t) => {
     ]
   })
 
-  // Test: Create and update within a transaction using entity methods directly.
-  // When updating an existing record, save() calls find() internally to verify
-  // the user has permission to modify that record. For this authorization check
-  // to work correctly within a transaction, find() must receive the transaction
-  // context to see uncommitted data from earlier operations in the same transaction.
+  // Create and update within a transaction using entity methods directly.
+  // The update authorization check must receive the transaction context so its
+  // find can see the uncommitted insert.
   app.post('/test-transaction', async (_request, reply) => {
     return await app.platformatic.db.tx(async (tx) => {
       // Create a page within the transaction
-      const created = await app.platformatic.entities.page.save({
+      const created = await app.platformatic.entities.page.insert({
         input: { title: 'Test Page' },
         ctx: { reply },
         tx
@@ -60,7 +58,7 @@ test('save with primary keys passes tx to authorization check', async (t) => {
       // Update the same page within the transaction
       // The authorization check must find this page to verify userId matches
       // This find() call needs tx to see the uncommitted insert above
-      const updated = await app.platformatic.entities.page.save({
+      const updated = await app.platformatic.entities.page.update({
         input: {
           id: created.id,
           title: 'Updated Page'

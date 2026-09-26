@@ -163,14 +163,14 @@ $ curl -X 'GET' 'http://localhost:3042/pages/1?fields=title,body
 }
 ```
 
-## `POST [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`
+## `PUT [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`
 
-Updates a row identified by `PRIMARY_KEY`. 
+Updates the row identified by `PRIMARY_KEY`. It returns `404 Not Found` when the row does not exist and never inserts a row.
 
 **Example**
 
 ```bash
-$ curl -X 'POST' \
+$ curl -X 'PUT' \
   'http://localhost:3042/pages/1' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
@@ -185,10 +185,6 @@ $ curl -X 'POST' \
   "body": "Welcome to Platformatic"
 }
 ```
-
-## `PUT [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`
-
-Same as `POST [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`.
 
 <a name="put-plural"></a>
 ## `PUT [PLURAL_ENTITY_NAME]`

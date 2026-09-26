@@ -122,8 +122,11 @@ type moviesCount {
 }
 
 type Mutation {
-  saveMovie(input: MovieInput!): Movie
+  insertMovie(input: MovieInput!): Movie
   insertMovies(inputs: [MovieInput]!): [Movie]
+  updateMovie(input: MovieInput!): Movie
+  upsertMovie(input: MovieInput!): Movie
+  saveMovie(input: MovieInput!): Movie @deprecated(reason: "Use upsertMovie instead.")
   deleteMovies(where: MovieWhereArguments): [Movie]
 }
 

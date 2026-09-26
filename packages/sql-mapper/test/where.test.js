@@ -65,7 +65,7 @@ test('list', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -301,7 +301,7 @@ test('totalCount', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -410,7 +410,7 @@ test('foreign keys', async () => {
   ]
 
   {
-    const res = await mapper.entities.owner.insert({
+    const res = await mapper.entities.owner.insertMany({
       inputs: owners
     })
     const toAssign = [...posts]
@@ -418,7 +418,7 @@ test('foreign keys', async () => {
       toAssign.shift().ownerId = owner.id
       toAssign.shift().ownerId = owner.id
     }
-    await mapper.entities.post.insert({
+    await mapper.entities.post.insertMany({
       inputs: posts
     })
   }
@@ -517,7 +517,7 @@ test('limit should be 10 by default 100 at max', async () => {
     })
   }
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -606,7 +606,7 @@ test('limit must accept custom configuration', async () => {
     })
   }
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -683,7 +683,7 @@ test('is NULL', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -777,7 +777,7 @@ test('LIKE', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -964,7 +964,7 @@ test('ILIKE', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -1144,7 +1144,7 @@ test('pagination can be disabled', async () => {
       counter: 40
     }
   ]
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
