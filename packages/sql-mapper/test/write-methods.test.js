@@ -1,7 +1,7 @@
 import { deepEqual, equal, ok, rejects } from 'node:assert'
 import { test } from 'node:test'
 import { connect } from '../index.js'
-import { clear, connInfo, isSQLite } from './helper.js'
+import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
 const fakeLogger = {
   trace () {},
@@ -21,6 +21,13 @@ async function setup (t) {
           title VARCHAR(42),
           inserted_at TIMESTAMP,
           updated_at TIMESTAMP
+        );`)
+      } else if (isMysql) {
+        await db.query(sql`CREATE TABLE pages (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          inserted_at TIMESTAMP NULL DEFAULT NULL,
+          updated_at TIMESTAMP NULL DEFAULT NULL
         );`)
       } else {
         await db.query(sql`CREATE TABLE pages (
