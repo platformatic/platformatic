@@ -60,11 +60,11 @@ query {
 }
 ```
 
-Mutation works exactly the same as before:
+Update a relationship by passing every field in its composite primary key:
 
 ```graphql
 mutation {
-  saveEditor(input: { userId: "1", pageId: "1", role: "captain" }) {
+  updateEditor(input: { userId: "1", pageId: "1", role: "captain" }) {
     user {
       id
       username

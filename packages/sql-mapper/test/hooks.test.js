@@ -83,7 +83,7 @@ test('basic hooks', async t => {
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
         },
-        async insert (original, args) {
+        async insertMany (original, args) {
           ok('insert called')
 
           deepEqual(args.inputs, [
@@ -115,7 +115,7 @@ test('basic hooks', async t => {
     title: 'Hello from hook 2'
   })
 
-  await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
+  await entity.insertMany({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
 })
 
 test('addEntityHooks', async t => {
@@ -196,7 +196,7 @@ test('addEntityHooks', async t => {
       deepEqual(args.fields, ['id', 'title'])
       return original(args)
     },
-    async insert (original, args) {
+    async insertMany (original, args) {
       ok('insert called')
 
       deepEqual(args.inputs, [
@@ -226,7 +226,7 @@ test('addEntityHooks', async t => {
     title: 'Hello from hook 2'
   })
 
-  await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
+  await entity.insertMany({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
 })
 
 test('basic hooks with smaller cap name', async t => {
@@ -304,7 +304,7 @@ test('basic hooks with smaller cap name', async t => {
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
         },
-        async insert (original, args) {
+        async insertMany (original, args) {
           ok('insert called')
 
           deepEqual(args.inputs, [
@@ -336,5 +336,5 @@ test('basic hooks with smaller cap name', async t => {
     title: 'Hello from hook 2'
   })
 
-  await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
+  await entity.insertMany({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
 })

@@ -120,7 +120,7 @@ export default async function (app) {
     await pipeline(file.file, createWriteStream(path))
 
     const ctx = req.platformaticContext
-    await app.platformatic.entities.user.save({
+    await app.platformatic.entities.user.update({
       input: { id: req.params.id, avatarPath: path },
       ctx
     })

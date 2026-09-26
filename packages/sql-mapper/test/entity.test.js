@@ -102,13 +102,13 @@ test('entity API', async () => {
 
   // insert - single
   const insertResult = await pageEntity.insert({
-    inputs: [{ theTitle: 'foobar', isPublished: false }],
+    input: { theTitle: 'foobar', isPublished: false },
     fields: ['id', 'theTitle', 'isPublished']
   })
-  deepEqual(insertResult, [{ id: '3', theTitle: 'foobar', isPublished: false }])
+  deepEqual(insertResult, { id: '3', theTitle: 'foobar', isPublished: false })
 
   // insert - multiple
-  const insertMultipleResult = await pageEntity.insert({
+  const insertMultipleResult = await pageEntity.insertMany({
     inputs: [
       { theTitle: 'platformatic', isPublished: false },
       { isPublished: true, theTitle: 'foobar' }
@@ -219,10 +219,10 @@ test('insert with empty inputs array returns an empty array', async () => {
   })
   const pageEntity = mapper.entities.page
 
-  const res = await pageEntity.insert({ inputs: [] })
+  const res = await pageEntity.insertMany({ inputs: [] })
   deepEqual(res, [])
 
-  await rejects(pageEntity.insert({}), {
+  await rejects(pageEntity.insertMany({}), {
     code: 'PLT_SQL_MAPPER_INPUT_NOT_PROVIDED'
   })
 })
@@ -247,9 +247,9 @@ test('insert with explicit integer PK value', async () => {
     hooks: {}
   })
   const pageEntity = mapper.entities.page
-  const [newPage] = await pageEntity.insert({
+  const newPage = await pageEntity.insert({
     fields: ['id', 'title'],
-    inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }]
+    input: { id: 13, title: '13th page with explicit id equal to 13' }
   })
   deepEqual(newPage, {
     id: '13',
@@ -282,15 +282,15 @@ test('NUMBER, NUMERIC, BIGINT and TEXT primary keys are accepted on SQLite', { s
 
   for (const entity of ['number', 'numeric', 'bigint']) {
     deepEqual(mapper.entities[entity].primaryKeys, new Set(['id']))
-    const [row] = await mapper.entities[entity].insert({
-      inputs: [{ id: 42, title: 'foo' }]
+    const row = await mapper.entities[entity].insert({
+      input: { id: 42, title: 'foo' }
     })
     deepEqual(row, { id: '42', title: 'foo' })
   }
 
   deepEqual(mapper.entities.text.primaryKeys, new Set(['id']))
-  const [row] = await mapper.entities.text.insert({
-    inputs: [{ id: 'the-key', title: 'foo' }]
+  const row = await mapper.entities.text.insert({
+    input: { id: 'the-key', title: 'foo' }
   })
   deepEqual(row, { id: 'the-key', title: 'foo' })
 })
@@ -316,7 +316,7 @@ test('insert with explicit uuid PK value', { skip: !isSQLite }, async () => {
   })
 
   const pageEntity = mapper.entities.page
-  const [newPage] = await pageEntity.insert({
+  const [newPage] = await pageEntity.insertMany({
     fields: ['id', 'title'],
     inputs: [
       {
@@ -352,7 +352,7 @@ test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, as
   })
 
   const pageEntity = mapper.entities.page
-  const [newPage] = await pageEntity.insert({
+  const [newPage] = await pageEntity.insertMany({
     fields: ['id', 'title'],
     inputs: [
       {
@@ -390,12 +390,10 @@ test('insert without fields to retrieve', { skip: !isSQLite }, async () => {
   const pageEntity = mapper.entities.page
   await pageEntity.insert({
     fields: [],
-    inputs: [
-      {
-        id: '13',
-        title: '13th page with explicit id equal to 13'
-      }
-    ]
+    input: {
+      id: '13',
+      title: '13th page with explicit id equal to 13'
+    }
   })
 
   const [newPage] = await pageEntity.find({
@@ -484,7 +482,7 @@ test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async () => {
     hooks: {}
   })
   const pageEntity = mapper.entities.page
-  const [newPage] = await pageEntity.insert({
+  const [newPage] = await pageEntity.insertMany({
     fields: ['id', 'title'],
     inputs: [{ id: 'varchar_id', title: '13th page with explicit id equal to 13' }]
   })
@@ -563,13 +561,13 @@ test('mixing snake and camel case', async () => {
 
   strictEqual(pageEntity.fields.category_id.stringifyOutput, true)
 
-  const [newCategory] = await categoryEntity.insert({
+  const [newCategory] = await categoryEntity.insertMany({
     fields: ['id', 'name'],
     inputs: [{ name: 'fiction' }]
   })
 
   {
-    const res = await pageEntity.insert({
+    const res = await pageEntity.insertMany({
       fields: ['id', 'title', 'categoryId'],
       inputs: [
         {
@@ -681,10 +679,10 @@ test('only foreign keys referencing primary keys are stringified', async t => {
   strictEqual(pageEntity.fields.category_id.stringifyOutput, true)
   strictEqual(pageEntity.fields.category_code.stringifyOutput, undefined)
 
-  const [category] = await categoryEntity.insert({
+  const [category] = await categoryEntity.insertMany({
     inputs: [{ externalCode: 42 }]
   })
-  const pages = await pageEntity.insert({
+  const pages = await pageEntity.insertMany({
     inputs: [
       { categoryId: category.id, categoryCode: category.externalCode },
       { categoryId: null, categoryCode: null }
@@ -880,14 +878,14 @@ test('only include wanted fields - with foreign', async () => {
   const pageEntity = mapper.entities.page
   const categoryEntity = mapper.entities.category
 
-  const [newCategory] = await categoryEntity.insert({
+  const [newCategory] = await categoryEntity.insertMany({
     fields: ['id', 'name'],
     inputs: [{ name: 'fiction' }]
   })
 
   {
     const fields = ['id', 'category_id']
-    const res = await pageEntity.insert({
+    const res = await pageEntity.insertMany({
       fields,
       inputs: [
         {
@@ -973,14 +971,14 @@ test('only include wanted fields - without foreign', async () => {
   const pageEntity = mapper.entities.page
   const categoryEntity = mapper.entities.category
 
-  const [newCategory] = await categoryEntity.insert({
+  const [newCategory] = await categoryEntity.insertMany({
     fields: ['id', 'name'],
     inputs: [{ name: 'fiction' }]
   })
 
   {
     const fields = ['id', 'title']
-    const res = await pageEntity.insert({
+    const res = await pageEntity.insertMany({
       fields,
       inputs: [
         {
@@ -1066,13 +1064,13 @@ test('include all fields', async () => {
   const pageEntity = mapper.entities.page
   const categoryEntity = mapper.entities.category
 
-  const [newCategory] = await categoryEntity.insert({
+  const [newCategory] = await categoryEntity.insertMany({
     fields: ['id', 'name'],
     inputs: [{ name: 'fiction' }]
   })
 
   {
-    const res = await pageEntity.insert({
+    const res = await pageEntity.insertMany({
       inputs: [
         {
           title: 'A fiction',
@@ -1171,7 +1169,7 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async () => {
 
   // insert
   deepEqual(
-    await simpleType.insert({
+    await simpleType.insertMany({
       inputs: [{ config: { foo: 'bar' } }]
     }),
     [{ id: 2, config: { foo: 'bar' } }]
@@ -1240,7 +1238,7 @@ test('stored and virtual generated columns should return for SQLite', { skip: !i
 
   // insert
   deepEqual(
-    await generatedTest.insert({
+    await generatedTest.insertMany({
       inputs: [{ test: 4 }]
     }),
     [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }]
@@ -1305,7 +1303,7 @@ test('stored generated columns should return for pg', { skip: !isPg }, async () 
 
   // insert
   deepEqual(
-    await generatedTest.insert({
+    await generatedTest.insertMany({
       inputs: [{ test: 4 }]
     }),
     [{ id: 2, test: 4, testStored: 8 }]
@@ -1371,7 +1369,7 @@ test('stored and virtual generated columns should return for pg', { skip: isPg |
 
   // insert
   deepEqual(
-    await generatedTest.insert({
+    await generatedTest.insertMany({
       inputs: [{ test: 4 }]
     }),
     [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }]
@@ -1473,7 +1471,7 @@ test('array support (PG)', { skip: !isPg }, async () => {
 
   // insert
   deepEqual(
-    await generatedTest.insert({
+    await generatedTest.insertMany({
       inputs: [{ test: [4], checkmark: true }]
     }),
     [{ id: 2, test: [4], checkmark: true }]
@@ -1607,7 +1605,7 @@ test('date columns are returned as YYYY-MM-DD strings', { skip: !isPg }, async (
   })
   const pageEntity = mapper.entities.page
 
-  const [page] = await pageEntity.insert({
+  const [page] = await pageEntity.insertMany({
     inputs: [{ publishDate: '2023-06-01' }]
   })
   // No time zone dependent Date parsing: the value must be the exact date

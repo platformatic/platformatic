@@ -524,7 +524,7 @@ test('additional options are passed to original functions', async t => {
     })
 
     fastify.post('/rest-insert', async (req, reply) => {
-      await fastify.platformatic.entities.page.insert({
+      await fastify.platformatic.entities.page.insertMany({
         fields: ['id'],
         inputs: [{ title: 'title 2' }, { title: 'title 3' }],
         cool: 'insert'
