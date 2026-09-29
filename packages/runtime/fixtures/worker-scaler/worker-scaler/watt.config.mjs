@@ -18,6 +18,6 @@ export default {
     minimum: 1,
     maximum: 10,
     total: 10,
-    gracePeriod: 1000
+    processIntervalMs: 1000
   }
 }

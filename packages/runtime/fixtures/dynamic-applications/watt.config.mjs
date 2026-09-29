@@ -20,9 +20,8 @@ export default {
     minimum: 1,
     maximum: 2,
     total: 10,
-    scaleUpELU: 0.1,
-    scaleDownELU: 0.2,
-    gracePeriod: 5000,
-    cooldown: 5000
+    eluThreshold: 0.1,
+    processIntervalMs: 3000,
+    cooldowns: { scaleUpAfterScaleUpMs: 5000, scaleDownAfterScaleDownMs: 5000 }
   }
 }

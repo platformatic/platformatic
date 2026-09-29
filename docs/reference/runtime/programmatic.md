@@ -172,6 +172,7 @@ test('handles ping messages', async t => {
 - **`runtime.getRuntimeStatus(): string`** — One of `starting`, `started`, `stopping`, `stopped`, `closed`.
 - **`runtime.getRuntimeMetadata(): Promise<RuntimeMetadata>`** — `pid`, `cwd`, `argv`, `uptimeSeconds`, `execPath`, `nodeVersion`, `projectDir`, `packageName`, `packageVersion`, `platformaticVersion`, and `urls`. `urls` is a map of observed worker listener URLs keyed by `applicationId:workerId`.
 - **`runtime.getRuntimeConfig(includeMeta = false): object`** — The resolved configuration. When `includeMeta` is `true` the `[kMetadata]` symbol is preserved (needed by `prepareAddedApplications()`).
+- **`runtime.getDynamicWorkersScaler()`** — Returns the predictive scaler when dynamic scaling is enabled, otherwise `undefined`. Its `getConfig()` method returns a copy of the effective predictive settings, including `total`, `minimum`, `maximum`, `cooldowns`, and the memory limit resolved at startup. Watt v4 uses these configuration names instead of the legacy scaler's `maxTotalWorkers`, `minWorkers`, `maxWorkers`, and single `cooldown`.
 - **`runtime.getRuntimeEnv(): Record<string, string>`** — Environment variables visible to the runtime process.
 - **`runtime.getUrls(applicationId?): Record<string, string>`** — Observed listener URLs for running workers, keyed by `applicationId:workerId`. Pass an application ID to select only that application's workers.
 - **`runtime.getApplicationsIds(): string[]`** — IDs of all configured applications.

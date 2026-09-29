@@ -44,37 +44,6 @@ export type PlatformaticRuntimeConfig = {
       };
   metrics?: boolean | MetricsOptions;
   tracing?: TelemetryOptions;
-  verticalScaler?: {
-    enabled?: boolean;
-    maxTotalWorkers?: number;
-    maxTotalMemory?: number;
-    minWorkers?: number;
-    maxWorkers?: number;
-    cooldownSec?: number;
-    gracePeriod?: number;
-    scaleUpELU?: number;
-    scaleDownELU?: number;
-    /**
-     * @deprecated
-     */
-    timeWindowSec?: number;
-    /**
-     * @deprecated
-     */
-    scaleDownTimeWindowSec?: number;
-    /**
-     * @deprecated
-     */
-    scaleIntervalSec?: number;
-    applications?: {
-      [k: string]: {
-        minWorkers?: number;
-        maxWorkers?: number;
-        scaleUpELU?: number;
-        scaleDownELU?: number;
-      };
-    };
-  };
   inspectorOptions?: {
     host?: string;
     port?: number;
@@ -150,12 +119,24 @@ export interface ApplicationEntryOverrides {
     | number
     | string
     | {
-        static?: number;
+        dynamic?: boolean;
         minimum?: number;
         maximum?: number;
-        scaleUpELU?: number;
-        scaleDownELU?: number;
-        [k: string]: unknown;
+        eluThreshold?: number;
+        heapThresholdMb?: number;
+        scaleUpMargin?: number;
+        scaleDownMargin?: number;
+        redistributionMs?: number;
+        alphaUp?: number;
+        alphaDown?: number;
+        betaUp?: number;
+        betaDown?: number;
+        cooldowns?: {
+          scaleUpAfterScaleUpMs?: number;
+          scaleUpAfterScaleDownMs?: number;
+          scaleDownAfterScaleUpMs?: number;
+          scaleDownAfterScaleDownMs?: number;
+        };
       };
   health?: {
     enabled?: boolean | string;
@@ -235,17 +216,28 @@ export interface ApplicationEntryOverrides {
       };
 }
 export interface WorkersOptions {
-  static?: number;
   dynamic?: boolean;
   minimum?: number;
   maximum?: number;
   total?: number;
   maxMemory?: number;
-  cooldown?: number;
-  gracePeriod?: number;
-  scaleUpELU?: number;
-  scaleDownELU?: number;
-  [k: string]: unknown;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+  processIntervalMs?: number;
+  maxScaleUpStep?: number;
+  scaleUpMargin?: number;
+  scaleDownMargin?: number;
+  redistributionMs?: number;
+  alphaUp?: number;
+  alphaDown?: number;
+  betaUp?: number;
+  betaDown?: number;
+  cooldowns?: {
+    scaleUpAfterScaleUpMs?: number;
+    scaleUpAfterScaleDownMs?: number;
+    scaleDownAfterScaleUpMs?: number;
+    scaleDownAfterScaleDownMs?: number;
+  };
 }
 export interface RuntimeLoggerOptions {
   /**

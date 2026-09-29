@@ -72,10 +72,6 @@ function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: fa
     config.workers = {}
   }
 
-  // What this entry asked for, before the defaults are folded in.
-  const declaredMinimum = config.workers.minimum
-  const declaredStatic = config.workers.static
-
   // Fill missing values from defaults
   for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
     if (typeof config.workers[key] === 'undefined' && typeof defaultWorkers[key] !== 'undefined') {
@@ -90,17 +86,10 @@ function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: fa
     config.workers.maximum = t
   }
 
-  /*
-    `static` is how many workers the application starts with, and an entry that declared its own
-    `minimum` has already said. The runtime-wide default -- which is 1 unless the project set one --
-    must not override it: `{ dynamic: true, minimum: 2 }` otherwise starts a single worker and
-    leaves the autoscaler to climb to the floor the entry asked for.
-  */
-  if (typeof declaredStatic === 'undefined' && typeof declaredMinimum !== 'undefined') {
-    config.workers.static = declaredMinimum
-  }
-
-  if (typeof config.workers.static === 'undefined') {
+  if (config.workers.dynamic) {
+    config.workers.minimum ??= 1
+    config.workers.static = config.workers.minimum
+  } else if (typeof config.workers.static === 'undefined') {
     config.workers.static = config.workers.minimum
   }
 }
@@ -390,7 +379,7 @@ export async function finalizeConfiguration (config, applications, context, prod
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
   // Root-level workers
-  parseWorkers(config, 'Runtime', { static: 1, dynamic: false })
+  parseWorkers(config, 'Runtime')
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {

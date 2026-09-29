@@ -15,7 +15,7 @@
   },
   "scripts": {
     "test": "npm run test:types && npm run test:main && npm run test:api && npm run test:cli && npm run test:start && npm run test:multiple-workers",
-    "test:main": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/versions/*.test.js",
+    "test:main": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/versions/*.test.js test/predictive-scaling/*.test.js",
     "test:api": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/api/*.test.js test/management-api/*.test.js",
     "test:cli": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/cli/*.test.js test/cli/**/*.test.js",
     "test:start": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/start/*.test.js",

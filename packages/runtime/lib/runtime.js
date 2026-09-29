@@ -70,7 +70,7 @@ import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
-import { DynamicWorkersScaler } from './worker-scaler.js'
+import { PredictiveWorkersScaler } from './predictive-worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
@@ -411,13 +411,7 @@ export class Runtime extends EventEmitter {
     this.#createWorkersBroadcastChannel()
 
     if (this.#config.workers.dynamic) {
-      if (this.#config.workers.dynamic === false) {
-        this.logger.warn(
-          `Worker scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
-        )
-      } else {
-        this.#dynamicWorkersScaler = new DynamicWorkersScaler(this, this.#config.workers)
-      }
+      this.#dynamicWorkersScaler = new PredictiveWorkersScaler(this, this.#config.workers)
     }
 
     // Load extensions before creating any worker so that custom ITC handlers

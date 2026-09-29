@@ -1,519 +1,86 @@
-import { safeRemove } from '@platformatic/foundation'
-import assert, { deepStrictEqual } from 'node:assert'
-import { cp, mkdtemp } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
-import { request } from 'undici'
-import { transform } from '../index.js'
-import { ScalingAlgorithm } from '../lib/scaling-algorithm.js'
-import { DynamicWorkersScaler } from '../lib/worker-scaler.js'
-import { kApplicationId, kId, kWorkerStartTime, kWorkerStatus } from '../lib/worker/symbols.js'
-import { createRuntime, updateConfigFile, configurationFileIn } from './helpers.js'
+import { PredictiveWorkersScaler } from '../lib/predictive-worker-scaler.js'
+import { prepareAddedApplications } from '../lib/config.js'
+import { createRuntime } from './helpers.js'
 
-const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
+const root = join(import.meta.dirname, '../fixtures/worker-scaler')
 
-const configurations = {
-  default: 'default',
-  'worker-scaler': 'worker-scaler'
-}
-
-function countWorkers (workers, applicationId) {
-  let count = 0
-  for (const worker of Object.values(workers)) {
-    if (worker.application === applicationId) count++
-  }
-  return count
-}
-
-async function waitForWorkers (app, applicationId, expectedCount, { timeoutMs = 30000, intervalMs = 250 } = {}) {
-  const start = Date.now()
-  let workers
-  while (Date.now() - start < timeoutMs) {
-    workers = await app.getWorkers()
-    if (countWorkers(workers, applicationId) === expectedCount) return workers
-    await sleep(intervalMs)
-  }
-  return workers
-}
-
-async function driveLoad (serviceUrl, signal) {
-  while (!signal.aborted) {
-    try {
-      await request(serviceUrl + '/cpu-intensive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timeout: 500 })
-      })
-    } catch {
-      // Ignore transient errors while the scaler is adding workers.
-    }
-  }
-}
-
-for (const [name, file] of Object.entries(configurations)) {
-  test(`should scale an application if elu is higher than treshold (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
-    const app = await createRuntime(configFile)
-    const { 'service-2:0': serviceUrl } = await app.start()
-
-    t.after(() => app.close())
-
-    // Drive sustained load instead of a single burst and poll for the new
-    // worker instead of sleeping a fixed amount of time: a single burst can
-    // be missed by the ELU sampling window on slow CI runners.
-    const ac = new AbortController()
-    const load = driveLoad(serviceUrl, ac.signal)
-    t.after(async () => {
-      ac.abort()
-      await load
-    })
-
-    const workers = await waitForWorkers(app, 'service-2', 2)
-    assert.strictEqual(countWorkers(workers, 'service-1'), 1)
-    assert.strictEqual(countWorkers(workers, 'service-2'), 2)
+async function start (t, workers, applications) {
+  const app = await createRuntime(root, {
+    watch: false,
+    autoload: { path: './services' },
+    applications: applications?.map(application => ({ path: join(root, 'services', application.id), ...application })),
+    health: { enabled: false },
+    workers
   })
-
-  test(`should not scale an application when the scaler is the cooldown(configuration ${name})`, async t => {
-    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
-    const app = await createRuntime(configFile, null, {
-      async transform (config, ...args) {
-        config = await transform(config, ...args)
-        config.verticalScaler = {
-          enabled: true,
-          maxTotalWorkers: 5,
-          gracePeriod: 1
-        }
-        return config
-      }
-    })
-
-    const { 'service-2:0': serviceUrl } = await app.start()
-
-    t.after(() => app.close())
-
-    const ac = new AbortController()
-    const load = driveLoad(serviceUrl, ac.signal)
-    t.after(async () => {
-      ac.abort()
-      await load
-    })
-
-    const workers = await waitForWorkers(app, 'service-2', 2)
-    assert.strictEqual(countWorkers(workers, 'service-1'), 1)
-    assert.strictEqual(countWorkers(workers, 'service-2'), 2)
-  })
-
-  test(`should not scale applications when the elu is lower than treshold (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
-    const app = await createRuntime(configFile, null, {
-      async transform (config, ...args) {
-        config = await transform(config, ...args)
-        // The current spelling of what verticalScaler.scaleUpELU said: a threshold no load reaches, so
-        // nothing scales. verticalScaler no longer exists -- the transform carries no migration.
-        config.workers.scaleUpELU = 1
-        return config
-      }
-    })
-
-    const { 'service-2:0': serviceUrl } = await app.start()
-
-    t.after(() => app.close())
-
-    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ timeout: 1000 })
-    })
-    assert.strictEqual(statusCode, 200)
-
-    await sleep(10000)
-
-    const workers = await app.getWorkers()
-
-    const service1Workers = []
-    const service2Workers = []
-
-    for (const worker of Object.values(workers)) {
-      if (worker.application === 'service-1') {
-        service1Workers.push(worker)
-      }
-      if (worker.application === 'service-2') {
-        service2Workers.push(worker)
-      }
-    }
-
-    assert.strictEqual(service1Workers.length, 1)
-    assert.strictEqual(service2Workers.length, 1)
-  })
-
-  test(`should not scale applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
-    const app = await createRuntime(configFile, null, {
-      async transform (config, ...args) {
-        config = await transform(config, ...args)
-        config.workers = { static: 1, dynamic: false }
-        return config
-      }
-    })
-
-    const { 'service-2:0': serviceUrl } = await app.start()
-
-    t.after(() => app.close())
-
-    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ timeout: 1000 })
-    })
-    assert.strictEqual(statusCode, 200)
-
-    await sleep(10000)
-
-    const workers = await app.getWorkers()
-
-    const service1Workers = []
-    const service2Workers = []
-
-    for (const worker of Object.values(workers)) {
-      if (worker.application === 'service-1') {
-        service1Workers.push(worker)
-      }
-      if (worker.application === 'service-2') {
-        service2Workers.push(worker)
-      }
-    }
-
-    assert.strictEqual(service1Workers.length, 1)
-    assert.strictEqual(service2Workers.length, 1)
-  })
-
-  test(`should not scale an applications when the worker property is set (configuration ${name})`, async t => {
-    const configFile = configurationFileIn(join(fixturesDir, 'worker-scaler', file))
-    const app = await createRuntime(configFile, null, {
-      async transform (config, ...args) {
-        config = await transform(config, ...args)
-
-        // On the list the loader produced, not a replacement for it: the transform used to re-expand
-        // autoload so a skeleton list grew paths back, and the transform deliberately no longer does.
-        for (const application of config.applications) {
-          application.workers = { static: 1, dynamic: false }
-        }
-
-        return config
-      }
-    })
-
-    const { 'service-2:0': serviceUrl } = await app.start()
-
-    t.after(() => app.close())
-
-    const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ timeout: 1000 })
-    })
-    assert.strictEqual(statusCode, 200)
-
-    await sleep(10000)
-
-    const workers = await app.getWorkers()
-
-    const service1Workers = []
-    const service2Workers = []
-
-    for (const worker of Object.values(workers)) {
-      if (worker.application === 'service-1') {
-        service1Workers.push(worker)
-      }
-      if (worker.application === 'service-2') {
-        service2Workers.push(worker)
-      }
-    }
-
-    assert.strictEqual(service1Workers.length, 1)
-    assert.strictEqual(service2Workers.length, 1)
-  })
-}
-
-/*
-  The three tests below edit the configuration, so each copies the whole variant directory to a
-  scratch sibling first -- a sibling, because the configuration autoloads `../services` and a copy
-  anywhere else would point at nothing. A single file used to be copied under a second name; one
-  configuration is allowed per directory.
-*/
-async function prepareScratchVariant (t) {
-  const scratchDir = await mkdtemp(join(fixturesDir, 'worker-scaler', 'scratch-'))
-  await cp(join(fixturesDir, 'worker-scaler', 'default', 'watt.config.mjs'), join(scratchDir, 'watt.config.mjs'))
-  t.after(() => safeRemove(scratchDir))
-
-  return join(scratchDir, 'watt.config.mjs')
-}
-
-test('should properly apply runtime workers configuration to the applications (number)', async t => {
-  const configFile = await prepareScratchVariant(t)
-
-  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
-  const logsPath = join(tmpDir, 'log.txt')
-
-  await updateConfigFile(configFile, contents => {
-    contents.workers = 3
-    return contents
-  })
-
-  const app = await createRuntime(configFile, null, { logsPath })
-
+  t.after(() => app.close())
   await app.start()
-  t.after(() => app.close())
+  return app
+}
 
-  const config = await app.getRuntimeConfig()
+for (const [name, workers, count] of [
+  ['number', 3, 3],
+  ['object', { dynamic: true, minimum: 2, maximum: 3 }, 2],
+  ['inverted bounds', { dynamic: true, minimum: 4, maximum: 3 }, 3]
+]) {
+  test(`applies runtime workers configuration (${name})`, async t => {
+    const app = await start(t, workers)
+    const config = app.getRuntimeConfig()
+    const entrypoint = config.applications.find(app => app.id === 'service-1')
+    const service = config.applications.find(app => app.id === 'service-2')
+    assert.equal(entrypoint.workers.static, count)
+    assert.equal(service.workers.static, count)
+    const all = Object.values(await app.getWorkers())
+    assert.equal(all.filter(worker => worker.application === 'service-2').length, count)
+    if (typeof workers === 'number') assert.equal(app.getDynamicWorkersScaler(), undefined)
+    else assert.ok(app.getDynamicWorkersScaler() instanceof PredictiveWorkersScaler)
+  })
+}
 
-  deepStrictEqual(config.applications[0].workers, { dynamic: false, static: 3 })
-  deepStrictEqual(config.applications[1].workers, { dynamic: false, static: 3 })
+test('fixed application counts override inherited scaling', async t => {
+  const app = await start(t, { dynamic: true, minimum: 2 }, [{ id: 'service-2', workers: 3 }])
+  const service = app.getRuntimeConfig().applications.find(app => app.id === 'service-2')
+  assert.equal(service.workers.dynamic, false)
+  assert.equal(service.workers.static, 3)
 })
 
-test('should properly apply runtime workers configuration to the applications (object)', async t => {
-  const configFile = await prepareScratchVariant(t)
+test('effective scaler configuration exposes predictive defaults and isolates callers', async t => {
+  const app = await start(t, { dynamic: true, maxMemory: 123456, total: 8 })
+  const scaler = app.getDynamicWorkersScaler()
+  const config = scaler.getConfig()
+  assert.equal(config.total, 8)
+  assert.equal(config.maxMemory, 123456)
+  assert.equal(config.eluThreshold, 0.8)
+  assert.equal(config.cooldowns.scaleDownAfterScaleUpMs, 30000)
+  assert.equal(config.version, undefined)
+  config.cooldowns.scaleDownAfterScaleUpMs = 0
+  assert.equal(scaler.getConfig().cooldowns.scaleDownAfterScaleUpMs, 30000)
+})
 
-  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
-  const logsPath = join(tmpDir, 'log.txt')
-
-  await updateConfigFile(configFile, contents => {
-    contents.workers = {
-      dynamic: true,
-      static: 1,
-      minimum: 2,
-      maximum: 3
-    }
-    return contents
-  })
-
-  const app = await createRuntime(configFile, null, { logsPath })
-
+test('applications added after startup receive their minimum workers and can be removed', async t => {
+  const app = await createRuntime(join(root, 'added/watt.config.mjs'))
+  t.after(() => app.close())
   await app.start()
-  t.after(() => app.close())
-
-  const config = await app.getRuntimeConfig()
-
-  deepStrictEqual(config.applications[0].workers, { dynamic: true, static: 2, minimum: 2, maximum: 3 })
-  deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 2, minimum: 2, maximum: 3 })
+  const config = app.getRuntimeConfig(true)
+  const later = await prepareAddedApplications(config, [{
+    id: 'later', path: join(root, 'services/service-2'), workers: { minimum: 2 }
+  }], app.getApplicationsIds())
+  await app.addApplications(later)
+  await app.startApplication('later')
+  assert.equal(Object.values(await app.getWorkers()).filter(worker => worker.application === 'later').length, 2)
+  await app.removeApplications(['later'])
+  assert.equal(Object.values(await app.getWorkers()).filter(worker => worker.application === 'later').length, 0)
 })
 
-test('should ensure the right order for minimum and maximum', async t => {
-  const configFile = await prepareScratchVariant(t)
-
-  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-'))
-  const logsPath = join(tmpDir, 'log.txt')
-
-  await updateConfigFile(configFile, contents => {
-    contents.workers = {
-      dynamic: true,
-      static: 1,
-      minimum: 4,
-      maximum: 3
-    }
-    return contents
-  })
-
-  const app = await createRuntime(configFile, null, { logsPath })
-
+test('standalone applications use the same predictive scaler through the application shorthand', async t => {
+  const app = await createRuntime(join(root, '../worker-scaler-service/watt.config.mjs'))
+  t.after(() => app.close())
   await app.start()
-  t.after(() => app.close())
-
-  const config = await app.getRuntimeConfig()
-
-  deepStrictEqual(config.applications[0].workers, { dynamic: true, static: 3, minimum: 3, maximum: 4 })
-  deepStrictEqual(config.applications[1].workers, { dynamic: true, static: 3, minimum: 3, maximum: 4 })
-})
-
-test('should apply application scaleUpELU and scaleDownELU', async t => {
-  const configFile = join(fixturesDir, 'worker-scaler', 'worker-scaler', 'watt.config.mjs')
-  const app = await createRuntime(configFile, null, {
-    async transform (config, ...args) {
-      config = await transform(config, ...args)
-
-      Object.assign(config.workers, { dynamic: true, minimum: 1, maximum: 5, scaleUpELU: 1, gracePeriod: 1 })
-
-      // Per-application thresholds override the runtime-wide one, so only service-2 -- the one the
-      // load actually hits -- crosses its threshold.
-      for (const application of config.applications) {
-        application.workers = {
-          dynamic: true,
-          static: 1,
-          minimum: 1,
-          maximum: 5,
-          scaleUpELU: application.id === 'service-2' ? 0.5 : 1
-        }
-      }
-
-      return config
-    }
-  })
-
-  const { 'service-2:0': serviceUrl } = await app.start()
-
-  t.after(() => app.close())
-
-  const { statusCode } = await request(serviceUrl + '/cpu-intensive', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ timeout: 1000 })
-  })
-  assert.strictEqual(statusCode, 200)
-
-  await sleep(10000)
-
-  const workers = await app.getWorkers()
-
-  const service1Workers = []
-  const service2Workers = []
-
-  for (const worker of Object.values(workers)) {
-    if (worker.application === 'service-1') {
-      service1Workers.push(worker)
-    }
-    if (worker.application === 'service-2') {
-      service2Workers.push(worker)
-    }
-  }
-
-  assert.strictEqual(service1Workers.length, 1)
-  assert.strictEqual(service2Workers.length, 2)
-})
-
-test('applies the minimum workers after a dynamically added application starts', async t => {
-  const updates = []
-  const runtime = {
-    async updateApplicationsResources (applications) {
-      updates.push(applications)
-    }
-  }
-  const scaler = new DynamicWorkersScaler(runtime, { maxMemory: 1 })
-
-  await scaler.start()
-  t.after(() => scaler.stop())
-
-  await scaler.add({
-    id: 'application',
-    workers: { dynamic: true, minimum: 3, maximum: 4 }
-  })
-
-  assert.deepStrictEqual(updates, [])
-
-  await scaler.applyPendingUpdate('application')
-
-  assert.deepStrictEqual(updates, [[{ application: 'application', workers: 3 }]])
-})
-
-test('removes application state from the scaler', async t => {
-  let healthCheck
-  const updates = []
-
-  t.mock.method(globalThis, 'setTimeout', callback => {
-    healthCheck = callback
-    return { refresh () {} }
-  })
-
-  const removeApplication = t.mock.method(ScalingAlgorithm.prototype, 'removeApplication')
-  const addWorkerHealthInfo = t.mock.method(ScalingAlgorithm.prototype, 'addWorkerHealthInfo')
-
-  const runtime = {
-    logger: {
-      error () {}
-    },
-    async updateApplicationsResources (applications) {
-      updates.push(applications)
-    },
-    async getWorkers () {
-      return {
-        worker: {
-          raw: {
-            [kApplicationId]: 'application',
-            [kId]: 'worker',
-            [kWorkerStartTime]: 0,
-            [kWorkerStatus]: 'started'
-          }
-        }
-      }
-    },
-    async getWorkerHealth () {
-      return {
-        currentELU: 1,
-        elu: 1,
-        heapUsed: 1,
-        heapTotal: 1
-      }
-    }
-  }
-  const scaler = new DynamicWorkersScaler(runtime, { maxMemory: 1, gracePeriod: 0 })
-
-  await scaler.add({
-    id: 'application',
-    workers: { dynamic: true, minimum: 2, maximum: 3 }
-  })
-
-  scaler.remove('application')
-
-  await scaler.start()
-  t.after(() => scaler.stop())
-  await healthCheck()
-
-  assert.deepStrictEqual(updates, [])
-  assert.deepStrictEqual(removeApplication.mock.calls[0].arguments, ['application'])
-  assert.strictEqual(addWorkerHealthInfo.mock.calls.length, 0)
-})
-
-test('logs worker health errors and refreshes the health check timeout', async t => {
-  const error = new Error('health check failed')
-  const errors = []
-  let healthCheck
-  let refreshes = 0
-
-  t.mock.method(globalThis, 'setTimeout', callback => {
-    healthCheck = callback
-    return {
-      refresh () {
-        refreshes++
-      }
-    }
-  })
-
-  const runtime = {
-    logger: {
-      error (details, message) {
-        errors.push({ details, message })
-      }
-    },
-    async getWorkers () {
-      return {
-        worker: {
-          raw: {
-            [kWorkerStartTime]: 0,
-            [kWorkerStatus]: 'started'
-          }
-        }
-      }
-    },
-    async getWorkerHealth () {
-      throw error
-    }
-  }
-  const scaler = new DynamicWorkersScaler(runtime, { maxMemory: 1, gracePeriod: 0 })
-
-  await scaler.start()
-  t.after(() => scaler.stop())
-
-  await healthCheck()
-
-  assert.deepStrictEqual(errors, [{ details: { err: error }, message: 'Failed to get health for worker' }])
-  assert.strictEqual(refreshes, 1)
+  const scaler = app.getDynamicWorkersScaler()
+  assert.ok(scaler instanceof PredictiveWorkersScaler)
+  assert.equal(scaler.getConfig().maximum, 2)
+  assert.equal(scaler.getConfig().total, 10)
+  assert.equal(scaler.getConfig().version, undefined)
 })
