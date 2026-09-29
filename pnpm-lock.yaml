@@ -2539,6 +2539,9 @@ importers:
       pprof-format:
         specifier: ^2.1.0
         version: 2.3.1
+      source-map:
+        specifier: ^0.8.0
+        version: 0.8.0
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
