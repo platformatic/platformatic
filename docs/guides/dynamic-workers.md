@@ -255,7 +255,7 @@ On platforms without the required `reusePort` support, the scaler limits an entr
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `eluThreshold` | `0.8` | Per-worker ELU capacity used to convert aggregate load into a worker count |
-| `heapThresholdMb` | Not set | Per-worker heap capacity in MB, where 1 MB is 1,048,576 bytes. Enables an independent heap-based recommendation; heap is always measured for memory checks |
+| `heapThresholdMb` | Not set | Per-worker heap capacity in MB, where 1 MB is 1,048,576 bytes. Enables an independent heap-based recommendation; heap is always measured for memory checks and charts |
 | `processIntervalMs` | `10000` | Time between processing runs. Samples arriving between runs are processed together. Runtime-level only |
 | `maxScaleUpStep` | `1` | Maximum workers added to the selected application per run. Positive integer; runtime-level only |
 | `redistributionMs` | `10000` | Expected time for a new worker to absorb its share of traffic; controls how its contribution is introduced into the aggregate |
@@ -327,3 +327,38 @@ An application inherits the runtime’s `dynamic` setting unless it explicitly o
 Here, `api` can scale between two and six workers using a 70% ELU threshold. `jobs` stays at one worker, which still counts toward `total`.
 
 The algorithm version, processing interval, scale-up step, total worker limit, and memory budget are runtime-level settings. For a standalone framework application, use `runtime.workers`.
+
+### Applications dashboard
+
+Enable the metrics server alongside predictive scaling in the runtime configuration:
+
+```json
+{
+  "workers": {
+    "dynamic": true,
+    "version": "v2"
+  },
+  "metrics": {
+    "enabled": true,
+    "hostname": "127.0.0.1",
+    "port": 9090
+  }
+}
+```
+
+For a standalone framework application, put both properties inside `runtime`. Open **http://127.0.0.1:9090/scaler/** on the metrics server. This is separate from the application's HTTP port. The page uses the metrics server's existing HTTPS and authentication settings and is available only when predictive scaling is active.
+
+Select an application to see its worker counts, aggregated metrics, forecasts, and individual worker charts. Heap charts are always available. When `heapThresholdMb` is absent, the page warns that heap is monitored and used for memory checks but does not trigger scaling. The page also reports current worker and memory constraints and workers taking longer than expected to start.
+
+#### Reading the charts
+
+- **Current workers** are registered live workers. **Scheduled workers** are the controller's approved target, including pending starts. The page does not retain unapproved recommendations or a decision log.
+- **Past metric values** come from the algorithm's existing 60-second history. **Dashed projections** show its current smoothed level and trend divided by the approved target. These lines are a display of the current state, not a second execution of the decision algorithm.
+- **NOW** marks the snapshot time. **INIT** marks the estimated startup delay when it fits in the chart. The chart shows 20 seconds into the future; metric projections can extend beyond the algorithm's forecast horizon to fill that display window.
+- **Displayed ELU** is bounded to 0–100%. Heap has a zero lower bound. These display bounds do not cap the algorithm's internal forecast or worker recommendation.
+
+Worker-count history is recorded only while the page receives snapshots and is cleared on refresh. Individual worker charts can include a silent worker's last valid measurement.
+
+The page polls every five seconds and pauses polling when hidden or when **Pause** is selected. The UI can refresh between algorithm runs; this does not trigger another scaling decision. Snapshot requests read existing state and add no history buffers or metric collection to the scaling loop. Worker-count history and chart rendering stay in the browser.
+
+![Predictive scaling dashboard showing application worker counts, ELU and heap forecasts, and individual worker metrics.](./images/predictive-scaling-dashboard.png)

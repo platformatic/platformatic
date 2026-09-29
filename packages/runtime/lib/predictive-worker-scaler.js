@@ -190,6 +190,25 @@ export class PredictiveWorkersScaler {
     this.#initialUpdates.delete(appId)
   }
 
+  getDiagnostics () {
+    const now = Date.now()
+    return {
+      now,
+      processIntervalMs: this.#config.processIntervalMs,
+      maxScaleUpStep: this.#config.maxScaleUpStep,
+      maxTotalWorkers: this.#maxTotalWorkers,
+      applications: [...this.#apps].map(([id, { algorithm }]) => ({ id, ...algorithm.getDiagnostics(now) }))
+    }
+  }
+
+  async getMemoryDiagnostics () {
+    // Read only when the diagnostics page requests it, using the same scope
+    // and limit as the coordinator. Do not retain another memory sample.
+    if (!this.#memoryInfo) return null
+    const { used } = await getMemoryInfo({ scope: this.#memoryInfo.scope })
+    return { used, limit: this.#maxTotalMemory }
+  }
+
   #handleHealthMetrics ({ id, application, currentHealth }) {
     try {
       const app = this.#apps.get(application)
