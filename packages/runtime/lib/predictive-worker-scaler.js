@@ -13,7 +13,7 @@ const V2_DEFAULTS = {
   maxScaleUpStep: 1,
   scaleUpMargin: 0.1,
   scaleDownMargin: 0.3,
-  redistributionMs: 30000,
+  redistributionMs: 10000,
   alphaUp: 0.2,
   alphaDown: 0.1,
   betaUp: 0.1,
@@ -31,6 +31,8 @@ export class PredictiveWorkersScaler {
   #config
   #apps
   #processTimer
+  #started = false
+  #initialUpdates = new Map()
   #isProcessing = false
   #maxTotalWorkers
   #maxTotalMemory
@@ -70,6 +72,12 @@ export class PredictiveWorkersScaler {
       this.#apps.get(application)?.algorithm.addWorker(id, startTime)
     }
 
+    const initialApplications = [...this.#initialUpdates.keys()]
+    this.#started = true
+    for (const id of initialApplications) {
+      await this.applyPendingUpdate(id)
+    }
+
     this.#processTimer = setInterval(
       () => this.#process(),
       this.#config.processIntervalMs
@@ -77,6 +85,7 @@ export class PredictiveWorkersScaler {
   }
 
   stop () {
+    this.#started = false
     clearInterval(this.#processTimer)
 
     this.#runtime.off('application:worker:health:metrics', this.#onHealthMetrics)
@@ -113,6 +122,27 @@ export class PredictiveWorkersScaler {
     const algorithm = new PredictiveScalingAlgorithm(algorithmConfig)
 
     this.#apps.set(appId, { algorithm })
+    this.#initialUpdates.delete(appId)
+    if (min > (application.workers.static ?? 1)) {
+      this.#initialUpdates.set(appId, { workers: min, promise: null })
+    }
+  }
+
+  async applyPendingUpdate (applicationId) {
+    if (!this.#started) return
+    const update = this.#initialUpdates.get(applicationId)
+    if (!update) return
+
+    // Startup provisioning is separate from predictive scaling. Share an
+    // in-flight request so repeated startup notifications cannot apply it twice.
+    update.promise ??= Promise.resolve().then(async () => {
+      if (this.#initialUpdates.get(applicationId) !== update) return
+      await this.#runtime.updateApplicationsResources([{ application: applicationId, workers: update.workers }])
+      if (this.#initialUpdates.get(applicationId) === update) {
+        this.#initialUpdates.delete(applicationId)
+      }
+    }).finally(() => { update.promise = null })
+    await update.promise
   }
 
   #buildAlgorithmConfig (min, max, config) {
@@ -133,12 +163,15 @@ export class PredictiveWorkersScaler {
       }
     }
 
+    let heapThreshold = null
     if (config.heapThresholdMb != null) {
-      metrics.heap = {
-        threshold: config.heapThresholdMb * 1024 * 1024,
-        redistributionMs: config.redistributionMs,
-        ...holtConfig
-      }
+      heapThreshold = config.heapThresholdMb * 1024 * 1024
+    }
+
+    metrics.heap = {
+      threshold: heapThreshold,
+      redistributionMs: config.redistributionMs,
+      ...holtConfig
     }
 
     return {
@@ -154,6 +187,7 @@ export class PredictiveWorkersScaler {
   remove (application) {
     const appId = typeof application === 'string' ? application : application.id
     this.#apps.delete(appId)
+    this.#initialUpdates.delete(appId)
   }
 
   #handleHealthMetrics ({ id, application, currentHealth }) {
@@ -213,10 +247,15 @@ export class PredictiveWorkersScaler {
     const now = Date.now()
     const updates = []
     let plannedWorkerCount = 0
-    let scaleUpCandidate = null
-    let scaleUpRatio = -1
+    const scaleUpCandidates = []
 
     for (const [appId, app] of this.#apps) {
+      // Reserve the configured minimum, but do not make a competing scaling
+      // decision while the application's startup update is pending.
+      if (this.#initialUpdates.has(appId)) {
+        plannedWorkerCount += app.algorithm.targetCount
+        continue
+      }
       const desiredTarget = app.algorithm.process(now)
       const targetCount = app.algorithm.targetCount
       plannedWorkerCount += targetCount
@@ -230,38 +269,51 @@ export class PredictiveWorkersScaler {
         updates.push({ application: appId, workers: desiredTarget })
       } else {
         const ratio = (desiredTarget - targetCount) / targetCount
-        if (ratio > scaleUpRatio) {
-          scaleUpRatio = ratio
-          scaleUpCandidate = { appId, app, desiredTarget }
-        }
+        scaleUpCandidates.push({ appId, app, desiredTarget, ratio })
       }
     }
 
-    if (scaleUpCandidate) {
-      const { appId, app, desiredTarget } = scaleUpCandidate
-      const hasAvailableMemory = await this.#hasAvailableMemory()
-
+    if (scaleUpCandidates.length > 0) {
       if (plannedWorkerCount >= this.#maxTotalWorkers) {
         this.#runtime.logger.warn(
-          `Cannot scale up the "${appId}" app. ` +
           `The maximum number of workers "${this.#maxTotalWorkers}" has been reached.`
         )
-      } else if (!hasAvailableMemory) {
-        this.#runtime.logger.warn(
-          `Cannot scale up the "${appId}" app. ` +
-          `The memory limit "${this.#maxTotalMemory}" has been reached.`
-        )
       } else {
-        const scaleUpCount = Math.min(
-          desiredTarget - app.algorithm.targetCount,
-          this.#config.maxScaleUpStep,
-          this.#maxTotalWorkers - plannedWorkerCount
-        )
-        const newTarget = app.algorithm.targetCount + scaleUpCount
-        this.#runtime.logger.info(
-          `Predictive scaling up the "${appId}" app to ${newTarget} workers`
-        )
-        updates.push({ application: appId, workers: newTarget })
+        const availableMemory = await this.#getAvailableMemory()
+        scaleUpCandidates.sort((a, b) => b.ratio - a.ratio)
+
+        for (const { appId, app, desiredTarget } of scaleUpCandidates) {
+          const heap = app.algorithm.getMetricStats('heap')
+          let heapPerWorker = null
+          if (heap?.level != null && heap.count > 0) {
+            heapPerWorker = heap.level / heap.count
+          }
+
+          if (!Number.isFinite(heapPerWorker) || heapPerWorker <= 0) {
+            this.#runtime.logger.warn(`Cannot scale up the "${appId}" app until heap measurements are available.`)
+            continue
+          }
+
+          const workersWithinMemory = Math.floor(availableMemory / heapPerWorker)
+          if (!(workersWithinMemory > 0)) {
+            this.#runtime.logger.warn(`Not enough available memory to scale up the "${appId}" app.`)
+            continue
+          }
+
+          const scaleUpCount = Math.min(
+            desiredTarget - app.algorithm.targetCount,
+            this.#config.maxScaleUpStep,
+            this.#maxTotalWorkers - plannedWorkerCount,
+            workersWithinMemory
+          )
+
+          const newTarget = app.algorithm.targetCount + scaleUpCount
+          this.#runtime.logger.info(
+            `Predictive scaling up the "${appId}" app to ${newTarget} workers`
+          )
+          updates.push({ application: appId, workers: newTarget })
+          break
+        }
       }
     }
 
@@ -280,8 +332,8 @@ export class PredictiveWorkersScaler {
     }
   }
 
-  async #hasAvailableMemory () {
+  async #getAvailableMemory () {
     const mem = await getMemoryInfo({ scope: this.#memoryInfo.scope })
-    return mem.used < this.#maxTotalMemory
+    return this.#maxTotalMemory - mem.used
   }
 }

@@ -90,3 +90,16 @@ test('rejects unknown properties', () => {
   assert.ok(!v({ workers: { version: 'v2', fooBar: 123 } }))
   assert.ok(!v({ workers: { fooBar: 123 } }))
 })
+
+test('only v1 workers objects support static counts', () => {
+  const ajv = new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false })
+  const v = ajv.compile({ type: 'object', properties: { workers } })
+  for (const dynamic of [undefined, false, true]) {
+    assert.ok(!v({ workers: { version: 'v2', dynamic, static: 4 } }))
+    assert.ok(v.errors.some(error => error.keyword === 'additionalProperties' && error.params.additionalProperty === 'static'))
+    for (const version of [undefined, 'v1']) {
+      assert.ok(v({ workers: { version, dynamic, static: 4 } }))
+    }
+  }
+  assert.ok(v({ workers: 4 }))
+})

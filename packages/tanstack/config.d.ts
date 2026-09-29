@@ -216,7 +216,6 @@ export interface PlatformaticTanStackConfig {
               dynamic?: boolean;
               minimum?: number;
               maximum?: number;
-              static?: number;
               total?: number;
               maxMemory?: number;
               eluThreshold?: number;
