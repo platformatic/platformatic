@@ -5,6 +5,7 @@ import { test } from 'node:test'
 import { setImmediate } from 'node:timers/promises'
 import { PredictiveScalingAlgorithm } from '../lib/predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from '../lib/worker/symbols.js'
+import { metricView, scalingWarnings } from '../public/scaler/model.js'
 
 // Keep admission tests independent of host/container memory and concurrent load.
 const metricsUrl = new URL('../lib/metrics.js', import.meta.url).href
@@ -36,7 +37,7 @@ function createAlgorithm (heapThreshold) {
   })
 }
 
-test('heap without a threshold is processed without making scaling decisions', t => {
+test('heap without a threshold is processed and displayed without making scaling decisions', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
   algorithm.addWorker('app:0', 1000)
@@ -51,6 +52,12 @@ test('heap without a threshold is processed without making scaling decisions', t
     assert.equal(algorithm.getMetricStats('heap').count, 2)
     t.mock.timers.tick(1000)
   }
+  const snapshot = algorithm.getDiagnostics()
+  const view = metricView(snapshot, 'heap', Date.now())
+  assert.equal(view.threshold, null)
+  assert.ok(view.history.length)
+  assert.ok(view.forecast.length)
+  assert.ok(snapshot.workers.every(worker => worker.metrics.heap.value === 1))
 })
 
 test('observation-only heap does not change ELU decisions', t => {
@@ -91,6 +98,21 @@ test('metric stats expose the current smoothed level and live count independentl
   algorithm.removeWorker('app:0', 11000)
   algorithm.removeWorker('app:1', 11000)
   assert.equal(algorithm.getMetricStats('heap').count, 0)
+})
+
+test('dashboard warns about an absent heap threshold without hiding measurements', () => {
+  const selected = {
+    id: 'app',
+    targetCount: 1,
+    liveCount: 1,
+    max: 10,
+    pending: [],
+    metrics: { heap: { threshold: null } }
+  }
+  const snapshot = { applications: [selected], maxTotalWorkers: 10, memory: { used: 600, limit: 1000 } }
+  assert.match(scalingWarnings(snapshot, selected)[0], /heap scaling threshold not configured/)
+  selected.metrics.heap.threshold = 200
+  assert.deepEqual(scalingWarnings(snapshot, selected), [])
 })
 
 async function setup (t, applications, availableMemory, config = {}) {

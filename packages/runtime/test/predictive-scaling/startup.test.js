@@ -40,6 +40,10 @@ test('start provisions the configured minimum before the first predictive decisi
   await scaler.start()
   assert.deepEqual(updates, [[{ application: 'app', workers: 3 }]])
   assert.equal(process.mock.callCount(), 0)
+  const app = scaler.getDiagnostics().applications[0]
+  assert.equal(app.targetCount, 3)
+  assert.equal(app.liveCount, 3)
+  assert.equal(app.workers.length, 3)
   await scaler.applyPendingUpdate('app')
   assert.equal(updates.length, 1)
 })
@@ -70,6 +74,7 @@ test('later applications wait for their startup hook and share an in-flight mini
   t.mock.timers.tick(500)
   await setImmediate()
   assert.equal(process.mock.callCount(), 1)
+  assert.equal(scaler.getDiagnostics().applications[0].liveCount, 2)
 })
 
 test('initial counts already meeting the minimum and fixed workers need no startup update', async t => {
@@ -80,6 +85,7 @@ test('initial counts already meeting the minimum and fixed workers need no start
   await scaler.applyPendingUpdate('ready')
   await scaler.applyPendingUpdate('fixed')
   assert.deepEqual(updates, [])
+  assert.deepEqual(scaler.getDiagnostics().applications.map(app => app.targetCount), [3, 2])
 })
 
 test('removing an application also removes its startup update', async t => {
