@@ -169,6 +169,8 @@ async function auth (app, opts) {
       // fields are specified
       checkSaveMandatoryFieldsInRules(type, rules)
 
+      const kAuthorizedWrite = Symbol('authorizedWrite')
+
       function useOriginal (skipAuth, ctx) {
         if (skipAuth === false && !ctx) {
           throw new Error('Cannot set skipAuth to `false` without ctx')
@@ -190,7 +192,18 @@ async function auth (app, opts) {
         return normalized
       }
 
-      async function authorizeWrite (ctx, fields, inputs) {
+      async function authorizeWrite (ctx, fields, inputs, authorizedWrite) {
+        // Upserts prepare their input before choosing insert or update. Reuse
+        // that result only for the same input and context so defaults run once.
+        if (
+          authorizedWrite &&
+          authorizedWrite.ctx === ctx &&
+          authorizedWrite.inputs === inputs
+        ) {
+          checkFieldsFromRule(authorizedWrite.rule.save, fields)
+          return authorizedWrite
+        }
+
         const request = getRequestFromContext(ctx)
         const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
@@ -222,7 +235,21 @@ async function auth (app, opts) {
           normalizedInputs = normalizedInputs.map(normalizeWriteInput)
         }
 
-        return { request, rule, inputs: isArray ? normalizedInputs : normalizedInputs[0] }
+        return { ctx, request, rule, inputs: isArray ? normalizedInputs : normalizedInputs[0] }
+      }
+
+      async function authorizeUpsert (originalUpsert, opts = {}) {
+        const { input, ctx, fields, skipAuth } = opts
+        if (useOriginal(skipAuth, ctx) || input == null) {
+          return originalUpsert(opts)
+        }
+
+        const authorizedWrite = await authorizeWrite(ctx, fields, input, opts[kAuthorizedWrite])
+        return originalUpsert({
+          ...opts,
+          input: authorizedWrite.inputs,
+          [kAuthorizedWrite]: authorizedWrite
+        })
       }
 
       const primaryKeyFields = Array.from(type.primaryKeys, key => type.fields[key].camelcase)
@@ -275,17 +302,20 @@ async function auth (app, opts) {
           return originalCount({ ...restOpts, where, ctx })
         },
 
-        async insert (originalInsert, { input, ctx, fields, skipAuth, ...restOpts } = {}) {
-          if (useOriginal(skipAuth, ctx) || !input) {
+        upsert: authorizeUpsert,
+        save: authorizeUpsert,
+
+        async insert (originalInsert, { input, ctx, fields, skipAuth, [kAuthorizedWrite]: authorizedWrite, ...restOpts } = {}) {
+          if (useOriginal(skipAuth, ctx) || input == null) {
             return originalInsert({ input, ctx, fields, ...restOpts })
           }
 
-          const { inputs: normalizedInput } = await authorizeWrite(ctx, fields, input)
+          const { inputs: normalizedInput } = await authorizeWrite(ctx, fields, input, authorizedWrite)
           return originalInsert({ input: normalizedInput, ctx, fields, ...restOpts })
         },
 
         async insertMany (originalInsertMany, { inputs, ctx, fields, skipAuth, ...restOpts } = {}) {
-          if (useOriginal(skipAuth, ctx) || !inputs) {
+          if (useOriginal(skipAuth, ctx) || inputs == null) {
             return originalInsertMany({ inputs, ctx, fields, ...restOpts })
           }
 
@@ -293,12 +323,12 @@ async function auth (app, opts) {
           return originalInsertMany({ inputs: normalizedInputs, ctx, fields, ...restOpts })
         },
 
-        async update (originalUpdate, { input, ctx, fields, skipAuth, ...restOpts } = {}) {
-          if (useOriginal(skipAuth, ctx) || !input) {
+        async update (originalUpdate, { input, ctx, fields, skipAuth, [kAuthorizedWrite]: authorizedWrite, ...restOpts } = {}) {
+          if (useOriginal(skipAuth, ctx) || input == null) {
             return originalUpdate({ input, ctx, fields, ...restOpts })
           }
 
-          const { request, rule, inputs: normalizedInput } = await authorizeWrite(ctx, fields, input)
+          const { request, rule, inputs: normalizedInput } = await authorizeWrite(ctx, fields, input, authorizedWrite)
           if (hasAllPrimaryKeys(normalizedInput)) {
             await checkRowIsWritable(ctx, request, rule, normalizedInput, fields, restOpts.tx)
           }
