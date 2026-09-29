@@ -22,7 +22,7 @@ async function main() {
     body: {
       query: `
         mutation {
-          savePage(input: { id: 3 title: "Platformatic is cool!" }) {
+          upsertPage(input: { id: 3 title: "Platformatic is cool!" }) {
             id
             title
           }
@@ -31,7 +31,7 @@ async function main() {
     }
   })
   const result = await res.json()
-  console.log(result.data) // { savePage: { id: '3', title: 'Platformatic is cool!' } }
+  console.log(result.data) // { upsertPage: { id: '3', title: 'Platformatic is cool!' } }
   await app.close()
 }
 

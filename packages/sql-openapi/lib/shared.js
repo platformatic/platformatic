@@ -271,7 +271,7 @@ export function rootEntityRoutes (
           }
         }
 
-        const res = await entity.save({ input: request.body, ctx, fields: queryFields })
+        const res = await entity.insert({ input: request.body, ctx, fields: queryFields })
 
         reply.header('location', `${app.prefix}/${res[[...entity.primaryKeys][0]]}`)
 

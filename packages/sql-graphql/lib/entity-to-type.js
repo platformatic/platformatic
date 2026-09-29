@@ -304,10 +304,70 @@ export function constructGraph (app, entity, opts, ignore) {
 
   // Views are read-only: skip all mutations
   if (!entity.isView) {
+    // Preserve the existing bulk mutation name for uncountable entity names
+    // (for example, insertSheep) and give the singular operation a clear
+    // fallback name so the two fields do not overwrite each other.
+    const insert = singular === plural ? camelcase(['insertOne', singular]) : camelcase(['insert', singular])
+
+    mutationTopFields[insert] = {
+      type,
+      args: {
+        input: { type: new GraphQLNonNull(inputType) }
+      }
+    }
+
+    resolvers.Mutation[insert] = async (_, { input }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.insert({ input, ctx, fields: [...fields, ...relationalFields] })
+    }
+
+    const insertMany = camelcase(['insert', plural])
+
+    mutationTopFields[insertMany] = {
+      type: new GraphQLList(type),
+      args: {
+        inputs: { type: new GraphQLNonNull(new GraphQLList(inputType)) }
+      }
+    }
+
+    resolvers.Mutation[insertMany] = (_, { inputs }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.insertMany({ inputs, ctx, fields: [...fields, ...relationalFields] })
+    }
+
+    const update = camelcase(['update', singular])
+
+    mutationTopFields[update] = {
+      type,
+      args: {
+        input: { type: new GraphQLNonNull(inputType) }
+      }
+    }
+
+    resolvers.Mutation[update] = async (_, { input }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.update({ input, ctx, fields: [...fields, ...relationalFields] })
+    }
+
+    const upsert = camelcase(['upsert', singular])
+
+    mutationTopFields[upsert] = {
+      type,
+      args: {
+        input: { type: new GraphQLNonNull(inputType) }
+      }
+    }
+
+    resolvers.Mutation[upsert] = async (_, { input }, ctx, info) => {
+      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
+      return entity.upsert({ input, ctx, fields: [...fields, ...relationalFields] })
+    }
+
     const save = camelcase(['save', singular])
 
     mutationTopFields[save] = {
       type,
+      deprecationReason: `Use ${upsert} instead.`,
       args: {
         input: { type: new GraphQLNonNull(inputType) }
       }
@@ -316,20 +376,6 @@ export function constructGraph (app, entity, opts, ignore) {
     resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
       const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
       return entity.save({ input, ctx, fields: [...fields, ...relationalFields] })
-    }
-
-    const insert = camelcase(['insert', plural])
-
-    mutationTopFields[insert] = {
-      type: new GraphQLList(type),
-      args: {
-        inputs: { type: new GraphQLNonNull(new GraphQLList(inputType)) }
-      }
-    }
-
-    resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
-      const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
-      return entity.insert({ inputs, ctx, fields: [...fields, ...relationalFields] })
     }
 
     const deleteKey = camelcase(['delete', plural])

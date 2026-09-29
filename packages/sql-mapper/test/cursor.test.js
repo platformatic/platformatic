@@ -55,7 +55,7 @@ test('single field cursor pagination', async test => {
     { title: 'Eighth Article', content: 'Content 8', timestamp: '2025-01-05 11:00:00' },
     { title: 'Ninth Article', content: 'Content 9', timestamp: '2025-01-05 10:00:00' }
   ]
-  await entity.insert({
+  await entity.insertMany({
     inputs: articles
   })
 
@@ -192,7 +192,7 @@ test('compound cursor: simple pagination', async test => {
   })
 
   const entity = mapper.entities.article
-  await entity.insert({
+  await entity.insertMany({
     inputs: [
       { title: 'First Article', content: 'Content 1', timestamp: '2025-01-01 10:00:00' },
       { title: 'Second Article', content: 'Content 2', timestamp: '2025-01-02 10:00:00' },
@@ -288,7 +288,7 @@ test('compound cursor: several rows have same timestamp', async test => {
     { title: 'Eighth Article', content: 'Content 8', timestamp: ts },
     { title: 'Ninth Article', content: 'Content 9', timestamp: ts }
   ]
-  await entity.insert({
+  await entity.insertMany({
     inputs: [...normalArticles, ...sameTsArticles]
   })
 
@@ -348,7 +348,7 @@ test('compound cursor: backward pagination with same direction', async test => {
   })
 
   const entity = mapper.entities.article
-  await entity.insert({
+  await entity.insertMany({
     inputs: [
       { title: 'First Article', content: 'Content 1', timestamp: '2025-01-01 10:00:00' },
       { title: 'Second Article', content: 'Content 2', timestamp: '2025-01-02 10:00:00' },
@@ -421,7 +421,7 @@ test('compound cursor: mixed directions', async test => {
   })
 
   const entity = mapper.entities.article
-  await entity.insert({
+  await entity.insertMany({
     inputs: [
       { title: 'First', content: 'Content 1', timestamp: '2025-01-01 10:00:00', rating: 5 },
       { title: 'Second', content: 'Content 2', timestamp: '2025-01-01 10:00:00', rating: 4 },
@@ -513,7 +513,7 @@ test('compound cursor: four or more fields', async test => {
   })
 
   const entity = mapper.entities.article
-  await entity.insert({
+  await entity.insertMany({
     inputs: [
       { title: 'A1', content: 'Content 1', timestamp: '2025-01-01', category: 'tech', rating: 5 },
       { title: 'A2', content: 'Content 2', timestamp: '2025-01-01', category: 'tech', rating: 4 },
@@ -611,7 +611,7 @@ test('compound cursor: where clause', async test => {
   })
 
   const entity = mapper.entities.article
-  await entity.insert({
+  await entity.insertMany({
     inputs: [
       { title: 'A1', content: 'Content 1', timestamp: '2025-01-01', category: 'tech', rating: 5 },
       { title: 'A2', content: 'Content 2', timestamp: '2025-01-01', category: 'tech', rating: 4 },

@@ -201,7 +201,7 @@ test('insert', async t => {
   const expected = []
 
   // save - new record
-  const pages = await pageEntity.insert({
+  const pages = await pageEntity.insertMany({
     inputs: [
       {
         title: 'fourth page'

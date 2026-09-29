@@ -1,4 +1,4 @@
-import { deepEqual } from 'node:assert'
+import { deepEqual, rejects } from 'node:assert'
 import { test } from 'node:test'
 import { connect } from '../index.js'
 import { clear, connInfo, isMysql, isPg, isSQLite } from './helper.js'
@@ -120,13 +120,20 @@ test('composite primary keys', async () => {
   })
   deepEqual(editor2, { pageId: '1', userId: '2', role: 'author' })
 
-  await editorEntity.save({
+  deepEqual(await editorEntity.update({
     input: {
       pageId: '1',
       userId: '1',
       role: 'captain'
     }
-  })
+  }), { pageId: '1', userId: '1', role: 'captain' })
+
+  await rejects(editorEntity.update({
+    input: {
+      pageId: '1',
+      role: 'missing user key'
+    }
+  }), { code: 'PLT_SQL_MAPPER_MISSING_VALUE_FOR_PRIMARY_KEY' })
 
   const editors = await editorEntity.find({ orderBy: [{ field: 'userId', direction: 'ASC' }] })
   deepEqual(editors, [
@@ -144,7 +151,7 @@ test('composite primary keys', async () => {
 
   await editorEntity.delete({})
 
-  const editorsInserted = await editorEntity.insert({
+  const editorsInserted = await editorEntity.insertMany({
     inputs: [
       {
         pageId: '1',

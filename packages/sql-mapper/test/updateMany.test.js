@@ -65,7 +65,7 @@ test('updateMany successful', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -166,7 +166,7 @@ test('updateMany will return the updated values', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -250,7 +250,7 @@ test('updateMany missing input', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 
@@ -338,7 +338,7 @@ test('updateMany successful and update updated_at', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
   const createdPost3 = (await entity.find({ where: { id: { eq: '3' } } }))[0]
@@ -418,7 +418,7 @@ test('updateMany missing where clause', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 

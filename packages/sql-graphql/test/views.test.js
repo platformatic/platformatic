@@ -172,6 +172,26 @@ test('views are exposed as read-only GraphQL queries', async t => {
       url: '/graphql',
       body: {
         query: `
+          query {
+            __type(name: "Mutation") {
+              fields(includeDeprecated: true) { name }
+            }
+          }
+        `
+      }
+    })
+    const mutationNames = res.json().data.__type.fields.map(field => field.name)
+    for (const name of ['insertOnePagesView', 'updatePagesView', 'upsertPagesView']) {
+      equal(mutationNames.includes(name), false, `${name} mutation should not exist`)
+    }
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
           mutation {
             deletePagesView(where: { title: { eq: "Hello" } }) {
               title

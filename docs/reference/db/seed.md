@@ -16,7 +16,7 @@ an instance of [`@platformatic/sql-mapper`](../sql-mapper/overview.md).
 'use strict'
 
 module.exports = async function seed ({ entities, db, sql }) {
-  await entities.graph.save({ input: { name: 'Hello' } })
+  await entities.graph.insert({ input: { name: 'Hello' } })
   await db.query(sql`
     INSERT INTO graphs (name) VALUES ('Hello 2');
   `)
@@ -32,7 +32,7 @@ const movies: object[] = [{ title: 'Harry Potter' }, { title: 'The Matrix' }]
 
 export async function seed (opts: { entities: Entities }) {
   for (const movie of movies) {
-    await opts.entities.movie.save({ input: movie })
+    await opts.entities.movie.insert({ input: movie })
   }
 }
 ```

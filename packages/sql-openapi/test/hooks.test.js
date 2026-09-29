@@ -33,34 +33,35 @@ test('basic hooks', async t => {
         noKey () {
           // This should never be called
         },
-        async save (original, { input, ctx, fields }) {
+        async insert (original, { input, ctx, fields }) {
           not(ctx.reply, undefined, 'ctx.reply is defined')
           not(ctx.app, undefined, 'ctx.app is defined')
-          if (!input.id) {
-            same(input, {
-              title: 'Hello'
-            })
+          same(input, {
+            title: 'Hello'
+          })
 
-            return original({
-              input: {
-                title: 'Hello from hook'
-              },
-              fields
-            })
-          } else {
-            same(input, {
+          return original({
+            input: {
+              title: 'Hello from hook'
+            },
+            fields
+          })
+        },
+        async update (original, { input, ctx, fields }) {
+          not(ctx.reply, undefined, 'ctx.reply is defined')
+          not(ctx.app, undefined, 'ctx.app is defined')
+          same(input, {
+            id: 1,
+            title: 'Hello World'
+          })
+
+          return original({
+            input: {
               id: 1,
-              title: 'Hello World'
-            })
-
-            return original({
-              input: {
-                id: 1,
-                title: 'Hello from hook 2'
-              },
-              fields
-            })
-          }
+              title: 'Hello from hook 2'
+            },
+            fields
+          })
         },
         async find (original, args) {
           not(args.ctx.reply, undefined, 'ctx.reply is defined')

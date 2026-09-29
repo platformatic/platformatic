@@ -152,7 +152,7 @@ const people = ['Stephen King', 'Miranda July', 'Lewis Carroll', 'Martha Schumac
 
 module.exports = async function ({ entities, logger }) {
   for (const name of people) {
-    const newPerson = await entities.person.save({ input: { name } })
+    const newPerson = await entities.person.insert({ input: { name } })
 
     logger.info({ newPerson }, 'Created person')
   }
@@ -303,7 +303,7 @@ const books = [
 
 module.exports = async function ({ entities, logger }) {
   for (const book of books) {
-    const newBook = await entities.book.save({ input: book })
+    const newBook = await entities.book.insert({ input: book })
 
     logger.info({ newBook }, 'Created book')
   }
@@ -488,7 +488,7 @@ const movies = [
 
 module.exports = async function ({ entities, logger }) {
   for (const movie of movies) {
-    const newmovie = await entities.movie.save({ input: movie })
+    const newmovie = await entities.movie.insert({ input: movie })
 
     logger.info({ newmovie }, 'Created movie')
   }
