@@ -1,105 +1,45 @@
-import assert from 'node:assert'
+import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import Ajv from 'ajv'
-import { workers } from '../lib/schema.js'
+import { application, runtimeProperties, workers } from '../lib/schema.js'
 
-function validate (config) {
-  const ajv = new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false })
-  const schema = { type: 'object', properties: { workers } }
-  const v = ajv.compile(schema)
-  const valid = v(config)
-  assert.ok(valid, `Validation failed: ${JSON.stringify(v.errors)}`)
-  return config
+function validator (schema) {
+  return new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false }).compile(schema)
 }
 
-test('v2 workers config validates correctly', () => {
-  const config = validate({ workers: { version: 'v2', dynamic: true } })
-  assert.strictEqual(config.workers.version, 'v2')
-  assert.strictEqual(config.workers.dynamic, true)
+test('worker schemas accept predictive settings without a version selector', () => {
+  const validate = validator(workers)
+  assert.ok(validate({ dynamic: true, minimum: 1, maximum: 4, total: 8, eluThreshold: 0.8, heapThresholdMb: 128, processIntervalMs: 1000, maxScaleUpStep: 2, cooldowns: { scaleUpAfterScaleUpMs: 0 } }))
+  assert.ok(validate(4))
+  assert.ok(validate('{PLT_WORKERS}'))
 })
 
-test('v2 workers config accepts all v2 properties', () => {
-  const config = validate({
-    workers: {
-      version: 'v2',
-      dynamic: true,
-      eluThreshold: 0.9,
-      processIntervalMs: 5000,
-      maxScaleUpStep: 3,
-      scaleUpMargin: 0.05,
-      scaleDownMargin: 0.4,
-      redistributionMs: 20000,
-      alphaUp: 0.3,
-      alphaDown: 0.2,
-      betaUp: 0.3,
-      betaDown: 0.2,
-      cooldowns: {
-        scaleUpAfterScaleUpMs: 1000,
-        scaleUpAfterScaleDownMs: 2000,
-        scaleDownAfterScaleUpMs: 10000,
-        scaleDownAfterScaleDownMs: 8000
-      }
-    }
-  })
-
-  assert.strictEqual(config.workers.eluThreshold, 0.9)
-  assert.strictEqual(config.workers.processIntervalMs, 5000)
-  assert.strictEqual(config.workers.maxScaleUpStep, 3)
-  assert.strictEqual(config.workers.cooldowns.scaleUpAfterScaleUpMs, 1000)
+test('worker defaults are applied by normalization, without schema branch side effects', () => {
+  const value = { dynamic: true }
+  assert.ok(validator(workers)(value))
+  assert.deepEqual(value, { dynamic: true })
 })
 
-test('v2 workers config rejects invalid values', () => {
-  const ajv = new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false })
-  const schema = { type: 'object', properties: { workers } }
-  const v = ajv.compile(schema)
-
-  assert.ok(!v({ workers: { version: 'v2', eluThreshold: 2 } }), 'eluThreshold > 1 should fail')
-  assert.ok(!v({ workers: { version: 'v2', alphaUp: -1 } }), 'alphaUp < 0 should fail')
-  for (const maxScaleUpStep of [0, -1, 1.5]) {
-    assert.ok(!v({ workers: { version: 'v2', maxScaleUpStep } }), 'maxScaleUpStep must be a positive integer')
-  }
-})
-
-test('v1 workers config does not include v2 properties', () => {
-  const config = validate({ workers: { dynamic: true } })
-  assert.strictEqual(config.workers.eluThreshold, undefined)
-  assert.strictEqual(config.workers.processIntervalMs, undefined)
-  assert.strictEqual(config.workers.cooldowns, undefined)
-})
-
-test('v2 config rejects v1 properties', () => {
-  const ajv = new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false })
-  const v = ajv.compile({ type: 'object', properties: { workers } })
-
-  assert.ok(!v({ workers: { version: 'v2', cooldown: 5000 } }))
-  assert.ok(!v({ workers: { version: 'v2', scaleUpELU: 0.8 } }))
-})
-
-test('v1 config rejects v2 properties', () => {
-  const ajv = new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false })
-  const v = ajv.compile({ type: 'object', properties: { workers } })
-
-  assert.ok(!v({ workers: { version: 'v1', eluThreshold: 0.8 } }))
-  assert.ok(!v({ workers: { dynamic: true, processIntervalMs: 5000 } }))
-})
-
-test('rejects unknown properties', () => {
-  const ajv = new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false })
-  const v = ajv.compile({ type: 'object', properties: { workers } })
-
-  assert.ok(!v({ workers: { version: 'v2', fooBar: 123 } }))
-  assert.ok(!v({ workers: { fooBar: 123 } }))
-})
-
-test('only v1 workers objects support static counts', () => {
-  const ajv = new Ajv({ useDefaults: true, coerceTypes: true, allErrors: true, strict: false })
-  const v = ajv.compile({ type: 'object', properties: { workers } })
-  for (const dynamic of [undefined, false, true]) {
-    assert.ok(!v({ workers: { version: 'v2', dynamic, static: 4 } }))
-    assert.ok(v.errors.some(error => error.keyword === 'additionalProperties' && error.params.additionalProperty === 'static'))
-    for (const version of [undefined, 'v1']) {
-      assert.ok(v({ workers: { version, dynamic, static: 4 } }))
+test('runtime and application workers reject legacy settings and unknown keys', () => {
+  for (const schema of [workers, application.properties.workers]) {
+    const validate = validator(schema)
+    for (const value of [{ version: 'v1' }, { version: 'v2' }, { static: 2 }, { cooldown: 0 }, { gracePeriod: 0 }, { scaleUpELU: 0.8 }, { scaleDownELU: 0.2 }, { unknown: true }]) {
+      assert.equal(validate(value), false, JSON.stringify(value))
     }
   }
-  assert.ok(v({ workers: 4 }))
+  assert.equal(runtimeProperties.verticalScaler, undefined)
+})
+
+test('application workers declare dynamic and reject global-only settings', () => {
+  const validate = validator(application.properties.workers)
+  assert.ok(validate({ dynamic: false }))
+  assert.ok(validate({ dynamic: true, minimum: 2, eluThreshold: 0.7 }))
+  for (const key of ['total', 'maxMemory', 'processIntervalMs', 'maxScaleUpStep']) assert.equal(validate({ [key]: 10 }), false)
+})
+
+test('validates predictive tuning ranges and cooldown keys', () => {
+  const validate = validator(workers)
+  for (const value of [{ eluThreshold: 2 }, { alphaUp: -1 }, { cooldowns: { unknown: 0 } }, ...[0, -1, 1.5].map(maxScaleUpStep => ({ maxScaleUpStep }))]) {
+    assert.equal(validate(value), false)
+  }
 })

@@ -20,7 +20,6 @@ function createMockRuntime () {
 
 function makeConfig (overrides = {}) {
   return {
-    version: 'v2',
     dynamic: true,
     processIntervalMs: 500,
     eluThreshold: 0.8,

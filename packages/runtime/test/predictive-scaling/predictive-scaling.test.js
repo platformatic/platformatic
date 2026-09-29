@@ -1254,7 +1254,7 @@ test('PredictiveScalingAlgorithm', async (t) => {
     }
 
     const snapshot = alg.getSnapshot('elu')
-    assert.strictEqual(snapshot.horizonMs, 6000)
+    assert.strictEqual(snapshot.horizonMs, 7000)
     assert.strictEqual(typeof snapshot.targetCount, 'number')
     assert.ok(snapshot.history.length > 0)
     assert.strictEqual(typeof snapshot.level, 'number')
@@ -1567,34 +1567,20 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
     )
   })
 
-  await t.test('addWorker updates adaptive init timeout', () => {
-    const alg = new PredictiveScalingAlgorithm(makeConfig({
-      cooldowns: {
-        scaleUpAfterScaleUpMs: 0,
-        scaleUpAfterScaleDownMs: 0,
-        scaleDownAfterScaleUpMs: 0,
-        scaleDownAfterScaleDownMs: 0,
-      }
-    }))
-
-    // INIT_TIMEOUT_MS = 5000, HORIZON_MULTIPLIER = 1.2
-    // Initial horizon = 1.2 * 5000 = 6000
+  await t.test('addWorker updates adaptive init timeout', t => {
+    t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+    const alg = new PredictiveScalingAlgorithm(makeConfig())
+    alg.addWorker('w1', 1000)
     const horizonBefore = alg.getSnapshot('elu').horizonMs
-    assert.strictEqual(horizonBefore, 6000)
+    assert.strictEqual(horizonBefore, 7000)
 
-    // Trigger scale-up (need enough ticks for Holt to build signal)
-    feedTicks(alg, ['w1'], 1, 10, 0.95)
-    assert.ok(alg.getSnapshot('elu').targetCount > 1, 'should have scaled up')
-
-    // Worker starts 15 seconds after decision — slower than the 5s default
-    // This should increase the adaptive init timeout and thus the horizon
-    alg.addWorker('w2', 25000)
-
-    const horizonAfter = alg.getSnapshot('elu').horizonMs
-    assert.ok(
-      horizonAfter > horizonBefore,
-      `horizon should increase after slow init (before=${horizonBefore}, after=${horizonAfter})`
-    )
+    // Two slow starts raise the rate-limited estimate above the horizon floor.
+    for (const [target, worker] of [[2, 'w2'], [3, 'w3']]) {
+      alg.setTarget(target)
+      t.mock.timers.tick(15000)
+      alg.addWorker(worker, Date.now())
+    }
+    assert.ok(alg.getSnapshot('elu').horizonMs > horizonBefore)
   })
 
   await t.test('remaining worker continues after another worker exits', () => {

@@ -1,4 +1,4 @@
-import { deepmerge, features } from '@platformatic/foundation'
+import { deepmerge } from '@platformatic/foundation'
 import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
 import { PredictiveScalingAlgorithm } from './predictive-scaling.js'
@@ -7,7 +7,7 @@ import { kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 // Ajv does not apply defaults inside anyOf branches, so the schema defaults
 // defined in foundation/lib/schema.js are only used for validation. Defaults
 // must be applied here in code. Keep these in sync with the schema.
-const V2_DEFAULTS = {
+const DEFAULTS = {
   eluThreshold: 0.8,
   processIntervalMs: 10000,
   maxScaleUpStep: 1,
@@ -43,7 +43,7 @@ export class PredictiveWorkersScaler {
 
   constructor (runtime, config) {
     this.#runtime = runtime
-    this.#config = deepmerge(V2_DEFAULTS, config)
+    this.#config = deepmerge(DEFAULTS, config)
     this.#apps = new Map()
     this.#processTimer = null
     this.#maxTotalWorkers = config.total ?? availableParallelism()
@@ -52,6 +52,16 @@ export class PredictiveWorkersScaler {
     this.#onHealthMetrics = this.#handleHealthMetrics.bind(this)
     this.#onWorkerStarted = this.#handleWorkerStarted.bind(this)
     this.#onWorkerExited = this.#handleWorkerExited.bind(this)
+  }
+
+  getConfig () {
+    return structuredClone({
+      ...this.#config,
+      minimum: this.#config.minimum ?? 1,
+      maximum: this.#config.maximum ?? availableParallelism(),
+      total: this.#maxTotalWorkers,
+      maxMemory: this.#maxTotalMemory
+    })
   }
 
   async start () {
@@ -97,14 +107,7 @@ export class PredictiveWorkersScaler {
     const appId = application.id
 
     let min, max, appConfig
-    if (application.entrypoint && !features.node.reusePort) {
-      this.#runtime.logger.warn(
-        `The "${appId}" application cannot be scaled because it is an entrypoint and the "reusePort" feature is not available in your OS.`
-      )
-      min = 1
-      max = 1
-      appConfig = {}
-    } else if (application.workers.dynamic === false) {
+    if (application.workers.dynamic === false) {
       this.#runtime.logger.warn(
         `The "${appId}" application cannot be scaled because it has a fixed number of workers (${application.workers.static}).`
       )
@@ -246,32 +249,33 @@ export class PredictiveWorkersScaler {
   async #processApplications () {
     const now = Date.now()
     const updates = []
-    let plannedWorkerCount = 0
+    const scaleDowns = []
     const scaleUpCandidates = []
 
     for (const [appId, app] of this.#apps) {
       // Reserve the configured minimum, but do not make a competing scaling
       // decision while the application's startup update is pending.
       if (this.#initialUpdates.has(appId)) {
-        plannedWorkerCount += app.algorithm.targetCount
         continue
       }
       const desiredTarget = app.algorithm.process(now)
       const targetCount = app.algorithm.targetCount
-      plannedWorkerCount += targetCount
       if (desiredTarget === null || desiredTarget === targetCount) continue
 
       if (desiredTarget < targetCount) {
         this.#runtime.logger.info(
           `Predictive scaling down the "${appId}" app to ${desiredTarget} workers`
         )
-        plannedWorkerCount -= targetCount - desiredTarget
-        updates.push({ application: appId, workers: desiredTarget })
+        scaleDowns.push({ appId, app, workers: desiredTarget })
       } else {
         const ratio = (desiredTarget - targetCount) / targetCount
         scaleUpCandidates.push({ appId, app, desiredTarget, ratio })
       }
     }
+
+    await this.#applyScaleDowns(scaleDowns)
+    if (!this.#started) return
+    let plannedWorkerCount = this.#plannedWorkerCount()
 
     if (scaleUpCandidates.length > 0) {
       if (plannedWorkerCount >= this.#maxTotalWorkers) {
@@ -280,9 +284,13 @@ export class PredictiveWorkersScaler {
         )
       } else {
         const availableMemory = await this.#getAvailableMemory()
+        if (!this.#started) return
+        plannedWorkerCount = this.#plannedWorkerCount()
+        if (plannedWorkerCount >= this.#maxTotalWorkers) return
         scaleUpCandidates.sort((a, b) => b.ratio - a.ratio)
 
         for (const { appId, app, desiredTarget } of scaleUpCandidates) {
+          if (this.#apps.get(appId) !== app) continue
           const heap = app.algorithm.getMetricStats('heap')
           let heapPerWorker = null
           if (heap?.level != null && heap.count > 0) {
@@ -329,6 +337,37 @@ export class PredictiveWorkersScaler {
       } catch (err) {
         this.#runtime.logger.error({ err }, 'Failed to apply predictive scaling')
       }
+    }
+  }
+
+  #plannedWorkerCount () {
+    let count = 0
+    for (const { algorithm } of this.#apps.values()) count += algorithm.targetCount
+    return count
+  }
+
+  async #applyScaleDowns (candidates) {
+    const active = candidates.filter(({ appId, app }) => this.#apps.get(appId) === app)
+    if (!active.length || !this.#started) return
+    let reports
+    try {
+      reports = await this.#runtime.updateApplicationsResources(
+        active.map(({ appId, workers }) => ({ application: appId, workers }))
+      )
+    } catch (err) {
+      this.#runtime.logger.error({ err }, 'Failed to apply predictive scale-down')
+    }
+    for (const { appId, app } of active) {
+      if (this.#apps.get(appId) !== app) continue
+      const report = reports?.find(entry => entry.application === appId)?.workers
+      // A failed or partial stop must not free capacity that is still occupied.
+      // When the call throws, lifecycle events remain the source of truth.
+      let count = app.algorithm.getMetricStats('elu').count
+      if (report?.success) count = report.new
+      else if (Number.isFinite(report?.current) && Array.isArray(report.stopped)) {
+        count = report.current - report.stopped.length
+      }
+      if (count > 0 && count < app.algorithm.targetCount) app.algorithm.setTarget(count)
     }
   }
 

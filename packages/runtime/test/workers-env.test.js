@@ -78,7 +78,7 @@ test('root workers: valid PLT_WORKERS coerces to number', async () => {
 
   await withEnv({ PLT_WORKERS: '2' }, async () => {
     const loaded = await loadConfiguration(cfgPath)
-    deepStrictEqual(loaded.workers, { dynamic: false, static: 2, version: 'v1' })
+    deepStrictEqual(loaded.workers, { dynamic: false, static: 2 })
   })
 })
 
@@ -98,6 +98,6 @@ test('service workers: valid PLT_WORKERS coerces to number', async () => {
   await withEnv({ PLT_WORKERS: '3' }, async () => {
     const loaded = await loadConfiguration(cfgPath)
     const svc = loaded.applications.find(s => s.id === 'svc')
-    deepStrictEqual(svc.workers, { dynamic: false, static: 3, version: 'v1' })
+    deepStrictEqual(svc.workers, { dynamic: false, static: 3 })
   })
 })

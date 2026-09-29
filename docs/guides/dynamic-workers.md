@@ -20,147 +20,7 @@ As traffic grows, the synchronous parts of handling requests—like parsing bodi
 
 
 
-WATT provides two scaling algorithms. **Threshold-based scaling (v1)**, the default, reacts to recent ELU averages and uses heap usage to check whether another worker fits in memory. **Predictive scaling (v2)** forecasts demand from ELU and, optionally, heap usage so it can request capacity before the current workers become overloaded.
-
-## Threshold-based scaling (v1)
-
-Threshold-based scaling adds capacity when an application's recent average ELU exceeds an upper threshold and removes capacity when it falls below a lower threshold. Separate thresholds leave room for normal fluctuations without repeatedly adding and removing a worker.
-
-For example, with the defaults, an application whose workers average 85% ELU over the last 10 seconds qualifies for an extra worker. If its average falls below 20% over the last minute, it qualifies to lose a worker. The longer scale-down window avoids removing capacity in response to a brief drop in traffic.
-
-### How a decision works
-
-The threshold-based scaler samples eligible workers approximately once per second. It ignores a new worker's metrics during its startup grace period, which defaults to 30 seconds. For each application, it averages each worker's readings over the relevant window, then averages those worker values:
-
-| Decision | ELU window | Default threshold |
-| --- | --- | --- |
-| Scale up | Last 10 seconds | Above `0.8` |
-| Scale down | Last 60 seconds | Below `0.2` |
-
-The threshold-based scaler checks for scaling when a sampled worker exceeds its application's scale-up threshold. It also checks every 60 seconds, so low-load applications can scale down without a high-load trigger.
-
-Each scaling check looks at all applications and can:
-
-- Remove one worker from each application whose average ELU is below the scale-down threshold, without going below its minimum worker count.
-- Add one worker to one application whose average ELU is above the scale-up threshold, if worker and memory limits allow it.
-
-If an application's worker count is already outside its configured minimum or maximum, the scaler can add or remove multiple workers to bring it back within those limits.
-
-After applying scaling updates, the threshold-based scaler waits for a global cooldown before making another decision. The default is 20 seconds, and it blocks both directions across all applications. Metric collection continues during the cooldown.
-
-### Sharing capacity between applications
-
-Assume the default thresholds, a minimum of one worker per application, no active cooldown, and sufficient memory unless stated otherwise. ELU values below are the averages for the relevant decision window.
-
-| Situation | Result |
-| --- | --- |
-| A has two workers at 85% ELU; no other app needs scaling; worker and memory limits allow growth | A receives one additional worker |
-| A has two workers at 90%; B has two at 30%; `total` is four | No change: A cannot grow, and B is above the 20% scale-down threshold |
-| A has two workers at 50%; B has three at 10% | B loses one worker |
-| A has three workers at 15%; B has two at 18% | Each loses one worker |
-| A needs to grow, but its average worker heap is 1.5 GB and only 1 GB remains below `maxMemory` | A does not grow |
-
-The scaler does not remove a worker from an application solely to make room for another one. The application must qualify for scale-down itself.
-
-### Configuration
-
-#### Global configuration
-
-Enable threshold-based scaling by setting `dynamic` to `true` and `version` to `"v1"` in the runtime-level `workers` object. This algorithm is also selected when `version` is omitted. Durations are in milliseconds.
-
-```json
-{
-  "workers": {
-    "dynamic": true,
-    "version": "v1",
-    "minimum": 1,
-    "maximum": 4,
-    "total": 8,
-    "scaleUpELU": 0.8,
-    "scaleDownELU": 0.2,
-    "cooldown": 20000,
-    "gracePeriod": 30000
-  }
-}
-```
-
-This gives each dynamically scaled application between one and four workers, with a total budget of eight across the runtime.
-
-For a framework application running directly through WATT, put the settings inside its configuration's `runtime` section instead:
-
-```json
-{
-  "runtime": {
-    "workers": {
-      "dynamic": true,
-      "version": "v1",
-      "minimum": 1,
-      "maximum": 4,
-      "total": 4
-    }
-  }
-}
-```
-
-These are configuration fragments; keep your existing application and server settings. Start the application through WATT, for example with `wattpm start`. Starting a framework directly, such as with `next start`, does not run the WATT scaler. The algorithm version is selected for the whole runtime.
-
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `dynamic` | `false` | Enable automatic worker scaling |
-| `version` | `"v1"` | Use `"v1"` or omit this setting to select threshold-based scaling |
-| `static` | `1` | Initial worker count; also the fixed count when dynamic scaling is disabled |
-| `minimum` | `1` | Default minimum workers per application |
-| `maximum` | `total` | Default maximum workers per application |
-| `total` | `os.availableParallelism()` | Runtime-wide worker limit for load-driven scale-ups, including fixed applications |
-| `maxMemory` | 90% of detected total memory | Memory usage limit, in bytes, used when considering scale-ups |
-| `scaleUpELU` | `0.8` | Scale-up threshold for the 10-second application average |
-| `scaleDownELU` | `0.2` | Scale-down threshold for the 60-second application average |
-| `cooldown` | `20000` | Global delay after scaling updates before another decision |
-| `gracePeriod` | `30000` | Time after each worker starts before the threshold-based scaler uses its metrics |
-
-Memory usage and capacity come from cgroup files when available, otherwise from the host operating system. On a host, the check therefore includes memory used outside this WATT. `maxMemory` is a scaling constraint; setting it does not impose an operating-system memory limit.
-
-The threshold-based scaler estimates whether there is room for another worker using the application's average heap usage. Heap usage constrains whether a new worker can be started; it does not independently trigger threshold-based scaling.
-
-Choose application minima and fixed counts that fit within `total` and the available memory. Provisioning the configured minimum is separate from the checks for load-driven scale-ups. A runtime can otherwise start above its intended budget.
-
-On platforms without the required `reusePort` support, the scaler limits an entrypoint application to one worker and logs a warning.
-
-#### Per-application configuration
-
-In a multi-application runtime, set overrides in `applications[].workers`. Threshold-based scaling supports `minimum`, `maximum`, `scaleUpELU`, and `scaleDownELU` per application. Omitted values use the runtime-level settings.
-
-```json
-{
-  "workers": {
-    "dynamic": true,
-    "version": "v1",
-    "minimum": 1,
-    "maximum": 4,
-    "total": 8
-  },
-  "applications": [
-    {
-      "id": "api",
-      "path": "./services/api",
-      "workers": {
-        "minimum": 2,
-        "maximum": 6,
-        "scaleUpELU": 0.7
-      }
-    },
-    {
-      "id": "jobs",
-      "path": "./services/jobs",
-      "workers": 1
-    }
-  ]
-}
-```
-
-Here, `api` can scale between two and six workers. `jobs` stays at one worker, which still counts toward `total`. Cooldown and grace-period settings apply across the runtime.
-
-## Predictive scaling (v2)
+## Predictive scaling
 
 Starting a worker takes time: it must load the application and initialize its dependencies before handling requests. During that time, the existing workers continue to carry the traffic. Waiting until average ELU exceeds the configured limit can leave them overloaded before the new worker is ready.
 
@@ -202,7 +62,7 @@ Redistribution accounts for the transition after a scale-up. New workers' measur
 
 Applications share the WATT's CPU and memory. A recommendation from one application cannot assume that all spare resources are available to it. The runtime controller compares the desired worker counts and decides which updates to approve:
 
-- It accepts scale-down recommendations for all eligible applications in the same cycle.
+- It applies scale-down recommendations for all eligible applications before admitting scale-ups. Only capacity actually released by successful or partial stops is made available; failed stops remain counted and can be retried.
 - For scale-up, it considers applications in order of relative increase: `(desiredTarget - approvedTarget) / approvedTarget`, selecting the first application with enough memory for at least one additional worker.
 - It adds at most `maxScaleUpStep` workers to that application, limited by its requested count, the total worker budget, and the memory check.
 
@@ -214,13 +74,14 @@ The default is one extra worker per cycle. Starting workers can involve compilat
 
 #### Global configuration
 
-Enable predictive scaling by setting `version` to `"v2"` in the runtime-level `workers` object. This example scales on ELU; add `heapThresholdMb` when heap usage should also influence worker count. Durations are in milliseconds.
+Enable predictive scaling by setting `dynamic` to `true` in the runtime-level `workers` object. This example scales on ELU; add `heapThresholdMb` when heap usage should also influence worker count. Durations are in milliseconds.
 
-```json
-{
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
   "workers": {
     "dynamic": true,
-    "version": "v2",
     "minimum": 1,
     "maximum": 4,
     "total": 8,
@@ -228,15 +89,14 @@ Enable predictive scaling by setting `version` to `"v2"` in the runtime-level `w
     "processIntervalMs": 10000,
     "maxScaleUpStep": 1
   }
-}
+})
 ```
 
-For a framework application running directly through WATT, put this `workers` object inside its configuration's `runtime` section. Start it through WATT, for example with `wattpm start`; a framework's own start command does not run the scaler. The version applies to the whole runtime.
+Keep `workers` at the top level of `watt.config.ts`, including for single-application projects using the `application` shorthand. Start through WATT with `wattpm start`; a framework's own start command does not run the scaler.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `dynamic` | `false` | Enable automatic worker scaling |
-| `version` | `"v1"` | Set to `"v2"` to select predictive scaling |
 | `minimum` | `1` | Initial and minimum worker count for each dynamically scaled application |
 | `maximum` | `os.availableParallelism()` | Default maximum workers per application |
 | `total` | `os.availableParallelism()` | Runtime-wide worker limit for load-driven scale-ups, including fixed applications |
@@ -248,7 +108,7 @@ The predictive scaler always processes heap measurements, even without `heapThre
 
 Choose application minima and fixed counts that fit within `total` and the available memory. Provisioning the configured minimum is separate from the checks for load-driven scale-ups. A runtime can otherwise start above its intended budget.
 
-On platforms without the required `reusePort` support, the scaler limits an entrypoint application to one worker and logs a warning.
+On platforms without the required `reusePort` support, applications listening on a fixed port use one worker unless their capability configuration sets `server.portAssignment` to `perWorkerIncrement`. Ephemeral ports can use multiple workers.
 
 #### Thresholds and decision timing
 
@@ -292,15 +152,16 @@ The predictive scaler does not use the `cooldown` or `gracePeriod` settings of t
 
 #### Per-application configuration
 
-In a multi-application runtime, set overrides in `applications[].workers`. Predictive scaling supports `minimum`, `maximum`, metric thresholds, margins, redistribution time, smoothing parameters, and cooldowns per application. Omitted values use the runtime-level settings.
+In a multi-application runtime, set overrides in `applications[].workers`. Dynamic scaling supports `minimum`, `maximum`, metric thresholds, margins, redistribution time, smoothing parameters, and cooldowns per application. Omitted values use the runtime-level settings.
 
-An application inherits the runtime’s `dynamic` setting unless it explicitly overrides it, just as in v1. Setting `static` alone does not disable dynamic scaling. To keep an application at four workers, use `"workers": { "dynamic": false, "static": 4 }` or the numeric shorthand `"workers": 4`. With v2 dynamic scaling enabled, whether explicitly or inherited, `static` is ignored and the application starts at its effective `minimum`.
+An application inherits the runtime’s `dynamic` setting unless it explicitly overrides it. To keep an application at four workers, use `"workers": 4`. Dynamically scaled applications start at their effective `minimum`.
 
-```json
-{
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
   "workers": {
     "dynamic": true,
-    "version": "v2",
     "minimum": 1,
     "maximum": 4,
     "total": 8
@@ -321,9 +182,22 @@ An application inherits the runtime’s `dynamic` setting unless it explicitly o
       "workers": 1
     }
   ]
-}
+})
 ```
 
 Here, `api` can scale between two and six workers using a 70% ELU threshold. `jobs` stays at one worker, which still counts toward `total`.
 
-The algorithm version, processing interval, scale-up step, total worker limit, and memory budget are runtime-level settings. For a standalone framework application, use `runtime.workers`.
+The processing interval, scale-up step, total worker limit, and memory budget are runtime-level settings. For a single-application project, keep `workers` at the root beside `application`.
+
+## Migrating from Watt v3 to Watt v4
+
+Watt v4 uses predictive scaling whenever `workers.dynamic` is `true`. Dynamic scaling remains disabled by default. There is no algorithm version selector.
+
+- Remove `workers.version`. Both former version values are rejected.
+- Use a number, such as `"workers": 4`, for a fixed worker count. Use `minimum` for the initial count of dynamically scaled applications. The public `workers.static` setting has been removed.
+- Replace `scaleUpELU` with `eluThreshold` as a starting point for tuning; forecasting changes when a scale-up happens. `scaleDownELU` has no direct equivalent: review `scaleDownMargin` and the directional `cooldowns` instead.
+- Replace the single `cooldown` with the directional `cooldowns` settings. Remove the scaler's `gracePeriod`; new worker measurements are handled through redistribution and startup tracking. The separate `health.gracePeriod` setting is unchanged.
+- Replace `verticalScaler` with `workers`: `enabled` becomes `dynamic`, `minWorkers`/`maxWorkers` become `minimum`/`maximum`, and `maxTotalWorkers`/`maxTotalMemory` become `total`/`maxMemory`. Move application overrides to `applications[].workers`. Review obsolete timing settings rather than copying them unchanged.
+- The default per-application maximum is `os.availableParallelism()`. Set `maximum` explicitly if you previously relied on it following `total`.
+
+Removed options are rejected during configuration validation. Predictive scaling can add capacity before an overload and uses different scale-down hysteresis, so validate the new settings against representative traffic before upgrading production.

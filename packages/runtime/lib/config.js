@@ -38,7 +38,7 @@ function raiseInvalidWorkersError (location, received, hint) {
   throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
 }
 
-function parseWorkers (config, prefix, globalWorkers, defaultWorkers = { static: 1, dynamic: false }) {
+function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: false }) {
   if (typeof config.workers !== 'undefined') {
     // Number
     if (typeof config.workers !== 'object') {
@@ -72,11 +72,6 @@ function parseWorkers (config, prefix, globalWorkers, defaultWorkers = { static:
     config.workers = {}
   }
 
-  // What this entry asked for, before the defaults are folded in.
-  const declaredMinimum = config.workers.minimum
-  const declaredStatic = config.workers.static
-  config.workers.version ??= 'v1'
-
   // Fill missing values from defaults
   for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
     if (typeof config.workers[key] === 'undefined' && typeof defaultWorkers[key] !== 'undefined') {
@@ -91,7 +86,7 @@ function parseWorkers (config, prefix, globalWorkers, defaultWorkers = { static:
     config.workers.maximum = t
   }
 
-  if (globalWorkers?.version === 'v2' && config.workers.dynamic) {
+  if (config.workers.dynamic) {
     config.workers.minimum ??= 1
     config.workers.static = config.workers.minimum
   } else if (typeof config.workers.static === 'undefined') {
@@ -304,7 +299,7 @@ function verifyApplicationsPorts (applications) {
 // loader's envelope before any worker exists rather than by loading the application's config file.
 export function finalizeApplication (config, application, defaultWorkers) {
   // Validate and coerce per-service workers
-  parseWorkers(application, `Service "${application.id}"`, config.workers, defaultWorkers)
+  parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
 
   application.dependencies ??= []
   application.localUrl = `http://${application.id}.plt.local`
@@ -384,7 +379,7 @@ export async function finalizeConfiguration (config, applications, context, prod
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
   // Root-level workers
-  parseWorkers(config, 'Runtime', config.workers)
+  parseWorkers(config, 'Runtime')
   const defaultWorkers = config.workers
 
   for (let i = 0; i < applications.length; ++i) {
