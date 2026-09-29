@@ -77,9 +77,13 @@ The default is one extra worker per cycle. Starting workers can involve compilat
 Enable predictive scaling by setting `dynamic` to `true` in the runtime-level `workers` object. This example scales on ELU; add `heapThresholdMb` when heap usage should also influence worker count. Durations are in milliseconds.
 
 ```ts config
+import { createNodeConfig } from '@platformatic/node'
 import { createWattConfig } from 'wattpm'
 
 export default createWattConfig({
+  application: {
+    config: createNodeConfig({})
+  },
   "workers": {
     "dynamic": true,
     "minimum": 1,
@@ -157,6 +161,7 @@ In a multi-application runtime, set overrides in `applications[].workers`. Dynam
 An application inherits the runtime’s `dynamic` setting unless it explicitly overrides it. To keep an application at four workers, use `"workers": 4`. Dynamically scaled applications start at their effective `minimum`.
 
 ```ts config
+import { createNodeConfig } from '@platformatic/node'
 import { createWattConfig } from 'wattpm'
 
 export default createWattConfig({
@@ -170,6 +175,7 @@ export default createWattConfig({
     {
       "id": "api",
       "path": "./services/api",
+      config: createNodeConfig({}),
       "workers": {
         "minimum": 2,
         "maximum": 6,
@@ -179,6 +185,7 @@ export default createWattConfig({
     {
       "id": "jobs",
       "path": "./services/jobs",
+      config: createNodeConfig({}),
       "workers": 1
     }
   ]
