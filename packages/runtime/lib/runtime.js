@@ -91,6 +91,7 @@ import {
   kWorkerServerOptions,
   kWorkerUrl,
   kWorkersBroadcast,
+  kWorkerStartAborted,
   kWorkerStartTime,
   kWorkerStatus
 } from './worker/symbols.js'
@@ -3510,6 +3511,13 @@ export class Runtime extends EventEmitter {
       }
     } catch (err) {
       let error = ensureError(err)
+      // Forced shutdown may terminate the thread before its start handler can report the abort.
+      if (
+        worker[kWorkerStartAborted] &&
+        error.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+      ) {
+        error = new RuntimeAbortedError({ cause: error })
+      }
       worker[kITC].notify('application:worker:start:processed')
 
       if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {
@@ -3554,6 +3562,7 @@ export class Runtime extends EventEmitter {
         error.code === 'EADDRINUSE' ||
         error.code === 'EADDRNOTAVAIL' ||
         error.code === 'PLT_RUNTIME_EADDR_IN_USE' ||
+        error.code === 'PLT_RUNTIME_RUNTIME_ABORT' ||
         error.code === 'PLT_RUNTIME_WORKER_EADDR_IN_USE'
       ) {
         throw error
@@ -3655,6 +3664,9 @@ export class Runtime extends EventEmitter {
 
     const eventPayload = { application: id, worker: index, workersCount }
 
+    if (worker[kWorkerStatus] === 'starting' && this.error) {
+      worker[kWorkerStartAborted] = true
+    }
     worker[kWorkerStatus] = 'stopping'
     worker[kITC].removeAllListeners('changed')
     this.emitAndNotify('application:worker:stopping', eventPayload)
