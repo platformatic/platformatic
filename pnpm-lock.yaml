@@ -2514,6 +2514,9 @@ importers:
       '@platformatic/globals':
         specifier: workspace:*
         version: link:../globals
+      source-map:
+        specifier: ^0.8.0
+        version: 0.8.0
       undici:
         specifier: ^7.27.2
         version: 7.29.0
@@ -2539,9 +2542,6 @@ importers:
       pprof-format:
         specifier: ^2.1.0
         version: 2.3.1
-      source-map:
-        specifier: ^0.8.0
-        version: 0.8.0
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
