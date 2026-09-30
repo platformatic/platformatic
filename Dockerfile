@@ -15,7 +15,7 @@ WORKDIR $PLT_HOME
 RUN apt-get update && apt-get install -y --no-install-recommends python3 libc-dev make g++ && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
-RUN npm i pnpm@9 --location=global
+RUN npm i pnpm@10 --location=global
 
 # Copy lock files
 COPY package.json ./
@@ -41,7 +41,7 @@ RUN cd packages/wattpm && pnpm link --global
 FROM node:22-slim
 
 # Make pnpm available
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@10
 
 # We don't need the build tools anymore
 RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*
