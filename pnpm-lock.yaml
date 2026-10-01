@@ -2601,6 +2601,8 @@ importers:
         specifier: ^7.27.2
         version: 7.29.0
 
+  packages/workflowsdk: {}
+
 packages:
 
   '@angular-devkit/core@19.2.24':
