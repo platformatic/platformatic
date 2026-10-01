@@ -1616,3 +1616,146 @@ test('date columns are returned as YYYY-MM-DD strings', { skip: !isPg }, async (
   const [found] = await pageEntity.find({ where: { publishDate: { eq: '2023-06-01' } } })
   equal(found.publishDate, '2023-06-01')
 })
+
+test('usePrimaryKeySqlType exposes keys using their own SQL type', async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+
+    if (isMysql) {
+      // MySQL's SERIAL is a BIGINT UNSIGNED, so spell the integer key out
+      await db.query(sql`
+        CREATE TABLE categories (
+          id INTEGER PRIMARY KEY AUTO_INCREMENT,
+          name VARCHAR(42)
+        );
+        CREATE TABLE pages (
+          id INTEGER PRIMARY KEY AUTO_INCREMENT,
+          title VARCHAR(42),
+          category_id INTEGER,
+          FOREIGN KEY (category_id) REFERENCES categories(id)
+        );
+      `)
+    } else if (isSQLite) {
+      await db.query(sql`CREATE TABLE categories (
+        id INTEGER PRIMARY KEY,
+        name VARCHAR(42)
+      );`)
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42),
+        category_id INTEGER REFERENCES categories(id)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(42)
+      );`)
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(42),
+        category_id INTEGER REFERENCES categories(id)
+      );`)
+    }
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {},
+    usePrimaryKeySqlType: true
+  })
+
+  const categoryEntity = mapper.entities.category
+  const pageEntity = mapper.entities.page
+
+  // An int4 primary key survives JSON, so it is not marked for stringification,
+  // and neither is the foreign key referencing it.
+  strictEqual(categoryEntity.fields.id.stringifyOutput, undefined)
+  strictEqual(pageEntity.fields.id.stringifyOutput, undefined)
+  strictEqual(pageEntity.fields.category_id.stringifyOutput, undefined)
+
+  const [category] = await categoryEntity.insert({ inputs: [{ name: 'fiction' }] })
+  strictEqual(typeof category.id, 'number')
+
+  const [page] = await pageEntity.insert({ inputs: [{ title: 'a page', categoryId: category.id }] })
+  strictEqual(typeof page.id, 'number')
+  strictEqual(typeof page.categoryId, 'number')
+  strictEqual(page.categoryId, category.id, 'the foreign key compares equal to the primary key')
+
+  const [found] = await pageEntity.find({ where: { id: { eq: page.id } } })
+  strictEqual(typeof found.id, 'number')
+  strictEqual(typeof found.categoryId, 'number')
+})
+
+test('usePrimaryKeySqlType keeps wide primary keys as strings', async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+
+    await db.query(sql`CREATE TABLE pages (
+      id BIGINT NOT NULL PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {},
+    usePrimaryKeySqlType: true
+  })
+
+  const pageEntity = mapper.entities.page
+  // A bigint cannot be represented as a JSON number without losing precision.
+  strictEqual(pageEntity.fields.id.stringifyOutput, true)
+
+  const [page] = await pageEntity.insert({ inputs: [{ id: 42, title: 'a page' }] })
+  strictEqual(typeof page.id, 'string')
+})
+
+test('primary keys are stringified by default', async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    }
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+  strictEqual(pageEntity.fields.id.stringifyOutput, true)
+
+  const [page] = await pageEntity.insert({ inputs: [{ title: 'a page' }] })
+  strictEqual(typeof page.id, 'string')
+})
