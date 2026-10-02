@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@fastify/http-proxy": "^11.5.0",
+    "@fastify/http-proxy": "^11.6.3",
     "@fastify/reply-from": "^12.0.0",
     "@fastify/static": "^10.0.0",
     "@fastify/swagger": "^9.0.0",
