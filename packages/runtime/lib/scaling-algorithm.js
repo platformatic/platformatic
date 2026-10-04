@@ -139,7 +139,7 @@ export class ScalingAlgorithm {
             applicationId,
             workersCount,
             heapUsed: recommendation.avgHeapUsage,
-            elu: recommendation.scaleUpELU
+            scaleUpELU: recommendation.scaleUpELU
           }
         }
       }
@@ -234,7 +234,7 @@ export class ScalingAlgorithm {
   }
 
   #getMetricsTimeWindow () {
-    return Math.max(scaleUpTimeWindow, scaleDownTimeWindow) * 1000
+    return Math.max(scaleUpTimeWindow, scaleDownTimeWindow)
   }
 
   #getApplicationScaleRecommendation (applicationId) {

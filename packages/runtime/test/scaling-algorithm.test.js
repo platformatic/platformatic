@@ -2,6 +2,46 @@ import assert from 'node:assert'
 import { test } from 'node:test'
 import { ScalingAlgorithm } from '../lib/scaling-algorithm.js'
 
+test('ScalingAlgorithm - prioritizes the hottest eligible app independent of application order', () => {
+  for (const order of [['warm', 'hot'], ['hot', 'warm']]) {
+    const algorithm = new ScalingAlgorithm({ maxTotalWorkers: 5 })
+    const workers = {}
+    for (const applicationId of order) {
+      algorithm.addApplication(applicationId, { minWorkers: 1, maxWorkers: 3 })
+      workers[applicationId] = 2
+      algorithm.addWorkerHealthInfo({ applicationId, workerId: 0, elu: applicationId === 'hot' ? 0.99 : 0.81, heapUsed: 64 })
+    }
+    assert.deepStrictEqual(algorithm.getRecommendations(workers, { availableMemory: 1024 }), [
+      { applicationId: 'hot', workersCount: 3, direction: 'up' }
+    ])
+  }
+})
+
+test('ScalingAlgorithm - prioritizes fewer workers when eligible apps have equal ELU', () => {
+  const algorithm = new ScalingAlgorithm({ maxTotalWorkers: 5 })
+  for (const applicationId of ['larger', 'smaller']) {
+    algorithm.addApplication(applicationId)
+    algorithm.addWorkerHealthInfo({ applicationId, workerId: 0, elu: 0.95, heapUsed: 64 })
+  }
+  assert.deepStrictEqual(algorithm.getRecommendations({ larger: 3, smaller: 1 }), [
+    { applicationId: 'smaller', workersCount: 2, direction: 'up' }
+  ])
+})
+
+test('ScalingAlgorithm - expires heap samples after the longest metrics window', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 1_000_000 })
+  const algorithm = new ScalingAlgorithm({ maxTotalWorkers: 3 })
+  algorithm.addApplication('app', { minWorkers: 1, maxWorkers: 3 })
+  algorithm.addWorkerHealthInfo({ applicationId: 'app', workerId: 0, elu: 0.9, heapUsed: 1024 })
+  t.mock.timers.tick(59_000)
+  algorithm.addWorkerHealthInfo({ applicationId: 'app', workerId: 0, elu: 0.9, heapUsed: 64 })
+  assert.deepStrictEqual(algorithm.getRecommendations({ app: 2 }, { availableMemory: 128 }), [])
+  t.mock.timers.tick(1_001)
+  assert.deepStrictEqual(algorithm.getRecommendations({ app: 2 }, { availableMemory: 128 }), [
+    { applicationId: 'app', workersCount: 3, direction: 'up' }
+  ])
+})
+
 test('ScalingAlgorithm - should scale down if app ELUs are lower the treshold', async () => {
   const scaleDownELU = 0.2
   const scalingAlgorithm = new ScalingAlgorithm()
