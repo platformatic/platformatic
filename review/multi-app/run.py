@@ -95,7 +95,7 @@ for i,(seed,policy,protocol,(name,rate,weights,apps,frontends,hotspots)) in enum
  print(f'[{i+1}/{len(jobs)}] {label}',flush=True)
  start(policy,protocol,frontends,apps,hotspots)
  (OUT/(label+'.config.json')).write_text(cmd(['docker','exec',SERVER,'cat','/tmp/watt-multi-app/platformatic.json']))
- options=dict(seed=seed,rate=rate,seconds=3 if a.smoke else a.seconds,weights=weights,protocol=protocol,iterationsPerMs=cal['iterationsPerMs'])
+ options=dict(seed=seed,rate=rate,seconds=3 if a.smoke else a.seconds,weights=weights,protocol=protocol,iterationsPerMs=cal['iterationsPerMs'],requireGatewayIdentity=True,frontends=frontends)
  if apps:options['apps']=apps
  if not a.smoke:generate({**options,'seconds':5},OUT/(label+'.warmup.json'))
  before=control();result=generate(options,OUT/(label+'.client.json'))
@@ -119,7 +119,7 @@ for i,(seed,policy,protocol,(name,rate,weights,apps,frontends,hotspots)) in enum
  stop(label)
  result.update(label=label,policy=policy,protocol=protocol,before=before,after=after)
  records.append(result);file.write_text(json.dumps(records,indent=2))
- invalid=[e for e in result['errors'] if (e.get('error')=='invalid JSON' or str(e.get('error','')).startswith('invalid response'))]
+ invalid=[e for e in result['errors'] if (e.get('error')=='invalid JSON' or str(e.get('error','')).startswith(('invalid response','invalid gateway identity')))]
  if invalid:raise RuntimeError(f'wrong application/body: {invalid[:2]}')
  if policy!='rr' and any(w['routing']['selected']!=w['routing']['completed'] for w in after['workers']):raise RuntimeError('reservation accounting mismatch')
  print(json.dumps(result['apps']),flush=True)

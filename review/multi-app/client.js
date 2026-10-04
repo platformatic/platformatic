@@ -36,6 +36,7 @@ function send (arrival) {
       if (!error && headers.status === 503 && headers.rejected === '1' && value.code === 'PLT_REQUEST_CAPACITY_EXCEEDED' && value.statusCode === 503) error = 'capacity rejection'
       if (!error && headers.status >= 400 && headers.status <= 599) error = `HTTP ${headers.status}`
       if (!error && (headers.status !== 200 || headers.app !== app || value.app !== app || value.request !== rid || !Number.isInteger(value.worker) || value.worker < 0 || value.worker !== Number(headers.worker))) error = `invalid response ${JSON.stringify(headers)}`
+      if (!error && o.requireGatewayIdentity && (!Number.isInteger(Number(headers.gateway)) || Number(headers.gateway) < 0 || Number(headers.gateway) >= o.frontends)) error = `invalid gateway identity ${JSON.stringify(headers)}`
       const result = { app, rid, latencyMs: performance.now() - due, endedMs: performance.now() - start,
         worker: Number(headers?.worker), gateway: Number(headers?.gateway), responseBody: error ? body : undefined, status: headers?.status, error: error ? String(error) : undefined }
       ;(error ? errors : samples).push(result); resolve()

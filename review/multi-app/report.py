@@ -11,6 +11,7 @@ p.add_argument('--fixed', default='release-v17-calibrated')
 p.add_argument('--scaler', default='release-v18-scaler')
 p.add_argument('--short', default='release-v17-final-forwarding')
 p.add_argument('--steady', default='release-v18-steady-forwarding')
+p.add_argument('--instrumentation', default='gateway-instrumentation-v19')
 p.add_argument('--output', default='review/multi-app/REPORT.md')
 a = p.parse_args()
 root = Path(__file__).resolve().parents[2]
@@ -26,8 +27,12 @@ apps = [x for x in fixed['apps'] if not x['case'].startswith('scaler-')] + scale
 lookup = {(x['case'], x['policy'], x['app']): x for x in apps}
 forwarding = {'short': read(a.short, 'aggregate.json'), 'steady': read(a.steady, 'aggregate.json')}
 assert all(x['runs'] == 7 for rows in forwarding.values() for x in rows)
+instrumentation = read(a.instrumentation, 'validation.json')
+assert len(instrumentation) == 12 and all(not x['errors'] for x in instrumentation)
 resources = []
 decisions = []
+static_scaler_runs = {r['label']: r for r in read(a.fixed, 'scaler-summary.json')}
+allocation_pairs = []
 for revision in [a.fixed, a.scaler]:
     for file in (raw / revision).glob('*-summary.json'):
         if revision == a.fixed and file.name == 'scaler-summary.json':
@@ -45,6 +50,10 @@ for revision in [a.fixed, a.scaler]:
                 'oomDelta': mem1['oom'] - mem0['oom'], 'oomKillDelta': mem1['oom_kill'] - mem0['oom_kill'],
                 'drainMs': run['drainMs']})
             if revision == a.scaler:
+                baseline = static_scaler_runs[run['label']]
+                assert baseline['arrivals'] == run['arrivals'], 'Unmatched allocation diagnostic arrivals'
+                allocation_pairs.append({'label': run['label'], 'policy': run['policy'],
+                    'staticApps': baseline['apps'], 'dynamicApps': run['apps']})
                 health = read(revision, run['label'] + '.health.json')
                 assert health['scalerEnabled'] and health['scalerChecks'] > 0
                 recommendations = [x for d in health['scalingDecisions'] for x in d['recommendations']]
@@ -53,10 +62,21 @@ for revision in [a.fixed, a.scaler]:
 summary = {'implementationCommit': 'dd9c49ed64eeee5fc918cf1e72eac3cd807a403d',
     'cohorts': vars(a), 'checks': valid, 'apps': apps, 'resources': resources,
     'primaryWorkerProfiles': [x for x in fixed['workers'] if x['case'].startswith('primary-')],
-    'scaling': decisions, 'forwarding': forwarding, 'loadProfile': profile}
+    'scaling': decisions, 'allocationDiagnosticPairs': allocation_pairs,
+    'forwarding': forwarding, 'loadProfile': profile,
+    'gatewayInstrumentationValidation': instrumentation}
 target = root / a.output
 target.parent.mkdir(parents=True, exist_ok=True)
-(target.parent / 'evidence/multi-app-results.json').write_text(json.dumps(summary, indent=2) + '\n')
+(target.parent / 'evidence').mkdir(exist_ok=True)
+# Keep machine-readable evidence compact: one complete record per line.
+records = []
+for key, value in summary.items():
+    if isinstance(value, list):
+        content = '[\n' + ',\n'.join('    ' + json.dumps(row, separators=(',', ':')) for row in value) + '\n  ]'
+    else:
+        content = json.dumps(value, separators=(',', ':'))
+    records.append('  ' + json.dumps(key) + ': ' + content)
+(target.parent / 'evidence/multi-app-results.json').write_text('{\n' + ',\n'.join(records) + '\n}\n')
 lines = []
 def line(text=''):
     lines.append(text)
@@ -77,7 +97,7 @@ line('## Implementation and validation')
 line()
 line('Draft PR: [platformatic/platformatic#5157](https://github.com/platformatic/platformatic/pull/5157). Measured production source is `dd9c49ed64eeee5fc918cf1e72eac3cd807a403d`, based on upstream `8f6b4e5ee2670d2148655d34235561ee6191248f` with Fastify 5.12.5. Request selection is per app and per HTTP request, including persistent HTTP/1 connections and multiplexed HTTP/2 streams. Shared bounded reservations remain held until backend completion or actual backend exit; client cancellation alone does not free accepted work.')
 line()
-line('All 42 targeted tests pass on Linux Node 22, 24 and 26 and in restricted non-root Linux. The current default lifecycle/channel cases (26), gateway cases (20), lint, packaging/license checks and post-rebase types pass. The PR head `7238c6cb5` had 243 successful CI checks and one neutral check. Raw validation logs and the CI snapshot are in `evidence/`. The original runtime-main run failed; preserved corrective runs and CI, rather than that failed run, establish validation. A reproduced scale-up/shutdown bootstrap-retry hang was fixed and has a regression test. Production requires neither SQLite nor a native memory-map addon.')
+line('All 42 targeted tests pass on Linux Node 22, 24 and 26 and in restricted non-root Linux. The current default lifecycle/channel cases (26), gateway cases (20), lint, packaging/license checks and post-rebase types pass. The implementation/evidence heads `7238c6cb5` and `c9fdbacd0` each had 243 successful CI checks and one neutral check. Raw validation logs and the CI snapshot are in `evidence/`. The original runtime-main run failed; preserved corrective runs and CI, rather than that failed run, establish validation. A reproduced scale-up/shutdown bootstrap-retry hang was fixed and has a regression test. Production requires neither SQLite nor a native memory-map addon.')
 line()
 line('## Controls and integrity')
 line()
@@ -97,7 +117,7 @@ line()
 table(['Protocol', 'App', 'Round robin', 'Least outstanding', 'ELU/heap preference'],
     [[proto, app, *[tail(f'primary-mixed-{proto}-f1', policy, app) for policy in ['rr', 'least', 'pressure']]]
      for proto in ['h1', 'h2'] for app in ['catalog', 'rendering', 'search', 'personalization']])
-line('Rendering tails are approximately unchanged with least outstanding at the primary load. The binary pressure preference routes too much work away from the busy worker and has worse rendering tails. Request reservations do not measure background CPU demand, GC cost or remaining service time. Neither policy is established as the final production scheduling solution by these results.')
+line('Rendering tails are approximately unchanged with least outstanding at the primary load. The binary pressure preference shifts selections toward the worker without background CPU bursts, yet has worse rendering tails; these measurements do not isolate the cause. Request reservations do not measure background CPU demand, GC cost or remaining service time. Neither policy is established as the final production scheduling solution by these results.')
 line()
 line('## Load sweeps and frontend variants')
 line()
@@ -107,6 +127,10 @@ table(['Case', 'App', 'Round robin p99 ms', 'Least outstanding p99 ms'],
     [[case, app, tail(f'rates-{case}-h1-f1', 'rr', app), tail(f'rates-{case}-h1-f1', 'least', app)]
      for case in ['healthy', 'near', 'overload', 'render-hot'] for app in ['catalog', 'rendering', 'search', 'personalization']])
 line('Two/four gateway workers, uniform pools and TLS have three seeds per variant. All per-app p50/p95/p99, goodput and error totals are retained in `evidence/multi-app-results.json`; the raw configuration, arrival results and health files remain in the local cohort directories. More gateway workers do not add to the shared four-CPU budget. The multi-app TCP/Rust comparison remains open: the single-app prototype has different completion/failure semantics and cannot certify this request-reservation contract.')
+line()
+line('The recorded gateway plugin’s request hooks were encapsulated away from proxy routes: gateway request counters and identity headers are unavailable, rather than measured zero. Global per-thread ELU/heap/GC samples remain valid; backend identity checks and current reservation snapshots remain valid. The fixture now uses an unencapsulated Fastify plugin and requires gateway identity in new runs. HTTP/2 intentionally uses one connection, so a two/four-gateway case can still use only one frontend; these cases do not prove frontend throughput scaling. A complete frontend capacity comparison with corrected instrumentation remains open.')
+line()
+line(f"The correction passed {len(instrumentation)} separate HTTP/1/HTTP/2 smoke cases with two/four gateways: every response has a valid gateway identity and actual served counters advance. Those cases and their source archive are in `results/review/multi-app/{a.instrumentation}/`; they verify instrumentation, not capacity or latency gains.")
 line()
 line('## Achieved worker pressure and resources')
 line()
@@ -118,6 +142,8 @@ table(['App:worker', 'ELU p50 / p99', 'Heap MiB p50 / p99', 'Heap/limit p99'],
      for w in fixed['workers'] if w['case'] == 'primary-mixed-h1-f1' and w['policy'] == 'rr'])
 line('The full aggregate retains per-generation GC frequency/pause deltas, allocation counts, event-loop delay and sample gaps. A blocked worker can publish stale health; the corrected driver uses the supervisor’s current shared reservation snapshot for final drain assertions. Primary/isolated runs loaded an earlier driver, whose exact source was recovered and SHA-verified; retrospective assertions also check their current shared snapshots.')
 line()
+line('The primary search/personalization samples never crossed the experimental 85% heap threshold (maximum observed ratio about 81%). These runs demonstrate distinct large live sets and repeated GC, but do not test the preference’s behavior near heap exhaustion. Its primary comparison is driven by ELU/headroom freshness. Blocked rendering workers also produced health gaps above 1500 ms; their stale samples are retained, not interpolated into fresh measurements.')
+line()
 line(f"Across valid cases, average measured CPU use including client drain ranges {min(x['averageCpuCoresIncludingDrain'] for x in resources):.2f}–{max(x['averageCpuCoresIncludingDrain'] for x in resources):.2f} cores. Before/after process RSS ranges {min(min(x['beforeRssMiB'], x['afterRssMiB']) for x in resources):.1f}–{max(max(x['beforeRssMiB'], x['afterRssMiB']) for x in resources):.1f} MiB; cgroup memory ranges {min(min(x['beforeCgroupMiB'], x['afterCgroupMiB']) for x in resources):.1f}–{max(max(x['beforeCgroupMiB'], x['afterCgroupMiB']) for x in resources):.1f} MiB. These are endpoint observations, not continuous peak measurements. OOM events: {sum(x['oomDelta'] for x in resources)}; OOM kills: {sum(x['oomKillDelta'] for x in resources)}. Worker RSS is never summed as independent process memory.")
 line()
 line('## Corrected scaler experiment')
@@ -128,6 +154,15 @@ table(['Case', 'Scaler checks', 'Recommendations', 'Started / stopped / exited e
     [[d['label'], d['checks'], len(d['recommendations']),
       ' / '.join(str(collections.Counter(e['name'] for e in d['events'])[f'application:worker:{name}']) for name in ['started', 'stopped', 'exited'])] for d in decisions])
 line('Zero recommendations are a measured scaler outcome, not evidence that scale-up/down was exercised. Actual scaling with accepted requests and concurrent shutdown is covered separately by integration tests. Routing within an app and allocating workers among apps remain different decisions.')
+line()
+line('The earlier six scaler-labelled cases actually held worker counts fixed. They can be used as explicitly labelled 180-second fixed-worker diagnostics: each corrected case has an identical saved arrival schedule, request content and policy. Median p99 across three seeds is below. These successive cohorts also differ in scaler health collection/observation and execution time; they are not a randomized production A/B or evidence of an SLO.')
+line()
+table(['Policy', 'App', 'Fixed-worker diagnostic p99 ms', 'Dynamic allocation p99 ms'],
+    [[policy, app,
+      f"{statistics.median(r['staticApps'][app]['latencyMs']['p99'] for r in allocation_pairs if r['policy'] == policy):.1f}",
+      f"{statistics.median(r['dynamicApps'][app]['latencyMs']['p99'] for r in allocation_pairs if r['policy'] == policy):.1f}"]
+     for policy in ['rr', 'least'] for app in ['catalog', 'rendering', 'search', 'personalization']])
+line('This diagnostic supports investigating cross-app worker allocation before adopting a new request policy. Reducing an app to one replica is a fixture assumption, not an availability recommendation. Production minimum replica counts and budgets must be supplied before using that allocation in a canary.')
 line()
 line('## Forwarding overhead')
 line()

@@ -14,7 +14,7 @@ for r in runs:
  assert offered==len(r['samples'])+len(r['errors']),(r['label'],'missing outcomes')
  identities=[x['rid'] for x in r['samples']+r['errors']]
  assert len(set(identities))==offered,(r['label'],'duplicate outcomes')
- assert not [e for e in r['errors'] if (e.get('error')=='invalid JSON' or str(e.get('error','')).startswith('invalid response'))],(r['label'],'incorrect response')
+ assert not [e for e in r['errors'] if (e.get('error')=='invalid JSON' or str(e.get('error','')).startswith(('invalid response','invalid gateway identity')))],(r['label'],'incorrect response')
  configured=[w['routing'] for w in r['after']['workers'] if w['routing']]
  assert all(x['outstanding']==0 for x in configured),(r['label'],'reservation leak')
  current=[w['requestRouting'] for w in r['after']['runtimeWorkers'] if w.get('requestRouting')]

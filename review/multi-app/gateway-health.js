@@ -2,7 +2,11 @@
 import { workerData, threadId, BroadcastChannel } from 'node:worker_threads'
 import { performance, monitorEventLoopDelay, PerformanceObserver } from 'node:perf_hooks'
 import { getHeapStatistics } from 'node:v8'
-export default async function gatewayHealth (app) {
+import { createRequire } from 'node:module'
+import { dirname } from 'node:path'
+const require = createRequire(import.meta.url)
+const fp = require(require.resolve('fastify-plugin', { paths: [dirname(require.resolve('@platformatic/gateway'))] }))
+export default fp(async function gatewayHealth (app) {
   const channel = new BroadcastChannel('watt.multi-app.health')
   const delay = monitorEventLoopDelay({ resolution: 10 }); delay.enable()
   let running = 0, served = 0, aborted = 0, gcCount = 0, gcMs = 0
@@ -29,4 +33,4 @@ export default async function gatewayHealth (app) {
     delay.reset()
   }, 250)
   app.addHook('onClose', async () => { clearInterval(timer); observer.disconnect(); delay.disable(); channel.close() })
-}
+})
