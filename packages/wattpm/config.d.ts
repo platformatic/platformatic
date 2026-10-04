@@ -44,6 +44,10 @@ export type PlatformaticRuntimeConfig = {
               [k: string]: boolean;
             };
         config?: string;
+        requestRouting?: {
+          algorithm: "least-outstanding";
+          maxOutstanding?: number;
+        };
         useHttp?: boolean;
         websocket?: boolean;
         reuseTcpPorts?: boolean;

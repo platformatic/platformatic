@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.71.0.json",
+  "entrypoint": "gateway",
+  "applications": [
+    { "id": "gateway", "path": "./gateway", "config": "platformatic.json", "workers": 2 },
+    { "id": "alpha", "path": "./alpha", "config": "platformatic.json", "workers": 2, "requestRouting": { "algorithm": "least-outstanding", "maxOutstanding": 2 } },
+    { "id": "beta", "path": "./beta", "config": "platformatic.json", "workers": 2, "requestRouting": { "algorithm": "least-outstanding", "maxOutstanding": 2 } }
+  ],
+  "server": { "hostname": "127.0.0.1", "port": 0 },
+  "logger": { "level": "silent" },
+  "watch": false,
+  "managementApi": false
+}

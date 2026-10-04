@@ -1,0 +1,39 @@
+
+> platformatic@3.71.0 license-check /focused
+> node ./scripts/license-check.js
+
+Checked 569 production dependencies
+
+   420  MIT
+    71  Apache-2.0
+    36  ISC
+    23  BSD-3-Clause
+    12  BlueOak-1.0.0
+     1  (BSD-2-Clause OR MIT OR Apache-2.0)
+     1  (MIT OR CC0-1.0)
+     1  (MIT OR WTFPL)
+     1  0BSD
+     1  BSD-2-Clause
+     1  LGPL-3.0-or-later
+     1  Python-2.0
+
+Dependencies whose license is not in the base allow list:
+
+  @img/sharp-libvips-linux-arm64@1.2.4: LGPL-3.0-or-later
+    Platformatic packages: @platformatic/next
+    Pulled in by: @platformatic/next -> @platformatic/image-optimizer -> sharp -> @img/sharp-libvips-linux-arm64
+  argparse@2.0.1: Python-2.0
+    Platformatic packages: @platformatic/composer, @platformatic/db, @platformatic/db-core, @platformatic/gateway, @platformatic/sql-mapper
+    Pulled in by: @platformatic/gateway -> @platformatic/fastify-openapi-glue -> js-yaml -> argparse
+  expand-template@2.0.3: (MIT OR WTFPL)
+    Platformatic packages: @platformatic/db, @platformatic/db-core, @platformatic/sql-mapper
+    Pulled in by: @platformatic/sql-mapper -> @matteo.collina/sqlite-pool -> better-sqlite3 -> prebuild-install -> expand-template
+  rc@1.2.8: (BSD-2-Clause OR MIT OR Apache-2.0)
+    Platformatic packages: @platformatic/db, @platformatic/db-core, @platformatic/sql-mapper
+    Pulled in by: @platformatic/sql-mapper -> @matteo.collina/sqlite-pool -> better-sqlite3 -> prebuild-install -> rc
+  type-fest@5.8.0: (MIT OR CC0-1.0)
+    Platformatic packages: @platformatic/composer, @platformatic/db, @platformatic/db-core, @platformatic/gateway, @platformatic/service, @platformatic/sql-openapi
+    Pulled in by: @platformatic/gateway -> @scalar/fastify-api-reference -> @scalar/client-side-rendering -> @scalar/types -> type-fest
+
+All production dependency licenses are allowed.
+Note: 27 optional dependencies are not installed on this platform and were skipped.

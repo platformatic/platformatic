@@ -131,11 +131,24 @@ export interface ApplicationsTopology {
   applications: ApplicationDetails[]
 }
 
+export interface RequestRoutingDetails {
+  ready: number
+  outstanding: number
+  rejected: number
+  selected: number
+  completed: number
+  accountingErrors: number
+  elu: number | null
+  heapRatio: number | null
+  sampledAt: number
+}
+
 export interface WorkerDetails {
   application: string
   worker: string
   status: string
   thread: number
+  requestRouting?: RequestRoutingDetails
   raw?: unknown
 }
 

@@ -1,0 +1,208 @@
+TAP version 13
+# Subtest: interceptors as undici options
+ok 1 - interceptors as undici options
+  ---
+  duration_ms: 561.371709
+  type: 'test'
+  ...
+# Subtest: composable interceptors
+ok 2 - composable interceptors
+  ---
+  duration_ms: 508.858292
+  type: 'test'
+  ...
+# Subtest: mesh network works from external processes via ChildManager
+ok 3 - mesh network works from external processes via ChildManager
+  ---
+  duration_ms: 979.361042
+  type: 'test'
+  ...
+# Subtest: use client interceptors for internal requests
+ok 4 - use client interceptors for internal requests
+  ---
+  duration_ms: 469.6235
+  type: 'test'
+  ...
+# Subtest: update undici interceptor config
+ok 5 - update undici interceptor config
+  ---
+  duration_ms: 461.126
+  type: 'test'
+  ...
+# Subtest: interceptor readiness timeout handling
+ok 6 - interceptor readiness timeout handling
+  ---
+  duration_ms: 4341.725127
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they throw an exception during start
+ok 7 - can restart only crashed workers when they throw an exception during start
+  ---
+  duration_ms: 3957.028459
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they exit during start
+ok 8 - can restart only crashed workers when they exit during start
+  ---
+  duration_ms: 3831.236336
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they crash
+ok 9 - can restart only crashed workers when they crash
+  ---
+  duration_ms: 3368.563543
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they exit
+ok 10 - can restart only crashed workers when they exit
+  ---
+  duration_ms: 3283.071543
+  type: 'test'
+  ...
+# Subtest: should post updated workers list via broadcast channel
+ok 11 - should post updated workers list via broadcast channel
+  ---
+  duration_ms: 2363.575292
+  type: 'test'
+  ...
+# Subtest: should post updated workers when something crashed
+ok 12 - should post updated workers when something crashed
+  ---
+  duration_ms: 1316.784376
+  type: 'test'
+  ...
+# Subtest: should post updated workers when the application is updated
+ok 13 - should post updated workers when the application is updated
+  ---
+  duration_ms: 925.709583
+  type: 'test'
+  ...
+# Subtest: should get information from other workers via ITC using a round robin approach
+ok 14 - should get information from other workers via ITC using a round robin approach
+  ---
+  duration_ms: 1026.101126
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker throws an error
+ok 15 - should return an error if the target worker throws an error
+  ---
+  duration_ms: 974.93075
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker times out
+ok 16 - should return an error if the target worker times out
+  ---
+  duration_ms: 5978.991753
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker exits before returning a response
+ok 17 - should return an error if the target worker exits before returning a response
+  ---
+  duration_ms: 944.091584
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker throws an error while saving the channel
+ok 18 - should return an error if the target worker throws an error while saving the channel
+  ---
+  duration_ms: 953.768
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker times out while saving the channel
+ok 19 - should return an error if the target worker times out while saving the channel
+  ---
+  duration_ms: 12945.770297
+  type: 'test'
+  ...
+# Subtest: should reuse channels when the worker are restarted
+ok 20 - should reuse channels when the worker are restarted
+  ---
+  duration_ms: 2121.444876
+  type: 'test'
+  ...
+# Subtest: should notify all the workers
+ok 21 - should notify all the workers
+  ---
+  duration_ms: 3975.649794
+  type: 'test'
+  ...
+# Subtest: the mesh network works with the internal dispatcher
+ok 22 - the mesh network works with the internal dispatcher
+  ---
+  duration_ms: 2185.978251
+  type: 'test'
+  ...
+# Subtest: the mesh network works with the HTTP applications when using ITC
+ok 23 - the mesh network works with the HTTP applications when using ITC
+  ---
+  duration_ms: 1998.680001
+  type: 'test'
+  ...
+# Subtest: the mesh network works with the HTTP applications when using HTTP
+ok 24 - the mesh network works with the HTTP applications when using HTTP
+  ---
+  duration_ms: 2052.219001
+  type: 'test'
+  ...
+# Subtest: the mesh network stays in-memory for applications using the websocket flag
+ok 25 - the mesh network stays in-memory for applications using the websocket flag
+  ---
+  duration_ms: 2017.653501
+  type: 'test'
+  ...
+# Subtest: can inject on a worker
+ok 26 - can inject on a worker
+  ---
+  duration_ms: 1907.319043
+  type: 'test'
+  ...
+# Subtest: per-application restartOnError=0 quarantines a crashed application while the runtime keeps running
+ok 27 - per-application restartOnError=0 quarantines a crashed application while the runtime keeps running
+  ---
+  duration_ms: 3009.039127
+  type: 'test'
+  ...
+# Subtest: per-application restartOnError overrides a runtime which disabled restarts
+ok 28 - per-application restartOnError overrides a runtime which disabled restarts
+  ---
+  duration_ms: 1192.326792
+  type: 'test'
+  ...
+# Subtest: the runtime-level restartOnError is used when the application does not define one
+ok 29 - the runtime-level restartOnError is used when the application does not define one
+  ---
+  duration_ms: 2825.314668
+  type: 'test'
+  ...
+# Subtest: should restrict access via interceptor
+ok 30 - should restrict access via interceptor
+  ---
+  duration_ms: 933.009208
+  type: 'test'
+  ...
+# Subtest: should restrict access via messaging API
+ok 31 - should restrict access via messaging API
+  ---
+  duration_ms: 864.955084
+  type: 'test'
+  ...
+# Subtest: a restart racing shutdown leaves no unobserved worker rejection
+ok 32 - a restart racing shutdown leaves no unobserved worker rejection
+  ---
+  duration_ms: 3469.658043
+  type: 'test'
+  ...
+# Subtest: the routing rejection is still reported to whoever awaits it
+ok 33 - the routing rejection is still reported to whoever awaits it
+  ---
+  duration_ms: 2009.143459
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 81099.483162

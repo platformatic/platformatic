@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: should keep the status codes of responses which declare no body
+ok 1 - should keep the status codes of responses which declare no body
+  ---
+  duration_ms: 311.913958
+  type: 'test'
+  ...
+# Subtest: should not alter responses which declare a body
+ok 2 - should not alter responses which declare a body
+  ---
+  duration_ms: 185.013083
+  type: 'test'
+  ...
+# Subtest: should keep both the body-less and the described responses of an operation
+ok 3 - should keep both the body-less and the described responses of an operation
+  ---
+  duration_ms: 122.248709
+  type: 'test'
+  ...
+# Subtest: should not change the body-less responses when the deprecated addEmptySchema is set
+ok 4 - should not change the body-less responses when the deprecated addEmptySchema is set
+  ---
+  duration_ms: 161.582792
+  type: 'test'
+  ...
+# Subtest: should proxy a body-less response as it is
+ok 5 - should proxy a body-less response as it is
+  ---
+  duration_ms: 183.7345
+  type: 'test'
+  ...
+# Subtest: should expose x-forwarded-* headers
+ok 6 - should expose x-forwarded-* headers
+  ---
+  duration_ms: 324.873542
+  type: 'test'
+  ...
+# Subtest: should select the upstream via custom getUpstream using a request header or a cookie and pass custom.options to the module
+ok 7 - should select the upstream via custom getUpstream using a request header or a cookie and pass custom.options to the module
+  ---
+  duration_ms: 200.638917
+  type: 'test'
+  ...
+# Subtest: should support custom onError hooks
+ok 8 - should support custom onError hooks
+  ---
+  duration_ms: 143.463166
+  type: 'test'
+  ...
+# Subtest: should route requests via the runtime mesh to applications not listed in the gateway configuration
+ok 9 - should route requests via the runtime mesh to applications not listed in the gateway configuration
+  ---
+  duration_ms: 763.392792
+  type: 'test'
+  ...
+# Subtest: should select the WebSocket upstream per-connection via custom getUpstream
+ok 10 - should select the WebSocket upstream per-connection via custom getUpstream
+  ---
+  duration_ms: 125.738709
+  type: 'test'
+  ...
+# Subtest: should reject a WebSocket upgrade to a mesh-only application with a coded error
+ok 11 - should reject a WebSocket upgrade to a mesh-only application with a coded error
+  ---
+  duration_ms: 676.046083
+  type: 'test'
+  ...
+# Subtest: should proxy WebSocket connections when the application exposes a TCP server
+ok 12 - should proxy WebSocket connections when the application exposes a TCP server
+  ---
+  duration_ms: 565.776376
+  type: 'test'
+  ...
+# Subtest: should warn at boot when proxy.ws is explicitly configured for a mesh-only application
+ok 13 - should warn at boot when proxy.ws is explicitly configured for a mesh-only application
+  ---
+  duration_ms: 150.549291
+  type: 'test'
+  ...
+# Subtest: should keep proxying WebSocket connections to an application with an external origin
+ok 14 - should keep proxying WebSocket connections to an application with an external origin
+  ---
+  duration_ms: 108.90575
+  type: 'test'
+  ...
+# Subtest: should compose the guard with a user configured custom preValidation hook
+ok 15 - should compose the guard with a user configured custom preValidation hook
+  ---
+  duration_ms: 549.425208
+  type: 'test'
+  ...
+# Subtest: should proxy WebSocket connections to a node application using the websocket flag
+ok 16 - should proxy WebSocket connections to a node application using the websocket flag
+  ---
+  duration_ms: 642.088584
+  type: 'test'
+  ...
+# Subtest: should proxy WebSocket connections to a service application using the websocket flag
+ok 17 - should proxy WebSocket connections to a service application using the websocket flag
+  ---
+  duration_ms: 618.879042
+  type: 'test'
+  ...
+# Subtest: should dial a fresh TCP port after the application is restarted
+ok 18 - should dial a fresh TCP port after the application is restarted
+  ---
+  duration_ms: 835.682084
+  type: 'test'
+  ...
+# Subtest: should proxy openapi requests with telemetry span
+ok 19 - should proxy openapi requests with telemetry span
+  ---
+  duration_ms: 230.983833
+  type: 'test'
+  ...
+# Subtest: should proxy openapi requests with telemetry, managing errors
+ok 20 - should proxy openapi requests with telemetry, managing errors
+  ---
+  duration_ms: 172.791416
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8855.178879

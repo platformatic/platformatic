@@ -12,7 +12,7 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parentPort, workerData } from 'node:worker_threads'
 import { Agent, Client, Pool } from 'undici'
-import { wire } from 'undici-thread-interceptor'
+import { wire } from '../mesh/index.js'
 import { createChannelCreationHook } from '../policies.js'
 import { RemoteCacheStore, httpCacheInterceptor } from './http-cache.js'
 
@@ -226,6 +226,8 @@ function createThreadInterceptor (runtimeConfig) {
     domain: '.plt.local',
     port: parentPort,
     timeout: runtimeConfig.applicationTimeout,
+    requestRouting: workerData.requestRouting,
+    requestRoutingApplications: (runtimeConfig.applications ?? []).filter(a => a.requestRouting).map(a => a.id),
     onChannelCreation: createChannelCreationHook(runtimeConfig),
     ...telemetryHooks
   })

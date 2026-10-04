@@ -330,6 +330,10 @@ async function proxyPlugin (app, opts) {
       routes,
       internalRewriteLocationHeader: false,
       replyOptions: {
+        retryDelay: ({ req, res, err, attempt, getDefaultDelay }) => {
+          if (res?.headers['x-platformatic-request-rejected'] === '1') return null
+          return getDefaultDelay(req, res, err, attempt)
+        },
         rewriteHeaders: (headers, request) => {
           let location = headers.location
           if (location) {

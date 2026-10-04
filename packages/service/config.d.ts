@@ -1041,6 +1041,10 @@ export interface PlatformaticServiceConfig {
           directory?: string;
         };
     application?: {
+      requestRouting?: {
+        algorithm: "least-outstanding";
+        maxOutstanding?: number;
+      };
       reuseTcpPorts?: boolean;
       workers?:
         | number

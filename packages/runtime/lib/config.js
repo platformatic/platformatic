@@ -283,6 +283,9 @@ export async function prepareApplication (config, application, defaultWorkers) {
   parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
 
   application.entrypoint = application.id === config.entrypoint
+  if (application.requestRouting && (application.useHttp || application.websocket || application.entrypoint || !application.path)) {
+    throw new InvalidArgumentError(`Service "${application.id}" requestRouting requires an internal in-process mesh application without useHttp.`)
+  }
   application.dependencies ??= []
   application.localUrl = `http://${application.id}.plt.local`
 
@@ -514,6 +517,12 @@ export async function transform (config, _, context) {
         hasValidEntrypoint = true
       }
     }
+  }
+
+  // Autodetection occurs after prepareApplication; enforce the same contract.
+  const routedEntrypoint = applications.find(application => application.entrypoint && application.requestRouting)
+  if (routedEntrypoint) {
+    throw new InvalidArgumentError(`Service "${routedEntrypoint.id}" requestRouting requires an internal in-process mesh application without useHttp.`)
   }
 
   if (!hasValidEntrypoint && config.entrypoint && !context.allowMissingEntrypoint) {

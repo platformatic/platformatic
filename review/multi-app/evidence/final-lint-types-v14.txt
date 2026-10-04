@@ -1,0 +1,16 @@
+
+> @platformatic/runtime@3.71.0 test:types /focused/packages/runtime
+> tstyche
+
+[90m····[0m TSTyche 7.2.2[90m at /focused/packages/runtime[0m
+
+[34muses[0m TypeScript 6.0.3[90m with baseline TSConfig[0m
+
+[32mpass[0m [90m./test/types/[0merrors.tst.ts
+[32mpass[0m [90m./test/types/[0mindex.tst.ts
+
+Targets:    [32m1 passed[0m, 1 total
+Test files: [32m2 passed[0m, 2 total
+Tests:      [32m50 passed[0m, 50 total
+Assertions: [32m145 passed[0m, 145 total
+Duration:   0.7s

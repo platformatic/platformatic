@@ -1,0 +1,1 @@
+Disposable self-signed TLS material for local performance testing only. The generator disables certificate verification for this fixture; TLS tests measure transport behavior and cost, not deployment trust configuration. Regenerate with the command in setup.sh; no production credentials are used.

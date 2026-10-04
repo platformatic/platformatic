@@ -1,0 +1,574 @@
+TAP version 13
+# Subtest: applications are started with multiple workers according to the configuration
+ok 1 - applications are started with multiple workers according to the configuration
+  ---
+  duration_ms: 2506.210959
+  type: 'test'
+  ...
+# Subtest: applications are started with a single workers when no workers information is specified in the files
+ok 2 - applications are started with a single workers when no workers information is specified in the files
+  ---
+  duration_ms: 797.662834
+  type: 'test'
+  ...
+# Subtest: can detect changes and restart all workers for a application
+ok 3 - can detect changes and restart all workers for a application
+  ---
+  duration_ms: 4473.605293
+  type: 'test'
+  ...
+# Subtest: can collect metrics with worker label
+ok 4 - can collect metrics with worker label
+  ---
+  duration_ms: 2978.640835
+  type: 'test'
+  ...
+# Subtest: text metrics contain a single HELP/TYPE block per metric family across all workers
+ok 5 - text metrics contain a single HELP/TYPE block per metric family across all workers
+  ---
+  duration_ms: 2843.53996
+  type: 'test'
+  ...
+# Subtest: worker threads have correct threadName property set
+ok 6 - worker threads have correct threadName property set
+  ---
+  duration_ms: 1948.258542
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they throw an exception during start
+ok 7 - can restart only crashed workers when they throw an exception during start
+  ---
+  duration_ms: 5734.362503
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they exit during start
+ok 8 - can restart only crashed workers when they exit during start
+  ---
+  duration_ms: 5650.057878
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they crash
+ok 9 - can restart only crashed workers when they crash
+  ---
+  duration_ms: 3441.498169
+  type: 'test'
+  ...
+# Subtest: can restart only crashed workers when they exit
+ok 10 - can restart only crashed workers when they exit
+  ---
+  duration_ms: 5105.679126
+  type: 'test'
+  ...
+# Subtest: logging properly works in development mode when using separate processes
+ok 11 - logging properly works in development mode when using separate processes
+  ---
+  duration_ms: 4031.299585
+  type: 'test'
+  ...
+# Subtest: logging properly works in production mode when using separate processes
+ok 12 - logging properly works in production mode when using separate processes
+  ---
+  duration_ms: 4736.939669
+  type: 'test'
+  ...
+# Subtest: return workers information in the management API when starting in production mode
+ok 13 - return workers information in the management API when starting in production mode
+  ---
+  duration_ms: 2443.422667
+  type: 'test'
+  ...
+# Subtest: return no workers information in the management API when starting in development mode
+ok 14 - return no workers information in the management API when starting in development mode
+  ---
+  duration_ms: 3095.499335
+  type: 'test'
+  ...
+# Subtest: should post updated workers list via broadcast channel
+ok 15 - should post updated workers list via broadcast channel
+  ---
+  duration_ms: 3631.590335
+  type: 'test'
+  ...
+# Subtest: should post updated workers when something crashed
+ok 16 - should post updated workers when something crashed
+  ---
+  duration_ms: 1869.892751
+  type: 'test'
+  ...
+# Subtest: should post updated workers when the application is updated
+ok 17 - should post updated workers when the application is updated
+  ---
+  duration_ms: 1445.376417
+  type: 'test'
+  ...
+# Subtest: should get information from other workers via ITC using a round robin approach
+ok 18 - should get information from other workers via ITC using a round robin approach
+  ---
+  duration_ms: 1888.401585
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker throws an error
+ok 19 - should return an error if the target worker throws an error
+  ---
+  duration_ms: 1411.868334
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker times out
+ok 20 - should return an error if the target worker times out
+  ---
+  duration_ms: 6485.208377
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker exits before returning a response
+ok 21 - should return an error if the target worker exits before returning a response
+  ---
+  duration_ms: 1482.666792
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker throws an error while saving the channel
+ok 22 - should return an error if the target worker throws an error while saving the channel
+  ---
+  duration_ms: 1466.512459
+  type: 'test'
+  ...
+# Subtest: should return an error if the target worker times out while saving the channel
+ok 23 - should return an error if the target worker times out while saving the channel
+  ---
+  duration_ms: 13621.24084
+  type: 'test'
+  ...
+# Subtest: should reuse channels when the worker are restarted
+ok 24 - should reuse channels when the worker are restarted
+  ---
+  duration_ms: 3278.074501
+  type: 'test'
+  ...
+# Subtest: should notify all the workers
+ok 25 - should notify all the workers
+  ---
+  duration_ms: 4497.994252
+  type: 'test'
+  ...
+# Subtest: the mesh network works with the internal dispatcher
+ok 26 - the mesh network works with the internal dispatcher
+  ---
+  duration_ms: 2887.02121
+  type: 'test'
+  ...
+# Subtest: the mesh network works with the HTTP applications when using ITC
+ok 27 - the mesh network works with the HTTP applications when using ITC
+  ---
+  duration_ms: 3204.030584
+  type: 'test'
+  ...
+# Subtest: the mesh network works with the HTTP applications when using HTTP
+ok 28 - the mesh network works with the HTTP applications when using HTTP
+  ---
+  duration_ms: 2549.951085
+  type: 'test'
+  ...
+# Subtest: the mesh network stays in-memory for applications using the websocket flag
+ok 29 - the mesh network stays in-memory for applications using the websocket flag
+  ---
+  duration_ms: 2991.140834
+  type: 'test'
+  ...
+# Subtest: can inject on a worker
+ok 30 - can inject on a worker
+  ---
+  duration_ms: 2800.257835
+  type: 'test'
+  ...
+# Subtest: per-application restartOnError=0 quarantines a crashed application while the runtime keeps running
+ok 31 - per-application restartOnError=0 quarantines a crashed application while the runtime keeps running
+  ---
+  duration_ms: 3084.899293
+  type: 'test'
+  ...
+# Subtest: per-application restartOnError overrides a runtime which disabled restarts
+ok 32 - per-application restartOnError overrides a runtime which disabled restarts
+  ---
+  duration_ms: 1661.737042
+  type: 'test'
+  ...
+# Subtest: the runtime-level restartOnError is used when the application does not define one
+ok 33 - the runtime-level restartOnError is used when the application does not define one
+  ---
+  duration_ms: 3327.587876
+  type: 'test'
+  ...
+# Subtest: findAvailablePortRange retries when a port inside the candidate range is unavailable
+ok 34 - findAvailablePortRange retries when a port inside the candidate range is unavailable
+  ---
+  duration_ms: 14.78525
+  type: 'test'
+  ...
+# Subtest: findAvailablePortRange avoids the Windows dynamic port range
+ok 35 - findAvailablePortRange avoids the Windows dynamic port range # SKIP
+  ---
+  duration_ms: 0.076292
+  type: 'test'
+  ...
+# Subtest: assigns one incremental port per entrypoint worker
+ok 36 - assigns one incremental port per entrypoint worker
+  ---
+  duration_ms: 1542.908626
+  type: 'test'
+  ...
+# Subtest: assigns new incremental ports when scaling up and stops highest ports when scaling down
+ok 37 - assigns new incremental ports when scaling up and stops highest ports when scaling down
+  ---
+  duration_ms: 2410.991376
+  type: 'test'
+  ...
+# Subtest: preserves incremental ports when restarting an application
+ok 38 - preserves incremental ports when restarting an application
+  ---
+  duration_ms: 2788.464293
+  type: 'test'
+  ...
+# Subtest: preserves incremental ports when replacing workers after a health update
+ok 39 - preserves incremental ports when replacing workers after a health update
+  ---
+  duration_ms: 2402.950001
+  type: 'test'
+  ...
+# Subtest: preserves incremental port when restarting a crashed worker
+ok 40 - preserves incremental port when restarting a crashed worker
+  ---
+  duration_ms: 1822.323834
+  type: 'test'
+  ...
+# Subtest: one persistent HTTP/1 connection balances requests within the correct application
+ok 41 - one persistent HTTP/1 connection balances requests within the correct application
+  ---
+  duration_ms: 1390.234001
+  type: 'test'
+  ...
+# Subtest: HTTP/2 streams on one connection balance within each application
+ok 42 - HTTP/2 streams on one connection balance within each application
+  ---
+  duration_ms: 1284.681959
+  type: 'test'
+  ...
+# Subtest: streaming bodies retain content and release reservations after response completion
+ok 43 - streaming bodies retain content and release reservations after response completion
+  ---
+  duration_ms: 1318.785459
+  type: 'test'
+  ...
+# Subtest: cancelling a client retains accepted backend work until it finishes
+ok 44 - cancelling a client retains accepted backend work until it finishes
+  ---
+  duration_ms: 5152.022586
+  type: 'test'
+  ...
+# Subtest: bounded admission rejects a busy app while another app continues serving
+ok 45 - bounded admission rejects a busy app while another app continues serving
+  ---
+  duration_ms: 1538.638292
+  type: 'test'
+  ...
+# Subtest: gateway exit retains accepted work and the backend releases it after completion
+ok 46 - gateway exit retains accepted work and the backend releases it after completion
+  ---
+  duration_ms: 1687.181834
+  type: 'test'
+  ...
+# Subtest: rolling replacement cannot charge new workers for old accepted requests
+ok 47 - rolling replacement cannot charge new workers for old accepted requests
+  ---
+  duration_ms: 1867.089375
+  type: 'test'
+  ...
+# Subtest: request routing refuses TCP mode instead of claiming backend completion knowledge
+ok 48 - request routing refuses TCP mode instead of claiming backend completion knowledge
+  ---
+  duration_ms: 64.128542
+  type: 'test'
+  ...
+# Subtest: aborting a streamed response releases its backend reservation
+ok 49 - aborting a streamed response releases its backend reservation
+  ---
+  duration_ms: 5151.083961
+  type: 'test'
+  ...
+# Subtest: streamed request bodies arrive intact and without application accounting hooks
+ok 50 - streamed request bodies arrive intact and without application accounting hooks
+  ---
+  duration_ms: 1170.763334
+  type: 'test'
+  ...
+# Subtest: backend termination retires accepted reservations before replacing the generation
+ok 51 - backend termination retires accepted reservations before replacing the generation
+  ---
+  duration_ms: 1295.569292
+  type: 'test'
+  ...
+# Subtest: routing metrics expose worker generations and count admission rejection once
+ok 52 - routing metrics expose worker generations and count admission rejection once
+  ---
+  duration_ms: 2348.572043
+  type: 'test'
+  ...
+# Subtest: shutdown cancels unread coordinator response bodies instead of waiting forever
+ok 53 - shutdown cancels unread coordinator response bodies instead of waiting forever
+  ---
+  duration_ms: 1181.820625
+  type: 'test'
+  ...
+# Subtest: autodetected entrypoints cannot enable internal request routing
+ok 54 - autodetected entrypoints cannot enable internal request routing
+  ---
+  duration_ms: 89.87625
+  type: 'test'
+  ...
+# Subtest: cancellation keeps synchronous CPU work reserved until backend production finishes
+ok 55 - cancellation keeps synchronous CPU work reserved until backend production finishes
+  ---
+  duration_ms: 5159.491085
+  type: 'test'
+  ...
+# Subtest: a completely unavailable application returns 503 while other applications serve
+ok 56 - a completely unavailable application returns 503 while other applications serve
+  ---
+  duration_ms: 1167.989834
+  type: 'test'
+  ...
+# Subtest: draining immediately stops admission and retains outstanding metrics until completion
+ok 57 - draining immediately stops admission and retains outstanding metrics until completion
+  ---
+  duration_ms: 2354.522918
+  type: 'test'
+  ...
+# Subtest: shutdown during a gateway crash restart preserves mesh exit acknowledgements
+ok 58 - shutdown during a gateway crash restart preserves mesh exit acknowledgements
+  ---
+  duration_ms: 1227.970084
+  type: 'test'
+  ...
+# Subtest: backend errors release capacity for subsequent requests
+ok 59 - backend errors release capacity for subsequent requests
+  ---
+  duration_ms: 1336.169292
+  type: 'test'
+  ...
+# Subtest: shared cache hits bypass worker reservation and preserve the cached response
+ok 60 - shared cache hits bypass worker reservation and preserve the cached response
+  ---
+  duration_ms: 1189.821708
+  type: 'test'
+  ...
+# Subtest: gateway telemetry preserves trace context across the opted-in mesh
+ok 61 - gateway telemetry preserves trace context across the opted-in mesh
+  ---
+  duration_ms: 1175.726459
+  type: 'test'
+  ...
+# Subtest: channel policies still block opted-in apps while permitted apps remain reachable
+ok 62 - channel policies still block opted-in apps while permitted apps remain reachable
+  ---
+  duration_ms: 1158.636376
+  type: 'test'
+  ...
+# Subtest: applications are started with multiple workers even for the entrypoint when Node.js supports reusePort
+ok 63 - applications are started with multiple workers even for the entrypoint when Node.js supports reusePort
+  ---
+  duration_ms: 1028.32375
+  type: 'test'
+  ...
+# Subtest: should throw error for invalid parameters of updateApplicationsResources
+ok 64 - should throw error for invalid parameters of updateApplicationsResources
+  ---
+  duration_ms: 1876.253959
+  type: 'test'
+  ...
+# Subtest: should throw error for invalid parameters of updateApplicationsResources
+ok 65 - should throw error for invalid parameters of updateApplicationsResources
+  ---
+  duration_ms: 1713.892834
+  type: 'test'
+  ...
+# Subtest: should increase multiple applications workers by 1
+ok 66 - should increase multiple applications workers by 1
+  ---
+  duration_ms: 2317.585792
+  type: 'test'
+  ...
+# Subtest: should decrease multiple applications workers by 1
+ok 67 - should decrease multiple applications workers by 1
+  ---
+  duration_ms: 1644.219709
+  type: 'test'
+  ...
+# Subtest: should increase multiple applications workers by 2
+ok 68 - should increase multiple applications workers by 2
+  ---
+  duration_ms: 2995.470335
+  type: 'test'
+  ...
+# Subtest: should decrease multiple applications workers by 2
+ok 69 - should decrease multiple applications workers by 2
+  ---
+  duration_ms: 1741.458959
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864
+ok 70 - should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864
+  ---
+  duration_ms: 4795.493585
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and increase workers by 1 at the same time
+ok 71 - should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and increase workers by 1 at the same time
+  ---
+  duration_ms: 6052.693753
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and decrease workers by 1 at the same time
+ok 72 - should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and decrease workers by 1 at the same time
+  ---
+  duration_ms: 4127.142586
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and increase workers by 2 at the same time
+ok 73 - should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and increase workers by 2 at the same time
+  ---
+  duration_ms: 7383.474129
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and decrease workers by 2 at the same time
+ok 74 - should update applications maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 and decrease workers by 2 at the same time
+  ---
+  duration_ms: 3460.237085
+  type: 'test'
+  ...
+# Subtest: should update only maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 because workers are the same as current ones
+ok 75 - should update only maxHeapTotal to 536870912 and maxYoungGeneration to 67108864 because workers are the same as current ones
+  ---
+  duration_ms: 3737.22146
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB
+ok 76 - should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB
+  ---
+  duration_ms: 4773.203419
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and increase workers by 1 at the same time
+ok 77 - should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and increase workers by 1 at the same time
+  ---
+  duration_ms: 6052.851003
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and decrease workers by 1 at the same time
+ok 78 - should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and decrease workers by 1 at the same time
+  ---
+  duration_ms: 4126.447252
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and increase workers by 2 at the same time
+ok 79 - should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and increase workers by 2 at the same time
+  ---
+  duration_ms: 7336.409878
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and decrease workers by 2 at the same time
+ok 80 - should update applications maxHeapTotal to 512MB and maxYoungGeneration to 64MB and decrease workers by 2 at the same time
+  ---
+  duration_ms: 3440.167043
+  type: 'test'
+  ...
+# Subtest: should update only maxHeapTotal to 512MB and maxYoungGeneration to 64MB because workers are the same as current ones
+ok 81 - should update only maxHeapTotal to 512MB and maxYoungGeneration to 64MB because workers are the same as current ones
+  ---
+  duration_ms: 3788.075585
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB
+ok 82 - should update applications maxHeapTotal to 512MB
+  ---
+  duration_ms: 4842.701502
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and increase workers by 1 at the same time
+ok 83 - should update applications maxHeapTotal to 512MB and increase workers by 1 at the same time
+  ---
+  duration_ms: 6086.045836
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and decrease workers by 1 at the same time
+ok 84 - should update applications maxHeapTotal to 512MB and decrease workers by 1 at the same time
+  ---
+  duration_ms: 4084.890002
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and increase workers by 2 at the same time
+ok 85 - should update applications maxHeapTotal to 512MB and increase workers by 2 at the same time
+  ---
+  duration_ms: 7364.63792
+  type: 'test'
+  ...
+# Subtest: should update applications maxHeapTotal to 512MB and decrease workers by 2 at the same time
+ok 86 - should update applications maxHeapTotal to 512MB and decrease workers by 2 at the same time
+  ---
+  duration_ms: 3529.503751
+  type: 'test'
+  ...
+# Subtest: should update only maxHeapTotal to 512MB because workers are the same as current ones
+ok 87 - should update only maxHeapTotal to 512MB because workers are the same as current ones
+  ---
+  duration_ms: 3771.235127
+  type: 'test'
+  ...
+# Subtest: should update applications maxYoungGeneration to 64MB
+ok 88 - should update applications maxYoungGeneration to 64MB
+  ---
+  duration_ms: 4801.885294
+  type: 'test'
+  ...
+# Subtest: should update applications maxYoungGeneration to 64MB and increase workers by 1 at the same time
+ok 89 - should update applications maxYoungGeneration to 64MB and increase workers by 1 at the same time
+  ---
+  duration_ms: 6008.270128
+  type: 'test'
+  ...
+# Subtest: should update applications maxYoungGeneration to 64MB and decrease workers by 1 at the same time
+ok 90 - should update applications maxYoungGeneration to 64MB and decrease workers by 1 at the same time
+  ---
+  duration_ms: 4139.80771
+  type: 'test'
+  ...
+# Subtest: should update applications maxYoungGeneration to 64MB and increase workers by 2 at the same time
+ok 91 - should update applications maxYoungGeneration to 64MB and increase workers by 2 at the same time
+  ---
+  duration_ms: 7337.169754
+  type: 'test'
+  ...
+# Subtest: should update applications maxYoungGeneration to 64MB and decrease workers by 2 at the same time
+ok 92 - should update applications maxYoungGeneration to 64MB and decrease workers by 2 at the same time
+  ---
+  duration_ms: 3517.315252
+  type: 'test'
+  ...
+# Subtest: should update only maxYoungGeneration to 64MB because workers are the same as current ones
+ok 93 - should update only maxYoungGeneration to 64MB because workers are the same as current ones
+  ---
+  duration_ms: 3779.006585
+  type: 'test'
+  ...
+# Subtest: should report on failures
+ok 94 - should report on failures
+  ---
+  duration_ms: 3238.520752
+  type: 'test'
+  ...
+1..94
+# tests 94
+# suites 0
+# pass 93
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 302472.739054

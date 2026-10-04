@@ -1,0 +1,5 @@
+"""Fingerprint deployed source, not just the host checkout."""
+import json, subprocess
+def deployed_sources(container, workspace):
+ script = """const fs=require('node:fs'),p=require('node:path'),c=require('node:crypto');const root=process.argv[1],out={};function walk(dir){for(const e of fs.readdirSync(p.join(root,dir),{withFileTypes:true})){const f=p.join(dir,e.name);if(['node_modules','__pycache__'].includes(e.name))continue;if(e.isDirectory())walk(f);else out[f]=c.createHash('sha256').update(fs.readFileSync(p.join(root,f))).digest('hex')}}for(const dir of ['packages/runtime/lib/mesh','review/multi-app'])walk(dir);for(const f of ['packages/runtime/lib/runtime.js','packages/runtime/lib/config.js','packages/runtime/lib/worker/interceptors.js','packages/runtime/package.json','packages/foundation/lib/schema.js','packages/gateway/lib/proxy.js','pnpm-lock.yaml'])out[f]=c.createHash('sha256').update(fs.readFileSync(p.join(root,f))).digest('hex');console.log(JSON.stringify(out))"""
+ return json.loads(subprocess.check_output(['docker','exec',container,'node','-e',script,workspace],text=True))

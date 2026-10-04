@@ -958,6 +958,15 @@ export const application = {
       type: 'string',
       default: 'main'
     },
+    requestRouting: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['algorithm'],
+      properties: {
+        algorithm: { type: 'string', enum: ['least-outstanding'] },
+        maxOutstanding: { type: 'integer', minimum: 1, maximum: 4096, default: 128 }
+      }
+    },
     useHttp: {
       type: 'boolean'
     },

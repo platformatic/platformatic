@@ -32,6 +32,66 @@ The `autoload` configuration is intended to be used with monorepo applications.
   these default values.
   Supported properties are the same of entries in `application`, except `path`, `url`, and `gitBranch`.
 
+### Application `requestRouting`
+
+Internal applications can opt into request-level balancing among their worker threads:
+
+```json
+{
+  "applications": [
+    { "id": "gateway", "path": "./gateway" },
+    {
+      "id": "rendering",
+      "path": "./rendering",
+      "workers": 4,
+      "requestRouting": { "algorithm": "least-outstanding", "maxOutstanding": 128 }
+    }
+  ],
+  "entrypoint": "gateway"
+}
+```
+
+The policy selects a ready worker in the requested application's pool with the fewest
+outstanding reservations, rotating ties. It applies to participating mesh HTTP calls,
+including gateway forwarding. HTTP/1 keepalive requests and HTTP/2 streams can select
+workers independently. Round robin remains the default when `requestRouting` is absent.
+
+`maxOutstanding` bounds reservations per backend worker, including queued work and
+streaming responses. It defaults to 128 and accepts integers from 1 to 4096. When no
+ready worker has capacity, including while the entire configured pool is unavailable,
+the gateway returns HTTP 503 with code
+`PLT_REQUEST_CAPACITY_EXCEEDED`; it does not retry that admission rejection. Existing
+retry behavior for other upstream responses is preserved.
+
+Request routing requires an internal in-process mesh application. Entrypoints,
+`useHttp`, TCP-only/subprocess targets and the `websocket` flag are unsupported for
+this policy. TCP connection distribution remains separate from request selection.
+
+Reservations remain held until backend response production terminates or the backend
+exits. Client cancellation, timeout or gateway exit alone does not establish that
+accepted work stopped. Unread or long-lived streamed responses can consume capacity;
+configure application/transport timeouts and admission limits accordingly. Worker
+replacement uses distinct shared state, so late completions cannot charge a new worker.
+
+The signal measures participating HTTP requests, not CPU utilization, heap pressure,
+background jobs or estimated remaining work. It does not allocate CPU/memory between
+applications or replace Watt's scaler. No application completion hooks, SQLite or
+native memory mapping are required.
+
+Worker details include `requestRouting` counters. The metrics API also exposes
+`watt_request_routing_outstanding`, `watt_request_routing_selected_total`,
+`watt_request_routing_completed_total`, `watt_request_routing_rejected_total` and
+`watt_request_routing_accounting_errors_total`,
+labelled by application, worker and thread generation. Released reservations include
+pre-dispatch cleanup; they are not a successful-response count. Generation termination
+can retire accepted work without a completion. The outstanding gauge reads live
+reservation slots; use it for current work rather than subtracting cumulative counters.
+Abrupt thread termination can interrupt cumulative-counter bookkeeping. Admission rejection is counted once
+for the pool, by the first route's worker state; sum the rejection metric across the
+application's current workers. A pool with no live generation has no per-worker
+rejection metric. Accounting errors count expired or invalid reservation
+messages rejected at the backend; investigate a rising value during normal operation.
+
 ### `preload`
 
 The `preload` configuration is intended to be used to register

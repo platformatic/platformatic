@@ -33,7 +33,8 @@ import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
-import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { createThreadInterceptor } from './mesh/index.js'
+import { createState as createRequestRoutingState, snapshot as snapshotRequestRouting, retire as retireRequestRouting, beginDrain as beginRequestRoutingDrain } from './mesh/lib/request-routing.js'
 import { pprofCapturePreloadPath } from './config.js'
 import {
   ApplicationAlreadyStartedError,
@@ -81,6 +82,7 @@ import {
   kId,
   kInterceptorReadyPromise,
   kIsSubprocessHost,
+  kRequestRoutingState,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
@@ -260,6 +262,7 @@ export class Runtime extends EventEmitter {
     this.#channelCreationHook = createChannelCreationHook(this.#config)
     this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
+      requestRoutingApplications: (this.#config.applications ?? []).filter(a => a.requestRouting).map(a => a.id),
       timeout: this.#config.applicationTimeout,
       meshTimeout: this.#context.meshTimeout ?? true,
       onChannelCreation: this.#channelCreationHook,
@@ -500,6 +503,7 @@ export class Runtime extends EventEmitter {
     // control-plane extensions can settle work and hand off state first.
     await this.#stopExtensions()
 
+    this.#meshInterceptor.cancelStreams?.()
     await this.stopApplications(this.getApplicationsIds(), silent)
 
     await this.#meshInterceptor.close()
@@ -1668,7 +1672,10 @@ export class Runtime extends EventEmitter {
 
     let metrics = null
 
-    const applicationRestartMetrics = this.#getApplicationRestartMetricsJson()
+    const applicationRestartMetrics = [
+      ...this.#getApplicationRestartMetricsJson(),
+      ...this.#getRequestRoutingMetricsJson()
+    ]
 
     // Get process-level metrics once from main thread registry (if available)
     let processMetricsJson = null
@@ -1836,6 +1843,41 @@ export class Runtime extends EventEmitter {
       ...this.#config.metrics?.labels,
       [this.#metricsLabelName]: applicationId
     }
+  }
+
+  #getRequestRoutingMetricsJson () {
+    const metrics = []
+    const definitions = [
+      ['outstanding', 'gauge', 'Outstanding mesh request reservations'],
+      ['selected', 'counter', 'Reserved mesh requests in this worker generation'],
+      ['completed', 'counter', 'Released mesh request reservations in this worker generation'],
+      ['rejected', 'counter', 'Mesh admission rejections recorded by this worker generation'],
+      ['accountingErrors', 'counter', 'Expired or invalid mesh request reservations', 'accounting_errors']
+    ]
+    for (const worker of this.#workers.values()) {
+      const state = worker[kRequestRoutingState]
+      if (!state || !['started', 'stopping'].includes(worker[kWorkerStatus])) continue
+      const snapshot = snapshotRequestRouting(state)
+      for (const [field, type, help, alias = field] of definitions) {
+        const name = `watt_request_routing_${alias}${type === 'counter' ? '_total' : ''}`
+        metrics.push({
+          name,
+          help,
+          type,
+          aggregator: 'sum',
+          values: [{
+            value: snapshot[field],
+            labels: {
+              [this.#metricsLabelName]: worker[kApplicationId],
+              workerId: worker[kId],
+              threadId: worker.threadId
+            },
+            metricName: name
+          }]
+        })
+      }
+    }
+    return metrics
   }
 
   #getApplicationRestartMetricsJson () {
@@ -2283,6 +2325,7 @@ export class Runtime extends EventEmitter {
         worker: index,
         status: worker[kWorkerStatus],
         thread: worker.threadId,
+        ...(worker[kRequestRoutingState] ? { requestRouting: snapshotRequestRouting(worker[kRequestRoutingState]) } : {}),
         raw: includeRaw ? worker : undefined
       }
     }
@@ -2558,9 +2601,11 @@ export class Runtime extends EventEmitter {
       }
     }
 
+    const requestRoutingState = applicationConfig.requestRouting ? createRequestRoutingState(applicationConfig.requestRouting) : undefined
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config: workerConfig,
+        requestRouting: requestRoutingState,
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,
@@ -2595,6 +2640,8 @@ export class Runtime extends EventEmitter {
       name: workerId
     })
 
+    worker[kRequestRoutingState] = requestRoutingState
+    worker.once('exit', () => retireRequestRouting(requestRoutingState))
     this.#handleWorkerStandardStreams(worker, applicationId, index)
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
@@ -3454,6 +3501,7 @@ export class Runtime extends EventEmitter {
 
     const eventPayload = { application: id, worker: index, workersCount }
 
+    beginRequestRoutingDrain(worker[kRequestRoutingState])
     worker[kWorkerStatus] = 'stopping'
     worker[kITC].removeAllListeners('changed')
     this.emitAndNotify('application:worker:stopping', eventPayload)
@@ -3522,7 +3570,10 @@ export class Runtime extends EventEmitter {
 
   async #discardWorker (worker) {
     await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
-    worker.removeAllListeners('exit')
+    // Suppress crash restart without dropping transport/retirement waiters.
+    // Discard can overlap another worker's route-removal acknowledgement.
+    worker[kWorkerStatus] = 'exited'
+    beginRequestRoutingDrain(worker[kRequestRoutingState])
     await worker.terminate()
 
     return this.#cleanupWorker(worker)
