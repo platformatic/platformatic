@@ -2,6 +2,14 @@
 
 Release recommendation: **hold**. This is an opt-in implementation for review; production per-app SLOs, error budgets, resource limits and a canary destination have not been established. Performance results must not be treated as a promise of improvement over other gateways.
 
+## Latest completed iteration
+
+The [queue, health and admission evaluation](adaptive/REPORT.md) contains 33 completed cases and 231,822 planned arrivals. Two existing scaler defects are fixed: candidate ELU is now stored under the field used by the ordering comparator, and old metrics expire after the intended window instead of 1,000 times later. Three regressions fail before and pass after; all 44 scaler unit/integration tests pass. Production head `280608ce9` has 242 successful CI checks and one neutral check. The five benchmark selector tests also pass.
+
+At the primary load, changing app worker allocation with round robin lowers rendering's median p99 from 914.8 to 539.4 ms in three matched-arrival seeds; all 21,870 dynamic round-robin arrivals succeed. This is a synthetic allocation diagnostic, not an effect attributed solely to the bug fixes or a production availability recommendation. ELU-based preferences do not establish a benefit over admission alone. The pilot-derived limits cause unnecessary primary-load failures; under overload, admission alone raises rendering's timely-success fraction from 1.92% to 69.43%, with 1,165 explicit rejections versus round robin's 1,278 deadlines. The 800 ms threshold is diagnostic, not a supplied production SLO.
+
+Keep round robin as the default and prioritize app allocation plus per-app overload protection. The new supervisor sampler, timing hooks, ELU preferences and pilot limits are benchmark-only. Across all policies/cohorts, 4,500 arrivals fail, including 3,222 admission rejections; none are removed from denominators. No OOM or remaining reservations were observed. The public least-outstanding implementation remains opt-in and the release remains on hold; the earlier transport/frontend, confidence and canary gates below are still open. The earlier v17/v18 evidence is retained separately.
+
 ## Implemented contract
 
 An internal application's `requestRouting.algorithm: "least-outstanding"` selects among that application's ready mesh workers for each HTTP request. Requests on a persistent HTTP/1 connection and concurrent HTTP/2 streams select independently. Round robin remains the default.

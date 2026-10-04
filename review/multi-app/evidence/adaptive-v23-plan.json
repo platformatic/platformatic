@@ -1,0 +1,114 @@
+{
+  "plan": {
+    "status": "declared before pilot and comparisons",
+    "purpose": "Separate queue-aware health routing, admission, and cross-app allocation; no production SLO claim.",
+    "pilot": {
+      "policy": "least",
+      "rate": 14.175,
+      "seconds": 120,
+      "warmup": 15,
+      "seed": 1
+    },
+    "limitRule": "min(64, max(1, 1 + floor(queueBudgetMs / measured pilot handler-service p95)))",
+    "queueBudgetMs": {
+      "catalog": 25,
+      "rendering": 400,
+      "search": 25,
+      "personalization": 150
+    },
+    "arrivalLatencyBudgetMs": {
+      "catalog": 50,
+      "rendering": 800,
+      "search": 75,
+      "personalization": 250
+    },
+    "primary": {
+      "rate": 24.3,
+      "seconds": 300,
+      "warmup": 15,
+      "seeds": [
+        21,
+        22,
+        23
+      ],
+      "protocol": "h1",
+      "policies": [
+        "rr",
+        "least",
+        "limited",
+        "tie",
+        "bounded"
+      ],
+      "allocation": "fixed"
+    },
+    "scaler": {
+      "rate": 24.3,
+      "seconds": 300,
+      "warmup": 15,
+      "seeds": [
+        21,
+        22,
+        23
+      ],
+      "protocol": "h1",
+      "policies": [
+        "rr",
+        "limited",
+        "bounded"
+      ],
+      "allocation": "dynamic, maximum nine workers including gateway"
+    },
+    "overload": {
+      "rate": 52.65,
+      "seconds": 120,
+      "warmup": 15,
+      "seeds": [
+        21,
+        22,
+        23
+      ],
+      "protocol": "h1",
+      "policies": [
+        "rr",
+        "limited",
+        "bounded"
+      ]
+    },
+    "interpretation": "Keep every outcome. Admission rejections are failed arrivals, not faster successful responses. Compare bounded and tie to limited to isolate selection. Report per-run sample counts and p99 resolution; three seeds are diagnostic, not release confidence. Do not pool previous cohorts."
+  },
+  "limits": {
+    "pilot": "/Users/batman/src/platformatic/watt-threads-balancer/results/review/multi-app/adaptive-v22-pilot",
+    "limits": {
+      "catalog": 11,
+      "rendering": 2,
+      "search": 4,
+      "personalization": 1
+    },
+    "measurements": {
+      "catalog": {
+        "samples": 850,
+        "serviceP95Ms": 2.36775,
+        "queueBudgetMs": 25
+      },
+      "rendering": {
+        "samples": 341,
+        "serviceP95Ms": 373.987375,
+        "queueBudgetMs": 400
+      },
+      "search": {
+        "samples": 345,
+        "serviceP95Ms": 6.632625,
+        "queueBudgetMs": 25
+      },
+      "personalization": {
+        "samples": 165,
+        "serviceP95Ms": 151.636417,
+        "queueBudgetMs": 150
+      }
+    },
+    "rule": "min(64, max(1, 1 + floor(queueBudgetMs / measured pilot handler-service p95)))",
+    "note": "Fixed experimental limits, not an adaptive controller or a production latency guarantee."
+  },
+  "sourceArchiveSha256": "d0051d95038feb6f43ab9727f72e6025a93796d5b8b068c2cc7a5573a74418f3",
+  "note": "Five-minute per-run estimates increase tail observations tenfold; they remain diagnostic, not production SLO validation."
+}

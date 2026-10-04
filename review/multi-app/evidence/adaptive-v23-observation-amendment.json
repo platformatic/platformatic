@@ -1,0 +1,9 @@
+{
+  "reason": "The 120-second overload cohort can outlast client deadlines. Observe accepted backend work for up to 180 seconds after clients finish instead of 40. No arrival, policy, latency budget or client deadline changes.",
+  "appliesTo": [
+    "adaptive-v23-scaler",
+    "adaptive-v23-overload"
+  ],
+  "unchangedRunningCohort": "adaptive-v23-fixed retains its exact captured driver",
+  "newDriverSha256": "dd2401cb30ac14d976a1819f1857bcd7efc596084494b0701b63092b4023c452"
+}

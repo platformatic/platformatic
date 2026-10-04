@@ -2,7 +2,13 @@
 
 **Release verdict: hold.** The opt-in mesh implementation passes correctness checks, but these workloads do not establish a repeatable latency benefit for least outstanding. The experimental ELU/heap preference is worse on rendering. Production per-app SLOs, error budgets and a representative canary remain unspecified. Keep round robin as the default; this report does not recommend a Rust rewrite or make an nginx comparison.
 
-## Implementation and validation
+## Latest follow-up: allocation, queueing and admission
+
+The completed [adaptive evaluation](adaptive/REPORT.md) adds 33 longer cases and 231,822 arrivals. Enabling the corrected scaler with round robin lowers the three-seed median rendering p99 from 914.8 to 539.4 ms in this synthetic fixture, with zero failures in those 21,870 dynamic round-robin arrivals. The bounded/tie ELU preferences do not establish a benefit over admission alone. Pilot-derived limits reject requests unnecessarily at primary load, but admission substantially improves rendering's timely success under overload. Every rejection and deadline remains in the results.
+
+Production commit `280608ce9` fixes scaler candidate ordering and stale metric retention; 44 scaler unit/integration tests pass and its CI snapshot has 242 successes plus one neutral check. The request-routing contract is unchanged. New health selectors, native supervisor sampling, queue/service instrumentation and pilot limits remain benchmark-only. See [compact results](evidence/adaptive-v23-results.json), [source provenance](evidence/adaptive-v23-provenance.json) and [current status](STATUS.md). Keep the release on hold. The v17/v18 evaluation below is preserved as separate historical evidence, with its original source and instrumentation limits.
+
+## v17/v18 implementation and validation
 
 Draft PR: [platformatic/platformatic#5157](https://github.com/platformatic/platformatic/pull/5157). Measured production source is `dd9c49ed64eeee5fc918cf1e72eac3cd807a403d`, based on upstream `8f6b4e5ee2670d2148655d34235561ee6191248f` with Fastify 5.12.5. Request selection is per app and per HTTP request, including persistent HTTP/1 connections and multiplexed HTTP/2 streams. Shared bounded reservations remain held until backend completion or actual backend exit; client cancellation alone does not free accepted work.
 

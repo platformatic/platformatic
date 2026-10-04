@@ -1,0 +1,13 @@
+✔ health breaks equal-load ties without changing reservations (1.464791ms)
+✔ tie preference cannot override unequal queue lengths (0.115333ms)
+✔ bounded preference can admit one additional request to the cooler worker (0.092375ms)
+✔ bounded preference stops favoring the cooler worker beyond its allowance (0.088708ms)
+✔ stale health falls back to least outstanding (0.583958ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56.198083

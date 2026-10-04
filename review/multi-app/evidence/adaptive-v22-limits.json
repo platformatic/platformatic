@@ -1,0 +1,33 @@
+{
+  "pilot": "/Users/batman/src/platformatic/watt-threads-balancer/results/review/multi-app/adaptive-v22-pilot",
+  "limits": {
+    "catalog": 11,
+    "rendering": 2,
+    "search": 4,
+    "personalization": 1
+  },
+  "measurements": {
+    "catalog": {
+      "samples": 850,
+      "serviceP95Ms": 2.36775,
+      "queueBudgetMs": 25
+    },
+    "rendering": {
+      "samples": 341,
+      "serviceP95Ms": 373.987375,
+      "queueBudgetMs": 400
+    },
+    "search": {
+      "samples": 345,
+      "serviceP95Ms": 6.632625,
+      "queueBudgetMs": 25
+    },
+    "personalization": {
+      "samples": 165,
+      "serviceP95Ms": 151.636417,
+      "queueBudgetMs": 150
+    }
+  },
+  "rule": "min(64, max(1, 1 + floor(queueBudgetMs / measured pilot handler-service p95)))",
+  "note": "Fixed experimental limits, not an adaptive controller or a production latency guarantee."
+}

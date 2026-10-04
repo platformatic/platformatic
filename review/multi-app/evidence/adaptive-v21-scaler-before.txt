@@ -1,0 +1,114 @@
+✖ ScalingAlgorithm - prioritizes the hottest eligible app independent of application order (1.515625ms)
+✖ ScalingAlgorithm - prioritizes fewer workers when eligible apps have equal ELU (0.175125ms)
+✖ ScalingAlgorithm - expires heap samples after the longest metrics window (0.31875ms)
+✔ ScalingAlgorithm - should scale down if app ELUs are lower the treshold (0.191333ms)
+✔ ScalingAlgorithm - should not scale down if there is 1 worker (0.081333ms)
+✔ ScalingAlgorithm - should scale up if the max workers is reached (0.068667ms)
+✔ ScalingAlgorithm - should scale up if elu is higher than treshold (0.071708ms)
+✔ ScalingAlgorithm - should not scale if elu is between tresholds (0.070375ms)
+✔ ScalingAlgorithm - should scale up only one app per recommendation (0.0965ms)
+✔ ScalingAlgorithm - should not scale up there is not enough workers (0.498ms)
+✔ ScalingAlgorithm - should scale down many apps per recommendation (0.161958ms)
+✔ ScalingAlgorithm - should not scale if the application max workers is reached (0.150084ms)
+✔ ScalingAlgorithm - should scale up apps to their min workers if the actual workers count is lower (0.077625ms)
+✔ ScalingAlgorithm - should not scale if there is not enough memory (0.061666ms)
+✔ ScalingAlgorithm - should scale an application that has enough memory (0.048875ms)
+✔ ScalingAlgorithm - should reserve memory when scaling an app to its minimum workers (0.061625ms)
+✔ ScalingAlgorithm - should reclaim memory when scaling an app down to its maximum workers (0.072875ms)
+✔ ScalingAlgorithm - should reclaim memory when scaling an app down based on ELU (0.066291ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 15
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44.512708
+
+✖ failing tests:
+
+test at packages/runtime/test/scaling-algorithm.test.js:5:1
+✖ ScalingAlgorithm - prioritizes the hottest eligible app independent of application order (1.515625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+  +     applicationId: 'warm',
+  -     applicationId: 'hot',
+        direction: 'up',
+        workersCount: 3
+      }
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/batman/.codex/worktrees/request-worker-balancing/watt-threads-balancer/packages/runtime/test/scaling-algorithm.test.js:14:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { applicationId: 'warm', workersCount: 3, direction: 'up' } ],
+    expected: [ { applicationId: 'hot', workersCount: 3, direction: 'up' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at packages/runtime/test/scaling-algorithm.test.js:20:1
+✖ ScalingAlgorithm - prioritizes fewer workers when eligible apps have equal ELU (0.175125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+  +     applicationId: 'larger',
+  -     applicationId: 'smaller',
+        direction: 'up',
+  +     workersCount: 4
+  -     workersCount: 2
+      }
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/batman/.codex/worktrees/request-worker-balancing/watt-threads-balancer/packages/runtime/test/scaling-algorithm.test.js:26:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { applicationId: 'larger', workersCount: 4, direction: 'up' } ],
+    expected: [ { applicationId: 'smaller', workersCount: 2, direction: 'up' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at packages/runtime/test/scaling-algorithm.test.js:31:1
+✖ ScalingAlgorithm - expires heap samples after the longest metrics window (0.31875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   {
+  -     applicationId: 'app',
+  -     direction: 'up',
+  -     workersCount: 3
+  -   }
+  - ]
+  
+      at TestContext.<anonymous> (file:///Users/batman/.codex/worktrees/request-worker-balancing/watt-threads-balancer/packages/runtime/test/scaling-algorithm.test.js:40:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ { applicationId: 'app', workersCount: 3, direction: 'up' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

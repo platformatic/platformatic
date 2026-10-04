@@ -1,0 +1,276 @@
+TAP version 13
+# (node:25) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: ScalingAlgorithm - prioritizes the hottest eligible app independent of application order
+ok 1 - ScalingAlgorithm - prioritizes the hottest eligible app independent of application order
+  ---
+  duration_ms: 1.348042
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - prioritizes fewer workers when eligible apps have equal ELU
+ok 2 - ScalingAlgorithm - prioritizes fewer workers when eligible apps have equal ELU
+  ---
+  duration_ms: 0.175416
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - expires heap samples after the longest metrics window
+ok 3 - ScalingAlgorithm - expires heap samples after the longest metrics window
+  ---
+  duration_ms: 0.605708
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should scale down if app ELUs are lower the treshold
+ok 4 - ScalingAlgorithm - should scale down if app ELUs are lower the treshold
+  ---
+  duration_ms: 0.209875
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should not scale down if there is 1 worker
+ok 5 - ScalingAlgorithm - should not scale down if there is 1 worker
+  ---
+  duration_ms: 0.143666
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should scale up if the max workers is reached
+ok 6 - ScalingAlgorithm - should scale up if the max workers is reached
+  ---
+  duration_ms: 0.095917
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should scale up if elu is higher than treshold
+ok 7 - ScalingAlgorithm - should scale up if elu is higher than treshold
+  ---
+  duration_ms: 0.123208
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should not scale if elu is between tresholds
+ok 8 - ScalingAlgorithm - should not scale if elu is between tresholds
+  ---
+  duration_ms: 0.083083
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should scale up only one app per recommendation
+ok 9 - ScalingAlgorithm - should scale up only one app per recommendation
+  ---
+  duration_ms: 0.284917
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should not scale up there is not enough workers
+ok 10 - ScalingAlgorithm - should not scale up there is not enough workers
+  ---
+  duration_ms: 0.732917
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should scale down many apps per recommendation
+ok 11 - ScalingAlgorithm - should scale down many apps per recommendation
+  ---
+  duration_ms: 0.277917
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should not scale if the application max workers is reached
+ok 12 - ScalingAlgorithm - should not scale if the application max workers is reached
+  ---
+  duration_ms: 0.163042
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should scale up apps to their min workers if the actual workers count is lower
+ok 13 - ScalingAlgorithm - should scale up apps to their min workers if the actual workers count is lower
+  ---
+  duration_ms: 0.077916
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should not scale if there is not enough memory
+ok 14 - ScalingAlgorithm - should not scale if there is not enough memory
+  ---
+  duration_ms: 0.06425
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should scale an application that has enough memory
+ok 15 - ScalingAlgorithm - should scale an application that has enough memory
+  ---
+  duration_ms: 0.063625
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should reserve memory when scaling an app to its minimum workers
+ok 16 - ScalingAlgorithm - should reserve memory when scaling an app to its minimum workers
+  ---
+  duration_ms: 0.080875
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should reclaim memory when scaling an app down to its maximum workers
+ok 17 - ScalingAlgorithm - should reclaim memory when scaling an app down to its maximum workers
+  ---
+  duration_ms: 0.101333
+  type: 'test'
+  ...
+# Subtest: ScalingAlgorithm - should reclaim memory when scaling an app down based on ELU
+ok 18 - ScalingAlgorithm - should reclaim memory when scaling an app down based on ELU
+  ---
+  duration_ms: 0.068375
+  type: 'test'
+  ...
+# Subtest: should scale an application if elu is higher than treshold (configuration default)
+ok 19 - should scale an application if elu is higher than treshold (configuration default)
+  ---
+  duration_ms: 1707.80996
+  type: 'test'
+  ...
+# Subtest: should not scale an application when the scaler is the cooldown(configuration default)
+ok 20 - should not scale an application when the scaler is the cooldown(configuration default)
+  ---
+  duration_ms: 2076.351709
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the elu is lower than treshold (configuration default)
+ok 21 - should not scale applications when the elu is lower than treshold (configuration default)
+  ---
+  duration_ms: 11558.961297
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the worker property is set (configuration default)
+ok 22 - should not scale applications when the worker property is set (configuration default)
+  ---
+  duration_ms: 11595.20938
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the worker property is set (configuration default)
+ok 23 - should not scale an applications when the worker property is set (configuration default)
+  ---
+  duration_ms: 11586.981297
+  type: 'test'
+  ...
+# Subtest: should scale an application if elu is higher than treshold (configuration worker-scaler)
+ok 24 - should scale an application if elu is higher than treshold (configuration worker-scaler)
+  ---
+  duration_ms: 2101.602043
+  type: 'test'
+  ...
+# Subtest: should not scale an application when the scaler is the cooldown(configuration worker-scaler)
+ok 25 - should not scale an application when the scaler is the cooldown(configuration worker-scaler)
+  ---
+  duration_ms: 2043.905126
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the elu is lower than treshold (configuration worker-scaler)
+ok 26 - should not scale applications when the elu is lower than treshold (configuration worker-scaler)
+  ---
+  duration_ms: 11541.540588
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the worker property is set (configuration worker-scaler)
+ok 27 - should not scale applications when the worker property is set (configuration worker-scaler)
+  ---
+  duration_ms: 11595.450131
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the worker property is set (configuration worker-scaler)
+ok 28 - should not scale an applications when the worker property is set (configuration worker-scaler)
+  ---
+  duration_ms: 11558.406672
+  type: 'test'
+  ...
+# Subtest: should properly apply runtime workers configuration to the applications (number)
+ok 29 - should properly apply runtime workers configuration to the applications (number)
+  ---
+  duration_ms: 1213.830709
+  type: 'test'
+  ...
+# Subtest: should properly apply runtime workers configuration to the applications (object)
+ok 30 - should properly apply runtime workers configuration to the applications (object)
+  ---
+  duration_ms: 1218.658292
+  type: 'test'
+  ...
+# Subtest: should ensure the right order for minimum and maximum
+ok 31 - should ensure the right order for minimum and maximum
+  ---
+  duration_ms: 1924.552333
+  type: 'test'
+  ...
+# Subtest: should apply application scaleUpELU and scaleDownELU
+ok 32 - should apply application scaleUpELU and scaleDownELU
+  ---
+  duration_ms: 11519.855713
+  type: 'test'
+  ...
+# Subtest: applies the minimum workers after a dynamically added application starts
+ok 33 - applies the minimum workers after a dynamically added application starts
+  ---
+  duration_ms: 1.617875
+  type: 'test'
+  ...
+# Subtest: removes application state from the scaler
+ok 34 - removes application state from the scaler
+  ---
+  duration_ms: 1.559166
+  type: 'test'
+  ...
+# Subtest: logs worker health errors and refreshes the health check timeout
+ok 35 - logs worker health errors and refreshes the health check timeout
+  ---
+  duration_ms: 1.164416
+  type: 'test'
+  ...
+# Subtest: should apply application scaleUpELU and scaleDownELU (vertical scaler))
+ok 36 - should apply application scaleUpELU and scaleDownELU (vertical scaler))
+  ---
+  duration_ms: 11528.087672
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the app maxWorkers is reached (configuration default)
+ok 37 - should not scale an applications when the app maxWorkers is reached (configuration default)
+  ---
+  duration_ms: 11678.426171
+  type: 'test'
+  ...
+# Subtest: should scale a standalone application if elu is higher than treshold (configuration default)
+ok 38 - should scale a standalone application if elu is higher than treshold (configuration default)
+  ---
+  duration_ms: 11767.438214
+  type: 'test'
+  ...
+# Subtest: should scale applications to their min workers at start (configuration default)
+ok 39 - should scale applications to their min workers at start (configuration default)
+  ---
+  duration_ms: 2828.578918
+  type: 'test'
+  ...
+# Subtest: should not scale an application is there is not enough memory (configuration default)
+ok 40 - should not scale an application is there is not enough memory (configuration default)
+  ---
+  duration_ms: 11759.351338
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the app maxWorkers is reached (configuration worker-scaler)
+ok 41 - should not scale an applications when the app maxWorkers is reached (configuration worker-scaler)
+  ---
+  duration_ms: 11638.035839
+  type: 'test'
+  ...
+# Subtest: should scale a standalone application if elu is higher than treshold (configuration worker-scaler)
+ok 42 - should scale a standalone application if elu is higher than treshold (configuration worker-scaler)
+  ---
+  duration_ms: 11584.009297
+  type: 'test'
+  ...
+# Subtest: should scale applications to their min workers at start (configuration worker-scaler)
+ok 43 - should scale applications to their min workers at start (configuration worker-scaler)
+  ---
+  duration_ms: 2522.717626
+  type: 'test'
+  ...
+# Subtest: should not scale an application is there is not enough memory (configuration worker-scaler)
+ok 44 - should not scale an application is there is not enough memory (configuration worker-scaler)
+  ---
+  duration_ms: 11671.875296
+  type: 'test'
+  ...
+1..44
+# tests 44
+# suites 0
+# pass 44
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 180750.86554

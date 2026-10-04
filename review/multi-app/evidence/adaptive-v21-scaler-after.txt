@@ -1,0 +1,26 @@
+✔ ScalingAlgorithm - prioritizes the hottest eligible app independent of application order (1.2585ms)
+✔ ScalingAlgorithm - prioritizes fewer workers when eligible apps have equal ELU (0.093125ms)
+✔ ScalingAlgorithm - expires heap samples after the longest metrics window (0.269583ms)
+✔ ScalingAlgorithm - should scale down if app ELUs are lower the treshold (0.16025ms)
+✔ ScalingAlgorithm - should not scale down if there is 1 worker (0.0815ms)
+✔ ScalingAlgorithm - should scale up if the max workers is reached (0.063709ms)
+✔ ScalingAlgorithm - should scale up if elu is higher than treshold (0.084834ms)
+✔ ScalingAlgorithm - should not scale if elu is between tresholds (0.063375ms)
+✔ ScalingAlgorithm - should scale up only one app per recommendation (0.083292ms)
+✔ ScalingAlgorithm - should not scale up there is not enough workers (0.470334ms)
+✔ ScalingAlgorithm - should scale down many apps per recommendation (0.202291ms)
+✔ ScalingAlgorithm - should not scale if the application max workers is reached (0.125708ms)
+✔ ScalingAlgorithm - should scale up apps to their min workers if the actual workers count is lower (0.100583ms)
+✔ ScalingAlgorithm - should not scale if there is not enough memory (0.061791ms)
+✔ ScalingAlgorithm - should scale an application that has enough memory (0.056666ms)
+✔ ScalingAlgorithm - should reserve memory when scaling an app to its minimum workers (0.074ms)
+✔ ScalingAlgorithm - should reclaim memory when scaling an app down to its maximum workers (0.058167ms)
+✔ ScalingAlgorithm - should reclaim memory when scaling an app down based on ELU (0.055291ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38.0955

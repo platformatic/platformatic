@@ -1,0 +1,77 @@
+{
+  "status": "declared before pilot and comparisons",
+  "purpose": "Separate queue-aware health routing, admission, and cross-app allocation; no production SLO claim.",
+  "pilot": {
+    "policy": "least",
+    "rate": 14.175,
+    "seconds": 120,
+    "warmup": 15,
+    "seed": 1
+  },
+  "limitRule": "min(64, max(1, 1 + floor(queueBudgetMs / measured pilot handler-service p95)))",
+  "queueBudgetMs": {
+    "catalog": 25,
+    "rendering": 400,
+    "search": 25,
+    "personalization": 150
+  },
+  "arrivalLatencyBudgetMs": {
+    "catalog": 50,
+    "rendering": 800,
+    "search": 75,
+    "personalization": 250
+  },
+  "primary": {
+    "rate": 24.3,
+    "seconds": 300,
+    "warmup": 15,
+    "seeds": [
+      21,
+      22,
+      23
+    ],
+    "protocol": "h1",
+    "policies": [
+      "rr",
+      "least",
+      "limited",
+      "tie",
+      "bounded"
+    ],
+    "allocation": "fixed"
+  },
+  "scaler": {
+    "rate": 24.3,
+    "seconds": 300,
+    "warmup": 15,
+    "seeds": [
+      21,
+      22,
+      23
+    ],
+    "protocol": "h1",
+    "policies": [
+      "rr",
+      "limited",
+      "bounded"
+    ],
+    "allocation": "dynamic, maximum nine workers including gateway"
+  },
+  "overload": {
+    "rate": 52.65,
+    "seconds": 120,
+    "warmup": 15,
+    "seeds": [
+      21,
+      22,
+      23
+    ],
+    "protocol": "h1",
+    "policies": [
+      "rr",
+      "limited",
+      "bounded"
+    ]
+  },
+  "interpretation": "Keep every outcome. Admission rejections are failed arrivals, not faster successful responses. Compare bounded and tie to limited to isolate selection. Report per-run sample counts and p99 resolution; three seeds are diagnostic, not release confidence. Do not pool previous cohorts."
+}
