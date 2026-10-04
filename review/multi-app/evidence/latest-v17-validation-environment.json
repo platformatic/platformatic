@@ -1,0 +1,338 @@
+{
+  "base": "8f6b4e5ee2670d2148655d34235561ee6191248f",
+  "implementationCommit": "dd9c49ed64eeee5fc918cf1e72eac3cd807a403d",
+  "nodeVersions": {
+    "22": "v22.23.3",
+    "24": "v24.21.0",
+    "26": "v26.10.0"
+  },
+  "restrictedContainer": {
+    "Id": "1fcafc34b33a6af865f2a421878606d49826095394fd480f04112f7e1f45306d",
+    "Created": "2026-10-04T09:33:55.076573333Z",
+    "Path": "docker-entrypoint.sh",
+    "Args": [
+      "timeout",
+      "110s",
+      "node",
+      "--test",
+      "--test-concurrency=1",
+      "test/request-routing.test.js",
+      "test/request-routing-errors.test.js",
+      "test/multiple-workers/request-routing.test.js"
+    ],
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-04T09:33:55.125372333Z",
+      "FinishedAt": "2026-10-04T09:34:52.679409805Z"
+    },
+    "Image": "sha256:bbb88bc1dd1b9fce8489f5eaaef0ba3ac004ead12e46dec461a17c59f82dd1ef",
+    "ResolvConfPath": "/var/lib/docker/containers/1fcafc34b33a6af865f2a421878606d49826095394fd480f04112f7e1f45306d/resolv.conf",
+    "HostnamePath": "/var/lib/docker/containers/1fcafc34b33a6af865f2a421878606d49826095394fd480f04112f7e1f45306d/hostname",
+    "HostsPath": "/var/lib/docker/containers/1fcafc34b33a6af865f2a421878606d49826095394fd480f04112f7e1f45306d/hosts",
+    "LogPath": "/var/lib/docker/containers/1fcafc34b33a6af865f2a421878606d49826095394fd480f04112f7e1f45306d/1fcafc34b33a6af865f2a421878606d49826095394fd480f04112f7e1f45306d-json.log",
+    "Name": "/watt-request-restricted-v17-test",
+    "RestartCount": 0,
+    "Driver": "overlayfs",
+    "Platform": "linux",
+    "MountLabel": "",
+    "ProcessLabel": "",
+    "AppArmorProfile": "",
+    "ExecIDs": null,
+    "HostConfig": {
+      "Binds": [
+        "/tmp/watt-request-restricted-v17/symbols.js:/focused/packages/runtime/lib/worker/symbols.js:ro",
+        "/tmp/watt-request-restricted-v17/test:/focused/packages/runtime/test:ro",
+        "/tmp/watt-request-restricted-v17/fixture:/focused/packages/runtime/fixtures/request-routing:ro",
+        "/tmp/watt-request-restricted-v17/mesh:/focused/packages/runtime/lib/mesh:ro",
+        "/tmp/watt-request-restricted-v17/runtime.js:/focused/packages/runtime/lib/runtime.js:ro",
+        "/tmp/watt-request-restricted-v17/config.js:/focused/packages/runtime/lib/config.js:ro",
+        "/tmp/watt-request-restricted-v17/interceptors.js:/focused/packages/runtime/lib/worker/interceptors.js:ro"
+      ],
+      "ContainerIDFile": "",
+      "LogConfig": {
+        "Type": "json-file",
+        "Config": {}
+      },
+      "NetworkMode": "bridge",
+      "PortBindings": {},
+      "RestartPolicy": {
+        "Name": "no",
+        "MaximumRetryCount": 0
+      },
+      "AutoRemove": false,
+      "VolumeDriver": "",
+      "VolumesFrom": null,
+      "ConsoleSize": [
+        0,
+        0
+      ],
+      "CapAdd": null,
+      "CapDrop": [
+        "ALL"
+      ],
+      "CgroupnsMode": "private",
+      "Dns": null,
+      "DnsOptions": [],
+      "DnsSearch": [],
+      "ExtraHosts": null,
+      "GroupAdd": null,
+      "IpcMode": "private",
+      "Cgroup": "",
+      "Links": null,
+      "OomScoreAdj": 0,
+      "PidMode": "",
+      "Privileged": false,
+      "PublishAllPorts": false,
+      "ReadonlyRootfs": true,
+      "SecurityOpt": [
+        "no-new-privileges"
+      ],
+      "Tmpfs": {
+        "/focused/packages/runtime/tmp": "rw,exec,mode=1777",
+        "/focused/tmp": "rw,exec,mode=1777",
+        "/tmp": "rw,exec,mode=1777"
+      },
+      "UTSMode": "",
+      "UsernsMode": "",
+      "ShmSize": 67108864,
+      "Runtime": "runc",
+      "Isolation": "",
+      "CpuShares": 0,
+      "Memory": 2147483648,
+      "NanoCpus": 4000000000,
+      "CgroupParent": "",
+      "BlkioWeight": 0,
+      "BlkioWeightDevice": [],
+      "BlkioDeviceReadBps": [],
+      "BlkioDeviceWriteBps": [],
+      "BlkioDeviceReadIOps": [],
+      "BlkioDeviceWriteIOps": [],
+      "CpuPeriod": 0,
+      "CpuQuota": 0,
+      "CpuRealtimePeriod": 0,
+      "CpuRealtimeRuntime": 0,
+      "CpusetCpus": "8-11",
+      "CpusetMems": "",
+      "Devices": [],
+      "DeviceCgroupRules": null,
+      "DeviceRequests": null,
+      "MemoryReservation": 0,
+      "MemorySwap": 2147483648,
+      "MemorySwappiness": null,
+      "OomKillDisable": null,
+      "PidsLimit": null,
+      "Ulimits": [],
+      "CpuCount": 0,
+      "CpuPercent": 0,
+      "IOMaximumIOps": 0,
+      "IOMaximumBandwidth": 0,
+      "MaskedPaths": [
+        "/proc/acpi",
+        "/proc/asound",
+        "/proc/interrupts",
+        "/proc/kcore",
+        "/proc/keys",
+        "/proc/latency_stats",
+        "/proc/sched_debug",
+        "/proc/scsi",
+        "/proc/timer_list",
+        "/proc/timer_stats",
+        "/sys/devices/virtual/powercap",
+        "/sys/firmware"
+      ],
+      "ReadonlyPaths": [
+        "/proc/bus",
+        "/proc/fs",
+        "/proc/irq",
+        "/proc/sys",
+        "/proc/sysrq-trigger"
+      ]
+    },
+    "GraphDriver": {
+      "Data": null,
+      "Name": ""
+    },
+    "Mounts": [
+      {
+        "Type": "bind",
+        "Source": "/tmp/watt-request-restricted-v17/config.js",
+        "Destination": "/focused/packages/runtime/lib/config.js",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/tmp/watt-request-restricted-v17/interceptors.js",
+        "Destination": "/focused/packages/runtime/lib/worker/interceptors.js",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/tmp/watt-request-restricted-v17/symbols.js",
+        "Destination": "/focused/packages/runtime/lib/worker/symbols.js",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/tmp/watt-request-restricted-v17/test",
+        "Destination": "/focused/packages/runtime/test",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/tmp/watt-request-restricted-v17/fixture",
+        "Destination": "/focused/packages/runtime/fixtures/request-routing",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/tmp/watt-request-restricted-v17/mesh",
+        "Destination": "/focused/packages/runtime/lib/mesh",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/tmp/watt-request-restricted-v17/runtime.js",
+        "Destination": "/focused/packages/runtime/lib/runtime.js",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      }
+    ],
+    "Config": {
+      "Hostname": "1fcafc34b33a",
+      "Domainname": "",
+      "User": "65534:65534",
+      "AttachStdin": false,
+      "AttachStdout": true,
+      "AttachStderr": true,
+      "Tty": false,
+      "OpenStdin": false,
+      "StdinOnce": false,
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "NODE_VERSION=22.23.3",
+        "YARN_VERSION=1.22.22"
+      ],
+      "Cmd": [
+        "timeout",
+        "110s",
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/request-routing.test.js",
+        "test/request-routing-errors.test.js",
+        "test/multiple-workers/request-routing.test.js"
+      ],
+      "Image": "watt-request-release-v15:local",
+      "Volumes": null,
+      "WorkingDir": "/focused/packages/runtime",
+      "Entrypoint": [
+        "docker-entrypoint.sh"
+      ],
+      "OnBuild": null,
+      "Labels": {},
+      "StopTimeout": 1
+    },
+    "NetworkSettings": {
+      "Bridge": "",
+      "SandboxID": "",
+      "SandboxKey": "",
+      "Ports": {},
+      "HairpinMode": false,
+      "LinkLocalIPv6Address": "",
+      "LinkLocalIPv6PrefixLen": 0,
+      "SecondaryIPAddresses": null,
+      "SecondaryIPv6Addresses": null,
+      "EndpointID": "",
+      "Gateway": "",
+      "GlobalIPv6Address": "",
+      "GlobalIPv6PrefixLen": 0,
+      "IPAddress": "",
+      "IPPrefixLen": 0,
+      "IPv6Gateway": "",
+      "MacAddress": "",
+      "Networks": {
+        "bridge": {
+          "IPAMConfig": null,
+          "Links": null,
+          "Aliases": null,
+          "MacAddress": "",
+          "DriverOpts": null,
+          "GwPriority": 0,
+          "NetworkID": "9b2c1fef86975b84e0ee8182c28f7d3a688ebd5b8cb5d8397af4e88236aad25c",
+          "EndpointID": "",
+          "Gateway": "",
+          "IPAddress": "",
+          "IPPrefixLen": 0,
+          "IPv6Gateway": "",
+          "GlobalIPv6Address": "",
+          "GlobalIPv6PrefixLen": 0,
+          "DNSNames": null
+        }
+      }
+    },
+    "ImageManifestDescriptor": {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:bbb88bc1dd1b9fce8489f5eaaef0ba3ac004ead12e46dec461a17c59f82dd1ef",
+      "size": 2277,
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    }
+  },
+  "sourceSha256": {
+    "packages/runtime/lib/mesh/LICENSE": "897aca559db7c629533271541ae111cf3bf7553d98e498bc4f88a2f640cbbd75",
+    "packages/runtime/lib/mesh/index.js": "d61e00f256078a5ad622b791ee4831bb7e67e4f4bcc572242b00ceb8b83bb2db",
+    "packages/runtime/lib/mesh/README.md": "70f1a257357391c151b2ccbf1e915fadc3b86675095fa6525c78924d2fa45627",
+    "packages/runtime/lib/mesh/package.json": "7d38de102f9d211b8a221ab5943610473c4b23aeee36e9a9cf0e22848e04b9d4",
+    "packages/runtime/lib/mesh/lib/round-robin-interceptor.js": "b523fb90939aa11039239b9111674e861426fc96f45a8737ca37bf6f1366c8e9",
+    "packages/runtime/lib/mesh/lib/request-routing.js": "7e1814b78aafd1609c305bacbe495baa1e194e00bf8e65220495dc4d9842908d",
+    "packages/runtime/lib/mesh/lib/hooks.js": "c04c8616038540ee9e65e88a3ba3271c99e02dfa0352f9dafda8a1d4091faa79",
+    "packages/runtime/lib/mesh/lib/coordinator.js": "bd344cefe03ee37d4a235b8c20fca25897312b2ab1313b1337c497eb0e6a9486",
+    "packages/runtime/lib/mesh/lib/dispatch-controller.js": "7287a8370b6821193c85ee617809541734120786e4a9c9c86eaf4d8c3a429fd8",
+    "packages/runtime/lib/mesh/lib/roundrobin.js": "448390eb3e45f99a09859499d4dc0b09387d4b5f5f30ca02e05b15b7b729d1d4",
+    "packages/runtime/lib/mesh/lib/common.js": "d52996bed1a1aed4a1f61430ec08ce4470a0b35f398bdcbbffd869eb7641961b",
+    "packages/runtime/lib/mesh/lib/utils.js": "25b26f2effaa66ea32c0706c171fac08b84eeaf8a55b9a9dc0238ff907f20a08",
+    "packages/runtime/lib/mesh/lib/requests-store.js": "1b95240f34411e3b98d08cd0657deef356445f379b3ab5e26d400f3de5fd0730",
+    "packages/runtime/lib/mesh/lib/wire.js": "a74232367620e119ff831c15a4e70ba8ab4db241f733d4224b3a7f781ea40cee",
+    "packages/runtime/lib/mesh/lib/wrap-handler.js": "d8f4e237e2fbf55544d671bea92b2b1ec8e51c21e4745c78a3c43544cdcefb2d",
+    "packages/runtime/lib/mesh/lib/interceptor.js": "056497c271d1b53472bcba401f0aae62d4d5419efe8e0d7df1fe8e66133c5755",
+    "packages/runtime/lib/mesh/lib/message-port-streams.js": "6f77e3c911dac75dd177a2ec44f1c3fd10a4a28826d1e8f4d29adc47b55b5cec",
+    "packages/runtime/lib/runtime.js": "f231f303f249a9bcda5c61f3958f521431c0ab74bcc1b72b5f149a97389b9cec",
+    "packages/runtime/lib/config.js": "6e5d51474a00e01863f0bf761d3b9a967dd6c538f35fe535192bdab341363aac",
+    "packages/runtime/lib/worker/interceptors.js": "e9b941865d3f4b88c356432cfa4674a539cd39be5eb3050eccd55c02208472ed",
+    "packages/runtime/lib/worker/symbols.js": "b48414c35b6462364091ace58caade68004fcbb713d787ec8bd8e5f7a4ff2da3",
+    "packages/runtime/test/multiple-workers/request-routing.test.js": "abccc1d25c12301905cf861f540b1c35f74d767cff39970ac38fa94235fe82e4",
+    "packages/runtime/package.json": "0ceed41149348d567abc6ec869899cce9a19e100dd88e50d94dabe0c62b03e80",
+    "packages/foundation/lib/schema.js": "2fdf7bbfd54d8122d3092a107ecd5e448bc600a6b32c66d0506e74642a4c11f2",
+    "packages/gateway/lib/proxy.js": "46646a4be8a58e9b223d212b3bca807e70e46d3bf8f2ffbc128c2f3dcf1d5c5f",
+    "pnpm-lock.yaml": "9a160d2dc36db8f1189e0f48e2cedcca26e84ee51c8c27460c3fb4ca01703351"
+  },
+  "notes": [
+    "The initial complete main suite was not a passing run: 458/472 cases passed and the scaler process required termination. Missing SQLite test-fixture bindings were built before the affected files were rerun.",
+    "The six-file rerun had 96/97 passes. The remaining host-scope fixture was then corrected and all 21 utils cases passed. Scaler-1 and scaler-2 both exited normally.",
+    "Production routing introduces no SQLite dependency. No sandbox syscall restriction prevented these experiments.",
+    "Benchmarks started after correctness processes finished; unrelated Docker services remain active."
+  ]
+}

@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: shutdown during scale-up does not recreate a discarded booting worker
+not ok 1 - shutdown during scale-up does not recreate a discarded booting worker
+  ---
+  duration_ms: 11737.267589
+  type: 'test'
+  location: '/focused/packages/runtime/test/multiple-workers/request-routing.test.js:252:1'
+  failureType: 'cancelledByParent'
+  error: 'Promise resolution is still pending but the event loop has already resolved'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    process.emit (node:events:519:28)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 11944.907631

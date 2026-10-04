@@ -1,0 +1,610 @@
+TAP version 13
+# Subtest: throws if no entrypoint is found
+ok 1 - throws if no entrypoint is found
+  ---
+  duration_ms: 137.143417
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - throws if --inspect and --inspect-brk are both used
+ok 2 - parseInspectorOptions - throws if --inspect and --inspect-brk are both used
+  ---
+  duration_ms: 0.103541
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - --inspect default settings
+ok 3 - parseInspectorOptions - --inspect default settings
+  ---
+  duration_ms: 0.274542
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - --inspect-brk default settings
+ok 4 - parseInspectorOptions - --inspect-brk default settings
+  ---
+  duration_ms: 0.042125
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - hot reloading is disabled if the inspector is used
+ok 5 - parseInspectorOptions - hot reloading is disabled if the inspector is used
+  ---
+  duration_ms: 0.059417
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - sets port to a custom value
+ok 6 - parseInspectorOptions - sets port to a custom value
+  ---
+  duration_ms: 0.041584
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - sets host and port to custom values
+ok 7 - parseInspectorOptions - sets host and port to custom values
+  ---
+  duration_ms: 0.033334
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - throws if the host is empty
+ok 8 - parseInspectorOptions - throws if the host is empty
+  ---
+  duration_ms: 0.122
+  type: 'test'
+  ...
+# Subtest: parseInspectorOptions - differentiates valid and invalid ports
+ok 9 - parseInspectorOptions - differentiates valid and invalid ports
+  ---
+  duration_ms: 0.290958
+  type: 'test'
+  ...
+# Subtest: correctly loads the watch value from a string
+ok 10 - correctly loads the watch value from a string
+  ---
+  duration_ms: 88.595333
+  type: 'test'
+  ...
+# Subtest: correctly loads the watch value from a string
+ok 11 - correctly loads the watch value from a string
+  ---
+  duration_ms: 82.388541
+  type: 'test'
+  ...
+# Subtest: defaults graceful shutdown timeouts
+ok 12 - defaults graceful shutdown timeouts
+  ---
+  duration_ms: 67.596
+  type: 'test'
+  ...
+# Subtest: strictEnv should fail loading the configuration when environment variables are missing
+ok 13 - strictEnv should fail loading the configuration when environment variables are missing
+  ---
+  duration_ms: 1.043
+  type: 'test'
+  ...
+# Subtest: strictEnv should not fail loading the configuration when all environment variables are set
+ok 14 - strictEnv should not fail loading the configuration when all environment variables are set
+  ---
+  duration_ms: 59.6535
+  type: 'test'
+  ...
+# Subtest: defaults the application name to `main` if there is no package.json
+ok 15 - defaults the application name to `main` if there is no package.json
+  ---
+  duration_ms: 199.62875
+  type: 'test'
+  ...
+# Subtest: uses the name in package.json
+ok 16 - uses the name in package.json
+  ---
+  duration_ms: 163.741083
+  type: 'test'
+  ...
+# Subtest: uses the name in package.json, removing the scope
+ok 17 - uses the name in package.json, removing the scope
+  ---
+  duration_ms: 133.560958
+  type: 'test'
+  ...
+# Subtest: defaults name to `main` if package.json exists but has no name
+ok 18 - defaults name to `main` if package.json exists but has no name
+  ---
+  duration_ms: 170.313917
+  type: 'test'
+  ...
+# Subtest: wrapInRuntimeConfig does not synthesize a server hostname when none is configured
+ok 19 - wrapInRuntimeConfig does not synthesize a server hostname when none is configured
+  ---
+  duration_ms: 56.7225
+  type: 'test'
+  ...
+# Subtest: uses application runtime configuration, avoiding overriding of sensible properties
+ok 20 - uses application runtime configuration, avoiding overriding of sensible properties
+  ---
+  duration_ms: 57.512459
+  type: 'test'
+  ...
+# Subtest: supports configurable envfile location
+ok 21 - supports configurable envfile location
+  ---
+  duration_ms: 358.284
+  type: 'test'
+  ...
+# Subtest: supports default envfile location
+ok 22 - supports default envfile location
+  ---
+  duration_ms: 356.219959
+  type: 'test'
+  ...
+# Subtest: supports configurable arguments
+ok 23 - supports configurable arguments
+  ---
+  duration_ms: 475.980833
+  type: 'test'
+  ...
+# Subtest: should manage application config patch
+ok 24 - should manage application config patch
+  ---
+  duration_ms: 697.856959
+  type: 'test'
+  ...
+# Subtest: prepareApplication should not perform slow glob for services with url but no path
+ok 25 - prepareApplication should not perform slow glob for services with url but no path
+  ---
+  duration_ms: 140.140666
+  type: 'test'
+  ...
+# Subtest: prepareApplication should handle multiple services with url but no path efficiently
+ok 26 - prepareApplication should handle multiple services with url but no path efficiently
+  ---
+  duration_ms: 399.672875
+  type: 'test'
+  ...
+# Subtest: autoload - merges an explicit entry which points to the autoloaded directory
+ok 27 - autoload - merges an explicit entry which points to the autoloaded directory
+  ---
+  duration_ms: 63.351625
+  type: 'test'
+  ...
+# Subtest: autoload - merges an external entry when the autoloaded directory is where it is resolved
+ok 28 - autoload - merges an external entry when the autoloaded directory is where it is resolved
+  ---
+  duration_ms: 79.055875
+  type: 'test'
+  ...
+# Subtest: autoload - throws when the id of an autoloaded directory is used by an external application
+ok 29 - autoload - throws when the id of an autoloaded directory is used by an external application
+  ---
+  duration_ms: 53.224958
+  type: 'test'
+  ...
+# Subtest: autoload - throws when the id of an autoloaded directory is used by another local application
+ok 30 - autoload - throws when the id of an autoloaded directory is used by another local application
+  ---
+  duration_ms: 51.796334
+  type: 'test'
+  ...
+# Subtest: autoload - does not report a collision with a disabled application
+ok 31 - autoload - does not report a collision with a disabled application
+  ---
+  duration_ms: 50.984083
+  type: 'test'
+  ...
+# Subtest: should continously monitor workers health
+ok 32 - should continously monitor workers health
+  ---
+  duration_ms: 1956.842209
+  type: 'test'
+  ...
+# Subtest: should not lose any connection when restarting the process
+ok 33 - should not lose any connection when restarting the process
+  ---
+  duration_ms: 12641.933797
+  type: 'test'
+  ...
+# Subtest: set the spaces memory correctly
+ok 34 - set the spaces memory correctly
+  ---
+  duration_ms: 420.425167
+  type: 'test'
+  ...
+# Subtest: set the spaces memory correctly when maxHeapTotal is a string
+ok 35 - set the spaces memory correctly when maxHeapTotal is a string
+  ---
+  duration_ms: 431.34225
+  type: 'test'
+  ...
+# Subtest: set the code range size correctly
+ok 36 - set the code range size correctly
+  ---
+  duration_ms: 397.106583
+  type: 'test'
+  ...
+# Subtest: set Buffer.poolSize and default stream highWaterMark from health config
+ok 37 - set Buffer.poolSize and default stream highWaterMark from health config
+  ---
+  duration_ms: 406.8875
+  type: 'test'
+  ...
+# Subtest: should continously monitor workers health
+ok 38 - should continously monitor workers health
+  ---
+  duration_ms: 16779.048383
+  type: 'test'
+  ...
+# Subtest: should start profiling for a service
+ok 39 - should start profiling for a service
+  ---
+  duration_ms: 937.361417
+  type: 'test'
+  ...
+# Subtest: should stop profiling for a service and return profile data
+ok 40 - should stop profiling for a service and return profile data
+  ---
+  duration_ms: 963.022334
+  type: 'test'
+  ...
+# Subtest: should optionally return the profile sample count
+ok 41 - should optionally return the profile sample count
+  ---
+  duration_ms: 957.623458
+  type: 'test'
+  ...
+# Subtest: should throw error when starting profiling on non-existent service
+ok 42 - should throw error when starting profiling on non-existent service
+  ---
+  duration_ms: 771.114042
+  type: 'test'
+  ...
+# Subtest: should throw error when stopping profiling on non-existent service
+ok 43 - should throw error when stopping profiling on non-existent service
+  ---
+  duration_ms: 777.674709
+  type: 'test'
+  ...
+# Subtest: should handle profiling already started error
+ok 44 - should handle profiling already started error
+  ---
+  duration_ms: 809.884917
+  type: 'test'
+  ...
+# Subtest: should handle profiling not started error
+ok 45 - should handle profiling not started error
+  ---
+  duration_ms: 774.488667
+  type: 'test'
+  ...
+# Subtest: runtime errors if wattpm-pprof-capture is not loaded
+ok 46 - runtime errors if wattpm-pprof-capture is not loaded
+  ---
+  duration_ms: 779.63775
+  type: 'test'
+  ...
+# Subtest: runtime errors if wattpm-pprof-capture is not loaded (stop)
+ok 47 - runtime errors if wattpm-pprof-capture is not loaded (stop)
+  ---
+  duration_ms: 769.436333
+  type: 'test'
+  ...
+# Subtest: profiling inherits dependency source maps with application setting undefined
+ok 48 - profiling inherits dependency source maps with application setting undefined
+  ---
+  duration_ms: 1110.611375
+  type: 'test'
+  ...
+# Subtest: profiling inherits dependency source maps with application setting ["application-package"]
+ok 49 - profiling inherits dependency source maps with application setting ["application-package"]
+  ---
+  duration_ms: 1088.717958
+  type: 'test'
+  ...
+# Subtest: profiling inherits dependency source maps with application setting []
+ok 50 - profiling inherits dependency source maps with application setting []
+  ---
+  duration_ms: 1090.897251
+  type: 'test'
+  ...
+# Subtest: getArrayDifference
+ok 51 - getArrayDifference
+  ---
+  duration_ms: 0.613584
+  type: 'test'
+  ...
+# Subtest: getMemoryInfo - should get the host memory info
+not ok 52 - getMemoryInfo - should get the host memory info
+  ---
+  duration_ms: 3.7565
+  type: 'test'
+  location: '/focused/packages/runtime/test/utils.test.js:15:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'cgroup-v2'
+    - 'host'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'host'
+  actual: 'cgroup-v2'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///focused/packages/runtime/test/utils.test.js:17:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: topologicalSort - should properly sort simple linear dependency
+ok 53 - topologicalSort - should properly sort simple linear dependency
+  ---
+  duration_ms: 0.278709
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort multiple independent nodes
+ok 54 - topologicalSort - should properly sort multiple independent nodes
+  ---
+  duration_ms: 0.067
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort complex dependency graph
+ok 55 - topologicalSort - should properly sort complex dependency graph
+  ---
+  duration_ms: 0.101625
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort diamond dependencies
+ok 56 - topologicalSort - should properly sort diamond dependencies
+  ---
+  duration_ms: 0.049417
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort a empty graph
+ok 57 - topologicalSort - should properly sort a empty graph
+  ---
+  duration_ms: 0.075458
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort a single node with no dependencies
+ok 58 - topologicalSort - should properly sort a single node with no dependencies
+  ---
+  duration_ms: 0.045667
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly detect circular dependencies
+ok 59 - topologicalSort - should properly detect circular dependencies
+  ---
+  duration_ms: 0.381125
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly detect self-referencing nodes
+ok 60 - topologicalSort - should properly detect self-referencing nodes
+  ---
+  duration_ms: 0.236583
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly detect circular dependencies in a complex graph
+ok 61 - topologicalSort - should properly detect circular dependencies in a complex graph
+  ---
+  duration_ms: 0.105292
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort multiple paths to same node
+ok 62 - topologicalSort - should properly sort multiple paths to same node
+  ---
+  duration_ms: 0.043
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort deep dependency chain
+ok 63 - topologicalSort - should properly sort deep dependency chain
+  ---
+  duration_ms: 0.037333
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort forest graphs (multiple disconnected trees)
+ok 64 - topologicalSort - should properly sort forest graphs (multiple disconnected trees)
+  ---
+  duration_ms: 0.033834
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort shared dependency
+ok 65 - topologicalSort - should properly sort shared dependency
+  ---
+  duration_ms: 0.033084
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should group independent nodes in the same level
+ok 66 - topologicalLevels - should group independent nodes in the same level
+  ---
+  duration_ms: 0.056417
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle a linear dependency chain
+ok 67 - topologicalLevels - should handle a linear dependency chain
+  ---
+  duration_ms: 0.038417
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle all independent nodes
+ok 68 - topologicalLevels - should handle all independent nodes
+  ---
+  duration_ms: 0.074083
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle diamond dependencies
+ok 69 - topologicalLevels - should handle diamond dependencies
+  ---
+  duration_ms: 0.056208
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle empty graph
+ok 70 - topologicalLevels - should handle empty graph
+  ---
+  duration_ms: 0.036
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle single node
+ok 71 - topologicalLevels - should handle single node
+  ---
+  duration_ms: 0.033959
+  type: 'test'
+  ...
+# Subtest: should scale an application if elu is higher than treshold (configuration default)
+ok 72 - should scale an application if elu is higher than treshold (configuration default)
+  ---
+  duration_ms: 2227.025751
+  type: 'test'
+  ...
+# Subtest: should not scale an application when the scaler is the cooldown(configuration default)
+ok 73 - should not scale an application when the scaler is the cooldown(configuration default)
+  ---
+  duration_ms: 1556.413459
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the elu is lower than treshold (configuration default)
+ok 74 - should not scale applications when the elu is lower than treshold (configuration default)
+  ---
+  duration_ms: 11565.502589
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the worker property is set (configuration default)
+ok 75 - should not scale applications when the worker property is set (configuration default)
+  ---
+  duration_ms: 11543.029838
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the worker property is set (configuration default)
+ok 76 - should not scale an applications when the worker property is set (configuration default)
+  ---
+  duration_ms: 12388.178548
+  type: 'test'
+  ...
+# Subtest: should scale an application if elu is higher than treshold (configuration worker-scaler)
+ok 77 - should scale an application if elu is higher than treshold (configuration worker-scaler)
+  ---
+  duration_ms: 1914.903792
+  type: 'test'
+  ...
+# Subtest: should not scale an application when the scaler is the cooldown(configuration worker-scaler)
+ok 78 - should not scale an application when the scaler is the cooldown(configuration worker-scaler)
+  ---
+  duration_ms: 1557.467125
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the elu is lower than treshold (configuration worker-scaler)
+ok 79 - should not scale applications when the elu is lower than treshold (configuration worker-scaler)
+  ---
+  duration_ms: 11521.308464
+  type: 'test'
+  ...
+# Subtest: should not scale applications when the worker property is set (configuration worker-scaler)
+ok 80 - should not scale applications when the worker property is set (configuration worker-scaler)
+  ---
+  duration_ms: 11562.962462
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the worker property is set (configuration worker-scaler)
+ok 81 - should not scale an applications when the worker property is set (configuration worker-scaler)
+  ---
+  duration_ms: 12167.771673
+  type: 'test'
+  ...
+# Subtest: should properly apply runtime workers configuration to the applications (number)
+ok 82 - should properly apply runtime workers configuration to the applications (number)
+  ---
+  duration_ms: 1513.641168
+  type: 'test'
+  ...
+# Subtest: should properly apply runtime workers configuration to the applications (object)
+ok 83 - should properly apply runtime workers configuration to the applications (object)
+  ---
+  duration_ms: 2066.758709
+  type: 'test'
+  ...
+# Subtest: should ensure the right order for minimum and maximum
+ok 84 - should ensure the right order for minimum and maximum
+  ---
+  duration_ms: 5284.655877
+  type: 'test'
+  ...
+# Subtest: should apply application scaleUpELU and scaleDownELU
+ok 85 - should apply application scaleUpELU and scaleDownELU
+  ---
+  duration_ms: 11966.603922
+  type: 'test'
+  ...
+# Subtest: applies the minimum workers after a dynamically added application starts
+ok 86 - applies the minimum workers after a dynamically added application starts
+  ---
+  duration_ms: 12.208
+  type: 'test'
+  ...
+# Subtest: removes application state from the scaler
+ok 87 - removes application state from the scaler
+  ---
+  duration_ms: 3.377083
+  type: 'test'
+  ...
+# Subtest: logs worker health errors and refreshes the health check timeout
+ok 88 - logs worker health errors and refreshes the health check timeout
+  ---
+  duration_ms: 5.96875
+  type: 'test'
+  ...
+# Subtest: should apply application scaleUpELU and scaleDownELU (vertical scaler))
+ok 89 - should apply application scaleUpELU and scaleDownELU (vertical scaler))
+  ---
+  duration_ms: 12377.279922
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the app maxWorkers is reached (configuration default)
+ok 90 - should not scale an applications when the app maxWorkers is reached (configuration default)
+  ---
+  duration_ms: 12342.630171
+  type: 'test'
+  ...
+# Subtest: should scale a standalone application if elu is higher than treshold (configuration default)
+ok 91 - should scale a standalone application if elu is higher than treshold (configuration default)
+  ---
+  duration_ms: 12400.118256
+  type: 'test'
+  ...
+# Subtest: should scale applications to their min workers at start (configuration default)
+ok 92 - should scale applications to their min workers at start (configuration default)
+  ---
+  duration_ms: 2167.927626
+  type: 'test'
+  ...
+# Subtest: should not scale an application is there is not enough memory (configuration default)
+ok 93 - should not scale an application is there is not enough memory (configuration default)
+  ---
+  duration_ms: 11559.538171
+  type: 'test'
+  ...
+# Subtest: should not scale an applications when the app maxWorkers is reached (configuration worker-scaler)
+ok 94 - should not scale an applications when the app maxWorkers is reached (configuration worker-scaler)
+  ---
+  duration_ms: 11605.21788
+  type: 'test'
+  ...
+# Subtest: should scale a standalone application if elu is higher than treshold (configuration worker-scaler)
+ok 95 - should scale a standalone application if elu is higher than treshold (configuration worker-scaler)
+  ---
+  duration_ms: 11546.581047
+  type: 'test'
+  ...
+# Subtest: should scale applications to their min workers at start (configuration worker-scaler)
+ok 96 - should scale applications to their min workers at start (configuration worker-scaler)
+  ---
+  duration_ms: 2089.695376
+  type: 'test'
+  ...
+# Subtest: should not scale an application is there is not enough memory (configuration worker-scaler)
+ok 97 - should not scale an application is there is not enough memory (configuration worker-scaler)
+  ---
+  duration_ms: 11540.867463
+  type: 'test'
+  ...
+1..97
+# tests 97
+# suites 0
+# pass 96
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 235498.233189

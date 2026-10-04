@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: getArrayDifference
+ok 1 - getArrayDifference
+  ---
+  duration_ms: 0.7375
+  type: 'test'
+  ...
+# Subtest: getMemoryInfo - should get the host memory info
+ok 2 - getMemoryInfo - should get the host memory info
+  ---
+  duration_ms: 3.253041
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort simple linear dependency
+ok 3 - topologicalSort - should properly sort simple linear dependency
+  ---
+  duration_ms: 0.124
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort multiple independent nodes
+ok 4 - topologicalSort - should properly sort multiple independent nodes
+  ---
+  duration_ms: 0.090625
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort complex dependency graph
+ok 5 - topologicalSort - should properly sort complex dependency graph
+  ---
+  duration_ms: 0.094417
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort diamond dependencies
+ok 6 - topologicalSort - should properly sort diamond dependencies
+  ---
+  duration_ms: 0.05
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort a empty graph
+ok 7 - topologicalSort - should properly sort a empty graph
+  ---
+  duration_ms: 0.074167
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort a single node with no dependencies
+ok 8 - topologicalSort - should properly sort a single node with no dependencies
+  ---
+  duration_ms: 0.043333
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly detect circular dependencies
+ok 9 - topologicalSort - should properly detect circular dependencies
+  ---
+  duration_ms: 0.410917
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly detect self-referencing nodes
+ok 10 - topologicalSort - should properly detect self-referencing nodes
+  ---
+  duration_ms: 0.26025
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly detect circular dependencies in a complex graph
+ok 11 - topologicalSort - should properly detect circular dependencies in a complex graph
+  ---
+  duration_ms: 0.105291
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort multiple paths to same node
+ok 12 - topologicalSort - should properly sort multiple paths to same node
+  ---
+  duration_ms: 0.044708
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort deep dependency chain
+ok 13 - topologicalSort - should properly sort deep dependency chain
+  ---
+  duration_ms: 0.038959
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort forest graphs (multiple disconnected trees)
+ok 14 - topologicalSort - should properly sort forest graphs (multiple disconnected trees)
+  ---
+  duration_ms: 0.034584
+  type: 'test'
+  ...
+# Subtest: topologicalSort - should properly sort shared dependency
+ok 15 - topologicalSort - should properly sort shared dependency
+  ---
+  duration_ms: 0.033167
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should group independent nodes in the same level
+ok 16 - topologicalLevels - should group independent nodes in the same level
+  ---
+  duration_ms: 0.059083
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle a linear dependency chain
+ok 17 - topologicalLevels - should handle a linear dependency chain
+  ---
+  duration_ms: 0.038792
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle all independent nodes
+ok 18 - topologicalLevels - should handle all independent nodes
+  ---
+  duration_ms: 0.074125
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle diamond dependencies
+ok 19 - topologicalLevels - should handle diamond dependencies
+  ---
+  duration_ms: 0.040292
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle empty graph
+ok 20 - topologicalLevels - should handle empty graph
+  ---
+  duration_ms: 0.030625
+  type: 'test'
+  ...
+# Subtest: topologicalLevels - should handle single node
+ok 21 - topologicalLevels - should handle single node
+  ---
+  duration_ms: 0.032292
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50.604583

@@ -1,0 +1,369 @@
+
+> @platformatic/runtime@3.71.0 lint /focused/packages/runtime
+> eslint
+
+v22.23.3
+TAP version 13
+# Subtest: one persistent HTTP/1 connection balances requests within the correct application
+ok 1 - one persistent HTTP/1 connection balances requests within the correct application
+  ---
+  duration_ms: 1402.235251
+  type: 'test'
+  ...
+# Subtest: HTTP/2 streams on one connection balance within each application
+ok 2 - HTTP/2 streams on one connection balance within each application
+  ---
+  duration_ms: 1229.958875
+  type: 'test'
+  ...
+# Subtest: streaming bodies retain content and release reservations after response completion
+ok 3 - streaming bodies retain content and release reservations after response completion
+  ---
+  duration_ms: 1497.634626
+  type: 'test'
+  ...
+# Subtest: cancelling a client retains accepted backend work until it finishes
+ok 4 - cancelling a client retains accepted backend work until it finishes
+  ---
+  duration_ms: 5612.888586
+  type: 'test'
+  ...
+# Subtest: bounded admission rejects a busy app while another app continues serving
+ok 5 - bounded admission rejects a busy app while another app continues serving
+  ---
+  duration_ms: 1553.151376
+  type: 'test'
+  ...
+# Subtest: gateway exit retains accepted work and the backend releases it after completion
+ok 6 - gateway exit retains accepted work and the backend releases it after completion
+  ---
+  duration_ms: 1662.391667
+  type: 'test'
+  ...
+# Subtest: rolling replacement cannot charge new workers for old accepted requests
+ok 7 - rolling replacement cannot charge new workers for old accepted requests
+  ---
+  duration_ms: 1819.718043
+  type: 'test'
+  ...
+# Subtest: request routing refuses TCP mode instead of claiming backend completion knowledge
+ok 8 - request routing refuses TCP mode instead of claiming backend completion knowledge
+  ---
+  duration_ms: 59.386084
+  type: 'test'
+  ...
+# Subtest: aborting a streamed response releases its backend reservation
+ok 9 - aborting a streamed response releases its backend reservation
+  ---
+  duration_ms: 5205.301336
+  type: 'test'
+  ...
+# Subtest: streamed request bodies arrive intact and without application accounting hooks
+ok 10 - streamed request bodies arrive intact and without application accounting hooks
+  ---
+  duration_ms: 1739.403626
+  type: 'test'
+  ...
+# Subtest: backend termination retires accepted reservations before replacing the generation
+ok 11 - backend termination retires accepted reservations before replacing the generation
+  ---
+  duration_ms: 1875.573167
+  type: 'test'
+  ...
+# Subtest: routing metrics expose worker generations and count admission rejection once
+ok 12 - routing metrics expose worker generations and count admission rejection once
+  ---
+  duration_ms: 2207.588751
+  type: 'test'
+  ...
+# Subtest: shutdown cancels unread coordinator response bodies instead of waiting forever
+ok 13 - shutdown cancels unread coordinator response bodies instead of waiting forever
+  ---
+  duration_ms: 1168.198251
+  type: 'test'
+  ...
+# Subtest: autodetected entrypoints cannot enable internal request routing
+ok 14 - autodetected entrypoints cannot enable internal request routing
+  ---
+  duration_ms: 107.825042
+  type: 'test'
+  ...
+# Subtest: cancellation keeps synchronous CPU work reserved until backend production finishes
+ok 15 - cancellation keeps synchronous CPU work reserved until backend production finishes
+  ---
+  duration_ms: 5696.598294
+  type: 'test'
+  ...
+# Subtest: a completely unavailable application returns 503 while other applications serve
+ok 16 - a completely unavailable application returns 503 while other applications serve
+  ---
+  duration_ms: 2789.566918
+  type: 'test'
+  ...
+# Subtest: draining immediately stops admission and retains outstanding metrics until completion
+ok 17 - draining immediately stops admission and retains outstanding metrics until completion
+  ---
+  duration_ms: 2372.115876
+  type: 'test'
+  ...
+# Subtest: shutdown during a gateway crash restart preserves mesh exit acknowledgements
+ok 18 - shutdown during a gateway crash restart preserves mesh exit acknowledgements
+  ---
+  duration_ms: 1143.105001
+  type: 'test'
+  ...
+# Subtest: scale-up publishes ready replicas and scale-down drains their accepted work
+ok 19 - scale-up publishes ready replicas and scale-down drains their accepted work
+  ---
+  duration_ms: 2761.175085
+  type: 'test'
+  ...
+# Subtest: shutdown during scale-up does not recreate a discarded booting worker
+ok 20 - shutdown during scale-up does not recreate a discarded booting worker
+  ---
+  duration_ms: 2019.837251
+  type: 'test'
+  ...
+# Subtest: backend errors release capacity for subsequent requests
+ok 21 - backend errors release capacity for subsequent requests
+  ---
+  duration_ms: 2004.160042
+  type: 'test'
+  ...
+# Subtest: shared cache hits bypass worker reservation and preserve the cached response
+ok 22 - shared cache hits bypass worker reservation and preserve the cached response
+  ---
+  duration_ms: 1542.174334
+  type: 'test'
+  ...
+# Subtest: gateway telemetry preserves trace context across the opted-in mesh
+ok 23 - gateway telemetry preserves trace context across the opted-in mesh
+  ---
+  duration_ms: 2011.687001
+  type: 'test'
+  ...
+# Subtest: channel policies still block opted-in apps while permitted apps remain reachable
+ok 24 - channel policies still block opted-in apps while permitted apps remain reachable
+  ---
+  duration_ms: 1165.090084
+  type: 'test'
+  ...
+# Subtest: construction and client hook errors release unsent reservations
+ok 25 - construction and client hook errors release unsent reservations
+  ---
+  duration_ms: 1.562416
+  type: 'test'
+  ...
+# Subtest: a request aborted before transport dispatch never consumes backend capacity
+ok 26 - a request aborted before transport dispatch never consumes backend capacity
+  ---
+  duration_ms: 0.368208
+  type: 'test'
+  ...
+# Subtest: structured-clone failure removes outgoing callbacks and releases capacity
+ok 27 - structured-clone failure removes outgoing callbacks and releases capacity
+  ---
+  duration_ms: 0.364042
+  type: 'test'
+  ...
+# Subtest: timeout cancels the caller once while retaining accepted backend work
+ok 28 - timeout cancels the caller once while retaining accepted backend work
+  ---
+  duration_ms: 40.855459
+  type: 'test'
+  ...
+# Subtest: bitmap word boundaries preserve finite admission at all supported sizes
+ok 29 - bitmap word boundaries preserve finite admission at all supported sizes
+  ---
+  duration_ms: 6.252792
+  type: 'test'
+  ...
+# Subtest: configured applications without a live route return predictable unavailability
+ok 30 - configured applications without a live route return predictable unavailability
+  ---
+  duration_ms: 0.471166
+  type: 'test'
+  ...
+# Subtest: a closing caller cannot publish new reservations to closed channels
+ok 31 - a closing caller cannot publish new reservations to closed channels
+  ---
+  duration_ms: 0.169417
+  type: 'test'
+  ...
+# Subtest: mesh acknowledgements do not wait on an already-exited real worker
+ok 32 - mesh acknowledgements do not wait on an already-exited real worker
+  ---
+  duration_ms: 14.98475
+  type: 'test'
+  ...
+# Subtest: publishing a routed worker enables existing round-robin callers and preserves unavailability
+ok 33 - publishing a routed worker enables existing round-robin callers and preserves unavailability
+  ---
+  duration_ms: 0.502
+  type: 'test'
+  ...
+# Subtest: the round-robin fast path still refuses dispatch after caller close
+ok 34 - the round-robin fast path still refuses dispatch after caller close
+  ---
+  duration_ms: 0.388125
+  type: 'test'
+  ...
+# Subtest: target channel exit settles callers and an already-pending route drain
+ok 35 - target channel exit settles callers and an already-pending route drain
+  ---
+  duration_ms: 1.428959
+  type: 'test'
+  ...
+# Subtest: capacity is bounded, leases release once and old generations stay separate
+ok 36 - capacity is bounded, leases release once and old generations stay separate
+  ---
+  duration_ms: 0.741167
+  type: 'test'
+  ...
+# Subtest: a sender interrupted before publishing its lease cannot leak admission capacity
+ok 37 - a sender interrupted before publishing its lease cannot leak admission capacity
+  ---
+  duration_ms: 0.153166
+  type: 'test'
+  ...
+# Subtest: multiple callers share a finite pool without duplicate accepted leases
+ok 38 - multiple callers share a finite pool without duplicate accepted leases
+  ---
+  duration_ms: 40.391125
+  type: 'test'
+  ...
+# Subtest: worker selection skips draining workers and keeps reservation pressure across callers
+ok 39 - worker selection skips draining workers and keeps reservation pressure across callers
+  ---
+  duration_ms: 1.702292
+  type: 'test'
+  ...
+# Subtest: generation leases and metrics continue beyond signed 32-bit request counts
+ok 40 - generation leases and metrics continue beyond signed 32-bit request counts
+  ---
+  duration_ms: 0.084416
+  type: 'test'
+  ...
+# Subtest: experimental pressure preference falls back to available hot or stale workers
+ok 41 - experimental pressure preference falls back to available hot or stale workers
+  ---
+  duration_ms: 0.291375
+  type: 'test'
+  ...
+# Subtest: a late backend readiness update cannot revive a draining generation
+ok 42 - a late backend readiness update cannot revive a draining generation
+  ---
+  duration_ms: 0.063792
+  type: 'test'
+  ...
+1..42
+# tests 42
+# suites 0
+# pass 42
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 51114.143774
+v24.21.0
+✔ one persistent HTTP/1 connection balances requests within the correct application (1102.147626ms)
+✔ HTTP/2 streams on one connection balance within each application (1025.291709ms)
+✔ streaming bodies retain content and release reservations after response completion (1725.851918ms)
+✔ cancelling a client retains accepted backend work until it finishes (1909.207917ms)
+✔ bounded admission rejects a busy app while another app continues serving (2204.891375ms)
+✔ gateway exit retains accepted work and the backend releases it after completion (1425.872167ms)
+✔ rolling replacement cannot charge new workers for old accepted requests (2408.456542ms)
+✔ request routing refuses TCP mode instead of claiming backend completion knowledge (110.636292ms)
+✔ aborting a streamed response releases its backend reservation (1061.454584ms)
+✔ streamed request bodies arrive intact and without application accounting hooks (839.890833ms)
+✔ backend termination retires accepted reservations before replacing the generation (854.903417ms)
+✔ routing metrics expose worker generations and count admission rejection once (1857.308543ms)
+✔ shutdown cancels unread coordinator response bodies instead of waiting forever (1566.685459ms)
+✔ autodetected entrypoints cannot enable internal request routing (87.693667ms)
+✔ cancellation keeps synchronous CPU work reserved until backend production finishes (2130.842835ms)
+✔ a completely unavailable application returns 503 while other applications serve (973.926667ms)
+✔ draining immediately stops admission and retains outstanding metrics until completion (2830.488543ms)
+✔ shutdown during a gateway crash restart preserves mesh exit acknowledgements (952.54525ms)
+✔ scale-up publishes ready replicas and scale-down drains their accepted work (2722.798918ms)
+✔ shutdown during scale-up does not recreate a discarded booting worker (1537.027418ms)
+✔ backend errors release capacity for subsequent requests (1507.5865ms)
+✔ shared cache hits bypass worker reservation and preserve the cached response (1601.192584ms)
+✔ gateway telemetry preserves trace context across the opted-in mesh (1688.549376ms)
+✔ channel policies still block opted-in apps while permitted apps remain reachable (937.495042ms)
+✔ construction and client hook errors release unsent reservations (1.444792ms)
+✔ a request aborted before transport dispatch never consumes backend capacity (0.245417ms)
+✔ structured-clone failure removes outgoing callbacks and releases capacity (0.345333ms)
+✔ timeout cancels the caller once while retaining accepted backend work (41.700667ms)
+✔ bitmap word boundaries preserve finite admission at all supported sizes (3.25625ms)
+✔ configured applications without a live route return predictable unavailability (0.328292ms)
+✔ a closing caller cannot publish new reservations to closed channels (0.153209ms)
+✔ mesh acknowledgements do not wait on an already-exited real worker (13.896667ms)
+✔ publishing a routed worker enables existing round-robin callers and preserves unavailability (0.35825ms)
+✔ the round-robin fast path still refuses dispatch after caller close (0.134375ms)
+✔ target channel exit settles callers and an already-pending route drain (0.802958ms)
+✔ capacity is bounded, leases release once and old generations stay separate (0.761125ms)
+✔ a sender interrupted before publishing its lease cannot leak admission capacity (0.125875ms)
+✔ multiple callers share a finite pool without duplicate accepted leases (28.842959ms)
+✔ worker selection skips draining workers and keeps reservation pressure across callers (1.467ms)
+✔ generation leases and metrics continue beyond signed 32-bit request counts (0.091542ms)
+✔ experimental pressure preference falls back to available hot or stale workers (0.267416ms)
+✔ a late backend readiness update cannot revive a draining generation (0.07575ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35535.917849
+v26.10.0
+✔ one persistent HTTP/1 connection balances requests within the correct application (1088.400083ms)
+✔ HTTP/2 streams on one connection balance within each application (924.488583ms)
+✔ streaming bodies retain content and release reservations after response completion (971.831001ms)
+✔ cancelling a client retains accepted backend work until it finishes (1112.462709ms)
+✔ bounded admission rejects a busy app while another app continues serving (1256.943876ms)
+✔ gateway exit retains accepted work and the backend releases it after completion (1326.541209ms)
+✔ rolling replacement cannot charge new workers for old accepted requests (1322.324834ms)
+✔ request routing refuses TCP mode instead of claiming backend completion knowledge (81.798416ms)
+✔ aborting a streamed response releases its backend reservation (834.012209ms)
+✔ streamed request bodies arrive intact and without application accounting hooks (814.361917ms)
+✔ backend termination retires accepted reservations before replacing the generation (809.859708ms)
+✔ routing metrics expose worker generations and count admission rejection once (1802.482834ms)
+✔ shutdown cancels unread coordinator response bodies instead of waiting forever (826.813917ms)
+✔ autodetected entrypoints cannot enable internal request routing (73.57975ms)
+✔ cancellation keeps synchronous CPU work reserved until backend production finishes (1303.907167ms)
+✔ a completely unavailable application returns 503 while other applications serve (784.389917ms)
+✔ draining immediately stops admission and retains outstanding metrics until completion (1977.735126ms)
+✔ shutdown during a gateway crash restart preserves mesh exit acknowledgements (815.838875ms)
+✔ scale-up publishes ready replicas and scale-down drains their accepted work (1687.666334ms)
+✔ shutdown during scale-up does not recreate a discarded booting worker (1002.870959ms)
+✔ backend errors release capacity for subsequent requests (1397.006209ms)
+✔ shared cache hits bypass worker reservation and preserve the cached response (1327.704709ms)
+✔ gateway telemetry preserves trace context across the opted-in mesh (788.321417ms)
+✔ channel policies still block opted-in apps while permitted apps remain reachable (788.913417ms)
+✔ construction and client hook errors release unsent reservations (1.49325ms)
+✔ a request aborted before transport dispatch never consumes backend capacity (0.245917ms)
+✔ structured-clone failure removes outgoing callbacks and releases capacity (0.333042ms)
+✔ timeout cancels the caller once while retaining accepted backend work (42.029292ms)
+✔ bitmap word boundaries preserve finite admission at all supported sizes (3.500625ms)
+✔ configured applications without a live route return predictable unavailability (0.315417ms)
+✔ a closing caller cannot publish new reservations to closed channels (0.143708ms)
+✔ mesh acknowledgements do not wait on an already-exited real worker (7.143875ms)
+✔ publishing a routed worker enables existing round-robin callers and preserves unavailability (0.31425ms)
+✔ the round-robin fast path still refuses dispatch after caller close (0.142916ms)
+✔ target channel exit settles callers and an already-pending route drain (0.696459ms)
+✔ capacity is bounded, leases release once and old generations stay separate (1.164167ms)
+✔ a sender interrupted before publishing its lease cannot leak admission capacity (0.121625ms)
+✔ multiple callers share a finite pool without duplicate accepted leases (21.684ms)
+✔ worker selection skips draining workers and keeps reservation pressure across callers (1.088333ms)
+✔ generation leases and metrics continue beyond signed 32-bit request counts (0.096208ms)
+✔ experimental pressure preference falls back to available hot or stale workers (0.254708ms)
+✔ a late backend readiness update cannot revive a draining generation (0.078084ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25559.698762

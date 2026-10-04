@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: should restrict access via interceptor
+ok 1 - should restrict access via interceptor
+  ---
+  duration_ms: 1525.542168
+  type: 'test'
+  ...
+# Subtest: should restrict access via messaging API
+ok 2 - should restrict access via messaging API
+  ---
+  duration_ms: 1494.258459
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3396.137876

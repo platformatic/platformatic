@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: should scale an application if elu is higher than treshold (configuration default)
+ok 1 - should scale an application if elu is higher than treshold (configuration default)
+  ---
+  duration_ms: 1754.473209
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1950.645792
