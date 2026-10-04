@@ -234,7 +234,28 @@ export class NextCapability extends BaseCapability {
 
     try {
       await this.childManager.inject()
-      const childPromise = createChildProcessListener()
+
+      // Redirect the output as soon as the child is spawned. If the server fails during startup,
+      // nextDev never resolves and Next.js exits the thread, so waiting for it would lose the error.
+      const childPromise = createChildProcessListener().then(child => {
+        this.#child = child
+
+        // Paolo: I couldn't really reproduce this, but in some environments our child_process patch
+        // might not work and thus the stdio streams are not pipeable.
+        // Rathen than throwing an error in that case, we log a warning and continue without redirecting the output,
+        // as the worst thing is that the user will lose our formatted output.
+        //
+        // This should be fixable once https://github.com/nodejs/node/pull/61836 lands and it is broadly available.
+        if (typeof child.stdout?.pipe === 'function' && typeof child.stderr?.pipe === 'function') {
+          child.stdout.setEncoding('utf8')
+          child.stderr.setEncoding('utf8')
+
+          child.stdout.pipe(process.stdout, { end: false })
+          child.stderr.pipe(process.stderr, { end: false })
+        } else {
+          this.logger.warn('Unable to redirect Next.js development server output to the main process')
+        }
+      })
 
       this.#ensurePipeableStreamsInFork()
 
@@ -286,23 +307,7 @@ export class NextCapability extends BaseCapability {
         await nextDev(serverOptions, 'default', this.root)
       }
 
-      this.#child = await childPromise
-
-      // Paolo: I couldn't really reproduce this, but in some environments our child_process patch
-      // might not work and thus the stdio streams are not pipeable.
-      // Rathen than throwing an error in that case, we log a warning and continue without redirecting the output,
-      // as the worst thing is that the user will lose our formatted output.
-      //
-      // This should be fixable once https://github.com/nodejs/node/pull/61836 lands and it is broadly available.
-      if (typeof this.#child.stdout?.pipe === 'function' && typeof this.#child.stderr?.pipe === 'function') {
-        this.#child.stdout.setEncoding('utf8')
-        this.#child.stderr.setEncoding('utf8')
-
-        this.#child.stdout.pipe(process.stdout, { end: false })
-        this.#child.stderr.pipe(process.stderr, { end: false })
-      } else {
-        this.logger.warn('Unable to redirect Next.js development server output to the main process')
-      }
+      await childPromise
     } finally {
       await this.childManager.eject()
     }
