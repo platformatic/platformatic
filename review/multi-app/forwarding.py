@@ -11,7 +11,7 @@ def cmd(args):return subprocess.check_output(args,text=True,stderr=subprocess.ST
 def control():return json.loads(cmd(['docker','exec','watt-multi-client','node','-e','fetch("http://watt-multi-server:3999/").then(r=>r.text()).then(console.log)']))
 jobs=[(s,p,h) for s in range(1,a.seeds+1) for p in ['stock','rr','least'] for h in ['h1','h2']]
 random.Random(20261003).shuffle(jobs)
-(OUT/'environment.json').write_text(json.dumps({'server':json.loads(cmd(['docker','inspect','watt-multi-server'])),'client':json.loads(cmd(['docker','inspect','watt-multi-client'])),'node':cmd(['docker','exec','watt-multi-server','node','--version']),'deployedSources':deployed_sources('watt-multi-server',WORKSPACE),'options':vars(a),'baselineMethod':'common entry-module overlay; no custom loader'},indent=2))
+(OUT/'environment.json').write_text(json.dumps({'implementationCommit':__import__('os').environ.get('BENCH_IMPLEMENTATION_COMMIT'),'server':json.loads(cmd(['docker','inspect','watt-multi-server'])),'client':json.loads(cmd(['docker','inspect','watt-multi-client'])),'node':cmd(['docker','exec','watt-multi-server','node','--version']),'deployedSources':deployed_sources('watt-multi-server',WORKSPACE),'options':vars(a),'baselineMethod':'common entry-module overlay; no custom loader'},indent=2))
 summary=[]
 for i,(seed,policy,protocol) in enumerate(jobs):
  print(f'[{i+1}/{len(jobs)}] {policy}-{protocol}-s{seed}',flush=True)

@@ -83,6 +83,7 @@ import {
   kInterceptorReadyPromise,
   kIsSubprocessHost,
   kRequestRoutingState,
+  kWorkerExitHandler,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
@@ -2650,7 +2651,7 @@ export class Runtime extends EventEmitter {
     // Track application exiting
     const eventPayload = { application: applicationId, worker: index, workersCount }
 
-    worker.once('exit', code => {
+    worker[kWorkerExitHandler] = code => {
       if (worker[kWorkerStatus] === 'exited') {
         return
       }
@@ -2695,7 +2696,8 @@ export class Runtime extends EventEmitter {
           }
         }
       })
-    })
+    }
+    worker.once('exit', worker[kWorkerExitHandler])
 
     worker[kId] = workerId
     worker[kFullId] = workerId
@@ -2951,6 +2953,12 @@ export class Runtime extends EventEmitter {
     try {
       await waitEventFromITC(worker, 'init')
     } catch (e) {
+      // A discarded bootstrap still emits exit to transport and ITC waiters.
+      // Shutdown must not turn that acknowledgement into a replacement worker
+      // after stopApplications has already captured the workers to stop.
+      if (['stopping', 'stopped', 'closing', 'closed'].includes(this.#status)) {
+        throw new RuntimeAbortedError({ cause: e })
+      }
       if (attempt === MAX_BOOTSTRAP_ATTEMPTS) {
         const error = new RuntimeAbortedError({ cause: e })
         error.message = `Unable to initialize the ${errorLabel}.`
@@ -3569,11 +3577,12 @@ export class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
-    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
-    // Suppress crash restart without dropping transport/retirement waiters.
-    // Discard can overlap another worker's route-removal acknowledgement.
-    worker[kWorkerStatus] = 'exited'
     beginRequestRoutingDrain(worker[kRequestRoutingState])
+    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
+    // Remove only the runtime's crash handler. Transport, initialization and
+    // retirement waiters still need the actual exit event. Do not overwrite
+    // the bootstrap status while setup/start is concurrently observing it.
+    worker.removeListener('exit', worker[kWorkerExitHandler])
     await worker.terminate()
 
     return this.#cleanupWorker(worker)

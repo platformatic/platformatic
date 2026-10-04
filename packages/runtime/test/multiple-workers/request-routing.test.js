@@ -249,6 +249,49 @@ test('shutdown during a gateway crash restart preserves mesh exit acknowledgemen
   ok(captured.every(worker => worker.threadId === -1))
 })
 
+test('scale-up publishes ready replicas and scale-down drains their accepted work', async t => {
+  const { runtime, url } = await start(t)
+  const { request } = await import('undici')
+  await runtime.updateApplicationsResources([{ application: 'alpha', workers: 3 }])
+  const work = Array.from({ length: 6 }, () => request(url + '/alpha/work?ms=600').then(response => response.body.json()))
+  await waitFor(async () => await outstanding(runtime, 'alpha') === 6)
+  const down = runtime.updateApplicationsResources([{ application: 'alpha', workers: 1 }])
+  const beta = await request(url + '/beta/work')
+  strictEqual(beta.statusCode, 200); strictEqual((await beta.body.json()).app, 'beta')
+  const responses = await Promise.all(work)
+  ok(responses.every(response => response.app === 'alpha'))
+  strictEqual(new Set(responses.map(response => response.worker)).size, 3)
+  await down
+  const alpha = Object.values(await runtime.getWorkers()).filter(worker => worker.application === 'alpha')
+  strictEqual(alpha.length, 1)
+  strictEqual(alpha[0].requestRouting.outstanding, 0)
+  strictEqual(alpha[0].requestRouting.accountingErrors, 0)
+  const next = await request(url + '/alpha/work')
+  strictEqual(next.statusCode, 200); strictEqual((await next.body.json()).worker, Number(alpha[0].worker))
+})
+
+test('shutdown during scale-up does not recreate a discarded booting worker', async t => {
+  const { runtime } = await start(t)
+  const initial = Object.values(await runtime.getWorkers(true))
+  const alphaCount = initial.filter(worker => worker.application === 'alpha').length
+  const update = runtime.updateApplicationsResources([{ application: 'alpha', workers: alphaCount + 1 }])
+  // Observe the new thread before its bootstrap acknowledgement. Shutdown's
+  // worker snapshot includes it, so exit must not retry bootstrap afterwards.
+  let booting
+  await waitFor(async () => {
+    booting = Object.values(await runtime.getWorkers(true)).find(worker => worker.application === 'alpha' && worker.status === 'boot')
+    return booting
+  })
+  const captured = [...initial.map(worker => worker.raw), booting.raw]
+  let initializedAfterStop = 0
+  runtime.on('application:worker:init', () => { initializedAfterStop++ })
+  await runtime.close()
+  await update
+  strictEqual(initializedAfterStop, 0)
+  ok(captured.every(worker => worker.threadId === -1))
+  deepStrictEqual(await runtime.getWorkers(), {})
+})
+
 test('backend errors release capacity for subsequent requests', async t => {
   const { runtime, url } = await start(t)
   const { request } = await import('undici')

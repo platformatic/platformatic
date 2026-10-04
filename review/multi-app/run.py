@@ -48,7 +48,7 @@ if not (OUT/'calibration.json').exists():
  cal=control('calibrate');cal['iterationsPerMs']=round(10000/cal['msPer10000']);(OUT/'calibration.json').write_text(json.dumps(cal,indent=2));stop('calibration')
 cal=json.loads((OUT/'calibration.json').read_text())
 # One snapshot per invocation records the actual deployed code, limits and runtime.
-env={'options':vars(a),'sourceHead':cmd(['git','rev-parse','HEAD']).strip(),'server':json.loads(cmd(['docker','inspect',SERVER])),
+env={'implementationCommit':__import__('os').environ.get('BENCH_IMPLEMENTATION_COMMIT'),'options':vars(a),'sourceHead':cmd(['git','rev-parse','HEAD']).strip(),'server':json.loads(cmd(['docker','inspect',SERVER])),
  'client':json.loads(cmd(['docker','inspect',CLIENT])),'node':cmd(['docker','exec',SERVER,'node','--version']),
  'kernel':cmd(['docker','exec',SERVER,'uname','-a']),'deployedSources':deployed_sources(SERVER,WORKSPACE),'files':{str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for f in (ROOT/'review/multi-app').glob('*') if f.is_file()}}
 (OUT/(a.suite+'-environment.json')).write_text(json.dumps(env,indent=2))
