@@ -66,7 +66,7 @@ async function installDependencies (viteVersion) {
 
   await createDirectory(base)
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-  await execa('pnpm', ['add', '-D', '--ignore-workspace', `vite@${viteVersion}`], { cwd: base })
+  await execa('pnpm', ['add', '-D', '--ignore-workspace', '--allow-build=esbuild', `vite@${viteVersion}`], { cwd: base })
 }
 
 async function boundLinkVite (viteVersion) {
