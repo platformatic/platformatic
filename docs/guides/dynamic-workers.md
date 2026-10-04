@@ -115,6 +115,8 @@ Individual applications can configure their worker limits using the `workers` pr
 | **dynamic** | Enable dynamic worker scaling for this application | Global setting |
 | **minimum** | Minimum workers for this application | 1 |
 | **maximum** | Maximum workers for this application | Global total |
+| **scaleUpELU** | ELU threshold to trigger scaling up for this application (0-1) | Global setting |
+| **scaleDownELU** | ELU threshold to trigger scaling down for this application (0-1) | Global setting |
 
 Example (in application's `platformatic.json`):
 ```json
