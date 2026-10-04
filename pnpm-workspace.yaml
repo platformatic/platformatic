@@ -37,6 +37,8 @@ minimumReleaseAgeExclude:
   - find-my-way@9.7.0
   # Renovate security update: @fastify/static@10.1.2
   - "@fastify/static@10.1.2"
+  # Renovate security update: fastify@5.12.5
+  - fastify@5.12.5
 nodeLinker: hoisted
 # With the hoisted linker, a tree containing several esbuild versions can end up with the
 # `esbuild` package and the hoisted `@esbuild/<platform>` binary at different versions, which
