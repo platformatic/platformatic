@@ -39,6 +39,8 @@ minimumReleaseAgeExclude:
   - "@fastify/static@10.1.2"
   # Renovate security update: fastify@5.12.5
   - fastify@5.12.5
+  # Renovate security update: @nestjs/platform-fastify@11.2.4
+  - "@nestjs/platform-fastify@11.2.4"
 nodeLinker: hoisted
 # With the hoisted linker, a tree containing several esbuild versions can end up with the
 # `esbuild` package and the hoisted `@esbuild/<platform>` binary at different versions, which
