@@ -7,6 +7,7 @@ quantile=lambda x,q: sorted(x)[min(len(x)-1,int(len(x)*q))] if x else None
 spread=lambda x: {'median':statistics.median(x),'min':min(x),'max':max(x),'n':len(x)} if x else None
 runs=[]
 for f in root.glob('*-summary.json'): runs+=json.loads(f.read_text())
+assert len({r['label'] for r in runs})==len(runs),'Duplicate run labels: raw files may have been overwritten'
 groups=collections.defaultdict(list);health=collections.defaultdict(list);checks=[]; per_run_health=[]
 for r in runs:
  offered=sum(v['offered'] for v in r['apps'].values())
@@ -16,6 +17,8 @@ for r in runs:
  assert not [e for e in r['errors'] if (e.get('error')=='invalid JSON' or str(e.get('error','')).startswith('invalid response'))],(r['label'],'incorrect response')
  configured=[w['routing'] for w in r['after']['workers'] if w['routing']]
  assert all(x['outstanding']==0 for x in configured),(r['label'],'reservation leak')
+ current=[w['requestRouting'] for w in r['after']['runtimeWorkers'] if w.get('requestRouting')]
+ assert all(x['outstanding']==0 for x in current),(r['label'],'current shared state did not drain')
  if not r['label'].startswith('scaler'):assert all(x['selected']==x['completed'] for x in configured),(r['label'],'accounting mismatch')
  checks.append({'label':r['label'],'offered':offered,'successes':len(r['samples']),'errors':len(r['errors']),'accountingDrained':True})
  # Strip only policy and seed from a label; different mixes/frontends stay separate.

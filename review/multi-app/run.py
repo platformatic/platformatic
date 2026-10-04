@@ -2,11 +2,13 @@
 import argparse, json, pathlib, random, subprocess, time, hashlib
 from evidence import deployed_sources
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+LOADED_DRIVER = pathlib.Path(__file__).read_bytes()
 OUT = ROOT / 'results/review/multi-app'
 SERVER, CLIENT = 'watt-multi-server', 'watt-multi-client'
 WORKSPACE = __import__('os').environ.get('BENCH_WORKSPACE', '/work')
 p = argparse.ArgumentParser()
 p.add_argument('--smoke', action='store_true'); p.add_argument('--resume', action='store_true')
+p.add_argument('--load-profile', action='store_true', help='Use saved isolated-goodput diagnostic rate anchors')
 p.add_argument('--revision', default='release')
 p.add_argument('--policies', nargs='+', choices=['rr','least','pressure'])
 p.add_argument('--protocols', nargs='+', choices=['h1','h2','h1tls','h2tls'])
@@ -42,13 +44,23 @@ def generate(options, path):
  options['startAt']=int(time.time()*1000)+300
  value=cmd(['docker','exec',CLIENT,'node','/tmp/multi-client.mjs',json.dumps(options)])
  path.write_text(value);return json.loads(value)
+def settled(after):
+ # Health samples may be old while synchronous work blocks a backend. Read
+ # reservation state from the supervisor's current shared-buffer snapshot.
+ backends=[w for w in after['runtimeWorkers'] if w['application'] in after['ids']]
+ current={w['thread'] for w in backends if w['status']=='started'}
+ sampled={w['threadId'] for w in after['workers']}
+ return (current<=sampled and
+  all(w.get('requestRouting',{}).get('outstanding',0)==0 for w in backends) and
+  all(w['running']==0 and 0<=after['at']-w['at']<=1500 for w in after['workers']))
 OUT.mkdir(parents=True,exist_ok=True)
+(OUT/(a.suite+'-driver.py')).write_bytes(LOADED_DRIVER)
 if not (OUT/'calibration.json').exists():
  start('rr','h1',apps=['catalog'],hotspots=False)
  cal=control('calibrate');cal['iterationsPerMs']=round(10000/cal['msPer10000']);(OUT/'calibration.json').write_text(json.dumps(cal,indent=2));stop('calibration')
 cal=json.loads((OUT/'calibration.json').read_text())
 # One snapshot per invocation records the actual deployed code, limits and runtime.
-env={'implementationCommit':__import__('os').environ.get('BENCH_IMPLEMENTATION_COMMIT'),'options':vars(a),'sourceHead':cmd(['git','rev-parse','HEAD']).strip(),'server':json.loads(cmd(['docker','inspect',SERVER])),
+env={'implementationCommit':__import__('os').environ.get('BENCH_IMPLEMENTATION_COMMIT'),'loadedDriverSha256':hashlib.sha256(LOADED_DRIVER).hexdigest(),'options':vars(a),'sourceHead':cmd(['git','rev-parse','HEAD']).strip(),'server':json.loads(cmd(['docker','inspect',SERVER])),
  'client':json.loads(cmd(['docker','inspect',CLIENT])),'node':cmd(['docker','exec',SERVER,'node','--version']),
  'kernel':cmd(['docker','exec',SERVER,'uname','-a']),'deployedSources':deployed_sources(SERVER,WORKSPACE),'files':{str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for f in (ROOT/'review/multi-app').glob('*') if f.is_file()}}
 (OUT/(a.suite+'-environment.json')).write_text(json.dumps(env,indent=2))
@@ -57,6 +69,12 @@ if a.suite=='rates':cases=[('healthy',20,[50,20,20,10],None,1,True),('overload',
 if a.suite=='isolated':cases=[(app,rate,[1],[app],1,False) for app in ['catalog','rendering','search','personalization'] for rate in ([100,500,1000] if app=='catalog' else [4,8,12] if app=='rendering' else [50,150,300] if app=='search' else [8,16,24])]
 if a.suite=='frontends':cases=[('frontend',35,[50,20,20,10],None,f,True) for f in [2,4]]
 if a.suite=='uniform':cases=[('uniform',35,[50,20,20,10],None,1,False)]
+if a.load_profile:
+ profile=json.loads((OUT/'load-profile.json').read_text())
+ if a.suite=='rates':
+  cases=[(name,profile['rates'][name],[20,50,20,10] if name=='render-hot' else [50,20,20,10],None,1,True) for name in ['healthy','near','overload','render-hot']]
+ else:
+  cases=[(name,profile['rates']['primary'],weights,apps,frontends,hotspots) for name,rate,weights,apps,frontends,hotspots in cases]
 policies=['rr','least','pressure']; protocols=['h1','h2'];seeds=range(1,a.seeds+1)
 if a.suite=='tls':protocols=['h1tls','h2tls']
 if a.suite=='scaler':policies=['rr','least'];protocols=['h1'];seeds=range(1,a.seeds+1);a.seconds=max(180,a.seconds)
@@ -71,7 +89,8 @@ file=OUT/(a.suite+('-smoke' if a.smoke else '')+'-summary.json')
 records=json.loads(file.read_text()) if a.resume and file.exists() else []
 done={r['label'] for r in records}
 for i,(seed,policy,protocol,(name,rate,weights,apps,frontends,hotspots)) in enumerate(jobs):
- label=f'{a.suite}-{"smoke-" if a.smoke else ""}{name}-{policy}-{protocol}-f{frontends}-s{seed}'
+ case_name=f'{name}-r{rate}' if a.suite=='isolated' else name
+ label=f'{a.suite}-{"smoke-" if a.smoke else ""}{case_name}-{policy}-{protocol}-f{frontends}-s{seed}'
  if label in done:continue
  print(f'[{i+1}/{len(jobs)}] {label}',flush=True)
  start(policy,protocol,frontends,apps,hotspots)
@@ -84,10 +103,19 @@ for i,(seed,policy,protocol,(name,rate,weights,apps,frontends,hotspots)) in enum
  # application work to settle, while preserving all timed-out outcomes.
  for _ in range(160):
   after=control()
-  if all(w['running']==0 and (w['routing'] is None or w['routing']['outstanding']==0) for w in after['workers']):break
+  if settled(after):break
   time.sleep(.25)
  else:raise RuntimeError('backend did not drain')
  timeline=control('timeline');(OUT/(label+'.health.json')).write_text(json.dumps(timeline,indent=2))
+ if a.suite=='scaler' and not (timeline.get('scalerEnabled') and timeline.get('scalerChecks',0)>0):
+  raise RuntimeError('Scaler experiment did not execute any scaling decisions')
+ # Preserve the sampled value and expose the current reservation snapshot for
+ # the final drain/accounting assertions, without altering the health timeline.
+ current={w['thread']:w.get('requestRouting') for w in after['runtimeWorkers']}
+ for worker in after['workers']:
+  worker['sampledRouting']=worker['routing']
+  worker['routing']=current.get(worker['threadId'])
+  worker['routingSnapshotAt']=after['at']
  stop(label)
  result.update(label=label,policy=policy,protocol=protocol,before=before,after=after)
  records.append(result);file.write_text(json.dumps(records,indent=2))

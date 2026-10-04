@@ -4,11 +4,22 @@ import { BroadcastChannel } from 'node:worker_threads'
 import { performance } from 'node:perf_hooks'
 import { pbkdf2Sync } from 'node:crypto'
 import { create } from '../../packages/runtime/index.js'
+import { ScalingAlgorithm } from '../../packages/runtime/lib/scaling-algorithm.js'
 import { fileURLToPath } from 'node:url'
 const workspace = fileURLToPath(new URL('../..', import.meta.url)).replace(/\/$/, '')
 const scaler = process.env.MULTI_SCALER === '1'
 const tls = process.env.MULTI_PROTOCOL?.endsWith('tls')
 const events = []
+const scalingDecisions = []
+if (scaler) {
+  // Observe the existing scaler without changing its recommendations.
+  const recommend = ScalingAlgorithm.prototype.getRecommendations
+  ScalingAlgorithm.prototype.getRecommendations = function (workers, options) {
+    const recommendations = recommend.call(this, workers, options)
+    scalingDecisions.push({ at: Date.now(), workers, options, recommendations })
+    return recommendations
+  }
+}
 const ids = process.env.MULTI_APPS ? process.env.MULTI_APPS.split(',') : ['catalog', 'rendering', 'search', 'personalization']
 const root = '/tmp/watt-multi-app'
 const health = new Map(), timeline = []
@@ -40,7 +51,7 @@ await writeFile(root + '/platformatic.json', JSON.stringify({
   server: { hostname: '0.0.0.0', port: 3000, ...(process.env.MULTI_PROTOCOL?.startsWith('h2') ? { http2: true } : {}),
     ...(tls ? { https: { key: { path: `${workspace}/review/multi-app/tls/key.pem` }, cert: { path: `${workspace}/review/multi-app/tls/cert.pem` }, allowHTTP1: true } } : {}) },
   health: { enabled: false, maxHeapTotal: 268435456, maxYoungGeneration: 16777216 },
-  ...(scaler ? { workers: { total: 9, maximum: 3, maxMemory: 1610612736, cooldown: 0, gracePeriod: 0 } } : {}),
+  ...(scaler ? { workers: { dynamic: true, total: 9, maximum: 3, maxMemory: 1610612736, cooldown: 0, gracePeriod: 0 } } : {}),
   logger: { level: 'silent' }, managementApi: false, watch: false
 }))
 const runtime = await create(root + '/platformatic.json', undefined, { isProduction: true, setupSignals: false })
@@ -57,6 +68,9 @@ const control = createServer(async (req, res) => {
   const current = Object.values(await runtime.getWorkers()).filter(w => w.status === 'started' && ids.includes(w.application))
   const active = [...health.values()].filter(w => current.some(c => c.thread === w.threadId))
   res.end(JSON.stringify({ at: Date.now(), ready: ids.every(id => active.some(w => w.app === id)), ids, workers: active, runtimeWorkers: Object.values(await runtime.getWorkers()), events,
-    timeline: req.url === '/timeline' ? timeline : undefined, cpu, memory: Number(memory), memoryEvents, rss: process.memoryUsage().rss }))
+    timeline: req.url === '/timeline' ? timeline : undefined,
+    scalerEnabled: scaler, scalerChecks: scalingDecisions.length,
+    scalingDecisions: req.url === '/timeline' ? scalingDecisions : undefined,
+    cpu, memory: Number(memory), memoryEvents, rss: process.memoryUsage().rss }))
 })
 control.listen(3999, '0.0.0.0', () => console.log('ready'))

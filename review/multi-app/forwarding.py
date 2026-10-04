@@ -2,16 +2,18 @@
 """Compare final least-outstanding with the maintained RR and pristine RR transport.
 Runs serially; do not run concurrently with the multi-app matrix.
 """
-import argparse, json, pathlib, random, subprocess, time
+import argparse, json, pathlib, random, subprocess, time, hashlib
 from evidence import deployed_sources
-p=argparse.ArgumentParser();p.add_argument('--seeds',type=int,default=5);p.add_argument('--seconds',type=int,default=20);p.add_argument('--revision',default='forwarding-final');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--seeds',type=int,default=5);p.add_argument('--seconds',type=int,default=20);p.add_argument('--revision',default='forwarding-final')
+p.add_argument('--first-seed',type=int,default=1);p.add_argument('--warmup',type=int,default=3);a=p.parse_args()
+if a.first_seed<1 or a.seeds<1 or a.seconds<1 or a.warmup<0:raise ValueError('Invalid forwarding duration or seed range')
 WORKSPACE=__import__('os').environ.get('BENCH_WORKSPACE','/work')
 OUT=pathlib.Path('results/review/multi-app')/a.revision;OUT.mkdir(parents=True,exist_ok=True)
 def cmd(args):return subprocess.check_output(args,text=True,stderr=subprocess.STDOUT)
 def control():return json.loads(cmd(['docker','exec','watt-multi-client','node','-e','fetch("http://watt-multi-server:3999/").then(r=>r.text()).then(console.log)']))
-jobs=[(s,p,h) for s in range(1,a.seeds+1) for p in ['stock','rr','least'] for h in ['h1','h2']]
-random.Random(20261003).shuffle(jobs)
-(OUT/'environment.json').write_text(json.dumps({'implementationCommit':__import__('os').environ.get('BENCH_IMPLEMENTATION_COMMIT'),'server':json.loads(cmd(['docker','inspect','watt-multi-server'])),'client':json.loads(cmd(['docker','inspect','watt-multi-client'])),'node':cmd(['docker','exec','watt-multi-server','node','--version']),'deployedSources':deployed_sources('watt-multi-server',WORKSPACE),'options':vars(a),'baselineMethod':'common entry-module overlay; no custom loader'},indent=2))
+jobs=[(s,p,h) for s in range(a.first_seed,a.first_seed+a.seeds) for p in ['stock','rr','least'] for h in ['h1','h2']]
+random.Random(20261003+a.first_seed-1).shuffle(jobs)
+(OUT/'environment.json').write_text(json.dumps({'implementationCommit':__import__('os').environ.get('BENCH_IMPLEMENTATION_COMMIT'),'server':json.loads(cmd(['docker','inspect','watt-multi-server'])),'client':json.loads(cmd(['docker','inspect','watt-multi-client'])),'node':cmd(['docker','exec','watt-multi-server','node','--version']),'deployedSources':deployed_sources('watt-multi-server',WORKSPACE),'hostDriverSha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [pathlib.Path(__file__),pathlib.Path(__file__).with_name('evidence.py')]},'options':vars(a),'shuffleSeed':20261003+a.first_seed-1,'baselineMethod':'common entry-module overlay; no custom loader'},indent=2))
 summary=[]
 for i,(seed,policy,protocol) in enumerate(jobs):
  print(f'[{i+1}/{len(jobs)}] {policy}-{protocol}-s{seed}',flush=True)
@@ -32,8 +34,9 @@ for i,(seed,policy,protocol) in enumerate(jobs):
  def generate(seconds):
   opts['seconds']=seconds;opts['startAt']=int(time.time()*1000)+300
   return json.loads(cmd(['docker','exec','watt-multi-client','node','/tmp/forwarding-client.mjs',json.dumps(opts)]))
- generate(3);before=control();value=generate(a.seconds);after=control()
  label=f'{policy}-{protocol}-s{seed}'
+ warmup=generate(a.warmup);(OUT/(label+'.warmup.json')).write_text(json.dumps(warmup,indent=2))
+ before=control();value=generate(a.seconds);after=control()
  value.update(label=label,policy=policy,protocol=protocol,before=before,after=after)
  (OUT/(label+'.json')).write_text(json.dumps(value,indent=2));summary.append(value)
  (OUT/'summary.json').write_text(json.dumps(summary,indent=2))
