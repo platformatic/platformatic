@@ -63,7 +63,8 @@ test('worker selection skips draining workers and keeps reservation pressure acr
   const states = [createState({ maxOutstanding: 2 }), createState({ maxOutstanding: 2 })]
   const ports = states.map((state, i) => ({ [kReady]: true, [kThread]: i + 1, [routing.kRouting]: state }))
   states.forEach(s => setReady(s, true)); ports.forEach(p => rr.add(p))
-  const first = routing.select(rr, 'alpha'), second = routing.select(rr, 'alpha')
+  const first = routing.select(rr, 'alpha')
+  const second = routing.select(rr, 'alpha')
   ok(first.port !== second.port)
   setReady(states[0], false)
   const third = routing.select(rr, 'alpha'); strictEqual(third.port, ports[1])
@@ -84,7 +85,6 @@ test('generation leases and metrics continue beyond signed 32-bit request counts
   strictEqual(snapshot(state).completed, 0x80000000); strictEqual(snapshot(state).outstanding, 0)
 })
 
-
 test('experimental pressure preference falls back to available hot or stale workers', async () => {
   const { RoundRobin } = await import('../lib/mesh/lib/roundrobin.js')
   const { default: { kReady } } = await import('../lib/mesh/lib/utils.js')
@@ -99,7 +99,6 @@ test('experimental pressure preference falls back to available hot or stale work
   states.forEach(s => Atomics.store(routing.view(s), 10, (Date.now() - 2000) & 0x7fffffff))
   const stale = routing.select(rr, 'alpha'); ok(stale.reservation); release(stale.reservation)
 })
-
 
 test('a late backend readiness update cannot revive a draining generation', () => {
   const state = createState({ maxOutstanding: 1 }); setReady(state, true)

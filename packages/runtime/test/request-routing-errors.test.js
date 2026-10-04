@@ -114,7 +114,6 @@ test('the round-robin fast path still refuses dispatch after caller close', t =>
   throws(() => dispatch(opts, { onRequestStart () {} }), /dispatcher has been closed/)
 })
 
-
 test('target channel exit settles callers and an already-pending route drain', async t => {
   const { state, port1, port2, mesh, dispatch } = setup(t)
   mesh[utils.kRoutes].clear()
