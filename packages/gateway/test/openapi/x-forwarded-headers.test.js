@@ -10,6 +10,7 @@ test('should expose x-forwarded-* headers', async t => {
 
   const config = {
     server: {
+      hostname: '127.0.0.1',
       logger: {
         level: 'fatal'
       }
@@ -41,7 +42,6 @@ test('should expose x-forwarded-* headers', async t => {
   const returnedHeaders = await body.json()
 
   const expectedForwardedHost = gatewayOrigin.replace('http://', '')
-  const [expectedForwardedFor] = expectedForwardedHost.split(':')
   assert.equal(returnedHeaders['x-forwarded-host'], expectedForwardedHost)
-  assert.equal(returnedHeaders['x-forwarded-for'], expectedForwardedFor)
+  assert.equal(returnedHeaders['x-forwarded-for'], '127.0.0.1')
 })
