@@ -13,7 +13,7 @@ test('getArrayDifference', async () => {
 })
 
 test('getMemoryInfo - should get the host memory info', async () => {
-  const memInfo = await getMemoryInfo()
+  const memInfo = await getMemoryInfo({ scope: 'host' })
   equal(memInfo.scope, 'host')
   ok(memInfo.used > 0)
   ok(memInfo.total > 0)
