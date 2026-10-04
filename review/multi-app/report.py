@@ -29,6 +29,10 @@ forwarding = {'short': read(a.short, 'aggregate.json'), 'steady': read(a.steady,
 assert all(x['runs'] == 7 for rows in forwarding.values() for x in rows)
 instrumentation = read(a.instrumentation, 'validation.json')
 assert len(instrumentation) == 12 and all(not x['errors'] for x in instrumentation)
+environments = [read(a.fixed, 'primary-environment.json'), read(a.scaler, 'scaler-environment.json'),
+                read(a.short, 'environment.json'), read(a.steady, 'environment.json')]
+production_sources = {k: v for k, v in environments[0]['deployedSources'].items() if not k.startswith('review/')}
+assert all({k: v for k, v in e['deployedSources'].items() if not k.startswith('review/')} == production_sources for e in environments), 'Mixed production source revisions'
 resources = []
 decisions = []
 static_scaler_runs = {r['label']: r for r in read(a.fixed, 'scaler-summary.json')}
@@ -60,6 +64,7 @@ for revision in [a.fixed, a.scaler]:
                 decisions.append({'label': run['label'], 'checks': health['scalerChecks'],
                     'recommendations': recommendations, 'events': after['events']})
 summary = {'implementationCommit': 'dd9c49ed64eeee5fc918cf1e72eac3cd807a403d',
+    'deployedProductionSources': production_sources,
     'cohorts': vars(a), 'checks': valid, 'apps': apps, 'resources': resources,
     'primaryWorkerProfiles': [x for x in fixed['workers'] if x['case'].startswith('primary-')],
     'scaling': decisions, 'allocationDiagnosticPairs': allocation_pairs,
@@ -153,7 +158,7 @@ line()
 table(['Case', 'Scaler checks', 'Recommendations', 'Started / stopped / exited events'],
     [[d['label'], d['checks'], len(d['recommendations']),
       ' / '.join(str(collections.Counter(e['name'] for e in d['events'])[f'application:worker:{name}']) for name in ['started', 'stopped', 'exited'])] for d in decisions])
-line('Zero recommendations are a measured scaler outcome, not evidence that scale-up/down was exercised. Actual scaling with accepted requests and concurrent shutdown is covered separately by integration tests. Routing within an app and allocating workers among apps remain different decisions.')
+line('Every corrected run recommended catalog/search scale-down to one worker and rendering scale-up to three, finishing with eight active workers including the gateway. Actual scaling with accepted requests and concurrent shutdown is also covered by integration tests. Routing within an app and allocating workers among apps remain different decisions.')
 line()
 line('The earlier six scaler-labelled cases actually held worker counts fixed. They can be used as explicitly labelled 180-second fixed-worker diagnostics: each corrected case has an identical saved arrival schedule, request content and policy. Median p99 across three seeds is below. These successive cohorts also differ in scaler health collection/observation and execution time; they are not a randomized production A/B or evidence of an SLO.')
 line()
