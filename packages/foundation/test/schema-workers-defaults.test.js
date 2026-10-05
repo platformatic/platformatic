@@ -43,3 +43,16 @@ test('validates predictive tuning ranges and cooldown keys', () => {
     assert.equal(validate(value), false)
   }
 })
+
+test('runtime and application worker thresholds must be positive when set', () => {
+  for (const schema of [workers, application.properties.workers]) {
+    const validate = validator(schema)
+    assert.ok(validate({ dynamic: true }))
+    for (const key of ['eluThreshold', 'heapThresholdMb']) {
+      for (const value of [0, -1]) assert.equal(validate({ [key]: value }), false, `${key}: ${value}`)
+      for (const value of [0.0001, 1]) assert.ok(validate({ [key]: value }), `${key}: ${value}`)
+    }
+    assert.equal(validate({ eluThreshold: 1.0001 }), false)
+    assert.ok(validate({ heapThresholdMb: 128 }))
+  }
+})

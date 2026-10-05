@@ -1541,12 +1541,12 @@
                       },
                       "eluThreshold": {
                         "type": "number",
-                        "minimum": 0,
+                        "exclusiveMinimum": 0,
                         "maximum": 1
                       },
                       "heapThresholdMb": {
                         "type": "number",
-                        "minimum": 0
+                        "exclusiveMinimum": 0
                       },
                       "scaleUpMargin": {
                         "type": "number",
@@ -1982,12 +1982,12 @@
                 },
                 "eluThreshold": {
                   "type": "number",
-                  "minimum": 0,
+                  "exclusiveMinimum": 0,
                   "maximum": 1
                 },
                 "heapThresholdMb": {
                   "type": "number",
-                  "minimum": 0
+                  "exclusiveMinimum": 0
                 },
                 "processIntervalMs": {
                   "type": "number",
@@ -3607,12 +3607,12 @@
                     },
                     "eluThreshold": {
                       "type": "number",
-                      "minimum": 0,
+                      "exclusiveMinimum": 0,
                       "maximum": 1
                     },
                     "heapThresholdMb": {
                       "type": "number",
-                      "minimum": 0
+                      "exclusiveMinimum": 0
                     },
                     "scaleUpMargin": {
                       "type": "number",
