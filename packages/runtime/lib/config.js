@@ -1,6 +1,7 @@
 import { createDirectory, kMetadata, loadModule } from '@platformatic/foundation'
 import { loadAdditionalApplications } from '@platformatic/foundation/loader'
 import { createRequire, findPackageJSON } from 'node:module'
+import { availableParallelism } from 'node:os'
 import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -17,80 +18,59 @@ import {
 const runtimeScopePath = fileURLToPath(new URL('../index.js', import.meta.url))
 
 // Validate and coerce workers values early to avoid runtime hangs when invalid
-function coercePositiveInteger (value) {
-  if (typeof value === 'number') {
-    if (!Number.isInteger(value) || value < 1) return null
-    return value
+function coercePositiveInteger (value, location) {
+  const count = typeof value === 'string' ? Number(value) : value
+  if (!Number.isInteger(count) || count < 1) {
+    const hint = typeof value === 'string' && /\{.*\}/.test(value) ? ' (check your environment variable)' : ''
+    throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${value}"${hint}`)
   }
-  if (typeof value === 'string') {
-    // Trim to handle accidental spaces
-    const trimmed = value.trim()
-    if (trimmed.length === 0) return null
-    const num = Number(trimmed)
-    if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1) return null
-    return num
-  }
-  return null
+  return count
 }
 
-function raiseInvalidWorkersError (location, received, hint) {
-  const extra = hint ? ` (${hint})` : ''
-  throw new InvalidArgumentError(`${location} workers must be a positive integer; received "${received}"${extra}`)
-}
+function coerceWorkers (workers, prefix) {
+  if (workers === undefined) return {}
 
-function parseWorkers (config, prefix, defaultWorkers = { static: 1, dynamic: false }) {
-  if (typeof config.workers !== 'undefined') {
-    // Number
-    if (typeof config.workers !== 'object') {
-      const coerced = coercePositiveInteger(config.workers)
-
-      if (coerced === null) {
-        const raw = config.workers
-        const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
-        raiseInvalidWorkersError(prefix, config.workers, hint)
-      } else {
-        config.workers = { static: coerced, dynamic: false }
-      }
-      // Object
-    } else {
-      for (const key of ['minimum', 'maximum', 'static']) {
-        if (typeof config.workers[key] === 'undefined') {
-          continue
-        }
-
-        const coerced = coercePositiveInteger(config.workers[key])
-        if (coerced === null) {
-          const raw = config.workers
-          const hint = typeof raw === 'string' && /\{.*\}/.test(raw) ? 'check your environment variable' : ''
-          raiseInvalidWorkersError(`${prefix} ${key}`, config.workers, hint)
-        } else {
-          config.workers[key] = coerced
-        }
-      }
+  if (typeof workers !== 'object') {
+    return {
+      static: coercePositiveInteger(workers, prefix),
+      dynamic: false
     }
-  } else {
-    config.workers = {}
   }
 
-  // Fill missing values from defaults
+  for (const key of ['minimum', 'maximum', 'static']) {
+    if (workers[key] !== undefined) {
+      workers[key] = coercePositiveInteger(workers[key], `${prefix} ${key}`)
+    }
+  }
+  return workers
+}
+
+function parseRuntimeWorkers (config) {
+  const workers = coerceWorkers(config.workers, 'Runtime')
+  workers.total ??= availableParallelism()
+  workers.static ??= 1
+  workers.dynamic ??= false
+
+  applyWorkersLimits(workers, workers.total)
+  config.workers = workers
+}
+
+function parseApplicationWorkers (applicationConfig, config) {
+  const workers = coerceWorkers(applicationConfig.workers, `Service "${applicationConfig.id}"`)
   for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
-    if (typeof config.workers[key] === 'undefined' && typeof defaultWorkers[key] !== 'undefined') {
-      config.workers[key] = defaultWorkers[key]
-    }
+    workers[key] ??= config.workers[key]
   }
 
-  // Additional validations
-  if (config.workers.maximum < config.workers.minimum) {
-    const t = config.workers.minimum
-    config.workers.minimum = config.workers.maximum
-    config.workers.maximum = t
-  }
+  applyWorkersLimits(workers, config.workers.total)
+  applicationConfig.workers = workers
+}
 
-  if (config.workers.dynamic) {
-    config.workers.minimum ??= 1
-    config.workers.static = config.workers.minimum
-  } else if (typeof config.workers.static === 'undefined') {
-    config.workers.static = config.workers.minimum
+function applyWorkersLimits (workers, totalWorkers) {
+  workers.maximum = Math.min(workers.maximum ?? totalWorkers, totalWorkers)
+  workers.minimum = Math.min(workers.minimum ?? 1, workers.maximum)
+
+  if (workers.dynamic || workers.static === undefined) {
+    workers.static = workers.minimum
   }
 }
 
@@ -195,7 +175,7 @@ export async function prepareAddedApplications (config, entries, existingIds = [
   const prepared = []
 
   for (const application of applications) {
-    prepared.push(await prepareRuntimeApplication(config, application, config.workers))
+    prepared.push(await prepareRuntimeApplication(config, application))
   }
 
   return prepared
@@ -297,9 +277,9 @@ function verifyApplicationsPorts (applications) {
 
 // Everything an application needs regardless of how its capability was determined, taken from the
 // loader's envelope before any worker exists rather than by loading the application's config file.
-export function finalizeApplication (config, application, defaultWorkers) {
+export function finalizeApplication (config, application) {
   // Validate and coerce per-service workers
-  parseWorkers(application, `Service "${application.id}"`, defaultWorkers)
+  parseApplicationWorkers(application, config)
 
   application.dependencies ??= []
   application.localUrl = `http://${application.id}.plt.local`
@@ -321,7 +301,7 @@ export function finalizeApplication (config, application, defaultWorkers) {
   existed. So there is nothing to discover here, and in particular no application config file to
   re-read: that is the whole point of evaluating configuration exactly once per load.
 */
-export async function prepareRuntimeApplication (config, application, defaultWorkers) {
+export async function prepareRuntimeApplication (config, application) {
   // resolvedConfig replaces the config file path in workerData: the worker receives the validated
   // capability payload as data and never re-reads a file.
   application.resolvedConfig = application.config ?? {}
@@ -368,7 +348,7 @@ export async function prepareRuntimeApplication (config, application, defaultWor
     }
   }
 
-  return finalizeApplication(config, application, defaultWorkers)
+  return finalizeApplication(config, application)
 }
 
 // The half of the transform the loader does not own: inspector options, worker counts, the
@@ -379,11 +359,10 @@ export async function finalizeConfiguration (config, applications, context, prod
   parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
   // Root-level workers
-  parseWorkers(config, 'Runtime')
-  const defaultWorkers = config.workers
+  parseRuntimeWorkers(config)
 
   for (let i = 0; i < applications.length; ++i) {
-    await prepare(config, applications[i], defaultWorkers)
+    await prepare(config, applications[i])
   }
 
   verifyApplicationsPorts(applications)

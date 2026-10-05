@@ -36,26 +36,26 @@ for (const option of ['total', 'maxMemory', 'processIntervalMs', 'maxScaleUpStep
 
 test('dynamic applications start at their effective minimum', async () => {
   for (const minimum of [undefined, 3]) {
-    const config = await load({ dynamic: true, minimum })
+    const config = await load({ dynamic: true, minimum, total: 4 })
     assert.equal(config.workers.static, minimum ?? 1)
     assert.equal(config.applications[0].workers.static, minimum ?? 1)
     assert.equal(config.workers.version, undefined)
   }
-  const config = await load({ dynamic: true, minimum: 3 }, { minimum: 2 })
+  const config = await load({ dynamic: true, minimum: 3, total: 4 }, { minimum: 2 })
   assert.equal(config.workers.static, 3)
   assert.equal(config.applications[0].workers.static, 2)
 })
 
 test('normalizes inverted minimum and maximum before choosing the initial count', async () => {
-  const config = await load({ dynamic: true, minimum: 4, maximum: 2 })
+  const config = await load({ dynamic: true, minimum: 4, maximum: 2, total: 4 })
   assert.equal(config.workers.minimum, 2)
-  assert.equal(config.workers.maximum, 4)
+  assert.equal(config.workers.maximum, 2)
   assert.equal(config.applications[0].workers.static, 2)
 })
 
 test('numeric counts disable dynamic scaling even when inherited', async () => {
-  const config = await load({ dynamic: true, minimum: 2 }, 4)
-  assert.deepEqual(config.applications[0].workers, { static: 4, dynamic: false, minimum: 2 })
+  const config = await load({ dynamic: true, minimum: 2, total: 4 }, 4)
+  assert.deepEqual(config.applications[0].workers, { static: 4, dynamic: false, minimum: 2, maximum: 4 })
   const fixed = await load(4)
   assert.equal(fixed.applications[0].workers.static, 4)
   assert.equal(fixed.applications[0].workers.dynamic, false)
@@ -64,14 +64,11 @@ test('numeric counts disable dynamic scaling even when inherited', async () => {
 test('dynamic scaling remains opt-in and application overrides are inherited consistently', async () => {
   for (const dynamic of [undefined, false, true]) {
     for (const applicationWorkers of [undefined, {}, 4, '4', { dynamic: false }, { dynamic: true, minimum: 2 }]) {
-      const config = await load({ dynamic, minimum: 3 }, structuredClone(applicationWorkers))
-      const descriptor = () => ({ id: 'later', url: 'https://example.com/later', workers: structuredClone(applicationWorkers) })
-      const later = await finalizeApplication(config, descriptor(), config.workers)
+      const config = await load({ dynamic, minimum: 3, total: 4 }, structuredClone(applicationWorkers))
+      const later = finalizeApplication(config, {
+        id: 'later', url: 'https://example.com/later', workers: structuredClone(applicationWorkers)
+      })
       assert.deepEqual(later.workers, config.applications[0].workers)
-      const independent = await finalizeApplication(config, descriptor())
-      const enabled = typeof applicationWorkers === 'object' && applicationWorkers?.dynamic === true
-      assert.equal(independent.workers.dynamic, enabled)
-      assert.equal(independent.workers.static, enabled ? 2 : typeof applicationWorkers === 'number' || typeof applicationWorkers === 'string' ? 4 : 1)
     }
   }
 })

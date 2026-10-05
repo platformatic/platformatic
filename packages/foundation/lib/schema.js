@@ -46,15 +46,15 @@ export const env = {
 
 export const workers = {
   anyOf: [
-    { type: 'number', minimum: 1 },
+    { type: 'integer', minimum: 1 },
     { type: 'string' },
     {
       type: 'object',
       properties: {
         dynamic: { type: 'boolean' },
-        minimum: { type: 'number', minimum: 1 },
-        maximum: { type: 'number', minimum: 0 },
-        total: { type: 'number', minimum: 1 },
+        minimum: { type: 'integer', minimum: 1 },
+        maximum: { type: 'integer', minimum: 0 },
+        total: { type: 'integer', minimum: 1 },
         maxMemory: { type: 'number', minimum: 0 },
         eluThreshold: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
         heapThresholdMb: { type: 'number', exclusiveMinimum: 0 },
@@ -969,14 +969,14 @@ export const application = {
     },
     workers: {
       anyOf: [
-        { type: 'number', minimum: 1 },
+        { type: 'integer', minimum: 1 },
         { type: 'string' },
         {
           type: 'object',
           properties: {
             dynamic: { type: 'boolean' },
-            minimum: { type: 'number', minimum: 1 },
-            maximum: { type: 'number', minimum: 0 },
+            minimum: { type: 'integer', minimum: 1 },
+            maximum: { type: 'integer', minimum: 0 },
             eluThreshold: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
             heapThresholdMb: { type: 'number', exclusiveMinimum: 0 },
             scaleUpMargin: { type: 'number', minimum: 0 },

@@ -58,7 +58,7 @@ export class PredictiveWorkersScaler {
     return structuredClone({
       ...this.#config,
       minimum: this.#config.minimum ?? 1,
-      maximum: this.#config.maximum ?? availableParallelism(),
+      maximum: this.#config.maximum ?? this.#maxTotalWorkers,
       total: this.#maxTotalWorkers,
       maxMemory: this.#maxTotalMemory
     })
@@ -117,7 +117,7 @@ export class PredictiveWorkersScaler {
     } else {
       appConfig = application.workers
       min = appConfig.minimum ?? this.#config.minimum ?? 1
-      max = appConfig.maximum ?? this.#config.maximum ?? availableParallelism()
+      max = appConfig.maximum ?? this.#config.maximum ?? this.#maxTotalWorkers
     }
 
     const merged = deepmerge(this.#config, appConfig)

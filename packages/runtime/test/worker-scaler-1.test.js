@@ -22,8 +22,8 @@ async function start (t, workers, applications) {
 
 for (const [name, workers, count] of [
   ['number', 3, 3],
-  ['object', { dynamic: true, minimum: 2, maximum: 3 }, 2],
-  ['inverted bounds', { dynamic: true, minimum: 4, maximum: 3 }, 3]
+  ['object', { dynamic: true, minimum: 2, maximum: 3, total: 8 }, 2],
+  ['inverted bounds', { dynamic: true, minimum: 4, maximum: 3, total: 8 }, 3]
 ]) {
   test(`applies runtime workers configuration (${name})`, async t => {
     const app = await start(t, workers)
@@ -40,7 +40,7 @@ for (const [name, workers, count] of [
 }
 
 test('fixed application counts override inherited scaling', async t => {
-  const app = await start(t, { dynamic: true, minimum: 2 }, [{ id: 'service-2', workers: 3 }])
+  const app = await start(t, { dynamic: true, minimum: 2, total: 8 }, [{ id: 'service-2', workers: 3 }])
   const service = app.getRuntimeConfig().applications.find(app => app.id === 'service-2')
   assert.equal(service.workers.dynamic, false)
   assert.equal(service.workers.static, 3)

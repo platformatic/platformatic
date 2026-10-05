@@ -152,7 +152,7 @@
               "workers": {
                 "anyOf": [
                   {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1
                   },
                   {
@@ -165,11 +165,11 @@
                         "type": "boolean"
                       },
                       "minimum": {
-                        "type": "number",
+                        "type": "integer",
                         "minimum": 1
                       },
                       "maximum": {
-                        "type": "number",
+                        "type": "integer",
                         "minimum": 0
                       },
                       "eluThreshold": {
@@ -650,7 +650,7 @@
           "workers": {
             "anyOf": [
               {
-                "type": "number",
+                "type": "integer",
                 "minimum": 1
               },
               {
@@ -663,11 +663,11 @@
                     "type": "boolean"
                   },
                   "minimum": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1
                   },
                   "maximum": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0
                   },
                   "eluThreshold": {
@@ -1151,7 +1151,7 @@
           "workers": {
             "anyOf": [
               {
-                "type": "number",
+                "type": "integer",
                 "minimum": 1
               },
               {
@@ -1164,11 +1164,11 @@
                     "type": "boolean"
                   },
                   "minimum": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1
                   },
                   "maximum": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0
                   },
                   "eluThreshold": {
@@ -1652,7 +1652,7 @@
           "workers": {
             "anyOf": [
               {
-                "type": "number",
+                "type": "integer",
                 "minimum": 1
               },
               {
@@ -1665,11 +1665,11 @@
                     "type": "boolean"
                   },
                   "minimum": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1
                   },
                   "maximum": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0
                   },
                   "eluThreshold": {
@@ -2085,7 +2085,7 @@
     "workers": {
       "anyOf": [
         {
-          "type": "number",
+          "type": "integer",
           "minimum": 1
         },
         {
@@ -2098,15 +2098,15 @@
               "type": "boolean"
             },
             "minimum": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1
             },
             "maximum": {
-              "type": "number",
+              "type": "integer",
               "minimum": 0
             },
             "total": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1
             },
             "maxMemory": {

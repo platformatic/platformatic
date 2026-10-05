@@ -56,3 +56,18 @@ test('runtime and application worker thresholds must be positive when set', () =
     assert.ok(validate({ heapThresholdMb: 128 }))
   }
 })
+
+test('runtime and application worker counts must be integers', () => {
+  for (const schema of [workers, application.properties.workers]) {
+    const validate = validator(schema)
+    const properties = schema.anyOf.find(branch => branch.type === 'object').properties
+    for (const key of ['minimum', 'maximum', 'total']) {
+      if (!properties[key]) continue
+      assert.equal(validate({ [key]: 1.5 }), false, `${key} must reject fractions`)
+      assert.ok(validate({ [key]: 2 }), `${key} must accept integers`)
+    }
+    const validateCount = new Ajv().compile(schema)
+    assert.equal(validateCount(1.5), false)
+    assert.ok(validateCount(2))
+  }
+})
