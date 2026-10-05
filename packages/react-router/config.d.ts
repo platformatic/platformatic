@@ -297,6 +297,7 @@ export interface ExtensionEntry1 {
   build?: boolean;
 }
 export interface WorkersOptions {
+  static?: number;
   dynamic?: boolean;
   minimum?: number;
   maximum?: number;
@@ -804,6 +805,7 @@ export interface CompileCacheOptions {
   awaitFirstWorker?: boolean;
 }
 export interface ApplicationWorkersOptions {
+  static?: number;
   dynamic?: boolean;
   minimum?: number;
   maximum?: number;

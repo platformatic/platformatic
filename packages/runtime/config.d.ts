@@ -119,6 +119,7 @@ export interface ApplicationEntryOverrides {
     | number
     | string
     | {
+        static?: number;
         dynamic?: boolean;
         minimum?: number;
         maximum?: number;
@@ -216,6 +217,7 @@ export interface ApplicationEntryOverrides {
       };
 }
 export interface WorkersOptions {
+  static?: number;
   dynamic?: boolean;
   minimum?: number;
   maximum?: number;

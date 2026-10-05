@@ -32,7 +32,7 @@ async function setup (t, config = {}) {
     }
     if (status === 'started') runtime.emit('application:worker:started', { application, worker: index })
   }
-  addWorker('fixed', 0)
+  addWorker('idle', 0)
   addWorker('busy', 0)
   runtime.getWorkers = async () => workers
   const updates = []
@@ -58,7 +58,7 @@ async function setup (t, config = {}) {
     cooldowns: { scaleUpAfterScaleUpMs: 0, scaleDownAfterScaleUpMs: 0, scaleDownAfterScaleDownMs: 0 },
     ...config
   })
-  await scaler.add({ id: 'fixed', workers: { dynamic: false, static: 1 } })
+  await scaler.add({ id: 'idle', workers: { dynamic: true, static: 1 } })
   await scaler.add({ id: 'busy', workers: { dynamic: true, static: 1 } })
   await scaler.start()
   function sample (application, index, elu) {
@@ -76,8 +76,8 @@ async function setup (t, config = {}) {
 
 test('an external resource update consumes capacity before predictive processing', async t => {
   const { runtime, updates, sample, tick } = await setup(t)
-  await runtime.updateApplicationsResources([{ application: 'fixed', workers: 2 }])
-  runtime.emit('application:resources:workers:updated', { application: 'fixed', workers: 2 })
+  await runtime.updateApplicationsResources([{ application: 'idle', workers: 2 }])
+  runtime.emit('application:resources:workers:updated', { application: 'idle', workers: 2 })
   updates.length = 0
   sample('busy', 0, 0.95)
   await tick()
@@ -87,7 +87,7 @@ test('an external resource update consumes capacity before predictive processing
 for (const status of ['boot', 'init', 'starting', 'started', 'stopping', 'exited']) {
   test(`worker budget accounts for ${status} workers from the runtime snapshot`, async t => {
     const { updates, addWorker, sample, tick } = await setup(t)
-    addWorker('fixed', 1, status)
+    addWorker('idle', 1, status)
     sample('busy', 0, 0.95)
     await tick()
     assert.deepEqual(updates, status === 'exited' ? [{ application: 'busy', workers: 2 }] : [])
@@ -120,7 +120,7 @@ test('an external update during the memory check consumes capacity before approv
   sample('busy', 0, 0.95)
   await tick()
   assert.equal(typeof finish, 'function')
-  addWorker('fixed', 1)
+  addWorker('idle', 1)
   finish({ scope: 'host', used: 100, total: 10000 })
   for (let i = 0; i < 10; i++) await setImmediate()
   assert.deepEqual(updates, [])

@@ -51,27 +51,36 @@ function parseRuntimeWorkers (config) {
   workers.static ??= 1
   workers.dynamic ??= false
 
-  applyWorkersLimits(workers, workers.total)
+  if (workers.maximum < workers.minimum) {
+    throw new InvalidArgumentError(
+      `Workers minimum (${workers.minimum}) must not exceed maximum (${workers.maximum})`
+    )
+  }
+  if (workers.dynamic) {
+    workers.static = workers.minimum ?? 1
+  }
+
   config.workers = workers
 }
 
 function parseApplicationWorkers (applicationConfig, config) {
   const workers = coerceWorkers(applicationConfig.workers, `Service "${applicationConfig.id}"`)
   for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
-    workers[key] ??= config.workers[key]
+    if (workers[key] === undefined && config.workers[key] !== undefined) {
+      workers[key] = config.workers[key]
+    }
   }
 
-  applyWorkersLimits(workers, config.workers.total)
+  if (workers.maximum < workers.minimum) {
+    throw new InvalidArgumentError(
+      `Workers minimum (${workers.minimum}) must not exceed maximum (${workers.maximum})`
+    )
+  }
+  if (workers.dynamic) {
+    workers.static = workers.minimum ?? 1
+  }
+
   applicationConfig.workers = workers
-}
-
-function applyWorkersLimits (workers, totalWorkers) {
-  workers.maximum = Math.min(workers.maximum ?? totalWorkers, totalWorkers)
-  workers.minimum = Math.min(workers.minimum ?? 1, workers.maximum)
-
-  if (workers.dynamic || workers.static === undefined) {
-    workers.static = workers.minimum
-  }
 }
 
 export function pprofCapturePreloadPath () {

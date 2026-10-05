@@ -100,15 +100,18 @@ Keep `workers` at the top level of `watt.config.ts`, including for single-applic
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
+| `static` | `1` | Fixed worker count when dynamic scaling is disabled |
 | `dynamic` | `false` | Enable automatic worker scaling |
 | `minimum` | `1` | Initial and minimum worker count for each dynamically scaled application |
-| `maximum` | `os.availableParallelism()` | Default maximum workers per application |
+| `maximum` | `total` | Default maximum workers per application |
 | `total` | `os.availableParallelism()` | Runtime-wide worker limit for load-driven scale-ups, including fixed applications |
 | `maxMemory` | 90% of detected total memory | Memory usage limit, in bytes, used when considering scale-ups |
 
 Memory usage and capacity come from cgroup files when available, otherwise from the host operating system. On a host, the check therefore includes memory used outside this WATT. `maxMemory` is a scaling constraint; setting it does not impose an operating-system memory limit.
 
 The predictive scaler always processes heap measurements, even without `heapThresholdMb`. It divides each application’s current smoothed heap level by its live worker count to estimate heap per additional worker. The available memory (`maxMemory` minus current usage) limits how many workers can be added in a cycle. An application without a positive heap measurement waits for data; an application that cannot fit one additional worker does not block other applications that can. This check uses the current level, not a forecast or the target worker count. Heap does not include every memory allocation, so allow headroom for startup and other memory usage.
+
+`minimum` must not exceed `maximum` after application settings inherit the runtime defaults; conflicting bounds cause a configuration error. Neither bound is capped by `total`. Counts outside the effective application bounds are corrected independently of load predictions and available capacity.
 
 Choose application minima and fixed counts that fit within `total` and the available memory. Provisioning the configured minimum is separate from the checks for load-driven scale-ups. A runtime can otherwise start above its intended budget.
 
@@ -158,7 +161,7 @@ The predictive scaler does not use the `cooldown` or `gracePeriod` settings of t
 
 In a multi-application runtime, set overrides in `applications[].workers`. Dynamic scaling supports `minimum`, `maximum`, metric thresholds, margins, redistribution time, smoothing parameters, and cooldowns per application. Omitted values use the runtime-level settings.
 
-An application inherits the runtime’s `dynamic` setting unless it explicitly overrides it. To keep an application at four workers, use `"workers": 4`. Dynamically scaled applications start at their effective `minimum`.
+An application inherits the runtime’s `dynamic` setting unless it explicitly overrides it. To keep an application at four workers, use `"workers": 4` or `"workers": { "static": 4, "dynamic": false }`. When dynamic scaling is enabled, the initial count comes from `minimum` (default `1`), regardless of `static`. Runtime-level `dynamic: true` enables the scaler; an application-level override alone does not enable it.
 
 ```ts config
 import { createNodeConfig } from '@platformatic/node'
@@ -201,10 +204,8 @@ The processing interval, scale-up step, total worker limit, and memory budget ar
 Watt v4 uses predictive scaling whenever `workers.dynamic` is `true`. Dynamic scaling remains disabled by default. There is no algorithm version selector.
 
 - Remove `workers.version`. Both former version values are rejected.
-- Use a number, such as `"workers": 4`, for a fixed worker count. Use `minimum` for the initial count of dynamically scaled applications. The public `workers.static` setting has been removed.
 - Replace `scaleUpELU` with `eluThreshold` as a starting point for tuning; forecasting changes when a scale-up happens. `scaleDownELU` has no direct equivalent: review `scaleDownMargin` and the directional `cooldowns` instead.
 - Replace the single `cooldown` with the directional `cooldowns` settings. Remove the scaler's `gracePeriod`; new worker measurements are handled through redistribution and startup tracking. The separate `health.gracePeriod` setting is unchanged.
 - Replace `verticalScaler` with `workers`: `enabled` becomes `dynamic`, `minWorkers`/`maxWorkers` become `minimum`/`maximum`, and `maxTotalWorkers`/`maxTotalMemory` become `total`/`maxMemory`. Move application overrides to `applications[].workers`. Review obsolete timing settings rather than copying them unchanged.
-- The default per-application maximum is `os.availableParallelism()`. Set `maximum` explicitly if you previously relied on it following `total`.
 
 Removed options are rejected during configuration validation. Predictive scaling can add capacity before an overload and uses different scale-down hysteresis, so validate the new settings against representative traffic before upgrading production.

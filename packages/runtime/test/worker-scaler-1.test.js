@@ -22,8 +22,7 @@ async function start (t, workers, applications) {
 
 for (const [name, workers, count] of [
   ['number', 3, 3],
-  ['object', { dynamic: true, minimum: 2, maximum: 3, total: 8 }, 2],
-  ['inverted bounds', { dynamic: true, minimum: 4, maximum: 3, total: 8 }, 3]
+  ['object', { dynamic: true, minimum: 2, maximum: 3, total: 8 }, 2]
 ]) {
   test(`applies runtime workers configuration (${name})`, async t => {
     const app = await start(t, workers)
@@ -38,6 +37,13 @@ for (const [name, workers, count] of [
     else assert.ok(app.getDynamicWorkersScaler() instanceof PredictiveWorkersScaler)
   })
 }
+
+test('rejects inverted runtime bounds before starting workers', async t => {
+  await assert.rejects(start(t, { dynamic: true, minimum: 4, maximum: 3, total: 8 }), {
+    code: 'PLT_RUNTIME_INVALID_ARGUMENT',
+    message: 'Invalid argument: "Workers minimum (4) must not exceed maximum (3)"'
+  })
+})
 
 test('fixed application counts override inherited scaling', async t => {
   const app = await start(t, { dynamic: true, minimum: 2, total: 8 }, [{ id: 'service-2', workers: 3 }])

@@ -51,6 +51,7 @@ export const workers = {
     {
       type: 'object',
       properties: {
+        static: { type: 'integer', minimum: 1 },
         dynamic: { type: 'boolean' },
         minimum: { type: 'integer', minimum: 1 },
         maximum: { type: 'integer', minimum: 0 },
@@ -974,6 +975,7 @@ export const application = {
         {
           type: 'object',
           properties: {
+            static: { type: 'integer', minimum: 1 },
             dynamic: { type: 'boolean' },
             minimum: { type: 'integer', minimum: 1 },
             maximum: { type: 'integer', minimum: 0 },

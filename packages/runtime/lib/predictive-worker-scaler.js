@@ -126,7 +126,7 @@ export class PredictiveWorkersScaler {
 
     this.#apps.set(appId, { algorithm })
     this.#initialUpdates.delete(appId)
-    if (min > (application.workers.static ?? 1)) {
+    if (min !== (application.workers.static ?? 1)) {
       this.#initialUpdates.set(appId, { workers: min, promise: null })
     }
   }

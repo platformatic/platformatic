@@ -918,6 +918,10 @@
                   {
                     "type": "object",
                     "properties": {
+                      "static": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
                       "dynamic": {
                         "type": "boolean"
                       },
@@ -1351,6 +1355,10 @@
             {
               "type": "object",
               "properties": {
+                "static": {
+                  "type": "integer",
+                  "minimum": 1
+                },
                 "dynamic": {
                   "type": "boolean"
                 },
@@ -2984,6 +2992,10 @@
                 {
                   "type": "object",
                   "properties": {
+                    "static": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
                     "dynamic": {
                       "type": "boolean"
                     },

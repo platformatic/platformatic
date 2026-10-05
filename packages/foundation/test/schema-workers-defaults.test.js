@@ -23,7 +23,7 @@ test('worker defaults are applied by normalization, without schema branch side e
 test('runtime and application workers reject legacy settings and unknown keys', () => {
   for (const schema of [workers, application.properties.workers]) {
     const validate = validator(schema)
-    for (const value of [{ version: 'v1' }, { version: 'v2' }, { static: 2 }, { cooldown: 0 }, { gracePeriod: 0 }, { scaleUpELU: 0.8 }, { scaleDownELU: 0.2 }, { unknown: true }]) {
+    for (const value of [{ version: 'v1' }, { version: 'v2' }, { cooldown: 0 }, { gracePeriod: 0 }, { scaleUpELU: 0.8 }, { scaleDownELU: 0.2 }, { unknown: true }]) {
       assert.equal(validate(value), false, JSON.stringify(value))
     }
   }
@@ -61,7 +61,7 @@ test('runtime and application worker counts must be integers', () => {
   for (const schema of [workers, application.properties.workers]) {
     const validate = validator(schema)
     const properties = schema.anyOf.find(branch => branch.type === 'object').properties
-    for (const key of ['minimum', 'maximum', 'total']) {
+    for (const key of ['minimum', 'maximum', 'total', 'static']) {
       if (!properties[key]) continue
       assert.equal(validate({ [key]: 1.5 }), false, `${key} must reject fractions`)
       assert.ok(validate({ [key]: 2 }), `${key} must accept integers`)
@@ -69,5 +69,14 @@ test('runtime and application worker counts must be integers', () => {
     const validateCount = new Ajv().compile(schema)
     assert.equal(validateCount(1.5), false)
     assert.ok(validateCount(2))
+  }
+})
+
+test('runtime and application workers accept positive static counts', () => {
+  for (const schema of [workers, application.properties.workers]) {
+    const validate = validator(schema)
+    assert.ok(validate({ static: 4 }))
+    assert.ok(validate({ static: 4, dynamic: false }))
+    for (const value of [0, -1, 1.5]) assert.equal(validate({ static: value }), false)
   }
 })

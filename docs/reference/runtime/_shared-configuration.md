@@ -305,6 +305,7 @@ object supports the following settings:
 - **`workers`** - The number of workers to start for this application. In development mode this value is ignored and hardcoded to `1`. This can be specified as:
   - **`number`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
+    - **`static`** (`integer`) - Fixed worker count when dynamic scaling is disabled (minimum 1). Set `dynamic: false` to disable inherited scaling. When dynamic scaling is enabled, `static` is ignored and the initial count comes from `minimum` (default `1`).
     - **`dynamic`** (`boolean`) - Enable dynamic worker scaling. This is only meaningful when set to `false` to disable dynamic scaling for this application.
     - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
     - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
@@ -467,9 +468,10 @@ This can be specified as:
 
 - **`number`** - A fixed number of workers (minimum 1)
 - **`object`** - Advanced worker configuration with the following properties:
+  - **`static`** (`integer`) - Fixed worker count when dynamic scaling is disabled (minimum 1). Set `dynamic: false` to disable inherited scaling. When dynamic scaling is enabled, `static` is ignored and the initial count comes from `minimum` (default `1`).
   - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`). The dynamic worker scaler automatically adjusts the number of workers for each application based on health metrics. It can be overridden at the application level.
   - **`minimum`** (`number`) - The minimum number of workers that can be used for each application. Default: `1`.
-  - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: `os.availableParallelism()`.
+  - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: `total`.
   - **`total`** (`number`) - The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
   - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
 
