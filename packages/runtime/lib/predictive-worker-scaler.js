@@ -275,18 +275,14 @@ export class PredictiveWorkersScaler {
 
     await this.#applyScaleDowns(scaleDowns)
     if (!this.#started) return
-    let plannedWorkerCount = this.#plannedWorkerCount()
 
     if (scaleUpCandidates.length > 0) {
-      if (plannedWorkerCount >= this.#maxTotalWorkers) {
+      const targetWorkersCount = await this.#getTargetWorkersCount()
+      if (targetWorkersCount >= this.#maxTotalWorkers) {
         this.#runtime.logger.warn(
           `The maximum number of workers "${this.#maxTotalWorkers}" has been reached.`
         )
       } else {
-        const availableMemory = await this.#getAvailableMemory()
-        if (!this.#started) return
-        plannedWorkerCount = this.#plannedWorkerCount()
-        if (plannedWorkerCount >= this.#maxTotalWorkers) return
         scaleUpCandidates.sort((a, b) => b.ratio - a.ratio)
 
         for (const { appId, app, desiredTarget } of scaleUpCandidates) {
@@ -302,6 +298,7 @@ export class PredictiveWorkersScaler {
             continue
           }
 
+          const availableMemory = await this.#getAvailableMemory()
           const workersWithinMemory = Math.floor(availableMemory / heapPerWorker)
           if (!(workersWithinMemory > 0)) {
             this.#runtime.logger.warn(`Not enough available memory to scale up the "${appId}" app.`)
@@ -311,7 +308,7 @@ export class PredictiveWorkersScaler {
           const scaleUpCount = Math.min(
             desiredTarget - app.algorithm.targetCount,
             this.#config.maxScaleUpStep,
-            this.#maxTotalWorkers - plannedWorkerCount,
+            this.#maxTotalWorkers - targetWorkersCount,
             workersWithinMemory
           )
 
@@ -340,10 +337,27 @@ export class PredictiveWorkersScaler {
     }
   }
 
-  #plannedWorkerCount () {
-    let count = 0
-    for (const { algorithm } of this.#apps.values()) count += algorithm.targetCount
-    return count
+  async #getTargetWorkersCount () {
+    const workers = await this.#runtime.getWorkers(true)
+
+    const actualCounts = {}
+    for (const { application, status, raw } of Object.values(workers)) {
+      const workerStatus = raw?.[kWorkerStatus] ?? status
+      if (workerStatus === 'exited') continue
+
+      actualCounts[application] ??= 0
+      actualCounts[application] += 1
+    }
+
+    let totalWorkersCount = 0
+
+    for (const appId in actualCounts) {
+      const actualCount = actualCounts[appId]
+      const targetCount = this.#apps.get(appId)?.algorithm.targetCount ?? 0
+      totalWorkersCount += Math.max(targetCount, actualCount)
+    }
+
+    return totalWorkersCount
   }
 
   async #applyScaleDowns (candidates) {
