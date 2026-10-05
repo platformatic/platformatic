@@ -23,8 +23,6 @@ function makeConfig (overrides = {}) {
     dynamic: true,
     processIntervalMs: 500,
     eluThreshold: 0.8,
-    scaleUpMargin: 0.1,
-    scaleDownMargin: 0.3,
     // Exercise scaling with settled workers; redistribution is covered by unit tests.
     redistributionMs: 1,
     alphaUp: 0.2,

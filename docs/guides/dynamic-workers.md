@@ -123,11 +123,9 @@ On platforms without the required `reusePort` support, applications listening on
 | --- | --- | --- |
 | `eluThreshold` | `0.8` | Per-worker ELU capacity used to convert aggregate load into a worker count |
 | `heapThresholdMb` | Not set | Per-worker heap capacity in MB, where 1 MB is 1,048,576 bytes. Enables an independent heap-based recommendation; heap is always measured for memory checks |
-| `processIntervalMs` | `10000` | Time between processing runs. Samples arriving between runs are processed together. Runtime-level only |
-| `maxScaleUpStep` | `1` | Maximum workers added to the selected application per run. Positive integer; runtime-level only |
+| `processIntervalMs` | `10000` | Time between processing runs. Samples arriving between runs are processed together |
+| `maxScaleUpStep` | `1` | Maximum workers added to the selected application per run. Positive integer |
 | `redistributionMs` | `10000` | Expected time for a new worker to absorb its share of traffic; controls how its contribution is introduced into the aggregate |
-| `scaleUpMargin` | `0.1` | Fractional-worker margin for rounding up a forecast-based request. Current overload bypasses this margin |
-| `scaleDownMargin` | `0.3` | Extra capacity retained when calculating a lower worker count |
 
 For example, an adjusted forecast requiring 2.08 workers does not pass a `0.1` scale-up margin by itself. Current overload can still justify rounding up. Scale-down uses the current smoothed load with additional headroom; it does not simply reverse the scale-up calculation.
 
@@ -159,7 +157,7 @@ The predictive scaler does not use the `cooldown` or `gracePeriod` settings of t
 
 #### Per-application configuration
 
-In a multi-application runtime, set overrides in `applications[].workers`. Dynamic scaling supports `minimum`, `maximum`, metric thresholds, margins, redistribution time, smoothing parameters, and cooldowns per application. Omitted values use the runtime-level settings.
+In a multi-application runtime, set overrides in `applications[].workers`. Applications support `static`, `dynamic`, `minimum`, `maximum`, `eluThreshold`, and `heapThresholdMb`. All other worker settings are configured at the runtime level. Omitted values use the runtime-level settings.
 
 An application inherits the runtime’s `dynamic` setting unless it explicitly overrides it. To keep an application at four workers, use `"workers": 4` or `"workers": { "static": 4, "dynamic": false }`. When dynamic scaling is enabled, the initial count comes from `minimum` (default `1`), regardless of `static`. Runtime-level `dynamic: true` enables the scaler; an application-level override alone does not enable it.
 
@@ -197,14 +195,14 @@ export default createWattConfig({
 
 Here, `api` can scale between two and six workers using a 70% ELU threshold. `jobs` stays at one worker, which still counts toward `total`.
 
-The processing interval, scale-up step, total worker limit, and memory budget are runtime-level settings. For a single-application project, keep `workers` at the root beside `application`.
+For a single-application project, keep `workers` at the root beside `application`.
 
 ## Migrating from Watt v3 to Watt v4
 
 Watt v4 uses predictive scaling whenever `workers.dynamic` is `true`. Dynamic scaling remains disabled by default. There is no algorithm version selector.
 
 - Remove `workers.version`. Both former version values are rejected.
-- Replace `scaleUpELU` with `eluThreshold` as a starting point for tuning; forecasting changes when a scale-up happens. `scaleDownELU` has no direct equivalent: review `scaleDownMargin` and the directional `cooldowns` instead.
+- Replace `scaleUpELU` with `eluThreshold` as a starting point for tuning; forecasting changes when a scale-up happens. `scaleDownELU` has no direct equivalent: review the directional `cooldowns` instead.
 - Replace the single `cooldown` with the directional `cooldowns` settings. Remove the scaler's `gracePeriod`; new worker measurements are handled through redistribution and startup tracking. The separate `health.gracePeriod` setting is unchanged.
 - Replace `verticalScaler` with `workers`: `enabled` becomes `dynamic`, `minWorkers`/`maxWorkers` become `minimum`/`maximum`, and `maxTotalWorkers`/`maxTotalMemory` become `total`/`maxMemory`. Move application overrides to `applications[].workers`. Review obsolete timing settings rather than copying them unchanged.
 

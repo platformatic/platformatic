@@ -14,8 +14,6 @@ function createAlgorithm () {
   return new PredictiveScalingAlgorithm({
     min: 1,
     max: 10,
-    scaleUpMargin: 0.1,
-    scaleDownMargin: 0.3,
     cooldowns: {},
     metrics: { elu: metric, heap: metric }
   })

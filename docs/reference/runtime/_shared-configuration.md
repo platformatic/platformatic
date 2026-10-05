@@ -303,12 +303,12 @@ object supports the following settings:
   needs nothing here.
 - **`reuseTcpPorts`**: Enable the use of the [`reusePort`](https://nodejs.org/dist/latest/docs/api/net.html#serverlistenoptions-callback) option whenever any TCP server starts listening on a port. The default is `true`. The values specified here overrides the values specified in the runtime.
 - **`workers`** - The number of workers to start for this application. In development mode this value is ignored and hardcoded to `1`. This can be specified as:
-  - **`number`** - A fixed number of workers
+  - **`integer`** - A fixed number of workers
   - **`object`** - Advanced worker configuration with the following properties:
     - **`static`** (`integer`) - Fixed worker count when dynamic scaling is disabled (minimum 1). Set `dynamic: false` to disable inherited scaling. When dynamic scaling is enabled, `static` is ignored and the initial count comes from `minimum` (default `1`).
     - **`dynamic`** (`boolean`) - Enable dynamic worker scaling. This is only meaningful when set to `false` to disable dynamic scaling for this application.
-    - **`minimum`** (`number`) - Minimum number of workers when using dynamic scaling
-    - **`maximum`** (`number`) - Maximum number of workers when using dynamic scaling
+    - **`minimum`** (`integer`) - Minimum number of workers when using dynamic scaling
+    - **`maximum`** (`integer`) - Maximum number of workers when using dynamic scaling
 - **`health`** (object): Configures the health check and low-level resource defaults for each worker of the application. It supports all the properties also supported in the runtime [health](#health) property. The values specified here override the values specified in the runtime.
 - **`arguments`** (`array` of `string`s) - The arguments to pass to the application. They will be available in `process.argv`.
 - **`envfile`** (`string`) - The path to an `.env` file to load for the application, resolved relative to the application's own directory. By default, the `.env` file is loaded from the application directory. Naming a file that does not exist is an error. Not valid on an entry that also carries an inline `config` — that application has no separate per-app evaluation step for `envfile` to apply to.
@@ -462,33 +462,31 @@ Runtime does not choose ports, write port environment variables, or rewrite list
 
 ### `workers`
 
-Configures the default number of workers to start per each application. Some values can be overridden at the application level.
+Configures the default number of workers to start per each application. Applications can override `static`, `dynamic`, `minimum`, `maximum`, `eluThreshold`, and `heapThresholdMb`; all other worker settings are configured at the runtime level.
 
 This can be specified as:
 
-- **`number`** - A fixed number of workers (minimum 1)
+- **`integer`** - A fixed number of workers (minimum 1)
 - **`object`** - Advanced worker configuration with the following properties:
   - **`static`** (`integer`) - Fixed worker count when dynamic scaling is disabled (minimum 1). Set `dynamic: false` to disable inherited scaling. When dynamic scaling is enabled, `static` is ignored and the initial count comes from `minimum` (default `1`).
   - **`dynamic`** (`boolean`) - Enable dynamic worker scaling (default: `false`). The dynamic worker scaler automatically adjusts the number of workers for each application based on health metrics. It can be overridden at the application level.
-  - **`minimum`** (`number`) - The minimum number of workers that can be used for each application. Default: `1`.
-  - **`maximum`** (`number`) - The maximum number of workers that can be used for each application. Default: `total`.
-  - **`total`** (`number`) - The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
+  - **`minimum`** (`integer`) - The minimum number of workers that can be used for each application. Default: `1`.
+  - **`maximum`** (`integer`) - The maximum number of workers that can be used for each application. Default: `total`.
+  - **`total`** (`integer`) - The maximum number of workers that can be used for _all_ applications. Default: `os.availableParallelism()` (typically the number of CPU cores).
   - **`maxMemory`** (`number`) - The maximum total memory in bytes that can be used by all workers. Default: 90% of the system's total memory.
 
 
   - **`eluThreshold`** (`number`) - Per-worker ELU overload threshold (0-1). Default: `0.8`.
   - **`heapThresholdMb`** (`number`) - Per-worker heap threshold in MB. If absent, heap measurements remain available for scale-up memory checks, but do not produce scaling recommendations.
   - **`processIntervalMs`** (`number`) - How often the algorithm runs in milliseconds. Default: `10000`.
-  - **`maxScaleUpStep`** (`integer`, minimum `1`) - Maximum extra workers requested for the selected application per processing run. Global-only. Default: `1`. Increase only when the application and container have enough spare resources for the additional startup work.
-  - **`scaleUpMargin`** (`number`) - Fractional overload margin required before adding a worker. Default: `0.1`.
-  - **`scaleDownMargin`** (`number`) - Hysteresis margin for scale-down safety. Default: `0.3`.
+  - **`maxScaleUpStep`** (`integer`, minimum `1`) - Maximum extra workers requested for the selected application per processing run. Default: `1`. Increase only when the application and container have enough spare resources for the additional startup work.
   - **`redistributionMs`** (`number`) - Expected time in ms for a new worker to absorb its share of load. Default: `10000`.
 
   - **`alphaUp`** (`number`) - Holt level smoothing factor for upward movement (0-1). Default: `0.2`.
   - **`alphaDown`** (`number`) - Holt level smoothing factor for downward movement (0-1). Default: `0.1`.
   - **`betaUp`** (`number`) - Holt trend smoothing factor for upward movement (0-1). Default: `0.1`.
   - **`betaDown`** (`number`) - Holt trend smoothing factor for downward movement (0-1). Default: `0.1`.
-  - **`cooldowns`** (`object`) - Cooldown timers between scaling decisions:
+  - **`cooldowns`** (`object`) - Cooldown durations, tracked independently for each application:
     - **`scaleUpAfterScaleUpMs`** (`number`) - Default: `5000`.
     - **`scaleUpAfterScaleDownMs`** (`number`) - Default: `5000`.
     - **`scaleDownAfterScaleUpMs`** (`number`) - Default: `30000`.

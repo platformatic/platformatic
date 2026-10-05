@@ -61,8 +61,6 @@ export const workers = {
         heapThresholdMb: { type: 'number', exclusiveMinimum: 0 },
         processIntervalMs: { type: 'number', minimum: 0 },
         maxScaleUpStep: { type: 'integer', minimum: 1 },
-        scaleUpMargin: { type: 'number', minimum: 0 },
-        scaleDownMargin: { type: 'number', minimum: 0 },
         redistributionMs: { type: 'number', minimum: 0 },
         alphaUp: { type: 'number', minimum: 0, maximum: 1 },
         alphaDown: { type: 'number', minimum: 0, maximum: 1 },
@@ -980,24 +978,7 @@ export const application = {
             minimum: { type: 'integer', minimum: 1 },
             maximum: { type: 'integer', minimum: 0 },
             eluThreshold: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
-            heapThresholdMb: { type: 'number', exclusiveMinimum: 0 },
-            scaleUpMargin: { type: 'number', minimum: 0 },
-            scaleDownMargin: { type: 'number', minimum: 0 },
-            redistributionMs: { type: 'number', minimum: 0 },
-            alphaUp: { type: 'number', minimum: 0, maximum: 1 },
-            alphaDown: { type: 'number', minimum: 0, maximum: 1 },
-            betaUp: { type: 'number', minimum: 0, maximum: 1 },
-            betaDown: { type: 'number', minimum: 0, maximum: 1 },
-            cooldowns: {
-              type: 'object',
-              properties: {
-                scaleUpAfterScaleUpMs: { type: 'number', minimum: 0 },
-                scaleUpAfterScaleDownMs: { type: 'number', minimum: 0 },
-                scaleDownAfterScaleUpMs: { type: 'number', minimum: 0 },
-                scaleDownAfterScaleDownMs: { type: 'number', minimum: 0 }
-              },
-              additionalProperties: false
-            }
+            heapThresholdMb: { type: 'number', exclusiveMinimum: 0 }
           },
           additionalProperties: false
         }

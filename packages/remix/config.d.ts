@@ -307,8 +307,6 @@ export interface WorkersOptions {
   heapThresholdMb?: number;
   processIntervalMs?: number;
   maxScaleUpStep?: number;
-  scaleUpMargin?: number;
-  scaleDownMargin?: number;
   redistributionMs?: number;
   alphaUp?: number;
   alphaDown?: number;
@@ -811,19 +809,6 @@ export interface ApplicationWorkersOptions {
   maximum?: number;
   eluThreshold?: number;
   heapThresholdMb?: number;
-  scaleUpMargin?: number;
-  scaleDownMargin?: number;
-  redistributionMs?: number;
-  alphaUp?: number;
-  alphaDown?: number;
-  betaUp?: number;
-  betaDown?: number;
-  cooldowns?: {
-    scaleUpAfterScaleUpMs?: number;
-    scaleUpAfterScaleDownMs?: number;
-    scaleDownAfterScaleUpMs?: number;
-    scaleDownAfterScaleDownMs?: number;
-  };
 }
 export interface ApplicationHealthOptions {
   enabled?: boolean | string;

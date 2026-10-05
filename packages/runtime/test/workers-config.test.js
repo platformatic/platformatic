@@ -34,6 +34,14 @@ for (const option of ['total', 'maxMemory', 'processIntervalMs', 'maxScaleUpStep
   })
 }
 
+for (const [option, value] of Object.entries({ redistributionMs: 1000, alphaUp: 0.3, alphaDown: 0.2, betaUp: 0.2, betaDown: 0.1, cooldowns: { scaleUpAfterScaleUpMs: 0 } })) {
+  test(`accepts ${option} globally and rejects it on applications`, async () => {
+    const config = await load({ dynamic: true, [option]: value })
+    assert.deepEqual(config.workers[option], value)
+    await assert.rejects(load({ dynamic: true }, { [option]: value }), isSchemaError)
+  })
+}
+
 test('dynamic applications start at minimum regardless of static', async () => {
   for (const minimum of [undefined, 3]) {
     const config = await load({ dynamic: true, minimum, total: 4 })
@@ -85,9 +93,9 @@ test('dynamic scaling remains opt-in and application overrides are inherited con
   }
 })
 
-test('supports per-application predictive tuning and separate health grace periods', async () => {
-  const tuning = { eluThreshold: 0.7, heapThresholdMb: 128, alphaUp: 0.3, cooldowns: { scaleDownAfterScaleUpMs: 1000 } }
-  const config = await load({ dynamic: true }, tuning, { health: { gracePeriod: 5000 } })
-  for (const [key, value] of Object.entries(tuning)) assert.deepEqual(config.applications[0].workers[key], value)
+test('supports per-application thresholds and separate health grace periods', async () => {
+  const thresholds = { eluThreshold: 0.7, heapThresholdMb: 128 }
+  const config = await load({ dynamic: true }, thresholds, { health: { gracePeriod: 5000 } })
+  for (const [key, value] of Object.entries(thresholds)) assert.deepEqual(config.applications[0].workers[key], value)
   assert.equal(config.health.gracePeriod, 5000)
 })

@@ -2,6 +2,9 @@
 // Constants
 // ---------------------------------------------------------------------------
 
+const SCALE_UP_MARGIN = 0.1
+const SCALE_DOWN_MARGIN = 0.3
+
 export const SCALE_UP_K = 2
 export const PENDING_SCALE_UP_EXPIRY_MS = 30000
 export const SAMPLE_INTERVAL_MS = 1000
@@ -72,8 +75,6 @@ export class PredictiveScalingAlgorithm {
 
   // Shared config
   #horizonMs
-  #scaleUpMargin
-  #scaleDownMargin
   #min
   #max
   #cooldowns
@@ -90,17 +91,12 @@ export class PredictiveScalingAlgorithm {
 
   /**
    * @param {object} config
-   * @param {number} config.scaleUpMargin - fractional overload margin for adding a worker
-   * @param {number} config.scaleDownMargin - hysteresis margin for scale-down safety
    * @param {number} config.min - minimum worker count
    * @param {number} config.max - maximum worker count
    * @param {object} config.cooldowns - cooldown timers
    * @param {Object<string, object>} config.metrics - per-metric config keyed by metric name
    */
   constructor (config) {
-    this.#scaleUpMargin = config.scaleUpMargin
-    this.#scaleDownMargin = config.scaleDownMargin
-
     this.#min = config.min
     this.#max = config.max
     this.#cooldowns = config.cooldowns
@@ -412,9 +408,7 @@ export class PredictiveScalingAlgorithm {
       min: this.#min,
       max: this.#max,
       horizontalTrendThreshold: HORIZONTAL_TREND_THRESHOLD,
-      scaleUpK: SCALE_UP_K,
-      scaleUpMargin: this.#scaleUpMargin,
-      scaleDownMargin: this.#scaleDownMargin
+      scaleUpK: SCALE_UP_K
     })
   }
 
@@ -865,8 +859,6 @@ export function getTrendDirection (trend, level, horizontalTrendThreshold) {
  * @param {number} params.max - maximum worker count
  * @param {number} params.horizontalTrendThreshold - deadband angle in degrees
  * @param {number} params.scaleUpK - consequence-asymmetric weight steepness
- * @param {number} params.scaleUpMargin - fractional overload margin for adding a worker
- * @param {number} params.scaleDownMargin - hysteresis margin for scale-down safety
  * @returns {number} target worker count
  */
 export function makeScalingDecision ({
@@ -879,9 +871,7 @@ export function makeScalingDecision ({
   min,
   max,
   horizontalTrendThreshold,
-  scaleUpK,
-  scaleUpMargin,
-  scaleDownMargin
+  scaleUpK
 }) {
   const horizonSeconds = horizonMs / 1000
   const predictedSum = level + trend * horizonSeconds
@@ -898,8 +888,7 @@ export function makeScalingDecision ({
       threshold,
       max,
       targetCount,
-      scaleUpK,
-      scaleUpMargin
+      scaleUpK
     })
   }
 
@@ -908,8 +897,7 @@ export function makeScalingDecision ({
       level,
       threshold,
       min,
-      targetCount,
-      scaleDownMargin
+      targetCount
     })
   }
 
@@ -923,8 +911,7 @@ function findScaleUpTarget ({
   threshold,
   max,
   targetCount,
-  scaleUpK,
-  scaleUpMargin
+  scaleUpK
 }) {
   let predictedSumIncrease = predictedSum - level
   if (level > 0 && predictedSumIncrease > 0) {
@@ -937,7 +924,7 @@ function findScaleUpTarget ({
 
   let newTarget = Math.floor(adjustedPredictedSum / threshold)
   const targetOverload = adjustedPredictedSum - newTarget * threshold
-  if (targetOverload > 0 && (isOverloaded || targetOverload / threshold > scaleUpMargin)) {
+  if (targetOverload > 0 && (isOverloaded || targetOverload / threshold > SCALE_UP_MARGIN)) {
     newTarget++
   }
 
@@ -950,10 +937,9 @@ function findScaleDownTarget ({
   level,
   threshold,
   min,
-  targetCount,
-  scaleDownMargin
+  targetCount
 }) {
-  const minInstances = Math.floor((1 + scaleDownMargin) * level / threshold) + 1
+  const minInstances = Math.floor((1 + SCALE_DOWN_MARGIN) * level / threshold) + 1
   return Math.max(min, Math.min(targetCount, minInstances))
 }
 

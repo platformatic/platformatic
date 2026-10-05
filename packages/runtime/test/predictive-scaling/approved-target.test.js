@@ -14,8 +14,6 @@ function createAlgorithm (cooldowns = {}) {
   const algorithm = new PredictiveScalingAlgorithm({
     min: 1,
     max: 10,
-    scaleUpMargin: 0,
-    scaleDownMargin: 0,
     cooldowns: {
       scaleUpAfterScaleUpMs: 0,
       scaleUpAfterScaleDownMs: 0,

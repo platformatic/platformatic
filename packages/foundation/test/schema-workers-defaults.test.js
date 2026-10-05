@@ -30,11 +30,30 @@ test('runtime and application workers reject legacy settings and unknown keys', 
   assert.equal(runtimeProperties.verticalScaler, undefined)
 })
 
+test('runtime and application workers reject configurable scaling margins', () => {
+  for (const schema of [workers, application.properties.workers]) {
+    const validate = validator(schema)
+    for (const key of ['scaleUpMargin', 'scaleDownMargin']) {
+      assert.equal(validate({ dynamic: true, [key]: 0.1 }), false, key)
+    }
+  }
+})
+
 test('application workers declare dynamic and reject global-only settings', () => {
   const validate = validator(application.properties.workers)
   assert.ok(validate({ dynamic: false }))
   assert.ok(validate({ dynamic: true, minimum: 2, eluThreshold: 0.7 }))
   for (const key of ['total', 'maxMemory', 'processIntervalMs', 'maxScaleUpStep']) assert.equal(validate({ [key]: 10 }), false)
+})
+
+test('algorithm tuning is accepted globally and rejected on applications', () => {
+  const validateRuntime = validator(workers)
+  const validateApplication = validator(application.properties.workers)
+  for (const [key, value] of Object.entries({ redistributionMs: 1000, alphaUp: 0.3, alphaDown: 0.2, betaUp: 0.2, betaDown: 0.1, cooldowns: { scaleUpAfterScaleUpMs: 0 } })) {
+    assert.ok(validateRuntime({ dynamic: true, [key]: value }), key)
+    assert.equal(validateApplication({ dynamic: true, [key]: value }), false, key)
+  }
+  assert.ok(validateApplication({ static: 2, dynamic: true, minimum: 1, maximum: 4, eluThreshold: 0.7, heapThresholdMb: 128 }))
 })
 
 test('validates predictive tuning ranges and cooldown keys', () => {

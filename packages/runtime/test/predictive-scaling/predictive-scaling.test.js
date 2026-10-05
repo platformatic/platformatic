@@ -687,10 +687,18 @@ test('makeScalingDecision', async (t) => {
     min: 1,
     max: 10,
     horizontalTrendThreshold: 5,
-    scaleUpK: 3,
-    scaleUpMargin: 0.2,
-    scaleDownMargin: 0.3
+    scaleUpK: 3
   }
+
+  await t.test('forecast scale-up uses the fixed 0.1 margin', () => {
+    assert.strictEqual(makeScalingDecision({ ...baseParams, level: 150, trend: 3 }), 2)
+    assert.strictEqual(makeScalingDecision({ ...baseParams, level: 150, trend: 4 }), 3)
+  })
+
+  await t.test('scale-down retains the fixed 0.3 capacity margin', () => {
+    assert.strictEqual(makeScalingDecision({ ...baseParams, level: 60 }), 1)
+    assert.strictEqual(makeScalingDecision({ ...baseParams, level: 64 }), 2)
+  })
 
   await t.test('scale up when trend is UP and utilization is high', () => {
     const result = makeScalingDecision({
@@ -704,7 +712,7 @@ test('makeScalingDecision', async (t) => {
       // predictedSum = 140 + 20*5 = 240
       // adjustedPredictedSum = 140 + 0.955 * 100 = 235.5
       // newTarget = floor(235.5/80) = 2, overload = 235.5-160 = 75.5
-      // 75.5/80 = 0.94 > 0.2 margin -> newTarget = 3 > 2 -> scale up
+      // 75.5/80 = 0.94 > 0.1 margin -> newTarget = 3 > 2 -> scale up
     })
     assert.strictEqual(result, 3)
   })
@@ -721,7 +729,7 @@ test('makeScalingDecision', async (t) => {
       // predictedSum = 40 + 10*5 = 90
       // adjustedPredictedSum = 40 + 0.5 * 50 = 65
       // newTarget = floor(65/80) = 0, overload = 65
-      // 65/80 = 0.8125 > 0.2 margin -> newTarget = 1
+      // 65/80 = 0.8125 > 0.1 margin -> newTarget = 1
       // max(1, 2) = 2 -> hold
     })
     assert.strictEqual(result, 2)
@@ -739,7 +747,7 @@ test('makeScalingDecision', async (t) => {
       // cost = 3*0.875 = 2.625, weight = 2.625/(2.625+0.125) = 0.955
       // adjustedPredictedSum = 140 + 0.955*25 = 163.9
       // newTarget = floor(163.9/80) = 2, overload = 163.9-160 = 3.9
-      // 3.9/80 = 0.049 < 0.2 margin, not isOverloaded -> newTarget stays 2
+      // 3.9/80 = 0.049 < 0.1 margin, not isOverloaded -> newTarget stays 2
       // BUT isOverloaded check: 140/2=70 < 80 -> not overloaded
       // max(2, 2) = 2 -> hold due to dampening
     })
@@ -759,7 +767,7 @@ test('makeScalingDecision', async (t) => {
       // cost = 3*0.9375 = 2.8125, weight = 2.8125/(2.8125+0.0625) = 0.978
       // adjustedPredictedSum = 150 + 0.978*50 = 198.9
       // newTarget = floor(198.9/80) = 2, overload = 198.9-160 = 38.9
-      // 38.9/80 = 0.486 > 0.2 -> newTarget = 3 > 2 -> scale up
+      // 38.9/80 = 0.486 > 0.1 -> newTarget = 3 > 2 -> scale up
       // newTarget = 3 > 2 -> scale up
     })
     assert.strictEqual(result, 3)
@@ -1002,8 +1010,6 @@ test('PredictiveScalingAlgorithm', async (t) => {
   }
 
   const algorithmConfig = {
-    scaleUpMargin: 0.2,
-    scaleDownMargin: 0.3,
     min: 1,
     max: 10,
     cooldowns: {
@@ -1287,8 +1293,6 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
 
   function makeConfig (overrides = {}) {
     return {
-      scaleUpMargin: 0.2,
-      scaleDownMargin: 0.3,
       min: 1,
       max: 10,
       cooldowns: {
@@ -1585,8 +1589,6 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
 
   await t.test('remaining worker continues after another worker exits', () => {
     const alg = new PredictiveScalingAlgorithm({
-      scaleUpMargin: 0.2,
-      scaleDownMargin: 0.3,
       min: 1,
       max: 10,
       cooldowns: {

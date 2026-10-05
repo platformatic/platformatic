@@ -11,8 +11,6 @@ const DEFAULTS = {
   eluThreshold: 0.8,
   processIntervalMs: 10000,
   maxScaleUpStep: 1,
-  scaleUpMargin: 0.1,
-  scaleDownMargin: 0.3,
   redistributionMs: 10000,
   alphaUp: 0.2,
   alphaDown: 0.1,
@@ -180,8 +178,6 @@ export class PredictiveWorkersScaler {
     return {
       min,
       max,
-      scaleUpMargin: config.scaleUpMargin,
-      scaleDownMargin: config.scaleDownMargin,
       cooldowns: config.cooldowns,
       metrics
     }

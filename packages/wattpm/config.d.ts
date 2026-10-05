@@ -125,19 +125,6 @@ export interface ApplicationEntryOverrides {
         maximum?: number;
         eluThreshold?: number;
         heapThresholdMb?: number;
-        scaleUpMargin?: number;
-        scaleDownMargin?: number;
-        redistributionMs?: number;
-        alphaUp?: number;
-        alphaDown?: number;
-        betaUp?: number;
-        betaDown?: number;
-        cooldowns?: {
-          scaleUpAfterScaleUpMs?: number;
-          scaleUpAfterScaleDownMs?: number;
-          scaleDownAfterScaleUpMs?: number;
-          scaleDownAfterScaleDownMs?: number;
-        };
       };
   health?: {
     enabled?: boolean | string;
@@ -227,8 +214,6 @@ export interface WorkersOptions {
   heapThresholdMb?: number;
   processIntervalMs?: number;
   maxScaleUpStep?: number;
-  scaleUpMargin?: number;
-  scaleDownMargin?: number;
   redistributionMs?: number;
   alphaUp?: number;
   alphaDown?: number;
