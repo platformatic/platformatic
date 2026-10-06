@@ -301,6 +301,11 @@ async function proxyPlugin (app, opts) {
       handler: proxyHandler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
+      // false stops @fastify/http-proxy from registering its catch-all content
+      // type parsers, which hand a custom getUpstream an unparsed stream.
+      // Without this, supplying a preValidation hook that does nothing is the
+      // only way to get them out of the way.
+      proxyPayloads: application.proxy?.proxyPayloads,
       preHandler: wsGuardPreHandler,
 
       websocket: true,
