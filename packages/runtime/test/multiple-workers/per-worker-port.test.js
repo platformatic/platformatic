@@ -158,6 +158,9 @@ function keepRequesting (ports) {
       } catch (err) {
         results.failures.push(`${port}: ${err.code ?? err.message}`)
       }
+
+      // Throttle so the polling alone does not push the workers over maxELU
+      await sleep(20)
     }
   })
 
@@ -366,6 +369,9 @@ test('keeps the incremental port open while replacing a worker with a high ELU',
     30_000
   )
 
+  const unhealthy = []
+  app.on('application:worker:unhealthy', ({ worker }) => unhealthy.push(worker))
+
   const requester = keepRequesting([basePort + 1])
   const res = await request(`http://${HOST}:${basePort + 1}/busy`, { method: 'POST' })
   await res.body.text()
@@ -374,5 +380,6 @@ test('keeps the incremental port open while replacing a worker with a high ELU',
 
   deepStrictEqual(requester.refused(), [])
   ok(requester.results.ok > 0)
-  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 3, 2])
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 3, 2], `unhealthy workers: ${unhealthy}`)
+  deepStrictEqual(unhealthy, [1])
 })
