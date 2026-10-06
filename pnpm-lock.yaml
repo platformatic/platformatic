@@ -2178,7 +2178,7 @@ importers:
         version: 6.4.0
       fast-uri:
         specifier: ^4.0.0
-        version: 4.1.5
+        version: 4.2.1
       fastify-plugin:
         specifier: ^6.0.0
         version: 6.0.0
@@ -2348,7 +2348,7 @@ importers:
         version: link:../globals
       fast-uri:
         specifier: ^4.0.0
-        version: 4.1.5
+        version: 4.2.1
       fastify-plugin:
         specifier: ^5.0.1
         version: 5.1.0
@@ -7901,9 +7901,6 @@ packages:
 
   fast-uri@3.1.8:
     resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
-
-  fast-uri@4.1.5:
-    resolution: {integrity: sha512-vZeoMRB4epNr7QfdHxel7te/RcX16CxyXI07JCCTFWZA2s4v1azGNESRj+2EoaHSaWFL/Z3GmKT2jF6A202jLg==}
 
   fast-uri@4.2.1:
     resolution: {integrity: sha512-TmHQgewjHtMq1E5QKA0tOE0yeYGQs25KZC/ziJpubRtWI15W92e6vPFydWOeZBVROSHBYw/QhD9d5OefdD6LDg==}
@@ -19456,8 +19453,6 @@ snapshots:
   fast-uri@3.1.5: {}
 
   fast-uri@3.1.8: {}
-
-  fast-uri@4.1.5: {}
 
   fast-uri@4.2.1: {}
 
