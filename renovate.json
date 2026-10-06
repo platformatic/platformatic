@@ -3,6 +3,17 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/__fixtures__/**",
+    "**/fixtures/**"
+  ],
   "rangeStrategy": "update-lockfile",
   "ignoreDeps": [
     "camelcase",
@@ -13,7 +24,8 @@
     "ora",
     "graphiql"
   ],
-  "prHourlyLimit": 1,
+  "prHourlyLimit": 3,
+  "prConcurrentLimit": 10,
   "packageRules": [
     {
       "matchUpdateTypes": [
@@ -23,6 +35,14 @@
         "digest"
       ],
       "automerge": true
+    },
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch"
     },
     {
       "matchPackageNames": ["@opentelemetry/**"],
@@ -36,7 +56,7 @@
   },
   "timezone": "Europe/Rome",
   "schedule": [
-    "* 0-6 * * 6,0"
+    "* 0-6 * * *"
   ],
   "rebaseWhen": "conflicted"
 }
