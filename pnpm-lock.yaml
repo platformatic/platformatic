@@ -1241,7 +1241,7 @@ importers:
         version: 0.12.2(@typescript-eslint/utils@8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
       nitro:
         specifier: ^3.0.260610-beta
-        version: 3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+        version: 3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.3)(mysql2@3.23.3(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       nitropack:
         specifier: ^2.12.9
         version: 2.13.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.11.22)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2))
@@ -1943,7 +1943,7 @@ importers:
         version: 7.1.0
       mqemitter-redis:
         specifier: ^7.0.0
-        version: 7.2.0
+        version: 7.2.1
     devDependencies:
       '@platformatic/sql-mapper':
         specifier: workspace:*
@@ -2273,7 +2273,7 @@ importers:
         version: 0.12.2(@typescript-eslint/utils@8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
       nitro:
         specifier: 3.0.1-alpha.2
-        version: 3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+        version: 3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.3)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       react:
         specifier: ^19.1.0
         version: 19.2.8
@@ -9274,6 +9274,10 @@ packages:
     resolution: {integrity: sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g==}
     engines: {node: 20 || >=22}
 
+  lru-cache@11.5.3:
+    resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
+    engines: {node: 20 || >=22}
+
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
@@ -9797,8 +9801,8 @@ packages:
   moo@0.5.3:
     resolution: {integrity: sha512-m2fmM2dDm7GZQsY7KK2cme8agi+AAljILjQnof7p1ZMDe6dQ4bdnSMx0cPppudoeNv5hEFQirN6u+O4fDE0IWA==}
 
-  mqemitter-redis@7.2.0:
-    resolution: {integrity: sha512-YdYZgSab9kQsk6JXFYylJVctzAND6q7ps/g8PeqczSd0s+WKH7dXXfpiTrlUNDwmLkMpKPw0DyuQNeo2CeBxLg==}
+  mqemitter-redis@7.2.1:
+    resolution: {integrity: sha512-nsRIWaRVTAF4EEuiKMuLp6SFtKJkteKCK0anCJDMjyOrRTph+aHR6GH/68Evbiq3Va/OCkdc3WFpbCHZcELKAA==}
     engines: {node: '>=20'}
 
   mqemitter@7.1.0:
@@ -9823,8 +9827,8 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
-  msgpack-lite@0.1.26:
-    resolution: {integrity: sha512-SZ2IxeqZ1oRFGo0xFGbvBJWMp3yLIY9rlIJyxy8CGrwZn1f0ZK4r6jV/AM1r0FZMDUkWkglOk/eeKIL9g77Nxw==}
+  msgpack-lite@0.1.27:
+    resolution: {integrity: sha512-q/ic+YAXhbEZVEtITloe2hOqnd6Zt75nwrX5vsDlo3mmZm99JUg9poC/wOzgp+Xl7jisbmU586DN1mhBnruWWQ==}
     hasBin: true
 
   msgpackr-extract@3.0.4:
@@ -14863,7 +14867,7 @@ snapshots:
       agent-base: 7.1.4
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.6
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
       - supports-color
@@ -14887,7 +14891,7 @@ snapshots:
       common-ancestor-path: 2.0.0
       hosted-git-info: 9.0.3
       json-stringify-nice: 1.1.4
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       minimatch: 10.2.6
       nopt: 9.0.0
       npm-install-checks: 8.0.0
@@ -14933,7 +14937,7 @@ snapshots:
       '@gar/promise-retry': 1.0.3
       '@npmcli/promise-spawn': 9.0.1
       ini: 6.0.0
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       npm-pick-manifest: 11.0.3
       proc-log: 6.1.0
       semver: 7.8.5
@@ -18178,7 +18182,7 @@ snapshots:
       '@npmcli/fs': 5.0.0
       fs-minipass: 3.0.3
       glob: 13.0.6
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       minipass: 7.1.3
       minipass-collect: 2.0.1
       minipass-flush: 1.0.7
@@ -20128,7 +20132,7 @@ snapshots:
 
   hosted-git-info@9.0.3:
     dependencies:
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
 
   html-entities@2.3.3: {}
 
@@ -20968,6 +20972,8 @@ snapshots:
   lru-cache@10.4.3: {}
 
   lru-cache@11.5.2: {}
+
+  lru-cache@11.5.3: {}
 
   lru-cache@5.1.1:
     dependencies:
@@ -21901,14 +21907,14 @@ snapshots:
 
   moo@0.5.3: {}
 
-  mqemitter-redis@7.2.0:
+  mqemitter-redis@7.2.1:
     dependencies:
       hyperid: 3.3.0
       inherits: 2.0.4
       ioredis: 5.11.1
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       mqemitter: 7.1.0
-      msgpack-lite: 0.1.26
+      msgpack-lite: 0.1.27
     transitivePeerDependencies:
       - supports-color
 
@@ -21927,7 +21933,7 @@ snapshots:
 
   ms@2.1.3: {}
 
-  msgpack-lite@0.1.26:
+  msgpack-lite@0.1.27:
     dependencies:
       event-lite: 0.1.3
       ieee754: 1.2.1
@@ -22058,7 +22064,7 @@ snapshots:
 
   nf3@0.3.23: {}
 
-  nitro@3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
+  nitro@3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.3)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.10(srvx@0.10.1)
@@ -22073,7 +22079,7 @@ snapshots:
       srvx: 0.10.1
       undici: 7.29.0
       unenv: 2.0.0-rc.24
-      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3)
+      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.3)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
       rolldown: 1.2.4
       rollup: 4.62.4
@@ -22109,7 +22115,7 @@ snapshots:
       - sqlite3
       - uploadthing
 
-  nitro@3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
+  nitro@3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.3)(mysql2@3.23.3(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.10(srvx@0.11.22)
@@ -22124,7 +22130,7 @@ snapshots:
       rolldown: 1.2.4
       srvx: 0.11.22
       unenv: 2.0.0-rc.24
-      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3)
+      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.3)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
       dotenv: 17.4.2
       giget: 3.3.1
@@ -23028,7 +23034,7 @@ snapshots:
 
   path-scurry@2.0.2:
     dependencies:
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       minipass: 7.1.3
 
   path-to-regexp@0.1.13: {}
@@ -25376,7 +25382,7 @@ snapshots:
       chokidar: 5.0.0
       destr: 2.0.5
       h3: 1.15.11
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       node-fetch-native: 1.6.7
       ofetch: 1.5.1
       ufo: 1.6.4
@@ -25384,12 +25390,12 @@ snapshots:
       db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
       ioredis: 5.11.1
 
-  unstorage@2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3):
+  unstorage@2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.3)(ofetch@2.0.0-alpha.3):
     optionalDependencies:
       chokidar: 5.0.0
       db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
       ioredis: 5.11.1
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
       ofetch: 2.0.0-alpha.3
 
   untun@0.2.2: {}
