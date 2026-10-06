@@ -1,8 +1,9 @@
-import { equal, ok, rejects } from 'node:assert'
+import { deepStrictEqual, equal, ok, rejects } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { transform } from '../lib/config.js'
 import { MissingPprofCapture } from '../lib/errors.js'
+import { kITC } from '../lib/worker/symbols.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -227,3 +228,53 @@ test('runtime errors if wattpm-pprof-capture is not loaded (stop)', async t => {
 
   await rejects(runtime.stopApplicationProfiling('with-logger'), new MissingPprofCapture())
 })
+
+for (const applicationModules of [undefined, ['application-package'], []]) {
+  test(`profiling inherits dependency source maps with application setting ${JSON.stringify(applicationModules)}`, async t => {
+    const configFile = join(fixturesDir, 'configs', 'monorepo-workers.json')
+    const app = await createRuntime(configFile, null, {
+      async transform (config, ...args) {
+        config.nodeModulesSourceMaps = ['runtime-package']
+        config.autoload.mappings.serviceAppWithLogger.nodeModulesSourceMaps = applicationModules
+        return transform(config, ...args)
+      }
+    })
+    t.after(() => app.close())
+    await app.start()
+
+    const calls = []
+    for (let index = 0; index < 2; index++) {
+      const worker = await app.getApplication(`with-logger:${index}`)
+      const original = worker[kITC].send.bind(worker[kITC])
+      t.mock.method(worker[kITC], 'send', async (command, options, ...args) => {
+        if (command === 'startProfiling') {
+          calls.push({ index, options })
+          return
+        }
+        return original(command, options, ...args)
+      })
+    }
+
+    for (const explicitModules of [undefined, ['explicit-package'], []]) {
+      const expected = explicitModules ?? applicationModules ?? ['runtime-package']
+      const options = { sourceMaps: true, nodeModulesSourceMaps: explicitModules }
+      const originalOptions = structuredClone(options)
+      for (const [id, allWorkers, count] of [
+        ['with-logger', false, 1],
+        ['with-logger:1', false, 1],
+        ['with-logger', true, 2]
+      ]) {
+        calls.length = 0
+        await app.startApplicationProfiling(id, { ...options, allWorkers })
+        equal(calls.length, count)
+        for (const call of calls) {
+          deepStrictEqual(call.options.nodeModulesSourceMaps, expected)
+          equal(call.options.sourceMaps, true)
+          equal('allWorkers' in call.options, false)
+          if (id.endsWith(':1')) equal(call.index, 1)
+        }
+      }
+      deepStrictEqual(options, originalOptions)
+    }
+  })
+}

@@ -1,5 +1,7 @@
 import assert from 'node:assert'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import test from 'node:test'
 import { loadNodeModulesSourceMaps } from '../lib/node-modules-sourcemaps.js'
 
@@ -76,3 +78,35 @@ test('loaded source maps should have valid mapping data', async (t) => {
   console.log(`Tested lookup on ${generatedPath}`)
   console.log(`  Sources: ${info.mapConsumer.sources.length}`)
 })
+
+for (const name of ['no-root-entry', '@scope/no-root-entry']) {
+  test(`loads maps from ${name} without a resolvable root entry`, async t => {
+    const root = await mkdtemp(join(tmpdir(), 'pprof-module-maps-'))
+    t.after(() => rm(root, { recursive: true, force: true }))
+    const appPath = join(root, 'applications', 'web')
+    const modulePath = join(root, 'node_modules', name)
+    await mkdir(appPath, { recursive: true })
+    await mkdir(modulePath, { recursive: true })
+    await writeFile(join(modulePath, 'package.json'), JSON.stringify({
+      name,
+      exports: { './server': './server.js' }
+    }))
+    await writeFile(join(modulePath, 'server.js'), 'export const value = 42\n')
+    await writeFile(join(modulePath, 'server.js.map'), JSON.stringify({
+      version: 3,
+      file: 'server.js',
+      sources: ['server.ts'],
+      names: [],
+      mappings: 'AAAA'
+    }))
+
+    const entries = await loadNodeModulesSourceMaps(appPath, [name])
+    assert.strictEqual(entries.size, 1)
+    const info = entries.get(join(modulePath, 'server.js'))
+    assert.ok(info)
+    assert.deepStrictEqual(info.mapConsumer.originalPositionFor({ line: 1, column: 0 }), {
+      source: 'server.ts', line: 1, column: 0, name: null
+    })
+    info.mapConsumer.destroy()
+  })
+}

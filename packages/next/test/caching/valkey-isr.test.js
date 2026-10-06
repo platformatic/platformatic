@@ -26,6 +26,38 @@ process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 const configuration = 'caching-valkey'
 
+function getPageTags (nextMajor) {
+  switch (nextMajor) {
+    case 14:
+      return ['first', 'second', 'third', '_N_T_/layout', '_N_T_/page', '_N_T_/']
+    case 15:
+      return ['_N_T_/layout', '_N_T_/page', '_N_T_/', 'first', 'second', 'third']
+    default:
+      return ['_N_T_/layout', '_N_T_/page', '_N_T_/', '_N_T_/index', 'first', 'second', 'third']
+  }
+}
+
+function getRouteTags (nextMajor) {
+  switch (nextMajor) {
+    case 14:
+      return ['first', 'second', 'third', '_N_T_/layout', '_N_T_/route', '_N_T_/route/route']
+    case 15:
+      return ['_N_T_/layout', '_N_T_/route', '_N_T_/route/route', 'first', 'second', 'third']
+    default:
+      return ['_N_T_/layout', '_N_T_/route', '_N_T_/route/route', 'first', 'second', 'third']
+  }
+}
+
+function getTagOperations (prefix, tags, key) {
+  return tags.flatMap(tag => {
+    const tagKey = keyFor(valkeyPrefix, prefix, 'tags', tag)
+    return [
+      ['sadd', tagKey, key],
+      ['expire', tagKey, '120']
+    ]
+  })
+}
+
 test('should properly use the Valkey cache handler in development to cache fetch calls but not pages', async t => {
   const { url } = await prepareRuntimeWithBackend(t, configuration)
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
@@ -147,6 +179,8 @@ test('should properly use the Valkey cache handler in production to cache fetch 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
+  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
+  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
 
   let storedValues
 
@@ -164,6 +198,7 @@ test('should properly use the Valkey cache handler in production to cache fetch 
         ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
         ['get', key],
         ['set', key, base64ValueMatcher, 'EX', '120'],
+        ...pageTagOperations,
         ['get', key]
       ])
       break
@@ -179,6 +214,7 @@ test('should properly use the Valkey cache handler in production to cache fetch 
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
         ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
         ['set', key, base64ValueMatcher, 'EX', '120'],
+        ...pageTagOperations,
         ['get', key]
       ])
       break
@@ -357,6 +393,7 @@ test('should properly use the Valkey cache handler in production to cache fetch 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
+  const routeKey = keyFor(valkeyPrefix, prefix, 'values', '/route')
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
@@ -369,6 +406,7 @@ test('should properly use the Valkey cache handler in production to cache fetch 
     ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
     ['set', key, base64ValueMatcher, 'EX', '120'],
+    ...getTagOperations(prefix, getRouteTags(nextMajor), routeKey),
     ['get', key]
   ])
 
@@ -506,6 +544,37 @@ test('should properly revalidate tags in Valkey', async t => {
   ])
 })
 
+test('should revalidate cached pages in production', async t => {
+  const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await valkey.disconnect()
+  })
+
+  async function getPageValues () {
+    const response = await fetch(url)
+    const data = await response.text()
+    const match = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(match)
+    return match.slice(1)
+  }
+
+  const initial = await getPageValues()
+  deepStrictEqual(await getPageValues(), initial)
+
+  const revalidated = once(runtime, 'application:worker:event:revalidated')
+  const response = await fetch(url + '/revalidate')
+  deepStrictEqual(response.status, 200)
+  await revalidated
+
+  const refreshed = await getPageValues()
+  notDeepStrictEqual(refreshed[0], initial[0])
+  notDeepStrictEqual(refreshed[1], initial[1])
+})
+
 test('should not issue an empty DEL when revalidating a tag with no entries', async t => {
   const errors = []
   const logger = {
@@ -552,6 +621,39 @@ test('should not issue an empty DEL when revalidating a tag with no entries', as
   ])
 
   deepStrictEqual(errors, [])
+})
+
+test('should revalidate page entries using tags from the Next.js cache tags header', async t => {
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { console.log('cache error', msg, obj) }
+  }
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await cleanupCache(valkey)
+    await valkey.disconnect()
+  })
+
+  const handler = new CacheHandler({ standalone: true, store: valkey, prefix: valkeyPrefix, logger })
+  const fetchKey = `${valkeyPrefix}:fetch`
+  const pageKey = `${valkeyPrefix}:page`
+  const tagKey = keyFor(valkeyPrefix, '', 'tags', 'shared')
+
+  await handler.set(fetchKey, { kind: 'FETCH' }, { revalidate: 120, tags: ['shared'] })
+  await handler.set(
+    pageKey,
+    { kind: 'APP_PAGE', headers: { 'x-next-cache-tags': '_N_T_/page,shared' } },
+    { revalidate: 120 }
+  )
+
+  deepStrictEqual(new Set(await valkey.smembers(tagKey)), new Set([fetchKey, pageKey]))
+
+  await handler.revalidateTag('shared')
+
+  deepStrictEqual(await Promise.all([valkey.get(fetchKey), valkey.get(pageKey), valkey.get(tagKey)]), [null, null, null])
 })
 
 test('should extend TTL when our limit is smaller than the user one', async t => {
@@ -707,7 +809,7 @@ test('should not extend the TTL over the original intended one', async t => {
   ])
 })
 
-test('should handle read error', async t => {
+test('should treat read errors as cache misses', async t => {
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   await cleanupCache(valkey)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
@@ -725,8 +827,48 @@ test('should handle read error', async t => {
 
   const completed = once(runtime, 'application:worker:event:completed')
   const response = await fetch(url + '/route')
-  deepStrictEqual((await response.json()).time, 0)
+  deepStrictEqual(response.status, 200)
+  notDeepStrictEqual((await response.json()).time, 0)
   await completed
+
+  await runtime.close()
+  const logs = await getLogsFromFile(root)
+
+  ok(
+    logs.find(l => {
+      return (
+        l.msg === 'Cannot read cache value from Valkey' &&
+        l.err?.message === "NOPERM User plt-caching-test has no permissions to run the 'get' command"
+      )
+    })
+  )
+})
+
+test('should serve production pages when Valkey reads fail', async t => {
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', 'allcommands')
+
+  const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
+    await setCacheSettings(root, cache => {
+      cache.url = cache.url.replace('://', '://plt-caching-test@')
+    })
+  })
+
+  t.after(async () => {
+    await valkey.acl('delUser', valkeyUser)
+    await valkey.disconnect()
+  })
+
+  let response = await fetch(url)
+  deepStrictEqual(response.status, 200)
+
+  await valkey.acl('deluser', valkeyUser)
+  await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
+
+  response = await fetch(url)
+  deepStrictEqual(response.status, 200)
+  ok((await response.text()).includes('Hello from v'))
 
   await runtime.close()
   const logs = await getLogsFromFile(root)
@@ -1361,6 +1503,7 @@ test('should properly use the Valkey cache handler in production when using next
   const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
 
   const fetchKey = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
+  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
 
   let storedValues
 
@@ -1378,6 +1521,7 @@ test('should properly use the Valkey cache handler in production when using next
         ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
         ['get', fetchKey],
         ['set', pageKey, base64ValueMatcher, 'EX', '120'],
+        ...pageTagOperations,
         ['get', pageKey]
       ])
       break
@@ -1393,6 +1537,7 @@ test('should properly use the Valkey cache handler in production when using next
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
         ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
         ['set', pageKey, base64ValueMatcher, 'EX', '120'],
+        ...pageTagOperations,
         ['get', pageKey]
       ])
       break
@@ -1503,6 +1648,8 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
+  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
+  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
 
   let storedValues
 
@@ -1520,6 +1667,7 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
         ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
         ['get', key],
         ['set', key, base64ValueMatcher, 'EX', '120'],
+        ...pageTagOperations,
         ['get', key]
       ])
       break
@@ -1535,6 +1683,7 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
         ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
         ['set', key, base64ValueMatcher, 'EX', '120'],
+        ...pageTagOperations,
         ['get', key]
       ])
       break
