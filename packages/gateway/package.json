@@ -72,7 +72,7 @@
     "find-my-way": "^9.0.0",
     "graphql": "^16.8.1",
     "help-me": "^5.0.0",
-    "iovalkey": "^0.3.0",
+    "iovalkey": "^0.4.0",
     "json-schema-traverse": "^1.0.0",
     "mercurius": "^16.0.0",
     "minimist": "^1.2.8",
