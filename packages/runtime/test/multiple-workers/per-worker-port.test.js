@@ -137,6 +137,8 @@ async function waitForWorkerOnPort (port, expectedWorkerId, expectedFrom = 'node
 
 // Drives requests to each port until stopped, recording every failure.
 // When a worker is replaced, a closed listening socket shows up here as ECONNREFUSED.
+// An ECONNRESET is expected instead when the old worker closes its idle keep-alive sockets,
+// or resets the connections still queued on its listener (unless net.ipv4.tcp_migrate_req is set).
 function keepRequesting (ports) {
   const results = { ok: 0, failures: [] }
   // A holder rather than a bare `let`: stop() flips it from outside the loops,
@@ -161,6 +163,9 @@ function keepRequesting (ports) {
 
   return {
     results,
+    refused () {
+      return results.failures.filter(failure => failure.endsWith(': ECONNREFUSED'))
+    },
     async stop () {
       state.running = false
       await Promise.all(loops)
@@ -336,7 +341,7 @@ test('keeps every incremental port open while restarting an application', { skip
   await app.restartApplication('node')
   await requester.stop()
 
-  deepStrictEqual(requester.results.failures, [])
+  deepStrictEqual(requester.refused(), [])
   ok(requester.results.ok > 0)
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [5, 6, 7, 8, 9])
 })
@@ -367,7 +372,7 @@ test('keeps the incremental port open while replacing a worker with a high ELU',
   await eventsPromise
   await requester.stop()
 
-  deepStrictEqual(requester.results.failures, [])
+  deepStrictEqual(requester.refused(), [])
   ok(requester.results.ok > 0)
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 3, 2])
 })
