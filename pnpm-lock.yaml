@@ -592,7 +592,7 @@ importers:
         version: 9.39.5(jiti@2.7.0)
       fast-jwt:
         specifier: ^6.0.0
-        version: 6.3.2
+        version: 6.3.4
       fastify:
         specifier: ^5.0.0
         version: 5.12.5
@@ -1717,7 +1717,7 @@ importers:
         version: 4.22.2
       fast-jwt:
         specifier: ^6.0.0
-        version: 6.3.2
+        version: 6.3.4
       get-port:
         specifier: ^7.1.0
         version: 7.2.0
@@ -7870,8 +7870,8 @@ packages:
     resolution: {integrity: sha512-LPE7OCGUl11q3ZgW681cEU2d0d2JZ37hhJAmetCgNyW8waVaJVZXhyFF6U2so1Iim58Yc7pfxJe2P7MNetQH2g==}
     engines: {node: '>=20'}
 
-  fast-jwt@6.3.2:
-    resolution: {integrity: sha512-JTQImpkXVvj+eq7tJImtsHRt1K6ngloEzIx62Qbf9x4tEM2P2EqGpYJSeUoPf/kMn78rImSHfhf08KShR8PauA==}
+  fast-jwt@6.3.4:
+    resolution: {integrity: sha512-wq1bK/Pi0OARHYrEkXyTH793Xbqx4dHxBVxYWWHymqFxSEmhllkDj5ZCvbYZcfwUQmitjnBKSgy7nv7Duxg2BQ==}
     engines: {node: '>=20'}
 
   fast-levenshtein@2.0.6:
@@ -9782,8 +9782,8 @@ packages:
   mnemonist@0.39.8:
     resolution: {integrity: sha512-vyWo2K3fjrUw8YeeZ1zF0fy6Mu59RHokURlld8ymdUPjMlD9EC9ov1/YPqTgqRvUN9nTr3Gqfz29LYAmu0PHPQ==}
 
-  mnemonist@0.40.4:
-    resolution: {integrity: sha512-ZAv+KNavneRVzu4tUeOgzkScI3W5BGwZ3rkxIpKtzzVgfTtWQFN1CgX0U72cyvyh3iTuHL3SiSmrQxTlryEIcw==}
+  mnemonist@0.40.5:
+    resolution: {integrity: sha512-egXDkYJsKZCizjk8FydZ3g8TOigBwt+dIaehgKcQSAE3DCkCTWG4N94trvwR1ZYeAHo1exxE+ZhZOUuj01HdNw==}
 
   mocked-exports@0.1.1:
     resolution: {integrity: sha512-aF7yRQr/Q0O2/4pIXm6PZ5G+jAd7QS4Yu8m+WEeEHGnbo+7mE36CbLSDQiXYV8bVL3NfmdeqPJct0tUlnjVSnA==}
@@ -13899,7 +13899,7 @@ snapshots:
     dependencies:
       '@fastify/error': 4.2.0
       '@lukeed/ms': 2.0.2
-      fast-jwt: 6.3.2
+      fast-jwt: 6.3.4
       fastify-plugin: 6.0.0
       steed: 1.1.3
 
@@ -17864,7 +17864,7 @@ snapshots:
 
   async-cache-dedupe@3.4.0:
     dependencies:
-      mnemonist: 0.40.4
+      mnemonist: 0.40.5
       safe-stable-stringify: 2.5.0
 
   async-function@1.0.0: {}
@@ -19423,14 +19423,14 @@ snapshots:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
-      mnemonist: 0.40.4
+      mnemonist: 0.40.5
 
-  fast-jwt@6.3.2:
+  fast-jwt@6.3.4:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
-      mnemonist: 0.40.4
+      mnemonist: 0.40.5
       safe-regex2: 5.1.1
 
   fast-levenshtein@2.0.6: {}
@@ -21889,7 +21889,7 @@ snapshots:
     dependencies:
       obliterator: 2.0.5
 
-  mnemonist@0.40.4:
+  mnemonist@0.40.5:
     dependencies:
       obliterator: 2.0.5
 
@@ -25088,7 +25088,7 @@ snapshots:
   undici-oidc-interceptor@0.9.0:
     dependencies:
       async-cache-dedupe: 3.4.0
-      fast-jwt: 6.3.2
+      fast-jwt: 6.3.4
       undici: 7.29.0
 
   undici-thread-interceptor@1.5.0:
