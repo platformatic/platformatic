@@ -224,6 +224,7 @@ export const gateway = {
                   rewritePrefix: { type: 'string' },
                   rewriteLocationHeader: { type: 'boolean' },
                   hostname: { type: 'string' },
+                  proxyPayloads: { type: 'boolean' },
                   custom: {
                     type: 'object',
                     properties: {
