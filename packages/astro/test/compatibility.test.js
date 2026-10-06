@@ -58,7 +58,7 @@ before(async () => {
     await safeRemove(base)
     await createDirectory(base)
     await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-    await execa('pnpm', ['add', '-D', '--ignore-workspace', `astro@${astroVersion}`, `vite@${viteVersion}`], {
+    await execa('pnpm', ['add', '-D', '--ignore-workspace', '--allow-build=esbuild', '--allow-build=sharp', `astro@${astroVersion}`, `vite@${viteVersion}`], {
       cwd: base
     })
   }

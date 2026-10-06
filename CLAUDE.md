@@ -22,8 +22,8 @@ pnpm run gen-schema    # Generate JSON schemas
 pnpm run gen-types     # Generate TypeScript types
 
 # Cleanup
-pnpm clean             # Clean node_modules in all packages
-pnpm cleanall          # Clean everything including lockfile
+pnpm run clean         # Clean node_modules in all packages
+pnpm run cleanall      # Clean everything including lockfile
 
 # Testing individual packages
 cd packages/<package-name>
