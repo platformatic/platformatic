@@ -1,0 +1,9 @@
+{
+  "name": "node-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@platformatic/globals": ">=3.0.0"
+  }
+}

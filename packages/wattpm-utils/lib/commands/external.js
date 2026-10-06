@@ -249,21 +249,31 @@ async function importApplication (logger, configurationFile, id, path, url, bran
 
   // If there is a locale path
   if (path) {
+    const canonicalPath = canonicalize(path)
     let autoloadPath = config.autoload?.path
 
-    // If we already autoload this path, there is nothing to do
+    // If we already autoload this path, there is nothing to do.
+    // Autoload only claims the direct children of its directory which are not excluded, so
+    // containment at any depth is not the right test.
     if (autoloadPath) {
-      autoloadPath = resolve(root, autoloadPath)
-      if (path.startsWith(autoloadPath)) {
+      autoloadPath = canonicalize(resolve(root, autoloadPath))
+
+      const isAutoloaded =
+        dirname(canonicalPath) === autoloadPath && !(config.autoload.exclude ?? []).includes(basename(canonicalPath))
+
+      if (isAutoloaded) {
         logger.warn('The path is already autoloaded as an application.')
         return
       }
     }
 
-    // If the path is within the application repository
-    if (path.startsWith(root)) {
+    // If the path is within the application repository. The root itself qualifies, as the
+    // configuration file might be the application one rather than the runtime one.
+    const canonicalRoot = canonicalize(root)
+
+    if (canonicalPath === canonicalRoot || isPathInside(canonicalRoot, canonicalPath)) {
       // If the path is already defined as an application, there is nothing to do
-      if (config.applications.some(s => s.path === path)) {
+      if (config.applications.some(s => s.path && canonicalize(s.path) === canonicalPath)) {
         logger.warn('The path is already defined as an application.')
         return
       }

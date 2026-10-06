@@ -60,5 +60,7 @@ jobs:
         run: git status
       - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == true && 'next' || 'latest' }} --publish-branch ${{ github.ref_name }}
       - name: "Create release notes"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          pnpx @matteo.collina/release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t v${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}
+          pnpx @matteo.collina/release-notes -t v${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}

@@ -42,7 +42,7 @@ With `authorization.roleMergeStrategy` set to `most-permissive` (default `first-
 
 ### Supported Operations
 
-Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). Here's an example illustrating how these permissions are structured:
+Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). The `find` permission also governs counting: the `count` entity method, the `count<Entities>` GraphQL query and the `X-Total-Count` REST header apply the same checks as `find`. Here's an example illustrating how these permissions are structured:
 
 ```json title="Example JSON object"
 {
@@ -118,6 +118,8 @@ For `save` operations, it's important to include all not-nullable fields in the 
 ```
 
 In this configuration, a user with the `user` role can only access the `id` and `title` fields of the `page` entity.
+
+The `fields` list of a `find` rule also applies to the `where` and `orderBy` clauses of `find` and `count` operations: filtering or sorting on a field that is not in the list is rejected with a `PLT_DB_AUTH_FIELD_UNAUTHORIZED` error. Otherwise the value of a hidden field could be recovered through filters such as `where.secret.like=a%`. The rule's own `checks` are not affected by this limit, so in the example above the `userId` check keeps working even though `userId` cannot be selected, filtered or sorted on by the user.
 
 ## Set Entity Fields from User Metadata
 

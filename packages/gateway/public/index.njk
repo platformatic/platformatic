@@ -76,6 +76,11 @@
       // this; skew protection puts `?dpl=<version>` on the URL routinely.
       const basePath = window.location.pathname.replace(/\/$/, '')
       const baseUrl = window.location.origin + basePath
+      // Query pinning is the only skew-protection mechanism available behind
+      // an ALB. Preserve the deployment pin when opening a proxied application
+      // from the generated Gateway page.
+      const deploymentId = new URLSearchParams(window.location.search).get('dpl')
+      const deploymentQuery = deploymentId ? `?dpl=${encodeURIComponent(deploymentId)}` : ''
       // Trailing slash restored so relative asset paths resolve under the mount
       // point: "" -> "/", "/my-app" -> "/my-app/". Concatenating a bare pathname
       // produced "/my-appimages/..." when the gateway was mounted on a prefix.
@@ -84,7 +89,7 @@
         {% if key === 'proxy' %}
           {% if value.services.length %}
             {% for svc in value.services %}
-        document.getElementById('{{ key }}-{{ svc.id}}-external-link').href = baseUrl + '{{ svc.externalLink }}'
+        document.getElementById('{{ key }}-{{ svc.id}}-external-link').href = baseUrl + '{{ svc.externalLink }}' + deploymentQuery
             {% endfor %}
           {% endif %}
         {% endif %}

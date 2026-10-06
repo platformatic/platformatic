@@ -55,6 +55,20 @@ export function buildPinoTimestamp (timestamp) {
   return stdTimeFunctions[timestamp]
 }
 
+// Pino options which have no Platformatic specific handling and are therefore passed to pino verbatim
+export const forwardedPinoOptions = [
+  'levelVal',
+  'useOnlyCustomLevels',
+  'levelComparison',
+  'msgPrefix',
+  'nestedKey',
+  'errorKey',
+  'depthLimit',
+  'edgeLimit',
+  'crlf',
+  'enabled'
+]
+
 export function buildPinoOptions (loggerConfig, serverConfig, applicationId, workerId, context, root) {
   const pinoOptions = {
     level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
@@ -112,10 +126,21 @@ export function buildPinoOptions (loggerConfig, serverConfig, applicationId, wor
       paths: loggerConfig.redact.paths,
       censor: loggerConfig.redact.censor
     }
+
+    if (loggerConfig.redact.remove !== undefined) {
+      pinoOptions.redact.remove = loggerConfig.redact.remove
+    }
   }
 
   if (loggerConfig?.messageKey) {
     pinoOptions.messageKey = loggerConfig.messageKey
+  }
+
+  // Options which are forwarded to pino as they are
+  for (const option of forwardedPinoOptions) {
+    if (loggerConfig?.[option] !== undefined) {
+      pinoOptions[option] = loggerConfig[option]
+    }
   }
 
   if (loggerConfig?.customLevels) {

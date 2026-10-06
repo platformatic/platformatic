@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/react-router",
-  "version": "3.68.0",
+  "version": "3.71.0",
   "description": "Platformatic React Router Capability",
   "main": "index.js",
   "type": "module",
@@ -52,7 +52,7 @@
     "react-router": "^7.10.0",
     "react-router-dom": "^7.10.0",
     "typescript": "~6.0.3",
-    "vite": "^7.1.7",
+    "vite": "^8.2.2",
     "ws": "^8.18.0"
   },
   "engines": {

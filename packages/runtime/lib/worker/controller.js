@@ -69,7 +69,11 @@ function handleUnhandled (app, event, listeners, timeout, err, ...args) {
     }
   }
 
-  app.stop().catch()
+  // stop() rejects while the controller is not started. Left unobserved, that rejection re-enters
+  // this handler forever and starves the event loop, so the exit scheduled above never runs.
+  app.stop().catch(stopError => {
+    logger.debug({ err: ensureLoggableError(stopError) }, `Stopping the ${label} after the ${event} event failed.`)
+  })
 }
 
 export class Controller extends EventEmitter {

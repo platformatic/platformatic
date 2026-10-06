@@ -1,6 +1,6 @@
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
-import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, notDeepStrictEqual, ok, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -543,7 +543,16 @@ test('should track Next.js cache hit and miss ratio in Prometheus', async t => {
   const cacheHit = metrics.find(m => m.name === 'next_components_cache_valkey_hit_count')
   const cacheMiss = metrics.find(m => m.name === 'next_components_cache_valkey_miss_count')
 
+  strictEqual(cacheHit.type, 'counter')
+  strictEqual(cacheHit.help, 'Next.js Components Cache (Valkey) Hit Count')
+  strictEqual(cacheHit.values[0].labels.applicationId, 'frontend')
+  strictEqual(cacheHit.values[0].labels.workerId, 0)
   deepStrictEqual(cacheHit.values[0].value, 1) // One for the page (second request)
+
+  strictEqual(cacheMiss.type, 'counter')
+  strictEqual(cacheMiss.help, 'Next.js Components Cache (Valkey) Miss Count')
+  strictEqual(cacheMiss.values[0].labels.applicationId, 'frontend')
+  strictEqual(cacheMiss.values[0].labels.workerId, 0)
   deepStrictEqual(cacheMiss.values[0].value, 1) // One for the page (first request)
 })
 

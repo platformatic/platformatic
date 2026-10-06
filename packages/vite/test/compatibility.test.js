@@ -20,7 +20,7 @@ import {
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-const viteVersions = ['5.4.0', '6.3.5']
+const viteVersions = ['5.4.0', '6.3.5', '7.3.6', '8.2.2']
 
 const files = ['services/frontend/dist/index.html', 'services/frontend/dist/assets/index-*.js']
 const filesSSR = ['services/frontend/client/dist/client/index.html', 'services/frontend/client/dist/server/index.js']

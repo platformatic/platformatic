@@ -8,7 +8,8 @@ import {
   kEnvFileFallbackKeys,
   kMetadata,
   kTimeout,
-  parseMemorySize
+  parseMemorySize,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
@@ -448,6 +449,11 @@ export class Runtime extends EventEmitter {
     }
 
     this.#updateStatus('started')
+
+    // The CLI enables the module compile cache for this process. Node.js would only write it when
+    // the process terminates, so flush it now that the boot is complete to not lose it when the
+    // process is killed abruptly. This is a no-op when the compile cache is not enabled.
+    scheduleCompileCacheFlush()
 
     // Start the global health metrics timer for all workers if needed
     this.#startHealthMetricsCollectionIfNeeded()
@@ -988,7 +994,13 @@ export class Runtime extends EventEmitter {
 
     if (!allWorkers || hasWorkerIndex(id)) {
       const service = await this.#getApplicationWorkerForProfiling(id, ensureStarted)
-      return sendViaITC(service, 'startProfiling', profilingOptions)
+      const nodeModulesSourceMaps = profilingOptions.nodeModulesSourceMaps ??
+        service[kConfig].nodeModulesSourceMaps ?? this.#config.nodeModulesSourceMaps
+
+      return sendViaITC(service, 'startProfiling', {
+        ...profilingOptions,
+        nodeModulesSourceMaps
+      })
     }
 
     const started = []
@@ -997,7 +1009,14 @@ export class Runtime extends EventEmitter {
 
     for (const { workerIndex, worker } of await this.#getApplicationWorkersForProfiling(id, ensureStarted)) {
       try {
-        await sendViaITC(worker, 'startProfiling', profilingOptions)
+        const nodeModulesSourceMaps = profilingOptions.nodeModulesSourceMaps ??
+          worker[kConfig].nodeModulesSourceMaps ??
+          this.#config.nodeModulesSourceMaps
+
+        await sendViaITC(worker, 'startProfiling', {
+          ...profilingOptions,
+          nodeModulesSourceMaps
+        })
         started.push(workerIndex)
       } catch (error) {
         // A worker which is already being profiled is considered covered, but
