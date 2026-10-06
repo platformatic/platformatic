@@ -180,7 +180,7 @@ importers:
     dependencies:
       '@fastify/middie':
         specifier: ^9.0.0
-        version: 9.3.3
+        version: 9.3.4
       '@fastify/static':
         specifier: ^10.0.0
         version: 10.1.3
@@ -3394,9 +3394,6 @@ packages:
 
   '@fastify/merge-json-schemas@0.2.1':
     resolution: {integrity: sha512-OA3KGBCy6KtIvLf8DINC5880o5iBlDX4SxzLQS8HorJAbqluzLRn80UXU0bxZn7UOFhFgpRJDasfwn9nG4FG4A==}
-
-  '@fastify/middie@9.3.3':
-    resolution: {integrity: sha512-N2VRS+sfw/lxA/uLD6TvBpvfPfOV/RdYzM7ctAB58Cn2TAYxbRd8+JLFhNhMJoXlSbgChXYUnkn3hPU/JdA4Pg==}
 
   '@fastify/middie@9.3.4':
     resolution: {integrity: sha512-dd8phTnVWzx3iKPBKSvtRUT8+Igvy/MP+P5HcY2tjejEyeVbyjkD4HgzKessUObue5RRM5J6PZdxtAqgbn84yw==}
@@ -14081,19 +14078,11 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  '@fastify/middie@9.3.3':
-    dependencies:
-      '@fastify/error': 4.2.0
-      fastify-plugin: 6.0.0
-      find-my-way: 9.7.0
-      path-to-regexp: 8.4.2
-      reusify: 1.1.0
-
   '@fastify/middie@9.3.4':
     dependencies:
       '@fastify/error': 4.2.0
       fastify-plugin: 6.0.0
-      find-my-way: 9.7.0
+      find-my-way: 9.9.0
       path-to-regexp: 8.4.2
       reusify: 1.1.0
 
