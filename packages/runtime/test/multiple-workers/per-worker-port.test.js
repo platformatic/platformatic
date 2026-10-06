@@ -1,4 +1,5 @@
-import { deepStrictEqual, notStrictEqual, strictEqual } from 'node:assert'
+import { features } from '@platformatic/foundation'
+import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
 import { resolve } from 'node:path'
@@ -10,6 +11,7 @@ import { findAvailablePortRange, prepareRuntime, waitForEvents } from './helper.
 
 const HOST = '127.0.0.1'
 const WINDOWS_DYNAMIC_PORT_START = 49_152
+const NO_REUSE_PORT = !features.node.reusePort && 'reusePort is not available on this platform'
 
 async function listen (server, port = 0) {
   server.listen({ host: HOST, port, exclusive: true })
@@ -47,7 +49,7 @@ async function getOccupiedPortWithAvailablePreviousPort () {
 
 async function preparePerWorkerPortRuntime (
   t,
-  { application = 'node', workerCount = 5, maxWorkerCount = workerCount } = {}
+  { application = 'node', workerCount = 5, maxWorkerCount = workerCount, health } = {}
 ) {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
@@ -61,6 +63,10 @@ async function preparePerWorkerPortRuntime (
     }
     contents.autoload = undefined
     contents.entrypoint = application
+
+    if (health) {
+      contents.health = health
+    }
 
     let applicationConfig = contents.services.find(service => service.id === application)
     if (!applicationConfig) {
@@ -114,8 +120,8 @@ async function assertPortsRespond (basePort, offsets, expectedFrom = 'node') {
   return workerIds
 }
 
-async function waitForWorkerOnPort (port, expectedWorkerId, expectedFrom = 'node') {
-  for (let attempt = 0; attempt < 50; attempt++) {
+async function waitForWorkerOnPort (port, expectedWorkerId, expectedFrom = 'node', attempts = 50) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       const workerId = await requestWorkerPort(port, expectedFrom)
       if (workerId === expectedWorkerId) {
@@ -127,6 +133,39 @@ async function waitForWorkerOnPort (port, expectedWorkerId, expectedFrom = 'node
   }
 
   throw new Error(`Port ${port} did not switch to worker ${expectedWorkerId}`)
+}
+
+// Drives requests to each port until stopped, recording every failure.
+// When a worker is replaced, a closed listening socket shows up here as ECONNREFUSED.
+function keepRequesting (ports) {
+  const results = { ok: 0, failures: [] }
+  // A holder rather than a bare `let`: stop() flips it from outside the loops,
+  // which a plain variable makes look unmodified to static analysis.
+  const state = { running: true }
+
+  const loops = ports.map(async port => {
+    while (state.running) {
+      try {
+        const res = await request(`http://${HOST}:${port}/hello`)
+        await res.body.text()
+        if (res.statusCode === 200) {
+          results.ok++
+        } else {
+          results.failures.push(`${port}: HTTP ${res.statusCode}`)
+        }
+      } catch (err) {
+        results.failures.push(`${port}: ${err.code ?? err.message}`)
+      }
+    }
+  })
+
+  return {
+    results,
+    async stop () {
+      state.running = false
+      await Promise.all(loops)
+    }
+  }
 }
 
 async function assertPortClosed (port) {
@@ -261,4 +300,74 @@ test('preserves incremental port when restarting a crashed worker', async t => {
 
   await waitForWorkerOnPort(basePort, 3, 'service')
   deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2], 'service'), [3, 1, 2])
+})
+
+test('preserves incremental port when replacing a worker with a high ELU', async t => {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t, {
+    workerCount: 3,
+    health: { enabled: true, gracePeriod: 500, interval: 500, maxELU: 0.5, maxUnhealthyChecks: 2 }
+  })
+
+  await app.start()
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 1, 2])
+
+  const eventsPromise = waitForEvents(
+    app,
+    { event: 'application:worker:unhealthy', application: 'node', worker: 1 },
+    20_000
+  )
+
+  const res = await request(`http://${HOST}:${basePort + 1}/busy`, { method: 'POST' })
+  await res.body.text()
+  await eventsPromise
+
+  // Without reusePort the busy worker is stopped before its replacement starts, which can take a while
+  await waitForWorkerOnPort(basePort + 1, 3, 'node', 300)
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 3, 2])
+})
+
+test('keeps every incremental port open while restarting an application', { skip: NO_REUSE_PORT }, async t => {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t)
+
+  await app.start()
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [0, 1, 2, 3, 4])
+
+  const requester = keepRequesting([0, 1, 2, 3, 4].map(offset => basePort + offset))
+  await app.restartApplication('node')
+  await requester.stop()
+
+  deepStrictEqual(requester.results.failures, [])
+  ok(requester.results.ok > 0)
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2, 3, 4]), [5, 6, 7, 8, 9])
+})
+
+test('keeps the incremental port open while replacing a worker with a high ELU', { skip: NO_REUSE_PORT }, async t => {
+  const { app, basePort } = await preparePerWorkerPortRuntime(t, {
+    workerCount: 3,
+    health: { enabled: true, gracePeriod: 500, interval: 500, maxELU: 0.5, maxUnhealthyChecks: 2 }
+  })
+
+  await app.start()
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 1, 2])
+
+  // The replacement is complete once the old worker has stopped
+  const eventsPromise = waitForEvents(
+    app,
+    [
+      { event: 'application:worker:unhealthy', application: 'node', worker: 1 },
+      { event: 'application:worker:started', application: 'node', worker: 3 },
+      { event: 'application:worker:stopped', application: 'node', worker: 1 }
+    ],
+    30_000
+  )
+
+  const requester = keepRequesting([basePort + 1])
+  const res = await request(`http://${HOST}:${basePort + 1}/busy`, { method: 'POST' })
+  await res.body.text()
+  await eventsPromise
+  await requester.stop()
+
+  deepStrictEqual(requester.results.failures, [])
+  ok(requester.results.ok > 0)
+  deepStrictEqual(await assertPortsRespond(basePort, [0, 1, 2]), [0, 3, 2])
 })
