@@ -577,7 +577,7 @@ importers:
         version: 11.1.2
       '@fastify/session':
         specifier: ^11.0.0
-        version: 11.1.2
+        version: 11.1.3
       '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
@@ -3258,8 +3258,8 @@ packages:
   '@fastify/send@4.1.1':
     resolution: {integrity: sha512-BYo+EiaKwlxH+WetGk6hAs1d39iP0y1gqB8lGF/qwkJ9ZZ/cBY1vx5NvExb9Sc3yRMFjD5X4Eyh4e4+TzRkzdw==}
 
-  '@fastify/session@11.1.2':
-    resolution: {integrity: sha512-Hh2MjeVSQIqHumfigTtVPbyUUscPWlkUM3Xf7nII9bS82HYdCl3phMXF1pEHwNlQZRpKD4MWa3/t0TjGrJT6sw==}
+  '@fastify/session@11.1.3':
+    resolution: {integrity: sha512-VesvZ0utB6e+W1UP0V1wiz+Iz+aMlA+GB9Rwp9xGuf1U2WJXKhL1eOP7s0oLpMpXQgMxL5MxPBJRt8zDXZxLxw==}
 
   '@fastify/static@10.1.3':
     resolution: {integrity: sha512-W6jqajYS974XjPjB5hQWoxPM8NKM4+p8YmQT6G5IbCa4uhdWSVadZUv75siy1wEA/3ty8RYdpBydfWeu9AqAqQ==}
@@ -13971,7 +13971,7 @@ snapshots:
       http-errors: 2.0.1
       mime: 3.0.0
 
-  '@fastify/session@11.1.2':
+  '@fastify/session@11.1.3':
     dependencies:
       fastify-plugin: 6.0.0
       safe-stable-stringify: 2.5.0
