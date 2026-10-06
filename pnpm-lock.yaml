@@ -804,7 +804,7 @@ importers:
         version: 6.0.0
       find-my-way:
         specifier: ^9.0.0
-        version: 9.7.0
+        version: 9.9.0
       graphql:
         specifier: ^16.8.1
         version: 16.14.2
