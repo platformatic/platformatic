@@ -44,7 +44,7 @@ importers:
     devDependencies:
       '@astrojs/node':
         specifier: ^11.0.0
-        version: 11.1.3(astro@6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+        version: 11.1.3(astro@6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       '@platformatic/gateway':
         specifier: workspace:*
         version: link:../gateway
@@ -59,7 +59,7 @@ importers:
         version: 19.2.4(@types/react@19.2.18)
       astro:
         specifier: ^6.1.4
-        version: 6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)
+        version: 6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1241,10 +1241,10 @@ importers:
         version: 0.12.2(@typescript-eslint/utils@8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
       nitro:
         specifier: ^3.0.260610-beta
-        version: 3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+        version: 3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(mysql2@3.24.5(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       nitropack:
         specifier: ^2.12.9
-        version: 2.13.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.11.22)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2))
+        version: 2.13.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.11.22)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2))
       tstyche:
         specifier: ^7.0.0
         version: 7.2.2(typescript@6.0.3)
@@ -1369,7 +1369,7 @@ importers:
         version: 0.12.2(@typescript-eslint/utils@8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
       nuxt:
         specifier: ^4.4.8
-        version: 4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.23.3(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0)
+        version: 4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.24.5(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0)
       tstyche:
         specifier: ^7.0.0
         version: 7.2.2(typescript@6.0.3)
@@ -2084,7 +2084,7 @@ importers:
     dependencies:
       '@databases/mysql':
         specifier: ^7.0.0
-        version: 7.0.1(@types/node@22.20.1)(typescript@6.0.3)
+        version: 7.1.0(@types/node@22.20.1)(typescript@6.0.3)
       '@databases/pg':
         specifier: ^5.5.0
         version: 5.5.0(typescript@6.0.3)
@@ -2273,7 +2273,7 @@ importers:
         version: 0.12.2(@typescript-eslint/utils@8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
       nitro:
         specifier: 3.0.1-alpha.2
-        version: 3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+        version: 3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.2)(mysql2@3.24.5(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       react:
         specifier: ^19.1.0
         version: 19.2.8
@@ -2767,8 +2767,8 @@ packages:
     resolution: {integrity: sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/helper-validator-identifier@8.0.4':
-    resolution: {integrity: sha512-4wFaiLd0bVo4cIoTXI3zKI038NIWE/cr3jvBjejOVYVxV/m8Ltav1USiGzG1fmS5J2RhgEOgXNNK46cRPnRsrg==}
+  '@babel/helper-validator-identifier@8.0.6':
+    resolution: {integrity: sha512-HYx0YmuchRxRSpnjvcNffnPS8DCauKNmnumIuHG3jnQAVewRA7kfJGwF13ayEpSZs7s4R/oBH4eppuXcAQd5JQ==}
     engines: {node: ^22.18.0 || >=24.11.0}
 
   '@babel/helper-validator-option@7.29.7':
@@ -2914,8 +2914,8 @@ packages:
   '@databases/mysql-config@4.0.0':
     resolution: {integrity: sha512-38JyypCBXyRNxdI+XoBv/7b4i9tgZGL8JY4oj7zRprn33rM2QzgQ3h7VZoK+/v8iz3wFoe/HjH2CG75+u5dUFQ==}
 
-  '@databases/mysql@7.0.1':
-    resolution: {integrity: sha512-xR6QPhvDr5zX/QOcmXsbl3i9q4/J6tHXbb7WflwVKdFhaesrEquMDDE0RvnyUyC9psr/uTzOtt8ciow0x/2zdg==}
+  '@databases/mysql@7.1.0':
+    resolution: {integrity: sha512-iDMUmqbHxCjL8XK8K782TvmykY3t6mAOoG/633zDykzOmgJHhHa+oQGjz2MrT8PX6zO6RdhAWaoKBQ8qEefJjQ==}
 
   '@databases/pg-config@3.4.0':
     resolution: {integrity: sha512-4dYiTbHjzyQfEfaIGkh3uCBNBRWPs5Jcws94cFagLAGnjO/TcghC7oexzC81+bIADLDlpCw7DEWJAK/gNSQxkw==}
@@ -9281,8 +9281,8 @@ packages:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
     engines: {node: '>=12'}
 
-  lru.min@1.1.4:
-    resolution: {integrity: sha512-DqC6n3QQ77zdFpCMASA1a3Jlb64Hv2N2DciFGkO/4L9+q/IpIAuRlKOvCXabtRW6cQf8usbmM6BE/TOPysCdIA==}
+  lru.min@1.1.5:
+    resolution: {integrity: sha512-5J9ysMYUpYIg9RF2vJpy9SinEmSviFSe0GyPpCQ4L5QSkLAgeLXlTAOu2ZwWUU5m+0SBl6gUU1R1ZQB3aKypfA==}
     engines: {bun: '>=1.0.0', deno: '>=1.30.0', node: '>=8.0.0'}
 
   luxon@3.7.2:
@@ -9852,8 +9852,8 @@ packages:
   my-ua-parser@2.0.4:
     resolution: {integrity: sha512-lhPyjoce3SRNXqgozoVti8XWC6oWY/rMcXljvov9IAgHKj2ZTU3dR5iQ7jLrIj02xD4Ggn6doTi7K2pnSbjzeg==}
 
-  mysql2@3.23.3:
-    resolution: {integrity: sha512-ehp9HEKr4wVJaBOUVxNFa+CNrsCCCZ6363/jbGhb7WpEmSRNIXjHBjFs5K2s2cXn7j/RhDieejsQJ6nfUwD6vQ==}
+  mysql2@3.24.5:
+    resolution: {integrity: sha512-X6Ujsr2QSkkLpkQGjxzpKRAPn9nu4axpR63ntBzquFVEvPOArgbUQ1sJjFKI7hnaYtiVZxa17Z7q18KSubW0IQ==}
     engines: {node: '>= 8.0'}
     peerDependencies:
       '@types/node': '>= 8'
@@ -11668,8 +11668,8 @@ packages:
   sponge-case@2.0.3:
     resolution: {integrity: sha512-i4h9ZGRfxV6Xw3mpZSFOfbXjf0cQcYmssGWutgNIfFZ2VM+YIWfD71N/kjjwK6X/AAHzBr+rciEcn/L34S8TGw==}
 
-  sql-escaper@1.5.1:
-    resolution: {integrity: sha512-4toX5E1fQbBrpfXidaHnF0669nkAdETeIPTs2SUjxxD7RRIs9ICG4gtpmfc68JCEKehsdwLFqBu9VlQqZ1P1gg==}
+  sql-escaper@1.5.2:
+    resolution: {integrity: sha512-6CKD38c31SENivxOADeMNLdukOnUxUcflKtzVWzace7Riv1v7cAEym5Cx9Q7gYZ3ezIJI7ZpqecQq8cqNeSSFg==}
     engines: {bun: '>=1.0.0', deno: '>=2.0.0', node: '>=12.0.0'}
 
   srvx@0.10.1:
@@ -13262,10 +13262,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@11.1.3(astro@6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))':
+  '@astrojs/node@11.1.3(astro@6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
       '@astrojs/internal-helpers': 0.10.3
-      astro: 6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)
+      astro: 6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)
       send: 1.2.1
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -13416,7 +13416,7 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.29.7': {}
 
-  '@babel/helper-validator-identifier@8.0.4': {}
+  '@babel/helper-validator-identifier@8.0.6': {}
 
   '@babel/helper-validator-option@7.29.7': {}
 
@@ -13516,7 +13516,7 @@ snapshots:
   '@babel/types@8.0.4':
     dependencies:
       '@babel/helper-string-parser': 8.0.0
-      '@babel/helper-validator-identifier': 8.0.4
+      '@babel/helper-validator-identifier': 8.0.6
 
   '@bcoe/v8-coverage@1.0.2': {}
 
@@ -13570,7 +13570,7 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@databases/mysql@7.0.1(@types/node@22.20.1)(typescript@6.0.3)':
+  '@databases/mysql@7.1.0(@types/node@22.20.1)(typescript@6.0.3)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@databases/escape-identifier': 1.0.3
@@ -13578,7 +13578,7 @@ snapshots:
       '@databases/push-to-async-iterable': 3.0.0
       '@databases/shared': 3.2.0
       '@databases/sql': 3.3.0
-      mysql2: 3.23.3(@types/node@22.20.1)
+      mysql2: 3.24.5(@types/node@22.20.1)
     transitivePeerDependencies:
       - '@types/node'
       - typescript
@@ -15073,7 +15073,7 @@ snapshots:
       pkg-types: 2.3.1
       semver: 7.8.5
 
-  '@nuxt/devtools@3.4.1(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(magic-string@1.2.0)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))':
+  '@nuxt/devtools@3.4.1(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(magic-string@1.2.0)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))':
     dependencies:
       '@nuxt/devtools-kit': 3.4.1(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       '@nuxt/devtools-wizard': 3.4.1
@@ -15103,7 +15103,7 @@ snapshots:
       sirv: 3.0.2
       structured-clone-es: 2.0.1
       tinyglobby: 0.2.17
-      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)
+      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)
       vite: 8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)
       vite-plugin-inspect: 11.4.1(@nuxt/kit@4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))))(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       vite-plugin-vue-tracer: 1.5.0(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
@@ -15168,7 +15168,7 @@ snapshots:
       - rolldown
       - unplugin
 
-  '@nuxt/nitro-server@4.5.2(639a1a24f753032a5874656f7542882e)':
+  '@nuxt/nitro-server@4.5.2(3367d479ea9febab202ab78349ac1ee2)':
     dependencies:
       '@nuxt/devalue': 2.0.2
       '@nuxt/kit': 4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))
@@ -15185,9 +15185,9 @@ snapshots:
       impound: 1.1.6(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
       klona: 2.0.6
       mocked-exports: 0.1.1
-      nitropack: 2.13.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.12.5)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
+      nitropack: 2.13.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.12.5)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
       nostics: 1.2.0
-      nuxt: 4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.23.3(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0)
+      nuxt: 4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.24.5(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0)
       nypm: 0.6.9
       ohash: 2.0.11
       pathe: 2.0.3
@@ -15195,7 +15195,7 @@ snapshots:
       std-env: 4.2.0
       ufo: 1.6.4
       unctx: 3.0.0(magic-string@1.2.0)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))
-      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)
+      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)
       vue: 3.5.41(typescript@6.0.3)
       vue-bundle-renderer: 2.3.2
       vue-devtools-stub: 0.1.0
@@ -15272,7 +15272,7 @@ snapshots:
       rc9: 3.0.1
       std-env: 4.2.0
 
-  '@nuxt/vite-builder@4.5.2(e7057b3bfcdb7dfc190827c0a697956c)':
+  '@nuxt/vite-builder@4.5.2(21d3cc853190b59a62a3ef1569fcdc08)':
     dependencies:
       '@nuxt/kit': 4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))
       '@vitejs/plugin-vue': 6.0.8(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
@@ -15290,7 +15290,7 @@ snapshots:
       knitwork: 1.3.0
       mlly: 1.8.2
       mocked-exports: 0.1.1
-      nuxt: 4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.23.3(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0)
+      nuxt: 4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.24.5(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0)
       nypm: 0.6.9
       pathe: 2.0.3
       pkg-types: 2.3.1
@@ -17764,7 +17764,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0):
+  astro@6.4.8(@types/node@22.20.1)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(jiti@2.7.0)(lightningcss@1.33.0)(rollup@4.62.4)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       '@astrojs/compiler': 4.0.0
       '@astrojs/internal-helpers': 0.10.0
@@ -17814,7 +17814,7 @@ snapshots:
       ultrahtml: 1.7.0
       unifont: 0.7.5
       unist-util-visit: 5.1.0
-      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)
+      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)
       vfile: 6.0.3
       vite: 7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)
       vitefu: 1.1.3(vite@7.3.6(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
@@ -18621,10 +18621,10 @@ snapshots:
 
   dateformat@4.6.3: {}
 
-  db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)):
+  db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)):
     optionalDependencies:
       better-sqlite3: 12.11.1
-      mysql2: 3.23.3(@types/node@22.20.1)
+      mysql2: 3.24.5(@types/node@22.20.1)
 
   debounce@2.2.0: {}
 
@@ -20975,7 +20975,7 @@ snapshots:
 
   lru-cache@7.18.3: {}
 
-  lru.min@1.1.4: {}
+  lru.min@1.1.5: {}
 
   luxon@3.7.2: {}
 
@@ -21965,20 +21965,20 @@ snapshots:
 
   my-ua-parser@2.0.4: {}
 
-  mysql2@3.23.3(@types/node@22.20.1):
+  mysql2@3.24.5(@types/node@22.20.1):
     dependencies:
       '@types/node': 22.20.1
       aws-ssl-profiles: 1.1.2
       generate-function: 2.3.1
       iconv-lite: 0.7.3
       long: 5.3.2
-      lru.min: 1.1.4
+      lru.min: 1.1.5
       named-placeholders: 1.1.6
-      sql-escaper: 1.5.1
+      sql-escaper: 1.5.2
 
   named-placeholders@1.1.6:
     dependencies:
-      lru.min: 1.1.4
+      lru.min: 1.1.5
 
   nanoid@3.3.18: {}
 
@@ -22058,11 +22058,11 @@ snapshots:
 
   nf3@0.3.23: {}
 
-  nitro@3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
+  nitro@3.0.1-alpha.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(better-sqlite3@12.11.1)(chokidar@5.0.0)(ioredis@5.11.1)(lru-cache@11.5.2)(mysql2@3.24.5(@types/node@22.20.1))(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.10(srvx@0.10.1)
-      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
+      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))
       h3: 2.0.1-rc.26(crossws@0.4.10(srvx@0.10.1))
       jiti: 2.7.0
       nf3: 0.3.23
@@ -22073,7 +22073,7 @@ snapshots:
       srvx: 0.10.1
       undici: 7.29.0
       unenv: 2.0.0-rc.24
-      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3)
+      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
       rolldown: 1.2.4
       rollup: 4.62.4
@@ -22109,11 +22109,11 @@ snapshots:
       - sqlite3
       - uploadthing
 
-  nitro@3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(mysql2@3.23.3(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
+  nitro@3.0.260610-beta(better-sqlite3@12.11.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(ioredis@5.11.1)(jiti@2.7.0)(lru-cache@11.5.2)(mysql2@3.24.5(@types/node@22.20.1))(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.10(srvx@0.11.22)
-      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
+      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))
       env-runner: 0.1.16
       h3: 2.0.1-rc.22(crossws@0.4.10(srvx@0.11.22))
       hookable: 6.1.1
@@ -22124,7 +22124,7 @@ snapshots:
       rolldown: 1.2.4
       srvx: 0.11.22
       unenv: 2.0.0-rc.24
-      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3)
+      unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
       dotenv: 17.4.2
       giget: 3.3.1
@@ -22163,7 +22163,7 @@ snapshots:
       - uploadthing
       - wrangler
 
-  nitropack@2.13.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.11.22)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)):
+  nitropack@2.13.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.11.22)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.62.4)
@@ -22184,7 +22184,7 @@ snapshots:
       cookie-es: 2.0.1
       croner: 10.0.1
       crossws: 0.3.5
-      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
+      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))
       defu: 6.1.7
       destr: 2.0.5
       dot-prop: 10.2.0
@@ -22230,7 +22230,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       unimport: 6.4.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2))
       unplugin-utils: 0.3.2
-      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)
+      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)
       untyped: 2.0.0
       unwasm: 0.5.3
       youch: 4.1.1
@@ -22275,7 +22275,7 @@ snapshots:
       - vite
       - webpack
 
-  nitropack@2.13.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.12.5)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)):
+  nitropack@2.13.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))(rolldown@1.2.4)(srvx@0.12.5)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.62.4)
@@ -22296,7 +22296,7 @@ snapshots:
       cookie-es: 2.0.1
       croner: 10.0.1
       crossws: 0.3.5
-      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
+      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))
       defu: 6.1.7
       destr: 2.0.5
       dot-prop: 10.2.0
@@ -22342,7 +22342,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       unimport: 6.4.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
       unplugin-utils: 0.3.2
-      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)
+      unstorage: 1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)
       untyped: 2.0.0
       unwasm: 0.5.3
       youch: 4.1.1
@@ -22550,16 +22550,16 @@ snapshots:
     optionalDependencies:
       chokidar: 3.6.0
 
-  nuxt@4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.23.3(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0):
+  nuxt@4.5.2(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@oxc-project/types@0.144.0)(@types/node@22.20.1)(@vue/compiler-sfc@3.5.41)(better-sqlite3@12.11.1)(cac@6.7.14)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(esbuild@0.28.2)(eslint@9.39.5(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.33.0)(magicast@0.5.4)(mysql2@3.24.5(@types/node@22.20.1))(optionator@0.9.4)(rolldown@1.2.4)(rollup-plugin-visualizer@7.0.1(rolldown@1.2.4)(rollup@4.62.4))(rollup@4.62.4)(srvx@0.12.5)(terser@5.50.0)(tsx@4.23.12)(typescript@6.0.3)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))(yaml@2.9.0):
     dependencies:
       '@dxup/nuxt': 0.5.6(esbuild@0.28.2)(magicast@0.5.4)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
       '@nuxt/cli': 3.37.0(@nuxt/schema@4.5.2)(cac@6.7.14)(magicast@0.5.4)
-      '@nuxt/devtools': 3.4.1(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(magic-string@1.2.0)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
+      '@nuxt/devtools': 3.4.1(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(magic-string@1.2.0)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))
       '@nuxt/kit': 4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))
-      '@nuxt/nitro-server': 4.5.2(639a1a24f753032a5874656f7542882e)
+      '@nuxt/nitro-server': 4.5.2(3367d479ea9febab202ab78349ac1ee2)
       '@nuxt/schema': 4.5.2
       '@nuxt/telemetry': 2.8.0(@nuxt/kit@4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))))
-      '@nuxt/vite-builder': 4.5.2(e7057b3bfcdb7dfc190827c0a697956c)
+      '@nuxt/vite-builder': 4.5.2(21d3cc853190b59a62a3ef1569fcdc08)
       '@unhead/vue': 3.3.2(@oxc-project/types@0.144.0)(esbuild@0.28.2)(lightningcss@1.33.0)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@6.0.3))(webpack@5.106.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
       '@vue/shared': 3.5.41
       chokidar: 5.0.0
@@ -24529,7 +24529,7 @@ snapshots:
 
   sponge-case@2.0.3: {}
 
-  sql-escaper@1.5.1: {}
+  sql-escaper@1.5.2: {}
 
   srvx@0.10.1: {}
 
@@ -25370,7 +25370,7 @@ snapshots:
       '@unrs/resolver-binding-win32-ia32-msvc': 1.12.2
       '@unrs/resolver-binding-win32-x64-msvc': 1.12.2
 
-  unstorage@1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1):
+  unstorage@1.17.5(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1):
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -25381,13 +25381,13 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.4
     optionalDependencies:
-      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
+      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))
       ioredis: 5.11.1
 
-  unstorage@2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3):
+  unstorage@2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1)))(ioredis@5.11.1)(lru-cache@11.5.2)(ofetch@2.0.0-alpha.3):
     optionalDependencies:
       chokidar: 5.0.0
-      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.23.3(@types/node@22.20.1))
+      db0: 0.3.4(better-sqlite3@12.11.1)(mysql2@3.24.5(@types/node@22.20.1))
       ioredis: 5.11.1
       lru-cache: 11.5.2
       ofetch: 2.0.0-alpha.3
