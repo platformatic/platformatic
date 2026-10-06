@@ -163,7 +163,7 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
   }
 
   {
-    const resInsert = await app.platformatic.entities.page.insert({
+    const resInsert = await app.platformatic.entities.page.insertMany({
       inputs: [{ title: 'page title2' }],
       skipAuth: true
     })
@@ -446,7 +446,7 @@ test('if ctx is not present, skips permission check ', async () => {
   }
 
   {
-    const resInsert = await app.platformatic.entities.page.insert({ inputs: [{ title: 'page title2' }] })
+    const resInsert = await app.platformatic.entities.page.insertMany({ inputs: [{ title: 'page title2' }] })
 
     deepEqual(resInsert, [{ id: '2', title: 'page title2', userId: null }], 'insert')
   }
@@ -620,7 +620,7 @@ test('validate that a ctx is needed for skipAuth: false', async () => {
   )
 
   await rejects(
-    app.platformatic.entities.page.insert({
+    app.platformatic.entities.page.insertMany({
       inputs: [{ title: 'page title' }],
       skipAuth: false
     })

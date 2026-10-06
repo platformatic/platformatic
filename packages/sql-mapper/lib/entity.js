@@ -5,6 +5,7 @@ import { buildCursorCondition } from './cursor.js'
 import {
   InputNotProvidedError,
   InvalidPrimaryKeyTypeError,
+  MissingValueForPrimaryKeyError,
   MissingWhereClauseError,
   ParamNotAllowedError,
   UnknownFieldError,
@@ -146,50 +147,30 @@ function createMapper (
     return newOutput
   }
 
-  async function save (args) {
-    const db = getDB(args)
+  async function insert (args) {
     if (args.input === undefined) {
       throw new InputNotProvidedError()
     }
-    // args.input is not array
+
+    const db = getDB(args)
     const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
     const input = fixInput(args.input)
 
-    let hasPrimaryKeys = true
-    for (const key of primaryKeys) {
-      if (input[key] === undefined) {
-        hasPrimaryKeys = false
-        break
+    if (autoTimestamp) {
+      const now = new Date()
+      if (fields[autoTimestamp.createdAt]) {
+        input[autoTimestamp.createdAt] = now
+      }
+      if (fields[autoTimestamp.updatedAt]) {
+        input[autoTimestamp.updatedAt] = now
       }
     }
 
-    let now
-    if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
-      now = new Date()
-      input[autoTimestamp.updatedAt] = now
-    }
-    if (hasPrimaryKeys) {
-      // update
-      const res = await queries.updateOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
-      if (res) {
-        return fixOutput(res)
-      }
-      // If we are here, the record does not exist, so we create it
-      // this is inefficient because it will do 2 queries.
-      // TODO there is a way to do it in one query with DB specific syntax.
-    }
-
-    // insert
-    if (autoTimestamp && fields[autoTimestamp.createdAt]) {
-      /* istanbul ignore next */
-      now = now || new Date()
-      input[autoTimestamp.createdAt] = now
-    }
     const res = await queries.insertOne(db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve)
     return fixOutput(res)
   }
 
-  async function insert (args) {
+  async function insertMany (args) {
     const db = getDB(args)
     const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
     const inputs = args.inputs
@@ -238,6 +219,53 @@ function createMapper (
 
       return res
     }
+  }
+
+  async function update (args) {
+    if (args.input === undefined) {
+      throw new InputNotProvidedError()
+    }
+
+    const db = getDB(args)
+    const fieldsToRetrieve = computeFields(args.fields).map(f => sql.ident(f))
+    const input = fixInput(args.input)
+
+    for (const key of primaryKeys) {
+      if (input[key] === undefined) {
+        throw new MissingValueForPrimaryKeyError(key)
+      }
+    }
+
+    if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
+      input[autoTimestamp.updatedAt] = new Date()
+    }
+
+    const res = await queries.updateOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
+    return res ? fixOutput(res) : null
+  }
+
+  async function upsert (args) {
+    if (args.input === undefined) {
+      throw new InputNotProvidedError()
+    }
+
+    const input = fixInput(args.input)
+    let hasPrimaryKeys = true
+    for (const key of primaryKeys) {
+      if (input[key] === undefined) {
+        hasPrimaryKeys = false
+        break
+      }
+    }
+
+    if (hasPrimaryKeys) {
+      const updated = await entity.update(args)
+      if (updated) {
+        return updated
+      }
+    }
+
+    return entity.insert(args)
   }
 
   async function updateMany (args) {
@@ -508,9 +536,12 @@ function createMapper (
 
   if (!isView) {
     entity.insert = insert
-    entity.save = save
-    entity.delete = _delete
+    entity.insertMany = insertMany
+    entity.update = update
     entity.updateMany = updateMany
+    entity.upsert = upsert
+    entity.save = upsert
+    entity.delete = _delete
   }
 
   return entity

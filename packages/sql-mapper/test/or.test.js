@@ -72,7 +72,7 @@ test('where clause with or operation', async () => {
     }
   ]
 
-  await entity.insert({
+  await entity.insertMany({
     inputs: posts
   })
 

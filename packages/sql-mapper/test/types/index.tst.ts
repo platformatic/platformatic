@@ -93,13 +93,19 @@ test('sql mapper plugin types', async () => {
   expect(entity.fixInput).type.toBe<(input: { [columnName: string]: any }) => { [columnName: string]: any }>()
   expect(entity.fixOutput).type.toBe<(input: { [columnName: string]: any }) => { [columnName: string]: any }>()
   expect(await entity.find()).type.toBe<Partial<EntityFields>[]>()
-  expect(await entity.insert({ inputs: [{ id: 1, name: 'test' }] })).type.toBe<Partial<EntityFields>[]>()
+  expect(await entity.insert({ input: { id: 1, name: 'test' } })).type.toBe<Partial<EntityFields>>()
+  expect(await entity.insertMany({ inputs: [{ id: 1, name: 'test' }] })).type.toBe<Partial<EntityFields>[]>()
+  expect(await entity.update({ input: { id: 1, name: 'test' } })).type.toBe<Partial<EntityFields> | null>()
+  expect(await entity.upsert({ input: { id: 1, name: 'test' } })).type.toBe<Partial<EntityFields>>()
   expect(await entity.save({ input: { id: 1, name: 'test' } })).type.toBe<Partial<EntityFields>>()
   expect(await entity.delete()).type.toBe<Partial<EntityFields>[]>()
   expect(await entity.count()).type.toBe<number>()
   expect(await entity.find({ tx: pluginOptions.db })).type.toBe<Partial<EntityFields>[]>()
   expect(await entity.find({ ctx })).type.toBe<Partial<EntityFields>[]>()
-  expect(await entity.insert({ inputs: [{ id: 1, name: 'test' }], tx: pluginOptions.db })).type.toBe<Partial<EntityFields>[]>()
+  expect(await entity.insert({ input: { id: 1, name: 'test' }, tx: pluginOptions.db })).type.toBe<Partial<EntityFields>>()
+  expect(await entity.insertMany({ inputs: [{ id: 1, name: 'test' }], tx: pluginOptions.db })).type.toBe<Partial<EntityFields>[]>()
+  expect(await entity.update({ input: { id: 1, name: 'test' }, ctx })).type.toBe<Partial<EntityFields> | null>()
+  expect(await entity.upsert({ input: { id: 1, name: 'test' }, ctx })).type.toBe<Partial<EntityFields>>()
   expect(await entity.save({ input: { id: 1, name: 'test' }, tx: pluginOptions.db })).type.toBe<Partial<EntityFields>>()
   expect(await entity.save({ input: { id: 1, name: 'test' }, ctx })).type.toBe<Partial<EntityFields>>()
   expect(await entity.delete({ tx: pluginOptions.db })).type.toBe<Partial<EntityFields>[]>()
@@ -155,7 +161,25 @@ test('sql mapper plugin types', async () => {
       originalInsert: typeof entity.insert,
       ...options: Parameters<typeof entity.insert>
     ): ReturnType<typeof entity.insert> {
+      return {}
+    },
+    async insertMany (
+      originalInsertMany: typeof entity.insertMany,
+      ...options: Parameters<typeof entity.insertMany>
+    ): ReturnType<typeof entity.insertMany> {
       return []
+    },
+    async update (
+      originalUpdate: typeof entity.update,
+      ...options: Parameters<typeof entity.update>
+    ): ReturnType<typeof entity.update> {
+      return null
+    },
+    async upsert (
+      originalUpsert: typeof entity.upsert,
+      ...options: Parameters<typeof entity.upsert>
+    ): ReturnType<typeof entity.upsert> {
+      return {}
     },
     async save (
       originalSave: typeof entity.save,

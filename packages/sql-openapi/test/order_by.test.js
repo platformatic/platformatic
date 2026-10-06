@@ -159,7 +159,7 @@ test('list order by', async t => {
   await app.ready()
 
   {
-    const res = await app.platformatic.entities.page.insert({
+    const res = await app.platformatic.entities.page.insertMany({
       inputs: [
         { counter: 3, counter2: 3 },
         { counter: 3, counter2: 2 },

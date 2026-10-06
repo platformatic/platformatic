@@ -169,12 +169,107 @@ async function auth (app, opts) {
       // fields are specified
       checkSaveMandatoryFieldsInRules(type, rules)
 
+      const kAuthorizedWrite = Symbol('authorizedWrite')
+
       function useOriginal (skipAuth, ctx) {
         if (skipAuth === false && !ctx) {
           throw new Error('Cannot set skipAuth to `false` without ctx')
         }
 
         return skipAuth || !ctx
+      }
+
+      function normalizeWriteInput (input) {
+        const normalized = {}
+        for (const [key, value] of Object.entries(input)) {
+          const field = type.camelCasedFields[key] || type.fields[key]
+          if (!field) {
+            // Preserve sql-mapper's public error for unknown input fields.
+            type.fixInput({ [key]: value })
+          }
+          normalized[field.camelcase] = value
+        }
+        return normalized
+      }
+
+      async function authorizeWrite (ctx, fields, inputs, authorizedWrite) {
+        // Upserts prepare their input before choosing insert or update. Reuse
+        // that result only for the same input and context so defaults run once.
+        if (
+          authorizedWrite &&
+          authorizedWrite.ctx === ctx &&
+          authorizedWrite.inputs === inputs
+        ) {
+          checkFieldsFromRule(authorizedWrite.rule.save, fields)
+          return authorizedWrite
+        }
+
+        const request = getRequestFromContext(ctx)
+        const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
+
+        if (!rule.save) {
+          throw new Unauthorized()
+        }
+
+        const isArray = Array.isArray(inputs)
+        let normalizedInputs = (isArray ? inputs : [inputs]).map(normalizeWriteInput)
+
+        checkFieldsFromRule(rule.save, fields)
+        checkInputFromRuleFields(rule.save, isArray ? normalizedInputs : normalizedInputs[0])
+
+        /* istanbul ignore else */
+        if (rule.defaults) {
+          for (const input of normalizedInputs) {
+            for (const key of Object.keys(rule.defaults)) {
+              const defaults = rule.defaults[key]
+              if (typeof defaults === 'function') {
+                input[key] = await defaults({ user: request.user, ctx, input })
+              } else {
+                input[key] = request.user[defaults]
+              }
+            }
+          }
+
+          // Defaults may use either database or API field names. Normalize once
+          // more so aliases cannot override authorization-owned values.
+          normalizedInputs = normalizedInputs.map(normalizeWriteInput)
+        }
+
+        return { ctx, request, rule, inputs: isArray ? normalizedInputs : normalizedInputs[0] }
+      }
+
+      async function authorizeUpsert (originalUpsert, opts = {}) {
+        const { input, ctx, fields, skipAuth } = opts
+        if (useOriginal(skipAuth, ctx) || input == null) {
+          return originalUpsert(opts)
+        }
+
+        const authorizedWrite = await authorizeWrite(ctx, fields, input, opts[kAuthorizedWrite])
+        return originalUpsert({
+          ...opts,
+          input: authorizedWrite.inputs,
+          [kAuthorizedWrite]: authorizedWrite
+        })
+      }
+
+      const primaryKeyFields = Array.from(type.primaryKeys, key => type.fields[key].camelcase)
+
+      function hasAllPrimaryKeys (input) {
+        return primaryKeyFields.every(key => input[key] !== undefined)
+      }
+
+      async function checkRowIsWritable (ctx, request, rule, input, fields, tx) {
+        const whereConditions = {}
+        for (const key of primaryKeyFields) {
+          whereConditions[key] = { eq: input[key] }
+        }
+
+        const where = await fromRuleToWhere(ctx, rule.save, whereConditions, request.user)
+        const found = await type.find({ where, ctx, fields, tx })
+
+        if (found.length === 0) {
+          throw new Unauthorized()
+        }
       }
 
       app.platformatic.addEntityHooks(entityKey, {
@@ -207,86 +302,37 @@ async function auth (app, opts) {
           return originalCount({ ...restOpts, where, ctx })
         },
 
-        async save (originalSave, { input, ctx, fields, skipAuth, ...restOpts }) {
-          if (useOriginal(skipAuth, ctx)) {
-            return originalSave({ ctx, input, fields, ...restOpts })
-          }
-          const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
+        upsert: authorizeUpsert,
+        save: authorizeUpsert,
 
-          if (!rule.save) {
-            throw new Unauthorized()
-          }
-          checkFieldsFromRule(rule.save, fields)
-          checkInputFromRuleFields(rule.save, input)
-
-          if (rule.defaults) {
-            for (const key of Object.keys(rule.defaults)) {
-              const defaults = rule.defaults[key]
-              if (typeof defaults === 'function') {
-                input[key] = await defaults({ user: request.user, ctx, input })
-              } else {
-                input[key] = request.user[defaults]
-              }
-            }
+        async insert (originalInsert, { input, ctx, fields, skipAuth, [kAuthorizedWrite]: authorizedWrite, ...restOpts } = {}) {
+          if (useOriginal(skipAuth, ctx) || input == null) {
+            return originalInsert({ input, ctx, fields, ...restOpts })
           }
 
-          let hasAllPrimaryKeys = false
-          const whereConditions = {}
-          for (const key of type.primaryKeys) {
-            hasAllPrimaryKeys = hasAllPrimaryKeys || input[key] !== undefined
-            whereConditions[key] = { eq: input[key] }
-          }
-
-          if (hasAllPrimaryKeys) {
-            const where = await fromRuleToWhere(ctx, rule.save, whereConditions, request.user)
-
-            const found = await type.find({
-              where,
-              ctx,
-              fields,
-              tx: restOpts.tx
-            })
-
-            if (found.length === 0) {
-              throw new Unauthorized()
-            }
-
-            return originalSave({ input, ctx, fields, ...restOpts })
-          }
-
-          return originalSave({ input, ctx, fields, ...restOpts })
+          const { inputs: normalizedInput } = await authorizeWrite(ctx, fields, input, authorizedWrite)
+          return originalInsert({ input: normalizedInput, ctx, fields, ...restOpts })
         },
 
-        async insert (originalInsert, { inputs, ctx, fields, skipAuth, ...restOpts }) {
-          if (useOriginal(skipAuth, ctx)) {
-            return originalInsert({ inputs, ctx, fields, ...restOpts })
-          }
-          const request = getRequestFromContext(ctx)
-          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
-
-          if (!rule.save) {
-            throw new Unauthorized()
+        async insertMany (originalInsertMany, { inputs, ctx, fields, skipAuth, ...restOpts } = {}) {
+          if (useOriginal(skipAuth, ctx) || inputs == null) {
+            return originalInsertMany({ inputs, ctx, fields, ...restOpts })
           }
 
-          checkFieldsFromRule(rule.save, fields)
-          checkInputFromRuleFields(rule.save, inputs)
+          const { inputs: normalizedInputs } = await authorizeWrite(ctx, fields, inputs)
+          return originalInsertMany({ inputs: normalizedInputs, ctx, fields, ...restOpts })
+        },
 
-          /* istanbul ignore else */
-          if (rule.defaults) {
-            for (const input of inputs) {
-              for (const key of Object.keys(rule.defaults)) {
-                const defaults = rule.defaults[key]
-                if (typeof defaults === 'function') {
-                  input[key] = await defaults({ user: request.user, ctx, input })
-                } else {
-                  input[key] = request.user[defaults]
-                }
-              }
-            }
+        async update (originalUpdate, { input, ctx, fields, skipAuth, [kAuthorizedWrite]: authorizedWrite, ...restOpts } = {}) {
+          if (useOriginal(skipAuth, ctx) || input == null) {
+            return originalUpdate({ input, ctx, fields, ...restOpts })
           }
 
-          return originalInsert({ inputs, ctx, fields, ...restOpts })
+          const { request, rule, inputs: normalizedInput } = await authorizeWrite(ctx, fields, input, authorizedWrite)
+          if (hasAllPrimaryKeys(normalizedInput)) {
+            await checkRowIsWritable(ctx, request, rule, normalizedInput, fields, restOpts.tx)
+          }
+          return originalUpdate({ input: normalizedInput, ctx, fields, ...restOpts })
         },
 
         async delete (originalDelete, { where, ctx, fields, skipAuth, ...restOpts }) {

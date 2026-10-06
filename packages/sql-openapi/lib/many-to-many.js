@@ -104,12 +104,17 @@ export async function manyToMany (app, opts) {
     })
 
     if (!ignoredWithParams) {
+      const isCreate = method === 'POST'
       app.route({
         url: pathWithParams,
         method,
         schema: {
-          summary: `Update ${entity.name} by ${operationName}.`,
-          description: `Update ${entity.name} by ${operationName} in the database.`,
+          summary: isCreate
+            ? `Create ${entity.name} by ${operationName}.`
+            : `Update ${entity.name} by ${operationName}.`,
+          description: isCreate
+            ? `Add new ${entity.name} by ${operationName} to the database.`
+            : `Update ${entity.name} by ${operationName} in the database.`,
           body: entitySchemaInput,
           params: primaryKeysParams,
           tags: [entity.table],
@@ -128,7 +133,8 @@ export async function manyToMany (app, opts) {
             return { key, value: request.params[key] }
           })
           const ctx = { app: this, reply }
-          const res = await entity.save({
+          const operation = isCreate ? entity.insert : entity.update
+          const res = await operation({
             ctx,
             input: {
               ...request.body,
@@ -137,12 +143,11 @@ export async function manyToMany (app, opts) {
                 return acc
               }, {})
             },
-            where: ids.reduce((acc, { key, value }) => {
-              acc[key] = { eq: value }
-              return acc
-            }, {}),
             fields: request.query.fields
           })
+          if (!res) {
+            return reply.callNotFound()
+          }
           let location = app.prefix + pathWithParams
           for (const key of primaryKeysCamelcase) {
             location = location.replace(`:${key}`, request.params[key])

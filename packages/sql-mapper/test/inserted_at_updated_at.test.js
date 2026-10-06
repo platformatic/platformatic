@@ -105,7 +105,7 @@ test('bulk insert adds inserted_at updated_at', async () => {
   const entity = mapper.entities.page
 
   {
-    const pages = await entity.insert({
+    const pages = await entity.insertMany({
       inputs: [{ title: 'Page 1' }, { title: 'Page 2' }, { title: 'Page 3' }]
     })
     for (const page of pages) {

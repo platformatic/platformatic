@@ -5,9 +5,12 @@ A set of operation methods are available on each entity:
 - [`find`](#find)
 - [`count`](#count)
 - [`insert`](#insert)
-- [`save`](#save)
-- [`delete`](#delete)
+- [`insertMany`](#insertmany)
+- [`update`](#update)
 - [`updateMany`](#updatemany)
+- [`upsert`](#upsert)
+- [`save`](#save) (deprecated)
+- [`delete`](#delete)
 
 
 ## Returned fields
@@ -240,106 +243,76 @@ main()
 
 ### `insert`
 
-Insert one or more entity rows in the database.
+Insert one entity row and return the inserted object.
 
-#### Options
-
-| Name | Type | Description
+| Name | Type | Description |
 |---|---|---|
-| `fields` | Array of `string` | List of fields to be returned for each object |
-| `inputs` | Array of `Object` | Each object is a new row
-
-#### Usage
-<!-- docs/reference/sql-mapper/examples/insert.js -->
-```js
-'use strict'
-
-const { connect } = require('@platformatic/sql-mapper')
-const { pino } = require('pino')
-const pretty = require('pino-pretty')
-const logger = pino(pretty())
-
-async function main() {
-  const pgConnectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
-  const mapper = await connect({
-    connectionString: pgConnectionString,
-    log: logger,
-  })
-  const res = await mapper.entities.page.insert({
-    fields: ['id', 'title' ],
-      inputs: [
-        { title: 'Foobar' },
-        { title: 'FizzBuzz' }
-      ],
-  })
-  logger.info(res)
-  /**
-    0: {
-      "id": "16",
-      "title": "Foobar"
-    }
-    1: {
-      "id": "17",
-      "title": "FizzBuzz"
-    }
-  */
-  await mapper.db.dispose()
-}
-main()
-```
-
-#### Client-generated primary keys
-
-The primary key does not have to be database-generated: to build idempotent services, provide the primary key value in the input and it will be used as-is. This works with every supported primary key type, including UUIDs:
+| `fields` | Array of `string` | Fields to return |
+| `input` | `Object` | The row to insert |
+| `ctx` | `Object` | Request context used by hooks |
+| `tx` | `Object` | Transaction in which to run the query |
 
 ```js
-await mapper.entities.page.insert({
-  inputs: [
-    { id: '00000000-0000-0000-0000-000000000042', title: 'Foobar' }
-  ]
+const page = await mapper.entities.page.insert({
+  input: { title: 'Foobar' },
+  fields: ['id', 'title']
 })
 ```
 
-The same applies to the generated REST (`POST /pages`) and GraphQL (`savePage`/`insertPages`) APIs. To reject client-provided primary keys in the REST API instead, set `db.openapi.allowPrimaryKeysInInput` to `false`.
+A client-generated primary key may be supplied in `input`. To reject client-provided primary keys in the generated REST API, set `db.openapi.allowPrimaryKeysInInput` to `false`.
+
+### `insertMany`
+
+Insert multiple entity rows and return an array of inserted objects. Passing an empty `inputs` array returns an empty array.
+
+| Name | Type | Description |
+|---|---|---|
+| `fields` | Array of `string` | Fields to return for each object |
+| `inputs` | Array of `Object` | Rows to insert |
+| `ctx` | `Object` | Request context used by hooks |
+| `tx` | `Object` | Transaction in which to run the query |
+
+```js
+const pages = await mapper.entities.page.insertMany({
+  inputs: [{ title: 'Foobar' }, { title: 'FizzBuzz' }],
+  fields: ['id', 'title']
+})
+```
+
+### `update`
+
+Update one entity identified by all its primary keys. It never inserts. It returns `null` when the row does not exist and throws `PLT_SQL_MAPPER_MISSING_VALUE_FOR_PRIMARY_KEY` when a primary key is missing.
+
+| Name | Type | Description |
+|---|---|---|
+| `fields` | Array of `string` | Fields to return |
+| `input` | `Object` | Changed fields, including every primary key |
+| `ctx` | `Object` | Request context used by hooks |
+| `tx` | `Object` | Transaction in which to run the query |
+
+```js
+const page = await mapper.entities.page.update({
+  input: { id: 1, title: 'Updated' },
+  fields: ['id', 'title']
+})
+```
+
+### `upsert`
+
+Insert a row when its primary keys are absent. When all primary keys are present, try `update` first and fall back to `insert` when no row matches. `upsert` delegates through those public methods, so their hooks run.
+
+```js
+const page = await mapper.entities.page.upsert({
+  input: { id: 1, title: 'FizzBuzz' }
+})
+```
+
+This is an update-then-insert operation, not a database-native atomic upsert.
 
 ### `save`
 
-Create a new entity row in the database or update an existing one.
+> Deprecated: use [`upsert`](#upsert). `save` is a compatibility alias with the same behavior.
 
-To update an existing entity, the `id` field (or equivalent primary key) must be included in the `input` object. 
-`save` actually behaves as an `upsert`, allowing both behaviours depending on the presence of the primary key field.
-
-#### Options
-
-| Name | Type | Description
-|---|---|---|
-| `fields` | Array of `string` | List of fields to be returned for each object |
-| `input` | `Object` | The single row to create/update
-
-#### Usage
-<!-- docs/reference/sql-mapper/examples/save.js -->
-```js
-'use strict'
-const { connect } = require('@platformatic/sql-mapper')
-const { pino } = require('pino')
-const pretty = require('pino-pretty')
-const logger = pino(pretty())
-
-async function main() {
-  const connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
-  const mapper = await connect({
-    connectionString: connectionString,
-    log: logger,
-  })
-  const res = await mapper.entities.page.save({
-    fields: ['id', 'title' ],
-      input: { id: 1, title: 'FizzBuzz' },
-  })
-  logger.info(res)
-  await mapper.db.dispose()
-}
-main()
-```
 ### `delete`
 
 Delete one or more entity rows from the database, depending on the `where` option. Returns the data for all deleted objects.

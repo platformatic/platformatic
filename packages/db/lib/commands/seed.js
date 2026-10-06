@@ -64,7 +64,7 @@ Here is an example of a seed file:
 'use strict'
 
 module.exports = async function ({ entities, db, sql }) {
-  await entities.graph.save({ input: { name: 'Hello' } })
+  await entities.graph.insert({ input: { name: 'Hello' } })
   await db.query(sql\`INSERT INTO graphs (name) VALUES ('Hello 2');\`)
 }
 \`\`\`
