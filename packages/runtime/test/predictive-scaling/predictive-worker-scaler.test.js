@@ -73,6 +73,18 @@ async function feedElu (runtime, application, workerId, workerIndex, elu, durati
   }
 }
 
+test('effective scaler configuration exposes predictive defaults and isolates callers', () => {
+  const scaler = new PredictiveWorkersScaler({}, { dynamic: true, maxMemory: 123456, total: 8 })
+  const config = scaler.getConfig()
+  assert.equal(config.total, 8)
+  assert.equal(config.maxMemory, 123456)
+  assert.equal(config.eluThreshold, 0.8)
+  assert.equal(config.cooldowns.scaleDownAfterScaleUpMs, 30000)
+  assert.equal(config.version, undefined)
+  config.cooldowns.scaleDownAfterScaleUpMs = 0
+  assert.equal(scaler.getConfig().cooldowns.scaleDownAfterScaleUpMs, 30000)
+})
+
 test('scaler initializes existing lifetimes and timestamps exit notifications', async t => {
   t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 10000 })
   const runtime = createMockRuntime()
