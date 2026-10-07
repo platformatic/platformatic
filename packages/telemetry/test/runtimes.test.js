@@ -49,11 +49,9 @@ test('configure telemetry correctly with a node app', async t => {
 
   const [span] = spans
   equal(span.kind, SpanKind.SERVER)
-  // these asserts will fail when this will be fixed
-  // https://github.com/open-telemetry/opentelemetry-js/issues/5103
-  equal(span.attributes['http.method'], 'GET')
-  equal(span.attributes['http.scheme'], 'http')
-  equal(span.attributes['http.target'], '/test')
+  equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['url.scheme'], 'http')
+  equal(span.attributes['url.path'], '/test')
 
   const resourceAttributes = getAttributesForResource(span.resource)
   deepEqual(resourceAttributes['service.name'], 'test-service-api')
@@ -76,11 +74,9 @@ test('configure telemetry correctly with a express app', async t => {
 
   const [span] = spans
   equal(span.kind, SpanKind.SERVER)
-  // these asserts will fail when this will be fixed
-  // https://github.com/open-telemetry/opentelemetry-js/issues/5103
-  equal(span.attributes['http.method'], 'GET')
-  equal(span.attributes['http.scheme'], 'http')
-  equal(span.attributes['http.target'], '/test')
+  equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['url.scheme'], 'http')
+  equal(span.attributes['url.path'], '/test')
 
   const resourceAttributes = getAttributesForResource(span.resource)
   deepEqual(resourceAttributes['service.name'], 'test-service-api')
