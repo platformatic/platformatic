@@ -138,7 +138,26 @@ test('httpMetrics observes outgoing HTTP client request errors', async t => {
   assert.strictEqual(count.labels.error_type, 'UND_ERR_SOCKET')
 })
 
-test('httpMetrics histogram resets after metric collection', async t => {
+test('httpMetrics client histogram is not reset after metric collection', async t => {
+  const result = await collectMetrics('test-service', 1, { httpMetrics: true, httpClientMetrics: true })
+  t.after(() => clearRegistry(result.registry))
+
+  const request = { method: 'GET', origin: 'http://dependency.internal', path: '/' }
+  channel('undici:request:create').publish({ request })
+  channel('undici:request:headers').publish({ request, response: { statusCode: 200 } })
+  channel('undici:request:trailers').publish({ request })
+
+  await result.registry.metrics()
+
+  await nextTick()
+
+  const metrics = await result.registry.getMetricsAsJSON()
+  const histogram = metrics.find(m => m.name === 'http_client_request_duration_seconds')
+  const count = histogram.values.find(v => v.metricName === 'http_client_request_duration_seconds_count')
+  assert.strictEqual(count.value, 1, 'client histogram count should be preserved')
+})
+
+test('httpMetrics histogram is not reset after metric collection', async t => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
   t.after(() => clearRegistry(result.registry))
 
@@ -163,11 +182,11 @@ test('httpMetrics histogram resets after metric collection', async t => {
 
   const sum = histogramAfter.values.find(v => v.metricName === 'http_request_all_duration_seconds_sum')
   const count = histogramAfter.values.find(v => v.metricName === 'http_request_all_duration_seconds_count')
-  assert.strictEqual(sum?.value || 0, 0, 'histogram sum should be reset to 0')
-  assert.strictEqual(count?.value || 0, 0, 'histogram count should be reset to 0')
+  assert.ok(Math.abs(sum.value - 0.6) < 1e-9, 'histogram sum should be preserved')
+  assert.strictEqual(count.value, 3, 'histogram count should be preserved')
 })
 
-test('httpMetrics summary resets after metric collection', async t => {
+test('httpMetrics summary is not reset after metric collection', async t => {
   const result = await collectMetrics('test-service', 1, { httpMetrics: true })
   t.after(() => clearRegistry(result.registry))
 
@@ -192,8 +211,8 @@ test('httpMetrics summary resets after metric collection', async t => {
 
   const sum = summaryAfter.values.find(v => v.metricName === 'http_request_all_summary_seconds_sum')
   const count = summaryAfter.values.find(v => v.metricName === 'http_request_all_summary_seconds_count')
-  assert.strictEqual(sum?.value || 0, 0, 'summary sum should be reset to 0')
-  assert.strictEqual(count?.value || 0, 0, 'summary count should be reset to 0')
+  assert.ok(Math.abs(sum.value - 0.75) < 1e-9, 'summary sum should be preserved')
+  assert.strictEqual(count.value, 3, 'summary count should be preserved')
 })
 
 // Tests for buildCustomLabelsConfig
