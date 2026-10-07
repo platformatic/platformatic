@@ -1642,7 +1642,7 @@ export class Runtime extends EventEmitter {
       const { applicationId, config: applicationConfig, workers, health, currentWorkers, currentHealth } = update
 
       if (workers && health) {
-        const r = await this.#updateApplicationWorkersAndHealth(
+        const resourceReport = await this.#updateApplicationWorkersAndHealth(
           applicationId,
           config,
           applicationConfig,
@@ -1653,11 +1653,11 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          workers: r.workers,
-          health: r.health
+          workers: resourceReport.workers,
+          health: resourceReport.health
         })
       } else if (health) {
-        const r = await this.#updateApplicationHealth(
+        const healthReport = await this.#updateApplicationHealth(
           applicationId,
           config,
           applicationConfig,
@@ -1667,10 +1667,10 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          health: r.health
+          health: healthReport
         })
       } else if (workers) {
-        const r = await this.#updateApplicationWorkers(
+        const workersReport = await this.#updateApplicationWorkers(
           applicationId,
           config,
           applicationConfig,
@@ -1679,7 +1679,7 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          workers: r.workers
+          workers: workersReport
         })
       }
     }

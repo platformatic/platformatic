@@ -25,7 +25,11 @@ async function prepareRuntime (t, applicationsId, fixture) {
 
 test('updates a zero-worker application without blocking other applications in the batch', async t => {
   const { runtime } = await prepareRuntime(t, ['node', 'service'], 'update-service-workers')
-  await runtime.updateApplicationsResources([{ application: 'node', health: { maxHeapTotal: '512MB' } }])
+  const [healthReport] = await runtime.updateApplicationsResources([
+    { application: 'node', health: { maxHeapTotal: '512MB' } }
+  ])
+  assert.equal(healthReport.application, 'node')
+  assert.equal(healthReport.health.success, true)
   const { health } = await runtime.getApplicationResourcesInfo('node')
   await runtime.stopApplication('node')
 
