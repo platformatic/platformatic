@@ -81,6 +81,10 @@ nodeLinker: hoisted
 # Keeping a single version avoids the mismatch.
 overrides:
   esbuild: 0.28.2
+  # fastify-user@1.4.0 depends on @fastify/jwt@9, which pulls fast-jwt@5 (CVE-2026-44351,
+  # CVE-2026-34950, CVE-2026-35039). Remove once fastify-user ships with @fastify/jwt@10
+  # (https://github.com/platformatic/fastify-user/pull/634).
+  'fastify-user>@fastify/jwt': ^10.2.2
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest
