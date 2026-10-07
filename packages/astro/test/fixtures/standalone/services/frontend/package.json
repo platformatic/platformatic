@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@platformatic/astro": "^3.49.1",
-    "astro": "^6.1.4"
+    "astro": "^7.3.6"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

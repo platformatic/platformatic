@@ -21,7 +21,7 @@ import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
 
-export const supportedVersions = '^6.0.0'
+export const supportedVersions = '^6.0.0 || ^7.0.0'
 
 export class AstroCapability extends BaseCapability {
   #astro

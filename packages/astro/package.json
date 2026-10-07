@@ -34,19 +34,20 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@astrojs/node": "^11.0.0",
+    "@astrojs/node": "^11.1.7",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
-    "astro": "^6.1.4",
+    "astro": "^7.3.6",
     "cleaner-spec-reporter": "^0.5.0",
+    "cookie": "^2.0.1",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
-    "typescript": "~6.0.3",
     "tstyche": "^7.0.0",
-    "vite": "^7.0.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.3",
     "ws": "^8.18.0"
   },
   "engines": {
