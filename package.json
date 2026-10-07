@@ -26,7 +26,7 @@
   "packageManager": "pnpm@12.9.1",
   "devDependencies": {
     "@fastify/pre-commit": "^2.1.0",
-    "markdownlint-cli2": "^0.18.0"
+    "markdownlint-cli2": "^0.23.3"
   },
   "pre-commit": "lint:updated-only, gen-schemas-types"
 }
