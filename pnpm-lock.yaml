@@ -2040,8 +2040,8 @@ importers:
         version: 7.29.1
     devDependencies:
       '@fastify/aws-lambda':
-        specifier: ^5.0.0
-        version: 5.1.4
+        specifier: ^6.0.0
+        version: 6.4.1
       '@fastify/compress':
         specifier: ^8.0.0
         version: 8.3.1
@@ -3341,8 +3341,8 @@ packages:
   '@fastify/autoload@6.5.0':
     resolution: {integrity: sha512-JkjNcIia6PW1EhHLhAbI4vR6sO++8dW7hBwkcZ/p3ewBTQzrjyPXvQ0ChaUpkd+3/wNqg7W6GLsc0Az+KpW0Qw==}
 
-  '@fastify/aws-lambda@5.1.4':
-    resolution: {integrity: sha512-ExyaFMcEJXyUnYktzs5ww/5iDI8LcXMiIMnYZW6aavSIu+W0d08bJhvw8ShHL9wsRrRvfH+BOLdUEVB8oQ4Rew==}
+  '@fastify/aws-lambda@6.4.1':
+    resolution: {integrity: sha512-eTCkZJ8b4NAyafxChyM1VSVMUK1KnlyXj7NBfrQm8dRcXj42X8je5poyaZDZ9T5XTyykl3oLMiI4IvZJWXzLsw==}
 
   '@fastify/basic-auth@6.3.0':
     resolution: {integrity: sha512-Yohe3nQ8J3xtYXoryDwrVj1bYEJRq+kNPU1Sdv7w0Nh45JyyflVpCttyfzioc/JnHJ/i0CKpVwW2K+5fGMW/pQ==}
@@ -13990,7 +13990,7 @@ snapshots:
 
   '@fastify/autoload@6.5.0': {}
 
-  '@fastify/aws-lambda@5.1.4': {}
+  '@fastify/aws-lambda@6.4.1': {}
 
   '@fastify/basic-auth@6.3.0':
     dependencies:
