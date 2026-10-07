@@ -20,7 +20,7 @@ function processAndAccept (algorithm, now) {
   if (target !== null) {
     const clock = mock.method(Date, 'now', () => now)
     try {
-      algorithm.setTarget(target)
+      algorithm.setTargetCount(target)
     } finally {
       clock.mock.restore()
     }
@@ -1580,7 +1580,7 @@ test('PredictiveScalingAlgorithm cooldowns and pending scale-ups', async (t) => 
 
     // Two slow starts raise the rate-limited estimate above the horizon floor.
     for (const [target, worker] of [[2, 'w2'], [3, 'w3']]) {
-      alg.setTarget(target)
+      alg.setTargetCount(target)
       t.mock.timers.tick(15000)
       alg.addWorker(worker, Date.now())
     }

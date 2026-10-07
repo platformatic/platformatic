@@ -39,7 +39,7 @@ test('heap without a threshold is processed without making scaling decisions', t
   const algorithm = createAlgorithm()
   algorithm.addWorker('app:0', 1000)
   algorithm.addWorker('app:1', 1000)
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   for (const value of [100, 10000, 1]) {
     algorithm.addSample('heap', 'app:0', Date.now(), value)
     algorithm.addSample('heap', 'app:1', Date.now(), value)
@@ -61,7 +61,7 @@ test('observation-only heap does not change ELU decisions', t => {
     withHeap.addSample('heap', 'app:0', Date.now(), 100000)
     const target = withHeap.process(Date.now())
     assert.equal(target, withoutHeap.process(Date.now()))
-    for (const algorithm of [withHeap, withoutHeap]) algorithm.setTarget(target)
+    for (const algorithm of [withHeap, withoutHeap]) algorithm.setTargetCount(target)
     t.mock.timers.tick(40000)
   }
 })
@@ -83,7 +83,7 @@ test('metric stats expose the current smoothed level and live count independentl
     algorithm.addSample('heap', id, 10000, 200)
   }
   algorithm.process(10000)
-  algorithm.setTarget(4)
+  algorithm.setTargetCount(4)
   assert.equal(algorithm.getSnapshot('heap').level, 400)
   assert.deepEqual(algorithm.getMetricStats('heap'), { level: 400, trend: 0, count: 2 })
   algorithm.removeWorker('app:0', 11000)
@@ -99,7 +99,7 @@ async function setup (t, applications, availableMemory, config = {}) {
     if (!algorithms.includes(this)) {
       const { approvedTarget } = applications[algorithms.length]
       algorithms.push(this)
-      if (approvedTarget) this.setTarget(approvedTarget)
+      if (approvedTarget) this.setTargetCount(approvedTarget)
     }
     originalProcess.call(this, now)
     return applications[algorithms.indexOf(this)].desiredTarget

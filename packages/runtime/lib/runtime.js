@@ -777,7 +777,6 @@ export class Runtime extends EventEmitter {
     await this.stopApplications(applications, silent, true)
 
     for (const application of applications) {
-      this.#dynamicWorkersScaler?.remove(application)
       await this.#scheduler?.removeApplicationJobs(application)
       this.#applications.delete(application)
       this.#applicationRestartCounts.delete(application)
@@ -953,6 +952,7 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
+    this.#dynamicWorkersScaler?.remove(id)
     const workersIds = this.#workers.getKeys(id)
     const workersCount = workersIds.length
 
@@ -2146,7 +2146,13 @@ export class Runtime extends EventEmitter {
     const workersCount = this.#workers.getKeys(id).length
     // Use round-robin to get any available worker instead of assuming index 0 exists
     const worker = await this.#getWorkerByIdOrNext(id, null, false, false)
-    const health = worker[kConfig].health
+    let health
+    if (worker) {
+      health = worker[kConfig].health
+    } else {
+      const applicationConfig = this.#applications.get(id)
+      health = deepmerge(this.#config.health ?? {}, applicationConfig.health ?? {})
+    }
 
     return { workers: workersCount, health }
   }

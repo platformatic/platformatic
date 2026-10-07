@@ -56,7 +56,7 @@ async function setup (t) {
 }
 
 for (const failure of ['throw', 'report', 'partial']) {
-  test(`scale-down ${failure} retains occupied capacity and retries`, async t => {
+  test(`scale-down ${failure} keeps the requested target`, async t => {
     const { runtime, updates, tick, setTarget, getAlgorithm } = await setup(t)
     await tick()
     assert.equal(getAlgorithm().targetCount, 3)
@@ -68,41 +68,37 @@ for (const failure of ['throw', 'report', 'partial']) {
       return [{ application: 'app', workers: { success: false, current: 3, new: 1, stopped: failure === 'partial' ? [2] : [] } }]
     }
     await tick()
-    assert.equal(getAlgorithm().targetCount, failure === 'partial' ? 2 : 3)
+    assert.equal(getAlgorithm().targetCount, 1)
     const before = updates.length
     await tick()
-    assert.equal(updates.length, before + 1)
+    assert.equal(updates.length, before)
     assert.deepEqual(updates.at(-1), { application: 'app', workers: 1 })
   })
 }
 
-test('a failed scale-down does not finance a scale-up for another application', async t => {
+test('scale-up capacity assumes the requested scale-down succeeds', async t => {
   const { runtime, scaler, tick, setTarget, updates } = await setup(t)
   await tick()
   await scaler.add({ id: 'other', workers: { dynamic: true } })
   runtime.emit('application:worker:started', { application: 'other', worker: 0 })
+  runtime.getWorkers = async () => ({
+    'app:0': { application: 'app', status: 'started' },
+    'app:1': { application: 'app', status: 'started' },
+    'app:2': { application: 'app', status: 'started' },
+    'other:0': { application: 'other', status: 'started' }
+  })
   runtime.emit('application:worker:health:metrics', { application: 'other', id: 'other:0', currentHealth: { heapUsed: 100, elu: 0.95 } })
   setTarget(1)
+  updates.length = 0
+  const getWorkers = t.mock.method(runtime, 'getWorkers')
   runtime.updateApplicationsResources = async changes => {
     updates.push(...changes)
     return [{ application: 'app', workers: { success: false, current: 3, new: 1, stopped: [] } }]
   }
   await tick()
-  assert.ok(updates.every(update => update.application === 'app'))
+  assert.deepEqual(updates, [
+    { application: 'app', workers: 1 },
+    { application: 'other', workers: 2 }
+  ])
+  assert.equal(getWorkers.mock.callCount(), 1)
 })
-
-for (const action of ['remove', 'replace', 'stop']) {
-  test(`${action} during the memory check cancels stale scale-up candidates`, async t => {
-    const { scaler, updates, tick } = await setup(t)
-    let finish
-    globalThis[memoryKey] = () => new Promise(resolve => { finish = resolve })
-    await tick()
-    assert.equal(typeof finish, 'function')
-    if (action === 'stop') scaler.stop()
-    else scaler.remove('app')
-    if (action === 'replace') await scaler.add({ id: 'app', workers: { dynamic: true } })
-    finish({ scope: 'host', used: 100, total: 10000 })
-    for (let i = 0; i < 10; i++) await setImmediate()
-    assert.deepEqual(updates, [])
-  })
-}

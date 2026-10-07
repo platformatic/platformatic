@@ -122,7 +122,7 @@ export class PredictiveWorkersScaler {
     const algorithmConfig = this.#buildAlgorithmConfig(min, max, merged)
     const algorithm = new PredictiveScalingAlgorithm(algorithmConfig)
 
-    this.#apps.set(appId, { algorithm })
+    this.#apps.set(appId, { algorithm, min, max })
     this.#initialUpdates.delete(appId)
     if (min !== (application.workers.static ?? 1)) {
       this.#initialUpdates.set(appId, { workers: min, promise: null })
@@ -247,14 +247,41 @@ export class PredictiveWorkersScaler {
     const updates = []
     const scaleDowns = []
     const scaleUpCandidates = []
+    const desiredTargets = new Map()
 
     for (const [appId, app] of this.#apps) {
-      // Reserve the configured minimum, but do not make a competing scaling
-      // decision while the application's startup update is pending.
+      // Do not make a competing scaling decision while startup is pending.
       if (this.#initialUpdates.has(appId)) {
         continue
       }
-      const desiredTarget = app.algorithm.process(now)
+      desiredTargets.set(appId, app.algorithm.process(now))
+    }
+
+    const actualCountsByAppId = await this.#getWorkerCounts()
+    if (!this.#started) return
+
+    let workerBudgetUsage = 0
+    for (const [appId, actualCount] of Object.entries(actualCountsByAppId)) {
+      const app = this.#apps.get(appId)
+      workerBudgetUsage += Math.max(actualCount, app?.algorithm.targetCount ?? 0, app?.min ?? 0)
+    }
+
+    for (const [appId, desiredTarget] of desiredTargets) {
+      const app = this.#apps.get(appId)
+      if (!app) continue
+
+      const actualCount = actualCountsByAppId[appId] ?? 0
+      if (actualCount < app.min) {
+        app.algorithm.syncWorkersCount(app.min)
+        updates.push({ application: appId, workers: app.min })
+        continue
+      }
+      if (actualCount > app.max) {
+        app.algorithm.syncWorkersCount(app.max)
+        updates.push({ application: appId, workers: app.max })
+        continue
+      }
+
       const targetCount = app.algorithm.targetCount
       if (desiredTarget === null || desiredTarget === targetCount) continue
 
@@ -262,19 +289,26 @@ export class PredictiveWorkersScaler {
         this.#runtime.logger.info(
           `Predictive scaling down the "${appId}" app to ${desiredTarget} workers`
         )
-        scaleDowns.push({ appId, app, workers: desiredTarget })
+        workerBudgetUsage -= Math.max(actualCount, targetCount) - desiredTarget
+        app.algorithm.setTargetCount(desiredTarget)
+        scaleDowns.push({ application: appId, workers: desiredTarget })
       } else {
         const ratio = (desiredTarget - targetCount) / targetCount
         scaleUpCandidates.push({ appId, app, desiredTarget, ratio })
       }
     }
 
-    await this.#applyScaleDowns(scaleDowns)
-    if (!this.#started) return
+    if (scaleDowns.length > 0) {
+      try {
+        await this.#runtime.updateApplicationsResources(scaleDowns)
+      } catch (err) {
+        this.#runtime.logger.error({ err }, 'Failed to apply predictive scale-down')
+      }
+      if (!this.#started) return
+    }
 
     if (scaleUpCandidates.length > 0) {
-      const targetWorkersCount = await this.#getTargetWorkersCount()
-      if (targetWorkersCount >= this.#maxTotalWorkers) {
+      if (workerBudgetUsage >= this.#maxTotalWorkers) {
         this.#runtime.logger.warn(
           `The maximum number of workers "${this.#maxTotalWorkers}" has been reached.`
         )
@@ -304,7 +338,7 @@ export class PredictiveWorkersScaler {
           const scaleUpCount = Math.min(
             desiredTarget - app.algorithm.targetCount,
             this.#config.maxScaleUpStep,
-            this.#maxTotalWorkers - targetWorkersCount,
+            this.#maxTotalWorkers - workerBudgetUsage,
             workersWithinMemory
           )
 
@@ -312,16 +346,11 @@ export class PredictiveWorkersScaler {
           this.#runtime.logger.info(
             `Predictive scaling up the "${appId}" app to ${newTarget} workers`
           )
+          app.algorithm.setTargetCount(newTarget)
           updates.push({ application: appId, workers: newTarget })
           break
         }
       }
-    }
-
-    for (const update of updates) {
-      const app = this.#apps.get(update.application)
-      if (!app) continue
-      app.algorithm.setTarget(update.workers)
     }
 
     if (updates.length > 0) {
@@ -333,52 +362,23 @@ export class PredictiveWorkersScaler {
     }
   }
 
-  async #getTargetWorkersCount () {
+  async #getWorkerCounts () {
     const workers = await this.#runtime.getWorkers(true)
 
-    const actualCounts = {}
+    const actualCountsByAppId = {}
     for (const { application, status, raw } of Object.values(workers)) {
       const workerStatus = raw?.[kWorkerStatus] ?? status
       if (workerStatus === 'exited') continue
 
-      actualCounts[application] ??= 0
-      actualCounts[application] += 1
+      actualCountsByAppId[application] ??= 0
+      actualCountsByAppId[application] += 1
     }
 
-    let totalWorkersCount = 0
-
-    for (const appId in actualCounts) {
-      const actualCount = actualCounts[appId]
-      const targetCount = this.#apps.get(appId)?.algorithm.targetCount ?? 0
-      totalWorkersCount += Math.max(targetCount, actualCount)
+    for (const appId of this.#apps.keys()) {
+      actualCountsByAppId[appId] ??= 0
     }
 
-    return totalWorkersCount
-  }
-
-  async #applyScaleDowns (candidates) {
-    const active = candidates.filter(({ appId, app }) => this.#apps.get(appId) === app)
-    if (!active.length || !this.#started) return
-    let reports
-    try {
-      reports = await this.#runtime.updateApplicationsResources(
-        active.map(({ appId, workers }) => ({ application: appId, workers }))
-      )
-    } catch (err) {
-      this.#runtime.logger.error({ err }, 'Failed to apply predictive scale-down')
-    }
-    for (const { appId, app } of active) {
-      if (this.#apps.get(appId) !== app) continue
-      const report = reports?.find(entry => entry.application === appId)?.workers
-      // A failed or partial stop must not free capacity that is still occupied.
-      // When the call throws, lifecycle events remain the source of truth.
-      let count = app.algorithm.getMetricStats('elu').count
-      if (report?.success) count = report.new
-      else if (Number.isFinite(report?.current) && Array.isArray(report.stopped)) {
-        count = report.current - report.stopped.length
-      }
-      if (count > 0 && count < app.algorithm.targetCount) app.algorithm.setTarget(count)
-    }
+    return actualCountsByAppId
   }
 
   async #getAvailableMemory () {

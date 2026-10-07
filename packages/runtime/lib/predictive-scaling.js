@@ -247,16 +247,26 @@ export class PredictiveScalingAlgorithm {
     return this.#checkScaleDown(now) ? maxTargetCount : this.#targetCount
   }
 
-  /** Record the coordinator's approved target before requesting workers. */
-  setTarget (targetCount) {
+  syncWorkersCount (workersCount) {
+    // Pending starts are ordered by expectedCount.
+    while (this.#pendingScaleUps.at(-1)?.expectedCount > workersCount) {
+      this.#pendingScaleUps.pop()
+    }
+    this.#targetCount = workersCount
+  }
+
+  setTargetCount (targetCount) {
     if (targetCount === this.#targetCount) return
 
     const now = Date.now()
-
     if (targetCount > this.#targetCount) {
       const scaleAt = now + this.#initTimeoutMs
       for (let i = this.#targetCount; i < targetCount; i++) {
-        this.#pendingScaleUps.push({ scaleAt, decisionAt: now, expectedCount: i + 1 })
+        this.#pendingScaleUps.push({
+          scaleAt,
+          decisionAt: now,
+          expectedCount: i + 1
+        })
       }
       this.#lastScaleUpTime = now
     } else {

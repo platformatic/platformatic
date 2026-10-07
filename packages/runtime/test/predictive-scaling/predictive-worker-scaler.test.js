@@ -14,7 +14,16 @@ function createMockRuntime () {
     error: () => {}
   }
   runtime.updateApplicationsResources = async () => {}
-  runtime.getWorkers = async () => ({})
+  const workers = {}
+  runtime.getWorkers = async () => workers
+  runtime.on('application:worker:started', ({ application, worker }) => {
+    workers[`${application}:${worker}`] = {
+      application, raw: { [kWorkerStatus]: 'started', [kWorkerStartTime]: Date.now() }
+    }
+  })
+  runtime.on('application:worker:exited', ({ application, worker }) => {
+    delete workers[`${application}:${worker}`]
+  })
   return runtime
 }
 

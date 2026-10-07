@@ -50,7 +50,7 @@ test('only the approved extra worker blocks scale-down, shared by both metrics',
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
   assert.equal(sample(algorithm, 10000, 4), 4)
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   assert.equal(algorithm.getSnapshot('elu').targetCount, 2)
   assert.equal(algorithm.getSnapshot('heap').targetCount, 2)
   assert.equal(sample(algorithm, 11000, 0.1), 2)
@@ -58,18 +58,94 @@ test('only the approved extra worker blocks scale-down, shared by both metrics',
   assert.equal(sample(algorithm, 13000, 0.1, ['w1', 'w2']), 1)
   // Even scale-down recommendations need coordinator approval.
   assert.equal(algorithm.getSnapshot('elu').targetCount, 2)
-  algorithm.setTarget(1)
+  algorithm.setTargetCount(1)
   assert.equal(algorithm.getSnapshot('heap').targetCount, 1)
+})
+
+test('raising the stored target below the live count does not create pending starts', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  const workers = ['w1', 'w2', 'w3', 'w4', 'w5']
+  for (const worker of workers.slice(1)) algorithm.addWorker(worker, 1000)
+  algorithm.syncWorkersCount(3)
+  assert.equal(sample(algorithm, 11000, 0.1, workers), 1)
+})
+
+test('a forced decrease does not start the scale-down cooldown even when the stored target increases', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm({ scaleUpAfterScaleDownMs: 5000 })
+  const workers = ['w1', 'w2', 'w3', 'w4', 'w5']
+  for (const worker of workers.slice(1)) algorithm.addWorker(worker, 1000)
+  algorithm.syncWorkersCount(3)
+  assert.equal(algorithm.targetCount, 3)
+  assert.equal(sample(algorithm, 11000, 1, workers), 5)
+})
+
+test('approving the existing target does not start a cooldown', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm({ scaleUpAfterScaleUpMs: 5000, scaleUpAfterScaleDownMs: 5000 })
+  algorithm.setTargetCount(1)
+  assert.equal(algorithm.targetCount, 1)
+  assert.equal(sample(algorithm, 11000, 4), 4)
+})
+
+test('correcting to the stored target allows further scale-down without a new cooldown', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm({ scaleDownAfterScaleDownMs: 5000 })
+  algorithm.syncWorkersCount(3)
+  algorithm.addWorker('w2', 1000)
+  algorithm.addWorker('w3', 1000)
+  algorithm.syncWorkersCount(3)
+  assert.equal(sample(algorithm, 11000, 0.1, ['w1', 'w2', 'w3']), 1)
+})
+
+test('a correction creates neither pending starts nor a scale-up cooldown', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm({ scaleUpAfterScaleUpMs: 5000 })
+  algorithm.syncWorkersCount(3)
+  assert.equal(sample(algorithm, 11000, 4), 4)
+  algorithm.syncWorkersCount(3)
+  assert.equal(sample(algorithm, 12000, 0.1), 1)
+})
+
+test('corrections preserve pending start ages and discard superseded capacity', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTargetCount(4)
+  t.mock.timers.setTime(20000)
+  algorithm.syncWorkersCount(3)
+  assert.equal(sample(algorithm, 45000, 0.1), 3)
+  assert.equal(sample(algorithm, 46000, 0.1), 1)
+})
+
+test('a correction discards pending starts above its target', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm()
+  algorithm.setTargetCount(4)
+  algorithm.syncWorkersCount(2)
+  algorithm.addWorker('w2', 11000)
+  assert.equal(sample(algorithm, 12000, 0.1, ['w1', 'w2']), 1)
+})
+
+test('a correction preserves cooldowns from earlier predictive decisions', t => {
+  t.mock.timers.enable({ apis: ['Date'], now: 10000 })
+  const algorithm = createAlgorithm({ scaleUpAfterScaleDownMs: 5000 })
+  algorithm.syncWorkersCount(3)
+  algorithm.setTargetCount(2)
+  t.mock.timers.setTime(12000)
+  algorithm.syncWorkersCount(3)
+  assert.equal(sample(algorithm, 14000, 4), 3)
+  assert.equal(sample(algorithm, 15000, 4), 4)
 })
 
 test('cooldown starts at approval, and setting the same target does not extend it', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 20000 })
   const algorithm = createAlgorithm({ scaleUpAfterScaleUpMs: 5000 })
   assert.equal(sample(algorithm, 10000, 4), 4)
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   assert.equal(sample(algorithm, 24000, 4), 2)
   t.mock.timers.setTime(24000)
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   assert.equal(sample(algorithm, 25000, 4), 4)
 })
 
@@ -77,7 +153,7 @@ test('startup duration starts at approval rather than the earlier recommendation
   t.mock.timers.enable({ apis: ['Date'], now: 20000 })
   const algorithm = createAlgorithm()
   assert.equal(sample(algorithm, 10000, 4), 4)
-  algorithm.setTarget(3)
+  algorithm.setTargetCount(3)
   algorithm.addWorker('w2', 21000)
   algorithm.addWorker('w3', 21000)
   assert.equal(algorithm.getSnapshot('elu').horizonMs, 7000)
@@ -87,7 +163,7 @@ test('startup duration starts at approval rather than the earlier recommendation
 test('an approved worker that never starts stops blocking scale-down after expiry', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   // Expected startup at 15000 plus the existing 30000 ms expiry allowance.
   assert.equal(sample(algorithm, 45000, 0.1), 2)
   assert.equal(sample(algorithm, 46000, 0.1), 1)
@@ -99,9 +175,9 @@ test('an approved worker that never starts stops blocking scale-down after expir
 test('expiry removes only old requests and leaves newer pending starts', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   t.mock.timers.setTime(20000)
-  algorithm.setTarget(3)
+  algorithm.setTargetCount(3)
   assert.equal(sample(algorithm, 46000, 0.1), 2)
   assert.equal(algorithm.targetCount, 2)
   algorithm.addWorker('w2', 47000)
@@ -111,7 +187,7 @@ test('expiry removes only old requests and leaves newer pending starts', t => {
 test('pending requests expire during processing even without a scale-down recommendation', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(3)
+  algorithm.setTargetCount(3)
   assert.equal(sample(algorithm, 46000, 4), 4)
   // These starts must not match old requests and inflate the startup estimate.
   algorithm.addWorker('w2', 47000)
@@ -123,14 +199,14 @@ test('expiry lets the algorithm request the same missing capacity again', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
   assert.equal(sample(algorithm, 10000, 1.5), 2)
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   assert.equal(sample(algorithm, 45000, 1.5), 2)
   assert.equal(algorithm.targetCount, 2)
   assert.equal(sample(algorithm, 46000, 1.5), 2)
   assert.equal(algorithm.targetCount, 1)
 
   t.mock.timers.setTime(46000)
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   assert.equal(sample(algorithm, 47000, 0.1), 2)
   algorithm.addWorker('w2', 48000)
   assert.equal(sample(algorithm, 49000, 0.1, ['w1', 'w2']), 1)
@@ -139,7 +215,7 @@ test('expiry lets the algorithm request the same missing capacity again', t => {
 test('expiry preserves workers that started while dropping missing capacity', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(4)
+  algorithm.setTargetCount(4)
   algorithm.addWorker('w2', 15000)
   sample(algorithm, 46000, 0.1, ['w1', 'w2'])
   assert.equal(algorithm.targetCount, 2)
@@ -148,7 +224,7 @@ test('expiry preserves workers that started while dropping missing capacity', t 
 test('expiry reconciles the target even when there are no metric samples', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   assert.equal(algorithm.process(46000), null)
   assert.equal(algorithm.targetCount, 1)
 })
@@ -156,7 +232,7 @@ test('expiry reconciles the target even when there are no metric samples', t => 
 test('expiry does not restart or bypass scale-up cooldowns', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm({ scaleUpAfterScaleUpMs: 50000 })
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   assert.equal(sample(algorithm, 46000, 1.5), 1)
   assert.equal(algorithm.targetCount, 1)
   assert.equal(sample(algorithm, 60000, 1.5), 2)
@@ -165,10 +241,10 @@ test('expiry does not restart or bypass scale-up cooldowns', t => {
 test('a later request can expire before an earlier request when the startup estimate decreases', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(3) // Both starts expected at 15000.
+  algorithm.setTargetCount(3) // Both starts expected at 15000.
   algorithm.addWorker('w2', 10100) // Reduces the estimate from 5000 to 4500.
   t.mock.timers.setTime(10200)
-  algorithm.setTarget(4) // This start is expected earlier, at 14700.
+  algorithm.setTargetCount(4) // This start is expected earlier, at 14700.
   algorithm.process(44700)
   assert.equal(algorithm.targetCount, 4)
   algorithm.process(44701)
@@ -181,7 +257,7 @@ for (const replacementId of ['w1', 'replacement']) {
   test(`replacement ${replacementId} does not fulfil a pending scale-up until the live count grows`, t => {
     t.mock.timers.enable({ apis: ['Date'], now: 10000 })
     const algorithm = createAlgorithm()
-    algorithm.setTarget(2)
+    algorithm.setTargetCount(2)
     algorithm.removeWorker('w1', 11000)
     algorithm.addWorker(replacementId, 12000)
     assert.equal(sample(algorithm, 13000, 0.1, [replacementId]), 2)
@@ -194,7 +270,7 @@ for (const replacementId of ['w1', 'replacement']) {
 test('duplicate lifecycle events do not change the live count', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   algorithm.addWorker('w1', 11000)
   assert.equal(sample(algorithm, 12000, 0.1), 2)
   algorithm.removeWorker('w1', 13000)
@@ -209,9 +285,9 @@ test('duplicate lifecycle events do not change the live count', t => {
 test('each pending scale-up waits for its own expected live count', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   t.mock.timers.setTime(11000)
-  algorithm.setTarget(3)
+  algorithm.setTargetCount(3)
   algorithm.addWorker('w2', 12000)
   assert.equal(sample(algorithm, 13000, 0.1, ['w1', 'w2']), 3)
 
@@ -225,7 +301,7 @@ test('each pending scale-up waits for its own expected live count', t => {
 test('startup estimates use the time when the requested capacity exists', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(3)
+  algorithm.setTargetCount(3)
   algorithm.removeWorker('w1', 11000)
   algorithm.addWorker('replacement', 12000)
   algorithm.addWorker('w2', 20000)
@@ -238,7 +314,7 @@ test('startup estimates use the time when the requested capacity exists', t => {
 test('a replacement starting before the old worker exits can fulfil the requested count', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const algorithm = createAlgorithm()
-  algorithm.setTarget(2)
+  algorithm.setTargetCount(2)
   // Accepted tradeoff: the count briefly reaches two during a rolling restart.
   algorithm.addWorker('replacement', 11000)
   algorithm.removeWorker('w1', 12000)

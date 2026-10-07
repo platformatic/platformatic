@@ -29,6 +29,7 @@ async function setup (t, workerConfig, runtimeConfig = {}) {
   }
   const addWorker = t.mock.method(PredictiveScalingAlgorithm.prototype, 'addWorker')
   const process = t.mock.method(PredictiveScalingAlgorithm.prototype, 'process', () => null)
+  const syncWorkersCount = t.mock.method(PredictiveScalingAlgorithm.prototype, 'syncWorkersCount')
   const scaler = new PredictiveWorkersScaler(runtime, {
     total: 8, maximum: 8, maxMemory: 1, processIntervalMs: 1000, ...runtimeConfig
   })
@@ -40,7 +41,7 @@ async function setup (t, workerConfig, runtimeConfig = {}) {
     t.mock.timers.tick(1000)
     for (let i = 0; i < 10; i++) await setImmediate()
   }
-  return { updates, algorithm, process, setCount, tick }
+  return { runtime, updates, algorithm, process, syncWorkersCount, setCount, tick }
 }
 
 for (const { name, workers, total, expected, update } of [
@@ -63,4 +64,59 @@ test('does not reduce a valid count merely because total is exceeded', async t =
   setCount(4)
   await tick()
   assert.deepEqual(updates, [])
+})
+
+for (const { actual, minimum, maximum, expected } of [
+  { actual: 0, minimum: 3, maximum: 6, expected: 3 },
+  { actual: 1, minimum: 3, maximum: 6, expected: 3 },
+  { actual: 7, minimum: 1, maximum: 3, expected: 3 }
+]) {
+  for (const recommendation of [null, 1, 5]) {
+    test(`corrects ${actual} workers to ${expected} with recommendation ${recommendation}`, async t => {
+      const { updates, algorithm, process, syncWorkersCount, setCount, tick } = await setup(t, {
+        dynamic: true, static: minimum, minimum, maximum
+      }, { total: 1, maxScaleUpStep: 1 })
+      // No heap samples and no spare memory or worker budget are available.
+      process.mock.mockImplementation(() => recommendation)
+      setCount(actual)
+      await tick()
+      assert.deepEqual(updates, [{ application: 'app', workers: expected }])
+      assert.deepEqual(syncWorkersCount.mock.calls.map(call => call.arguments), [[expected]])
+      assert.equal(algorithm.targetCount, expected)
+      process.mock.mockImplementation(() => null)
+      await tick()
+      assert.equal(updates.length, 1)
+    })
+  }
+}
+
+test('retries an out-of-bounds count without predictive scaling bookkeeping', async t => {
+  const { runtime, updates, syncWorkersCount, setCount, tick } = await setup(t, {
+    dynamic: true, static: 3, minimum: 3, maximum: 6
+  })
+  setCount(1)
+  runtime.updateApplicationsResources = async changes => {
+    updates.push(...changes)
+    return [{ application: 'app', workers: { success: false, current: 1, new: 3, started: [] } }]
+  }
+  await tick()
+  await tick()
+  assert.deepEqual(updates, [
+    { application: 'app', workers: 3 },
+    { application: 'app', workers: 3 }
+  ])
+  assert.deepEqual(syncWorkersCount.mock.calls.map(call => call.arguments), [
+    [3],
+    [3]
+  ])
+
+  setCount(3)
+  await tick()
+  setCount(1)
+  await tick()
+  assert.deepEqual(syncWorkersCount.mock.calls.map(call => call.arguments), [
+    [3],
+    [3],
+    [3]
+  ])
 })

@@ -102,6 +102,25 @@ test('workers outside the scaler application map still occupy capacity', async t
   assert.deepEqual(updates, [])
 })
 
+test('minimum corrections reserve capacity before ordinary scale-ups', async t => {
+  const { scaler, updates, sample, tick } = await setup(t, { total: 4 })
+  await scaler.add({ id: 'idle', workers: { dynamic: true, static: 3, minimum: 3 } })
+  sample('busy', 0, 0.95)
+  await tick()
+  assert.deepEqual(updates, [{ application: 'idle', workers: 3 }])
+})
+
+test('all applications below minimum are corrected in the same cycle', async t => {
+  const { scaler, updates, tick } = await setup(t, { total: 1, maxMemory: 1 })
+  await scaler.add({ id: 'idle', workers: { dynamic: true, static: 3, minimum: 3 } })
+  await scaler.add({ id: 'busy', workers: { dynamic: true, static: 2, minimum: 2 } })
+  await tick()
+  assert.deepEqual(updates, [
+    { application: 'idle', workers: 3 },
+    { application: 'busy', workers: 2 }
+  ])
+})
+
 test('started workers are not counted twice alongside their approved target', async t => {
   const { updates, sample, tick } = await setup(t, { total: 4 })
   sample('busy', 0, 0.95)
@@ -113,21 +132,8 @@ test('started workers are not counted twice alongside their approved target', as
   assert.deepEqual(updates.at(-1), { application: 'busy', workers: 3 })
 })
 
-test('an external update during the memory check consumes capacity before approval', async t => {
-  const { updates, addWorker, sample, tick } = await setup(t)
-  let finish
-  globalThis[memoryKey] = () => new Promise(resolve => { finish = resolve })
-  sample('busy', 0, 0.95)
-  await tick()
-  assert.equal(typeof finish, 'function')
-  addWorker('idle', 1)
-  finish({ scope: 'host', used: 100, total: 10000 })
-  for (let i = 0; i < 10; i++) await setImmediate()
-  assert.deepEqual(updates, [])
-})
-
 for (const status of ['stopping', 'exited']) {
-  test(`a scale-down refreshes capacity while the removed worker is ${status}`, async t => {
+  test(`a scale-down frees planned capacity while the removed worker is ${status}`, async t => {
     const { runtime, scaler, workers, updates, addWorker, sample, tick } = await setup(t, { total: 4 })
     sample('busy', 0, 0.95)
     await tick()
@@ -148,10 +154,12 @@ for (const status of ['stopping', 'exited']) {
       return originalUpdate(changes)
     }
     updates.length = 0
+    const getWorkers = t.mock.method(runtime, 'getWorkers')
     await tick()
     assert.deepEqual(updates, [
       { application: 'busy', workers: 1 },
-      ...(status === 'exited' ? [{ application: 'other', workers: 2 }] : [])
+      { application: 'other', workers: 2 }
     ])
+    assert.equal(getWorkers.mock.callCount(), 1)
   })
 }
