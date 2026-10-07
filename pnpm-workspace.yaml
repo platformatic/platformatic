@@ -81,6 +81,9 @@ nodeLinker: hoisted
 # Keeping a single version avoids the mismatch.
 overrides:
   esbuild: 0.28.2
+  # @nestjs/platform-fastify@11 pins fastify@5.11.3, which has known high severity CVEs
+  # fixed in 5.12.2. Remove when moving to Nest 12, which pins fastify@5.12.5.
+  '@nestjs/platform-fastify>fastify': 5.12.5
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest
