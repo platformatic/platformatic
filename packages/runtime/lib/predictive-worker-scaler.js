@@ -329,6 +329,9 @@ export class PredictiveWorkersScaler {
           }
 
           const availableMemory = await this.#getAvailableMemory()
+          if (!this.#started) return
+          if (this.#apps.get(appId) !== app) continue
+
           const workersWithinMemory = Math.floor(availableMemory / heapPerWorker)
           if (!(workersWithinMemory > 0)) {
             this.#runtime.logger.warn(`Not enough available memory to scale up the "${appId}" app.`)

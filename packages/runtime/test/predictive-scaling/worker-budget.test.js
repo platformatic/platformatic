@@ -102,6 +102,35 @@ test('workers outside the scaler application map still occupy capacity', async t
   assert.deepEqual(updates, [])
 })
 
+for (const change of ['remove', 'replace', 'stop']) {
+  test(`discards a scale-up when ${change} occurs during the memory check`, { timeout: 5000 }, async t => {
+    const { scaler, updates, sample } = await setup(t)
+    const memoryRequested = Promise.withResolvers()
+    const memoryResponse = Promise.withResolvers()
+    globalThis[memoryKey] = () => {
+      memoryRequested.resolve()
+      return memoryResponse.promise
+    }
+
+    sample('busy', 0, 0.95)
+    t.mock.timers.tick(1000)
+    await memoryRequested.promise
+
+    if (change === 'stop') {
+      scaler.stop()
+    } else {
+      scaler.remove('busy')
+      if (change === 'replace') {
+        await scaler.add({ id: 'busy', workers: { dynamic: true, static: 1 } })
+      }
+    }
+
+    memoryResponse.resolve({ scope: 'host', used: 100, total: 10000 })
+    for (let i = 0; i < 10; i++) await setImmediate()
+    assert.deepEqual(updates, [])
+  })
+}
+
 test('minimum corrections reserve capacity before ordinary scale-ups', async t => {
   const { scaler, updates, sample, tick } = await setup(t, { total: 4 })
   await scaler.add({ id: 'idle', workers: { dynamic: true, static: 3, minimum: 3 } })
