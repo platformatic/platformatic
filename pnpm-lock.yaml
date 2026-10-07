@@ -1814,8 +1814,8 @@ importers:
         version: 8.21.3
     devDependencies:
       '@fastify/compress':
-        specifier: ^8.0.0
-        version: 8.3.1
+        specifier: ^9.0.0
+        version: 9.2.0
       '@fastify/express':
         specifier: ^4.0.0
         version: 4.0.8(supports-color@10.2.2)
@@ -2043,8 +2043,8 @@ importers:
         specifier: ^6.0.0
         version: 6.4.1
       '@fastify/compress':
-        specifier: ^8.0.0
-        version: 8.3.1
+        specifier: ^9.0.0
+        version: 9.2.0
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -3353,8 +3353,8 @@ packages:
   '@fastify/busboy@3.2.1':
     resolution: {integrity: sha512-tgK4O+57iz5ycYNGXE5ZWj1ES03lD2XnnBYWSbU/3wYZRMQzCUq7Ycds/RdyBZQeL5MU4fxBt6lzbIWf/Bickw==}
 
-  '@fastify/compress@8.3.1':
-    resolution: {integrity: sha512-BUpItLr6MUX9e9ukg5Y6xekyA/7pBFG8QWtFCrUDm9ctoBc3R2/nA16yOaOWtVoccpXGjdDEYA/MxAb5+8cxag==}
+  '@fastify/compress@9.2.0':
+    resolution: {integrity: sha512-35VL33PIEt/UbD/ZMlRNaICd2BQz0IaG7en74Dv7tI+MHIQkedibS1+9JfekWH4I1g+Y8RbbZD4Zsk9h4XTItg==}
 
   '@fastify/cookie@11.1.2':
     resolution: {integrity: sha512-Dtrpk/YOGUsbRMvP/8ZqPpwnMRv0qSqodFdoQ2B589Obc7jw4s4Qla+cV72Bsm7WsZJnqlYFX/i7uSBq0xzg6g==}
@@ -11095,9 +11095,6 @@ packages:
   pumpify@1.5.1:
     resolution: {integrity: sha512-oClZI37HvuUJJxSKKrC17bZ9Cu0ZYhEAGPsPUy9KlMUmv9dKX2o77RUmq7f3XjIxbwyGwYzbzQ1L2Ks8sIradQ==}
 
-  pumpify@2.0.1:
-    resolution: {integrity: sha512-m7KOje7jZxrmutanlkS1daj1dS6z6BgslzOXmcSEpIlCxM3VJH7lG5QLeck/6hgF6F4crFf01UtQmNsJfweTAw==}
-
   punycode.js@2.3.1:
     resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
     engines: {node: '>=6'}
@@ -13978,15 +13975,12 @@ snapshots:
 
   '@fastify/busboy@3.2.1': {}
 
-  '@fastify/compress@8.3.1':
+  '@fastify/compress@9.2.0':
     dependencies:
       '@fastify/accept-negotiator': 2.1.0
-      fastify-plugin: 5.1.0
+      fastify-plugin: 6.0.0
       mime-db: 1.54.0
       minipass: 7.1.3
-      peek-stream: 1.1.3
-      pump: 3.0.4
-      pumpify: 2.0.1
       readable-stream: 4.7.0
 
   '@fastify/cookie@11.1.2':
@@ -23690,12 +23684,6 @@ snapshots:
       duplexify: 3.7.1
       inherits: 2.0.4
       pump: 2.0.1
-
-  pumpify@2.0.1:
-    dependencies:
-      duplexify: 4.1.3
-      inherits: 2.0.4
-      pump: 3.0.4
 
   punycode.js@2.3.1: {}
 
