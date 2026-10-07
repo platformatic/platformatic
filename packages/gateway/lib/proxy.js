@@ -291,6 +291,9 @@ async function proxyPlugin (app, opts) {
       })
     }
 
+    // Websocket links already counted in the activeWsConnections gauge.
+    const wsConnections = new WeakSet()
+
     const proxyOptions = {
       prefix,
       rewritePrefix: proxyRewritePrefix,
@@ -307,11 +310,24 @@ async function proxyPlugin (app, opts) {
       wsReconnect: ws?.reconnect,
       wsHooks: {
         onConnect: (...args) => {
-          metrics?.activeWsConnections?.inc()
+          // The gauge counts links, not callbacks. A proxied link is torn down
+          // from both of its sockets, so onDisconnect can be delivered more
+          // than once for the same connection, and an unguarded dec() would
+          // walk the gauge below zero and keep going from there. Tracking the
+          // source socket makes both sides idempotent; the WeakSet keeps no
+          // socket alive on its own.
+          const source = args[1]
+          if (source && !wsConnections.has(source)) {
+            wsConnections.add(source)
+            metrics?.activeWsConnections?.inc()
+          }
           ws?.hooks?.onConnect(...args)
         },
         onDisconnect: (...args) => {
-          metrics?.activeWsConnections?.dec()
+          const source = args[1]
+          if (source && wsConnections.delete(source)) {
+            metrics?.activeWsConnections?.dec()
+          }
           ws?.hooks?.onDisconnect(...args)
         },
         onReconnect: ws?.hooks?.onReconnect,
