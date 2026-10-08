@@ -80,7 +80,7 @@ function parseRuntimeWorkers (config) {
 
 function parseApplicationWorkers (applicationConfig, config) {
   const workers = coerceWorkers(applicationConfig.workers, `Service "${applicationConfig.id}"`)
-  for (const key of ['minimum', 'maximum', 'static', 'dynamic', 'eluThreshold', 'heapThresholdMb']) {
+  for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
     if (workers[key] === undefined && config.workers[key] !== undefined) {
       workers[key] = config.workers[key]
     }
@@ -92,6 +92,11 @@ function parseApplicationWorkers (applicationConfig, config) {
     )
   }
   if (workers.dynamic) {
+    for (const key of ['eluThreshold', 'heapThresholdMb']) {
+      if (workers[key] === undefined && config.workers[key] !== undefined) {
+        workers[key] = config.workers[key]
+      }
+    }
     workers.minimum ??= 1
     // An implicit maximum must accommodate the application's required minimum.
     workers.maximum ??= Math.max(workers.minimum, config.workers.total)

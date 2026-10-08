@@ -68,7 +68,7 @@ test('rejects inverted minimum and maximum', async () => {
 
 test('numeric counts disable dynamic scaling even when inherited', async () => {
   const config = await load({ dynamic: true, minimum: 2, total: 4 }, 4)
-  assert.deepEqual(config.applications[0].workers, { static: 4, dynamic: false, minimum: 2, eluThreshold: 0.8 })
+  assert.deepEqual(config.applications[0].workers, { static: 4, dynamic: false, minimum: 2 })
   const fixed = await load(4)
   assert.equal(fixed.applications[0].workers.static, 4)
   assert.equal(fixed.applications[0].workers.dynamic, false)
