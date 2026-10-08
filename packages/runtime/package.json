@@ -32,7 +32,7 @@
   "devDependencies": {
     "@fastify/compress": "^9.0.0",
     "@fastify/express": "^4.0.0",
-    "@fastify/formbody": "^8.0.0",
+    "@fastify/formbody": "^9.0.0",
     "@opentelemetry/sdk-metrics": "^2.8.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
