@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/snap": "^0.3.0",
+    "@matteo.collina/snap": "^1.0.0",
     "@platformatic/sql-mapper": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "^9.4.0",
