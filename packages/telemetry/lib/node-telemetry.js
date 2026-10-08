@@ -17,6 +17,7 @@ import process from 'node:process'
 import util from 'node:util'
 import { workerData } from 'node:worker_threads'
 import { getInstrumentations } from './pluggable-instrumentations.js'
+import { getSampler } from './samplers.js'
 import { getSpanProcessors } from './span-processors.js'
 
 const debuglog = util.debuglog('@platformatic/telemetry')
@@ -43,6 +44,9 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   const additionalInstrumentations = await getInstrumentations(instrumentations, applicationDir)
 
   const { spanProcessors } = getSpanProcessors(opts)
+  // The node capability builds its own provider, so the sampler has to be
+  // applied here too or the option would only work for the other capabilities.
+  const sampler = await getSampler({ ...opts, applicationDir })
 
   const clientSpansAls = new AsyncLocalStorage()
 
@@ -50,7 +54,8 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: applicationName
-    })
+    }),
+    ...(sampler ? { sampler } : {})
   })
   updateGlobals({ clientSpansAls, tracerProvider })
 
