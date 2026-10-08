@@ -27,7 +27,7 @@ export const INIT_TIMEOUT_CONFIG = {
 // ---------------------------------------------------------------------------
 
 /**
- * Per-application predictive scaling algorithm.
+ * Stateful predictive scaler for one application's workers.
  *
  * Handles multiple metrics (e.g. ELU, heap), each with its own independent
  * alignment → redistribution → Holt smoothing pipeline. The final scaling
@@ -36,7 +36,7 @@ export const INIT_TIMEOUT_CONFIG = {
  * Workers are shared across metrics (same startTime). Each metric has its
  * own per-worker sliding window, Holt state, redistribution state, and history.
  */
-export class PredictiveScalingAlgorithm {
+export class PredictiveApplicationScaler {
   /** @type {WorkerIdMapper} */
   #workerIdMapper
 
@@ -75,8 +75,8 @@ export class PredictiveScalingAlgorithm {
 
   // Shared config
   #horizonMs
-  #min
-  #max
+  #minimum
+  #maximum
   #cooldowns
 
   // Cooldown state
@@ -91,16 +91,16 @@ export class PredictiveScalingAlgorithm {
 
   /**
    * @param {object} config
-   * @param {number} config.min - minimum worker count
-   * @param {number} config.max - maximum worker count
+   * @param {number} config.minimum - minimum worker count
+   * @param {number} config.maximum - maximum worker count
    * @param {object} config.cooldowns - cooldown timers
    * @param {Object<string, object>} config.metrics - per-metric config keyed by metric name
    */
   constructor (config) {
-    this.#min = config.min
-    this.#max = config.max
+    this.#minimum = config.minimum
+    this.#maximum = config.maximum
     this.#cooldowns = config.cooldowns
-    this.#targetCount = config.min
+    this.#targetCount = config.minimum
 
     this.#lastScaleUpTime = 0
     this.#lastScaleDownTime = 0
@@ -188,18 +188,18 @@ export class PredictiveScalingAlgorithm {
     return this.#targetCount
   }
 
-  getMetricStats (metricName) {
-    const metric = this.#metrics.get(metricName)
-    if (!metric) return null
+  getHeapPerWorker () {
+    const heap = this.#metrics.get('heap')
+    const level = heap?.holtState?.level
+    const workersCount = this.#workerIdMapper.size
+    if (level == null || workersCount === 0) return null
 
-    return {
-      level: metric.holtState?.level ?? null,
-      trend: metric.holtState?.trend ?? 0,
-      count: this.#workerIdMapper.size
-    }
+    return Math.max(level / workersCount, Number.EPSILON)
   }
 
-  getSnapshot (metricName) {
+  // Test-only inspection of aligned history and the adaptive prediction horizon;
+  // final worker counts cannot reveal errors in these intermediate states.
+  _getSnapshot (metricName) {
     const metric = this.#metrics.get(metricName)
     if (!metric) return null
 
@@ -415,8 +415,8 @@ export class PredictiveScalingAlgorithm {
       threshold: config.threshold,
       targetCount: this.#targetCount,
       horizonMs: this.#horizonMs,
-      min: this.#min,
-      max: this.#max,
+      minimum: this.#minimum,
+      maximum: this.#maximum,
       horizontalTrendThreshold: HORIZONTAL_TREND_THRESHOLD,
       scaleUpK: SCALE_UP_K
     })
@@ -865,8 +865,8 @@ export function getTrendDirection (trend, level, horizontalTrendThreshold) {
  * @param {number} params.threshold - per-worker overload threshold
  * @param {number} params.targetCount - current target worker count
  * @param {number} params.horizonMs - prediction horizon in ms
- * @param {number} params.min - minimum worker count
- * @param {number} params.max - maximum worker count
+ * @param {number} params.minimum - minimum worker count
+ * @param {number} params.maximum - maximum worker count
  * @param {number} params.horizontalTrendThreshold - deadband angle in degrees
  * @param {number} params.scaleUpK - consequence-asymmetric weight steepness
  * @returns {number} target worker count
@@ -878,8 +878,8 @@ export function makeScalingDecision ({
   threshold,
   targetCount,
   horizonMs,
-  min,
-  max,
+  minimum,
+  maximum,
   horizontalTrendThreshold,
   scaleUpK
 }) {
@@ -896,7 +896,7 @@ export function makeScalingDecision ({
       predictedSum,
       isOverloaded,
       threshold,
-      max,
+      maximum,
       targetCount,
       scaleUpK
     })
@@ -906,7 +906,7 @@ export function makeScalingDecision ({
     return findScaleDownTarget({
       level,
       threshold,
-      min,
+      minimum,
       targetCount
     })
   }
@@ -919,7 +919,7 @@ function findScaleUpTarget ({
   predictedSum,
   isOverloaded,
   threshold,
-  max,
+  maximum,
   targetCount,
   scaleUpK
 }) {
@@ -939,18 +939,18 @@ function findScaleUpTarget ({
   }
 
   newTarget = Math.max(newTarget, targetCount)
-  newTarget = Math.min(newTarget, max)
+  newTarget = Math.min(newTarget, maximum)
   return newTarget
 }
 
 function findScaleDownTarget ({
   level,
   threshold,
-  min,
+  minimum,
   targetCount
 }) {
   const minInstances = Math.floor((1 + SCALE_DOWN_MARGIN) * level / threshold) + 1
-  return Math.max(min, Math.min(targetCount, minInstances))
+  return Math.max(minimum, Math.min(targetCount, minInstances))
 }
 
 // ---------------------------------------------------------------------------

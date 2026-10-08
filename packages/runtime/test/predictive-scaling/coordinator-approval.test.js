@@ -2,9 +2,11 @@ import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { test } from 'node:test'
 import { setImmediate, setTimeout } from 'node:timers/promises'
-import { PredictiveScalingAlgorithm } from '../../lib/predictive-scaling.js'
+import { PredictiveApplicationScaler } from '../../lib/predictive-scaling.js'
 import { PredictiveWorkersScaler } from '../../lib/predictive-worker-scaler.js'
 import { kWorkerStartTime, kWorkerStatus } from '../../lib/worker/symbols.js'
+import { finalizeApplication } from '../../lib/config.js'
+import { createWorkersConfig } from './helpers.js'
 
 async function waitFor (condition) {
   for (let i = 0; i < 200; i++) {
@@ -23,14 +25,14 @@ function success (updates) {
 
 async function setup (t, config = {}, applications = ['app1']) {
   t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 10000 })
-  const algorithms = new Set()
-  const originalProcess = PredictiveScalingAlgorithm.prototype.process
-  const process = t.mock.method(PredictiveScalingAlgorithm.prototype, 'process', function (now) {
-    algorithms.add(this)
+  const applicationScalers = new Set()
+  const originalProcess = PredictiveApplicationScaler.prototype.process
+  const process = t.mock.method(PredictiveApplicationScaler.prototype, 'process', function (now) {
+    applicationScalers.add(this)
     originalProcess.call(this, now)
     return 4
   })
-  const setTargetCount = t.mock.method(PredictiveScalingAlgorithm.prototype, 'setTargetCount')
+  const setTargetCount = t.mock.method(PredictiveApplicationScaler.prototype, 'setTargetCount')
   const runtime = new EventEmitter()
   runtime.logger = { info () {}, warn () {}, error () {} }
   const warnings = t.mock.method(runtime.logger, 'warn')
@@ -44,14 +46,15 @@ async function setup (t, config = {}, applications = ['app1']) {
     updates.push(...changes)
     return success(changes)
   }
-  const scaler = new PredictiveWorkersScaler(runtime, {
+  const runtimeWorkersConfig = await createWorkersConfig({
     processIntervalMs: 500,
     total: 64,
     maxMemory: Number.MAX_SAFE_INTEGER,
     ...config
   })
+  const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
   for (const id of applications) {
-    await scaler.add({ id, entrypoint: false, workers: { dynamic: true } })
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, { id, entrypoint: false, workers: { dynamic: true } }))
   }
   await scaler.start()
   for (const application of applications) {
@@ -60,21 +63,24 @@ async function setup (t, config = {}, applications = ['app1']) {
     })
   }
   t.after(() => scaler.stop())
-  return { runtime, updates, algorithms, process, setTargetCount, warnings, errors }
+  return { runtime, updates, applicationScalers, process, setTargetCount, warnings, errors }
 }
 
 test('only the selected application records the approved single extra worker', async t => {
-  const { updates, algorithms, setTargetCount } = await setup(t, {}, ['app1', 'app2'])
+  const { updates, applicationScalers, setTargetCount } = await setup(t, {}, ['app1', 'app2'])
   t.mock.timers.tick(500)
   await waitFor(() => updates.length === 1)
-  const [first, second] = algorithms
+  const [first, second] = applicationScalers
   assert.deepEqual(updates, [{ application: 'app1', workers: 2 }])
   assert.deepEqual(setTargetCount.mock.calls.map(call => call.arguments), [[2]])
-  assert.equal(first.getSnapshot('elu').targetCount, 2)
-  assert.equal(second.getSnapshot('elu').targetCount, 1)
+  assert.equal(first._getSnapshot('elu').targetCount, 2)
+  assert.equal(second._getSnapshot('elu').targetCount, 1)
   t.mock.timers.tick(500)
   await waitFor(() => updates.length === 2)
-  assert.deepEqual(updates[1], { application: 'app2', workers: 2 })
+  // No new worker appeared, so the repeated request still starts from one worker.
+  assert.deepEqual(updates[1], { application: 'app1', workers: 2 })
+  assert.equal(first.targetCount, 2)
+  assert.equal(second.targetCount, 1)
 })
 
 for (const [name, config, target] of [
@@ -83,51 +89,51 @@ for (const [name, config, target] of [
   ['total worker limit', { maxScaleUpStep: 10, total: 3 }, 2]
 ]) {
   test(`scale-up respects the ${name} and still selects only one application`, async t => {
-    const { updates, algorithms, setTargetCount } = await setup(t, config, ['app1', 'app2'])
+    const { updates, applicationScalers, setTargetCount } = await setup(t, config, ['app1', 'app2'])
     t.mock.timers.tick(500)
     await waitFor(() => updates.length === 1)
-    const [first, second] = algorithms
+    const [first, second] = applicationScalers
     assert.deepEqual(updates, [{ application: 'app1', workers: target }])
     assert.deepEqual(setTargetCount.mock.calls.map(call => call.arguments), [[target]])
-    assert.equal(first.getSnapshot('elu').targetCount, target)
-    assert.equal(second.getSnapshot('elu').targetCount, 1)
+    assert.equal(first._getSnapshot('elu').targetCount, target)
+    assert.equal(second._getSnapshot('elu').targetCount, 1)
   })
 }
 
 test('a larger approved step records every pending start', async t => {
-  const { runtime, algorithms, updates, process } = await setup(t, {
+  const { runtime, applicationScalers, updates, process } = await setup(t, {
     maxScaleUpStep: 3,
     redistributionMs: 1,
     cooldowns: { scaleDownAfterScaleUpMs: 0 }
   })
   t.mock.timers.tick(500)
   await waitFor(() => updates.length === 1)
-  const [algorithm] = algorithms
+  const [applicationScaler] = applicationScalers
   process.mock.restore()
-  algorithm.addSample('elu', 'app1:0', 11000, 0.01)
-  assert.equal(algorithm.process(11000), 4)
+  applicationScaler.addSample('elu', 'app1:0', 11000, 0.01)
+  assert.equal(applicationScaler.process(11000), 4)
   for (const worker of [1, 2]) {
     runtime.emit('application:worker:started', { application: 'app1', worker })
   }
-  assert.equal(algorithm.process(12000), 4)
+  assert.equal(applicationScaler.process(12000), 4)
   runtime.emit('application:worker:started', { application: 'app1', worker: 3 })
-  assert.equal(algorithm.process(13000), 1)
+  assert.equal(applicationScaler.process(13000), 1)
 })
 
 for (const [name, config] of [['worker limit', { total: 1 }], ['memory limit', { maxMemory: 1 }]]) {
   test(`${name} prevents approval bookkeeping`, async t => {
-    const { algorithms, setTargetCount, warnings, updates } = await setup(t, config)
+    const { applicationScalers, setTargetCount, warnings, updates } = await setup(t, config)
     t.mock.timers.tick(500)
     await waitFor(() => warnings.mock.callCount() === 1)
     assert.equal(setTargetCount.mock.callCount(), 0)
-    assert.equal([...algorithms][0].getSnapshot('elu').targetCount, 1)
+    assert.equal([...applicationScalers][0]._getSnapshot('elu').targetCount, 1)
     assert.deepEqual(updates, [])
   })
 }
 
 for (const failure of ['throw', 'report', 'no report', 'silent failure']) {
   test(`runtime failure (${failure}) leaves pending starts until expiry`, async t => {
-    const { runtime, algorithms, updates, process } = await setup(t)
+    const { runtime, applicationScalers, updates, process } = await setup(t)
     runtime.updateApplicationsResources = async changes => {
       updates.push(...changes)
       if (failure === 'throw') throw new Error('failed')
@@ -138,55 +144,55 @@ for (const failure of ['throw', 'report', 'no report', 'silent failure']) {
     }
     t.mock.timers.tick(500)
     await waitFor(() => updates.length === 1)
-    const [algorithm] = algorithms
-    assert.equal(algorithm.getSnapshot('elu').targetCount, 2)
+    const [applicationScaler] = applicationScalers
+    assert.equal(applicationScaler._getSnapshot('elu').targetCount, 2)
 
     process.mock.restore()
-    algorithm.addSample('elu', 'app1:0', 11000, 0.01)
-    assert.equal(algorithm.process(11000), 2)
-    algorithm.addSample('elu', 'app1:0', 45000, 0.01)
-    assert.equal(algorithm.process(45000), 2)
-    algorithm.addSample('elu', 'app1:0', 46000, 0.01)
-    assert.equal(algorithm.process(46000), 1)
+    applicationScaler.addSample('elu', 'app1:0', 11000, 0.01)
+    assert.equal(applicationScaler.process(11000), 2)
+    applicationScaler.addSample('elu', 'app1:0', 45000, 0.01)
+    assert.equal(applicationScaler.process(45000), 2)
+    applicationScaler.addSample('elu', 'app1:0', 46000, 0.01)
+    assert.equal(applicationScaler.process(46000), 1)
   })
 }
 
 test('a worker-start event during the runtime call resolves an already recorded request', async t => {
-  const { runtime, algorithms, errors, process } = await setup(t, {
+  const { runtime, applicationScalers, errors, process } = await setup(t, {
     redistributionMs: 1,
     cooldowns: { scaleDownAfterScaleUpMs: 0 }
   })
   runtime.updateApplicationsResources = async () => {
-    assert.equal([...algorithms][0].getSnapshot('elu').targetCount, 2)
+    assert.equal([...applicationScalers][0]._getSnapshot('elu').targetCount, 2)
     runtime.emit('application:worker:started', { application: 'app1', worker: 1 })
     throw new Error('failure after worker started')
   }
   t.mock.timers.tick(500)
   await waitFor(() => errors.mock.callCount() === 1)
-  const [algorithm] = algorithms
+  const [applicationScaler] = applicationScalers
   process.mock.restore()
-  algorithm.addSample('elu', 'app1:1', 12000, 0.01)
-  assert.equal(algorithm.process(12000), 1)
+  applicationScaler.addSample('elu', 'app1:1', 12000, 0.01)
+  assert.equal(applicationScaler.process(12000), 1)
 })
 
 test('the coordinator retries an expired scale-up without exceeding the total limit', async t => {
-  const { runtime, updates, algorithms, process, setTargetCount } = await setup(t, {
+  const { runtime, updates, applicationScalers, process, setTargetCount } = await setup(t, {
     total: 2,
     redistributionMs: 1
   })
   t.mock.timers.tick(500)
   await waitFor(() => updates.length === 1)
   assert.deepEqual(updates[0], { application: 'app1', workers: 2 })
-  const [algorithm] = algorithms
+  const [applicationScaler] = applicationScalers
   process.mock.restore()
-  algorithm.addSample('elu', 'app1:0', 45000, 0.95)
+  applicationScaler.addSample('elu', 'app1:0', 45000, 0.95)
 
   // The runtime accepted the update, but no new worker ever started.
   t.mock.timers.setTime(44500)
   t.mock.timers.tick(500)
   await setImmediate()
   assert.equal(updates.length, 1)
-  assert.equal(algorithm.targetCount, 2)
+  assert.equal(applicationScaler.targetCount, 2)
 
   t.mock.timers.setTime(45500)
   t.mock.timers.tick(500)
@@ -195,16 +201,16 @@ test('the coordinator retries an expired scale-up without exceeding the total li
   assert.deepEqual(setTargetCount.mock.calls.map(call => call.arguments), [[2], [2]])
 
   runtime.emit('application:worker:started', { application: 'app1', worker: 1 })
-  algorithm.addSample('elu', 'app1:1', 47000, 0.1)
-  algorithm.addSample('elu', 'app1:0', 47000, 0.1)
-  assert.equal(algorithm.targetCount, 2)
+  applicationScaler.addSample('elu', 'app1:1', 47000, 0.1)
+  applicationScaler.addSample('elu', 'app1:0', 47000, 0.1)
+  assert.equal(applicationScaler.targetCount, 2)
 })
 
 test('expiry in an application without metrics frees capacity for another application', async t => {
-  const { updates, algorithms, process } = await setup(t, { total: 3, redistributionMs: 1 }, ['app1', 'app2'])
+  const { updates, applicationScalers, process } = await setup(t, { total: 3, redistributionMs: 1 }, ['app1', 'app2'])
   t.mock.timers.tick(500)
   await waitFor(() => updates.length === 1)
-  const [first, second] = algorithms
+  const [first, second] = applicationScalers
   process.mock.restore()
   // app1 has no samples, but its pending request must still expire.
   second.addSample('elu', 'app2:0', 46000, 0.95)

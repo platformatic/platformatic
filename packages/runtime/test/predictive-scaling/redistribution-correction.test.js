@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { getStabilizationWeight, holt, PredictiveScalingAlgorithm, redistributeValues } from '../../lib/predictive-scaling.js'
+import { getStabilizationWeight, holt, PredictiveApplicationScaler, redistributeValues } from '../../lib/predictive-scaling.js'
 
 const redistributionConfig = { redistributionMs: 5000, k: 1 }
 const holtConfig = { alphaUp: 0.5, alphaDown: 0.3, betaUp: 0.3, betaDown: 0.1 }
@@ -108,26 +108,26 @@ test('Holt compensates both the forecast and the level difference', () => {
 
 test('the application preserves independent correction state for ELU and heap between runs', () => {
   const metric = { ...holtConfig, redistributionMs: 5000, threshold: 1 }
-  const algorithm = new PredictiveScalingAlgorithm({
-    min: 1,
-    max: 10,
+  const applicationScaler = new PredictiveApplicationScaler({
+    minimum: 1,
+    maximum: 10,
     cooldowns: {},
     metrics: { elu: metric, heap: metric }
   })
-  algorithm.addWorker('stable', 0)
-  algorithm.addWorker('new', 10000)
+  applicationScaler.addWorker('stable', 0)
+  applicationScaler.addWorker('new', 10000)
 
   for (const timestamp of [11000, 12000, 13000, 14000]) {
-    algorithm.addSample('elu', 'stable', timestamp, 0.5)
-    algorithm.addSample('elu', 'new', timestamp, 0.25)
-    algorithm.addSample('heap', 'stable', timestamp, 100)
-    algorithm.addSample('heap', 'new', timestamp, 50)
-    algorithm.process(timestamp)
+    applicationScaler.addSample('elu', 'stable', timestamp, 0.5)
+    applicationScaler.addSample('elu', 'new', timestamp, 0.25)
+    applicationScaler.addSample('heap', 'stable', timestamp, 100)
+    applicationScaler.addSample('heap', 'new', timestamp, 50)
+    applicationScaler.process(timestamp)
   }
 
   const weight = getStabilizationWeight(4000, 5000, 1)
-  assertClose(algorithm.getSnapshot('elu').level, 0.5 + weight * 0.25)
-  assertClose(algorithm.getSnapshot('elu').trend, 0)
-  assertClose(algorithm.getSnapshot('heap').level, 100 + weight * 50)
-  assertClose(algorithm.getSnapshot('heap').trend, 0)
+  assertClose(applicationScaler._getSnapshot('elu').level, 0.5 + weight * 0.25)
+  assertClose(applicationScaler._getSnapshot('elu').trend, 0)
+  assertClose(applicationScaler._getSnapshot('heap').level, 100 + weight * 50)
+  assertClose(applicationScaler._getSnapshot('heap').trend, 0)
 })

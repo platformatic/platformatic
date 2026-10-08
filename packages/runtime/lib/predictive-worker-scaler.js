@@ -1,36 +1,14 @@
-import { deepmerge } from '@platformatic/foundation'
-import { availableParallelism } from 'node:os'
 import { getMemoryInfo } from './metrics.js'
-import { PredictiveScalingAlgorithm } from './predictive-scaling.js'
+import { PredictiveApplicationScaler } from './predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
-
-// Ajv does not apply defaults inside anyOf branches, so the schema defaults
-// defined in foundation/lib/schema.js are only used for validation. Defaults
-// must be applied here in code. Keep these in sync with the schema.
-const DEFAULTS = {
-  eluThreshold: 0.8,
-  processIntervalMs: 10000,
-  maxScaleUpStep: 1,
-  redistributionMs: 10000,
-  alphaUp: 0.2,
-  alphaDown: 0.1,
-  betaUp: 0.1,
-  betaDown: 0.1,
-  cooldowns: {
-    scaleUpAfterScaleUpMs: 5000,
-    scaleUpAfterScaleDownMs: 5000,
-    scaleDownAfterScaleUpMs: 30000,
-    scaleDownAfterScaleDownMs: 20000
-  }
-}
 
 export class PredictiveWorkersScaler {
   #runtime
   #config
-  #apps
+  #appConfigs = new Map()
+  #appScalers = new Map()
   #processTimer
   #started = false
-  #initialUpdates = new Map()
   #isProcessing = false
   #maxTotalWorkers
   #maxTotalMemory
@@ -38,28 +16,19 @@ export class PredictiveWorkersScaler {
   #onHealthMetrics
   #onWorkerStarted
   #onWorkerExited
+  #onWorkersUpdated
 
   constructor (runtime, config) {
     this.#runtime = runtime
-    this.#config = deepmerge(DEFAULTS, config)
-    this.#apps = new Map()
+    this.#config = config
     this.#processTimer = null
-    this.#maxTotalWorkers = config.total ?? availableParallelism()
+    this.#maxTotalWorkers = config.total
     this.#maxTotalMemory = config.maxMemory
 
     this.#onHealthMetrics = this.#handleHealthMetrics.bind(this)
     this.#onWorkerStarted = this.#handleWorkerStarted.bind(this)
     this.#onWorkerExited = this.#handleWorkerExited.bind(this)
-  }
-
-  getConfig () {
-    return structuredClone({
-      ...this.#config,
-      minimum: this.#config.minimum ?? 1,
-      maximum: this.#config.maximum ?? this.#maxTotalWorkers,
-      total: this.#maxTotalWorkers,
-      maxMemory: this.#maxTotalMemory
-    })
+    this.#onWorkersUpdated = this.#handleWorkersUpdated.bind(this)
   }
 
   async start () {
@@ -69,27 +38,31 @@ export class PredictiveWorkersScaler {
     this.#runtime.on('application:worker:health:metrics', this.#onHealthMetrics)
     this.#runtime.on('application:worker:started', this.#onWorkerStarted)
     this.#runtime.on('application:worker:exited', this.#onWorkerExited)
+    this.#runtime.on('application:resources:workers:updated', this.#onWorkersUpdated)
 
     // Initial workers start before the scaler subscribes. Read their lifetimes
     // from the runtime instead of inferring them from the first metric event.
-    const workers = await this.#runtime.getWorkers(true)
-    for (const [id, { application, raw }] of Object.entries(workers)) {
-      if (raw[kWorkerStatus] !== 'started' && raw[kWorkerStatus] !== 'stopping') continue
+    const workers = await this.#getLiveWorkers()
+    for (const [id, { application, raw }] of workers) {
+      if (
+        raw[kWorkerStatus] !== 'started' &&
+        raw[kWorkerStatus] !== 'stopping'
+      ) continue
+
       const startTime = raw[kWorkerStartTime]
+      // A worker stopped before completing startup has no running lifetime.
       if (startTime === undefined) continue
-      this.#apps.get(application)?.algorithm.addWorker(id, startTime)
+
+      const applicationScaler = this.#appScalers.get(application)
+      applicationScaler?.addWorker(id, startTime)
     }
 
-    const initialApplications = [...this.#initialUpdates.keys()]
     this.#started = true
-    for (const id of initialApplications) {
-      await this.applyPendingUpdate(id)
-    }
 
     this.#processTimer = setInterval(
       () => this.#process(),
       this.#config.processIntervalMs
-    )
+    ).unref()
   }
 
   stop () {
@@ -99,54 +72,29 @@ export class PredictiveWorkersScaler {
     this.#runtime.off('application:worker:health:metrics', this.#onHealthMetrics)
     this.#runtime.off('application:worker:started', this.#onWorkerStarted)
     this.#runtime.off('application:worker:exited', this.#onWorkerExited)
+    this.#runtime.off('application:resources:workers:updated', this.#onWorkersUpdated)
   }
 
   async add (application) {
     const appId = application.id
 
-    let min, max, appConfig
     if (application.workers.dynamic === false) {
       this.#runtime.logger.warn(
         `The "${appId}" application cannot be scaled because it has a fixed number of workers (${application.workers.static}).`
       )
-      min = application.workers.static
-      max = application.workers.static
-      appConfig = {}
-    } else {
-      appConfig = application.workers
-      min = appConfig.minimum ?? this.#config.minimum ?? 1
-      max = appConfig.maximum ?? this.#config.maximum ?? this.#maxTotalWorkers
+      this.remove(appId)
+      return
     }
 
-    const merged = deepmerge(this.#config, appConfig)
-    const algorithmConfig = this.#buildAlgorithmConfig(min, max, merged)
-    const algorithm = new PredictiveScalingAlgorithm(algorithmConfig)
-
-    this.#apps.set(appId, { algorithm, min, max })
-    this.#initialUpdates.delete(appId)
-    if (min !== (application.workers.static ?? 1)) {
-      this.#initialUpdates.set(appId, { workers: min, promise: null })
-    }
+    const { minimum, maximum } = application.workers
+    const scalerConfig = this.#buildApplicationScalerConfig(application.workers)
+    const applicationScaler = new PredictiveApplicationScaler(scalerConfig)
+    this.#appConfigs.set(appId, { minimum, maximum })
+    this.#appScalers.set(appId, applicationScaler)
   }
 
-  async applyPendingUpdate (applicationId) {
-    if (!this.#started) return
-    const update = this.#initialUpdates.get(applicationId)
-    if (!update) return
-
-    // Startup provisioning is separate from predictive scaling. Share an
-    // in-flight request so repeated startup notifications cannot apply it twice.
-    update.promise ??= Promise.resolve().then(async () => {
-      if (this.#initialUpdates.get(applicationId) !== update) return
-      await this.#runtime.updateApplicationsResources([{ application: applicationId, workers: update.workers }])
-      if (this.#initialUpdates.get(applicationId) === update) {
-        this.#initialUpdates.delete(applicationId)
-      }
-    }).finally(() => { update.promise = null })
-    await update.promise
-  }
-
-  #buildAlgorithmConfig (min, max, config) {
+  #buildApplicationScalerConfig (workersConfig) {
+    const config = this.#config
     const holtConfig = {
       alphaUp: config.alphaUp,
       alphaDown: config.alphaDown,
@@ -156,7 +104,7 @@ export class PredictiveWorkersScaler {
 
     const metrics = {
       elu: {
-        threshold: config.eluThreshold,
+        threshold: workersConfig.eluThreshold,
         redistributionMs: config.redistributionMs,
         maxValue: 1,
         saturationZone: 0.02,
@@ -165,8 +113,8 @@ export class PredictiveWorkersScaler {
     }
 
     let heapThreshold = null
-    if (config.heapThresholdMb != null) {
-      heapThreshold = config.heapThresholdMb * 1024 * 1024
+    if (workersConfig.heapThresholdMb != null) {
+      heapThreshold = workersConfig.heapThresholdMb * 1024 * 1024
     }
 
     metrics.heap = {
@@ -176,29 +124,32 @@ export class PredictiveWorkersScaler {
     }
 
     return {
-      min,
-      max,
+      minimum: workersConfig.minimum,
+      maximum: workersConfig.maximum,
       cooldowns: config.cooldowns,
       metrics
     }
   }
 
-  remove (application) {
-    const appId = typeof application === 'string' ? application : application.id
-    this.#apps.delete(appId)
-    this.#initialUpdates.delete(appId)
+  remove (appId) {
+    this.#appConfigs.delete(appId)
+    this.#appScalers.delete(appId)
+  }
+
+  #handleWorkersUpdated ({ application, workers }) {
+    this.#appScalers.get(application)?.syncWorkersCount(workers)
   }
 
   #handleHealthMetrics ({ id, application, currentHealth }) {
     try {
-      const app = this.#apps.get(application)
-      if (!app || !currentHealth) return
+      const applicationScaler = this.#appScalers.get(application)
+      if (!applicationScaler || !currentHealth) return
 
       const now = Date.now()
-      app.algorithm.addSample('elu', id, now, currentHealth.elu)
+      applicationScaler.addSample('elu', id, now, currentHealth.elu)
 
       if (currentHealth.heapUsed !== undefined) {
-        app.algorithm.addSample('heap', id, now, currentHealth.heapUsed)
+        applicationScaler.addSample('heap', id, now, currentHealth.heapUsed)
       }
     } catch (err) {
       this.#runtime.logger.error({ err }, 'Failed to handle health metrics')
@@ -207,11 +158,11 @@ export class PredictiveWorkersScaler {
 
   #handleWorkerStarted ({ application, worker }) {
     try {
-      const app = this.#apps.get(application)
-      if (!app) return
+      const applicationScaler = this.#appScalers.get(application)
+      if (!applicationScaler) return
 
       const workerId = `${application}:${worker}`
-      app.algorithm.addWorker(workerId, Date.now())
+      applicationScaler.addWorker(workerId, Date.now())
     } catch (err) {
       this.#runtime.logger.error({ err }, 'Failed to handle worker started')
     }
@@ -219,11 +170,11 @@ export class PredictiveWorkersScaler {
 
   #handleWorkerExited ({ application, worker }) {
     try {
-      const app = this.#apps.get(application)
-      if (!app) return
+      const applicationScaler = this.#appScalers.get(application)
+      if (!applicationScaler) return
 
       const workerId = `${application}:${worker}`
-      app.algorithm.removeWorker(workerId, Date.now())
+      applicationScaler.removeWorker(workerId, Date.now())
     } catch (err) {
       this.#runtime.logger.error({ err }, 'Failed to handle worker exited')
     }
@@ -236,148 +187,170 @@ export class PredictiveWorkersScaler {
     try {
       await this.#processApplications()
     } catch (err) {
-      this.#runtime.logger.error({ err }, 'Failed to process predictive scaling')
+      this.#runtime.logger.error({ err }, 'Failed to process dynamic workers scaling')
     } finally {
       this.#isProcessing = false
     }
   }
 
   async #processApplications () {
-    const now = Date.now()
-    const updates = []
-    const scaleDowns = []
-    const scaleUpCandidates = []
-    const desiredTargets = new Map()
-
-    for (const [appId, app] of this.#apps) {
-      // Do not make a competing scaling decision while startup is pending.
-      if (this.#initialUpdates.has(appId)) {
-        continue
-      }
-      desiredTargets.set(appId, app.algorithm.process(now))
-    }
-
-    const actualCountsByAppId = await this.#getWorkerCounts()
+    const workersCountByAppId = await this.#getWorkerCounts()
     if (!this.#started) return
 
-    let workerBudgetUsage = 0
-    for (const [appId, actualCount] of Object.entries(actualCountsByAppId)) {
-      const app = this.#apps.get(appId)
-      workerBudgetUsage += Math.max(actualCount, app?.algorithm.targetCount ?? 0, app?.min ?? 0)
+    const appWorkersTargets = new Map()
+    const now = Date.now()
+    for (const [appId, appScaler] of this.#appScalers) {
+      const target = appScaler.process(now)
+      appWorkersTargets.set(appId, target)
     }
 
-    for (const [appId, desiredTarget] of desiredTargets) {
-      const app = this.#apps.get(appId)
-      if (!app) continue
+    const syncAndScaleDownUpdates = []
+    const scaleUpCandidates = []
 
-      const actualCount = actualCountsByAppId[appId] ?? 0
-      if (actualCount < app.min) {
-        app.algorithm.syncWorkersCount(app.min)
-        updates.push({ application: appId, workers: app.min })
+    let totalWorkersCount = 0
+    for (const appId in workersCountByAppId) {
+      let workersCount = workersCountByAppId[appId]
+      const appConfig = this.#appConfigs.get(appId)
+      const appScaler = this.#appScalers.get(appId)
+
+      // Unmanaged workers still occupy capacity.
+      if (!appScaler) {
+        totalWorkersCount += workersCount
         continue
       }
-      if (actualCount > app.max) {
-        app.algorithm.syncWorkersCount(app.max)
-        updates.push({ application: appId, workers: app.max })
-        continue
+
+      const minimum = appConfig.minimum
+      const maximum = appConfig.maximum
+      let target = appWorkersTargets.get(appId)
+
+      if (workersCount < minimum || workersCount > maximum) {
+        // Sync workers if they are outside min/max bounds
+        if (workersCount < minimum) {
+          workersCount = minimum
+        }
+        if (workersCount > maximum) {
+          workersCount = Math.min(maximum, target ?? maximum)
+        }
       }
 
-      const targetCount = app.algorithm.targetCount
-      if (desiredTarget === null || desiredTarget === targetCount) continue
-
-      if (desiredTarget < targetCount) {
-        this.#runtime.logger.info(
-          `Predictive scaling down the "${appId}" app to ${desiredTarget} workers`
-        )
-        workerBudgetUsage -= Math.max(actualCount, targetCount) - desiredTarget
-        app.algorithm.setTargetCount(desiredTarget)
-        scaleDowns.push({ application: appId, workers: desiredTarget })
-      } else {
-        const ratio = (desiredTarget - targetCount) / targetCount
-        scaleUpCandidates.push({ appId, app, desiredTarget, ratio })
+      if (target === null) {
+        target = workersCount
+        appWorkersTargets.set(appId, target)
       }
+
+      if (target < workersCount) {
+        // Handle scale-downs first, so we have enough resources to scale up
+        workersCount = target
+        appScaler.setTargetCount(workersCount)
+      }
+
+      if (target > workersCount) {
+        const ratio = (target - workersCount) / workersCount
+        scaleUpCandidates.push({ appId, target, ratio })
+      }
+
+      if (workersCount !== workersCountByAppId[appId]) {
+        syncAndScaleDownUpdates.push({
+          application: appId,
+          workers: workersCount
+        })
+        workersCountByAppId[appId] = workersCount
+      }
+      totalWorkersCount += workersCount
     }
 
-    if (scaleDowns.length > 0) {
+    // Apply syncs and scale-downs first to free up resources for scale-ups.
+    if (syncAndScaleDownUpdates.length > 0) {
       try {
-        await this.#runtime.updateApplicationsResources(scaleDowns)
+        await this.#runtime.updateApplicationsResources(syncAndScaleDownUpdates)
       } catch (err) {
-        this.#runtime.logger.error({ err }, 'Failed to apply predictive scale-down')
+        this.#runtime.logger.error({ err }, 'Failed to apply worker corrections and scale-downs')
       }
       if (!this.#started) return
     }
 
-    if (scaleUpCandidates.length > 0) {
-      if (workerBudgetUsage >= this.#maxTotalWorkers) {
-        this.#runtime.logger.warn(
-          `The maximum number of workers "${this.#maxTotalWorkers}" has been reached.`
-        )
-      } else {
-        scaleUpCandidates.sort((a, b) => b.ratio - a.ratio)
+    if (scaleUpCandidates.length === 0) return
 
-        for (const { appId, app, desiredTarget } of scaleUpCandidates) {
-          if (this.#apps.get(appId) !== app) continue
-          const heap = app.algorithm.getMetricStats('heap')
-          let heapPerWorker = null
-          if (heap?.level != null && heap.count > 0) {
-            heapPerWorker = heap.level / heap.count
-          }
+    scaleUpCandidates.sort((a, b) => b.ratio - a.ratio)
 
-          if (!Number.isFinite(heapPerWorker) || heapPerWorker <= 0) {
-            this.#runtime.logger.warn(`Cannot scale up the "${appId}" app until heap measurements are available.`)
-            continue
-          }
-
-          const availableMemory = await this.#getAvailableMemory()
-          if (!this.#started) return
-          if (this.#apps.get(appId) !== app) continue
-
-          const workersWithinMemory = Math.floor(availableMemory / heapPerWorker)
-          if (!(workersWithinMemory > 0)) {
-            this.#runtime.logger.warn(`Not enough available memory to scale up the "${appId}" app.`)
-            continue
-          }
-
-          const scaleUpCount = Math.min(
-            desiredTarget - app.algorithm.targetCount,
-            this.#config.maxScaleUpStep,
-            this.#maxTotalWorkers - workerBudgetUsage,
-            workersWithinMemory
-          )
-
-          const newTarget = app.algorithm.targetCount + scaleUpCount
-          this.#runtime.logger.info(
-            `Predictive scaling up the "${appId}" app to ${newTarget} workers`
-          )
-          app.algorithm.setTargetCount(newTarget)
-          updates.push({ application: appId, workers: newTarget })
-          break
-        }
+    if (totalWorkersCount >= this.#maxTotalWorkers) {
+      let totalDesiredWorkers = totalWorkersCount
+      const scaleUpRequests = []
+      for (const { appId, target } of scaleUpCandidates) {
+        const workersCount = workersCountByAppId[appId]
+        totalDesiredWorkers += target - workersCount
+        scaleUpRequests.push(`"${appId}": ${workersCount} -> ${target}`)
       }
+      this.#runtime.logger.warn(
+        `The maximum number of workers "${this.#maxTotalWorkers}" has been reached. ` +
+        `Applications requesting scale-up: ${scaleUpRequests.join(', ')}. Total desired workers: ${totalDesiredWorkers}.`
+      )
+      return
     }
 
-    if (updates.length > 0) {
-      try {
-        await this.#runtime.updateApplicationsResources(updates)
-      } catch (err) {
-        this.#runtime.logger.error({ err }, 'Failed to apply predictive scaling')
+    const availableMemory = await this.#getAvailableMemory()
+    if (!this.#started) return
+
+    for (const { appId, target } of scaleUpCandidates) {
+      const appScaler = this.#appScalers.get(appId)
+      if (!appScaler) continue
+
+      const workersCount = workersCountByAppId[appId]
+      if (target <= workersCount) continue
+
+      const heapPerWorker = appScaler.getHeapPerWorker()
+      if (heapPerWorker === null) {
+        this.#runtime.logger.warn(`Cannot scale up the "${appId}" app until heap measurements are available.`)
+        continue
       }
+
+      const workersWithinMemory = Math.floor(availableMemory / heapPerWorker)
+      if (workersWithinMemory === 0) {
+        this.#runtime.logger.warn(`Not enough available memory to scale up the "${appId}" app.`)
+        continue
+      }
+
+      const scaleUpCount = Math.min(
+        target - workersCount,
+        this.#config.maxScaleUpStep,
+        this.#maxTotalWorkers - totalWorkersCount,
+        workersWithinMemory
+      )
+
+      const constrainedTarget = workersCount + scaleUpCount
+      this.#runtime.logger.info(
+        `Scaling up the "${appId}" app to ${constrainedTarget} workers`
+      )
+      appScaler.setTargetCount(constrainedTarget)
+
+      try {
+        await this.#runtime.updateApplicationsResources([{ application: appId, workers: constrainedTarget }])
+      } catch (err) {
+        this.#runtime.logger.error({ err }, 'Failed to scale up application workers')
+      }
+      break
     }
   }
 
-  async #getWorkerCounts () {
+  async #getLiveWorkers () {
     const workers = await this.#runtime.getWorkers(true)
+    // The copied status can be stale after awaiting the snapshot. Prefer the
+    // live worker status, and retain starting/stopping workers for budgeting.
+    return Object.entries(workers).filter(([, { raw, status }]) => {
+      return (raw?.[kWorkerStatus] ?? status) !== 'exited'
+    })
+  }
 
-    const actualCountsByAppId = {}
-    for (const { application, status, raw } of Object.values(workers)) {
-      const workerStatus = raw?.[kWorkerStatus] ?? status
-      if (workerStatus === 'exited') continue
+  async #getWorkerCounts () {
+    const workers = await this.#getLiveWorkers()
 
+    const actualCountsByAppId = Object.create(null)
+    for (const [, { application }] of workers) {
       actualCountsByAppId[application] ??= 0
       actualCountsByAppId[application] += 1
     }
 
-    for (const appId of this.#apps.keys()) {
+    for (const appId of this.#appScalers.keys()) {
       actualCountsByAppId[appId] ??= 0
     }
 
@@ -386,6 +359,6 @@ export class PredictiveWorkersScaler {
 
   async #getAvailableMemory () {
     const mem = await getMemoryInfo({ scope: this.#memoryInfo.scope })
-    return this.#maxTotalMemory - mem.used
+    return Math.max(0, this.#maxTotalMemory - mem.used)
   }
 }

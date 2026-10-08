@@ -3,8 +3,10 @@ import { EventEmitter } from 'node:events'
 import { registerHooks } from 'node:module'
 import { test } from 'node:test'
 import { setImmediate } from 'node:timers/promises'
-import { PredictiveScalingAlgorithm } from '../lib/predictive-scaling.js'
+import { PredictiveApplicationScaler } from '../lib/predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from '../lib/worker/symbols.js'
+import { finalizeApplication } from '../lib/config.js'
+import { createWorkersConfig } from './predictive-scaling/helpers.js'
 
 // Keep admission tests independent of host/container memory and concurrent load.
 const metricsUrl = new URL('../lib/metrics.js', import.meta.url).href
@@ -21,11 +23,11 @@ const hook = registerHooks({
 const { PredictiveWorkersScaler } = await import('../lib/predictive-worker-scaler.js')
 hook.deregister()
 
-function createAlgorithm (heapThreshold) {
+function createApplicationScaler (heapThreshold) {
   const smoothing = { redistributionMs: 1, alphaUp: 1, alphaDown: 1, betaUp: 0, betaDown: 0 }
-  return new PredictiveScalingAlgorithm({
-    min: 1,
-    max: 10,
+  return new PredictiveApplicationScaler({
+    minimum: 1,
+    maximum: 10,
     cooldowns: {},
     metrics: {
       elu: { ...smoothing, threshold: 0.8 },
@@ -36,73 +38,81 @@ function createAlgorithm (heapThreshold) {
 
 test('heap without a threshold is processed without making scaling decisions', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
-  const algorithm = createAlgorithm()
-  algorithm.addWorker('app:0', 1000)
-  algorithm.addWorker('app:1', 1000)
-  algorithm.setTargetCount(2)
+  const applicationScaler = createApplicationScaler()
+  applicationScaler.addWorker('app:0', 1000)
+  applicationScaler.addWorker('app:1', 1000)
+  applicationScaler.setTargetCount(2)
   for (const value of [100, 10000, 1]) {
-    algorithm.addSample('heap', 'app:0', Date.now(), value)
-    algorithm.addSample('heap', 'app:1', Date.now(), value)
-    assert.equal(algorithm.process(Date.now()), null)
-    assert.equal(algorithm.targetCount, 2)
-    assert.equal(algorithm.getSnapshot('heap').level, 2 * value)
-    assert.equal(algorithm.getMetricStats('heap').count, 2)
+    applicationScaler.addSample('heap', 'app:0', Date.now(), value)
+    applicationScaler.addSample('heap', 'app:1', Date.now(), value)
+    assert.equal(applicationScaler.process(Date.now()), null)
+    assert.equal(applicationScaler.targetCount, 2)
+    assert.equal(applicationScaler._getSnapshot('heap').level, 2 * value)
+    assert.equal(applicationScaler.getHeapPerWorker(), value)
     t.mock.timers.tick(1000)
   }
 })
 
 test('observation-only heap does not change ELU decisions', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
-  const withHeap = createAlgorithm()
-  const withoutHeap = createAlgorithm()
-  for (const algorithm of [withHeap, withoutHeap]) algorithm.addWorker('app:0', 1000)
+  const withHeap = createApplicationScaler()
+  const withoutHeap = createApplicationScaler()
+  for (const applicationScaler of [withHeap, withoutHeap]) applicationScaler.addWorker('app:0', 1000)
   for (const elu of [0.95, 0.1, 0.99]) {
-    for (const algorithm of [withHeap, withoutHeap]) algorithm.addSample('elu', 'app:0', Date.now(), elu)
+    for (const applicationScaler of [withHeap, withoutHeap]) applicationScaler.addSample('elu', 'app:0', Date.now(), elu)
     withHeap.addSample('heap', 'app:0', Date.now(), 100000)
     const target = withHeap.process(Date.now())
     assert.equal(target, withoutHeap.process(Date.now()))
-    for (const algorithm of [withHeap, withoutHeap]) algorithm.setTargetCount(target)
+    for (const applicationScaler of [withHeap, withoutHeap]) applicationScaler.setTargetCount(target)
     t.mock.timers.tick(40000)
   }
 })
 
 test('a configured heap threshold still requests scaling', () => {
-  const algorithm = createAlgorithm(100)
-  algorithm.addWorker('app:0', 1000)
-  algorithm.addSample('heap', 'app:0', 10000, 250)
-  assert.equal(algorithm.process(10000), 3)
+  const applicationScaler = createApplicationScaler(100)
+  applicationScaler.addWorker('app:0', 1000)
+  applicationScaler.addSample('heap', 'app:0', 10000, 250)
+  assert.equal(applicationScaler.process(10000), 3)
 })
 
-test('metric stats expose the current smoothed level and live count independently of the approved target', t => {
+test('heap per worker uses the live count independently of the approved target', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
-  const algorithm = createAlgorithm()
-  assert.deepEqual(algorithm.getMetricStats('heap'), { level: null, trend: 0, count: 0 })
-  assert.equal(algorithm.getMetricStats('unknown'), null)
+  const applicationScaler = createApplicationScaler()
+  assert.equal(applicationScaler.getHeapPerWorker(), null)
   for (const id of ['app:0', 'app:1']) {
-    algorithm.addWorker(id, 1000)
-    algorithm.addSample('heap', id, 10000, 200)
+    applicationScaler.addWorker(id, 1000)
+    applicationScaler.addSample('heap', id, 10000, 200)
   }
-  algorithm.process(10000)
-  algorithm.setTargetCount(4)
-  assert.equal(algorithm.getSnapshot('heap').level, 400)
-  assert.deepEqual(algorithm.getMetricStats('heap'), { level: 400, trend: 0, count: 2 })
-  algorithm.removeWorker('app:0', 11000)
-  algorithm.removeWorker('app:1', 11000)
-  assert.equal(algorithm.getMetricStats('heap').count, 0)
+  applicationScaler.process(10000)
+  applicationScaler.setTargetCount(4)
+  assert.equal(applicationScaler._getSnapshot('heap').level, 400)
+  assert.equal(applicationScaler.getHeapPerWorker(), 200)
+  applicationScaler.removeWorker('app:0', 11000)
+  applicationScaler.removeWorker('app:1', 11000)
+  assert.equal(applicationScaler.getHeapPerWorker(), null)
+})
+
+test('a zero heap measurement produces a positive estimate below one byte', () => {
+  const applicationScaler = createApplicationScaler()
+  applicationScaler.addWorker('app:0', 1000)
+  applicationScaler.addSample('heap', 'app:0', 10000, 0)
+  applicationScaler.process(10000)
+  const heapPerWorker = applicationScaler.getHeapPerWorker()
+  assert.ok(heapPerWorker > 0 && heapPerWorker < 1)
 })
 
 async function setup (t, applications, availableMemory, config = {}) {
   t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 10000 })
-  const algorithms = []
-  const originalProcess = PredictiveScalingAlgorithm.prototype.process
-  t.mock.method(PredictiveScalingAlgorithm.prototype, 'process', function (now) {
-    if (!algorithms.includes(this)) {
-      const { approvedTarget } = applications[algorithms.length]
-      algorithms.push(this)
+  const applicationScalers = []
+  const originalProcess = PredictiveApplicationScaler.prototype.process
+  t.mock.method(PredictiveApplicationScaler.prototype, 'process', function (now) {
+    if (!applicationScalers.includes(this)) {
+      const { approvedTarget } = applications[applicationScalers.length]
+      applicationScalers.push(this)
       if (approvedTarget) this.setTargetCount(approvedTarget)
     }
     originalProcess.call(this, now)
-    return applications[algorithms.indexOf(this)].desiredTarget
+    return applications[applicationScalers.indexOf(this)].desiredTarget
   })
   const runtime = new EventEmitter()
   runtime.logger = { info () {}, warn () {}, error () {} }
@@ -115,7 +125,7 @@ async function setup (t, applications, availableMemory, config = {}) {
     updates.push(...changes)
     return changes.map(({ application, workers }) => ({ application, workers: { new: workers, success: true } }))
   }
-  const scaler = new PredictiveWorkersScaler(runtime, {
+  const runtimeWorkersConfig = await createWorkersConfig({
     processIntervalMs: 100,
     total: 30,
     maxScaleUpStep: 10,
@@ -127,8 +137,9 @@ async function setup (t, applications, availableMemory, config = {}) {
     betaDown: 0,
     ...config
   })
+  const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
   for (const app of applications) {
-    await scaler.add({ id: app.id, workers: { dynamic: true, minimum: app.heap.length, static: app.heap.length } })
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, { id: app.id, workers: { dynamic: true, minimum: app.heap.length, static: app.heap.length } }))
   }
   await scaler.start()
   t.after(() => scaler.stop())
@@ -163,9 +174,9 @@ test('available memory caps a multi-worker increase using average heap per live 
   assert.deepEqual(updates, [{ application: 'app', workers: 4 }])
 })
 
-test('pending workers do not dilute heap cost when approving additional workers', async t => {
+test('an unfulfilled target does not dilute heap cost or add nonexistent workers', async t => {
   const { updates } = await setup(t, [{ id: 'app', heap: [100, 300], approvedTarget: 4, desiredTarget: 8 }], 450)
-  assert.deepEqual(updates, [{ application: 'app', workers: 6 }])
+  assert.deepEqual(updates, [{ application: 'app', workers: 4 }])
 })
 
 for (const availableMemory of [-1, 0, 99, 100]) {
@@ -175,13 +186,20 @@ for (const availableMemory of [-1, 0, 99, 100]) {
   })
 }
 
-for (const heap of [undefined, 0, NaN]) {
-  test(`an app without positive heap data (${heap}) waits without blocking another app`, async t => {
+for (const heap of [undefined, NaN]) {
+  test(`an app without heap data (${heap}) waits without blocking another app`, async t => {
     const { updates } = await setup(t, [
       { id: 'unknown', heap: [heap], desiredTarget: 4 },
       { id: 'ready', heap: [100], desiredTarget: 2 }
     ], 150)
     assert.deepEqual(updates, [{ application: 'ready', workers: 2 }])
+  })
+}
+
+for (const availableMemory of [-1, 0, 1]) {
+  test(`zero heap permits scaling only with available memory (${availableMemory})`, async t => {
+    const { updates } = await setup(t, [{ id: 'app', heap: [0], desiredTarget: 4 }], availableMemory)
+    assert.deepEqual(updates, availableMemory > 0 ? [{ application: 'app', workers: 4 }] : [])
   })
 }
 

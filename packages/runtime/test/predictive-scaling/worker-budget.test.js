@@ -3,7 +3,10 @@ import { EventEmitter } from 'node:events'
 import { registerHooks } from 'node:module'
 import { test } from 'node:test'
 import { setImmediate } from 'node:timers/promises'
+import { finalizeApplication } from '../../lib/config.js'
+import { PredictiveApplicationScaler } from '../../lib/predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from '../../lib/worker/symbols.js'
+import { createWorkersConfig } from './helpers.js'
 
 const memoryKey = Symbol.for('scaler-worker-budget-memory')
 const metricsUrl = new URL('../../lib/metrics.js', import.meta.url).href
@@ -42,10 +45,11 @@ async function setup (t, config = {}) {
       for (let i = 0; i < count; i++) {
         if (!workers[`${application}:${i}`]) addWorker(application, i)
       }
+      runtime.emit('application:resources:workers:updated', { application, workers: count })
     }
     return changes.map(({ application, workers: count }) => ({ application, workers: { success: true, new: count } }))
   }
-  const scaler = new PredictiveWorkersScaler(runtime, {
+  const runtimeWorkersConfig = await createWorkersConfig({
     total: 3,
     maximum: 4,
     maxMemory: 10000,
@@ -58,8 +62,12 @@ async function setup (t, config = {}) {
     cooldowns: { scaleUpAfterScaleUpMs: 0, scaleDownAfterScaleUpMs: 0, scaleDownAfterScaleDownMs: 0 },
     ...config
   })
-  await scaler.add({ id: 'idle', workers: { dynamic: true, static: 1 } })
-  await scaler.add({ id: 'busy', workers: { dynamic: true, static: 1 } })
+  const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+  async function addApplication (application) {
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, application))
+  }
+  await addApplication({ id: 'idle', workers: { dynamic: true, static: 1 } })
+  await addApplication({ id: 'busy', workers: { dynamic: true, static: 1 } })
   await scaler.start()
   function sample (application, index, elu) {
     runtime.emit('application:worker:health:metrics', {
@@ -71,13 +79,12 @@ async function setup (t, config = {}) {
     for (let i = 0; i < 10; i++) await setImmediate()
   }
   t.after(() => { scaler.stop(); delete globalThis[memoryKey] })
-  return { runtime, scaler, workers, updates, addWorker, sample, tick }
+  return { runtime, scaler, addApplication, workers, updates, addWorker, sample, tick }
 }
 
 test('an external resource update consumes capacity before predictive processing', async t => {
   const { runtime, updates, sample, tick } = await setup(t)
   await runtime.updateApplicationsResources([{ application: 'idle', workers: 2 }])
-  runtime.emit('application:resources:workers:updated', { application: 'idle', workers: 2 })
   updates.length = 0
   sample('busy', 0, 0.95)
   await tick()
@@ -102,9 +109,106 @@ test('workers outside the scaler application map still occupy capacity', async t
   assert.deepEqual(updates, [])
 })
 
+test('fixed applications have no predictor and still occupy the worker budget', async t => {
+  const { runtime, updates, addApplication, addWorker, sample, tick } = await setup(t)
+  await addApplication({ id: 'idle', workers: { dynamic: false, static: 2 } })
+  const process = t.mock.method(PredictiveApplicationScaler.prototype, 'process')
+  const addWorkerToScaler = t.mock.method(PredictiveApplicationScaler.prototype, 'addWorker')
+  const errors = t.mock.method(runtime.logger, 'error')
+  addWorker('idle', 1)
+  sample('idle', 0, 0.95)
+  sample('busy', 0, 0.95)
+  await tick()
+  assert.equal(process.mock.callCount(), 1)
+  assert.equal(addWorkerToScaler.mock.callCount(), 0)
+  assert.equal(errors.mock.callCount(), 0)
+  assert.deepEqual(updates, [])
+})
+
+for (const change of ['remove', 'replace']) {
+  test(`uses the application collection after ${change} occurs while reading worker counts`, async t => {
+    const { runtime, scaler, workers, updates, addApplication, sample, tick } = await setup(t)
+    const errors = t.mock.method(runtime.logger, 'error')
+    runtime.getWorkers = async () => {
+      scaler.remove('busy')
+      if (change === 'replace') {
+        await addApplication({ id: 'busy', workers: { dynamic: true } })
+      }
+      return workers
+    }
+    sample('busy', 0, 0.95)
+    await tick()
+    assert.deepEqual(updates, [])
+    assert.equal(errors.mock.callCount(), 0)
+  })
+}
+
+test('a failed scale-up does not reserve workers that were never created', async t => {
+  const { runtime, updates, sample, tick } = await setup(t)
+  runtime.updateApplicationsResources = async changes => {
+    updates.push(...changes)
+    return changes.map(({ application, workers }) => ({
+      application, workers: { success: false, current: 1, new: workers, started: [] }
+    }))
+  }
+  sample('busy', 0, 0.95)
+  await tick()
+  assert.deepEqual(updates, [{ application: 'busy', workers: 2 }])
+  sample('idle', 0, 0.95)
+  sample('busy', 0, 0.95)
+  await tick()
+  assert.deepEqual(updates, [
+    { application: 'busy', workers: 2 },
+    { application: 'idle', workers: 2 }
+  ])
+})
+
+test('scale-up starts from externally added capacity and only records the extra workers', async t => {
+  const { runtime, updates, sample, tick } = await setup(t, { total: 6 })
+  const syncWorkersCount = t.mock.method(PredictiveApplicationScaler.prototype, 'syncWorkersCount')
+  const setTargetCount = t.mock.method(PredictiveApplicationScaler.prototype, 'setTargetCount')
+  await runtime.updateApplicationsResources([{ application: 'busy', workers: 2 }])
+  assert.deepEqual(syncWorkersCount.mock.calls.map(call => call.arguments), [[2]])
+  assert.equal(syncWorkersCount.mock.calls[0].this.targetCount, 2)
+  assert.equal(setTargetCount.mock.callCount(), 0)
+  updates.length = 0
+  runtime.updateApplicationsResources = async changes => { updates.push(...changes) }
+  sample('busy', 0, 0.95)
+  sample('busy', 1, 0.95)
+  await tick()
+  assert.deepEqual(updates, [{ application: 'busy', workers: 3 }])
+  assert.deepEqual(syncWorkersCount.mock.calls.map(call => call.arguments), [[2]])
+  assert.deepEqual(setTargetCount.mock.calls.map(call => call.arguments), [[3]])
+})
+
+test('successful worker updates sync approved targets and stop syncing removed applications', async t => {
+  const { runtime, scaler } = await setup(t)
+  const syncWorkersCount = t.mock.method(PredictiveApplicationScaler.prototype, 'syncWorkersCount')
+  await runtime.updateApplicationsResources([{ application: 'busy', workers: 2 }])
+  const appScaler = syncWorkersCount.mock.calls[0].this
+  appScaler.setTargetCount(3)
+
+  await runtime.updateApplicationsResources([{ application: 'busy', workers: 3 }])
+  assert.deepEqual(syncWorkersCount.mock.calls.map(call => call.arguments), [[2], [3]])
+  assert.equal(appScaler.targetCount, 3)
+
+  scaler.remove('busy')
+  runtime.emit('application:resources:workers:updated', { application: 'busy', workers: 1 })
+  assert.equal(appScaler.targetCount, 3)
+  assert.equal(syncWorkersCount.mock.callCount(), 2)
+
+  scaler.stop()
+  assert.equal(runtime.listenerCount('application:resources:workers:updated'), 0)
+  runtime.emit('application:resources:workers:updated', { application: 'idle', workers: 2 })
+  assert.equal(syncWorkersCount.mock.callCount(), 2)
+})
+
 for (const change of ['remove', 'replace', 'stop']) {
-  test(`discards a scale-up when ${change} occurs during the memory check`, { timeout: 5000 }, async t => {
-    const { scaler, updates, sample } = await setup(t)
+  test(`uses the current scaler after ${change} occurs during the memory check`, { timeout: 5000 }, async t => {
+    const { scaler, updates, sample, addApplication } = await setup(t)
+    const process = t.mock.method(PredictiveApplicationScaler.prototype, 'process')
+    const setTargetCount = t.mock.method(PredictiveApplicationScaler.prototype, 'setTargetCount')
+    const getHeapPerWorker = t.mock.method(PredictiveApplicationScaler.prototype, 'getHeapPerWorker', () => 100)
     const memoryRequested = Promise.withResolvers()
     const memoryResponse = Promise.withResolvers()
     globalThis[memoryKey] = () => {
@@ -121,28 +225,38 @@ for (const change of ['remove', 'replace', 'stop']) {
     } else {
       scaler.remove('busy')
       if (change === 'replace') {
-        await scaler.add({ id: 'busy', workers: { dynamic: true, static: 1 } })
+        await addApplication({ id: 'busy', workers: { dynamic: true, static: 1 } })
       }
     }
 
     memoryResponse.resolve({ scope: 'host', used: 100, total: 10000 })
     for (let i = 0; i < 10; i++) await setImmediate()
-    assert.deepEqual(updates, [])
+    if (change === 'replace') {
+      assert.deepEqual(updates, [{ application: 'busy', workers: 2 }])
+      assert.equal(setTargetCount.mock.callCount(), 1)
+      const updatedScaler = setTargetCount.mock.calls[0].this
+      assert.ok(process.mock.calls.every(call => call.this !== updatedScaler))
+      assert.equal(getHeapPerWorker.mock.calls[0].this, updatedScaler)
+      assert.equal(updatedScaler.targetCount, 2)
+    } else {
+      assert.deepEqual(updates, [])
+      assert.equal(setTargetCount.mock.callCount(), 0)
+    }
   })
 }
 
 test('minimum corrections reserve capacity before ordinary scale-ups', async t => {
-  const { scaler, updates, sample, tick } = await setup(t, { total: 4 })
-  await scaler.add({ id: 'idle', workers: { dynamic: true, static: 3, minimum: 3 } })
+  const { updates, sample, tick, addApplication } = await setup(t, { total: 4 })
+  await addApplication({ id: 'idle', workers: { dynamic: true, static: 3, minimum: 3 } })
   sample('busy', 0, 0.95)
   await tick()
   assert.deepEqual(updates, [{ application: 'idle', workers: 3 }])
 })
 
 test('all applications below minimum are corrected in the same cycle', async t => {
-  const { scaler, updates, tick } = await setup(t, { total: 1, maxMemory: 1 })
-  await scaler.add({ id: 'idle', workers: { dynamic: true, static: 3, minimum: 3 } })
-  await scaler.add({ id: 'busy', workers: { dynamic: true, static: 2, minimum: 2 } })
+  const { updates, tick, addApplication } = await setup(t, { total: 1, maxMemory: 1 })
+  await addApplication({ id: 'idle', workers: { dynamic: true, static: 3, minimum: 3 } })
+  await addApplication({ id: 'busy', workers: { dynamic: true, static: 2, minimum: 2 } })
   await tick()
   assert.deepEqual(updates, [
     { application: 'idle', workers: 3 },
@@ -163,11 +277,11 @@ test('started workers are not counted twice alongside their approved target', as
 
 for (const status of ['stopping', 'exited']) {
   test(`a scale-down frees planned capacity while the removed worker is ${status}`, async t => {
-    const { runtime, scaler, workers, updates, addWorker, sample, tick } = await setup(t, { total: 4 })
+    const { runtime, workers, updates, addWorker, sample, tick, addApplication } = await setup(t, { total: 4 })
     sample('busy', 0, 0.95)
     await tick()
     assert.deepEqual(updates, [{ application: 'busy', workers: 2 }])
-    await scaler.add({ id: 'other', workers: { dynamic: true, static: 1 } })
+    await addApplication({ id: 'other', workers: { dynamic: true, static: 1 } })
     addWorker('other', 0)
     sample('other', 0, 0.95)
     sample('busy', 0, 0)

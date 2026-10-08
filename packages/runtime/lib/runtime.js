@@ -944,7 +944,6 @@ export class Runtime extends EventEmitter {
     await this.#collectServingState(id)
 
     this.emitAndNotify('application:started', id)
-    await this.#dynamicWorkersScaler?.applyPendingUpdate(id)
   }
 
   async stopApplication (id, silent = false, dependents = []) {

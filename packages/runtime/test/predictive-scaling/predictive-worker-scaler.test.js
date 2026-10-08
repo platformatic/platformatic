@@ -3,8 +3,10 @@ import { EventEmitter } from 'node:events'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { PredictiveWorkersScaler } from '../../lib/predictive-worker-scaler.js'
-import { PredictiveScalingAlgorithm } from '../../lib/predictive-scaling.js'
+import { PredictiveApplicationScaler } from '../../lib/predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from '../../lib/worker/symbols.js'
+import { finalizeApplication } from '../../lib/config.js'
+import { createWorkersConfig } from './helpers.js'
 
 function createMockRuntime () {
   const runtime = new EventEmitter()
@@ -73,18 +75,6 @@ async function feedElu (runtime, application, workerId, workerIndex, elu, durati
   }
 }
 
-test('effective scaler configuration exposes predictive defaults and isolates callers', () => {
-  const scaler = new PredictiveWorkersScaler({}, { dynamic: true, maxMemory: 123456, total: 8 })
-  const config = scaler.getConfig()
-  assert.equal(config.total, 8)
-  assert.equal(config.maxMemory, 123456)
-  assert.equal(config.eluThreshold, 0.8)
-  assert.equal(config.cooldowns.scaleDownAfterScaleUpMs, 30000)
-  assert.equal(config.version, undefined)
-  config.cooldowns.scaleDownAfterScaleUpMs = 0
-  assert.equal(scaler.getConfig().cooldowns.scaleDownAfterScaleUpMs, 30000)
-})
-
 test('scaler initializes existing lifetimes and timestamps exit notifications', async t => {
   t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 10000 })
   const runtime = createMockRuntime()
@@ -96,11 +86,12 @@ test('scaler initializes existing lifetimes and timestamps exit notifications', 
       'app1:1': { application: 'app1', raw: { [kWorkerStatus]: 'exited', [kWorkerStartTime]: 1000 } }
     }
   }
-  const addWorker = t.mock.method(PredictiveScalingAlgorithm.prototype, 'addWorker')
-  const removeWorker = t.mock.method(PredictiveScalingAlgorithm.prototype, 'removeWorker')
-  const addSample = t.mock.method(PredictiveScalingAlgorithm.prototype, 'addSample')
-  const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-  await scaler.add(makeApp('app1'))
+  const addWorker = t.mock.method(PredictiveApplicationScaler.prototype, 'addWorker')
+  const removeWorker = t.mock.method(PredictiveApplicationScaler.prototype, 'removeWorker')
+  const addSample = t.mock.method(PredictiveApplicationScaler.prototype, 'addSample')
+  const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+  const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+  await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
   await scaler.start()
   t.after(() => scaler.stop())
 
@@ -123,9 +114,10 @@ test('scaler does not initialize a snapshot worker that exited while the snapsho
     runtime.emit('application:worker:exited', { application: 'app1', worker: 0 })
     return snapshot
   }
-  const addWorker = t.mock.method(PredictiveScalingAlgorithm.prototype, 'addWorker')
-  const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-  await scaler.add(makeApp('app1'))
+  const addWorker = t.mock.method(PredictiveApplicationScaler.prototype, 'addWorker')
+  const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+  const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+  await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
   await scaler.start()
   t.after(() => scaler.stop())
   assert.equal(addWorker.mock.callCount(), 0)
@@ -137,8 +129,9 @@ test('PredictiveWorkersScaler', async (t) => {
     const updates = []
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-    await scaler.add(makeApp('app1'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
     await scaler.start()
     t.after(() => scaler.stop())
 
@@ -156,8 +149,9 @@ test('PredictiveWorkersScaler', async (t) => {
     const updates = []
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig({ total: 1 }))
-    await scaler.add(makeApp('app1'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig({ total: 1 }))
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
     await scaler.start()
     t.after(() => scaler.stop())
 
@@ -174,8 +168,9 @@ test('PredictiveWorkersScaler', async (t) => {
     const updates = []
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig({ maxMemory: 1 }))
-    await scaler.add(makeApp('app1'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig({ maxMemory: 1 }))
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
     await scaler.start()
     t.after(() => scaler.stop())
 
@@ -192,8 +187,9 @@ test('PredictiveWorkersScaler', async (t) => {
     const updates = []
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-    await scaler.add(makeApp('app1'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
     await scaler.start()
     t.after(() => scaler.stop())
 
@@ -225,9 +221,10 @@ test('PredictiveWorkersScaler', async (t) => {
     const updates = []
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-    await scaler.add(makeApp('app1'))
-    await scaler.add(makeApp('app2'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app2')))
     await scaler.start()
     t.after(() => scaler.stop())
 
@@ -258,9 +255,10 @@ test('PredictiveWorkersScaler', async (t) => {
     const updates = []
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-    await scaler.add(makeApp('app1'))
-    await scaler.add(makeApp('app2'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app2')))
     await scaler.start()
     t.after(() => scaler.stop())
 
@@ -307,9 +305,10 @@ test('PredictiveWorkersScaler', async (t) => {
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
     // Global threshold 0.8, app2 overrides to 0.99
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-    await scaler.add(makeApp('app1'))
-    await scaler.add(makeApp('app2', { eluThreshold: 0.99 }))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app2', { eluThreshold: 0.99 })))
     await scaler.start()
     t.after(() => scaler.stop())
 
@@ -332,8 +331,9 @@ test('PredictiveWorkersScaler', async (t) => {
   await t.test('stop unsubscribes from events', async (t) => {
     const runtime = createMockRuntime()
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-    await scaler.add(makeApp('app1'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
     await scaler.start()
 
     const listenersBefore = runtime.listenerCount('application:worker:health:metrics')
@@ -348,8 +348,9 @@ test('PredictiveWorkersScaler', async (t) => {
     const updates = []
     runtime.updateApplicationsResources = async (u) => { updates.push(...u) }
 
-    const scaler = new PredictiveWorkersScaler(runtime, makeConfig())
-    await scaler.add(makeApp('app1'))
+    const runtimeWorkersConfig = await createWorkersConfig(makeConfig())
+    const scaler = new PredictiveWorkersScaler(runtime, runtimeWorkersConfig)
+    await scaler.add(finalizeApplication({ workers: runtimeWorkersConfig }, makeApp('app1')))
     await scaler.start()
     t.after(() => scaler.stop())
 

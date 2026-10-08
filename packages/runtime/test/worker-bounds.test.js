@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { availableParallelism } from 'node:os'
 import { test } from 'node:test'
 import { finalizeApplication, finalizeConfiguration } from '../lib/config.js'
-import { PredictiveWorkersScaler } from '../lib/predictive-worker-scaler.js'
 
 async function normalize (workers, applicationWorkers) {
   return finalizeConfiguration(
@@ -49,14 +48,13 @@ for (const { name, input, expected } of [
 ]) {
   test(`normalizes runtime worker settings: ${name}`, async () => {
     const config = await normalize(structuredClone(input))
-    assert.deepEqual(config.workers, { ...expected, total: expected.total ?? availableParallelism() })
+    for (const [key, value] of Object.entries(expected)) {
+      assert.deepEqual(config.workers[key], value)
+    }
+    assert.equal(config.workers.total, expected.total ?? availableParallelism())
     const inherited = { ...expected }
     delete inherited.total
-    assert.deepEqual(config.applications[0].workers, inherited)
-    const effective = new PredictiveWorkersScaler({}, config.workers).getConfig()
-    assert.equal(effective.minimum, expected.minimum ?? 1)
-    assert.equal(effective.maximum, expected.maximum ?? expected.total ?? availableParallelism())
-    assert.equal(effective.total, expected.total ?? availableParallelism())
+    assert.partialDeepStrictEqual(config.applications[0].workers, inherited)
   })
 }
 
@@ -100,12 +98,26 @@ for (const { name, runtime, application, expected } of [
 ]) {
   test(`normalizes application worker settings: ${name}`, async () => {
     const config = await normalize(structuredClone(runtime), structuredClone(application))
-    assert.deepEqual(config.applications[0].workers, expected)
+    assert.partialDeepStrictEqual(config.applications[0].workers, expected)
     assert.equal(config.workers.dynamic, runtime.dynamic)
     const added = finalizeApplication(config, { id: 'later', workers: structuredClone(application) })
-    assert.deepEqual(added.workers, expected)
+    assert.deepEqual(added.workers, config.applications[0].workers)
   })
 }
+
+test('normalization resolves dynamic bounds and inherits application thresholds', async () => {
+  const config = await normalize({ dynamic: true, total: 4, eluThreshold: 0.7, heapThresholdMb: 128 })
+  assert.deepEqual(config.applications[0].workers, {
+    dynamic: true, static: 1, minimum: 1, maximum: 4, eluThreshold: 0.7, heapThresholdMb: 128
+  })
+  const added = finalizeApplication(config, {
+    id: 'later', workers: { minimum: 6, eluThreshold: 0.9, heapThresholdMb: 256 }
+  })
+  assert.deepEqual(added.workers, {
+    dynamic: true, static: 6, minimum: 6, maximum: 6, eluThreshold: 0.9, heapThresholdMb: 256
+  })
+  assert.equal(config.workers.maximum, undefined)
+})
 
 for (const dynamic of [false, true]) {
   test(`rejects inverted runtime bounds with dynamic=${dynamic}`, async () => {

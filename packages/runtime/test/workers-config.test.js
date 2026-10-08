@@ -37,7 +37,12 @@ for (const option of ['total', 'maxMemory', 'processIntervalMs', 'maxScaleUpStep
 for (const [option, value] of Object.entries({ redistributionMs: 1000, alphaUp: 0.3, alphaDown: 0.2, betaUp: 0.2, betaDown: 0.1, cooldowns: { scaleUpAfterScaleUpMs: 0 } })) {
   test(`accepts ${option} globally and rejects it on applications`, async () => {
     const config = await load({ dynamic: true, [option]: value })
-    assert.deepEqual(config.workers[option], value)
+    if (option === 'cooldowns') {
+      assert.equal(config.workers.cooldowns.scaleUpAfterScaleUpMs, 0)
+      assert.equal(config.workers.cooldowns.scaleDownAfterScaleUpMs, 30000)
+    } else {
+      assert.deepEqual(config.workers[option], value)
+    }
     await assert.rejects(load({ dynamic: true }, { [option]: value }), isSchemaError)
   })
 }
@@ -63,7 +68,7 @@ test('rejects inverted minimum and maximum', async () => {
 
 test('numeric counts disable dynamic scaling even when inherited', async () => {
   const config = await load({ dynamic: true, minimum: 2, total: 4 }, 4)
-  assert.deepEqual(config.applications[0].workers, { static: 4, dynamic: false, minimum: 2 })
+  assert.deepEqual(config.applications[0].workers, { static: 4, dynamic: false, minimum: 2, eluThreshold: 0.8 })
   const fixed = await load(4)
   assert.equal(fixed.applications[0].workers.static, 4)
   assert.equal(fixed.applications[0].workers.dynamic, false)

@@ -51,6 +51,21 @@ function parseRuntimeWorkers (config) {
   workers.static ??= 1
   workers.dynamic ??= false
 
+  // Ajv does not apply property defaults inside the workers schema's anyOf branches.
+  workers.eluThreshold ??= 0.8
+  workers.processIntervalMs ??= 10000
+  workers.maxScaleUpStep ??= 1
+  workers.redistributionMs ??= 10000
+  workers.alphaUp ??= 0.2
+  workers.alphaDown ??= 0.1
+  workers.betaUp ??= 0.1
+  workers.betaDown ??= 0.1
+  workers.cooldowns ??= {}
+  workers.cooldowns.scaleUpAfterScaleUpMs ??= 5000
+  workers.cooldowns.scaleUpAfterScaleDownMs ??= 5000
+  workers.cooldowns.scaleDownAfterScaleUpMs ??= 30000
+  workers.cooldowns.scaleDownAfterScaleDownMs ??= 20000
+
   if (workers.maximum < workers.minimum) {
     throw new InvalidArgumentError(
       `Workers minimum (${workers.minimum}) must not exceed maximum (${workers.maximum})`
@@ -65,7 +80,7 @@ function parseRuntimeWorkers (config) {
 
 function parseApplicationWorkers (applicationConfig, config) {
   const workers = coerceWorkers(applicationConfig.workers, `Service "${applicationConfig.id}"`)
-  for (const key of ['minimum', 'maximum', 'static', 'dynamic']) {
+  for (const key of ['minimum', 'maximum', 'static', 'dynamic', 'eluThreshold', 'heapThresholdMb']) {
     if (workers[key] === undefined && config.workers[key] !== undefined) {
       workers[key] = config.workers[key]
     }
@@ -77,7 +92,10 @@ function parseApplicationWorkers (applicationConfig, config) {
     )
   }
   if (workers.dynamic) {
-    workers.static = workers.minimum ?? 1
+    workers.minimum ??= 1
+    // An implicit maximum must accommodate the application's required minimum.
+    workers.maximum ??= Math.max(workers.minimum, config.workers.total)
+    workers.static = workers.minimum
   }
 
   applicationConfig.workers = workers

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { MetricStore, PredictiveScalingAlgorithm } from '../../lib/predictive-scaling.js'
+import { MetricStore, PredictiveApplicationScaler } from '../../lib/predictive-scaling.js'
 
-function createAlgorithm () {
+function createApplicationScaler () {
   const metric = {
     threshold: 0.8,
     redistributionMs: 1,
@@ -11,9 +11,9 @@ function createAlgorithm () {
     betaUp: 0,
     betaDown: 0
   }
-  return new PredictiveScalingAlgorithm({
-    min: 1,
-    max: 10,
+  return new PredictiveApplicationScaler({
+    minimum: 1,
+    maximum: 10,
     cooldowns: {},
     metrics: { elu: metric, heap: metric }
   })
@@ -40,40 +40,40 @@ test('missing ticks use the last raw measurement, without extending its slope', 
 for (const metric of ['elu', 'heap']) {
   for (const invalid of [null, undefined, NaN, Infinity, -Infinity, '0.9']) {
     test(`${metric}: invalid readings (${String(invalid)}) carry forward the last valid value`, () => {
-      const algorithm = createAlgorithm()
-      algorithm.addWorker('reporting', 0)
-      algorithm.addWorker('invalid', 0)
-      algorithm.addSample(metric, 'reporting', 10000, 0.25)
-      algorithm.addSample(metric, 'invalid', 10000, 0.75)
-      algorithm.process(10000)
+      const applicationScaler = createApplicationScaler()
+      applicationScaler.addWorker('reporting', 0)
+      applicationScaler.addWorker('invalid', 0)
+      applicationScaler.addSample(metric, 'reporting', 10000, 0.25)
+      applicationScaler.addSample(metric, 'invalid', 10000, 0.75)
+      applicationScaler.process(10000)
 
-      algorithm.addSample(metric, 'reporting', 11000, 0.25)
-      algorithm.addSample(metric, 'invalid', 11000, invalid)
-      algorithm.process(12000)
-      assert.deepEqual(algorithm.getSnapshot(metric).history, [
+      applicationScaler.addSample(metric, 'reporting', 11000, 0.25)
+      applicationScaler.addSample(metric, 'invalid', 11000, invalid)
+      applicationScaler.process(12000)
+      assert.deepEqual(applicationScaler._getSnapshot(metric).history, [
         { timestamp: 10000, value: 0.5 },
         { timestamp: 11000, value: 0.5 },
         { timestamp: 12000, value: 0.5 }
       ])
 
       // A valid zero replaces the held value without revisiting earlier ticks.
-      algorithm.addSample(metric, 'invalid', 13000, 0)
-      algorithm.process(13000)
-      assert.deepEqual(algorithm.getSnapshot(metric).history.at(-1), { timestamp: 13000, value: 0.125 })
+      applicationScaler.addSample(metric, 'invalid', 13000, 0)
+      applicationScaler.process(13000)
+      assert.deepEqual(applicationScaler._getSnapshot(metric).history.at(-1), { timestamp: 13000, value: 0.125 })
     })
   }
 
   test(`${metric}: a silent worker retains its last value and remains counted`, () => {
-    const algorithm = createAlgorithm()
-    algorithm.addWorker('reporting', 0)
-    algorithm.addWorker('silent', 0)
-    algorithm.addSample(metric, 'reporting', 10000, 0.25)
-    algorithm.addSample(metric, 'silent', 10000, 0.75)
-    algorithm.process(10000)
+    const applicationScaler = createApplicationScaler()
+    applicationScaler.addWorker('reporting', 0)
+    applicationScaler.addWorker('silent', 0)
+    applicationScaler.addSample(metric, 'reporting', 10000, 0.25)
+    applicationScaler.addSample(metric, 'silent', 10000, 0.75)
+    applicationScaler.process(10000)
 
-    algorithm.addSample(metric, 'reporting', 12000, 0.5)
-    algorithm.process(13000)
-    assert.deepEqual(algorithm.getSnapshot(metric).history, [
+    applicationScaler.addSample(metric, 'reporting', 12000, 0.5)
+    applicationScaler.process(13000)
+    assert.deepEqual(applicationScaler._getSnapshot(metric).history, [
       { timestamp: 10000, value: 0.5 },
       { timestamp: 11000, value: 0.5625 },
       { timestamp: 12000, value: 0.625 },
@@ -82,27 +82,27 @@ for (const metric of ['elu', 'heap']) {
   })
 
   test(`${metric}: carry-forward continues across processing runs when all workers are silent`, () => {
-    const algorithm = createAlgorithm()
-    algorithm.addWorker('worker', 0)
-    assert.equal(algorithm.process(9000), null) // No value to carry yet.
-    algorithm.addSample(metric, 'worker', 10000, 0.5)
-    algorithm.process(11000)
-    algorithm.process(13000)
-    assert.deepEqual(algorithm.getSnapshot(metric).history, [
+    const applicationScaler = createApplicationScaler()
+    applicationScaler.addWorker('worker', 0)
+    assert.equal(applicationScaler.process(9000), null) // No value to carry yet.
+    applicationScaler.addSample(metric, 'worker', 10000, 0.5)
+    applicationScaler.process(11000)
+    applicationScaler.process(13000)
+    assert.deepEqual(applicationScaler._getSnapshot(metric).history, [
       { timestamp: 10000, value: 0.5 },
       { timestamp: 11000, value: 0.5 },
       { timestamp: 12000, value: 0.5 },
       { timestamp: 13000, value: 0.5 }
     ])
-    assert.equal(algorithm.process(13500), null)
+    assert.equal(applicationScaler.process(13500), null)
   })
 
   test(`${metric}: zero is a valid last value`, () => {
-    const algorithm = createAlgorithm()
-    algorithm.addWorker('worker', 0)
-    algorithm.addSample(metric, 'worker', 10000, 0)
-    algorithm.process(12000)
-    assert.deepEqual(algorithm.getSnapshot(metric).history, [
+    const applicationScaler = createApplicationScaler()
+    applicationScaler.addWorker('worker', 0)
+    applicationScaler.addSample(metric, 'worker', 10000, 0)
+    applicationScaler.process(12000)
+    assert.deepEqual(applicationScaler._getSnapshot(metric).history, [
       { timestamp: 10000, value: 0 },
       { timestamp: 11000, value: 0 },
       { timestamp: 12000, value: 0 }
@@ -110,13 +110,13 @@ for (const metric of ['elu', 'heap']) {
   })
 
   test(`${metric}: a new reading affects pending ticks without replaying carried ticks`, () => {
-    const algorithm = createAlgorithm()
-    algorithm.addWorker('worker', 0)
-    algorithm.addSample(metric, 'worker', 10000, 0.25)
-    algorithm.process(12000)
-    algorithm.addSample(metric, 'worker', 14000, 0.75)
-    algorithm.process(14000)
-    assert.deepEqual(algorithm.getSnapshot(metric).history, [
+    const applicationScaler = createApplicationScaler()
+    applicationScaler.addWorker('worker', 0)
+    applicationScaler.addSample(metric, 'worker', 10000, 0.25)
+    applicationScaler.process(12000)
+    applicationScaler.addSample(metric, 'worker', 14000, 0.75)
+    applicationScaler.process(14000)
+    assert.deepEqual(applicationScaler._getSnapshot(metric).history, [
       { timestamp: 10000, value: 0.25 },
       { timestamp: 11000, value: 0.25 },
       { timestamp: 12000, value: 0.25 },
@@ -126,19 +126,19 @@ for (const metric of ['elu', 'heap']) {
   })
 
   test(`${metric}: carry-forward stops at exit and does not cross into a restarted lifetime`, () => {
-    const algorithm = createAlgorithm()
-    algorithm.addWorker('worker', 0)
-    algorithm.addSample(metric, 'worker', 10000, 0.75)
-    algorithm.removeWorker('worker', 12000)
-    algorithm.addWorker('worker', 13000)
-    algorithm.process(15000)
-    assert.deepEqual(algorithm.getSnapshot(metric).history, [
+    const applicationScaler = createApplicationScaler()
+    applicationScaler.addWorker('worker', 0)
+    applicationScaler.addSample(metric, 'worker', 10000, 0.75)
+    applicationScaler.removeWorker('worker', 12000)
+    applicationScaler.addWorker('worker', 13000)
+    applicationScaler.process(15000)
+    assert.deepEqual(applicationScaler._getSnapshot(metric).history, [
       { timestamp: 10000, value: 0.75 },
       { timestamp: 11000, value: 0.75 }
     ])
-    algorithm.addSample(metric, 'worker', 16000, 0.25)
-    algorithm.process(17000)
-    assert.deepEqual(algorithm.getSnapshot(metric).history.slice(-2), [
+    applicationScaler.addSample(metric, 'worker', 16000, 0.25)
+    applicationScaler.process(17000)
+    assert.deepEqual(applicationScaler._getSnapshot(metric).history.slice(-2), [
       { timestamp: 16000, value: 0.25 },
       { timestamp: 17000, value: 0.25 }
     ])
