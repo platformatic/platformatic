@@ -1285,7 +1285,8 @@
               "workers": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 1
                   },
                   {
                     "type": "string"
@@ -1294,28 +1295,31 @@
                     "type": "object",
                     "properties": {
                       "static": {
-                        "type": "number",
+                        "type": "integer",
                         "minimum": 1
                       },
+                      "dynamic": {
+                        "type": "boolean"
+                      },
                       "minimum": {
-                        "type": "number",
+                        "type": "integer",
                         "minimum": 1
                       },
                       "maximum": {
-                        "type": "number",
+                        "type": "integer",
                         "minimum": 0
                       },
-                      "scaleUpELU": {
+                      "eluThreshold": {
                         "type": "number",
-                        "minimum": 0,
+                        "exclusiveMinimum": 0,
                         "maximum": 1
                       },
-                      "scaleDownELU": {
+                      "heapThresholdMb": {
                         "type": "number",
-                        "minimum": 0,
-                        "maximum": 1
+                        "exclusiveMinimum": 0
                       }
                     },
+                    "additionalProperties": false,
                     "title": "ApplicationWorkersOptions"
                   }
                 ]
@@ -1664,7 +1668,7 @@
         "workers": {
           "anyOf": [
             {
-              "type": "number",
+              "type": "integer",
               "minimum": 1
             },
             {
@@ -1674,48 +1678,93 @@
               "type": "object",
               "properties": {
                 "static": {
-                  "type": "number",
+                  "type": "integer",
                   "minimum": 1
                 },
                 "dynamic": {
-                  "type": "boolean",
-                  "default": false
+                  "type": "boolean"
                 },
                 "minimum": {
-                  "type": "number",
+                  "type": "integer",
                   "minimum": 1
                 },
                 "maximum": {
-                  "type": "number",
+                  "type": "integer",
                   "minimum": 0
                 },
                 "total": {
-                  "type": "number",
+                  "type": "integer",
                   "minimum": 1
                 },
                 "maxMemory": {
                   "type": "number",
                   "minimum": 0
                 },
-                "cooldown": {
+                "eluThreshold": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 1
+                },
+                "heapThresholdMb": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "processIntervalMs": {
                   "type": "number",
                   "minimum": 0
                 },
-                "gracePeriod": {
+                "maxScaleUpStep": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "redistributionMs": {
                   "type": "number",
                   "minimum": 0
                 },
-                "scaleUpELU": {
+                "alphaUp": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1
                 },
-                "scaleDownELU": {
+                "alphaDown": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1
+                },
+                "betaUp": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "betaDown": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "cooldowns": {
+                  "type": "object",
+                  "properties": {
+                    "scaleUpAfterScaleUpMs": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "scaleUpAfterScaleDownMs": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "scaleDownAfterScaleUpMs": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "scaleDownAfterScaleDownMs": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
+              "additionalProperties": false,
               "title": "WorkersOptions"
             }
           ]
@@ -3099,65 +3148,6 @@
           "additionalProperties": false,
           "title": "TelemetryOptions"
         },
-        "verticalScaler": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "default": true
-            },
-            "maxTotalWorkers": {
-              "type": "number",
-              "minimum": 1
-            },
-            "maxTotalMemory": {
-              "type": "number",
-              "minimum": 0
-            },
-            "minWorkers": {
-              "type": "number",
-              "minimum": 1
-            },
-            "maxWorkers": {
-              "type": "number",
-              "minimum": 1
-            },
-            "cooldownSec": {
-              "type": "number",
-              "minimum": 0
-            },
-            "gracePeriod": {
-              "type": "number",
-              "minimum": 0
-            },
-            "scaleUpELU": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
-            },
-            "scaleDownELU": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 1
-            },
-            "timeWindowSec": {
-              "type": "number",
-              "minimum": 0,
-              "deprecated": true
-            },
-            "scaleDownTimeWindowSec": {
-              "type": "number",
-              "minimum": 0,
-              "deprecated": true
-            },
-            "scaleIntervalSec": {
-              "type": "number",
-              "minimum": 0,
-              "deprecated": true
-            }
-          },
-          "additionalProperties": false
-        },
         "inspectorOptions": {
           "type": "object",
           "properties": {
@@ -3307,7 +3297,8 @@
             "workers": {
               "anyOf": [
                 {
-                  "type": "number"
+                  "type": "integer",
+                  "minimum": 1
                 },
                 {
                   "type": "string"
@@ -3316,28 +3307,31 @@
                   "type": "object",
                   "properties": {
                     "static": {
-                      "type": "number",
+                      "type": "integer",
                       "minimum": 1
                     },
+                    "dynamic": {
+                      "type": "boolean"
+                    },
                     "minimum": {
-                      "type": "number",
+                      "type": "integer",
                       "minimum": 1
                     },
                     "maximum": {
-                      "type": "number",
+                      "type": "integer",
                       "minimum": 0
                     },
-                    "scaleUpELU": {
+                    "eluThreshold": {
                       "type": "number",
-                      "minimum": 0,
+                      "exclusiveMinimum": 0,
                       "maximum": 1
                     },
-                    "scaleDownELU": {
+                    "heapThresholdMb": {
                       "type": "number",
-                      "minimum": 0,
-                      "maximum": 1
+                      "exclusiveMinimum": 0
                     }
                   },
+                  "additionalProperties": false,
                   "title": "ApplicationWorkersOptions"
                 }
               ]

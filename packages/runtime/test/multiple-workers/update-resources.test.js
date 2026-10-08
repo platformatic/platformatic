@@ -1,6 +1,8 @@
 import { strict as assert, deepStrictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { transform } from '../../index.js'
+import { PredictiveWorkersScaler } from '../../lib/predictive-worker-scaler.js'
 import { configurationFileIn, createRuntime } from '../helpers.js'
 import { waitForEvents } from './helper.js'
 
@@ -20,6 +22,54 @@ async function prepareRuntime (t, applicationsId, fixture) {
 
   return { runtime, resourcesInfo }
 }
+
+test('updates a zero-worker application without blocking other applications in the batch', async t => {
+  const { runtime } = await prepareRuntime(t, ['node', 'service'], 'update-service-workers')
+  const [healthReport] = await runtime.updateApplicationsResources([
+    { application: 'node', health: { maxHeapTotal: '512MB' } }
+  ])
+  assert.equal(healthReport.application, 'node')
+  assert.equal(healthReport.health.success, true)
+  const { health } = await runtime.getApplicationResourcesInfo('node')
+  await runtime.stopApplication('node')
+
+  assert.deepEqual(await runtime.getApplicationResourcesInfo('node'), { workers: 0, health })
+  const report = await runtime.updateApplicationsResources([
+    { application: 'node', workers: 1 },
+    { application: 'service', workers: 2 }
+  ])
+  assert.equal(report.length, 2)
+  assert.ok(report.every(update => update.workers.success))
+  assert.deepEqual(await runtime.getApplicationResourcesInfo('node'), { workers: 1, health })
+  assert.equal((await runtime.getApplicationResourcesInfo('service')).workers, 2)
+})
+
+test('stopping an application removes it from scaling until it is started again', async t => {
+  const add = t.mock.method(PredictiveWorkersScaler.prototype, 'add')
+  const remove = t.mock.method(PredictiveWorkersScaler.prototype, 'remove')
+  const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
+  const runtime = await createRuntime(configurationFileIn(appPath), null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.workers.dynamic = true
+      config.workers.processIntervalMs = 60000
+      return config
+    }
+  })
+  t.after(() => runtime.close())
+  await runtime.start()
+  const initialRegistrations = add.mock.calls.filter(call => call.arguments[0].id === 'node').length
+  runtime.once('application:stopping', id => {
+    assert.equal(id, 'node')
+    assert.deepEqual(remove.mock.calls.at(-1).arguments, ['node'])
+  })
+
+  await runtime.stopApplication('node')
+  assert.equal((await runtime.getApplicationResourcesInfo('node')).workers, 0)
+  await runtime.startApplication('node')
+  assert.equal(add.mock.calls.filter(call => call.arguments[0].id === 'node').length, initialRegistrations + 1)
+  assert.ok((await runtime.getApplicationResourcesInfo('node')).workers > 0)
+})
 
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
