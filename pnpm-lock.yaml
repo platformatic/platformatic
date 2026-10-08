@@ -1821,8 +1821,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.8(supports-color@10.2.2)
       '@fastify/formbody':
-        specifier: ^8.0.0
-        version: 8.0.2
+        specifier: ^9.0.0
+        version: 9.0.0
       '@opentelemetry/sdk-metrics':
         specifier: ^2.8.0
         version: 2.12.0(@opentelemetry/api@1.9.1)
@@ -3380,6 +3380,9 @@ packages:
 
   '@fastify/formbody@8.0.2':
     resolution: {integrity: sha512-84v5J2KrkXzjgBpYnaNRPqwgMsmY7ZDjuj0YVuMR3NXCJRCgKEZy/taSP1wUYGn0onfxJpLyRGDLa+NMaDJtnA==}
+
+  '@fastify/formbody@9.0.0':
+    resolution: {integrity: sha512-T/af26CSrUARBCvsEmv+DJLPfZlrRKESzqironxP1j7qzuLyKcoZtj6MuTGShuKx1THXugoie2oFbUJxXfGFzA==}
 
   '@fastify/forwarded@3.0.2':
     resolution: {integrity: sha512-NE8HgKLgYejV9lDpqkEFaDKMLYelJBVfHekhB0UKvX0ghagXRJqg68feg8er1NPXxG4N9i6vPxzt8E+3wHfcmA==}
@@ -14005,6 +14008,11 @@ snapshots:
     dependencies:
       fast-querystring: 1.1.2
       fastify-plugin: 5.1.0
+
+  '@fastify/formbody@9.0.0':
+    dependencies:
+      fast-querystring: 1.1.2
+      fastify-plugin: 6.0.0
 
   '@fastify/forwarded@3.0.2': {}
 
