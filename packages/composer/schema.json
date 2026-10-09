@@ -3987,6 +3987,9 @@
                       "hostname": {
                         "type": "string"
                       },
+                      "proxyPayloads": {
+                        "type": "boolean"
+                      },
                       "custom": {
                         "type": "object",
                         "properties": {

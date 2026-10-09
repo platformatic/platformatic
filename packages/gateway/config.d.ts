@@ -308,6 +308,7 @@ export interface PlatformaticGatewayConfig {
             rewritePrefix?: string;
             rewriteLocationHeader?: boolean;
             hostname?: string;
+            proxyPayloads?: boolean;
             custom?: {
               path: string;
               options?: {

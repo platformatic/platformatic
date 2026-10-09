@@ -293,3 +293,54 @@ test('should select the WebSocket upstream per-connection via custom getUpstream
   assert.equal(await firstMessage({ 'x-plt-version': 'two' }), 'ws-two')
   assert.equal(await firstMessage({}), 'ws-one')
 })
+
+test('proxyPayloads: false leaves body parsing to the application', async t => {
+  // @fastify/http-proxy registers catch-all content type parsers unless a
+  // preValidation hook is supplied, which hands a custom getUpstream an
+  // unparsed stream. proxyPayloads is its own switch for that, and until it is
+  // reachable from the configuration the only way to turn it off is to supply a
+  // hook that does nothing.
+  const upstream = await createApplication(t, [
+    {
+      method: 'POST',
+      path: '/echo',
+      handler: async (req, res) => res.send({ echoed: req.body })
+    }
+  ])
+  const origin = await upstream.listen({ host: '127.0.0.1', port: 0 })
+
+  const gateway = await createFromConfig(t, {
+    server: { logger: { level: 'fatal' } },
+    gateway: {
+      applications: [
+        {
+          id: 'one',
+          origin,
+          proxy: {
+            prefix: '/',
+            proxyPayloads: false,
+            custom: {
+              path: resolve(import.meta.dirname, './proxy/fixtures/custom-body-upstream.js'),
+              options: { upstream: origin }
+            }
+          }
+        }
+      ],
+      refreshTimeout: 1000
+    }
+  })
+  const gatewayOrigin = await gateway.start({ listen: true })
+
+  const { statusCode, body } = await request(gatewayOrigin, {
+    method: 'POST',
+    path: '/echo',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ parsed: true })
+  })
+
+  assert.equal(statusCode, 200)
+  // The fixture only reaches the upstream when it saw a parsed object rather
+  // than a stream, so arriving here at all means Fastify's own parser ran — and
+  // the body still made it across intact.
+  assert.deepEqual(await body.json(), { echoed: { parsed: true } })
+})

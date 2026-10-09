@@ -12,6 +12,7 @@ import { initMetrics } from './metrics.js'
 import { WsUpstreams } from './ws-upstreams.js'
 
 const kProxyRoute = Symbol('plt.gateway.proxy.route')
+const kProxiedUpstream = Symbol('plt.gateway.proxy.upstream')
 
 const urlPattern = /^https?:\/\//
 
@@ -275,6 +276,19 @@ async function proxyPlugin (app, opts) {
       }
     }
 
+    // Record the destination getUpstream settles on. The span for the proxied
+    // call is built in rewriteRequestHeaders, which @fastify/reply-from runs
+    // after it has resolved the upstream, so the value is already there by then
+    // and nothing has to call getUpstream a second time to find it out.
+    if (getUpstream) {
+      const resolveUpstream = getUpstream
+      getUpstream = function recordingGetUpstream (request, base) {
+        const resolved = resolveUpstream(request, base)
+        request[kProxiedUpstream] = resolved
+        return resolved
+      }
+    }
+
     // When getUpstream is provided, upstream must be undefined, otherwise the getUpstream will be ignored
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
 
@@ -301,6 +315,11 @@ async function proxyPlugin (app, opts) {
       handler: proxyHandler,
       preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
       preValidation: application.proxy?.custom?.preValidation,
+      // false stops @fastify/http-proxy from registering its catch-all content
+      // type parsers, which hand a custom getUpstream an unparsed stream.
+      // Without this, supplying a preValidation hook that does nothing is the
+      // only way to get them out of the way.
+      proxyPayloads: application.proxy?.proxyPayloads,
       preHandler: wsGuardPreHandler,
 
       websocket: true,
@@ -365,7 +384,11 @@ async function proxyPlugin (app, opts) {
           return headers
         },
         rewriteRequestHeaders: (request, headers) => {
-          const targetUrl = `${origin}${request.url}`
+          // Without a getUpstream the destination is the configured origin; with
+          // one it is whatever that returned for this request. Naming the origin
+          // in both cases makes a trace of a split deployment report a host the
+          // request never reached.
+          const targetUrl = `${request[kProxiedUpstream] ?? origin}${request.url}`
           const context = request.span?.context
           const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(
             targetUrl,
