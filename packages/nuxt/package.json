@@ -47,7 +47,7 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@nuxt/cli": "^3.35.2",
+    "@nuxt/cli": "^4.0.0",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
