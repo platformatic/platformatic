@@ -1,12 +1,13 @@
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
+import { createHash } from 'node:crypto'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { test } from 'node:test'
-import { parse } from 'semver'
+import { parse, satisfies } from 'semver'
 import { fixturesDir, getLogsFromFile, setFixturesDir, updateFile } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
 import { CacheHandler } from '../../lib/caching/valkey-isr.js'
@@ -46,6 +47,17 @@ function getRouteTags (nextMajor) {
     default:
       return ['_N_T_/layout', '_N_T_/route', '_N_T_/route/route', 'first', 'second', 'third']
   }
+}
+
+// Starting from Next.js 16.4, the cached responses are namespaced by the kind and the source route which
+// generated them. See getRouteCacheKey in next/dist/server/lib/route-cache-key.js.
+function getRouteCacheKey (nextVersion, kind, sourceRoute, pathname) {
+  if (!satisfies(nextVersion, '>=16.4.0')) {
+    return pathname
+  }
+
+  const source = createHash('sha256').update(sourceRoute).digest('hex')
+  return `/route-cache/${kind}/${source}/$${pathname}`
 }
 
 function getTagOperations (prefix, tags, key) {
@@ -179,7 +191,12 @@ test('should properly use the Valkey cache handler in production to cache fetch 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
-  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
+  const pageKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_PAGE', '/page', '/index')
+  )
   const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
 
   let storedValues
@@ -393,7 +410,12 @@ test('should properly use the Valkey cache handler in production to cache fetch 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
-  const routeKey = keyFor(valkeyPrefix, prefix, 'values', '/route')
+  const routeKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_ROUTE', '/route/route', '/route')
+  )
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
@@ -1500,7 +1522,12 @@ test('should properly use the Valkey cache handler in production when using next
     deepStrictEqual(mo[2], time)
   }
 
-  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
+  const pageKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_PAGE', '/page', '/index')
+  )
 
   const fetchKey = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
   const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
@@ -1648,7 +1675,12 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
-  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
+  const pageKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_PAGE', '/page', '/index')
+  )
   const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
 
   let storedValues
