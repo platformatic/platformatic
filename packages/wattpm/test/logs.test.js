@@ -1,6 +1,9 @@
-import { LOGS_TIMEOUT } from '@platformatic/runtime/test/helpers.js'
+import { LOGS_TIMEOUT, updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
+import { randomUUID } from 'node:crypto'
 import { on } from 'node:events'
+import { platform } from 'node:os'
+import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
@@ -124,6 +127,41 @@ test('logs - should stream runtime logs filtering by application', async t => {
   ok(applicationLogFound)
   ok(!mainLogFound)
   ok(!traceFound)
+})
+
+test('logs - should stream runtime logs from a custom socket', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const socketPath =
+    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(rootDir, 'custom.sock')
+
+  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+    config.managementApi = { socket: socketPath }
+    return config
+  })
+
+  const startProcess = wattpm('start', rootDir, { env: { PLT_TESTS_DELAY_START: '5000' } })
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
+      break
+    }
+  }
+
+  const logsProcess = wattpm('-S', socketPath, 'logs', 'main')
+  t.after(() => {
+    logsProcess.kill('SIGINT')
+    return logsProcess.catch(() => {})
+  })
+  const { mainLogFound, applicationLogFound } = await matchLogs(logsProcess.stdout)
+
+  ok(applicationLogFound)
+  ok(mainLogFound)
 })
 
 test('logs - should stream runtime logs filtering by level', async t => {
