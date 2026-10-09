@@ -28,12 +28,37 @@ export function buildListenOptions (serverConfig) {
   return options
 }
 
-export async function buildAdditionalServerOptions (serverConfig, skipHTTPSSanitization = false) {
+// Builds the options handled by createServerListener which do not depend on the protocol.
+export function buildServerListenerOptions (serverConfig) {
   const options = {}
 
-  if (typeof serverConfig?.backlog === 'number') {
-    options.backlog = serverConfig.backlog
+  for (const key of ['backlog', 'keepAliveTimeout', 'headersTimeout']) {
+    if (typeof serverConfig?.[key] === 'number') {
+      options[key] = serverConfig[key]
+    }
   }
+
+  return options
+}
+
+// keepAliveTimeout and headersTimeout are properties of the HTTP server, not listen options.
+// They are applied to the server and the remaining options are returned.
+export function applyServerTimeouts (server, options) {
+  const { keepAliveTimeout, headersTimeout, ...listenOptions } = options ?? {}
+
+  if (typeof keepAliveTimeout === 'number') {
+    server.keepAliveTimeout = keepAliveTimeout
+  }
+
+  if (typeof headersTimeout === 'number') {
+    server.headersTimeout = headersTimeout
+  }
+
+  return listenOptions
+}
+
+export async function buildAdditionalServerOptions (serverConfig, skipHTTPSSanitization = false) {
+  const options = buildServerListenerOptions(serverConfig)
 
   if (serverConfig?.https) {
     Object.assign(options, skipHTTPSSanitization ? serverConfig.https : await sanitizeHTTPSOptions(serverConfig.https))

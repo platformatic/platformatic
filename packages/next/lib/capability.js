@@ -4,6 +4,7 @@ import {
   ChildManager,
   cleanBasePath,
   createChildProcessListener,
+  buildServerListenerOptions,
   createServerListener,
   getServerUrl,
   importFile,
@@ -344,7 +345,7 @@ export class NextCapability extends BaseCapability {
       await this.childManager.inject()
       const { nextStart } = await importFile(resolvePath(this.#next, './dist/cli/next-start.js'))
 
-      const { hostname, port, backlog } = this.serverConfig ?? {}
+      const { hostname, port } = this.serverConfig ?? {}
       const serverOptions = {
         hostname: hostname || '127.0.0.1',
         port: port || 0
@@ -355,7 +356,7 @@ export class NextCapability extends BaseCapability {
       const serverPromise = createServerListener(
         (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
         (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-        typeof backlog === 'number' ? { backlog } : {}
+        buildServerListenerOptions(this.serverConfig)
       )
 
       if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
@@ -403,7 +404,7 @@ export class NextCapability extends BaseCapability {
       await this.childManager.inject()
       await this.childManager.register()
 
-      const { hostname, port, backlog } = this.serverConfig ?? {}
+      const { hostname, port } = this.serverConfig ?? {}
       const serverOptions = {
         hostname: hostname || '127.0.0.1',
         port: port || 0
@@ -412,10 +413,11 @@ export class NextCapability extends BaseCapability {
       const serverPromise = createServerListener(
         (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
         (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-        typeof backlog === 'number' ? { backlog } : {}
+        buildServerListenerOptions(this.serverConfig)
       )
 
-      let keepAliveTimeout = parseInt(process.env.KEEP_ALIVE_TIMEOUT, 10)
+      // The server configuration takes precedence, KEEP_ALIVE_TIMEOUT is kept as a fallback
+      let keepAliveTimeout = this.serverConfig?.keepAliveTimeout ?? parseInt(process.env.KEEP_ALIVE_TIMEOUT, 10)
       if (Number.isNaN(keepAliveTimeout) || !Number.isFinite(keepAliveTimeout) || keepAliveTimeout < 0) {
         keepAliveTimeout = undefined
       }

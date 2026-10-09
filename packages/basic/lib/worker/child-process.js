@@ -49,7 +49,7 @@ import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
-import { importFile } from '../utils.js'
+import { applyServerTimeouts, importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
 
 class ForwardingEventEmitter extends EventEmitter {
@@ -623,7 +623,7 @@ export class ChildProcess extends ITC {
 
   #setupServer () {
     const subscribers = {
-      asyncStart ({ options }) {
+      asyncStart ({ server, options }) {
         // Unix socket, do nothing
         if (options.path) {
           return
@@ -650,7 +650,7 @@ export class ChildProcess extends ITC {
           options.host = host
         }
 
-        Object.assign(options, additionalOptions)
+        Object.assign(options, applyServerTimeouts(server, additionalOptions))
         const events = getEvents({ throwOnMissing: false })
         if (events) {
           events.emitAndNotify('serverOptions', options)

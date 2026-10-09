@@ -324,6 +324,11 @@ export class ServiceCapability extends BaseCapability {
       listenOptions.backlog = serverOptions.backlog
     }
 
+    // Fastify handles keepAliveTimeout but has no option for headersTimeout
+    if (typeof serverOptions?.headersTimeout === 'number') {
+      this.#app.server.headersTimeout = serverOptions.headersTimeout
+    }
+
     await this.#app.listen(listenOptions)
     this.url = getServerUrl(this.#app.server)
 

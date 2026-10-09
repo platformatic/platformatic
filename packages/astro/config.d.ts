@@ -114,6 +114,14 @@ export interface PlatformaticAstroConfig {
      * The maximum length of the queue of pending connections
      */
     backlog?: number;
+    /**
+     * The number of milliseconds of inactivity a server needs to wait for additional incoming data, after it has finished writing the last response, before a socket will be destroyed. When running behind a load balancer, set it higher than the load balancer idle timeout.
+     */
+    keepAliveTimeout?: number;
+    /**
+     * The number of milliseconds to wait to receive the complete HTTP headers from the client. It should be greater than keepAliveTimeout.
+     */
+    headersTimeout?: number;
     http2?: boolean;
     https?: {
       allowHTTP1?: boolean;
@@ -317,6 +325,14 @@ export interface PlatformaticAstroConfig {
        * The maximum length of the queue of pending connections
        */
       backlog?: number;
+      /**
+       * The number of milliseconds of inactivity a server needs to wait for additional incoming data, after it has finished writing the last response, before a socket will be destroyed. When running behind a load balancer, set it higher than the load balancer idle timeout.
+       */
+      keepAliveTimeout?: number;
+      /**
+       * The number of milliseconds to wait to receive the complete HTTP headers from the client. It should be greater than keepAliveTimeout.
+       */
+      headersTimeout?: number;
       http2?: boolean;
       https?: {
         allowHTTP1?: boolean;

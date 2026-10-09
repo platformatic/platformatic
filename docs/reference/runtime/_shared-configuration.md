@@ -621,6 +621,8 @@ An object with the following settings:
 - **`hostname`** — Hostname where Platformatic Service server will listen for connections.
 - **`port`** — Port where Platformatic Service server will listen for connections. Provide a number or a string. When `portAssignment` is set to `perWorkerIncrement`, this is the first port assigned to worker 0.
 - **`portAssignment`** (`string`) — Sets how entrypoint server worker ports are assigned. Default: `shared`. Set it to `shared` or leave it unset to make all workers listen on the same `port`. Set it to `perWorkerIncrement` to give each worker its own incremental port, starting from `port`. Use `perWorkerIncrement` only with external load balancing, never on its own.
+- **`keepAliveTimeout`** (`integer`) — Milliseconds the server waits for more data on an idle keep-alive connection before closing it. Default: the framework or Node.js default (`5000` in Node.js). When running behind a load balancer that reuses connections, such as AWS ALB (60 seconds idle timeout by default), set it higher than the load balancer idle timeout to avoid `502` errors.
+- **`headersTimeout`** (`integer`) — Milliseconds the server waits to receive the complete HTTP request headers. Default: the Node.js default. Keep it greater than `keepAliveTimeout`.
 - **`http2`** (`boolean`) — Enables HTTP/2 support. Default: `false`.
 - **`https`** (`object`) - Configuration for HTTPS supporting the following options. Requires `https`.
   - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.

@@ -103,6 +103,17 @@ export declare function buildListenOptions (serverConfig?: { port?: number | str
   host?: string
 }
 
+export declare function buildServerListenerOptions (serverConfig?: Record<string, any>): {
+  backlog?: number
+  keepAliveTimeout?: number
+  headersTimeout?: number
+}
+
+export declare function applyServerTimeouts (
+  server: { keepAliveTimeout?: number; headersTimeout?: number },
+  options?: Record<string, any>
+): Record<string, unknown>
+
 export declare function buildAdditionalServerOptions (
   serverConfig?: Record<string, any>,
   skipHTTPSSanitization?: boolean

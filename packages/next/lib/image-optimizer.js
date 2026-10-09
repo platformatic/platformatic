@@ -2,6 +2,7 @@ import {
   BaseCapability,
   buildListenOptions,
   errors as basicErrors,
+  buildServerListenerOptions,
   createServerListener,
   getServerUrl,
   importFile,
@@ -86,8 +87,12 @@ export class NextImageOptimizerCapability extends BaseCapability {
       const serverOptions = this.serverConfig
       const listenOptions = buildListenOptions(serverOptions)
 
+      const listenerOptions = buildServerListenerOptions(serverOptions)
+      if (Object.keys(listenerOptions).length > 0) {
+        createServerListener(false, false, listenerOptions)
+      }
+
       if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
         listenOptions.backlog = serverOptions.backlog
       }
 
