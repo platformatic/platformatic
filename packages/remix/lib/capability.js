@@ -3,6 +3,7 @@ import {
   buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
+  buildServerListenerOptions,
   createServerListener,
   ensureTrailingSlash,
   errors,
@@ -144,8 +145,9 @@ export class RemixCapability extends ViteCapability {
       const serverOptions = this.serverConfig
       const listenOptions = buildListenOptions(serverOptions)
 
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
+      const listenerOptions = buildServerListenerOptions(serverOptions)
+      if (Object.keys(listenerOptions).length > 0) {
+        createServerListener(false, false, listenerOptions)
       }
 
       await this.#app.listen(listenOptions)
