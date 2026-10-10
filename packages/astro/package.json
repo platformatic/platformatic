@@ -43,7 +43,7 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
-    "neostandard": "^0.12.0",
+    "neostandard": "^0.14.0",
     "typescript": "~6.0.3",
     "tstyche": "^7.0.0",
     "vite": "^7.0.0",

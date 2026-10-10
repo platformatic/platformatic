@@ -32,7 +32,7 @@
     "cleaner-spec-reporter": "^0.5.0",
     "eslint": "9",
     "fastify": "^5.0.0",
-    "neostandard": "^0.12.0",
+    "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",
     "typescript": "~6.0.3"
   },
@@ -42,7 +42,7 @@
     "@databases/sql": "^3.3.0",
     "@fastify/error": "^4.0.0",
     "@hapi/topo": "^6.0.2",
-    "@matteo.collina/sqlite-pool": "^0.7.0",
+    "@matteo.collina/sqlite-pool": "^0.8.0",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "async-cache-dedupe": "^2.1.0",

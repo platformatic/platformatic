@@ -23,7 +23,7 @@
     "generate-errors-doc": "node ./scripts/generate-errors-doc.js",
     "global-links": "cd packages/cli && pnpm add -g . && cd ../wattpm && pnpm add -g . && cd ../create-wattpm && pnpm add -g ."
   },
-  "packageManager": "pnpm@12.9.1",
+  "packageManager": "pnpm@12.11.2",
   "devDependencies": {
     "@fastify/pre-commit": "^2.1.0",
     "markdownlint-cli2": "^0.23.3"
