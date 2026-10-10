@@ -22,7 +22,7 @@
     "@fastify/session": "^11.0.0",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "fast-jwt": "^6.0.0",
     "fastify": "^5.0.0",
