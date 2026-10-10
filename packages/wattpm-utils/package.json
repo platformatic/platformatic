@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@platformatic/node": "workspace:*",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",

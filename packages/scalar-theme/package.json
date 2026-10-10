@@ -30,6 +30,6 @@
     "node": ">=22.19.0"
   },
   "devDependencies": {
-    "cleaner-spec-reporter": "^0.5.0"
+    "cleaner-spec-reporter": "^2.0.0"
   }
 }
