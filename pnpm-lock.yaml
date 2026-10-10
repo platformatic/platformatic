@@ -327,8 +327,8 @@ importers:
         version: link:../wattpm
     devDependencies:
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -358,8 +358,8 @@ importers:
         version: link:../globals
     devDependencies:
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -505,8 +505,8 @@ importers:
         specifier: ^22.5.0
         version: 22.20.1
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -668,8 +668,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -866,8 +866,8 @@ importers:
         specifier: ^4.0.0
         version: 4.1.13
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1023,8 +1023,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1096,8 +1096,8 @@ importers:
         specifier: ^9.0.7
         version: 9.0.10
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1860,8 +1860,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       c8:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^12.0.0
+        version: 12.0.0
       cleaner-spec-reporter:
         specifier: ^0.5.0
         version: 0.5.0
@@ -6901,9 +6901,9 @@ packages:
       magicast:
         optional: true
 
-  c8@11.0.0:
-    resolution: {integrity: sha512-e/uRViGHSVIJv7zsaDKM7VRn2390TgHXqUSvYwPHBQaU6L7E9L0n9JbdkwdYPvshDT0KymBmmlwSpms3yBaMNg==}
-    engines: {node: 20 || >=22}
+  c8@12.0.0:
+    resolution: {integrity: sha512-4zpJvrd1nKWutnnKC2pXkFmb6iM1l+ffN//o1CzlTNwW7GSOs9a1xrLqkC48nU8oEkjmPZLPiwMsIaOvoF4Pqg==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=23}
     hasBin: true
     peerDependencies:
       monocart-coverage-reports: ^2
@@ -18223,7 +18223,7 @@ snapshots:
     optionalDependencies:
       magicast: 0.5.4
 
-  c8@11.0.0:
+  c8@12.0.0:
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@istanbuljs/schema': 0.1.6
@@ -18234,7 +18234,7 @@ snapshots:
       istanbul-reports: 3.2.0
       test-exclude: 8.0.0
       v8-to-istanbul: 9.3.0
-      yargs: 17.7.3
+      yargs: 18.1.0
       yargs-parser: 21.1.1
 
   cac@6.7.14: {}
