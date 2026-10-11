@@ -28,7 +28,7 @@
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
-    "eslint": "9",
+    "eslint": "10",
     "fastify": "^5.0.0",
     "ioredis": "^5.3.2",
     "neostandard": "^0.12.0",

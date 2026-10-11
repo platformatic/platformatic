@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "cleaner-spec-reporter": "^0.5.0",
-    "eslint": "9",
+    "eslint": "10",
     "import-in-the-middle": "^1.14.2",
     "neostandard": "^0.12.0"
   },

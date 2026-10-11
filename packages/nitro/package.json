@@ -50,7 +50,7 @@
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
-    "eslint": "9",
+    "eslint": "10",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
     "nitro": "^3.0.260610-beta",

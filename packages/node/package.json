@@ -37,7 +37,7 @@
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^0.5.0",
-    "eslint": "9",
+    "eslint": "10",
     "express": "^4.19.2",
     "fastify": "^5.0.0",
     "tstyche": "^7.0.0",
