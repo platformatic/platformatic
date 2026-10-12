@@ -10,6 +10,7 @@ import {
   variableDeclaration,
   variableDeclarator
 } from '@babel/types'
+import { readFileSync, realpathSync } from 'node:fs'
 import { readFile, realpath } from 'node:fs/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -86,8 +87,8 @@ export function transformESM (source) {
   return generate.default(ast).code
 }
 
-export async function initialize (data) {
-  const realRoot = pathToFileURL(await realpath(fileURLToPath(data.root)))
+function initializeCandidates (data, realRootPath) {
+  const realRoot = pathToFileURL(realRootPath)
 
   if (!realRoot.pathname.endsWith('/')) {
     realRoot.pathname += '/'
@@ -98,6 +99,38 @@ export async function initialize (data) {
   }
 
   candidates = candidates.map(c => new URL(c, realRoot).toString())
+}
+
+export function initializeSync (data) {
+  initializeCandidates(data, realpathSync(fileURLToPath(data.root)))
+}
+
+export async function initialize (data) {
+  initializeCandidates(data, await realpath(fileURLToPath(data.root)))
+}
+
+export function loadSync (url, context, nextLoad) {
+  // Load the original file
+  const result = nextLoad(url, context)
+
+  if (!url.startsWith('file:')) {
+    return result
+  }
+
+  url = pathToFileURL(realpathSync(fileURLToPath(url))).toString()
+
+  if (!candidates.includes(url)) {
+    return result
+  }
+
+  if (result.format === 'commonjs' || result.format == null) {
+    result.format ??= 'commonjs'
+    result.source = transformCJS(result.source ?? readFileSync(new URL(result.responseURL ?? url), 'utf-8'))
+  } else {
+    result.source = transformESM(result.source)
+  }
+
+  return result
 }
 
 export async function load (url, context, nextLoad) {
@@ -114,8 +147,8 @@ export async function load (url, context, nextLoad) {
     return result
   }
 
-  if (result.format === 'commonjs') {
-    await readFile(new URL(result.responseURL ?? url), 'utf-8')
+  if (result.format === 'commonjs' || result.format == null) {
+    result.format ??= 'commonjs'
     result.source = transformCJS(result.source ?? (await readFile(new URL(result.responseURL ?? url), 'utf-8')))
   } else {
     result.source = transformESM(result.source)
