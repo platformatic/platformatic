@@ -1,10 +1,11 @@
+import { ITC } from '@platformatic/itc'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { transform } from '../../lib/config.js'
-import { createRuntime, getTempDir } from '../helpers.js'
+import { createRuntime, getTempDir, updateFile } from '../helpers.js'
 import { prepareRuntime } from '../multiple-workers/helper.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
@@ -168,4 +169,67 @@ test('restartApplication restarts each original worker exactly once', async t =>
 
   deepStrictEqual(started, [5, 6, 7, 8, 9])
   deepStrictEqual(stopped, [0, 1, 2, 3, 4])
+})
+
+test('applications can be called while a replacement worker is starting', async t => {
+  const app = await createRuntime(join(fixturesDir, 'update-service-workers', 'platformatic.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  // Hold the first replacement worker before it starts
+  const replacementStarting = Promise.withResolvers()
+  const resumeStart = Promise.withResolvers()
+  const send = ITC.prototype.send
+  t.mock.method(ITC.prototype, 'send', async function (name, ...args) {
+    if (name === 'start') {
+      replacementStarting.resolve()
+      await resumeStart.promise
+    }
+
+    return send.call(this, name, ...args)
+  })
+
+  const restart = app.restartApplication('node')
+
+  try {
+    await replacementStarting.promise
+    const workers = (await app.getApplicationResourcesInfo('node')).workers
+
+    // Go through every worker at least twice
+    for (let i = 0; i < workers * 2; i++) {
+      const res = await app.inject('node', { method: 'GET', url: '/' })
+      strictEqual(res.statusCode, 200)
+    }
+  } finally {
+    resumeStart.resolve()
+    await restart
+  }
+})
+
+test('restarting the runtime picks up changed application scheduled tasks', async t => {
+  const root = await prepareRuntime(t, 'scheduled-tasks-restart', { node: ['node'] })
+  const app = await createRuntime(join(root, 'platformatic.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  deepStrictEqual(
+    app.getSchedulerJobs().map(job => job.cron),
+    ['0 0 1 1 *']
+  )
+
+  // A new version of the application is deployed with a different schedule
+  await updateFile(join(root, 'node', 'index.mjs'), contents => contents.replace('0 0 1 1 *', '0 0 2 2 *'))
+  await app.restart()
+
+  deepStrictEqual(
+    app.getSchedulerJobs().map(job => job.cron),
+    ['0 0 2 2 *']
+  )
 })

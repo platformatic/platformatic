@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.66.0.json",
+  "watch": false,
+  "metrics": false,
+  "entrypoint": "node",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "services": [
+    {
+      "id": "node",
+      "path": "./node",
+      "config": "platformatic.json"
+    }
+  ],
+  "logger": {
+    "level": "error"
+  }
+}

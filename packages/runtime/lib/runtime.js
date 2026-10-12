@@ -84,6 +84,7 @@ import {
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
+  kWorkerExitCode,
   kWorkerHealthSignals,
   kWorkerId,
   kWorkersBroadcast,
@@ -225,10 +226,9 @@ export class Runtime extends EventEmitter {
   #extensionHealthRoutes
   #lastOverloadProfiles
   #restartingApplications
-  #restartingWorkers
+  #replicas
   #dynamicWorkersScaler
   #nextWorkerIndex
-  #workerPortOffsets
 
   #sharedHttpCache
   #scheduler
@@ -268,9 +268,8 @@ export class Runtime extends EventEmitter {
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingApplications = new Set()
-    this.#restartingWorkers = new Map()
+    this.#replicas = new Map()
     this.#nextWorkerIndex = new Map()
-    this.#workerPortOffsets = new Map() // fullWorkerId => portOffset
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
 
@@ -743,6 +742,7 @@ export class Runtime extends EventEmitter {
       await this.#scheduler?.removeApplicationJobs(application)
       this.#applications.delete(application)
       this.#applicationRestartCounts.delete(application)
+      this.#replicas.delete(application)
     }
 
     for (const application of applications) {
@@ -833,16 +833,11 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
-    const workers = applicationConfig.workers.static
-    for (let i = 0; i < workers; i++) {
-      const worker = this.#workers.get(`${id}:${i}`)
-      const status = worker?.[kWorkerStatus]
-
-      if (status && status !== 'boot' && status !== 'init') {
-        throw new ApplicationAlreadyStartedError()
-      }
+    if (this.#isApplicationStarted(id)) {
+      throw new ApplicationAlreadyStartedError()
     }
 
+    const workers = applicationConfig.workers.static
     this.emitAndNotify('application:starting', id)
 
     for (let i = 0; i < workers; i++) {
@@ -860,7 +855,15 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
+    // Removing the replicas cancels the work in progress for them, i.e. refills of crashed workers and replacements
+    const replicas = this.#replicas.get(id) ?? []
+    this.#replicas.set(id, [])
+    const detached = Promise.all(replicas.map(replica => this.#detachReplica(id, replica)))
+
+    // Workers being discarded by the detach above are already marked as exited
     const workersIds = this.#workers.getKeys(id)
+      .filter(workerId => this.#workers.get(workerId)[kWorkerStatus] !== 'exited')
+
     const workersCount = workersIds.length
 
     this.emitAndNotify('application:stopping', id)
@@ -875,6 +878,8 @@ export class Runtime extends EventEmitter {
 
       await executeInParallel(this.#stopWorker.bind(this), stopInvocations, this.#concurrency)
     }
+
+    await detached
 
     this.emitAndNotify('application:stopped', id)
   }
@@ -901,21 +906,28 @@ export class Runtime extends EventEmitter {
 
     try {
       const config = this.#config
-      const workersIds = await this.#workers.getKeys(id)
-      const workersCount = workersIds.length
+      // A copy: while the loop awaits, scale-downs remove replicas from the list, which would shift the remaining ones
+      // and skip some. Replicas added in the meanwhile (scale-up) already run fresh workers.
+      const replicas = [...(this.#replicas.get(id) ?? [])]
+      const replicasCount = replicas.length
 
       this.emitAndNotify('application:restarting', id)
 
-      for (let i = 0; i < workersCount; i++) {
-        const workerId = workersIds[i]
-        const worker = this.#workers.get(workerId)
-        const workerIndex = parseInt(workerId.split(':')[1], 10)
+      for (let i = 0; i < replicasCount; i++) {
+        const replica = replicas[i]
 
         if (i > 0 && config.workersRestartDelay > 0) {
           await sleep(config.workersRestartDelay)
         }
 
-        await this.#replaceWorker(config, applicationConfig, workersCount, id, workerIndex, worker, true)
+        // The replica might have been removed while the previous ones were being replaced,
+        // or its worker crashed and the replica is being refilled with a fresh worker.
+        const worker = replica.worker
+        if (replica.abortController.signal.aborted || !worker) {
+          continue
+        }
+
+        await this.#replaceWorker(config, applicationConfig, replicasCount, id, worker[kWorkerId], worker, true)
       }
 
       await this.#registerApplicationSchedulerJobs(id)
@@ -2077,12 +2089,19 @@ export class Runtime extends EventEmitter {
   }
 
   async getApplicationResourcesInfo (id) {
-    const workersCount = this.#workers.getKeys(id).length
+    const workers = this.#replicas.get(id)?.length ?? 0
     // Use round-robin to get any available worker instead of assuming index 0 exists
     const worker = await this.#getWorkerByIdOrNext(id, null, false, false)
-    const health = worker[kConfig].health
 
-    return { workers: workersCount, health }
+    if (worker) {
+      return { workers, health: worker[kConfig].health }
+    }
+
+    // No worker can answer (the application is stopped or its only worker is being restarted), use the configuration
+    const applicationConfig = this.#applications.get(id)
+    const health = deepmerge(this.#config.health ?? {}, applicationConfig.health ?? {})
+
+    return { workers, health }
   }
 
   getApplicationsIds () {
@@ -2157,7 +2176,7 @@ export class Runtime extends EventEmitter {
     }
 
     if (this.#isProduction) {
-      applicationDetails.workers = this.#workers.getKeys(id).length
+      applicationDetails.workers = this.#replicas.get(id)?.length ?? 0
     }
 
     if (entrypoint) {
@@ -2446,14 +2465,16 @@ export class Runtime extends EventEmitter {
     }
 
     const workers = applicationConfig.workers.static
-    const setupInvocations = []
 
+    // All the replicas of the application are (re)created, so their port offsets match the indexes of their workers
+    this.#replicas.set(id, [])
+
+    const setupInvocations = []
     for (let i = 0; i < workers; i++) {
-      this.#workerPortOffsets.set(`${id}:${i}`, i)
-      setupInvocations.push([config, applicationConfig, workers, id, i])
+      setupInvocations.push([config, applicationConfig, workers, id, i, i])
     }
 
-    await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
+    await executeInParallel(this.#setupReplica.bind(this), setupInvocations, this.#concurrency)
 
     // Initialize the next worker index counter (next index starts after initial workers)
     this.#nextWorkerIndex.set(id, workers)
@@ -2462,7 +2483,51 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:init', id)
   }
 
-  async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true, attempt = 0) {
+  // Adds a replica to the application (see the #replicas field) and sets up its worker.
+  // Returns null if the replica was removed in the meanwhile.
+  async #setupReplica (config, applicationConfig, workersCount, applicationId, index, portOffset) {
+    const replica = {
+      portOffset,
+      // The worker serving the replica, null while the replica is being refilled
+      worker: null,
+      // The worker being started to refill the replica or to replace its worker
+      replacement: null,
+      // The operation in progress: 'refill' or 'replace'
+      pending: null,
+      abortController: new AbortController()
+    }
+
+    // Added right away, so that concurrent operations see the requested workers
+    this.#replicas.get(applicationId).push(replica)
+
+    let worker
+    try {
+      worker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, portOffset)
+    } catch (err) {
+      await this.#detachReplica(applicationId, replica)
+      throw err
+    }
+
+    // The replica was removed in the meanwhile (i.e. scale-down or application stopped)
+    if (replica.abortController.signal.aborted) {
+      await this.#discardWorker(worker)
+      return null
+    }
+
+    replica.worker = worker
+    return replica
+  }
+
+  async #setupWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    applicationId,
+    index,
+    portOffset,
+    enabled = true,
+    attempt = 0
+  ) {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
     const workerId = `${applicationId}:${index}`
 
@@ -2479,7 +2544,6 @@ export class Runtime extends EventEmitter {
 
     let serverConfigOverride
     if (this.#config.server?.portAssignment === 'perWorkerIncrement') {
-      const portOffset = this.#workerPortOffsets.get(workerId)
       serverConfigOverride = { port: Number(this.#config.server.port) + portOffset }
     }
 
@@ -2604,15 +2668,24 @@ export class Runtime extends EventEmitter {
     const eventPayload = { application: applicationId, worker: index, workersCount }
 
     worker.once('exit', code => {
+      worker[kWorkerExitCode] = code
+
       if (worker[kWorkerStatus] === 'exited') {
         return
       }
 
       const started = worker[kWorkerStatus] === 'started'
+
+      // A crashed worker leaves its replica empty until the replica is refilled below.
+      // Workers which crash while starting are handled by #startWorker.
+      const replica = started ? this.#getWorkerReplica(applicationId, worker) : undefined
+      if (replica) {
+        replica.worker = null
+      }
+
       worker[kWorkerStatus] = 'exited'
       this.emitAndNotify('application:worker:exited', eventPayload)
 
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
       this.#cleanupWorker(worker)
 
       if (this.#status === 'stopping') {
@@ -2628,8 +2701,9 @@ export class Runtime extends EventEmitter {
           this.logger.warn(`The ${errorLabel} unexpectedly exited with code ${code}.`)
         }
 
-        // Restart the application if it was started
-        if (started && this.#status === 'started') {
+        // Refill the replica of the worker if it was started. Workers which were not serving a replica anymore
+        // (i.e. being retired after a restart) are not replaced, and a replica being replaced gets the replacement.
+        if (started && this.#status === 'started' && replica && replica.pending !== 'replace') {
           if (restartOnError > 0) {
             if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
               this.logger.warn(`The ${errorLabel} is being restarted ...`)
@@ -2637,14 +2711,16 @@ export class Runtime extends EventEmitter {
               this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms ...`)
             }
 
-            this.#restartCrashedWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, portOffset).catch(
+            this.#refillReplica(config, applicationConfig, workersCount, applicationId, replica, false, 0).catch(
               err => {
                 this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
+                this.#detachReplica(applicationId, replica)
               }
             )
           } else {
             this.emitAndNotify('application:worker:unvailable', eventPayload)
             this.logger.warn(`The ${errorLabel} is no longer available.`)
+            this.#detachReplica(applicationId, replica)
           }
         }
       })
@@ -2918,7 +2994,16 @@ export class Runtime extends EventEmitter {
       }
 
       this.#workers.delete(workerId)
-      return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled, attempt + 1)
+      return this.#setupWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        index,
+        portOffset,
+        enabled,
+        attempt + 1
+      )
     }
 
     if (applicationConfig.entrypoint) {
@@ -3387,7 +3472,6 @@ export class Runtime extends EventEmitter {
     } catch (err) {
       const error = ensureError(err)
       worker[kITC].notify('application:worker:start:processed')
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
 
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
@@ -3434,7 +3518,14 @@ export class Runtime extends EventEmitter {
         )
       }
 
-      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt, portOffset)
+      // The replica was removed while the worker was starting, there is nothing to refill
+      const replica = this.#getWorkerReplica(id, worker)
+      if (!replica) {
+        throw error
+      }
+
+      replica.worker = null
+      await this.#refillReplica(config, applicationConfig, workersCount, id, replica, silent, bootstrapAttempt)
     }
   }
 
@@ -3509,7 +3600,6 @@ export class Runtime extends EventEmitter {
 
   #cleanupWorker (worker) {
     clearTimeout(worker[kHealthCheckTimer])
-    this.#workerPortOffsets.delete(worker[kFullId])
 
     const currentWorker = this.#workers.get(worker[kFullId])
 
@@ -3521,8 +3611,9 @@ export class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
+    // Marked synchronously, so that the exit handler ignores the worker and nobody else tries to stop it
+    worker[kWorkerStatus] = 'exited'
     await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
-    worker.removeAllListeners('exit')
     await worker.terminate()
 
     return this.#cleanupWorker(worker)
@@ -3536,6 +3627,39 @@ export class Runtime extends EventEmitter {
     const index = this.#nextWorkerIndex.get(applicationId) ?? 0
     this.#nextWorkerIndex.set(applicationId, index + 1)
     return index
+  }
+
+  #getWorkerReplica (applicationId, worker) {
+    return this.#replicas.get(applicationId)?.find(replica => replica.worker === worker)
+  }
+
+  // Removes a replica and cancels the work in progress for it. Stopping its worker is up to the caller.
+  async #detachReplica (applicationId, replica) {
+    const replicas = this.#replicas.get(applicationId)
+    const position = replicas?.indexOf(replica) ?? -1
+
+    if (position !== -1) {
+      replicas.splice(position, 1)
+    }
+
+    replica.abortController.abort()
+
+    if (replica.replacement) {
+      await this.#discardWorker(replica.replacement)
+    }
+  }
+
+  // Returns the lowest port offset which is not used by any replica of the application.
+  // Empty replicas keep their port offset, as they will be refilled.
+  #getNextReplicaPortOffset (applicationId) {
+    const used = new Set(this.#replicas.get(applicationId)?.map(replica => replica.portOffset))
+
+    let offset = 0
+    while (used.has(offset)) {
+      offset++
+    }
+
+    return offset
   }
 
   // Returns the effective restartOnError value for an application: the application-level
@@ -3554,75 +3678,85 @@ export class Runtime extends EventEmitter {
     return restartOnError
   }
 
-  async #restartCrashedWorker (config, applicationConfig, workersCount, id, oldIndex, silent, bootstrapAttempt, portOffset) {
+  // Starts a new worker for a replica whose worker crashed (or failed to start), after the restartOnError delay
+  async #refillReplica (config, applicationConfig, workersCount, id, replica, silent, bootstrapAttempt) {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
+    const { signal } = replica.abortController
+    replica.pending = 'refill'
 
-    // Use oldIndex for tracking to prevent duplicate restarts of the same crashed worker
-    const restartKey = `${id}:${oldIndex}`
+    try {
+      try {
+        if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+          await new Promise(resolve => process.nextTick(resolve))
+        } else {
+          await sleep(restartOnError, undefined, { signal })
+        }
+      } catch {
+        // The replica was removed in the meanwhile
+        return
+      }
 
-    let restartPromise = this.#restartingWorkers.get(restartKey)
-    if (restartPromise) {
-      await restartPromise
-      return
-    }
+      // If the replica was removed or the runtime was stopped in the meanwhile, ignore it
+      if (signal.aborted || !this.#status.startsWith('start')) {
+        return
+      }
 
-    restartPromise = new Promise((resolve, reject) => {
-      async function restart () {
-        this.#restartingWorkers.delete(restartKey)
+      // Get a new unique index for the worker, which inherits the port offset of the replica
+      const newIndex = this.#getNextWorkerIndex(id)
 
-        // If some processes were scheduled to restart
-        // but the runtime is stopped, ignore it
-        if (!this.#status.startsWith('start')) {
+      try {
+        const worker = await this.#setupWorker(
+          config,
+          applicationConfig,
+          workersCount,
+          id,
+          newIndex,
+          replica.portOffset
+        )
+
+        if (signal.aborted) {
+          await this.#discardWorker(worker)
           return
         }
 
-        // Get a new unique index for the restarted worker
-        const newIndex = this.#getNextWorkerIndex(id)
-        const newWorkerId = `${id}:${newIndex}`
-        this.#workerPortOffsets.set(newWorkerId, portOffset)
-
-        try {
-          await this.#setupWorker(config, applicationConfig, workersCount, id, newIndex)
-          await this.#startWorker(config, applicationConfig, workersCount, id, newIndex, silent, bootstrapAttempt)
-          this.#incrementApplicationRestartCount(id)
-
-          this.logger.info(
-            `The ${this.#workerExtendedLabel(id, newIndex, workersCount)} has been successfully restarted ...`
-          )
-          resolve()
-        } catch (err) {
-          this.#workerPortOffsets.delete(newWorkerId)
-
-          // The runtime was stopped while the restart was happening, ignore any error.
-          if (!this.#status.startsWith('start')) {
-            resolve()
-          }
-
-          reject(err)
+        replica.worker = worker
+        await this.#startWorker(config, applicationConfig, workersCount, id, newIndex, silent, bootstrapAttempt, worker)
+      } catch (err) {
+        // The replica was removed or the runtime was stopped while the worker was starting, ignore any error.
+        if (signal.aborted || !this.#status.startsWith('start')) {
+          return
         }
+
+        throw err
       }
 
-      if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
-        process.nextTick(restart.bind(this))
-      } else {
-        setTimeout(restart.bind(this), restartOnError)
+      this.#incrementApplicationRestartCount(id)
+      this.logger.info(`The ${this.#workerExtendedLabel(id, newIndex, workersCount)} has been successfully restarted ...`)
+    } finally {
+      if (replica.pending === 'refill') {
+        replica.pending = null
       }
-    })
-
-    this.#restartingWorkers.set(restartKey, restartPromise)
-    await restartPromise
+    }
   }
 
+  // Replaces the worker of a replica with a new one. Only one operation at a time is performed on a replica.
   async #replaceWorker (config, applicationConfig, workersCount, applicationId, oldIndex, worker, silent) {
+    const replica = this.#getWorkerReplica(applicationId, worker)
+
+    // The worker is not serving a replica anymore, or the replica is already being refilled or replaced
+    if (!replica || replica.pending) {
+      return
+    }
+
+    const { signal } = replica.abortController
     const oldLabel = this.#workerExtendedLabel(applicationId, oldIndex, workersCount)
     let newWorker
+    let error
 
-    // Get a new unique index for the replacement worker
+    // Get a new unique index for the replacement worker, which inherits the port offset of the replica
     const newIndex = this.#getNextWorkerIndex(applicationId)
     const newWorkerId = `${applicationId}:${newIndex}`
     const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
-    const portOffset = this.#workerPortOffsets.get(`${applicationId}:${oldIndex}`)
-    this.#workerPortOffsets.set(newWorkerId, portOffset)
 
     const stopBeforeStart =
       applicationConfig.entrypoint &&
@@ -3638,6 +3772,8 @@ export class Runtime extends EventEmitter {
       configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
     }
 
+    replica.pending = 'replace'
+
     try {
       if (!silent) {
         this.logger.debug(`Preparing to start ${newLabel} as replacement for ${oldLabel} ...`)
@@ -3645,13 +3781,23 @@ export class Runtime extends EventEmitter {
 
       if (stopBeforeStart) {
         await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
+        replica.worker = null
       }
 
       // Create a new worker with a new index, preserving any pinned port when stopBeforeStart is required.
-      newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false)
+      newWorker = await this.#setupWorker(
+        configForNewWorker,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        newIndex,
+        replica.portOffset,
+        false
+      )
+      replica.replacement = newWorker
 
-      // Make sure the runtime hasn't been stopped in the meanwhile
-      if (this.#status !== 'started') {
+      // Make sure the runtime hasn't been stopped and the replica hasn't been removed in the meanwhile
+      if (this.#status !== 'started' || signal.aborted) {
         return this.#discardWorker(newWorker)
       }
 
@@ -3673,20 +3819,42 @@ export class Runtime extends EventEmitter {
         true
       )
 
-      // Make sure the runtime hasn't been stopped in the meanwhile
-      if (this.#status !== 'started') {
+      // Make sure the runtime hasn't been stopped and the replica hasn't been removed in the meanwhile
+      if (this.#status !== 'started' || signal.aborted) {
         return this.#discardWorker(newWorker)
       }
     } catch (e) {
-      this.#workerPortOffsets.delete(newWorkerId)
+      error = e
+    } finally {
+      replica.pending = null
+      replica.replacement = null
+    }
 
+    if (error) {
       if (this.#workers.get(newWorkerId) === newWorker) {
         this.#workers.delete(newWorkerId)
       }
 
       newWorker?.terminate?.()
-      throw e
+
+      // The replica was removed in the meanwhile, the new worker was meant to be discarded anyway
+      if (signal.aborted) {
+        return
+      }
+
+      // The replaced worker crashed (or was stopped before starting the new one): the replica must be refilled
+      if (!replica.worker && this.#getApplicationRestartOnError(config, applicationConfig) > 0) {
+        this.#refillReplica(config, applicationConfig, workersCount, applicationId, replica, true, 0).catch(err => {
+          this.logger.error({ err: ensureLoggableError(err) }, `${oldLabel} could not be restarted.`)
+          this.#detachReplica(applicationId, replica)
+        })
+      }
+
+      throw error
     }
+
+    // The replaced worker might have crashed in the meanwhile, in which case it is not in the replica anymore
+    replica.worker = newWorker
 
     if (!stopBeforeStart) {
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
@@ -3694,6 +3862,11 @@ export class Runtime extends EventEmitter {
   }
 
   async #removeWorker (workersCount, applicationId, index, worker, silent, label) {
+    // The worker crashed in the meanwhile, there is nothing left to remove
+    if (typeof worker[kWorkerExitCode] === 'number') {
+      return
+    }
+
     if (!silent) {
       this.logger.debug(`Preparing to stop the old version of ${label} ...`)
     }
@@ -3759,7 +3932,13 @@ export class Runtime extends EventEmitter {
 
     // Note that in this class "== null" is purposely used instead of "===" to check for both null and undefined
     if (workerId == null) {
-      worker = this.#workers.next(applicationId)
+      // During restarts and scaling the application also has workers which are still booting or being stopped:
+      // only pick a worker which can serve the call. Booting workers cannot handle ITC calls yet,
+      // stopping ones might exit before replying.
+      worker = this.#workers.next(applicationId, worker => {
+        const status = worker[kWorkerStatus]
+        return status === 'started' || (!ensureStarted && (status === 'init' || status === 'starting'))
+      })
     } else {
       worker = this.#workers.get(`${applicationId}:${workerId}`)
     }
@@ -3769,6 +3948,11 @@ export class Runtime extends EventEmitter {
     if (!worker) {
       if (!mustExist && applicationsIds.includes(applicationId)) {
         return null
+      }
+
+      // The application has workers, but they are all booting or being stopped
+      if (workerId == null && this.#workers.getKeys(applicationId).length > 0) {
+        throw new ApplicationNotStartedError(applicationId)
       }
 
       if (applicationsIds.includes(applicationId)) {
@@ -4217,16 +4401,21 @@ export class Runtime extends EventEmitter {
         await this.#updateApplicationConfigHealth(applicationId, health)
       }
 
-      // Get actual worker keys to iterate over existing workers (snapshot to avoid mutation during iteration)
-      const workerKeys = [...this.#workers.getKeys(applicationId)]
-      for (const workerKey of workerKeys) {
-        const workerIndex = parseInt(workerKey.split(':')[1], 10)
+      // A copy: while the loop awaits, scale-downs remove replicas from the list, which would shift the remaining ones
+      // and skip some. Replicas added in the meanwhile (scale-up) already use the new health config.
+      for (const replica of [...(this.#replicas.get(applicationId) ?? [])]) {
+        // The worker crashed, the replica is refilled with a fresh worker which uses the new health config
+        const worker = replica.worker
+        if (!worker) {
+          continue
+        }
+
+        const workerIndex = worker[kWorkerId]
         this.logger.info(
           { health: { current: currentHealth, new: health } },
           `Restarting application "${applicationId}" worker ${workerIndex} to update config health heap...`
         )
 
-        const worker = this.#workers.get(workerKey)
         if (health.maxHeapTotal) {
           worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
         }
@@ -4269,24 +4458,47 @@ export class Runtime extends EventEmitter {
 
     if (currentWorkers < workers) {
       report.started = []
-      let pendingWorkerId
+
+      let pendingReplica
 
       try {
         for (let i = currentWorkers; i < workers; i++) {
           const newIndex = this.#getNextWorkerIndex(applicationId)
-          pendingWorkerId = `${applicationId}:${newIndex}`
-          this.#workerPortOffsets.set(pendingWorkerId, i)
+          pendingReplica = await this.#setupReplica(
+            config,
+            applicationConfig,
+            workers,
+            applicationId,
+            newIndex,
+            this.#getNextReplicaPortOffset(applicationId)
+          )
 
-          await this.#setupWorker(config, applicationConfig, workers, applicationId, newIndex)
-          await this.#startWorker(config, applicationConfig, workers, applicationId, newIndex, false, 0)
+          // The replica was removed in the meanwhile (i.e. scale-down or application stopped)
+          if (!pendingReplica) {
+            continue
+          }
 
-          pendingWorkerId = undefined
+          await this.#startWorker(
+            config,
+            applicationConfig,
+            workers,
+            applicationId,
+            newIndex,
+            false,
+            0,
+            pendingReplica.worker
+          )
+
+          pendingReplica = undefined
           report.started.push(newIndex)
           startedWorkersCount++
         }
         report.success = true
       } catch (err) {
-        pendingWorkerId && this.#workerPortOffsets.delete(pendingWorkerId)
+        // The worker of the replica could not be started
+        if (pendingReplica && !pendingReplica.worker) {
+          await this.#detachReplica(applicationId, pendingReplica)
+        }
 
         if (startedWorkersCount < 1) {
           this.logger.error({ err }, 'Cannot start application workers, no worker started')
@@ -4303,30 +4515,51 @@ export class Runtime extends EventEmitter {
       report.stopped = []
       try {
         const workersToStop = currentWorkers - workers
-        const allInOnePort = this.#config.server?.portAssignment !== 'perWorkerIncrement'
-        const workerIdsToStop = this.#workers
-          .getKeys(applicationId)
-          .map(key => parseInt(key.split(':')[1], 10))
+        // Remove the empty replicas first (their worker crashed and they are waiting to be refilled), then the ones
+        // being replaced. Then, when port increment is enabled, the ones with the highest ports, so that the
+        // application keeps listening on a contiguous range of ports starting from the configured one.
+        // Otherwise, the most recent workers.
+        const perWorkerIncrement = this.#config.server?.portAssignment === 'perWorkerIncrement'
 
-        if (allInOnePort) {
-          // Stop most recent workers first.
-          workerIdsToStop.sort((a, b) => b - a)
-        } else {
-          // When port increment is enabled, disable the workers with the highest ports.
-          workerIdsToStop.sort((a, b) => {
-            const offsetA = this.#workerPortOffsets.get(`${applicationId}:${a}`) ?? a
-            const offsetB = this.#workerPortOffsets.get(`${applicationId}:${b}`) ?? b
-            return offsetB - offsetA
-          })
+        // Replicas being replaced come right after the empty ones: cancelling a replacement which is not serving yet
+        // is cheaper than stopping a worker which is
+        const state = replica => {
+          if (!replica.worker) {
+            return 0
+          }
+
+          return replica.pending === 'replace' ? 1 : 2
         }
 
-        for (const workerIndex of workerIdsToStop.splice(0, workersToStop)) {
-          const worker = this.#workers.get(`${applicationId}:${workerIndex}`)
-          await sendViaITC(worker, 'removeFromMesh')
-          await this.#stopWorker(currentWorkers, applicationId, workerIndex, false, worker, [])
-          report.stopped.push(workerIndex)
+        const removed = (this.#replicas.get(applicationId) ?? [])
+          .toSorted((a, b) => {
+            const byState = state(a) - state(b)
+
+            // Both replicas are empty or the state decides
+            if (byState !== 0 || !a.worker) {
+              return byState
+            }
+
+            return perWorkerIncrement ? b.portOffset - a.portOffset : b.worker[kWorkerId] - a.worker[kWorkerId]
+          })
+          .slice(0, workersToStop)
+
+        // Detached right away, so that concurrent operations see the requested workers.
+        // This also cancels the work in progress for them, i.e. refills and replacements.
+        const detached = Promise.all(removed.map(replica => this.#detachReplica(applicationId, replica)))
+
+        for (const replica of removed) {
+          const worker = replica.worker
+          if (worker && typeof worker[kWorkerExitCode] !== 'number') {
+            await sendViaITC(worker, 'removeFromMesh')
+            await this.#stopWorker(currentWorkers, applicationId, worker[kWorkerId], false, worker, [])
+            report.stopped.push(worker[kWorkerId])
+          }
+
           stoppedWorkersCount++
         }
+
+        await detached
 
         report.success = true
       } catch (err) {
@@ -4418,6 +4651,11 @@ export class Runtime extends EventEmitter {
   #processHealthSignals ({ workerId, signals }) {
     const worker = this.#workers.get(workerId)
 
+    // Signals can arrive from a worker which is not registered (anymore)
+    if (!worker) {
+      return
+    }
+
     worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
     worker[kWorkerHealthSignals].add(signals)
   }
@@ -4493,18 +4731,16 @@ export class Runtime extends EventEmitter {
   }
 
   #isApplicationStarted (id) {
-    const applicationConfig = this.#applications.get(id)
-    if (!applicationConfig) {
+    if (!this.#applications.has(id)) {
       return false
     }
 
-    const workers = applicationConfig.workers.static
-    for (let i = 0; i < workers; i++) {
-      const worker = this.#workers.get(`${id}:${i}`)
-      const status = worker?.[kWorkerStatus]
+    // Workers replaced by restarts get new indexes, so check all the workers of the application.
+    // Anything past boot/init means already started.
+    for (const workerId of this.#workers.getKeys(id)) {
+      const status = this.#workers.get(workerId)[kWorkerStatus]
 
-      // Match startApplication(): anything past boot/init means already started.
-      if (status && status !== 'boot' && status !== 'init') {
+      if (status !== 'boot' && status !== 'init') {
         return true
       }
     }
