@@ -24,7 +24,7 @@
   "devDependencies": {
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "execa": "^9.0.0",
     "neostandard": "^0.12.0",

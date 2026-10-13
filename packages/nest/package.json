@@ -40,7 +40,7 @@
     "@nestjs/platform-fastify": "^11.1.2",
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",

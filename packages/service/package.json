@@ -28,7 +28,7 @@
     "@fastify/aws-lambda": "^6.0.0",
     "@fastify/compress": "^9.0.0",
     "bindings": "^1.5.0",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.12.0",

@@ -40,7 +40,7 @@
     "@react-router/node": "^7.10.0",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "isbot": "^5.1.17",

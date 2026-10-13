@@ -26,7 +26,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "dtsgenerator": "^3.19.1",
     "eslint": "9",
     "fastify": "^5.0.0",

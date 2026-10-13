@@ -23,7 +23,7 @@
     "create-wattpm": "workspace:*"
   },
   "devDependencies": {
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "import-in-the-middle": "^1.14.2",
     "neostandard": "^0.12.0"
