@@ -188,19 +188,39 @@ export class PredictiveApplicationScaler {
     return Math.max(level / workersCount, Number.EPSILON)
   }
 
-  // Test-only inspection of model state and the adaptive prediction horizon;
-  // final worker counts cannot reveal errors in these intermediate states.
-  _getSnapshot (metricName) {
-    const metric = this.#metrics.get(metricName)
-    if (!metric) return null
+  // Read-only view of the existing state for the diagnostics page. It is built
+  // on request and nothing is retained for it.
+  getDiagnostics () {
+    const metrics = {}
+    for (const [name, metric] of this.#metrics) {
+      metrics[name] = {
+        threshold: metric.config.threshold,
+        lastProcessedTs: metric.lastProcessedTs,
+        level: metric.holtState?.level ?? null,
+        trendPerSecond: (metric.holtState?.trend ?? 0) * 1000 / SAMPLE_INTERVAL_MS
+      }
+    }
+
+    const workers = []
+    for (const [id, instance] of this.#instances) {
+      if (instance.endTime !== null) continue
+      const workerMetrics = {}
+      for (const name of this.#metrics.keys()) {
+        if (instance[name]) workerMetrics[name] = instance[name].getDiagnostics()
+      }
+      workers.push({ id, startTime: instance.startTime, metrics: workerMetrics })
+    }
 
     return {
       targetCount: this.#targetCount,
+      liveCount: this.#workerIdMapper.size,
+      minimum: this.#minimum,
+      maximum: this.#maximum,
+      initTimeoutMs: this.#initTimeoutMs,
       horizonMs: this.#horizonMs,
-      threshold: metric.config.threshold,
-      lastProcessedTs: metric.lastProcessedTs,
-      level: metric.holtState?.level ?? null,
-      trend: metric.holtState?.trend ?? 0
+      pending: this.#pendingScaleUps,
+      metrics,
+      workers
     }
   }
 
@@ -537,6 +557,18 @@ export class MetricStore {
 
     this.#prevRawTs = timestamp
     this.#prevRawValue = value
+  }
+
+  // Read-only view of the stored samples and the latest raw reading. Sample i
+  // is at firstSampleTs + i * intervalMs.
+  getDiagnostics () {
+    return {
+      lastSampleTs: this.#prevRawTs,
+      lastValue: this.#prevRawValue,
+      firstSampleTs: this.#nextAlignedTs - this.#values.length * this.#sampleIntervalMs,
+      intervalMs: this.#sampleIntervalMs,
+      values: this.#values
+    }
   }
 
   // Bounds are finite and inclusive. Carry-forward never changes stored readings.

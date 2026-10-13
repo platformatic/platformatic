@@ -9,7 +9,7 @@ export async function createWorkersConfig (workers = {}) {
 
 export function processAndAssertMetric (applicationScaler, metricName, timestamp, expectedLevel, expectedTimestamp = timestamp) {
   applicationScaler.process(timestamp)
-  const { level, lastProcessedTs } = applicationScaler._getSnapshot(metricName)
+  const { level, lastProcessedTs } = applicationScaler.getDiagnostics().metrics[metricName]
   assert.equal(lastProcessedTs, expectedTimestamp)
   assert.equal(level, expectedLevel, `${metricName} level at ${timestamp}`)
 }

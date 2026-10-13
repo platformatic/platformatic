@@ -39,8 +39,8 @@ test('recommendations do not change the target or start cooldowns', t => {
   t.mock.timers.enable({ apis: ['Date'], now: 10000 })
   const applicationScaler = createApplicationScaler({ scaleUpAfterScaleUpMs: 60000 })
   assert.equal(sample(applicationScaler, 10000, 4), 4)
-  assert.equal(applicationScaler._getSnapshot('elu').targetCount, 1)
-  assert.equal(applicationScaler._getSnapshot('heap').targetCount, 1)
+  assert.equal(applicationScaler.getDiagnostics().targetCount, 1)
+  assert.equal(applicationScaler.getDiagnostics().targetCount, 1)
   // The coordinator rejects the request. The next tick can still recommend it.
   assert.equal(sample(applicationScaler, 11000, 4), 4)
   assert.equal(sample(applicationScaler, 12000, 0.1), 1)
@@ -51,15 +51,15 @@ test('only the approved extra worker blocks scale-down, shared by both metrics',
   const applicationScaler = createApplicationScaler()
   assert.equal(sample(applicationScaler, 10000, 4), 4)
   applicationScaler.setTargetCount(2)
-  assert.equal(applicationScaler._getSnapshot('elu').targetCount, 2)
-  assert.equal(applicationScaler._getSnapshot('heap').targetCount, 2)
+  assert.equal(applicationScaler.getDiagnostics().targetCount, 2)
+  assert.equal(applicationScaler.getDiagnostics().targetCount, 2)
   assert.equal(sample(applicationScaler, 11000, 0.1), 2)
   applicationScaler.addWorker('w2', 12000)
   assert.equal(sample(applicationScaler, 13000, 0.1, ['w1', 'w2']), 1)
   // Even scale-down recommendations need coordinator approval.
-  assert.equal(applicationScaler._getSnapshot('elu').targetCount, 2)
+  assert.equal(applicationScaler.getDiagnostics().targetCount, 2)
   applicationScaler.setTargetCount(1)
-  assert.equal(applicationScaler._getSnapshot('heap').targetCount, 1)
+  assert.equal(applicationScaler.getDiagnostics().targetCount, 1)
 })
 
 test('raising the stored target below the live count does not create pending starts', t => {
@@ -156,8 +156,8 @@ test('startup duration starts at approval rather than the earlier recommendation
   applicationScaler.setTargetCount(3)
   applicationScaler.addWorker('w2', 21000)
   applicationScaler.addWorker('w3', 21000)
-  assert.equal(applicationScaler._getSnapshot('elu').horizonMs, 7000)
-  assert.equal(applicationScaler._getSnapshot('heap').horizonMs, 7000)
+  assert.equal(applicationScaler.getDiagnostics().horizonMs, 7000)
+  assert.equal(applicationScaler.getDiagnostics().horizonMs, 7000)
 })
 
 test('an approved worker that never starts stops blocking scale-down after expiry', t => {
@@ -169,7 +169,7 @@ test('an approved worker that never starts stops blocking scale-down after expir
   assert.equal(sample(applicationScaler, 46000, 0.1), 1)
   // Expiry removes capacity that never appeared from the remembered target.
   assert.equal(applicationScaler.targetCount, 1)
-  assert.equal(applicationScaler._getSnapshot('elu').targetCount, 1)
+  assert.equal(applicationScaler.getDiagnostics().targetCount, 1)
 })
 
 test('expiry removes only old requests and leaves newer pending starts', t => {
@@ -192,7 +192,7 @@ test('pending requests expire during processing even without a scale-down recomm
   // These starts must not match old requests and inflate the startup estimate.
   applicationScaler.addWorker('w2', 47000)
   applicationScaler.addWorker('w3', 47000)
-  assert.equal(applicationScaler._getSnapshot('elu').horizonMs, 7000)
+  assert.equal(applicationScaler.getDiagnostics().horizonMs, 7000)
 })
 
 test('expiry lets the application scaler request the same missing capacity again', t => {
@@ -307,8 +307,8 @@ test('startup estimates use the time when the requested capacity exists', t => {
   applicationScaler.addWorker('w2', 20000)
   applicationScaler.addWorker('w3', 22000)
   // Both measured increases took longer than the initial five-second estimate.
-  assert.ok(applicationScaler._getSnapshot('elu').horizonMs > 7000)
-  assert.equal(applicationScaler._getSnapshot('heap').horizonMs, applicationScaler._getSnapshot('elu').horizonMs)
+  assert.ok(applicationScaler.getDiagnostics().horizonMs > 7000)
+  assert.equal(applicationScaler.getDiagnostics().horizonMs, applicationScaler.getDiagnostics().horizonMs)
 })
 
 test('a replacement starting before the old worker exits can fulfil the requested count', t => {

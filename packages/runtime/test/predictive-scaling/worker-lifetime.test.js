@@ -95,16 +95,16 @@ for (const metric of ['elu', 'heap']) {
     applicationScaler.process(3000)
     applicationScaler.removeWorker('worker', 3500)
     applicationScaler.removeWorker('worker', 3600)
-    const before = structuredClone(applicationScaler._getSnapshot(metric))
+    const before = structuredClone(applicationScaler.getDiagnostics())
 
     applicationScaler.addSample(metric, 'worker', 4000, 0.9)
     assert.equal(applicationScaler.process(5000), null)
-    assert.deepEqual(applicationScaler._getSnapshot(metric), before)
+    assert.deepEqual(applicationScaler.getDiagnostics(), before)
     // A later event must also be ignored after the ended state has been cleaned up.
     // The run restarts the stale state, but must not process the late reading.
     applicationScaler.addSample(metric, 'worker', 70000, 0.9)
     assert.equal(applicationScaler.process(71000), null)
-    assert.equal(applicationScaler._getSnapshot(metric).lastProcessedTs, before.lastProcessedTs)
+    assert.equal(applicationScaler.getDiagnostics().metrics[metric].lastProcessedTs, before.metrics[metric].lastProcessedTs)
   })
 
   test(`${metric}: restarting the same worker ID keeps distinct lifetimes without a timer`, t => {
@@ -129,7 +129,7 @@ for (const metric of ['elu', 'heap']) {
     t.mock.timers.tick(5000)
     applicationScaler.addSample(metric, 'worker', 19000, 0.2)
     assert.notEqual(applicationScaler.process(19000), null)
-    assert.equal(applicationScaler._getSnapshot(metric).lastProcessedTs, 19000)
+    assert.equal(applicationScaler.getDiagnostics().metrics[metric].lastProcessedTs, 19000)
   })
 
   test(`${metric}: silence does not expire an active lifetime`, () => {
@@ -142,7 +142,7 @@ for (const metric of ['elu', 'heap']) {
     applicationScaler.process(140000)
     applicationScaler.addSample(metric, 'worker', 141000, 0.4)
     assert.notEqual(applicationScaler.process(141000), null)
-    assert.equal(applicationScaler._getSnapshot(metric).lastProcessedTs, 141000)
+    assert.equal(applicationScaler.getDiagnostics().metrics[metric].lastProcessedTs, 141000)
   })
 
   test(`${metric}: duplicate start notifications preserve pending samples`, () => {
@@ -187,9 +187,7 @@ test('batched ticks match incremental processing across missing readings and res
   // Retain the exited lifetime across a partial batch before draining its samples.
   batchedScaler.process(10000)
   assert.equal(batchedScaler.process(15000), incrementalScaler.process(15000))
-  for (const metric of ['elu', 'heap']) {
-    assert.deepEqual(batchedScaler._getSnapshot(metric), incrementalScaler._getSnapshot(metric))
-  }
+  assert.deepEqual(batchedScaler.getDiagnostics(), incrementalScaler.getDiagnostics())
 
   // These readings interpolate across already processed carry-forward ticks.
   for (const applicationScaler of [batchedScaler, incrementalScaler]) {
@@ -200,9 +198,7 @@ test('batched ticks match incremental processing across missing readings and res
   }
   for (const timestamp of [16000, 17000, 18000]) incrementalScaler.process(timestamp)
   assert.equal(batchedScaler.process(19000), incrementalScaler.process(19000))
-  for (const metric of ['elu', 'heap']) {
-    assert.deepEqual(batchedScaler._getSnapshot(metric), incrementalScaler._getSnapshot(metric))
-  }
+  assert.deepEqual(batchedScaler.getDiagnostics(), incrementalScaler.getDiagnostics())
 })
 
 test('a run after a long gap restarts from the stored samples', () => {
@@ -232,5 +228,5 @@ test('a run after a long gap restarts from the stored samples', () => {
 
   resumedScaler.process(240000)
   freshScaler.process(240000)
-  assert.deepEqual(resumedScaler._getSnapshot('elu'), freshScaler._getSnapshot('elu'))
+  assert.deepEqual(resumedScaler.getDiagnostics(), freshScaler.getDiagnostics())
 })

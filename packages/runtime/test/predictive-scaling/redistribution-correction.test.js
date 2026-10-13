@@ -126,8 +126,8 @@ test('the application preserves independent correction state for ELU and heap be
   }
 
   const weight = getStabilizationWeight(4000, 5000, 1)
-  assertClose(applicationScaler._getSnapshot('elu').level, 0.5 + weight * 0.25)
-  assertClose(applicationScaler._getSnapshot('elu').trend, 0)
-  assertClose(applicationScaler._getSnapshot('heap').level, 100 + weight * 50)
-  assertClose(applicationScaler._getSnapshot('heap').trend, 0)
+  assertClose(applicationScaler.getDiagnostics().metrics.elu.level, 0.5 + weight * 0.25)
+  assertClose(applicationScaler.getDiagnostics().metrics.elu.trendPerSecond, 0)
+  assertClose(applicationScaler.getDiagnostics().metrics.heap.level, 100 + weight * 50)
+  assertClose(applicationScaler.getDiagnostics().metrics.heap.trendPerSecond, 0)
 })

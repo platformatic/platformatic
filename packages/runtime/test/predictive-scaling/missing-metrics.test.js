@@ -102,9 +102,9 @@ for (const metric of ['elu', 'heap']) {
       processAndAssertMetric(applicationScaler, metric, timestamp, 0.25)
     }
     applicationScaler.addSample(metric, 'worker', 14000, 0.75)
-    const before = applicationScaler._getSnapshot(metric)
+    const before = structuredClone(applicationScaler.getDiagnostics())
     assert.equal(applicationScaler.process(12000), null)
-    assert.deepEqual(applicationScaler._getSnapshot(metric), before)
+    assert.deepEqual(applicationScaler.getDiagnostics(), before)
     processAndAssertMetric(applicationScaler, metric, 13000, 0.625)
     processAndAssertMetric(applicationScaler, metric, 14000, 0.75)
   })

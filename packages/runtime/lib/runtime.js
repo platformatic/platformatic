@@ -2455,6 +2455,10 @@ export class Runtime extends EventEmitter {
     return { elu: elu.utilization, heapUsed, heapTotal, currentELU }
   }
 
+  getDynamicWorkersScaler () {
+    return this.#dynamicWorkersScaler
+  }
+
   #getHttpCacheValue ({ request }) {
     if (!this.#sharedHttpCache) {
       return

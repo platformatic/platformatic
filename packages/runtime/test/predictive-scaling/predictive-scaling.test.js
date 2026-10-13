@@ -1123,7 +1123,7 @@ test('PredictiveApplicationScaler', async (t) => {
     }
 
     assert.ok(result !== null)
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 1)
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 1)
   })
 
   await t.test('rising load produces scale-up', () => {
@@ -1136,7 +1136,7 @@ test('PredictiveApplicationScaler', async (t) => {
       processAndAccept(applicationScaler, (tick + 1) * 1000 + 500)
     }
 
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 2)
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 2)
   })
 
   await t.test('new worker appears mid-stream', () => {
@@ -1155,8 +1155,7 @@ test('PredictiveApplicationScaler', async (t) => {
       processAndAccept(applicationScaler, (tick + 1) * 1000 + 500)
     }
 
-    const snapshot = applicationScaler._getSnapshot('elu')
-    assert.ok(snapshot.level !== null)
+    assert.ok(applicationScaler.getDiagnostics().metrics.elu.level !== null)
   })
 
   await t.test('worker stops sending metrics', () => {
@@ -1176,8 +1175,7 @@ test('PredictiveApplicationScaler', async (t) => {
       processAndAccept(applicationScaler, (tick + 1) * 1000 + 500)
     }
 
-    const snapshot = applicationScaler._getSnapshot('elu')
-    assert.ok(snapshot.level !== null)
+    assert.ok(applicationScaler.getDiagnostics().metrics.elu.level !== null)
   })
 
   await t.test('redistribution filters new worker contribution', () => {
@@ -1195,8 +1193,8 @@ test('PredictiveApplicationScaler', async (t) => {
     const result = processAndAccept(applicationScaler, 12500)
 
     assert.ok(result !== null)
-    const snapshot = applicationScaler._getSnapshot('elu')
-    assert.ok(snapshot.level > 0.3, `level ${snapshot.level} should not drop dramatically after adding new worker`)
+    const { level } = applicationScaler.getDiagnostics().metrics.elu
+    assert.ok(level > 0.3, `level ${level} should not drop dramatically after adding new worker`)
   })
 
   await t.test('scale down when load drops significantly', () => {
@@ -1207,13 +1205,13 @@ test('PredictiveApplicationScaler', async (t) => {
 
     let tick = 1
     let prevTarget = 1
-    while (applicationScaler._getSnapshot('elu').targetCount < 3) {
+    while (applicationScaler.getDiagnostics().targetCount < 3) {
       applicationScaler.addSample('elu', 'w1', tick * 1000 + 500, 0.95)
       applicationScaler.addSample('elu', 'w2', tick * 1000 + 500, 0.95)
       applicationScaler.addSample('elu', 'w3', tick * 1000 + 500, 0.95)
       processAndAccept(applicationScaler, (tick + 1) * 1000 + 500)
 
-      const newTarget = applicationScaler._getSnapshot('elu').targetCount
+      const newTarget = applicationScaler.getDiagnostics().targetCount
       if (newTarget > prevTarget) {
         // Resolve pending by simulating the new workers starting
         const scaleUpCount = newTarget - prevTarget
@@ -1235,7 +1233,7 @@ test('PredictiveApplicationScaler', async (t) => {
       processAndAccept(applicationScaler, (tick + 1) * 1000 + 500)
     }
 
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 1)
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 1)
   })
 
   await t.test('respects max boundary', () => {
@@ -1256,7 +1254,7 @@ test('PredictiveApplicationScaler', async (t) => {
     }
 
     assert.ok(result !== null)
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 2)
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 2)
   })
 
   await t.test('respects min boundary', () => {
@@ -1275,7 +1273,7 @@ test('PredictiveApplicationScaler', async (t) => {
     }
 
     assert.ok(result !== null)
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 2)
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 2)
   })
 
   await t.test('multiple metrics: max targetCount wins', () => {
@@ -1297,10 +1295,10 @@ test('PredictiveApplicationScaler', async (t) => {
     }
 
     // heap threshold (0.5) is lower than elu (0.8), so heap drives scale-up
-    assert.ok(applicationScaler._getSnapshot('elu').targetCount >= 2)
+    assert.ok(applicationScaler.getDiagnostics().targetCount >= 2)
   })
 
-  await t.test('_getSnapshot returns current processing and prediction state', () => {
+  await t.test('getDiagnostics returns current processing and prediction state', () => {
     const applicationScaler = new PredictiveApplicationScaler(applicationScalerConfig)
     applicationScaler.addWorker('w1', 1000)
 
@@ -1309,18 +1307,13 @@ test('PredictiveApplicationScaler', async (t) => {
       processAndAccept(applicationScaler, (tick + 1) * 1000 + 500)
     }
 
-    const snapshot = applicationScaler._getSnapshot('elu')
-    assert.strictEqual(snapshot.horizonMs, 7000)
-    assert.strictEqual(typeof snapshot.targetCount, 'number')
-    assert.strictEqual(snapshot.lastProcessedTs, 11000)
-    assert.strictEqual(typeof snapshot.level, 'number')
-    assert.strictEqual(typeof snapshot.trend, 'number')
-    assert.strictEqual(snapshot.threshold, 0.8)
-  })
-
-  await t.test('_getSnapshot returns null for unknown metric', () => {
-    const applicationScaler = new PredictiveApplicationScaler(applicationScalerConfig)
-    assert.strictEqual(applicationScaler._getSnapshot('unknown'), null)
+    const diagnostics = applicationScaler.getDiagnostics()
+    assert.strictEqual(diagnostics.horizonMs, 7000)
+    assert.strictEqual(typeof diagnostics.targetCount, 'number')
+    assert.strictEqual(diagnostics.metrics.elu.lastProcessedTs, 11000)
+    assert.strictEqual(typeof diagnostics.metrics.elu.level, 'number')
+    assert.strictEqual(typeof diagnostics.metrics.elu.trendPerSecond, 'number')
+    assert.strictEqual(diagnostics.metrics.elu.threshold, 0.8)
   })
 })
 
@@ -1386,7 +1379,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     // Feed high ELU to trigger scale-up
     feedTicks(applicationScaler, ['w1'], 1, 5, 0.95)
 
-    const targetAfterScaleUp = applicationScaler._getSnapshot('elu').targetCount
+    const targetAfterScaleUp = applicationScaler.getDiagnostics().targetCount
     assert.ok(targetAfterScaleUp > 1, `should have scaled up, got ${targetAfterScaleUp}`)
 
     // Feed low ELU — applicationScaler wants to scale down,
@@ -1394,7 +1387,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     feedTicks(applicationScaler, ['w1'], 6, 10, 0.01)
 
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount,
+      applicationScaler.getDiagnostics().targetCount,
       targetAfterScaleUp,
       'pending scale-ups should block scale-down'
     )
@@ -1412,7 +1405,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Trigger scale-up
     feedTicks(applicationScaler, ['w1'], 1, 5, 0.95)
-    const targetAfterScaleUp = applicationScaler._getSnapshot('elu').targetCount
+    const targetAfterScaleUp = applicationScaler.getDiagnostics().targetCount
     assert.ok(targetAfterScaleUp > 1)
 
     // Resolve pending by adding the new worker
@@ -1422,7 +1415,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     feedTicks(applicationScaler, ['w1', 'w2'], 6, 15, 0.01)
 
     assert.ok(
-      applicationScaler._getSnapshot('elu').targetCount < targetAfterScaleUp,
+      applicationScaler.getDiagnostics().targetCount < targetAfterScaleUp,
       'should scale down after pending resolved'
     )
   })
@@ -1439,7 +1432,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Feed high ELU to trigger first scale-up
     feedTicks(applicationScaler, ['w1'], 1, 5, 0.95)
-    const target1 = applicationScaler._getSnapshot('elu').targetCount
+    const target1 = applicationScaler.getDiagnostics().targetCount
     assert.strictEqual(target1, 2, 'first scale-up should happen')
 
     // Add worker so pending is resolved
@@ -1448,14 +1441,14 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     // Continue feeding high ELU — should NOT scale up again within cooldown
     feedTicks(applicationScaler, ['w1', 'w2'], 6, 5, 0.95)
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount, 2,
+      applicationScaler.getDiagnostics().targetCount, 2,
       'should not scale up within scaleUpAfterScaleUpMs'
     )
 
     // Advance past cooldown (tick 16 = 17000ms, first scale-up was ~5000ms, diff > 10000)
     feedTicks(applicationScaler, ['w1', 'w2'], 16, 5, 0.95)
     assert.ok(
-      applicationScaler._getSnapshot('elu').targetCount > 2,
+      applicationScaler.getDiagnostics().targetCount > 2,
       'should scale up after cooldown expires'
     )
   })
@@ -1472,7 +1465,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Trigger scale-up
     feedTicks(applicationScaler, ['w1'], 1, 5, 0.95)
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 2)
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 2)
 
     // Add worker — this sets lastWorkerStartTime
     applicationScaler.addWorker('w2', 6000)
@@ -1480,14 +1473,14 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     // Feed low ELU — should be blocked by scaleDownAfterScaleUpMs
     feedTicks(applicationScaler, ['w1', 'w2'], 6, 10, 0.01)
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount, 2,
+      applicationScaler.getDiagnostics().targetCount, 2,
       'should not scale down within scaleDownAfterScaleUpMs of worker start'
     )
 
     // Advance past cooldown (tick 22 = 23000ms, worker started at 6000, diff = 17000 > 15000)
     feedTicks(applicationScaler, ['w1', 'w2'], 22, 5, 0.01)
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount, 1,
+      applicationScaler.getDiagnostics().targetCount, 1,
       'should scale down after scaleDownAfterScaleUpMs expires'
     )
   })
@@ -1504,7 +1497,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Trigger scale-up to 3+
     feedTicks(applicationScaler, ['w1'], 1, 5, 0.95)
-    const target = applicationScaler._getSnapshot('elu').targetCount
+    const target = applicationScaler.getDiagnostics().targetCount
     assert.ok(target >= 2, `should have scaled up to at least 2, got ${target}`)
 
     // Add workers to resolve all pending
@@ -1515,7 +1508,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Feed low ELU — first scale-down should happen
     feedTicks(applicationScaler, workers, 6, 5, 0.01)
-    const targetAfterFirstDown = applicationScaler._getSnapshot('elu').targetCount
+    const targetAfterFirstDown = applicationScaler.getDiagnostics().targetCount
     assert.ok(
       targetAfterFirstDown < target,
       'first scale-down should happen'
@@ -1524,7 +1517,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     // Immediately try more scale-down — should be blocked
     feedTicks(applicationScaler, workers, 11, 3, 0.01)
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount,
+      applicationScaler.getDiagnostics().targetCount,
       targetAfterFirstDown,
       'should not scale down within scaleDownAfterScaleDownMs'
     )
@@ -1542,26 +1535,26 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Trigger scale-up
     feedTicks(applicationScaler, ['w1'], 1, 5, 0.95)
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 2)
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 2)
 
     // Add worker, resolve pending
     applicationScaler.addWorker('w2', 6000)
 
     // Feed low ELU to trigger scale-down
     feedTicks(applicationScaler, ['w1', 'w2'], 6, 10, 0.01)
-    assert.strictEqual(applicationScaler._getSnapshot('elu').targetCount, 1, 'should scale down')
+    assert.strictEqual(applicationScaler.getDiagnostics().targetCount, 1, 'should scale down')
 
     // Now feed high ELU — scale-up should be blocked by scaleUpAfterScaleDownMs
     feedTicks(applicationScaler, ['w1'], 16, 5, 0.95)
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount, 1,
+      applicationScaler.getDiagnostics().targetCount, 1,
       'should not scale up within scaleUpAfterScaleDownMs of scale-down'
     )
 
     // Advance past cooldown
     feedTicks(applicationScaler, ['w1'], 30, 5, 0.95)
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount, 2,
+      applicationScaler.getDiagnostics().targetCount, 2,
       'should scale up after scaleUpAfterScaleDownMs expires'
     )
   })
@@ -1579,13 +1572,13 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Trigger scale-up
     feedTicks(applicationScaler, ['w1'], 1, 5, 0.95)
-    const targetAfterScaleUp = applicationScaler._getSnapshot('elu').targetCount
+    const targetAfterScaleUp = applicationScaler.getDiagnostics().targetCount
     assert.ok(targetAfterScaleUp > 1)
 
     // Feed low ELU immediately — pending should still block scale-down
     feedTicks(applicationScaler, ['w1'], 6, 5, 0.01)
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount,
+      applicationScaler.getDiagnostics().targetCount,
       targetAfterScaleUp,
       'pending scale-ups should not expire immediately when pendingScaleUpExpiryMs is not configured'
     )
@@ -1606,7 +1599,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     // Scale-up happens at tick 4: decisionAt = 5000, scaleAt = 10000.
     // Correct expiry: now > 40000; decisionAt-based expiry: now > 35000.
     feedTicks(applicationScaler, ['w1'], 1, 4, 0.95)
-    const targetAfterScaleUp = applicationScaler._getSnapshot('elu').targetCount
+    const targetAfterScaleUp = applicationScaler.getDiagnostics().targetCount
     assert.ok(targetAfterScaleUp > 1)
 
     // Feed low ELU up to tick 37 (now = 38000).
@@ -1615,7 +1608,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     feedTicks(applicationScaler, ['w1'], 5, 33, 0.01)
 
     assert.strictEqual(
-      applicationScaler._getSnapshot('elu').targetCount,
+      applicationScaler.getDiagnostics().targetCount,
       targetAfterScaleUp,
       'pending should not expire before scaleAt + PENDING_SCALE_UP_EXPIRY_MS'
     )
@@ -1625,7 +1618,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
     t.mock.timers.enable({ apis: ['Date'], now: 10000 })
     const applicationScaler = new PredictiveApplicationScaler(makeConfig())
     applicationScaler.addWorker('w1', 1000)
-    const horizonBefore = applicationScaler._getSnapshot('elu').horizonMs
+    const horizonBefore = applicationScaler.getDiagnostics().horizonMs
     assert.strictEqual(horizonBefore, 7000)
 
     // Two slow starts raise the rate-limited estimate above the horizon floor.
@@ -1634,7 +1627,7 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
       t.mock.timers.tick(15000)
       applicationScaler.addWorker(worker, Date.now())
     }
-    assert.ok(applicationScaler._getSnapshot('elu').horizonMs > horizonBefore)
+    assert.ok(applicationScaler.getDiagnostics().horizonMs > horizonBefore)
   })
 
   await t.test('remaining worker continues after another worker exits', () => {
@@ -1683,8 +1676,8 @@ test('PredictiveApplicationScaler cooldowns and pending scale-ups', async (t) =>
 
     // Verify the applicationScaler still works correctly — w2's stale data
     // should not pollute redistribution with a ghost instance
-    const snapshot = applicationScaler._getSnapshot('elu')
-    assert.strictEqual(typeof snapshot.level, 'number')
-    assert.ok(snapshot.targetCount >= 1)
+    const diagnostics = applicationScaler.getDiagnostics()
+    assert.strictEqual(typeof diagnostics.metrics.elu.level, 'number')
+    assert.ok(diagnostics.targetCount >= 1)
   })
 })

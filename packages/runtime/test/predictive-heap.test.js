@@ -47,7 +47,7 @@ test('heap without a threshold is processed without making scaling decisions', t
     applicationScaler.addSample('heap', 'app:1', Date.now(), value)
     assert.equal(applicationScaler.process(Date.now()), null)
     assert.equal(applicationScaler.targetCount, 2)
-    assert.equal(applicationScaler._getSnapshot('heap').level, 2 * value)
+    assert.equal(applicationScaler.getDiagnostics().metrics.heap.level, 2 * value)
     assert.equal(applicationScaler.getHeapPerWorker(), value)
     t.mock.timers.tick(1000)
   }
@@ -85,7 +85,7 @@ test('heap per worker uses the live count independently of the approved target',
   }
   applicationScaler.process(10000)
   applicationScaler.setTargetCount(4)
-  assert.equal(applicationScaler._getSnapshot('heap').level, 400)
+  assert.equal(applicationScaler.getDiagnostics().metrics.heap.level, 400)
   assert.equal(applicationScaler.getHeapPerWorker(), 200)
   applicationScaler.removeWorker('app:0', 11000)
   applicationScaler.removeWorker('app:1', 11000)

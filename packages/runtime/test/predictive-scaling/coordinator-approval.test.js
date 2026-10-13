@@ -73,8 +73,8 @@ test('only the selected application records the approved single extra worker', a
   const [first, second] = applicationScalers
   assert.deepEqual(updates, [{ application: 'app1', workers: 2 }])
   assert.deepEqual(setTargetCount.mock.calls.map(call => call.arguments), [[2]])
-  assert.equal(first._getSnapshot('elu').targetCount, 2)
-  assert.equal(second._getSnapshot('elu').targetCount, 1)
+  assert.equal(first.getDiagnostics().targetCount, 2)
+  assert.equal(second.getDiagnostics().targetCount, 1)
   t.mock.timers.tick(500)
   await waitFor(() => updates.length === 2)
   // No new worker appeared, so the repeated request still starts from one worker.
@@ -95,8 +95,8 @@ for (const [name, config, target] of [
     const [first, second] = applicationScalers
     assert.deepEqual(updates, [{ application: 'app1', workers: target }])
     assert.deepEqual(setTargetCount.mock.calls.map(call => call.arguments), [[target]])
-    assert.equal(first._getSnapshot('elu').targetCount, target)
-    assert.equal(second._getSnapshot('elu').targetCount, 1)
+    assert.equal(first.getDiagnostics().targetCount, target)
+    assert.equal(second.getDiagnostics().targetCount, 1)
   })
 }
 
@@ -126,7 +126,7 @@ for (const [name, config] of [['worker limit', { total: 1 }], ['memory limit', {
     t.mock.timers.tick(500)
     await waitFor(() => warnings.mock.callCount() === 1)
     assert.equal(setTargetCount.mock.callCount(), 0)
-    assert.equal([...applicationScalers][0]._getSnapshot('elu').targetCount, 1)
+    assert.equal([...applicationScalers][0].getDiagnostics().targetCount, 1)
     assert.deepEqual(updates, [])
   })
 }
@@ -145,7 +145,7 @@ for (const failure of ['throw', 'report', 'no report', 'silent failure']) {
     t.mock.timers.tick(500)
     await waitFor(() => updates.length === 1)
     const [applicationScaler] = applicationScalers
-    assert.equal(applicationScaler._getSnapshot('elu').targetCount, 2)
+    assert.equal(applicationScaler.getDiagnostics().targetCount, 2)
 
     process.mock.restore()
     applicationScaler.addSample('elu', 'app1:0', 11000, 0.01)
@@ -163,7 +163,7 @@ test('a worker-start event during the runtime call resolves an already recorded 
     cooldowns: { scaleDownAfterScaleUpMs: 0 }
   })
   runtime.updateApplicationsResources = async () => {
-    assert.equal([...applicationScalers][0]._getSnapshot('elu').targetCount, 2)
+    assert.equal([...applicationScalers][0].getDiagnostics().targetCount, 2)
     runtime.emit('application:worker:started', { application: 'app1', worker: 1 })
     throw new Error('failure after worker started')
   }
