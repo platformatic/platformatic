@@ -22,3 +22,27 @@ test('should fail to start running application', async t => {
     strictEqual(err.message, 'Application is already started')
   }
 })
+
+test('should fail to start running application after it was restarted', async t => {
+  const configFile = join(fixturesDir, 'update-service-workers', 'watt.config.mjs')
+  const app = await createRuntime(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Restarted workers get new indexes, the application is still running
+  await app.restartApplication('node')
+  const workers = (await app.getApplicationResourcesInfo('node')).workers
+
+  try {
+    await app.startApplication('node')
+    fail('should have thrown')
+  } catch (err) {
+    strictEqual(err.message, 'Application is already started')
+  }
+
+  strictEqual((await app.getApplicationResourcesInfo('node')).workers, workers)
+})

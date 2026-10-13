@@ -30,7 +30,7 @@ import {
 } from '../errors.js'
 import { updateUndiciInterceptors } from './interceptors.js'
 import { MessagingITC } from './messaging.js'
-import { kApplicationId, kITC, kId, kWorkerId } from './symbols.js'
+import { kApplicationId, kITC, kId, kWorkerExitCode, kWorkerId } from './symbols.js'
 
 function startSubprocessRepl (port, childManager, clientWs, controller) {
   // Start the REPL in the child process
@@ -88,14 +88,18 @@ async function safeHandleInITC (worker, fn) {
   try {
     // Make sure to catch when the worker exits, otherwise we're stuck forever
     const ac = new AbortController()
-    let exitCode
+    // A worker which already exited will not emit the exit event again
+    let exitCode = worker[kWorkerExitCode]
+    let response
 
-    const response = await Unpromise.race([
-      fn(),
-      once(worker, 'exit', { signal: ac.signal }).then(([code]) => {
-        exitCode = code
-      })
-    ])
+    if (typeof exitCode !== 'number') {
+      response = await Unpromise.race([
+        fn(),
+        once(worker, 'exit', { signal: ac.signal }).then(([code]) => {
+          exitCode = code
+        })
+      ])
+    }
 
     if (typeof exitCode === 'number') {
       if (typeof worker[kWorkerId] !== 'undefined' && exitCode !== exitCodes.PROCESS_UNHANDLED_ERROR) {

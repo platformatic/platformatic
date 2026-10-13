@@ -1,12 +1,14 @@
+import { ITC } from '@platformatic/itc'
 import { strict as assert, deepStrictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { transform } from '../../index.js'
 import { configurationFileIn, createRuntime } from '../helpers.js'
 import { waitForEvents } from './helper.js'
 
-async function prepareRuntime (t, applicationsId, fixture) {
+async function prepareRuntime (t, applicationsId, fixture, context) {
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', fixture)
-  const runtime = await createRuntime(configurationFileIn(appPath))
+  const runtime = await createRuntime(configurationFileIn(appPath), null, context)
   t.after(async () => {
     await runtime.close()
   })
@@ -20,6 +22,96 @@ async function prepareRuntime (t, applicationsId, fixture) {
 
   return { runtime, resourcesInfo }
 }
+
+test('requesting one worker during a restart preserves the replacement worker', { timeout: 30000 }, async t => {
+  const { runtime } = await prepareRuntime(t, ['node'], 'update-service-workers')
+  await runtime.updateApplicationsResources([{ application: 'node', workers: 1 }])
+
+  const originalWorkers = Object.entries(await runtime.getWorkers())
+    .filter(([, worker]) => worker.application === 'node')
+  assert.equal(originalWorkers.length, 1)
+  const originalWorkerId = originalWorkers[0][0]
+
+  // Hold the restart after its replacement starts, before retiring the old worker.
+  const restart = await runtime.restartApplication('node', true)
+  try {
+    const restartingWorkers = Object.entries(await runtime.getWorkers())
+      .filter(([, worker]) => worker.application === 'node')
+    assert.equal(restartingWorkers.length, 2)
+    const replacementWorkerId = restartingWorkers.find(([id]) => id !== originalWorkerId)[0]
+
+    await runtime.updateApplicationsResources([{ application: 'node', workers: 1 }])
+
+    for (const retirement of restart.retirements) {
+      await retirement.retire()
+    }
+    restart.complete()
+
+    const remainingWorkers = Object.entries(await runtime.getWorkers())
+      .filter(([, worker]) => worker.application === 'node')
+    assert.deepEqual(remainingWorkers.map(([id]) => id), [replacementWorkerId])
+    assert.equal(remainingWorkers[0][1].status, 'started')
+
+    const response = await runtime.inject('node', { method: 'GET', url: '/' })
+    assert.equal(response.statusCode, 200)
+    assert.deepEqual(JSON.parse(response.payload), { from: 'node' })
+  } finally {
+    restart.release()
+  }
+})
+
+test('reducing the worker count cancels a removed worker replacement before it starts', { timeout: 30000 }, async t => {
+  const { runtime } = await prepareRuntime(t, ['node'], 'update-service-workers', {
+    async transform (config, ...args) {
+      config.startTimeout = 0
+      return transform(config, ...args)
+    }
+  })
+  await runtime.updateApplicationsResources([{ application: 'node', workers: 2 }])
+
+  const replacementWaiting = Promise.withResolvers()
+  const resumeStart = Promise.withResolvers()
+  const send = ITC.prototype.send
+  let replacementStarts = 0
+  t.mock.method(ITC.prototype, 'send', async function (name, ...args) {
+    if (name === 'start' && ++replacementStarts === 2) {
+      // Let the first replacement finish, then hold the second before its start command.
+      replacementWaiting.resolve()
+      await resumeStart.promise
+    }
+    return send.call(this, name, ...args)
+  })
+
+  const startedWorkers = []
+  runtime.on('application:worker:started', ({ application, worker }) => {
+    if (application === 'node') startedWorkers.push(worker)
+  })
+  const restart = runtime.restartApplication('node').then(
+    () => ({ error: null }),
+    error => ({ error })
+  )
+
+  try {
+    await replacementWaiting.promise
+    await runtime.updateApplicationsResources([{ application: 'node', workers: 1 }])
+  } finally {
+    resumeStart.resolve()
+  }
+
+  const { error } = await restart
+  assert.ifError(error)
+  assert.equal(startedWorkers.length, 1, 'the removed worker replacement must not start')
+
+  const remainingWorkers = Object.values(await runtime.getWorkers())
+    .filter(worker => worker.application === 'node')
+  assert.equal(remainingWorkers.length, 1)
+  assert.equal(remainingWorkers[0].status, 'started')
+  assert.equal(remainingWorkers[0].worker, String(startedWorkers[0]))
+
+  const response = await runtime.inject('node', { method: 'GET', url: '/' })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(JSON.parse(response.payload), { from: 'node' })
+})
 
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
