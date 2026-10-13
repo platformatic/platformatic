@@ -1,4 +1,4 @@
-import { getMemoryInfo } from './metrics.js'
+import { readMemory } from './memory.js'
 import { PredictiveApplicationScaler } from './predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 
@@ -12,7 +12,6 @@ export class PredictiveWorkersScaler {
   #isProcessing = false
   #maxTotalWorkers
   #maxTotalMemory
-  #memoryInfo
   #onHealthMetrics
   #onWorkerStarted
   #onWorkerExited
@@ -32,8 +31,8 @@ export class PredictiveWorkersScaler {
   }
 
   async start () {
-    this.#memoryInfo = await getMemoryInfo()
-    this.#maxTotalMemory ??= this.#memoryInfo.total * 0.9
+    const { total } = await readMemory()
+    this.#maxTotalMemory ??= total * 0.9
 
     this.#runtime.on('application:worker:health:metrics', this.#onHealthMetrics)
     this.#runtime.on('application:worker:started', this.#onWorkerStarted)
@@ -358,7 +357,7 @@ export class PredictiveWorkersScaler {
   }
 
   async #getAvailableMemory () {
-    const mem = await getMemoryInfo({ scope: this.#memoryInfo.scope })
-    return Math.max(0, this.#maxTotalMemory - mem.used)
+    const { used } = await readMemory()
+    return Math.max(0, this.#maxTotalMemory - used)
   }
 }

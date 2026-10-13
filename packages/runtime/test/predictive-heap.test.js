@@ -9,14 +9,14 @@ import { finalizeApplication } from '../lib/config.js'
 import { createWorkersConfig } from './predictive-scaling/helpers.js'
 
 // Keep admission tests independent of host/container memory and concurrent load.
-const metricsUrl = new URL('../lib/metrics.js', import.meta.url).href
+const memoryUrl = new URL('../lib/memory.js', import.meta.url).href
 const hook = registerHooks({
   load (url, context, nextLoad) {
-    if (url !== metricsUrl) return nextLoad(url, context)
+    if (url !== memoryUrl) return nextLoad(url, context)
     return {
       format: 'module',
       shortCircuit: true,
-      source: 'export async function getMemoryInfo () { return { scope: "host", used: 600, total: 1000 } }'
+      source: 'export async function readMemory () { return { scope: "host", used: 600, total: 1000 } }'
     }
   }
 })

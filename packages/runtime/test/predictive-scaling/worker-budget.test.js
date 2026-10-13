@@ -9,14 +9,14 @@ import { kWorkerStartTime, kWorkerStatus } from '../../lib/worker/symbols.js'
 import { createWorkersConfig } from './helpers.js'
 
 const memoryKey = Symbol.for('scaler-worker-budget-memory')
-const metricsUrl = new URL('../../lib/metrics.js', import.meta.url).href
+const memoryUrl = new URL('../../lib/memory.js', import.meta.url).href
 const hook = registerHooks({
   load (url, context, nextLoad) {
-    if (url !== metricsUrl) return nextLoad(url, context)
+    if (url !== memoryUrl) return nextLoad(url, context)
     return {
       format: 'module',
       shortCircuit: true,
-      source: 'export async function getMemoryInfo () { return globalThis[Symbol.for("scaler-worker-budget-memory")]() }'
+      source: 'export async function readMemory () { return globalThis[Symbol.for("scaler-worker-budget-memory")]() }'
     }
   }
 })
