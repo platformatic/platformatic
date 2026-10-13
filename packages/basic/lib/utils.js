@@ -1,5 +1,5 @@
 import { sanitizeHTTPSOptions } from '@platformatic/foundation'
-import { createRequire } from 'node:module'
+import { createRequire, registerHooks } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
@@ -105,6 +105,19 @@ export function ensureFileUrl (pathOrUrl) {
 // This is to avoid common path/URL problems on Windows
 export function importFile (path) {
   return import(ensureFileUrl(path))
+}
+
+// `module.register()` is deprecated since Node 22.12 (DEP0205). Its replacement,
+// `module.registerHooks()`, takes the hooks directly instead of a specifier and
+// has no `data` option, so we import the loader module ourselves, run its
+// `initialize` hook manually when it defines one, and register the rest.
+export async function registerLoaderHooks (loader, data) {
+  const hooks = await import(loader)
+  if (typeof hooks.initialize === 'function') {
+    await hooks.initialize(data)
+  }
+  const { resolve, load } = hooks
+  registerHooks({ resolve, load })
 }
 
 /* c8 ignore next 6 */

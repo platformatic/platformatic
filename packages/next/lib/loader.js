@@ -10,7 +10,8 @@ import {
   variableDeclaration,
   variableDeclarator
 } from '@babel/types'
-import { readFile, realpath } from 'node:fs/promises'
+import { realpath } from 'node:fs/promises'
+import { readFileSync, realpathSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const originalId = '__pltEnhanceNextConfig'
@@ -100,23 +101,23 @@ export async function initialize (data) {
   candidates = candidates.map(c => new URL(c, realRoot).toString())
 }
 
-export async function load (url, context, nextLoad) {
+export function load (url, context, nextLoad) {
   // Load the original file
-  const result = await nextLoad(url, context)
+  const result = nextLoad(url, context)
 
   if (!url.startsWith('file:')) {
     return result
   }
 
-  url = pathToFileURL(await realpath(fileURLToPath(url))).toString()
+  url = pathToFileURL(realpathSync(fileURLToPath(url))).toString()
 
   if (!candidates.includes(url)) {
     return result
   }
 
   if (result.format === 'commonjs') {
-    await readFile(new URL(result.responseURL ?? url), 'utf-8')
-    result.source = transformCJS(result.source ?? (await readFile(new URL(result.responseURL ?? url), 'utf-8')))
+    readFileSync(new URL(result.responseURL ?? url), 'utf-8')
+    result.source = transformCJS(result.source ?? readFileSync(new URL(result.responseURL ?? url), 'utf-8'))
   } else {
     result.source = transformESM(result.source)
   }

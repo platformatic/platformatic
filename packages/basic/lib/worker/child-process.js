@@ -39,7 +39,7 @@ import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import { Server as HttpsServer } from 'node:https'
-import { createRequire, register } from 'node:module'
+import { createRequire } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import { Duplex } from 'node:stream'
@@ -49,7 +49,7 @@ import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
-import { importFile } from '../utils.js'
+import { importFile, registerLoaderHooks } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
 
 class ForwardingEventEmitter extends EventEmitter {
@@ -876,7 +876,7 @@ async function main () {
   updateGlobals({ ...data, events })
 
   if (loader) {
-    register(loader, { data })
+    await registerLoaderHooks(loader, data)
   }
 
   for (const script of scripts) {

@@ -5,14 +5,14 @@ import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { createRequire, register } from 'node:module'
+import { createRequire } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 import { exitCodes } from '../errors.js'
-import { ensureFileUrl, importFile } from '../utils.js'
+import { ensureFileUrl, importFile, registerLoaderHooks } from '../utils.js'
 
 export const isWindows = platform() === 'win32'
 
@@ -214,7 +214,7 @@ export class ChildManager extends ITC {
 
   async register () {
     updateGlobals(this.#context)
-    register(this.#loader, { data: this.#context })
+    await registerLoaderHooks(this.#loader, this.#context)
 
     for (const script of this.#scripts) {
       await importFile(script)
