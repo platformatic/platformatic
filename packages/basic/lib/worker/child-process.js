@@ -39,7 +39,7 @@ import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import { Server as HttpsServer } from 'node:https'
-import { createRequire, register } from 'node:module'
+import { createRequire } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import { Duplex } from 'node:stream'
@@ -51,6 +51,7 @@ import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
+import { registerLoader } from './loader.js'
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
@@ -867,7 +868,7 @@ async function main () {
   const executable = basename(process.argv[1] ?? '')
 
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
-  const { data, loader, scripts, urlFromScript } = JSON.parse(await readFile(dataPath))
+  const { data, loader, loaderOptions, scripts, urlFromScript } = JSON.parse(await readFile(dataPath))
 
   // Enable compile cache early before loading user modules
   await setupCompileCache(data)
@@ -876,7 +877,7 @@ async function main () {
   updateGlobals({ ...data, events })
 
   if (loader) {
-    register(loader, { data })
+    await registerLoader(loader, data, loaderOptions)
   }
 
   for (const script of scripts) {
