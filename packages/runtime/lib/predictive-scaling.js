@@ -3,7 +3,10 @@ export const SCALE_DOWN_MARGIN = 0.3
 export const SCALE_UP_K = 2
 export const PENDING_SCALE_UP_EXPIRY_MS = 30000
 export const SAMPLE_INTERVAL_MS = 1000
-export const WINDOW_MS = 60000
+// Stored samples per worker and metric. Holt keeps the history in its state and
+// only needs the ticks since the last run; after a restart its trend settles
+// within ~30 ticks. A larger value adds memory, not accuracy.
+export const MAX_SAMPLES = 30
 export const REDISTRIBUTION_K = 1
 export const HORIZONTAL_TREND_THRESHOLD = 10
 export const HORIZON_MULTIPLIER = 1.2
@@ -45,7 +48,7 @@ export class PredictiveApplicationScaler {
    *     prevNewCount: number
    *   } | null,
    *   lastProcessedTs: number,
-   *   config: { sampleIntervalMs: number, windowMs: number, threshold: number | null,
+   *   config: { threshold: number | null,
    *     redistributionConfig: { redistributionMs: number, k: number },
    *     holtConfig: {
    *       alphaUp: number,
@@ -65,6 +68,7 @@ export class PredictiveApplicationScaler {
 
   // Shared config
   #horizonMs
+  #maxWindowMs
   #minimum
   #maximum
   #cooldowns
@@ -100,6 +104,8 @@ export class PredictiveApplicationScaler {
     this.#initTimeoutMs = INIT_TIMEOUT_MS
     this.#initTimeoutWindow = []
     this.#horizonMs = this.#calculateHorizon()
+    // The oldest tick a run can read is this far behind the newest one.
+    this.#maxWindowMs = (MAX_SAMPLES - 1) * SAMPLE_INTERVAL_MS
 
     this.#workerIdMapper = new WorkerIdMapper()
     this.#instances = new Map()
@@ -112,8 +118,6 @@ export class PredictiveApplicationScaler {
         redistributionState: null,
         lastProcessedTs: 0,
         config: {
-          sampleIntervalMs: SAMPLE_INTERVAL_MS,
-          windowMs: WINDOW_MS,
           threshold: mc.threshold ?? null,
           redistributionConfig: {
             redistributionMs: mc.redistributionMs,
@@ -165,10 +169,7 @@ export class PredictiveApplicationScaler {
 
     let metricSamples = instance[metricName]
     if (!metricSamples) {
-      metricSamples = new MetricStore(
-        metric.config.sampleIntervalMs,
-        metric.config.windowMs
-      )
+      metricSamples = new MetricStore(SAMPLE_INTERVAL_MS, MAX_SAMPLES)
       instance[metricName] = metricSamples
     }
     metricSamples.push(timestamp, value)
@@ -254,7 +255,7 @@ export class PredictiveApplicationScaler {
       }
     }
 
-    this.#cleanupExpired(now)
+    this.#removeEndedInstances(now)
 
     if (!processed) return null
 
@@ -269,7 +270,17 @@ export class PredictiveApplicationScaler {
 
   #processMetric (metricName, now) {
     const metric = this.#metrics.get(metricName)
-    const startTs = metric.lastProcessedTs + metric.config.sampleIntervalMs
+    let startTs = metric.lastProcessedTs + SAMPLE_INTERVAL_MS
+
+    // Ticks since the last run may no longer be stored. Continuing from the old
+    // state would read the gap as a single tick, so start again from the oldest
+    // tick every reporting worker still stores.
+    const windowStartTs = alignDown(now, SAMPLE_INTERVAL_MS) - this.#maxWindowMs
+    if (startTs < windowStartTs) {
+      startTs = windowStartTs
+      metric.holtState = null
+      metric.redistributionState = null
+    }
 
     const stateByTimestamp = this.#getAlignedMetrics(metricName, startTs, now)
     if (stateByTimestamp.length === 0) return null
@@ -294,7 +305,7 @@ export class PredictiveApplicationScaler {
     let { level, trend } = lastEntry.holt
 
     // Convert trend from per-tick to per-second
-    trend *= 1000 / metric.config.sampleIntervalMs
+    trend *= 1000 / SAMPLE_INTERVAL_MS
 
     // Adjust level forward to now
     level += trend * (now - lastEntry.timestamp) / 1000
@@ -431,23 +442,11 @@ export class PredictiveApplicationScaler {
     }
   }
 
-  #cleanupExpired (now) {
+  #removeEndedInstances (now) {
     for (const [instanceId, instance] of this.#instances) {
-      // Silence is not an exit. Keep the active lifetime even without samples.
-      if (instance.endTime === null) continue
-
-      let hasPendingTicks = false
-      for (const [metricName, metric] of this.#metrics) {
-        const metricSamples = instance[metricName]
-        if (!metricSamples || metricSamples.isExpired(now)) continue
-
-        const fromTick = Math.max(metric.lastProcessedTs + metric.config.sampleIntervalMs, instance.startTime)
-        if (metricSamples.hasEntries(fromTick, instance.endTime - 1)) {
-          hasPendingTicks = true
-          break
-        }
+      if (instance.endTime !== null && instance.endTime <= now) {
+        this.#instances.delete(instanceId)
       }
-      if (!hasPendingTicks) this.#instances.delete(instanceId)
     }
   }
 }
@@ -483,20 +482,29 @@ export class WorkerIdMapper {
   }
 }
 
+function alignDown (timestamp, intervalMs) {
+  return Math.floor(timestamp / intervalMs) * intervalMs
+}
+
+function alignUp (timestamp, intervalMs) {
+  return Math.ceil(timestamp / intervalMs) * intervalMs
+}
+
 // Worker metrics aligned to a fixed grid, with interpolation and carry-forward.
 export class MetricStore {
   #sampleIntervalMs
-  #windowMs
+  #maxWindowMs
   #capacity
   #values
   #prevRawTs
   #prevRawValue
   #nextAlignedTs
 
-  constructor (sampleIntervalMs, windowMs) {
+  constructor (sampleIntervalMs, maxSamples) {
     this.#sampleIntervalMs = sampleIntervalMs
-    this.#windowMs = windowMs
-    this.#capacity = Math.floor(windowMs / sampleIntervalMs) + 1
+    this.#capacity = maxSamples
+    // The oldest stored tick is at most this far behind the newest one.
+    this.#maxWindowMs = (maxSamples - 1) * sampleIntervalMs
     this.#values = []
     this.#prevRawTs = null
     this.#prevRawValue = null
@@ -505,47 +513,30 @@ export class MetricStore {
 
   push (timestamp, value) {
     const intervalMs = this.#sampleIntervalMs
-    const alignedTs = Math.floor(timestamp / intervalMs) * intervalMs
+    const alignedTs = alignDown(timestamp, intervalMs)
 
-    if (this.#prevRawTs === null) {
+    if (this.#nextAlignedTs === null) {
       this.#values.push(value)
       this.#nextAlignedTs = alignedTs + intervalMs
     } else if (this.#nextAlignedTs <= alignedTs) {
-      const pendingCount = (alignedTs - this.#nextAlignedTs) / intervalMs + 1
-
-      const expiredCount = this.#values.length + pendingCount - this.#capacity
-      if (expiredCount > 0) {
-        this.#values.splice(0, expiredCount)
-      }
-
       // A long silence must not generate ticks that are already outside the window.
-      const firstRetainedTs = alignedTs - (this.#capacity - 1) * intervalMs
-      const slope = (value - this.#prevRawValue) / (timestamp - this.#prevRawTs)
-
-      this.#nextAlignedTs = Math.max(this.#nextAlignedTs, firstRetainedTs)
-      while (this.#nextAlignedTs <= alignedTs) {
-        const alignedValue = value + slope * (this.#nextAlignedTs - timestamp)
-        this.#values.push(alignedValue)
-        this.#nextAlignedTs += intervalMs
+      const windowStartTs = alignedTs - this.#maxWindowMs
+      if (this.#nextAlignedTs < windowStartTs) {
+        this.#values.length = 0
+        this.#nextAlignedTs = windowStartTs
       }
+
+      const slope = (value - this.#prevRawValue) / (timestamp - this.#prevRawTs)
+      for (; this.#nextAlignedTs <= alignedTs; this.#nextAlignedTs += intervalMs) {
+        this.#values.push(value + slope * (this.#nextAlignedTs - timestamp))
+      }
+
+      const expiredCount = this.#values.length - this.#capacity
+      if (expiredCount > 0) this.#values.splice(0, expiredCount)
     }
 
     this.#prevRawTs = timestamp
     this.#prevRawValue = value
-  }
-
-  isExpired (now) {
-    if (this.#nextAlignedTs === null) return true
-    const lastAlignedTs = this.#nextAlignedTs - this.#sampleIntervalMs
-    return lastAlignedTs < now - this.#windowMs
-  }
-
-  hasEntries (startTs, endTs) {
-    if (this.#nextAlignedTs === null) return false
-    const intervalMs = this.#sampleIntervalMs
-    const firstStoredTs = this.#nextAlignedTs - this.#values.length * intervalMs
-    const firstRequestedTs = Math.max(firstStoredTs, Math.ceil(startTs / intervalMs) * intervalMs)
-    return firstRequestedTs <= endTs
   }
 
   // Bounds are finite and inclusive. Carry-forward never changes stored readings.
@@ -554,13 +545,12 @@ export class MetricStore {
 
     const intervalMs = this.#sampleIntervalMs
     const firstStoredTs = this.#nextAlignedTs - this.#values.length * intervalMs
-    const firstRequestedTs = Math.max(firstStoredTs, Math.ceil(startTs / intervalMs) * intervalMs)
+    const firstTs = Math.max(firstStoredTs, alignUp(startTs, intervalMs))
 
-    let index = (firstRequestedTs - firstStoredTs) / intervalMs
-    for (let timestamp = firstRequestedTs; timestamp <= endTs; timestamp += intervalMs) {
-      const value = timestamp < this.#nextAlignedTs ? this.#values[index] : this.#prevRawValue
+    let index = (firstTs - firstStoredTs) / intervalMs
+    for (let timestamp = firstTs; timestamp <= endTs; timestamp += intervalMs) {
+      const value = timestamp < this.#nextAlignedTs ? this.#values[index++] : this.#prevRawValue
       visit(timestamp, value)
-      index++
     }
   }
 }

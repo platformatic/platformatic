@@ -48,7 +48,7 @@ function assertClose (actual, expected, tolerance = 1e-6) {
 
 test('MetricStore', async (t) => {
   await t.test('first sample aligns to grid floor', () => {
-    const w = new MetricStore(1000, 60000)
+    const w = new MetricStore(1000, 61)
     w.push(1500, 0.42)
 
     const ticks = getMetricEntries(w, 0, 1500)
@@ -58,7 +58,7 @@ test('MetricStore', async (t) => {
   })
 
   await t.test('interpolates between samples to fill grid ticks', () => {
-    const w = new MetricStore(1000, 60000)
+    const w = new MetricStore(1000, 61)
     w.push(1500, 0.1)
     w.push(2500, 0.3)
 
@@ -73,7 +73,7 @@ test('MetricStore', async (t) => {
   })
 
   await t.test('fills multiple grid ticks between distant samples', () => {
-    const w = new MetricStore(1000, 60000)
+    const w = new MetricStore(1000, 61)
     w.push(1500, 0.0)
     w.push(4500, 0.6)
 
@@ -86,7 +86,7 @@ test('MetricStore', async (t) => {
   })
 
   await t.test('two samples in same interval: only first creates a tick', () => {
-    const w = new MetricStore(1000, 60000)
+    const w = new MetricStore(1000, 61)
     w.push(1100, 0.3)
     w.push(1200, 0.9)
 
@@ -96,7 +96,7 @@ test('MetricStore', async (t) => {
   })
 
   await t.test('iteration starts at the requested tick', () => {
-    const w = new MetricStore(1000, 60000)
+    const w = new MetricStore(1000, 61)
     w.push(1500, 0.1)
     w.push(2500, 0.2)
     w.push(3500, 0.3)
@@ -109,7 +109,7 @@ test('MetricStore', async (t) => {
   })
 
   await t.test('duplicate timestamps update interpolation without generating another tick', () => {
-    const store = new MetricStore(1000, 60000)
+    const store = new MetricStore(1000, 61)
     store.push(1500, 0.2)
     store.push(1500, 0.4)
     store.push(2500, 0.8)
@@ -121,7 +121,7 @@ test('MetricStore', async (t) => {
   })
 
   await t.test('sliding window expires old ticks', () => {
-    const w = new MetricStore(1000, 5000)
+    const w = new MetricStore(1000, 6)
 
     for (let i = 1; i <= 10; i++) {
       w.push(i * 1000 + 500, 0.3)
@@ -134,7 +134,7 @@ test('MetricStore', async (t) => {
   })
 
   await t.test('works with different intervals', () => {
-    const w = new MetricStore(500, 60000)
+    const w = new MetricStore(500, 121)
     w.push(1500, 0.1)
     w.push(2500, 0.3)
 
@@ -152,31 +152,26 @@ test('MetricStore', async (t) => {
 
 test('MetricStore retention and range boundaries', async t => {
   await t.test('empty stores have no readings to retain or carry forward', () => {
-    const store = new MetricStore(1000, 5000)
+    const store = new MetricStore(1000, 6)
     assert.deepStrictEqual(getMetricEntries(store, 0, 0), [])
     assert.deepStrictEqual(getMetricEntries(store, 1000, 5000), [])
-    assert.strictEqual(store.hasEntries(1000, 5000), false)
-    assert.strictEqual(store.isExpired(0), true)
   })
 
-  await t.test('retention includes the cutoff and expiry uses the last aligned reading', () => {
-    const store = new MetricStore(1000, 5000)
+  await t.test('retention includes the cutoff and is relative to the last aligned reading', () => {
+    const store = new MetricStore(1000, 6)
     store.push(1500, 0.1)
     store.push(6500, 0.6)
     assert.deepStrictEqual(getMetricEntries(store, 0, 6500).map(({ timestamp }) => timestamp), [1000, 2000, 3000, 4000, 5000, 6000])
-    assert.strictEqual(store.isExpired(11000), false)
-    assert.strictEqual(store.isExpired(11001), true)
 
     store.push(6600, 0.7)
     assert.strictEqual(getMetricEntries(store, 0, 6600)[0].timestamp, 1000)
-    assert.strictEqual(store.isExpired(11001), true)
     store.push(7500, 0.8)
     assert.deepStrictEqual(getMetricEntries(store, 0, 7500).map(({ timestamp }) => timestamp), [2000, 3000, 4000, 5000, 6000, 7000])
   })
 
-  await t.test('retention supports windows that are not multiples of the interval', () => {
-    for (const [windowMs, expectedTimestamps] of [[2500, [3000, 4000, 5000]], [500, [5000]], [0, [5000]]]) {
-      const store = new MetricStore(1000, windowMs)
+  await t.test('retention keeps the configured number of samples', () => {
+    for (const [maxSamples, expectedTimestamps] of [[3, [3000, 4000, 5000]], [1, [5000]]]) {
+      const store = new MetricStore(1000, maxSamples)
       store.push(1500, 0.1)
       store.push(5500, 0.5)
       assert.deepStrictEqual(getMetricEntries(store, 0, 5500).map(({ timestamp }) => timestamp), expectedTimestamps)
@@ -184,7 +179,7 @@ test('MetricStore retention and range boundaries', async t => {
   })
 
   await t.test('long gaps retain only the window while interpolating from the original readings', () => {
-    const store = new MetricStore(1000, 60000)
+    const store = new MetricStore(1000, 61)
     const timestamp = 365 * 24 * 60 * 60 * 1000 + 1500
     store.push(1500, 0.1)
     store.push(timestamp, 0.9)
@@ -198,8 +193,8 @@ test('MetricStore retention and range boundaries', async t => {
     }
   })
 
-  await t.test('range checks match inclusive reads for stored and carried ticks', () => {
-    const store = new MetricStore(1000, 2000)
+  await t.test('reads are inclusive for stored and carried ticks', () => {
+    const store = new MetricStore(1000, 3)
     store.push(1500, 0.1)
     store.push(4500, 0.7)
     for (const [startTs, endTs, expectedTimestamps] of [
@@ -212,12 +207,11 @@ test('MetricStore retention and range boundaries', async t => {
       [5000, 4999, []]
     ]) {
       assert.deepStrictEqual(getMetricEntries(store, startTs, endTs).map(({ timestamp }) => timestamp), expectedTimestamps)
-      assert.strictEqual(store.hasEntries(startTs, endTs), expectedTimestamps.length > 0)
     }
   })
 
-  await t.test('iteration carries forward the latest raw value without changing stored readings or expiry', () => {
-    const store = new MetricStore(1000, 5000)
+  await t.test('iteration carries forward the latest raw value without changing stored readings', () => {
+    const store = new MetricStore(1000, 6)
     store.push(1100, 0.3)
     store.push(1200, 0)
     assert.deepStrictEqual(getMetricEntries(store, 1000, 3000), [
@@ -226,7 +220,6 @@ test('MetricStore retention and range boundaries', async t => {
       { timestamp: 3000, value: 0 }
     ])
     assert.deepStrictEqual(getMetricEntries(store, 1000, 1000), [{ timestamp: 1000, value: 0.3 }])
-    assert.strictEqual(store.isExpired(6001), true)
     assert.deepStrictEqual(getMetricEntries(store, 7000, 8000), [
       { timestamp: 7000, value: 0 },
       { timestamp: 8000, value: 0 }

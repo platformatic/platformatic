@@ -56,6 +56,20 @@ for (const metric of ['elu', 'heap']) {
     processAndAssertMetric(applicationScaler, metric, 13000, 1)
   })
 
+  test(`${metric}: a run after the exit still counts the readings before it`, () => {
+    const applicationScaler = createApplicationScaler()
+    applicationScaler.addWorker('remaining', 0)
+    applicationScaler.addWorker('exiting', 0)
+    for (const timestamp of [10000, 11000, 12000]) {
+      applicationScaler.addSample(metric, 'remaining', timestamp, 0.2)
+      applicationScaler.addSample(metric, 'exiting', timestamp, 0.8)
+    }
+
+    applicationScaler.removeWorker('exiting', 12500)
+    processAndAssertMetric(applicationScaler, metric, 12999, 1, 12000)
+    processAndAssertMetric(applicationScaler, metric, 14000, 0.2)
+  })
+
   test(`${metric}: batched processing excludes the exit tick`, () => {
     const applicationScaler = createApplicationScaler()
     applicationScaler.addWorker('remaining', 0)
@@ -85,10 +99,12 @@ for (const metric of ['elu', 'heap']) {
 
     applicationScaler.addSample(metric, 'worker', 4000, 0.9)
     assert.equal(applicationScaler.process(5000), null)
+    assert.deepEqual(applicationScaler._getSnapshot(metric), before)
     // A later event must also be ignored after the ended state has been cleaned up.
+    // The run restarts the stale state, but must not process the late reading.
     applicationScaler.addSample(metric, 'worker', 70000, 0.9)
     assert.equal(applicationScaler.process(71000), null)
-    assert.deepEqual(applicationScaler._getSnapshot(metric), before)
+    assert.equal(applicationScaler._getSnapshot(metric).lastProcessedTs, before.lastProcessedTs)
   })
 
   test(`${metric}: restarting the same worker ID keeps distinct lifetimes without a timer`, t => {
@@ -187,4 +203,34 @@ test('batched ticks match incremental processing across missing readings and res
   for (const metric of ['elu', 'heap']) {
     assert.deepEqual(batchedScaler._getSnapshot(metric), incrementalScaler._getSnapshot(metric))
   }
+})
+
+test('a run after a long gap restarts from the stored samples', () => {
+  const config = {
+    minimum: 1,
+    maximum: 10,
+    cooldowns: {},
+    metrics: {
+      elu: { threshold: 0.8, redistributionMs: 1, alphaUp: 0.2, alphaDown: 0.1, betaUp: 0.1, betaDown: 0.1 }
+    }
+  }
+  const resumedScaler = new PredictiveApplicationScaler(config)
+  const freshScaler = new PredictiveApplicationScaler(config)
+  resumedScaler.addWorker('worker', 0)
+  freshScaler.addWorker('worker', 0)
+
+  for (let timestamp = 1000; timestamp <= 240000; timestamp += 1000) {
+    const value = 0.3 + timestamp / 1e6
+    resumedScaler.addSample('elu', 'worker', timestamp, value)
+    if (timestamp <= 60000) {
+      resumedScaler.process(timestamp)
+    } else {
+      // Only the stored samples matter after the gap.
+      freshScaler.addSample('elu', 'worker', timestamp, value)
+    }
+  }
+
+  resumedScaler.process(240000)
+  freshScaler.process(240000)
+  assert.deepEqual(resumedScaler._getSnapshot('elu'), freshScaler._getSnapshot('elu'))
 })

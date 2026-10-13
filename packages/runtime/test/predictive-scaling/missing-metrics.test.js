@@ -21,7 +21,7 @@ function createApplicationScaler () {
 }
 
 test('missing ticks use the last raw measurement, without extending its slope', () => {
-  const store = new MetricStore(1000, 60000)
+  const store = new MetricStore(1000, 61)
   store.push(1200, 0.25)
   store.push(2400, 1)
 
