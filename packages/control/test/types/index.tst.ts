@@ -15,7 +15,9 @@ import type {
   RuntimeApplication,
   RuntimeApplications,
   RuntimeSchedulerJob,
-  RuntimeSchedulerRunResult
+  RuntimeMemory,
+  RuntimeSchedulerRunResult,
+  WorkersScaler
 } from '../../lib/index.js';
 import { RuntimeApiClient } from '../../lib/index.js';
 
@@ -28,6 +30,8 @@ const api = new RuntimeApiClient();
 test('RuntimeApiClient methods', () => {
   expect(api.getMatchingRuntime()).type.toBe<Promise<Runtime>>();
   expect(api.getRuntimeMetrics(runtime.pid)).type.toBe<Promise<Metric[]>>();
+  expect(api.getRuntimeMemory(runtime.pid)).type.toBe<Promise<RuntimeMemory>>();
+  expect(api.getRuntimeWorkersScaler(runtime.pid)).type.toBe<Promise<WorkersScaler | null>>();
   expect(api.getRuntimeMetrics(runtime.pid, {})).type.toBe<Promise<Metric[]>>();
   expect(api.getRuntimeMetrics(runtime.pid, { format: 'json' })).type.toBe<
     Promise<Metric[]>

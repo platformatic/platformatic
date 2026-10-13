@@ -18,6 +18,8 @@ import {
   FailedToGetRuntimeLogIndexes,
   FailedToGetRuntimeMetadata,
   FailedToGetRuntimeMetrics,
+  FailedToGetRuntimeMemory,
+  FailedToGetRuntimeWorkersScaler,
   FailedToGetRuntimeOpenapi,
   FailedToGetRuntimeScheduler,
   FailedToReloadRuntime,
@@ -567,6 +569,44 @@ export class RuntimeApiClient {
     const metrics = format === 'json' ? await body.json() : await body.text()
 
     return metrics
+  }
+
+  async getRuntimeMemory (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/memory',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToGetRuntimeMemory(error)
+    }
+
+    return body.json()
+  }
+
+  // Resolves to null when the runtime does not run the dynamic workers scaler.
+  async getRuntimeWorkersScaler (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/workers/scaler',
+      method: 'GET'
+    })
+
+    if (statusCode === 404) {
+      await body.dump()
+      return null
+    }
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToGetRuntimeWorkersScaler(error)
+    }
+
+    return body.json()
   }
 
   getRuntimeLiveLogsStream (pid) {

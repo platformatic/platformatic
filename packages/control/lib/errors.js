@@ -83,6 +83,16 @@ export const FailedToGetRuntimeMetrics = createError(
   'Failed to get runtime metrics %s.'
 )
 
+export const FailedToGetRuntimeMemory = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_MEMORY`,
+  'Failed to get runtime memory %s.'
+)
+
+export const FailedToGetRuntimeWorkersScaler = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_WORKERS_SCALER`,
+  'Failed to get runtime workers scaler %s.'
+)
+
 export const ProfilingAlreadyStarted = createError(
   `${ERROR_PREFIX}_PROFILING_ALREADY_STARTED`,
   'Profiling is already started for service "%s".'

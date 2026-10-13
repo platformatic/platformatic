@@ -102,6 +102,59 @@ export interface Metric {
   aggregator: string
 }
 
+export interface WorkersScalerMetric {
+  threshold: number | null
+  lastProcessedTs: number
+  level: number | null
+  trendPerSecond: number
+}
+
+export interface WorkersScalerWorkerMetric {
+  lastSampleTs: number
+  lastValue: number
+  firstSampleTs: number
+  intervalMs: number
+  values: number[]
+}
+
+export interface WorkersScalerPendingStart {
+  scaleAt: number
+  decisionAt: number
+  expectedCount: number
+}
+
+export interface WorkersScalerApplication {
+  id: string
+  targetCount: number
+  liveCount: number
+  minimum: number
+  maximum: number
+  initTimeoutMs: number
+  horizonMs: number
+  pending: WorkersScalerPendingStart[]
+  metrics: Record<string, WorkersScalerMetric>
+  workers: {
+    id: string
+    startTime: number
+    metrics: Record<string, WorkersScalerWorkerMetric>
+  }[]
+}
+
+export interface WorkersScaler {
+  version: number
+  now: number
+  processIntervalMs: number
+  maxTotalWorkers: number
+  memoryLimit: number
+  applications: WorkersScalerApplication[]
+}
+
+export interface RuntimeMemory {
+  scope: 'host' | 'cgroup-v1' | 'cgroup-v2'
+  used: number
+  total: number
+}
+
 export interface LogIndexes {
   pid: number
   indexes: number[]
@@ -147,6 +200,8 @@ export class RuntimeApiClient {
     pid: number,
     options?: T
   ): Promise<T extends { format: 'text' } ? string : Metric[]>
+  getRuntimeMemory (pid: number): Promise<RuntimeMemory>
+  getRuntimeWorkersScaler (pid: number): Promise<WorkersScaler | null>
   getRuntimeLiveLogsStream (pid: number, startLogIndex?: number): WebSocketStream
   getRuntimeLogsStream (pid: number, logsId: string, options?: { runtimePID?: number }): Promise<ReadableBody>
   getRuntimeAllLogsStream (pid: number, options?: { runtimePID?: number }): Promise<ReadableBody>

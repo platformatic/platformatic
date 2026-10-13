@@ -15,6 +15,7 @@ import { dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createWebSocketStream } from 'ws'
 import { prepareAddedApplications } from './config.js'
+import { readMemory } from './memory.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
@@ -133,6 +134,20 @@ export async function managementApiPlugin (app, opts) {
 
   app.get('/applications', quiet, async () => {
     return runtime.getApplications()
+  })
+
+  app.get('/memory', quiet, async () => {
+    return readMemory()
+  })
+
+  app.get('/workers/scaler', quiet, async (_request, reply) => {
+    const scaler = runtime.getDynamicWorkersScaler()
+    if (!scaler) {
+      reply.code(404)
+      return { statusCode: 404, error: 'Not Found', message: 'Dynamic workers scaling is not enabled.' }
+    }
+
+    return scaler.getDiagnostics()
   })
 
   app.post('/applications', async (request, reply) => {
