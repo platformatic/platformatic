@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { prepareAddedApplications } from '../lib/config.js'
+import { PredictiveApplicationScaler } from '../lib/predictive-scaling.js'
 import { createRuntime } from './helpers.js'
 
 const root = join(import.meta.dirname, '../fixtures/worker-scaler')
@@ -63,6 +65,30 @@ test('applications added after startup receive their minimum workers and can be 
   assert.equal(Object.values(await app.getWorkers()).filter(worker => worker.application === 'later').length, 2)
   await app.removeApplications(['later'])
   assert.equal(Object.values(await app.getWorkers()).filter(worker => worker.application === 'later').length, 0)
+})
+
+test('applications stopped and started again are still scaled', async t => {
+  let scalingEnabled = false
+  t.mock.method(PredictiveApplicationScaler.prototype, 'process', () => scalingEnabled ? 2 : null)
+  t.mock.method(PredictiveApplicationScaler.prototype, 'getHeapPerWorker', () => 1)
+
+  const app = await start(t, {
+    dynamic: true,
+    minimum: 1,
+    maximum: 2,
+    total: 8,
+    processIntervalMs: 100,
+    cooldowns: { scaleUpAfterScaleUpMs: 0, scaleUpAfterScaleDownMs: 0 }
+  }, [{ id: 'service-1', workers: 1 }])
+  await app.stopApplication('service-2')
+  await app.startApplication('service-2')
+  scalingEnabled = true
+
+  // Closing while a scale-up is still starting a worker is a different scenario.
+  const countWorkers = async () => Object.values(await app.getWorkers())
+    .filter(worker => worker.application === 'service-2' && worker.status === 'started').length
+  for (let i = 0; i < 50 && await countWorkers() < 2; i++) await sleep(100)
+  assert.equal(await countWorkers(), 2)
 })
 
 test('standalone applications preserve worker settings through the application shorthand', async t => {

@@ -51,7 +51,7 @@ export class PredictiveApplicationScaler {
    *       alphaUp: number,
    *       alphaDown: number,
    *       betaUp: number,
-   *       betaDown: number
+   *       betaDown: number,
    *       maxValue: number,
    *       saturationZone: number
    *     }
@@ -163,15 +163,15 @@ export class PredictiveApplicationScaler {
     const instance = this.#instances.get(instanceId)
     if (timestamp < instance.startTime) return
 
-    let timeline = instance[metricName]
-    if (!timeline) {
-      timeline = new MetricStore(
+    let metricSamples = instance[metricName]
+    if (!metricSamples) {
+      metricSamples = new MetricStore(
         metric.config.sampleIntervalMs,
         metric.config.windowMs
       )
-      instance[metricName] = timeline
+      instance[metricName] = metricSamples
     }
-    timeline.push(timestamp, value)
+    metricSamples.push(timestamp, value)
   }
 
   get targetCount () {
@@ -320,31 +320,30 @@ export class PredictiveApplicationScaler {
     })
   }
 
-  #getAlignedMetrics (metricName, fromTick, toTick) {
-    const ticks = new Map()
+  #getAlignedMetrics (metricName, fromTick, now) {
+    const samplesByTimestamp = new Map()
 
     for (const [instanceId, instance] of this.#instances) {
-      const timeline = instance[metricName]
-      if (!timeline) continue
+      const metricSamples = instance[metricName]
+      if (!metricSamples) continue
 
-      if (instance.startTime > fromTick) {
-        fromTick = instance.startTime
-      }
-      if (instance.endTime !== null && instance.endTime < toTick) {
-        toTick = instance.endTime
-      }
+      // Bounds are per lifetime. The exit tick belongs to the remaining workers.
+      const instanceFromTick = Math.max(fromTick, instance.startTime)
+      const instanceToTick = instance.endTime === null
+        ? now
+        : Math.min(now, instance.endTime - 1)
 
-      timeline.forEachEntry(fromTick, toTick, (timestamp, value) => {
-        let tick = ticks.get(timestamp)
-        if (!tick) {
-          tick = { timestamp, workerValues: {} }
-          ticks.set(timestamp, tick)
+      metricSamples.forEachEntry(instanceFromTick, instanceToTick, (timestamp, value) => {
+        let samplesAtTimestamp = samplesByTimestamp.get(timestamp)
+        if (!samplesAtTimestamp) {
+          samplesAtTimestamp = { timestamp, workerValues: {} }
+          samplesByTimestamp.set(timestamp, samplesAtTimestamp)
         }
-        tick.workerValues[instanceId] = value
+        samplesAtTimestamp.workerValues[instanceId] = value
       })
     }
 
-    return [...ticks.values()].sort((a, b) => a.timestamp - b.timestamp)
+    return [...samplesByTimestamp.values()].sort((a, b) => a.timestamp - b.timestamp)
   }
 
   #checkScaleUp (now) {
@@ -439,11 +438,11 @@ export class PredictiveApplicationScaler {
 
       let hasPendingTicks = false
       for (const [metricName, metric] of this.#metrics) {
-        const timeline = instance[metricName]
-        if (!timeline || timeline.isExpired(now)) continue
+        const metricSamples = instance[metricName]
+        if (!metricSamples || metricSamples.isExpired(now)) continue
 
         const fromTick = Math.max(metric.lastProcessedTs + metric.config.sampleIntervalMs, instance.startTime)
-        if (timeline.hasEntries(fromTick, instance.endTime - 1)) {
+        if (metricSamples.hasEntries(fromTick, instance.endTime - 1)) {
           hasPendingTicks = true
           break
         }
@@ -453,10 +452,9 @@ export class PredictiveApplicationScaler {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Worker ID Mapper
-// ---------------------------------------------------------------------------
-
+// The runtime reuses worker IDs when it restarts a worker, or when it scales
+// down and back up. The algorithm needs to tell each worker lifetime apart, so
+// every registration gets a fresh instance ID that is never reused.
 export class WorkerIdMapper {
   #map
   #counter
@@ -485,10 +483,7 @@ export class WorkerIdMapper {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Worker metrics aligned to a fixed grid, with interpolation and carry-forward
-// ---------------------------------------------------------------------------
-
+// Worker metrics aligned to a fixed grid, with interpolation and carry-forward.
 export class MetricStore {
   #sampleIntervalMs
   #windowMs
@@ -570,17 +565,13 @@ export class MetricStore {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Redistribution
-// ---------------------------------------------------------------------------
-
 /**
  * Calculate stabilization weight using exponential curve.
  * Weight goes from 0 (just added) to 1 (fully stable).
  *
  * @param {number} age - how long the worker has been running (ms)
  * @param {number} redistributionMs - expected time for full stabilization
- * @param {number} k - shape parameter (default 0.5)
+ * @param {number} k - shape parameter
  * @returns {number} weight in [0, 1]
  */
 export function getStabilizationWeight (age, redistributionMs, k) {
@@ -677,10 +668,6 @@ export function redistributeValues (state, workers, config, prev) {
   return { prevSum, prevSumOfWeight, prevNewAvgValue, prevNewCount }
 }
 
-// ---------------------------------------------------------------------------
-// Holt smoothing
-// ---------------------------------------------------------------------------
-
 /**
  * Double Exponential Smoothing (Holt's Method)
  *
@@ -753,10 +740,6 @@ export function holt (state, config, prev) {
 
   return { level, trend }
 }
-
-// ---------------------------------------------------------------------------
-// Decision
-// ---------------------------------------------------------------------------
 
 export const TrendDirection = {
   UP: 'up',
@@ -882,10 +865,6 @@ function findScaleDownTarget ({
   const minInstances = Math.floor((1 + SCALE_DOWN_MARGIN) * level / threshold) + 1
   return Math.max(minimum, Math.min(targetCount, minInstances))
 }
-
-// ---------------------------------------------------------------------------
-// Init timeout
-// ---------------------------------------------------------------------------
 
 export function median (values) {
   const sorted = [...values].sort((a, b) => a - b)

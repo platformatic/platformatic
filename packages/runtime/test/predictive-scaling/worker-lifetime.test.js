@@ -38,6 +38,39 @@ for (const metric of ['elu', 'heap']) {
     processAndAssertMetric(applicationScaler, metric, 13000, 0.2)
   })
 
+  test(`${metric}: an exited worker does not truncate the readings of later workers`, () => {
+    const applicationScaler = createApplicationScaler()
+    for (const workerId of ['first', 'exiting', 'last']) {
+      applicationScaler.addWorker(workerId, 0)
+    }
+    for (const workerId of ['first', 'exiting', 'last']) {
+      applicationScaler.addSample(metric, workerId, 10000, 0.5)
+    }
+    processAndAssertMetric(applicationScaler, metric, 10000, 1.5)
+
+    applicationScaler.removeWorker('exiting', 10500)
+    for (const timestamp of [11000, 12000, 13000]) {
+      applicationScaler.addSample(metric, 'first', timestamp, 0.5)
+      applicationScaler.addSample(metric, 'last', timestamp, 0.5)
+    }
+    processAndAssertMetric(applicationScaler, metric, 13000, 1)
+  })
+
+  test(`${metric}: batched processing excludes the exit tick`, () => {
+    const applicationScaler = createApplicationScaler()
+    applicationScaler.addWorker('remaining', 0)
+    applicationScaler.addWorker('exiting', 0)
+    for (const timestamp of [10000, 11000, 12000]) {
+      applicationScaler.addSample(metric, 'remaining', timestamp, 0.2)
+      applicationScaler.addSample(metric, 'exiting', timestamp, 0.8)
+    }
+
+    applicationScaler.removeWorker('exiting', 12000)
+    processAndAssertMetric(applicationScaler, metric, 10000, 1)
+    // Same result as processing 11000 and 12000 separately.
+    processAndAssertMetric(applicationScaler, metric, 12000, 0.2)
+  })
+
   test(`${metric}: metrics cannot register or revive a worker`, () => {
     const applicationScaler = createApplicationScaler()
     applicationScaler.addSample(metric, 'worker', 1000, 0.8)

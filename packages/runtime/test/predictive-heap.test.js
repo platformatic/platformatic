@@ -6,7 +6,7 @@ import { setImmediate } from 'node:timers/promises'
 import { PredictiveApplicationScaler } from '../lib/predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from '../lib/worker/symbols.js'
 import { finalizeApplication } from '../lib/config.js'
-import { createWorkersConfig, mockApplicationResources } from './predictive-scaling/helpers.js'
+import { createWorkersConfig } from './predictive-scaling/helpers.js'
 
 // Keep admission tests independent of host/container memory and concurrent load.
 const metricsUrl = new URL('../lib/metrics.js', import.meta.url).href
@@ -120,7 +120,6 @@ async function setup (t, applications, availableMemory, config = {}) {
     `${app.id}:${index}`,
     { application: app.id, raw: { [kWorkerStatus]: 'started', [kWorkerStartTime]: 1000 } }
   ])))
-  mockApplicationResources(runtime, runtime.getWorkers)
   const updates = []
   runtime.updateApplicationsResources = async changes => {
     updates.push(...changes)
