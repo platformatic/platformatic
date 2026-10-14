@@ -15,6 +15,9 @@
     "**/fixtures/**"
   ],
   "rangeStrategy": "update-lockfile",
+  // Mirrors pnpm-workspace.yaml `minimumReleaseAge: 1440` (1440 minutes = 1 day).
+  // Security updates bypass this check regardless.
+  "minimumReleaseAge": "1 day",
   "ignoreDeps": [
     "camelcase",
     "inquirer",
@@ -27,6 +30,11 @@
   "prHourlyLimit": 3,
   "prConcurrentLimit": 10,
   "packageRules": [
+    {
+      // Matches pnpm-workspace.yaml `minimumReleaseAgeExclude: - '@platformatic/*'`
+      "matchPackageNames": ["@platformatic/*"],
+      "minimumReleaseAge": null
+    },
     {
       "matchUpdateTypes": [
         "minor",
