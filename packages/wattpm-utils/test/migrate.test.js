@@ -1637,7 +1637,8 @@ test('migrate - converts the v3 scaler settings and reports the removed ones', a
   const root = await project(t, {
     'platformatic.json': {
       $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
-      workers: { maximum: 4, scaleUpELU: 0.75, scaleDownELU: 0.25, cooldown: 30000 },
+      // `version` was never a v3 option: v3 ignored it, and v4 refuses it.
+      workers: { maximum: 4, scaleUpELU: 0.75, scaleDownELU: 0.25, cooldown: 30000, version: 'v2' },
       // The older form v3 converted into `workers`, where a value already in `workers` won.
       verticalScaler: {
         maxTotalWorkers: 8,
@@ -1689,6 +1690,7 @@ test('migrate - converts the v3 scaler settings and reports the removed ones', a
   strictEqual(workers.maximum, 4)
   strictEqual(workers.minimum, 2)
   strictEqual(workers.total, 8)
+  strictEqual(workers.version, undefined)
   strictEqual(loaded.config.verticalScaler, undefined)
 
   const application = loaded.config.applications.find(entry => entry.id === 'api')
@@ -1699,6 +1701,7 @@ test('migrate - converts the v3 scaler settings and reports the removed ones', a
   for (const removed of [
     'workers.scaleDownELU: 0.25',
     'workers.cooldown: 30000',
+    'workers.version: "v2"',
     'verticalScaler.cooldownSec: 10',
     'verticalScaler.gracePeriod: 5000',
     'workers.scaleDownELU: 0.1'
@@ -1752,4 +1755,76 @@ test('migrate - takes the maximum from verticalScaler.maxTotalWorkers when maxWo
   ok(emitted.includes('total: 16'), emitted)
   ok(emitted.includes('maximum: 8'), emitted)
   ok(emitted.includes('dynamic: true'), emitted)
+})
+
+test('migrate - applies verticalScaler.applications overrides, and ignores a zero threshold there as v3 did', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      verticalScaler: {
+        maxTotalWorkers: 8,
+        scaleUpELU: 0,
+        applications: {
+          api: { minWorkers: 3, maxWorkers: 4, scaleUpELU: 0.65, scaleDownELU: 0.1 }
+        }
+      },
+      services: [
+        // The entry's own value wins over the override, as in v3.
+        { id: 'api', path: './services/api', config: 'platformatic.json', workers: { minimum: 2 } }
+      ]
+    }
+  })
+
+  await mkdir(join(root, 'services/api'), { recursive: true })
+  await writeFile(
+    join(root, 'services/api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: false,
+    onWarning () {},
+    onInfo () {}
+  })
+
+  strictEqual(loaded.config.workers.eluThreshold, undefined)
+
+  const application = loaded.config.applications.find(entry => entry.id === 'api')
+  strictEqual(application.workers.minimum, 2)
+  strictEqual(application.workers.maximum, 4)
+  strictEqual(application.workers.eluThreshold, 0.65)
+
+  ok(migrateProcess.stdout.includes('verticalScaler.applications.api.scaleDownELU: 0.1'), migrateProcess.stdout)
+})
+
+test('migrate - writes a zero workers.scaleUpELU as the smallest threshold v4 accepts in practice', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json',
+      runtime: {
+        workers: { dynamic: true, maximum: 4, scaleUpELU: 0 }
+      }
+    }
+  })
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+
+  // v3 scaled up on any load with a threshold of 0, which v4 refuses; 0.01 still does.
+  ok(emitted.includes('eluThreshold: 0.01'), emitted)
+  ok(migrateProcess.stdout.includes('workers.scaleUpELU: 0'), migrateProcess.stdout)
 })

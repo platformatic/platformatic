@@ -238,7 +238,7 @@ export default createWattConfig({
 
 `workers.dynamic: true` still turns on dynamic worker scaling, but v4 uses a completely different algorithm. See [Dynamic workers](./dynamic-workers.md) for how it works.
 
-`migrate` converts these settings as the tables below describe and prints a note for each option it removes.
+`migrate` converts these settings as the tables below describe and prints a note listing the options it removed.
 
 | v3 `workers` | v4 |
 | --- | --- |
@@ -255,8 +255,9 @@ v4 also removes the `verticalScaler` block. Its settings map to `workers`:
 | `enabled` (`true` by default) | `workers.dynamic` |
 | `minWorkers` / `maxWorkers` | `workers.minimum` / `workers.maximum` |
 | `maxTotalWorkers` / `maxTotalMemory` | `workers.total` / `workers.maxMemory` |
+| `applications.<id>` | `workers` on that application, with the same renames |
 | `scaleUpELU`, `scaleDownELU`, `cooldownSec`, `gracePeriod` | As the matching `workers` rows above |
-| `timeWindowSec`, `scaleDownTimeWindowSec`, `scaleIntervalSec` | Removed |
+| `timeWindowSec`, `scaleDownTimeWindowSec`, `scaleIntervalSec` | Removed without a note. They had no effect in v3 |
 
 ### Cooldowns and redistribution
 
