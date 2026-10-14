@@ -14,10 +14,17 @@ import { isFetchable } from './utils.js'
 
 const EXPERIMENTAL_GRAPHQL_GATEWAY_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
-async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema, fetchGraphqlSubgraphs, composeEndpointMissCache }) {
+async function detectApplicationsUpdate ({
+  app,
+  applications,
+  graphqlApplications,
+  fetchOpenApiSchema,
+  fetchGraphqlSubgraphs,
+  composeEndpointMissCache
+}) {
   let changed
+  let watchingGraphqlApplications = false
 
-  const graphqlApplications = []
   // assumes applications here are fetchable
   for (const application of applications) {
     const { id, origin, openapi, graphql } = application
@@ -40,12 +47,19 @@ async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema
     }
 
     if (graphql) {
-      graphqlApplications.push(application)
+      watchingGraphqlApplications = true
     }
   }
 
-  if (!changed && graphqlApplications.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlApplications, app.graphqlComposerOptions, app, composeEndpointMissCache)
+  // When at least one graphql application is fetched, compose the supergraph again from all of them:
+  // the applications with a schema file reuse the schema read at startup.
+  if (!changed && watchingGraphqlApplications) {
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(
+      graphqlApplications,
+      app.graphqlComposerOptions,
+      app,
+      composeEndpointMissCache
+    )
     if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
       changed = true
       app.graphqlSupergraph = graphqlSupergraph
@@ -70,6 +84,7 @@ async function watchApplications (app, { config, capability }) {
   if (watching.length < 1) {
     return
   }
+  const graphqlApplications = applications.filter(application => application.graphql)
 
   const composeEndpointMissCache = new Map()
 
@@ -86,7 +101,16 @@ async function watchApplications (app, { config, capability }) {
 
   const timer = setInterval(async () => {
     try {
-      if (await detectApplicationsUpdate({ app, applications: watching, fetchOpenApiSchema, fetchGraphqlSubgraphs, composeEndpointMissCache })) {
+      if (
+        await detectApplicationsUpdate({
+          app,
+          applications: watching,
+          graphqlApplications,
+          fetchOpenApiSchema,
+          fetchGraphqlSubgraphs,
+          composeEndpointMissCache
+        })
+      ) {
         clearInterval(timer)
         app.log.info('detected applications changes, restarting ...')
 

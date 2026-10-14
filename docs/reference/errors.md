@@ -20,6 +20,10 @@
 
 ## @platformatic/gateway
 
+### PLT_GATEWAY_COULD_NOT_READ_GRAPHQL_SCHEMA_FILE
+
+**Message:** Could not read the GraphQL schema file "%s" of the "%s" application: %s
+
 ### PLT_GATEWAY_COULD_NOT_READ_OPENAPI_CONFIG
 
 **Message:** Could not read openapi config for "%s" service
@@ -35,6 +39,10 @@
 ### PLT_GATEWAY_INVALID_CUSTOM_HANDLER
 
 **Message:** Custom proxy handler "%s" must be a function.
+
+### PLT_GATEWAY_INVALID_GRAPHQL_SCHEMA_FILE
+
+**Message:** The GraphQL schema file "%s" of the "%s" application is not a valid GraphQL schema: %s
 
 ### PLT_GATEWAY_INVALID_HEADERS_OVERRIDE
 
