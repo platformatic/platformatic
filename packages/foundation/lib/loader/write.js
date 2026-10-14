@@ -4,8 +4,7 @@ import { join } from 'node:path'
 /*
   Writing a configuration file.
 
-  Three machine writers produce one -- scaffolding, `wattpm import` and `wattpm-utils migrate` --
-  and they are in different packages. Sharing the serializer and the suffix rule is what keeps them
+  The migration CLI and external tooling produce these files. Sharing the serializer and suffix rule keeps them
   from drifting apart on questions the format has one answer to: which quote, which filename in a
   CommonJS package, and how an expression is spelled inside an object literal.
 */
@@ -15,7 +14,7 @@ import { join } from 'node:path'
   plain object form, which is supported for capabilities that implement the contract without
   shipping a factory.
 
-  Here rather than in each writer, because all three of them ask the same question and an answer
+  Here rather than in each writer, because they ask the same question and an answer
   that differs between them is a configuration that boots under one and not the other.
 */
 export const capabilityFactories = {

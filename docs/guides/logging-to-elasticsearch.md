@@ -7,7 +7,8 @@ The logs will then be visualized via [Kibana](https://www.elastic.co/kibana).
 
 ## Create a Watt application
 
-Create a Watt application using `npm create wattpm`.
+Create a Watt application using the [official agent skill](./use-watt-with-ai-agents.md)
+or the [manual scaffolding instructions](../skills/watt/references/scaffolding.md).
 
 ## Setup ElasticSearch and Kibana
 

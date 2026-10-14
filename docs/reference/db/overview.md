@@ -71,13 +71,11 @@ All the commands will be prefixed by the application id. For instance, if your a
 The easiest way to create a Database Service is within a Watt application:
 
 ```bash
-# Create a new Watt application
-wattpm create my-app
-
-# This will prompt you to add a Database Application
+# Read the skill and ask your agent to create my-app with a database application
+wattpm skill references/services.md
 cd my-app
 
-# Start in development mode
+# After setup, start in development mode
 wattpm dev
 ```
 

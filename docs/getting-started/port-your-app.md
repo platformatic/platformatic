@@ -46,24 +46,22 @@ cd demo
 npm install
 ```
 
-### 2. Use `npm create wattpm`
+### 2. Integrate with the Watt skill
 
-Use `npm create wattpm` to wrap your application inside Watt.
+Install the [official skill](../guides/use-watt-with-ai-agents.md):
 
-```bash
-$ npm create wattpm
-Hello YOURNAME, welcome to Watt 4.0.0!
-? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
-? What port do you want to use? 3042
-[15:59:20.315] INFO (53128): /home/user/work/demo/.env written!
-[15:59:20.319] INFO (53128): /home/user/work/demo/.env.sample written!
-[15:59:20.319] INFO (53128): /home/user/work/demo/package.json written!
-[15:59:20.320] INFO (53128): /home/user/work/demo/watt.config.mjs written!
-[15:59:20.320] INFO (53128): Installing dependencies for the application using npm ...
-[15:59:37.237] INFO (53128): You are all set! Run `npm start` to start your project.
+```sh
+npx skills add platformatic/skills --skill watt
 ```
 
-The wizard writes `watt.config.mjs` because this package does not declare `"type": "module"`. In a package that does, it writes `watt.config.js`; if you would rather write the file in TypeScript, rename it to `watt.config.mts` (or `watt.config.ts` under `"type": "module"`) — the contents are the same either way.
+Ask your agent to integrate the existing application with Watt 4 on port 3042,
+preserving its source, module convention, original scripts, and environment files.
+It should add `wattpm`, the matching capability, and a minimal configuration.
+Review changes and authorize dependency installation. For manual integration, see
+the [framework reference](../skills/watt/references/frameworks.md).
+
+Use `watt.config.mjs` when the package does not declare `"type": "module"`, or
+`watt.config.js` / `watt.config.ts` in an ESM package. Keep one configuration file.
 
 ### 3. Setup application commands (optional)
 
@@ -91,7 +89,11 @@ export default {
 }
 ```
 
-The file is a program, so it reads `process.env` directly — there is no `{PLACEHOLDER}` interpolation. There is no `runtime` block either: orchestration settings like `logger` are the root's own, `application` is the shorthand for a project with exactly one application, and everything the capability itself understands — `server` included — sits under `application.config`. The wizard writes the plain-object form shown here so that the file can be read before anything is installed; once your dependencies are in place you can switch to `import { createWattConfig } from 'wattpm'` and wrap the object in `createWattConfig(...)` to get types.
+The file reads `process.env` directly. Runtime settings like `logger` belong to the
+root; capability settings sit under `application.config`. Use `createWattConfig`
+from `wattpm` for typed configuration, or add a versioned `$schema` when generating
+a plain-object file. Preserve the original framework scripts under different names
+to avoid recursively invoking Watt from `application.commands`.
 
 ## Starting Your Application
 
@@ -110,15 +112,16 @@ wattpm start
 
 ## Port your Next.js application to Watt
 
-In order to run your existing Next.js application with Watt, you can use the import capability of `wattpm-utils`.
+Ask your agent to integrate the existing Next.js application, or install the packages directly.
 
 From the root of your application, run:
 
-```
-npx wattpm-utils import
+```sh
+npm install wattpm @platformatic/next
 ```
 
-The command installs `@platformatic/next` as part of your dependencies. It writes no configuration file: a project with a single application and no configuration is detected from its dependencies and booted on inferred defaults, so there is nothing for a file to say.
+An inferred single-application project can run without configuration. Write a file
+when you need a specific port or other settings.
 
 By default, Watt will run on a random port. If you want to choose a specific port — or anything else the defaults do not cover — write a `watt.config.mjs` at the root of your application:
 

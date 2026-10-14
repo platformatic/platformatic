@@ -6,7 +6,6 @@ import { bold } from 'colorette'
 import { adminCommand } from './commands/admin.js'
 import { applicationsAddCommand, applicationsRemoveCommand } from './commands/applications.js'
 import { buildCommand } from './commands/build.js'
-import { createCommand } from './commands/create.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './commands/execution.js'
 import { helpCommand } from './commands/help.js'
 import { injectCommand } from './commands/inject.js'
@@ -17,6 +16,7 @@ import { pprofCommand } from './commands/pprof.js'
 import { replCommand } from './commands/repl.js'
 import { schedulerCommand, schedulerPauseCommand, schedulerResumeCommand, schedulerRunCommand } from './commands/scheduler.js'
 import { heapSnapshotCommand } from './commands/snapshot.js'
+import { skillCommand } from './commands/skill.js'
 import { version } from './schema.js'
 
 export * from './schema.js'
@@ -166,11 +166,8 @@ export async function main () {
     case 'admin':
       command = adminCommand
       break
-    /* c8 ignore next 2 - aliases */
-    case 'init':
-    case 'add':
-    case 'create':
-      command = createCommand
+    case 'skill':
+      command = skillCommand
       break
     case 'help':
       command = helpCommand

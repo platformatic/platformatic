@@ -33,7 +33,6 @@
   "dependencies": {
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
-    "@platformatic/generators": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "@watchable/unpromise": "^1.0.2",
     "json5": "^2.2.3",

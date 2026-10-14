@@ -17,15 +17,20 @@ Watt supports the stacks you love most, including [Next.js](https://nextjs.org/)
 ## Install
 
 ```bash
-# Create a new application
-npx wattpm@latest create
-
-# Or install manually:
 npm install wattpm
+
+# Install the official skill for your coding agent:
+npx skills add platformatic/skills --skill watt
+
+# Read the bundled instructions without an agent:
+npx wattpm skill
 ```
 
 Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start)
 to get up and running with Watt.
+
+Watt 4 replaces project generators and the import command with agent skills. See
+[Use Watt with AI Coding Agents](https://docs.platformatic.dev/docs/guides/use-watt-with-ai-agents).
 
 ## Documentation
 

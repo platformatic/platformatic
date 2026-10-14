@@ -180,12 +180,12 @@ mkdir my-platformatic-app
 cd my-platformatic-app
 ```
 
-3. Initialize a new app:
+3. Read the bundled setup instructions and create the application with your agent:
 ```bash
-wattpm create
+wattpm skill references/scaffolding.md
 ```
 
-4. Follow the prompts and start the app:
+4. Review the files, install the dependencies with your chosen package manager, and start the app:
 ```bash
 wattpm start
 ```

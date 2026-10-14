@@ -329,7 +329,6 @@ await app.removeApplications(['analytics-service'])
 The package also exports:
 
 - **`Runtime`** — the class itself, for `instanceof` checks and advanced subclassing scenarios.
-- **`Generator`**, **`WrappedGenerator`** — generators used by `create-platformatic` to scaffold new runtimes.
 - **`schema`** — the JSON Schema for runtime configuration.
 - **`transform`** — the configuration transform pipeline used internally.
 - **`errors`** — a namespace of `@fastify/error` constructors for runtime operations.

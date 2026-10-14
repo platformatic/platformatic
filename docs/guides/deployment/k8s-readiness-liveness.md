@@ -45,19 +45,10 @@ Before implementing Kubernetes health checks, you need:
 
 ## Installation
 
-**1. Create a new Watt application**, remeber to select a `@platformatic/node` called `api`:
-
-```bash
-$ npm create wattpm
-Hello YOURNAME, welcome to Watt Utils 3.0.0!
-? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? no
-? Where would you like to create your project? my-health-app
-? Which kind of application do you want to create? @platformatic/node
-✔ Installing @platformatic/node@^3.0.3 using pnpm ...
-? What is the name of the application? api
-? Do you want to create another application? no
-? What port do you want to use? 3042
-```
+**1. Create a new Watt application** using the
+[official skill](../use-watt-with-ai-agents.md). Ask for a Watt 4 project named
+`my-health-app` with a Fastify application `api` in `web/api`, using
+`@platformatic/node`, ESM source, `watt.config.ts`, npm workspaces, and port 3042.
 
 ```bash
 cd web/api; npm install fastify @fastify/postgresql @fastify/autoload; cd ..

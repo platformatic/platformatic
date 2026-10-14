@@ -117,6 +117,19 @@ const sidebars = {
       ]
     },
 
+    {
+      type: 'category',
+      label: 'Agent Skills',
+      items: [
+        'skills/watt/SKILL',
+        'skills/watt/references/scaffolding',
+        'skills/watt/references/frameworks',
+        'skills/watt/references/services',
+        'skills/watt/references/integration',
+        'skills/watt/references/operations'
+      ]
+    },
+
     // Concepts - Why Watt works the way it does (Diátaxis: Understanding-oriented)
     {
       type: 'category',

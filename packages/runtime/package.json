@@ -81,7 +81,6 @@
     "@opentelemetry/exporter-metrics-otlp-proto": "^0.219.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
-    "@platformatic/generators": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",

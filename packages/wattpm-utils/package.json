@@ -33,11 +33,9 @@
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@platformatic/foundation": "workspace:*",
-    "@platformatic/generators": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "colorette": "^2.0.20",
-    "create-wattpm": "workspace:*",
     "execa": "^9.4.0",
     "fast-json-patch": "^3.1.1",
     "json5": "^2.2.3",

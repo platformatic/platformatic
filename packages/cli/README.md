@@ -12,11 +12,10 @@
 ## Install
 
 ```bash
-# Create a new application
-npm create platformatic@latest
-
-# Or install manually:
 npm install platformatic
+
+# Create projects with the official Watt agent skill:
+npx skills add platformatic/skills --skill watt
 ```
 
 Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start)
