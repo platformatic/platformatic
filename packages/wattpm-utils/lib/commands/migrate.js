@@ -1103,6 +1103,9 @@ export async function planMigration (root, source, config, { useSampleDefaults =
   const seeds = new Map()
   const skipped = []
   const suggestions = new Map()
+
+  notes.push(...convertScaling(config, basename(source)))
+
   const declaredEntries = config.applications ?? config.services ?? config.web ?? []
   const rootDirectory = canonicalize(dirname(source))
 
@@ -1371,6 +1374,10 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       continue
     }
 
+    if (application.config.runtime) {
+      notes.push(...convertScaling(application.config.runtime, application.where))
+    }
+
     const placeholders = convertPlaceholders(
       application.config,
       await capabilitySchema(application.module, application.directory),
@@ -1432,6 +1439,110 @@ function stripRemovedKeys (config, id) {
     config.application = rest
     notes.push(
       `${bold(id)} declared ${bold(`entrypointPort: ${entrypointPort}`)}, which v4 removed along with the runtime's own listener; an application advertises its address through its own server block now.`
+    )
+  }
+
+  return notes
+}
+
+/*
+  The v3 scaler keys migrate renames or removes, wherever they appear: `workers` (root or per
+  application) and the older `verticalScaler` block. Every other key is copied as is.
+*/
+const scalingKeyRenames = {
+  scaleUpELU: 'eluThreshold',
+  // verticalScaler's names for `workers` keys.
+  minWorkers: 'minimum',
+  maxWorkers: 'maximum',
+  maxTotalWorkers: 'total',
+  maxTotalMemory: 'maxMemory'
+}
+
+const scalingKeyRemovals = {
+  scaleDownELU: 'v4 scales down automatically',
+  cooldown: 'replaced by workers.cooldowns, which work differently',
+  cooldownSec: 'replaced by workers.cooldowns, which work differently',
+  gracePeriod: 'replaced by workers.redistributionMs, which works differently'
+}
+
+// Renames into `target` without overwriting it, so converting `workers` before `verticalScaler`
+// keeps v3's precedence, where a value already in `workers` won.
+function convertScalingKeys (source, target, prefix, application, dropped) {
+  if (typeof source !== 'object' || source === null) {
+    return
+  }
+
+  for (const [key, value] of Object.entries(source)) {
+    if (scalingKeyRenames[key]) {
+      target[scalingKeyRenames[key]] ??= value
+      delete source[key]
+    } else if (scalingKeyRemovals[key]) {
+      const owner = application ? ` (application ${application})` : ''
+      dropped.push(`${bold(`${prefix}.${key}: ${value}`)}${owner} — ${scalingKeyRemovals[key]}`)
+      delete source[key]
+    }
+  }
+}
+
+/*
+  Every position a v3 file could tune the scaler from: the runtime's `workers` and the older
+  `verticalScaler` v3 converted into it, and the `workers` of each application, whether declared,
+  mapped for autoload or written as the wrapped single-app shorthand. Run before placeholders are
+  typed, because those are typed against the v4 schema, where only the converted positions exist.
+*/
+function convertScaling (config, where) {
+  const dropped = []
+
+  convertScalingKeys(config.workers, config.workers, 'workers', null, dropped)
+
+  if (config.verticalScaler) {
+    const scaler = config.verticalScaler
+
+    // v3 crashed merging into a `workers` count, so no project that ran has both: the block is just dropped.
+    if (typeof config.workers !== 'number' && typeof config.workers !== 'string') {
+      const workers = (config.workers ??= {})
+
+      // v3 enabled the scaler for the block alone.
+      workers.dynamic ??= scaler.enabled ?? true
+
+      // v3 fell back to `maxTotalWorkers` for the maximum, which differs from v4's default when
+      // `workers.total` was set too. Its final fallback, a maximum of 1, was a bug and is dropped.
+      if (scaler.maxTotalWorkers !== undefined) {
+        workers.maximum ??= scaler.maxWorkers ?? scaler.maxTotalWorkers
+      }
+
+      convertScalingKeys(scaler, workers, 'verticalScaler', null, dropped)
+    }
+
+    // `enabled` is converted above; `timeWindowSec`, `scaleDownTimeWindowSec` and `scaleIntervalSec`
+    // go with the block, as v3 already ignored them.
+    delete config.verticalScaler
+  }
+
+  const entries = [
+    ...(config.applications ?? []),
+    ...(config.services ?? []),
+    ...(config.web ?? []),
+    ...Object.values(config.autoload?.mappings ?? {})
+  ]
+
+  if (config.application) {
+    entries.push(config.application)
+  }
+
+  for (const entry of entries) {
+    convertScalingKeys(entry.workers, entry.workers, 'workers', entry.id, dropped)
+  }
+
+  // One note per file, opening with why: a list of removed keys means nothing to a reader who does
+  // not know the scaler itself was replaced.
+  const notes = []
+
+  if (dropped.length > 0) {
+    notes.push(
+      `Dynamic worker scaling uses a new algorithm in v4. These v3 options in ${bold(where)} no longer exist and were removed:\n` +
+        dropped.map(item => `  - ${item}\n`).join('') +
+        'See "Update dynamic worker scaling" in the v4 migration guide.'
     )
   }
 
@@ -2536,6 +2647,7 @@ export async function migrateCommand (logger, args) {
   let needsPath = false
   let suggested = new Map()
   let seeds = new Map()
+  let scalingNotes = []
 
   if (runtime && refusals.length === 0) {
     plan = await planMigration(directory, source, config, { useSampleDefaults, resumed })
@@ -2546,6 +2658,10 @@ export async function migrateCommand (logger, args) {
       either way: a position migrate cannot decide is a refusal, not a value carried through as the
       literal text of a placeholder.
     */
+    if (config.runtime) {
+      scalingNotes = convertScaling(config.runtime, basename(source))
+    }
+
     const placeholders = convertPlaceholders(config, await capabilitySchema(module, directory), {
       module,
       sample: readSampleEnv(directory),
@@ -2896,7 +3012,7 @@ export async function migrateCommand (logger, args) {
     )
   }
 
-  for (const note of notes.concat(envBlocks, plan?.exposure ?? [])) {
+  for (const note of notes.concat(scalingNotes, envBlocks, plan?.exposure ?? [])) {
     logger.warn(note)
   }
 

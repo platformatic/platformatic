@@ -19,7 +19,7 @@ npx wattpm-utils migrate
 
 `migrate` reads the v3 configuration, decides every refusal before writing anything, and then writes the v4 files. It converts `{PLT_X}` placeholders to the expressions they stand for, moves the root listener into the capability that owned it, and reports what it could not decide for you. What follows is what it does, so that you can read its output — and do it by hand where you would rather.
 
-**Run it on a clean git tree.** There is no backup file and no `--keep`: version control is the undo mechanism, so review the result with `git diff` and undo it with `git restore` if needed. `migrate` refuses to run on a dirty tree (`--force` overrides, with a loud warning; the same flag is needed for a project with no VCS at all). An untracked or gitignored legacy config file — `platformatic.json` is often gitignored because it carries secrets — counts as dirty too, and blocks the run by name, because deleting a file git never tracked is unrecoverable; commit it or exclude it deliberately first.
+**Run it on a clean git tree.** There is no backup file and no `--keep`: version control is the undo mechanism, so review the result with `git diff` and undo it with `git restore` if needed. `migrate` does not check the tree for you. Watch for an untracked or gitignored legacy config file — `platformatic.json` is often gitignored because it carries secrets: `migrate` deletes it like any other, and git cannot restore a file it never tracked, so copy it somewhere safe first.
 
 Legacy config files are **deleted** once the new ones are written and validated, not merely left in place. If the run is interrupted, `wattpm-utils migrate --resume` continues from where it left off, using a `.wattpm-migrate.json` manifest written for the life of the run (and removed on completion).
 
@@ -233,6 +233,47 @@ export default createWattConfig({
   }
 })
 ```
+
+## Update dynamic worker scaling
+
+`workers.dynamic: true` still turns on dynamic worker scaling, but v4 uses a completely different algorithm. See [Dynamic workers](./dynamic-workers.md) for how it works.
+
+`migrate` converts these settings as the tables below describe and prints a note for each option it removes.
+
+| v3 `workers` | v4 |
+| --- | --- |
+| `scaleUpELU` (root or per application) | `eluThreshold` |
+| `scaleDownELU` (root or per application) | Removed. The v4 scaler scales down automatically |
+| `cooldown` | Removed. See [Cooldowns and redistribution](#cooldowns-and-redistribution) |
+| `gracePeriod` | Removed. See [Cooldowns and redistribution](#cooldowns-and-redistribution) |
+| `static`, `dynamic`, `minimum`, `maximum`, `total`, `maxMemory` | Unchanged |
+
+v4 also removes the `verticalScaler` block. Its settings map to `workers`:
+
+| v3 `verticalScaler` | v4 |
+| --- | --- |
+| `enabled` (`true` by default) | `workers.dynamic` |
+| `minWorkers` / `maxWorkers` | `workers.minimum` / `workers.maximum` |
+| `maxTotalWorkers` / `maxTotalMemory` | `workers.total` / `workers.maxMemory` |
+| `scaleUpELU`, `scaleDownELU`, `cooldownSec`, `gracePeriod` | As the matching `workers` rows above |
+| `timeWindowSec`, `scaleDownTimeWindowSec`, `scaleIntervalSec` | Removed |
+
+### Cooldowns and redistribution
+
+v3's `cooldown` and `gracePeriod` have v4 counterparts that work differently, so `migrate` does not copy their values.
+
+**Cooldowns.** v3 depended on `cooldown`: it was one delay after any scaling action (20 seconds by default), shared by the whole runtime, and without it the scaler kept adding workers before the new ones took any load. The v4 scaler accounts for the workers it has just started, so it works correctly without cooldowns. `workers.cooldowns` are optional limits on how often it scales, set for each combination of directions and applied to each application on its own:
+
+| Setting | Default | What it delays |
+| --- | --- | --- |
+| `scaleUpAfterScaleUpMs` | `5000` | A scale-up after a scale-up |
+| `scaleUpAfterScaleDownMs` | `5000` | A scale-up after a scale-down |
+| `scaleDownAfterScaleUpMs` | `30000` | A scale-down after a worker starts |
+| `scaleDownAfterScaleDownMs` | `20000` | A scale-down after a scale-down |
+
+Set a delay to `0` to remove it. Setting all four to v3's 20 seconds also works, but the scaler then reacts more slowly than it can.
+
+**Redistribution.** v3's `gracePeriod` ignored a new worker's metrics for a fixed time (30 seconds by default). v4 reads them from the start. Over `workers.redistributionMs` (10 seconds by default), it counts the new worker's load in gradually and offsets the drop on existing workers as traffic moves to it, so a scale-up is not mistaken for falling demand. Set it to about how long a new worker takes to receive its share of traffic.
 
 ## Update programmatic startup code
 

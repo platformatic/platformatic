@@ -968,7 +968,7 @@ The configuration format is the same as the per-application `management` setting
 
 ### verticalScaler
 
-Removed. Use predictive [`workers`](#workers) settings; see the [Watt v4 migration guide](../../guides/dynamic-workers.md#migrating-from-watt-v3-to-watt-v4).
+Removed. Use predictive [`workers`](#workers) settings; see the [Watt v4 migration guide](../../guides/migrate-v4.md#update-dynamic-worker-scaling).
 
 ### policies
 

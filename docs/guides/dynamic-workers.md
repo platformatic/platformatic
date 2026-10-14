@@ -196,14 +196,3 @@ export default createWattConfig({
 Here, `api` can scale between two and six workers using a 70% ELU threshold. `jobs` stays at one worker, which still counts toward `total`.
 
 For a single-application project, keep `workers` at the root beside `application`.
-
-## Migrating from Watt v3 to Watt v4
-
-Watt v4 uses predictive scaling whenever `workers.dynamic` is `true`. Dynamic scaling remains disabled by default. There is no algorithm version selector.
-
-- Remove `workers.version`. Both former version values are rejected.
-- Replace `scaleUpELU` with `eluThreshold` as a starting point for tuning; forecasting changes when a scale-up happens. `scaleDownELU` has no direct equivalent: review the directional `cooldowns` instead.
-- Replace the single `cooldown` with the directional `cooldowns` settings. Remove the scaler's `gracePeriod`; new worker measurements are handled through redistribution and startup tracking. The separate `health.gracePeriod` setting is unchanged.
-- Replace `verticalScaler` with `workers`: `enabled` becomes `dynamic`, `minWorkers`/`maxWorkers` become `minimum`/`maximum`, and `maxTotalWorkers`/`maxTotalMemory` become `total`/`maxMemory`. Move application overrides to `applications[].workers`. Review obsolete timing settings rather than copying them unchanged.
-
-Removed options are rejected during configuration validation. Predictive scaling can add capacity before an overload and uses different scale-down hysteresis, so validate the new settings against representative traffic before upgrading production.
