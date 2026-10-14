@@ -1,7 +1,7 @@
 import { ApplicationDefinition, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
-import { PlatformaticApplication, ServiceCapability, Generator as ServiceGenerator } from '@platformatic/service'
+import { PlatformaticApplication, ServiceCapability } from '@platformatic/service'
 import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { Entities, SQLMapperPluginInterface } from '@platformatic/sql-mapper'
 import { JSONSchemaType } from 'ajv'
@@ -41,8 +41,6 @@ export declare function create (
 export declare const skipTracingHooks: boolean
 
 export declare function platformaticDatabase (app: FastifyInstance, capability: DatabaseCapability): Promise<void>
-
-export declare class Generator extends ServiceGenerator {}
 
 export declare const packageJson: Record<string, unknown>
 

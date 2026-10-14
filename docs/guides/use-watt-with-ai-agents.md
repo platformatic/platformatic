@@ -1,127 +1,122 @@
 # Use Watt with AI Coding Agents
 
-## Problem
+Watt 4 uses agent skills instead of interactive project generators. An agent reads
+the official skill and writes code and configuration directly, preserving your
+framework, package manager, workspace layout, and existing application behavior.
 
-You want an AI coding agent (Claude Code, Cursor, GitHub Copilot, Gemini CLI, and others) to set up and run Platformatic Watt for you, instead of writing `watt.config.ts` and wiring up dependencies and deployment manifests by hand. You need the agent to:
+## Install the skill
 
-- Detect your framework and generate a correct `watt.config.ts`
-- Install the right `wattpm` and `@platformatic/*` packages
-- Produce Docker, Kubernetes, and cloud deployment configuration
-- Guide you through `wattpm` CLI commands, observability, scheduling, and profiling
+Install the official skill in your project with:
 
-**When to use this solution:**
-
-- You are starting a new Watt project or porting an existing application
-- You already use an AI coding agent and want it to follow Watt best practices
-- You want consistent, repeatable Watt setup across projects and teammates
-
-## Solution
-
-Platformatic publishes an official Agent Skill for Watt. A skill is a set of Markdown instructions that a skills-compatible agent reads and follows. The Watt skill tells your agent how to set up, configure, and deploy Watt, so you do not have to spell out each step.
-
-The skill follows the [Agent Skills open standard](https://agentskills.io/), so it works with any skills-compatible agent. Loaded into Claude Code, it also adds slash commands.
-
-The skill is maintained in the [`platformatic/skills`](https://github.com/platformatic/skills) repository.
-
-### Install the skill
-
-For any skills-compatible agent:
-
-```bash
-npx skills add platformatic/skills
+```sh
+npx skills add platformatic/skills --skill watt
 ```
 
-The installer clones the repository and lets you pick which skills to install. Select `watt` (and optionally `kafka` and `workflow`):
+Select your local agent and project-level installation in the installer. Use its
+global installation option only if you want the skill available in all projects.
+The skill follows the [Agent Skills standard](https://agentskills.io/) and can be
+used with Claude Code, Cursor, GitHub Copilot, Gemini CLI, and other compatible agents.
 
-![Selecting the watt skill with npx skills add](./images/skills-add-watt.png)
+For an agent without a skills installer, place `SKILL.md` and the complete `references/`
+directory in the agent's supported skill directory. Keep their relative paths intact.
+Read the agent's documentation for its discovery path; no Watt plugin or generator
+is required. Do not overwrite an existing agent instruction file to install a skill.
 
-Alternatively, clone the repository and point your agent at the `skills/` directory:
+For example, a project-local Claude Code installation has this layout:
 
-```bash
-git clone https://github.com/platformatic/skills.git
+```text
+.claude/
+  skills/
+    watt/
+      SKILL.md
+      references/
+        scaffolding.md
+        frameworks.md
+        services.md
+        integration.md
+        operations.md
 ```
 
-For Claude Code, load it as a plugin to enable slash commands:
+Keep the whole skill directory, not just the main Markdown file: the instructions
+load references as needed. Restart or refresh your agent's skill discovery after
+manual installation. If it does not select Watt automatically, explicitly ask it
+to use the `watt` skill and confirm it can read the referenced files.
 
-```bash
-claude --plugin-dir /path/to/skills
+## Use the skill
+
+Describe the result you want, for example:
+
+- "Create a Watt 4 project with a Fastify API and a gateway."
+- "Add Watt to this Next.js application without replacing its existing source."
+- "Add a PostgreSQL database application with migrations and endpoint tests."
+- "Integrate this existing application into our Watt workspace."
+- "Prepare Docker and Kubernetes deployment files for this Watt project."
+
+The agent should inspect your project, read the relevant reference, propose changes,
+and write the necessary files. Review configuration and authorize installations,
+migrations, downloads, and deployment separately. Watt requires Node.js 24.20.0+.
+
+## Read the skill without an agent
+
+The published `wattpm` package includes an offline copy matching its release:
+
+```sh
+npx wattpm skill
+npx wattpm skill references/scaffolding.md
+npx wattpm skill references/frameworks.md
+npx wattpm skill references/services.md
+npx wattpm skill references/integration.md
+npx wattpm skill references/migration-v4.md
+npx wattpm skill references/operations.md
 ```
 
-### Use the skill
+The command prints Markdown to stdout without changing project files. `FILE` is a
+relative filename inside the bundled Watt skill, not an arbitrary local file.
+The default is `SKILL.md`. Missing files fail with `PLT_SKILL_FILE_NOT_FOUND`;
+invalid paths or extra arguments fail with `PLT_INVALID_SKILL_FILE`.
 
-Once the skill is installed, describe what you want in plain language. The agent matches the request against the skill and runs the matching workflow. For example:
+## Skill source and distribution
 
-- "Add Watt to this Next.js project"
-- "Generate a Dockerfile for my Watt app"
-- "Deploy this to Kubernetes"
-- "Create a multi-service enterprise setup"
-- "Capture a CPU profile for my Watt app with pprof"
+The source of truth is [`docs/skills/watt`](../skills/watt/SKILL.md) in
+`platformatic/platformatic`. It is published as searchable documentation and bundled
+into `wattpm`. The `platformatic/skills` repository maintains the agent distribution,
+including additional detailed references and independent companion skills. Updates
+are reconciled deliberately rather than replacing its Watt directory automatically.
 
-### Claude Code slash commands
+From the root of an existing `platformatic/skills` checkout, maintainers prepare
+a snapshot and agent context with:
 
-When the skill is loaded as a Claude Code plugin, it exposes argument-based slash commands. These are specific to Claude Code and are not part of the Agent Skills standard:
+```sh
+node scripts/prepare-watt-context.mjs --ref main
 
-```
-/watt                  # auto-detect the framework and integrate Watt
-/watt init nextjs      # integrate with a framework hint
-/watt deploy docker    # generate Docker configuration
-/watt deploy k8s       # generate Kubernetes manifests
-/watt enterprise       # multi-service setup
-/watt migrate          # migrate an existing application
-/watt cli              # wattpm CLI reference
-/watt status           # check Watt configuration health
+# Or use a local Platformatic checkout, including unpublished changes:
+node scripts/prepare-watt-context.mjs --path /path/to/platformatic
 ```
 
-## What the skill can do
+The ref must already be published in `platformatic/platformatic` and contain
+`docs/skills/watt`. Use `--ref` to select a branch, tag, or commit. The script downloads
+an immutable snapshot into `tmp/watt/upstream/<commit>/` and generates
+`tmp/watt/CONTEXT.md` with provenance, inventories, differences, and reconciliation
+instructions. It does not modify distributed skills or launch an agent.
+`--path` also accepts the skill directory itself, requires no Git or network, and
+stores a content-addressed snapshot in `tmp/watt/upstream/local-<sha256>/`.
+Use either `--ref` or `--path`, not both.
 
-| Capability | Description |
-|------------|-------------|
-| Framework detection | Identifies Next.js, Nuxt, Nitro, React Router, TanStack Start, Vite, Remix, Astro, NestJS, Express, Fastify, Koa, WordPress, Laravel, and PHP |
-| Configuration generation | Creates a `watt.config.ts` tuned to the detected framework |
-| Dependency installation | Installs `wattpm` and the matching `@platformatic/*` package |
-| Deployment automation | Generates Docker, Kubernetes, and cloud (Fly.io, Railway, Render) configuration |
-| CLI guidance | Explains `wattpm` commands such as `create`, `inject`, `logs`, `ps`, and `pprof` |
-| Observability | Sets up logging (Pino), tracing (OpenTelemetry), and metrics (Prometheus) |
-| Scheduled jobs | Configures cron-based tasks with retry support |
-| Performance profiling | Captures CPU profiles and heap snapshots, and generates flamegraphs |
+Run your agent manually in the skills checkout and give it `tmp/watt/CONTEXT.md`.
+Review its proposal before approving changes, preserving useful existing references
+and aligning Watt-related commands and agents. Commit, push, and publication remain
+separate manual operations. See that repository's README for prerequisites and tests.
 
-## Supported frameworks
+## Migration from generators
 
-| Framework | Package | Detection |
-|-----------|---------|-----------|
-| Next.js | `@platformatic/next` | `next.config.{js,ts,mjs}` |
-| Nuxt | `@platformatic/nuxt` | `nuxt.config.{ts,js,mjs}` |
-| Nitro | `@platformatic/nitro` | `nitro` or `nitropack` in dependencies |
-| React Router | `@platformatic/react-router` | `react-router.config.{ts,js}` |
-| TanStack Start | `@platformatic/tanstack` | `@tanstack/react-start` in dependencies |
-| Vite | `@platformatic/vite` | `vite.config.{js,ts,mjs}` (fallback for Vite apps) |
-| Remix | `@platformatic/remix` | `remix.config.js` |
-| Astro | `@platformatic/astro` | `astro.config.{mjs,ts}` |
-| Express | `@platformatic/node` | `express` in dependencies |
-| Fastify | `@platformatic/node` | `fastify` in dependencies |
-| Koa | `@platformatic/node` | `koa` in dependencies |
-| NestJS | `@platformatic/node` | `nest-cli.json` or `@nestjs/core` |
-| WordPress | `@platformatic/php` | `wp-config.php` |
-| Laravel | `@platformatic/php` | `artisan` plus `composer.json` |
-| PHP | `@platformatic/php` | `composer.json` plus `public/index.php` |
-
-Several frameworks build on Vite (Nitro, React Router, TanStack Start, Remix, Astro) and ship a `vite.config.*`. The agent matches the specific framework first and falls back to `@platformatic/vite` only when no more specific signal is present.
-
-## Requirements
-
-- Node.js v24.20.0 or higher
-- A skills-compatible agent (Claude Code, Cursor, GitHub Copilot, Gemini CLI, and others)
-
-## Related skills
-
-The `platformatic/skills` repository also ships companion skills:
-
-- **`kafka`** - event-driven microservices with `@platformatic/kafka` and kafka-hooks, including migrations from KafkaJS and node-rdkafka
-- **`workflow`** - building applications with the Vercel Workflow SDK against a self-hosted Platformatic Workflow Service via `@platformatic/world`
+Watt 4 removes `create-wattpm`, `create-platformatic`, `@platformatic/generators`,
+the `create`/`init`/`add` scaffolding aliases, and the `import` command. Use the skill
+to create projects and integrate applications. Runtime commands and operational
+`wattpm-utils install`, `update`, `resolve`, and `migrate` remain available.
 
 ## See also
 
-- [Watt overview](../reference/wattpm/overview.md)
-- [Watt CLI commands](../reference/wattpm/cli-commands.md)
-- [`platformatic/skills` repository](https://github.com/platformatic/skills)
-- [Agent Skills standard](https://agentskills.io/)
+- [Watt skill](../skills/watt/SKILL.md)
+- [Watt CLI](../reference/wattpm/cli-commands.md)
+- [Watt 4 migration](./migrate-v4.md)
+- [`platformatic/skills`](https://github.com/platformatic/skills)

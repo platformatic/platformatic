@@ -1,6 +1,5 @@
 import { FastifyError } from '@fastify/error'
 import { Configuration, ConfigurationOptions, logFatalError, parseArgs } from '@platformatic/foundation'
-import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticGlobal } from '@platformatic/globals'
 import * as PromClient from '@platformatic/prom-client'
 import { JSONSchemaType } from 'ajv'
@@ -271,10 +270,6 @@ export interface ManagementClient {
   removeApplications (ids: string[]): Promise<ApplicationDetails[]>
   inject (id: string, injectParams: InjectParams): Promise<InjectResponse>
 }
-
-export class Generator extends BaseGenerator {}
-
-export class WrappedGenerator extends BaseGenerator {}
 
 export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
 

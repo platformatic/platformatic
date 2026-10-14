@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { test } from 'node:test'
 import { showGeneralHelp } from '../lib/commands/help.js'
 import { version } from '../lib/version.js'
@@ -67,4 +67,17 @@ test('help - should complain for invalid commands', async t => {
       'Unknown command whatever. Please run "wattpm-utils help" to see available commands.'
     )
   )
+})
+
+test('help - removed scaffolding commands are not available', async () => {
+  for (const command of ['create', 'init', 'add', 'import']) {
+    const result = await wattpmUtils(command, { reject: false })
+    strictEqual(result.exitCode, 1)
+    ok(result.stdout.includes(`Unknown command ${command}`))
+  }
+
+  const help = await wattpmUtils('help')
+  ok(!help.stdout.includes('Imports an external resource'))
+  ok(!help.stdout.includes('Creates a new Watt project'))
+  ok(help.stdout.includes('resolve [root]'))
 })

@@ -29,20 +29,9 @@ Your Platformatic app should be at the `http://127.0.0.1:3042/` URL.
 
 We're now going to use Platformatic Gateway compose our database and our frontend applications:
 
-```bash
-npm create wattpm
-```
-
-And then let's enter the following settings:
-
-```bash
-Hello YOURNAME, welcome to Watt 3.0.0!
-Using existing configuration ...
-? Which kind of application do you want to create? @platformatic/gateway
-? What is the name of the application? gateway
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-```
+Use the [Watt skill](./use-watt-with-ai-agents.md) to add `web/gateway` using
+`@platformatic/gateway`. Request ESM source and `watt.config.ts`, preserve the
+database application, and configure the gateway as the publicly listening application.
 
 ## Create a Front-end Application
 
@@ -71,21 +60,10 @@ npm create vite@latest -- web/frontend --template vue-ts
 </TabItem>
 </Tabs>
 
-Run the command below to add a `watt.config.ts` file to your frontend application:
-
-```bash
-npx wattpm-utils import
-```
-
-This will also install the required dependencies. The command will output:
-
-```
-[13:06:10.996] INFO (42432): Application next is using Next.js. Adding @platformatic/next to its package.json dependencies.
-[13:06:10.998] INFO (42432): Installing dependencies for the project using npm ...
-[13:06:12.119] INFO (42432): Installing dependencies for the application gateway using npm ...
-[13:06:13.092] INFO (42432): Installing dependencies for the application node using npm ...
-[13:06:14.310] INFO (42432): Installing dependencies for the application next using npm ...
-```
+Ask your agent to integrate the frontend using its matching capability and write
+`watt.config.ts`. Add the capability to the frontend workspace's dependencies and
+register it in the root topology unless it is already autoloaded. See the
+[framework reference](../skills/watt/references/frameworks.md).
 
 Add your frontend `id` and DB application to the `watt.config.ts` file in your `web/gateway` application:
 

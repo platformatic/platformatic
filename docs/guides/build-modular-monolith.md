@@ -37,35 +37,21 @@ To follow along with this tutorial, you'll need to have this software installed:
 
 We're going to start by creating our Library app. This will be a Platformatic Runtime app that contains all of our applications.
 
-First, let's run the Watt creator wizard in our terminal:
+Install the [Watt skill](./use-watt-with-ai-agents.md) and ask your agent:
 
-```bash
-npm create wattpm
-```
+> Create `library-app` as a Watt 4 npm workspace using `web/*`. Add a database
+> application named `people-application` with SQLite, ESM JavaScript source,
+> `watt.config.ts`, and port 3042. Create an empty migrations directory; we will
+> write migrations below. Add scripts, env examples, and tests, and ask before
+> installing dependencies.
 
-And then let's enter the following settings:
-
-```
-Hello YOURNAME, welcome to Watt 3.0.0!
-? Where would you like to create your project? library-app
-? Which kind of application do you want to create? @platformatic/db
-? What is the name of the application? people-application
-? What is the connection string? sqlite://./db.sqlite
-? Do you want to create default migrations? no
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 3042
-```
-
-After answering these questions, the creator will create all the files for the `people-application`.
-
-Once the creator has finished, our `library-app` directory should look like this:
+After reviewing the generated files, the directory should look like this:
 
 ```
 library-app/
 ├── README.md
 ├── package.json
-├── platformatic.runtime.json
+├── watt.config.ts
 └── web
     └── people-application
         ├── README.md
@@ -220,26 +206,10 @@ We should receive a response like this:
 
 We're now going to create a Books application. We'll follow a similar process to the one that we just used to set up our People application.
 
-In the root directory of our Runtime project (`library-app`), let's run this command to create the new application:
-
-```bash
-npm create wattpm
-```
-
-And then let's enter the following settings:
-
-```
-Hello YOURNAME, welcome to Watt 3.0.0!
-Using existing configuration ...
-? Which kind of application do you want to create? @platformatic/db
-? What is the name of the application? books-application
-? What is the connection string? sqlite://./db.sqlite
-? Do you want to create default migrations? no
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-```
-
-Once the command has finished running, we should see that a Platformatic DB application has been created for us in the `web/books-application/` directory.
+From `library-app`, ask your agent to add a SQLite database application named
+`books-application` in `web/books-application`, with an empty migrations directory,
+ESM source, and `watt.config.ts`. Preserve the People application and root
+configuration and add the new application entry without changing the public listener.
 
 ### Create the Books database schema
 
@@ -401,26 +371,9 @@ If we open up the API documentation for our Books application at http://127.0.0.
 
 We're now going to create our third and final Platformatic DB application: the Movies application.
 
-In the root directory of our Runtime project (`library-app`), let's create the new application:
-
-```bash
-npm create wattpm
-```
-
-And then let's enter the following settings:
-
-```bash
-Hello YOURNAME, welcome to Watt 3.0.0!
-Using existing configuration ...
-? Which kind of application do you want to create? @platformatic/db
-? What is the name of the application? movies-application
-? What is the connection string? sqlite://./db.sqlite
-? Do you want to create default migrations? no
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-```
-
-Similarly to before, once the command has finished running, we should see that a Platformatic DB application has been created for us in the `web/movies-application/` directory.
+Ask your agent to add `movies-application` in `web/movies-application`, using the
+same database setup as Books but a separate SQLite file and env variables. Leave
+its migrations directory empty for the SQL below and preserve existing applications.
 
 ### Create the Movies database schema
 
@@ -590,24 +543,10 @@ If we open up the Swagger UI documentation at http://127.0.0.1:3044/documentatio
 
 We're now going to use Platformatic Gateway to create a Media application. This application will compose the `books-application` and `movies-application` APIs into a single REST API.
 
-In the root directory of our Runtime project (`library-app`), let's create the Media application by running:
-
-```bash
-npm create wattpm
-```
-
-And then let's enter the following settings:
-
-```bash
-Hello YOURNAME, welcome to Watt 3.0.0!
-Using existing configuration ...
-? Which kind of application do you want to create? @platformatic/gateway
-? What is the name of the application? media-application
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-```
-
-Once the command has finished, we'll see that our Platformatic Gateway application has been created in the `web/media-application` directory.
+Ask your agent to add a gateway named `media-application` in `web/media-application`
+using `@platformatic/gateway`, ESM source, and `watt.config.ts`. Configure it to
+compose Books and Movies and explicitly configure the public application listener.
+See the [gateway skill reference](../skills/watt/references/services.md).
 
 ### Configure the composed applications
 

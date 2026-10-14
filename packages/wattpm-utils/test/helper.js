@@ -8,7 +8,6 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import split2 from 'split2'
 import { setFixturesDir, temporaryFolder } from '../../basic/test/helper.js'
-import { appendEnvVariable } from '../lib/commands/external.js'
 
 let tmpCount = 0
 export const wattCliPath = fileURLToPath(new URL('../../wattpm/bin/cli.js', import.meta.url))
@@ -65,7 +64,7 @@ export async function prepareGitRepository (t, root) {
   t.after(() => safeRemove(repo))
 
   const url = pathToFileURL(repo)
-  await appendEnvVariable(resolve(root, '.env'), 'PLT_GIT_REPO_URL', url)
+  await writeFile(resolve(root, '.env'), `\nPLT_GIT_REPO_URL=${url}\n`, { flag: 'a' })
 
   return url.toString()
 }

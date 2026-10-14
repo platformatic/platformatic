@@ -24,7 +24,7 @@
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
     "generate-errors-doc": "node ./scripts/generate-errors-doc.js",
-    "global-links": "cd packages/wattpm && pnpm add -g . && cd ../create-wattpm && pnpm add -g ."
+    "global-links": "cd packages/wattpm && pnpm add -g ."
   },
   "packageManager": "pnpm@12.15.0",
   "devDependencies": {

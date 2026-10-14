@@ -2,7 +2,6 @@ import { ApplicationDefinition, BaseCapability, CapabilityFactoryOptions, Config
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import {
   ServiceCapability,
-  Generator as ServiceGenerator,
   ServerInstance as ServiceServerInstance
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
@@ -43,8 +42,6 @@ export function create (
 export declare function platformaticGateway (app: FastifyInstance, capability: BaseCapability): Promise<void>
 
 export declare function createCommands (id: string): GatewayCommandDefinition
-
-export class Generator extends ServiceGenerator {}
 
 export declare const packageJson: Record<string, unknown>
 

@@ -124,13 +124,9 @@ Before starting, ensure you have:
 
 ### Setting up Fastify
 
-Create your Watt application using the create command:
-
-```bash
-npm create wattpm
-```
-
-This will prompt you to create services. Choose `@platformatic/node` to create a Fastify-based service that will handle your cached endpoints.
+Use the [Watt skill](./use-watt-with-ai-agents.md) to create a Fastify application
+named `api` in `web/api` using `@platformatic/node`. Request a root workspace,
+`watt.config.ts`, scripts, and endpoint tests; authorize dependency installation.
 
 Your application structure will look like:
 
@@ -183,11 +179,9 @@ This created a Fastify app that will autoload the routes.
 
 Let's create a more realistic example with multiple services to show how caching works with Watt's internal service mesh. Add a gateway and a data service:
 
-```bash
-npx create wattpm
-```
-
-Choose `@platformatic/gateway` to create an API gateway, and then create another `@platformatic/node` service for your data backend. Your structure should look like:
+Ask your agent to add `web/gateway` using `@platformatic/gateway` and
+`web/data-service` using `@platformatic/node`. Preserve the existing API and
+configure the gateway's routes explicitly. Your structure should look like:
 
 ```
 my-cache-app/

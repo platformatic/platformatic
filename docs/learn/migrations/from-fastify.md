@@ -36,17 +36,11 @@ await app.listen({ port: process.env.PORT ?? 3000 })
 From the root of your existing project:
 
 ```bash
-npm create wattpm
+npm install wattpm @platformatic/node
 ```
 
-It detects the existing application and offers to wrap it:
-
-```
-Hello YOURNAME, welcome to Watt!
-? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
-INFO: watt.config.mjs written!
-INFO: You are all set! Run `npm start` to start your project.
-```
+Alternatively, use the [Watt skill](../../guides/use-watt-with-ai-agents.md) and ask
+your agent to integrate Fastify while preserving its existing entrypoint and scripts.
 
 ```bash
 npx wattpm dev

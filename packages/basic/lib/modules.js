@@ -119,7 +119,7 @@ export async function importCapabilityAndConfig (root, config, context) {
         `We suggest you create a ${chooseConfigurationFileName(applicationRoot)} in the folder ${applicationRoot} ${suggestion}.`
       )
       logger.warn(`Also don't forget to add "${moduleName}" to the application dependencies.`)
-      logger.warn('You can also run "wattpm import" to do this automatically.\n')
+      logger.warn('Use "wattpm skill references/integration.md" for agent-assisted integration instructions.\n')
     }
   }
 

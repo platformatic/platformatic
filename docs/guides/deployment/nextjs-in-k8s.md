@@ -125,15 +125,16 @@ When you deploy multiple replicas of your Next.js application in Kubernetes, eac
 
 ## Add `watt.config.ts`
 
-In order to run your existing Next.js application with Watt, you can use the import capability of `wattpm-utils`.
+Integrate your existing Next.js application with the [Watt skill](../use-watt-with-ai-agents.md)
+or install the dependencies directly.
 
 From the root of your application, run:
 
-```
-npx wattpm-utils import
+```sh
+npm install wattpm @platformatic/next
 ```
 
-The command will create a `watt.config.ts` for you and also install `@platformatic/next` as part of your dependencies.
+Write `watt.config.ts` using the example below. Installation does not generate configuration.
 
 By default, Watt will run on a random port. To choose a specific port, configure the Next.js capability's `server`
 property. Multithreading is orchestration, so it goes on the application entry rather than inside the

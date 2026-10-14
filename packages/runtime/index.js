@@ -448,7 +448,6 @@ export async function transform (config, schema, context) {
   return transformConfiguration(config, schema, context)
 }
 export * as errors from './lib/errors.js'
-export { RuntimeGenerator as Generator, WrappedGenerator } from './lib/generator.js'
 export { setupLoopbackMessaging } from './lib/loopback-messaging.js'
 export { Runtime } from './lib/runtime.js'
 export { schema } from './lib/schema.js'
