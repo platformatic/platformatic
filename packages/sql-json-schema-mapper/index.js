@@ -76,7 +76,7 @@ function mapSQLTypeToOpenAPISchema (field, output) {
   }
 
   let type = mapSQLTypeToOpenAPIType(field.sqlType)
-  if (output && (field.primaryKey || field.stringifyOutput) && (type === 'integer' || type === 'number')) {
+  if (output && field.stringifyOutput && (type === 'integer' || type === 'number')) {
     type = 'string'
   }
 
@@ -194,8 +194,8 @@ function renderProperties (
       types = [type]
     }
 
-    // The mapper returns primary keys and marked foreign keys as strings
-    if (fieldDefinitions[name]?.primaryKey || fieldDefinitions[name]?.stringifyOutput) {
+    // The mapper returns fields marked with `stringifyOutput` as strings
+    if (fieldDefinitions[name]?.stringifyOutput) {
       types = Array.from(new Set(types.map(t => (t === 'integer' || t === 'number' ? 'string' : t))))
     }
 
