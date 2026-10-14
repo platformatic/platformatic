@@ -2,7 +2,9 @@ import { loadConfiguration } from '@platformatic/foundation/loader'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { test } from 'node:test'
+import { frameworkPortFacts } from '../lib/commands/migrate.js'
 import { version } from '../lib/version.js'
 import { createTemporaryDirectory, wattpmUtils } from './helper.js'
 
@@ -1827,4 +1829,284 @@ test('migrate - writes a zero workers.scaleUpELU as the smallest threshold v4 ac
   // v3 scaled up on any load with a threshold of 0, which v4 refuses; 0.01 still does.
   ok(emitted.includes('eluThreshold: 0.01'), emitted)
   ok(migrateProcess.stdout.includes('workers.scaleUpELU: 0'), migrateProcess.stdout)
+})
+
+/*
+  Entries and autoload mappings are copied for emission before the root's placeholders are
+  converted, so the converted values have to reach those copies -- or the emitted file carries the
+  literal token, which v4 refuses wherever it expects a number.
+*/
+test('migrate - converts placeholders inside application entries and autoload mappings', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      autoload: { path: './web', mappings: { worker: { id: 'worker', workers: { maximum: '{PLT_WORKER_MAX}' } } } },
+      applications: [{ id: 'api', path: './api', config: 'platformatic.json', workers: { maximum: '{PLT_API_MAX}' } }]
+    },
+    '.env': 'PLT_API_MAX=3\nPLT_WORKER_MAX=2\n'
+  })
+
+  for (const directory of ['api', 'web/worker']) {
+    await mkdir(join(root, directory), { recursive: true })
+    await writeFile(
+      join(root, directory, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
+  ok(!emitted.includes("'{PLT_API_MAX}'"), emitted)
+  ok(!emitted.includes("'{PLT_WORKER_MAX}'"), emitted)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: false,
+    onWarning () {},
+    onInfo () {}
+  })
+
+  strictEqual(loaded.config.applications.find(entry => entry.id === 'api').workers.maximum, 3)
+  strictEqual(loaded.config.applications.find(entry => entry.id === 'worker').workers.maximum, 2)
+})
+
+test('migrate - prints what it converted when it pauses', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json'
+    }
+  })
+
+  await linkCapability(root, 'next')
+
+  const pauseProcess = await wattpmUtils('migrate', root, '--no-install')
+
+  ok(pauseProcess.stdout.includes('Migration paused before installing'), pauseProcess.stdout)
+  ok(pauseProcess.stdout.includes('is written out as port: 0'), pauseProcess.stdout)
+})
+
+test('migrate - a --resume whose output does not load stays paused, and can be resumed again', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/@platformatic/next/3.65.0.json',
+      server: { hostname: '127.0.0.1', port: 3042 }
+    }
+  })
+
+  await linkCapability(root, 'next')
+  await wattpmUtils('migrate', root, '--no-install')
+
+  const emitted = join(root, 'watt.config.mjs')
+  const original = await readFile(emitted, 'utf-8')
+  await writeFile(emitted, original.replace('createNextConfig({', 'createNextConfig({\n  notAKey: true,'), 'utf-8')
+
+  const failed = await wattpmUtils('migrate', root, '--resume', '--no-install', { reject: false })
+
+  strictEqual(failed.exitCode, 1)
+  ok(failed.stdout.includes('The migration is still paused'), failed.stdout)
+  ok(!failed.stdout.includes('Nothing was changed'), failed.stdout)
+
+  // Back in the paused state: the legacy file restored, the manifest kept.
+  strictEqual(await fileExists(join(root, 'platformatic.json')), true)
+  strictEqual(await fileExists(join(root, '.wattpm-migrate.json')), true)
+
+  await writeFile(emitted, original, 'utf-8')
+  const resumed = await wattpmUtils('migrate', root, '--resume', '--no-install')
+
+  ok(resumed.stdout.includes('Migrated platformatic.json to watt.config.mjs'), resumed.stdout)
+  strictEqual(await fileExists(join(root, '.wattpm-migrate.json')), false)
+})
+
+test('migrate - folds services and web into applications, as v3 ran them, before converting placeholders', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      services: [{ id: 'api', path: './api', config: 'platformatic.json', workers: { maximum: '{PLT_API_MAX}' } }],
+      web: [{ id: 'site', path: './site', config: 'platformatic.json' }]
+    },
+    '.env': 'PLT_API_MAX=3\n'
+  })
+
+  for (const directory of ['api', 'site']) {
+    await mkdir(join(root, directory), { recursive: true })
+    await writeFile(
+      join(root, directory, 'platformatic.json'),
+      JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+      'utf-8'
+    )
+  }
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  await wattpmUtils('migrate', root)
+
+  const loaded = await loadConfiguration({
+    cwd: root,
+    configPath: join(root, 'watt.config.mjs'),
+    command: 'start',
+    production: true,
+    realEnv: {},
+    validateCapabilities: false,
+    onWarning () {},
+    onInfo () {}
+  })
+
+  // Both aliases survive: reading only the first one present dropped `web`.
+  deepStrictEqual(loaded.config.applications.map(entry => entry.id).sort(), ['api', 'site'])
+  strictEqual(loaded.config.applications.find(entry => entry.id === 'api').workers.maximum, 3)
+})
+
+test('migrate - --resume recognizes an application the paused run converted from a named configuration', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      applications: [{ id: 'api', path: './api', config: 'platformatic.json' }]
+    }
+  })
+
+  await mkdir(join(root, 'api'), { recursive: true })
+  await writeFile(
+    join(root, 'api/platformatic.json'),
+    JSON.stringify({ $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' }),
+    'utf-8'
+  )
+
+  await linkCapability(root, 'node')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const pauseProcess = await wattpmUtils('migrate', root, '--no-install')
+
+  // The undo names everything the paused run touched, the dependency edit included.
+  ok(pauseProcess.stdout.includes('package.json'), pauseProcess.stdout)
+  ok(pauseProcess.stdout.includes(join('api', 'watt.config.mjs')), pauseProcess.stdout)
+
+  const resumeProcess = await wattpmUtils('migrate', root, '--resume', '--no-install')
+
+  ok(resumeProcess.stdout.includes('Migrated platformatic.json to watt.config.mjs'), resumeProcess.stdout)
+  ok(!resumeProcess.stdout.includes('has no configuration of its own'), resumeProcess.stdout)
+  strictEqual(await fileExists(join(root, 'api/watt.config.mjs')), true)
+})
+
+/*
+  A framework application's own server always listened on v3 -- on its declared port, or else on an
+  ephemeral one -- whether or not it was the entrypoint. v4 opens no port the configuration does not
+  declare, so that port is kept, or written out as 0. A node application that was not the entrypoint
+  never listened, so its declared port is still dropped.
+*/
+test('migrate - keeps or writes out the port of a framework application that was not the entrypoint', async t => {
+  const capabilities = { api: 'node', web: 'next', site: 'next', worker: 'node' }
+  const servers = { site: { port: 3001 }, worker: { port: 3002 } }
+
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      entrypoint: 'api',
+      applications: Object.keys(capabilities).map(id => ({ id, path: `./${id}`, config: 'platformatic.json' }))
+    }
+  })
+
+  for (const [id, capability] of Object.entries(capabilities)) {
+    await mkdir(join(root, id), { recursive: true })
+    await writeFile(
+      join(root, id, 'platformatic.json'),
+      JSON.stringify({
+        $schema: `https://schemas.platformatic.dev/@platformatic/${capability}/3.65.0.json`,
+        ...(servers[id] ? { server: servers[id] } : {})
+      }),
+      'utf-8'
+    )
+  }
+
+  await linkCapability(root, 'node')
+  await linkCapability(root, 'next')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  const migrateProcess = await wattpmUtils('migrate', root)
+
+  const web = await readFile(join(root, 'web/watt.config.mjs'), 'utf-8')
+  ok(web.includes('port: 0'), web)
+  ok(migrateProcess.stdout.includes('web declares no port, and v4 does not start @platformatic/next without one'), migrateProcess.stdout)
+
+  const site = await readFile(join(root, 'site/watt.config.mjs'), 'utf-8')
+  ok(site.includes('port: 3001'), site)
+
+  const worker = await readFile(join(root, 'worker/watt.config.mjs'), 'utf-8')
+  ok(!worker.includes('3002'), worker)
+})
+
+/*
+  migrate cannot ask the installed capability whether v4 needs a port -- before the dependency edit it
+  is the v3 one, which declares nothing -- so it keeps its own table. This keeps the table's v4 column
+  equal to what each v4 capability declares.
+*/
+test('migrate - the framework port table matches what the v4 capabilities declare', async () => {
+  const cases = [
+    ['next', {}],
+    ['nuxt', {}],
+    ['nitro', {}],
+    ['tanstack', {}],
+    ['astro', {}],
+    ['remix', {}],
+    ['react-router', {}],
+    ['nest', {}],
+    ['vite', {}],
+    ['vite', { vite: { ssr: true } }],
+    ['vite', { vite: { ssr: { enabled: true } } }],
+    ['node', {}],
+    ['service', {}],
+    ['db', {}],
+    ['gateway', {}]
+  ]
+
+  for (const [name, config] of cases) {
+    const { servesWithoutPort = 'worker' } = await import(pathToFileURL(join(packagesDir, name, 'lib/schema.js')).href)
+    const declared = typeof servesWithoutPort === 'function' ? servesWithoutPort(config) : servesWithoutPort
+    const needsPort = declared !== 'worker' && !(declared.production && declared.development)
+
+    strictEqual(frameworkPortFacts(`@platformatic/${name}`, config).needsPort, needsPort, `${name} ${JSON.stringify(config)}`)
+  }
+})
+
+test('migrate - keeps the declared port of a Vite SSR application that was not the entrypoint', async t => {
+  const root = await project(t, {
+    'platformatic.json': {
+      $schema: 'https://schemas.platformatic.dev/wattpm/3.65.0.json',
+      entrypoint: 'api',
+      applications: [
+        { id: 'api', path: './api', config: 'platformatic.json' },
+        { id: 'ssr', path: './ssr', config: 'platformatic.json' }
+      ]
+    }
+  })
+
+  const configs = {
+    api: { $schema: 'https://schemas.platformatic.dev/@platformatic/node/3.65.0.json' },
+    // v3's SSR server listened whether or not it was the entrypoint, so this port was real.
+    ssr: { $schema: 'https://schemas.platformatic.dev/@platformatic/vite/3.65.0.json', vite: { ssr: { enabled: true } }, server: { port: 3003 } }
+  }
+
+  for (const [id, config] of Object.entries(configs)) {
+    await mkdir(join(root, id), { recursive: true })
+    await writeFile(join(root, id, 'platformatic.json'), JSON.stringify(config), 'utf-8')
+  }
+
+  await linkCapability(root, 'node')
+  await linkCapability(root, 'vite')
+  await linkPackage(root, 'wattpm', 'wattpm')
+
+  // Paused before validation, which would need a built Vite application.
+  await wattpmUtils('migrate', root, '--no-install')
+
+  const ssr = await readFile(join(root, 'ssr/watt.config.mjs'), 'utf-8')
+  ok(ssr.includes('port: 3003'), ssr)
 })

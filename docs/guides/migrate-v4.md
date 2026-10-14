@@ -19,7 +19,7 @@ npx wattpm-utils migrate
 
 `migrate` reads the v3 configuration, decides every refusal before writing anything, and then writes the v4 files. It converts `{PLT_X}` placeholders to the expressions they stand for, moves the root listener into the capability that owned it, and reports what it could not decide for you. What follows is what it does, so that you can read its output — and do it by hand where you would rather.
 
-**Run it on a clean git tree.** There is no backup file and no `--keep`: version control is the undo mechanism, so review the result with `git diff` and undo it with `git restore` if needed. `migrate` does not check the tree for you. Watch for an untracked or gitignored legacy config file — `platformatic.json` is often gitignored because it carries secrets: `migrate` deletes it like any other, and git cannot restore a file it never tracked, so copy it somewhere safe first.
+**Run it on a clean git tree.** There is no backup file: version control is the undo mechanism, so review the result with `git diff` and undo it with `git restore` if needed. `migrate` does not check the tree for you. If a legacy config file is untracked or gitignored (`platformatic.json` often is, because it carries secrets), copy it somewhere safe first: `migrate` deletes it, and git can't restore a file it never tracked.
 
 Legacy config files are **deleted** once the new ones are written and validated, not merely left in place. If the run is interrupted, `wattpm-utils migrate --resume` continues from where it left off, using a `.wattpm-migrate.json` manifest written for the life of the run (and removed on completion).
 
