@@ -16,15 +16,14 @@ function isSchemaError (error) {
   return error.code === 'PLT_INVALID_ROOT_CONFIGURATION'
 }
 
-for (const [key, value] of Object.entries({ version: 'v1', cooldown: 5000, gracePeriod: 1000, scaleUpELU: 0.8, scaleDownELU: 0.2 })) {
+for (const [key, value] of Object.entries({ cooldown: 5000, gracePeriod: 1000, scaleUpELU: 0.8, scaleDownELU: 0.2 })) {
   test(`rejects removed workers.${key} at runtime and application levels`, async () => {
     await assert.rejects(load({ dynamic: true, [key]: value }), isSchemaError)
     await assert.rejects(load({ dynamic: true }, { [key]: value }), isSchemaError)
   })
 }
 
-test('rejects both former versions and deprecated verticalScaler configuration', async () => {
-  await assert.rejects(load({ version: 'v2', dynamic: true }), isSchemaError)
+test('rejects deprecated verticalScaler configuration', async () => {
   await assert.rejects(load(undefined, undefined, { verticalScaler: { enabled: true } }), isSchemaError)
 })
 

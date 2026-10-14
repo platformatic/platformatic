@@ -153,8 +153,6 @@ Predictive scaling cooldowns apply independently to each application. They are e
 | `cooldowns.scaleDownAfterScaleUpMs` | `30000` | A scale-down after the most recent worker start, including initial and replacement workers |
 | `cooldowns.scaleDownAfterScaleDownMs` | `20000` | Another scale-down after the last approved scale-down |
 
-The predictive scaler does not use the `cooldown` or `gracePeriod` settings of threshold-based scaling. It starts using a worker's valid measurements as they arrive and accounts for its startup through redistribution and pending-worker tracking.
-
 #### Per-application configuration
 
 In a multi-application runtime, set overrides in `applications[].workers`. Applications support `static`, `dynamic`, `minimum`, `maximum`, `eluThreshold`, and `heapThresholdMb`. All other worker settings are configured at the runtime level. Omitted values use the runtime-level settings.

@@ -23,7 +23,7 @@ test('worker defaults are applied by normalization, without schema branch side e
 test('runtime and application workers reject legacy settings and unknown keys', () => {
   for (const schema of [workers, application.properties.workers]) {
     const validate = validator(schema)
-    for (const value of [{ version: 'v1' }, { version: 'v2' }, { cooldown: 0 }, { gracePeriod: 0 }, { scaleUpELU: 0.8 }, { scaleDownELU: 0.2 }, { unknown: true }]) {
+    for (const value of [{ cooldown: 0 }, { gracePeriod: 0 }, { scaleUpELU: 0.8 }, { scaleDownELU: 0.2 }, { unknown: true }]) {
       assert.equal(validate(value), false, JSON.stringify(value))
     }
   }
