@@ -249,6 +249,7 @@ export interface PlatformaticGatewayConfig {
             name?: string;
             graphqlEndpoint?: string;
             composeEndpoint?: string;
+            file?: string;
             entities?: {
               /**
                * This interface was referenced by `undefined`'s JSON-Schema definition

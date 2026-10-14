@@ -3802,6 +3802,10 @@
                         "type": "string",
                         "default": "/.well-known/graphql-composition"
                       },
+                      "file": {
+                        "type": "string",
+                        "resolvePath": true
+                      },
                       "entities": {
                         "type": "object",
                         "patternProperties": {
