@@ -17,6 +17,48 @@ function getRuntimeTmpDir (runtimeDir) {
   return join(platformaticTmpDir, runtimeDirHash)
 }
 
+test('should get the runtime workers scaler state', async t => {
+  const projectDir = join(fixturesDir, 'runtime-dynamic')
+  const configFile = join(projectDir, 'watt.config.mjs')
+
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await safeRemove(runtimeTmpDir)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+    await safeRemove(runtimeTmpDir)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  const scaler = await runtimeClient.getRuntimeWorkersScaler(runtime.pid)
+  assert.strictEqual(scaler.version, 1)
+  assert.strictEqual(scaler.maxTotalWorkers, 4)
+  assert.ok(scaler.memoryLimit > 0)
+  assert.deepStrictEqual(scaler.applications.map(application => application.id).sort(), ['service-1', 'service-2'])
+
+  const memory = await runtimeClient.getRuntimeMemory(runtime.pid)
+  assert.deepStrictEqual(Object.keys(memory).sort(), ['scope', 'total', 'used'])
+  assert.ok(memory.used > 0 && memory.total > 0)
+})
+
+test('should get no workers scaler state without dynamic workers', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'watt.config.mjs')
+
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await safeRemove(runtimeTmpDir)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+    await safeRemove(runtimeTmpDir)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  assert.strictEqual(await runtimeClient.getRuntimeWorkersScaler(runtime.pid), null)
+})
+
 test('should get runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'watt.config.mjs')

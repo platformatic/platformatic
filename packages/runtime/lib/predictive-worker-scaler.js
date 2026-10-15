@@ -2,6 +2,9 @@ import { readMemory } from './memory.js'
 import { PredictiveApplicationScaler } from './predictive-scaling.js'
 import { kWorkerStartTime, kWorkerStatus } from './worker/symbols.js'
 
+// Bump on any change to the shape returned by getDiagnostics().
+export const DIAGNOSTICS_VERSION = 1
+
 export class PredictiveWorkersScaler {
   #runtime
   #config
@@ -133,6 +136,18 @@ export class PredictiveWorkersScaler {
   remove (appId) {
     this.#appConfigs.delete(appId)
     this.#appScalers.delete(appId)
+  }
+
+  // Read-only views for diagnostics, built on request.
+  getDiagnostics () {
+    return {
+      version: DIAGNOSTICS_VERSION,
+      now: Date.now(),
+      processIntervalMs: this.#config.processIntervalMs,
+      maxTotalWorkers: this.#maxTotalWorkers,
+      memoryLimit: this.#maxTotalMemory,
+      applications: [...this.#appScalers].map(([id, appScaler]) => ({ id, ...appScaler.getDiagnostics() }))
+    }
   }
 
   #handleWorkersUpdated ({ application, workers }) {
