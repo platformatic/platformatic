@@ -46,46 +46,40 @@ export const env = {
 
 export const workers = {
   anyOf: [
-    {
-      type: 'number',
-      minimum: 1
-    },
+    { type: 'integer', minimum: 1 },
     { type: 'string' },
     {
       type: 'object',
       properties: {
-        static: { type: 'number', minimum: 1 },
-        dynamic: { type: 'boolean', default: false },
-        minimum: { type: 'number', minimum: 1 },
-        maximum: { type: 'number', minimum: 0 },
-        total: { type: 'number', minimum: 1 },
+        static: { type: 'integer', minimum: 1 },
+        dynamic: { type: 'boolean' },
+        minimum: { type: 'integer', minimum: 1 },
+        maximum: { type: 'integer', minimum: 0 },
+        total: { type: 'integer', minimum: 1 },
         maxMemory: { type: 'number', minimum: 0 },
-        cooldown: { type: 'number', minimum: 0 },
-        gracePeriod: { type: 'number', minimum: 0 },
-        scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
-        scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
-      }
+        eluThreshold: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
+        heapThresholdMb: { type: 'number', exclusiveMinimum: 0 },
+        processIntervalMs: { type: 'number', minimum: 0 },
+        maxScaleUpStep: { type: 'integer', minimum: 1 },
+        redistributionMs: { type: 'number', minimum: 0 },
+        alphaUp: { type: 'number', minimum: 0, maximum: 1 },
+        alphaDown: { type: 'number', minimum: 0, maximum: 1 },
+        betaUp: { type: 'number', minimum: 0, maximum: 1 },
+        betaDown: { type: 'number', minimum: 0, maximum: 1 },
+        cooldowns: {
+          type: 'object',
+          properties: {
+            scaleUpAfterScaleUpMs: { type: 'number', minimum: 0 },
+            scaleUpAfterScaleDownMs: { type: 'number', minimum: 0 },
+            scaleDownAfterScaleUpMs: { type: 'number', minimum: 0 },
+            scaleDownAfterScaleDownMs: { type: 'number', minimum: 0 }
+          },
+          additionalProperties: false
+        }
+      },
+      additionalProperties: false
     }
   ]
-}
-
-const verticalScaler = {
-  type: 'object',
-  properties: {
-    enabled: { type: 'boolean', default: true },
-    maxTotalWorkers: { type: 'number', minimum: 1 },
-    maxTotalMemory: { type: 'number', minimum: 0 },
-    minWorkers: { type: 'number', minimum: 1 },
-    maxWorkers: { type: 'number', minimum: 1 },
-    cooldownSec: { type: 'number', minimum: 0 },
-    gracePeriod: { type: 'number', minimum: 0 },
-    scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
-    scaleDownELU: { type: 'number', minimum: 0, maximum: 1 },
-    timeWindowSec: { type: 'number', minimum: 0, deprecated: true },
-    scaleDownTimeWindowSec: { type: 'number', minimum: 0, deprecated: true },
-    scaleIntervalSec: { type: 'number', minimum: 0, deprecated: true }
-  },
-  additionalProperties: false
 }
 
 export const preload = {
@@ -974,21 +968,19 @@ export const application = {
     },
     workers: {
       anyOf: [
-        {
-          type: 'number'
-        },
-        {
-          type: 'string'
-        },
+        { type: 'integer', minimum: 1 },
+        { type: 'string' },
         {
           type: 'object',
           properties: {
-            static: { type: 'number', minimum: 1 },
-            minimum: { type: 'number', minimum: 1 },
-            maximum: { type: 'number', minimum: 0 },
-            scaleUpELU: { type: 'number', minimum: 0, maximum: 1 },
-            scaleDownELU: { type: 'number', minimum: 0, maximum: 1 }
-          }
+            static: { type: 'integer', minimum: 1 },
+            dynamic: { type: 'boolean' },
+            minimum: { type: 'integer', minimum: 1 },
+            maximum: { type: 'integer', minimum: 0 },
+            eluThreshold: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
+            heapThresholdMb: { type: 'number', exclusiveMinimum: 0 }
+          },
+          additionalProperties: false
         }
       ]
     },
@@ -1562,7 +1554,6 @@ export const runtimeProperties = {
     default: false
   },
   tracing,
-  verticalScaler,
   inspectorOptions: {
     type: 'object',
     properties: {

@@ -86,7 +86,6 @@ export namespace symbols {
   export const kHealthCheckTimer: unique symbol
   export const kHealthMetricsTimer: unique symbol
   export const kLastHealthCheckELU: unique symbol
-  export const kLastWorkerScalerELU: unique symbol
   export const kWorkerStatus: unique symbol
   export const kWorkerHealthSignals: unique symbol
   export const kWorkerUrl: unique symbol

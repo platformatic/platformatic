@@ -14,7 +14,6 @@ export const kWorkerUrl = Symbol.for('plt.runtime.worker.url')
 export const kWorkerPortOffset = Symbol.for('plt.runtime.worker.portOffset')
 export const kWorkerServerOptions = Symbol.for('plt.runtime.worker.serverOptions')
 export const kLastHealthCheckELU = Symbol.for('plt.runtime.worker.lastHealthCheckELU')
-export const kLastWorkerScalerELU = Symbol.for('plt.runtime.worker.lastWorkerScalerELU')
 export const kIsSubprocessHost = Symbol.for('plt.runtime.worker.isSubprocessHost')
 export const kSubprocessPid = Symbol('subprocessPid')
 

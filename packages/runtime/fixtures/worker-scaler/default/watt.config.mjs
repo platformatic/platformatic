@@ -15,7 +15,7 @@ export default {
   },
   workers: {
     dynamic: true,
-    gracePeriod: 1000,
+    processIntervalMs: 1000,
     total: 10
   }
 }

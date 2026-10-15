@@ -39,29 +39,6 @@ export interface PlatformaticBasicConfig {
         };
     metrics?: boolean | MetricsOptions;
     tracing?: TelemetryOptions;
-    verticalScaler?: {
-      enabled?: boolean;
-      maxTotalWorkers?: number;
-      maxTotalMemory?: number;
-      minWorkers?: number;
-      maxWorkers?: number;
-      cooldownSec?: number;
-      gracePeriod?: number;
-      scaleUpELU?: number;
-      scaleDownELU?: number;
-      /**
-       * @deprecated
-       */
-      timeWindowSec?: number;
-      /**
-       * @deprecated
-       */
-      scaleDownTimeWindowSec?: number;
-      /**
-       * @deprecated
-       */
-      scaleIntervalSec?: number;
-    };
     inspectorOptions?: {
       host?: string;
       port?: number;
@@ -139,11 +116,21 @@ export interface WorkersOptions {
   maximum?: number;
   total?: number;
   maxMemory?: number;
-  cooldown?: number;
-  gracePeriod?: number;
-  scaleUpELU?: number;
-  scaleDownELU?: number;
-  [k: string]: unknown;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+  processIntervalMs?: number;
+  maxScaleUpStep?: number;
+  redistributionMs?: number;
+  alphaUp?: number;
+  alphaDown?: number;
+  betaUp?: number;
+  betaDown?: number;
+  cooldowns?: {
+    scaleUpAfterScaleUpMs?: number;
+    scaleUpAfterScaleDownMs?: number;
+    scaleDownAfterScaleUpMs?: number;
+    scaleDownAfterScaleDownMs?: number;
+  };
 }
 export interface AppLoggerOptions {
   /**
@@ -630,11 +617,11 @@ export interface CompileCacheOptions {
 }
 export interface ApplicationWorkersOptions {
   static?: number;
+  dynamic?: boolean;
   minimum?: number;
   maximum?: number;
-  scaleUpELU?: number;
-  scaleDownELU?: number;
-  [k: string]: unknown;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
 }
 export interface ApplicationHealthOptions {
   enabled?: boolean | string;

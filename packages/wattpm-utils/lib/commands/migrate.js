@@ -1103,6 +1103,9 @@ export async function planMigration (root, source, config, { useSampleDefaults =
   const seeds = new Map()
   const skipped = []
   const suggestions = new Map()
+
+  notes.push(...convertScaling(config, basename(source)))
+
   const declaredEntries = config.applications ?? config.services ?? config.web ?? []
   const rootDirectory = canonicalize(dirname(source))
 
@@ -1371,6 +1374,10 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       continue
     }
 
+    if (application.config.runtime) {
+      notes.push(...convertScaling(application.config.runtime, application.where))
+    }
+
     const placeholders = convertPlaceholders(
       application.config,
       await capabilitySchema(application.module, application.directory),
@@ -1432,6 +1439,183 @@ function stripRemovedKeys (config, id) {
     config.application = rest
     notes.push(
       `${bold(id)} declared ${bold(`entrypointPort: ${entrypointPort}`)}, which v4 removed along with the runtime's own listener; an application advertises its address through its own server block now.`
+    )
+  }
+
+  return notes
+}
+
+/*
+  The v3 scaler keys migrate renames or removes, wherever they appear: `workers` (root or per
+  application) and the older `verticalScaler` block. Every other key is copied as is.
+*/
+const scalingKeyRenames = {
+  scaleUpELU: 'eluThreshold',
+  // verticalScaler's names for `workers` keys.
+  minWorkers: 'minimum',
+  maxWorkers: 'maximum',
+  maxTotalWorkers: 'total',
+  maxTotalMemory: 'maxMemory'
+}
+
+const scalingKeyRemovals = {
+  scaleDownELU: 'v4 scales down automatically',
+  cooldown: 'replaced by workers.cooldowns, which work differently',
+  cooldownSec: 'replaced by workers.cooldowns, which work differently',
+  gracePeriod: 'replaced by workers.redistributionMs, which works differently'
+}
+
+// What v4 accepts in each `workers`, read from its schema. v3 ignored any other key there and v4
+// refuses it, so a key outside these is dropped rather than copied into a file that cannot load.
+function workersKeys (schema) {
+  return new Set(Object.keys(schema.anyOf.find(branch => branch.type === 'object').properties))
+}
+
+const runtimeWorkersKeys = workersKeys(configurationSchema.properties.workers)
+const applicationWorkersKeys = workersKeys(configurationSchema.properties.applications.items.properties.workers)
+
+/*
+  Renames into `target` without overwriting it, so converting `workers` before `verticalScaler`
+  keeps v3's precedence, where a value already in `workers` won. `admitted` is the set of keys v4
+  accepts in `source`; without it, as for `verticalScaler`, which is deleted whole, the remaining
+  keys are left alone.
+*/
+function convertScalingKeys (source, target, { prefix, application, admitted }, report) {
+  if (typeof source !== 'object' || source === null) {
+    return
+  }
+
+  const owner = application ? ` (application ${application})` : ''
+
+  for (const [key, value] of Object.entries(source)) {
+    let reason = null
+
+    if (key === 'scaleUpELU' && value === 0) {
+      /*
+        v3 used a threshold of 0 in `workers`: it scaled up on any load until the maximum. v4 needs
+        one above 0, and 0.01 also scales up on any real load. (`verticalScaler` ignored a 0, and
+        `withoutZeroThreshold` removes it before it gets here.)
+      */
+      target.eluThreshold ??= 0.01
+      report.rewritten.push(
+        `${bold(`${prefix}.scaleUpELU: 0`)}${owner} was written as ${bold('eluThreshold: 0.01')}: v4 needs an ELU threshold above 0, and 0.01 still scales up on any load.`
+      )
+    } else if (scalingKeyRenames[key]) {
+      target[scalingKeyRenames[key]] ??= value
+    } else if (scalingKeyRemovals[key]) {
+      reason = scalingKeyRemovals[key]
+    } else if (admitted && !admitted.has(key)) {
+      reason = 'v3 ignored it, and v4 does not accept it'
+    } else {
+      continue
+    }
+
+    if (reason) {
+      report.dropped.push(`${bold(`${prefix}.${key}: ${JSON.stringify(value)}`)}${owner} — ${reason}`)
+    }
+
+    delete source[key]
+  }
+}
+
+// v3 read `scaleUpELU` from `verticalScaler` only when truthy, so a 0 there meant the default.
+function withoutZeroThreshold (overrides) {
+  const { scaleUpELU, ...rest } = overrides
+  return scaleUpELU === 0 ? rest : { ...overrides }
+}
+
+// The `workers` that v3 applied `verticalScaler.applications.<id>` to: the declared entry with that
+// id, or else the autoloaded application, which v3 matched by id as well. Null where v3 had nothing
+// to apply it to, or crashed merging into a `workers` count.
+function verticalScalerTarget (config, id) {
+  let owner = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])].find(
+    entry => entry.id === id
+  )
+
+  if (!owner && config.autoload) {
+    const mappings = (config.autoload.mappings ??= {})
+    owner = Object.entries(mappings).find(([name, mapping]) => (mapping.id ?? name) === id)?.[1]
+    owner ??= mappings[id] = { id }
+  }
+
+  if (!owner || typeof owner.workers === 'number' || typeof owner.workers === 'string') {
+    return null
+  }
+
+  return (owner.workers ??= {})
+}
+
+/*
+  Every position a v3 file could tune the scaler from: the runtime's `workers` and the older
+  `verticalScaler` v3 converted into it, and the `workers` of each application, whether declared,
+  mapped for autoload or written as the wrapped single-app shorthand. Run before placeholders are
+  typed, because those are typed against the v4 schema, where only the converted positions exist.
+
+  Every `workers` is converted before `verticalScaler` is folded in, because in v3 a value already
+  in `workers` won.
+*/
+function convertScaling (config, where) {
+  const report = { dropped: [], rewritten: [] }
+  const entries = [
+    ...(config.applications ?? []),
+    ...(config.services ?? []),
+    ...(config.web ?? []),
+    ...Object.values(config.autoload?.mappings ?? {})
+  ]
+
+  if (config.application) {
+    entries.push(config.application)
+  }
+
+  convertScalingKeys(config.workers, config.workers, { prefix: 'workers', admitted: runtimeWorkersKeys }, report)
+
+  for (const entry of entries) {
+    const options = { prefix: 'workers', application: entry.id, admitted: applicationWorkersKeys }
+    convertScalingKeys(entry.workers, entry.workers, options, report)
+  }
+
+  if (config.verticalScaler) {
+    const scaler = withoutZeroThreshold(config.verticalScaler)
+
+    // v3 crashed merging into a `workers` count, so no project that ran has both.
+    if (typeof config.workers !== 'number' && typeof config.workers !== 'string') {
+      const workers = (config.workers ??= {})
+
+      // v3 enabled the scaler for the block alone.
+      workers.dynamic ??= scaler.enabled ?? true
+
+      // v3 fell back to `maxTotalWorkers` for the maximum, which differs from v4's default when
+      // `workers.total` was set too. Its final fallback, a maximum of 1, was a bug and is dropped.
+      if (scaler.maxTotalWorkers !== undefined) {
+        workers.maximum ??= scaler.maxWorkers ?? scaler.maxTotalWorkers
+      }
+
+      convertScalingKeys(scaler, workers, { prefix: 'verticalScaler' }, report)
+    }
+
+    for (const [id, overrides] of Object.entries(scaler.applications ?? {})) {
+      const workers = verticalScalerTarget(config, id)
+
+      if (workers) {
+        const options = { prefix: `verticalScaler.applications.${id}`, admitted: applicationWorkersKeys }
+        convertScalingKeys(withoutZeroThreshold(overrides), workers, options, report)
+      }
+    }
+
+    // `enabled` and `applications` are converted above; `timeWindowSec`, `scaleDownTimeWindowSec`
+    // and `scaleIntervalSec` go with the block, as v3 already ignored them.
+    delete config.verticalScaler
+  }
+
+  // One note per file, opening with why: a list of removed keys means nothing to a reader who does
+  // not know the scaler itself was replaced.
+  const notes = report.rewritten.map(item => `In ${bold(where)}, ${item}`)
+
+  if (report.dropped.length > 0) {
+    notes.push(
+      `Dynamic worker scaling uses a new algorithm in v4. These v3 options in ${bold(where)} no longer exist and were removed:\n` +
+        report.dropped.map(item => `  - ${item}\n`).join('') +
+        'See "Update dynamic worker scaling" in the v4 migration guide.'
     )
   }
 
@@ -2536,6 +2720,7 @@ export async function migrateCommand (logger, args) {
   let needsPath = false
   let suggested = new Map()
   let seeds = new Map()
+  let scalingNotes = []
 
   if (runtime && refusals.length === 0) {
     plan = await planMigration(directory, source, config, { useSampleDefaults, resumed })
@@ -2546,6 +2731,10 @@ export async function migrateCommand (logger, args) {
       either way: a position migrate cannot decide is a refusal, not a value carried through as the
       literal text of a placeholder.
     */
+    if (config.runtime) {
+      scalingNotes = convertScaling(config.runtime, basename(source))
+    }
+
     const placeholders = convertPlaceholders(config, await capabilitySchema(module, directory), {
       module,
       sample: readSampleEnv(directory),
@@ -2896,7 +3085,7 @@ export async function migrateCommand (logger, args) {
     )
   }
 
-  for (const note of notes.concat(envBlocks, plan?.exposure ?? [])) {
+  for (const note of notes.concat(scalingNotes, envBlocks, plan?.exposure ?? [])) {
     logger.warn(note)
   }
 

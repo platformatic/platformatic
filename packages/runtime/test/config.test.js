@@ -39,6 +39,7 @@ test('prepareApplication - resolves module source separately from writable appli
     [kMetadata]: {
       root: resolve(import.meta.dirname, '..')
     },
+    workers: { static: 1, dynamic: false, minimum: 1, maximum: 4, total: 4 },
     watch: false
   }
 
@@ -49,8 +50,7 @@ test('prepareApplication - resolves module source separately from writable appli
       path: applicationPath,
       module: '@platformatic/basic',
       moduleApplication: true
-    },
-    { static: 1, dynamic: false }
+    }
   )
 
   strictEqual(application.path, applicationPath)
@@ -64,6 +64,7 @@ test('prepareApplication - reports missing application modules with a coded erro
     prepareRuntimeApplication(
       {
         [kMetadata]: { root: resolve(fixturesDir, 'missing') },
+        workers: { static: 1, dynamic: false, minimum: 1, maximum: 4, total: 4 },
         watch: false
       },
       {
@@ -71,8 +72,7 @@ test('prepareApplication - reports missing application modules with a coded erro
         path: resolve(fixturesDir, 'missing', 'application'),
         module: '@platformatic/does-not-exist',
         moduleApplication: true
-      },
-      { static: 1, dynamic: false }
+      }
     ),
     error => error.code === 'PLT_RUNTIME_MISSING_DEPENDENCY'
   )
