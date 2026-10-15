@@ -792,7 +792,9 @@ jobs:
       - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node }}
+          # Node.js 26.12.0 crashes on require(esm) inside module.register() hooks
+          # (ERR_INTERNAL_ASSERTION), which telemetry uses with Next.js. Remove once fixed.
+          node-version: ${{ matrix.node == 26 && '26.11.1' || matrix.node }}
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
