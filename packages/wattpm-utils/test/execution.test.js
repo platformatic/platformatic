@@ -13,6 +13,7 @@ test('start - should use default folders for resolved applications', async t => 
 
   changeWorkingDirectory(t, rootDir)
   await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications ??= []
     config.applications.push({ id: 'resolved', url: repo })
   })
   await wattpmUtils('resolve', rootDir)
@@ -84,6 +85,7 @@ test('start - should throw an error when an application has not been resolved', 
 
   changeWorkingDirectory(t, rootDir)
   await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications ??= []
     config.applications.push({ id: 'resolved', url: repo })
   })
 

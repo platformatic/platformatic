@@ -22,6 +22,7 @@ function declarePath (rootDir, id, path) {
 // Declare remote fixtures directly; resolving does not depend on a scaffolding command.
 function declareRemote (rootDir, url, gitBranch) {
   return updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications ??= []
     config.applications.push({ id: 'resolved', url, ...(gitBranch ? { gitBranch } : {}) })
   })
 }
