@@ -92,7 +92,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
 
   const {
     maxTTL,
-    meta: { applicationId, workerId },
+    meta: { applicationId, workerId, file },
     value,
     revalidate,
     expire,
@@ -111,6 +111,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
   deepStrictEqual(maxTTL, 86400 * 7)
   deepStrictEqual(applicationId, 'frontend')
   deepStrictEqual(workerId, 0)
+  deepStrictEqual(file, 'src/app/page.jsx')
 })
 
 test('should properly use the Valkey cache handler in production to cache route handlers', async t => {
@@ -172,7 +173,7 @@ test('should properly use the Valkey cache handler in production to cache route 
 
   const {
     maxTTL,
-    meta: { applicationId, workerId },
+    meta: { applicationId, workerId, file },
     value,
     revalidate,
     expire,
@@ -188,6 +189,7 @@ test('should properly use the Valkey cache handler in production to cache route 
   deepStrictEqual(maxTTL, 86400 * 7)
   deepStrictEqual(applicationId, 'frontend')
   deepStrictEqual(workerId, 0)
+  deepStrictEqual(file, 'src/app/route/route.js')
 })
 
 test('should extend TTL when our limit is smaller than the user one', async t => {

@@ -6,10 +6,12 @@ import {
   deserialize,
   ensureMsgpackr,
   ensureRedis,
+  getCacheFunctionId,
   getConnection,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
   keyFor,
+  loadCacheFunctionsFiles,
   serialize
 } from './valkey-common.js'
 
@@ -37,6 +39,7 @@ export class CacheHandler {
   #prefix
   #subprefix
   #meta
+  #cacheFunctionsFiles
   #maxTTL
   #sections
   #cacheHitMetric
@@ -155,9 +158,17 @@ export class CacheHandler {
       }
 
       // Compute the parameters to save
+
+      const file = await this.#fileFor(cacheKey)
+
+      let meta = this.#meta
+      if (file) {
+        meta = { ...meta, file }
+      }
+
       const toSerialize = serialize({
         maxTTL: this.#maxTTL,
-        meta: this.#meta,
+        meta,
         value: Buffer.concat(chunks),
         ...data
       })
@@ -290,6 +301,20 @@ export class CacheHandler {
     }
 
     await Promise.all(promises)
+  }
+
+  // The manifest is read once, on the first write
+  async #fileFor (cacheKey) {
+    this.#cacheFunctionsFiles ??= loadCacheFunctionsFiles().catch(e => {
+      this.#logger.error(
+        { err: ensureLoggableError(e) },
+        'Cannot read the server references manifest'
+      )
+      return new Map()
+    })
+
+    const files = await this.#cacheFunctionsFiles
+    return files.get(getCacheFunctionId(cacheKey))
   }
 
   #keyFor (key, section) {
