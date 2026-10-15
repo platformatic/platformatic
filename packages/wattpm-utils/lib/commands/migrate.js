@@ -816,6 +816,38 @@ async function capabilitySchema (module, directory) {
   }
 }
 
+const viteSsr = config => config?.vite?.ssr === true || config?.vite?.ssr?.enabled === true
+
+/*
+  For an application that was not the entrypoint: whether its own server listened on v3 anyway, under
+  `start` or `dev`, so that a declared port is real; and whether v4 refuses to start it without a port,
+  under `start` or `dev`. Both describe fixed versions, so they are written down here rather than read
+  from the capability installed when migrate runs, which is still the v3 one. A test checks the v4
+  column against each capability's `servesWithoutPort`.
+
+  Anything not listed -- the service family, `node`, a third-party capability -- did not listen and is
+  not given a port.
+*/
+const frameworkPorts = {
+  '@platformatic/next': { listened: true, needsPort: true },
+  '@platformatic/nuxt': { listened: true, needsPort: true },
+  '@platformatic/nitro': { listened: true, needsPort: true },
+  '@platformatic/tanstack': { listened: true, needsPort: true },
+  // Their production servers listened only as the entrypoint; their development servers always did.
+  '@platformatic/astro': { listened: true, needsPort: true },
+  '@platformatic/remix': { listened: true, needsPort: true },
+  '@platformatic/react-router': { listened: true, needsPort: true },
+  '@platformatic/nest': { listened: false, needsPort: true },
+  // The SSR server always listened. v4 decides in the worker whether it needs a port.
+  '@platformatic/vite': config => (viteSsr(config) ? { listened: true, needsPort: false } : { listened: true, needsPort: true })
+}
+
+export function frameworkPortFacts (module, config) {
+  const facts = frameworkPorts[module]
+
+  return (typeof facts === 'function' ? facts(config) : facts) ?? { listened: false, needsPort: false }
+}
+
 async function admittedServerKeys (module, directory) {
   const properties = (await capabilitySchema(module, directory))?.properties?.server?.properties
 
@@ -1096,7 +1128,22 @@ export function emitRootConfiguration (
   file it finds, which is right -- it may be one somebody wrote by hand. A resumed run put those
   files there itself, and refusing them would make the pause unresumable.
 */
-export async function planMigration (root, source, config, { useSampleDefaults = false, resumed = new Set() } = {}) {
+export async function planMigration (
+  root,
+  source,
+  config,
+  { useSampleDefaults = false, resumed = new Set(), paused = new Set() } = {}
+) {
+  /*
+    v3 ran the entries of `applications`, `services` and `web` together, in that order. v4 has only
+    `applications`, and placeholders are typed against its schema, so the aliases are folded in first.
+  */
+  if (config.services || config.web) {
+    config.applications = [...(config.applications ?? []), ...(config.services ?? []), ...(config.web ?? [])]
+    delete config.services
+    delete config.web
+  }
+
   const refusals = []
   const applications = []
   const notes = []
@@ -1106,7 +1153,22 @@ export async function planMigration (root, source, config, { useSampleDefaults =
 
   notes.push(...convertScaling(config, basename(source)))
 
-  const declaredEntries = config.applications ?? config.services ?? config.web ?? []
+  const declaredEntries = config.applications ?? []
+
+  /*
+    A resumed run stands in front of the applications the paused run already converted: their legacy
+    file is gone and their v4 file is on disk. They are neither refused for the missing file nor
+    reported as having no configuration.
+  */
+  const convertedByPause = (directory, legacy) =>
+    legacy ? paused.has(legacy) && !existsSync(legacy) : [...paused].some(path => dirname(path) === directory && !existsSync(path))
+
+  const pausedApplication = async (directory, entry, orchestration) => ({
+    directory,
+    entry,
+    orchestration: { ...orchestration, id: entry.id ? legalId(entry.id) : (await deriveLegacyId(directory)).id }
+  })
+
   const rootDirectory = canonicalize(dirname(source))
 
   const sample = readSampleEnv(root)
@@ -1260,6 +1322,11 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       entry.config = entryConfig
       legacy = resolve(directory, entryConfig)
 
+      if (convertedByPause(directory, legacy)) {
+        applications.push(await pausedApplication(directory, entry, orchestration))
+        continue
+      }
+
       if (!existsSync(legacy)) {
         refusals.push({
           reason: `${bold(named)} names the configuration ${bold(entry.config)}, which does not exist`,
@@ -1285,6 +1352,11 @@ export async function planMigration (root, source, config, { useSampleDefaults =
       // The root's own legacy file is the runtime configuration and not this application's, so an
       // inline entry has a configuration only where the entry names one.
       legacy = findLegacyConfiguration(directory, null)
+    }
+
+    if (!legacy && convertedByPause(directory, null)) {
+      applications.push(await pausedApplication(directory, entry, orchestration))
+      continue
     }
 
     if (!legacy) {
@@ -1336,7 +1408,7 @@ export async function planMigration (root, source, config, { useSampleDefaults =
     })
   }
 
-  const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds, useSampleDefaults, source)
+  const autoload = await planAutoload(root, config, applications, refusals, skipped, seeds, useSampleDefaults, source, convertedByPause)
 
   /*
     Conversion runs here rather than as each application is discovered, because it needs two things
@@ -1360,6 +1432,36 @@ export async function planMigration (root, source, config, { useSampleDefaults =
   })
 
   refusals.push(...converted.refusals)
+
+  /*
+    The loops above copied each entry and autoload mapping before its placeholders were converted,
+    and the copies are what is emitted. Carry the converted values across, except for the keys the
+    loops settled themselves.
+  */
+  const convertedEntries = converted.converted.applications ?? []
+
+  for (const application of applications) {
+    const index = declaredEntries.indexOf(application.entry)
+
+    if (index === -1 || !application.orchestration) {
+      continue
+    }
+
+    application.orchestration = { ...application.orchestration }
+
+    for (const key of Object.keys(application.orchestration)) {
+      if (key !== 'path' && key !== 'id' && key !== 'envfile') {
+        application.orchestration[key] = convertedEntries[index][key]
+      }
+    }
+  }
+
+  for (const [name, mapping] of Object.entries(autoload?.mappings ?? {})) {
+    // The pinned id is migrate's own decision, not a converted value.
+    const { id: _id, ...convertedMapping } = converted.converted.autoload?.mappings?.[name] ?? {}
+
+    autoload.mappings[name] = { ...mapping, ...convertedMapping }
+  }
 
   for (const [name, value] of converted.seeds) {
     seeds.set(name, value)
@@ -1624,7 +1726,7 @@ function convertScaling (config, where) {
 
 /*
   v4 has no entrypoint, no root `server` and no entry-level `server` or `useHttp`, so everything
-  those said about which port was live has to be said again in the capability configurations. Four
+  those said about which port was live has to be said again in the capability configurations. Five
   rules, in this order -- the order is what keeps rule 2 from overwriting the public port rule 1
   just carried across.
 
@@ -1657,6 +1759,7 @@ async function applyExposure (config, applications, entrypoint) {
     const own = application.config.server
     const isEntrypoint = application === entrypoint
     const useHttp = application.entry?.useHttp === true
+    const ports = frameworkPortFacts(application.module, application.config)
     let synthesized = false
 
     if (isEntrypoint && config.server) {
@@ -1748,8 +1851,11 @@ async function applyExposure (config, applications, entrypoint) {
       v4 any declared port is a real listener, and two of them on one port is a hard error rather
       than a dead value. The strip never applies to a port rules 2 or 3 synthesized: cancelling that
       would leave the application with no listener at all.
+
+      A framework application whose own server listened on v3 anyway is the exception: its declared
+      port is real, and stays.
     */
-    if (!isEntrypoint && !useHttp && !synthesized && own?.port !== undefined) {
+    if (!isEntrypoint && !useHttp && !synthesized && !ports.listened && own?.port !== undefined) {
       const { port, ...rest } = application.config.server
 
       if (Object.keys(rest).length > 0) {
@@ -1760,6 +1866,18 @@ async function applyExposure (config, applications, entrypoint) {
 
       notes.push(
         `${bold(application.orchestration.id)} declared ${bold(`port: ${port}`)} that never listened on v3 — it was neither the entrypoint nor useHttp — and it is dropped, because in v4 a declared port is a real listener.`
+      )
+    }
+
+    /*
+      Rule 5. v4 opens no port the configuration does not declare, and refuses to start a framework
+      application that needs one. Without a declared port, v3 gave it an ephemeral one.
+    */
+    if (!isEntrypoint && !useHttp && ports.needsPort && application.config.server?.port === undefined) {
+      application.config.server = { ...application.config.server, port: 0 }
+
+      notes.push(
+        `${bold(application.orchestration.id)} declares no port, and v4 does not start ${bold(application.module)} without one, so it is written out as ${bold('port: 0')}.`
       )
     }
   }
@@ -1819,7 +1937,7 @@ function planExposure (config, applications, refusals) {
   The directories themselves are converted like any other application: each one that has a
   configuration of its own gets a v4 file in its place.
 */
-async function planAutoload (root, config, applications, refusals, skipped, seeds, useSampleDefaults, source) {
+async function planAutoload (root, config, applications, refusals, skipped, seeds, useSampleDefaults, source, convertedByPause) {
   if (!config.autoload) {
     return null
   }
@@ -1921,7 +2039,11 @@ async function planAutoload (root, config, applications, refusals, skipped, seed
       : findLegacyConfiguration(applicationRoot, null)
 
     if (!legacy || !existsSync(legacy)) {
-      skipped.push(v3)
+      // Converted by the run that paused, rather than a directory with no configuration of its own.
+      if (!convertedByPause(applicationRoot, mappingConfig ? legacy : null)) {
+        skipped.push(v3)
+      }
+
       applications.push({ autoloaded: true, directory: applicationRoot, entry: mapping, orchestration: { id: v3 } })
       continue
     }
@@ -2505,7 +2627,7 @@ async function digestOf (path) {
 
 const LOCKFILES = ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'npm-shrinkwrap.json']
 
-async function writeManifest (root, { source, target, legacy, packageManager }) {
+async function writeManifest (root, { source, target, legacy, written, edited, packageManager }) {
   const entries = []
 
   for (const path of [...new Set([...legacy, target])]) {
@@ -2518,7 +2640,21 @@ async function writeManifest (root, { source, target, legacy, packageManager }) 
 
   await writeFile(
     join(root, MANIFEST_NAME),
-    `${JSON.stringify({ version: 1, source: relative(root, source), target: relative(root, target), legacy: legacy.map(path => relative(root, path)), packageManager, entries, expected }, null, 2)}\n`
+    `${JSON.stringify(
+      {
+        version: 1,
+        source: relative(root, source),
+        target: relative(root, target),
+        legacy: legacy.map(path => relative(root, path)),
+        written: written.map(path => relative(root, path)),
+        edited: edited.map(path => relative(root, path)),
+        packageManager,
+        entries,
+        expected
+      },
+      null,
+      2
+    )}\n`
   )
 }
 
@@ -2723,7 +2859,8 @@ export async function migrateCommand (logger, args) {
   let scalingNotes = []
 
   if (runtime && refusals.length === 0) {
-    plan = await planMigration(directory, source, config, { useSampleDefaults, resumed })
+    const paused = new Set((manifest?.legacy ?? []).map(path => join(root, path)))
+    plan = await planMigration(directory, source, config, { useSampleDefaults, resumed, paused })
     refusals.push(...plan.refusals)
   } else if (!runtime) {
     /*
@@ -2898,6 +3035,37 @@ export async function migrateCommand (logger, args) {
   const legacyPaths = [source, ...(plan?.applications ?? []).map(application => application.legacy).filter(Boolean)]
   const packageManager = await getPackageManager(root)
 
+  // How to abandon a paused run: every file it wrote goes, every legacy file it removed comes back.
+  // A resumed run reads what the paused one wrote and edited from the manifest: it emits nothing
+  // itself, and finds the dependency ranges already set.
+  const written = manifest?.written?.map(path => join(root, path)) ?? [target, ...(plan?.applications ?? []).map(application => application.target).filter(Boolean)]
+  const editedManifests = manifest?.edited?.map(path => join(root, path)) ?? edited.map(entry => join(root, entry.where))
+
+  function undoInstructions () {
+    const restore = [...legacyPaths, ...editedManifests].map(path => bold(relative(root, path))).join(', ')
+    const remove = [...written, join(root, MANIFEST_NAME)].map(path => bold(relative(root, path))).join(', ')
+
+    return `To undo instead, restore ${restore} and delete ${remove}. If you installed dependencies since, restore the lockfile too.`
+  }
+
+  // What the conversion changed or dropped. Printed when the run pauses as well as when it finishes,
+  // so a paused tree is never left without saying what is in it.
+  function reportConversion () {
+    if (declared !== module) {
+      logger.warn(`${bold(declared)} is now ${bold(module)}; the emitted configuration imports the new name.`)
+    }
+
+    for (const { from, to } of renamed) {
+      logger.warn(
+        `The application id ${bold(from)} is not a legal v4 id and was written as ${bold(to)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
+      )
+    }
+
+    for (const note of notes.concat(scalingNotes, envBlocks, plan?.exposure ?? [])) {
+      logger.warn(note)
+    }
+  }
+
   /*
     Three ways through here.
 
@@ -2951,7 +3119,8 @@ export async function migrateCommand (logger, args) {
       )
     }
   } else if (noInstall && !resume) {
-    await writeManifest(root, { source, target, legacy: legacyPaths, packageManager })
+    await writeManifest(root, { source, target, legacy: legacyPaths, written, edited: editedManifests, packageManager })
+    reportConversion()
 
     const command = [packageManager, ...getInstallationCommand(packageManager, false), '--ignore-scripts'].join(' ')
 
@@ -2959,9 +3128,7 @@ export async function migrateCommand (logger, args) {
       'Migration paused before installing. The project holds both a v3 and a v4 configuration right now, which is a state the runtime refuses — it is not bootable until this finishes.'
     )
     logger.info(`Install with ${bold(command)}, then run ${bold('wattpm-utils migrate --resume')} to finish.`)
-    logger.info(
-      `To undo instead, restore ${legacyPaths.map(path => bold(relative(root, path))).join(', ')} and delete ${bold(relative(root, target))} and ${bold(MANIFEST_NAME)}.`
-    )
+    logger.info(undoInstructions())
 
     return true
   }
@@ -3015,16 +3182,6 @@ export async function migrateCommand (logger, args) {
     }
   }
 
-  /*
-    The manifest goes once the legacy files are gone: from here the tree is valid v4 and there is
-    nothing left to resume. It is removed before validation deliberately -- validation failure is
-    the one path that does not roll back, and a manifest left behind would invite a resume of a
-    migration that has already happened.
-  */
-  if (existsSync(join(root, MANIFEST_NAME))) {
-    await rm(join(root, MANIFEST_NAME), { force: true })
-  }
-
   let unresolved = null
 
   try {
@@ -3068,26 +3225,25 @@ export async function migrateCommand (logger, args) {
     } else {
       await journal.rollback()
 
+      /*
+        A resumed run only removed the root legacy file, and the rollback puts it back: the tree is
+        in the paused state again, which the manifest still describes, so it can be resumed again.
+      */
       return logFatalError(
         logger,
-        `The configuration migrate emitted does not load: ${error.message} Nothing was changed — ${bold(basename(source))} is as it was.`
+        resume
+          ? `The configuration migrate emitted does not load: ${error.message} The migration is still paused: fix the emitted files and run ${bold('wattpm-utils migrate --resume')} again. ${undoInstructions()}`
+          : `The configuration migrate emitted does not load: ${error.message} Nothing was changed — ${bold(basename(source))} is as it was.`
       )
     }
   }
 
-  if (declared !== module) {
-    logger.warn(`${bold(declared)} is now ${bold(module)}; the emitted configuration imports the new name.`)
+  // The emitted configuration loads, so there is nothing left to resume.
+  if (existsSync(join(root, MANIFEST_NAME))) {
+    await rm(join(root, MANIFEST_NAME), { force: true })
   }
 
-  for (const { from, to } of renamed) {
-    logger.warn(
-      `The application id ${bold(from)} is not a legal v4 id and was written as ${bold(to)}. That name is also the mesh hostname, the injected PLT_*_URL variable, the metrics label and how siblings name it in dependencies — update anything that refers to the old spelling.`
-    )
-  }
-
-  for (const note of notes.concat(scalingNotes, envBlocks, plan?.exposure ?? [])) {
-    logger.warn(note)
-  }
+  reportConversion()
 
   /*
     Run after the migration is complete, because it reports on the result rather than deciding it:
