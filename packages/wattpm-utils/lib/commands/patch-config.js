@@ -1,4 +1,5 @@
 import {
+  applyConfigPatch,
   ensureLoggableError,
   extractModuleFromSchemaUrl,
   findRuntimeConfigurationFile,
@@ -14,7 +15,6 @@ import {
   saveConfigurationFile
 } from '@platformatic/foundation'
 import { create } from '@platformatic/runtime'
-import jsonPatch from 'fast-json-patch'
 import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
@@ -23,7 +23,7 @@ import { resolve } from 'node:path'
 
 async function patchFile (path, patch) {
   let config = getParser(path)(await readFile(path, 'utf-8'))
-  config = jsonPatch.applyPatch(config, patch).newDocument
+  config = applyConfigPatch(config, patch)
   await writeFile(path, getStringifier(path)(config))
 }
 
