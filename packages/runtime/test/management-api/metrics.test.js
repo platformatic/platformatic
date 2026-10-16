@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { setImmediate as immediate } from 'node:timers/promises'
 import { Client } from 'undici'
 import { kITC } from '../../lib/worker/symbols.js'
 import { configurationFileIn, createRuntime } from '../helpers.js'
@@ -339,16 +340,45 @@ test('should preserve counters and listeners for identical metrics updates', asy
 
 test('should serialize concurrent metrics configuration updates', async t => {
   const { app } = await createMetricsRuntime(t, { enabled: false, port: 0, hostname: '127.0.0.1' })
+  const { raw } = Object.values(await app.getWorkers(true))[0]
+  const originalSend = raw[kITC].send.bind(raw[kITC])
+  const started = Promise.withResolvers()
+  const release = Promise.withResolvers()
+  const updates = []
+  t.mock.method(raw[kITC], 'send', async (name, ...args) => {
+    if (name === 'updateMetricsConfig') {
+      updates.push(args[0])
+      if (updates.length === 1) {
+        started.resolve()
+        await release.promise
+      }
+    }
+    return originalSend(name, ...args)
+  })
 
-  const results = await Promise.all([
-    app.updateMetricsConfig({ enabled: true }),
-    app.updateMetricsConfig({ labels: { environment: 'test' } }),
-    app.updateMetricsConfig({ enabled: false })
-  ])
+  // Hold the first update inside a worker while later updates enter the queue.
+  const enabling = app.updateMetricsConfig({ enabled: true })
+  await started.promise
+  const relabeling = app.updateMetricsConfig({ labels: { environment: 'test' } })
+  const disabling = app.updateMetricsConfig({ enabled: false })
+
+  try {
+    await immediate()
+    strictEqual(updates.length, 1)
+    strictEqual(app.getRuntimeConfig().metrics.enabled, true)
+    strictEqual(app.getRuntimeConfig().metrics.labels, undefined)
+  } finally {
+    release.resolve()
+  }
+
+  const results = await Promise.all([enabling, relabeling, disabling])
 
   strictEqual(results[0].config.enabled, true)
+  strictEqual(results[1].config.enabled, true)
   deepStrictEqual(results[1].config.labels, { environment: 'test' })
   strictEqual(results[2].config.enabled, false)
+  deepStrictEqual(results[2].config.labels, { environment: 'test' })
+  deepStrictEqual(updates, results.map(result => result.config))
   deepStrictEqual(app.getRuntimeConfig().metrics, results[2].config)
 })
 

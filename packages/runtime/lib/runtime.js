@@ -1438,95 +1438,102 @@ export class Runtime extends EventEmitter {
    */
   async updateMetricsConfig (metricsConfig) {
     // Serialize changes because they share listeners and worker registries.
-    await this.#metricsConfigUpdatePromise
+    const previousUpdate = this.#metricsConfigUpdatePromise
+    const { promise, resolve } = Promise.withResolvers()
+    this.#metricsConfigUpdatePromise = promise
+    await previousUpdate
 
-    const currentConfig = this.#config.metrics
-    const previousConfig = typeof currentConfig === 'boolean' ? { enabled: currentConfig } : (currentConfig ?? {})
-    metricsConfig = { ...previousConfig, ...metricsConfig }
+    try {
+      const currentConfig = this.#config.metrics
+      const previousConfig = typeof currentConfig === 'boolean' ? { enabled: currentConfig } : (currentConfig ?? {})
+      metricsConfig = { ...previousConfig, ...metricsConfig }
 
-    // An omitted enabled option already means enabled for an object configuration.
-    const previousOptions = { ...previousConfig, enabled: previousConfig.enabled !== false }
-    const nextOptions = { ...metricsConfig, enabled: metricsConfig.enabled !== false }
-    if (!this.#metricsConfigUpdateFailed && isDeepStrictEqual(previousOptions, nextOptions)) {
+      // An omitted enabled option already means enabled for an object configuration.
+      const previousOptions = { ...previousConfig, enabled: previousConfig.enabled !== false }
+      const nextOptions = { ...metricsConfig, enabled: metricsConfig.enabled !== false }
+      if (!this.#metricsConfigUpdateFailed && isDeepStrictEqual(previousOptions, nextOptions)) {
+        this.#config.metrics = metricsConfig
+        return { success: true, config: structuredClone(metricsConfig) }
+      }
+
+      // Failed updates can be retried even when the main-thread configuration already changed.
+      this.#metricsConfigUpdateFailed = true
+
+      if (this.#metricsServersStartPromise) {
+        await this.#metricsServersStartPromise
+      }
+
+      if (this.#prometheusServer) {
+        await this.#prometheusServer.close()
+        this.#prometheusServer = null
+      }
+
+      if (this.#healthProbesServer) {
+        await this.#healthProbesServer.close()
+        this.#healthProbesServer = null
+      }
+
+      this.#metricsServersInitialized = false
+
+      if (this.#opentelemetryMetricsForwarder) {
+        await this.#opentelemetryMetricsForwarder.close()
+        this.#opentelemetryMetricsForwarder = null
+      }
+
       this.#config.metrics = metricsConfig
+      this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
+
+      if (metricsConfig.enabled === false) {
+        if (this.#processMetricsRegistry) {
+          clearRegistry(this.#processMetricsRegistry)
+          this.#processMetricsRegistry = null
+        }
+      } else if (!this.#processMetricsRegistry) {
+        this.#processMetricsRegistry = new metricsClient.Registry()
+        collectProcessMetrics(this.#processMetricsRegistry)
+      }
+
+      // Allow extension health routes to be re-applied on the restarted servers.
+      for (const entry of this.#extensionHealthRoutes) {
+        entry.applied = false
+      }
+
+      await this.#ensureMetricsServersStarted()
+
+      if (metricsConfig.enabled !== false) {
+        await this.#startOpenTelemetryMetricsForwarder(metricsConfig.opentelemetry)
+      }
+
+      const promises = []
+      for (const worker of this.#workers.values()) {
+        if (worker[kWorkerStatus] === 'started') {
+          promises.push(
+            sendViaITC(worker, 'updateMetricsConfig', metricsConfig).catch(err => {
+              throw new FailedToUpdateMetricsConfigError(worker[kFullId], err.message)
+            })
+          )
+        }
+      }
+
+      const results = await Promise.allSettled(promises)
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          this.logger.error({ err: result.reason }, 'Cannot update metrics config on worker')
+        }
+      }
+
+      const failure = results.find(result => result.status === 'rejected')
+      if (failure) {
+        throw failure.reason
+      }
+
+      this.#metricsConfigUpdateFailed = false
+      this.logger.info('Metrics configuration updated')
       return { success: true, config: structuredClone(metricsConfig) }
+    } finally {
+      // Failed and no-op updates must also release the next queued request.
+      resolve()
     }
-
-    // Failed updates can be retried even when the main-thread configuration already changed.
-    this.#metricsConfigUpdateFailed = true
-
-    if (this.#metricsServersStartPromise) {
-      await this.#metricsServersStartPromise
-    }
-
-    if (this.#prometheusServer) {
-      await this.#prometheusServer.close()
-      this.#prometheusServer = null
-    }
-
-    if (this.#healthProbesServer) {
-      await this.#healthProbesServer.close()
-      this.#healthProbesServer = null
-    }
-
-    this.#metricsServersInitialized = false
-
-    if (this.#opentelemetryMetricsForwarder) {
-      await this.#opentelemetryMetricsForwarder.close()
-      this.#opentelemetryMetricsForwarder = null
-    }
-
-    this.#config.metrics = metricsConfig
-    this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
-
-    if (metricsConfig.enabled === false) {
-      if (this.#processMetricsRegistry) {
-        clearRegistry(this.#processMetricsRegistry)
-        this.#processMetricsRegistry = null
-      }
-    } else if (!this.#processMetricsRegistry) {
-      this.#processMetricsRegistry = new metricsClient.Registry()
-      collectProcessMetrics(this.#processMetricsRegistry)
-    }
-
-    // Allow extension health routes to be re-applied on the restarted servers.
-    for (const entry of this.#extensionHealthRoutes) {
-      entry.applied = false
-    }
-
-    await this.#ensureMetricsServersStarted()
-
-    if (metricsConfig.enabled !== false) {
-      await this.#startOpenTelemetryMetricsForwarder(metricsConfig.opentelemetry)
-    }
-
-    const promises = []
-    for (const worker of this.#workers.values()) {
-      if (worker[kWorkerStatus] === 'started') {
-        promises.push(
-          sendViaITC(worker, 'updateMetricsConfig', metricsConfig).catch(err => {
-            throw new FailedToUpdateMetricsConfigError(worker[kFullId], err.message)
-          })
-        )
-      }
-    }
-
-    const results = await Promise.allSettled(promises)
-    for (const result of results) {
-      if (result.status === 'rejected') {
-        this.logger.error({ err: result.reason }, 'Cannot update metrics config on worker')
-      }
-    }
-
-    const failure = results.find(result => result.status === 'rejected')
-    if (failure) {
-      throw failure.reason
-    }
-
-    this.#metricsConfigUpdateFailed = false
-    this.logger.info('Metrics configuration updated')
-    
-    return { success: true, config: structuredClone(metricsConfig) }
   }
 
   async #ensureMetricsServersStarted () {
