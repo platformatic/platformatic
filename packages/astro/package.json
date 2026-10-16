@@ -41,6 +41,7 @@
     "@types/react-dom": "^19.1.7",
     "astro": "^7.0.0",
     "cleaner-spec-reporter": "^2.0.0",
+    "cookie": "^2.0.1",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
