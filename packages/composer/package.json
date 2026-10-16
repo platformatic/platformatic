@@ -30,7 +30,7 @@
     "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "neostandard": "^0.14.0",
-    "json-schema-to-typescript": "^15.0.0"
+    "json-schema-to-typescript": "^16.0.0"
   },
   "dependencies": {
     "@platformatic/foundation": "workspace:*",
