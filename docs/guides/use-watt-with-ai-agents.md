@@ -34,7 +34,9 @@ For example, a project-local Claude Code installation has this layout:
         frameworks.md
         services.md
         integration.md
+        migration-v4.md
         operations.md
+        # Additional references, including nested framework and deployment guides.
 ```
 
 Keep the whole skill directory, not just the main Markdown file: the instructions
@@ -64,6 +66,7 @@ The published `wattpm` package includes an offline copy matching its release:
 npx wattpm skill
 npx wattpm skill references/scaffolding.md
 npx wattpm skill references/frameworks.md
+npx wattpm skill references/frameworks/nextjs.md
 npx wattpm skill references/services.md
 npx wattpm skill references/integration.md
 npx wattpm skill references/migration-v4.md
@@ -80,32 +83,26 @@ invalid paths or extra arguments fail with `PLT_INVALID_SKILL_FILE`.
 The source of truth is [`docs/skills/watt`](../skills/watt/SKILL.md) in
 `platformatic/platformatic`. It is published as searchable documentation and bundled
 into `wattpm`. The `platformatic/skills` repository maintains the agent distribution,
-including additional detailed references and independent companion skills. Updates
-are reconciled deliberately rather than replacing its Watt directory automatically.
+alongside independent companion skills, commands, and agents. Make Watt skill changes
+here, including updates to its detailed framework, deployment, and operations references.
 
-From the root of an existing `platformatic/skills` checkout, maintainers prepare
-a snapshot and agent context with:
+For each stable release, the **Sync Watt skill** workflow copies `docs/skills/watt/`
+from the released tag to `platformatic/skills/skills/watt/` and opens a pull request
+on `sync-watt-skill-<version>` (for example, `sync-watt-skill-4.0.0`). It replaces only
+the Watt skill, including deleted files; other skills, commands, and agents are untouched.
+Review and merge the distribution PR manually. Re-running the same release updates
+its open PR; identical content produces no commit or PR.
 
-```sh
-node scripts/prepare-watt-context.mjs --ref main
+Prereleases and drafts are not synchronized. Maintainers can retry a published stable
+release through the workflow's manual trigger by providing its tag, such as `v4.0.0`.
+The release publishing workflow also calls the sync workflow explicitly, because releases
+created with `GITHUB_TOKEN` do not trigger other release-event workflows.
 
-# Or use a local Platformatic checkout, including unpublished changes:
-node scripts/prepare-watt-context.mjs --path /path/to/platformatic
-```
-
-The ref must already be published in `platformatic/platformatic` and contain
-`docs/skills/watt`. Use `--ref` to select a branch, tag, or commit. The script downloads
-an immutable snapshot into `tmp/watt/upstream/<commit>/` and generates
-`tmp/watt/CONTEXT.md` with provenance, inventories, differences, and reconciliation
-instructions. It does not modify distributed skills or launch an agent.
-`--path` also accepts the skill directory itself, requires no Git or network, and
-stores a content-addressed snapshot in `tmp/watt/upstream/local-<sha256>/`.
-Use either `--ref` or `--path`, not both.
-
-Run your agent manually in the skills checkout and give it `tmp/watt/CONTEXT.md`.
-Review its proposal before approving changes, preserving useful existing references
-and aligning Watt-related commands and agents. Commit, push, and publication remain
-separate manual operations. See that repository's README for prerequisites and tests.
+The cross-repository operation requires the `SKILLS_SYNC_TOKEN` Actions secret in
+`platformatic/platformatic`. Use a fine-grained PAT limited to `platformatic/skills`
+with **Contents: Read and write** and **Pull requests: Read and write**. The workflow
+documents the required permissions and organization approval requirements. Do not put
+the token in source files or workflow inputs.
 
 ## Migration from generators
 

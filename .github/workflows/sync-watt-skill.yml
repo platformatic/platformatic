@@ -34,6 +34,9 @@ concurrency:
 
 jobs:
   sync:
+    # Ignore prerelease events before checking out sources or using the cross-repository PAT.
+    # Manual and reusable invocations also validate the published release below.
+    if: ${{ github.event_name != 'release' || !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     steps:
       - name: Resolve published stable release

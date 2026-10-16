@@ -1,50 +1,43 @@
----
-title: Integrate Existing and Remote Applications
----
-
 # Integrate existing and remote applications
 
-This workflow replaces `watt import` and generator-driven wrapping. Write configuration
-and package changes directly; fetching applications remains an operational task.
+Write configuration and package changes directly. This replaces generator-driven
+wrapping and import commands; downloading applications remains a separate operation.
 
 ## Existing local application
 
-1. Identify its framework and capability using [framework integration](frameworks.md).
-2. Inspect existing configuration and dependencies. Do not add a second configuration
-   file or overwrite an existing one.
-3. Add the capability dependency and a minimal `watt.config.*` if explicit configuration
-   is needed. Watt also supports inferred single-application projects without a config.
-4. If joining a runtime, add `{ id, path }` to its `applications` list or move/copy only
-   with authorization into its existing autoload directory. Preserve package boundaries.
-5. Set the public listener, routes, environment, and shutdown deliberately. Keep the original
-   framework build commands available when Watt needs them.
+1. Detect the capability using [frameworks](frameworks.md).
+2. Inspect existing configuration and dependencies; do not add competing config files.
+3. Add a compatible capability dependency and minimal `watt.config.*` when necessary.
+   Recognized single applications can also use inferred configuration.
+4. Join a runtime through `{ id, path }` in `applications`, or its existing autoload.
+   Moving/copying source needs authorization; preserve package boundaries.
+5. Deliberately configure listener, routes, environment, build, and shutdown.
 
-## Wrap an application with runtime orchestration
+## Runtime wrapper
 
-Prefer a root configuration referencing the existing application by path. A single
-inline application can use the runtime's `application` shorthand:
+Prefer referencing the existing app by path. A single inline application can use:
 
 ```js config
 import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
 
 export default createWattConfig({
   application: {
-    config: {
-      module: '@platformatic/node',
-      node: { main: './index.js' },
+    config: createNodeConfig({
+      main: './index.js',
       server: { port: Number(process.env.PORT || 3042) }
-    },
+    }),
     workers: 2
   }
 })
 ```
 
-Move capability options into `config`; keep orchestration settings beside it. Do not
-nest a legacy `runtime` block inside the capability or duplicate an HTTP listener.
+Keep capability settings in `config`, orchestration alongside it. Avoid duplicate
+listeners and obsolete root `server`/`entrypoint` settings.
 
 ## Remote applications
 
-Declare Git or npm applications explicitly in the runtime configuration:
+Declare Git/npm applications in the root configuration:
 
 ```js config
 import { createWattConfig } from 'wattpm'
@@ -62,29 +55,25 @@ export default createWattConfig({
 })
 ```
 
-Use real user-provided URLs and revisions, not these placeholders. An omitted `path`
-uses the configured resolved-applications base directory. Do not store Git passwords
-in URLs, source, or shell history. Use the environment-supported credentials instead.
-Keep checkout paths inside the project and avoid collisions or existing directories.
-The remote project must already be a valid Watt application with compatible dependencies.
+Use user-provided URLs/revisions, not placeholders. An omitted path uses the resolved
+applications base directory. Keep credentials out of URLs, source, and shell history.
+Keep checkout paths inside the project and avoid existing paths/collisions. Remote
+applications must already use compatible Watt 4 configuration and dependencies.
 
-With authorization, fetch declared applications using:
+With authorization:
 
 ```sh
 npx wattpm-utils resolve --for start
 ```
 
-`--for dev`, `--for build`, or `--for all` selects which configuration context to
-evaluate. Dynamic configuration may produce different topology per command; do not
-evaluate all contexts blindly. `resolve` fetches applications and installs dependencies;
-use `--skip-dependencies` when installation is not authorized. Review lifecycle scripts.
-Do not mutate configuration merely to record a fetched path.
+`--for dev`, `build`, or `all` selects evaluation contexts. Dynamic configurations can
+produce different topologies; do not evaluate all contexts blindly. `resolve` downloads
+applications and installs dependencies; `--skip-dependencies` avoids installation but
+does not authorize fetching. Review lifecycle scripts and any `npx` download separately.
+Do not rewrite configuration or `.env` merely to record a fetched path.
 
-## Migration from Watt 3
+## Existing Watt 3 projects
 
-Do not rename `watt.json` to `watt.config.js`: JSON and modules are different contracts.
-Read the [agent migration reference](migration-v4.md) and its linked migration guide,
-inspect all capability versions, and preserve environment
-semantics, topology, authorization, and database settings. The explicit
-`wattpm-utils migrate` codemod remains available when appropriate; it is not a scaffolder.
-Review its output before installing upgraded packages or starting the application.
+Read [migration-v4.md](migration-v4.md). Renaming JSON to a module is not migration.
+Preserve environment semantics, topology, auth, database settings, and cleanup behavior.
+The authorized `wattpm-utils migrate` codemod remains available; it is not a scaffolder.

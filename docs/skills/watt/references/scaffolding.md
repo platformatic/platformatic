@@ -1,13 +1,9 @@
----
-title: Scaffold Watt Applications
----
-
 # Scaffold Watt applications
 
-## A new single application
+## Single application
 
-Choose a project name and directory; do not create a Git repository automatically.
-Create a package manifest with `"type": "module"`, Node.js `>=24.20.0`, and scripts:
+Choose an unused project directory; do not initialize Git automatically. For a new
+ESM project, set `"type": "module"`, `engines.node: ">=24.20.0"`, and these scripts:
 
 ```json
 {
@@ -20,14 +16,11 @@ Create a package manifest with `"type": "module"`, Node.js `>=24.20.0`, and scri
 }
 ```
 
-Install `wattpm` and the chosen `@platformatic/*` capability at compatible Watt 4
-versions. For generic Node.js, also install the application's framework if needed.
-Do not add TypeScript compilation unless the application needs it: configuration
-types can be stripped by Node.js, while frontend frameworks still require their builds.
+With authorization, install `wattpm` and the chosen capability at compatible Watt 4
+versions, using the existing package manager. For a Fastify app also install `fastify`
+and `@platformatic/node`. Create `index.js`:
 
-For a small Fastify application, create `index.js`:
-
-```js source
+```js
 import Fastify from 'fastify'
 
 export function create () {
@@ -51,25 +44,26 @@ export default createNodeConfig({
 })
 ```
 
-Add `.env.example` with `HOST=127.0.0.1` and `PORT=3042`; do not overwrite `.env`.
-Ignore `node_modules/`, `.env`, build output, logs, and profiling artifacts. Add a
-README with installation, development, production, and endpoint instructions.
-For tests, call `create()`, use Fastify `inject()`, and close the app in `t.after()`.
+Add `.env.example` documenting `HOST=127.0.0.1` and `PORT=3042`; never replace `.env`.
+Ignore dependencies, secrets, build output, logs, CPU profiles, and heap snapshots.
+Document installation, development, build/start, and `/hello`. Tests can call `create()`,
+use Fastify `inject()`, and close the instance in `t.after()`.
 
-## Multiple applications
+Native stripping of configuration types does not replace frontend builds or type checking.
+Do not install TypeScript compilation tooling unless the application requires it.
 
-Use the project's existing layout, or `applications/<id>/` for a new workspace.
-Each application has its own package manifest, dependencies, code, and configuration.
-Put `wattpm` at the root and capability dependencies in their owning applications.
-For npm or Yarn, declare root `workspaces`; Yarn workspaces need `"private": true`.
-For pnpm, create or extend `pnpm-workspace.yaml`:
+## Workspace
+
+Preserve existing layout, or use `applications/<id>/` for a new project. Put `wattpm`
+at the root, and capability/framework dependencies in each owning application's manifest.
+Declare npm/Yarn workspaces; Yarn also needs root `"private": true`. For pnpm:
 
 ```yaml
 packages:
   - 'applications/*'
 ```
 
-Create the root `watt.config.js`:
+Root `watt.config.js`:
 
 ```js config
 import { createWattConfig } from 'wattpm'
@@ -83,28 +77,26 @@ export default createWattConfig({
 })
 ```
 
-The gateway application's own `server` exposes the public HTTP listener. Internal applications communicate
-through `http://<id>.plt.local` without opening a public port for every application.
-Inspect the capability schema before configuring `server`, especially for frameworks.
-Alternatively use `autoload: { path: './applications' }` to discover applications.
-Do not combine explicit entries and autoload accidentally or introduce duplicate IDs.
+Write the applications using [services](services.md) or [frameworks](frameworks.md).
+The gateway's own capability configuration exposes the public listener. Internal calls
+use `http://<id>.plt.local`. Check framework-specific listener requirements instead of
+assuming every capability can start without a port.
+
+Alternatively use `autoload: { path: './applications' }`. Do not accidentally combine
+autoload and explicit entries or duplicate IDs.
 
 ## Add an application
 
-1. Inspect the root configuration and workspace definition.
-2. Choose a unique, descriptive application ID and an unused directory.
-3. Write the application files using the matching framework or service reference.
-4. Add its workspace package and a runtime `applications` entry, or rely on existing
-   autoload. Do not replace the root file with a new static object.
-5. Select the publicly listening application deliberately; adding an internal service
-   must not change the existing public application or its port. The runtime has no
-   `entrypoint` property.
-6. Install authorized dependencies and verify that existing applications still work.
+1. Inspect the root configuration and workspace definitions.
+2. Choose a unique ID and unused path; write the application and its own manifest/config.
+3. Extend workspaces and `applications`, or rely on existing autoload. Edit dynamic exports
+   minimally instead of replacing the root with a static object.
+4. Preserve existing listeners and routing. There is no runtime `entrypoint` property.
+5. Install and verify existing applications only with authorization.
 
 ## TypeScript
 
-Use `.ts` configuration and native Node.js type stripping for erasable syntax.
-Use the framework's existing TypeScript toolchain for its source. For a new project,
-prefer ESM and NodeNext settings, `noEmit` for type checks when Node runs the source,
-and `@types/node` plus `typescript` as development dependencies. Avoid enums,
-parameter properties, and path aliases without a runtime strategy.
+Use `.ts` configuration with erasable syntax, respecting package module type. For source,
+retain the framework toolchain. New Node projects can use NodeNext, `noEmit`, `typescript`,
+and `@types/node` for checking. Enums, decorators, parameter properties, and path aliases
+need a separate runtime/build strategy.
