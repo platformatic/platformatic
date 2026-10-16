@@ -31,9 +31,6 @@ COPY . .
 # Install all the deps in the source code
 RUN pnpm install --prod --offline --node-linker=hoisted --shamefully-hoist --force
 
-# Add platformatic to path
-RUN cd packages/cli && pnpm link --global
-
 # Add wattpm to path
 RUN cd packages/wattpm && pnpm link --global
 
@@ -55,8 +52,8 @@ ENV PATH=$PNPM_HOME:$PATH
 COPY --from=base $PLT_HOME $PLT_HOME
 COPY --from=base $PNPM_HOME $PNPM_HOME
 
-# Add platformatic to path
-RUN cd $PLT_HOME/packages/cli && pnpm link --global
+# Add wattpm to path
+RUN cd $PLT_HOME/packages/wattpm && pnpm link --global
 
 # Move to the app directory
 WORKDIR $APP_HOME
@@ -66,4 +63,4 @@ RUN chown node:node .
 USER node
 
 ENTRYPOINT ["dumb-init"]
-CMD ["platformatic"]
+CMD ["wattpm"]

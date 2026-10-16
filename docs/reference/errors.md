@@ -20,26 +20,6 @@
 ### PLT_BASIC_UNSUPPORTED_VERSION
 **Message:** %s version %s is not supported. Please use version %s. 
 
-## @platformatic/composer 
-
-### PLT_GATEWAY_COULD_NOT_READ_OPENAPI_CONFIG
-**Message:** Could not read openapi config for "%s" application 
-
-### PLT_GATEWAY_FAILED_TO_FETCH_OPENAPI_SCHEMA
-**Message:** Failed to fetch OpenAPI schema from %s 
-
-### PLT_GATEWAY_FASTIFY_INSTANCE_IS_ALREADY_LISTENING
-**Message:** Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"! 
-
-### PLT_GATEWAY_INVALID_OPENAPI_SCHEMA
-**Message:** Failed to compose OpenAPI schemas: %s 
-
-### PLT_GATEWAY_PATH_ALREADY_EXISTS
-**Message:** Path "%s" is exposed by both the "%s" and the "%s" applications. Set a different openapi.prefix on one of them to resolve the conflict. 
-
-### PLT_GATEWAY_VALIDATION_ERRORS
-**Message:** Validation errors: %s 
-
 ## @platformatic/db 
 
 ### PLT_DB_MIGRATE_ERROR

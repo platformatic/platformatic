@@ -157,16 +157,26 @@ test('a companion package does not trip the ambiguity error', async t => {
   strictEqual(config.applications[0].module, '@platformatic/node')
 })
 
-test('composer is an alias of gateway rather than a second capability', async t => {
+test('gateway is detected from its package dependency', async t => {
   const root = await createTree(t, {
     'package.json': '{ "name": "proj" }',
     'watt.config.js': 'export default { applications: [{ id: "api", path: "./web/api" }] }',
-    'web/api/package.json': '{ "dependencies": { "@platformatic/composer": "2.0.0", "@platformatic/gateway": "3.0.0" } }'
+    'web/api/package.json': '{ "dependencies": { "@platformatic/gateway": "4.0.0" } }'
   })
 
   const { config } = await load(root)
 
   strictEqual(config.applications[0].module, '@platformatic/gateway')
+})
+
+test('the removed composer package is not detected as a capability', async t => {
+  const root = await createTree(t, {
+    'package.json': '{ "name": "proj" }',
+    'watt.config.js': 'export default { applications: [{ id: "api", path: "./web/api" }] }',
+    'web/api/package.json': '{ "dependencies": { "@platformatic/composer": "3.0.0" } }'
+  })
+
+  await rejects(() => load(root), { code: 'PLT_CAPABILITY_NOT_DETECTED' })
 })
 
 /*

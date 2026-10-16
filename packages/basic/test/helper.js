@@ -101,7 +101,6 @@ function getTargetApplication (applications) {
 
 const capabilities = new Set([
   '@platformatic/astro',
-  '@platformatic/composer',
   '@platformatic/db',
   '@platformatic/gateway',
   '@platformatic/nest',
@@ -370,10 +369,6 @@ export async function ensureDependencies (configOrPaths) {
     )
 
     for (const dep of allDeps) {
-      if (dep === 'platformatic') {
-        continue
-      }
-
       const moduleRoot = resolve(path, 'node_modules', dep)
 
       // If it is a @platformatic dependency, use the current repository, otherwise resolve

@@ -2532,7 +2532,7 @@ export class Runtime extends EventEmitter {
   }
 
   async #refuseUnresolvedApplication (id) {
-    const executable = getExecutable() ?? 'platformatic'
+    const executable = getExecutable() ?? 'wattpm'
 
     this.logger.error(
       `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,

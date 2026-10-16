@@ -8,7 +8,7 @@ Platformatic Remix is configured with a configuration file. The file is a module
 
 It supports all the [settings supported by Platformatic Vite](../vite/configuration.md), plus the following one:
 
-- **`remix.outputDirectory`**: The subdirectory where production build is stored at when using `wattpm build` or `plt build`. The default is `build`.
+- **`remix.outputDirectory`**: The subdirectory where production build is stored at when using `wattpm build`. The default is `build`.
 
 :::note
 Platformatic Remix uses this property instead of `application.outputDirectory` (which is ignored).

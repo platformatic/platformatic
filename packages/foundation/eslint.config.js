@@ -20,9 +20,7 @@ const noInternalPackages = {
 
           let pkg
 
-          if (deps.includes('platformatic')) {
-            pkg = 'platformatic'
-          } else if (deps.includes('wattpm')) {
+          if (deps.includes('wattpm')) {
             pkg = 'wattpm'
           } else {
             pkg = deps.find(d => d.startsWith('@platformatic/'))

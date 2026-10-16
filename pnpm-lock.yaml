@@ -159,62 +159,6 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
 
-  packages/cli:
-    dependencies:
-      '@platformatic/foundation':
-        specifier: workspace:*
-        version: link:../foundation
-      wattpm:
-        specifier: workspace:*
-        version: link:../wattpm
-    devDependencies:
-      c8:
-        specifier: ^11.0.0
-        version: 11.0.0
-      cleaner-spec-reporter:
-        specifier: ^0.5.0
-        version: 0.5.0
-      eslint:
-        specifier: '9'
-        version: 9.39.5(jiti@2.7.0)
-      license-checker-rseidelsohn:
-        specifier: ^5.0.1
-        version: 5.0.1
-      neostandard:
-        specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
-      typescript:
-        specifier: ~6.0.3
-        version: 6.0.3
-
-  packages/composer:
-    dependencies:
-      '@platformatic/foundation':
-        specifier: workspace:*
-        version: link:../foundation
-      '@platformatic/gateway':
-        specifier: workspace:*
-        version: link:../gateway
-      '@platformatic/globals':
-        specifier: workspace:*
-        version: link:../globals
-    devDependencies:
-      c8:
-        specifier: ^11.0.0
-        version: 11.0.0
-      cleaner-spec-reporter:
-        specifier: ^0.5.0
-        version: 0.5.0
-      eslint:
-        specifier: '9'
-        version: 9.39.5(jiti@2.7.0)
-      json-schema-to-typescript:
-        specifier: ^15.0.0
-        version: 15.0.4
-      neostandard:
-        specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.65.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
-
   packages/control:
     dependencies:
       '@fastify/error':
@@ -1668,9 +1612,6 @@ importers:
       '@opentelemetry/sdk-metrics':
         specifier: ^2.8.0
         version: 2.10.0(@opentelemetry/api@1.9.1)
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db

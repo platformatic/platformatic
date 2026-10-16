@@ -12,7 +12,7 @@ Platformatic Next is configured through a configuration file. The file is a modu
 Supported object properties:
 
 - **`basePath`**: Service proxy base path when exposing this application in a [gateway](../gateway/configuration.md) with the `proxy` property. If not specified, the application is exposed on `/$ID` (where `$ID` is the application ID), or on a value specified in application code via `platformatic.setBasePath()`.
-- **`outputDirectory`**: Subdirectory where the production build is stored when using `wattpm build` or `plt build`. Default: `dist`.
+- **`outputDirectory`**: Subdirectory where the production build is stored when using `wattpm build`. Default: `dist`.
 - **`include`**: Paths to include when deploying the application. Default: `['dist']`.
 - **`commands`**: Object specifying commands to manage the application instead of Next.js defaults:
   - **`install`**: Command to install application dependencies. Default: `npm ci --omit-dev`.

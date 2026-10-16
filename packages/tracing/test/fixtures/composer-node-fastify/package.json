@@ -14,7 +14,7 @@
     "wattpm": ">=3.0.0"
   },
   "devDependencies": {
-    "platformatic": "^2.5.5"
+    "wattpm": "^2.5.5"
   },
   "workspaces": [
     "web/*"
