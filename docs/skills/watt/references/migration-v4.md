@@ -1,67 +1,89 @@
-# Migrate Watt 3 projects to Watt 4
+# Migrate Watt 3 to Watt 4
 
-Use this reference to identify migration work and navigate the existing documentation.
-The [Watt 4 migration guide](https://docs.platformatic.dev/docs/guides/migrate-v4)
-contains the detailed contracts, before/after examples, and codemod limitations.
-Read the relevant sections before editing; this checklist is not a replacement for them.
+Read the relevant sections of the [Watt 4 migration guide](https://docs.platformatic.dev/docs/guides/migrate-v4)
+before editing. This checklist does not replace its detailed contracts and limitations.
 
-## Inspect and agree on the scope
+## Inspect and agree on scope
 
-1. Read the project's instructions, installed versions, manifests, configuration,
-   application entrypoints, environment examples, and deployment files. Watt 4 requires
-   Node.js 24.20.0 or newer; check CI and production images as well as the local runtime.
-2. Inventory legacy configuration, listeners, framework factories, custom startup
-   commands, runtime API consumers, globals, tracing, interceptors, and cleanup hooks.
-3. Explain the affected files and dependencies. Preserve topology, authentication,
-   database settings, environment semantics, and unrelated code. Do not silently mix
-   Watt 3 and Watt 4 packages or convert a project without authorization.
+Inspect installed versions, manifests, configuration, entrypoints, env examples, CI,
+and deployment. Watt 4.0.0 requires Node.js 24.20.0+. Inventory listeners, factories,
+custom commands, runtime API consumers, globals, tracing, interceptors, and shutdown.
+Preserve topology, authentication, database behavior, and unrelated code. Do not mix
+major versions or convert a project without permission.
 
-## What changed and where to read
+## Changes and documentation
 
-| Area | Watt 4 change and agent action | Migration guide section |
+| Area | Required review | Migration guide section |
 | --- | --- | --- |
-| Configuration format | Replace legacy JSON configuration with an exported program. Do not merely rename JSON or leave competing legacy and module configurations. | [Choosing the filename](https://docs.platformatic.dev/docs/guides/migrate-v4#choosing-the-filename) |
-| Module system | Choose among `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, and `.cjs` using the package's module system. Native TypeScript stripping accepts erasable syntax only. | [Choosing the filename](https://docs.platformatic.dev/docs/guides/migrate-v4#choosing-the-filename) |
-| Environment values | Replace `{PLT_X}` interpolation with expressions. Preserve missing/empty behavior and numeric conversions; boolean positions require individual review rather than one universal conversion. | [Placeholders become expressions](https://docs.platformatic.dev/docs/guides/migrate-v4#placeholders-become-expressions) |
-| Tracing | Rename configuration `telemetry` to `tracing` and the package to `@platformatic/tracing`. Check imports as well as dependencies; do not infer that every exported symbol was renamed. | [Rename tracing configuration and package](https://docs.platformatic.dev/docs/guides/migrate-v4#rename-tracing-configuration-and-package) |
-| Runtime globals | Replace `globalThis.platformatic` access with typed getters and setters from `@platformatic/globals`. | [Replace the legacy runtime global](https://docs.platformatic.dev/docs/guides/migrate-v4#replace-the-legacy-runtime-global) |
-| Managed listeners | Remove runtime `entrypoint` and root `server`. Move listener settings, including HTTPS and port assignment where supported, to the owning capability configuration, not the runtime application entry. Keep worker counts on runtime application entries. | [Move listener configuration to the capability](https://docs.platformatic.dev/docs/guides/migrate-v4#move-listener-configuration-to-the-capability) |
-| Custom listeners | Applications that start their own servers choose their own addresses. The runtime observes them and no longer writes `PORT`. Distinguish these from factories returning a managed server. | [Let applications own custom listeners](https://docs.platformatic.dev/docs/guides/migrate-v4#let-applications-own-custom-listeners) |
-| HTTP and WebSockets | Remove application-entry `useHttp` and `websocket` flags. Managed TCP listeners use capability `server.port`; mesh WebSocket proxying does not require a TCP listener. | [Removed application flags](https://docs.platformatic.dev/docs/guides/migrate-v4#the-usehttp-and-websocket-application-flags-are-gone) |
-| Single application | A capability configuration can stand alone. Add a runtime root only for runtime options; the singular `application` key supports that case. Avoid unnecessary topology changes during migration. | [A single application needs no root](https://docs.platformatic.dev/docs/guides/migrate-v4#a-single-application-needs-no-root) |
-| Programmatic startup | Update consumers of startup results: `runtime.start()` and `runtime.getUrls()` expose observed URLs keyed by `applicationId:workerId`. | [Update programmatic startup code](https://docs.platformatic.dev/docs/guides/migrate-v4#update-programmatic-startup-code) |
-| Undici interceptors | Custom dispatcher handlers must implement the Undici 8 lifecycle and signatures, not just rename old callbacks. | [Update custom Undici interceptors](https://docs.platformatic.dev/docs/guides/migrate-v4#update-custom-undici-interceptors) |
-| Shutdown | Replace legacy `getEvents().on('close', ...)` cleanup with `registerCloseCallback()`. Review reverse callback order, asynchronous cleanup, and custom-command child-process responsibilities. | [Update application shutdown](https://docs.platformatic.dev/docs/guides/migrate-v4#update-application-shutdown) |
-| Scaffolding | Removed generators and import commands are replaced by the agent skill. The migration codemod is retained; it is not a scaffolder. | [Use Watt with AI agents](https://docs.platformatic.dev/docs/guides/use-watt-with-ai-agents) |
+| Format/module system | Export configuration from one `watt.config.*` per directory; choose extension using package module type. Native TS accepts erasable syntax only. | [Filename](https://docs.platformatic.dev/docs/guides/migrate-v4#choosing-the-filename) |
+| Environment | Replace placeholders with expressions, preserving missing/empty behavior and numeric conversion. Review boolean positions individually. | [Expressions](https://docs.platformatic.dev/docs/guides/migrate-v4#placeholders-become-expressions) |
+| Tracing | `telemetry` configuration becomes `tracing`; package becomes `@platformatic/tracing`. Do not assume every exported symbol changed name. | [Tracing](https://docs.platformatic.dev/docs/guides/migrate-v4#rename-tracing-configuration-and-package) |
+| Globals | Replace `globalThis.platformatic` with typed getters/setters from `@platformatic/globals`. | [Globals](https://docs.platformatic.dev/docs/guides/migrate-v4#replace-the-legacy-runtime-global) |
+| Managed listener | Remove root `server` and `entrypoint`; move listener/HTTPS/port assignment into the owning capability, not its runtime entry. Keep workers on orchestration entries. | [Listener](https://docs.platformatic.dev/docs/guides/migrate-v4#move-listener-configuration-to-the-capability) |
+| Custom listener | Self-listening apps/custom commands choose their own addresses. Runtime observes listeners and no longer writes `PORT`. | [Custom listener](https://docs.platformatic.dev/docs/guides/migrate-v4#let-applications-own-custom-listeners) |
+| HTTP/WebSocket flags | Remove runtime entry `useHttp`/`websocket`; managed TCP uses capability `server.port`, mesh WebSockets need no extra TCP listener flag. | [Flags](https://docs.platformatic.dev/docs/guides/migrate-v4#the-usehttp-and-websocket-application-flags-are-gone) |
+| Single application | A capability can stand alone; use singular runtime `application` when runtime options are needed. Avoid gratuitous topology changes. | [Single app](https://docs.platformatic.dev/docs/guides/migrate-v4#a-single-application-needs-no-root) |
+| Startup results | `runtime.start()` and `getUrls()` expose observed URLs keyed by `applicationId:workerId`. | [Startup API](https://docs.platformatic.dev/docs/guides/migrate-v4#update-programmatic-startup-code) |
+| Undici | Implement Undici 8 handler lifecycle/signatures; callback renaming alone is insufficient. | [Interceptors](https://docs.platformatic.dev/docs/guides/migrate-v4#update-custom-undici-interceptors) |
+| Cleanup | Replace legacy close events with `registerCloseCallback()`. Review async cleanup, reverse callback order, and child-process responsibilities. | [Shutdown](https://docs.platformatic.dev/docs/guides/migrate-v4#update-application-shutdown) |
+| Scaffolding | Generators/import commands are removed; write files with this skill. The migration codemod remains. | [Agent workflow](https://docs.platformatic.dev/docs/guides/use-watt-with-ai-agents) |
 
-## Use the codemod deliberately
+### Before/after: legacy configuration
 
-Read [Run the codemod first](https://docs.platformatic.dev/docs/guides/migrate-v4#run-the-codemod-first)
-before proposing `wattpm-utils migrate`. Run it only with explicit authorization.
-It writes new configuration and deletes validated legacy files; it does not create
-backups. A clean, recoverable version-control state is a prerequisite, not permission
-for the agent to commit, restore, or discard user work. Untracked or ignored legacy
-configuration can also block the run; never commit secrets to satisfy that check.
+This is a **Watt 3 example for migration only**, not a new-project template:
 
-Do not use `--force` to bypass unresolved safety checks. For an interrupted migration,
-review its `.wattpm-migrate.json` manifest and the documented `--resume` workflow
-before proceeding. Review warnings and generated output; do not assume the codemod
-updates every application API, custom interceptor, cleanup hook, or deployment setting.
+```json
+{
+  "entrypoint": "api",
+  "server": { "port": "{PORT}" },
+  "applications": [{ "id": "api", "path": "./api" }]
+}
+```
 
-## Review and validate
+Watt 4 root `watt.config.js`, in an ESM package:
 
-- Confirm there is one recognized configuration per directory and no mixed legacy
-  configuration. Review helpers and plain-object shapes against installed capability
-  schemas; preserve dynamic exports, imports, functions, and comments.
-- Verify public listeners, internal routing, WebSockets, worker settings, and environment
-  values against the previous behavior. Report any change that needs a user decision.
-- Update dependencies, lockfiles, scripts, CI, deployment files, and user documentation
-  within the authorized scope and using the existing package manager.
-- With permission, exercise development startup, build/production startup, relevant
-  endpoints, interceptors, and graceful shutdown. Check missing and empty environment
-  values, not only the successful path. Report checks performed and remaining gaps.
+```js
+import { createWattConfig } from 'wattpm'
 
-Use [Framework integration](frameworks.md), [Services and databases](services.md),
-and [Operations](operations.md) for capability-specific work. The
-[runtime shutdown reference](https://docs.platformatic.dev/docs/reference/runtime/shutdown)
-defines cleanup sequencing and timeouts beyond the migration overview.
+export default createWattConfig({
+  applications: [{ id: 'api', path: './api' }]
+})
+```
+
+`api/watt.config.js` owns its listener:
+
+```js
+import { createServiceConfig } from '@platformatic/service'
+
+export default createServiceConfig({
+  server: { port: Number(process.env.PORT || 3042) }
+})
+```
+
+The fallback above is a new explicit choice; migrations must preserve prior missing/empty
+semantics rather than adding defaults indiscriminately. Retain valid capability `runtime`
+wrapping when supported; remove obsolete listener/topology properties, not every block
+with that name.
+
+## Codemod safety
+
+Read [codemod behavior](https://docs.platformatic.dev/docs/guides/migrate-v4#run-the-codemod-first)
+before proposing `wattpm-utils migrate`. Run only with explicit authorization. It writes
+new config and deletes validated legacy files without backups. A clean, recoverable
+version-control state is required, not permission to commit/restore/discard user work.
+Untracked/ignored config can block migration; never commit secrets to satisfy this check.
+
+Do not use `--force` to bypass unresolved safety checks. For interruptions, review
+`.wattpm-migrate.json` and the documented `--resume` flow. Review warnings and output;
+the codemod does not update every API consumer, interceptor, cleanup hook, or deployment.
+
+## Validation
+
+- Confirm one configuration per directory, no competing legacy files, and correct helper/plain-object shapes.
+- Compare listeners, routing, WebSockets, workers, auth, and missing/empty environment values.
+- Update dependencies/lockfiles/scripts/CI/deployment within the authorized scope.
+- With permission, exercise dev/build/start, endpoints, interceptors, and shutdown.
+- Report checks performed and remaining gaps, especially external capability compatibility.
+
+See [frameworks](frameworks.md), [services](services.md), [operations](operations.md),
+and [shutdown sequencing](https://docs.platformatic.dev/docs/reference/runtime/shutdown).

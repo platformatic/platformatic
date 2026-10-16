@@ -1,41 +1,36 @@
----
-title: Integrate Frameworks with Watt
----
+# Framework integration with Watt 4
 
-# Integrate frameworks with Watt
+Read configuration and dependencies together. Specific framework dependencies take
+precedence over shared Vite infrastructure, even when `vite.config.*` is present.
 
-## Detect the capability
+| Signal | Capability | Detailed reference |
+| --- | --- | --- |
+| `next.config.*` or `next` | `@platformatic/next` | [Next.js](frameworks/nextjs.md) |
+| `nuxt.config.*` or `nuxt` | `@platformatic/nuxt` | [Nuxt](frameworks/nuxt.md) |
+| Standalone `nitro`/`nitropack`, after specific framework checks | `@platformatic/nitro` | [Nitro](frameworks/nitro.md) |
+| `react-router.config.*` or `@react-router/dev` | `@platformatic/react-router` | [React Router](frameworks/react-router.md) |
+| `@tanstack/react-start`; inspect older `@tanstack/start` projects | `@platformatic/tanstack` | [TanStack](frameworks/tanstack.md) |
+| `remix.config.*` or `@remix-run/dev` | `@platformatic/remix` | [Remix](frameworks/remix.md) |
+| `astro.config.*` or `astro` | `@platformatic/astro` | [Astro](frameworks/astro.md) |
+| `nest-cli.json` or `@nestjs/core` | `@platformatic/nest` | [NestJS](frameworks/nestjs.md) |
+| Vite without a more specific match | `@platformatic/vite` | [Vite](frameworks/vite.md) |
+| `express` | `@platformatic/node` | [Express](frameworks/express.md) |
+| `fastify` | `@platformatic/node` | [Fastify](frameworks/fastify.md) |
+| `koa` | `@platformatic/node` | [Koa](frameworks/koa.md) |
+| Generic Node.js, including Hono with a Node server | `@platformatic/node` | [Node configuration](https://docs.platformatic.dev/docs/reference/node/configuration) |
+| PHP, WordPress, Laravel | External `@platformatic/php` | [PHP compatibility](frameworks/php.md) |
 
-Read configuration files and dependencies together. Specific frameworks take precedence
-over their shared Vite infrastructure; do not classify every `vite.config.*` as plain Vite.
-
-| Signal | Capability |
-| --- | --- |
-| `next.config.*` or `next` | `@platformatic/next` |
-| `nuxt.config.*` or `nuxt` | `@platformatic/nuxt` |
-| `nitro` or `nitropack` | `@platformatic/nitro` |
-| `react-router.config.*` or `@react-router/dev` | `@platformatic/react-router` |
-| `@tanstack/react-start` | `@platformatic/tanstack` |
-| `remix.config.*` or `@remix-run/dev` | `@platformatic/remix` |
-| `astro.config.*` or `astro` | `@platformatic/astro` |
-| `nest-cli.json` or `@nestjs/core` | `@platformatic/nest` |
-| Vite without a more specific match | `@platformatic/vite` |
-| Express, Fastify, Koa, or generic Node.js | `@platformatic/node` |
-| PHP, WordPress, or Laravel | External `@platformatic/php` capability |
-
-Use the framework's own scaffold only if explicitly requested for a new framework
-application; Watt configuration itself is written directly. For an existing app,
-keep the framework's source and configuration and preserve original scripts under
-clear names when replacing `dev`, `build`, and `start` with Watt commands.
+Use a framework's scaffold only when explicitly requested for a new framework app.
+Write Watt configuration directly. Preserve framework source/configuration and retain
+original build/dev/start commands under clear script names when introducing Watt scripts.
 
 ## Configuration and dependencies
 
-Install `wattpm` and the capability using the existing package manager. Inspect the
-installed capability's schema and helper exports; do not infer options from another
-framework. External capabilities may not yet support Watt 4: check compatibility
-and report a blocker instead of installing an incompatible package.
+Install `wattpm` and the capability only with authorization, using the existing package
+manager. Require compatible Watt 4 versions; external packages must be checked separately.
+Inspect installed helper exports, schema, and supported framework versions.
 
-For Next.js, a minimal `watt.config.ts` is:
+For Next.js in an ESM TypeScript project:
 
 ```ts config
 import { createNextConfig } from '@platformatic/next'
@@ -45,20 +40,16 @@ export default createNextConfig({
 })
 ```
 
-Keep `next.config.*`, routes, image configuration, React versions, and existing build
-settings intact. Run `wattpm build` before `wattpm start`. Apply Next.js standalone
-output only when the chosen deployment needs it; preserve any existing adapter setup.
+Keep routes, images, React versions, and adapter/build choices intact. Standalone output
+is a deployment choice, not a universal requirement. For other capabilities, use their
+own helper or a versioned plain object with `module` and the actual schema shape.
+Do not infer `application`, `commands`, or listener behavior from another framework.
 
-For other capabilities, read their current configuration reference before writing
-the matching typed helper call or a plain object with `module` and a versioned
-`$schema`. Leave unspecified defaults to the capability rather than adding unsupported
-`application`, `server`, or `commands` blocks from a generic template.
+## Node entrypoints
 
-## Generic Node.js entrypoints
+Prefer a factory returning the application or supported server rather than listening twice:
 
-For Express, export a factory returning the application rather than listening twice:
-
-```js source
+```js
 import express from 'express'
 
 export function create () {
@@ -70,21 +61,18 @@ export function create () {
 }
 ```
 
-For Fastify, return a Fastify instance. For Koa or a custom HTTP server, inspect the
-Node capability's supported entrypoint contract before adapting it. When retaining
-a self-listening entrypoint, supply a `close` export or a shutdown handler registered
-through `@platformatic/globals`. Preserve standalone usage if the user needs it.
+Fastify factories return the instance. Koa needs a supported HTTP server adaptation;
+read its guide before returning a raw callback. Use `main` in `createNodeConfig`, or
+`node.main` in a plain object, pointing at actual source or production build output.
 
-Configure `main` in `createNodeConfig`, or `node.main` in a plain-object definition,
-to point to the actual file or production build output.
-Keep the existing build command when source compilation is required. Confirm that
-shutdown closes resources, connections, timers, and the HTTP server.
+Self-listening in-thread entrypoints need a `close()` export or `registerCloseCallback()`
+from `@platformatic/globals`. Custom commands run in child processes and must close their
+own resources; exported factories/`close()` are not their shutdown contract.
 
 ## Verification
 
-With authorization, exercise development startup, a representative endpoint, framework
-build, and production startup. Check SSR/static assets and routing for frontend apps.
-Do not conclude integration is successful from `wattpm --version` alone.
+With permission, exercise dev startup, an endpoint, build, production startup, assets,
+SSR, routing, and shutdown. `wattpm --version` alone does not verify integration.
 
-See [framework guides](https://docs.platformatic.dev/docs/guides/frameworks) and the
-matching capability configuration reference for exact options.
+See [framework guides](https://docs.platformatic.dev/docs/guides/frameworks) for
+release-matched capability details.

@@ -1,6 +1,6 @@
 import { ok, rejects, strictEqual } from 'node:assert'
-import { readFile, symlink, unlink } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { readFile, readdir, symlink, unlink } from 'node:fs/promises'
+import { dirname, relative, resolve } from 'node:path'
 import { test } from 'node:test'
 import { readSkillFile } from '../lib/commands/skill.js'
 import { wattpm } from './helper.js'
@@ -16,13 +16,32 @@ test('skill - prints the complete source without logger output', async () => {
 })
 
 test('skill - reads every bundled reference', async () => {
-  for (const name of ['scaffolding', 'frameworks', 'services', 'integration', 'migration-v4', 'operations']) {
-    const file = `references/${name}.md`
+  const files = await readdir(resolve(sourceDirectory, 'references'), { recursive: true })
+  for (const name of files.filter(file => file.endsWith('.md'))) {
+    const file = `references/${name}`
     strictEqual(await readSkillFile(file), await readFile(resolve(sourceDirectory, file), 'utf-8'))
   }
 
-  const result = await wattpm('skill', 'references/frameworks.md', { stripFinalNewline: false })
-  strictEqual(result.stdout, await readSkillFile('references/frameworks.md'))
+  for (const file of ['references/frameworks.md', 'references/frameworks/nextjs.md', 'references/deployment/docker.md']) {
+    const result = await wattpm('skill', file, { stripFinalNewline: false })
+    strictEqual(result.stdout, await readSkillFile(file))
+  }
+})
+
+test('skill - bundles all locally linked Markdown references', async () => {
+  const files = await readdir(sourceDirectory, { recursive: true })
+  for (const file of files.filter(file => file.endsWith('.md'))) {
+    const source = await readSkillFile(file)
+    for (const [, link] of source.matchAll(/\]\(([^)]+\.md)(?:#[^)]*)?\)/g)) {
+      if (link.startsWith('https://')) {
+        continue
+      }
+
+      // Resolve links from the referring document, including nested framework guides.
+      const target = relative(sourceDirectory, resolve(sourceDirectory, dirname(file), link))
+      strictEqual(await readSkillFile(target), await readFile(resolve(sourceDirectory, target), 'utf-8'))
+    }
+  }
 })
 
 test('skill - rejects paths outside the bundle and non-Markdown files', async () => {
