@@ -21,6 +21,7 @@ export declare const FailedToGetRuntimeHistoryLogs: (value: string) => FastifyEr
 export declare const FailedToGetRuntimeAllLogs: (value: string) => FastifyError
 export declare const FailedToGetRuntimeLogIndexes: (value: string) => FastifyError
 export declare const FailedToGetRuntimeMetrics: (value: string) => FastifyError
+export declare const FailedToUpdateRuntimeMetrics: (value: string) => FastifyError
 export declare const FailedToGetRuntimeMemory: (value: string) => FastifyError
 export declare const FailedToGetRuntimeWorkersScaler: (value: string) => FastifyError
 export declare const FailedToStartProfiling: (value: string) => FastifyError

@@ -1,3 +1,4 @@
+import { kMetadata } from '@platformatic/foundation'
 import { equal, ok, rejects, strictEqual } from 'node:assert'
 import { randomUUID } from 'node:crypto'
 import { EventEmitter, once } from 'node:events'
@@ -92,6 +93,7 @@ test('should throw when the custom socket remains in use after retries', async t
   })
 
   const runtime = new EventEmitter()
+  runtime.getRuntimeConfig = () => ({ [kMetadata]: { root: fixturesDir } })
   t.after(async () => {
     const closeManagementApi = runtime.listeners('closed')[0]
     await closeManagementApi?.()

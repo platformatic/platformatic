@@ -30,6 +30,7 @@ import {
   FailedToStreamRuntimeLogs,
   FailedToTakeHeapSnapshot,
   FailedToUpdateRuntimeScheduler,
+  FailedToUpdateRuntimeMetrics,
   ProfilingAlreadyStarted,
   ProfilingNotStarted,
   RuntimeNotFound
@@ -569,6 +570,22 @@ export class RuntimeApiClient {
     const metrics = format === 'json' ? await body.json() : await body.text()
 
     return metrics
+  }
+
+  async updateRuntimeMetricsConfig (pid, metricsConfig) {
+    const client = this.#getUndiciClient(pid)
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/metrics',
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(metricsConfig)
+    })
+
+    if (statusCode !== 200) {
+      throw new FailedToUpdateRuntimeMetrics(await body.text())
+    }
+
+    return body.json()
   }
 
   async getRuntimeMemory (pid) {

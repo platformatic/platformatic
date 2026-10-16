@@ -8,6 +8,7 @@ import {
   type ApplicationsTopology,
   type Runtime,
   type RuntimeConfiguration,
+  type MetricsConfigUpdateResult,
   type RuntimeCreateContext,
   type ApplicationDetails,
   type InjectParams,
@@ -194,6 +195,7 @@ test('Runtime.getApplicationGraphqlSchema', () => {
 test('Runtime.getMetrics', () => {
   expect(runtime.getMetrics()).type.toBe<Promise<{ metrics: unknown }>>()
   expect(runtime.getMetrics('text')).type.toBe<Promise<{ metrics: unknown }>>()
+  expect(runtime.updateMetricsConfig({ enabled: true })).type.toBe<Promise<MetricsConfigUpdateResult>>()
 })
 
 test('Runtime.getSharedContext', () => {
