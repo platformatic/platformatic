@@ -3,9 +3,11 @@ import { createServer } from 'node:http'
 import { test } from 'node:test'
 import { pathToFileURL } from 'node:url'
 import {
+  applyServerTimeouts,
   buildListenOptions,
   buildAdditionalServerOptions,
   buildFastifyOptions,
+  buildServerListenerOptions,
   cleanBasePath,
   ensureFileUrl,
   ensureTrailingSlash,
@@ -198,6 +200,40 @@ test('buildAdditionalServerOptions - can skip https options sanitization', async
       ...https
     }
   )
+})
+
+test('buildServerListenerOptions - returns only the numeric backlog and timeouts', () => {
+  deepStrictEqual(buildServerListenerOptions(undefined), {})
+  deepStrictEqual(
+    buildServerListenerOptions({ hostname: '127.0.0.1', port: 3000, backlog: 42, keepAliveTimeout: 65000, headersTimeout: 66000 }),
+    { backlog: 42, keepAliveTimeout: 65000, headersTimeout: 66000 }
+  )
+})
+
+test('buildAdditionalServerOptions - includes server timeouts', async () => {
+  deepStrictEqual(await buildAdditionalServerOptions({ keepAliveTimeout: 65000, headersTimeout: 66000 }), {
+    keepAliveTimeout: 65000,
+    headersTimeout: 66000
+  })
+})
+
+test('applyServerTimeouts - sets timeouts on the server and returns the listen options', () => {
+  const server = createServer()
+
+  deepStrictEqual(applyServerTimeouts(server, { backlog: 42, keepAliveTimeout: 65000, headersTimeout: 66000 }), {
+    backlog: 42
+  })
+  deepStrictEqual(server.keepAliveTimeout, 65000)
+  deepStrictEqual(server.headersTimeout, 66000)
+})
+
+test('applyServerTimeouts - leaves server defaults untouched when timeouts are missing', () => {
+  const server = createServer()
+  const { keepAliveTimeout, headersTimeout } = server
+
+  deepStrictEqual(applyServerTimeouts(server, { backlog: 42 }), { backlog: 42 })
+  deepStrictEqual(server.keepAliveTimeout, keepAliveTimeout)
+  deepStrictEqual(server.headersTimeout, headersTimeout)
 })
 
 test('buildFastifyOptions - returns http2 and sanitized https options', async () => {
