@@ -739,6 +739,32 @@ export interface PlatformaticViteConfig {
        * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
        */
       diagLogger?: boolean | string;
+      /**
+       * How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.
+       */
+      sampler?:
+        | {
+            type:
+              | "always_on"
+              | "always_off"
+              | "traceidratio"
+              | "parentbased_always_on"
+              | "parentbased_always_off"
+              | "parentbased_traceidratio";
+            /**
+             * Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.
+             */
+            options?: {
+              [k: string]: unknown;
+            };
+          }
+        | {
+            package: string;
+            exportName?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          };
     };
     verticalScaler?: {
       enabled?: boolean;

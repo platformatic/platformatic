@@ -872,6 +872,50 @@ export const telemetry = {
       ],
       description:
         'Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.'
+    },
+    sampler: {
+      description:
+        'How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.',
+      anyOf: [
+        {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              enum: [
+                'always_on',
+                'always_off',
+                'traceidratio',
+                'parentbased_always_on',
+                'parentbased_always_off',
+                'parentbased_traceidratio'
+              ]
+            },
+            options: {
+              type: 'object',
+              description: 'Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.',
+              additionalProperties: true
+            }
+          },
+          required: ['type'],
+          additionalProperties: false
+        },
+        {
+          type: 'object',
+          description:
+            'A module exporting a sampler, or a factory which receives the options and returns one. A relative path is resolved against the application directory.',
+          properties: {
+            package: { type: 'string' },
+            exportName: { type: 'string' },
+            options: {
+              type: 'object',
+              additionalProperties: true
+            }
+          },
+          required: ['package'],
+          additionalProperties: false
+        }
+      ]
     }
   },
   required: ['applicationName'],
