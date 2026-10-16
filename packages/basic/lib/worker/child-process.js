@@ -684,6 +684,13 @@ export class ChildProcess extends ITC {
       },
       error: ({ error }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
+
+        // When a script reports the app URL itself (urlFromScript), the failed listen might
+        // be a throwaway probe (i.e. Nuxt checking for reusePort support), so it is not fatal.
+        if (this.#urlFromScript) {
+          return
+        }
+
         this.notify('error', error)
       }
     }

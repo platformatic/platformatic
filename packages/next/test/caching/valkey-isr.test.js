@@ -18,7 +18,8 @@ import {
   setCacheSettings,
   valkeyPrefix,
   valkeyUser,
-  verifyValkeySequence
+  verifyValkeySequence,
+  withValkeyUser
 } from './helper.js'
 
 process.setMaxListeners(100)
@@ -816,7 +817,7 @@ test('should treat read errors as cache misses', async t => {
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
     })
   })
 
@@ -851,7 +852,7 @@ test('should serve production pages when Valkey reads fail', async t => {
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
     })
   })
 
@@ -937,7 +938,7 @@ test('should handle deserialization error', async t => {
 test('should handle refresh error', async t => {
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
       cache.maxTTL = 10
     })
   })
@@ -990,7 +991,7 @@ test('should handle write error', async t => {
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
     })
   })
 
@@ -1020,7 +1021,7 @@ test('should handle write error', async t => {
 test('should handle refresh error', async t => {
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
       cache.maxTTL = 20
     })
   })
