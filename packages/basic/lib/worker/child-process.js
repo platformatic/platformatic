@@ -52,6 +52,7 @@ import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
 import { applicationServerEvents, isBareHttpServer } from './listeners.js'
+import { registerLoader } from './loader.js'
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
