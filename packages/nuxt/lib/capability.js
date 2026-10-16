@@ -82,6 +82,12 @@ export class NuxtCapability extends BaseCapability {
       ]
 
     if (command) {
+      if (!this.isProduction) {
+        return this.startWithCommand(command, null, [fileURLToPath(new URL('./dev-ready.js', import.meta.url))], {
+          urlFromScript: true
+        })
+      }
+
       return this.startWithCommand(command)
     }
 
