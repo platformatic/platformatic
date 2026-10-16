@@ -3,11 +3,13 @@ import fastifyWebsocket from '@fastify/websocket'
 import {
   applications as applicationSchema,
   createDirectory,
+  createValidator,
   createSharedTemporaryDirectory,
   kMetadata,
   safeRemove,
   validate
 } from '@platformatic/foundation'
+import { schemaComponents } from '@platformatic/foundation/schema'
 import fastify from 'fastify'
 import { chmod } from 'node:fs/promises'
 import { platform, tmpdir } from 'node:os'
@@ -16,6 +18,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { createWebSocketStream } from 'ws'
 import { prepareAddedApplications } from './config.js'
 import { readMemory } from './memory.js'
+import { MetricsDisabledError } from './errors.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
@@ -303,19 +306,31 @@ export async function managementApiPlugin (app, opts) {
     return reply
   })
 
+  const metricsSchema = schemaComponents.runtimeProperties.metrics.anyOf[1]
+  app.patch('/metrics', {
+    schema: {
+      body: {
+        ...metricsSchema,
+        minProperties: 1,
+        properties: { ...metricsSchema.properties, enabled: { type: 'boolean' } }
+      }
+    },
+    // A patch must not inject defaults, coerce values, or silently discard unknown options.
+    validatorCompiler: ({ schema }) => createValidator(schema, {
+      useDefaults: false,
+      coerceTypes: false,
+      removeAdditional: false
+    }, { root: runtime.getRuntimeConfig(true)[kMetadata].root })
+  }, async req => runtime.updateMetricsConfig(req.body))
+
   app.get('/metrics', quiet, async (req, reply) => {
     // The live read: this needs one boolean, and the public getter builds a frozen snapshot of the
     // whole configuration -- which is the right shape to hand a consumer and the wrong one to pay
     // for on a scrape.
     const config = runtime.getRuntimeConfig(true)
 
-    if (config.metrics?.enabled === false) {
-      reply.code(501)
-      return {
-        statusCode: 501,
-        error: 'Not Implemented',
-        message: 'Metrics are disabled.'
-      }
+    if (config.metrics === false || config.metrics?.enabled === false) {
+      throw new MetricsDisabledError()
     }
 
     const accepts = req.accepts()

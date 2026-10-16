@@ -180,6 +180,81 @@ export interface RuntimeSchedulerRunResult {
   executedAt: string
 }
 
+export interface RuntimeMetricsAuth {
+  username: string
+  password: string
+}
+
+export interface RuntimeMetricsCertificatePath {
+  path?: string
+}
+
+export type RuntimeMetricsCertificate = string | RuntimeMetricsCertificatePath
+
+export interface RuntimeMetricsHttps {
+  allowHTTP1?: boolean
+  key: RuntimeMetricsCertificate | RuntimeMetricsCertificate[]
+  cert: RuntimeMetricsCertificate | RuntimeMetricsCertificate[]
+  requestCert?: boolean
+  rejectUnauthorized?: boolean
+}
+
+export interface RuntimeMetricsProbeResponse {
+  statusCode?: number
+  body?: string
+}
+
+export interface RuntimeMetricsProbe {
+  endpoint?: string
+  success?: RuntimeMetricsProbeResponse
+  fail?: RuntimeMetricsProbeResponse
+}
+
+export interface RuntimeMetricsExporter {
+  enabled?: boolean | string
+  endpoint: string
+  interval?: number | string
+  headers?: Record<string, string>
+}
+
+export interface RuntimeMetricsOtlpExporter extends RuntimeMetricsExporter {
+  serviceName?: string
+  serviceVersion?: string
+}
+
+export interface RuntimeMetricsHttpLabel {
+  name: string
+  header: string
+  default?: string
+}
+
+export interface RuntimeMetricsConfig {
+  enabled?: boolean | string
+  port?: number | string
+  hostname?: string
+  endpoint?: string
+  https?: RuntimeMetricsHttps
+  auth?: RuntimeMetricsAuth
+  labels?: Record<string, string>
+  applicationLabel?: string
+  httpClientMetrics?: boolean | string
+  readiness?: boolean | RuntimeMetricsProbe
+  liveness?: boolean | RuntimeMetricsProbe
+  healthChecksTimeouts?: number | string
+  plugins?: string[]
+  timeout?: number | string
+  otlpExporter?: RuntimeMetricsOtlpExporter
+  opentelemetry?: RuntimeMetricsExporter
+  httpCustomLabels?: RuntimeMetricsHttpLabel[]
+}
+
+export type RuntimeMetricsConfigUpdate = Omit<RuntimeMetricsConfig, 'enabled'> & { enabled?: boolean }
+
+export interface RuntimeMetricsConfigUpdateResult {
+  success: boolean
+  config: RuntimeMetricsConfig
+}
+
 export class RuntimeApiClient {
   getMatchingRuntime (options?: { pid?: string; name?: string }): Promise<Runtime>
   getRuntimes (): Promise<Runtime[]>
@@ -201,6 +276,10 @@ export class RuntimeApiClient {
     options?: T
   ): Promise<T extends { format: 'text' } ? string : Metric[]>
   getRuntimeMemory (pid: number): Promise<RuntimeMemory>
+  updateRuntimeMetricsConfig (
+    pid: number,
+    metricsConfig: RuntimeMetricsConfigUpdate
+  ): Promise<RuntimeMetricsConfigUpdateResult>
   getRuntimeWorkersScaler (pid: number): Promise<WorkersScaler | null>
   getRuntimeLiveLogsStream (pid: number, startLogIndex?: number): WebSocketStream
   getRuntimeLogsStream (pid: number, logsId: string, options?: { runtimePID?: number }): Promise<ReadableBody>

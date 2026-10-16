@@ -83,6 +83,11 @@ export const FailedToGetRuntimeMetrics = createError(
   'Failed to get runtime metrics %s.'
 )
 
+export const FailedToUpdateRuntimeMetrics = createError(
+  `${ERROR_PREFIX}_FAILED_TO_UPDATE_RUNTIME_METRICS`,
+  'Failed to update runtime metrics configuration %s.'
+)
+
 export const FailedToGetRuntimeMemory = createError(
   `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_MEMORY`,
   'Failed to get runtime memory %s.'

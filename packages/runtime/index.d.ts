@@ -7,9 +7,14 @@ import { JSONSchemaType } from 'ajv'
 import * as colorette from 'colorette'
 import { EventEmitter } from 'node:events'
 import { Logger } from 'pino'
-import { PlatformaticRuntimeConfig } from './config.js'
+import { MetricsOptions, PlatformaticRuntimeConfig } from './config.js'
 
 export type RuntimeConfiguration = Configuration<PlatformaticRuntimeConfig>
+
+export interface MetricsConfigUpdateResult {
+  success: boolean
+  config: MetricsOptions
+}
 
 export type ApplicationCommandContext = {
   colorette: typeof colorette
@@ -40,6 +45,8 @@ export namespace errors {
   export const AddressInUseError: (port: number, firstApplication: string, secondApplication: string) => FastifyError
   export const WorkerAddressInUseError: (port: number, application: string) => FastifyError
   export const RuntimeExitedError: () => FastifyError
+  export const MetricsDisabledError: () => FastifyError
+  export const FailedToUpdateMetricsConfigError: (worker: string, reason: string) => FastifyError
   export const UnknownRuntimeAPICommandError: (command: string) => FastifyError
   export const ApplicationNotFoundError: (id: string) => FastifyError
   export const ApplicationNotStartedError: (id: string) => FastifyError
@@ -419,6 +426,7 @@ export declare class Runtime extends EventEmitter {
   getApplicationOpenapiSchema (id: string): Promise<unknown>
   getApplicationGraphqlSchema (id: string): Promise<unknown>
   getMetrics (format?: string): Promise<{ metrics: unknown }>
+  updateMetricsConfig (metricsConfig: Partial<MetricsOptions>): Promise<MetricsConfigUpdateResult>
   /**
    * Returns the current shared context. Synchronous on the main thread.
    * Do not mutate it in place — use `updateSharedContext()` so changes are

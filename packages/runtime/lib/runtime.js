@@ -13,11 +13,13 @@ import {
 import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
 import {
+  clearRegistry,
   collectProcessMetrics,
   client as metricsClient,
   openTelemetryITCMessage
 } from '@platformatic/metrics'
 import fastify from 'fastify'
+import { randomUUID } from 'node:crypto'
 import { EventEmitter, once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -25,11 +27,11 @@ import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
 import { basename, dirname, isAbsolute, join } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
+import { isDeepStrictEqual } from 'node:util'
 import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
@@ -37,7 +39,6 @@ import { createCoordinator, createInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
 import {
   AddressInUseError,
-  WorkerAddressInUseError,
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
   ApplicationNotStartedError,
@@ -48,16 +49,19 @@ import {
   FailedToLoadExtensionError,
   FailedToStartExtensionError,
   FailedToStopExtensionError,
+  FailedToUpdateMetricsConfigError,
   InvalidArgumentError,
   InvalidExtensionError,
   LastProfileTimeoutError,
   MessagingError,
   MetricFamilyCollisionError,
+  MetricsDisabledError,
   MissingPprofCapture,
   MixedServingStateError,
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
   RuntimeExtensionBuildAlreadyCalledError,
+  WorkerAddressInUseError,
   WorkerNotFoundError
 } from './errors.js'
 import { abstractLogger, createLogger } from './logger.js'
@@ -65,12 +69,12 @@ import { startManagementApi } from './management-api.js'
 import { createManagementHandlers } from './management-handlers.js'
 import { OpenTelemetryMetricsForwarder } from './opentelemetry-metrics.js'
 import { createChannelCreationHook, createTargetPermissionHook } from './policies.js'
+import { PredictiveWorkersScaler } from './predictive-worker-scaler.js'
 import { startHealthProbesServer, startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
-import { PredictiveWorkersScaler } from './predictive-worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
@@ -81,20 +85,20 @@ import {
   kHealthCheckTimer,
   kId,
   kIsSubprocessHost,
-  kSubprocessPid,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
+  kSubprocessPid,
   kWorkerExitCode,
   kWorkerHealthSignals,
   kWorkerId,
   kWorkerPortOffset,
-  kWorkerServerOptions,
-  kWorkerUrl,
   kWorkersBroadcast,
+  kWorkerServerOptions,
   kWorkerStartAborted,
   kWorkerStartTime,
-  kWorkerStatus
+  kWorkerStatus,
+  kWorkerUrl
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -268,6 +272,8 @@ export class Runtime extends EventEmitter {
   #healthProbesServer
   #metricsServersInitialized
   #metricsServersStartPromise
+  #metricsConfigUpdatePromise
+  #metricsConfigUpdateFailed
   #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
@@ -353,6 +359,9 @@ export class Runtime extends EventEmitter {
     this.#extensions = []
     this.#metricsServersInitialized = false
     this.#metricsServersStartPromise = null
+    this.#metricsConfigUpdatePromise = Promise.resolve()
+    this.#metricsConfigUpdateFailed = false
+    this.#processMetricsRegistry = null
     this.#extensionsWantHealthMetrics = false
     this.#extensionReadinessChecks = new Map()
     this.#extensionLivenessChecks = new Map()
@@ -406,7 +415,9 @@ export class Runtime extends EventEmitter {
       this.#managementApi = await startManagementApi(this, config.managementApi)
     }
 
-    await this.#startOpenTelemetryMetricsForwarder(config.metrics?.opentelemetry)
+    if (config.metrics && config.metrics.enabled !== false) {
+      await this.#startOpenTelemetryMetricsForwarder(config.metrics.opentelemetry)
+    }
 
     this.#createWorkersBroadcastChannel()
 
@@ -611,7 +622,7 @@ export class Runtime extends EventEmitter {
 
     // Clean up process metrics registry
     if (this.#processMetricsRegistry) {
-      this.#processMetricsRegistry.clear()
+      clearRegistry(this.#processMetricsRegistry)
       this.#processMetricsRegistry = null
     }
 
@@ -1406,7 +1417,8 @@ export class Runtime extends EventEmitter {
   }
 
   /**
-   * Updates the metrics configuration at runtime without restarting the runtime or workers.
+   * Merges top-level metrics options without restarting the runtime or workers.
+   * Nested objects are replaced when supplied. Identical successful updates are no-ops.
    *
    * This method allows you to:
    * - Enable or disable metrics collection
@@ -1425,6 +1437,28 @@ export class Runtime extends EventEmitter {
    * await runtime.updateMetricsConfig({ enabled: false })
    */
   async updateMetricsConfig (metricsConfig) {
+    // Serialize changes because they share listeners and worker registries.
+    await this.#metricsConfigUpdatePromise
+
+    const currentConfig = this.#config.metrics
+    const previousConfig = typeof currentConfig === 'boolean' ? { enabled: currentConfig } : (currentConfig ?? {})
+    metricsConfig = { ...previousConfig, ...metricsConfig }
+
+    // An omitted enabled option already means enabled for an object configuration.
+    const previousOptions = { ...previousConfig, enabled: previousConfig.enabled !== false }
+    const nextOptions = { ...metricsConfig, enabled: metricsConfig.enabled !== false }
+    if (!this.#metricsConfigUpdateFailed && isDeepStrictEqual(previousOptions, nextOptions)) {
+      this.#config.metrics = metricsConfig
+      return { success: true, config: structuredClone(metricsConfig) }
+    }
+
+    // Failed updates can be retried even when the main-thread configuration already changed.
+    this.#metricsConfigUpdateFailed = true
+
+    if (this.#metricsServersStartPromise) {
+      await this.#metricsServersStartPromise
+    }
+
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
       this.#prometheusServer = null
@@ -1445,6 +1479,16 @@ export class Runtime extends EventEmitter {
     this.#config.metrics = metricsConfig
     this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
 
+    if (metricsConfig.enabled === false) {
+      if (this.#processMetricsRegistry) {
+        clearRegistry(this.#processMetricsRegistry)
+        this.#processMetricsRegistry = null
+      }
+    } else if (!this.#processMetricsRegistry) {
+      this.#processMetricsRegistry = new metricsClient.Registry()
+      collectProcessMetrics(this.#processMetricsRegistry)
+    }
+
     // Allow extension health routes to be re-applied on the restarted servers.
     for (const entry of this.#extensionHealthRoutes) {
       entry.applied = false
@@ -1452,12 +1496,18 @@ export class Runtime extends EventEmitter {
 
     await this.#ensureMetricsServersStarted()
 
-    await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
+    if (metricsConfig.enabled !== false) {
+      await this.#startOpenTelemetryMetricsForwarder(metricsConfig.opentelemetry)
+    }
 
     const promises = []
     for (const worker of this.#workers.values()) {
       if (worker[kWorkerStatus] === 'started') {
-        promises.push(sendViaITC(worker, 'updateMetricsConfig', metricsConfig))
+        promises.push(
+          sendViaITC(worker, 'updateMetricsConfig', metricsConfig).catch(err => {
+            throw new FailedToUpdateMetricsConfigError(worker[kFullId], err.message)
+          })
+        )
       }
     }
 
@@ -1468,8 +1518,15 @@ export class Runtime extends EventEmitter {
       }
     }
 
-    this.logger.info({ metricsConfig }, 'Metrics configuration updated')
-    return { success: true, config: metricsConfig }
+    const failure = results.find(result => result.status === 'rejected')
+    if (failure) {
+      throw failure.reason
+    }
+
+    this.#metricsConfigUpdateFailed = false
+    this.logger.info('Metrics configuration updated')
+    
+    return { success: true, config: structuredClone(metricsConfig) }
   }
 
   async #ensureMetricsServersStarted () {
@@ -1895,7 +1952,7 @@ export class Runtime extends EventEmitter {
 
   async getMetrics (format = 'json') {
     if (this.#config.metrics === false || this.#config.metrics?.enabled === false) {
-      throw new Error('Metrics are disabled')
+      throw new MetricsDisabledError()
     }
 
     let metrics = null
