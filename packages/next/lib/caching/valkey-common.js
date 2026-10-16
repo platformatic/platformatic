@@ -10,6 +10,7 @@ import {
   updateGlobals
 } from '@platformatic/globals'
 import { existsSync, readFileSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { hostname } from 'node:os'
 import { resolve } from 'node:path'
@@ -118,6 +119,50 @@ export function getPlatformaticSubprefix () {
   return existsSync(resolve(root, '.next/BUILD_ID'))
     ? readFileSync(resolve(root, '.next/BUILD_ID'), 'utf-8').trim()
     : 'development'
+}
+
+// Maps each "use cache" function ID to the file defining it, relative to the application.
+export async function loadCacheFunctionsFiles () {
+  const nextDir = resolve(fileURLToPath(getRoot()), '.next')
+  const files = new Map()
+
+  const [manifest, serverFiles] = await Promise.all([
+    readJSON(resolve(nextDir, 'server/server-reference-manifest.json')),
+    readJSON(resolve(nextDir, 'required-server-files.json'))
+  ])
+
+  if (!manifest || !serverFiles) {
+    return files
+  }
+
+  // Turbopack reports files relative to the workspace root, which can contain the application
+  const appPrefix = serverFiles.relativeAppDir ? serverFiles.relativeAppDir + '/' : ''
+
+  for (const [id, { filename }] of Object.entries(manifest.node ?? {})) {
+    if (filename) {
+      files.set(id, filename.startsWith(appPrefix) ? filename.slice(appPrefix.length) : filename)
+    }
+  }
+
+  return files
+}
+
+// Returns null when the file does not exist, like in development.
+async function readJSON (path) {
+  try {
+    return JSON.parse(await readFile(path, 'utf-8'))
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      return null
+    }
+    throw e
+  }
+}
+
+// The cache key is the React-encoded list of the function ID, its arguments and other parts.
+// The ID, a 42 characters hexadecimal string, is the first one of its kind in the key.
+export function getCacheFunctionId (cacheKey) {
+  return cacheKey.match(/"([0-9a-f]{42})"/)?.[1]
 }
 
 export function getPlatformaticMeta () {
