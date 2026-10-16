@@ -1,4 +1,5 @@
-// Runs inside the spawned `nuxt.mjs dev` child process, before the Nuxt CLI loads.
+// Runs inside the spawned `nuxt dev` child process (either the built-in development
+// command or a user-provided one), before the Nuxt CLI loads.
 //
 // Nuxt 4's dev CLI probes a random port with a throwaway `net.Server` (via
 // listhen/get-port-please) before the real server listens. The generic URL
@@ -10,19 +11,22 @@
 // its real `ready` address (after the build, when the serving server is up),
 // and forwards that URL to the parent via the child-manager `url` event — the
 // same channel `startWithCommand` already waits on.
+//
+// The script is preloaded in every Node.js process spawned by the command, including
+// the dev server forks the Nuxt CLI creates. Those have a real IPC channel with the
+// CLI, so messages are still forwarded to the original `process.send` when present.
 import { getITC } from '@platformatic/globals'
 
 process.env.__NUXT__FORK = '1'
 
-process.send = function (message) {
-  if (!message || message.type !== 'nuxt:internal:dev:ready') {
-    return
+const originalSend = process.send?.bind(process)
+
+process.send = function (message, ...args) {
+  const address = message?.type === 'nuxt:internal:dev:ready' ? message.address : undefined
+
+  if (typeof address === 'string' && address.length > 0) {
+    getITC({ throwOnMissing: false })?.notify('url', address)
   }
 
-  const address = message.address
-  if (typeof address !== 'string' || address.length === 0) {
-    return
-  }
-
-  getITC({ throwOnMissing: false })?.notify('url', address)
+  return originalSend?.(message, ...args) ?? true
 }

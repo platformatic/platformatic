@@ -1,5 +1,7 @@
+import { globalIgnores } from 'eslint/config'
 import neostandard from 'neostandard'
 
-export default neostandard({
-  ignores: ['**/tmp']
-})
+export default [
+  ...neostandard(),
+  globalIgnores(['**/tmp'])
+]
