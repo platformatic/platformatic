@@ -526,7 +526,8 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
 - **`host`** (`string`) - application host; if not specified, the `application.origin` is used.
 - **`name`** (`string`) - name to identify the application. If not specified, the `application.origin` is used.
 - **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
-- **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
+- **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`. Not used when `file` is set.
+- **`file`** (`string`) - A path to a file containing the GraphQL schema of the application, as SDL. Relative paths are resolved from the location of the configuration file. When set, the schema is read from the file instead of being fetched from the application, so the Gateway can start while the application is not reachable; queries are still sent to the application `host` and `graphqlEndpoint`. The file is read once when the Gateway starts, and it is not fetched again when the Gateway polls the applications for changes (see `refreshTimeout`). The Gateway does not start if the file can not be read or does not contain a valid GraphQL schema.
 - **`entities`** (`object`) - Configuration object for working with entities in this subgraph, the values are objects with the following schema:
   - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
     - **`name`** (`string`, **required**) - The name of the resolver.
@@ -548,6 +549,30 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
     - **`pkey`** (`string`) - The primary key of the referred entity.
     - **`subgraph`** (`string`) - The subgraph name of the referred entity, where the resolver is located; if missing is intended the self.
     - **`resolver`** (`object`, **required**) - The resolver definition to query the referred entity, same structure as `entity.resolver`.
+
+Composition of a GraphQL application from its schema file, along with a GraphQL application whose schema is fetched from the application:
+
+```json title="Example JSON object"
+{
+  "gateway": {
+    "applications": [
+      {
+        "id": "books",
+        "origin": "https://books-service.com",
+        "graphql": {
+          "graphqlEndpoint": "/graphql",
+          "file": "./schemas/books.graphql"
+        }
+      },
+      {
+        "id": "reviews",
+        "origin": "https://reviews-service.com",
+        "graphql": true
+      }
+    ]
+  }
+}
+```
 
 ## Configuration References
 
