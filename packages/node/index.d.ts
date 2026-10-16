@@ -1,6 +1,5 @@
 import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
-import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticNodeJsConfig } from './config.d.ts'
 
@@ -28,7 +27,6 @@ export declare function create (
   context?: ConfigurationOptions
 ): Promise<NodeCapability>
 
-export declare class Generator extends BaseGenerator {}
 
 export declare const packageJson: Record<string, unknown>
 export declare const schema: JSONSchemaType<PlatformaticNodeJsConfig>

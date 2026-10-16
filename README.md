@@ -62,15 +62,15 @@ Using Watt to run your app(s) brings the following advantages:
 
 ## Quick Start (2 minutes)
 
-Get your first Watt application running in under 2 minutes:
+Install the official Watt agent skill:
 
 ```bash
-npm install -g wattpm
-npx wattpm create my-first-app
-cd my-first-app && npm start
+npx skills add platformatic/skills --skill watt
 ```
 
-Your application will be running at `http://localhost:3042` with auto-generated REST and GraphQL APIs.
+Ask your agent to create a Watt 4 application with your chosen framework, then run
+`npm run dev`. See [agent setup](docs/guides/use-watt-with-ai-agents.md) or read the
+instructions directly with `npx wattpm skill`.
 
 ## Choose Your Learning Path
 

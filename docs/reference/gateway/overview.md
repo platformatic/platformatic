@@ -53,14 +53,11 @@ The Gateway is ideal for:
 Create a Gateway within a Watt application:
 
 ```bash
-# Create a new Watt application
-wattpm create my-gateway
-
-# Add multiple applications to compose
-# (This will prompt you through the application setup)
+# Read the skill and ask your agent to create my-gateway and its applications
+wattpm skill references/services.md
 cd my-gateway
 
-# Start in development mode
+# After setup, start in development mode
 wattpm dev
 ```
 

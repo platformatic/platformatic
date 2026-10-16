@@ -118,11 +118,9 @@ Note also that the access token is valid for 5 minutes (keycloak default)
 
 ## Platformatic Setup and Test
 
-Create a Platformatic application using `npm create wattpm`.
-Call it `keycloak-test` with a `db-service`. 
-Specify to use sqlite and the default migrations:
-
-![npm create wattpm](./keycloak-images/watt-create.png)
+Use the [Watt skill](../../guides/use-watt-with-ai-agents.md) to create `keycloak-test`
+with a database application named `db-service` in `web/db-service`. Use SQLite and
+paired migrations, then review and authorize dependency installation.
 
 Go to `keycloak-test/web/db-service` folder and open `watt.config.ts`.
 Add the `authorization` section with the `jwt` configuration to the factory call:
@@ -181,7 +179,6 @@ Now you should get a response (an empty array in this case, since we have no mov
 
 
 ![Authorized](./keycloak-images/plt_auth.png)
-
 
 
 

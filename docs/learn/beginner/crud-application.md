@@ -74,7 +74,7 @@ Instead of running a separate database server, API server, and frontend server, 
 
 Navigate to your web directory and add a database application:
 
-### Run `create-wattpm`
+### Set up with the Watt skill
 
 <NewApiProjectInstructions />
 
@@ -82,7 +82,7 @@ Navigate to your web directory and add a database application:
 
 ### Experience Watt's Unified Configuration
 
-Take a moment to examine the files Watt created:
+Take a moment to examine the files your agent created:
 
 1. **`watt.config.ts`** - Your application server configuration
 2. **`.env`** - Environment variables shared across all applications
@@ -190,7 +190,9 @@ The first one is the dangerous one, because it fails later than the other two â€
 
 ### Create the Users Table
 
-The wizard created a sample migration file (`001.do.sql`) with a `movies` table. Since that migration was already applied when we started the server, we'll create a **new** migration file for our Users table.
+The setup includes a sample migration file (`001.do.sql`) with a `movies` table.
+Since that migration was already applied when we started the development server,
+we'll create a **new** migration file for our Users table.
 
 Create a new file `web/db/migrations/002.do.sql`:
 

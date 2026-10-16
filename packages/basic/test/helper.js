@@ -530,7 +530,7 @@ async function copyFixture (source) {
 /*
   A copy of a fixture on disk, with its dependencies linked, and nothing loaded. It is what a test
   needs when the fixture deliberately does not load yet -- an application whose capability is
-  missing is exactly what `wattpm-utils import` exists to fix -- because every application's
+  missing must be prepared explicitly -- because every application's
   capability is validated when the root is read, so merely creating a runtime over such a fixture
   fails before the command under test runs.
 */

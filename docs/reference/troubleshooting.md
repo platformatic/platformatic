@@ -518,7 +518,8 @@ wattpm applications
 1. **Create a minimal example:**
 
    ```bash
-   wattpm create debug-app --skip-dependencies
+   wattpm skill references/scaffolding.md
+   # Ask your agent to create debug-app with only the required capability
    cd debug-app
    # Add only the problematic configuration
    ```

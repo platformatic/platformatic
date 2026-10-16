@@ -13,6 +13,11 @@ The two dialects do not mix. A `watt.json` beside a `watt.config.ts` is refused 
 
 ## Run the codemod first
 
+Watt 4 also replaces scaffolding generators and the import command with the
+[official agent skill](./use-watt-with-ai-agents.md). Use it for new projects and
+application integration; the migration codemod below remains available for existing
+Watt 3 configuration. Read the release-matched skill with `wattpm skill [FILE]`.
+
 ```bash
 npx wattpm-utils migrate
 ```

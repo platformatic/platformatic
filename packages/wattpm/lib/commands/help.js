@@ -11,7 +11,7 @@ async function loadCommands () {
 
   for (const file of [
     'build',
-    'create',
+    'skill',
     'execution',
     'applications',
     'scheduler',

@@ -43,25 +43,14 @@ app.listen(port, () => {
 
 ## Stage 1: Wrap it, change nothing
 
-Run the Watt creator from the root of your existing project:
+Install Watt and its generic Node.js capability from the existing project root:
 
 ```bash
-npm create wattpm
+npm install wattpm @platformatic/node
 ```
 
-It detects that the directory already contains a Node.js application and offers to wrap it:
-
-```
-Hello YOURNAME, welcome to Watt!
-? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
-- Installing @platformatic/runtime using npm ...
-INFO: .env written!
-INFO: .env.sample written!
-INFO: package.json written!
-INFO: watt.config.mjs written!
-INFO: Installing dependencies for the project using npm ...
-INFO: You are all set! Run `npm start` to start your project.
-```
+Alternatively, use the [Watt skill](../../guides/use-watt-with-ai-agents.md) and ask
+your agent to integrate Express without changing its routes or existing entrypoint.
 
 This treats your project as a single `@platformatic/node` application. With default settings it
 writes no configuration file at all — the capability is inferred from your dependencies. Write one

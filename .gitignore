@@ -41,6 +41,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+packages/wattpm/skills/
 jspm_packages/
 
 # Dependency lock file
