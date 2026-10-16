@@ -12,7 +12,7 @@ For a high level overview of how Watt and its applications work, please referenc
 
 Gateway was named **Composer** throughout the v1 and v2 lines, and was distributed as `@platformatic/composer`. It was renamed to Gateway in **v3.0.0**; the documentation, the package name, and the configuration key all use `gateway` from that release onward.
 
-`@platformatic/composer` still exists as a deprecated alias that re-exports Gateway, so existing applications keep working, but it logs a deprecation warning on startup and **will be removed in v4.0.0**.
+The deprecated `@platformatic/composer` alias was removed in **v4.0.0**. Applications must use `@platformatic/gateway` instead.
 
 To migrate:
 

@@ -31,8 +31,6 @@ export const capabilityPackages = [
   '@platformatic/kafka-hooks'
 ]
 
-export const capabilityAliases = { '@platformatic/composer': '@platformatic/gateway' }
-
 // Fallback only, and ordered: Nitro applications often use Vite, so Nitro is checked first, and
 // Vite comes last amongst the frontend frameworks for the same reason.
 export const frameworkDependencies = [
@@ -74,12 +72,6 @@ export async function detectCapability (directory, { id, packageJson } = {}) {
   packageJson ??= await readPackageJson(directory)
 
   const declared = new Set()
-
-  for (const [alias, canonical] of Object.entries(capabilityAliases)) {
-    if (hasDirectDependency(packageJson, alias)) {
-      declared.add(canonical)
-    }
-  }
 
   for (const capability of capabilityPackages) {
     if (hasDirectDependency(packageJson, capability)) {

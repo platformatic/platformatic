@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { safeRemove } from '../../lib/file-system.js'
@@ -9,7 +9,8 @@ import { safeRemove } from '../../lib/file-system.js'
   created implicitly, so a tree is one literal.
 */
 export async function createTree (t, files) {
-  const root = await mkdtemp(join(tmpdir(), 'plt-loader-'))
+  // Module resolution canonicalizes symlinks, including macOS's temporary directory.
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'plt-loader-')))
 
   t.after(() => safeRemove(root))
 

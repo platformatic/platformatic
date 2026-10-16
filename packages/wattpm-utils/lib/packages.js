@@ -2,7 +2,6 @@
 export const packages = [
   '@platformatic/astro',
   '@platformatic/basic',
-  '@platformatic/composer',
   '@platformatic/control',
   '@platformatic/db',
   '@platformatic/db-authorization',
@@ -34,7 +33,6 @@ export const packages = [
   '@platformatic/wattpm-pprof-capture',
   'create-platformatic',
   'create-wattpm',
-  'platformatic',
   'wattpm',
   'wattpm-utils'
 ]

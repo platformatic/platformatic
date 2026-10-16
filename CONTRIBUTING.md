@@ -29,7 +29,7 @@ pnpm install
 
 ### 3. Link CLI Tools Globally
 
-To use `platformatic`, `plt`, and `watt` commands globally during development:
+To use `wattpm`, `watt`, and `create-wattpm` commands globally during development:
 
 ```bash
 pnpm run global-links
@@ -38,7 +38,7 @@ pnpm run global-links
 Verify the setup:
 
 ```bash
-platformatic --version
+wattpm --version
 watt --version
 ```
 

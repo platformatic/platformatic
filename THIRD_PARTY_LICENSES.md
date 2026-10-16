@@ -43,7 +43,7 @@ different license expression, and is listed with the Platformatic packages that 
 ### (MIT OR CC0-1.0)
 
 - `type-fest@5.8.0`
-  - Platformatic packages: `@platformatic/composer`, `@platformatic/db`, `@platformatic/db-core`, `@platformatic/gateway`, `@platformatic/service`, `@platformatic/sql-openapi`
+  - Platformatic packages: `@platformatic/db`, `@platformatic/db-core`, `@platformatic/gateway`, `@platformatic/service`, `@platformatic/sql-openapi`
   - Pulled in by: `@platformatic/gateway` → `@scalar/fastify-api-reference` → `@scalar/client-side-rendering` → `@scalar/types` → `type-fest`
   - Allowed because the SPDX expression can be satisfied by a license in the base allow list.
 
@@ -64,7 +64,7 @@ different license expression, and is listed with the Platformatic packages that 
 ### Python-2.0
 
 - `argparse@2.0.1`
-  - Platformatic packages: `@platformatic/composer`, `@platformatic/db`, `@platformatic/db-core`, `@platformatic/gateway`, `@platformatic/sql-mapper`
+  - Platformatic packages: `@platformatic/db`, `@platformatic/db-core`, `@platformatic/gateway`, `@platformatic/sql-mapper`
   - Pulled in by: `@platformatic/gateway` → `@platformatic/fastify-openapi-glue` → `js-yaml` → `argparse`
   - Allowed on top of the base list: permissive, GPL compatible, no copyleft obligation on users of the code
 
