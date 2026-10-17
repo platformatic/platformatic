@@ -13,7 +13,7 @@ import { isFetchable } from './utils.js'
 
 const EXPERIMENTAL_GRAPHQL_GATEWAY_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
-async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema, fetchGraphqlSubgraphs }) {
+async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema, fetchGraphqlSubgraphs, composeEndpointMissCache }) {
   let changed
 
   const graphqlApplications = []
@@ -44,7 +44,7 @@ async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema
   }
 
   if (!changed && graphqlApplications.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlApplications, app.graphqlComposerOptions, app)
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlApplications, app.graphqlComposerOptions, app, composeEndpointMissCache)
     if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
       changed = true
       app.graphqlSupergraph = graphqlSupergraph
@@ -70,6 +70,8 @@ async function watchApplications (app, { config, capability }) {
     return
   }
 
+  const composeEndpointMissCache = new Map()
+
   try {
     getRuntimeId()
   } catch {
@@ -83,7 +85,7 @@ async function watchApplications (app, { config, capability }) {
 
   const timer = setInterval(async () => {
     try {
-      if (await detectApplicationsUpdate({ app, applications: watching, fetchOpenApiSchema, fetchGraphqlSubgraphs })) {
+      if (await detectApplicationsUpdate({ app, applications: watching, fetchOpenApiSchema, fetchGraphqlSubgraphs, composeEndpointMissCache })) {
         clearInterval(timer)
         app.log.info('detected applications changes, restarting ...')
 
