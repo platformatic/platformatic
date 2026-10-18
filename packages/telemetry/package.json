@@ -17,8 +17,8 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@databases/pg": "^5.5.0",
-    "@opentelemetry/instrumentation-express": "0.71.0",
-    "@opentelemetry/instrumentation-pg": "0.75.0",
+    "@opentelemetry/instrumentation-express": "0.71.1",
+    "@opentelemetry/instrumentation-pg": "0.76.0",
     "cleaner-spec-reporter": "^2.0.0",
     "express": "^5.1.0",
     "fastify": "^5.0.0",
