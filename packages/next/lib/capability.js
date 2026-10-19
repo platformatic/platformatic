@@ -22,6 +22,8 @@ import { parseStandaloneNextConfig, requireStandaloneStartServer, resolveStandal
 
 export const supportedVersions = ['^14.0.0', '^15.0.0', '^16.0.0']
 
+const loaderOptions = { registerHooks: true }
+
 export function getCacheHandlerPath (name) {
   return fileURLToPath(new URL(`./caching/${name}.js`, import.meta.url)).replaceAll(sep, '/')
 }
@@ -167,7 +169,7 @@ export class NextCapability extends BaseCapability {
       command = ['node', resolvePath(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
-    await this.buildWithCommand(command, this.#basePath, { loader, scripts: this.#getChildManagerScripts() })
+    await this.buildWithCommand(command, this.#basePath, { loader, loaderOptions, scripts: this.#getChildManagerScripts() })
     await this.#fixRequiredServerFiles()
   }
 
@@ -209,7 +211,7 @@ export class NextCapability extends BaseCapability {
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     if (command) {
-      return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
+      return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts(), { loaderOptions })
     }
 
     const { hostname, port } = this.serverConfig ?? {}
@@ -322,7 +324,7 @@ export class NextCapability extends BaseCapability {
       if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
         childManagerScripts.push(new URL('./create-context-patch.js', import.meta.url))
       }
-      return this.startWithCommand(command, loaderUrl, childManagerScripts)
+      return this.startWithCommand(command, loaderUrl, childManagerScripts, { loaderOptions })
     }
 
     this.childManager = this.#createChildManager(
@@ -514,6 +516,7 @@ export class NextCapability extends BaseCapability {
   #createChildManager (loader, context, scripts) {
     const childManager = new ChildManager({
       loader,
+      loaderOptions,
       context,
       scripts
     })

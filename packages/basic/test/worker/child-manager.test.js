@@ -109,6 +109,21 @@ test('ChildManager - register - can register a local loader', async t => {
   ok(loaded)
 })
 
+test('ChildManager - register - can register a local synchronous loader', async t => {
+  createLogger()
+  const manager = new ChildManager({
+    loader: new URL('../fixtures/sync-loader.js', import.meta.url),
+    loaderOptions: { registerHooks: true }
+  })
+
+  await manager.register()
+
+  const { loaded } = await import(new URL('../fixtures/sync-non-existing.js', import.meta.url))
+  await manager.close()
+
+  ok(loaded)
+})
+
 test('ChildManager - inject - should not include telemetry when enabled is false', async () => {
   createLogger()
   const originalNodeOptions = process.env.NODE_OPTIONS

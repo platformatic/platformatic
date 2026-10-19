@@ -243,12 +243,18 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
     basePath?: string,
     opts?: {
       loader?: string | URL
+      loaderOptions?: { registerHooks?: boolean }
       scripts?: unknown[]
       context?: object
       disableChildManager?: boolean
     }
   ): Promise<void>
-  startWithCommand (command: string | string[], loader?: string | URL, scripts?: unknown[]): Promise<void>
+  startWithCommand (
+    command: string | string[],
+    loader?: string | URL,
+    scripts?: unknown[],
+    opts?: { urlFromScript?: boolean, loaderOptions?: { registerHooks?: boolean } }
+  ): Promise<void>
   stopCommand (): Promise<void>
   getChildManager (): object | null
   getChildManagerContext (basePath: string): Promise<object>
@@ -285,6 +291,7 @@ export class BaseCapability<Config = Record<string, any>, Options = BaseOptions>
 export class ChildManager {
   constructor (opts: {
     loader?: string | URL
+    loaderOptions?: { registerHooks?: boolean }
     context?: Record<string, any>
     scripts?: Array<string | URL>
     handlers?: Record<string, (...args: any[]) => unknown>

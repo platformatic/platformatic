@@ -1,3 +1,7 @@
+import { globalIgnores } from 'eslint/config'
 import neostandard from 'neostandard'
 
-export default neostandard({ ignores: ['**/.astro', '**/.next', '**/.vite', '**/dist'] })
+export default [
+  ...neostandard(),
+  globalIgnores(['**/.astro', '**/.next', '**/.vite', '**/dist'])
+]

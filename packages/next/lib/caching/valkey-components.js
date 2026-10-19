@@ -22,10 +22,12 @@ export const CACHE_MISS_METRIC = {
   help: 'Next.js Components Cache (Valkey) Miss Count'
 }
 export const MAX_BATCH_SIZE = 100
+export const IMPLICIT_TAG_PREFIX = '_N_T_'
 
 export const sections = {
   values: 'components:values',
-  tags: 'components:tags'
+  tags: 'components:tags',
+  revalidations: 'components:revalidations'
 }
 
 export class CacheHandler {
@@ -193,9 +195,32 @@ export class CacheHandler {
   // This function is not necessary as we don't have a local state to synchronize.
   async refreshTags () {}
 
-  getExpiration (_tags) {
-    // Delegates the check to get method, only when appropriate.
-    return Number.POSITIVE_INFINITY
+  // Next.js calls this with the implicit tags of the current request (the ones revalidatePath()
+  // targets) and discards any entry created before the returned timestamp.
+  async getExpiration (tags) {
+    if (!tags?.length) {
+      return 0
+    }
+
+    try {
+      const keys = tags.map(tag => this.#keyFor(tag, this.#sections.revalidations))
+      const timestamps = await this.#store.mget(keys)
+
+      let expiration = 0
+      for (const timestamp of timestamps) {
+        if (timestamp) {
+          expiration = Math.max(expiration, Number(timestamp))
+        }
+      }
+
+      return expiration
+    } catch (e) {
+      this.#logger.error(
+        { err: ensureLoggableError(e) },
+        'Cannot read cache tags expiration from Valkey'
+      )
+      return 0
+    }
   }
 
   async updateTags (tags) {
@@ -207,6 +232,17 @@ export class CacheHandler {
       const toDelete = new Set()
 
       for (const tag of tags) {
+        // Implicit tags are never attached to entries, so there is nothing to delete.
+        // Record when they were revalidated instead, getExpiration() will check it.
+        if (tag.startsWith(IMPLICIT_TAG_PREFIX)) {
+          if (this.#maxTTL >= 1) {
+            const revalidationKey = this.#keyFor(tag, this.#sections.revalidations)
+            await this.#store.set(revalidationKey, Date.now(), 'EX', this.#maxTTL)
+          }
+
+          continue
+        }
+
         const tagsKey = this.#keyFor(tag, this.#sections.tags)
 
         // For each key in the tag set, expire the key
