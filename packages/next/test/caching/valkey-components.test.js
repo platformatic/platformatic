@@ -15,13 +15,25 @@ import {
   setCacheSettings,
   valkeyPrefix,
   valkeyUser,
-  verifyValkeySequence
+  verifyValkeySequence,
+  withValkeyUser
 } from './helper.js'
 
 process.setMaxListeners(100)
 
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 const configuration = 'caching-components'
+
+// Implicit tags Next.js derives for each tested path, checked on every cache hit
+const pageImplicitTags = ['/layout', '/page', '/', '/index']
+const routeImplicitTags = ['/layout', '/route', '/route/route']
+
+function implicitTagsLookup (prefix, tags) {
+  return [
+    'mget',
+    ...tags.map(tag => keyFor(valkeyPrefix, prefix, 'components:revalidations', '_N_T_' + tag))
+  ]
+}
 
 test('should properly use the Valkey cache handler in production to cache pages', async t => {
   const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
@@ -75,7 +87,8 @@ test('should properly use the Valkey cache handler in production to cache pages'
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
-    ['get', key]
+    ['get', key],
+    implicitTagsLookup(prefix, pageImplicitTags)
   ])
 
   const {
@@ -154,7 +167,8 @@ test('should properly use the Valkey cache handler in production to cache route 
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
-    ['get', key]
+    ['get', key],
+    implicitTagsLookup(prefix, routeImplicitTags)
   ])
 
   const {
@@ -236,7 +250,8 @@ test('should extend TTL when our limit is smaller than the user one', async t =>
     ['expire', key, '20', 'gt'],
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '20', 'gt'],
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '20', 'gt'],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '20', 'gt']
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '20', 'gt'],
+    implicitTagsLookup(prefix, pageImplicitTags)
   ])
 })
 
@@ -383,7 +398,7 @@ test('should handle read error', async t => {
     ['frontend'],
     async root => {
       await setCacheSettings(root, cache => {
-        cache.url = cache.url.replace('://', '://plt-caching-test@')
+        cache.url = withValkeyUser(cache.url)
       })
     }
   )
@@ -424,7 +439,7 @@ test('should handle refresh error', async t => {
     ['frontend'],
     async root => {
       await setCacheSettings(root, cache => {
-        cache.url = cache.url.replace('://', '://plt-caching-test@')
+        cache.url = withValkeyUser(cache.url)
         cache.maxTTL = 10
       })
     }
@@ -478,7 +493,7 @@ test('should handle write error', async t => {
     ['frontend'],
     async root => {
       await setCacheSettings(root, cache => {
-        cache.url = cache.url.replace('://', '://plt-caching-test@')
+        cache.url = withValkeyUser(cache.url)
       })
     }
   )
@@ -610,7 +625,8 @@ test('should properly use the Valkey cache handler in production when using next
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
-    ['get', key]
+    ['get', key],
+    implicitTagsLookup(prefix, pageImplicitTags)
   ])
 
   const {
@@ -692,7 +708,8 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
-    ['get', key]
+    ['get', key],
+    implicitTagsLookup(prefix, pageImplicitTags)
   ])
 
   const {
@@ -794,4 +811,42 @@ test('should properly revalidate tags in Valkey', async t => {
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120']
   ])
+})
+
+test('should properly revalidate paths in Valkey', async t => {
+  const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey)
+
+  t.after(async () => {
+    await valkey.disconnect()
+  })
+
+  let version
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(mo)
+
+    version = mo[1]
+  }
+
+  {
+    const res = await fetch(url + '/revalidate-path')
+    strictEqual(res.status, 200)
+  }
+
+  await once(runtime, 'application:worker:event:revalidated')
+
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(mo)
+    notDeepStrictEqual(mo[1], version)
+  }
 })
