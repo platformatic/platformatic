@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process'
 import { createServer } from 'node:http'
 import { createServer as createNetServer } from 'node:net'
 import { test } from 'node:test'
-import { createChildProcessListener, createServerListener } from '../../lib/worker/listeners.js'
+import { createChildProcessListener, createServerListener, isBareHttpServer } from '../../lib/worker/listeners.js'
 
 async function listen (server, opts) {
   return new Promise((resolve, reject) => {
@@ -168,4 +168,21 @@ test('createChildProcessListener - is cancelable', async t => {
   const listener = createChildProcessListener()
   listener.cancel()
   deepStrictEqual(await listener, null)
+})
+
+// The Nuxt CLI 4 and later probe SO_REUSEPORT support by binding HTTP servers without any handler
+// before the dev server. Those are told apart from the application server by their listeners.
+test('isBareHttpServer - should only match HTTP servers without any application handler', async t => {
+  ok(isBareHttpServer(createServer()))
+  ok(!isBareHttpServer(createServer(() => {})))
+  ok(!isBareHttpServer(createNetServer()))
+
+  const upgradable = createServer()
+  upgradable.on('upgrade', () => {})
+  ok(!isBareHttpServer(upgradable))
+
+  const late = createServer()
+  ok(isBareHttpServer(late))
+  late.on('request', () => {})
+  ok(!isBareHttpServer(late))
 })

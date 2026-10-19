@@ -1,5 +1,7 @@
 import { getEvents, isEntrypoint } from '@platformatic/globals'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
+import { Server as HttpServer } from 'node:http'
+import { Server as HttpsServer } from 'node:https'
 import { Server as NetServer } from 'node:net'
 
 // Some frameworks (Vite 8 and later) look for a free port by opening and immediately closing
@@ -10,6 +12,19 @@ import { Server as NetServer } from 'node:net'
 // from by the framework itself.
 function isPortProbe (server) {
   return server?.constructor === NetServer
+}
+
+// Other frameworks (the Nuxt CLI 4 and later) check whether the platform supports SO_REUSEPORT by
+// binding throwaway HTTP servers before the real one. Unlike the probes above those are HTTP servers,
+// but they are created without any handler as they are never meant to serve anything.
+export const applicationServerEvents = ['request', 'upgrade', 'connect', 'checkContinue', 'checkExpectation']
+
+export function isBareHttpServer (server) {
+  if (!(server instanceof HttpServer) && !(server instanceof HttpsServer)) {
+    return false
+  }
+
+  return applicationServerEvents.every(event => server.listenerCount(event) === 0)
 }
 
 export function createServerListener (overridePort = true, overrideHost = false, additionalOptions = {}) {

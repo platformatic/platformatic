@@ -6,6 +6,9 @@
 // capture in `packages/basic/lib/worker/child-process.js` subscribes to the
 // FIRST `net.server.listen` trace and therefore reports the probe's URL, which
 // races the real server's startup and intermittently fails with ECONNREFUSED.
+// Moreover, the Nuxt CLI 4 starts the real server before Nuxt has finished
+// loading, and until then it answers every request coming from an unknown host
+// (like the one used by the runtime) with a 403.
 //
 // This script opts the Nuxt child into Nuxt's own dev IPC so the CLI reports
 // its real `ready` address (after the build, when the serving server is up),
@@ -15,7 +18,29 @@
 // The script is preloaded in every Node.js process spawned by the command, including
 // the dev server forks the Nuxt CLI creates. Those have a real IPC channel with the
 // CLI, so messages are still forwarded to the original `process.send` when present.
+//
+// Custom development commands might not run the Nuxt CLI at all (and then the
+// `ready` message will never be sent). In that case, the address of the first
+// application server is reported after a grace period.
 import { getITC } from '@platformatic/globals'
+import { tracingChannel } from 'node:diagnostics_channel'
+import { Server as HttpsServer } from 'node:https'
+import { Server as NetServer } from 'node:net'
+
+const FALLBACK_TIMEOUT = 15_000
+
+let reported = false
+let fallbackTimer
+
+function report (url) {
+  if (reported) {
+    return
+  }
+
+  reported = true
+  clearTimeout(fallbackTimer)
+  getITC({ throwOnMissing: false })?.notify('url', url)
+}
 
 process.env.__NUXT__FORK = '1'
 
@@ -25,8 +50,37 @@ process.send = function (message, ...args) {
   const address = message?.type === 'nuxt:internal:dev:ready' ? message.address : undefined
 
   if (typeof address === 'string' && address.length > 0) {
-    getITC({ throwOnMissing: false })?.notify('url', address)
+    report(address)
   }
 
   return originalSend?.(message, ...args) ?? true
 }
+
+tracingChannel('net.server.listen').subscribe({
+  start () {},
+  end () {},
+  asyncStart () {},
+  error () {},
+  asyncEnd ({ server }) {
+    // Skip port probes and bare HTTP servers (the framework's own probes).
+    if (reported || fallbackTimer || server?.constructor === NetServer || server?.listenerCount('request') === 0) {
+      return
+    }
+
+    fallbackTimer = setTimeout(() => {
+      const address = server.address()
+
+      if (!server.listening || !address || typeof address === 'string') {
+        fallbackTimer = undefined
+        return
+      }
+
+      const protocol = server instanceof HttpsServer ? 'https' : 'http'
+      const host = address.family === 'IPv6' ? `[${address.address}]` : address.address
+
+      report(`${protocol}://${host}:${address.port}`)
+    }, FALLBACK_TIMEOUT)
+
+    fallbackTimer.unref()
+  }
+})
