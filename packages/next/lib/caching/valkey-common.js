@@ -7,6 +7,7 @@ import {
   getRoot,
   getValkeyClients,
   getWorkerId,
+  isBuilding,
   updateGlobals
 } from '@platformatic/globals'
 import { existsSync, readFileSync } from 'node:fs'
@@ -113,12 +114,16 @@ export function createPlatformaticLogger () {
   return pino(pinoOptions)
 }
 
+// The subprefix is the build ID. During a build it is null until Next.js writes the ID,
+// so that nothing is stored under a subprefix the application will never read.
 export function getPlatformaticSubprefix () {
-  const root = fileURLToPath(getRoot())
+  const buildIdPath = resolve(fileURLToPath(getRoot()), '.next/BUILD_ID')
 
-  return existsSync(resolve(root, '.next/BUILD_ID'))
-    ? readFileSync(resolve(root, '.next/BUILD_ID'), 'utf-8').trim()
-    : 'development'
+  if (existsSync(buildIdPath)) {
+    return readFileSync(buildIdPath, 'utf-8').trim()
+  }
+
+  return isBuilding({ throwOnMissing: false }) ? null : 'development'
 }
 
 // Maps each "use cache" function ID to the file defining it, relative to the application.
