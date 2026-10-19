@@ -6,10 +6,12 @@ import {
   deserialize,
   ensureMsgpackr,
   ensureRedis,
+  getCacheFunctionId,
   getConnection,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
   keyFor,
+  loadCacheFunctionsFiles,
   serialize
 } from './valkey-common.js'
 
@@ -37,6 +39,7 @@ export class CacheHandler {
   #prefix
   #subprefix
   #meta
+  #cacheFunctionsFiles
   #maxTTL
   #sections
   #cacheHitMetric
@@ -83,6 +86,10 @@ export class CacheHandler {
 
   async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'cache get')
+
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
 
     const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
 
@@ -145,8 +152,6 @@ export class CacheHandler {
 
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
-
     try {
       // Gather the value
       const chunks = []
@@ -154,10 +159,24 @@ export class CacheHandler {
         chunks.push(chunk)
       }
 
+      if (!isRedisKey && !this.#hasSubprefix()) {
+        return
+      }
+
+      const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
+
       // Compute the parameters to save
+
+      const file = await this.#fileFor(cacheKey)
+
+      let meta = this.#meta
+      if (file) {
+        meta = { ...meta, file }
+      }
+
       const toSerialize = serialize({
         maxTTL: this.#maxTTL,
-        meta: this.#meta,
+        meta,
         value: Buffer.concat(chunks),
         ...data
       })
@@ -198,7 +217,7 @@ export class CacheHandler {
   // Next.js calls this with the implicit tags of the current request (the ones revalidatePath()
   // targets) and discards any entry created before the returned timestamp.
   async getExpiration (tags) {
-    if (!tags?.length) {
+    if (!tags?.length || !this.#hasSubprefix()) {
       return 0
     }
 
@@ -224,6 +243,10 @@ export class CacheHandler {
   }
 
   async updateTags (tags) {
+    if (!this.#hasSubprefix()) {
+      return
+    }
+
     if (typeof tags === 'string') {
       tags = [tags]
     }
@@ -290,6 +313,26 @@ export class CacheHandler {
     }
 
     await Promise.all(promises)
+  }
+
+  // The manifest is read once, on the first write
+  async #fileFor (cacheKey) {
+    this.#cacheFunctionsFiles ??= loadCacheFunctionsFiles().catch(e => {
+      this.#logger.error(
+        { err: ensureLoggableError(e) },
+        'Cannot read the server references manifest'
+      )
+      return new Map()
+    })
+
+    const files = await this.#cacheFunctionsFiles
+    return files.get(getCacheFunctionId(cacheKey))
+  }
+
+  // During a build, the subprefix is only known once Next.js writes the build ID
+  #hasSubprefix () {
+    this.#subprefix ??= getPlatformaticSubprefix()
+    return this.#subprefix !== null
   }
 
   #keyFor (key, section) {

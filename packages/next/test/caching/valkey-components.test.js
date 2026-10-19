@@ -5,6 +5,7 @@ import { once } from 'node:events'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { satisfies } from 'semver'
 import { fixturesDir, getLogsFromFile, setFixturesDir, updateFile } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
 import {
@@ -93,7 +94,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
 
   const {
     maxTTL,
-    meta: { applicationId, workerId },
+    meta: { applicationId, workerId, file },
     value,
     revalidate,
     expire,
@@ -112,6 +113,7 @@ test('should properly use the Valkey cache handler in production to cache pages'
   deepStrictEqual(maxTTL, 86400 * 7)
   deepStrictEqual(applicationId, 'frontend')
   deepStrictEqual(workerId, 0)
+  deepStrictEqual(file, 'src/app/page.jsx')
 })
 
 test('should properly use the Valkey cache handler in production to cache route handlers', async t => {
@@ -173,7 +175,7 @@ test('should properly use the Valkey cache handler in production to cache route 
 
   const {
     maxTTL,
-    meta: { applicationId, workerId },
+    meta: { applicationId, workerId, file },
     value,
     revalidate,
     expire,
@@ -189,6 +191,15 @@ test('should properly use the Valkey cache handler in production to cache route 
   deepStrictEqual(maxTTL, 86400 * 7)
   deepStrictEqual(applicationId, 'frontend')
   deepStrictEqual(workerId, 0)
+
+  // Before 16.4, the server references manifest only lists the "use cache" functions of pages
+  const nextPackageJson = JSON.parse(
+    await readFile(resolve(root, 'services/frontend/node_modules/next/package.json'), 'utf-8')
+  )
+  deepStrictEqual(
+    file,
+    satisfies(nextPackageJson.version, '>=16.4.0') ? 'src/app/route/route.js' : undefined
+  )
 })
 
 test('should extend TTL when our limit is smaller than the user one', async t => {
