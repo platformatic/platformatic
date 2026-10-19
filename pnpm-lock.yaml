@@ -717,7 +717,7 @@ importers:
         version: 4.2.1
       '@fastify/jwt':
         specifier: ^10.0.0
-        version: 10.2.4
+        version: 10.2.5
       fastify-plugin:
         specifier: ^6.0.0
         version: 6.0.1
@@ -3398,8 +3398,8 @@ packages:
   '@fastify/http-proxy@11.6.4':
     resolution: {integrity: sha512-JPsbLX9D5X5yES1A6M2yx1i2PGf8eNyKT48j+6pgLIwxfRYpj1MEzR1CwASRvqdZOWhcPmdsZiIKehSgioW6ww==}
 
-  '@fastify/jwt@10.2.4':
-    resolution: {integrity: sha512-xaRULl7ZLLmmclAWc0gaNHCrK32A+uho8wMJkHfxQ+EXIXIBdCLnbe/89uTlNbQoR2w4i/p24DzOuldvM52ETA==}
+  '@fastify/jwt@10.2.5':
+    resolution: {integrity: sha512-pObTiMwxYNYdTZ2E/aoU3REIQAMCFXtXMBcUTP1r60nbPqxQEDbN9zh/SQUEefL7gn+KBOaXcoU/Qmza4NxANA==}
 
   '@fastify/jwt@9.1.0':
     resolution: {integrity: sha512-CiGHCnS5cPMdb004c70sUWhQTfzrJHAeTywt7nVw6dAiI0z1o4WRvU94xfijhkaId4bIxTCOjFgn4sU+Gvk43w==}
@@ -13951,7 +13951,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@fastify/jwt@10.2.4':
+  '@fastify/jwt@10.2.5':
     dependencies:
       '@fastify/error': 4.2.1
       '@lukeed/ms': 2.0.2
