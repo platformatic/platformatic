@@ -5,6 +5,8 @@ import { errors } from '../../index.js'
 test('errors', () => {
   expect(errors.AddressInUseError(3042, 'first', 'second')).type.toBe<FastifyError>()
   expect(errors.RuntimeExitedError()).type.toBe<FastifyError>()
+  expect(errors.MetricsDisabledError()).type.toBe<FastifyError>()
+  expect(errors.FailedToUpdateMetricsConfigError('application:0', 'error')).type.toBe<FastifyError>()
   expect(errors.UnknownRuntimeAPICommandError('command')).type.toBe<FastifyError>()
   expect(errors.ApplicationNotFoundError('id')).type.toBe<FastifyError>()
   expect(errors.ApplicationNotStartedError('id')).type.toBe<FastifyError>()

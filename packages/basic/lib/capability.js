@@ -208,12 +208,18 @@ export class BaseCapability extends EventEmitter {
     }
     this.context.metricsConfig = normalizedConfig
 
+    // Stop the old exporter before clearing its registry or creating a replacement.
+    if (this.otlpBridge) {
+      this.otlpBridge.stop()
+      this.otlpBridge = null
+    }
+
     // If running in subprocess mode, send the update to the child process
     if (this.childManager && this.clientWs) {
       await this.childManager.send(this.clientWs, 'updateMetricsConfig', {
         applicationId: this.applicationId,
         workerId: this.workerId,
-        metricsConfig: normalizedConfig
+        metricsConfig: { defaultMetrics: true, httpMetrics: true, ...normalizedConfig }
       })
       return
     }

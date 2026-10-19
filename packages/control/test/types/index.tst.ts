@@ -6,7 +6,8 @@ import {
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeOpenapi,
   FailedToGetRuntimeScheduler,
-  FailedToUpdateRuntimeScheduler
+  FailedToUpdateRuntimeScheduler,
+  FailedToUpdateRuntimeMetrics
 } from '../../lib/errors.js';
 import type {
   Metric,
@@ -16,6 +17,7 @@ import type {
   RuntimeApplications,
   RuntimeSchedulerJob,
   RuntimeMemory,
+  RuntimeMetricsConfigUpdateResult,
   RuntimeSchedulerRunResult,
   WorkersScaler
 } from '../../lib/index.js';
@@ -30,6 +32,11 @@ const api = new RuntimeApiClient();
 test('RuntimeApiClient methods', () => {
   expect(api.getMatchingRuntime()).type.toBe<Promise<Runtime>>();
   expect(api.getRuntimeMetrics(runtime.pid)).type.toBe<Promise<Metric[]>>();
+  expect(api.updateRuntimeMetricsConfig(runtime.pid, { enabled: true })).type.toBe<
+    Promise<RuntimeMetricsConfigUpdateResult>
+  >();
+  expect(api.updateRuntimeMetricsConfig).type.not.toBeCallableWith(runtime.pid, { enabled: 'true' });
+  expect(FailedToUpdateRuntimeMetrics('error')).type.toBe<FastifyError>();
   expect(api.getRuntimeMemory(runtime.pid)).type.toBe<Promise<RuntimeMemory>>();
   expect(api.getRuntimeWorkersScaler(runtime.pid)).type.toBe<Promise<WorkersScaler | null>>();
   expect(api.getRuntimeMetrics(runtime.pid, {})).type.toBe<Promise<Metric[]>>();

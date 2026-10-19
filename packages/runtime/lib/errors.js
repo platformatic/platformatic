@@ -81,6 +81,11 @@ export const FailedToRetrieveMetricsError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_METRICS`,
   'Failed to retrieve metrics for application with id "%s": %s'
 )
+export const FailedToUpdateMetricsConfigError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_UPDATE_METRICS_CONFIG`,
+  'Failed to update metrics configuration on worker "%s": %s'
+)
+export const MetricsDisabledError = createError(`${ERROR_PREFIX}_METRICS_DISABLED`, 'Metrics are disabled.', 501)
 export const FailedToRetrieveHealthError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_HEALTH`,
   'Failed to retrieve health for application with id "%s": %s'

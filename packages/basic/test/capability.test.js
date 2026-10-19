@@ -1039,3 +1039,36 @@ test('BaseCapability - updateMetricsConfig - should handle no registry', async t
   await capability.updateMetricsConfig({ enabled: true })
   deepStrictEqual(capability.context.metricsConfig, { enabled: true, idLabel: 'applicationId' })
 })
+
+test('BaseCapability - updateMetricsConfig - should stop the previous exporter', async t => {
+  const capability = await create(t, { applicationId: 'test-app', metricsConfig: { enabled: true } })
+  const stop = t.mock.fn()
+  capability.otlpBridge = { stop }
+
+  await capability.updateMetricsConfig({ enabled: false })
+
+  deepStrictEqual(stop.mock.callCount(), 1)
+  deepStrictEqual(capability.otlpBridge, null)
+})
+
+test('BaseCapability - updateMetricsConfig - should forward collection defaults to subprocesses', async t => {
+  const capability = await create(t, { applicationId: 'test-app', metricsConfig: { enabled: false } })
+  const send = t.mock.fn()
+  capability.childManager = { send }
+  capability.clientWs = {}
+  t.after(() => {
+    capability.childManager = null
+    capability.clientWs = null
+  })
+
+  await capability.updateMetricsConfig({ enabled: true })
+
+  deepStrictEqual(send.mock.callCount(), 1)
+  deepStrictEqual(send.mock.calls[0].arguments[1], 'updateMetricsConfig')
+  deepStrictEqual(send.mock.calls[0].arguments[2].metricsConfig, {
+    defaultMetrics: true,
+    httpMetrics: true,
+    enabled: true,
+    idLabel: 'applicationId'
+  })
+})

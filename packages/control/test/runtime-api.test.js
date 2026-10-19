@@ -129,6 +129,32 @@ test('should get runtime metrics', async t => {
   }
 })
 
+test('should update runtime metrics configuration', async t => {
+  const configFile = join(fixturesDir, 'runtime-1', 'watt.config.mjs')
+  const { runtime } = await startRuntime(configFile)
+  const client = new RuntimeApiClient()
+  t.after(async () => {
+    await client.close()
+    await kill(runtime)
+  })
+
+  const disabled = await client.updateRuntimeMetricsConfig(runtime.pid, { enabled: false })
+  assert.strictEqual(disabled.success, true)
+  assert.strictEqual(disabled.config.enabled, false)
+  await assert.rejects(client.getRuntimeMetrics(runtime.pid), { code: 'PLT_CTR_FAILED_TO_GET_RUNTIME_METRICS' })
+
+  const enabled = await client.updateRuntimeMetricsConfig(runtime.pid, { enabled: true })
+  assert.strictEqual(enabled.success, true)
+  assert.deepStrictEqual(enabled.config, { ...disabled.config, enabled: true })
+  const metrics = await client.getRuntimeMetrics(runtime.pid, { format: 'json' })
+  assert.ok(metrics.some(metric => metric.name === 'process_resident_memory_bytes'))
+  assert.ok(metrics.some(metric => metric.name === 'nodejs_heap_size_used_bytes'))
+
+  await assert.rejects(client.updateRuntimeMetricsConfig(runtime.pid, { enabled: 'invalid' }), {
+    code: 'PLT_CTR_FAILED_TO_UPDATE_RUNTIME_METRICS'
+  })
+})
+
 test('should get matching runtime', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'watt.config.mjs')

@@ -185,6 +185,43 @@ test('handles ping messages', async t => {
 - **`runtime.getSharedContext(): object`** — The current main-thread shared context. Do not mutate it directly; use `updateSharedContext()` so workers are notified.
 - **`runtime.updateSharedContext({ context, overwrite = false }): Promise<object>`** — Merges `context` into the shared context and broadcasts the new state to all running workers. Set `overwrite` to replace it instead. Broadcast failures are logged without rejecting the update.
 
+#### Updating metrics at runtime
+
+`runtime.updateMetricsConfig(options)` enables, disables, or reconfigures metrics without restarting the runtime or its workers:
+
+```js
+await runtime.updateMetricsConfig({ enabled: true })
+await runtime.updateMetricsConfig({ enabled: false })
+```
+
+Updates merge top-level options with the current metrics configuration. Omitted options, including the Prometheus address, authentication, labels, and timeout, are preserved. Nested objects such as `labels` are replaced when supplied. Repeating an identical successful update does not reset counters or restart listeners. Actual configuration changes can reset worker metrics and restart the metrics and health probe listeners. Enabling metrics also enables the configured Prometheus listener (port `9090` by default).
+
+The management API exposes the same operation over its local socket:
+
+```http
+PATCH /api/v1/metrics
+Content-Type: application/json
+
+{ "enabled": true }
+```
+
+The request must be a non-empty object containing metrics configuration options. `enabled`, when supplied, must be a boolean. Relative plugin and certificate paths are resolved from the runtime project root. Successful updates return HTTP `200` with `{ success: true, config }`, where `config` is the resulting metrics configuration. Changes are in-memory only; the configuration file is not modified.
+
+With `@platformatic/control`:
+
+```js
+import { RuntimeApiClient } from '@platformatic/control'
+
+const client = new RuntimeApiClient()
+try {
+  await client.updateRuntimeMetricsConfig(pid, { enabled: true })
+} finally {
+  await client.close()
+}
+```
+
+When metrics are disabled, `GET /api/v1/metrics` returns HTTP `501` with code `PLT_RUNTIME_METRICS_DISABLED`. Worker update failures reject with `PLT_RUNTIME_FAILED_TO_UPDATE_METRICS_CONFIG`; an update may already have reached other workers, so retry the same request to complete it. The control client reports unsuccessful updates with `PLT_CTR_FAILED_TO_UPDATE_RUNTIME_METRICS`.
+
 ### Per-application control
 
 - **`runtime.startApplication(id, silent = false): Promise<void>`**

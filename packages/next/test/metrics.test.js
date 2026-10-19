@@ -136,12 +136,17 @@ test('should update metrics config at runtime', async t => {
   assert.strictEqual(disableResult.success, true)
   assert.strictEqual(disableResult.config.enabled, false)
 
-  // Verify metrics server is closed when disabled
-  try {
-    await request(`http://127.0.0.1:${newPort}/metrics`)
-    throw new Error('Expected request to fail when disabled')
-  } catch (e) {
-    assert.strictEqual(e.code, 'ECONNREFUSED', 'Expected ECONNREFUSED when metrics disabled')
+  // The shared listener stays available for health probes, but no longer exposes metrics.
+  {
+    const { statusCode, body } = await request(`http://127.0.0.1:${newPort}/metrics`)
+    assert.strictEqual(statusCode, 404)
+    await body.dump()
+  }
+
+  for (const endpoint of ['/ready', '/status']) {
+    const { statusCode, body } = await request(`http://127.0.0.1:${newPort}${endpoint}`)
+    assert.strictEqual(statusCode, 200)
+    assert.strictEqual(await body.text(), 'OK')
   }
 
   // Re-enable metrics
