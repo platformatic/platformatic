@@ -17,6 +17,8 @@ hoist: false
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@platformatic/*'
+  # fastify-user@2.0.0 was published on 2026-10-13; it fixes the fast-jwt 5 advisories via @fastify/jwt 10
+  - fastify-user@2.0.0
   # Renovate security update: protobufjs@8.0.1
   - protobufjs@8.0.1
   # Renovate security update: fast-uri@3.1.2 || 4.1.1 || 4.1.5

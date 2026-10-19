@@ -728,8 +728,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.1
       fastify-user:
-        specifier: ^1.0.2
-        version: 1.4.0
+        specifier: ^2.0.0
+        version: 2.0.0
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -3529,9 +3529,6 @@ packages:
 
   '@fastify/jwt@10.2.5':
     resolution: {integrity: sha512-pObTiMwxYNYdTZ2E/aoU3REIQAMCFXtXMBcUTP1r60nbPqxQEDbN9zh/SQUEefL7gn+KBOaXcoU/Qmza4NxANA==}
-
-  '@fastify/jwt@9.1.0':
-    resolution: {integrity: sha512-CiGHCnS5cPMdb004c70sUWhQTfzrJHAeTywt7nVw6dAiI0z1o4WRvU94xfijhkaId4bIxTCOjFgn4sU+Gvk43w==}
 
   '@fastify/merge-json-schemas@0.2.1':
     resolution: {integrity: sha512-OA3KGBCy6KtIvLf8DINC5880o5iBlDX4SxzLQS8HorJAbqluzLRn80UXU0bxZn7UOFhFgpRJDasfwn9nG4FG4A==}
@@ -8045,10 +8042,6 @@ packages:
   fast-json-stringify@7.0.1:
     resolution: {integrity: sha512-eRSayARSbbwlBjpP4vnTTIRD5QPcIrmihPxDeN1DtKnHPg66UuJLx+8hlK1kaFdjvzyQ/dzALoi4vwAQ+T+iZA==}
 
-  fast-jwt@5.0.6:
-    resolution: {integrity: sha512-LPE7OCGUl11q3ZgW681cEU2d0d2JZ37hhJAmetCgNyW8waVaJVZXhyFF6U2so1Iim58Yc7pfxJe2P7MNetQH2g==}
-    engines: {node: '>=20'}
-
   fast-jwt@6.3.5:
     resolution: {integrity: sha512-H05ACsqy2i91TwJeLLHcTgQu6cmcmwdyvfIavjtv3ig+sQZRPsSiksXR3QFPvdk0aXmJdKIePE0OsvO4ndt4zw==}
     engines: {node: '>=20'}
@@ -8121,8 +8114,9 @@ packages:
     resolution: {integrity: sha512-TxFM9+MUUM2Ub6chZbP5sPNUFaPWA86kHU0VRd4o9OP6PBP92cj9c4/IEsnLoVHcLgrgXf2GUXWUzkJAO9iKFQ==}
     engines: {node: '>=20.0.0'}
 
-  fastify-user@1.4.0:
-    resolution: {integrity: sha512-VqGa60xX3nFCz2gIJHfdVjDlJIsdJ9bwigDdazaKlZ/lSxsyeXOnxsyxtZ9XeMht2drc6WLUtJ0MMeo1BSvXCg==}
+  fastify-user@2.0.0:
+    resolution: {integrity: sha512-ns3rsyNEklwhcF4x+XiSLeWtpIxYVXg8jEpd9WNJZoY3z/oya91JEPDZpaii2csG4+kRP0RKy4NHCzPfS4TdJw==}
+    engines: {node: '>=22'}
 
   fastify@5.12.7:
     resolution: {integrity: sha512-v4pEPsTRPuqlDIYiQFB+BHjVN4SdHX9u0ABk0ZDUKbbdY1vsNryUd1j4Z+jQEZajvYIVk047Kimva9/AJ79GYw==}
@@ -13818,14 +13812,6 @@ snapshots:
       fastify-plugin: 6.0.1
       steed: 1.1.3
 
-  '@fastify/jwt@9.1.0':
-    dependencies:
-      '@fastify/error': 4.2.1
-      '@lukeed/ms': 2.0.2
-      fast-jwt: 5.0.6
-      fastify-plugin: 5.1.0
-      steed: 1.1.3
-
   '@fastify/merge-json-schemas@0.2.1':
     dependencies:
       dequal: 2.0.3
@@ -19130,13 +19116,6 @@ snapshots:
       json-schema-ref-resolver: 3.0.0
       rfdc: 1.4.1
 
-  fast-jwt@5.0.6:
-    dependencies:
-      '@lukeed/ms': 2.0.2
-      asn1.js: 5.4.1
-      ecdsa-sig-formatter: 1.0.11
-      mnemonist: 0.40.4
-
   fast-jwt@6.3.5:
     dependencies:
       '@lukeed/ms': 2.0.2
@@ -19205,12 +19184,12 @@ snapshots:
 
   fastify-tsconfig@3.0.0: {}
 
-  fastify-user@1.4.0:
+  fastify-user@2.0.0:
     dependencies:
       '@fastify/error': 4.2.1
-      '@fastify/jwt': 9.1.0
+      '@fastify/jwt': 10.2.5
       fastify: 5.12.7
-      fastify-plugin: 5.1.0
+      fastify-plugin: 6.0.1
       get-jwks: 11.0.3
 
   fastify@5.12.7:
