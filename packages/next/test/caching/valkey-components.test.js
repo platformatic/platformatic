@@ -15,7 +15,8 @@ import {
   setCacheSettings,
   valkeyPrefix,
   valkeyUser,
-  verifyValkeySequence
+  verifyValkeySequence,
+  withValkeyUser
 } from './helper.js'
 
 process.setMaxListeners(100)
@@ -397,7 +398,7 @@ test('should handle read error', async t => {
     ['frontend'],
     async root => {
       await setCacheSettings(root, cache => {
-        cache.url = cache.url.replace('://', '://plt-caching-test@')
+        cache.url = withValkeyUser(cache.url)
       })
     }
   )
@@ -438,7 +439,7 @@ test('should handle refresh error', async t => {
     ['frontend'],
     async root => {
       await setCacheSettings(root, cache => {
-        cache.url = cache.url.replace('://', '://plt-caching-test@')
+        cache.url = withValkeyUser(cache.url)
         cache.maxTTL = 10
       })
     }
@@ -492,7 +493,7 @@ test('should handle write error', async t => {
     ['frontend'],
     async root => {
       await setCacheSettings(root, cache => {
-        cache.url = cache.url.replace('://', '://plt-caching-test@')
+        cache.url = withValkeyUser(cache.url)
       })
     }
   )

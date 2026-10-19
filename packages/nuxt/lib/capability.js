@@ -22,6 +22,8 @@ import { satisfies } from 'semver'
 import { readSchedulerManifest } from './scheduled-tasks.js'
 import { version } from './schema.js'
 
+const devReadyScript = fileURLToPath(new URL('./dev-ready.js', import.meta.url))
+
 export const supportedVersions = '^4.0.0'
 
 export class NuxtCapability extends BaseCapability {
@@ -82,13 +84,10 @@ export class NuxtCapability extends BaseCapability {
       ]
 
     if (command) {
-      if (!this.isProduction) {
-        return this.startWithCommand(command, null, [fileURLToPath(new URL('./dev-ready.js', import.meta.url))], {
-          urlFromScript: true
-        })
-      }
-
-      return this.startWithCommand(command)
+      // In development, the custom command still runs the Nuxt CLI, so use its dev IPC to get the URL
+      return this.isProduction
+        ? this.startWithCommand(command)
+        : this.startWithCommand(command, null, [devReadyScript], { urlFromScript: true })
     }
 
     // In development mode we use Nuxt CLI
@@ -231,7 +230,7 @@ export class NuxtCapability extends BaseCapability {
     await this.startWithCommand(
       `node ${resolve(this.#nuxt)}/bin/nuxt.mjs dev --host ${hostname} --port ${port} --no-open --no-fork${httpsArgs}`,
       null,
-      [fileURLToPath(new URL('./dev-ready.js', import.meta.url))],
+      [devReadyScript],
       { urlFromScript: true }
     )
 
