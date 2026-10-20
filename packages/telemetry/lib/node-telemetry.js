@@ -36,6 +36,12 @@ const contextManager = new AsyncLocalStorageContextManager()
 contextManager.enable()
 context.setGlobalContextManager(contextManager)
 
+// The calls between applications are traced by the thread interceptor hooks. Since it publishes
+// the undici diagnostics events too, the undici instrumentation would create a second client span.
+function isInternalMeshRequest (request) {
+  return typeof request.origin === 'string' && request.origin.endsWith('.plt.local')
+}
+
 const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
   setupDiagLogger(opts)
 
@@ -59,6 +65,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir) => {
     tracerProvider,
     instrumentations: [
       new UndiciInstrumentation({
+        ignoreRequestHook: isInternalMeshRequest,
         responseHook: span => {
           const store = clientSpansAls.getStore()
           if (store) {
