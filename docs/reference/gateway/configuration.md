@@ -39,6 +39,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
     - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
     - **`rewriteLocationHeader`** (`boolean`) - Controls rewriting of relative `Location` response headers from the upstream. When enabled, the gateway rewrites redirects from `rewritePrefix` to `prefix`. Set to `false` to forward relative `Location` headers unchanged. The default is `true` unless overridden by the target capability.
+    - **`headers`** (`object`) - Headers to set on each request proxied to the application, by name, after the gateway's own (`x-forwarded-*`). A `null` value removes the header instead, such as `cookie`, so a session of the gateway's own is not sent on. Values can name environment variables, as `{PLT_UPSTREAM_TOKEN}`.
+    - **`responseHeaders`** (`object`) - Headers to set on each response proxied from the application, by name, after the `Location` rewrite and before the hooks of `custom`. A `null` value removes the header instead.
     - **`methods`** (`array of string`, default: `['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']`) - HTTP methods handled by this proxy application. Useful when multiple applications share the same `prefix` and need method-based routing.
 
       :::note
