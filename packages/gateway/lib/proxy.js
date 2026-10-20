@@ -105,6 +105,8 @@ async function resolveApplicationProxyParameters (application, root) {
     needsRootTrailingSlash: meta.needsRootTrailingSlash,
     needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
     upstream: application.proxy?.upstream,
+    headers: application.proxy?.headers,
+    responseHeaders: application.proxy?.responseHeaders,
     ws: application.proxy?.ws,
     compression: application.proxy?.compression
   }
@@ -138,6 +140,32 @@ function getCustomHandler (application, name) {
 
 function defaultProxyHandler (_request, reply, destination, options) {
   return reply.from(destination, options)
+}
+
+// Returns the header changes of the configuration as [lower-case name, value] pairs, once
+// per application, or null when there are none, so that a request pays nothing for them.
+function headerChanges (changes) {
+  const entries = Object.entries(changes ?? {})
+  return entries.length > 0 ? entries.map(([name, value]) => [name.toLowerCase(), value]) : null
+}
+
+// Sets each header of `changes` (of headerChanges) on `headers`, or removes it when its
+// value is null, but leaves the headers of `overrides`, which a hook set for this request.
+// Returns `headers`, changed in place.
+function applyHeaders (headers, changes, overrides) {
+  for (const [name, value] of changes) {
+    if (overrides?.[name] !== undefined) {
+      continue
+    }
+
+    if (value === null) {
+      delete headers[name]
+    } else {
+      headers[name] = value
+    }
+  }
+
+  return headers
 }
 
 let metrics
@@ -178,6 +206,8 @@ async function proxyPlugin (app, opts) {
       needsRefererBasedRedirect,
       ws
     } = parameters
+    const requestHeaders = headerChanges(parameters.headers)
+    const responseHeaders = headerChanges(parameters.responseHeaders)
     const compressResponses = compression !== null && parameters.compression !== false
     const send = compressResponses
       ? (request, reply, body) => sendCompressed(request, reply, body, compression)
@@ -447,6 +477,10 @@ async function proxyPlugin (app, opts) {
             headers.location = location
           }
 
+          if (responseHeaders) {
+            applyHeaders(headers, responseHeaders)
+          }
+
           if (customRewriteHeaders) {
             headers = customRewriteHeaders(headers, request) ?? headers
           }
@@ -485,6 +519,10 @@ async function proxyPlugin (app, opts) {
           // choosing the encoding (for instance, Next.js only offers gzip).
           if (compressResponses && (meshUpstream ?? isMeshUpstream(request[kProxiedUpstream]))) {
             headers['accept-encoding'] = 'identity'
+          }
+
+          if (requestHeaders) {
+            applyHeaders(headers, requestHeaders, request[kHeadersOverride]?.request)
           }
 
           request.log.trace({ headers }, 'rewritten headers before proxying')
