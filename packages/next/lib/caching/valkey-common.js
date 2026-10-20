@@ -1,4 +1,4 @@
-import { buildPinoFormatters, buildPinoTimestamp } from '@platformatic/foundation'
+import { buildPinoFormatters, buildPinoTimestamp, setPinoLogKeys } from '@platformatic/foundation'
 import {
   getApplicationId,
   getConfig,
@@ -91,9 +91,10 @@ export function createPlatformaticLogger () {
   if (pinoOptions.formatters) {
     pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
   }
-  if (pinoOptions.timestamp) {
-    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
+  if (pinoOptions.timestamp || pinoOptions.timestampKey !== undefined) {
+    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp, pinoOptions.timestampKey)
   }
+  setPinoLogKeys(pinoOptions)
 
   const applicationId = getApplicationId()
   if (applicationId) {

@@ -48,11 +48,45 @@ export function buildPinoFormatters (formatters) {
 }
 
 export function setPinoTimestamp (options) {
-  options.timestamp = stdTimeFunctions[options.timestamp]
+  options.timestamp = buildPinoTimestamp(options.timestamp, options.timestampKey)
 }
 
-export function buildPinoTimestamp (timestamp) {
-  return stdTimeFunctions[timestamp]
+export function buildPinoTimestamp (timestamp = 'epochTime', timestampKey = 'time') {
+  if (timestampKey === 'time') {
+    return stdTimeFunctions[timestamp]
+  }
+
+  // Pino expects a JSON fragment with a leading comma, not a complete object.
+  const key = JSON.stringify(timestampKey)
+  switch (timestamp) {
+    case 'epochTime':
+      return () => `,${key}:${Date.now()}`
+    case 'unixTime':
+      return () => `,${key}:${Math.round(Date.now() / 1000)}`
+    case 'isoTime':
+      return () => `,${key}:"${new Date().toISOString()}"`
+    case 'nullTime':
+      return stdTimeFunctions.nullTime
+  }
+}
+
+export function setPinoLogKeys (options, config = options) {
+  if (config.levelKey && config.levelKey !== 'level') {
+    const formatter = options.formatters?.level ?? ((_label, level) => ({ level }))
+    options.formatters = {
+      ...options.formatters,
+      level (label, value) {
+        const formatted = formatter(label, value)
+        if (!Object.hasOwn(formatted, 'level')) {
+          return formatted
+        }
+
+        // Preserve custom level values and any additional formatter fields.
+        const { level, ...bindings } = formatted
+        return { ...bindings, [config.levelKey]: level }
+      }
+    }
+  }
 }
 
 // Pino options which have no Platformatic specific handling and are therefore passed to pino verbatim
@@ -117,8 +151,8 @@ export function buildPinoOptions (loggerConfig, serverConfig, applicationId, wor
     }
   }
 
-  if (loggerConfig?.timestamp !== undefined) {
-    pinoOptions.timestamp = stdTimeFunctions[loggerConfig.timestamp]
+  if (loggerConfig?.timestamp !== undefined || loggerConfig?.timestampKey !== undefined) {
+    pinoOptions.timestamp = buildPinoTimestamp(loggerConfig.timestamp, loggerConfig.timestampKey)
   }
 
   if (loggerConfig?.redact) {
@@ -154,8 +188,17 @@ export function buildPinoOptions (loggerConfig, serverConfig, applicationId, wor
 
   // This is used by standalone CLI like start-platformatic-node in @platformatic/node
   if (loggerConfig?.pretty) {
-    pinoOptions.transport = { target: 'pino-pretty' }
+    pinoOptions.transport = {
+      target: 'pino-pretty',
+      options: {
+        messageKey: loggerConfig.messageKey ?? 'msg',
+        timestampKey: loggerConfig.timestampKey ?? 'time',
+        levelKey: loggerConfig.levelKey ?? 'level'
+      }
+    }
   }
+
+  setPinoLogKeys(pinoOptions, loggerConfig ?? {})
 
   return pinoOptions
 }
