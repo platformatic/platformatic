@@ -1,4 +1,5 @@
 import { match, ok, strictEqual } from 'node:assert'
+import { execFileSync } from 'node:child_process'
 import { mkdtemp, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -129,6 +130,23 @@ test('createCliLogger - should have custom done level', () => {
   ok(logger.level === 'done')
   ok(typeof logger.done === 'function')
 })
+
+for (const customKeys of [false, true]) {
+  test(`createCliLogger - should emit pretty logs with custom keys: ${customKeys}`, () => {
+    const config = customKeys ? { messageKey: 'message', timestampKey: 'timestamp', levelKey: 'severity' } : {}
+
+    // Capture actual CLI output without interfering with the test runner's stdout.
+    const output = execFileSync(process.execPath, ['--input-type=module', '-e', `
+      import { createCliLogger } from ${JSON.stringify(new URL('../lib/cli.js', import.meta.url).href)}
+      const logger = createCliLogger('info', false, ${JSON.stringify(config)})
+      logger.info('Information message')
+      logger.done('Completion message')
+    `], { encoding: 'utf8', env: { ...process.env, NO_COLOR: 'true' } })
+
+    match(output, /INFO.*Information message/)
+    match(output, /DONE.*Completion message/)
+  })
+}
 
 test('createCliLogger - should use isoTime timestamp when configured', () => {
   const logger = createCliLogger('info', true, { timestamp: 'isoTime' })

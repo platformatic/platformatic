@@ -128,7 +128,7 @@ export function createCliLogger (level, noPretty = false, loggerConfig = {}) {
       levelKey: loggerConfig.levelKey ?? 'level',
       colorize: process.env.NO_COLOR !== 'true',
       customPrettifiers: {
-        level (logLevel, _u1, _u2, _u3, { label, labelColorized }) {
+        level (logLevel, _u1, _u2, { label, labelColorized }) {
           /* c8 ignore next - else */
           return logLevel === 35 ? bgGreen(black(label)) : labelColorized
         }
