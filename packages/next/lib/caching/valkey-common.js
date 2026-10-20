@@ -171,6 +171,22 @@ export function getCacheFunctionId (cacheKey) {
   return cacheKey.match(/"([0-9a-f]{42})"/)?.[1]
 }
 
+// How long an entry is usable, in seconds. Past its revalidate time, Next.js serves it as stale
+// while it regenerates it, until its expire time. Without one, keep the entry as long again
+// after revalidate, as the HTTP cache does.
+export function getEntryLifetime (revalidate, expire, maxTTL) {
+  if (typeof expire === 'number') {
+    return expire
+  }
+
+  // false means "cache forever" in Next.js
+  if (expire === false || revalidate === false) {
+    return maxTTL
+  }
+
+  return revalidate * 2
+}
+
 export function getPlatformaticMeta () {
   return {
     applicationId: getApplicationId(),

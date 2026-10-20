@@ -6,6 +6,7 @@ import {
   ensureMsgpackr,
   ensureRedis,
   getConnection,
+  getEntryLifetime,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
   keyFor,
@@ -148,6 +149,7 @@ export class CacheHandler {
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const lifetime = getEntryLifetime(revalidate, ctx.cacheControl?.expire, this.#maxTTL)
 
     try {
       // Compute the parameters to save
@@ -159,9 +161,7 @@ export class CacheHandler {
         maxTTL: this.#maxTTL,
         ...this.#meta
       })
-      // revalidate === false means "cache forever" in Next.js (SSG/force-static pages).
-      // Use maxTTL as the expiration in that case.
-      const expire = revalidate === false ? this.#maxTTL : Math.min(revalidate, this.#maxTTL)
+      const expire = Math.min(lifetime, this.#maxTTL)
 
       if (expire < 1) {
         return
