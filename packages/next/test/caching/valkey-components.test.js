@@ -81,13 +81,13 @@ test('should properly use the Valkey cache handler in production to cache pages'
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '604800'],
     ['get', key],
     implicitTagsLookup(prefix, pageImplicitTags)
   ])
@@ -162,13 +162,13 @@ test('should properly use the Valkey cache handler in production to cache route 
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '604800'],
     ['get', key],
     implicitTagsLookup(prefix, routeImplicitTags)
   ])
@@ -629,13 +629,13 @@ test('should properly use the Valkey cache handler in production when using next
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '604800'],
     ['get', key],
     implicitTagsLookup(prefix, pageImplicitTags)
   ])
@@ -712,13 +712,13 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '604800'],
     ['get', key],
     implicitTagsLookup(prefix, pageImplicitTags)
   ])
@@ -797,13 +797,13 @@ test('should properly revalidate tags in Valkey', async t => {
 
   verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '604800'],
     ['sscan', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '0'],
     ['del', key],
     ['del', keyFor(valkeyPrefix, prefix, 'components:tags', 'first')],
@@ -814,13 +814,13 @@ test('should properly revalidate tags in Valkey', async t => {
     ['del', key],
     ['del', keyFor(valkeyPrefix, prefix, 'components:tags', 'third')],
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'first'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'second'), '604800'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '120']
+    ['expire', keyFor(valkeyPrefix, prefix, 'components:tags', 'third'), '604800']
   ])
 })
 

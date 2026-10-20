@@ -1,6 +1,6 @@
 import { updateGlobals } from '@platformatic/globals'
 import Redis from 'iovalkey'
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual } from 'node:assert'
 import { EventEmitter } from 'node:events'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -151,19 +151,6 @@ test('ISR handler - limits the entries lifetime to maxTTL', async t => {
   deepStrictEqual([entry, tags], [300, 300])
 })
 
-test('ISR handler - extends up to maxTTL the entries living longer than it', async t => {
-  const valkey = await setup(t, 300)
-  const handler = await isrHandler()
-
-  await handler.set('/products', page(), { cacheControl: { revalidate: 60, expire: 600 }, tags: ['products'] })
-
-  const { key } = await getTTLs(valkey, 'values', 'tags')
-  await valkey.expire(key, 10)
-
-  ok(await handler.get('/products'))
-  deepStrictEqual(await valkey.ttl(key), 300)
-})
-
 test('components handler - keeps entries until their expire time', async t => {
   const valkey = await setup(t)
   const handler = await componentsHandler()
@@ -183,17 +170,4 @@ test('components handler - limits the entries lifetime to maxTTL', async t => {
 
   const { entry, tags } = await getTTLs(valkey, 'components:values', 'components:tags')
   deepStrictEqual([entry, tags], [300, 300])
-})
-
-test('components handler - extends up to maxTTL the entries living longer than it', async t => {
-  const valkey = await setup(t, 300)
-  const handler = await componentsHandler()
-
-  await handler.set('key', Promise.resolve(componentsEntry(60, 600)))
-
-  const { key } = await getTTLs(valkey, 'components:values', 'components:tags')
-  await valkey.expire(key, 10)
-
-  ok(await handler.get('key', []))
-  deepStrictEqual(await valkey.ttl(key), 300)
 })

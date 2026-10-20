@@ -125,11 +125,10 @@ export class CacheHandler {
     }
 
     const { maxTTL: _maxTTL, meta: _meta, ...value } = raw
-    const lifetime = getEntryLifetime(raw.revalidate, raw.expire, this.#maxTTL)
 
-    if (this.#maxTTL < lifetime) {
+    if (this.#maxTTL < raw.revalidate) {
       try {
-        await this.#refreshKey(key, value, lifetime)
+        await this.#refreshKey(key, value)
       } catch (e) {
         this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot refresh cache key expiration in Valkey')
       }
@@ -292,9 +291,9 @@ export class CacheHandler {
     }
   }
 
-  async #refreshKey (key, value, lifetime) {
+  async #refreshKey (key, value) {
     const life = Math.round((Date.now() - value.timestamp) / 1000)
-    const expire = Math.min(lifetime - life, this.#maxTTL)
+    const expire = Math.min(value.revalidate - life, this.#maxTTL)
 
     if (expire < 1) {
       return

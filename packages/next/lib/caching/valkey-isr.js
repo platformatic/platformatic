@@ -124,10 +124,9 @@ export class CacheHandler {
       throw new Error('Cannot deserialize cache value from Valkey', { cause: e })
     }
 
-    const lifetime = value.lifetime ?? value.revalidate
-    if (this.#maxTTL < lifetime) {
+    if (this.#maxTTL < value.revalidate) {
       try {
-        await this.#refreshKey(key, value, lifetime)
+        await this.#refreshKey(key, value)
       } catch (e) {
         this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot refresh cache key expiration in Valkey')
 
@@ -159,7 +158,6 @@ export class CacheHandler {
         tags,
         lastModified: Date.now(),
         revalidate,
-        lifetime,
         maxTTL: this.#maxTTL,
         ...this.#meta
       })
@@ -306,9 +304,9 @@ export class CacheHandler {
     return [...combinedTags]
   }
 
-  async #refreshKey (key, value, lifetime) {
+  async #refreshKey (key, value) {
     const life = Math.round((Date.now() - value.lastModified) / 1000)
-    const expire = Math.min(lifetime - life, this.#maxTTL)
+    const expire = Math.min(value.revalidate - life, this.#maxTTL)
 
     if (expire < 1) {
       return
