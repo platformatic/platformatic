@@ -1,12 +1,13 @@
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
+import { createHash } from 'node:crypto'
 import { readFile, rename, writeFile } from 'node:fs/promises'
 import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { test } from 'node:test'
-import { parse } from 'semver'
+import { parse, satisfies } from 'semver'
 import { fixturesDir, getLogsFromFile, setFixturesDir, updateFile } from '../../../basic/test/helper.js'
 import { keyFor } from '../../lib/caching/valkey-common.js'
 import { CacheHandler } from '../../lib/caching/valkey-isr.js'
@@ -18,7 +19,8 @@ import {
   setCacheSettings,
   valkeyPrefix,
   valkeyUser,
-  verifyValkeySequence
+  verifyValkeySequence,
+  withValkeyUser
 } from './helper.js'
 
 process.setMaxListeners(100)
@@ -48,12 +50,28 @@ function getRouteTags (nextMajor) {
   }
 }
 
-function getTagOperations (prefix, tags, key) {
+// Starting from Next.js 16.4, the cached responses are namespaced by the kind and the source route which
+// generated them. See getRouteCacheKey in next/dist/server/lib/route-cache-key.js.
+function getRouteCacheKey (nextVersion, kind, sourceRoute, pathname) {
+  if (!satisfies(nextVersion, '>=16.4.0')) {
+    return pathname
+  }
+
+  const source = createHash('sha256').update(sourceRoute).digest('hex')
+  return `/route-cache/${kind}/${source}/$${pathname}`
+}
+
+// Next.js 14 passes no expire time, so its pages are kept twice their revalidate time
+function getPageTTL (nextMajor) {
+  return nextMajor === 14 ? '240' : '604800'
+}
+
+function getTagOperations (prefix, tags, key, ttl) {
   return tags.flatMap(tag => {
     const tagKey = keyFor(valkeyPrefix, prefix, 'tags', tag)
     return [
       ['sadd', tagKey, key],
-      ['expire', tagKey, '120']
+      ['expire', tagKey, ttl]
     ]
   })
 }
@@ -100,13 +118,13 @@ test('should properly use the Valkey cache handler in development to cache fetch
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '240'],
     ['get', key]
   ])
 
@@ -179,8 +197,13 @@ test('should properly use the Valkey cache handler in production to cache fetch 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
-  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
-  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
+  const pageKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_PAGE', '/page', '/index')
+  )
+  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey, getPageTTL(nextMajor))
 
   let storedValues
 
@@ -189,15 +212,15 @@ test('should properly use the Valkey cache handler in production to cache fetch 
       storedValues = verifyValkeySequence(valkeyCalls, [
         ['get', key],
         ['get', key],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['set', key, base64ValueMatcher, 'EX', '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '240'],
         ['get', key],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['set', key, base64ValueMatcher, 'EX', getPageTTL(nextMajor)],
         ...pageTagOperations,
         ['get', key]
       ])
@@ -206,14 +229,14 @@ test('should properly use the Valkey cache handler in production to cache fetch 
       storedValues = verifyValkeySequence(valkeyCalls, [
         ['get', key],
         ['get', key],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['set', key, base64ValueMatcher, 'EX', '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '240'],
+        ['set', key, base64ValueMatcher, 'EX', getPageTTL(nextMajor)],
         ...pageTagOperations,
         ['get', key]
       ])
@@ -316,13 +339,13 @@ test('should properly use the Valkey cache handler in development to cache fetch
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '240'],
     ['get', key]
   ])
 
@@ -393,20 +416,25 @@ test('should properly use the Valkey cache handler in production to cache fetch 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
-  const routeKey = keyFor(valkeyPrefix, prefix, 'values', '/route')
+  const routeKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_ROUTE', '/route/route', '/route')
+  )
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '240'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '240'],
     ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
-    ...getTagOperations(prefix, getRouteTags(nextMajor), routeKey),
+    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '240'],
+    ['set', key, base64ValueMatcher, 'EX', getPageTTL(nextMajor)],
+    ...getTagOperations(prefix, getRouteTags(nextMajor), routeKey, getPageTTL(nextMajor)),
     ['get', key]
   ])
 
@@ -517,13 +545,13 @@ test('should properly revalidate tags in Valkey', async t => {
 
   verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '240'],
     ['sscan', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '0'],
     ['del', key],
     ['del', keyFor(valkeyPrefix, 'development', 'tags', 'first')],
@@ -534,13 +562,13 @@ test('should properly revalidate tags in Valkey', async t => {
     ['del', key],
     ['del', keyFor(valkeyPrefix, 'development', 'tags', 'third')],
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120']
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '240']
   ])
 })
 
@@ -816,7 +844,7 @@ test('should treat read errors as cache misses', async t => {
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
     })
   })
 
@@ -851,7 +879,7 @@ test('should serve production pages when Valkey reads fail', async t => {
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'], async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
     })
   })
 
@@ -937,7 +965,7 @@ test('should handle deserialization error', async t => {
 test('should handle refresh error', async t => {
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
       cache.maxTTL = 10
     })
   })
@@ -990,7 +1018,7 @@ test('should handle write error', async t => {
 
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
     })
   })
 
@@ -1020,7 +1048,7 @@ test('should handle write error', async t => {
 test('should handle refresh error', async t => {
   const { url, root, runtime } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     await setCacheSettings(root, cache => {
-      cache.url = cache.url.replace('://', '://plt-caching-test@')
+      cache.url = withValkeyUser(cache.url)
       cache.maxTTL = 20
     })
   })
@@ -1111,9 +1139,9 @@ test('can be used without the runtime - per-method flag', async t => {
   await monitorPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, '', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '240'],
     ['get', key],
     ['get', key],
     ['del', key],
@@ -1184,9 +1212,9 @@ test('can be used without the runtime - standalone mode', async t => {
   await monitorPromise.promise
 
   verifyValkeySequence(valkeyCalls, [
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, '', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '240'],
     ['get', key],
     ['get', key],
     ['del', key],
@@ -1420,13 +1448,13 @@ test('should properly use the Valkey cache handler in development when using nex
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '240'],
     ['get', key]
   ])
 
@@ -1500,10 +1528,15 @@ test('should properly use the Valkey cache handler in production when using next
     deepStrictEqual(mo[2], time)
   }
 
-  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
+  const pageKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_PAGE', '/page', '/index')
+  )
 
   const fetchKey = new RegExp('^' + keyFor(valkeyPrefix, prefix, 'values'))
-  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
+  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey, getPageTTL(nextMajor))
 
   let storedValues
 
@@ -1512,15 +1545,15 @@ test('should properly use the Valkey cache handler in production when using next
       storedValues = verifyValkeySequence(valkeyCalls, [
         ['get', pageKey],
         ['get', fetchKey],
-        ['set', fetchKey, base64ValueMatcher, 'EX', '120'],
+        ['set', fetchKey, base64ValueMatcher, 'EX', '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '240'],
         ['get', fetchKey],
-        ['set', pageKey, base64ValueMatcher, 'EX', '120'],
+        ['set', pageKey, base64ValueMatcher, 'EX', getPageTTL(nextMajor)],
         ...pageTagOperations,
         ['get', pageKey]
       ])
@@ -1529,14 +1562,14 @@ test('should properly use the Valkey cache handler in production when using next
       storedValues = verifyValkeySequence(valkeyCalls, [
         ['get', pageKey],
         ['get', fetchKey],
-        ['set', fetchKey, base64ValueMatcher, 'EX', '120'],
+        ['set', fetchKey, base64ValueMatcher, 'EX', '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-        ['set', pageKey, base64ValueMatcher, 'EX', '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '240'],
+        ['set', pageKey, base64ValueMatcher, 'EX', getPageTTL(nextMajor)],
         ...pageTagOperations,
         ['get', pageKey]
       ])
@@ -1648,8 +1681,13 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
   }
 
   const key = new RegExp('^' + keyFor(valkeyPrefix, prefix, '(values|tags)'))
-  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
-  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey)
+  const pageKey = keyFor(
+    valkeyPrefix,
+    prefix,
+    'values',
+    getRouteCacheKey(nextPackageJson.version, 'APP_PAGE', '/page', '/index')
+  )
+  const pageTagOperations = getTagOperations(prefix, getPageTags(nextMajor), pageKey, getPageTTL(nextMajor))
 
   let storedValues
 
@@ -1658,15 +1696,15 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
       storedValues = verifyValkeySequence(valkeyCalls, [
         ['get', key],
         ['get', key],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['set', key, base64ValueMatcher, 'EX', '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '240'],
         ['get', key],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['set', key, base64ValueMatcher, 'EX', getPageTTL(nextMajor)],
         ...pageTagOperations,
         ['get', key]
       ])
@@ -1675,14 +1713,14 @@ test('should properly use the Valkey cache handler in standalone mode', async t 
       storedValues = verifyValkeySequence(valkeyCalls, [
         ['get', key],
         ['get', key],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['set', key, base64ValueMatcher, 'EX', '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '240'],
         ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), key],
-        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-        ['set', key, base64ValueMatcher, 'EX', '120'],
+        ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '240'],
+        ['set', key, base64ValueMatcher, 'EX', getPageTTL(nextMajor)],
         ...pageTagOperations,
         ['get', key]
       ])

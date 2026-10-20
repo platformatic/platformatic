@@ -277,11 +277,7 @@ test('config - should list configuration for the runtime', async t => {
     logger: {
       captureStdio: true,
       level: 'trace',
-      pino: {
-        level: 'level',
-        message: 'msg',
-        time: 'time'
-      }
+      pino: {}
     },
     entrypoint: 'main',
     autoload: {

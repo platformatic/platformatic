@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/vite",
-  "version": "3.72.0",
+  "version": "3.73.0",
   "description": "Platformatic Vite Capability",
   "main": "index.js",
   "type": "module",
@@ -52,7 +52,7 @@
     "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
-    "neostandard": "^0.12.0",
+    "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

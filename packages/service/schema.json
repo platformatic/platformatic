@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.72.0.json",
-  "version": "3.72.0",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/3.73.0.json",
+  "version": "3.73.0",
   "title": "Platformatic Service Config",
   "type": "object",
   "properties": {
@@ -222,6 +222,16 @@
                 },
                 "messageKey": {
                   "type": "string"
+                },
+                "timestampKey": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The key used for the timestamp in emitted logs. Defaults to time."
+                },
+                "levelKey": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The key used for the level in emitted logs. Defaults to level."
                 },
                 "customLevels": {
                   "type": "object",
@@ -1858,6 +1868,16 @@
             },
             "messageKey": {
               "type": "string"
+            },
+            "timestampKey": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The key used for the timestamp in emitted logs. Defaults to time."
+            },
+            "levelKey": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The key used for the level in emitted logs. Defaults to level."
             },
             "customLevels": {
               "type": "object",

@@ -4,6 +4,7 @@ import type { Logger } from 'pino'
 import { describe, expect, test } from 'tstyche'
 import {
   applicationToEnvVariable,
+  applyConfigPatch,
   applications,
   createCLIContext,
   createCliLogger,
@@ -314,5 +315,23 @@ describe('ConfigurationOptions', () => {
     }
 
     expect(options.transform).type.not.toBe<undefined>()
+  })
+})
+
+describe('applyConfigPatch', () => {
+  test('accepts RFC 6902 and merge operations and keeps the configuration type', () => {
+    const config = { cache: { adapter: 'valkey' } }
+
+    expect(
+      applyConfigPatch(config, [
+        { op: 'merge', path: '/cache', value: { url: 'valkey://' } },
+        { op: 'remove', path: '/cache/adapter' },
+        { op: 'copy', from: '/cache', path: '/backup' }
+      ])
+    ).type.toBe<{ cache: { adapter: string } }>()
+  })
+
+  test('rejects unknown operations', () => {
+    expect(applyConfigPatch).type.not.toBeCallableWith({}, [{ op: 'unknown', path: '/a' }])
   })
 })

@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/remix/3.72.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/remix/3.73.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Remix Config",
   "type": "object",
@@ -140,6 +140,16 @@
         },
         "messageKey": {
           "type": "string"
+        },
+        "timestampKey": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The key used for the timestamp in emitted logs. Defaults to time."
+        },
+        "levelKey": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The key used for the level in emitted logs. Defaults to level."
         },
         "customLevels": {
           "type": "object",
@@ -1186,6 +1196,16 @@
             },
             "messageKey": {
               "type": "string"
+            },
+            "timestampKey": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The key used for the timestamp in emitted logs. Defaults to time."
+            },
+            "levelKey": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The key used for the level in emitted logs. Defaults to level."
             },
             "customLevels": {
               "type": "object",

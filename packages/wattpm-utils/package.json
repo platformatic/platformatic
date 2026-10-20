@@ -1,6 +1,6 @@
 {
   "name": "wattpm-utils",
-  "version": "3.72.0",
+  "version": "3.73.0",
   "description": "The Node.js Application Server Utilities Commands",
   "main": "index.js",
   "type": "module",
@@ -47,7 +47,7 @@
     "eslint": "9",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",
-    "neostandard": "^0.12.0",
+    "neostandard": "^0.14.0",
     "typescript": "~6.0.3",
     "undici": "^7.27.2"
   },

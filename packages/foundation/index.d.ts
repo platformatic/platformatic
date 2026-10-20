@@ -154,6 +154,11 @@ export declare function findRuntimeConfigurationFile (
   verifyPackages?: boolean
 ): Promise<string | null>
 export declare function loadConfigurationFile (configurationFile: string): Promise<RawConfiguration>
+export type ConfigPatchOperation =
+  | { op: 'add' | 'replace' | 'test' | 'merge', path: string, value: any }
+  | { op: 'remove', path: string }
+  | { op: 'move' | 'copy', from: string, path: string }
+export declare function applyConfigPatch<T = RawConfiguration> (config: T, patch: ConfigPatchOperation[]): T
 export declare function saveConfigurationFile (configurationFile: string, config: RawConfiguration): Promise<void>
 export declare function createValidator (
   schema: JSONSchemaType<any>,
@@ -285,7 +290,8 @@ export declare function sanitizeHTTPSOptions (https?: HTTPSConfig): Promise<Sani
 export declare function setPinoFormatters (options: any): void
 export declare function buildPinoFormatters (formatters: { path: string }): object
 export declare function setPinoTimestamp (options: any): void
-export declare function buildPinoTimestamp (timestamp: string): Function
+export declare function buildPinoTimestamp (timestamp?: string, timestampKey?: string): Function
+export declare function setPinoLogKeys (options: any, config?: any): void
 export declare function buildPinoOptions (
   loggerConfig: any,
   serverConfig: any,

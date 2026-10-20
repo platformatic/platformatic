@@ -1,7 +1,7 @@
 {
   "name": "platformatic",
   "type": "module",
-  "version": "3.72.0",
+  "version": "3.73.0",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
@@ -23,9 +23,10 @@
     "generate-errors-doc": "node ./scripts/generate-errors-doc.js",
     "global-links": "cd packages/cli && pnpm add -g . && cd ../wattpm && pnpm add -g . && cd ../create-wattpm && pnpm add -g ."
   },
-  "packageManager": "pnpm@12.9.1",
+  "packageManager": "pnpm@12.14.0",
   "devDependencies": {
     "@fastify/pre-commit": "^2.1.0",
+    "cookie": "^2.0.1",
     "markdownlint-cli2": "^0.23.3"
   },
   "pre-commit": "lint:updated-only, gen-schemas-types"

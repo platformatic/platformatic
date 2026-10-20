@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/foundation",
-  "version": "3.72.0",
+  "version": "3.73.0",
   "description": "Platformatic Foundation",
   "main": "index.js",
   "types": "index.d.ts",
@@ -45,7 +45,7 @@
     "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "fastify": "^5.0.0",
-    "neostandard": "^0.12.0",
+    "neostandard": "^0.14.0",
     "pino": "^9.9.0",
     "pino-test": "^1.0.1",
     "tstyche": "^7.0.0",
