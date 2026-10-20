@@ -6,6 +6,7 @@ import {
   ensureMsgpackr,
   ensureRedis,
   getConnection,
+  getEntryLifetime,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
   keyFor,
@@ -123,9 +124,10 @@ export class CacheHandler {
       throw new Error('Cannot deserialize cache value from Valkey', { cause: e })
     }
 
-    if (this.#maxTTL < value.revalidate) {
+    const lifetime = value.lifetime ?? value.revalidate
+    if (this.#maxTTL < lifetime) {
       try {
-        await this.#refreshKey(key, value)
+        await this.#refreshKey(key, value, lifetime)
       } catch (e) {
         this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot refresh cache key expiration in Valkey')
 
@@ -148,6 +150,7 @@ export class CacheHandler {
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const lifetime = getEntryLifetime(revalidate, ctx.cacheControl?.expire, this.#maxTTL)
 
     try {
       // Compute the parameters to save
@@ -156,12 +159,11 @@ export class CacheHandler {
         tags,
         lastModified: Date.now(),
         revalidate,
+        lifetime,
         maxTTL: this.#maxTTL,
         ...this.#meta
       })
-      // revalidate === false means "cache forever" in Next.js (SSG/force-static pages).
-      // Use maxTTL as the expiration in that case.
-      const expire = revalidate === false ? this.#maxTTL : Math.min(revalidate, this.#maxTTL)
+      const expire = Math.min(lifetime, this.#maxTTL)
 
       if (expire < 1) {
         return
@@ -304,9 +306,9 @@ export class CacheHandler {
     return [...combinedTags]
   }
 
-  async #refreshKey (key, value) {
+  async #refreshKey (key, value, lifetime) {
     const life = Math.round((Date.now() - value.lastModified) / 1000)
-    const expire = Math.min(value.revalidate - life, this.#maxTTL)
+    const expire = Math.min(lifetime - life, this.#maxTTL)
 
     if (expire < 1) {
       return
