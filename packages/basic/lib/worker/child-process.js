@@ -1,6 +1,7 @@
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  setPinoLogKeys,
   disablePinoDirectWrite,
   ensureLoggableError,
   mirrorGlobalDispatcherForBuiltinFetch,
@@ -605,9 +606,10 @@ export class ChildProcess extends ITC {
     if (loggerOptions.formatters) {
       pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
     }
-    if (loggerOptions.timestamp) {
-      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp)
+    if (loggerOptions.timestamp || loggerOptions.timestampKey !== undefined) {
+      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp, loggerOptions.timestampKey)
     }
+    setPinoLogKeys(pinoOptions)
 
     if (loggerOptions.base !== null) {
       pinoOptions.base = {

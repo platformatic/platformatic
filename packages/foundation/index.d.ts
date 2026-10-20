@@ -290,7 +290,8 @@ export declare function sanitizeHTTPSOptions (https?: HTTPSConfig): Promise<Sani
 export declare function setPinoFormatters (options: any): void
 export declare function buildPinoFormatters (formatters: { path: string }): object
 export declare function setPinoTimestamp (options: any): void
-export declare function buildPinoTimestamp (timestamp: string): Function
+export declare function buildPinoTimestamp (timestamp?: string, timestampKey?: string): Function
+export declare function setPinoLogKeys (options: any, config?: any): void
 export declare function buildPinoOptions (
   loggerConfig: any,
   serverConfig: any,

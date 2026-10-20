@@ -136,6 +136,12 @@ test('createCliLogger - should use isoTime timestamp when configured', () => {
   match(timeOutput, /"time":"[0-9]{4}-[0-9]{2}-[0-9]{2}T/)
 })
 
+test('createCliLogger - should use a custom timestamp key without an explicit format', () => {
+  const logger = createCliLogger('info', true, { timestampKey: 'timestamp' })
+  const timeOutput = logger[pino.symbols.timeSym]()
+  match(timeOutput, /^,"timestamp":\d+$/)
+})
+
 test('createCliLogger - should combine configuration', () => {
   const extensions = {
     level: 'finished',
