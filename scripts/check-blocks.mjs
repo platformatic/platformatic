@@ -520,6 +520,21 @@ async function checkDocument (name, documentIndex, blocks, failures, typecheckab
     */
     for (const [, named] of block.content.matchAll(/path:\s*'([^'\n]+)'/g)) {
       const application = join(directory, named)
+
+      // Module paths need importable files: runtime extensions load during configuration evaluation.
+      if (/\.(?:[cm]?[jt]s)$/.test(named)) {
+        mkdirSync(dirname(application), { recursive: true })
+
+        if (!existsSync(application)) {
+          const source = /\.c[jt]s$/.test(named)
+            ? 'module.exports = function setup () {}\n'
+            : 'export default function setup () {}\n'
+          writeFileSync(application, source)
+        }
+
+        continue
+      }
+
       mkdirSync(application, { recursive: true })
 
       /*
