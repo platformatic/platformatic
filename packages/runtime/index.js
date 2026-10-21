@@ -19,6 +19,7 @@ import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { dirname, resolve as resolvePath } from 'node:path'
 import { transformConfiguration } from './lib/config.js'
+import { configureExtensions, resolveExtensions } from './lib/extensions.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
 import { configurationSchema } from './lib/schema.js'
@@ -234,6 +235,16 @@ async function loadRuntimeConfiguration (target, context) {
     // both the schema import and the version stamp — the application's own dependencies still
     // come first.
     runtimeScope: import.meta.filename,
+    configure: async (config, { root }) => {
+      const extensions = resolveExtensions(config, { root, build: context?.build || command === 'build' })
+      await configureExtensions(config, extensions, { root })
+      // Check hook output before applications consume it without injecting defaults early.
+      validateCapabilityConfiguration(structuredClone(config), context?.schema ?? configurationSchema, {
+        id: 'runtime',
+        module: '@platformatic/runtime',
+        root
+      })
+    },
     /*
       These are the loader's user-facing diagnostics — the standalone-boot warning, the zero-config
       inference notice, the capability the detector chose — and they were being handed to

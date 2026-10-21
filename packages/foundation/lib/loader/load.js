@@ -211,6 +211,7 @@ export async function loadConfiguration ({
   runtimeScope,
   timeout = defaultEvaluationTimeout,
   inProcessTarget,
+  configure,
   onImport,
   onWatchFile,
   onWarning,
@@ -238,6 +239,7 @@ export async function loadConfiguration ({
     realEnv,
     timeout,
     inProcessTarget,
+    configure,
     validateCapabilities,
     runtimeScope
   }
@@ -364,7 +366,8 @@ export async function loadObjectConfiguration ({
   onInfo,
   report,
   synthesized = false,
-  standalone
+  standalone,
+  configure
 } = {}) {
   if (typeof root !== 'string' || root.length === 0) {
     throw new ObjectSourceRootRequiredError()
@@ -380,7 +383,8 @@ export async function loadObjectConfiguration ({
     realEnv,
     timeout,
     validateCapabilities,
-    runtimeScope
+    runtimeScope,
+    configure
   }
 
   report ??= createReport({ onImport, onWatchFile, onWarning, onInfo })
@@ -513,9 +517,13 @@ async function assemble ({
   realEnv,
   timeout,
   validateCapabilities,
-  runtimeScope
+  runtimeScope,
+  configure
 }) {
   const config = result.config
+
+  // Root evaluation has expanded autoload; applications must consume the configured values.
+  await configure?.(config, { root: deciding.directory })
 
   if (config.autoload?.path) {
     // Creating or removing an application directory changes the application list, so the directory

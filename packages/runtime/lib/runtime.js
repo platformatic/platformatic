@@ -26,7 +26,7 @@ import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
-import { basename, dirname, isAbsolute, join } from 'node:path'
+import { dirname, isAbsolute, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
@@ -46,12 +46,8 @@ import {
   DuplicateExtensionHealthCheckError,
   DuplicateITCHandlerNameError,
   ExtensionHealthRoutesUnavailableError,
-  FailedToLoadExtensionError,
-  FailedToStartExtensionError,
-  FailedToStopExtensionError,
   FailedToUpdateMetricsConfigError,
   InvalidArgumentError,
-  InvalidExtensionError,
   LastProfileTimeoutError,
   MessagingError,
   MetricFamilyCollisionError,
@@ -64,6 +60,7 @@ import {
   WorkerAddressInUseError,
   WorkerNotFoundError
 } from './errors.js'
+import { closeExtensions, loadExtensions, resolveExtensions, startExtensions, stopExtensions } from './extensions.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { createManagementHandlers } from './management-handlers.js'
@@ -169,18 +166,6 @@ function formatMetricValue (value) {
 // faux ESM modules, in which the real exports are properties of `module.exports`
 // and therefore only reachable via an additional `default` hop. The setup
 // function can also be exported as a named `setup` export, at both levels.
-function resolveExtensionSetup (imported) {
-  const candidates = [imported?.default, imported?.setup, imported?.default?.default, imported?.default?.setup]
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'function') {
-      return candidate
-    }
-  }
-
-  return null
-}
-
 // Always run operations in parallel to avoid deadlocks when services have dependencies
 const DEFAULT_CONCURRENCY = availableParallelism() * 2
 const MAX_BOOTSTRAP_ATTEMPTS = 5
@@ -452,7 +437,7 @@ export class Runtime extends EventEmitter {
     await this.#setDispatcher(config.undici)
 
     if (!this.#context.build) {
-      this.#scheduler = startScheduler(logger)
+      this.#scheduler = startScheduler(logger, this.#config.scheduler)
     }
 
     this.#updateStatus('init')
@@ -471,7 +456,7 @@ export class Runtime extends EventEmitter {
       // Dynamic applications started by an extension are excluded from the normal startup pass.
       const configuredApplications = this.getApplicationsIds()
 
-      await this.#startExtensions()
+      await startExtensions(this.#extensions)
 
       const applicationsToStart = configuredApplications.filter(id => !this.#isApplicationStarted(id))
       await this.startApplications(applicationsToStart, silent)
@@ -559,7 +544,7 @@ export class Runtime extends EventEmitter {
 
     // Await extension stop hooks before stopping remaining applications so that
     // control-plane extensions can settle work and hand off state first.
-    await this.#stopExtensions()
+    await stopExtensions(this.#extensions, this.logger)
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
@@ -602,7 +587,7 @@ export class Runtime extends EventEmitter {
     await this.stop(silent)
     this.#updateStatus('closing')
 
-    await this.#closeExtensions()
+    await closeExtensions(this.#extensions, this.logger)
 
     // The management API autocloses by itself via event in management-api.js.
     // This is needed to let management API stop endpoint to reply.
@@ -4958,67 +4943,24 @@ export class Runtime extends EventEmitter {
   }
 
   async #loadExtensions () {
-    let extensions = this.#config.extensions
-
-    if (!extensions) {
+    if (!this.#config.extensions) {
       return
     }
 
-    if (!Array.isArray(extensions)) {
-      extensions = [extensions]
-    }
-
-    for (const extension of extensions) {
-      const { path, options, build } = typeof extension === 'string' ? { path: extension } : extension
-
-      // Runtime extensions historically were not loaded by `wattpm build`.
-      // Preserve that behavior unless an extension explicitly opts into the
-      // build lifecycle.
-      if (this.#context.build && !build) {
-        continue
-      }
-
-      let imported
-      try {
-        imported = await import(pathToFileURL(path))
-      } catch (e) {
-        throw new FailedToLoadExtensionError(path, e.message, { cause: e })
-      }
-
-      const setup = resolveExtensionSetup(imported)
-
-      if (typeof setup !== 'function') {
-        throw new InvalidExtensionError(path)
-      }
-
-      const logger = this.logger.child({ name: `extension:${basename(path)}` })
-      const health = this.#createExtensionHealth(path, logger)
-
-      // One registry per extension so metric conflicts and cleanup are isolated.
-      // Extension metrics are main-thread only: Runtime never invents a worker ID.
-      const registry = new metricsClient.Registry()
-      const metrics = { client: metricsClient, registry }
-
-      try {
-        const instance = await setup({
-          runtime: this,
-          itc: this.#createExtensionITC(),
-          sharedContext: this.#createExtensionSharedContext(),
-          logger,
-          options: options ?? {},
-          root: this.#root,
-          metrics,
-          health
-        })
-
-        this.#extensions.push({ path, instance, registry, health, started: false, stopped: false, closed: false })
-      } catch (e) {
-        registry.clear()
-        // Drop any health contributions from a failed extension setup.
-        health.cleanup()
-        throw new FailedToLoadExtensionError(path, e.message, { cause: e })
-      }
-    }
+    const extensions = resolveExtensions(this.#config, { root: this.#root, build: this.#context.build })
+    await loadExtensions(extensions, this.#extensions, {
+      logger: this.logger,
+      createContext: ({ path, options, logger, metrics }) => ({
+        runtime: this,
+        itc: this.#createExtensionITC(),
+        sharedContext: this.#createExtensionSharedContext(),
+        logger,
+        options,
+        root: this.#root,
+        metrics,
+        health: this.#createExtensionHealth(path, logger)
+      })
+    })
 
     // If any extension subscribed to health metrics during its setup, make sure
     // the health metrics collection is started even if no health check or
@@ -5043,79 +4985,6 @@ export class Runtime extends EventEmitter {
     }
 
     return false
-  }
-
-  async #startExtensions () {
-    for (const extension of this.#extensions) {
-      if (extension.started) {
-        continue
-      }
-
-      try {
-        await extension.instance?.start?.()
-        extension.started = true
-      } catch (e) {
-        throw new FailedToStartExtensionError(extension.path, e.message, { cause: e })
-      }
-    }
-  }
-
-  async #stopExtensions () {
-    // Stop in reverse order, so that extensions loaded later, which might depend
-    // on earlier ones, are stopped first. Only extensions that completed start
-    // (including those without a start hook) are stopped, and at most once.
-    for (const extension of [...this.#extensions].reverse()) {
-      if (!extension.started || extension.stopped) {
-        continue
-      }
-
-      // Mark before invoking so repeated stop is idempotent even if stop throws.
-      extension.stopped = true
-
-      try {
-        await extension.instance?.stop?.()
-      } catch (e) {
-        const err = new FailedToStopExtensionError(extension.path, e.message, { cause: e })
-        this.logger.error({ err: ensureLoggableError(err) }, `Failed to stop the extension "${extension.path}".`)
-      }
-    }
-  }
-
-  async #closeExtensions () {
-    // Close in reverse order, so that extensions loaded later, which might depend
-    // on earlier ones, are closed first. Close is invoked at most once per extension.
-    const extensions = this.#extensions.splice(0).reverse()
-
-    for (const extension of extensions) {
-      if (extension.closed) {
-        continue
-      }
-
-      extension.closed = true
-
-      try {
-        await extension.instance?.close?.()
-      } catch (e) {
-        this.logger.error(
-          { err: ensureLoggableError(e) },
-          `Failed to close the extension "${extension.path}".`
-        )
-      } finally {
-        // Always drop health contributions with the extension, even if close fails.
-        extension.health?.cleanup?.()
-      }
-
-      // Drop the extension registry after close so its metrics stop appearing in
-      // getMetrics()/exporters and collectors cannot keep running in the background.
-      try {
-        extension.registry?.clear()
-      } catch (e) {
-        this.logger.error(
-          { err: ensureLoggableError(e) },
-          `Failed to clear metrics registry for extension "${extension.path}".`
-        )
-      }
-    }
   }
 
   #createExtensionSharedContext () {

@@ -63,6 +63,7 @@ export namespace errors {
   export const NodeInspectorFlagsNotSupportedError: () => FastifyError
   export const FailedToLoadExtensionError: (path: string, error: string) => FastifyError
   export const InvalidExtensionError: (path: string) => FastifyError
+  export const InvalidExtensionConfigureError: (path: string) => FastifyError
   export const ReservedITCHandlerNameError: (name: string) => FastifyError
   export const DuplicateITCHandlerNameError: (name: string) => FastifyError
   export const MetricFamilyCollisionError: (
@@ -333,6 +334,17 @@ export interface RuntimeExtensionHealth {
    */
   registerRoutes (plugin: (instance: any, opts: any) => unknown | Promise<unknown>): () => void
 }
+
+export interface RuntimeExtensionConfigureContext {
+  root: string
+  options: Record<string, unknown>
+}
+
+/** Runs in the main thread after autoload and before application configuration loading. */
+export type RuntimeExtensionConfigure = (
+  config: PlatformaticRuntimeConfig,
+  context: RuntimeExtensionConfigureContext
+) => void | Promise<void>
 
 export interface RuntimeExtensionContext {
   runtime: Runtime
