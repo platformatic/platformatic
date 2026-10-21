@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/basic",
-  "version": "4.0.0-alpha.2",
+  "version": "4.0.0-alpha.3",
   "description": "Platformatic Basic",
   "main": "index.js",
   "types": "index.d.ts",

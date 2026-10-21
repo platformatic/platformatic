@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "4.0.0-alpha.2",
+  "version": "4.0.0-alpha.3",
   "description": "Platformatic DB authorization",
   "main": "index.js",
   "type": "module",
