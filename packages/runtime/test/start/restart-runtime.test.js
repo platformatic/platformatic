@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { request } from 'undici'
 import { features } from '@platformatic/foundation'
 import { transform } from '../../index.js'
-import { configurationFileIn, createRuntime, getTempDir, updateFile } from '../helpers.js'
+import { configurationFileIn, createRuntime, getTempDir, updateConfigFile, updateFile } from '../helpers.js'
 import { prepareRuntime } from '../multiple-workers/helper.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
@@ -253,4 +253,33 @@ test('restarting the runtime picks up changed application scheduled tasks', asyn
     app.getSchedulerJobs().map(job => job.cron),
     ['0 0 2 2 *']
   )
+})
+
+test('scheduler autostart false survives application and runtime restarts', async t => {
+  const root = await prepareRuntime(t, 'scheduled-tasks-restart', { node: ['node'] })
+  const configFile = configurationFileIn(root)
+  await updateConfigFile(configFile, config => {
+    config.scheduler = { autostart: false }
+    return config
+  })
+  const app = await createRuntime(configFile)
+  t.after(() => app.close())
+
+  await app.start()
+  let jobs = app.getSchedulerJobs()
+  strictEqual(jobs.length, 1)
+  strictEqual(jobs[0].paused, true)
+  strictEqual(jobs[0].nextRunAt, null)
+
+  await app.restartApplication('node')
+  jobs = app.getSchedulerJobs()
+  strictEqual(jobs.length, 1)
+  strictEqual(jobs[0].paused, true)
+  strictEqual(jobs[0].nextRunAt, null)
+
+  await app.restart()
+  jobs = app.getSchedulerJobs()
+  strictEqual(jobs.length, 1)
+  strictEqual(jobs[0].paused, true)
+  strictEqual(jobs[0].nextRunAt, null)
 })

@@ -437,7 +437,7 @@ export class Runtime extends EventEmitter {
     await this.#setDispatcher(config.undici)
 
     if (!this.#context.build) {
-      this.#scheduler = startScheduler(logger)
+      this.#scheduler = startScheduler(logger, this.#config.scheduler)
     }
 
     this.#updateStatus('init')

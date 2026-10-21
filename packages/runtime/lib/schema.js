@@ -48,6 +48,17 @@ const platformaticRuntimeSchema = {
   type: 'object',
   properties: {
     ...schemaComponents.runtimeProperties,
+    scheduler: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        autostart: {
+          type: 'boolean',
+          default: true,
+          description: 'Start local cron triggers for newly registered jobs. When false, jobs are created paused.'
+        }
+      }
+    },
     module: {
       type: 'string'
     }

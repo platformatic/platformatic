@@ -75,6 +75,12 @@ export type PlatformaticRuntimeConfig = {
     };
   };
   compileCache?: boolean | CompileCacheOptions;
+  scheduler?: {
+    /**
+     * Start local cron triggers for newly registered jobs. When false, jobs are created paused.
+     */
+    autostart?: boolean;
+  };
   module?: string;
 };
 export type ApplicationEntry = {

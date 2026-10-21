@@ -45,6 +45,24 @@ Application Performance Monitoring (APM) agents. `preload` should contain
 a path or a list of paths pointing to a CommonJS or ES module that is loaded at the start of
 the app worker thread.
 
+### `scheduler`
+
+Controls the initial state of scheduled jobs:
+
+- **`autostart`** (boolean, default: `true`): whether newly registered jobs automatically start
+  their local cron triggers. Set it to `false` when an external coordinator manages execution.
+
+```js
+scheduler: {
+  autostart: false
+}
+```
+
+With `autostart: false`, jobs are registered in a paused state before any local trigger starts.
+This also applies to dynamically added jobs and jobs recreated after an application restart.
+An explicit resume activates local scheduling for that job; externally requested executions remain
+available while it is paused.
+
 ### `extensions`
 
 While `preload` injects code in each application worker thread, `extensions` loads custom code

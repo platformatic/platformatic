@@ -3,8 +3,11 @@ import { setTimeout } from 'node:timers/promises'
 import { DuplicateSchedulerJobError, InvalidSchedulerCronError, SchedulerJobNotFoundError } from './errors.js'
 
 export class SchedulerService {
-  constructor (logger) {
+  constructor (logger, options) {
+    options ??= {}
+
     this.logger = logger
+    this.autostart = options.autostart ?? true
     this.jobs = new Map()
     this.started = false
   }
@@ -21,7 +24,7 @@ export class SchedulerService {
       ...config,
       maxRetries: config.maxRetries ?? 3,
       source: config.source ?? 'application',
-      paused: false,
+      paused: !this.autostart,
       lastExecutedAt: null,
       lastStatus: null,
       cronJob: null,
@@ -209,8 +212,8 @@ export class SchedulerService {
   }
 }
 
-export function startScheduler (logger) {
-  const schedulerService = new SchedulerService(logger)
+export function startScheduler (logger, options) {
+  const schedulerService = new SchedulerService(logger, options)
   schedulerService.start()
   return schedulerService
 }
