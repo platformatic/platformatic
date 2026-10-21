@@ -16,6 +16,7 @@ import { metricsCommand } from './lib/commands/metrics.js'
 import { pprofCommand } from './lib/commands/pprof.js'
 import { replCommand } from './lib/commands/repl.js'
 import { schedulerCommand, schedulerPauseCommand, schedulerResumeCommand, schedulerRunCommand } from './lib/commands/scheduler.js'
+import { skillCommand } from './lib/commands/skill.js'
 import { heapSnapshotCommand } from './lib/commands/snapshot.js'
 import { version } from './lib/schema.js'
 
@@ -177,6 +178,9 @@ export async function main () {
       break
     case 'help':
       command = helpCommand
+      break
+    case 'skill':
+      command = skillCommand
       break
     default:
       if (requestedCommand) {

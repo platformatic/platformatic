@@ -27,6 +27,20 @@ npm install wattpm
 Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start)
 to get up and running with Watt.
 
+## Agent instructions
+
+Starting with Watt 3.74.0, the local CLI exposes release-matched instructions offline:
+
+```bash
+wattpm skill
+wattpm skill references/frameworks/nextjs.md
+```
+
+Use the project's installed binary for every read. Relative Markdown links resolve
+against the current document inside the bundle. See the
+[AI agent guide](https://docs.platformatic.dev/docs/guides/use-watt-with-ai-agents).
+Watt 3's existing scaffolding and import commands remain supported.
+
 ## Documentation
 
 - [Quick Start](https://docs.platformatic.dev/docs/getting-started/quick-start)

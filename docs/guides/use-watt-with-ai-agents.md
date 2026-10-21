@@ -21,7 +21,34 @@ Platformatic publishes an official Agent Skill for Watt. A skill is a set of Mar
 
 The skill follows the [Agent Skills open standard](https://agentskills.io/), so it works with any skills-compatible agent. Loaded into Claude Code, it also adds slash commands.
 
-The skill is maintained in the [`platformatic/skills`](https://github.com/platformatic/skills) repository.
+The discovery skill is maintained in [`platformatic/skills`](https://github.com/platformatic/skills).
+It delegates to the project's local `wattpm skill` command. The canonical Watt 3
+instructions and references are maintained in this repository and bundled with each
+`wattpm` release, so guidance matches the installed version and works offline.
+
+### Version-matched instructions
+
+This workflow requires **Watt 3.74.0 or newer** with the `skill` command. On an older
+installation, the agent stops the request and reports the requirement rather than
+automatically upgrading or downloading another version. For a new project, agree on
+the intended Watt version and install it before loading the bundled instructions.
+
+Use the same local installation for every read:
+
+```bash
+./node_modules/.bin/wattpm skill
+./node_modules/.bin/wattpm skill references/frameworks.md
+./node_modules/.bin/wattpm skill references/frameworks/nextjs.md
+```
+
+In a workspace, locate the installation belonging to the target package. Do not use a
+global binary or let an unqualified `npx` invocation download the latest release.
+Relative links in the returned Markdown belong to the bundle: resolve them against
+the current document and pass the bundle-relative path to `wattpm skill`.
+
+The bundled [Watt 3 skill](../skills/watt/SKILL.md) covers direct scaffolding and
+integration while retaining the existing v3 generators and import workflows. A migration
+to Watt 4 requires explicitly selected destination-version guidance.
 
 ### Install the skill
 
@@ -110,6 +137,7 @@ Several frameworks build on Vite (Nitro, React Router, TanStack Start, Remix, As
 ## Requirements
 
 - Node.js v22.19.0 or higher
+- A local Watt installation supporting `skill` (available from v3.74.0)
 - A skills-compatible agent (Claude Code, Cursor, GitHub Copilot, Gemini CLI, and others)
 
 ## Related skills
