@@ -96,7 +96,7 @@ export default createNodeConfig({
 
 ```bash
 # Read instructions for integrating the existing Express app
-npx wattpm skill references/frameworks.md
+./node_modules/.bin/wattpm skill references/frameworks.md
 ```
 
 **Step 2: Add Watt features incrementally**

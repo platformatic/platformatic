@@ -1,35 +1,36 @@
 import { ensureLoggableError, logFatalError, parseArgs } from '@platformatic/foundation'
-import { readFile, realpath } from 'node:fs/promises'
+import { readFile, realpath, stat } from 'node:fs/promises'
 import { isAbsolute, relative, resolve, sep } from 'node:path'
 import { InvalidSkillFileError, SkillFileNotFoundError } from '../errors.js'
 
 const skillDirectory = resolve(import.meta.dirname, '../../skills/watt')
 
 export async function readSkillFile (file = 'SKILL.md') {
-  // Only bundled Markdown references may be read, including through symlinks.
+  // Restrict reads to Markdown in this release's bundle, including symlink targets.
   const candidate = resolve(skillDirectory, file)
   const path = relative(skillDirectory, candidate)
-  if (isAbsolute(file) || path === '..' || path.startsWith(`..${sep}`) || !path.endsWith('.md')) {
+  if (isAbsolute(file) || path === '..' || path.startsWith(`..${sep}`) || !path.endsWith('.md') || file.includes('\0')) {
     throw new InvalidSkillFileError(file)
   }
 
-  let canonical
   try {
-    canonical = await realpath(candidate)
+    const canonicalRoot = await realpath(skillDirectory)
+    const canonical = await realpath(candidate)
+    const canonicalPath = relative(canonicalRoot, canonical)
+    if (
+      canonicalPath === '..' || canonicalPath.startsWith(`..${sep}`) ||
+      isAbsolute(canonicalPath) || !canonicalPath.endsWith('.md') || !(await stat(canonical)).isFile()
+    ) {
+      throw new InvalidSkillFileError(file)
+    }
+
+    return await readFile(canonical, 'utf-8')
   } catch (error) {
     if (error.code === 'ENOENT' || error.code === 'ENOTDIR') {
       throw new SkillFileNotFoundError(file)
     }
     throw error
   }
-
-  const canonicalRoot = await realpath(skillDirectory)
-  const canonicalPath = relative(canonicalRoot, canonical)
-  if (canonicalPath === '..' || canonicalPath.startsWith(`..${sep}`) || isAbsolute(canonicalPath)) {
-    throw new InvalidSkillFileError(file)
-  }
-
-  return readFile(canonical, 'utf-8')
 }
 
 export async function skillCommand (logger, args) {

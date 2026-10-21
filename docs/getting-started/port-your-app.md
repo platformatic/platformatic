@@ -54,6 +54,11 @@ Install the [official skill](../guides/use-watt-with-ai-agents.md):
 npx skills add platformatic/skills --skill watt
 ```
 
+Select the exact published Watt 4 version and authorize its local installation before
+delegating to the skill. If the project already uses Watt 3, explicitly select
+[destination-version migration guidance](../guides/use-watt-with-ai-agents.md#migrating-an-existing-watt-3-project)
+instead of treating its local v3 instructions as v4 instructions.
+
 Ask your agent to integrate the existing application with Watt 4 on port 3042,
 preserving its source, module convention, original scripts, and environment files.
 It should add `wattpm`, the matching capability, and a minimal configuration.

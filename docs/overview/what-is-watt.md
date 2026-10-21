@@ -275,7 +275,7 @@ export default createWattConfig({
 npm install wattpm @platformatic/next
 
 # Read instructions for adding a database application to the workspace
-npx wattpm skill references/services.md
+./node_modules/.bin/wattpm skill references/services.md
 ```
 
 Write a `watt.config.ts` only where the defaults are not what you want:

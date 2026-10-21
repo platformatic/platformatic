@@ -139,8 +139,10 @@ wattpm help inject
 ```
 
 Admin UI may download/start external tooling; require permission and compatible versions.
-Keep admin/control endpoints private. `wattpm skill [FILE]` reads release-matched embedded
-skill documentation; do not assume this repository's extended references exist in that bundle.
+Keep admin/control endpoints private. `wattpm skill [FILE]` reads the release-matched
+skill and all its Markdown references from the installed package, offline. Use the same
+project-local installation for every read. Resolve relative links against the current
+document and pass their normalized bundle-relative paths to the CLI.
 
 ## Documentation
 

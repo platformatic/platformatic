@@ -17,8 +17,10 @@ global installation option only if you want the skill available in all projects.
 The skill follows the [Agent Skills standard](https://agentskills.io/) and can be
 used with Claude Code, Cursor, GitHub Copilot, Gemini CLI, and other compatible agents.
 
-For an agent without a skills installer, place `SKILL.md` and the complete `references/`
-directory in the agent's supported skill directory. Keep their relative paths intact.
+The installed discovery skill is a lightweight entry point: it locates the project's
+local `wattpm` and reads release-matched instructions through `wattpm skill`.
+For an agent without a skills installer, place the discovery `skills/watt/SKILL.md`
+from `platformatic/skills` in the agent's supported skill directory.
 Read the agent's documentation for its discovery path; no Watt plugin or generator
 is required. Do not overwrite an existing agent instruction file to install a skill.
 
@@ -29,20 +31,40 @@ For example, a project-local Claude Code installation has this layout:
   skills/
     watt/
       SKILL.md
-      references/
-        scaffolding.md
-        frameworks.md
-        services.md
-        integration.md
-        migration-v4.md
-        operations.md
-        # Additional references, including nested framework and deployment guides.
 ```
 
-Keep the whole skill directory, not just the main Markdown file: the instructions
-load references as needed. Restart or refresh your agent's skill discovery after
-manual installation. If it does not select Watt automatically, explicitly ask it
-to use the `watt` skill and confirm it can read the referenced files.
+References remain in the installed npm package and are retrieved through the CLI.
+Restart or refresh your agent's skill discovery after manual installation. If it does
+not select Watt automatically, ask it to use the `watt` skill and confirm it can read
+the local CLI's instructions.
+
+## Select the local release
+
+The discovery workflow requires Watt **3.74.0 or newer** and an installation that
+provides `skill`. For older releases or a missing command, stop and report the
+requirement; do not automatically upgrade or fall back to another installation.
+
+Locate the installation belonging to the target project or workspace package and use
+that same binary for every read. Do not substitute a global binary or let `npx wattpm`
+implicitly download the latest version. A v3 installation returns v3 instructions;
+a v4 installation returns v4 instructions.
+
+### New projects
+
+Before delegating, agree on the exact published Watt 4 version to use, including a
+prerelease version when applicable. Create the minimal package manifest if needed and,
+with authorization, install that version locally using the selected package manager.
+Then load its skill and scaffold the application with compatible capability versions.
+Installing the discovery skill alone does not install Watt or select a major version.
+
+### Migrating an existing Watt 3 project
+
+Select the target Watt 4 release explicitly. Read its version-matched migration guide
+or, with authorization, install that exact release in a separate tooling directory and
+read `references/migration-v4.md` through its CLI. Identify that binary as the migration
+target and use it for all destination references. Keep the project's v3 installation
+until the dependency upgrade is an agreed migration step; do not silently switch the
+normal discovery workflow to a downloaded v4 binary.
 
 ## Use the skill
 
@@ -63,14 +85,14 @@ migrations, downloads, and deployment separately. Watt requires Node.js 24.20.0+
 The published `wattpm` package includes an offline copy matching its release:
 
 ```sh
-npx wattpm skill
-npx wattpm skill references/scaffolding.md
-npx wattpm skill references/frameworks.md
-npx wattpm skill references/frameworks/nextjs.md
-npx wattpm skill references/services.md
-npx wattpm skill references/integration.md
-npx wattpm skill references/migration-v4.md
-npx wattpm skill references/operations.md
+./node_modules/.bin/wattpm skill
+./node_modules/.bin/wattpm skill references/scaffolding.md
+./node_modules/.bin/wattpm skill references/frameworks.md
+./node_modules/.bin/wattpm skill references/frameworks/nextjs.md
+./node_modules/.bin/wattpm skill references/services.md
+./node_modules/.bin/wattpm skill references/integration.md
+./node_modules/.bin/wattpm skill references/migration-v4.md
+./node_modules/.bin/wattpm skill references/operations.md
 ```
 
 The command prints Markdown to stdout without changing project files. `FILE` is a
@@ -78,31 +100,20 @@ relative filename inside the bundled Watt skill, not an arbitrary local file.
 The default is `SKILL.md`. Missing files fail with `PLT_SKILL_FILE_NOT_FOUND`;
 invalid paths or extra arguments fail with `PLT_INVALID_SKILL_FILE`.
 
+Relative Markdown links belong to the bundle, not the application or discovery skill
+directory. Resolve each link relative to the document containing it, remove any fragment,
+and pass the normalized bundle-relative path to the same CLI. For example,
+`frameworks/nextjs.md` in `references/frameworks.md` becomes `references/frameworks/nextjs.md`.
+
 ## Skill source and distribution
 
 The source of truth is [`docs/skills/watt`](../skills/watt/SKILL.md) in
 `platformatic/platformatic`. It is published as searchable documentation and bundled
-into `wattpm`. The `platformatic/skills` repository maintains the agent distribution,
-alongside independent companion skills, commands, and agents. Make Watt skill changes
-here, including updates to its detailed framework, deployment, and operations references.
-
-For each stable release, the **Sync Watt skill** workflow copies `docs/skills/watt/`
-from the released tag to `platformatic/skills/skills/watt/` and opens a pull request
-on `sync-watt-skill-<version>` (for example, `sync-watt-skill-4.0.0`). It replaces only
-the Watt skill, including deleted files; other skills, commands, and agents are untouched.
-Review and merge the distribution PR manually. Re-running the same release updates
-its open PR; identical content produces no commit or PR.
-
-Prereleases and drafts are not synchronized. Maintainers can retry a published stable
-release through the workflow's manual trigger by providing its tag, such as `v4.0.0`.
-The release publishing workflow also calls the sync workflow explicitly, because releases
-created with `GITHUB_TOKEN` do not trigger other release-event workflows.
-
-The cross-repository operation requires the `SKILLS_SYNC_TOKEN` Actions secret in
-`platformatic/platformatic`. Use a fine-grained PAT limited to `platformatic/skills`
-with **Contents: Read and write** and **Pull requests: Read and write**. The workflow
-documents the required permissions and organization approval requirements. Do not put
-the token in source files or workflow inputs.
+into each `wattpm` release, including prereleases. The `platformatic/skills` repository
+distributes the version-independent discovery skill alongside separate companion skills,
+commands, and agents. Make release-specific Watt instruction changes here, including
+its framework, deployment, and operations references. Build and packaging copy these
+sources into the npm bundle; no cross-repository content synchronization is needed.
 
 ## Migration from generators
 

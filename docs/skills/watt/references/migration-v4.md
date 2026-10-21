@@ -5,6 +5,11 @@ before editing. This checklist does not replace its detailed contracts and limit
 
 ## Inspect and agree on scope
 
+These are destination-version instructions. Select the intended Watt 4 release
+explicitly; the project's local Watt 3 CLI returns v3 guidance. If using a separate
+authorized installation of the target CLI, keep all migration reference reads on that
+installation. Reading this guide is not authorization to upgrade project dependencies.
+
 Inspect installed versions, manifests, configuration, entrypoints, env examples, CI,
 and deployment. Watt 4.0.0 requires Node.js 24.20.0+. Inventory listeners, factories,
 custom commands, runtime API consumers, globals, tracing, interceptors, and shutdown.

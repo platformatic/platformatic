@@ -62,9 +62,17 @@ wattpm skill references/scaffolding.md
 ```
 
 `FILE` defaults to `SKILL.md` and must name a bundled Markdown file relative to the
-Watt skill directory. Absolute paths and paths outside the bundle are rejected.
+Watt skill directory. Absolute paths, paths outside the bundle, directories, and
+symlinks whose real target is outside the bundle or is not Markdown are rejected.
 Errors use `PLT_INVALID_SKILL_FILE` or `PLT_SKILL_FILE_NOT_FOUND` and a nonzero exit code.
 See [agent setup](../../guides/use-watt-with-ai-agents.md) for installation instructions.
+
+Use the target project's local binary for every read. The discovery workflow requires
+Watt 3.74.0+ and a release providing `skill`; older installations must stop rather than
+download a fallback. Relative Markdown links resolve against the document containing
+them: normalize to a bundle-relative path and use the same CLI. For new projects or
+v3-to-v4 migrations, select the intended destination version explicitly before loading
+its instructions.
 
 ### `wattpm dev`
 

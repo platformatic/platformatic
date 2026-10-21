@@ -32,6 +32,11 @@ Install the [Watt skill](../guides/use-watt-with-ai-agents.md):
 npx skills add platformatic/skills --skill watt
 ```
 
+Choose the exact published Watt 4 version for this project and authorize its local
+installation, creating a minimal package manifest if needed. The discovery skill then
+loads that installation's instructions through `wattpm skill`; it does not install Watt
+or choose a major version itself. See [agent setup](../guides/use-watt-with-ai-agents.md#new-projects).
+
 Ask your agent to create a Watt 4 npm workspace with `workspaces: ["web/*"]`,
 a Node.js application named `node` in `web/node`, ESM source, `watt.config.ts`,
 and port 3042. Request root `dev`, `build`, and `start` scripts using `wattpm`.

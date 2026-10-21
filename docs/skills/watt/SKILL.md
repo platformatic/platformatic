@@ -98,10 +98,28 @@ Read only the references needed for the current workflow. [Operations](reference
 connects CLI, observability, scheduler, profiling, and deployment guidance. Preserve existing
 framework build commands under clear names when replacing package scripts with Watt commands.
 
-When reading this skill through `wattpm skill`, retrieve a reference with
+## Local CLI and bundled references
+
+Use the `wattpm` installation belonging to the target project or workspace package for
+every read. The discovery workflow requires Watt 3.74.0+ and the `skill` command;
+stop on older releases or a missing command instead of downloading or upgrading implicitly.
+For a new project, agree on and install the intended Watt 4 version before loading
+these instructions. Do not substitute a global binary or an implicit `npx` download.
+
+When reading this skill through the selected local `wattpm skill`, retrieve a reference with
 `wattpm skill references/frameworks.md`, or a nested guide with
 `wattpm skill references/frameworks/nextjs.md`. All linked Watt references are bundled
 with the same release and available offline.
+
+Resolve relative Markdown links against the document currently being read, not the
+shell working directory or the discovery skill. Remove fragments and pass the normalized
+bundle-relative path to the same CLI. For example, `frameworks/nextjs.md` in
+`references/frameworks.md` resolves to `references/frameworks/nextjs.md`.
+
+For v3-to-v4 migration, explicitly select the destination release's guidance. A v3
+installation's skill remains v3 guidance. With authorization, obtain the destination
+CLI in a separate tooling directory and use it consistently for migration references;
+do not replace the project's dependencies merely to read instructions.
 
 ## Status check
 
@@ -116,8 +134,8 @@ with the same release and available offline.
 6. Use the existing local installation for authorized CLI checks; do not download via `npx`.
 
 Report version, configuration mode, detected conflicts, scripts, listener, environment
-requirements, checks actually performed, and remaining startup/build checks. The companion
-`/watt-status` command follows the same contract.
+requirements, checks actually performed, and remaining startup/build checks. Companion
+agents and commands such as `/watt-status` are distributed separately in `platformatic/skills`.
 
 ## Completion checklist
 

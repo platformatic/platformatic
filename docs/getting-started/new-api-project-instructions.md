@@ -4,6 +4,10 @@ Install the [official Watt skill](../guides/use-watt-with-ai-agents.md):
 npx skills add platformatic/skills --skill watt
 ```
 
+Select the exact published Watt 4 version and authorize its local installation first,
+creating a minimal package manifest if necessary. The discovery skill reads instructions
+from that installation; see [new-project setup](../guides/use-watt-with-ai-agents.md#new-projects).
+
 Ask your agent:
 
 > Create a Watt 4 npm workspace in this directory with a database application named

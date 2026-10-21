@@ -64,15 +64,3 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           pnpx @matteo.collina/release-notes -t v${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}
-
-  # Releases created with GITHUB_TOKEN do not trigger release-event workflows.
-  sync-watt-skill:
-    needs: release-npm
-    if: ${{ !inputs.prerelease }}
-    permissions:
-      contents: read
-    uses: ./.github/workflows/sync-watt-skill.yml
-    with:
-      tag: v${{ inputs.version }}
-    secrets:
-      SKILLS_SYNC_TOKEN: ${{ secrets.SKILLS_SYNC_TOKEN }}
