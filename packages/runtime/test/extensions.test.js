@@ -752,19 +752,14 @@ test('extensions cannot register the same ITC command twice', async t => {
   )
 })
 
-test('a missing extension file fails the startup', async t => {
+test('a missing extension file fails configuration loading', async () => {
   cleanExtensionGlobals()
   process.env.PORT = 0
 
   const configFile = join(fixturesDir, 'extensions', 'missing', 'watt.config.js')
-  const app = await createRuntime(configFile)
-
-  t.after(() => {
-    return app.close()
-  })
 
   await rejects(
-    () => app.init(),
+    () => createRuntime(configFile),
     err => {
       strictEqual(err.code, 'PLT_RUNTIME_FAILED_TO_LOAD_EXTENSION')
       return true

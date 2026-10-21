@@ -204,6 +204,11 @@ export const InvalidExtensionError = createError(
   'The extension "%s" must export a setup function as its default export or as a named "setup" export'
 )
 
+export const InvalidExtensionConfigureError = createError(
+  `${ERROR_PREFIX}_INVALID_EXTENSION_CONFIGURE`,
+  'The extension "%s" must export configure as a function'
+)
+
 export const ReservedITCHandlerNameError = createError(
   `${ERROR_PREFIX}_RESERVED_ITC_HANDLER_NAME`,
   'The ITC command name "%s" is reserved by the runtime'

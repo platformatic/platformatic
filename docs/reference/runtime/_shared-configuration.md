@@ -76,6 +76,20 @@ Each file must export a setup function, which is invoked during the runtime init
 before any application is started. TypeScript files are supported out of the box via
 [Node.js type stripping](https://nodejs.org/api/typescript.html#type-stripping).
 
+Use `npm:package-name` or `npm:@scope/package-name/subpath` to load an installed package:
+
+```js
+extensions: [
+  'npm:my-runtime-extension',
+  { path: 'npm:@acme/extensions/monitoring', options: { region: 'eu' } }
+]
+```
+
+Packages are resolved from the configuration root using Node.js `require.resolve` semantics,
+including package exports and subpaths, then imported in the main thread. Both `configure` and
+`setup` use the resolved file. This does not download or install packages; install them in the
+project first. Unprefixed paths remain filesystem paths relative to the configuration root.
+
 ```js
 export default async function setup ({ runtime, itc, sharedContext, logger, options, root, metrics, health }) {
   // React to runtime events
@@ -127,6 +141,31 @@ export default async function setup ({ runtime, itc, sharedContext, logger, opti
   }
 }
 ```
+
+#### Configuring the runtime before initialization
+
+An extension can also export an optional named `configure(config, context)` function:
+
+```js
+export async function configure (config, { root, options }) {
+  config.env = { ...config.env, DEPLOYMENT_REGION: options.region }
+}
+```
+
+Watt awaits these functions sequentially in declaration order in the main thread, after root
+configuration evaluation and autoload expansion, but before loading application configurations
+and constructing the `Runtime`. Each function mutates the configuration in place and sees changes
+made by earlier extensions. `context` contains the configuration `root` and the extension's
+`options` (an empty object by default); no runtime instance exists yet.
+
+The application list is already expanded: changing `autoload` does not repeat discovery.
+The extension list used for this phase is captured before the first hook runs.
+Hook output is validated before application configuration loading. A rejected hook aborts loading
+with `PLT_RUNTIME_FAILED_TO_LOAD_EXTENSION`, preserving the original error as its cause.
+CommonJS exports and transpiled exports exposed through the default export are also supported.
+During builds, only extensions declaring `build: true` participate, including in this phase.
+`configure` runs during configuration loading, including explicit calls to `loadConfiguration`;
+`setup` continues to run during `runtime.init()`.
 
 #### How the setup function is resolved
 
