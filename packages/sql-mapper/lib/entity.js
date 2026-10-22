@@ -471,6 +471,9 @@ function createMapper (
     if (opts.orderBy && opts.orderBy.length > 0) {
       const orderBy = opts.orderBy.map(order => {
         const field = inputToFieldMap[order.field]
+        if (!field) {
+          throw new UnknownFieldError(order.field)
+        }
         let direction = order.direction.toLowerCase()
         if (isBackwardPagination) {
           direction = direction === 'asc' ? 'desc' : 'asc'

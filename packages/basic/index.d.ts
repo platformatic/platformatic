@@ -116,6 +116,17 @@ export declare function buildListenOptions (serverConfig?: {
   backlog?: number
 }
 
+export declare function buildServerListenerOptions (serverConfig?: Record<string, any>): {
+  backlog?: number
+  keepAliveTimeout?: number
+  headersTimeout?: number
+}
+
+export declare function applyServerTimeouts (
+  server: { keepAliveTimeout?: number; headersTimeout?: number },
+  options?: Record<string, any>
+): Record<string, unknown>
+
 export declare function buildAdditionalServerOptions (
   serverConfig?: Record<string, any>,
   skipHTTPSSanitization?: boolean
@@ -322,9 +333,7 @@ export interface CancellablePromise<T> extends Promise<T> {
 }
 
 export declare function createServerListener (
-  overridePort?: boolean | number,
-  overrideHost?: boolean | string,
-  additionalOptions?: Record<string, unknown>
+  serverConfig?: { keepAliveTimeout?: number, headersTimeout?: number }
 ): CancellablePromise<Server | null>
 
 export declare function createChildProcessListener (): CancellablePromise<ChildProcess | null>

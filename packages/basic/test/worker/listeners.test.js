@@ -45,6 +45,35 @@ test('createServerListener - should preserve a fixed port', async t => {
   deepStrictEqual(server.address().port, port)
 })
 
+test('createServerListener - applies timeouts without overriding listener options', async t => {
+  const server = createHttpServer(t)
+  const intercepted = []
+  updateGlobals({ events: { emitAndNotify: (_, options) => intercepted.push(options) } })
+  t.after(() => updateGlobals({ events: undefined }))
+
+  const listener = createServerListener({ keepAliveTimeout: 65000, headersTimeout: 66000 })
+  await listen(server, { host: '127.0.0.1', port: 0, backlog: 42 })
+
+  deepStrictEqual(await listener, server)
+  deepStrictEqual(server.keepAliveTimeout, 65000)
+  deepStrictEqual(server.headersTimeout, 66000)
+  deepStrictEqual(intercepted[0].host, '127.0.0.1')
+  deepStrictEqual(intercepted[0].port, 0)
+  deepStrictEqual(intercepted[0].backlog, 42)
+  ok(!('keepAliveTimeout' in intercepted[0]))
+  ok(!('headersTimeout' in intercepted[0]))
+})
+
+test('createServerListener - preserves default timeouts when not configured', async t => {
+  const server = createHttpServer(t)
+  const defaults = { keepAliveTimeout: server.keepAliveTimeout, headersTimeout: server.headersTimeout }
+  const listener = createServerListener()
+  await listen(server, { port: 0 })
+  await listener
+
+  deepStrictEqual({ keepAliveTimeout: server.keepAliveTimeout, headersTimeout: server.headersTimeout }, defaults)
+})
+
 test('createServerListener - handle errors', async t => {
   const server = createHttpServer(t)
 

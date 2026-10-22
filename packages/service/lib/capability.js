@@ -315,7 +315,7 @@ export class ServiceCapability extends BaseCapability {
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
 
-    const serverPromise = createServerListener()
+    const serverPromise = createServerListener(this.serverConfig)
     await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#app.server)
 

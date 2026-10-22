@@ -7,6 +7,52 @@
 
 export type ApplicationEntry = {
   [k: string]: unknown;
+} & {
+  id?: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
+      };
+  path?: string;
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
+      };
+  url?: string;
+  module?: string;
+  gitBranch?: string;
+  reuseTcpPorts?: boolean;
+  workers?: number | string | ApplicationWorkersOptions;
+  health?: ApplicationHealthOptions;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: PermissionsOptions;
+  tracing?: ApplicationTelemetryOverrides;
+  compileCache?: boolean | CompileCacheOptions;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
+  [k: string]: unknown;
 };
 
 export interface PlatformaticRemixConfig {
@@ -72,11 +118,11 @@ export interface PlatformaticRemixConfig {
         [k: string]: string | [string, ...string[]];
       };
     };
-    compileCache?: boolean | CompileCacheOptions;
+    compileCache?: boolean | CompileCacheOptions1;
     application?: {
       reuseTcpPorts?: boolean;
-      workers?: number | string | ApplicationWorkersOptions;
-      health?: ApplicationHealthOptions;
+      workers?: number | string | ApplicationWorkersOptions1;
+      health?: ApplicationHealthOptions1;
       /**
        * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
        */
@@ -92,9 +138,9 @@ export interface PlatformaticRemixConfig {
       preload?: string | string[];
       nodeOptions?: string;
       execArgv?: string[];
-      permissions?: PermissionsOptions;
-      tracing?: ApplicationTelemetryOverrides;
-      compileCache?: boolean | CompileCacheOptions1;
+      permissions?: PermissionsOptions1;
+      tracing?: ApplicationTelemetryOverrides1;
+      compileCache?: boolean | CompileCacheOptions2;
     };
   };
   vite?: {
@@ -238,6 +284,14 @@ export interface AppServerOptions {
    * The maximum length of the queue of pending connections
    */
   backlog?: number;
+  /**
+   * The number of milliseconds of inactivity a server needs to wait for additional incoming data, after it has finished writing the last response, before a socket will be destroyed. When running behind a load balancer, set it higher than the load balancer idle timeout.
+   */
+  keepAliveTimeout?: number;
+  /**
+   * The number of milliseconds to wait to receive the complete HTTP headers from the client. It should be greater than keepAliveTimeout.
+   */
+  headersTimeout?: number;
   http2?: boolean;
   https?: HttpsOptions;
 }
@@ -273,8 +327,8 @@ export interface WatchOptions {
   /**
    * @minItems 1
    */
-  allow?: [string, ...string[]];
-  ignore?: string[];
+  allow?: [string, ...string[]] | null;
+  ignore?: string[] | null;
 }
 export interface BuildableApplicationOptions {
   basePath?: string;
@@ -303,6 +357,66 @@ export interface ExtensionEntry1 {
     [k: string]: unknown;
   };
   build?: boolean;
+}
+export interface ApplicationWorkersOptions {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+}
+export interface ApplicationHealthOptions {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface PermissionsOptions {
+  fs?: {
+    read?: string[];
+    write?: string[];
+  };
+}
+export interface ApplicationTelemetryOverrides {
+  /**
+   * An array of instrumentations loaded if tracing is enabled
+   */
+  instrumentations?: (
+    | string
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }
+  )[];
+  [k: string]: unknown;
+}
+export interface CompileCacheOptions {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
 }
 export interface WorkersOptions {
   static?: number;
@@ -804,7 +918,7 @@ export interface TelemetryOptions {
    */
   diagLogger?: boolean | string;
 }
-export interface CompileCacheOptions {
+export interface CompileCacheOptions1 {
   /**
    * Enable Node.js module compile cache for faster startup
    */
@@ -818,7 +932,7 @@ export interface CompileCacheOptions {
    */
   awaitFirstWorker?: boolean;
 }
-export interface ApplicationWorkersOptions {
+export interface ApplicationWorkersOptions1 {
   static?: number;
   dynamic?: boolean;
   minimum?: number;
@@ -826,7 +940,7 @@ export interface ApplicationWorkersOptions {
   eluThreshold?: number;
   heapThresholdMb?: number;
 }
-export interface ApplicationHealthOptions {
+export interface ApplicationHealthOptions1 {
   enabled?: boolean | string;
   interval?: number | string;
   gracePeriod?: number | string;
@@ -841,13 +955,13 @@ export interface ApplicationHealthOptions {
   bufferPoolSize?: number | string;
   defaultHighWaterMark?: number | string;
 }
-export interface PermissionsOptions {
+export interface PermissionsOptions1 {
   fs?: {
     read?: string[];
     write?: string[];
   };
 }
-export interface ApplicationTelemetryOverrides {
+export interface ApplicationTelemetryOverrides1 {
   /**
    * An array of instrumentations loaded if tracing is enabled
    */
@@ -864,7 +978,7 @@ export interface ApplicationTelemetryOverrides {
   )[];
   [k: string]: unknown;
 }
-export interface CompileCacheOptions1 {
+export interface CompileCacheOptions2 {
   /**
    * Enable Node.js module compile cache for faster startup
    */

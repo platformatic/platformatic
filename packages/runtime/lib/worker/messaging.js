@@ -11,11 +11,22 @@ import {
   traceIncomingMessagingHandler
 } from '@platformatic/itc'
 import { getITC } from '@platformatic/globals'
-import { MessagingError } from '../errors.js'
+import { InvalidArgumentError, MessagingError } from '../errors.js'
+import { pickByAffinity } from './affinity.js'
 import { RoundRobinMap } from './round-robin-map.js'
 import { kWorkersBroadcast } from './symbols.js'
 
 const kPendingResponses = Symbol('plt.messaging.pendingResponses')
+
+function serializeWorker ({ id, application, worker, thread }) {
+  return { id, application, worker, thread }
+}
+
+function validateAffinity (affinity) {
+  if (typeof affinity !== 'string' || affinity.length === 0) {
+    throw new InvalidArgumentError('affinity')
+  }
+}
 
 export class MessagingITC extends ITC {
   #id
@@ -26,6 +37,7 @@ export class MessagingITC extends ITC {
   #notificationsChannels
   #workers
   #sources
+  #workersListeners
   #logger
   #referenced = true
   #activeHandlers = 0
@@ -40,6 +52,7 @@ export class MessagingITC extends ITC {
     this.#timeout = runtimeConfig.messagingTimeout
     this.#workers = new RoundRobinMap()
     this.#sources = new Set()
+    this.#workersListeners = new Set()
 
     // Start listening on the BroadcastChannel for the list of applications
     this.#broadcastChannel = new BroadcastChannel(kWorkersBroadcast)
@@ -98,16 +111,51 @@ export class MessagingITC extends ITC {
     }
   }
 
+  getWorkers (application) {
+    if (application) {
+      return this.#workers.getAll(application).map(serializeWorker)
+    }
+
+    const workers = {}
+    for (const id of this.#workers.getApplications()) {
+      workers[id] = this.#workers.getAll(id).map(serializeWorker)
+    }
+
+    return workers
+  }
+
+  getWorkerForAffinity (application, affinity) {
+    validateAffinity(affinity)
+
+    const worker = this._getWorkerByAffinity(application, affinity)
+    return worker ? serializeWorker(worker) : null
+  }
+
+  onWorkersChange (listener) {
+    if (typeof listener !== 'function') {
+      throw new InvalidArgumentError('listener')
+    }
+
+    this.#workersListeners.add(listener)
+    return () => this.#workersListeners.delete(listener)
+  }
+
   async send (application, name, message, options) {
     const telemetry = startOutgoingMessagingSpan('send', this.#id, application, name, {
       telemetryContext: options?.telemetryContext,
       telemetryMetadata: options?.telemetryMetadata
     })
     let error = null
+    const { affinity, ...sendOptions } = options ?? {}
 
     try {
-      // Get the next worker for the application
-      const worker = this._getNextWorker(application)
+      if (affinity !== undefined) {
+        validateAffinity(affinity)
+      }
+
+      // Get the worker for the affinity key or, by default, the next worker for the application
+      const worker =
+        affinity === undefined ? this._getNextWorker(application) : this._getWorkerByAffinity(application, affinity)
 
       if (!worker) {
         throw new MessagingError(application, 'No workers available')
@@ -135,13 +183,13 @@ export class MessagingITC extends ITC {
         this._setupChannel(channel)
       }
 
-      const context = { ...options }
+      const context = { ...sendOptions }
       context.channel = worker.channel
       context.application = worker.application
       context.trackResponse = true
 
-      if (options?.meta || telemetry?.meta) {
-        context.meta = { ...options?.meta, ...telemetry?.meta }
+      if (sendOptions.meta || telemetry?.meta) {
+        context.meta = { ...sendOptions.meta, ...telemetry?.meta }
       }
 
       const abortController = new AbortController()
@@ -208,6 +256,10 @@ export class MessagingITC extends ITC {
     return this.#workers.next(application)
   }
 
+  _getWorkerByAffinity (application, affinity) {
+    return pickByAffinity(this.#workers.getAll(application), affinity)
+  }
+
   _send (request, context) {
     const { channel, transferList } = context
 
@@ -248,6 +300,7 @@ export class MessagingITC extends ITC {
     }
 
     this.#sources.clear()
+    this.#workersListeners.clear()
   }
 
   _setupChannel (channel) {
@@ -288,6 +341,18 @@ export class MessagingITC extends ITC {
 
         // Note i is not the worker index as in runtime, but the index in the list of current alive workers for the application
         this.#workers.set(`${application}:${i}`, { ...worker, channel })
+      }
+    }
+
+    if (this.#workersListeners.size > 0) {
+      const workers = this.getWorkers()
+
+      for (const listener of this.#workersListeners) {
+        try {
+          listener(workers)
+        } catch (err) {
+          this.#logger.error({ err: ensureLoggableError(err) }, 'A workers change listener failed.')
+        }
       }
     }
   }

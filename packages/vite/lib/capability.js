@@ -240,7 +240,7 @@ export class ViteCapability extends BaseCapability {
     }
 
     // Require Vite
-    const serverPromise = createServerListener()
+    const serverPromise = createServerListener(this.serverConfig)
     const { createServer } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
     const skewPlugin = platformaticSkewPlugin()
 
@@ -309,7 +309,7 @@ export class ViteCapability extends BaseCapability {
 
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
-    const serverPromise = createServerListener()
+    const serverPromise = createServerListener(this.serverConfig)
 
     await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#app.server)

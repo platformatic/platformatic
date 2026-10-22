@@ -499,3 +499,69 @@ test('should notify all the workers', async t => {
   ok(lines.includes('second:1'))
   ok(lines.includes('second:2'))
 })
+
+test('should route messages to the same worker when using an affinity key', async t => {
+  const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
+  const app = await createRuntime(configFile)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { 'composer:0': url } = await app.start()
+  const threads = new Set()
+
+  for (let i = 0; i < 20; i++) {
+    const responses = []
+
+    for (let j = 0; j < 3; j++) {
+      const res = await request(`${url}/first/affinity/key-${i}`)
+      deepStrictEqual(res.statusCode, 200)
+      responses.push(await res.body.json())
+    }
+
+    // The same key always reaches the same worker, which is the one advertised by getWorkerForAffinity
+    deepStrictEqual(new Set(responses.map(response => response.thread)).size, 1)
+    deepStrictEqual(responses[0].thread, responses[0].owner)
+    threads.add(responses[0].thread)
+  }
+
+  // Different keys are spread across workers
+  ok(threads.size > 1)
+})
+
+test('should expose the workers and notify their changes', async t => {
+  const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
+  const configFile = resolve(root, 'configs/1-to-n/watt.config.mjs')
+  const app = await createRuntime(configFile)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { 'composer:0': url } = await app.start()
+
+  const res = await request(`${url}/first/workers`)
+  deepStrictEqual(res.statusCode, 200)
+  const before = await res.body.json()
+  deepStrictEqual(before.ids.length, 3)
+
+  await app.restartApplication('second')
+
+  let after
+  for (let i = 0; i < 100; i++) {
+    const res = await request(`${url}/first/workers`)
+    after = await res.body.json()
+
+    if (after.changes > before.changes && after.ids.length === 3 && !after.ids.some(id => before.ids.includes(id))) {
+      break
+    }
+
+    await sleep(100)
+  }
+
+  ok(after.changes > before.changes)
+  deepStrictEqual(after.ids.length, 3)
+  ok(!after.ids.some(id => before.ids.includes(id)))
+})

@@ -4,6 +4,28 @@ import fastify from 'fastify'
 export function create () {
   const app = fastify({ logger: true })
 
+  let workersChanges = 0
+  getMessaging().onWorkersChange(() => {
+    workersChanges++
+  })
+
+  app.get('/affinity/:key', async req => {
+    const messaging = getMessaging()
+    const owner = messaging.getWorkerForAffinity('second', req.params.key)
+    const thread = await messaging.send('second', 'thread', {}, { affinity: req.params.key })
+
+    return { thread, owner: `T${owner.thread}` }
+  })
+
+  app.get('/workers', async () => {
+    return {
+      ids: getMessaging()
+        .getWorkers('second')
+        .map(worker => worker.id),
+      changes: workersChanges
+    }
+  })
+
   app.get('/thread/:id', async req => {
     const notify = req.query.notify
     const threadId = req.params.id

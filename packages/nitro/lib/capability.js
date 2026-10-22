@@ -354,7 +354,7 @@ export class NitroCapability extends BaseCapability {
     let serverPromise
 
     try {
-      serverPromise = createServerListener()
+      serverPromise = createServerListener(this.serverConfig)
       await importFile(entrypointPath)
       this.#server = await serverPromise
       this.#dispatcher = this.#server.listeners('request')[0]
@@ -602,7 +602,7 @@ export class NitroViteCapability extends ViteCapability {
     let serverPromise
 
     try {
-      serverPromise = createServerListener()
+      serverPromise = createServerListener(this.serverConfig)
       await importFile(entrypointPath)
       this.#server = await serverPromise
       this.#dispatcher = this.#server.listeners('request')[0]

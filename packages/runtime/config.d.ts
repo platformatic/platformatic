@@ -74,7 +74,7 @@ export type PlatformaticRuntimeConfig = {
       [k: string]: string | [string, ...string[]];
     };
   };
-  compileCache?: boolean | CompileCacheOptions;
+  compileCache?: boolean | CompileCacheOptions3;
   scheduler?: {
     /**
      * Start local cron triggers for newly registered jobs. When false, jobs are created paused.
@@ -85,11 +85,149 @@ export type PlatformaticRuntimeConfig = {
 };
 export type ApplicationEntry = {
   [k: string]: unknown;
+} & {
+  id?: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
+      };
+  path?: string;
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
+      };
+  url?: string;
+  module?: string;
+  gitBranch?: string;
+  reuseTcpPorts?: boolean;
+  workers?: number | string | ApplicationWorkersOptions;
+  health?: ApplicationHealthOptions;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: PermissionsOptions;
+  tracing?: ApplicationTelemetryOverrides;
+  compileCache?: boolean | CompileCacheOptions;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
+  [k: string]: unknown;
 };
 export type ApplicationEntry1 = {
   [k: string]: unknown;
+} & {
+  id?: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
+      };
+  path?: string;
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
+      };
+  url?: string;
+  module?: string;
+  gitBranch?: string;
+  reuseTcpPorts?: boolean;
+  workers?: number | string | ApplicationWorkersOptions1;
+  health?: ApplicationHealthOptions1;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: PermissionsOptions1;
+  tracing?: ApplicationTelemetryOverrides1;
+  compileCache?: boolean | CompileCacheOptions1;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
+  [k: string]: unknown;
 };
 export type ApplicationEntry2 = {
+  [k: string]: unknown;
+} & {
+  id?: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
+      };
+  path?: string;
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
+      };
+  url?: string;
+  module?: string;
+  gitBranch?: string;
+  reuseTcpPorts?: boolean;
+  workers?: number | string | ApplicationWorkersOptions2;
+  health?: ApplicationHealthOptions2;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: PermissionsOptions2;
+  tracing?: ApplicationTelemetryOverrides2;
+  compileCache?: boolean | CompileCacheOptions2;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
   [k: string]: unknown;
 };
 
@@ -208,6 +346,186 @@ export interface ApplicationEntryOverrides {
         enabled?: boolean;
         operations?: string[];
       };
+}
+export interface ApplicationWorkersOptions {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+}
+export interface ApplicationHealthOptions {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface PermissionsOptions {
+  fs?: {
+    read?: string[];
+    write?: string[];
+  };
+}
+export interface ApplicationTelemetryOverrides {
+  /**
+   * An array of instrumentations loaded if tracing is enabled
+   */
+  instrumentations?: (
+    | string
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }
+  )[];
+  [k: string]: unknown;
+}
+export interface CompileCacheOptions {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
+}
+export interface ApplicationWorkersOptions1 {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+}
+export interface ApplicationHealthOptions1 {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface PermissionsOptions1 {
+  fs?: {
+    read?: string[];
+    write?: string[];
+  };
+}
+export interface ApplicationTelemetryOverrides1 {
+  /**
+   * An array of instrumentations loaded if tracing is enabled
+   */
+  instrumentations?: (
+    | string
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }
+  )[];
+  [k: string]: unknown;
+}
+export interface CompileCacheOptions1 {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
+}
+export interface ApplicationWorkersOptions2 {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+}
+export interface ApplicationHealthOptions2 {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface PermissionsOptions2 {
+  fs?: {
+    read?: string[];
+    write?: string[];
+  };
+}
+export interface ApplicationTelemetryOverrides2 {
+  /**
+   * An array of instrumentations loaded if tracing is enabled
+   */
+  instrumentations?: (
+    | string
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }
+  )[];
+  [k: string]: unknown;
+}
+export interface CompileCacheOptions2 {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
 }
 export interface WorkersOptions {
   static?: number;
@@ -715,7 +1033,7 @@ export interface TelemetryOptions {
    */
   diagLogger?: boolean | string;
 }
-export interface CompileCacheOptions {
+export interface CompileCacheOptions3 {
   /**
    * Enable Node.js module compile cache for faster startup
    */

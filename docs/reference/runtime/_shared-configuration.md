@@ -516,6 +516,8 @@ Each is saved in `<resolvedApplicationsBasePath>/<id>`. Default: `external`.
 
 The Runtime and Watt root configuration no longer provide `entrypoint` or `server` settings. Configure listeners in each capability's own configuration file instead. A capability-local `server` object controls its hostname, port, HTTPS, and backlog; it is not an `applications[]` descriptor option.
 
+The capability-local `server` object also accepts **`keepAliveTimeout`** and **`headersTimeout`** (non-negative integers in milliseconds). `keepAliveTimeout` controls how long an idle keep-alive connection remains open; behind a load balancer, set it higher than the load balancer idle timeout to avoid `502` errors. `headersTimeout` controls how long the server waits for complete request headers and should be greater than `keepAliveTimeout`. When omitted, the framework or Node.js defaults are preserved.
+
 Runtime does not choose ports, write port environment variables, or rewrite listener options. Managed capabilities start their own listeners only when their capability configuration defines `server.port`; a value of `0` requests an ephemeral port. Custom commands and black-box Node.js applications decide whether to call `listen()` themselves.
 
 ### `workers`

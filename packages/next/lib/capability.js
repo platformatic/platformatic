@@ -355,7 +355,7 @@ export class NextCapability extends BaseCapability {
         port: port || 0
       }
 
-      const serverPromise = createServerListener()
+      const serverPromise = createServerListener(this.serverConfig)
 
       if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
         await nextStart({
@@ -408,9 +408,10 @@ export class NextCapability extends BaseCapability {
         port: port || 0
       }
 
-      const serverPromise = createServerListener()
+      const serverPromise = createServerListener(this.serverConfig)
 
-      let keepAliveTimeout = parseInt(process.env.KEEP_ALIVE_TIMEOUT, 10)
+      // The server configuration takes precedence, KEEP_ALIVE_TIMEOUT is kept as a fallback
+      let keepAliveTimeout = this.serverConfig?.keepAliveTimeout ?? parseInt(process.env.KEEP_ALIVE_TIMEOUT, 10)
       if (Number.isNaN(keepAliveTimeout) || !Number.isFinite(keepAliveTimeout) || keepAliveTimeout < 0) {
         keepAliveTimeout = undefined
       }

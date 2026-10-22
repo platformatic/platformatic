@@ -78,7 +78,7 @@ export class TanstackCapability extends ViteCapability {
     this.#basePath = await this._getBasePathFromBuildInfo()
 
     const serverOptions = this.serverConfig
-    const serverPromise = createServerListener()
+    const serverPromise = createServerListener(this.serverConfig)
 
     const httpsOptions = await sanitizeHTTPSOptions(serverOptions?.https)
     const environment = {

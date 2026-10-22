@@ -200,7 +200,7 @@ export class AstroCapability extends BaseCapability {
     }
 
     // Require Astro
-    const serverPromise = createServerListener()
+    const serverPromise = createServerListener(this.serverConfig)
     const { dev } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
     // Create the server and listen
@@ -307,7 +307,7 @@ export class AstroCapability extends BaseCapability {
 
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
-    const serverPromise = createServerListener()
+    const serverPromise = createServerListener(this.serverConfig)
 
     await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#app.server)

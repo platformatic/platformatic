@@ -97,7 +97,7 @@ export class NextImageOptimizerCapability extends BaseCapability {
 
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
-    const serverPromise = createServerListener()
+    const serverPromise = createServerListener(this.serverConfig)
 
     const [server] = await Promise.all([
       new Promise((resolve, reject) => {

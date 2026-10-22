@@ -3,6 +3,7 @@ import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel
 import { Server as HttpServer } from 'node:http'
 import { Server as HttpsServer } from 'node:https'
 import { Server as NetServer } from 'node:net'
+import { applyServerTimeouts } from '../utils.js'
 
 // Some frameworks (Vite 8 and later) look for a free port by opening and immediately closing
 // throwaway TCP servers before binding the real one. Those probes are bare net.Server instances,
@@ -27,17 +28,18 @@ export function isBareHttpServer (server) {
   return applicationServerEvents.every(event => server.listenerCount(event) === 0)
 }
 
-export function createServerListener () {
+export function createServerListener (serverConfig) {
   const { promise, resolve, reject } = Promise.withResolvers()
 
   let completed = false
   const subscribers = {
-    asyncStart ({ options }) {
+    asyncStart ({ server, options }) {
       // Unix socket, do nothing
       if (options.path) {
         return
       }
 
+      applyServerTimeouts(server, serverConfig)
       const events = getEvents({ throwOnMissing: false })
       if (events) {
         events.emitAndNotify('serverOptions', options)
