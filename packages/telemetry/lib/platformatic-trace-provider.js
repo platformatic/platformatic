@@ -1,17 +1,23 @@
+import { createNoopMeter } from '@opentelemetry/api'
 import { CompositePropagator, merge, W3CTraceContextPropagator } from '@opentelemetry/core'
 import { emptyResource } from '@opentelemetry/resources'
-import { AlwaysOnSampler } from '@opentelemetry/sdk-trace-base'
+import { AlwaysOnSampler, RandomIdGenerator } from '@opentelemetry/sdk-trace'
 import { createRequire } from 'node:module'
 import { MultiSpanProcessor } from './multispan-processor.js'
 
 const require = createRequire(import.meta.url)
 // We need to import the Tracer to write our own TracerProvider that does NOT extend the OpenTelemetry one.
-const { Tracer } = require('@opentelemetry/sdk-trace-base/build/src/Tracer')
+const { Tracer } = require('@opentelemetry/sdk-trace/build/src/Tracer')
+
+const noopMeterProvider = {
+  getMeter () {
+    return createNoopMeter()
+  }
+}
 
 export class PlatformaticTracerProvider {
   activeSpanProcessor = null
   _registeredSpanProcessors = []
-  // This MUST be called `resource`, see: https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-sdk-trace-base/src/Tracer.ts#L57
   resource = null
   _config = null
 
@@ -19,7 +25,17 @@ export class PlatformaticTracerProvider {
     const mergedConfig = merge(
       {},
       {
-        sampler: new AlwaysOnSampler()
+        sampler: new AlwaysOnSampler(),
+        spanLimits: {
+          attributeCountLimit: 128,
+          attributeValueLengthLimit: Infinity,
+          eventCountLimit: 128,
+          linkCountLimit: 128,
+          attributePerEventCountLimit: 128,
+          attributePerLinkCountLimit: 128
+        },
+        idGenerator: new RandomIdGenerator(),
+        meterProvider: noopMeterProvider
       },
       config
     )
@@ -31,7 +47,7 @@ export class PlatformaticTracerProvider {
 
   // This is the only mandatory API: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#get-a-tracer
   getTracer (name, version) {
-    return new Tracer({ name, version }, this._config, this.resource, this.activeSpanProcessor)
+    return new Tracer({ name, version }, { ...this._config, spanProcessor: this.activeSpanProcessor })
   }
 
   addSpanProcessor (spanProcessor) {

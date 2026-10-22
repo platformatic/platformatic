@@ -54,6 +54,18 @@ export function match (actual, expected) {
   return true
 }
 
+/**
+ * Convert an application name into the prefix used by its environment variables, so that the
+ * application "with-logger" owns PLT_WITH_LOGGER_*. This is the convention generators follow when
+ * they emit variables for an application, and the one the runtime uses to recognise a reference to
+ * an application, like {PLT_WITH_LOGGER_URL}.
+ * @param {string} applicationName - The application name
+ * @returns {string} The environment variable prefix
+ */
+export function convertApplicationNameToPrefix (applicationName) {
+  return applicationName.replace(/-/g, '_').toUpperCase()
+}
+
 // Once we drop Node < 24, remove this in favor of Regexp.escape which is more accurate
 export function escapeRegexp (raw) {
   return raw.replaceAll(/([!$()*+./:=?[\\\]^{|}])/g, '\\$1')

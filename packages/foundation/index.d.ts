@@ -154,6 +154,11 @@ export declare function findRuntimeConfigurationFile (
   verifyPackages?: boolean
 ): Promise<string | null>
 export declare function loadConfigurationFile (configurationFile: string): Promise<RawConfiguration>
+export type ConfigPatchOperation =
+  | { op: 'add' | 'replace' | 'test' | 'merge', path: string, value: any }
+  | { op: 'remove', path: string }
+  | { op: 'move' | 'copy', from: string, path: string }
+export declare function applyConfigPatch<T = RawConfiguration> (config: T, patch: ConfigPatchOperation[]): T
 export declare function saveConfigurationFile (configurationFile: string, config: RawConfiguration): Promise<void>
 export declare function createValidator (
   schema: JSONSchemaType<any>,
@@ -285,7 +290,8 @@ export declare function sanitizeHTTPSOptions (https?: HTTPSConfig): Promise<Sani
 export declare function setPinoFormatters (options: any): void
 export declare function buildPinoFormatters (formatters: { path: string }): object
 export declare function setPinoTimestamp (options: any): void
-export declare function buildPinoTimestamp (timestamp: string): Function
+export declare function buildPinoTimestamp (timestamp?: string, timestampKey?: string): Function
+export declare function setPinoLogKeys (options: any, config?: any): void
 export declare function buildPinoOptions (
   loggerConfig: any,
   serverConfig: any,
@@ -325,6 +331,7 @@ export declare function loadModule (require: NodeRequire, path: string): Promise
 // Node types
 export declare function checkNodeVersionForApplications (): void
 export declare function mirrorGlobalDispatcherForBuiltinFetch (dispatcher: unknown): void
+export declare function scheduleCompileCacheFlush (logger?: Logger): void
 export declare const features: {
   node: {
     reusePort: boolean
@@ -370,5 +377,6 @@ export declare const schemaComponents: Record<string, JSONSchemaType<any>>
 // String types
 export declare function findNearestString (strings: string[], target: string): string | null
 export declare function match (actual: any, expected: any): boolean
+export declare function convertApplicationNameToPrefix (applicationName: string): string
 export declare function escapeRegexp (raw: string): string
 export declare function parseMemorySize (size: string): number

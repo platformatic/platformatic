@@ -20,7 +20,7 @@ import {
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-const viteVersions = ['5.4.0', '6.3.5']
+const viteVersions = ['5.4.0', '6.3.5', '7.3.6', '8.2.2']
 
 const files = ['services/frontend/dist/index.html', 'services/frontend/dist/assets/index-*.js']
 const filesSSR = ['services/frontend/client/dist/client/index.html', 'services/frontend/client/dist/server/index.js']
@@ -66,7 +66,7 @@ async function installDependencies (viteVersion) {
 
   await createDirectory(base)
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-  await execa('pnpm', ['add', '-D', '--ignore-workspace', `vite@${viteVersion}`], { cwd: base })
+  await execa('pnpm', ['add', '-D', '--ignore-workspace', '--allow-build=esbuild', `vite@${viteVersion}`], { cwd: base })
 }
 
 async function boundLinkVite (viteVersion) {

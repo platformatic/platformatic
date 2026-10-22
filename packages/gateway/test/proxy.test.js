@@ -6,6 +6,7 @@ import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
 import openAPISchemaValidator from 'openapi-schema-validator'
 import client from 'prom-client'
 import selfCert from 'self-cert'
@@ -87,8 +88,10 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   async function getActiveConnections () {
     const metrics = await prometheusRegistry.metrics()
-    const match = metrics.match(/active_ws_gateway_connections.+\s(\d+)$/m)
-    return match ? parseInt(match[1]) : 0
+    // -? is deliberate: a gauge that has drifted below zero has to fail this
+    // test, not slip past a \d+ pattern that simply does not match and reads 0.
+    const match = metrics.match(/^active_ws_gateway_connections(?:\{[^}]*\})?\s+(-?[\d.]+)$/m)
+    return match ? Number(match[1]) : null
   }
 
   // Test: Start with 0 connections
@@ -117,6 +120,9 @@ test('should increment and decrement activeWsConnections metric', async t => {
   client1.close()
   await once(client1, 'close')
   await firstDisconnect
+  // The proxy tears a link down from both its sockets, so another disconnect
+  // callback can still be in flight here. Let it land before reading.
+  await sleep(500)
   assert.equal(await getActiveConnections(), 1)
 
   // Test: Close second connection, should decrement to 0
@@ -124,6 +130,7 @@ test('should increment and decrement activeWsConnections metric', async t => {
   client2.close()
   await once(client2, 'close')
   await secondDisconnect
+  await sleep(500)
   assert.equal(await getActiveConnections(), 0)
 
   await gateway.close()

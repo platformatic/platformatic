@@ -69,6 +69,15 @@ Supported object properties:
 
   In this configuration, `"use cache"` entries are stored on `localhost:6379` while `"use cache: remote"` entries go to `remote-server:6379` with a separate prefix and a 1-hour TTL. If `remote.url` is omitted, both handlers share the same Valkey instance but use different key namespaces to avoid collisions.
 
+  When runtime metrics are enabled, Cache Components exposes these Prometheus counters:
+
+  - **`next_components_cache_valkey_hit_count`**: Successful reads from the default Cache Components cache.
+  - **`next_components_cache_valkey_miss_count`**: Missing, invalid, or failed reads from the default Cache Components cache.
+  - **`next_remote_components_cache_valkey_hit_count`**: Successful reads from the remote Cache Components cache.
+  - **`next_remote_components_cache_valkey_miss_count`**: Missing, invalid, or failed reads from the remote Cache Components cache.
+
+  The counters use the runtime's standard application, worker, and configured static labels. The remote counters are registered only when `remote` is configured. Hit ratios can be calculated in PromQL from the corresponding hit and miss counters.
+
 ## `next`
 
 Configures Next.js. Supported object properties:

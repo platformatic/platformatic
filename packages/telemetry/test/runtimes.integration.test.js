@@ -109,8 +109,11 @@ test('configure telemetry correctly with a node app - integration test', async t
   equal(spans.length, 1)
   const serverSpan = spans[0]
   equal(serverSpan.kind, 2)
-  const applicationUrl = serverSpan.attributes.find(attr => attr.key === 'http.url')
-  equal(applicationUrl.value.stringValue, `${url}/`)
+  const attributes = Object.fromEntries(serverSpan.attributes.map(attr => [attr.key, attr.value]))
+  const { protocol, port } = new URL(url)
+  equal(attributes['url.scheme'].stringValue, protocol.slice(0, -1))
+  equal(attributes['server.port'].intValue, Number(port))
+  equal(attributes['url.path'].stringValue, '/')
 })
 
 test('configure telemetry correctly with a gateway + next - integration test', async t => {

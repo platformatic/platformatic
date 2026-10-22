@@ -2,6 +2,7 @@ import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash,
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  setPinoLogKeys,
   deepmerge,
   isKeyEnabled,
   sanitizeHTTPSOptions
@@ -9,7 +10,6 @@ import {
 import { getTracerProvider } from '@platformatic/globals'
 import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
 import fastify from 'fastify'
-import { printSchema } from 'graphql'
 import { randomUUID } from 'node:crypto'
 import { hostname } from 'node:os'
 import pino from 'pino'
@@ -208,7 +208,13 @@ export class ServiceCapability extends BaseCapability {
   async getGraphqlSchema () {
     await this.init()
     await this.#app.ready()
-    return this.#app.graphql ? printSchema(this.#app.graphql.schema) : null
+    if (!this.#app.graphql) {
+      return null
+    }
+
+    // graphql is already loaded by mercurius at this point, so the import is served from the module cache
+    const { printSchema } = await import('graphql')
+    return printSchema(this.#app.graphql.schema)
   }
 
   async updateContext (context) {
@@ -294,9 +300,10 @@ export class ServiceCapability extends BaseCapability {
     if (this.loggerConfig?.formatters) {
       pinoOptions.formatters = buildPinoFormatters(this.loggerConfig?.formatters)
     }
-    if (this.loggerConfig?.timestamp) {
-      pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig?.timestamp)
+    if (this.loggerConfig?.timestamp || this.loggerConfig?.timestampKey !== undefined) {
+      pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig.timestamp, this.loggerConfig.timestampKey)
     }
+    setPinoLogKeys(pinoOptions)
 
     if (this.loggerConfig.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)

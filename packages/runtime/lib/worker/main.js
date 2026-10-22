@@ -1,10 +1,12 @@
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  setPinoLogKeys,
   disablePinoDirectWrite,
   ensureLoggableError,
   getPrivateSymbol,
-  parseMemorySize
+  parseMemorySize,
+  scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import { getITC, getLogger, updateGlobals } from '@platformatic/globals'
 import { addPinoInstrumentation } from '@platformatic/telemetry'
@@ -96,9 +98,10 @@ function createLogger () {
   if (pinoOptions.formatters) {
     pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
   }
-  if (pinoOptions.timestamp) {
-    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
+  if (pinoOptions.timestamp || pinoOptions.timestampKey !== undefined) {
+    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp, pinoOptions.timestampKey)
   }
+  setPinoLogKeys(pinoOptions)
 
   if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.telemetry?.enabled !== false) {
     addPinoInstrumentation(pinoOptions)
@@ -149,6 +152,9 @@ function setupDefaultHighWaterMark (runtimeConfig, applicationConfig, logger) {
   }
 }
 
+// Whether the module compile cache has been enabled in this worker.
+let compileCacheEnabled = false
+
 // Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
   // Normalize boolean shorthand: true -> { enabled: true }
@@ -187,8 +193,10 @@ async function setupCompileCache (runtimeConfig, applicationConfig, logger) {
     const { compileCacheStatus } = moduleApi.constants ?? {}
 
     if (result.status === compileCacheStatus?.ENABLED) {
+      compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache enabled')
     } else if (result.status === compileCacheStatus?.ALREADY_ENABLED) {
+      compileCacheEnabled = true
       logger.debug({ directory: result.directory }, 'Module compile cache already enabled')
     } else if (result.status === compileCacheStatus?.FAILED) {
       logger.warn({ message: result.message }, 'Failed to enable module compile cache')
@@ -318,6 +326,14 @@ async function main () {
   )
 
   await controller.init(cleanup)
+
+  // Make the compile cache accumulated while booting durable, as Node.js would otherwise only write
+  // it when the worker terminates.
+  controller.on('started', () => {
+    if (compileCacheEnabled) {
+      scheduleCompileCacheFlush(logger)
+    }
+  })
 
   if (applicationConfig.entrypoint && runtimeConfig.basePath) {
     const meta = await controller.capability.getMeta()

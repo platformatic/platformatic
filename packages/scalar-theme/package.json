@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/scalar-theme",
-  "version": "3.68.0",
+  "version": "3.74.0",
   "description": "Platformatic's Scalar theme for @scalar/fastify-api-reference",
   "main": "theme.js",
   "types": "theme.d.ts",
@@ -30,6 +30,6 @@
     "node": ">=22.19.0"
   },
   "devDependencies": {
-    "cleaner-spec-reporter": "^0.5.0"
+    "cleaner-spec-reporter": "^2.0.0"
   }
 }

@@ -22,7 +22,7 @@ import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
 import { version } from './schema.js'
 
-const supportedVersions = ['^5.0.0', '^6.0.0', '^7.0.0']
+const supportedVersions = ['^5.0.0', '^6.0.0', '^7.0.0', '^8.0.0']
 
 export class ViteCapability extends BaseCapability {
   #vite

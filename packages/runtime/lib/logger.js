@@ -2,6 +2,7 @@ import {
   buildPinoFormatters,
   buildPinoTimestamp,
   kMetadata,
+  setPinoLogKeys
 } from '@platformatic/foundation'
 import { isatty } from 'node:tty'
 import pino from 'pino'
@@ -99,8 +100,11 @@ function createLoggerContext (config) {
   return context
 }
 
-function createPrettifier (context) {
+function createPrettifier (context, config) {
   return pretty({
+    messageKey: config.messageKey ?? 'msg',
+    timestampKey: config.timestampKey ?? 'time',
+    levelKey: config.levelKey ?? 'level',
     messageFormat (log, key) {
       const { name, pid, hostname, caller, worker } = log
 
@@ -120,7 +124,7 @@ function createPrettifier (context) {
         color = context.colors[prefix] ?? ''
       }
 
-      context.current.prefix = `(${pid}) ` + prefix.padStart(context.maxLength, ' ')
+      context.current.prefix = (pid == null ? '' : `(${pid}) `) + prefix.padStart(context.maxLength, ' ')
       context.current.color = color
 
       // We need to nullify all these so that prettifierMetadata in pino-pretty returns an empty string
@@ -172,7 +176,7 @@ export async function createLogger (config) {
 
     cliStream = pino.transport(config.logger.transport)
   } else if ((env.FORCE_TTY || isatty(1)) && env.PLT_PRETTY_PRINT !== 'false') {
-    cliStream = createPrettifier(context)
+    cliStream = createPrettifier(context, config.logger)
   } else {
     cliStream = pino.destination(1)
   }
@@ -181,9 +185,10 @@ export async function createLogger (config) {
     loggerConfig.formatters = buildPinoFormatters(loggerConfig.formatters)
   }
 
-  if (loggerConfig.timestamp) {
-    loggerConfig.timestamp = buildPinoTimestamp(loggerConfig.timestamp)
+  if (loggerConfig.timestamp || loggerConfig.timestampKey !== undefined) {
+    loggerConfig.timestamp = buildPinoTimestamp(loggerConfig.timestamp, loggerConfig.timestampKey)
   }
+  setPinoLogKeys(loggerConfig)
 
   if (!config.managementApi) {
     return [pino(loggerConfig, cliStream), cliStream, context]

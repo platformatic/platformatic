@@ -37,6 +37,29 @@ These options are available for all `wattpm` commands:
 
 These are the primary commands for working with Watt applications:
 
+### `wattpm skill [FILE]`
+
+Available from **Watt 3.74.0**. Prints the bundled Watt 3 agent skill or one of its
+Markdown references to stdout, without a logo or log prefix. The contents match the
+installed release and are available offline, even outside a Watt project.
+
+```bash
+wattpm skill
+wattpm skill references/frameworks.md
+wattpm skill references/frameworks/nextjs.md
+wattpm help skill
+```
+
+`FILE` defaults to `SKILL.md` and is relative to the bundled skill directory. Resolve
+links relative to the document containing them, then pass the normalized bundle-relative
+path to the same local CLI. Absolute paths, non-Markdown files, directories, and symlinks
+escaping the bundle are rejected with `PLT_INVALID_SKILL_FILE`. Missing documents report
+`PLT_SKILL_FILE_NOT_FOUND`; both errors produce a nonzero exit status.
+
+Use the project's local installation when following the
+[AI agent workflow](../../guides/use-watt-with-ai-agents.md). Existing v3 scaffolding
+and import commands remain supported.
+
 ### `wattpm create` or `wattpm init`
 
 Creates a new Watt application with interactive setup using `wattpm-utils`.

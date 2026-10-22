@@ -1,5 +1,5 @@
 import { getLogger } from '@platformatic/globals'
-import { promises as fs } from 'node:fs'
+import { promises as fs, statSync } from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 import * as sourceMap from 'source-map'
@@ -162,7 +162,7 @@ function resolveModulePath (appPath, moduleName) {
     const modulePath = path.join(currentDir, 'node_modules', moduleName)
     try {
       // Check if the module directory exists synchronously (we're in a sync context here)
-      const stat = require('node:fs').statSync(modulePath)
+      const stat = statSync(modulePath)
       if (stat.isDirectory()) {
         return modulePath
       }

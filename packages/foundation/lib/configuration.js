@@ -1,12 +1,9 @@
-import toml from '@iarna/toml'
 import Ajv from 'ajv'
 import jsonPatch from 'fast-json-patch'
-import JSON5 from 'json5'
 import { readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, parse, resolve } from 'node:path'
 import { parseEnv } from 'node:util'
-import { parse as rawParseYAML, stringify as stringifyYAML } from 'yaml'
 import {
   AddAModulePropertyToTheConfigOrAddAKnownSchemaError,
   CannotParseConfigFileError,
@@ -20,8 +17,33 @@ import { isFileAccessible } from './file-system.js'
 import { loadModule, splitModuleFromVersion } from './module.js'
 import { kEnvFileFallbackKeys, kMetadata } from './symbols.js'
 
-const { parse: parseJSON5, stringify: rawStringifyJSON5 } = JSON5
-const { parse: parseTOML, stringify: stringifyTOML } = toml
+// The parsers for the non JSON formats are loaded on first use so that
+// importing this module does not pay for formats that are never used.
+const lazyRequire = createRequire(import.meta.url)
+
+function parseJSON5 (...args) {
+  return lazyRequire('json5').parse(...args)
+}
+
+function rawStringifyJSON5 (...args) {
+  return lazyRequire('json5').stringify(...args)
+}
+
+function parseTOML (...args) {
+  return lazyRequire('@iarna/toml').parse(...args)
+}
+
+function stringifyTOML (...args) {
+  return lazyRequire('@iarna/toml').stringify(...args)
+}
+
+function rawParseYAML (...args) {
+  return lazyRequire('yaml').parse(...args)
+}
+
+function stringifyYAML (...args) {
+  return lazyRequire('yaml').stringify(...args)
+}
 
 const kReplaceEnvIgnore = Symbol('plt.foundation.replaceEnvIgnore')
 

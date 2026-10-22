@@ -6,10 +6,13 @@ import {
   deserialize,
   ensureMsgpackr,
   ensureRedis,
+  getCacheFunctionId,
   getConnection,
+  getEntryLifetime,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
   keyFor,
+  loadCacheFunctionsFiles,
   serialize
 } from './valkey-common.js'
 
@@ -22,10 +25,12 @@ export const CACHE_MISS_METRIC = {
   help: 'Next.js Components Cache (Valkey) Miss Count'
 }
 export const MAX_BATCH_SIZE = 100
+export const IMPLICIT_TAG_PREFIX = '_N_T_'
 
 export const sections = {
   values: 'components:values',
-  tags: 'components:tags'
+  tags: 'components:tags',
+  revalidations: 'components:revalidations'
 }
 
 export class CacheHandler {
@@ -35,6 +40,7 @@ export class CacheHandler {
   #prefix
   #subprefix
   #meta
+  #cacheFunctionsFiles
   #maxTTL
   #sections
   #cacheHitMetric
@@ -81,6 +87,10 @@ export class CacheHandler {
 
   async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'cache get')
+
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
 
     const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
 
@@ -143,8 +153,6 @@ export class CacheHandler {
 
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
-
     try {
       // Gather the value
       const chunks = []
@@ -152,18 +160,28 @@ export class CacheHandler {
         chunks.push(chunk)
       }
 
+      if (!isRedisKey && !this.#hasSubprefix()) {
+        return
+      }
+
+      const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, this.#sections.values)
+
       // Compute the parameters to save
+
+      const file = await this.#fileFor(cacheKey)
+
+      let meta = this.#meta
+      if (file) {
+        meta = { ...meta, file }
+      }
+
       const toSerialize = serialize({
         maxTTL: this.#maxTTL,
-        meta: this.#meta,
+        meta,
         value: Buffer.concat(chunks),
         ...data
       })
-      // revalidate === false means "cache forever" in Next.js (SSG/force-static pages).
-      // Use maxTTL as the expiration in that case.
-      const effectiveRevalidate = revalidate === false ? this.#maxTTL : revalidate
-      const effectiveExpire = expireSec === false ? this.#maxTTL : expireSec
-      const expire = Math.min(effectiveRevalidate, effectiveExpire, this.#maxTTL)
+      const expire = Math.min(getEntryLifetime(revalidate, expireSec, this.#maxTTL), this.#maxTTL)
 
       if (expire < 1) {
         return
@@ -193,12 +211,39 @@ export class CacheHandler {
   // This function is not necessary as we don't have a local state to synchronize.
   async refreshTags () {}
 
-  getExpiration (_tags) {
-    // Delegates the check to get method, only when appropriate.
-    return Number.POSITIVE_INFINITY
+  // Next.js calls this with the implicit tags of the current request (the ones revalidatePath()
+  // targets) and discards any entry created before the returned timestamp.
+  async getExpiration (tags) {
+    if (!tags?.length || !this.#hasSubprefix()) {
+      return 0
+    }
+
+    try {
+      const keys = tags.map(tag => this.#keyFor(tag, this.#sections.revalidations))
+      const timestamps = await this.#store.mget(keys)
+
+      let expiration = 0
+      for (const timestamp of timestamps) {
+        if (timestamp) {
+          expiration = Math.max(expiration, Number(timestamp))
+        }
+      }
+
+      return expiration
+    } catch (e) {
+      this.#logger.error(
+        { err: ensureLoggableError(e) },
+        'Cannot read cache tags expiration from Valkey'
+      )
+      return 0
+    }
   }
 
   async updateTags (tags) {
+    if (!this.#hasSubprefix()) {
+      return
+    }
+
     if (typeof tags === 'string') {
       tags = [tags]
     }
@@ -207,6 +252,17 @@ export class CacheHandler {
       const toDelete = new Set()
 
       for (const tag of tags) {
+        // Implicit tags are never attached to entries, so there is nothing to delete.
+        // Record when they were revalidated instead, getExpiration() will check it.
+        if (tag.startsWith(IMPLICIT_TAG_PREFIX)) {
+          if (this.#maxTTL >= 1) {
+            const revalidationKey = this.#keyFor(tag, this.#sections.revalidations)
+            await this.#store.set(revalidationKey, Date.now(), 'EX', this.#maxTTL)
+          }
+
+          continue
+        }
+
         const tagsKey = this.#keyFor(tag, this.#sections.tags)
 
         // For each key in the tag set, expire the key
@@ -254,6 +310,26 @@ export class CacheHandler {
     }
 
     await Promise.all(promises)
+  }
+
+  // The manifest is read once, on the first write
+  async #fileFor (cacheKey) {
+    this.#cacheFunctionsFiles ??= loadCacheFunctionsFiles().catch(e => {
+      this.#logger.error(
+        { err: ensureLoggableError(e) },
+        'Cannot read the server references manifest'
+      )
+      return new Map()
+    })
+
+    const files = await this.#cacheFunctionsFiles
+    return files.get(getCacheFunctionId(cacheKey))
+  }
+
+  // During a build, the subprefix is only known once Next.js writes the build ID
+  #hasSubprefix () {
+    this.#subprefix ??= getPlatformaticSubprefix()
+    return this.#subprefix !== null
   }
 
   #keyFor (key, section) {

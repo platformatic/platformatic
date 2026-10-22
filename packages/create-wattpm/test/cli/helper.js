@@ -65,7 +65,7 @@ export async function executeCreatePlatformatic (dir, options = {}) {
   }
 
   if (pkgManager === 'pnpm') {
-    execaOptions.env.npm_config_user_agent = 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64'
+    execaOptions.env.npm_config_user_agent = 'pnpm/12.9.1 npm/? node/? linux x64'
   }
 
   const child = execa(

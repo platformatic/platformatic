@@ -86,3 +86,35 @@ export const features = {
     }
   }
 }
+
+/*
+  Node.js only writes the module compile cache to disk when the process, or the worker thread that
+  populated it, terminates. Processes are often killed abruptly (SIGKILL, OOM killer, container
+  eviction), which discards the cache accumulated while booting and makes the next start pay the
+  full compilation cost again.
+
+  Flushing explicitly once the boot is complete, when most modules have been loaded, makes the cache
+  durable. Repeated flushes are cheap as Node.js skips the entries which have already been persisted.
+*/
+export function scheduleCompileCacheFlush (logger) {
+  // Defer the flush so that it never delays the caller.
+  setImmediate(async () => {
+    try {
+      const { flushCompileCache } = await import('node:module')
+
+      // flushCompileCache is available on Node.js 22.10.0+ and it is a no-op when the compile cache
+      // has not been enabled.
+      if (typeof flushCompileCache !== 'function') {
+        return
+      }
+
+      const start = process.hrtime.bigint()
+      flushCompileCache()
+      const duration = Number(process.hrtime.bigint() - start) / 1e6
+
+      logger?.debug({ duration }, 'Module compile cache flushed')
+    } catch (err) {
+      logger?.warn({ err }, 'Error flushing module compile cache')
+    }
+  })
+}

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-core",
-  "version": "3.68.0",
+  "version": "3.74.0",
   "description": "Platformatic DB core",
   "main": "index.js",
   "type": "module",
@@ -20,10 +20,10 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "fastify": "^5.0.0",
-    "neostandard": "^0.12.0",
+    "neostandard": "^0.14.0",
     "typescript": "~6.0.3",
     "why-is-node-running": "^2.2.2"
   },

@@ -62,6 +62,18 @@ export async function setCacheSettings (root, settings) {
   await saveConfigurationFile(resolve(root, 'services/frontend/platformatic.json'), config)
 }
 
+export function withValkeyUser (url, username = valkeyUser) {
+  const parsed = new URL(url)
+
+  // An empty host (i.e. "valkey://") means localhost, but a URL with credentials must have one
+  if (!parsed.hostname) {
+    parsed.hostname = 'localhost'
+  }
+
+  parsed.username = username
+  return parsed.toString()
+}
+
 export async function getValkeyUrl (root) {
   return (await getCacheSettings(root)).url
 }

@@ -9,7 +9,7 @@ Platformatic is an open-source Node.js application platform for building APIs wi
 ## Prerequisites
 
 - **Node.js**: Version 22.19 or higher
-- **pnpm**: Package manager (follow the [pnpm installation guide](https://pnpm.io/installation))
+- **pnpm**: Version 12.9.1, pinned in `package.json` (follow the [pnpm installation guide](https://pnpm.io/installation))
 - **Docker** (optional): Only required for running Platformatic DB tests with PostgreSQL, MySQL, and MariaDB ([Docker Desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima))
 
 ## Getting Started
@@ -32,6 +32,7 @@ pnpm install
 To use `platformatic`, `plt`, and `watt` commands globally during development:
 
 ```bash
+pnpm setup # Ensure the pnpm global bin directory is on PATH
 pnpm run global-links
 ```
 
@@ -74,8 +75,8 @@ pnpm run gen-schema    # Generate JSON schemas
 pnpm run gen-types     # Generate TypeScript types
 
 # Cleanup commands
-pnpm clean             # Clean node_modules in all packages
-pnpm cleanall          # Clean everything including lockfile
+pnpm run clean         # Clean node_modules in all packages
+pnpm run cleanall      # Clean everything including lockfile
 
 # Testing individual packages
 cd packages/<package-name>
@@ -104,7 +105,7 @@ If tests fail without code changes:
 
 1. Clean the environment:
 ```bash
-pnpm cleanall
+pnpm run cleanall
 ```
 
 2. Clear pnpm store and reinstall:
@@ -171,6 +172,7 @@ To test your local changes with a new app:
 
 1. Ensure CLI tools are linked globally:
 ```bash
+pnpm setup # Ensure the pnpm global bin directory is on PATH
 pnpm run global-links
 ```
 

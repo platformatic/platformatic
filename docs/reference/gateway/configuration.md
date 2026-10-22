@@ -289,6 +289,12 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the applications. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
 
+- **`restartOnApplicationChange`** (`boolean`) - Whether to restart the Gateway when an application is added to or removed from the Runtime, so it can recompose its routes. Default is `true`, and that is what you want for a Gateway that proxies applications registered in the Runtime.
+
+  Set it to `false` only for a Gateway that does **not** route from the application registry — one that resolves its upstreams some other way, such as from shared state written by a Runtime extension. Restarting an application replaces its workers one at a time: with two or more workers and `SO_REUSEPORT` the listening socket survives, but with a single worker (the default, and the only option where `SO_REUSEPORT` is unavailable) the Runtime has no open port until the replacement worker has booted. For a Gateway that has nothing to recompose, that window is pure downtime.
+
+  Opting out means a newly added application is **not** proxied until the Gateway is restarted by something else. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
+
 - **`addEmptySchema`** (`boolean`) - Deprecated, it no longer has any effect. Responses which declare no body - a `204`, a `304`, or any other status code whose response object has no `content` - always keep their status code in the composed OpenAPI specification, and are documented without a body.
 
 - **`handler`** (`string`) - Path to a JavaScript or TypeScript module that exports a custom proxy handler, either as `handler` or as the default export. The handler receives `(request, reply, dest, options)`, where `dest` is the rewritten proxy destination and `options` are the reply options passed to `reply.from()`. By default, proxied requests call `reply.from(dest, options)`; use this option to customize that behavior.

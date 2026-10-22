@@ -12,6 +12,10 @@
     {
       "id": "app-a",
       "path": "./applications/app-a"
+    },
+    {
+      "id": "app-b",
+      "path": "./applications/app-b"
     }
   ],
   "server": {

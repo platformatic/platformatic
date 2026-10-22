@@ -496,7 +496,7 @@ export class BaseCapability extends EventEmitter {
   }
 
   async buildWithCommand (command, basePath, opts = {}) {
-    const { loader, scripts, context, disableChildManager } = opts
+    const { loader, loaderOptions, scripts, context, disableChildManager } = opts
     const displayCommand = Array.isArray(command) ? command.join(' ') : command
 
     this.logger.debug(`Executing "${displayCommand}" ...`)
@@ -507,6 +507,7 @@ export class BaseCapability extends EventEmitter {
       : new ChildManager({
         logger: this.logger,
         loader,
+        loaderOptions,
         scripts,
         context: { ...baseContext, isBuilding: true, ...context }
       })
@@ -529,7 +530,7 @@ export class BaseCapability extends EventEmitter {
     }
   }
 
-  async startWithCommand (command, loader, scripts, { urlFromScript = false } = {}) {
+  async startWithCommand (command, loader, scripts, { urlFromScript = false, loaderOptions } = {}) {
     const config = this.config
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
@@ -537,6 +538,7 @@ export class BaseCapability extends EventEmitter {
     this.childManager = new ChildManager({
       logger: this.logger,
       loader,
+      loaderOptions,
       context,
       scripts,
       urlFromScript

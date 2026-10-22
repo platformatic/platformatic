@@ -3,7 +3,8 @@ export default async function (app, options) {
     return {
       resolvedBaseUrl: options.resolvedBaseUrl,
       resolvedClientId: options.resolvedClientId,
-      cacheUrl: options.cacheUrl
+      cacheUrl: options.cacheUrl,
+      peerUrl: options.peerUrl
     }
   })
 }

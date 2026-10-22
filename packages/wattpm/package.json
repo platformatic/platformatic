@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "3.68.0",
+  "version": "3.74.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -15,10 +15,12 @@
   },
   "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start",
   "scripts": {
+    "pretest": "node scripts/copy-skills.js",
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "npm run gen-schema && npm run gen-types",
+    "build": "npm run gen-schema && npm run gen-types && node scripts/copy-skills.js",
+    "prepack": "node scripts/copy-skills.js",
     "prepublishOnly": "npm run build",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
@@ -31,9 +33,11 @@
     "bin",
     "index.js",
     "schema.json",
-    "lib"
+    "lib",
+    "skills"
   ],
   "dependencies": {
+    "@fastify/error": "^4.0.0",
     "@fastify/websocket": "^11.0.0",
     "@platformatic/control": "workspace:*",
     "@platformatic/foundation": "workspace:*",
@@ -46,13 +50,13 @@
   },
   "devDependencies": {
     "@platformatic/node": "workspace:*",
-    "cleaner-spec-reporter": "^0.5.0",
+    "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "execa": "^9.4.0",
     "fastify": "^5.0.0",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",
-    "neostandard": "^0.12.0",
+    "neostandard": "^0.14.0",
     "typescript": "~6.0.3",
     "undici": "^7.27.2"
   },
