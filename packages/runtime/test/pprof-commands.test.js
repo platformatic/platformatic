@@ -231,11 +231,11 @@ test('runtime errors if wattpm-pprof-capture is not loaded (stop)', async t => {
 
 for (const applicationModules of [undefined, ['application-package'], []]) {
   test(`profiling inherits dependency source maps with application setting ${JSON.stringify(applicationModules)}`, async t => {
-    const configFile = join(fixturesDir, 'configs', 'monorepo-workers.json')
+    const configFile = join(fixturesDir, 'configs', 'monorepo-workers', 'watt.config.mjs')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config.nodeModulesSourceMaps = ['runtime-package']
-        config.autoload.mappings.serviceAppWithLogger.nodeModulesSourceMaps = applicationModules
+        config.applications.find(application => application.id === 'with-logger').nodeModulesSourceMaps = applicationModules
         return transform(config, ...args)
       }
     })

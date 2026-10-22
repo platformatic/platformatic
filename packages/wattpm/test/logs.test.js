@@ -142,11 +142,11 @@ test('logs - should stream runtime logs filtering by application', async t => {
 })
 
 test('logs - should stream runtime logs from a custom socket', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const socketPath =
     platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : resolve(rootDir, 'custom.sock')
 
-  await updateConfigFile(resolve(rootDir, 'watt.json'), config => {
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
     config.managementApi = { socket: socketPath }
     return config
   })
@@ -158,7 +158,11 @@ test('logs - should stream runtime logs from a custom socket', async t => {
   })
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg === 'Runtime event' && parsed.event === 'init') {
       break
