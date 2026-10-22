@@ -1,4 +1,5 @@
-import { deepEqual, deepStrictEqual } from 'node:assert'
+import { validate } from '@platformatic/foundation'
+import { deepEqual, deepStrictEqual, throws } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -17,4 +18,17 @@ test('root schema file', async t => {
   const rootSchema = JSON.parse(schemaFile)
 
   deepEqual(rootSchema, schema)
+})
+
+test('server accepts keepAliveTimeout and headersTimeout', async t => {
+  const config = {
+    entrypoint: 'main',
+    applications: [],
+    server: { port: 3000, keepAliveTimeout: 65000, headersTimeout: 66000 }
+  }
+
+  validate(schema, config)
+  deepStrictEqual(config.server, { port: 3000, keepAliveTimeout: 65000, headersTimeout: 66000 })
+
+  throws(() => validate(schema, { ...config, server: { keepAliveTimeout: -1 } }), /must be >= 0/)
 })

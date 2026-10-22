@@ -5,6 +5,7 @@ import {
   buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
+  buildServerListenerOptions,
   createServerListener,
   ensureTrailingSlash,
   errors,
@@ -198,7 +199,7 @@ export class AstroCapability extends BaseCapability {
     }
 
     // Prepare options
-    const { hostname, port, https, backlog } = this.serverConfig ?? {}
+    const { hostname, port, https } = this.serverConfig ?? {}
     const httpsOptions = await sanitizeHTTPSOptions(https)
     const configFile = config.astro.configFile // Note: Astro expect this to be a relative path to the root
 
@@ -212,7 +213,7 @@ export class AstroCapability extends BaseCapability {
     const serverPromise = createServerListener(
       (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
       (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-      typeof backlog === 'number' ? { backlog } : {}
+      buildServerListenerOptions(this.serverConfig)
     )
     const { dev } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
@@ -276,8 +277,9 @@ export class AstroCapability extends BaseCapability {
       const serverOptions = this.serverConfig
       const listenOptions = buildListenOptions(serverOptions)
 
-      if (typeof serverOptions?.backlog === 'number') {
-        createServerListener(false, false, { backlog: serverOptions.backlog })
+      const listenerOptions = buildServerListenerOptions(serverOptions)
+      if (Object.keys(listenerOptions).length > 0) {
+        createServerListener(false, false, listenerOptions)
       }
 
       await this.#app.listen(listenOptions)
