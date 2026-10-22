@@ -16,10 +16,9 @@ test('skill - prints the complete source outside a Watt project without logger o
   strictEqual(result.stderr, '')
 })
 
-test('skill - reads every bundled reference', async () => {
-  const files = await readdir(resolve(sourceDirectory, 'references'), { recursive: true })
-  for (const name of files.filter(file => file.endsWith('.md'))) {
-    const file = `references/${name}`
+test('skill - reads every bundled Markdown document verbatim', async () => {
+  const files = await readdir(sourceDirectory, { recursive: true })
+  for (const file of files.filter(file => file.endsWith('.md'))) {
     strictEqual(await readSkillFile(file), await readFile(resolve(sourceDirectory, file), 'utf-8'))
   }
 
@@ -72,14 +71,16 @@ test('skill - validates symlink targets and rejects directories named as Markdow
   strictEqual(await readSkillFile('test-skill-paths/inside.md'), await readSkillFile())
 })
 
-test('skill - reports missing files and extra arguments as CLI failures', async () => {
-  const missing = await wattpm('skill', 'missing.md', { reject: false })
-  strictEqual(missing.exitCode, 1)
-  ok(missing.stdout.includes('PLT_SKILL_FILE_NOT_FOUND'))
-
-  const extra = await wattpm('skill', 'SKILL.md', 'other.md', { reject: false })
-  strictEqual(extra.exitCode, 1)
-  ok(extra.stdout.includes('PLT_INVALID_SKILL_FILE'))
+test('skill - CLI failures expose stable error codes', async () => {
+  for (const [args, code] of [
+    [['missing.md'], 'PLT_SKILL_FILE_NOT_FOUND'],
+    [['../README.md'], 'PLT_INVALID_SKILL_FILE'],
+    [['SKILL.md', 'other.md'], 'PLT_INVALID_SKILL_FILE']
+  ]) {
+    const result = await wattpm('skill', ...args, { reject: false })
+    strictEqual(result.exitCode, 1)
+    ok(result.stdout.includes(code))
+  }
 })
 
 test('skill - exposes command help and replaces scaffolding commands', async () => {
