@@ -125,7 +125,7 @@ The returned `client` is `@platformatic/prom-client`, which is API-compatible wi
 
 | Getter | Description |
 | --- | --- |
-| `getMessaging(options?)` | Returns the messaging API with `send`, `notify`, and `handle` methods. |
+| `getMessaging(options?)` | Returns the messaging API with `send`, `notify`, `handle`, `getWorkers`, `getWorkerForAffinity`, and `onWorkersChange` methods. |
 | `getSharedContext(options?)` | Returns the shared context API with `get` and `update` methods. Context is shared between all runtime applications. |
 | `getManagement(options?)` | Returns the management API object when management is enabled for the application. |
 | `getITC(options?)` | Returns the low-level ITC API used for internal thread communication. This helper is intended for advanced integrations and Platformatic internals. |
@@ -160,8 +160,11 @@ The messaging API contains the following functions:
 | --- | --- |
 | `handle(message, handler)` | Registers a handler for the specified message. |
 | `handle(handlers)` | Registers multiple handlers from an object where each key is the message name. |
-| `send(application, message, data?, options?)` | Sends a message to one worker of an application using a round-robin algorithm and waits for the handler response. |
+| `send(application, message, data?, options?)` | Sends a message to one worker of an application and waits for the handler response. Workers are selected using a round-robin algorithm, unless `options.affinity` is set. |
 | `notify(application, message, data?, options?)` | Notifies all workers of an application and does not wait for a response. |
+| `getWorkers(application?)` | Returns the started workers of an application, or an object with the workers of every application when called without arguments. |
+| `getWorkerForAffinity(application, affinity)` | Returns the worker that receives the messages sent to the application with the given affinity key, or `null` if the application has no workers. |
+| `onWorkersChange(listener)` | Invokes `listener` with the workers of every application each time the list of workers changes. Returns a function that removes the listener. |
 
 `send()` uses a 30 second timeout by default. Configure the timeout with the runtime [`messagingTimeout`](./configuration.md#messagingtimeout) option.
 
@@ -175,6 +178,59 @@ const messaging = getMessaging()
 const { port1 } = new MessageChannel()
 
 await messaging.send('service', 'connect', { port: port1 }, { transferList: [port1] })
+```
+
+#### Worker affinity
+
+By default, consecutive `send()` calls are distributed across the workers of the target application.
+Set the `affinity` option to a non-empty string to always route messages with the same key to the same worker,
+for instance to keep the state of an entity in a single worker:
+
+```js
+import { getMessaging } from '@platformatic/globals'
+
+const messaging = getMessaging()
+
+// All messages for the same cart reach the same worker of the "carts" application
+await messaging.send('carts', 'addItem', { cart: 'cart-42', item: 'book' }, { affinity: 'cart-42' })
+```
+
+Workers are selected using [rendezvous hashing](https://en.wikipedia.org/wiki/Rendezvous_hashing) of the key over the
+started workers of the target application. Every thread selects the same worker for the same key. When a worker
+is added, removed, or restarted, only the keys of that worker move to a different worker. A restarted worker has
+a new identifier, so its keys are redistributed.
+
+Each worker receives a description with the following properties:
+
+| Property | Description |
+| --- | --- |
+| `id` | Unique identifier of the worker, in the form `<application>:<index>`. |
+| `application` | The application ID. |
+| `worker` | The worker index, which is also the value of [`getWorkerId()`](#application-context-getters) in that worker. |
+| `thread` | The worker thread ID. |
+
+A worker can find out whether it is responsible for a key, and react when keys move, by combining
+`getWorkerForAffinity()` and `onWorkersChange()`:
+
+```js
+import { getApplicationId, getMessaging, getWorkerId } from '@platformatic/globals'
+
+const messaging = getMessaging()
+const application = getApplicationId()
+const workerId = getWorkerId()
+
+function isOwner (key) {
+  return messaging.getWorkerForAffinity(application, key)?.worker === workerId
+}
+
+messaging.onWorkersChange(() => {
+  for (const key of localState.keys()) {
+    if (!isOwner(key)) {
+      // The key now belongs to another worker: release the local state
+      localState.delete(key)
+    }
+  }
+})
 ```
 
 ### Communicating with runtime extensions

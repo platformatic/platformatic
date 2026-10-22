@@ -2,6 +2,7 @@ import { type TracerProvider } from '@opentelemetry/api'
 import * as Client from '@platformatic/prom-client'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { type EventEmitter } from 'node:events'
+import { type TransferListItem } from 'node:worker_threads'
 import { type Level, type Logger } from 'pino'
 
 export type Handler = (data: any, context?: Record<string, any>) => any | Promise<any>
@@ -48,11 +49,31 @@ export interface ITC {
   close (): void
 }
 
+export interface MessagingWorker {
+  /** Unique worker identifier, in the form `<application>:<index>`. */
+  id: string
+  application: string
+  /** The worker index, as returned by `getWorkerId()` in the worker itself. */
+  worker: number
+  thread: number
+}
+
+export interface MessagingSendOptions {
+  /** Routes the message to the worker owning this key, instead of using round-robin. */
+  affinity?: string
+  transferList?: TransferListItem[]
+  [key: string]: any
+}
+
 export interface MessagingApi {
-  send (name: string, message: string, data?: any, options?: Record<string, any>): Promise<any>
+  send (name: string, message: string, data?: any, options?: MessagingSendOptions): Promise<any>
   notify (name: string, message: string, data?: any, options?: Record<string, any>): void
   handle (message: string, handler: Handler): void
   handle (handlers: Record<string, Handler>): void
+  getWorkers (): Record<string, MessagingWorker[]>
+  getWorkers (application: string): MessagingWorker[]
+  getWorkerForAffinity (application: string, affinity: string): MessagingWorker | null
+  onWorkersChange (listener: (workers: Record<string, MessagingWorker[]>) => void): () => void
 }
 
 export interface PlatformaticEvents extends EventEmitter {
