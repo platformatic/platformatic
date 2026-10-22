@@ -81,8 +81,10 @@ test('should increment and decrement activeWsConnections metric', async t => {
 
   async function getActiveConnections () {
     const metrics = await prometheusRegistry.metrics()
-    const match = metrics.match(/^active_ws_gateway_connections(?:\{[^}]*\})?\s+(\d+)$/m)
-    return match ? parseInt(match[1]) : 0
+    // -? is deliberate: a gauge that has drifted below zero has to fail this
+    // test, not slip past a \d+ pattern that simply does not match and reads 0.
+    const match = metrics.match(/^active_ws_gateway_connections(?:\{[^}]*\})?\s+(-?[\d.]+)$/m)
+    return match ? Number(match[1]) : null
   }
 
   // The gauge is updated when the upstream socket closes, which happens after the
@@ -124,11 +126,15 @@ test('should increment and decrement activeWsConnections metric', async t => {
   client1.close()
   await once(client1, 'close')
   assert.equal(await waitForActiveConnections(1), 1)
+  await sleep(500)
+  assert.equal(await getActiveConnections(), 1)
 
   // Test: Close second connection, should decrement to 0
   client2.close()
   await once(client2, 'close')
   assert.equal(await waitForActiveConnections(0), 0)
+  await sleep(500)
+  assert.equal(await getActiveConnections(), 0)
 
   await gateway.close()
   updateGlobals({ prometheus: initPromClient })

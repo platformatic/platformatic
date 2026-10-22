@@ -3,7 +3,21 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/__fixtures__/**",
+    "**/fixtures/**"
+  ],
   "rangeStrategy": "update-lockfile",
+  // Mirrors pnpm-workspace.yaml `minimumReleaseAge: 1440` (1440 minutes = 1 day).
+  // Security updates bypass this check regardless.
+  "minimumReleaseAge": "1 day",
   "ignoreDeps": [
     "camelcase",
     "inquirer",
@@ -13,8 +27,14 @@
     "ora",
     "graphiql"
   ],
-  "prHourlyLimit": 1,
+  "prHourlyLimit": 3,
+  "prConcurrentLimit": 10,
   "packageRules": [
+    {
+      // Matches pnpm-workspace.yaml `minimumReleaseAgeExclude: - '@platformatic/*'`
+      "matchPackageNames": ["@platformatic/*"],
+      "minimumReleaseAge": null
+    },
     {
       "matchUpdateTypes": [
         "minor",
@@ -23,6 +43,14 @@
         "digest"
       ],
       "automerge": true
+    },
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch"
     },
     {
       "matchPackageNames": ["@opentelemetry/**"],
@@ -36,7 +64,7 @@
   },
   "timezone": "Europe/Rome",
   "schedule": [
-    "* 0-6 * * 6,0"
+    "* 0-6 * * *"
   ],
   "rebaseWhen": "conflicted"
 }

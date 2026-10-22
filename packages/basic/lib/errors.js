@@ -21,10 +21,22 @@ export const CapabilityFactoryOptionsRequiredError = createError(
   'defineCapabilityFactory requires the capability module name as its first argument.'
 )
 
-export const UnsupportedVersion = createError(
+const UnsupportedVersionError = createError(
   `${ERROR_PREFIX}_UNSUPPORTED_VERSION`,
   '%s version %s is not supported. Please use version %s.'
 )
+
+// Supported versions can be a list of ranges, which would otherwise be printed as an array literal
+export function UnsupportedVersion (name, version, supportedVersions) {
+  if (Array.isArray(supportedVersions)) {
+    supportedVersions = new Intl.ListFormat('en', { type: 'disjunction' }).format(supportedVersions)
+  }
+
+  return new UnsupportedVersionError(name, version, supportedVersions)
+}
+
+// Keep instanceof checks working when the error is created via new UnsupportedVersion()
+UnsupportedVersion.prototype = UnsupportedVersionError.prototype
 
 export const NonZeroExitCode = createError(
   `${ERROR_PREFIX}_NON_ZERO_EXIT_CODE`,

@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { createRequire, register } from 'node:module'
+import { createRequire } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -13,6 +13,7 @@ import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 import { exitCodes } from '../errors.js'
 import { ensureFileUrl, importFile } from '../utils.js'
+import { registerLoader } from './loader.js'
 
 export const isWindows = platform() === 'win32'
 
@@ -43,6 +44,7 @@ export function getSocketPath (id) {
 export class ChildManager extends ITC {
   #id
   #loader
+  #loaderOptions
   #context
   #scripts
   #urlFromScript
@@ -59,7 +61,7 @@ export class ChildManager extends ITC {
   #dataPath
 
   constructor (opts) {
-    let { loader, context, scripts, urlFromScript, handlers, ...itcOpts } = opts
+    let { loader, loaderOptions, context, scripts, urlFromScript, handlers, ...itcOpts } = opts
 
     context ??= {}
     scripts ??= []
@@ -72,6 +74,7 @@ export class ChildManager extends ITC {
 
     this.#id = generateChildrenId(context)
     this.#loader = loader
+    this.#loaderOptions = loaderOptions
     this.#context = context
     this.#scripts = scripts
     this.#urlFromScript = urlFromScript
@@ -156,6 +159,7 @@ export class ChildManager extends ITC {
         {
           data: this.#context,
           loader: ensureFileUrl(this.#loader),
+          loaderOptions: this.#loaderOptions,
           scripts: this.#scripts.map(s => ensureFileUrl(s)),
           urlFromScript: this.#urlFromScript
         },
@@ -213,7 +217,7 @@ export class ChildManager extends ITC {
 
   async register () {
     updateGlobals(this.#context)
-    register(this.#loader, { data: this.#context })
+    await registerLoader(this.#loader, this.#context, this.#loaderOptions)
 
     for (const script of this.#scripts) {
       await importFile(script)

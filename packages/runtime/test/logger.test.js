@@ -318,7 +318,7 @@ test('should handle logs from thread applications as they are with captureStdio:
   )
 })
 
-test('should use base and messageKey options', async t => {
+test('should use base and messageKey options with an explicit default pino message key', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-options-base-message-key', 'watt.config.js')
 
   let responses = 0
@@ -349,6 +349,7 @@ test('should use base and messageKey options', async t => {
       )
     })
   )
+  ok(logs.some(log => log.stdout?.theMessage === 'call route / on service'))
 })
 
 test('should use configured pino message key to detect thread application logs', async t => {
@@ -385,7 +386,75 @@ test('should use configured pino message key to detect thread application logs',
   )
 })
 
-test('should use configured pino keys to detect thread application logs', async t => {
+test('should inherit output keys when detecting runtime, worker and application logs', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-output-keys', 'watt.config.js')
+  let responses = 0
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/service/' })
+      await requestAndDump(url, { path: '/node/' })
+    },
+    done: message => {
+      if (message.includes('call route / on service') || message.includes('call route / on node')) {
+        responses++
+      }
+      return responses > 1
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  for (const message of ['Using the worker environment resolved by the loader.', 'call route / on service', 'call route / on node']) {
+    const log = logs.find(log => log.message === message)
+    ok(log, message)
+    ok(!log.stdout)
+    deepStrictEqual(log.severity, 20)
+    deepStrictEqual(new Date(log.timestamp).toISOString(), log.timestamp)
+    ok(!Object.hasOwn(log, 'time'))
+    ok(!Object.hasOwn(log, 'level'))
+  }
+  ok(logs.some(log => log.message?.startsWith('Started the worker') && log.severity === 30))
+})
+
+for (const fixture of ['logger-options-base-message-key', 'logger-options-null-base']) {
+  test(`should omit missing PIDs in pretty logs with ${fixture}`, async () => {
+    const configPath = join(import.meta.dirname, '..', 'fixtures', fixture, 'watt.config.js')
+    const { stdout } = await execRuntime({
+      configPath,
+      env: { FORCE_TTY: 'true', PLT_PRETTY_PRINT: 'true', NO_COLOR: 'true' },
+      done: message => message.includes('Platformatic is now listening at')
+    })
+    const output = stdout.join('')
+
+    ok(output.includes('INFO'))
+    ok(!output.includes('(undefined)'))
+    ok(!output.includes('(null)'))
+    const listeningLine = output.split('\n').find(line => line.includes('Platformatic is now listening at'))
+    ok(!/\(\d+\)/.test(listeningLine))
+  })
+}
+
+test('should pretty print custom output keys', async t => {
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-output-keys', 'watt.config.js')
+  const { stdout } = await execRuntime({
+    configPath,
+    env: { FORCE_TTY: 'true', PLT_PRETTY_PRINT: 'true', NO_COLOR: 'true' },
+    onReady: async ({ url }) => {
+      await requestAndDump(url, { path: '/node/' })
+    },
+    done: message => message.includes('call route / on node')
+  })
+
+  const output = stdout.join('')
+  ok(output.includes('INFO'))
+  ok(output.includes('call route / on node'))
+  ok(output.includes('node:0'))
+  ok(/\[\d{2}:\d{2}:\d{2}\.\d+\]/.test(output))
+  ok(!output.includes('stdout:'))
+  ok(!output.includes('severity:'))
+})
+
+test('should prefer explicit pino keys over output keys when detecting thread application logs', async t => {
   const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-custom-pino-keys', 'watt.config.js')
 
   let requested = false
@@ -400,6 +469,8 @@ test('should use configured pino keys to detect thread application logs', async 
     }
   })
   const logs = stdioOutputToLogs(stdout)
+
+  ok(logs.some(log => log.outputMessage?.startsWith('Started the worker') && log.outputLevel === 30 && typeof log.outputTime === 'number'))
 
   ok(
     logs.find(log => {
@@ -664,7 +735,7 @@ test('should inherit logger level from runtime when node app does not specify lo
 })
 
 test('should support additional pino options and inherit them in the applications', async t => {
-  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-pino-options', 'platformatic.json')
+  const configPath = join(import.meta.dirname, '..', 'fixtures', 'logger-pino-options', 'watt.config.mjs')
 
   let requested = false
   const { stdout } = await execRuntime({

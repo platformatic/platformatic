@@ -168,6 +168,11 @@ function startProfiler (type, state, options) {
     // Add sourceMapper if enabled and available for transpiled source resolution
     if (state.sourceMapsEnabled && sourceMapper) {
       profilerOptions.sourceMapper = sourceMapper
+
+      // With line numbers the locations are the sampled lines rather than the
+      // beginning of the functions: a source map would resolve the name of
+      // the identifier at that position instead of the name of the function
+      profilerOptions.lineNumbers = false
     }
 
     profiler.start(profilerOptions)

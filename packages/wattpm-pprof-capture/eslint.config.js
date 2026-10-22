@@ -1,5 +1,7 @@
+import { globalIgnores } from 'eslint/config'
 import neostandard from 'neostandard'
 
-export default neostandard({
-  ignores: ['test/fixtures/**/dist/**']
-})
+export default [
+  ...neostandard(),
+  globalIgnores(['test/fixtures/**/dist/**'])
+]

@@ -48,11 +48,9 @@ test('configure telemetry correctly with a node app', async t => {
 
   const [span] = spans
   equal(span.kind, SpanKind.SERVER)
-  // these asserts will fail when this will be fixed
-  // https://github.com/open-telemetry/opentelemetry-js/issues/5103
-  equal(span.attributes['http.method'], 'GET')
-  equal(span.attributes['http.scheme'], 'http')
-  equal(span.attributes['http.target'], '/test')
+  equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['url.scheme'], 'http')
+  equal(span.attributes['url.path'], '/test')
 
   const resourceAttributes = getAttributesForResource(span.resource)
   deepEqual(resourceAttributes['service.name'], 'test-service-api')
@@ -75,11 +73,9 @@ test('configure telemetry correctly with a express app', async t => {
 
   const [span] = spans
   equal(span.kind, SpanKind.SERVER)
-  // these asserts will fail when this will be fixed
-  // https://github.com/open-telemetry/opentelemetry-js/issues/5103
-  equal(span.attributes['http.method'], 'GET')
-  equal(span.attributes['http.scheme'], 'http')
-  equal(span.attributes['http.target'], '/test')
+  equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['url.scheme'], 'http')
+  equal(span.attributes['url.path'], '/test')
 
   const resourceAttributes = getAttributesForResource(span.resource)
   deepEqual(resourceAttributes['service.name'], 'test-service-api')
@@ -210,6 +206,29 @@ test('configure telemetry correctly with a gateway + node + fastify', async t =>
 
   equal(spanNodeServer.traceId, traceId)
   equal(spanNodeServer.parentSpanContext.spanId, spanFastifyClient.id)
+})
+
+// The mesh hooks trace the calls between applications, so the undici instrumentation must not trace them again
+test('creates a single client span for a call between applications', async t => {
+  const app = await createRuntime(t, 'composer-node-fastify', false, true, 'watt.config.mjs')
+  const { url, root } = app
+
+  const { statusCode } = await request(`${url}/fastify/node`, {
+    method: 'GET'
+  })
+  equal(statusCode, 200)
+  await sleep(500)
+  const spans = await getSpans(join(root, 'spans.log'))
+
+  const clientSpans = spans.filter(span => {
+    return span.kind === SpanKind.CLIENT && span.attributes['url.full'] === 'http://node.plt.local/'
+  })
+  equal(clientSpans.length, 1)
+
+  const spanNodeServer = spans.find(span => {
+    return span.kind === SpanKind.SERVER && containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-node')
+  })
+  equal(spanNodeServer.parentSpanContext.spanId, clientSpans[0].id)
 })
 
 test('configure telemetry correctly with a gateway + next', async t => {

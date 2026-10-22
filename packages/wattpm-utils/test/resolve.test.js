@@ -2,7 +2,7 @@ import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { copyFile, readFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { test } from 'node:test'
 import { prepareFixture, prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
@@ -68,7 +68,7 @@ test('resolve - should do nothing when the directory already exists inside the r
   ok(!resolveProcess.stdout.includes('Installing dependencies for the application resolved using npm ...'))
 })
 
-test('resolve - should do nothing when loaded vian application file', async t => {
+test('resolve - should do nothing when loaded via an application file', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const repo = await prepareGitRepository(t, rootDir)
   t.after(() => safeRemove(rootDir))
@@ -76,6 +76,9 @@ test('resolve - should do nothing when loaded vian application file', async t =>
   // The root is gone, so web/main's own configuration is the only one there is: a standalone
   // application, which resolve has nothing to do for.
   await safeRemove(resolve(rootDir, 'watt.config.mjs'))
+
+  // The application becomes the project root, so keep dependency installation in dry-run mode there too.
+  await copyFile(resolve(rootDir, '.npmrc'), resolve(rootDir, 'web/main/.npmrc'))
 
   changeWorkingDirectory(t, resolve(rootDir, 'web/main'))
   const resolveProcess = await wattpmUtils('resolve', resolve(rootDir, 'web/main'))

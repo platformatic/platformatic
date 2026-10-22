@@ -7,6 +7,9 @@ export default {
   managementApi: false,
   logger: {
     level: 'debug',
+    levelKey: 'outputLevel',
+    timestampKey: 'outputTime',
+    messageKey: 'outputMessage',
     pino: {
       level: 'severity',
       time: 'timestamp',

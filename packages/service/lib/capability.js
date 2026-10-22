@@ -9,6 +9,7 @@ import {
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  setPinoLogKeys,
   deepmerge,
   isKeyEnabled,
   sanitizeHTTPSOptions
@@ -288,9 +289,10 @@ export class ServiceCapability extends BaseCapability {
     if (this.loggerConfig?.formatters) {
       pinoOptions.formatters = buildPinoFormatters(this.loggerConfig?.formatters)
     }
-    if (this.loggerConfig?.timestamp) {
-      pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig?.timestamp)
+    if (this.loggerConfig?.timestamp || this.loggerConfig?.timestampKey !== undefined) {
+      pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig.timestamp, this.loggerConfig.timestampKey)
     }
+    setPinoLogKeys(pinoOptions)
 
     if (this.loggerConfig.openTelemetryExporter && this.tracingConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)

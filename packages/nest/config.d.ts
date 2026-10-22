@@ -155,6 +155,14 @@ export interface AppLoggerOptions {
     [k: string]: unknown;
   } | null;
   messageKey?: string;
+  /**
+   * The key used for the timestamp in emitted logs. Defaults to time.
+   */
+  timestampKey?: string;
+  /**
+   * The key used for the level in emitted logs. Defaults to level.
+   */
+  levelKey?: string;
   customLevels?: {
     [k: string]: unknown;
   };
@@ -350,6 +358,14 @@ export interface AppLoggerOptions1 {
     [k: string]: unknown;
   } | null;
   messageKey?: string;
+  /**
+   * The key used for the timestamp in emitted logs. Defaults to time.
+   */
+  timestampKey?: string;
+  /**
+   * The key used for the level in emitted logs. Defaults to level.
+   */
+  levelKey?: string;
   customLevels?: {
     [k: string]: unknown;
   };

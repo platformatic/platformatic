@@ -41,18 +41,18 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
-      - uses: 'nick-fields/retry@v3.0.2'
+      - uses: 'nick-fields/retry@v4.0.0'
         with:
           max_attempts: 10
           timeout_minutes: 15
           retry_on: error
-          command: pnpm fetch --ignore-scripts
+          command: pnpm fetch
 
   dependency-check:
     name: 'dependency-check - ${{ matrix.os }} - ${{ matrix.node }}'
@@ -66,9 +66,9 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
@@ -92,14 +92,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -124,14 +124,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -147,16 +147,16 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
       - name: pnpm install
         run: pnpm install --frozen-lockfile
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -194,14 +194,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -222,14 +222,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -250,14 +250,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -278,14 +278,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -310,14 +310,14 @@ jobs:
         node: [24, 26]
         suite: [main, api, cli, start, multiple-workers]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 25
@@ -338,14 +338,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -370,14 +370,14 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -402,22 +402,22 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
       - uses: ikalnytskyi/action-setup-postgres@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: pnpm install -g typescript
-        run: pnpm install -g typescript
+      - name: pnpm add -g typescript
+        run: pnpm add -g typescript
       - name: Run test suite core
         run: cd packages/db-core && pnpm test && pnpm run lint
       - name: Run test suite Platformatic DB
@@ -434,16 +434,16 @@ jobs:
       matrix:
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d postgresql
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -464,9 +464,9 @@ jobs:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
@@ -474,7 +474,7 @@ jobs:
         run: docker compose up -d ${{ matrix.db }}
         if: ${{ matrix.db != 'sqlite' }}
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -504,9 +504,9 @@ jobs:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
@@ -516,7 +516,7 @@ jobs:
       - name: Start Valkey containers for testing
         run: docker compose up -d valkey
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -540,14 +540,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -568,14 +568,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -596,14 +596,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -624,21 +624,21 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Setup globals
-        run: cd packages/wattpm && pnpm link --global && cd ../..
+        run: cd packages/wattpm && pnpm add -g . && cd ../..
       - name: Setup local git user and email
         run: |
           git config --global user.name 'Platformatic Github Actions'
@@ -658,21 +658,21 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Setup globals
-        run: cd packages/wattpm && pnpm link --global && cd ../..
+        run: cd packages/wattpm && pnpm add -g . && cd ../..
       - name: Setup local git user and email
         run: |
           git config --global user.name 'Platformatic Github Actions'
@@ -692,14 +692,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -720,13 +720,13 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
-      - uses: 'nick-fields/retry@v3.0.2'
+      - uses: 'nick-fields/retry@v4.0.0'
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -746,14 +746,16 @@ jobs:
       matrix:
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
       - uses: ikalnytskyi/action-setup-postgres@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node }}
+          # Node.js 26.12.0 crashes on require(esm) inside module.register() hooks
+          # (ERR_INTERNAL_ASSERTION), which telemetry uses with Next.js. Remove once fixed.
+          node-version: ${{ matrix.node == 26 && '26.11.1' || matrix.node }}
           cache: 'pnpm'
-      - uses: 'nick-fields/retry@v3.0.2'
+      - uses: 'nick-fields/retry@v4.0.0'
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -774,14 +776,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -802,14 +804,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -835,14 +837,14 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -865,14 +867,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -893,14 +895,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -921,14 +923,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -949,14 +951,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -977,14 +979,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -1005,14 +1007,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -1033,14 +1035,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -1061,14 +1063,14 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         node: [24, 26]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: pnpm/action-setup@v4.4.0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
+        uses: nick-fields/retry@v4.0.0
         with:
           max_attempts: 10
           timeout_minutes: 15

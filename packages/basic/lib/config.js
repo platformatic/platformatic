@@ -1,4 +1,5 @@
 import {
+  applyConfigPatch,
   listRecognizedConfigurationFiles,
   loadConfiguration as utilsLoadConfiguration,
   NoConfigFileFoundError,
@@ -10,7 +11,6 @@ import {
   isConfigurationFileName,
   loadApplicationConfigurationFile
 } from '@platformatic/foundation/loader'
-import jsonPatch from 'fast-json-patch'
 import { stat } from 'node:fs/promises'
 import { basename, dirname, resolve as resolvePath } from 'node:path'
 import { workerData } from 'node:worker_threads'
@@ -131,7 +131,7 @@ export async function transform (config) {
   }
 
   if (Array.isArray(patch)) {
-    config = jsonPatch.applyPatch(config, patch).newDocument
+    config = applyConfigPatch(config, patch)
   }
 
   if (config.watch === undefined) {

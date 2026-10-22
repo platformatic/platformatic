@@ -1,6 +1,7 @@
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  setPinoLogKeys,
   disablePinoDirectWrite,
   ensureLoggableError,
   getPrivateSymbol,
@@ -96,9 +97,10 @@ function createLogger () {
   if (pinoOptions.formatters) {
     pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
   }
-  if (pinoOptions.timestamp) {
-    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
+  if (pinoOptions.timestamp || pinoOptions.timestampKey !== undefined) {
+    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp, pinoOptions.timestampKey)
   }
+  setPinoLogKeys(pinoOptions)
 
   if (workerData.config.logger?.openTelemetryExporter && workerData.applicationConfig.tracing?.enabled !== false) {
     addPinoInstrumentation(pinoOptions)

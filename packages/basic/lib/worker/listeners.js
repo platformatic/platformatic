@@ -1,5 +1,31 @@
 import { getEvents } from '@platformatic/globals'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
+import { Server as HttpServer } from 'node:http'
+import { Server as HttpsServer } from 'node:https'
+import { Server as NetServer } from 'node:net'
+
+// Some frameworks (Vite 8 and later) look for a free port by opening and immediately closing
+// throwaway TCP servers before binding the real one. Those probes are bare net.Server instances,
+// while any application server is an http, https or http2 server, so they can be told apart by
+// their constructor. Probes must never be mistaken for the application server: they are already
+// closed by the time the capability reads their address, and the errors they raise are recovered
+// from by the framework itself.
+function isPortProbe (server) {
+  return server?.constructor === NetServer
+}
+
+// Other frameworks (the Nuxt CLI 4 and later) check whether the platform supports SO_REUSEPORT by
+// binding throwaway HTTP servers before the real one. Unlike the probes above those are HTTP servers,
+// but they are created without any handler as they are never meant to serve anything.
+export const applicationServerEvents = ['request', 'upgrade', 'connect', 'checkContinue', 'checkExpectation']
+
+export function isBareHttpServer (server) {
+  if (!(server instanceof HttpServer) && !(server instanceof HttpsServer)) {
+    return false
+  }
+
+  return applicationServerEvents.every(event => server.listenerCount(event) === 0)
+}
 
 export function createServerListener () {
   const { promise, resolve, reject } = Promise.withResolvers()
@@ -18,10 +44,20 @@ export function createServerListener () {
       }
     },
     asyncEnd ({ server }) {
+      // Keep listening: the server options above must still be applied to the real server.
+      if (isPortProbe(server)) {
+        return
+      }
+
       cancel()
       resolve(server)
     },
-    error ({ error }) {
+    error ({ error, server }) {
+      // The framework retries on a different port after a failed probe, so this is not fatal.
+      if (isPortProbe(server)) {
+        return
+      }
+
       cancel()
       reject(error)
     }

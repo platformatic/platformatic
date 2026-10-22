@@ -16,16 +16,13 @@ const runtimeLogger = {
       default: {},
       properties: {
         level: {
-          type: 'string',
-          default: 'level'
+          type: 'string'
         },
         time: {
-          type: 'string',
-          default: 'time'
+          type: 'string'
         },
         message: {
-          type: 'string',
-          default: 'msg'
+          type: 'string'
         }
       },
       additionalProperties: false

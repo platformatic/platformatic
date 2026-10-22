@@ -11,6 +11,9 @@ export default {
       customBaseName: 'a',
       customBaseItem: 'b'
     },
-    messageKey: 'theMessage'
+    messageKey: 'theMessage',
+    pino: {
+      message: 'msg'
+    }
   }
 }

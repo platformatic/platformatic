@@ -11,7 +11,8 @@ export const CACHE_MISS_METRIC = {
 
 export const sections = {
   values: 'remote:components:values',
-  tags: 'remote:components:tags'
+  tags: 'remote:components:tags',
+  revalidations: 'remote:components:revalidations'
 }
 
 export default new CacheHandler({

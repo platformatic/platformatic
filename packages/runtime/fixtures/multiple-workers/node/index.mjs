@@ -29,5 +29,15 @@ export function create () {
     return response.json()
   })
 
+  // Keep the event loop busy so that the worker exceeds maxELU and gets replaced
+  app.post('/busy', async () => {
+    const timer = setInterval(() => {
+      const end = Date.now() + 95
+      while (Date.now() < end);
+    }, 100)
+    app.addHook('onClose', async () => clearInterval(timer))
+    return { ok: true }
+  })
+
   return app
 }

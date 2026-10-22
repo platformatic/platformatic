@@ -59,13 +59,13 @@ test('should properly instrument the application when using the adapter', async 
 
   const storedValues = verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, base64ValueMatcher, 'EX', '120'],
+    ['set', key, base64ValueMatcher, 'EX', '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '240'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '240'],
     ['get', key]
   ])
 

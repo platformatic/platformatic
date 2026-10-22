@@ -375,6 +375,7 @@ object supports the following settings:
 - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the application code.
 - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the application. These options are appended to any existing option.
 - **`execArgv`** (`array` of `string`s): Additional arguments to pass to application worker threads via the `execArgv` option. These arguments are passed to the Node.js executable when creating worker threads. See [Node.js Worker Threads documentation](https://nodejs.org/dist/latest/docs/api/worker_threads.html#new-workerfilename-options) for more information. Note that `execArgv` options are automatically inherited by any child worker threads created by the application.
+  For a complete example of early per-worker tracer initialization, see [Datadog tracing with multiple applications and workers](../../guides/datadog.md).
 - **`permissions`** (`object`): Configure application-level security permissions to restrict file system access. Supported properties are:
   - **`fs`**:
     - **`read`** (`array` of `string`s): Array of file system paths the application is permitted to read from. Uses the same syntax as Node.js [--allow-fs-read](https://nodejs.org/dist/latest/docs/api/cli.html#--allow-fs-read).
@@ -765,16 +766,33 @@ An object with the following settings:
 - **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main application. Default: `false`.
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
+- **`timestampKey`** — The non-empty key to use for the emitted timestamp. Default: `time`. The `timestamp` option still controls the format; `nullTime` omits the field regardless of its name.
+- **`levelKey`** — The non-empty key to use for the emitted log level. Default: `level`. When a custom level formatter returns a `level` field, it is renamed while preserving its value and all other fields. Formatters that already emit a different key are left unchanged.
 - **`pino`** — Configures the keys used to recognize Pino log entries emitted by worker applications before wrapping them in `stdout` or `stderr`. An object with properties:
-  - **`level`** — The key that contains the numeric log level. Default: `level`.
-  - **`time`** — The key that contains the log timestamp. Default: `time`.
-  - **`message`** — The key that contains the log message. Default: `msg`.
+  - **`level`** — The key that contains the log level. Defaults to `logger.levelKey`, or `level` when not configured.
+  - **`time`** — The key that contains the log timestamp. Defaults to `logger.timestampKey`, or `time` when not configured.
+  - **`message`** — The key that contains the log message. Defaults to `logger.messageKey`, or `msg` when not configured.
 - **`customLevels`** — Configuration for custom levels. Names defined here can also be used as the logger's `level`. See [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
 - **`openTelemetryExporter`** — Configuration for exporting logs to OpenTelemetry collectors. When configured alongside the `tracing` section, logs are automatically enriched with trace context (trace ID, span ID, trace flags) for correlation with distributed traces. An object with properties:
   - **`protocol`** (**required**) — The protocol to use for export. Valid values are: `http`, `grpc`.
   - **`url`** (**required**) — The OTLP collector endpoint URL.
 
   When used with tracing configuration, the service name and version from `tracing.applicationName` and `tracing.version` are automatically included as resource attributes when using `getLogger()`. See the [OpenTelemetry Logging Guide](../../guides/opentelemetry-logging.md) for detailed examples.
+
+Worker log recognition inherits the emission keys automatically. Explicit `pino` settings override the corresponding emission keys individually, allowing recognition of logs from third-party loggers with different field names. For example, this configuration emits and recognizes the same custom keys without a `pino` mapping:
+
+```json
+{
+  "logger": {
+    "messageKey": "message",
+    "timestampKey": "timestamp",
+    "timestamp": "isoTime",
+    "levelKey": "severity"
+  }
+}
+```
+
+Apply the same emission keys to application logger configurations when overriding the runtime logger settings.
 
 ### `undici`
 

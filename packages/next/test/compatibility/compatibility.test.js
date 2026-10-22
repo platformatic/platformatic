@@ -152,16 +152,18 @@ async function installDependencies (nextVersion, reactVersion) {
   }
   await createDirectory(base)
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
+  // Keep Next.js outside a nested virtual store so Turbopack resolves this version's templates.
   await execa(
     'pnpm',
     [
       'add',
       '-D',
       '--ignore-workspace',
+      '--config.nodeLinker=hoisted',
       '--allow-build=sharp',
       `next@${nextVersion}`,
       `react@${reactVersion}`,
-      `react-dom@${reactVersion}`,
+      `react-dom@${reactVersion}`
     ],
     { cwd: base }
   )

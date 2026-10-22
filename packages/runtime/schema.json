@@ -2130,6 +2130,16 @@
         "messageKey": {
           "type": "string"
         },
+        "timestampKey": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The key used for the timestamp in emitted logs. Defaults to time."
+        },
+        "levelKey": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The key used for the level in emitted logs. Defaults to level."
+        },
         "customLevels": {
           "type": "object",
           "additionalProperties": true
@@ -2207,16 +2217,13 @@
           "default": {},
           "properties": {
             "level": {
-              "type": "string",
-              "default": "level"
+              "type": "string"
             },
             "time": {
-              "type": "string",
-              "default": "time"
+              "type": "string"
             },
             "message": {
-              "type": "string",
-              "default": "msg"
+              "type": "string"
             }
           },
           "additionalProperties": false

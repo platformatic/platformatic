@@ -10,6 +10,7 @@ import { createDeduplicationHandler } from './deduplication/index.js'
 import { initMetrics } from './metrics.js'
 
 const kProxyRoute = Symbol('plt.gateway.proxy.route')
+const kProxiedUpstream = Symbol('plt.gateway.proxy.upstream')
 
 const urlPattern = /^https?:\/\//
 
@@ -208,10 +209,24 @@ async function proxyPlugin (app, opts) {
       metrics = initMetrics(prometheus)
     }
 
-    const getUpstream = application.proxy?.custom?.getUpstream
+    let getUpstream = application.proxy?.custom?.getUpstream
     const customRewriteHeaders = application.proxy?.custom?.rewriteHeaders
     const customOnError = application.proxy?.custom?.onError
-    // When getUpstream is provided, upstream ust be undefined, otherwise the getUpstream will be ignored
+
+    // Record the destination getUpstream settles on. The span for the proxied
+    // call is built in rewriteRequestHeaders, which @fastify/reply-from runs
+    // after it has resolved the upstream, so the value is already there by then
+    // and nothing has to call getUpstream a second time to find it out.
+    if (getUpstream) {
+      const resolveUpstream = getUpstream
+      getUpstream = function recordingGetUpstream (request, base) {
+        const resolved = resolveUpstream(request, base)
+        request[kProxiedUpstream] = resolved
+        return resolved
+      }
+    }
+
+    // When getUpstream is provided, upstream must be undefined, otherwise the getUpstream will be ignored
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
 
     let proxyHandler = handler
@@ -238,6 +253,10 @@ async function proxyPlugin (app, opts) {
     }
     // Child-process applications expose a real TCP listener; the mesh interceptor only handles HTTP dispatch.
     const wsOrigin = childProcess ? (url ?? origin) : origin
+
+    // Websocket links already counted in the activeWsConnections gauge.
+    const wsConnections = new WeakSet()
+
     const proxyOptions = {
       prefix,
       rewritePrefix,
@@ -248,6 +267,11 @@ async function proxyPlugin (app, opts) {
       wsClientOptions: upgradeAgent
         ? { agent: upgradeAgent }
         : undefined,
+      // false stops @fastify/http-proxy from registering its catch-all content
+      // type parsers, which hand a custom getUpstream an unparsed stream.
+      // Without this, supplying a preValidation hook that does nothing is the
+      // only way to get them out of the way.
+      proxyPayloads: application.proxy?.proxyPayloads,
 
       websocket: true,
       // When getUpstream is provided and no explicit WebSocket upstream is configured,
@@ -256,11 +280,24 @@ async function proxyPlugin (app, opts) {
       wsReconnect: ws?.reconnect,
       wsHooks: {
         onConnect: (...args) => {
-          metrics?.activeWsConnections?.inc()
+          // The gauge counts links, not callbacks. A proxied link is torn down
+          // from both of its sockets, so onDisconnect can be delivered more
+          // than once for the same connection, and an unguarded dec() would
+          // walk the gauge below zero and keep going from there. Tracking the
+          // source socket makes both sides idempotent; the WeakSet keeps no
+          // socket alive on its own.
+          const source = args[1]
+          if (source && !wsConnections.has(source)) {
+            wsConnections.add(source)
+            metrics?.activeWsConnections?.inc()
+          }
           ws?.hooks?.onConnect(...args)
         },
         onDisconnect: (...args) => {
-          metrics?.activeWsConnections?.dec()
+          const source = args[1]
+          if (source && wsConnections.delete(source)) {
+            metrics?.activeWsConnections?.dec()
+          }
           ws?.hooks?.onDisconnect(...args)
         },
         onReconnect: ws?.hooks?.onReconnect,
@@ -298,7 +335,11 @@ async function proxyPlugin (app, opts) {
           return headers
         },
         rewriteRequestHeaders: (request, headers) => {
-          const targetUrl = `${origin}${request.url}`
+          // Without a getUpstream the destination is the configured origin; with
+          // one it is whatever that returned for this request. Naming the origin
+          // in both cases makes a trace of a split deployment report a host the
+          // request never reached.
+          const targetUrl = `${request[kProxiedUpstream] ?? origin}${request.url}`
           const context = request.span?.context
           const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(
             targetUrl,

@@ -6,7 +6,7 @@ import { basename, resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
 import { findConfigurationFileRecursive } from './configuration.js'
-import { setPinoTimestamp } from './logger.js'
+import { setPinoLogKeys, setPinoTimestamp } from './logger.js'
 import { findDecidingFile, isConfigurationFileName } from './loader/index.js'
 
 /* c8 ignore next 4 - else branches */
@@ -123,6 +123,9 @@ export function createCliLogger (level, noPretty = false, loggerConfig = {}) {
     // Loaded on first use: only CLI processes need the pretty printer
     const pinoPretty = createRequire(import.meta.url)('pino-pretty')
     pretty = pinoPretty({
+      messageKey: loggerConfig.messageKey ?? 'msg',
+      timestampKey: loggerConfig.timestampKey ?? 'time',
+      levelKey: loggerConfig.levelKey ?? 'level',
       colorize: process.env.NO_COLOR !== 'true',
       customPrettifiers: {
         level (logLevel, _u1, _u2, { label, labelColorized }) {
@@ -135,9 +138,10 @@ export function createCliLogger (level, noPretty = false, loggerConfig = {}) {
   }
 
   const resolvedConfig = { ...loggerConfig }
-  if (typeof resolvedConfig.timestamp === 'string') {
+  if (typeof resolvedConfig.timestamp === 'string' || resolvedConfig.timestampKey !== undefined) {
     setPinoTimestamp(resolvedConfig)
   }
+  setPinoLogKeys(resolvedConfig)
 
   const dm = Deepmerge()
 

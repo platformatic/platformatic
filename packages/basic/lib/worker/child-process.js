@@ -1,6 +1,7 @@
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  setPinoLogKeys,
   disablePinoDirectWrite,
   ensureLoggableError,
   mirrorGlobalDispatcherForBuiltinFetch,
@@ -36,7 +37,7 @@ import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import { Server as HttpsServer } from 'node:https'
-import { createRequire, enableCompileCache, register } from 'node:module'
+import { createRequire, enableCompileCache } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import { Duplex } from 'node:stream'
@@ -49,6 +50,8 @@ import { WebSocket } from 'ws'
 import { ApplicationShutdownError, exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
+import { applicationServerEvents, isBareHttpServer } from './listeners.js'
+import { registerLoader } from './loader.js'
 
 async function runShutdownCallbacks () {
   const errors = []
@@ -642,9 +645,10 @@ export class ChildProcess extends ITC {
     if (loggerOptions.formatters) {
       pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
     }
-    if (loggerOptions.timestamp) {
-      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp)
+    if (loggerOptions.timestamp || loggerOptions.timestampKey !== undefined) {
+      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp, loggerOptions.timestampKey)
     }
+    setPinoLogKeys(pinoOptions)
 
     if (loggerOptions.base !== null) {
       pinoOptions.base = {
@@ -661,6 +665,7 @@ export class ChildProcess extends ITC {
   }
 
   #setupServer () {
+    let completed = false
     const subscribers = {
       asyncStart ({ options }) {
         // Unix socket, do nothing
@@ -674,36 +679,73 @@ export class ChildProcess extends ITC {
         }
       },
       asyncEnd: ({ server }) => {
-        tracingChannel('net.server.listen').unsubscribe(subscribers)
+        // Keep listening: the real application server is yet to come.
+        if (isBareHttpServer(server)) {
+          // If the handlers are attached after the server is listening, then it was not a probe.
+          const onNewListener = event => {
+            if (!applicationServerEvents.includes(event)) {
+              return
+            }
 
-        // Nested workers may expose internal servers (for example Nitro's env
-        // runner). They must not replace the command's public entrypoint URL.
-        // When a script reports the app URL itself (urlFromScript), ignore the
-        // tracing-channel listen here (which fires for listhen/get-port-please's
-        // throwaway probe) to avoid reporting a stale URL that races the real
-        // server's startup.
-        if (!isMainThread || this.#urlFromScript) {
+            server.removeListener('newListener', onNewListener)
+
+            if (!completed && server.listening) {
+              reportServer(server)
+            }
+          }
+
+          server.on('newListener', onNewListener)
           return
         }
 
-        const address = server.address()
-
-        // Unix socket, do nothing
-        if (typeof address === 'string') {
-          return
-        }
-
-        const { family, address: host, port } = address
-        const protocol = server instanceof HttpsServer ? 'https' : 'http'
-        /* c8 ignore next */
-        const url = new URL(family === 'IPv6' ? `${protocol}://[${host}]:${port}` : `${protocol}://${host}:${port}`).origin
-
-        this.notify('url', url)
+        reportServer(server)
       },
-      error: ({ error }) => {
+      error: ({ error, server }) => {
+        // The framework handles the failures of its own probes, so this is not fatal.
+        if (isBareHttpServer(server)) {
+          return
+        }
+
+        completed = true
         tracingChannel('net.server.listen').unsubscribe(subscribers)
+
+        // When a script reports the app URL itself (urlFromScript), the failed listen might
+        // be a throwaway probe (i.e. Nuxt checking for reusePort support), so it is not fatal.
+        if (this.#urlFromScript) {
+          return
+        }
+
         this.notify('error', error)
       }
+    }
+
+    const reportServer = server => {
+      completed = true
+      tracingChannel('net.server.listen').unsubscribe(subscribers)
+
+      // Nested workers may expose internal servers (for example Nitro's env
+      // runner). They must not replace the command's public entrypoint URL.
+      // When a script reports the app URL itself (urlFromScript), ignore the
+      // tracing-channel listen here (which fires for listhen/get-port-please's
+      // throwaway probe) to avoid reporting a stale URL that races the real
+      // server's startup.
+      if (!isMainThread || this.#urlFromScript) {
+        return
+      }
+
+      const address = server.address()
+
+      // Unix socket, do nothing
+      if (typeof address === 'string') {
+        return
+      }
+
+      const { family, address: host, port } = address
+      const protocol = server instanceof HttpsServer ? 'https' : 'http'
+      /* c8 ignore next */
+      const url = new URL(family === 'IPv6' ? `${protocol}://[${host}]:${port}` : `${protocol}://${host}:${port}`).origin
+
+      this.notify('url', url)
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)
@@ -880,7 +922,7 @@ async function main () {
   const executable = basename(process.argv[1] ?? '')
 
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
-  const { data, loader, scripts, urlFromScript } = JSON.parse(await readFile(dataPath))
+  const { data, loader, loaderOptions, scripts, urlFromScript } = JSON.parse(await readFile(dataPath))
 
   // Enable compile cache early before loading user modules
   await setupCompileCache(data)
@@ -889,7 +931,7 @@ async function main () {
   updateGlobals({ ...data, events })
 
   if (loader) {
-    register(loader, { data })
+    await registerLoader(loader, data, loaderOptions)
   }
 
   for (const script of scripts) {

@@ -353,3 +353,39 @@ test('should manage application config patch', async t => {
     deepStrictEqual(data, { alternate: true })
   }
 })
+
+test('should apply merge operations in application config patches', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node', 'watt.config.mjs')
+  const runtime = await createRuntime(configFile)
+
+  runtime.setApplicationConfigPatch('node', [{ op: 'merge', path: '/node', value: { main: 'alternate.mjs' } }])
+  runtime.setApplicationConfigPatch('serviceApp', [
+    { op: 'merge', path: '/plugins', value: { paths: ['alternate.js'] } }
+  ])
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+
+  await runtime.start()
+
+  {
+    const { payload } = await runtime.inject('node', {
+      method: 'GET',
+      url: '/'
+    })
+
+    deepStrictEqual(JSON.parse(payload), { alternate: true })
+  }
+
+  {
+    const { payload } = await runtime.inject('serviceApp', {
+      method: 'GET',
+      url: '/'
+    })
+
+    deepStrictEqual(JSON.parse(payload), { alternate: true })
+  }
+})

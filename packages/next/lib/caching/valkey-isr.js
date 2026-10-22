@@ -6,6 +6,7 @@ import {
   ensureMsgpackr,
   ensureRedis,
   getConnection,
+  getEntryLifetime,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
   keyFor,
@@ -15,6 +16,8 @@ import {
 export const CACHE_HIT_METRIC = { name: 'next_cache_valkey_hit_count', help: 'Next.js Cache (Valkey) Hit Count' }
 export const CACHE_MISS_METRIC = { name: 'next_cache_valkey_miss_count', help: 'Next.js Cache (Valkey) Miss Count' }
 export const MAX_BATCH_SIZE = 100
+
+const NEXT_CACHE_TAGS_HEADER = 'x-next-cache-tags'
 
 export const sections = {
   values: 'values',
@@ -86,6 +89,10 @@ export class CacheHandler {
   async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'cache get')
 
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
+
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     let rawValue
@@ -99,7 +106,7 @@ export class CacheHandler {
     } catch (e) {
       this.#cacheMissMetric?.inc()
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot read cache value from Valkey')
-      throw new Error('Cannot read cache value from Valkey', { cause: e })
+      return
     }
 
     let value
@@ -132,12 +139,17 @@ export class CacheHandler {
   }
 
   async set (cacheKey, value, ctx, isRedisKey) {
-    const tags = ctx.tags
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
+
+    const tags = this.#getTags(ctx.tags, value)
     const revalidate = ctx.revalidate ?? ctx.cacheControl?.revalidate ?? value.revalidate ?? 0
 
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const lifetime = getEntryLifetime(revalidate, ctx.cacheControl?.expire, this.#maxTTL)
 
     try {
       // Compute the parameters to save
@@ -149,9 +161,7 @@ export class CacheHandler {
         maxTTL: this.#maxTTL,
         ...this.#meta
       })
-      // revalidate === false means "cache forever" in Next.js (SSG/force-static pages).
-      // Use maxTTL as the expiration in that case.
-      const expire = revalidate === false ? this.#maxTTL : Math.min(revalidate, this.#maxTTL)
+      const expire = Math.min(lifetime, this.#maxTTL)
 
       if (expire < 1) {
         return
@@ -179,6 +189,10 @@ export class CacheHandler {
   }
 
   async remove (cacheKey, isRedisKey) {
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
+
     this.#logger.trace({ key: cacheKey }, 'cache remove')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
@@ -229,6 +243,10 @@ export class CacheHandler {
   }
 
   async revalidateTag (tags) {
+    if (!this.#hasSubprefix()) {
+      return
+    }
+
     this.#logger.trace({ tags }, 'cache revalidateTag')
 
     if (typeof tags === 'string') {
@@ -267,6 +285,25 @@ export class CacheHandler {
     }
   }
 
+  #getTags (tags, value) {
+    // Next.js stores page and route tags in this header instead of ctx.tags.
+    const tagsHeader = value?.headers?.[NEXT_CACHE_TAGS_HEADER]
+
+    if (typeof tagsHeader !== 'string') {
+      return tags
+    }
+
+    const combinedTags = new Set(tags)
+
+    for (const tag of tagsHeader.split(',')) {
+      if (tag) {
+        combinedTags.add(tag)
+      }
+    }
+
+    return [...combinedTags]
+  }
+
   async #refreshKey (key, value) {
     const life = Math.round((Date.now() - value.lastModified) / 1000)
     const expire = Math.min(value.revalidate - life, this.#maxTTL)
@@ -286,6 +323,12 @@ export class CacheHandler {
     }
 
     await Promise.all(promises)
+  }
+
+  // During a build, the subprefix is only known once Next.js writes the build ID
+  #hasSubprefix () {
+    this.#subprefix ??= getPlatformaticSubprefix()
+    return this.#subprefix !== null
   }
 
   #keyFor (key, section) {

@@ -92,7 +92,7 @@ test('getPkgManager - detects yarn', async t => {
 })
 
 test('getPkgManager - detects pnpm', async t => {
-  process.env.npm_config_user_agent = 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64'
+  process.env.npm_config_user_agent = 'pnpm/12.9.1 npm/? node/? linux x64'
 
   t.after(() => {
     delete process.env.npm_config_user_agent
