@@ -3,7 +3,7 @@ import type { AsyncLocalStorage } from 'node:async_hooks'
 import type Pino from 'pino'
 import { expect, test } from 'tstyche'
 import * as globals from '../../lib/index.js'
-import { type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
+import { type MessagingWorker, type PlatformaticEvents, type PlatformaticGlobal } from '../../lib/index.js'
 
 test("PlatformaticGlobal", () => {
   const platformatic = {} as PlatformaticGlobal
@@ -113,6 +113,11 @@ test("getters", () => {
   expect(globals.getITC()).type.toBe<PlatformaticGlobal['itc']>()
   expect(globals.getITC().process('message', { ok: true })).type.toBe<Promise<any>>()
   expect(globals.getMessaging()).type.toBe<PlatformaticGlobal['messaging']>()
+  expect(globals.getMessaging().send('app', 'message', {}, { affinity: 'key' })).type.toBe<Promise<any>>()
+  expect(globals.getMessaging().getWorkers()).type.toBe<Record<string, MessagingWorker[]>>()
+  expect(globals.getMessaging().getWorkers('app')).type.toBe<MessagingWorker[]>()
+  expect(globals.getMessaging().getWorkerForAffinity('app', 'key')).type.toBe<MessagingWorker | null>()
+  expect(globals.getMessaging().onWorkersChange(() => {})).type.toBe<() => void>()
   expect(globals.getCapability()).type.toBe<PlatformaticGlobal['capability']>()
   expect(globals.getClosing()).type.toBe<PlatformaticGlobal['closing']>()
   expect(globals.getSharedContext()).type.toBe<PlatformaticGlobal['sharedContext']>()

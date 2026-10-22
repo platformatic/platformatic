@@ -1,6 +1,6 @@
 import { abstractLogger } from '@platformatic/foundation'
 import { getMessaging, removeGlobals, updateGlobals } from '@platformatic/globals'
-import { MessageChannel } from 'node:worker_threads'
+import { MessageChannel, threadId } from 'node:worker_threads'
 import { MessagingITC } from './worker/messaging.js'
 
 class LoopbackMessagingITC extends MessagingITC {
@@ -17,7 +17,17 @@ class LoopbackMessagingITC extends MessagingITC {
 
   // Force the next worker to be the channel
   _getNextWorker () {
-    return { application: this.#application, channel: this.#channel }
+    return {
+      id: `${this.#application}:0`,
+      application: this.#application,
+      worker: 0,
+      thread: threadId,
+      channel: this.#channel
+    }
+  }
+
+  _getWorkerByAffinity () {
+    return this._getNextWorker()
   }
 }
 
@@ -41,7 +51,10 @@ class LoopbackMessaging extends LoopbackMessagingITC {
       messaging: {
         handle: this.#target.handle.bind(this.#target),
         send: this.#target.send.bind(this.#target),
-        notify: this.#target.notify.bind(this.#target)
+        notify: this.#target.notify.bind(this.#target),
+        getWorkers: this.#target.getWorkers.bind(this.#target),
+        getWorkerForAffinity: this.#target.getWorkerForAffinity.bind(this.#target),
+        onWorkersChange: this.#target.onWorkersChange.bind(this.#target)
       }
     })
 

@@ -46,6 +46,14 @@ export class RoundRobinMap extends Map {
     return [...(this.#instances[application]?.keys ?? [])]
   }
 
+  getApplications () {
+    return Object.keys(this.#instances)
+  }
+
+  getAll (application) {
+    return this.getKeys(application).map(key => this.get(key))
+  }
+
   next (application) {
     if (!this.#instances[application]) return
 

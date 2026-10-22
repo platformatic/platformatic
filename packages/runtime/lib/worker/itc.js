@@ -163,7 +163,10 @@ export async function setupITC (controller, application, dispatcher, sharedConte
     messaging: {
       handle: messaging.handle.bind(messaging),
       send: messaging.send.bind(messaging),
-      notify: messaging.notify.bind(messaging)
+      notify: messaging.notify.bind(messaging),
+      getWorkers: messaging.getWorkers.bind(messaging),
+      getWorkerForAffinity: messaging.getWorkerForAffinity.bind(messaging),
+      onWorkersChange: messaging.onWorkersChange.bind(messaging)
     }
   })
 
