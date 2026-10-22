@@ -396,6 +396,42 @@ test('should manage application config patch', async t => {
   }
 })
 
+test('should apply merge operations in application config patches', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const runtime = await createRuntime(configFile)
+
+  runtime.setApplicationConfigPatch('node', [{ op: 'merge', path: '/node', value: { main: 'alternate.mjs' } }])
+  runtime.setApplicationConfigPatch('serviceApp', [
+    { op: 'merge', path: '/plugins', value: { paths: ['alternate.js'] } }
+  ])
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+
+  await runtime.start()
+
+  {
+    const { payload } = await runtime.inject('node', {
+      method: 'GET',
+      url: '/'
+    })
+
+    deepStrictEqual(JSON.parse(payload), { alternate: true })
+  }
+
+  {
+    const { payload } = await runtime.inject('serviceApp', {
+      method: 'GET',
+      url: '/'
+    })
+
+    deepStrictEqual(JSON.parse(payload), { alternate: true })
+  }
+})
+
 test('prepareApplication should not perform slow glob for services with url but no path', async t => {
   const { prepareApplication } = await import('../lib/config.js')
   const { kMetadata } = await import('@platformatic/foundation')

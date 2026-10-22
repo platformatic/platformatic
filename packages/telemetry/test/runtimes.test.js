@@ -209,6 +209,29 @@ test('configure telemetry correctly with a gateway + node + fastify', async t =>
   equal(spanNodeServer.parentSpanContext.spanId, spanFastifyClient.id)
 })
 
+// The mesh hooks trace the calls between applications, so the undici instrumentation must not trace them again
+test('creates a single client span for a call between applications', async t => {
+  const app = await createRuntime(t, 'composer-node-fastify', false, true, 'platformatic.json')
+  const { url, root } = app
+
+  const { statusCode } = await request(`${url}/fastify/node`, {
+    method: 'GET'
+  })
+  equal(statusCode, 200)
+  await sleep(500)
+  const spans = await getSpans(join(root, 'spans.log'))
+
+  const clientSpans = spans.filter(span => {
+    return span.kind === SpanKind.CLIENT && span.attributes['url.full'] === 'http://node.plt.local/'
+  })
+  equal(clientSpans.length, 1)
+
+  const spanNodeServer = spans.find(span => {
+    return span.kind === SpanKind.SERVER && containsAttributeWithValue(span.resource, 'service.name', 'test-runtime-node')
+  })
+  equal(spanNodeServer.parentSpanContext.spanId, clientSpans[0].id)
+})
+
 test('configure telemetry correctly with a gateway + next', async t => {
   // gateway -> next -> fastify
   //                  -> node (via http)

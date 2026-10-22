@@ -1,6 +1,7 @@
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
+  setPinoLogKeys,
   disablePinoDirectWrite,
   ensureLoggableError,
   mirrorGlobalDispatcherForBuiltinFetch,
@@ -51,6 +52,7 @@ import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { applyServerTimeouts, importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
+import { applicationServerEvents, isBareHttpServer } from './listeners.js'
 import { registerLoader } from './loader.js'
 
 class ForwardingEventEmitter extends EventEmitter {
@@ -604,9 +606,10 @@ export class ChildProcess extends ITC {
     if (loggerOptions.formatters) {
       pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
     }
-    if (loggerOptions.timestamp) {
-      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp)
+    if (loggerOptions.timestamp || loggerOptions.timestampKey !== undefined) {
+      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp, loggerOptions.timestampKey)
     }
+    setPinoLogKeys(pinoOptions)
 
     if (loggerOptions.base !== null) {
       pinoOptions.base = {
@@ -623,6 +626,7 @@ export class ChildProcess extends ITC {
   }
 
   #setupServer () {
+    let completed = false
     const subscribers = {
       asyncStart ({ server, options }) {
         // Unix socket, do nothing
@@ -658,31 +662,34 @@ export class ChildProcess extends ITC {
         }
       },
       asyncEnd: ({ server }) => {
-        tracingChannel('net.server.listen').unsubscribe(subscribers)
+        // Keep listening: the real application server is yet to come.
+        if (isBareHttpServer(server)) {
+          // If the handlers are attached after the server is listening, then it was not a probe.
+          const onNewListener = event => {
+            if (!applicationServerEvents.includes(event)) {
+              return
+            }
 
-        // When a script reports the app URL itself (urlFromScript), ignore the
-        // tracing-channel listen here (which fires for listhen/get-port-please's
-        // throwaway probe) to avoid reporting a stale URL that races the real
-        // server's startup.
-        if (this.#urlFromScript) {
+            server.removeListener('newListener', onNewListener)
+
+            if (!completed && server.listening) {
+              reportServer(server)
+            }
+          }
+
+          server.on('newListener', onNewListener)
           return
         }
 
-        const address = server.address()
-
-        // Unix socket, do nothing
-        if (typeof address === 'string') {
-          return
-        }
-
-        const { family, address: host, port } = address
-        const protocol = server instanceof HttpsServer ? 'https' : 'http'
-        /* c8 ignore next */
-        const url = new URL(family === 'IPv6' ? `${protocol}://[${host}]:${port}` : `${protocol}://${host}:${port}`).origin
-
-        this.notify('url', url)
+        reportServer(server)
       },
-      error: ({ error }) => {
+      error: ({ error, server }) => {
+        // The framework handles the failures of its own probes, so this is not fatal.
+        if (isBareHttpServer(server)) {
+          return
+        }
+
+        completed = true
         tracingChannel('net.server.listen').unsubscribe(subscribers)
 
         // When a script reports the app URL itself (urlFromScript), the failed listen might
@@ -693,6 +700,33 @@ export class ChildProcess extends ITC {
 
         this.notify('error', error)
       }
+    }
+
+    const reportServer = server => {
+      completed = true
+      tracingChannel('net.server.listen').unsubscribe(subscribers)
+
+      // When a script reports the app URL itself (urlFromScript), ignore the
+      // tracing-channel listen here (which fires for listhen/get-port-please's
+      // throwaway probe) to avoid reporting a stale URL that races the real
+      // server's startup.
+      if (this.#urlFromScript) {
+        return
+      }
+
+      const address = server.address()
+
+      // Unix socket, do nothing
+      if (typeof address === 'string') {
+        return
+      }
+
+      const { family, address: host, port } = address
+      const protocol = server instanceof HttpsServer ? 'https' : 'http'
+      /* c8 ignore next */
+      const url = new URL(family === 'IPv6' ? `${protocol}://[${host}]:${port}` : `${protocol}://${host}:${port}`).origin
+
+      this.notify('url', url)
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)

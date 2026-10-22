@@ -14,11 +14,71 @@ import {
   forwardedPinoOptions,
   loadFormatters,
   setPinoFormatters,
+  setPinoLogKeys,
   setPinoTimestamp
 } from '../index.js'
 
 // Set up the directory path for fixtures
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'logger')
+
+for (const timestamp of [undefined, 'epochTime', 'unixTime', 'isoTime', 'nullTime']) {
+  test(`custom log keys preserve timestamp format: ${timestamp}`, () => {
+    const options = buildPinoOptions(
+      { timestamp, timestampKey: 'timestamp', levelKey: 'severity', messageKey: 'message' },
+      {}, 'app', '0', {}, import.meta.dirname
+    )
+    const logs = []
+    const logger = pino(options, { write: line => logs.push(JSON.parse(line)) })
+    logger.child({ requestId: '123' }).warn('custom keys')
+
+    const [log] = logs
+    strictEqual(log.severity, 40)
+    strictEqual(log.message, 'custom keys')
+    strictEqual(log.requestId, '123')
+    strictEqual(Object.hasOwn(log, 'level'), false)
+    strictEqual(Object.hasOwn(log, 'time'), false)
+    if (timestamp === 'nullTime') {
+      strictEqual(Object.hasOwn(log, 'timestamp'), false)
+    } else if (timestamp === 'isoTime') {
+      strictEqual(new Date(log.timestamp).toISOString(), log.timestamp)
+    } else {
+      const now = timestamp === 'unixTime' ? Math.round(Date.now() / 1000) : Date.now()
+      ok(Math.abs(log.timestamp - now) < 1000)
+    }
+  })
+}
+
+test('custom log keys preserve level formatters and escape timestamp keys', () => {
+  const timestampKey = 'date"\\$&'
+  const options = {
+    timestampKey,
+    timestamp: buildPinoTimestamp('epochTime', timestampKey),
+    levelKey: 'severity',
+    formatters: {
+      level: label => ({ level: label.toUpperCase(), extra: 'retained' }),
+      bindings: () => ({ service: 'test' })
+    }
+  }
+  setPinoLogKeys(options)
+  const logs = []
+  pino(options, { write: line => logs.push(JSON.parse(line)) }).info('formatted')
+
+  strictEqual(logs[0].severity, 'INFO')
+  strictEqual(logs[0].extra, 'retained')
+  strictEqual(logs[0].service, 'test')
+  strictEqual(typeof logs[0][timestampKey], 'number')
+  strictEqual(Object.hasOwn(logs[0], 'level'), false)
+})
+
+test('custom level keys preserve formatters that already use a different key', () => {
+  const options = { levelKey: 'severity', formatters: { level: label => ({ priority: label }) } }
+  setPinoLogKeys(options)
+  const logs = []
+  pino(options, { write: line => logs.push(JSON.parse(line)) }).info('formatted')
+
+  strictEqual(logs[0].priority, 'info')
+  strictEqual(Object.hasOwn(logs[0], 'severity'), false)
+})
 
 test('buildPinoOptions - default values', t => {
   const pinoOptions = buildPinoOptions({}, {}, 'test-application', 'worker-1', {}, import.meta.dirname)
@@ -551,7 +611,10 @@ test('buildPinoOptions - with pretty option', t => {
   const loggerConfig = { pretty: true }
   const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-application', 'worker-1', {}, import.meta.dirname)
 
-  deepStrictEqual(pinoOptions.transport, { target: 'pino-pretty' })
+  deepStrictEqual(pinoOptions.transport, {
+    target: 'pino-pretty',
+    options: { messageKey: 'msg', timestampKey: 'time', levelKey: 'level' }
+  })
 })
 
 test('disablePinoDirectWrite - should bind stdout.write', t => {

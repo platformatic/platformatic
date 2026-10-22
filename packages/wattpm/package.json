@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "3.72.0",
+  "version": "3.74.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -15,10 +15,12 @@
   },
   "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start",
   "scripts": {
+    "pretest": "node scripts/copy-skills.js",
     "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "npm run gen-schema && npm run gen-types",
+    "build": "npm run gen-schema && npm run gen-types && node scripts/copy-skills.js",
+    "prepack": "node scripts/copy-skills.js",
     "prepublishOnly": "npm run build",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
@@ -31,9 +33,11 @@
     "bin",
     "index.js",
     "schema.json",
-    "lib"
+    "lib",
+    "skills"
   ],
   "dependencies": {
+    "@fastify/error": "^4.0.0",
     "@fastify/websocket": "^11.0.0",
     "@platformatic/control": "workspace:*",
     "@platformatic/foundation": "workspace:*",

@@ -6,6 +6,7 @@ import {
   ensureMsgpackr,
   ensureRedis,
   getConnection,
+  getEntryLifetime,
   getPlatformaticMeta,
   getPlatformaticSubprefix,
   keyFor,
@@ -88,6 +89,10 @@ export class CacheHandler {
   async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'cache get')
 
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
+
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     let rawValue
@@ -134,12 +139,17 @@ export class CacheHandler {
   }
 
   async set (cacheKey, value, ctx, isRedisKey) {
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
+
     const tags = this.#getTags(ctx.tags, value)
     const revalidate = ctx.revalidate ?? ctx.cacheControl?.revalidate ?? value.revalidate ?? 0
 
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const lifetime = getEntryLifetime(revalidate, ctx.cacheControl?.expire, this.#maxTTL)
 
     try {
       // Compute the parameters to save
@@ -151,9 +161,7 @@ export class CacheHandler {
         maxTTL: this.#maxTTL,
         ...this.#meta
       })
-      // revalidate === false means "cache forever" in Next.js (SSG/force-static pages).
-      // Use maxTTL as the expiration in that case.
-      const expire = revalidate === false ? this.#maxTTL : Math.min(revalidate, this.#maxTTL)
+      const expire = Math.min(lifetime, this.#maxTTL)
 
       if (expire < 1) {
         return
@@ -181,6 +189,10 @@ export class CacheHandler {
   }
 
   async remove (cacheKey, isRedisKey) {
+    if (!isRedisKey && !this.#hasSubprefix()) {
+      return
+    }
+
     this.#logger.trace({ key: cacheKey }, 'cache remove')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
@@ -231,6 +243,10 @@ export class CacheHandler {
   }
 
   async revalidateTag (tags) {
+    if (!this.#hasSubprefix()) {
+      return
+    }
+
     this.#logger.trace({ tags }, 'cache revalidateTag')
 
     if (typeof tags === 'string') {
@@ -307,6 +323,12 @@ export class CacheHandler {
     }
 
     await Promise.all(promises)
+  }
+
+  // During a build, the subprefix is only known once Next.js writes the build ID
+  #hasSubprefix () {
+    this.#subprefix ??= getPlatformaticSubprefix()
+    return this.#subprefix !== null
   }
 
   #keyFor (key, section) {

@@ -366,6 +366,16 @@ export const logger = {
     messageKey: {
       type: 'string'
     },
+    timestampKey: {
+      type: 'string',
+      minLength: 1,
+      description: 'The key used for the timestamp in emitted logs. Defaults to time.'
+    },
+    levelKey: {
+      type: 'string',
+      minLength: 1,
+      description: 'The key used for the level in emitted logs. Defaults to level.'
+    },
     customLevels: {
       type: 'object',
       additionalProperties: true
