@@ -73,6 +73,10 @@ test('list', async () => {
     message: 'Unknown field invalidField'
   })
 
+  await rejects(entity.find({ orderBy: [{ field: 'invalidField', direction: 'asc' }] }), {
+    message: 'Unknown field invalidField'
+  })
+
   deepEqual(await entity.find({ where: { title: { eq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [
     {
       id: '1',
