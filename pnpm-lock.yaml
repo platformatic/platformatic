@@ -1056,8 +1056,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       single-user-cache:
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^2.0.0
+        version: 2.1.0
       split2:
         specifier: ^4.2.0
         version: 4.2.0
@@ -11431,9 +11431,6 @@ packages:
 
   simple-wcswidth@1.1.2:
     resolution: {integrity: sha512-j7piyCjAeTDSjzTSQ7DokZtMNwNlEAyxqSZeCS+CXH7fJ4jx3FuJ/mTW3mE+6JLs4VJBbcll0Kjn+KXI5t21Iw==}
-
-  single-user-cache@1.0.1:
-    resolution: {integrity: sha512-xFW/TuZUKoMZl47xqfC2jb7dO1XtJ5VgZxQliOKQWTueIH96CX6USaPiZcyDN0HFb4Ow+tsXpJZViRyIkl/rDA==}
 
   single-user-cache@2.1.0:
     resolution: {integrity: sha512-Wmu+uIEkabMoQPpJTOYhEsE6h/XjnjIhtuB1+tynxeO/hQxwQD0hIDq/ad65P1Tw9wt9f5SKnUe+63m6TMB4Uw==}
@@ -23776,10 +23773,6 @@ snapshots:
       - supports-color
 
   simple-wcswidth@1.1.2: {}
-
-  single-user-cache@1.0.1:
-    dependencies:
-      safe-stable-stringify: 2.5.0
 
   single-user-cache@2.1.0:
     dependencies:
