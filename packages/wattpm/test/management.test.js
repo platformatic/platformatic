@@ -350,6 +350,7 @@ test('config - should list configuration for the runtime', async t => {
     },
     healthProbes: true,
     resolvedApplicationsBasePath: 'external',
+    disabledApplications: [],
     metrics: {
       enabled: true,
       timeout: 1000
