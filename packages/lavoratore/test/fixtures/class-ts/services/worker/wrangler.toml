@@ -1,0 +1,10 @@
+name = "worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+STAGE = "production"
+ONLY_TOP_LEVEL = "yes"
+
+[env.staging.vars]
+STAGE = "staging"

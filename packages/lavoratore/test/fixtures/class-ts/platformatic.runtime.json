@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "worker",
+  "applications": [{ "id": "worker", "path": "./services/worker" }],
+  "restartOnError": false
+}

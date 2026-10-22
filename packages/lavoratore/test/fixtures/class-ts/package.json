@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@platformatic/lavoratore": "^3.0.0",
+    "@platformatic/runtime": "^3.0.0"
+  }
+}

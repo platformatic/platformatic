@@ -12,6 +12,7 @@ export const packages = [
   '@platformatic/generators',
   '@platformatic/globals',
   '@platformatic/itc',
+  '@platformatic/lavoratore',
   '@platformatic/metrics',
   '@platformatic/nest',
   '@platformatic/next',

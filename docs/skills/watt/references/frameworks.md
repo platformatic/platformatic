@@ -12,6 +12,7 @@ include Vite configuration. Preserve existing framework build configuration.
 | React Router | `@platformatic/react-router` | [React Router](frameworks/react-router.md) |
 | TanStack Start | `@platformatic/tanstack` | [TanStack](frameworks/tanstack.md) |
 | Vite | `@platformatic/vite` | [Vite](frameworks/vite.md) |
+| Workers (Wrangler) | `@platformatic/lavoratore` | [Lavoratore](frameworks/lavoratore.md) |
 | Remix | `@platformatic/remix` | [Remix](frameworks/remix.md) |
 | Astro | `@platformatic/astro` | [Astro](frameworks/astro.md) |
 | Express | `@platformatic/node` | [Express](frameworks/express.md) |

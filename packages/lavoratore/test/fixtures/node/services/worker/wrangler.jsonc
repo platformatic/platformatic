@@ -1,0 +1,13 @@
+{
+  // Comments are allowed
+  "name": "worker",
+  "main": "src/index.js",
+  "compatibility_date": "2025-01-01",
+  "vars": {
+    "GREETING": "hello"
+  },
+  "triggers": {
+    "crons": ["0 0 1 1 *"]
+  },
+  "services": [{ "binding": "BACKEND", "service": "backend" }]
+}

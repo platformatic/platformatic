@@ -1,0 +1,64 @@
+{
+  "name": "@platformatic/lavoratore",
+  "version": "3.74.0",
+  "description": "Platformatic Lavoratore Capability",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
+    "./workers": {
+      "types": "./lib/shims/workers.d.ts",
+      "import": "./lib/shims/workers.js",
+      "default": "./lib/shims/workers.js"
+    },
+    "./*": "./*"
+  },
+  "scripts": {
+    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "test:types": "tstyche",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "npm run gen-schema && npm run gen-types",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "@platformatic/basic": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
+    "@platformatic/generators": "workspace:*",
+    "@platformatic/globals": "workspace:*",
+    "json5": "^2.2.3",
+    "light-my-request": "^6.0.0"
+  },
+  "devDependencies": {
+    "@platformatic/node": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
+    "cleaner-spec-reporter": "^2.0.0",
+    "eslint": "9",
+    "json-schema-to-typescript": "^15.0.1",
+    "neostandard": "^0.14.0",
+    "tstyche": "^7.0.0",
+    "typescript": "~6.0.3",
+    "undici": "^7.27.2"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

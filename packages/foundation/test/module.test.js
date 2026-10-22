@@ -294,6 +294,17 @@ for (const dependencyType of ['dependencies', 'devDependencies']) {
     })
   }
 }
+test('detectApplicationType - should detect Lavoratore', async () => {
+  const result = await detectApplicationType('/tmp', { devDependencies: { wrangler: '^4.0.0' } })
+  equal(result.name, '@platformatic/lavoratore')
+  equal(result.label, 'Lavoratore')
+})
+
+test('detectApplicationType - should detect Vite before Lavoratore', async () => {
+  const result = await detectApplicationType('/tmp', { devDependencies: { wrangler: '^4.0.0', vite: '^7.0.0' } })
+  equal(result.name, '@platformatic/vite')
+})
+
 test('detectApplicationType - should detect Node.js when has JS files', async t => {
   const tempDir = join(tmpdir(), 'test-' + Math.random().toString(36).substr(2, 9))
   await mkdir(tempDir, { recursive: true })

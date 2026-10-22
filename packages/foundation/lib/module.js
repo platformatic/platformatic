@@ -23,6 +23,8 @@ export const applicationTypes = [
   { name: '@platformatic/nitro', label: 'Nitro', dependencies: ['nitro', 'nitropack'] },
   // Since Vite is often used with other frameworks, we must check for Vite last amongst frontend frameworks
   { name: '@platformatic/vite', label: 'Vite', dependencies: ['vite'] },
+  // Wrangler projects can use frontend frameworks, so they are checked after all of them
+  { name: '@platformatic/lavoratore', label: 'Lavoratore', dependencies: ['wrangler'] },
   {
     name: '@platformatic/gateway',
     label: 'Platformatic Gateway',

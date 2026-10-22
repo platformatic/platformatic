@@ -1,0 +1,30 @@
+import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
+import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
+import { LavoratoreCapability } from './lib/capability.js'
+import { schema } from './lib/schema.js'
+
+export async function transform (config, _schema, options) {
+  return basicTransform(config, schema, options)
+}
+
+export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
+  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
+
+  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+    validationOptions,
+    transform,
+    replaceEnv: true,
+    root,
+    ...context
+  })
+}
+
+export async function create (configOrRoot, sourceOrConfig, context) {
+  const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
+  return new LavoratoreCapability(config[kMetadata].root, config, context)
+}
+
+export * from './lib/capability.js'
+export { Generator } from './lib/generator.js'
+export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+export { findWranglerConfigFile, loadWranglerConfig, wranglerConfigFiles } from './lib/wrangler.js'

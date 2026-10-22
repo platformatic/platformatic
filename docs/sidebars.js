@@ -239,6 +239,12 @@ const sidebars = {
             },
             {
               type: 'category',
+              label: 'Lavoratore',
+              collapsed: true,
+              items: ['reference/lavoratore/overview', 'reference/lavoratore/configuration']
+            },
+            {
+              type: 'category',
               label: 'Nest.js',
               collapsed: true,
               items: ['reference/nest/overview', 'reference/nest/configuration']

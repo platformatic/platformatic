@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/lavoratore/3.0.0.json",
+  "lavoratore": {
+    "vars": {
+      "FROM_WATT": "watt"
+    }
+  }
+}

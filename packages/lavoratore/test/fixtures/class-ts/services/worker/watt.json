@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/lavoratore/3.0.0.json",
+  "lavoratore": {
+    "environment": "staging"
+  }
+}

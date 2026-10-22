@@ -96,6 +96,12 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 - **Use Case**: Standalone Nitro applications and Vite applications using the Nitro plugin
 - **Features**: Nitro development server, Vite-powered development, Nitro production output
 
+##### [`@platformatic/lavoratore`](../reference/lavoratore/overview.md)
+
+- **Description**: Worker applications exporting `fetch`/`scheduled` handlers, compatible with Cloudflare Workers
+- **Use Case**: Workers written against the `fetch`/`scheduled` handler interface, configured with Wrangler
+- **Features**: In-thread execution on Node.js, Wrangler configuration, cron triggers, service bindings over the mesh network
+
 ##### [`@platformatic/vite`](../reference/vite/overview.md)
 
 - **Description**: Vite-based application support
@@ -263,6 +269,7 @@ The tool can automatically detect and wrap:
 - Next.js applications
 - Nitro applications using `nitro` or `nitropack`
 - Vite-based projects
+- Worker projects using `wrangler`
 - Other JavaScript/TypeScript applications
 
 ## Package Manager Support
