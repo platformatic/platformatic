@@ -228,6 +228,40 @@ export interface PlatformaticServiceConfig {
   };
   plugins?: {
     [k: string]: unknown;
+  } & {
+    packages?: (
+      | string
+      | {
+          name: string;
+          options?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }
+    )[];
+    paths?: (
+      | string
+      | {
+          path?: string;
+          encapsulate?: boolean;
+          maxDepth?: number;
+          autoHooks?: boolean;
+          autoHooksPattern?: string;
+          cascadeHooks?: boolean;
+          overwriteHooks?: boolean;
+          routeParams?: boolean;
+          forceESM?: boolean;
+          ignoreFilter?: string;
+          matchFilter?: string;
+          ignorePattern?: string;
+          scriptPattern?: string;
+          indexPattern?: string;
+          options?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }
+    )[];
   };
   telemetry?: {
     enabled?: boolean | string;
@@ -331,8 +365,8 @@ export interface PlatformaticServiceConfig {
         /**
          * @minItems 1
          */
-        allow?: [string, ...string[]];
-        ignore?: string[];
+        allow?: [string, ...string[]] | null;
+        ignore?: string[] | null;
       }
     | boolean
     | string;
@@ -418,9 +452,108 @@ export interface PlatformaticServiceConfig {
             }
         )[];
     basePath?: string;
-    services?: {
+    services?: ({
       [k: string]: unknown;
-    }[];
+    } & {
+      id?: string;
+      enabled?:
+        | boolean
+        | string
+        | {
+            [k: string]: boolean;
+          };
+      path?: string;
+      config?: string;
+      url?: string;
+      gitBranch?: string;
+      useHttp?: boolean;
+      websocket?: boolean;
+      reuseTcpPorts?: boolean;
+      workers?:
+        | number
+        | string
+        | {
+            static?: number;
+            minimum?: number;
+            maximum?: number;
+            scaleUpELU?: number;
+            scaleDownELU?: number;
+            [k: string]: unknown;
+          };
+      health?: {
+        enabled?: boolean | string;
+        interval?: number | string;
+        gracePeriod?: number | string;
+        maxUnhealthyChecks?: number | string;
+        maxELU?: number | string;
+        maxEventLoopDelay?: number | string;
+        maxEventLoopDelayP99?: number | string;
+        maxHeapUsed?: number | string;
+        maxHeapTotal?: number | string;
+        maxYoungGeneration?: number | string;
+        codeRangeSize?: number | string;
+        bufferPoolSize?: number | string;
+        defaultHighWaterMark?: number | string;
+      };
+      /**
+       * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+       */
+      restartOnError?: boolean | number;
+      dependencies?: string[];
+      arguments?: string[];
+      env?: {
+        [k: string]: string;
+      };
+      envfile?: string;
+      sourceMaps?: boolean;
+      nodeModulesSourceMaps?: string[];
+      packageManager?: "npm" | "pnpm" | "yarn";
+      preload?: string | string[];
+      nodeOptions?: string;
+      execArgv?: string[];
+      permissions?: {
+        fs?: {
+          read?: string[];
+          write?: string[];
+        };
+      };
+      telemetry?: {
+        /**
+         * An array of instrumentations loaded if telemetry is enabled
+         */
+        instrumentations?: (
+          | string
+          | {
+              package: string;
+              exportName?: string;
+              options?: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }
+        )[];
+        [k: string]: unknown;
+      };
+      compileCache?:
+        | boolean
+        | {
+            /**
+             * Enable Node.js module compile cache for faster startup
+             */
+            enabled?: boolean;
+            /**
+             * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+             */
+            directory?: string;
+          };
+      management?:
+        | boolean
+        | {
+            enabled?: boolean;
+            operations?: string[];
+          };
+      [k: string]: unknown;
+    })[];
     workers?:
       | number
       | string
@@ -1266,7 +1399,7 @@ export interface RequestBodyOrReference {
   [k: string]: unknown;
 }
 export interface Responses {
-  [k: string]: ResponseOrReference;
+  [k: string]: unknown;
 }
 export interface ResponseOrReference {
   [k: string]: unknown;
