@@ -828,13 +828,13 @@ test('migrate - writes out the block useHttp stood for', async t => {
 
   /*
     v4 has no useHttp, and the v4 entry schema does not admit it either -- so the defaults v3
-    synthesized are written out. keepAliveTimeout is not among them: node is the basic family, whose
-    server block does not admit it, and on v3 the key was inert there.
+    synthesized are written out, including keepAliveTimeout now that the basic server schema
+    supports it. This preserves the timeout v3 supplied when useHttp was enabled.
   */
   const api = await readFile(join(root, 'services/api/watt.config.mjs'), 'utf-8')
   ok(api.includes('port: 0'), api)
   ok(api.includes("hostname: '127.0.0.1'"), api)
-  ok(!api.includes('keepAliveTimeout'), api)
+  ok(api.includes('keepAliveTimeout: 5000'), api)
 
   const emitted = await readFile(join(root, 'watt.config.mjs'), 'utf-8')
   ok(!emitted.includes('useHttp'), emitted)
