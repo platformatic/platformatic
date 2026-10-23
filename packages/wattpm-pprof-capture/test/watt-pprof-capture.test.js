@@ -104,26 +104,32 @@ test('error types should be distinguishable throughout lifecycle', async t => {
   // Start CPU intensive task to generate load for profiler
   await request(`${url}/cpu-intensive/start`, { method: 'POST' })
 
-  // Start profiling with profile rotation (no threshold). The maxELU cutoff
-  // is disabled since the workload may fully saturate the loop on slow CI
-  // machines and this test is about rotation, not the cutoff.
-  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500, maxELU: false })
+  // Keep rotation disabled while checking the pre-capture error. Otherwise a
+  // slow runner can rotate before the assertion observes the initial state.
+  await app.sendCommandToApplication('service', 'startProfiling', { maxELU: false })
 
   // Wait for profiler to actually start running
   await waitForCondition(async () => {
     const state = await app.sendCommandToApplication('service', 'getProfilingState')
     return state.isProfilerRunning && !state.hasProfile
-  }, 1000)
+  })
 
-  // Test NoProfileAvailableError (before any rotation happens)
+  // Test NoProfileAvailableError before capturing a profile
   await assert.rejects(
     () => app.sendCommandToApplication('service', 'getLastProfile'),
     { code: 'PLT_PPROF_NO_PROFILE_AVAILABLE' },
     'Should throw NoProfileAvailableError (not ProfilingNotStartedError)'
   )
 
-  // Wait for the profile to be captured through rotation
-  await new Promise(resolve => setTimeout(resolve, 600))
+  await app.sendCommandToApplication('service', 'stopProfiling')
+
+  // Now test rotation independently of the transient pre-capture state. The
+  // maxELU cutoff stays disabled because the workload can saturate slow runners.
+  await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 500, maxELU: false })
+  await waitForCondition(async () => {
+    const state = await app.sendCommandToApplication('service', 'getProfilingState')
+    return state.hasProfile
+  })
 
   // Get the profile (should succeed now)
   const profile = await app.sendCommandToApplication('service', 'getLastProfile')
