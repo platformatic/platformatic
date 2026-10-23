@@ -47,10 +47,10 @@ function getRouteTags (nextMajor) {
   }
 }
 
-// Starting from Next.js 16.4, the cached responses are namespaced by the kind and the source route which
+// Starting from Next.js 16.3.8, the cached responses are namespaced by the kind and the source route which
 // generated them. See getRouteCacheKey in next/dist/server/lib/route-cache-key.js.
 function getRouteCacheKey (nextVersion, kind, sourceRoute, pathname) {
-  if (!satisfies(nextVersion, '>=16.4.0')) {
+  if (!satisfies(nextVersion, '>=16.3.8')) {
     return pathname
   }
 

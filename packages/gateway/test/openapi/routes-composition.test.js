@@ -529,6 +529,9 @@ test('should proxy multipart content in OpenAPI composition', async t => {
       const parts = []
       if (request.isMultipart()) {
         for await (const part of request.parts()) {
+          if (part.type === 'file') {
+            assert.equal((await part.toBuffer()).toString(), 'test content')
+          }
           parts.push(part)
         }
       }
@@ -588,7 +591,6 @@ test('should proxy multipart content in OpenAPI composition', async t => {
     body: multipartBody
   })
 
-  // This test should initially fail due to multipart content not being properly proxied
   assert.equal(statusCode, 200)
   const response = JSON.parse(await body.text())
   assert.equal(response.parts, 2)
