@@ -183,15 +183,21 @@ export async function updateOne (db, sql, table, schema, input, primaryKeys, fie
     SET ${sql.join(pairs, sql`, `)}
     WHERE ${sql.join(where, sql` AND `)}
   `
-  await db.query(update)
+  const handleUpdate = async tx => {
+    await tx.query(update)
 
-  const select = sql`
-    SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-    FROM ${sql.ident(table)}
-    WHERE ${sql.join(where, sql` AND `)}
-  `
-  const res = await db.query(select)
-  return res[0]
+    const select = sql`
+      SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
+      FROM ${sql.ident(table)}
+      WHERE ${sql.join(where, sql` AND `)}
+    `
+    const res = await tx.query(select)
+    return res[0]
+  }
+
+  // Transaction handles may not expose .tx (SQLite doesn't support nested
+  // transactions), so reuse them directly when already inside a transaction.
+  return typeof db.tx === 'function' ? db.tx(handleUpdate) : handleUpdate(db)
 }
 
 export async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {

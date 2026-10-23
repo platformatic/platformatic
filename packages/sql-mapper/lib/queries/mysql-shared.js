@@ -79,16 +79,21 @@ export async function updateOne (db, sql, table, schema, input, primaryKeys, fie
     SET ${sql.join(pairs, sql`, `)}
     WHERE ${sql.join(where, sql` AND `)}
   `
-  await db.query(update)
+  return db.tx(async tx => {
+    // InnoDB's default REPEATABLE READ isolation locks the matching row (or
+    // primary-key gap) until commit. At READ COMMITTED, a missing-row insert
+    // can still race because InnoDB does not take gap locks.
+    await tx.query(update)
 
-  const select = sql`
-    SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-    FROM ${tableName(sql, table, schema)}
-    WHERE ${sql.join(where, sql` AND `)}
-  `
+    const select = sql`
+      SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
+      FROM ${tableName(sql, table, schema)}
+      WHERE ${sql.join(where, sql` AND `)}
+    `
 
-  const res = await db.query(select)
-  return res[0]
+    const res = await tx.query(select)
+    return res[0]
+  })
 }
 
 export async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
