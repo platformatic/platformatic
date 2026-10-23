@@ -77,7 +77,7 @@ test('server schema - hostname must not have a default value', () => {
   strictEqual(server.properties.hostname.default, undefined)
 })
 
-test('server and fastifyServer agree on every key they share', () => {
+test('server and fastifyServer agree on shared transport options', () => {
   /*
     They are separate object literals that happen to overlap: fastifyServer re-declares server's
     keys rather than composing with it, so a key added to one does not reach the other. That is how
@@ -85,7 +85,9 @@ test('server and fastifyServer agree on every key they share', () => {
     workers > 1 on a fixed port. Sharing the declaration is what keeps the two from drifting; this
     asserts they still do.
   */
-  const shared = Object.keys(server.properties).filter(key => key in fastifyServer.properties)
+  // keepAliveTimeout is capability-specific: Fastify explicitly defaults to
+  // 5000ms, while other capabilities preserve their framework's default.
+  const shared = Object.keys(server.properties).filter(key => key !== 'keepAliveTimeout' && key in fastifyServer.properties)
 
   // hostname is the only key both spell out, and it is spelled out identically.
   for (const key of shared) {
@@ -93,4 +95,11 @@ test('server and fastifyServer agree on every key they share', () => {
   }
 
   strictEqual(shared.includes('portAssignment'), true)
+})
+
+test('keepAliveTimeout preserves capability-specific defaults', () => {
+  strictEqual(server.properties.keepAliveTimeout.type, 'integer')
+  strictEqual(server.properties.keepAliveTimeout.minimum, 0)
+  strictEqual(server.properties.keepAliveTimeout.default, undefined)
+  deepEqual(fastifyServer.properties.keepAliveTimeout, { type: 'integer', default: 5000 })
 })
