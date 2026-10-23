@@ -1,11 +1,9 @@
-import fs from 'fs/promises'
 import assert from 'node:assert'
 import os from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { LOGS_TIMEOUT, sleep } from '../../basic/test/helper.js'
-import { createFromConfig } from './helper.js'
+import { createFromConfig, waitForLogLine } from './helper.js'
 
 test('config is adjusted to handle custom loggers', async t => {
   const options = {
@@ -74,10 +72,6 @@ test('transport logger', async t => {
   await server.start({ listen: true })
   await server.stop()
 
-  // Ths is need as the write happens in a custom transport
-  await sleep(LOGS_TIMEOUT)
-  const written = await fs.readFile(file, 'utf8')
-  const parsed = JSON.parse(written)
-
-  assert.strictEqual(parsed.fromTransport, true)
+  const log = await waitForLogLine(file, log => log.fromTransport === true)
+  assert.ok(log, 'expected a log entry from the custom transport')
 })
