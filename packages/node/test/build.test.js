@@ -129,7 +129,7 @@ test('should not hang if the runtime forcefully stops during start in case of er
     async additionalSetup (root, config) {
       config.restartOnError = 0
       await updateFile(resolve(root, 'services/app-no-config/src/index.ts'), content =>
-        content.replace('app.listen({ port: 1 })', 'setTimeout(() => app.listen({ port: 1 }), 2000)'))
+        content.replace('app.listen({ port: 0 })', 'setTimeout(() => app.listen({ port: 0 }), 2000)'))
 
       await writeFile(
         resolve(root, 'services/app-no-config/platformatic.json'),
@@ -153,7 +153,11 @@ test('should not hang if the runtime forcefully stops during start in case of er
     }
   })
 
-  const promise = startRuntime(t, runtime)
+  // A forced stop can terminate the worker before start completes. Handle that
+  // expected rejection immediately, while still failing on any other error.
+  const promise = startRuntime(t, runtime).catch(error => {
+    equal(error.code, 'PLT_RUNTIME_APPLICATION_WORKER_EXIT')
+  })
   runtime.error = new Error('This should not happen')
   await startingEvent.promise
 
