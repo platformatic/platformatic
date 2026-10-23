@@ -33,7 +33,7 @@
     "ioredis": "^6.0.0",
     "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",
-    "typescript": "~6.0.3"
+    "typescript": "~7.0.0"
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",

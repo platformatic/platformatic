@@ -58,7 +58,7 @@
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",
     "next": "^16.1.0",
-    "typescript": "~6.0.3",
+    "typescript": "~7.0.0",
     "ws": "^8.18.0"
   },
   "engines": {

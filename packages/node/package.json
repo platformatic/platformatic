@@ -45,7 +45,7 @@
     "koa": "^2.15.3",
     "neostandard": "^0.14.0",
     "tsx": "^4.19.0",
-    "typescript": "~6.0.3",
+    "typescript": "~7.0.0",
     "undici-8": "npm:undici@^8.3.0"
   },
   "engines": {

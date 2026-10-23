@@ -49,7 +49,7 @@
     "pino": "^9.9.0",
     "pino-test": "^2.0.0",
     "tstyche": "^7.0.0",
-    "typescript": "~6.0.3"
+    "typescript": "~7.0.0"
   },
   "engines": {
     "node": ">=22.19.0"
