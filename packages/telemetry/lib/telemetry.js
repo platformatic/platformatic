@@ -19,7 +19,7 @@ async function telemetry (app, opts) {
     setErrorInSpanClient,
     shutdown,
     openTelemetryAPIs
-  } = setupTelemetry(opts, app.log)
+  } = await setupTelemetry(opts, app.log)
 
   app.addHook('onRequest', startHTTPSpan)
   app.addHook('onResponse', endHTTPSpan)
