@@ -34,7 +34,8 @@ test('get application config via capability api', async t => {
   assert.deepStrictEqual(capabilityConfig, {
     application: {},
     db: {
-      ...connectionInfo
+      ...connectionInfo,
+      usePrimaryKeySqlType: false
     },
     plugins: {
       paths: [join(workingDir, 'routes')]
