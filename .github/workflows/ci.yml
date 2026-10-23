@@ -783,13 +783,26 @@ jobs:
     if: ${{ !inputs.job || inputs.job == 'telemetry' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       matrix:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@v6
-      - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v7
         with:
           # Node.js 26.12.0 crashes on require(esm) inside module.register() hooks
