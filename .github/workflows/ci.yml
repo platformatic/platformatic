@@ -87,7 +87,7 @@ jobs:
     name: 'license-check'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'license-check' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -119,7 +119,7 @@ jobs:
     name: 'runtime-lint'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'runtime-lint' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -142,7 +142,7 @@ jobs:
     name: 'db-lint'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-lint' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -390,7 +390,7 @@ jobs:
     name: 'gateway - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'gateway' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -421,7 +421,7 @@ jobs:
     name: 'composer - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'composer' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -479,7 +479,7 @@ jobs:
     name: 'db-authorization - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-authorization' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -507,7 +507,7 @@ jobs:
     name: 'db-core-test - ${{ matrix.db }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'db-core-test' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -546,7 +546,7 @@ jobs:
     name: 'sql-events - ${{ matrix.db }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'sql-events' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -781,15 +781,28 @@ jobs:
     name: 'telemetry - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'telemetry' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       matrix:
         node: [22, 24, 26]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@v6
-      - uses: ikalnytskyi/action-setup-postgres@v7
       - uses: actions/setup-node@v7
         with:
           # Node.js 26.12.0 crashes on require(esm) inside module.register() hooks
@@ -863,7 +876,7 @@ jobs:
     name: 'next - ${{ matrix.node }} - ${{ matrix.suite }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'next' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -895,7 +908,7 @@ jobs:
     name: 'vite - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'vite' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -922,7 +935,7 @@ jobs:
     name: 'astro - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'astro' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -934,6 +947,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
+          # Astro can require a newer Node.js patch than the runner's cached version.
+          check-latest: true
           cache: 'pnpm'
       - name: pnpm install
         uses: nick-fields/retry@v4.0.0
@@ -949,7 +964,7 @@ jobs:
     name: 'react-router - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'react-router' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -976,7 +991,7 @@ jobs:
     name: 'remix - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'remix' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -1003,7 +1018,7 @@ jobs:
     name: 'nest - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'nest' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
@@ -1084,7 +1099,7 @@ jobs:
     name: 'tanstack - ${{ matrix.os }} - ${{ matrix.node }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'tanstack' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       matrix:
