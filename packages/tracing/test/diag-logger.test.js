@@ -1,9 +1,9 @@
 import { diag } from '@opentelemetry/api'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { BatchSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base'
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { TracerProvider } from '@opentelemetry/sdk-trace'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
-import { deepStrictEqual, strictEqual } from 'node:assert'
+import { deepStrictEqual, match, strictEqual } from 'node:assert'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import pino from 'pino'
@@ -83,7 +83,7 @@ test('setupDiagLogger configures the OpenTelemetry diagnostic logger using the p
   diag.info('info message')
 
   strictEqual(calls[0][0], 'debug')
-  strictEqual(calls[0][1][0].startsWith('@opentelemetry/api: Registered a global for diag v1.9.'), true)
+  match(calls[0][1][0], /^@opentelemetry\/api: Registered a global for diag v1\./)
   deepStrictEqual(calls.slice(1), [
     ['debug', ['debug message']],
     ['info', ['info message']]
@@ -169,7 +169,7 @@ test('createPlatformaticDiagLogger renders spans using the OpenTelemetry custom 
     }
   })
   const logger = pino({ level: 'trace' }, stream)
-  const provider = new NodeTracerProvider({
+  const provider = new TracerProvider({
     resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: 'test-service' }),
     spanProcessors: [new BatchSpanProcessor(new InMemorySpanExporter())]
   })
@@ -203,7 +203,7 @@ test('createPlatformaticDiagLogger renders tracer objects using OpenTelemetry cu
     }
   })
   const logger = pino({ level: 'trace' }, stream)
-  const provider = new NodeTracerProvider({
+  const provider = new TracerProvider({
     resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: 'test-service' }),
     spanProcessors: [new BatchSpanProcessor(new InMemorySpanExporter())]
   })

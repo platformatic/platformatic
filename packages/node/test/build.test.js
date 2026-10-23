@@ -150,12 +150,14 @@ test('should not hang if the runtime forcefully stops during start in case of er
     }
   })
 
-  const promise = startRuntime(t, runtime)
+  // v4 reports an aborted startup when a worker is forcefully stopped. Attach
+  // the rejection assertion immediately, before awaiting the stop operation.
+  const promise = rejects(startRuntime(t, runtime), { code: 'PLT_RUNTIME_RUNTIME_ABORT' })
   runtime.error = new Error('This should not happen')
   await startingEvent.promise
 
   await runtime.stopApplication('app-no-config')
-  await rejects(() => promise, { code: 'PLT_RUNTIME_RUNTIME_ABORT' })
+  await promise
 })
 
 for (const application of ['app-no-config', 'app-with-config']) {

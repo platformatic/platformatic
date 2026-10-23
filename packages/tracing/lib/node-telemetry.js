@@ -4,7 +4,7 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
 import { W3CTraceContextPropagator } from '@opentelemetry/core'
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { TracerProvider } from '@opentelemetry/sdk-trace'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { updateGlobals } from '@platformatic/globals'
@@ -52,7 +52,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir, usesPlatformaticDisp
 
   const clientSpansAls = new AsyncLocalStorage()
 
-  const tracerProvider = new NodeTracerProvider({
+  const tracerProvider = new TracerProvider({
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: applicationName
