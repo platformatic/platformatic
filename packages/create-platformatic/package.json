@@ -26,7 +26,8 @@
     "cleaner-spec-reporter": "^2.0.0",
     "eslint": "9",
     "import-in-the-middle": "^3.0.0",
-    "neostandard": "^0.14.0"
+    "neostandard": "^0.14.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "engines": {
     "node": ">=22.19.0"

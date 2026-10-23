@@ -37,7 +37,7 @@
     "eslint": "9",
     "license-checker-rseidelsohn": "^5.0.1",
     "neostandard": "^0.14.0",
-    "typescript": "~7.0.0"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "dependencies": {
     "@platformatic/foundation": "workspace:*",

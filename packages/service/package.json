@@ -36,7 +36,7 @@
     "pino-abstract-transport": "^2.0.0",
     "self-cert": "^2.0.0",
     "split2": "^4.2.0",
-    "typescript": "~7.0.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "undici": "7.30.1",
     "vscode-json-languageservice": "^5.3.9",
     "why-is-node-running": "^2.2.2",

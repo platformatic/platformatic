@@ -86,6 +86,14 @@ npm test               # Run tests for specific package
 ./scripts/sync-version.sh  # Sync versions across all packages
 ```
 
+### TypeScript tooling
+
+The workspace installs TypeScript 7 as `@typescript/native`, providing the `tsc`
+command. Packages alias `typescript` to `@typescript/typescript6` so tools that
+need the TypeScript 6 compiler API, including ESLint and the Nest CLI, continue
+to work. The compatibility package provides `tsc6` without replacing `tsc`.
+Keep these dependencies side by side until those tools support the new API.
+
 ### Testing
 
 Tests require Docker for database setup. The test script automatically selects the appropriate Docker Compose file based on your OS.

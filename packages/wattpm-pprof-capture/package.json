@@ -34,7 +34,7 @@
     "eslint": "9",
     "neostandard": "^0.14.0",
     "pprof-format": "^2.1.0",
-    "typescript": "~7.0.0"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "engines": {
     "node": ">=22.19.0"
