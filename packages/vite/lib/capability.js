@@ -25,6 +25,38 @@ import { version } from './schema.js'
 
 const supportedVersions = ['^5.0.0', '^6.0.0', '^7.0.0', '^8.0.0']
 
+// Whether an `enabled` enables, as the runtime decides it of an application (isApplicationEnabled
+// in @platformatic/runtime's lib/config.js, which it does not export): a boolean, a string other than
+// "false", or an object of booleans by environment, enabled when none matches or when it is unset.
+function isEnabled (enabled, environment) {
+  if (typeof enabled === 'undefined') {
+    return true
+  }
+
+  if (typeof enabled === 'string') {
+    return enabled !== 'false'
+  }
+
+  if (typeof enabled === 'object' && enabled !== null) {
+    return enabled[environment] ?? true
+  }
+
+  return enabled
+}
+
+// `vite.preCompressed`: off when unset, else a boolean or a string, or `{ enabled }`, each as above.
+function isPreCompressed (preCompressed, environment) {
+  if (typeof preCompressed === 'undefined') {
+    return false
+  }
+
+  if (typeof preCompressed === 'object' && preCompressed !== null) {
+    return isEnabled(preCompressed.enabled, environment)
+  }
+
+  return isEnabled(preCompressed, environment)
+}
+
 export class ViteCapability extends BaseCapability {
   #vite
   #app
@@ -307,7 +339,8 @@ export class ViteCapability extends BaseCapability {
       root: outputDirectory,
       prefix: this.#basePath,
       prefixAvoidTrailingSlash: true,
-      schemaHide: true
+      schemaHide: true,
+      preCompressed: isPreCompressed(config.vite.preCompressed, this.isProduction ? 'production' : 'development')
     })
 
     if (config.vite.notFoundHandler?.enabled) {

@@ -1054,6 +1054,17 @@ export interface PlatformaticNuxtConfig {
           contentType?: string;
           statusCode?: number;
         };
+    preCompressed?:
+      | boolean
+      | string
+      | {
+          enabled?:
+            | boolean
+            | string
+            | {
+                [k: string]: boolean;
+              };
+        };
   };
   nuxt?: {
     outputDirectory?: string;
