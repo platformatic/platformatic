@@ -95,8 +95,8 @@ export default createNodeConfig({
 **Step 1: Wrap existing Express app**
 
 ```bash
-# Add Watt configuration to existing Express app
-npx wattpm create my-app
+# Read instructions for integrating the existing Express app
+./node_modules/.bin/wattpm skill references/frameworks.md
 ```
 
 **Step 2: Add Watt features incrementally**
@@ -253,23 +253,9 @@ export default function ProductList ({ products }) {
 
 **Best of Both Worlds:**
 
-```bash
-# Create Watt application with Next.js frontend
-# npm create wattpm
-Hello YOURNAME, welcome to Watt Utils 3.0.0!
-? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? no
-? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/db
-? What is the name of the application? api
-? Do you want to use TypeScript? no
-? Do you want to create another application? yes
-? Which kind of application do you want to create? @platformatic/next
-? What is the name of the application? frontend
-? Where is your application located? web/frontend
-? Do you want to import or copy your application? import
-? Do you want to create another application? no
-? What port do you want to use? 3042
-```
+Install the [Watt skill](../guides/use-watt-with-ai-agents.md) and ask your agent
+to create a Watt 4 workspace with a database API named `api` and a Next.js
+application named `frontend`, using `web/*` and port 3042 for the public entrypoint.
 
 This gives you:
 
@@ -760,8 +746,8 @@ Start: New Node.js Project?
 **Quick Start Path:**
 
 ```bash
-# Start with the basics
-npm create wattpm
+# Install the skill and ask your agent to scaffold a Watt 4 app
+npx skills add platformatic/skills --skill watt
 npm start
 ```
 

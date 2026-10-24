@@ -54,27 +54,17 @@ Let's setup all these components:
 
 ### Platformatic DB Application
 
-Create a DB application using `npm create wattpm`:
+Use the [Watt skill](./use-watt-with-ai-agents.md) to create the database application:
 
 ```bash
 mkdir test-db
 cd test-db
-npm create wattpm
+npx skills add platformatic/skills --skill watt
 ```
 
-To make it simple, use `sqlite` and create/apply the default migrations. This DB Application is exposed on port `5042`:
-
-```bash
-Hello YOURNAME, welcome to Platformatic 3.0.0!
-? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/db
-? What is the name of the application? main
-? What is the connection string? sqlite://./db.sqlite
-? Do you want to create default migrations? yes
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 5042
-```
+Ask your agent for a Watt 4 workspace with `web/main` using `@platformatic/db`,
+SQLite, paired example migrations, ESM source, `watt.config.ts`, and port 5042.
+Review the result and authorize dependency installation and local migration application.
 
 Open the `web/main/watt.config.ts` file and add the telemetry configuration to the factory call:
 
@@ -113,20 +103,10 @@ Create at the same level of `test-db` another folder for Application and cd into
 ```bash
 mkdir test-application
 cd test-application
-npm create wattpm
 ```
 
-Then create a `service` on the `5043` port in the folder using `npm create wattpm`:
-
-```bash
-Hello YOURNAME, welcome to Platformatic 3.0.0!
-? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/service
-? What is the name of the application? main
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 5043
-```
+Ask your agent to create a Watt 4 workspace with `web/main` using
+`@platformatic/service`, ESM source, `watt.config.ts`, and port 5043.
 
 Open the `web/main/watt.config.ts` file and add the following telemetry configuration to the factory call (it's exactly the same as `DB`, but with a different `applicationName`)
 
@@ -200,18 +180,10 @@ Create at the same level of `test-db` and `test-service` another folder for Gate
 ```bash
 mkdir test-gateway
 cd test-gateway
-npm create wattpm
 ```
 
-```bash
-Hello YOURNAME, welcome to Platformatic 3.0.0!
-? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/gateway
-? What is the name of the application? main
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 5044
-```
+Ask your agent to create `web/main` using `@platformatic/gateway`, ESM source,
+`watt.config.ts`, and port 5044. Keep this a separate project from the applications above.
 
 Open `web/main/watt.config.ts` and change it to the following:
 

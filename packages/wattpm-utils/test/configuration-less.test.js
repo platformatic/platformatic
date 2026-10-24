@@ -1,16 +1,10 @@
-import { createDirectory, safeRemove } from '@platformatic/foundation'
-import { deepStrictEqual, ok } from 'node:assert'
-import { readdir, symlink, writeFile } from 'node:fs/promises'
+import { deepStrictEqual } from 'node:assert'
+import { readdir, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
-import { request } from 'undici'
-import { prepareRuntime } from '../../basic/test/helper.js'
-import { changeWorkingDirectory, createTemporaryDirectory, waitForStart, wattpm, wattpmUtils } from './helper.js'
+import { changeWorkingDirectory, createTemporaryDirectory, wattpmUtils } from './helper.js'
 
-/*
-  Level 0. A directory with no configuration file of any kind is a single-application project
-  described entirely by inference, so these commands operate on it without one ever existing.
-*/
+// Inferred single-application projects do not need generated configuration files.
 for (const command of ['install', 'resolve']) {
   test(`${command} - when no configuration file exists, should operate on the root and write nothing`, async t => {
     const rootDir = await createTemporaryDirectory(t, 'cli-build')
@@ -23,76 +17,10 @@ for (const command of ['install', 'resolve']) {
 
     changeWorkingDirectory(t, rootDir)
     const wattProcess = await wattpmUtils(command, '-P', 'npm')
-
     deepStrictEqual(wattProcess.exitCode, 0)
 
-    // npm may write its own lockfile; the assertion is about configuration, which must not appear.
+    // npm may write its own lockfile; configuration must not appear.
     const files = (await readdir(rootDir)).sort().filter(file => file !== 'package-lock.json')
     deepStrictEqual(files, ['index.js', 'package.json'])
   })
 }
-
-test('import - when no configuration file exists, should add the capability dependency and write nothing', async t => {
-  const rootDir = await createTemporaryDirectory(t, 'cli-build')
-  await writeFile(
-    resolve(rootDir, 'index.js'),
-    `
-import { createServer } from 'node:http'
-
-const server = createServer((req, res) => {
-  res.writeHead(200, { 'content-type': 'application/json', connection: 'close' }).end(JSON.stringify({ ok: true }))
-})
-
-server.listen(3000)
-  `,
-    'utf-8'
-  )
-
-  await writeFile(resolve(rootDir, '.npmrc'), 'dry-run=true\n', 'utf-8')
-
-  changeWorkingDirectory(t, rootDir)
-  const wattProcess = await wattpmUtils('import', '-P', 'pnpm')
-
-  ok(
-    wattProcess.stdout.includes(
-      `Application ${basename(rootDir)} is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.`
-    )
-  )
-
-  // Replace some dependences with symlinks to local packages
-  const modulesDir = resolve(rootDir, 'node_modules/@platformatic')
-  await createDirectory(modulesDir)
-  await safeRemove(resolve(modulesDir, 'basic'))
-  await safeRemove(resolve(modulesDir, 'node'))
-  await symlink(resolve(import.meta.dirname, '../../basic'), resolve(modulesDir, 'basic'), 'dir')
-  await symlink(resolve(import.meta.dirname, '../../node'), resolve(modulesDir, 'node'), 'dir')
-
-  // Check that the application can start
-  const startProcess = wattpm('dev', rootDir)
-
-  // The synthesized application is named after the directory, which is also its mesh hostname.
-  const { url } = await waitForStart(startProcess, basename(rootDir))
-
-  const { statusCode, body } = await request(url)
-  deepStrictEqual(statusCode, 200)
-  deepStrictEqual(await body.json(), { ok: true })
-
-  // No configuration file was written: the capability dependency is the whole of what was missing.
-  ok(!(await readdir(rootDir)).some(entry => entry.startsWith('watt.')))
-
-  startProcess.kill('SIGINT')
-  await startProcess.catch(() => {})
-})
-
-test('import - it should fail with a folder with no recognized files', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
-  t.after(() => safeRemove(rootDir))
-
-  const emptyDir = resolve(rootDir, 'web/empty')
-  await createDirectory(emptyDir)
-  changeWorkingDirectory(t, rootDir)
-  const wattProcess = await wattpmUtils('import', '-P', 'pnpm', { reject: false })
-
-  deepStrictEqual(wattProcess.exitCode, 1)
-  ok(wattProcess.stdout.includes(`The path ${emptyDir} does not contain a supported application.`))
-})

@@ -70,7 +70,7 @@ export function configurationFileIn (directory, fallback = 'platformatic.json') 
 
   /*
     A directory with no current-format configuration is a fixture deliberately left in the legacy
-    format -- the format tests, the upgrade chains, the ones wattpm import rewrites -- and they do
+    format -- the format tests and upgrade chains -- and they do
     not all spell it platformatic.json, so the caller passes the name it was going to use.
   */
   return join(directory, fallback)

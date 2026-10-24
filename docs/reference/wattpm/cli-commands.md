@@ -51,29 +51,28 @@ application directory rather than the project root.
 
 These are the primary commands for working with Watt applications:
 
-### `wattpm create` or `wattpm init`
+### `wattpm skill [FILE]`
 
-Creates a new Watt application with interactive setup using `wattpm-utils`.
+Prints the bundled Watt agent skill to stdout, without generating or modifying files.
+It works offline and includes the instructions matching the installed Watt release.
 
-```bash
-wattpm create my-app
-wattpm init  # creates in current directory
+```sh
+wattpm skill
+wattpm skill references/scaffolding.md
 ```
 
-**Options:**
+`FILE` defaults to `SKILL.md` and must name a bundled Markdown file relative to the
+Watt skill directory. Absolute paths, paths outside the bundle, directories, and
+symlinks whose real target is outside the bundle or is not Markdown are rejected.
+Errors use `PLT_INVALID_SKILL_FILE` or `PLT_SKILL_FILE_NOT_FOUND` and a nonzero exit code.
+See [agent setup](../../guides/use-watt-with-ai-agents.md) for installation instructions.
 
-- `-l, --latest` - Use the latest version of watt-utils
-- `-c, --config <name>` - Configuration file name (default: `watt.config.ts`)
-- `-s, --skip-dependencies` - Don't install dependencies after creating files
-- `-P, --package-manager <manager>` - Use specific package manager (`npm`, `yarn`, `pnpm`)
-- `-M, --module <name>` - Additional application generator modules (can be used multiple times)
-
-**Example:**
-
-```bash
-wattpm create my-api
-wattpm init --skip-dependencies --package-manager pnpm
-```
+Use the target project's local binary for every read. The discovery workflow requires
+Watt 3.74.0+ and a release providing `skill`; older installations must stop rather than
+download a fallback. Relative Markdown links resolve against the document containing
+them: normalize to a bundle-relative path and use the same CLI. For new projects or
+v3-to-v4 migrations, select the intended destination version explicitly before loading
+its instructions.
 
 ### `wattpm dev`
 
@@ -322,63 +321,11 @@ wattpm applications:remove [id] application1 [application2] [...]
 wattpm applications:remove my-app api-app database-app --save
 ```
 
-### `wattpm import`
+### Integrating applications
 
-Imports an external application into your Watt application.
-
-```bash
-wattpm import [directory] [url]
-```
-
-The root configuration gains an `applications` entry pointing at the imported application with a
-literal relative `path`. It is written as-is, not as a placeholder — nothing further needs
-resolving from an `.env` file for the import to work.
-
-**Arguments:**
-
-- `directory` - Application directory (default: current directory)
-- `url` - URL or GitHub repository to import. Supports multiple formats:
-  - GitHub shorthand: `user/repo`
-  - Git URL: `https://github.com/user/repo.git`
-  - Git URL with branch fragment: `https://github.com/user/repo.git#branch-name`
-
-**Options:**
-
-- `-c, --config <path>` - Configuration file path
-- `-i, --id <name>` - Service ID (default: repository basename)
-- `-p, --path <path>` - Local path for the application (default: application ID)
-- `-H, --http` - Use HTTP instead of SSH for GitHub URLs
-- `-b, --branch <name>` - Branch to clone (overrides URL fragment, default: `main`)
-- `-s, --skip-dependencies` - Don't install application dependencies
-- `-P, --package-manager <manager>` - Package manager to use
-
-**Branch Specification:**
-
-You can specify a branch in two ways during import:
-
-1. **URL Fragment**: Append `#branch-name` to the git URL
-2. **Flag**: Use the `-b/--branch` flag (takes precedence over URL fragment)
-
-**Note:** When manually editing the configuration file to add applications with URLs, you must use the URL fragment syntax (`url#branch`) to specify a branch, as the `-b` flag is only available during the `import` command.
-
-**Examples:**
-
-```bash
-# Import using GitHub shorthand
-wattpm import platformatic/hello-world
-
-# Import with explicit ID
-wattpm import https://github.com/user/my-application.git --id my-application
-
-# Import specific branch using URL fragment
-wattpm import https://github.com/user/repo.git#develop
-
-# Import specific branch using flag
-wattpm import --http --branch develop user/repo
-
-# Flag overrides URL fragment (will clone 'main' branch)
-wattpm import https://github.com/user/repo.git#develop -b main
-```
+Use the [Watt integration skill](../../skills/watt/references/integration.md) to
+add local or remote application entries directly to `watt.config.*`. Watt 4 no
+longer provides an import or project scaffolding command.
 
 ### `wattpm-utils resolve`
 
@@ -410,7 +357,8 @@ before migrating the project that references them.
 
 **Branch Specification in Configuration:**
 
-When manually editing your configuration file to add applications with git URLs, specify branches using the URL fragment syntax (`url#branch`):
+Specify a branch using `gitBranch` or the URL fragment syntax (`url#branch`). An
+explicit `gitBranch` takes precedence over a fragment:
 
 ```ts config
 import { createWattConfig } from 'wattpm'
@@ -803,8 +751,8 @@ For more details, see [Configuration File Formats](../../file-formats.md).
 ### Creating a New Application
 
 ```bash
-# Create a new Watt app
-wattpm create my-app
+# Read the setup instructions and create the app with your agent
+wattpm skill references/scaffolding.md
 cd my-app
 
 # Start in development mode
@@ -817,8 +765,8 @@ wattpm inject --path /api/health
 ### Adding an External Service
 
 ```bash
-# Import an application from GitHub
-wattpm import platformatic/example-application
+# Read the integration instructions and declare the remote application
+wattpm skill references/integration.md
 
 # Resolve all external applications
 wattpm-utils resolve

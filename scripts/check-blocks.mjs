@@ -55,6 +55,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   unmarked TypeScript one.
 */
 const documents = [
+  { name: 'docs/skills/watt/references/scaffolding.md', markEverything: false },
+  { name: 'docs/skills/watt/references/frameworks.md', markEverything: false },
+  { name: 'docs/skills/watt/references/services.md', markEverything: false },
+  { name: 'docs/skills/watt/references/integration.md', markEverything: false },
   { name: 'docs/guides/migrate-v4.md', markEverything: false },
   { name: 'docs/file-formats.md', markEverything: false },
   { name: 'docs/guides/generating-watt-configuration.md', markEverything: false },

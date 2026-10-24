@@ -8,7 +8,6 @@ export const packages = [
   '@platformatic/db-core',
   '@platformatic/foundation',
   '@platformatic/gateway',
-  '@platformatic/generators',
   '@platformatic/globals',
   '@platformatic/itc',
   '@platformatic/metrics',
@@ -31,8 +30,6 @@ export const packages = [
   '@platformatic/tracing',
   '@platformatic/vite',
   '@platformatic/wattpm-pprof-capture',
-  'create-platformatic',
-  'create-wattpm',
   'wattpm',
   'wattpm-utils'
 ]

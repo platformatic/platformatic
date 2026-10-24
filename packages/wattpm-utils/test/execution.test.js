@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
+import { updateConfigFile } from '@platformatic/runtime/test/helpers.js'
 import { changeWorkingDirectory, prepareGitRepository, wattpm, wattpmUtils } from './helper.js'
 
 test('start - should use default folders for resolved applications', async t => {
@@ -11,7 +12,10 @@ test('start - should use default folders for resolved applications', async t => 
   const repo = await prepareGitRepository(t, rootDir)
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications ??= []
+    config.applications.push({ id: 'resolved', url: repo })
+  })
   await wattpmUtils('resolve', rootDir)
   await updateFile(resolve(rootDir, 'external/resolved/package.json'), content => {
     const config = JSON.parse(content)
@@ -80,7 +84,10 @@ test('start - should throw an error when an application has not been resolved', 
   const repo = await prepareGitRepository(t, rootDir)
 
   changeWorkingDirectory(t, rootDir)
-  await wattpmUtils('import', rootDir, '-H', '-i', 'resolved', repo)
+  await updateConfigFile(resolve(rootDir, 'watt.config.mjs'), config => {
+    config.applications ??= []
+    config.applications.push({ id: 'resolved', url: repo })
+  })
 
   const startProcess = await wattpm('start', rootDir, { reject: false })
 

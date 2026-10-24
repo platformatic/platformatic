@@ -271,12 +271,11 @@ export default createWattConfig({
 #### From Next.js Applications
 
 ```bash
-# 1. Import the app — this installs @platformatic/next and needs no configuration file,
-#    because a single application with default settings is inferred from its dependencies
-wattpm-utils import ./existing-nextjs-app
+# Install the packages in the existing Next.js project
+npm install wattpm @platformatic/next
 
-# 2. Add a database application
-npm create wattpm # Choose @platformatic/db
+# Read instructions for adding a database application to the workspace
+./node_modules/.bin/wattpm skill references/services.md
 ```
 
 Write a `watt.config.ts` only where the defaults are not what you want:

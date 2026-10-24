@@ -26,33 +26,28 @@ Before starting, ensure you have the following installed:
 
 ## Set up Watt
 
-```bash
-npx wattpm create
+Install the [Watt skill](../guides/use-watt-with-ai-agents.md):
+
+```sh
+npx skills add platformatic/skills --skill watt
 ```
 
-Which will output:
+Choose the exact published Watt 4 version for this project and authorize its local
+installation, creating a minimal package manifest if needed. The discovery skill then
+loads that installation's instructions through `wattpm skill`; it does not install Watt
+or choose a major version itself. See [agent setup](../guides/use-watt-with-ai-agents.md#new-projects).
 
-```
-Hello YOURNAME, welcome to Watt!
-? Where would you like to create your project? .
-? Which package manager do you want to use? npm
-? Which kind of application do you want to create? @platformatic/node
-✔ Installing @platformatic/node using npm ...
-? What is the name of the application? node
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 3042
-? Do you want to init the git repository? no
-```
+Ask your agent to create a Watt 4 npm workspace with `workspaces: ["web/*"]`,
+a Node.js application named `node` in `web/node`, ESM source, `watt.config.ts`,
+and port 3042. Request root `dev`, `build`, and `start` scripts using `wattpm`.
+The application should depend on `@platformatic/node` and `@platformatic/globals`.
+Review the files and authorize dependency installation before proceeding.
 
-Dependencies are going to be installed. Your application is located in `web/node`.
-The `watt.config.ts` file is automatically created in the `node` folder, and the `package.json` file includes `@platformatic/node` as a dependency.
+Alternatively, write these files using the [scaffolding reference](../skills/watt/references/scaffolding.md).
 
 ## Add your first Node.js application to Watt
 
-By choosing the `@platformatic/node` application, you have already created your nodejs app.
-
-This file is created as your nodejs app:
+Create `web/node/index.js`, or ask your agent to use this entrypoint:
 
 ```js
 import { getLogger } from '@platformatic/globals'
@@ -94,7 +89,8 @@ This will internally run `wattpm start` and start your Watt server.
 
 :::note
 
-running `npm run start` at the root directory is running the watt server. if you run `npm run start` at the application directory(in this case `web/node`) it is running that single application via this command from the application package.json script: `start-platformatic-node`
+Run root scripts to boot the whole workspace. Running `wattpm start` from `web/node`
+boots that application standalone instead; use `--config` to select the root explicitly.
 
 :::
 
@@ -114,24 +110,10 @@ curl http://localhost:3042
 
 ## Add a Platformatic Gateway to run multiple apps
 
-Inside `node`, let's create a new Platformatic Gateway
-
-```bash
-npx wattpm create
-```
-
-This will output:
-
-```
-Hello YOURNAME, welcome to Watt!
-Using existing configuration ...
-? Which package manager do you want to use? npm
-? Which kind of application do you want to create? @platformatic/gateway
-✔ Installing @platformatic/gateway using npm ...
-? What is the name of the application? gateway
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-```
+Ask your agent to add `web/gateway` using `@platformatic/gateway`, proxy `node` at
+`/node`, and configure the gateway's public listener on port 3042. Preserve the existing
+Node.js application and remove its public port setting so only the gateway exposes
+that port. See the [gateway reference](../skills/watt/references/services.md).
 
 Start your Watt server again:
 
@@ -262,20 +244,12 @@ reproduces with plain `next dev`, outside Watt entirely.
 
 :::
 
-Then, let's import it to our Watt server:
+Ask your agent to integrate `web/next` with `@platformatic/next`, preserving its
+framework configuration and workspace fixes above. Add a root application entry
+unless the root already autoloads `web`. Install the capability in that workspace:
 
-```bash
-npx wattpm-utils import
-```
-
-This will also install the required dependencies. The command will output:
-
-```
-[13:06:10.996] INFO (42432): Application next is using Next.js. Adding @platformatic/next to its package.json dependencies.
-[13:06:10.998] INFO (42432): Installing dependencies for the project using npm ...
-[13:06:12.119] INFO (42432): Installing dependencies for the application gateway using npm ...
-[13:06:13.092] INFO (42432): Installing dependencies for the application node using npm ...
-[13:06:14.310] INFO (42432): Installing dependencies for the application next using npm ...
+```sh
+npm install @platformatic/next --workspace frontend
 ```
 
 Then, we need to tell Watt to expose our `next` server on `/next` by modifying `web/next/watt.config.ts`:

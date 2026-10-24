@@ -200,105 +200,27 @@ dependency is not visible from the root, and the loader reports it with a target
 
 ### Adding Custom Capabilities
 
-Use the `--module` option to specify additional capabilities beyond the default ones:
+Install the custom capability in its owning workspace package, check Watt 4
+compatibility, and set its package name as `module` in the application configuration.
+Read its schema and documentation for the actual options; a generator implementation
+is not required.
 
-```bash
-# Add a custom capability
-npm create wattpm --module=my-custom-capability
+## Skill-first workflow
 
-# Add multiple capabilities
-npm create wattpm --module=@my-org/plugin1 --module=@my-org/plugin2
+Install the [Watt agent skill](./use-watt-with-ai-agents.md), then ask your agent to
+create or integrate the application using the appropriate capability. The agent
+inspects framework signals, preserves your package manager, and writes source,
+configuration, workspace manifests, env examples, and tests directly.
 
-# Short form
-npm create wattpm --module=my-plugin
-```
+Examples:
 
-## Interactive Workflow
+- "Create a Watt HTTP service using `@platformatic/service`."
+- "Integrate this existing Next.js application using `@platformatic/next`."
+- "Add `@my-company/custom-plugin` using its schema and package documentation."
+- "Create a workspace with a database API and a Next.js frontend."
 
-When you run `npm create wattpm`, you'll be guided through:
-
-1. **Project Location**: Choose where to create your project
-2. **Service Type**: Select the type of service you want to create
-3. **Service Configuration**: Configure service-specific options
-4. **Multi-Service Setup**: Optionally add additional services
-5. **Package Manager**: Select npm, yarn, or pnpm
-6. **Git Initialization**: Optionally initialize a Git repository
-
-## Examples
-
-### Creating a Basic HTTP Service
-
-```bash
-npm create wattpm
-```
-
-Follow the prompts:
-
-- Choose project location: `my-watt-app`
-- Select service type: `@platformatic/service`
-- Configure TypeScript and other options
-- Choose to install dependencies
-
-### Creating a Next.js Application
-
-```bash
-npm create wattpm
-```
-
-Follow the prompts:
-
-- Choose project location: `my-next-app`
-- Select service type: `@platformatic/next`
-- Configure your Next.js specific options
-
-### Creating with Custom Capabilities
-
-```bash
-npm create wattpm --module=@my-company/custom-plugin
-```
-
-This will include your custom capability in the list of available service types during the interactive setup.
-
-### Multi-Service Application
-
-During the interactive setup, you can choose to create multiple services:
-
-- First service: `@platformatic/db` (database API)
-- Second service: `@platformatic/next` (frontend)
-
-## Wrapping Existing Applications
-
-`create-wattpm` can wrap existing applications into the Watt runtime environment:
-
-1. Run `npm create wattpm` in a directory containing an existing application
-2. The tool will detect your application type (React, Next.js, etc.)
-3. Choose to wrap the existing application into Watt
-4. Your application will be integrated with Watt's runtime features
-
-### Supported Application Types
-
-The tool can automatically detect and wrap:
-
-- React applications
-- Next.js applications
-- Nitro applications using `nitro` or `nitropack`
-- Vite-based projects
-- Other JavaScript/TypeScript applications
-
-## Package Manager Support
-
-`create-wattpm` supports and auto-detects:
-
-- **npm** - Default Node.js package manager
-- **yarn** - Alternative package manager
-- **pnpm** - Fast, disk space efficient package manager
-
-The tool will detect existing lockfiles and use the appropriate package manager, or prompt you to choose one.
-
-## Git Integration
-
-The tool offers to initialize a Git repository with:
-
-- Initial commit with generated files
-- Appropriate `.gitignore` file
-- Remote origin setup (if applicable)
+See [scaffolding](../skills/watt/references/scaffolding.md),
+[frameworks](../skills/watt/references/frameworks.md), and
+[application integration](../skills/watt/references/integration.md) for complete steps.
+Use npm, Yarn, or pnpm consistently with the existing lockfile. Git initialization,
+commits, and pushes are separate user-authorized operations, not part of scaffolding.
