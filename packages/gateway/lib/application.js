@@ -2,6 +2,7 @@ import { isKeyEnabled } from '@platformatic/foundation'
 import { getApplicationId, getITC, getRuntimeId } from '@platformatic/globals'
 import { platformaticService } from '@platformatic/service'
 import deepEqual from 'fast-deep-equal'
+import { workerData } from 'node:worker_threads'
 import { fetchOpenApiSchema } from './commands/openapi-fetch-schemas.js'
 import { gatewayHook } from './gateway-hook.js'
 import { fetchGraphqlSubgraphs, isSameGraphqlSchema } from './graphql-fetch.js'
@@ -110,6 +111,17 @@ async function watchApplications (app, { config, capability }) {
 
 export async function ensureApplications (gatewayId, config) {
   if (config.gateway?.applications?.length) {
+    // An entry for an application the runtime disables is left out, as when its own `enabled`
+    // disables it: a gateway naming it would be a dependency the runtime cannot satisfy. An id the
+    // runtime has never heard of is kept, so that it is still reported as a missing dependency.
+    const disabled = workerData?.config?.disabledApplications
+
+    if (Array.isArray(disabled) && disabled.length > 0) {
+      config.gateway.applications = config.gateway.applications.filter(
+        application => application.origin || !disabled.includes(application.id)
+      )
+    }
+
     return
   }
 

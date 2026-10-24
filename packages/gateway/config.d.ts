@@ -229,6 +229,12 @@ export interface PlatformaticGatewayConfig {
   gateway?: {
     applications?: {
       id: string;
+      enabled?:
+        | boolean
+        | string
+        | {
+            [k: string]: boolean;
+          };
       origin?: string;
       openapi?: {
         [k: string]: unknown;

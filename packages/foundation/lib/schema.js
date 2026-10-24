@@ -32,6 +32,25 @@ export function omitProperties (obj, properties) {
   return omitted
 }
 
+// Resolves an `enabled` value of the shape of `application.properties.enabled` against an environment
+// (`production` or `development`): a boolean, a boolean string (anything but 'false' enables), or an
+// object of booleans by environment. A missing value, or an environment the object does not name, enables.
+export function isEnabled (enabled, environment) {
+  if (typeof enabled === 'undefined') {
+    return true
+  }
+
+  if (typeof enabled === 'string') {
+    return enabled !== 'false'
+  }
+
+  if (typeof enabled === 'object' && enabled !== null) {
+    return enabled[environment] ?? true
+  }
+
+  return enabled
+}
+
 export const env = {
   type: 'object',
   additionalProperties: {

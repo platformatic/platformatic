@@ -353,6 +353,10 @@ export declare function getPrivateSymbol (obj: any, name: string): symbol | unde
 export declare function overridableValue (spec: any, defaultValue?: any): any
 export declare function removeDefaults (schema: any): any
 export declare function omitProperties (obj: any, properties: string | string[]): any
+export declare function isEnabled (
+  enabled: boolean | string | Record<string, boolean> | undefined,
+  environment: string
+): boolean
 
 export declare const env: JSONSchemaType<Record<string, string>>
 export declare const workers: JSONSchemaType<number | string>
