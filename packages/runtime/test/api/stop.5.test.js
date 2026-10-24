@@ -8,14 +8,14 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should stop accepting new request immediately under high load', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-log.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-log', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(() => {
     app.close()
   })
 
-  const url = await app.start()
+  const { 'composerApp:0': url } = await app.start()
   let active = true
   const errors = []
 

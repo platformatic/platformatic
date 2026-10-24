@@ -12,12 +12,13 @@ For a high level overview of how Watt and its applications work, please referenc
 
 Gateway was named **Composer** throughout the v1 and v2 lines, and was distributed as `@platformatic/composer`. It was renamed to Gateway in **v3.0.0**; the documentation, the package name, and the configuration key all use `gateway` from that release onward.
 
-`@platformatic/composer` still exists in v3 as a deprecated alias that re-exports Gateway, so existing applications keep working, but it logs a deprecation warning on startup and **will be removed in v4.0.0**.
+The deprecated `@platformatic/composer` alias was removed in **v4.0.0**. Applications must use `@platformatic/gateway` instead.
 
 To migrate:
 
 - Replace the `@platformatic/composer` dependency with `@platformatic/gateway`
-- Point `$schema` at `https://schemas.platformatic.dev/@platformatic/gateway/<version>.json`
+- Import the `gateway` factory from `@platformatic/gateway`, or — on a legacy JSON configuration — point
+  `$schema` at `https://schemas.platformatic.dev/@platformatic/gateway/<version>.json`
 - Rename the top-level `composer` configuration key to `gateway`
 
 The properties nested under that key are unchanged, so no other edits are needed.
@@ -28,7 +29,7 @@ The properties nested under that key are unchanged, so no other edits are needed
 
 - **Service Discovery**: Automatically discover and compose APIs from multiple applications in your Watt application
 - **OpenAPI Composition**: Combine multiple OpenAPI specifications into a single, unified API documentation
-- **GraphQL Federation**: Aggregate GraphQL schemas from multiple applications with Apollo Federation support
+- **User-owned GraphQL Composition**: Compose GraphQL schemas in a custom application or plugin. See [Reproduce GraphQL Composition](../../guides/reproduce-graphql-composition.md).
 - **Conflict Resolution**: Intelligent handling of endpoint conflicts and path overlaps between applications
 - **Route Prefixing**: Organize APIs with automatic or custom path prefixing for each application
 - **Flexible Proxy Routing**: Route requests by prefix, method, and path patterns when multiple applications share the same prefix. See [Gateway configuration](./configuration.md#gateway).
@@ -52,14 +53,11 @@ The Gateway is ideal for:
 Create a Gateway within a Watt application:
 
 ```bash
-# Create a new Watt application
-wattpm create my-gateway
-
-# Add multiple applications to compose
-# (This will prompt you through the application setup)
+# Read the skill and ask your agent to create my-gateway and its applications
+wattpm skill references/services.md
 cd my-gateway
 
-# Start in development mode
+# After setup, start in development mode
 wattpm dev
 ```
 

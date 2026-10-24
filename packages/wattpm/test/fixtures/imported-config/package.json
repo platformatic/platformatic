@@ -1,0 +1,12 @@
+{
+  "name": "imported-config",
+  "private": true,
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "wattpm": ">=3.0.0"
+  }
+}

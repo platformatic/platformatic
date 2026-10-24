@@ -1,7 +1,7 @@
 import { deepStrictEqual, equal, ok, rejects } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { transform } from '../lib/config.js'
+import { transform } from '../index.js'
 import { MissingPprofCapture } from '../lib/errors.js'
 import { kITC } from '../lib/worker/symbols.js'
 import { createRuntime } from './helpers.js'
@@ -9,7 +9,7 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should start profiling for a service', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -27,7 +27,7 @@ test('should start profiling for a service', async t => {
 })
 
 test('should stop profiling for a service and return profile data', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -54,7 +54,7 @@ test('should stop profiling for a service and return profile data', async t => {
 })
 
 test('should optionally return the profile sample count', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -78,7 +78,7 @@ test('should optionally return the profile sample count', async t => {
 })
 
 test('should throw error when starting profiling on non-existent service', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -99,7 +99,7 @@ test('should throw error when starting profiling on non-existent service', async
 })
 
 test('should throw error when stopping profiling on non-existent service', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -120,7 +120,7 @@ test('should throw error when stopping profiling on non-existent service', async
 })
 
 test('should handle profiling already started error', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -148,7 +148,7 @@ test('should handle profiling already started error', async t => {
 })
 
 test('should handle profiling not started error', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -170,7 +170,7 @@ test('should handle profiling not started error', async t => {
 })
 
 test('runtime errors if wattpm-pprof-capture is not loaded', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const runtime = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -200,7 +200,7 @@ test('runtime errors if wattpm-pprof-capture is not loaded', async t => {
 })
 
 test('runtime errors if wattpm-pprof-capture is not loaded (stop)', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const runtime = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -231,11 +231,11 @@ test('runtime errors if wattpm-pprof-capture is not loaded (stop)', async t => {
 
 for (const applicationModules of [undefined, ['application-package'], []]) {
   test(`profiling inherits dependency source maps with application setting ${JSON.stringify(applicationModules)}`, async t => {
-    const configFile = join(fixturesDir, 'configs', 'monorepo-workers.json')
+    const configFile = join(fixturesDir, 'configs', 'monorepo-workers', 'watt.config.mjs')
     const app = await createRuntime(configFile, null, {
       async transform (config, ...args) {
         config.nodeModulesSourceMaps = ['runtime-package']
-        config.autoload.mappings.serviceAppWithLogger.nodeModulesSourceMaps = applicationModules
+        config.applications.find(application => application.id === 'with-logger').nodeModulesSourceMaps = applicationModules
         return transform(config, ...args)
       }
     })

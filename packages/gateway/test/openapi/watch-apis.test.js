@@ -47,7 +47,7 @@ test('should restart gateway if api has been changed', async t => {
     }
   })
 
-  let gatewayOrigin = await runtime.start()
+  let { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -62,9 +62,10 @@ test('should restart gateway if api has been changed', async t => {
     await testEntityRoutes(gatewayOrigin, ['/api1/users', '/api2/posts'])
   }
 
+  const restart = waitForRestart(runtime)
   await api1.close()
 
-  gatewayOrigin = await waitForRestart(runtime)
+  gatewayOrigin = await restart
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -122,7 +123,7 @@ test('should watch api only if it has a url', async t => {
     }
   })
 
-  const gatewayOrigin = await runtime.start()
+  const { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -200,7 +201,7 @@ test('should compose schema after application restart', async t => {
     }
   })
 
-  let gatewayOrigin = await runtime.start()
+  let { 'composer:0': gatewayOrigin } = await runtime.start()
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -215,9 +216,10 @@ test('should compose schema after application restart', async t => {
     await testEntityRoutes(gatewayOrigin, ['/api1/users', '/api2/posts'])
   }
 
+  const restart = waitForRestart(runtime, gatewayOrigin)
   await api1.close()
 
-  gatewayOrigin = await waitForRestart(runtime, gatewayOrigin)
+  gatewayOrigin = await restart
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -239,9 +241,10 @@ test('should compose schema after application restart', async t => {
   }
 
   const newApi1 = await createOpenApiApplication(t, ['users'])
+  const restartAfterReplacement = waitForRestart(runtime, gatewayOrigin)
   await newApi1.listen({ port: api1Port })
 
-  gatewayOrigin = await waitForRestart(runtime, gatewayOrigin)
+  gatewayOrigin = await restartAfterReplacement
 
   {
     const { statusCode, body } = await runtime.inject('composer', {

@@ -13,7 +13,15 @@ export const ERROR_PREFIX = 'PLT_RUNTIME'
 
 export const AddressInUseError = createError(
   `${ERROR_PREFIX}_EADDR_IN_USE`,
-  'The current port is in use by another application'
+  'Port %d is already in use by applications "%s" and "%s"'
+)
+export const ApplicationsPortsOverlapError = createError(
+  `${ERROR_PREFIX}_APPLICATIONS_PORTS_OVERLAP`,
+  'The applications "%s" (%s) and "%s" (%s) are both configured to listen on port %d. Applications cannot share a port: change one of the ports or make them listen on different hostnames.'
+)
+export const WorkerAddressInUseError = createError(
+  `${ERROR_PREFIX}_WORKER_EADDR_IN_USE`,
+  'Port %d is already in use by another worker of the application "%s". Multiple workers can share a port only when the reusePort feature is available in your OS, otherwise set "server.portAssignment" to "perWorkerIncrement" in the application configuration or use a single worker.'
 )
 export const RuntimeExitedError = createError(
   `${ERROR_PREFIX}_RUNTIME_EXIT`,
@@ -73,6 +81,11 @@ export const FailedToRetrieveMetricsError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_METRICS`,
   'Failed to retrieve metrics for application with id "%s": %s'
 )
+export const FailedToUpdateMetricsConfigError = createError(
+  `${ERROR_PREFIX}_FAILED_TO_UPDATE_METRICS_CONFIG`,
+  'Failed to update metrics configuration on worker "%s": %s'
+)
+export const MetricsDisabledError = createError(`${ERROR_PREFIX}_METRICS_DISABLED`, 'Metrics are disabled.', 501)
 export const FailedToRetrieveHealthError = createError(
   `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_HEALTH`,
   'Failed to retrieve health for application with id "%s": %s'
@@ -90,6 +103,12 @@ export const ApplicationAlreadyStartedError = createError(
   'Application is already started'
 )
 export const RuntimeNotStartedError = createError(`${ERROR_PREFIX}_NOT_STARTED`, 'Application has not been started')
+export class ApplicationShutdownError extends AggregateError {
+  constructor (errors) {
+    super(errors, 'Application shutdown failed')
+    this.code = `${ERROR_PREFIX}_APPLICATION_SHUTDOWN`
+  }
+}
 export const ConfigPathMustBeStringError = createError(
   `${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`,
   'Config path must be a string'
@@ -98,19 +117,15 @@ export const NoConfigFileFoundError = createError(
   `${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`,
   "No config file found for application '%s'"
 )
-export const InvalidEntrypointError = createError(
-  `${ERROR_PREFIX}_INVALID_ENTRYPOINT`,
-  "Invalid entrypoint: '%s' does not exist"
-)
 export const ApplicationIdCollisionError = createError(
   `${ERROR_PREFIX}_APPLICATION_ID_COLLISION`,
   'The application id "%s" is used by the autoloaded directory "%s" and by a different application defined in the configuration file via %s. Application ids must be unique.'
 )
-export const MissingEntrypointError = createError(
-  `${ERROR_PREFIX}_MISSING_ENTRYPOINT`,
-  'Missing application entrypoint.'
-)
 export const MissingDependencyError = createError(`${ERROR_PREFIX}_MISSING_DEPENDENCY`, 'Missing dependency: "%s"')
+export const InvalidApplicationModuleError = createError(
+  `${ERROR_PREFIX}_INVALID_APPLICATION_MODULE`,
+  'Application module "%s" must export a create function'
+)
 export const InspectAndInspectBrkError = createError(
   `${ERROR_PREFIX}_INSPECT_AND_INSPECT_BRK`,
   '--inspect and --inspect-brk cannot be used together'
@@ -154,6 +169,10 @@ export const DuplicateSchedulerJobError = createError(
   `${ERROR_PREFIX}_DUPLICATE_SCHEDULER_JOB`,
   'Scheduler "%s" is already registered'
 )
+export const InvalidSchedulerCronError = createError(
+  `${ERROR_PREFIX}_INVALID_SCHEDULER_CRON`,
+  'Invalid cron expression "%s" for scheduler "%s"'
+)
 
 export const MissingPprofCapture = createError(
   `${ERROR_PREFIX}_MISSING_PPROF_CAPTURE`,
@@ -183,6 +202,11 @@ export const FailedToStopExtensionError = createError(
 export const InvalidExtensionError = createError(
   `${ERROR_PREFIX}_INVALID_EXTENSION`,
   'The extension "%s" must export a setup function as its default export or as a named "setup" export'
+)
+
+export const InvalidExtensionConfigureError = createError(
+  `${ERROR_PREFIX}_INVALID_EXTENSION_CONFIGURE`,
+  'The extension "%s" must export configure as a function'
 )
 
 export const ReservedITCHandlerNameError = createError(
@@ -232,10 +256,6 @@ export const HealthSignalTypeMustBeStringError = createError(
   `${ERROR_PREFIX}_HEALTH_SIGNAL_TYPE_MUST_BE_STRING`,
   'Health signal type must be a string, received "%s"'
 )
-export const CannotRemoveEntrypointError = createError(
-  `${ERROR_PREFIX}_CANNOT_REMOVE_ENTRYPOINT`,
-  'Cannot remove the entrypoint application.'
-)
 export const WorkerInterceptorNotReadyError = createError(
   `${ERROR_PREFIX}_WORKER_INTERCEPTOR_NOT_READY`,
   'The "%s" application worker interceptor is not ready'
@@ -243,4 +263,8 @@ export const WorkerInterceptorNotReadyError = createError(
 export const WorkerInterceptorJoinTimeoutError = createError(
   `${ERROR_PREFIX}_WORKER_INTERCEPTOR_JOIN_TIMEOUT`,
   'The %s failed to join the mesh network in %dms.'
+)
+export const MixedServingStateError = createError(
+  `${ERROR_PREFIX}_MIXED_SERVING_STATE`,
+  'The workers of the application "%s" disagree about how it serves: %s. One application is one thing; workers that disagree about whether it serves HTTP would have the mesh route a share of requests to a worker that destroys them.'
 )

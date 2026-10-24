@@ -1,6 +1,11 @@
 import { createServer } from 'node:http'
+import { registerCloseCallback } from '@platformatic/globals'
 
 let server
+
+registerCloseCallback(async () => {
+  throw new Error('boom while callback')
+})
 
 export function create () {
   server = createServer((_, res) => {

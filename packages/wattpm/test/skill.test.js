@@ -6,31 +6,20 @@ import { readSkillFile } from '../lib/commands/skill.js'
 import { createTemporaryDirectory, wattpm } from './helper.js'
 
 const sourceDirectory = resolve(import.meta.dirname, '../../../docs/skills/watt')
-const bundleDirectory = resolve(import.meta.dirname, '../skills/watt')
 
-test('skill - prints verbatim Markdown outside a Watt project', async t => {
+test('skill - prints the complete source outside a Watt project without logger output', async t => {
   const cwd = await createTemporaryDirectory(t, 'skill')
   const source = await readFile(resolve(sourceDirectory, 'SKILL.md'), 'utf-8')
+  strictEqual(await readSkillFile(), source)
   const result = await wattpm('skill', { cwd, stripFinalNewline: false })
   strictEqual(result.stdout, source)
   strictEqual(result.stderr, '')
 })
 
-test('skill - all bundled documents and relative links match the documentation source', async () => {
+test('skill - reads every bundled Markdown document verbatim', async () => {
   const files = await readdir(sourceDirectory, { recursive: true })
   for (const file of files.filter(file => file.endsWith('.md'))) {
-    const source = await readFile(resolve(sourceDirectory, file), 'utf-8')
-    strictEqual(await readSkillFile(file), source)
-
-    for (const [, link] of source.matchAll(/\]\(([^)]+\.md)(?:#[^)]*)?\)/g)) {
-      if (/^https?:\/\//.test(link)) {
-        continue
-      }
-
-      // Nested guides resolve links against their own directory, not the bundle root.
-      const target = relative(sourceDirectory, resolve(sourceDirectory, dirname(file), link))
-      strictEqual(await readSkillFile(target), await readFile(resolve(sourceDirectory, target), 'utf-8'))
-    }
+    strictEqual(await readSkillFile(file), await readFile(resolve(sourceDirectory, file), 'utf-8'))
   }
 
   for (const file of ['references/frameworks.md', 'references/frameworks/nextjs.md', 'references/deployment/docker.md']) {
@@ -41,7 +30,23 @@ test('skill - all bundled documents and relative links match the documentation s
   strictEqual(await readSkillFile('references/frameworks/../frameworks.md'), await readSkillFile('references/frameworks.md'))
 })
 
-test('skill - refuses absolute paths, traversal, non-Markdown, and missing files', async () => {
+test('skill - bundles all locally linked Markdown references', async () => {
+  const files = await readdir(sourceDirectory, { recursive: true })
+  for (const file of files.filter(file => file.endsWith('.md'))) {
+    const source = await readSkillFile(file)
+    for (const [, link] of source.matchAll(/\]\(([^)]+\.md)(?:#[^)]*)?\)/g)) {
+      if (link.startsWith('https://')) {
+        continue
+      }
+
+      // Resolve links from the referring document, including nested framework guides.
+      const target = relative(sourceDirectory, resolve(sourceDirectory, dirname(file), link))
+      strictEqual(await readSkillFile(target), await readFile(resolve(sourceDirectory, target), 'utf-8'))
+    }
+  }
+})
+
+test('skill - rejects paths outside the bundle and non-Markdown files', async () => {
   for (const file of ['../README.md', '../../package.json', resolve(sourceDirectory, 'SKILL.md'), 'references', 'bad\0.md']) {
     await rejects(readSkillFile(file), { code: 'PLT_INVALID_SKILL_FILE' })
   }
@@ -50,6 +55,7 @@ test('skill - refuses absolute paths, traversal, non-Markdown, and missing files
 })
 
 test('skill - validates symlink targets and rejects directories named as Markdown', async t => {
+  const bundleDirectory = resolve(import.meta.dirname, '../skills/watt')
   const fixture = resolve(bundleDirectory, 'test-skill-paths')
   await mkdir(fixture)
   t.after(() => rm(fixture, { recursive: true, force: true }))
@@ -77,17 +83,20 @@ test('skill - CLI failures expose stable error codes', async () => {
   }
 })
 
-test('skill - help adds skill while preserving v3 scaffolding commands', async () => {
-  const specific = await wattpm('help', 'skill')
-  ok(specific.stdout.includes('Usage: wattpm skill [FILE]'))
+test('skill - exposes command help and replaces scaffolding commands', async () => {
+  const help = await wattpm('help', 'skill')
+  ok(help.stdout.includes('Usage: wattpm skill [FILE]'))
   const flag = await wattpm('skill', '--help')
   ok(flag.stdout.includes('Usage: wattpm skill [FILE]'))
   const general = await wattpm('help')
   ok(general.stdout.includes('skill [FILE]'))
+  ok(!general.stdout.includes('Creates a new Watt project'))
+})
 
-  for (const command of ['create', 'init', 'add']) {
-    const result = await wattpm('help', command)
-    ok(result.stdout.includes('Usage: wattpm'))
-    ok(!result.stdout.includes('Unknown command'))
+test('skill - removed scaffolding commands fail instead of invoking a generator', async () => {
+  for (const command of ['create', 'init', 'add', 'import']) {
+    const result = await wattpm(command, { reject: false })
+    strictEqual(result.exitCode, 1)
+    ok(result.stdout.includes(`Unknown command ${command}`))
   }
 })

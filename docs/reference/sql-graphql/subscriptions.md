@@ -8,7 +8,7 @@ like so: `subscriptionIgnore: ['page']`.
 
 ## `[ENTITY]Saved`
 
-Published whenever an entity is saved, e.g. when the mutation `insert[ENTITY]` or `save[ENTITY]` are called.
+Published once whenever an entity is inserted or updated, including through `upsert[ENTITY]` or the deprecated `save[ENTITY]` alias.
 
 ## `[ENTITY]Deleted`
 

@@ -93,6 +93,11 @@ export async function getConnectionInfo (dbType) {
   return {
     connectionInfo,
     async dropTestDB () {
+      if (dbType === 'postgresql') {
+        await db.query(
+          sql`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ${testDBName} AND pid <> pg_backend_pid();`
+        )
+      }
       await db.query(sql`DROP DATABASE ${sql.ident(testDBName)};`)
       await db.dispose()
     }
@@ -119,7 +124,6 @@ export async function createFromConfig (t, options, applicationFactory, creation
   const database = await create(directory, options, {
     applicationFactory,
     isStandalone: true,
-    isEntrypoint: true,
     isProduction: creationOptions.production
   })
   t.after(() => database.stop())

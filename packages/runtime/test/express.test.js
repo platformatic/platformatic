@@ -7,24 +7,24 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('gateway', async t => {
-  const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'express', 'watt.config.mjs')
   const app = await createRuntime(configFile)
   await app.init()
-  const entryUrl = await app.start()
+  const { 'b:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()
   })
 
   {
-    const res = await request(entryUrl + '/hello')
+    const res = await request(url + '/hello')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { hello: 'world' })
   }
 
   {
-    const res = await request(entryUrl + '/hello2')
+    const res = await request(url + '/hello2')
 
     strictEqual(res.statusCode, 200)
     deepStrictEqual(await res.body.json(), { hello: 'world2' })

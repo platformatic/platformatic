@@ -3,7 +3,7 @@ import {
   kMetadata,
   validate
 } from '@platformatic/foundation'
-import { prepareApplication } from './config.js'
+import { prepareAddedApplications } from './config.js'
 
 const allOperations = [
   'getRuntimeStatus',
@@ -138,11 +138,9 @@ export function createManagementHandlers (runtime, allowedOperations) {
 
     validate(applicationSchema, applications, {}, true, config[kMetadata].root)
 
-    for (let i = 0; i < applications.length; i++) {
-      applications[i] = await prepareApplication(config, applications[i], config.workers)
-    }
+    const prepared = await prepareAddedApplications(config, applications, runtime.getApplicationsIds())
 
-    return runtime.addApplications(applications, start)
+    return runtime.addApplications(prepared, start)
   })
 
   register('removeApplications', async ({ ids }) => {

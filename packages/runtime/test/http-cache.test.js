@@ -1,4 +1,4 @@
-import { parseNDJson } from '@platformatic/telemetry/test/helper.js'
+import { parseNDJson } from '@platformatic/tracing/test/helper.js'
 import { deepStrictEqual, notStrictEqual, ok, strictEqual } from 'node:assert'
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -7,15 +7,15 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { gunzipSync } from 'node:zlib'
 import { request } from 'undici'
-import { transform } from '../lib/config.js'
+import { transform } from '../index.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should cache http requests', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -63,9 +63,9 @@ test('should cache http requests', async t => {
 })
 
 test('should get response cached by another application', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -133,7 +133,7 @@ test('should use a custom cache storage', async t => {
     maxEntrySize: 4242
   }
 
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -144,7 +144,7 @@ test('should use a custom cache storage', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -179,9 +179,9 @@ test('should use a custom cache storage', async t => {
 })
 
 test('should remove a url from an http cache', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -243,9 +243,9 @@ test('should remove a url from an http cache', async t => {
 })
 
 test('should invalidate cache from another application', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -317,7 +317,7 @@ test('should invalidate cache from another application', async t => {
 })
 
 test('should invalidate cache by cache tags', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -327,7 +327,7 @@ test('should invalidate cache by cache tags', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -409,11 +409,11 @@ test('should set an opentelemetry attribute', async t => {
   const telemetryFilePath = join(tmpdir(), 'telemetry.ndjson')
   await rm(telemetryFilePath, { force: true }).catch(() => {})
 
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
-      config.telemetry = {
+      config.tracing = {
         applicationName: 'test-service',
         version: '1.0.0',
         exporter: {
@@ -425,7 +425,7 @@ test('should set an opentelemetry attribute', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -449,8 +449,8 @@ test('should set an opentelemetry attribute', async t => {
     const serverTraces = traces.filter(trace => trace.kind === 1)
     const clientTraces = traces.filter(trace => trace.kind === 2)
 
-    strictEqual(serverTraces.length, 4)
-    strictEqual(clientTraces.length, 3)
+    strictEqual(serverTraces.length, 3)
+    strictEqual(clientTraces.length, 2)
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
@@ -517,9 +517,9 @@ test('should set an opentelemetry attribute', async t => {
 })
 
 test('should cache http requests gzipped', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -574,7 +574,7 @@ test('should cache http requests gzipped', async t => {
 })
 
 test('should accept origins configuration with string values', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -585,7 +585,7 @@ test('should accept origins configuration with string values', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -611,7 +611,7 @@ test('should accept origins configuration with string values', async t => {
 })
 
 test('should cache requests to origins matching regex pattern', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -622,7 +622,7 @@ test('should cache requests to origins matching regex pattern', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -663,7 +663,7 @@ test('should cache requests to origins matching regex pattern', async t => {
 })
 
 test('should use cacheByDefault for responses without explicit expiration', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -673,7 +673,7 @@ test('should use cacheByDefault for responses without explicit expiration', asyn
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -694,7 +694,7 @@ test('should use cacheByDefault for responses without explicit expiration', asyn
 })
 
 test('should not cache responses without explicit expiration when cacheByDefault is not set', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -704,7 +704,7 @@ test('should not cache responses without explicit expiration when cacheByDefault
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 
@@ -725,7 +725,7 @@ test('should not cache responses without explicit expiration when cacheByDefault
 })
 
 test('should respect cache type configuration with private cache', async t => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const configFile = join(fixturesDir, 'http-cache', 'watt.config.mjs')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -735,7 +735,7 @@ test('should respect cache type configuration with private cache', async t => {
       return config
     }
   })
-  const entryUrl = await app.start()
+  const { 'main:0': entryUrl } = await app.start()
 
   t.after(() => app.close())
 

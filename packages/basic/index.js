@@ -1,6 +1,7 @@
 export * from './lib/capability.js'
 export * from './lib/config.js'
 export * from './lib/creation.js'
+export * from './lib/factory.js'
 export * as errors from './lib/errors.js'
 export * from './lib/modules.js'
 export { schema, schemaComponents } from './lib/schema.js'

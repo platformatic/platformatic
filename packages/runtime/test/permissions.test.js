@@ -29,14 +29,14 @@ async function createContent (t) {
 
 test('should access files when access is not restricted', async t => {
   const value = await createContent(t)
-  const configFile = join(fixturesDir, 'permissions', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'permissions', 'runtime', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
   const res = await request(url + '/')
 
   deepStrictEqual(await res.body.text(), value)
@@ -44,14 +44,14 @@ test('should access files when access is not restricted', async t => {
 
 test('should access files when access is granted by permissions', async t => {
   const value = await createContent(t)
-  const configFile = join(fixturesDir, 'permissions', 'platformatic.allowed.runtime.json')
+  const configFile = join(fixturesDir, 'permissions', 'allowed-runtime', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
   const res = await request(url + '/')
 
   deepStrictEqual(await res.body.text(), value)
@@ -59,14 +59,14 @@ test('should access files when access is granted by permissions', async t => {
 
 test('should not access files when access is not granted by permissions', async t => {
   await createContent(t)
-  const configFile = join(fixturesDir, 'permissions', 'platformatic.denied.runtime.json')
+  const configFile = join(fixturesDir, 'permissions', 'denied-runtime', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'service:0': url } = await server.start()
   const res = await request(url + '/')
 
   deepStrictEqual(await res.body.json(), {

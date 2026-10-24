@@ -1,11 +1,20 @@
-import { getBasePath } from '@platformatic/globals'
+import { getBasePath, registerCloseCallback } from '@platformatic/globals'
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
   base: getBasePath({ throwOnMissing: false }) ?? '/',
-  plugins: [reactRouter(), tsconfigPaths()],
+  plugins: [
+    reactRouter(),
+    tsconfigPaths(),
+    {
+      name: 'platformatic',
+      configureServer: server => {
+        registerCloseCallback(() => server.close())
+      }
+    }
+  ],
   server: {
     fs: {
       strict: false

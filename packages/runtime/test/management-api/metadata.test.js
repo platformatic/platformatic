@@ -1,15 +1,15 @@
-import { equal, ok, strictEqual } from 'node:assert'
+import { deepStrictEqual, equal, ok, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { version } from '../../lib/version.js'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get the runtime metadata', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -37,8 +37,6 @@ test('should get the runtime metadata', async t => {
 
   strictEqual(statusCode, 200)
 
-  const entrypoint = await app.getEntrypointDetails()
-
   const metadata = await body.json()
   equal(metadata.pid, process.pid)
   equal(metadata.cwd, process.cwd())
@@ -47,8 +45,14 @@ test('should get the runtime metadata', async t => {
   equal(metadata.packageName, 'test-runtime-package')
   equal(metadata.packageVersion, '1.0.42')
   equal(metadata.projectDir, projectDir)
-  equal(metadata.url, entrypoint.url)
+
+  // What `applications:add`/`remove --save` read, so they never need the whole configuration.
+  equal(metadata.configPath, configFile)
+  // The resolved path is handed back: the eval worker resolved it against the deciding file's
+  // directory, and a consumer computing paths from it should not have to repeat that.
+  deepStrictEqual(metadata.autoload, { path: join(projectDir, 'services'), exclude: [] })
   equal(metadata.platformaticVersion, version)
+  deepStrictEqual(metadata.urls, app.getUrls())
 
   ok(metadata.uptimeSeconds >= 0)
   ok(metadata.uptimeSeconds < 10)

@@ -1,6 +1,0 @@
-{
-  "name": "fastify-service",
-  "dependencies": {
-    "@platformatic/globals": ">=3.0.0"
-  }
-}

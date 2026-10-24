@@ -1,24 +1,34 @@
-# Nitro on Watt 3
+# Nitro with Watt 4
 
-Use `@platformatic/nitro` for a Nitro application and `@platformatic/nuxt` for Nuxt.
-Detect `nitro`/`nitropack` dependencies and Nitro configuration before selecting Vite.
+Use `@platformatic/nitro` for standalone Nitro or plain Vite applications using
+`nitro/vite`. Check Nuxt and TanStack first: a transitive Nitro dependency is not
+enough to reclassify those frameworks. Install compatible Watt 4 packages only with permission.
 
-```json
-{
-  "module": "@platformatic/nitro",
-  "runtime": {
-    "server": { "hostname": "0.0.0.0", "port": "{PORT}" }
+ESM `watt.config.js`:
+
+```js
+import { createNitroConfig } from '@platformatic/nitro'
+
+export default createNitroConfig({
+  server: {
+    hostname: process.env.HOST || '127.0.0.1',
+    port: Number(process.env.PORT || 3000)
   }
-}
+})
 ```
 
-Install `wattpm@^3.74.0` and a matching major 3 Nitro capability with authorization.
-Preserve Nitro's configuration, plugins, server routes, and target preset. Prefer the
-capability's lifecycle defaults over custom commands unless the project needs them.
+The capability detects Vite configuration and uses its pipeline; without Vite it uses
+the Nitro CLI. Preserve the project's source, adapters, and output conventions. The
+default production output is `.output/server/index.mjs`; deploy all `.output`, not
+only the entrypoint. Keep Watt packages/configuration when starting through Watt.
 
-Build before production startup and deploy the complete output, including server,
-public assets, and bundled dependencies. Inspect the installed capability's expected
-output directory and entrypoint when using a custom Nitro preset.
+For Vite development mesh requests, add `server.allowedHosts: ['.plt.local']` without
+replacing existing configuration. Configure listener addresses on the capability;
+custom commands choose their own addresses and cleanup, not runtime-assigned ports.
 
-Test internal mesh calls, the public listener, static assets, and production shutdown.
-See [Nuxt](nuxt.md) and [integration](../integration.md).
+Use `@platformatic/nitro/scheduler` for supported Nitro tasks; see
+[scheduler](../scheduler.md). Native configuration type stripping does not replace
+Vite/Nitro builds or type checks.
+
+See [Nitro configuration](https://docs.platformatic.dev/docs/reference/nitro/configuration)
+for output-directory and production-entrypoint options.

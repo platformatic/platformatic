@@ -3,13 +3,13 @@ import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { version } from '../../lib/version.js'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get applications topology', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -37,22 +37,24 @@ test('should get applications topology', async t => {
 
   strictEqual(statusCode, 200)
 
-  const entrypointDetails = await app.getEntrypointDetails()
   const topology = await body.json()
+  const applications = topology.applications.map(({ url, urls, ...application }) => {
+    deepStrictEqual(urls, [url])
+    strictEqual(new URL(url).protocol, 'http:')
+    return application
+  })
 
-  deepStrictEqual(topology, {
-    entrypoint: 'service-1',
+  deepStrictEqual({ ...topology, applications }, {
     production: false,
     applications: [
       {
         id: 'service-1',
         type: 'service',
         status: 'started',
-        config: resolve(projectDir, 'services/service-1', 'platformatic.json'),
+        servingState: 'listening',
+        configPath: configurationFileIn(join(projectDir, 'services/service-1')),
         path: resolve(projectDir, 'services/service-1'),
         version,
-        entrypoint: true,
-        url: entrypointDetails.url,
         localUrl: 'http://service-1.plt.local',
         dependencies: [],
         sourceMaps: false
@@ -61,10 +63,10 @@ test('should get applications topology', async t => {
         id: 'service-2',
         type: 'service',
         status: 'started',
-        config: resolve(projectDir, 'services/service-2', 'platformatic.json'),
+        servingState: 'listening',
+        configPath: configurationFileIn(join(projectDir, 'services/service-2')),
         path: resolve(projectDir, 'services/service-2'),
         version,
-        entrypoint: false,
         localUrl: 'http://service-2.plt.local',
         dependencies: [],
         sourceMaps: false
@@ -73,10 +75,10 @@ test('should get applications topology', async t => {
         id: 'service-db',
         type: 'db',
         status: 'started',
-        config: resolve(projectDir, 'services/service-db', 'platformatic.db.json'),
+        servingState: 'listening',
+        configPath: configurationFileIn(join(projectDir, 'services/service-db')),
         path: resolve(projectDir, 'services/service-db'),
         version,
-        entrypoint: false,
         localUrl: 'http://service-db.plt.local',
         dependencies: [],
         sourceMaps: false

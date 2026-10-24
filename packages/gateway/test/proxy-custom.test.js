@@ -203,7 +203,7 @@ test('should route requests via the runtime mesh to applications not listed in t
     ]
   )
 
-  const address = await runtime.start()
+  const { 'composer:0': address } = await runtime.start()
 
   {
     // No header and no cookie - use the fallback from custom.options

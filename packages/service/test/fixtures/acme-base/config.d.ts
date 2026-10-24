@@ -119,7 +119,7 @@ export interface AcmeBase {
           password: string;
         };
       };
-  telemetry?: OpenTelemetry;
+  tracing?: OpenTelemetry;
   watch?:
     | {
         enabled?: boolean | string;

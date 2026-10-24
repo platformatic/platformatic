@@ -112,8 +112,8 @@ Three consequences follow directly from shared-nothing, and each surprises someo
   backing store, exactly as they would across containers.
 - **Startup cost multiplies.** Four workers means four module graphs loaded and four heaps. Memory
   scales close to linearly with worker count.
-- **Only the entrypoint listens.** Non-entrypoint applications open no socket regardless of worker
-  count, unless they explicitly opt in with `useHttp`; the mesh addresses them by id.
+- **Only exposed applications listen.** An application without a configured `server.port` opens no
+  socket regardless of worker count; the mesh addresses it by id.
 
 Workers can also be scaled automatically based on event loop utilisation, via `workers.dynamic`. See
 [Dynamic Workers](../guides/dynamic-workers.md).

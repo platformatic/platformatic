@@ -180,6 +180,27 @@ test('composite primary keys', async t => {
 
   {
     const res = await app.inject({
+      method: 'POST',
+      url: '/editors/page/1/user/1',
+      body: {
+        role: 'must not replace admin'
+      }
+    })
+    equal(res.statusCode, 500, 'duplicate POST /editors/page/1/user/1 status code')
+
+    const unchanged = await app.inject({
+      method: 'GET',
+      url: '/editors/page/1/user/1'
+    })
+    same(unchanged.json(), {
+      userId: '1',
+      pageId: '1',
+      role: 'admin'
+    })
+  }
+
+  {
+    const res = await app.inject({
       method: 'GET',
       url: '/editors/page/1/user/2'
     })
@@ -205,13 +226,13 @@ test('composite primary keys', async t => {
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/editors/page/1/user/1',
       body: {
         role: 'captain'
       }
     })
-    equal(res.statusCode, 200, 'POST /editors/page/1/user/1 status code')
+    equal(res.statusCode, 200, 'PUT /editors/page/1/user/1 status code')
     same(
       res.json(),
       {
@@ -219,8 +240,19 @@ test('composite primary keys', async t => {
         pageId: '1',
         role: 'captain'
       },
-      'POST /editors/page/1/user/1 response'
+      'PUT /editors/page/1/user/1 response'
     )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/editors/page/1/user/3',
+      body: {
+        role: 'missing'
+      }
+    })
+    equal(res.statusCode, 404, 'missing PUT /editors/page/1/user/3 status code')
   }
 
   {
@@ -407,13 +439,13 @@ test('composite primary keys withour relations', async t => {
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/editors/pageId/1/userId/1',
       body: {
         role: 'captain'
       }
     })
-    equal(res.statusCode, 200, 'POST /editors/pageId/1/userId/1 status code')
+    equal(res.statusCode, 200, 'PUT /editors/pageId/1/userId/1 status code')
     same(
       res.json(),
       {
@@ -421,7 +453,7 @@ test('composite primary keys withour relations', async t => {
         pageId: '1',
         role: 'captain'
       },
-      'POST /editors/pageId/1/userId/1 response'
+      'PUT /editors/pageId/1/userId/1 response'
     )
   }
 

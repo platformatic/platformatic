@@ -7,14 +7,14 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should restrict access via interceptor', async t => {
-  const configFile = join(fixturesDir, 'policies', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'policies', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'gateway:0': url } = await server.start()
 
   // These requests also go between applications. Calls from application-1 to application-2 (or reverse) are blocked
   {
@@ -56,14 +56,14 @@ test('should restrict access via interceptor', async t => {
 })
 
 test('should restrict access via messaging API', async t => {
-  const configFile = join(fixturesDir, 'policies', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'policies', 'watt.config.js')
   const server = await createRuntime(configFile)
 
   t.after(async () => {
     await server.close()
   })
 
-  const url = await server.start()
+  const { 'gateway:0': url } = await server.start()
 
   // These requests also go between applications. Calls from application-1 to application-2 (or reverse) are blocked
   {

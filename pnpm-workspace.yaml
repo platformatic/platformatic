@@ -17,6 +17,7 @@ hoist: false
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@platformatic/*'
+  - undici-thread-interceptor@2.2.0
   # fastify-user@2.0.0 was published on 2026-10-13; it fixes the fast-jwt 5 advisories via @fastify/jwt 10
   - fastify-user@2.0.0
   # Renovate security update: protobufjs@8.0.1
@@ -83,9 +84,14 @@ nodeLinker: hoisted
 # Keeping a single version avoids the mismatch.
 overrides:
   esbuild: 0.28.2
+  # schema-utils@4.8.1 requires webpack@^5.112.0, but @nestjs/cli pins 5.106.2.
+  # Keep the compatible 4.x version until Nest updates its webpack dependency.
+  'schema-utils@^4.0.0': 4.3.3
   # @nestjs/platform-fastify@11 pins fastify@5.11.3, which has known high severity CVEs
   # fixed in 5.12.2. Remove when moving to Nest 12, which pins fastify@5.12.5.
   '@nestjs/platform-fastify>fastify': 5.12.7
+  'undici@7.29.0': ^8.5.0
+  'undici-oidc-interceptor>undici': ^8.5.0
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest

@@ -4,7 +4,6 @@ import {
   ChildManager,
   cleanBasePath,
   createChildProcessListener,
-  buildServerListenerOptions,
   createServerListener,
   getServerUrl,
   importFile,
@@ -78,13 +77,8 @@ export class NextCapability extends BaseCapability {
     }
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     this.on('config', config => {
       this.#configModified = true
@@ -92,9 +86,9 @@ export class NextCapability extends BaseCapability {
     })
 
     if (this.isProduction) {
-      await this.#startProduction(listen)
+      await this.#startProduction()
     } else {
-      await this.#startDevelopment(listen)
+      await this.#startDevelopment()
     }
 
     await this._collectMetrics()
@@ -112,8 +106,8 @@ export class NextCapability extends BaseCapability {
     }
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.subprocess) {
       return this.stopCommand()
@@ -182,14 +176,12 @@ export class NextCapability extends BaseCapability {
   }
 
   getMeta () {
-    const gateway = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootTrailingSlash: false }
-
-    if (this.url) {
-      gateway.tcp = true
-      gateway.url = this.url
-    }
-
-    return { gateway }
+    return super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      wantsAbsoluteUrls: true,
+      needsRootTrailingSlash: false
+    })
   }
 
   async getChildManagerContext (basePath) {
@@ -214,7 +206,11 @@ export class NextCapability extends BaseCapability {
       return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts(), { loaderOptions })
     }
 
-    const { hostname, port } = this.serverConfig ?? {}
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const { hostname, port } = this.serverConfig
     const serverOptions = {
       host: hostname || '127.0.0.1',
       port: port || 0
@@ -325,11 +321,11 @@ export class NextCapability extends BaseCapability {
 
     if (command) {
       const childManagerScripts = this.#getChildManagerScripts()
-
-      if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
-        childManagerScripts.push(new URL('./create-context-patch.js', import.meta.url))
-      }
       return this.startWithCommand(command, loaderUrl, childManagerScripts, { loaderOptions })
+    }
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
     }
 
     this.childManager = this.#createChildManager(
@@ -350,6 +346,7 @@ export class NextCapability extends BaseCapability {
     try {
       updateGlobals({ config: this.config })
       await this.childManager.inject()
+      await this.childManager.register()
       const { nextStart } = await importFile(resolvePath(this.#next, './dist/cli/next-start.js'))
 
       const { hostname, port } = this.serverConfig ?? {}
@@ -358,17 +355,11 @@ export class NextCapability extends BaseCapability {
         port: port || 0
       }
 
-      await this.childManager.register()
-
-      const serverPromise = createServerListener(
-        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-        buildServerListenerOptions(this.serverConfig)
-      )
+      const serverPromise = createServerListener(this.serverConfig)
 
       if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
         await nextStart({
-          '--hostname': serverOptions.host,
+          '--hostname': serverOptions.hostname,
           '--port': serverOptions.port,
           _: [this.root]
         })
@@ -417,11 +408,7 @@ export class NextCapability extends BaseCapability {
         port: port || 0
       }
 
-      const serverPromise = createServerListener(
-        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-        buildServerListenerOptions(this.serverConfig)
-      )
+      const serverPromise = createServerListener(this.serverConfig)
 
       // The server configuration takes precedence, KEEP_ALIVE_TIMEOUT is kept as a fallback
       let keepAliveTimeout = this.serverConfig?.keepAliveTimeout ?? parseInt(process.env.KEEP_ALIVE_TIMEOUT, 10)
@@ -455,6 +442,10 @@ export class NextCapability extends BaseCapability {
 
     if (this.#nextVersion.major >= 15) {
       scripts.push(new URL('./loader-next-15.cjs', import.meta.url))
+    }
+
+    if (this.#nextVersion.major < 15 || (this.#nextVersion.major === 15 && this.#nextVersion.minor < 1)) {
+      scripts.push(new URL('./create-context-patch.js', import.meta.url))
     }
 
     return scripts

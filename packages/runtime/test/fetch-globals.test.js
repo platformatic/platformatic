@@ -7,7 +7,7 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('fetch globals should work with both string URL and Request object', async t => {
-  const configFile = join(fixturesDir, 'fetch-globals', 'platformatic.json')
+  const configFile = join(fixturesDir, 'fetch-globals', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
@@ -15,7 +15,7 @@ test('fetch globals should work with both string URL and Request object', async 
   })
 
   await app.init()
-  const entryUrl = await app.start()
+  const { 'frontend:0': entryUrl } = await app.start()
 
   // Test fetch with string URL
   {

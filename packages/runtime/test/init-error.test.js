@@ -7,7 +7,7 @@ import { createRuntime, readLogs } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should correctly handle init errors', async t => {
-  const configFile = join(fixturesDir, 'init-error', 'watt.json')
+  const configFile = join(fixturesDir, 'init-error', 'watt.config.mjs')
 
   const context = {}
   const runtime = await createRuntime(configFile, null, context)

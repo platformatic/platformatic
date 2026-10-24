@@ -1,0 +1,22 @@
+{
+  "name": "gateway-next-node-fastify",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/runtime": ">=3.0.0",
+    "@platformatic/next": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0",
+    "wattpm": ">=3.0.0"
+  },
+  "devDependencies": {
+    "wattpm": "^2.5.5"
+  },
+  "workspaces": [
+    "web/*"
+  ]
+}

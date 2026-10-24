@@ -17,7 +17,7 @@ test('migrate and start', async t => {
   const context = createTestContext()
 
   process.env.DATABASE_URL = connectionInfo.connectionString
-  await applyMigrations(logger, join(cwd, 'platformatic.db.json'), [], context)
+  await applyMigrations(logger, join(cwd, 'watt.config.js'), [], context)
 
   const output = logger.getCaptured()
   assert.match(output, /001\.do\.sql/)
@@ -68,7 +68,7 @@ test('migrate and start', async t => {
 
 test('no cwd', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const config = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'platformatic.db.json')
+  const config = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'watt.config.js')
 
   const logger = createCapturingLogger()
   const context = createTestContext()
@@ -130,7 +130,7 @@ test('do not restart on save', async t => {
   const context = createTestContext()
 
   process.env.DATABASE_URL = connectionInfo.connectionString
-  await applyMigrations(logger, join(cwd, 'platformatic.db.json'), [], context)
+  await applyMigrations(logger, join(cwd, 'watt.config.js'), [], context)
 
   const output = logger.getCaptured()
   assert.match(output, /001\.do\.sql/)

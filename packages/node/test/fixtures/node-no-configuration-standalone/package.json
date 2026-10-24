@@ -5,6 +5,7 @@
     "services/*"
   ],
   "dependencies": {
+    "@platformatic/globals": ">=3.0.0",
     "@platformatic/runtime": ">=3.0.0",
     "@platformatic/node": ">=3.0.0",
     "wattpm": ">=3.0.0"

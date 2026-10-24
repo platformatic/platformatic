@@ -1,14 +1,25 @@
 # Kubernetes Deployment for Platformatic Watt
 
-Build a major 3 Watt image with Node.js 22.19.0+ using the [Docker guide](docker.md).
-The manifests below are templates: choose measured resources, an immutable image tag,
-and real application health endpoints. `/health` is an application route, not a
-universal Watt endpoint. Watt's default runtime probes are `/ready` and `/status` on
-the configured probe/metrics server; align probe ports and paths with that configuration.
+## Watt 4 deployment contract
 
-Ensure the configured listener uses `PORT` and binds to `0.0.0.0`. Budget workers,
-replicas, database pools, startup time, and termination grace time together. With a
-read-only root filesystem, provide writable mounts for temporary files and caches.
+Use an image built with Node.js **24.20.0+**, compatible Watt 4 production dependencies,
+complete framework/workspace output, and `wattpm start`. Preserve existing manifests.
+The owning application's capability configuration must explicitly read the listener env
+values below (`HOST`, `PORT`); no root `server`/`entrypoint` or automatic `PORT` injection exists.
+Read `LOG_LEVEL` explicitly where logger settings are wanted.
+
+All manifests below are templates to adapt, not an instruction to provision a cluster.
+Use actual immutable image tags/digests, namespace labels, listener ports, and measured
+worker CPU/memory. The examples' `/health` assumes an implemented app route: use its real
+Gateway prefix/path or explicitly configured runtime probes. Do not invent health routes.
+Readiness and liveness need different dependency semantics; startup probes should cover
+actual startup time. Keep metrics/control ports private and protected.
+
+Before enabling `readOnlyRootFilesystem`, provide writable mounts for required cache,
+temporary, upload, and profiling paths. Match the image's actual non-root UID (the Docker
+guide uses the image's `node` user). Set termination grace periods from real shutdown
+behavior, and verify cleanup under SIGTERM with permission. See [Docker](docker.md),
+[performance](../performance.md), and [observability](../observability.md).
 
 ## Directory Structure
 
@@ -47,8 +58,8 @@ metadata:
   namespace: watt-app
 data:
   NODE_ENV: "production"
-  PLT_SERVER_HOSTNAME: "0.0.0.0"
-  PLT_SERVER_LOGGER_LEVEL: "info"
+  HOST: "0.0.0.0"
+  LOG_LEVEL: "info"
   PORT: "3000"
 ```
 
@@ -68,7 +79,9 @@ stringData:
   # Add other secrets as needed
 ```
 
-**Note**: In production, use external secret management (Vault, AWS Secrets Manager, etc.)
+**Note**: These are placeholders, not production credentials. Do not commit actual Secret
+values; Kubernetes Secret encoding is not encryption. Prefer external secret management
+(Vault, AWS Secrets Manager, etc.) and existing secret references.
 
 ## Deployment
 
@@ -94,7 +107,7 @@ spec:
     spec:
       containers:
         - name: watt-app
-          image: your-registry/watt-app:release
+          image: your-registry/watt-app:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -138,11 +151,11 @@ spec:
             failureThreshold: 30
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1001
+            runAsUser: 1000
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
       securityContext:
-        fsGroup: 1001
+        fsGroup: 1000
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -234,6 +247,7 @@ metadata:
   name: watt-app-ingress
   namespace: watt-app
   annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
@@ -256,6 +270,9 @@ spec:
 ```
 
 ## Deployment Commands
+
+Provide these only for the selected cluster/context and execute mutations, rollbacks,
+or scaling only with explicit authorization. Confirm namespaces and resource ownership.
 
 ```bash
 # Create namespace first
@@ -314,6 +331,10 @@ spec:
 
 ## Network Policy
 
+Adapt ingress namespace labels to the actual cluster (do not assume a `name` label).
+The restrictive egress example needs extending for actual external APIs, tracing,
+image services, and DNS TCP fallback; enable only after checking application traffic.
+
 `k8s/networkpolicy.yaml`:
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -350,10 +371,10 @@ spec:
             matchLabels:
               k8s-app: kube-dns
       ports:
-         - protocol: UDP
-           port: 53
-         - protocol: TCP
-           port: 53
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
 ```
 
 ## Resource Quotas

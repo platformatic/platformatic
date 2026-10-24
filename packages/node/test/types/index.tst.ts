@@ -2,7 +2,6 @@ import type { Configuration, ConfigurationOptions } from '@platformatic/foundati
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
 import {
-  Generator,
   NodeCapability,
   type NodeConfiguration,
   type NodeContext,
@@ -35,7 +34,6 @@ test('Node types', () => {
   expect(new NodeCapability('/tmp', config)).type.toBe<NodeCapability>()
   expect(new NodeCapability('/tmp', config, context)).type.toBe<NodeCapability>()
   expect(new NodeCapability('/tmp', config).closeServer()).type.toBe<Promise<void> | undefined>()
-  expect(new Generator()).type.toBe<Generator>()
 
   expect(packageJson).type.toBe<Record<string, unknown>>()
   expect(schema).type.toBe<JSONSchemaType<PlatformaticNodeJsConfig>>()

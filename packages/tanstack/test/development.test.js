@@ -11,7 +11,6 @@ import {
 } from '../../basic/test/helper.js'
 import { additionalDependencies } from './helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 setAdditionalDependencies(additionalDependencies)
 
@@ -22,10 +21,15 @@ const hmrTriggerFile = 'services/frontend/src/routes/index.tsx'
 async function websocketHMRHandler (message, resolveConnection, resolveReload, context) {
   switch (message.type) {
     case 'connected':
-      deepStrictEqual(
-        (await context.runtime.inject('frontend', { url: `${context.path}src/routeTree.gen.ts` })).statusCode,
-        200
-      )
+      // An HTTP request for the page does not load its client modules like a browser would.
+      // Transform the route itself before editing it so Vite can always find it in the client
+      // module graph, independently of SSR loading and background dependency optimization.
+      for (const path of ['src/routeTree.gen.ts', 'src/routes/index.tsx']) {
+        deepStrictEqual(
+          (await context.runtime.inject('frontend', { url: `${context.path}${path}` })).statusCode,
+          200
+        )
+      }
       resolveConnection()
       break
     case 'update':

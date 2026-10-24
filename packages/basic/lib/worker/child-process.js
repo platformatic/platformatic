@@ -8,26 +8,23 @@ import {
   scheduleCompileCacheFlush
 } from '@platformatic/foundation'
 import {
-  getAdditionalServerOptions,
   getApplicationId,
   getConfig,
+  consumeCloseCallbacks,
   getEvents,
-  getHost,
   getITC,
   getLogger,
-  getPort,
   getPrometheus,
   getReuseTcpPorts,
   getRuntimeBasePath,
   getRuntimeConfig,
-  getTelemetryReady,
+  getTracingReady,
   getWantsAbsoluteUrls,
   getWorkerId,
   hasField,
-  isEntrypoint,
   updateGlobals
 } from '@platformatic/globals'
-import { ITC } from '@platformatic/itc/lib/index.js'
+import { ITC, sanitize } from '@platformatic/itc'
 import {
   clearRegistry,
   client,
@@ -40,7 +37,7 @@ import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { ServerResponse } from 'node:http'
 import { Server as HttpsServer } from 'node:https'
-import { createRequire } from 'node:module'
+import { createRequire, enableCompileCache } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import { Duplex } from 'node:stream'
@@ -49,11 +46,41 @@ import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
-import { exitCodes } from '../errors.js'
+
+import { ApplicationShutdownError, exitCodes } from '../errors.js'
 import { applyServerTimeouts, importFile } from '../utils.js'
 import { getSocketPath } from './child-manager.js'
 import { applicationServerEvents, isBareHttpServer } from './listeners.js'
 import { registerLoader } from './loader.js'
+
+async function runShutdownCallbacks () {
+  const errors = []
+  const callbacks = consumeCloseCallbacks().reverse()
+
+  for (const callback of callbacks) {
+    try {
+      await callback()
+    } catch (error) {
+      errors.push(error)
+    }
+  }
+
+  const signalListeners = process.listeners('SIGINT')
+  for (const listener of signalListeners) {
+    process.removeListener('SIGINT', listener)
+  }
+
+  for (const listener of signalListeners) {
+    try {
+      // Like a signal emission, ignore return values without consuming rejected promises.
+      listener.call(process, 'SIGINT')
+    } catch (error) {
+      errors.push(error)
+    }
+  }
+
+  return errors
+}
 
 class ForwardingEventEmitter extends EventEmitter {
   emitAndNotify (event, ...args) {
@@ -116,8 +143,6 @@ export class ChildProcess extends ITC {
   #urlFromScript
 
   constructor (executable, { urlFromScript = false } = {}) {
-    const events = getEvents()
-
     super({
       throwOnMissingHandler: false,
       name: `${process.env.PLT_MANAGER_ID}-child-process`,
@@ -147,32 +172,13 @@ export class ChildProcess extends ITC {
           // Forward health signals to the parent (ChildManager)
           this.notify('healthSignals', { workerId, signals })
         },
-        close: signal => {
-          let handled = false
-
-          try {
-            handled = events.emit('close', signal)
-          } catch (error) {
-            this.#logger.error({ err: ensureLoggableError(error) }, 'Error while handling close event.')
-            process.exitCode = 1
-          }
-
-          if (!handled) {
-            this.#logger.warn(
-              `Please register a "close" event handler via getEvents() for application "${this.applicationId}" to make sure resources have been closed properly and avoid exit timeouts.`
-            )
-
-            // No user event, just exit without errors
-            setImmediate(() => {
-              process.exit(process.exitCode ?? 0)
-            })
-          }
-
-          return handled
+        close: () => {
+          this._closePromise ??= this.close()
+          return this._closePromise
         },
         setClosing: () => {
           updateGlobals({ closing: true })
-          events.emit('closing')
+          getEvents().emit('closing')
         }
       }
     })
@@ -227,11 +233,40 @@ export class ChildProcess extends ITC {
   // accumulated while booting durable, as Node.js would otherwise only write it when the process
   // terminates.
   notify (name, message, options) {
-    if (name === 'url' && compileCacheEnabled) {
-      scheduleCompileCacheFlush()
+    if (name === 'url') {
+      if (compileCacheEnabled) {
+        scheduleCompileCacheFlush(undefined, flushed => {
+          super.notify('compile-cache:flushed', { flushed, source: 'child-process' })
+        })
+      } else if (compileCacheRequested) {
+        super.notify('compile-cache:unavailable', { source: 'child-process' })
+      }
     }
 
     return super.notify(name, message, options)
+  }
+
+  async close () {
+    const errors = await runShutdownCallbacks()
+
+    // Release telemetry handles but keep the unreferenced socket available to signal handlers.
+    if (this.#otlpBridge) {
+      this.#otlpBridge.stop()
+      this.#otlpBridge = null
+    }
+    clearRegistry(this.#metricsRegistry)
+
+    // Signal listeners can schedule work without returning a promise. Wait for that work
+    // to drain before replying; the parent enforces the shutdown deadline if it never does.
+    await once(process, 'beforeExit')
+    super.close()
+
+    if (errors.length > 0) {
+      process.exitCode = 1
+      const error = new ApplicationShutdownError(errors)
+      this.#logger.error({ err: ensureLoggableError(error) }, 'Errors occurred during application shutdown.')
+      throw error
+    }
   }
 
   registerGlobals (globals) {
@@ -285,13 +320,17 @@ export class ChildProcess extends ITC {
   }
 
   _send (message) {
+    const payload = JSON.stringify(sanitize(message), (_, value) => {
+      return value instanceof Error ? ensureLoggableError(value) : value
+    })
+
     /* c8 ignore next 4 */
     if (this.#socket.readyState === WebSocket.CONNECTING) {
-      this.#pendingMessages.push(JSON.stringify(message))
+      this.#pendingMessages.push(payload)
       return
     }
 
-    this.#socket.send(JSON.stringify(message))
+    this.#socket.send(payload)
   }
 
   _createClosePromise () {
@@ -355,9 +394,9 @@ export class ChildProcess extends ITC {
     }
 
     // Wait for telemetry to be ready before loading promotel to avoid race condition
-    const telemetryReady = getTelemetryReady({ throwOnMissing: false })
-    if (telemetryReady) {
-      await telemetryReady
+    const tracingReady = getTracingReady({ throwOnMissing: false })
+    if (tracingReady) {
+      await tracingReady
     }
 
     // Setup and start OTLP exporter bridge over the child's populated registry
@@ -634,28 +673,7 @@ export class ChildProcess extends ITC {
           return
         }
 
-        let port = getPort()
-        const host = getHost()
-        const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
-        const additionalOptions = getAdditionalServerOptions()
-
-        if (typeof port !== 'number' && port !== false) {
-          port = 0
-        }
-
-        // Check if we need to override the port only if a static port is being requested
-        if (port !== false && port !== 0) {
-          // The user application has requested a specific port, which is not the entrypoint one. Override it.
-          if (options.port !== port && isEntrypointApplication) {
-            options.port = port
-          }
-        }
-
-        if (typeof host === 'string') {
-          options.host = host
-        }
-
-        Object.assign(options, applyServerTimeouts(server, additionalOptions))
+        applyServerTimeouts(server, getConfig({ throwOnMissing: false })?.server)
         const events = getEvents({ throwOnMissing: false })
         if (events) {
           events.emitAndNotify('serverOptions', options)
@@ -706,11 +724,13 @@ export class ChildProcess extends ITC {
       completed = true
       tracingChannel('net.server.listen').unsubscribe(subscribers)
 
+      // Nested workers may expose internal servers (for example Nitro's env
+      // runner). They must not replace the command's public entrypoint URL.
       // When a script reports the app URL itself (urlFromScript), ignore the
       // tracing-channel listen here (which fires for listhen/get-port-please's
       // throwaway probe) to avoid reporting a stale URL that races the real
       // server's startup.
-      if (this.#urlFromScript) {
+      if (!isMainThread || this.#urlFromScript) {
         return
       }
 
@@ -731,11 +751,10 @@ export class ChildProcess extends ITC {
 
     tracingChannel('net.server.listen').subscribe(subscribers)
 
-    const isEntrypointApplication = isEntrypoint({ throwOnMissing: false })
     const runtimeBasePath = getRuntimeBasePath({ throwOnMissing: false }) ?? ''
     const wantsAbsoluteUrls = getWantsAbsoluteUrls({ throwOnMissing: false })
 
-    if (isEntrypointApplication && runtimeBasePath && !wantsAbsoluteUrls) {
+    if (runtimeBasePath && !wantsAbsoluteUrls) {
       stripBasePath(runtimeBasePath)
     }
   }
@@ -751,7 +770,12 @@ export class ChildProcess extends ITC {
   #setupInterceptors () {
     const globalDispatcher = new Agent().compose(createInterceptor(this))
     setGlobalDispatcher(globalDispatcher)
-    mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher)
+    const legacyDispatcher = globalThis[Symbol.for('undici.globalDispatcher.1')]
+    const currentDispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
+    const legacyWrapper = legacyDispatcher && legacyDispatcher !== currentDispatcher && legacyDispatcher.constructor?.name === 'Dispatcher1Wrapper'
+      ? new legacyDispatcher.constructor(globalDispatcher)
+      : globalDispatcher
+    mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher, legacyWrapper)
   }
 
   #setupHandlers (timeout) {
@@ -858,8 +882,8 @@ function stripBasePath (basePath) {
 
 // Whether the module compile cache has been enabled in this process.
 let compileCacheEnabled = false
+let compileCacheRequested = false
 
-// Enable compile cache if configured (Node.js 22.1.0+)
 async function setupCompileCache (contextData) {
   const config = contextData?.compileCache
 
@@ -875,17 +899,7 @@ async function setupCompileCache (contextData) {
     return
   }
 
-  // Check if API is available (Node.js 22.1.0+)
-  let moduleApi
-  try {
-    moduleApi = await import('node:module')
-    if (typeof moduleApi.enableCompileCache !== 'function') {
-      return
-    }
-  } catch {
-    return
-  }
-
+  compileCacheRequested = true
   // Use root from context data (capability's this.root as URL)
   const root = contextData?.root ? fileURLToPath(contextData.root) : null
   if (!root) {
@@ -898,7 +912,7 @@ async function setupCompileCache (contextData) {
       : join(root, '.plt', 'compile-cache')
 
   try {
-    moduleApi.enableCompileCache(cacheDir)
+    enableCompileCache(cacheDir)
     compileCacheEnabled = true
   } catch {
     // Silently ignore - cache is optional optimization

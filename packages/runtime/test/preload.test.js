@@ -8,9 +8,9 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('preload', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'preload', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'preload', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()
@@ -26,9 +26,9 @@ test('preload', async t => {
 
 test('preload multiple', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-single-service.json')
+  const configFile = join(fixturesDir, 'preload-multiple', 'single-service', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'a:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()
@@ -44,9 +44,9 @@ test('preload multiple', async t => {
 
 test('preload multiple on runtime and preload multiple on applications', async t => {
   process.env.PORT = 0
-  const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
+  const configFile = join(fixturesDir, 'preload-multiple', 'multiple-service', 'watt.config.mjs')
   const app = await createRuntime(configFile)
-  const entryUrl = await app.start()
+  const { 'composer:0': entryUrl } = await app.start()
 
   t.after(() => {
     return app.close()

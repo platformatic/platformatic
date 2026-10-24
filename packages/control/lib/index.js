@@ -13,12 +13,13 @@ import {
   FailedToGetRuntimeApplicationConfig,
   FailedToGetRuntimeApplicationEnv,
   FailedToGetRuntimeApplications,
-  FailedToGetRuntimeConfig,
   FailedToGetRuntimeEnv,
   FailedToGetRuntimeHistoryLogs,
   FailedToGetRuntimeLogIndexes,
   FailedToGetRuntimeMetadata,
   FailedToGetRuntimeMetrics,
+  FailedToGetRuntimeMemory,
+  FailedToGetRuntimeWorkersScaler,
   FailedToGetRuntimeOpenapi,
   FailedToGetRuntimeScheduler,
   FailedToReloadRuntime,
@@ -29,6 +30,7 @@ import {
   FailedToStreamRuntimeLogs,
   FailedToTakeHeapSnapshot,
   FailedToUpdateRuntimeScheduler,
+  FailedToUpdateRuntimeMetrics,
   ProfilingAlreadyStarted,
   ProfilingNotStarted,
   RuntimeNotFound
@@ -237,23 +239,6 @@ export class RuntimeApiClient {
     }
 
     return body.json()
-  }
-
-  async getRuntimeConfig (pid, metadata = false) {
-    const client = this.#getUndiciClient(pid)
-
-    const { statusCode, body } = await client.request({
-      path: `/api/v1/config?metadata=${metadata ? 'true' : 'false'}`,
-      method: 'GET'
-    })
-
-    if (statusCode !== 200) {
-      const error = await body.text()
-      throw new FailedToGetRuntimeConfig(error)
-    }
-
-    const runtimeConfig = await body.json()
-    return runtimeConfig
   }
 
   async getRuntimeApplicationConfig (pid, applicationId) {
@@ -587,15 +572,58 @@ export class RuntimeApiClient {
     return metrics
   }
 
-  getRuntimeLiveMetricsStream (pid) {
-    const socketPath = this.#getSocketPathFromPid(pid)
+  async updateRuntimeMetricsConfig (pid, metricsConfig) {
+    const client = this.#getUndiciClient(pid)
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/metrics',
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(metricsConfig)
+    })
 
-    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/metrics/live'
-    const webSocketStream = new WebSocketStream(webSocketUrl)
-    this.#webSockets.add(webSocketStream.ws)
+    if (statusCode !== 200) {
+      throw new FailedToUpdateRuntimeMetrics(await body.text())
+    }
 
-    return webSocketStream
+    return body.json()
+  }
+
+  async getRuntimeMemory (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/memory',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToGetRuntimeMemory(error)
+    }
+
+    return body.json()
+  }
+
+  // Resolves to null when the runtime does not run the dynamic workers scaler.
+  async getRuntimeWorkersScaler (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/workers/scaler',
+      method: 'GET'
+    })
+
+    if (statusCode === 404) {
+      await body.dump()
+      return null
+    }
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new FailedToGetRuntimeWorkersScaler(error)
+    }
+
+    return body.json()
   }
 
   getRuntimeLiveLogsStream (pid) {

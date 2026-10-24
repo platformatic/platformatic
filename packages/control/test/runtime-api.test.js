@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
 import { version } from '../../runtime/index.js'
 import { RuntimeApiClient } from '../lib/index.js'
@@ -18,9 +17,10 @@ function getRuntimeTmpDir (runtimeDir) {
   return join(platformaticTmpDir, runtimeDirHash)
 }
 
-test('should control runtime scheduler jobs', async t => {
-  const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+test('should get the runtime workers scaler state', async t => {
+  const projectDir = join(fixturesDir, 'runtime-dynamic')
+  const configFile = join(projectDir, 'watt.config.mjs')
+
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
 
@@ -31,24 +31,37 @@ test('should control runtime scheduler jobs', async t => {
   })
 
   const runtimeClient = new RuntimeApiClient()
-  t.after(() => runtimeClient.close())
-  const { jobs } = await runtimeClient.getRuntimeSchedulerJobs(runtime.pid)
-  assert.equal(jobs.length, 1)
-  assert.equal(jobs[0].name, 'control-test')
+  const scaler = await runtimeClient.getRuntimeWorkersScaler(runtime.pid)
+  assert.strictEqual(scaler.version, 1)
+  assert.strictEqual(scaler.maxTotalWorkers, 4)
+  assert.ok(scaler.memoryLimit > 0)
+  assert.deepStrictEqual(scaler.applications.map(application => application.id).sort(), ['service-1', 'service-2'])
 
-  const paused = await runtimeClient.pauseRuntimeSchedulerJob(runtime.pid, jobs[0].name)
-  assert.equal(paused.paused, true)
+  const memory = await runtimeClient.getRuntimeMemory(runtime.pid)
+  assert.deepStrictEqual(Object.keys(memory).sort(), ['scope', 'total', 'used'])
+  assert.ok(memory.used > 0 && memory.total > 0)
+})
 
-  const result = await runtimeClient.runRuntimeSchedulerJob(runtime.pid, jobs[0].name)
-  assert.equal(result.success, true)
+test('should get no workers scaler state without dynamic workers', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
-  const resumed = await runtimeClient.resumeRuntimeSchedulerJob(runtime.pid, jobs[0].name)
-  assert.equal(resumed.paused, false)
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await safeRemove(runtimeTmpDir)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+    await safeRemove(runtimeTmpDir)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  assert.strictEqual(await runtimeClient.getRuntimeWorkersScaler(runtime.pid), null)
 })
 
 test('should get runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -116,62 +129,48 @@ test('should get runtime metrics', async t => {
   }
 })
 
-test('should get runtime live metrics', async t => {
-  const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+test('should update runtime metrics configuration', async t => {
+  const configFile = join(fixturesDir, 'runtime-1', 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
+  const client = new RuntimeApiClient()
   t.after(async () => {
+    await client.close()
     await kill(runtime)
   })
 
-  // Wait for the runtime to collect some metrics
-  await sleep(5000)
+  const disabled = await client.updateRuntimeMetricsConfig(runtime.pid, { enabled: false })
+  assert.strictEqual(disabled.success, true)
+  assert.strictEqual(disabled.config.enabled, false)
+  await assert.rejects(client.getRuntimeMetrics(runtime.pid), { code: 'PLT_CTR_FAILED_TO_GET_RUNTIME_METRICS' })
 
-  const runtimeClient = new RuntimeApiClient()
-  const runtimeMetricsStream = runtimeClient.getRuntimeLiveMetricsStream(runtime.pid)
+  const enabled = await client.updateRuntimeMetricsConfig(runtime.pid, { enabled: true })
+  assert.strictEqual(enabled.success, true)
+  assert.deepStrictEqual(enabled.config, { ...disabled.config, enabled: true })
+  const metrics = await client.getRuntimeMetrics(runtime.pid, { format: 'json' })
+  assert.ok(metrics.some(metric => metric.name === 'process_resident_memory_bytes'))
+  assert.ok(metrics.some(metric => metric.name === 'nodejs_heap_size_used_bytes'))
 
-  let count = 0
-  await new Promise((resolve, reject) => {
-    runtimeMetricsStream.pipe(
-      split(record => {
-        if (count++ > 10) resolve()
-
-        const { applications } = JSON.parse(record)
-
-        assert.deepStrictEqual(Object.keys(applications).sort(), ['service-1', 'service-2'].sort())
-
-        for (const applicationMetrics of Object.values(applications)) {
-          assert.deepStrictEqual(
-            Object.keys(applicationMetrics).sort(),
-            ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
-          )
-
-          const latencyMetrics = applicationMetrics.latency
-          const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-          assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
-        }
-      })
-    )
+  await assert.rejects(client.updateRuntimeMetricsConfig(runtime.pid, { enabled: 'invalid' }), {
+    code: 'PLT_CTR_FAILED_TO_UPDATE_RUNTIME_METRICS'
   })
 })
 
 test('should get matching runtime', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
   })
 
   const runtimeClient = new RuntimeApiClient()
-  const { pid, url } = await runtimeClient.getMatchingRuntime()
+  const { pid } = await runtimeClient.getMatchingRuntime()
   assert.strictEqual(typeof pid, 'number')
-  assert.strictEqual(typeof url, 'string')
 })
 
 test('should get runtime OpenAPI definition', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -225,7 +224,7 @@ test('should get runtime OpenAPI definition', async t => {
 
 test('should restart all applications', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -247,7 +246,7 @@ test('should restart all applications', async t => {
 
 test('should only restart certain applications', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -269,7 +268,7 @@ test('should only restart certain applications', async t => {
 
 test('should be able to add and remove applications', async t => {
   const projectDir = join(fixturesDir, 'runtime-4')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     await kill(runtime)
@@ -284,14 +283,18 @@ test('should be able to add and remove applications', async t => {
     }
   ])
 
-  assert.deepStrictEqual(added, [
+  const [{ url: addedUrl, urls: addedUrls, ...addedDetails }] = added
+  assert.deepStrictEqual(addedUrls, [addedUrl])
+  assert.ok(addedUrl)
+  assert.deepStrictEqual([addedDetails], [
     {
+      configPath: resolve(projectDir, 'services', 'service-2', 'watt.config.mjs'),
       dependencies: [],
-      entrypoint: false,
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),
       status: 'started',
+      servingState: 'listening',
       type: 'service',
       version,
       sourceMaps: false
@@ -299,10 +302,13 @@ test('should be able to add and remove applications', async t => {
   ])
 
   const removed = await runtimeClient.removeApplications(runtime.pid, ['service-2'])
-  assert.deepStrictEqual(removed, [
+  const [{ url: removedUrl, urls: removedUrls, ...removedDetails }] = removed
+  assert.deepStrictEqual(removedUrls, [removedUrl])
+  assert.ok(removedUrl)
+  assert.deepStrictEqual([removedDetails], [
     {
+      configPath: resolve(projectDir, 'services', 'service-2', 'watt.config.mjs'),
       dependencies: [],
-      entrypoint: false,
       id: 'service-2',
       localUrl: 'http://service-2.plt.local',
       path: resolve(projectDir, 'services', 'service-2'),

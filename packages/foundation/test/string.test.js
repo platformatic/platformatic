@@ -190,21 +190,25 @@ test('parseMemorySize- should throw an error for invalid inputs', async () => {
 })
 
 test('escapeRegexp - should escape special regex characters', () => {
-  equal(escapeRegexp('hello.world'), 'hello\\.world')
-  equal(escapeRegexp('test*pattern'), 'test\\*pattern')
-  equal(escapeRegexp('query?string'), 'query\\?string')
-  equal(escapeRegexp('path/to/file'), 'path\\/to\\/file')
-  equal(escapeRegexp('price$100'), 'price\\$100')
-  equal(escapeRegexp('start^end'), 'start\\^end')
-  equal(escapeRegexp('array[0]'), 'array\\[0\\]')
-  equal(escapeRegexp('object{key}'), 'object\\{key\\}')
-  equal(escapeRegexp('group(1)'), 'group\\(1\\)')
-  equal(escapeRegexp('plus+sign'), 'plus\\+sign')
-  equal(escapeRegexp('pipe|or'), 'pipe\\|or')
-  equal(escapeRegexp('backslash\\'), 'backslash\\\\')
-  equal(escapeRegexp('exclamation!'), 'exclamation\\!')
-  equal(escapeRegexp('equals=sign'), 'equals\\=sign')
-  equal(escapeRegexp('colon:value'), 'colon\\:value')
+  for (const value of [
+    'hello.world',
+    'test*pattern',
+    'query?string',
+    'path/to/file',
+    'price$100',
+    'start^end',
+    'array[0]',
+    'object{key}',
+    'group(1)',
+    'plus+sign',
+    'pipe|or',
+    'backslash\\',
+    'exclamation!',
+    'equals=sign',
+    'colon:value'
+  ]) {
+    equal(escapeRegexp(value), RegExp.escape(value))
+  }
 })
 
 test('escapeRegexp - should handle empty string', () => {
@@ -212,6 +216,6 @@ test('escapeRegexp - should handle empty string', () => {
 })
 
 test('escapeRegexp - should handle string with no special characters', () => {
-  equal(escapeRegexp('hello world'), 'hello world')
-  equal(escapeRegexp('abc123'), 'abc123')
+  equal(escapeRegexp('hello world'), RegExp.escape('hello world'))
+  equal(escapeRegexp('abc123'), RegExp.escape('abc123'))
 })

@@ -2,7 +2,6 @@ import assert from 'node:assert'
 import os from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { request } from 'undici'
 import { createFromConfig, waitForLogLine } from './helper.js'
 
 test('config is adjusted to handle custom loggers', async t => {
@@ -29,7 +28,7 @@ test('config is adjusted to handle custom loggers', async t => {
   assert.strictEqual(app.logger, options.server.loggerInstance)
 })
 
-test('start without server config', async t => {
+test('does not listen without server.port', async t => {
   const app = await createFromConfig(t, {
     watch: false,
     server: {
@@ -43,9 +42,12 @@ test('start without server config', async t => {
   })
 
   const url = await app.start({ listen: true })
-  const res = await request(url)
-  assert.strictEqual(res.statusCode, 200, 'add status code')
-  assert.deepStrictEqual(await res.body.json(), {
+  assert.strictEqual(url, undefined)
+  assert.strictEqual(app.getUrl(), undefined)
+
+  const res = await app.inject({ method: 'GET', url: '/' })
+  assert.strictEqual(res.statusCode, 200)
+  assert.deepStrictEqual(JSON.parse(res.body), {
     message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
   })
 })

@@ -3,10 +3,10 @@ import { on } from 'node:events'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { wattpm } from './helper.js'
+import { parseRuntimeLog, wattpm, wattpmNoRuntime } from './helper.js'
 
 test('repl - should start a REPL session in the application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     replProcess.kill('SIGINT')
@@ -19,7 +19,11 @@ test('repl - should start a REPL session in the application', async t => {
 
   // Wait for the runtime to start
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg?.startsWith('Platformatic is now listening')) {
       break
@@ -69,7 +73,7 @@ test('repl - should start a REPL session in the application', async t => {
 })
 
 test('repl - should have access to platformatic context', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     replProcess.kill('SIGINT')
@@ -82,7 +86,11 @@ test('repl - should have access to platformatic context', async t => {
 
   // Wait for the runtime to start
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg?.startsWith('Platformatic is now listening')) {
       break
@@ -132,7 +140,7 @@ test('repl - should have access to platformatic context', async t => {
 })
 
 test('repl - should complain when a runtime is not found', async t => {
-  const replProcess = await wattpm('repl', 'p-' + Date.now.toString(), { reject: false })
+  const replProcess = await wattpmNoRuntime(t, 'repl', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(replProcess.exitCode, 1)
   ok(replProcess.stdout.includes('Cannot find a matching runtime.'))

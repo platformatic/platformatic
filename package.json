@@ -1,7 +1,7 @@
 {
   "name": "platformatic",
   "type": "module",
-  "version": "3.75.0",
+  "version": "4.0.0-alpha.3",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
@@ -14,6 +14,9 @@
     "lint:fix": "pnpm -r --workspace-concurrency=1 --if-present lint:fix",
     "lint:markdown": "markdownlint-cli2",
     "lint:updated-only": "node ./scripts/lint-updated-packages.js",
+    "convert-fixtures": "node ./scripts/convert-fixtures.mjs",
+    "update-node-version": "node ./scripts/update-node-version.js",
+    "check-node-version": "node ./scripts/update-node-version.js --check",
     "license-check": "node ./scripts/license-check.js",
     "license-list": "node ./scripts/license-check.js --format=markdown --out=THIRD_PARTY_LICENSES.md",
     "gen-schemas-types": "node ./scripts/gen-schemas-types.js",
@@ -21,7 +24,7 @@
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
     "generate-errors-doc": "node ./scripts/generate-errors-doc.js",
-    "global-links": "cd packages/cli && pnpm add -g . && cd ../wattpm && pnpm add -g . && cd ../create-wattpm && pnpm add -g ."
+    "global-links": "cd packages/wattpm && pnpm add -g ."
   },
   "packageManager": "pnpm@12.15.0",
   "devDependencies": {
@@ -29,5 +32,8 @@
     "cookie": "^2.0.1",
     "markdownlint-cli2": "^0.24.0"
   },
-  "pre-commit": "lint:updated-only, gen-schemas-types"
+  "pre-commit": "lint:updated-only, gen-schemas-types",
+  "engines": {
+    "node": ">=24.20.0"
+  }
 }

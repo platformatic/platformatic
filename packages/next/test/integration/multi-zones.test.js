@@ -72,7 +72,13 @@ async function verifyZones (url) {
 }
 
 test('serves multiple Next.js zones in development', async t => {
-  const { root, runtime } = await prepareRuntime(t, 'multi-zones', false)
+  // The gateway serves both zones, so it is the application which must be exposed.
+  const { root, runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, '../fixtures/multi-zones'),
+    production: false,
+    port: 0
+  })
   const url = await startRuntime(t, runtime)
 
   await verifyZones(url)
@@ -82,7 +88,13 @@ test('serves multiple Next.js zones in development', async t => {
 })
 
 test('builds and serves multiple Next.js zones in production', async t => {
-  const { root, runtime } = await prepareRuntime(t, 'multi-zones', true)
+  const { root, runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, '../fixtures/multi-zones'),
+    production: true,
+    build: false,
+    port: 0
+  })
 
   await buildRuntime(root)
 

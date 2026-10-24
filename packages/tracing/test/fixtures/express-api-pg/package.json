@@ -1,0 +1,22 @@
+{
+  "name": "gateway-next-node-fastify",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "dev": "wattpm dev",
+    "start": "wattpm start",
+    "build": "wattpm build"
+  },
+  "dependencies": {
+    "@platformatic/node": ">=3.0.0",
+    "@platformatic/runtime": ">=3.0.0",
+    "@opentelemetry/instrumentation-pg": "^0.55.0",
+    "wattpm": ">=3.0.0"
+  },
+  "devDependencies": {
+    "wattpm": "^2.18.0"
+  },
+  "workspaces": [
+    "api/*"
+  ]
+}

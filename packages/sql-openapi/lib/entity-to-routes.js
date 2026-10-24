@@ -427,20 +427,18 @@ export async function entityPlugin (app, opts) {
       async handler (request, reply) {
         const id = request.params[primaryKeyCamelcase]
         const ctx = { app: this, reply }
-        const res = await entity.save({
+        const res = await entity.update({
           ctx,
           input: {
             ...request.body,
             [primaryKeyCamelcase]: id
           },
-          where: {
-            [primaryKeyCamelcase]: {
-              eq: id
-            }
-          },
           fields: request.query.fields
         })
-        reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
+        if (!res) {
+          return reply.callNotFound()
+        }
+        reply.header('location', `${app.prefix}/${id}`)
         return res
       }
     })

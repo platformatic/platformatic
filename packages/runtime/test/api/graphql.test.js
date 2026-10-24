@@ -6,7 +6,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get a application graphql schema', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -20,7 +20,7 @@ test('should get a application graphql schema', async t => {
 })
 
 test('should fail to get a application graphql schema if application does not expose it', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()

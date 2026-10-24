@@ -1,0 +1,9 @@
+{
+  "main": "index.js",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "@platformatic/globals": ">=3.0.0",
+    "@platformatic/node": ">=3.0.0"
+  }
+}

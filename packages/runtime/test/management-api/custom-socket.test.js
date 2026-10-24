@@ -1,15 +1,16 @@
+import { kMetadata } from '@platformatic/foundation'
 import { equal, ok, rejects, strictEqual } from 'node:assert'
 import { randomUUID } from 'node:crypto'
 import { EventEmitter, once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { createServer } from 'node:net'
+import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { platform } from 'node:os'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { transform } from '../../index.js'
 import { startManagementApi } from '../../lib/management-api.js'
-import { createRuntime, createTemporaryDirectory } from '../helpers.js'
+import { configurationFileIn, createRuntime, createTemporaryDirectory } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -20,11 +21,11 @@ test('should use custom socket path when specified', async t => {
     return
   }
 
-  const tempDir = await createTemporaryDirectory(t, 'custom-socket')
-  const customSocketPath = join(tempDir, 'custom.sock')
+  await createTemporaryDirectory(t, 'custom-socket')
+  const customSocketPath = join(tmpdir(), `platformatic-${randomUUID()}.sock`)
 
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile, undefined, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -77,9 +78,10 @@ test('should use custom socket path when specified', async t => {
 })
 
 test('should throw when the custom socket remains in use after retries', async t => {
-  const tempDir = await createTemporaryDirectory(t, 'custom-socket-in-use')
   const customSocketPath =
-    platform() === 'win32' ? `\\\\.\\pipe\\platformatic-${randomUUID()}` : join(tempDir, 'custom.sock')
+    platform() === 'win32'
+      ? `\\\\.\\pipe\\platformatic-${randomUUID()}`
+      : join(tmpdir(), `platformatic-${randomUUID()}.sock`)
   const server = createServer()
   server.listen(customSocketPath)
   await once(server, 'listening')
@@ -91,6 +93,7 @@ test('should throw when the custom socket remains in use after retries', async t
   })
 
   const runtime = new EventEmitter()
+  runtime.getRuntimeConfig = () => ({ [kMetadata]: { root: fixturesDir } })
   t.after(async () => {
     const closeManagementApi = runtime.listeners('closed')[0]
     await closeManagementApi?.()
@@ -101,7 +104,7 @@ test('should throw when the custom socket remains in use after retries', async t
 
 test('should use default socket path when managementApi is true', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -121,7 +124,7 @@ test('should use default socket path when managementApi is true', async t => {
 
 test('should use default socket path when managementApi is an object without socket property', async t => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile, undefined, {
     async transform (config, ...args) {
       config = await transform(config, ...args)

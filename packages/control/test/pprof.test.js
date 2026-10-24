@@ -20,7 +20,7 @@ const fixturesDir = join(import.meta.dirname, 'fixtures')
 
 test('should start profiling via RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -45,7 +45,7 @@ test('should start profiling via RuntimeApiClient', async t => {
 
 test('should stop profiling and return profile data via RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -74,7 +74,7 @@ test('should stop profiling and return profile data via RuntimeApiClient', async
 
 test('should start and stop profiling on all workers via RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -111,7 +111,7 @@ test('should start and stop profiling on all workers via RuntimeApiClient', asyn
 
 test('should handle service not found error in RuntimeApiClient for start profiling', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -134,7 +134,7 @@ test('should handle service not found error in RuntimeApiClient for start profil
 
 test('should handle service not found error in RuntimeApiClient for stop profiling', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -157,7 +157,7 @@ test('should handle service not found error in RuntimeApiClient for stop profili
 
 test('should handle profiling already started error in RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -186,7 +186,7 @@ test('should handle profiling already started error in RuntimeApiClient', async 
 
 test('should handle profiling not started error in RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -209,7 +209,7 @@ test('should handle profiling not started error in RuntimeApiClient', async t =>
 
 test('should start heap profiling via RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -234,7 +234,7 @@ test('should start heap profiling via RuntimeApiClient', async t => {
 
 test('should stop heap profiling and return profile data via RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -263,7 +263,7 @@ test('should stop heap profiling and return profile data via RuntimeApiClient', 
 
 test('should support concurrent cpu and heap profiling via RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
@@ -298,7 +298,7 @@ test('should support concurrent cpu and heap profiling via RuntimeApiClient', as
 
 test('should handle heap profiling already started error in RuntimeApiClient', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = join(projectDir, 'watt.config.mjs')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)

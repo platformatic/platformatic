@@ -1,0 +1,26 @@
+// Converted from v3 JSON by scripts/convert-fixtures.mjs
+export default {
+  module: '@platformatic/trickortreat',
+  server: {
+    hostname: '127.0.0.1',
+    port: 0,
+    logger: {
+      level: 'info',
+      name: 'hello server'
+    }
+  },
+  plugins: {
+    paths: [
+      './plugin.js'
+    ]
+  },
+  service: {
+    openapi: true
+  },
+  metrics: false,
+  watch: false,
+  gracefulShutdown: {
+    runtime: 1000,
+    application: 1000
+  }
+}

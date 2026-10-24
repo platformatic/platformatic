@@ -9,21 +9,31 @@ import {
   setAdditionalDependencies,
   setFixturesDir
 } from '../../basic/test/helper.js'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 import { loadConfiguration, NitroCapability, NitroViteCapability } from '../index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 setAdditionalDependencies(['nitro', 'nitropack', 'vite'])
 
+// An application only starts its server when a port is configured, so these
+// fixtures must be exposed for the production checks to run at all.
+function exposeApplication (root) {
+  return updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), config => {
+    config.server ??= {}
+    config.server.port ??= 0
+  })
+}
+
 for (const fixture of ['standalone', 'standalone-nitro']) {
   test(`${fixture} reports a missing production output directory`, async t => {
-    const { runtime, root } = await prepareRuntime(t, fixture, true)
+    const { runtime, root } = await prepareRuntime(t, fixture, true, null, exposeApplication)
     await rejects(runtime.start())
     const logs = await getLogsFromFile(root)
     ok(logs.some(log => log.err?.message.includes("Please run the 'build' command")))
   })
 
   test(`${fixture} reports a missing production entrypoint`, async t => {
-    const { runtime, root } = await prepareRuntime(t, fixture, true)
+    const { runtime, root } = await prepareRuntime(t, fixture, true, null, exposeApplication)
     await buildRuntime(root)
     await rm(resolve(root, 'services/frontend/.output/server/index.mjs'))
     await rejects(runtime.start())
@@ -49,10 +59,11 @@ for (const property of ['ssr', 'notFoundHandler']) {
 }
 
 for (const Capability of [NitroCapability, NitroViteCapability]) {
-  test(`${Capability.name} rejects inherited runtime server.http2`, async () => {
+  test(`${Capability.name} rejects server.http2 in the resolved configuration`, async () => {
     const root = resolve(import.meta.dirname, '..')
     const config = await loadConfiguration(root, {})
-    const capability = new Capability(root, config, { isProduction: true, serverConfig: { http2: true } })
+    config.server = { http2: true }
+    const capability = new Capability(root, config, { isProduction: true })
 
     await rejects(
       capability.init(),
@@ -67,7 +78,7 @@ for (const [property, https] of [
 ]) {
   test(`standalone Nitropack rejects development HTTPS ${property} values that are not a single path`, async () => {
     const root = resolve(import.meta.dirname, 'fixtures/standalone-nitro/services/frontend')
-    const config = await loadConfiguration(root, { server: { https } })
+    const config = await loadConfiguration(root, { server: { https, port: 0 } })
     const capability = new NitroCapability(root, config, { isProduction: false })
 
     await capability.init()

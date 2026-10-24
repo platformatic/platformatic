@@ -1,12 +1,11 @@
 import { ok } from 'node:assert'
-import { join } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime, updateConfigFile } from './helpers.js'
+import { createRuntime, updateConfigFile, configurationFileIn } from './helpers.js'
 import { prepareRuntime } from './multiple-workers/helper.js'
 
 test('metrics with applicationLabel set to serviceId uses serviceId label', async t => {
   const tempDir = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
-  const configFile = join(tempDir, 'platformatic.json')
+  const configFile = configurationFileIn(tempDir)
 
   // Update config to use serviceId as the label
   await updateConfigFile(configFile, config => {
@@ -14,8 +13,6 @@ test('metrics with applicationLabel set to serviceId uses serviceId label', asyn
       port: 0,
       applicationLabel: 'serviceId'
     }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
     return config
   })
 
@@ -41,7 +38,7 @@ test('metrics with applicationLabel set to serviceId uses serviceId label', asyn
 
 test('metrics without applicationLabel uses applicationId label (default behavior)', async t => {
   const tempDir = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
-  const configFile = join(tempDir, 'platformatic.json')
+  const configFile = configurationFileIn(tempDir)
 
   // Update config to enable metrics without applicationLabel
   await updateConfigFile(configFile, config => {
@@ -49,8 +46,6 @@ test('metrics without applicationLabel uses applicationId label (default behavio
       port: 0
       // applicationLabel is not set, so it should default to 'applicationId'
     }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
     return config
   })
 
@@ -74,42 +69,9 @@ test('metrics without applicationLabel uses applicationId label (default behavio
   ok(metricsText.includes('process_cpu_percent_usage') && metricsText.includes('applicationId="node"'), 'process_cpu_percent_usage should have applicationId')
 })
 
-test('getFormattedMetrics handles custom applicationLabel', async t => {
-  const tempDir = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
-  const configFile = join(tempDir, 'platformatic.json')
-
-  // Update config to use serviceId as the label
-  await updateConfigFile(configFile, config => {
-    config.metrics = {
-      port: 0,
-      applicationLabel: 'serviceId'
-    }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
-    return config
-  })
-
-  const runtime = await createRuntime(configFile)
-
-  t.after(async () => {
-    await runtime.close()
-  })
-
-  await runtime.start()
-
-  // Get formatted metrics which aggregates metrics by application
-  const { applications } = await runtime.getFormattedMetrics()
-
-  // Should have metrics for 'node' application
-  ok(applications.node, 'Should have metrics for node application')
-  ok(typeof applications.node.cpu === 'number', 'Should have cpu metric')
-  ok(typeof applications.node.rss === 'number', 'Should have rss metric')
-  ok(typeof applications.node.elu === 'number', 'Should have elu metric')
-})
-
 test('metrics with custom applicationLabel and custom labels', async t => {
   const tempDir = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
-  const configFile = join(tempDir, 'platformatic.json')
+  const configFile = configurationFileIn(tempDir)
 
   // Update config to use a custom label name
   await updateConfigFile(configFile, config => {
@@ -117,8 +79,6 @@ test('metrics with custom applicationLabel and custom labels', async t => {
       port: 0,
       applicationLabel: 'customAppName'
     }
-    // Set entrypoint to the first service
-    config.entrypoint = 'node'
     return config
   })
 

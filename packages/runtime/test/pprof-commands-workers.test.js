@@ -5,7 +5,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
-const configFile = join(fixturesDir, 'configs', 'monorepo-workers.json')
+const configFile = join(fixturesDir, 'configs', 'monorepo-workers', 'watt.config.mjs')
 
 function profileBuffer (result) {
   return result instanceof Uint8Array ? result : result?.profile

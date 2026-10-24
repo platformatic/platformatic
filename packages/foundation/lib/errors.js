@@ -22,6 +22,16 @@ export function ensureError (error) {
     return error
   }
 
+  if (error?.name === 'AggregateError' && Array.isArray(error.errors)) {
+    const errors = error.errors.map(entry => {
+      return entry?.name && 'message' in entry ? ensureError(entry) : entry
+    })
+    const aggregate = new AggregateError(errors, error.message)
+    Object.assign(aggregate, error)
+    aggregate.errors = errors
+    return aggregate
+  }
+
   const err = new Error(error.message)
   Object.assign(err, error)
   return err
@@ -59,4 +69,8 @@ export const ConfigurationDoesNotValidateAgainstSchemaError = createError(
 export const MissingEnvVariablesError = createError(
   `${ERROR_PREFIX}_MISSING_ENV_VARIABLES`,
   'The configuration references the following environment variables which are not set: %s'
+)
+export const UnsupportedNodeVersionError = createError(
+  `${ERROR_PREFIX}_UNSUPPORTED_NODE_VERSION`,
+  'Your current Node.js version is %s, while the minimum supported version is v%s. Please upgrade Node.js and try again.'
 )

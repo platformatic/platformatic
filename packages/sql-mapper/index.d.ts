@@ -222,42 +222,86 @@ interface Count {
 interface Insert<EntityFields> {
   (options: {
     /**
+     * Entity to insert.
+     */
+    input: EntityFields,
+    /**
+     * List of fields to be returned for the object.
+     */
+    fields?: string[],
+    /**
+     * If present, the entity participates in transaction.
+     */
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allows authorization rules
+     * and other hooks to be applied to database queries.
+     */
+    ctx?: PlatformaticContext
+  }): Promise<Partial<EntityFields>>
+}
+
+interface InsertMany<EntityFields> {
+  (options: {
+    /**
      * Entities to insert.
      */
     inputs: EntityFields[],
     /**
-     * List of fields to be returned for each object
+     * List of fields to be returned for each object.
      */
     fields?: string[],
     /**
-     * If present, the entity participates in transaction
+     * If present, the entities participate in transaction.
      */
     tx?: Database,
     /**
-     * Passing this to all sql-mapper functions allow to apply
-     * authorization rules to the database queries (amongst other things).
+     * Passing this to all sql-mapper functions allows authorization rules
+     * and other hooks to be applied to database queries.
      */
     ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>
 }
 
-interface Save<EntityFields> {
+interface Update<EntityFields> {
   (options: {
     /**
-     * Entity to save.
+     * Entity fields to update. All primary keys must be present.
      */
-    input: EntityFields,
+    input: Partial<EntityFields>,
     /**
-     * List of fields to be returned for each object
+     * List of fields to be returned for the object.
      */
     fields?: string[],
     /**
-     * If present, the entity participates in transaction
+     * If present, the entity participates in transaction.
      */
     tx?: Database,
     /**
-     * Passing this to all sql-mapper functions allow to apply
-     * authorization rules to the database queries (amongst other things).
+     * Passing this to all sql-mapper functions allows authorization rules
+     * and other hooks to be applied to database queries.
+     */
+    ctx?: PlatformaticContext
+  }): Promise<Partial<EntityFields> | null>
+}
+
+interface Upsert<EntityFields> {
+  (options: {
+    /**
+     * Entity to insert or update.
+     */
+    input: EntityFields,
+    /**
+     * List of fields to be returned for the object.
+     */
+    fields?: string[],
+    /**
+     * If present, the entity participates in transaction.
+     */
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allows authorization rules
+     * and other hooks to be applied to database queries.
      */
     ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>>
@@ -361,13 +405,30 @@ export interface Entity<EntityFields = any> {
    */
   find: Find<EntityFields>,
   /**
-   * Inserts entities to the database.
+   * Inserts an entity into the database.
    */
   insert: Insert<EntityFields>,
   /**
-   * Saves entity to the database.
+   * Inserts multiple entities into the database.
    */
-  save: Save<EntityFields>,
+  insertMany: InsertMany<EntityFields>,
+  /**
+   * Updates an entity by its primary keys.
+   */
+  update: Update<EntityFields>,
+  /**
+   * Updates one or more entity rows in the database.
+   */
+  updateMany: UpdateMany<EntityFields>,
+  /**
+   * Inserts or updates an entity.
+   */
+  upsert: Upsert<EntityFields>,
+  /**
+   * Inserts or updates an entity.
+   * @deprecated Use `upsert` instead.
+   */
+  save: Upsert<EntityFields>,
   /**
    * Deletes entities from the database.
    */
@@ -376,10 +437,6 @@ export interface Entity<EntityFields = any> {
    * Count the entities considering the where condition.
    */
   count: Count,
-  /**
-   * Update one or more entity rows from the database.
-   */
-  updateMany: UpdateMany<EntityFields>
 }
 
 type EntityHook<T extends (...args: any) => any> = (original: T, ...options: Parameters<T>) => ReturnType<T>
@@ -387,10 +444,14 @@ type EntityHook<T extends (...args: any) => any> = (original: T, ...options: Par
 export interface EntityHooks<EntityFields = any> {
   find?: EntityHook<Find<EntityFields>>,
   insert?: EntityHook<Insert<EntityFields>>,
-  save?: EntityHook<Save<EntityFields>>,
+  insertMany?: EntityHook<InsertMany<EntityFields>>,
+  update?: EntityHook<Update<EntityFields>>,
+  updateMany?: EntityHook<UpdateMany<EntityFields>>,
+  upsert?: EntityHook<Upsert<EntityFields>>,
+  /** @deprecated Use the `upsert` hook instead. */
+  save?: EntityHook<Upsert<EntityFields>>,
   delete?: EntityHook<Delete<EntityFields>>,
-  count?: EntityHook<Count>,
-  updateMany?: EntityHook<UpdateMany<EntityFields>>
+  count?: EntityHook<Count>
 }
 
 interface BasePoolOptions {

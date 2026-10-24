@@ -1,0 +1,10 @@
+// Converted from v3 JSON by scripts/convert-fixtures.mjs
+export default {
+  module: '@platformatic/vite',
+  application: {
+    basePath: '/frontend'
+  },
+  vite: {
+    ssr: true
+  }
+}

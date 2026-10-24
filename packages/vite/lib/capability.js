@@ -4,7 +4,6 @@ import {
   buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
-  buildServerListenerOptions,
   createServerListener,
   ensureTrailingSlash,
   errors,
@@ -17,6 +16,7 @@ import { getLogger, updateGlobals } from '@platformatic/globals'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
 import { platformaticSkewPlugin } from './skew-plugin.js'
+import { platformaticHttp2HeadersPlugin } from './http2-headers-plugin.js'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
@@ -56,25 +56,20 @@ export class ViteCapability extends BaseCapability {
     }
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     if (this.isProduction) {
-      await this._startProduction(listen)
+      await this._startProduction()
     } else {
-      await this._startDevelopment(listen)
+      await this._startDevelopment()
     }
 
     await this._collectMetrics()
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
 
     if (this.childManager) {
       return this.stopCommand()
@@ -182,16 +177,15 @@ export class ViteCapability extends BaseCapability {
 
   getMeta (prefix) {
     const config = this.subprocessConfig ?? this.#app?.config
+    const options = prefix && typeof prefix === 'object' ? prefix : { prefix }
 
-    const gateway = {
-      tcp: typeof this.url !== 'undefined',
-      url: this.url,
-      prefix: this.basePath ?? config?.base ?? prefix ?? this.#basePath,
+    return super.getMeta({
+      ...options,
+      includeConnection: true,
+      prefix: this.basePath ?? config?.base ?? options.prefix ?? this.#basePath,
       wantsAbsoluteUrls: true,
       needsRootTrailingSlash: true
-    }
-
-    return { gateway }
+    })
   }
 
   _getApp () {
@@ -224,6 +218,10 @@ export class ViteCapability extends BaseCapability {
       return this.startWithCommand(command)
     }
 
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     // Prepare options
     const { hostname, port, https, cors } = this.serverConfig ?? {}
     const configFile = config.vite.configFile ? resolve(this.root, config.vite.configFile) : undefined
@@ -242,11 +240,7 @@ export class ViteCapability extends BaseCapability {
     }
 
     // Require Vite
-    const serverPromise = createServerListener(
-      (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
-      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true,
-      buildServerListenerOptions(this.serverConfig)
-    )
+    const serverPromise = createServerListener(this.serverConfig)
     const { createServer } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
     const skewPlugin = platformaticSkewPlugin()
 
@@ -259,7 +253,10 @@ export class ViteCapability extends BaseCapability {
       logLevel: this.logger.level,
       clearScreen: false,
       optimizeDeps: { force: false },
-      plugins: skewPlugin ? [skewPlugin] : undefined,
+      plugins: [
+        platformaticHttp2HeadersPlugin(),
+        ...(skewPlugin ? [skewPlugin] : [])
+      ],
       server: serverOptions
     })
 
@@ -268,7 +265,7 @@ export class ViteCapability extends BaseCapability {
     this.url = getServerUrl(this.#server)
   }
 
-  async _startProduction (listen) {
+  async _startProduction () {
     const config = this.config
     const command = this.config.application.commands.production
 
@@ -280,20 +277,6 @@ export class ViteCapability extends BaseCapability {
 
     if (command) {
       return this.startWithCommand(command)
-    }
-
-    if (this.#app && listen) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      const listenerOptions = buildServerListenerOptions(serverOptions)
-      if (Object.keys(listenerOptions).length > 0) {
-        createServerListener(false, false, listenerOptions)
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
-      return this.url
     }
 
     this.#app = fastify({ loggerInstance: this.logger, ...(await buildFastifyOptions(this.serverConfig)) })
@@ -319,6 +302,17 @@ export class ViteCapability extends BaseCapability {
     }
 
     await this.#app.ready()
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener(this.serverConfig)
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 
   async _getBasePathFromBuildInfo () {
@@ -364,15 +358,7 @@ export class ViteSSRCapability extends NodeCapability {
     this.registerGlobals({ basePath: this.#basePath })
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    /* c8 ignore next 3 */
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
-
+  async _start () {
     const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
 
@@ -398,7 +384,7 @@ export class ViteSSRCapability extends NodeCapability {
       }
     }
 
-    await super.start({ listen })
+    await super._start()
     await super._listen()
   }
 
@@ -486,15 +472,15 @@ export class ViteSSRCapability extends NodeCapability {
     const vite = this._getApplication()?.vite
     const applicationBasePath = vite?.config?.base
 
-    const gateway = {
-      tcp: typeof this.url !== 'undefined',
-      url: this.url,
-      prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
-      wantsAbsoluteUrls: true,
-      needsRootTrailingSlash: true
+    return {
+      gateway: {
+        tcp: typeof this.url !== 'undefined',
+        url: this.url,
+        prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
+        wantsAbsoluteUrls: true,
+        needsRootTrailingSlash: true
+      }
     }
-
-    return { gateway }
   }
 
   _findEntrypoint () {

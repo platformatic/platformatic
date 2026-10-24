@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/wattpm-pprof-capture",
-  "version": "3.75.0",
+  "version": "4.0.0-alpha.3",
   "description": "pprof profiling capture for wattpm",
   "main": "index.js",
   "type": "module",
@@ -24,12 +24,12 @@
     "@fastify/error": "^4.0.0",
     "@platformatic/globals": "workspace:*",
     "source-map": "^0.8.0",
-    "undici": "^7.27.2"
+    "undici": "^8.5.0"
   },
   "devDependencies": {
     "@platformatic/foundation": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "atomic-sleep": "^1.0.0",
     "eslint": "9",
     "neostandard": "^0.14.0",
@@ -37,6 +37,6 @@
     "typescript": "~6.0.3"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.20.0"
   }
 }

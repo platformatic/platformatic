@@ -118,35 +118,32 @@ Note also that the access token is valid for 5 minutes (keycloak default)
 
 ## Platformatic Setup and Test
 
-Create a Platformatic application using `npm create wattpm`.
-Call it `keycloak-test` with a `db-service`. 
-Specify to use sqlite and the default migrations:
+Use the [Watt skill](../../guides/use-watt-with-ai-agents.md) to create `keycloak-test`
+with a database application named `db-service` in `web/db-service`. Use SQLite and
+paired migrations, then review and authorize dependency installation.
 
-![npm create wattpm](./keycloak-images/watt-create.png)
+Go to `keycloak-test/web/db-service` folder and open `watt.config.ts`.
+Add the `authorization` section with the `jwt` configuration to the factory call:
 
-Go to `keycloak-test/services/db-service` folder and open `platformatic.json`.
-Add the `authorization` section with the `jwt` configuration:
-
-```json
-  "authorization": {
-    "jwt": {
-      "jwks": {
-        "allowedDomains": [
-          "http://127.0.0.1:8080/realms/plt"
-        ],
-        "providerDiscovery": true
-      }
-    },
-    "rolePath": "realm_access.roles",
-    "rules": [
-      {
-        "role": "movies:read",
-        "entity": "movie",
-        "find": true
-      }
-    ]
-  }
-
+```ts
+authorization: {
+  jwt: {
+    jwks: {
+      allowedDomains: [
+        'http://127.0.0.1:8080/realms/plt'
+      ],
+      providerDiscovery: true
+    }
+  },
+  rolePath: 'realm_access.roles',
+  rules: [
+    {
+      role: 'movies:read',
+      entity: 'movie',
+      find: true
+    }
+  ]
+}
 ```
 
 Note that the `rolePath` specify the  `realm_access.roles` path in the JWT token that is used to extract the roles from the token.
@@ -182,7 +179,6 @@ Now you should get a response (an empty array in this case, since we have no mov
 
 
 ![Authorized](./keycloak-images/plt_auth.png)
-
 
 
 

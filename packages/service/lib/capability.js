@@ -1,4 +1,11 @@
-import { BaseCapability, buildListenOptions, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import {
+  BaseCapability,
+  buildListenOptions,
+  cleanBasePath,
+  createServerListener,
+  ensureTrailingSlash,
+  getServerUrl
+} from '@platformatic/basic'
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
@@ -8,7 +15,7 @@ import {
   sanitizeHTTPSOptions
 } from '@platformatic/foundation'
 import { getTracerProvider } from '@platformatic/globals'
-import { addPinoInstrumentation, telemetry } from '@platformatic/telemetry'
+import { addPinoInstrumentation, telemetry } from '@platformatic/tracing'
 import fastify from 'fastify'
 import { randomUUID } from 'node:crypto'
 import { hostname } from 'node:os'
@@ -36,22 +43,17 @@ export class ServiceCapability extends BaseCapability {
 
     const config = this.config
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.applicationId))
+    const { errorHandler, ...serverConfig } = this.serverConfig ?? {}
 
     // Create the application
-    const { errorHandler, ...serverOptions } = this.serverConfig ?? {}
-
     this.#app = fastify({
-      ...serverOptions,
+      ...serverConfig,
       ...this.fastifyOptions,
       genReqId () {
         return randomUUID()
       }
     })
 
-    // The error handler is installed on the root instance before anything else is registered so that
-    // every route inherits it, including the ones registered by the capability itself, like the
-    // auto-generated CRUD routes of @platformatic/db. Plugins can still override it in their own
-    // encapsulation context.
     if (errorHandler) {
       this.#app.setErrorHandler(await loadErrorHandler(errorHandler))
     }
@@ -78,8 +80,8 @@ export class ServiceCapability extends BaseCapability {
     // Skip manual telemetry plugin if automatic instrumentation is already active
     // (loaded via --import from node-telemetry.js)
     const hasAutomaticInstrumentation = !!getTracerProvider({ throwOnMissing: false })
-    if (isKeyEnabled('telemetry', config) && !hasAutomaticInstrumentation) {
-      await this.#app.register(telemetry, config.telemetry)
+    if (isKeyEnabled('tracing', config) && !hasAutomaticInstrumentation) {
+      await this.#app.register(telemetry, config.tracing)
     }
 
     this.#app.decorate('platformatic', { config: this.config })
@@ -97,16 +99,8 @@ export class ServiceCapability extends BaseCapability {
     }
   }
 
-  async start (startOptions) {
-    // Compatibility with v2 service
-    const { listen } = startOptions ?? { listen: true }
-
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
-    await super._start({ listen })
+  async _start () {
+    await super._start()
 
     // Create the application if needed
     if (!this.#app) {
@@ -114,16 +108,14 @@ export class ServiceCapability extends BaseCapability {
       await this.#app.ready()
     }
 
-    if (listen) {
-      await this._listen()
-    }
+    await this._listen()
 
     await this._collectMetrics()
     return this.url
   }
 
-  async stop () {
-    await super.stop()
+  async _stop () {
+    await super._stop()
     await this.#app?.close()
   }
 
@@ -187,14 +179,14 @@ export class ServiceCapability extends BaseCapability {
   }
 
   getMeta () {
+    const applicationMeta = super.getMeta({
+      includeConnection: true,
+      prefix: this.basePath ?? this.#basePath,
+      needsRootTrailingSlash: false
+    })
+
     return {
-      gateway: {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: this.basePath ?? this.#basePath,
-        wantsAbsoluteUrls: false,
-        needsRootTrailingSlash: false
-      },
+      ...applicationMeta,
       connectionStrings: [this.connectionString]
     }
   }
@@ -212,7 +204,7 @@ export class ServiceCapability extends BaseCapability {
       return null
     }
 
-    // graphql is already loaded by mercurius at this point, so the import is served from the module cache
+    // Keep GraphQL optional for applications that only expose HTTP routes.
     const { printSchema } = await import('graphql')
     return printSchema(this.#app.graphql.schema)
   }
@@ -226,18 +218,18 @@ export class ServiceCapability extends BaseCapability {
       return
     }
 
-    const { telemetryConfig, serverConfig, isEntrypoint, isProduction, logger } = this.context
+    const { tracingConfig, serverConfig, isProduction, logger } = this.context
 
     const config = { ...this.config }
 
-    if (telemetryConfig) {
-      config.telemetry = telemetryConfig
+    if (tracingConfig) {
+      config.tracing = tracingConfig
     }
 
     const loggerInstance = logger ?? serverConfig?.loggerInstance ?? this.serverConfig?.loggerInstance
 
     if (serverConfig) {
-      config.server = deepmerge(this.serverConfig, serverConfig ?? {})
+      config.server = deepmerge(this.serverConfig, serverConfig)
     }
 
     config.server ??= {}
@@ -249,10 +241,7 @@ export class ServiceCapability extends BaseCapability {
       config.watch = { enabled: false }
     }
 
-    // Adjust server options
-    if (!isEntrypoint) {
-      config.server.trustProxy = true
-    }
+    config.server.trustProxy ??= true
 
     if (config.server.https) {
       config.server.https = await sanitizeHTTPSOptions(config.server.https)
@@ -305,7 +294,7 @@ export class ServiceCapability extends BaseCapability {
     }
     setPinoLogKeys(pinoOptions)
 
-    if (this.loggerConfig.openTelemetryExporter && this.telemetryConfig?.enabled !== false) {
+    if (this.loggerConfig.openTelemetryExporter && this.tracingConfig?.enabled !== false) {
       addPinoInstrumentation(pinoOptions)
     }
 
@@ -319,19 +308,15 @@ export class ServiceCapability extends BaseCapability {
   }
 
   async _listen () {
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
 
-    if (typeof serverOptions?.backlog === 'number') {
-      listenOptions.backlog = serverOptions.backlog
-    }
-
-    // Fastify handles keepAliveTimeout but has no option for headersTimeout
-    if (typeof serverOptions?.headersTimeout === 'number') {
-      this.#app.server.headersTimeout = serverOptions.headersTimeout
-    }
-
-    await this.#app.listen(listenOptions)
+    const serverPromise = createServerListener(this.serverConfig)
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#app.server)
 
     if (this.serverConfig.http2 || this.serverConfig.https?.key) {

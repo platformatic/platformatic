@@ -111,3 +111,18 @@ test('ensureError - should preserve all properties from error-like object', () =
   strictEqual(result.details.field, 'validation failed')
   strictEqual(result.nested.prop, 'value')
 })
+
+test('ensureError - should restore aggregate errors received over a transport', () => {
+  const result = ensureError({
+    name: 'AggregateError',
+    message: 'Application shutdown failed',
+    code: 'TEST_SHUTDOWN',
+    errors: [{ name: 'Error', message: 'first' }, null]
+  })
+
+  strictEqual(result instanceof AggregateError, true)
+  strictEqual(result.code, 'TEST_SHUTDOWN')
+  strictEqual(result.errors[0] instanceof Error, true)
+  strictEqual(result.errors[0].message, 'first')
+  strictEqual(result.errors[1], null)
+})

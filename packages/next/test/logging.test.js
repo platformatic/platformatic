@@ -1,10 +1,10 @@
 import { deepStrictEqual, ok, rejects } from 'node:assert'
-import { cp, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import {
-  commonFixturesRoot,
+  copyCommonApplication,
   ensureDependencies,
   getLogsFromFile,
   prepareRuntime,
@@ -12,24 +12,29 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
+import { configurationFileIn, updateConfigFile } from '../../runtime/test/helpers.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can properly show the logs the output', async t => {
-  const { root, runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
-    await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
-      const json = JSON.parse(contents)
-      json.workers = 3
-      return JSON.stringify(json, null, 2)
-    })
+  const { root, runtime } = await prepareRuntime({
+    t,
+    root: resolve(import.meta.dirname, 'fixtures/composer-with-prefix'),
+    production: true,
+    port: 0,
+    additionalSetup: async root => {
+      await updateConfigFile(resolve(root, 'platformatic.runtime.json'), contents => {
+        contents.workers = 3
+      })
 
-    await cp(resolve(commonFixturesRoot, 'composer-js'), resolve(root, 'services/composer'), { recursive: true })
-    await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), { recursive: true })
-    await ensureDependencies([resolve(root, 'services/composer'), resolve(root, 'services/backend')])
+      await copyCommonApplication(root, 'composer')
+      await copyCommonApplication(root, 'backend')
+      await ensureDependencies([resolve(root, 'services/composer'), resolve(root, 'services/backend')])
 
-    await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
-      return contents.replace('$PREFIX', '/frontend')
-    })
+      await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
+        return contents.replace('$PREFIX', '/frontend')
+      })
+    }
   })
 
   const url = await startRuntime(t, runtime, null, ['frontend'])
@@ -50,8 +55,10 @@ test('can properly show the logs the output', async t => {
 })
 
 test('shows the output of the development server when it fails during startup', async t => {
-  const { root, runtime } = await prepareRuntime(t, 'standalone', false, null, async (root, config) => {
-    config.restartOnError = 0
+  const { root, runtime } = await prepareRuntime(t, 'standalone', false, null, async root => {
+    await updateConfigFile(configurationFileIn(root), config => {
+      config.restartOnError = 0
+    })
 
     // Only fail in the development server child process, not in the worker thread
     await writeFile(

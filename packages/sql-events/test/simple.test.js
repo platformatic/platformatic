@@ -42,8 +42,8 @@ test('emit events', async t => {
 
   const expected = []
 
-  // save - new record
-  const page = await pageEntity.save({
+  // insert a new record
+  const page = await pageEntity.insert({
     input: { title: 'fourth page' }
   })
   expected.push({
@@ -53,8 +53,8 @@ test('emit events', async t => {
     }
   })
 
-  // save - update record
-  const page2 = await pageEntity.save({
+  // update the record
+  const page2 = await pageEntity.update({
     input: {
       id: page.id,
       title: 'fifth page'
@@ -66,6 +66,9 @@ test('emit events', async t => {
       id: page2.id
     }
   })
+
+  // a missing update must not publish an event
+  equal(await pageEntity.update({ input: { id: 999, title: 'missing' } }), null)
 
   await pageEntity.delete({
     where: {
@@ -121,8 +124,8 @@ test('return entities', async t => {
 
   const expected = []
 
-  // save - new record
-  const page = await pageEntity.save({
+  // insert a new record
+  const page = await pageEntity.insert({
     input: { title: 'fourth page' }
   })
   expected.push({
@@ -132,8 +135,8 @@ test('return entities', async t => {
     }
   })
 
-  // save - update record
-  await pageEntity.save({
+  // update the record
+  await pageEntity.update({
     input: {
       id: page.id,
       title: 'fifth page'
@@ -201,7 +204,7 @@ test('insert', async t => {
   const expected = []
 
   // save - new record
-  const pages = await pageEntity.insert({
+  const pages = await pageEntity.insertMany({
     inputs: [
       {
         title: 'fourth page'
@@ -413,7 +416,7 @@ test('emit events when the primary key is not in the requested fields', async t 
   })
 
   // insert - without the primary key in the fields
-  const inserted = await pageEntity.insert({
+  const inserted = await pageEntity.insertMany({
     inputs: [{ title: 'another page' }],
     fields: ['title']
   })
@@ -454,6 +457,57 @@ test('emit events when the primary key is not in the requested fields', async t 
     payload: {
       id: found.id
     }
+  })
+
+  // Empty field selections must still retrieve the primary key internally for
+  // event publication, then remove it from the returned value.
+  const emptyInsert = await pageEntity.insert({
+    input: { title: 'empty singular fields' },
+    fields: []
+  })
+  same(emptyInsert, {}, 'insert with empty fields returns an empty object')
+  const [emptyInsertedRow] = await pageEntity.find({
+    where: { title: { eq: 'empty singular fields' } },
+    fields: ['id']
+  })
+  expected.push({
+    topic: '/entity/page/save/' + emptyInsertedRow.id,
+    payload: { id: emptyInsertedRow.id }
+  })
+
+  const emptyUpdate = await pageEntity.update({
+    input: { id: emptyInsertedRow.id, title: 'empty singular update fields' },
+    fields: []
+  })
+  same(emptyUpdate, {}, 'update with empty fields returns an empty object')
+  expected.push({
+    topic: '/entity/page/save/' + emptyInsertedRow.id,
+    payload: { id: emptyInsertedRow.id }
+  })
+
+  const emptyInsertMany = await pageEntity.insertMany({
+    inputs: [{ title: 'empty bulk fields' }],
+    fields: []
+  })
+  same(emptyInsertMany, [{}], 'insertMany with empty fields returns empty objects')
+  const [emptyBulkRow] = await pageEntity.find({
+    where: { title: { eq: 'empty bulk fields' } },
+    fields: ['id']
+  })
+  expected.push({
+    topic: '/entity/page/save/' + emptyBulkRow.id,
+    payload: { id: emptyBulkRow.id }
+  })
+
+  const emptyUpdateMany = await pageEntity.updateMany({
+    where: { id: { eq: emptyBulkRow.id } },
+    input: { title: 'empty bulk update fields' },
+    fields: []
+  })
+  same(emptyUpdateMany, [{}], 'updateMany with empty fields returns empty objects')
+  expected.push({
+    topic: '/entity/page/save/' + emptyBulkRow.id,
+    payload: { id: emptyBulkRow.id }
   })
 
   for await (const ev of queue) {

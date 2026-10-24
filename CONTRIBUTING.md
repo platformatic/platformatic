@@ -8,8 +8,8 @@ Platformatic is an open-source Node.js application platform for building APIs wi
 
 ## Prerequisites
 
-- **Node.js**: Version 22.19 or higher
-- **pnpm**: Version 12.9.1, pinned in `package.json` (follow the [pnpm installation guide](https://pnpm.io/installation))
+- **Node.js**: Version 24.20.0 or higher
+- **pnpm**: Version 12.14.0, pinned in `package.json` (follow the [pnpm installation guide](https://pnpm.io/installation))
 - **Docker** (optional): Only required for running Platformatic DB tests with PostgreSQL, MySQL, and MariaDB ([Docker Desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima))
 
 ## Getting Started
@@ -29,7 +29,7 @@ pnpm install
 
 ### 3. Link CLI Tools Globally
 
-To use `platformatic`, `plt`, and `watt` commands globally during development:
+To use `wattpm`, `watt`, and `create-wattpm` commands globally during development:
 
 ```bash
 pnpm setup # Ensure the pnpm global bin directory is on PATH
@@ -39,7 +39,7 @@ pnpm run global-links
 Verify the setup:
 
 ```bash
-platformatic --version
+wattpm --version
 watt --version
 ```
 
@@ -182,12 +182,12 @@ mkdir my-platformatic-app
 cd my-platformatic-app
 ```
 
-3. Initialize a new app:
+3. Read the bundled setup instructions and create the application with your agent:
 ```bash
-wattpm create
+wattpm skill references/scaffolding.md
 ```
 
-4. Follow the prompts and start the app:
+4. Review the files, install the dependencies with your chosen package manager, and start the app:
 ```bash
 wattpm start
 ```

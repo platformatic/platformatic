@@ -29,7 +29,6 @@ test('get application config via capability api', async t => {
     gateway: {
       applications: [],
       refreshTimeout: 1000,
-      addEmptySchema: false,
       restartOnApplicationChange: true,
       passthroughContentTypes: ['multipart/form-data', 'application/octet-stream']
     },
@@ -38,7 +37,9 @@ test('get application config via capability api', async t => {
     },
     server: {
       hostname: '127.0.0.1',
+      port: 0,
       keepAliveTimeout: 5000,
+      trustProxy: true,
       logger: {
         level: 'fatal'
       }

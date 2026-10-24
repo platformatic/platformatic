@@ -1,0 +1,10 @@
+{
+  "name": "failed-start-cleanup",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "dependencies": {
+    "@platformatic/runtime": ">=3.0.0"
+  }
+}

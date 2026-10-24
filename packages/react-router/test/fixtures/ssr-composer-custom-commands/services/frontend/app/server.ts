@@ -1,6 +1,6 @@
 import fastifyStatic from '@fastify/static'
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
-import { getBasePath, getLogger } from '@platformatic/globals'
+import { getBasePath, getLogger, registerCloseCallback } from '@platformatic/globals'
 import fastify from 'fastify'
 import { join, resolve } from 'node:path'
 import { createRequestHandler } from 'react-router'
@@ -48,4 +48,5 @@ await app.all(
   )
 )
 
+registerCloseCallback(() => app.close())
 await app.listen({ port: 3000 })

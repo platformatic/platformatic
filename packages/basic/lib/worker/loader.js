@@ -23,7 +23,7 @@ export async function registerLoader (loader, data, options = {}) {
   // OpenTelemetry currently installs import-in-the-middle with module.register().
   // Combining that asynchronous loader with a synchronous registerHooks() loader
   // can break ESM namespace wrapping, so keep the legacy path when telemetry is on.
-  if (options.registerHooks && isFunction(registerHooks) && !(data?.telemetryConfig && data.telemetryConfig.enabled !== false)) {
+  if (options.registerHooks && isFunction(registerHooks) && !(data?.tracingConfig && data.tracingConfig.enabled !== false)) {
     const loaderModule = await import(loader)
     const hooks = {}
 

@@ -8,7 +8,6 @@ import {
   applications,
   createCLIContext,
   createCliLogger,
-  fallbackToTemporaryConfigFile,
   findRuntimeConfigurationFile,
   getRoot,
   loadConfigurationModule,
@@ -246,20 +245,6 @@ describe('findRuntimeConfigurationFile', () => {
       true,
       'myApp'
     )
-    expect(result).type.toBe<string | false | undefined>()
-  })
-})
-
-describe('fallbackToTemporaryConfigFile', () => {
-  test('returns promise', () => {
-    const logger: Logger = {} as Logger
-    const result = fallbackToTemporaryConfigFile(logger, '/root', true)
-    expect(result).type.toBe<Promise<string | false | undefined>>()
-  })
-
-  test('with verifyPackages false', async () => {
-    const logger: Logger = {} as Logger
-    const result = await fallbackToTemporaryConfigFile(logger, '/root', false)
     expect(result).type.toBe<string | false | undefined>()
   })
 })

@@ -20,7 +20,7 @@ async function waitForStarting (app, applicationId) {
 }
 
 test('should stop an application while it is starting', async t => {
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -53,7 +53,7 @@ test('should stop an application while it is starting', async t => {
 })
 
 test('should stop an application when starting fails', async t => {
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.with-failure.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'with-failure-runtime', 'watt.config.js')
   const app = await createRuntime(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -86,7 +86,7 @@ test('should stop an application when starting fails', async t => {
 })
 
 test('should handle another start command while an application is starting', async t => {
-  const configFile = join(fixturesDir, 'parallel-management', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'parallel-management', 'runtime', 'watt.config.js')
   const app = await createRuntime(configFile)
 
   await app.init()
@@ -101,4 +101,32 @@ test('should handle another start command while an application is starting', asy
   await Promise.all([startPromise, app.sendCommandToApplication('service-1', 'start')])
 
   strictEqual((await app.getApplicationDetails('service-1')).status, 'started')
+})
+
+test('forced termination during startup reports an aborted start', async t => {
+  const configFile = join(fixturesDir, 'parallel-management', 'runtime', 'watt.config.js')
+  const app = await createRuntime(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.gracefulShutdown.application = 50
+      config.restartOnError = 100
+      return config
+    }
+  })
+  t.after(() => app.close())
+  await app.init()
+
+  let exitTimeouts = 0
+  app.on('application:worker:exit:timeout', () => exitTimeouts++)
+  const startPromise = app.startApplication('service-1')
+  const startRejection = rejects(startPromise, error => {
+    strictEqual(error.code, 'PLT_RUNTIME_RUNTIME_ABORT')
+    strictEqual(error.cause.code, 'PLT_RUNTIME_APPLICATION_WORKER_EXIT')
+    return true
+  })
+  await waitForStarting(app, 'service-1')
+
+  app.error = new Error('Force shutdown during startup')
+  await Promise.all([startRejection, app.stopApplication('service-1')])
+  strictEqual(exitTimeouts, 1)
 })

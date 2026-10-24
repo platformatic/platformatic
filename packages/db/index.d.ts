@@ -1,6 +1,7 @@
+import { ApplicationDefinition, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
-import { PlatformaticApplication, ServiceCapability, Generator as ServiceGenerator } from '@platformatic/service'
+import { PlatformaticApplication, ServiceCapability } from '@platformatic/service'
 import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { Entities, SQLMapperPluginInterface } from '@platformatic/sql-mapper'
 import { JSONSchemaType } from 'ajv'
@@ -37,11 +38,9 @@ export declare function create (
   context?: ConfigurationOptions
 ): Promise<ServiceCapability>
 
-export declare const skipTelemetryHooks: boolean
+export declare const skipTracingHooks: boolean
 
 export declare function platformaticDatabase (app: FastifyInstance, capability: DatabaseCapability): Promise<void>
-
-export declare class Generator extends ServiceGenerator {}
 
 export declare const packageJson: Record<string, unknown>
 
@@ -62,3 +61,10 @@ export declare function UnknownDatabaseError (): FastifyError
 export declare function MigrateMissingMigrationsDirError (dir: string): FastifyError
 export declare function MissingSeedFileError (): FastifyError
 export declare function MigrationsToApplyError (): FastifyError
+
+export type DbConfigOptions = CapabilityFactoryOptions<PlatformaticDatabaseConfig, 'db', 'cache'>
+
+export declare function createDbConfig (options?: DbConfigOptions): ApplicationDefinition
+export declare function createDbConfig (
+  callback: (context: ConfigContext) => DbConfigOptions | Promise<DbConfigOptions>
+): DeferredApplicationDefinition

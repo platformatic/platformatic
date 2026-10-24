@@ -2,13 +2,13 @@ import { deepEqual, strictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get the runtime process env', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -38,10 +38,6 @@ test('should get the runtime process env', async t => {
 
   const runtimeEnv = await body.json()
 
-  deepEqual(runtimeEnv, {
-    ...process.env,
-    PLT_ROOT: projectDir,
-    PLT_DEV: 'true',
-    PLT_ENVIRONMENT: 'development'
-  })
+  // PLT_ROOT, PLT_DEV and PLT_ENVIRONMENT are no longer injected, so this is the process env as-is.
+  deepEqual(runtimeEnv, { ...process.env })
 })

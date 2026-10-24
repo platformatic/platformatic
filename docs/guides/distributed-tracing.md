@@ -30,7 +30,7 @@ You can also use OTLP over gRPC by setting `"protocol": "grpc"` (or `"transport"
 
 ```json
 {
-  "telemetry": {
+  "tracing": {
     "applicationName": "test-db",
     "exporter": {
       "type": "otlp",
@@ -54,40 +54,40 @@ Let's setup all these components:
 
 ### Platformatic DB Application
 
-Create a DB application using `npm create wattpm`:
+Use the [Watt skill](./use-watt-with-ai-agents.md) to create the database application:
 
 ```bash
 mkdir test-db
 cd test-db
-npm create wattpm
+npx skills add platformatic/skills --skill watt
 ```
 
-To make it simple, use `sqlite` and create/apply the default migrations. This DB Application is exposed on port `5042`:
+Ask your agent for a Watt 4 workspace with `web/main` using `@platformatic/db`,
+SQLite, paired example migrations, ESM source, `watt.config.ts`, and port 5042.
+Review the result and authorize dependency installation and local migration application.
 
-```bash
-Hello YOURNAME, welcome to Platformatic 3.0.0!
-? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/db
-? What is the name of the application? main
-? What is the connection string? sqlite://./db.sqlite
-? Do you want to create default migrations? yes
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 5042
-```
+Open the `web/main/watt.config.ts` file and add the telemetry configuration to the factory call:
 
-Open the `web/main/platformatic.json` file and add the telemetry configuration:
+```ts config
+import { createDbConfig } from '@platformatic/db'
 
-```json
-  "telemetry": {
-    "applicationName": "test-db",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+export default createDbConfig({
+  db: {
+    connectionString: process.env.DATABASE_URL ?? 'sqlite://./db.sqlite'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 5042)
+  },
+  tracing: {
+    applicationName: 'test-db',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   }
+})
 ```
 
 Finally, start the application:
@@ -103,33 +103,30 @@ Create at the same level of `test-db` another folder for Application and cd into
 ```bash
 mkdir test-application
 cd test-application
-npm create wattpm
 ```
 
-Then create a `service` on the `5043` port in the folder using `npm create wattpm`:
+Ask your agent to create a Watt 4 workspace with `web/main` using
+`@platformatic/service`, ESM source, `watt.config.ts`, and port 5043.
 
-```bash
-Hello YOURNAME, welcome to Platformatic 3.0.0!
-? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/service
-? What is the name of the application? main
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 5043
-```
+Open the `web/main/watt.config.ts` file and add the following telemetry configuration to the factory call (it's exactly the same as `DB`, but with a different `applicationName`)
 
-Open the `web/main/platformatic.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `applicationName`)
+```ts config
+import { createServiceConfig } from '@platformatic/service'
 
-```json
-  "telemetry": {
-    "applicationName": "test-service",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+export default createServiceConfig({
+  server: {
+    port: Number(process.env.PORT ?? 5043)
+  },
+  tracing: {
+    applicationName: 'test-service',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   }
+})
 ```
 
 We want this application to invoke the DB application, so we need to add a [Massimo client](https://massimohttp.dev/) for `test-db` to it:
@@ -183,50 +180,43 @@ Create at the same level of `test-db` and `test-service` another folder for Gate
 ```bash
 mkdir test-gateway
 cd test-gateway
-npm create wattpm
 ```
 
-```bash
-Hello YOURNAME, welcome to Platformatic 3.0.0!
-? Where would you like to create your project? .
-? Which kind of application do you want to create? @platformatic/gateway
-? What is the name of the application? main
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 5044
-```
+Ask your agent to create `web/main` using `@platformatic/gateway`, ESM source,
+`watt.config.ts`, and port 5044. Keep this a separate project from the applications above.
 
-Open `web/main/platformatic.json` and change it to the following:
+Open `web/main/watt.config.ts` and change it to the following:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/gateway/3.0.0.json",
-  "gateway": {
-    "applications": [
+```ts config
+import { createGatewayConfig } from '@platformatic/gateway'
+
+export default createGatewayConfig({
+  gateway: {
+    applications: [
       {
-        "id": "example",
-        "origin": "http://127.0.0.1:5043",
-        "openapi": {
-          "url": "/documentation/json"
+        id: 'example',
+        origin: 'http://127.0.0.1:5043',
+        openapi: {
+          url: '/documentation/json'
         }
       }
     ],
-    "refreshTimeout": 3000
+    refreshTimeout: 3000
   },
-  "telemetry": {
-    "applicationName": "test-gateway",
-    "exporter": {
-      "type": "otlp",
-      "options": {
-        "url": "http://localhost:4318/v1/traces"
+  tracing: {
+    applicationName: 'test-gateway',
+    exporter: {
+      type: 'otlp',
+      options: {
+        url: 'http://localhost:4318/v1/traces'
       }
     }
   },
-  "watch": true
-}
+  watch: true
+})
 ```
 
-Note that we just added `test-service` as `origin` of the proxied application and added the usual `telemetry` configuration, with a different `applicationName`.
+Note that we just added `test-service` as `origin` of the proxied application and added the usual `tracing` configuration, with a different `applicationName`.
 
 Finally, start the gateway:
 
@@ -291,10 +281,10 @@ Starting from this example, it's also possible to run the same test using Zipkin
 docker run -d -p 9411:9411 openzipkin/zipkin
 ```
 
-Then, you need to change the `telemetry` configuration in all the `platformatic.*.json` files to the following (only the `exporter` object is different):
+Then, you need to change the `tracing` configuration in all the `platformatic.*.json` files to the following (only the `exporter` object is different):
 
 ```json
-  "telemetry": {
+  "tracing": {
     (...)
     "exporter": {
       "type": "zipkin",

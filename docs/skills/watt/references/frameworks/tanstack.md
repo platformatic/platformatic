@@ -1,119 +1,60 @@
-# TanStack Start Integration with Platformatic Watt
+# TanStack Start with Watt 4
 
-## Package
-```
-@platformatic/tanstack
-```
+Detect `@tanstack/react-start` in dependencies before falling back to Vite or Nitro.
+Inspect older `@tanstack/start` projects and supported framework versions rather than
+assuming their adapter contracts match. Use compatible `wattpm` and `@platformatic/tanstack`.
 
-This capability runs a [TanStack Start](https://tanstack.com/start/) application as a Platformatic Runtime application with no modifications.
+ESM `watt.config.ts`:
 
-## Detection
+```ts
+import { createTanstackConfig } from '@platformatic/tanstack'
 
-TanStack Start is Vite-based and does not have a single dedicated config file, so detect it from dependencies in `package.json`:
-
-- `@tanstack/react-start` (primary signal)
-- `@tanstack/start` (older projects)
-
-A TanStack Start app also has a `vite.config.{ts,js}` with the TanStack Start plugin. Detect TanStack from the dependency first; fall back to `@platformatic/vite` only when no TanStack Start dependency is present.
-
-## watt.json Configuration
-
-Platformatic manages the development, build, and production lifecycle for you, so you do not need an `application.commands` block. A standalone TanStack Start app used as the Watt entrypoint:
-
-```json
-{
-  "module": "@platformatic/tanstack",
-  "runtime": {
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
-    "server": {
-      "hostname": "{PLT_SERVER_HOSTNAME}",
-      "port": "{PORT}"
-    }
-  }
-}
+export default createTanstackConfig({
+  server: { port: Number(process.env.PORT || 3000) }
+})
 ```
 
-When the app runs behind a Platformatic Gateway under a path prefix, add `application.basePath`:
+Verify the helper export against the installed package. The capability handles default
+commands; keep custom build pipelines only when needed. For prefixes, inspect
+`application.basePath`, router/Vite base, Gateway rewriting, and asset paths together.
 
-```json
-{
-  "module": "@platformatic/tanstack",
-  "application": {
-    "basePath": "/frontend"
-  }
-}
-```
+## Production build
 
-## Installation
+Retain the project's supported server adapter. For versions that use Nitro to emit a
+Node server, a production-gated Vite plugin can be:
 
-```bash
-npm install wattpm@^3.74.0 @platformatic/tanstack@^3.74.0
-```
-
-## Key Considerations
-
-### Prepare the production build
-TanStack Start needs Nitro to emit a Node.js server for production. Add the Nitro plugin to `vite.config.ts`, gated to production:
-
-```javascript
+```js
 import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [
-    // ...TanStack Start plugin
-    process.env.NODE_ENV === 'production' &&
-      nitro({
-        preset: 'node-server',
-        output: {
-          dir: 'dist'
-        }
-      })
-  ]
+    // Keep the application's existing TanStack Start plugin here.
+    process.env.NODE_ENV === 'production' && nitro({
+      preset: 'node-server',
+      output: { dir: 'dist' }
+    })
+  ],
+  server: { allowedHosts: ['.plt.local'] }
 })
 ```
 
-### No commands needed
-Platformatic detects TanStack Start and runs `dev`, `build`, and `production` itself. Only add `application.commands` for a custom pipeline. If you do, point the production command at the Nitro Node server output (for example `node dist/server/index.mjs`).
+This is a fragment to merge, not a replacement for the existing TanStack config.
+Do not force a legacy Nitro recipe on versions using a different server build.
+Custom production commands must target the actual output, such as `dist/server/index.mjs`.
+Deploy complete output and run `wattpm build` before `start`.
 
-### Port is managed by Platformatic
-In development and production Platformatic chooses the HTTP port and overrides any user or application setting. Do not hardcode a port.
+## Listener, HTTPS, TypeScript
 
-## Environment Variables
+Configure the public listener on the capability; Watt no longer overrides ports.
+Inspect capability `server.https` before configuring TLS. Keep frontend TypeScript
+builds/type checking: native configuration stripping does not replace them.
+Preserve existing environment names, reading listener values explicitly in config.
 
-```
-PORT=3000
-PLT_SERVER_HOSTNAME=0.0.0.0
-PLT_SERVER_LOGGER_LEVEL=info
-```
+## Common issues
 
-## HTTPS
+- Detected as plain Vite: check dependencies before selecting the fallback capability.
+- No production server: inspect the installed TanStack version, adapter, and output.
+- Mesh development rejected: allow `.plt.local` without globally disabling host checks.
 
-When TanStack Start is the Watt entrypoint, configure HTTPS in the runtime `server.https`
-object. This fragment belongs at the runtime root; wrap it in `runtime` for a standalone capability:
-
-```json
-{
-  "server": {
-    "https": {
-      "key": { "path": "./certs/server.key" },
-      "cert": { "path": "./certs/server.crt" }
-    }
-  }
-}
-```
-
-## TypeScript
-
-TanStack Start's build pipeline handles TypeScript and JSX. Native Node.js type stripping
-can load supported server-side TypeScript but does not replace the framework build or type checking.
-
-## Common Issues
-
-### Detected as plain Vite
-A TanStack Start app has a `vite.config.*`. If the skill picks `@platformatic/vite`, check `package.json` for `@tanstack/react-start` and switch to `@platformatic/tanstack`.
-
-### Production build has no server output
-The Nitro plugin is missing or not gated to production. Add `nitro({ preset: 'node-server' })` to the production branch of `vite.config.ts`.
+See [TanStack configuration](https://docs.platformatic.dev/docs/reference/tanstack/configuration).

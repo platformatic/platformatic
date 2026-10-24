@@ -1,5 +1,5 @@
 {
-  "name": "standalone",
+  "name": "frontend",
   "private": true,
   "version": "1.0.0",
   "description": "",
@@ -7,7 +7,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "astro dev",
-    "start": "astro preview",
+    "start": "node preview.mjs",
     "build": "astro build"
   },
   "dependencies": {

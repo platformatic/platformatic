@@ -41,7 +41,7 @@ export async function skillCommand (logger, args) {
       throw new InvalidSkillFileError(positionals.join(' '))
     }
 
-    // Preserve Markdown verbatim so agents can consume it without CLI decoration.
+    // Preserve the source verbatim, without a logo, logger prefix, or extra newline.
     process.stdout.write(await readSkillFile(positionals[0]))
   } catch (error) {
     return logFatalError(logger, { error: ensureLoggableError(error) }, error.message)
@@ -52,6 +52,6 @@ export const help = {
   skill: {
     usage: 'skill [FILE]',
     description: 'Print the bundled Watt agent skill or one of its Markdown references to stdout',
-    args: [{ name: 'FILE', description: 'A bundled Markdown file, relative to the Watt skill directory (default: SKILL.md)' }]
+    args: [{ name: 'FILE', description: 'A bundled skill file, relative to the Watt skill directory (default: SKILL.md)' }]
   }
 }

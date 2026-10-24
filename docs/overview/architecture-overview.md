@@ -236,15 +236,15 @@ const cached = await fetch('https://api.slow-application.com/data')
 
 **Note:** HTTP caching must be enabled in your configuration file to take advantage of automatic caching:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "httpCache": true,
-  "autoload": {
-    "path": "web"
-  },
-  "entrypoint": "api"
-}
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  httpCache: true,
+  autoload: {
+    path: 'web'
+  }
+})
 ```
 
 ## Deployment Architecture Patterns
@@ -307,7 +307,7 @@ const cached = await fetch('https://api.slow-application.com/data')
 ### Network Security
 
 - **Internal Mesh**: All internal communication happens in-process (no network exposure)
-- **External Boundaries**: Only designated entrypoint applications accept external traffic
+- **External Boundaries**: Each application controls its external listener through its own server configuration
 - **Request Validation**: Automatic schema validation for all API endpoints
 
 ### Authentication & Authorization

@@ -197,9 +197,6 @@ export function collectHttpClientMetrics (registry) {
     name: 'http_client_request_duration_seconds',
     help: 'outgoing HTTP client request duration in seconds',
     labelNames: ['method', 'status_code', 'dispatcher_stats_url', 'error_type'],
-    collect: function () {
-      process.nextTick(() => this.reset())
-    },
     registers: [registry]
   })
 
@@ -271,17 +268,11 @@ function collectHttpServerMetrics (registry, metricsConfig) {
     getCustomLabels,
     histogram: {
       name: 'http_request_all_duration_seconds',
-      help: 'request duration in seconds summary for all requests',
-      collect: function () {
-        process.nextTick(() => this.reset())
-      }
+      help: 'request duration in seconds summary for all requests'
     },
     summary: {
       name: 'http_request_all_summary_seconds',
-      help: 'request duration in seconds histogram for all requests',
-      collect: function () {
-        process.nextTick(() => this.reset())
-      }
+      help: 'request duration in seconds histogram for all requests'
     }
   })
 }

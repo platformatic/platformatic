@@ -53,11 +53,6 @@ export const FailedToReloadRuntime = createError(
   'Failed to reload the runtime %s.'
 )
 
-export const FailedToGetRuntimeConfig = createError(
-  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_CONFIG`,
-  'Failed to get runtime config %s.'
-)
-
 export const FailedToGetRuntimeApplicationEnv = createError(
   `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_APPLICATION_ENV`,
   'Failed to get runtime application environment variables %s.'
@@ -86,6 +81,21 @@ export const FailedToGetRuntimeLogIndexes = createError(
 export const FailedToGetRuntimeMetrics = createError(
   `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_METRICS`,
   'Failed to get runtime metrics %s.'
+)
+
+export const FailedToUpdateRuntimeMetrics = createError(
+  `${ERROR_PREFIX}_FAILED_TO_UPDATE_RUNTIME_METRICS`,
+  'Failed to update runtime metrics configuration %s.'
+)
+
+export const FailedToGetRuntimeMemory = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_MEMORY`,
+  'Failed to get runtime memory %s.'
+)
+
+export const FailedToGetRuntimeWorkersScaler = createError(
+  `${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_WORKERS_SCALER`,
+  'Failed to get runtime workers scaler %s.'
 )
 
 export const ProfilingAlreadyStarted = createError(

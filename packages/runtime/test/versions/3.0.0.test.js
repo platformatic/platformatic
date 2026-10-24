@@ -2,7 +2,7 @@ import { loadConfiguration } from '@platformatic/foundation'
 import { deepStrictEqual } from 'node:assert'
 import { test } from 'node:test'
 import { join } from 'path'
-import { transform } from '../../lib/config.js'
+import { transform } from '../../index.js'
 import { upgrade } from '../../lib/upgrade.js'
 
 test('gracefulShutdown service to application rename', async () => {

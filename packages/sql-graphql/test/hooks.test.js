@@ -31,35 +31,35 @@ test('basic hooks', async t => {
         noKey () {
           // This should never be called
         },
-        async save (original, { input, ctx, fields }) {
-          pass('save  called')
-
+        async insert (original, { input, ctx, fields }) {
+          pass('insert called')
           equal(ctx.app, app)
-          if (!input.id) {
-            deepEqual(input, {
-              title: 'Hello'
-            })
+          deepEqual(input, {
+            title: 'Hello'
+          })
 
-            return original({
-              input: {
-                title: 'Hello from hook'
-              },
-              fields
-            })
-          } else {
-            deepEqual(input, {
+          return original({
+            input: {
+              title: 'Hello from hook'
+            },
+            fields
+          })
+        },
+        async update (original, { input, ctx, fields }) {
+          pass('update called')
+          equal(ctx.app, app)
+          deepEqual(input, {
+            id: 1,
+            title: 'Hello World'
+          })
+
+          return original({
+            input: {
               id: 1,
-              title: 'Hello World'
-            })
-
-            return original({
-              input: {
-                id: 1,
-                title: 'Hello from hook 2'
-              },
-              fields
-            })
-          }
+              title: 'Hello from hook 2'
+            },
+            fields
+          })
         },
         async find (original, args) {
           pass('find called')
@@ -78,7 +78,7 @@ test('basic hooks', async t => {
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
         },
-        async insert (original, args) {
+        async insertMany (original, args) {
           pass('insert called')
 
           equal(args.ctx.app, app)
@@ -108,7 +108,7 @@ test('basic hooks', async t => {
       body: {
         query: `
           mutation {
-            savePage(input: { title: "Hello" }) {
+            insertPage(input: { title: "Hello" }) {
               id
               title
             }
@@ -116,18 +116,18 @@ test('basic hooks', async t => {
         `
       }
     })
-    equal(res.statusCode, 200, 'savePage status code')
+    equal(res.statusCode, 200, 'insertPage status code')
     deepEqual(
       res.json(),
       {
         data: {
-          savePage: {
+          insertPage: {
             id: 1,
             title: 'Hello from hook'
           }
         }
       },
-      'savePage response'
+      'insertPage response'
     )
   }
 
@@ -165,7 +165,7 @@ test('basic hooks', async t => {
       body: {
         query: `
           mutation {
-            savePage(input: { id: 1, title: "Hello World" }) {
+            updatePage(input: { id: 1, title: "Hello World" }) {
               id
               title
             }
@@ -173,18 +173,18 @@ test('basic hooks', async t => {
         `
       }
     })
-    equal(res.statusCode, 200, 'savePage status code')
+    equal(res.statusCode, 200, 'updatePage status code')
     deepEqual(
       res.json(),
       {
         data: {
-          savePage: {
+          updatePage: {
             id: 1,
             title: 'Hello from hook 2'
           }
         }
       },
-      'savePage response'
+      'updatePage response'
     )
   }
 
@@ -629,9 +629,12 @@ test('false resolver no schema', async t => {
     `,
     resolvers: {
       Mutation: {
+        insertPage: false,
+        insertPages: false,
+        updatePage: false,
+        upsertPage: false,
         savePage: false,
-        deletePages: false,
-        insertPages: false
+        deletePages: false
       },
       Query: {
         pages: false,

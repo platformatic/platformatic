@@ -6,6 +6,6 @@
   ],
   "dependencies": {
     "@platformatic/runtime": "^2.3.1",
-    "platformatic": "^2.3.1"
+    "wattpm": "^2.3.1"
   }
 }

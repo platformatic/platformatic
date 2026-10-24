@@ -1,8 +1,7 @@
 import { deepStrictEqual } from 'node:assert'
-import { cp } from 'node:fs/promises'
 import path, { resolve } from 'node:path'
 import { test } from 'node:test'
-import { commonFixturesRoot, prepareRuntime, updateFile } from '../../basic/test/helper.js'
+import { copyCommonApplication, prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 const envs = {
@@ -36,6 +35,7 @@ for (const [env, options] of Object.entries(envs)) {
     const { runtime } = await prepareRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/standalone'),
+      port: 0,
       build: options.build,
       production: options.production,
       async additionalSetup (root) {
@@ -50,7 +50,7 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, options.production ? 100 : undefined)
   })
 
   test(`Remix application should properly use backlog option in ${env} when using custom commands`, async t => {
@@ -61,9 +61,7 @@ for (const [env, options] of Object.entries(envs)) {
       production: options.production,
       async additionalSetup (root, config) {
         for (const type of ['backend', 'composer']) {
-          await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-            recursive: true
-          })
+          await copyCommonApplication(root, type)
         }
 
         await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
@@ -74,9 +72,6 @@ for (const [env, options] of Object.entries(envs)) {
           config.server ??= {}
           config.server.backlog = 100
         })
-
-        // Make sure we start an HTTP server in the service
-        config.applications[0].useHttp = true
       }
     })
 
@@ -84,6 +79,6 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, undefined)
   })
 }

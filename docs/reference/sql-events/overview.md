@@ -62,11 +62,11 @@ const queue = await mapper.subscribe([
   pageEntity.getSubscriptionTopic({ action: 'delete' })
 ])
 
-const page = await pageEntity.save({
+const page = await pageEntity.insert({
   input: { title: 'fourth page' }
 })
 
-const page2 = await pageEntity.save({
+const page2 = await pageEntity.update({
   input: {
     id: page.id,
     title: 'fifth page'
@@ -109,4 +109,4 @@ Each entity of `app.platformatic.entities` will be augmented with two functions:
 * `entity.getPublishTopic({ ctx, data, action })` 
 * `entity.getSubscriptionTopic({ ctx, action })`
 
-Where `ctx` is the GraphQL Context, `data` is the object that will be emitted and `action` is either `save` or `delete`.
+Where `ctx` is the GraphQL Context, `data` is the object that will be emitted and `action` is either `save` or `delete`. For compatibility, successful `insert`, `insertMany`, and `update` operations publish on the existing `save` topic.

@@ -16,9 +16,9 @@ test('management ITC - runtime-level management enables management for all apps'
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'app1:0': url } = await runtime.start()
 
-  // app1 (entrypoint) has management
+  // app1 has management
   {
     const res = await request(url + '/has-management')
     deepStrictEqual(res.statusCode, 200)
@@ -42,7 +42,7 @@ test('management ITC - runtime-level management allows operations on all apps', 
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'app1:0': url } = await runtime.start()
 
   // app1 can call getRuntimeStatus
   {
@@ -77,7 +77,7 @@ test('management ITC - per-app management: false overrides runtime-level managem
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'app1:0': url } = await runtime.start()
 
   // app1 has management (inherited from runtime)
   {
@@ -103,7 +103,7 @@ test('management ITC - privileged app has management client', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   // Privileged service has management client
   {
@@ -138,7 +138,7 @@ test('management ITC - getRuntimeStatus', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/status')
   deepStrictEqual(res.statusCode, 200)
@@ -154,7 +154,7 @@ test('management ITC - getRuntimeMetadata', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/metadata')
   deepStrictEqual(res.statusCode, 200)
@@ -162,6 +162,7 @@ test('management ITC - getRuntimeMetadata', async t => {
   ok(body.pid)
   ok(body.nodeVersion)
   ok(body.platformaticVersion)
+  deepStrictEqual(body.urls, runtime.getUrls())
 })
 
 test('management ITC - getApplicationsIds', async t => {
@@ -172,7 +173,7 @@ test('management ITC - getApplicationsIds', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/applications-ids')
   deepStrictEqual(res.statusCode, 200)
@@ -190,12 +191,12 @@ test('management ITC - getApplications', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/applications')
   deepStrictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  strictEqual(body.entrypoint, 'privileged')
+  strictEqual(body.production, false)
   ok(Array.isArray(body.applications))
   strictEqual(body.applications.length, 3)
 })
@@ -208,7 +209,7 @@ test('management ITC - getApplicationDetails', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/applications/unprivileged')
   deepStrictEqual(res.statusCode, 200)
@@ -225,7 +226,7 @@ test('management ITC - getApplicationDetails with nonexistent id returns error',
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/applications/nonexistent')
   ok(res.statusCode >= 400)
@@ -239,7 +240,7 @@ test('management ITC - inject to another service', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/inject', {
     method: 'POST',
@@ -319,7 +320,7 @@ test('management ITC - restartApplication', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   // Restart the unprivileged service
   const res = await request(url + '/applications/unprivileged/restart', { method: 'POST' })
@@ -343,12 +344,13 @@ test('management ITC - getRuntimeConfig', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/config')
   deepStrictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  ok(body.entrypoint || body.server || body.logger)
+  strictEqual(body.server, undefined)
+  ok(body.logger)
 })
 
 test('management ITC - getWorkers', async t => {
@@ -359,7 +361,7 @@ test('management ITC - getWorkers', async t => {
     await runtime.close()
   })
 
-  const url = await runtime.start()
+  const { 'privileged:0': url } = await runtime.start()
 
   const res = await request(url + '/workers')
   deepStrictEqual(res.statusCode, 200)

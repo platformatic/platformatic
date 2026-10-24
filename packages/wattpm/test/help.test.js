@@ -1,6 +1,8 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
+import { cp, readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { prepareRuntime } from '../../basic/test/helper.js'
+import { createTemporaryDirectory, prepareRuntime } from '../../basic/test/helper.js'
 import { showGeneralHelp } from '../lib/commands/help.js'
 import { version } from '../lib/schema.js'
 import { wattpm } from './helper.js'
@@ -79,7 +81,7 @@ test('help - should complain for invalid commands', async t => {
 })
 
 test('help - should support application commands', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'help', false, null)
   const mainProcess = await wattpm('help', { cwd: rootDir })
   const applicationHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
 
@@ -95,4 +97,20 @@ test('help - should support application commands', async t => {
       '\nUsage: wattpm main:fetch-openapi-schemas\\s+Fetch OpenAPI schemas from remote applications.'
     )
   )
+})
+
+test('help - enumerates application commands in the exec context, not a boot one', async t => {
+  const rootDir = await createTemporaryDirectory(t, 'exec-context')
+  await cp(resolve(import.meta.dirname, 'fixtures/exec-context'), rootDir, { recursive: true })
+
+  await wattpm('help', { cwd: rootDir })
+
+  /*
+    Enumerating a capability's commands starts nothing, so it is an 'exec' evaluation. Running it as
+    a boot would read the development env files and hand every callback `production: false` — a
+    context no invocation of these commands is ever made in.
+  */
+  const observed = await readFile(resolve(rootDir, 'observed-command.txt'), 'utf-8')
+
+  strictEqual(observed, 'exec')
 })

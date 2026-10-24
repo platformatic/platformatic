@@ -5,9 +5,13 @@ import { request } from 'undici'
 import { prepareRuntime } from '../../basic/test/helper.js'
 
 test('React Router application should properly process request body in development', async t => {
-  const { runtime } = await prepareRuntime({ t, root: path.resolve(import.meta.dirname, './fixtures/request-body') })
+  const { runtime } = await prepareRuntime({
+    t,
+    root: path.resolve(import.meta.dirname, './fixtures/request-body'),
+    port: 0
+  })
 
-  const url = await runtime.start()
+  const { 'frontend:0': url } = await runtime.start()
 
   const now = Date.now()
   const { statusCode, body } = await request(url + '/api', {
@@ -26,11 +30,12 @@ test('React Router application should properly process request body in productio
   const { runtime } = await prepareRuntime({
     t,
     root: path.resolve(import.meta.dirname, './fixtures/request-body'),
+    port: 0,
     build: true,
     production: true
   })
 
-  const url = await runtime.start()
+  const { 'frontend:0': url } = await runtime.start()
 
   const now = Date.now()
   const { statusCode, body } = await request(url + '/api', {

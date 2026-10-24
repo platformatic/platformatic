@@ -3,7 +3,6 @@ import {
   buildFastifyOptions,
   buildListenOptions,
   cleanBasePath,
-  buildServerListenerOptions,
   createServerListener,
   ensureTrailingSlash,
   errors,
@@ -56,12 +55,7 @@ export class ReactRouterCapability extends ViteCapability {
     this.subprocessTerminationSignal = 'SIGKILL'
   }
 
-  async start ({ listen }) {
-    // Make this idempotent
-    if (this.url) {
-      return this.url
-    }
-
+  async _start () {
     const config = this.config
     const reactRouterConfig = await this.#getReactRouterConfig()
 
@@ -76,13 +70,11 @@ export class ReactRouterCapability extends ViteCapability {
       }
 
       if (reactRouterConfig.ssr) {
-        await super._start({ listen })
-
-        return this.#startSSRProduction(listen)
+        return this.#startSSRProduction()
       }
     }
 
-    return super.start({ listen })
+    return super._start()
   }
 
   async build () {
@@ -123,22 +115,7 @@ export class ReactRouterCapability extends ViteCapability {
     return reactRouterConfig ?? {}
   }
 
-  async #startSSRProduction (listen) {
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      const serverOptions = this.serverConfig
-      const listenOptions = buildListenOptions(serverOptions)
-
-      const listenerOptions = buildServerListenerOptions(serverOptions)
-      if (Object.keys(listenerOptions).length > 0) {
-        createServerListener(false, false, listenerOptions)
-      }
-
-      await this.#app.listen(listenOptions)
-      this.url = getServerUrl(this.#app.server)
-      return this.url
-    }
-
+  async #startSSRProduction () {
     const config = this.config
 
     const clientRoot = resolve(this.root, config.reactRouter.outputDirectory, 'client')
@@ -215,6 +192,17 @@ export class ReactRouterCapability extends ViteCapability {
 
     await this.#app.ready()
     await this._collectMetrics()
+
+    if (typeof this.serverConfig?.port === 'undefined') {
+      return
+    }
+
+    const serverOptions = this.serverConfig
+    const listenOptions = buildListenOptions(serverOptions)
+    const serverPromise = createServerListener(this.serverConfig)
+
+    await Promise.all([this.#app.listen(listenOptions), serverPromise])
+    this.url = getServerUrl(this.#app.server)
   }
 
   #handleRequest (handle, req) {

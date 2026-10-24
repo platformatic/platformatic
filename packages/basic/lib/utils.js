@@ -25,10 +25,14 @@ export function buildListenOptions (serverConfig) {
     options.host = serverConfig.hostname
   }
 
+  if (typeof serverConfig?.backlog === 'number') {
+    options.backlog = serverConfig.backlog
+  }
+
   return options
 }
 
-// Builds the options handled by createServerListener which do not depend on the protocol.
+// Builds the extra server options exposed to custom commands and Node.js applications.
 export function buildServerListenerOptions (serverConfig) {
   const options = {}
 

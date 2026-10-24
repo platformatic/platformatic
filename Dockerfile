@@ -1,4 +1,4 @@
-FROM node:22-slim as base
+FROM node:24.20.0-slim as base
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
@@ -31,14 +31,11 @@ COPY . .
 # Install all the deps in the source code
 RUN pnpm install --prod --offline --node-linker=hoisted --config.shamefullyHoist=true --force
 
-# Add platformatic to path
-RUN cd packages/cli && pnpm add -g .
-
 # Add wattpm to path
 RUN cd packages/wattpm && pnpm add -g .
 
 # No pnpm/build tools install here, we just copy the files from the previous stage
-FROM node:22-slim
+FROM node:24.20.0-slim
 
 # Make pnpm available
 RUN npm install -g pnpm@12
@@ -55,8 +52,8 @@ ENV PATH=$PNPM_HOME/bin:$PATH
 COPY --from=base $PLT_HOME $PLT_HOME
 COPY --from=base $PNPM_HOME $PNPM_HOME
 
-# Add platformatic to path
-RUN cd $PLT_HOME/packages/cli && pnpm add -g .
+# Add wattpm to path
+RUN cd $PLT_HOME/packages/wattpm && pnpm add -g .
 
 # Move to the app directory
 WORKDIR $APP_HOME
@@ -66,4 +63,4 @@ RUN chown node:node .
 USER node
 
 ENTRYPOINT ["dumb-init"]
-CMD ["platformatic"]
+CMD ["wattpm"]

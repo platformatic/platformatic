@@ -23,20 +23,24 @@ npm install @platformatic/tanstack
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/tanstack/3.30.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { createTanstackConfig } from '@platformatic/tanstack'
+
+export default createTanstackConfig({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Preparing for production mode
 
-Add the following to your `vite.config.ts` plugins section:
+Add Nitro to `vite.config.ts`:
 
 ```javascript
 process.env.NODE_ENV === 'production' &&
@@ -50,11 +54,11 @@ process.env.NODE_ENV === 'production' &&
 
 ## Architecture
 
-When starting TanStack in development mode, production mode or by using the `commands` property, Platformatic will choose a random port for the HTTP server and it will override any user or application setting.
+The TanStack capability owns its managed listener and uses its capability-level `server` configuration. An application that uses the `commands` property is responsible for starting its own server.
 
 ## HTTPS
 
-When a TanStack application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+Configure HTTPS in this TanStack capability's `server.https` object. The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.
 
 ```json
 {
@@ -66,10 +70,6 @@ When a TanStack application is the Watt entrypoint, configure HTTPS in the runti
   }
 }
 ```
-
-In development mode, Platformatic forwards the HTTPS options to the Vite development server used by TanStack. In production mode, Platformatic passes the same HTTPS options to the built TanStack server when it starts listening.
-
-If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
 
 ## Configuration
 

@@ -5,7 +5,7 @@
 
 It's a pretty common solution to use Prometheus to collect and store monitoring data, and Grafana to visualize it.
 
-Platformatic can be configured to expose Prometheus metrics:
+Platformatic can be configured to expose Prometheus metrics. Metrics are disabled by default:
 
 ```json
 ...
@@ -147,7 +147,7 @@ Outgoing HTTP client request duration metrics are disabled by default to avoid c
 This exposes `http_client_request_duration_seconds` with labels for the HTTP method, status code, dispatcher URL, and error type.
 
 :::caution
-Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
+Read credentials from the [environment](../reference/service/configuration.md#environment-variables) in your Platformatic DB configuration file rather than writing them into it.
 :::
 
 ## Custom Metrics

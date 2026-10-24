@@ -7,7 +7,7 @@ import { waitForEvents } from '../multiple-workers/helper.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('can start timeout when applications dont start', async t => {
-  const configFile = join(fixturesDir, 'start-timeout/platformatic.json')
+  const configFile = join(fixturesDir, 'start-timeout', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {

@@ -8,10 +8,17 @@ import { createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
+function omitUrls (application) {
+  const { url, urls, ...details } = application
+  deepStrictEqual(urls, [url])
+  ok(url)
+  return details
+}
+
 test('should be able to add and remove applications using the management API', async t => {
   const configFile = join(fixturesDir, 'dynamic-applications')
   const runtime = await createRuntime(configFile, null)
-  let url = await runtime.start()
+  let { 'composer:0': url } = await runtime.start()
 
   const client = new Client(
     {
@@ -65,14 +72,15 @@ test('should be able to add and remove applications using the management API', a
     })
 
     deepStrictEqual(statusCode, 201)
-    deepStrictEqual(await body.json(), [
+    deepStrictEqual((await body.json()).map(omitUrls), [
       {
+        configPath: resolve(fixturesDir, 'dynamic-applications', 'application-2', 'watt.config.mjs'),
         dependencies: [],
-        entrypoint: false,
         id: 'application-2',
         path: resolve(fixturesDir, 'dynamic-applications', 'application-2'),
         localUrl: 'http://application-2.plt.local',
         status: 'started',
+        servingState: 'listening',
         type: 'nodejs',
         version,
         sourceMaps: false
@@ -84,7 +92,7 @@ test('should be able to add and remove applications using the management API', a
     ok(events.find(e => e.event === 'application:added' && e.payload.id === 'application-2'))
     ok(events.find(e => e.event === 'application:started' && e.payload === 'application-2'))
 
-    url = runtime.getUrl()
+    url = (await runtime.getApplicationDetails('composer')).url
 
     {
       const res = await request(url + '/application-1/hello')
@@ -112,11 +120,10 @@ test('should be able to add and remove applications using the management API', a
     })
 
     deepStrictEqual(statusCode, 202)
-    deepStrictEqual(await body.json(), [
+    deepStrictEqual((await body.json()).map(omitUrls), [
       {
-        config: resolve(fixturesDir, 'dynamic-applications', 'application-1', 'platformatic.json'),
+        configPath: resolve(fixturesDir, 'dynamic-applications', 'application-1', 'watt.config.mjs'),
         dependencies: [],
-        entrypoint: false,
         id: 'application-1',
         localUrl: 'http://application-1.plt.local',
         path: resolve(fixturesDir, 'dynamic-applications', 'application-1'),
@@ -133,7 +140,7 @@ test('should be able to add and remove applications using the management API', a
     ok(events.find(e => e.event === 'application:stopped' && e.payload === 'application-1'))
     ok(events.find(e => e.event === 'application:removed' && e.payload === 'application-1'))
 
-    url = runtime.getUrl()
+    url = (await runtime.getApplicationDetails('composer')).url
 
     {
       const res = await request(url + '/application-1/hello')
@@ -162,10 +169,10 @@ test('should be able to add and remove applications using the management API', a
     })
 
     deepStrictEqual(statusCode, 202)
-    deepStrictEqual(await body.json(), [
+    deepStrictEqual((await body.json()).map(omitUrls), [
       {
+        configPath: resolve(fixturesDir, 'dynamic-applications', 'application-2', 'watt.config.mjs'),
         dependencies: [],
-        entrypoint: false,
         id: 'application-2',
         localUrl: 'http://application-2.plt.local',
         path: resolve(fixturesDir, 'dynamic-applications', 'application-2'),
@@ -182,7 +189,7 @@ test('should be able to add and remove applications using the management API', a
     ok(events.find(e => e.event === 'application:stopped' && e.payload === 'application-2'))
     ok(events.find(e => e.event === 'application:removed' && e.payload === 'application-2'))
 
-    url = runtime.getUrl()
+    url = (await runtime.getApplicationDetails('composer')).url
 
     {
       const res = await request(url + '/application-1/hello')

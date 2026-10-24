@@ -7,10 +7,10 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should update shared context via runtime API', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
+  const { 'composerApp:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -79,10 +79,10 @@ test('should update shared context via runtime API', async t => {
 })
 
 test('should update shared context from one of the applications', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
-  const url = await app.start()
+  const { 'composerApp:0': url } = await app.start()
 
   t.after(async () => {
     await app.close()

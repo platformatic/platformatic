@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { ignoreDirs, isApplicationBuildable } from '../lib/utils.js'
+import { getTsconfig, ignoreDirs, isApplicationBuildable } from '../lib/utils.js'
 
 const tempDir = resolve(tmpdir(), 'packages-node-utils')
 
@@ -99,6 +99,24 @@ test('isApplicationBuildable - should return false for non-existent directory', 
   assert.equal(result, false)
 })
 
+test('getTsconfig - preserves watch options and merges Platformatic TypeScript options', async () => {
+  const dir = await mkdtemp(tempDir)
+
+  try {
+    await writeFile(join(dir, 'tsconfig.json'), JSON.stringify({
+      compilerOptions: { outDir: 'dist', sourceMap: true },
+      watchOptions: { excludeDirectories: ['cache'] }
+    }))
+
+    const result = await getTsconfig(dir, { plugins: { typescript: { sourceMap: false } } })
+    assert.equal(result.compilerOptions.outDir, 'dist')
+    assert.equal(result.compilerOptions.sourceMap, false)
+    assert.deepEqual(result.watchOptions.excludeDirectories, ['cache'])
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
 test('ignoreDirs - should handle both outDir and watchOptionsExcludeDirectories', async () => {
   const outDir = 'dist'
   const watchOptionsExcludeDirectories = ['**/node_modules', 'cache']
@@ -185,6 +203,13 @@ test('ignoreDirs - should handle empty watchOptionsExcludeDirectories', async ()
 
   // Should return correct number of entries
   assert.equal(result.length, 3)
+})
+
+test('ignoreDirs - should ignore TypeScript incremental build metadata', async () => {
+  const result = ignoreDirs('dist', null, 'cache/project.tsbuildinfo')
+
+  assert.ok(result.includes('cache/project.tsbuildinfo'))
+  assert.equal(result.length, 4)
 })
 
 test('ignoreDirs - should deduplicate directories', async () => {

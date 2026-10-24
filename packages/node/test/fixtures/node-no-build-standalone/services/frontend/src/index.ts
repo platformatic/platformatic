@@ -1,5 +1,5 @@
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
-import { getBasePath, getWorkerId } from '@platformatic/globals'
+import { getBasePath, getHost, getPort, getWorkerId } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 const prefix = getBasePath({ throwOnMissing: false }) ?? ''
@@ -21,4 +21,10 @@ const server = createServer((req, res) => {
   }
 })
 
-server.listen(0)
+const host: unknown = getHost()
+const port: unknown = getPort()
+
+server.listen({
+  host: typeof host === 'string' ? host : '127.0.0.1',
+  port: typeof port === 'number' ? port : 0
+})

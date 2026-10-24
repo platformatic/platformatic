@@ -12,7 +12,8 @@ test('exits without starting if there are no applications', async t => {
     '..',
     'fixtures',
     'configs',
-    'no-services-no-entrypoint.config.json'
+    'no-services-no-entrypoint-config',
+    'watt.config.mjs'
   )
   const child = execa(process.execPath, [startPath, config], {
     encoding: 'utf8',

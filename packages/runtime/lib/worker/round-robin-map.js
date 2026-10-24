@@ -54,15 +54,22 @@ export class RoundRobinMap extends Map {
     return this.getKeys(application).map(key => this.get(key))
   }
 
-  next (application) {
+  next (application, filter) {
     if (!this.#instances[application]) return
 
     let { next, keys } = this.#instances[application]
     if (next === null) {
       next = Math.floor(Math.random() * keys.length)
     }
-    this.#instances[application].next = (next + 1) % keys.length
 
-    return this.get(keys[next])
+    for (let i = 0; i < keys.length; i++) {
+      const candidate = (next + i) % keys.length
+      const worker = this.get(keys[candidate])
+
+      if (!filter || filter(worker)) {
+        this.#instances[application].next = (candidate + 1) % keys.length
+        return worker
+      }
+    }
   }
 }

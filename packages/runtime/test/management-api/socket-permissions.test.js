@@ -3,7 +3,7 @@ import { stat } from 'node:fs/promises'
 import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
@@ -15,7 +15,7 @@ test('shared tmp directories are world-writable while the socket directory is pr
   }
 
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()

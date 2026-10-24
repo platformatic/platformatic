@@ -90,13 +90,13 @@ test.after(async () => {
 })
 
 test('should resolve the original function names of minified code', { skip: process.platform === 'win32' }, async t => {
-  const configFile = resolve(import.meta.dirname, 'fixtures/sourcemap-minified-test/platformatic.json')
+  const configFile = resolve(import.meta.dirname, 'fixtures/sourcemap-minified-test/watt.config.js')
   const tmpDir = resolve(import.meta.dirname, '../../tmp')
   await mkdir(tmpDir, { recursive: true })
 
   const app = await createRuntime(configFile, null, { logsPath: resolve(tmpDir, `sourcemap-names-${Date.now()}.log`) })
   t.after(() => app.close())
-  const url = await app.start()
+  const { 'service:0': url } = await app.start()
 
   await app.sendCommandToApplication('service', 'startProfiling', { durationMillis: 3000, sourceMaps: true })
   await waitForProfilingState(app, state => state.isProfilerRunning)

@@ -1,0 +1,10 @@
+// Converted from v3 JSON by scripts/convert-fixtures.mjs
+export default {
+  module: '@platformatic/astro',
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: 0
+  }
+}

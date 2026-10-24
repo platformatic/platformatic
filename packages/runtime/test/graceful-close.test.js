@@ -10,7 +10,7 @@ const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('correctly applies the runtime graceful shutdown timeout', { skip: platform() === 'win32' }, async () => {
   const scriptFile = join(fixturesDir, 'delayed-shutdown', 'start-and-stop.js')
-  const configFile = join(fixturesDir, 'delayed-shutdown', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'delayed-shutdown', 'watt.config.js')
   const child = spawn(process.execPath, [scriptFile, configFile])
 
   const logs = []

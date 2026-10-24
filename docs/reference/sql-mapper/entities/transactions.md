@@ -17,12 +17,12 @@ async function main() {
 
   const result = await db.tx(async tx => {
     // these two operations will be executed in the same transaction
-   const authorResult = await entities.author.save({
+   const authorResult = await entities.author.insert({
       fields: ['id', 'name'],
       input: { name: 'test'},
       tx
     })
-    const res = await entities.page.save({
+    const res = await entities.page.insert({
       fields: ['title', 'authorId'],
       input: { title: 'page title', authorId: authorResult.id },
       tx
@@ -38,7 +38,7 @@ Throwing an Error triggers a transaction rollback:
 ```js
     try {
       await db.tx(async tx => {
-        await entities.page.save({
+        await entities.page.insert({
           input: { title: 'new page' },
           fields: ['title'],
           tx

@@ -3,9 +3,6 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
-
-process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should configure metrics correctly with both node and http metrics', async t => {

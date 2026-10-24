@@ -9,7 +9,7 @@ const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('can start applications programmatically from object', async t => {
   const root = await getTempDir()
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const config = await loadConfiguration(configFile, null, {
     async transform (config, ...args) {
       config = await transform(config, ...args)
@@ -25,14 +25,14 @@ test('can start applications programmatically from object', async t => {
   })
   const app = new Runtime(config)
 
-  const entryUrl = await app.start()
+  const { 'serviceApp:0': url } = await app.start()
 
   t.after(async () => {
     process.exitCode = 0
     await app.close()
   })
 
-  const res = await request(entryUrl)
+  const res = await request(url)
 
   strictEqual(res.statusCode, 200)
   deepStrictEqual(await res.body.json(), { hello: 'hello123' })

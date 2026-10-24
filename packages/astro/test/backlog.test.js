@@ -1,9 +1,24 @@
 import { deepStrictEqual } from 'node:assert'
-import { cp, writeFile } from 'node:fs/promises'
 import path, { resolve } from 'node:path'
 import { test } from 'node:test'
-import { commonFixturesRoot, prepareRuntime, updateFile } from '../../basic/test/helper.js'
+import {
+  copyCommonApplication,
+  prepareRuntime,
+  updateFile,
+  updateTargetApplicationConfig
+} from '../../basic/test/helper.js'
 import { updateConfigFile } from '../../runtime/test/helpers.js'
+
+// It reads the loaded configuration rather than the project directory, so it runs after the load.
+// The update still lands before start, which is when the worker is handed its configuration.
+const setBacklog = async (root, config) => {
+  return updateTargetApplicationConfig(config, applicationConfig => {
+    applicationConfig.server ??= {}
+    applicationConfig.server.backlog = 100
+  })
+}
+
+setBacklog.runAfterPrepare = true
 
 const envs = {
   dev: {
@@ -36,27 +51,17 @@ for (const [env, options] of Object.entries(envs)) {
     const { runtime } = await prepareRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/standalone'),
+      port: 0,
       build: options.build,
       production: options.production,
-      async additionalSetup (root) {
-        return writeFile(
-          resolve(root, 'services/frontend/platformatic.json'),
-          JSON.stringify({
-            $schema: 'https://schemas.platformatic.dev/@platformatic/astro/3.0.0.json',
-            server: {
-              backlog: 100
-            }
-          }),
-          'utf-8'
-        )
-      }
+      additionalSetup: setBacklog
     })
 
     const promise = waitServerOptions(runtime)
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, options.production ? 100 : undefined)
   })
 
   test(`astro application should properly use backlog option in ${env} when using custom commands`, async t => {
@@ -67,9 +72,7 @@ for (const [env, options] of Object.entries(envs)) {
       production: options.production,
       async additionalSetup (root, config) {
         for (const type of ['backend', 'composer']) {
-          await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-            recursive: true
-          })
+          await copyCommonApplication(root, type)
         }
 
         await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
@@ -80,9 +83,6 @@ for (const [env, options] of Object.entries(envs)) {
           config.server ??= {}
           config.server.backlog = 100
         })
-
-        // Make sure we start an HTTP server in the service
-        config.applications[0].useHttp = true
       }
     })
 
@@ -90,6 +90,13 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, undefined)
+
+    // A leaked preview server can serve later development tests on the same port.
+    const shutdownErrors = []
+    runtime.on('application:worker:stop:error', error => shutdownErrors.push(error))
+    runtime.on('application:worker:exit:timeout', error => shutdownErrors.push(error))
+    await runtime.close()
+    deepStrictEqual(shutdownErrors, [])
   })
 }

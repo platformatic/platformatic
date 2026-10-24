@@ -62,7 +62,7 @@ my-app/
     "fastify": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
@@ -90,7 +90,7 @@ Notice: The `"module": "commonjs"` setting means TypeScript will compile your mo
 
 **src/index.ts:**
 
-```typescript
+```typescript source refused
 import { createServer } from 'node:http'
 
 // Using the legacy enum syntax will make this file not loadable via Node.js native type stripping
@@ -154,39 +154,39 @@ npm install -D @platformatic/tsconfig
 
 ### Step 2: Create Watt Configuration
 
-**Create `watt.json` in your project root:**
+**Create `watt.config.ts` in your project root:**
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
-  "application": {
-    "commands": {
-      "build": "tsc -p ."
-    }
-  },
-  "node": {
-    "disableBuildInDevelopment": true
-  },
-  "runtime": {
-    "application": {
-      "execArgv": ["-r", "ts-node/register"]
-    },
-    "server": {
-      "port": 3000
-    }
+```ts config
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
+
+export default createWattConfig({
+  application: {
+    execArgv: ['-r', 'ts-node/register'],
+    config: createNodeConfig({
+      application: {
+        commands: {
+          build: 'tsc -p .'
+        }
+      },
+      node: {
+        disableBuildInDevelopment: true
+      }
+    })
   }
-}
+})
 ```
 
 Key configuration details:
 
-- Uses `@platformatic/node` schema
+- Calls the `@platformatic/node` capability factory
 - `application.commands.build: "tsc -p ."` defines the build command that will be used in production
   - `-p .` tells TypeScript to use the tsconfig.json in the current directory
 - `node.disableBuildInDevelopment: true` ensures TypeScript runs directly in dev mode without needing to build first
-- `runtime.application.execArgv` configures how Node.js runs your TypeScript files:
+- `execArgv` on the application entry configures how Node.js runs your TypeScript files. It is
+  orchestration rather than capability configuration, which is why the file wraps the factory call
+  in `createWattConfig`:
   - `"-r", "ts-node/register"` registers ts-node for CommonJS module loading
-- `runtime.server.port: 3000` sets the default server port
 
 This configuration provides maximum compatibility - it works whether your TypeScript compiles to CommonJS or ESM, automatically handling both module systems.
 
@@ -210,7 +210,7 @@ Update your package.json to use Watt commands:
   },
   "devDependencies": {
     "@platformatic/tsconfig": "^0.1.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
@@ -254,7 +254,7 @@ Add `"type": "module"` to tell Node.js to treat `.js` files as ESM:
   },
   "devDependencies": {
     "@platformatic/tsconfig": "^0.1.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
@@ -283,30 +283,32 @@ Key changes:
 - `"module": "NodeNext"` tells TypeScript to emit ESM-compatible code
 - `"moduleResolution": "NodeNext"` uses Node.js's ESM resolution algorithm
 
-**3. Update watt.json to use ESM loader:**
+**3. Update `watt.config.ts` to use ESM loader:**
 
 Change the `execArgv` configuration to use ts-node's ESM loader:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
-  "application": {
-    "commands": {
-      "build": "tsc -p ."
-    }
-  },
-  "node": {
-    "disableBuildInDevelopment": true
-  },
-  "runtime": {
-    "application": {
-      "execArgv": ["--loader", "ts-node/esm"]
-    },
-    "server": {
-      "port": 3000
-    }
+```ts config
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
+
+export default createWattConfig({
+  application: {
+    execArgv: ['--loader', 'ts-node/esm'],
+    config: createNodeConfig({
+      application: {
+        commands: {
+          build: 'tsc -p .'
+        }
+      },
+      node: {
+        disableBuildInDevelopment: true
+      },
+      server: {
+        port: 3000
+      }
+    })
   }
-}
+})
 ```
 
 The key change is `"execArgv": ["--loader", "ts-node/esm"]` which registers ts-node's ESM loader instead of the CommonJS register hook.
@@ -315,7 +317,7 @@ The key change is `"execArgv": ["--loader", "ts-node/esm"]` which registers ts-n
 
 With ESM, you may need to add file extensions to relative imports in some cases. However, TypeScript typically handles this for you:
 
-```typescript
+```typescript source
 // This works in ESM
 import { myFunction } from './myModule.js' // Note: .js extension even though source is .ts
 ```
@@ -361,9 +363,9 @@ By default, ts-node checks your TypeScript for errors every time it runs. This i
 
 When using transpile-only mode, ts-node will just convert your TypeScript to JavaScript without checking for errors. You should run `npx tsc --noEmit` separately (e.g., in a pre-commit hook or CI pipeline) to catch type errors.
 
-## Node.js 22+ Built-in TypeScript Support
+## Node.js 24 Built-in TypeScript Support
 
-If you're using Node.js 22 or later and only need type stripping (similar to [transpile-only mode](#faster-development-startup)), you don't need ts-node at all! Node.js 22+ includes experimental built-in support for running TypeScript files directly.
+If you only need type stripping (similar to [transpile-only mode](#faster-development-startup)), you don't need ts-node at all. Supported Node.js versions can run TypeScript files directly.
 
 ### When is Native Type Stripping Available?
 
@@ -378,17 +380,16 @@ Node.js built-in type stripping only strips types and doesn't transpile TypeScri
 
 ### Migration Steps from ts-node
 
-**1. Update watt.json to use Node.js built-in type stripping:**
+**1. Update `watt.config.ts` to use Node.js built-in type stripping:**
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
-  "runtime": {
-    "server": {
-      "port": 3000
-    }
+```ts config
+import { createNodeConfig } from '@platformatic/node'
+
+export default createNodeConfig({
+  server: {
+    port: 3000
   }
-}
+})
 ```
 
 **2. Remove ts-node from package.json:**
@@ -417,7 +418,7 @@ If your package.json referenced the `dist` folder for production builds, you can
   },
   "devDependencies": {
     "@platformatic/tsconfig": "^0.1.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "typescript": "^6.0.3"
   }
 }
@@ -434,7 +435,7 @@ Node.js built-in type stripping only strips types and doesn't transpile TypeScri
 
 For example, the enum in our example code won't work with built-in type stripping. You'd need to change it to:
 
-```typescript
+```typescript source refused
 // Before (won't work with --experimental-strip-types)
 enum Environment {
   Development = 'development',
@@ -455,7 +456,7 @@ const Environment = {
 - Works with both CommonJS and ESM (configured via your package.json and tsconfig.json as usual)
 - The `dist` folder is still created during production builds via `tsc`, so you don't need to update any deployment configurations
 
-This is the simplest approach if you're on Node.js 22+ and don't use advanced TypeScript features beyond type annotations.
+This is the simplest approach if you don't use advanced TypeScript features beyond type annotations.
 
 ## Using swc-node as an Alternative
 
@@ -469,20 +470,22 @@ While ts-node is the most popular choice for running TypeScript directly, there 
 npm install -D @swc-node/register @swc/core
 ```
 
-**Update `watt.json` in your project root:**
+**Update `watt.config.ts` in your project root:**
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
-  "runtime": {
-    "application": {
-      "execArgv": ["--import", "@swc-node/register/esm-register"]
-    }
-  },
-  "node": {
-    "disableBuildInDevelopment": true
+```ts config
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
+
+export default createWattConfig({
+  application: {
+    execArgv: ['--import', '@swc-node/register/esm-register'],
+    config: createNodeConfig({
+      node: {
+        disableBuildInDevelopment: true
+      }
+    })
   }
-}
+})
 ```
 
 ## Using tsx as an Alternative
@@ -497,7 +500,7 @@ npm install -D @swc-node/register @swc/core
 npm install -D tsx
 ```
 
-Ensure you are using **tsx v4.20.4 or later** for compatibility with Node.js 22.18+ and 24+, which have native type stripping enabled by default.
+Ensure you are using **tsx v4.20.4 or later** for compatibility with supported Node.js versions, which have native type stripping enabled by default.
 
 ### ESM Configuration
 
@@ -520,7 +523,7 @@ Use this configuration when your project uses `"type": "module"` in package.json
     "wattpm": "^3.25.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
@@ -542,33 +545,32 @@ Use this configuration when your project uses `"type": "module"` in package.json
 }
 ```
 
-**watt.json:**
+**watt.config.ts:**
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
-  "application": {
-    "commands": {
-      "development": "node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts",
-      "build": "tsc -p .",
-      "production": "node dist/index.js"
+```ts config
+import { createNodeConfig } from '@platformatic/node'
+
+export default createNodeConfig({
+  application: {
+    commands: {
+      development: 'node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts',
+      build: 'tsc -p .',
+      production: 'node dist/index.js'
     }
   },
-  "watch": {
-    "enabled": true
+  watch: {
+    enabled: true
   },
-  "runtime": {
-    "server": {
-      "port": 3000
-    }
+  server: {
+    port: 3000
   }
-}
+})
 ```
 
 Key configuration details:
 
 - `commands.development` runs tsx directly with Node.js flags to disable native type handling
-- `--no-experimental-strip-types` and `--no-experimental-transform-types` disable Node.js 22+/24+ built-in TypeScript processing, ensuring tsx handles all TypeScript compilation. This avoids conflicts between Node's native type stripping and tsx's own TypeScript handling
+- `--no-experimental-strip-types` and `--no-experimental-transform-types` disable Node.js built-in TypeScript processing, ensuring tsx handles all TypeScript compilation. This avoids conflicts between Node's native type stripping and tsx's own TypeScript handling
 - `--import tsx` registers tsx's ESM and CJS loaders
 - `commands.build` compiles TypeScript for production using `tsc`
 - `commands.production` runs the compiled JavaScript output
@@ -593,7 +595,7 @@ Use this configuration when your project does **not** have `"type": "module"` in
     "wattpm": "^3.25.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
@@ -617,27 +619,26 @@ Notice: No `"type": "module"` field — this keeps the project in CommonJS mode.
 }
 ```
 
-**watt.json:**
+**watt.config.ts:**
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.25.0.json",
-  "application": {
-    "commands": {
-      "development": "node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts",
-      "build": "tsc -p .",
-      "production": "node dist/index.js"
+```ts config
+import { createNodeConfig } from '@platformatic/node'
+
+export default createNodeConfig({
+  application: {
+    commands: {
+      development: 'node --no-experimental-strip-types --no-experimental-transform-types --import tsx src/index.ts',
+      build: 'tsc -p .',
+      production: 'node dist/index.js'
     }
   },
-  "watch": {
-    "enabled": true
+  watch: {
+    enabled: true
   },
-  "runtime": {
-    "server": {
-      "port": 3000
-    }
+  server: {
+    port: 3000
   }
-}
+})
 ```
 
 The `--import tsx` flag works for both ESM and CommonJS projects — tsx automatically detects the module system based on your package.json and tsconfig.json settings.
@@ -646,14 +647,16 @@ The `--import tsx` flag works for both ESM and CommonJS projects — tsx automat
 
 Unlike ts-node and swc-node, tsx **cannot** be used with the `execArgv` configuration in Watt:
 
-```json
-{
-  "runtime": {
-    "application": {
-      "execArgv": ["--import", "tsx"]
-    }
+```ts config
+import { createWattConfig } from 'wattpm'
+import { createNodeConfig } from '@platformatic/node'
+
+export default createWattConfig({
+  application: {
+    execArgv: ['--import', 'tsx'],
+    config: createNodeConfig({})
   }
-}
+})
 ```
 
 The above configuration will **not** work and will produce `MODULE_NOT_FOUND` errors.
@@ -686,7 +689,7 @@ The `--conditions import` flag tells Node.js to apply the `import` condition dur
 
 If your application creates its own Worker threads (not the workers managed by Watt), tsx won't automatically propagate to those child workers. You need to register tsx programmatically inside the worker:
 
-```typescript
+```typescript source
 // In your worker file
 import { register } from 'tsx/esm/api'
 register()
@@ -697,7 +700,7 @@ import { myFunction } from './my-module.ts'
 
 Alternatively, use the eval pattern when creating the worker:
 
-```typescript
+```typescript source
 import { Worker } from 'node:worker_threads'
 
 const workerPath = new URL('./my-worker.ts', import.meta.url).href

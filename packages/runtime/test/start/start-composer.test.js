@@ -7,17 +7,17 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('gateway', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'composerApp:0': url } = await app.start()
 
   {
-    const res = await request(entryUrl)
+    const res = await request(url)
     strictEqual(res.statusCode, 200)
 
     const data = await res.body.json()
@@ -25,7 +25,7 @@ test('gateway', async t => {
   }
 
   {
-    const res = await request(entryUrl + '/service-app/')
+    const res = await request(url + '/service-app/')
     strictEqual(res.statusCode, 200)
 
     const data = await res.body.json()
@@ -34,14 +34,14 @@ test('gateway', async t => {
 })
 
 test('gateway-proxy', async t => {
-  const configFile = join(fixturesDir, 'composer-proxy', 'platformatic.json')
+  const configFile = join(fixturesDir, 'composer-proxy', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'composer:0': url } = await app.start()
 
-  ok(entryUrl.startsWith('http://127.0.0.1'), 'entryUrl should start with http://127.0.0.1')
+  ok(url.startsWith('http://127.0.0.1'), 'url should start with http://127.0.0.1')
 })

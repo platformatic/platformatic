@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createCjsLoggingPlugin, start } from '../helper.js'
+import { configurationFileIn } from '../../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', '..', 'fixtures')
 const base = join(import.meta.dirname, '..', '..', 'tmp')
@@ -24,7 +25,7 @@ test('watches CommonJS files with watch on a single application', async t => {
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
 
-  const { child } = await start(join(appDst, 'platformatic.service.json'), { env: { PLT_USE_PLAIN_CREATE: 'true' } })
+  const { child } = await start(configurationFileIn(appDst), { env: { PLT_USE_PLAIN_CREATE: 'true' } })
 
   // Need this sleep to await for the CI linux machine to start watching
   await sleep(2000)

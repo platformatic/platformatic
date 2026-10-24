@@ -1,0 +1,13 @@
+// Converted from v3 JSON by scripts/convert-fixtures.mjs
+export default {
+  module: '@platformatic/node',
+  logger: {
+    level: 'silent'
+  },
+  application: {
+    commands: {
+      development: 'node index.mjs',
+      production: 'node index.mjs'
+    }
+  }
+}
