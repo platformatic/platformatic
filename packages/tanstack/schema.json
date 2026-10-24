@@ -3301,6 +3301,40 @@
             }
           ],
           "default": false
+        },
+        "preCompressed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "boolean"
+                      }
+                    }
+                  ],
+                  "default": true
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "default": false
         }
       },
       "default": {},

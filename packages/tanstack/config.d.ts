@@ -1054,5 +1054,16 @@ export interface PlatformaticTanStackConfig {
           contentType?: string;
           statusCode?: number;
         };
+    preCompressed?:
+      | boolean
+      | string
+      | {
+          enabled?:
+            | boolean
+            | string
+            | {
+                [k: string]: boolean;
+              };
+        };
   };
 }

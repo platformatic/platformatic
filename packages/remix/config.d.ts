@@ -1054,6 +1054,17 @@ export interface PlatformaticRemixConfig {
           contentType?: string;
           statusCode?: number;
         };
+    preCompressed?:
+      | boolean
+      | string
+      | {
+          enabled?:
+            | boolean
+            | string
+            | {
+                [k: string]: boolean;
+              };
+        };
   };
   remix?: {
     outputDirectory?: string;
