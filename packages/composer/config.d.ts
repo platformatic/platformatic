@@ -1185,6 +1185,12 @@ export interface PlatformaticComposerConfig {
             rewriteLocationHeader?: boolean;
             hostname?: string;
             proxyPayloads?: boolean;
+            headers?: {
+              [k: string]: string | null;
+            };
+            responseHeaders?: {
+              [k: string]: string | null;
+            };
             custom?: {
               path: string;
               options?: {
