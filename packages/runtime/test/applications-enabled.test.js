@@ -252,3 +252,24 @@ test('should support disabling autoloaded applications via mappings', async () =
     ['enabled']
   )
 })
+
+test('should record the disabled applications by id', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
+  const cfgPath = join(dir, 'platformatic.runtime.json')
+
+  await writeJSON(cfgPath, {
+    $schema: schema.$id,
+    entrypoint: 'enabled',
+    applications: [
+      { id: 'enabled', path: '.' },
+      { id: 'disabled', path: '.', enabled: false },
+      { id: 'development-only', path: '.', enabled: { production: false } }
+    ]
+  })
+
+  const production = await loadConfiguration(cfgPath, null, { production: true })
+  deepStrictEqual(production.disabledApplications, ['disabled', 'development-only'])
+
+  const development = await loadConfiguration(cfgPath, null, { production: false })
+  deepStrictEqual(development.disabledApplications, ['disabled'])
+})

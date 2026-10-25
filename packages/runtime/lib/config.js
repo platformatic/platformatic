@@ -2,6 +2,7 @@ import { importCapabilityAndConfig, validationOptions } from '@platformatic/basi
 import {
   extractModuleFromSchemaUrl,
   findConfigurationFile,
+  isEnabled,
   kMetadata,
   loadConfiguration,
   loadConfigurationModule,
@@ -331,24 +332,6 @@ function conflictingApplicationSource (root, resolvedApplicationsPath, existing,
   return null
 }
 
-function isApplicationEnabled (application, environment) {
-  const { enabled } = application
-
-  if (typeof enabled === 'undefined') {
-    return true
-  }
-
-  if (typeof enabled === 'string') {
-    return enabled !== 'false'
-  }
-
-  if (typeof enabled === 'object' && enabled !== null) {
-    return enabled[environment] ?? true
-  }
-
-  return enabled
-}
-
 export async function transform (config, _, context) {
   const production = context?.isProduction ?? context?.production
   const environment = production ? 'production' : 'development'
@@ -449,7 +432,7 @@ export async function transform (config, _, context) {
         // the autoloaded path survives next to the configured url. Reject the duplicate instead: an id
         // is the mesh hostname, the injected PLT_<ID>_URL name, the metrics label and the argument of
         // "wattpm inject", so two different applications cannot share one.
-        if (isApplicationEnabled(existing, environment)) {
+        if (isEnabled(existing.enabled, environment)) {
           const source = conflictingApplicationSource(root, resolvedApplicationsPath, existing, entryPath)
 
           if (source) {
@@ -464,8 +447,14 @@ export async function transform (config, _, context) {
     }
   }
 
+  // The applications this environment disables, by id, are kept so that an application of the
+  // runtime can tell one that does not run here from one that does not exist: the gateway leaves
+  // out the first and still refuses the second.
+  config.disabledApplications = []
+
   for (let i = applications.length - 1; i >= 0; --i) {
-    if (!isApplicationEnabled(applications[i], environment)) {
+    if (!isEnabled(applications[i].enabled, environment)) {
+      config.disabledApplications.unshift(applications[i].id)
       applications.splice(i, 1)
     }
   }

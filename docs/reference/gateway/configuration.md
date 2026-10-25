@@ -32,6 +32,9 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 - **`applications`** (`array`, default: `[]`) — is an array of objects that defines
   the applications managed by the gateway. Each application object supports the following settings:
   - **`id`** (**required**, `string`) - A unique identifier for the application. Use a Platformatic Runtime application id if the application is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
+  - **`enabled`** (`boolean`, `string`, or `object`) - If `false`, the gateway leaves the application out: it is not proxied or composed, and the gateway does not depend on it. Boolean strings and environment variable placeholders are supported. It can also be an object where each key is an environment name (`production` or `development`) and each value is a boolean; if the current environment does not match any key, the application is enabled. Default: `true`. It has the same shape as the runtime's [`enabled`](../runtime/configuration.md) of an application.
+
+    Inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context), the gateway also leaves out an application that the runtime's [`enabled`](../runtime/configuration.md) disables. So a gateway can name an application that only runs in development. An application that does not exist in the runtime is still reported as a missing dependency.
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, application `id` will be used instead of origin.
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
   - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.

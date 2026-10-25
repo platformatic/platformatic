@@ -206,6 +206,17 @@ export const gateway = {
         type: 'object',
         properties: {
           id: { type: 'string' },
+          enabled: {
+            anyOf: [
+              { type: 'boolean' },
+              { type: 'string' },
+              {
+                type: 'object',
+                additionalProperties: { type: 'boolean' }
+              }
+            ],
+            default: true
+          },
           origin: { type: 'string' },
           openapi: openApiApplication,
           graphql: graphqlApplication,

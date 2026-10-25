@@ -11,6 +11,7 @@ import {
   fallbackToTemporaryConfigFile,
   findRuntimeConfigurationFile,
   getRoot,
+  isEnabled,
   loadConfigurationModule,
   logFatalError,
   logo,
@@ -333,5 +334,18 @@ describe('applyConfigPatch', () => {
 
   test('rejects unknown operations', () => {
     expect(applyConfigPatch).type.not.toBeCallableWith({}, [{ op: 'unknown', path: '/a' }])
+  })
+})
+
+describe('isEnabled', () => {
+  test('resolves each shape of an enabled value to a boolean', () => {
+    expect(isEnabled(undefined, 'production')).type.toBe<boolean>()
+    expect(isEnabled(true, 'production')).type.toBe<boolean>()
+    expect(isEnabled('false', 'production')).type.toBe<boolean>()
+    expect(isEnabled({ production: false }, 'development')).type.toBe<boolean>()
+  })
+
+  test('rejects other values', () => {
+    expect(isEnabled).type.not.toBeCallableWith(1, 'production')
   })
 })
