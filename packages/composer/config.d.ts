@@ -235,6 +235,40 @@ export interface PlatformaticComposerConfig {
   };
   plugins?: {
     [k: string]: unknown;
+  } & {
+    packages?: (
+      | string
+      | {
+          name: string;
+          options?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }
+    )[];
+    paths?: (
+      | string
+      | {
+          path?: string;
+          encapsulate?: boolean;
+          maxDepth?: number;
+          autoHooks?: boolean;
+          autoHooksPattern?: string;
+          cascadeHooks?: boolean;
+          overwriteHooks?: boolean;
+          routeParams?: boolean;
+          forceESM?: boolean;
+          ignoreFilter?: string;
+          matchFilter?: string;
+          ignorePattern?: string;
+          scriptPattern?: string;
+          indexPattern?: string;
+          options?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }
+    )[];
   };
   application?: {};
   runtime?: {
@@ -259,9 +293,108 @@ export interface PlatformaticComposerConfig {
             }
         )[];
     basePath?: string;
-    services?: {
+    services?: ({
       [k: string]: unknown;
-    }[];
+    } & {
+      id?: string;
+      enabled?:
+        | boolean
+        | string
+        | {
+            [k: string]: boolean;
+          };
+      path?: string;
+      config?: string;
+      url?: string;
+      gitBranch?: string;
+      useHttp?: boolean;
+      websocket?: boolean;
+      reuseTcpPorts?: boolean;
+      workers?:
+        | number
+        | string
+        | {
+            static?: number;
+            minimum?: number;
+            maximum?: number;
+            scaleUpELU?: number;
+            scaleDownELU?: number;
+            [k: string]: unknown;
+          };
+      health?: {
+        enabled?: boolean | string;
+        interval?: number | string;
+        gracePeriod?: number | string;
+        maxUnhealthyChecks?: number | string;
+        maxELU?: number | string;
+        maxEventLoopDelay?: number | string;
+        maxEventLoopDelayP99?: number | string;
+        maxHeapUsed?: number | string;
+        maxHeapTotal?: number | string;
+        maxYoungGeneration?: number | string;
+        codeRangeSize?: number | string;
+        bufferPoolSize?: number | string;
+        defaultHighWaterMark?: number | string;
+      };
+      /**
+       * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+       */
+      restartOnError?: boolean | number;
+      dependencies?: string[];
+      arguments?: string[];
+      env?: {
+        [k: string]: string;
+      };
+      envfile?: string;
+      sourceMaps?: boolean;
+      nodeModulesSourceMaps?: string[];
+      packageManager?: "npm" | "pnpm" | "yarn";
+      preload?: string | string[];
+      nodeOptions?: string;
+      execArgv?: string[];
+      permissions?: {
+        fs?: {
+          read?: string[];
+          write?: string[];
+        };
+      };
+      telemetry?: {
+        /**
+         * An array of instrumentations loaded if telemetry is enabled
+         */
+        instrumentations?: (
+          | string
+          | {
+              package: string;
+              exportName?: string;
+              options?: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }
+        )[];
+        [k: string]: unknown;
+      };
+      compileCache?:
+        | boolean
+        | {
+            /**
+             * Enable Node.js module compile cache for faster startup
+             */
+            enabled?: boolean;
+            /**
+             * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+             */
+            directory?: string;
+          };
+      management?:
+        | boolean
+        | {
+            enabled?: boolean;
+            operations?: string[];
+          };
+      [k: string]: unknown;
+    })[];
     workers?:
       | number
       | string
@@ -1087,8 +1220,8 @@ export interface PlatformaticComposerConfig {
         /**
          * @minItems 1
          */
-        allow?: [string, ...string[]];
-        ignore?: string[];
+        allow?: [string, ...string[]] | null;
+        ignore?: string[] | null;
       }
     | boolean
     | string;
@@ -1106,6 +1239,15 @@ export interface PlatformaticComposerConfig {
       origin?: string;
       openapi?: {
         [k: string]: unknown;
+      } & {
+        url?: string;
+        file?: string;
+        prefix?: string;
+        config?: string;
+        /**
+         * Whether the gateway validates incoming requests against the OpenAPI schema of the application before proxying them. "full" compiles a validator for the body, params, querystring and headers of every operation and answers 400 at the gateway when a request does not match. "none" compiles no validator: requests that pass Fastify parsing are forwarded to the upstream application as they are, which stays responsible for validating them.
+         */
+        validation?: "full" | "none";
       };
       graphql?:
         | boolean
@@ -1211,15 +1353,23 @@ export interface PlatformaticComposerConfig {
               methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
               headers?: string[];
               skipHeaders?: string[];
-              routes?: {
+              routes?: ({
                 [k: string]: unknown;
-              }[];
+              } & {
+                method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
+                methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+                path: string;
+              })[];
               key?: string;
               timeout?: number;
               retries?: number;
               ttl?: number;
               lockTtl?: number;
             };
+            /**
+             * Set to false to leave the responses of this application alone: they are not compressed by the gateway and the Accept-Encoding header of the client is forwarded as it is.
+             */
+            compression?: boolean;
             ws?: {
               upstream?: string;
               reconnect?: {
@@ -1253,15 +1403,59 @@ export interface PlatformaticComposerConfig {
       methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
       headers?: string[];
       skipHeaders?: string[];
-      routes?: {
+      routes?: ({
         [k: string]: unknown;
-      }[];
+      } & {
+        method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
+        methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+        path: string;
+      })[];
       key?: string;
       timeout?: number;
       retries?: number;
       ttl?: number;
       lockTtl?: number;
     };
+    /**
+     * Compress the responses of the proxied applications. When enabled, the applications running in the runtime are asked for uncompressed responses, so that each response is only compressed once, by the gateway.
+     */
+    compression?:
+      | boolean
+      | string
+      | {
+          enabled?:
+            | boolean
+            | string
+            | {
+                [k: string]: boolean;
+              };
+          /**
+           * The encodings to offer, in order of preference. Defaults to ["br", "gzip"].
+           *
+           * @minItems 1
+           */
+          encodings?: ["br" | "gzip" | "deflate", ...("br" | "gzip" | "deflate")[]];
+          brotli?: {
+            /**
+             * The brotli quality. Defaults to 4.
+             */
+            quality?: number;
+          };
+          gzip?: {
+            /**
+             * The gzip and deflate level. Defaults to 6.
+             */
+            level?: number;
+          };
+          /**
+           * Responses whose Content-Length is smaller than this number of bytes are not compressed. Defaults to 1024.
+           */
+          threshold?: number;
+          /**
+           * Paths whose responses are never compressed, for instance routes compressed by a CDN. A "*" matches any sequence of characters, so "/assets/*" excludes everything under "/assets/".
+           */
+          exclude?: string[];
+        };
     openapi?: {
       info?: Info;
       jsonSchemaDialect?: string;
@@ -1498,7 +1692,7 @@ export interface RequestBodyOrReference {
   [k: string]: unknown;
 }
 export interface Responses {
-  [k: string]: ResponseOrReference;
+  [k: string]: unknown;
 }
 export interface ResponseOrReference {
   [k: string]: unknown;
