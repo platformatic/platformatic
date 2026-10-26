@@ -32,6 +32,12 @@ Configures Vite. Supported object properties:
   - **`entrypoint`**: The application entrypoint file. The default is `server.js`.
   - **`clientDirectory`**: The directory containing client files. The default is `client`.
   - **`serverDirectory`**: The directory containing server files. The default is `server`.
+- **`preCompressed`**: Serves the pre-compressed sibling of a static file in a production build (`<file>.br`, `<file>.gz` and the other encodings supported by [`@fastify/static`](https://github.com/fastify/fastify-static#precompressed)) when the request's `Accept-Encoding` accepts it, with the `Content-Type` of the original file and `Vary: Accept-Encoding`. The build must write those files, for example with a Vite compression plugin. A file without a compressed sibling is served as is. It can be:
+  - a boolean;
+  - a string, such as a [configuration placeholder](#configuration-placeholders) (`"{PLT_VITE_PRECOMPRESSED}"`): any value but `"false"` turns it on;
+  - an object with an **`enabled`** property, which takes the same values as an application's `enabled` in the [runtime](../runtime/configuration.md#applications): a boolean, a string as above, or an object of booleans by environment (`production`, `development`), enabled when it names none of them. `enabled` defaults to `true`.
+
+  The default is `false`.
 
 ## `logger`
 

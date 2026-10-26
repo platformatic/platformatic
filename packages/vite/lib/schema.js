@@ -58,6 +58,21 @@ const vite = {
         }
       ],
       default: false
+    },
+    preCompressed: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' },
+        {
+          type: 'object',
+          properties: {
+            // The runtime's own `enabled` of an application: a boolean, a string, or booleans by environment
+            enabled: utilsSchemaComponents.applications.items.properties.enabled
+          },
+          additionalProperties: false
+        }
+      ],
+      default: false
     }
   },
   default: {},
