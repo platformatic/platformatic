@@ -28,7 +28,8 @@ export async function createDeduplicationHandler ({
   overrideConfig,
   handler,
   metrics,
-  root
+  root,
+  send
 }) {
   if (!baseConfig && !overrideConfig) {
     return handler
@@ -147,6 +148,9 @@ export async function createDeduplicationHandler ({
 
         async function deduplicateResponse (proxiedRequest, proxiedReply, res) {
           const body = new DynamicBuffer()
+          // The headers are captured before the response is sent, as sending it can change them
+          // (for instance, compressing it sets Content-Encoding) while the stored body is the upstream one.
+          const headers = proxiedReply.getHeaders()
 
           // The client receives the body as it arrives from the upstream, while
           // the same chunks accumulate for storage. Backpressure from the client
@@ -181,7 +185,7 @@ export async function createDeduplicationHandler ({
               responseId,
               {
                 statusCode: res.statusCode,
-                headers: proxiedReply.getHeaders(),
+                headers,
                 body: body.buffers
               },
               config.ttl
@@ -244,7 +248,8 @@ export async function createDeduplicationHandler ({
       reply.code(response.statusCode)
       reply.headers(response.headers)
       metrics?.deduplicationReplay?.inc()
-      return reply.send(new DynamicBuffer(response.body).asReadable())
+      const body = new DynamicBuffer(response.body).asReadable()
+      return send ? send(request, reply, body) : reply.send(body)
     }
 
     metrics?.deduplicationFallback?.inc()

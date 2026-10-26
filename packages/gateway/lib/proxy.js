@@ -6,6 +6,7 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
+import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
 import { WsNoTcpUpstreamError } from './errors.js'
 import { initMetrics } from './metrics.js'
@@ -22,6 +23,14 @@ function isLocalApplication (application) {
   }
 
   return application.origin.endsWith('.plt.local')
+}
+
+function isMeshUpstream (upstream) {
+  try {
+    return new URL(upstream).hostname.endsWith('.plt.local')
+  } catch {
+    return false
+  }
 }
 
 function isWebSocketUpgrade (request) {
@@ -94,7 +103,8 @@ async function resolveApplicationProxyParameters (application, root) {
     needsRootTrailingSlash: meta.needsRootTrailingSlash,
     needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
     upstream: application.proxy?.upstream,
-    ws: application.proxy?.ws
+    ws: application.proxy?.ws,
+    compression: application.proxy?.compression
   }
 }
 
@@ -105,6 +115,11 @@ async function proxyPlugin (app, opts) {
   const hostnameLessProxies = []
   const root = opts.capability?.root ?? import.meta.dirname
   let wsUpstreams = null
+
+  const compression = resolveCompression(opts.compression, opts.context?.isProduction ? 'production' : 'development')
+  if (compression) {
+    await registerCompression(app, compression)
+  }
 
   let handler
   if (opts.handler) {
@@ -140,6 +155,7 @@ async function proxyPlugin (app, opts) {
       needsRefererBasedRedirect,
       ws
     } = parameters
+    const compressResponses = compression !== null && parameters.compression !== false
     meta.proxies[application.id] = parameters
 
     const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
@@ -291,6 +307,7 @@ async function proxyPlugin (app, opts) {
 
     // When getUpstream is provided, upstream must be undefined, otherwise the getUpstream will be ignored
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
+    const meshUpstream = upstream ? isMeshUpstream(upstream) : undefined
 
     let proxyHandler = handler
     if (opts.deduplication?.enabled === true || application.proxy?.deduplication?.enabled === true) {
@@ -301,7 +318,8 @@ async function proxyPlugin (app, opts) {
         overrideConfig: application.proxy?.deduplication,
         handler,
         metrics,
-        root
+        root,
+        send: compressResponses ? (request, reply, body) => sendCompressed(request, reply, body, compression) : undefined
       })
     }
 
@@ -410,6 +428,13 @@ async function proxyPlugin (app, opts) {
             'x-forwarded-proto': request.protocol
           }
 
+          // An application in the runtime is asked for an uncompressed response: compressing it there
+          // would be wasted when the gateway compresses it anyway, and it would prevent the gateway from
+          // choosing the encoding (for instance, Next.js only offers gzip).
+          if (compressResponses && (meshUpstream ?? isMeshUpstream(request[kProxiedUpstream]))) {
+            headers['accept-encoding'] = 'identity'
+          }
+
           request.log.trace({ headers }, 'rewritten headers before proxying')
 
           return headers
@@ -419,7 +444,12 @@ async function proxyPlugin (app, opts) {
             statusCode: reply.statusCode,
             headers: res.headers
           })
-          reply.send(res.stream)
+
+          if (compressResponses) {
+            sendCompressed(reply.request, reply, res.stream, compression)
+          } else {
+            reply.send(res.stream)
+          }
         },
         onError: (reply, { error }) => {
           app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another application')

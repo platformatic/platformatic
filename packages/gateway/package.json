@@ -46,6 +46,7 @@
     "ws": "^8.16.0"
   },
   "dependencies": {
+    "@fastify/compress": "^9.2.2",
     "@fastify/error": "^4.0.0",
     "@fastify/http-proxy": "^11.6.3",
     "@fastify/reply-from": "^12.0.0",

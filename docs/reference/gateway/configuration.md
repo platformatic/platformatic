@@ -50,6 +50,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     - **`routes`** (`array of string`, default: `['/', '/*']`) - Route patterns handled by this proxy application. Useful when multiple applications share the same `prefix` and need path-based routing. Route patterns follow Fastify route syntax for parameters and wildcards (for example, `/users/:id` and `/public/*`). See the [Fastify route URL syntax documentation](https://fastify.dev/docs/latest/Reference/Routes/#url-building) for details.
     - **`hostname`** (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header. When a hostname is specified, the service is accessible without the prefix when the Host header matches.
+    - **`compression`** (`boolean`) - Set to `false` to leave the responses of this application alone when [`compression`](#compression) is enabled: the gateway does not compress them and forwards the `Accept-Encoding` header of the client unchanged. Use it for an application which serves its own pre-compressed files, such as a Vite application with `vite.preCompressed`.
     - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
     - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
       - **`upstream`** (`string`) - The WebSocket upstream URL (e.g., `ws://localhost:3000`). Required for external services. Not needed for Platformatic Runtime applications exposing a TCP server (started with the `useHttp` or `websocket` flags): the gateway resolves their WebSocket upstream automatically, re-resolving it on every new connection so that new connections keep working across application restarts. Note that a connection arriving in the short window between a worker going away and the gateway observing its replacement can still be dialed against the previous port; the next connection succeeds.
@@ -397,6 +398,31 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   ```
 
   Custom gateway handlers that override `onResponse` or `onError` can call `options.deduplicateResponse(request, reply, res)` and `options.deduplicateError(reply, error)` to keep duplicate requests coordinated. See [Request Deduplication](./deduplication.md#custom-gateway-handlers) for examples.
+
+- **`compression`** (`boolean`, `string` or `object`) - Compresses the responses of the proxied applications with brotli or gzip. It is off by default. It can be `true`, a string such as an environment placeholder (anything but `"false"` enables it), or an object with the following options:
+
+  - **`enabled`** (`boolean`, `string` or `object`) - Whether compression is enabled, with the same values as the `enabled` of a Runtime application, including booleans by environment such as `{ "development": false }`. Default: `true`.
+  - **`encodings`** (`array of string`) - The encodings to offer, in order of preference, among `br`, `gzip` and `deflate`. Default: `["br", "gzip"]`.
+  - **`brotli.quality`** (`number`) - The brotli quality, from `0` to `11`. Default: `4`, which compresses better than gzip at a lower CPU cost. Higher values save only a few more bytes for much more CPU.
+  - **`gzip.level`** (`number`) - The gzip and deflate level, from `-1` to `9`. Default: `6`.
+  - **`threshold`** (`number`) - Responses whose `Content-Length` is smaller than this number of bytes are sent uncompressed. Default: `1024`.
+  - **`exclude`** (`array of string`) - Paths whose responses are never compressed, for instance routes already compressed by a CDN. A `*` matches any sequence of characters, so `/assets/*` excludes everything under `/assets/`. The query string is not considered.
+
+  The compression runs in the gateway workers. The gateway asks the applications of the Runtime for uncompressed responses, by sending them `Accept-Encoding: identity`, so a response is compressed once, by the gateway, with the best encoding the client accepts. There is no need to disable the compression of the applications, for instance the `compress` option of Next.js. Applications outside the Runtime receive the `Accept-Encoding` of the client.
+
+  A response is not compressed when the client does not accept any of the configured encodings, when it is already encoded, when its `Cache-Control` contains `no-transform`, when its type is not compressible (for instance, images), when it is a partial (`206`) response, or when it is a response to a `HEAD` request. Responses which can be compressed carry `Vary: Accept-Encoding`, even when a client gets them uncompressed.
+
+  ```json
+  {
+    "gateway": {
+      "compression": {
+        "brotli": { "quality": 4 },
+        "exclude": ["/static/*"]
+      },
+      "applications": [{ "id": "frontend" }]
+    }
+  }
+  ```
 
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 

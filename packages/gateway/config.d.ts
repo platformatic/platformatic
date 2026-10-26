@@ -365,6 +365,10 @@ export interface PlatformaticGatewayConfig {
               ttl?: number;
               lockTtl?: number;
             };
+            /**
+             * Set to false to leave the responses of this application alone: they are not compressed by the gateway and the Accept-Encoding header of the client is forwarded as it is.
+             */
+            compression?: boolean;
             ws?: {
               upstream?: string;
               reconnect?: {
@@ -411,6 +415,46 @@ export interface PlatformaticGatewayConfig {
       ttl?: number;
       lockTtl?: number;
     };
+    /**
+     * Compress the responses of the proxied applications. When enabled, the applications running in the runtime are asked for uncompressed responses, so that each response is only compressed once, by the gateway.
+     */
+    compression?:
+      | boolean
+      | string
+      | {
+          enabled?:
+            | boolean
+            | string
+            | {
+                [k: string]: boolean;
+              };
+          /**
+           * The encodings to offer, in order of preference. Defaults to ["br", "gzip"].
+           *
+           * @minItems 1
+           */
+          encodings?: ["br" | "gzip" | "deflate", ...("br" | "gzip" | "deflate")[]];
+          brotli?: {
+            /**
+             * The brotli quality. Defaults to 4.
+             */
+            quality?: number;
+          };
+          gzip?: {
+            /**
+             * The gzip and deflate level. Defaults to 6.
+             */
+            level?: number;
+          };
+          /**
+           * Responses whose Content-Length is smaller than this number of bytes are not compressed. Defaults to 1024.
+           */
+          threshold?: number;
+          /**
+           * Paths whose responses are never compressed, for instance routes compressed by a CDN. A "*" matches any sequence of characters, so "/assets/*" excludes everything under "/assets/".
+           */
+          exclude?: string[];
+        };
     openapi?: {
       info?: Info;
       jsonSchemaDialect?: string;
