@@ -94,8 +94,24 @@ async function resolveApplicationProxyParameters (application, root) {
     needsRootTrailingSlash: meta.needsRootTrailingSlash,
     needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
     upstream: application.proxy?.upstream,
+    headers: application.proxy?.headers,
+    responseHeaders: application.proxy?.responseHeaders,
     ws: application.proxy?.ws
   }
+}
+
+// Sets each header of `changes` on `headers`, by its lower-case name, or removes it when
+// its value is null. Returns `headers`, changed in place.
+function applyHeaders (headers, changes) {
+  for (const [name, value] of Object.entries(changes ?? {})) {
+    if (value === null) {
+      delete headers[name.toLowerCase()]
+    } else {
+      headers[name.toLowerCase()] = value
+    }
+  }
+
+  return headers
 }
 
 let metrics
@@ -138,6 +154,8 @@ async function proxyPlugin (app, opts) {
       internalRewriteLocationHeader,
       needsRootTrailingSlash,
       needsRefererBasedRedirect,
+      headers: requestHeaders,
+      responseHeaders,
       ws
     } = parameters
     meta.proxies[application.id] = parameters
@@ -377,6 +395,8 @@ async function proxyPlugin (app, opts) {
             headers.location = location
           }
 
+          applyHeaders(headers, responseHeaders)
+
           if (customRewriteHeaders) {
             headers = customRewriteHeaders(headers, request) ?? headers
           }
@@ -409,6 +429,8 @@ async function proxyPlugin (app, opts) {
             'x-forwarded-host': request.host,
             'x-forwarded-proto': request.protocol
           }
+
+          applyHeaders(headers, requestHeaders)
 
           request.log.trace({ headers }, 'rewritten headers before proxying')
 
