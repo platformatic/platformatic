@@ -168,7 +168,6 @@ overrides:
   vite@<6.4.3: 6.4.3
   react-router@<6.30.6: 6.30.6
   react-router-dom@<6.30.6: 6.30.6
-  turbo-stream: 3.0.0
   toml: 4.2.0
   estree-util-value-to-estree: 3.3.3
   cacache@17>tar: 7.5.22
@@ -11318,8 +11317,8 @@ packages:
     resolution: {integrity: sha512-50QV99kCKH5P/Vs4E2Gzp7BopNV+KzTXqWeaxrfu5IQJBOULRsTIS9seSsOVT8ZnGXzCyx55nYWAi4qJzpZKEQ==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  turbo-stream@3.0.0:
-    resolution: {integrity: sha512-cD7s7mh0XtUa+sE5Ej1ShRrWGKiAZ1X/l4clV7Dyg4A+u9jf2pbTTKDApeW0B7Za5o/tNCGzNTLFHBAVxeQC6g==}
+  turbo-stream@2.4.1:
+    resolution: {integrity: sha512-v8kOJXpG3WoTN/+at8vK7erSzo6nW6CIaeOvNOkHQVDajfz1ZVeSxCbc6tOH4hrGZW7VUCV0TOXd8CPzYnYkrw==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -15184,7 +15183,7 @@ snapshots:
       react-dom: 19.3.1(react@19.3.1)
       react-router: 6.30.6(react@19.3.1)
       react-router-dom: 6.30.6(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      turbo-stream: 3.0.0
+      turbo-stream: 2.4.1
     optionalDependencies:
       typescript: 6.0.3
 
@@ -15200,7 +15199,7 @@ snapshots:
       cookie: 0.7.2
       set-cookie-parser: 2.7.2
       source-map: 0.7.6
-      turbo-stream: 3.0.0
+      turbo-stream: 2.4.1
     optionalDependencies:
       typescript: 6.0.3
 
@@ -22639,7 +22638,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  turbo-stream@3.0.0: {}
+  turbo-stream@2.4.1: {}
 
   type-check@0.4.0:
     dependencies:

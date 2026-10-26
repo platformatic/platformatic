@@ -90,7 +90,6 @@ overrides:
   'vite@<6.4.3': 6.4.3
   'react-router@<6.30.6': 6.30.6
   'react-router-dom@<6.30.6': 6.30.6
-  turbo-stream: 3.0.0
   toml: 4.2.0
   estree-util-value-to-estree: 3.3.3
   'cacache@17>tar': 7.5.22
