@@ -12,7 +12,7 @@ import {
   importFile,
   resolvePackageViaCJS
 } from '@platformatic/basic'
-import { ensureLoggableError, sanitizeHTTPSOptions } from '@platformatic/foundation'
+import { ensureLoggableError, isEnabled, sanitizeHTTPSOptions } from '@platformatic/foundation'
 import { getLogger, updateGlobals } from '@platformatic/globals'
 import { NodeCapability } from '@platformatic/node'
 import fastify from 'fastify'
@@ -24,6 +24,20 @@ import { satisfies } from 'semver'
 import { version } from './schema.js'
 
 const supportedVersions = ['^5.0.0', '^6.0.0', '^7.0.0', '^8.0.0']
+
+// `vite.preCompressed`: off when unset, else a boolean or a string, or `{ enabled }`, each resolved as the
+// runtime resolves an application's `enabled`.
+function isPreCompressed (preCompressed, environment) {
+  if (typeof preCompressed === 'undefined') {
+    return false
+  }
+
+  if (typeof preCompressed === 'object' && preCompressed !== null) {
+    return isEnabled(preCompressed.enabled, environment)
+  }
+
+  return isEnabled(preCompressed, environment)
+}
 
 export class ViteCapability extends BaseCapability {
   #vite
@@ -307,7 +321,8 @@ export class ViteCapability extends BaseCapability {
       root: outputDirectory,
       prefix: this.#basePath,
       prefixAvoidTrailingSlash: true,
-      schemaHide: true
+      schemaHide: true,
+      preCompressed: isPreCompressed(config.vite.preCompressed, this.isProduction ? 'production' : 'development')
     })
 
     if (config.vite.notFoundHandler?.enabled) {

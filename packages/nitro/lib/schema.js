@@ -32,6 +32,7 @@ delete server.properties.http2
 const vite = structuredClone(viteSchemaComponents.vite)
 delete vite.properties.ssr
 delete vite.properties.notFoundHandler
+delete vite.properties.preCompressed
 
 export const schemaComponents = { nitro, vite }
 
