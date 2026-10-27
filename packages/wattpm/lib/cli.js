@@ -3,6 +3,7 @@ import { updateGlobals } from '@platformatic/globals'
 import { loadApplicationsCommands } from '@platformatic/runtime'
 import * as colorette from 'colorette'
 import { bold } from 'colorette'
+import { fileURLToPath } from 'node:url'
 import { adminCommand } from './commands/admin.js'
 import { applicationsAddCommand, applicationsRemoveCommand } from './commands/applications.js'
 import { buildCommand } from './commands/build.js'
@@ -44,7 +45,10 @@ function extractConfigOption (args) {
 }
 
 export async function main () {
-  updateGlobals({ executable: this.executableId })
+  updateGlobals({
+    executable: this.executableId,
+    cliPackage: { name: 'wattpm', version, path: fileURLToPath(new URL('../', import.meta.url)) }
+  })
 
   const options = {
     'no-pretty': {

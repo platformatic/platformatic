@@ -28,7 +28,7 @@ import {
   getApplicationUrl,
   topologyVariableName
 } from './identifiers.js'
-import { checkCapabilityVersionSkew } from './capability-resolution.js'
+import { checkCapabilityVersionSkew, checkPackageVersion, resolveCapabilityPackage } from './capability-resolution.js'
 import { runRootPipeline } from './pipeline.js'
 import { assertApplicationServes } from './serving.js'
 import { importCapabilitySchema, validateCapabilityConfiguration } from './validate.js'
@@ -209,6 +209,7 @@ export async function loadConfiguration ({
   schema,
   validateCapabilities = true,
   runtimeScope,
+  versionReference,
   timeout = defaultEvaluationTimeout,
   inProcessTarget,
   configure,
@@ -241,7 +242,8 @@ export async function loadConfiguration ({
     inProcessTarget,
     configure,
     validateCapabilities,
-    runtimeScope
+    runtimeScope,
+    versionReference
   }
 
   // --config is not a scope flag, but it does take cwd out of the decision.
@@ -359,6 +361,7 @@ export async function loadObjectConfiguration ({
   schema,
   validateCapabilities = true,
   runtimeScope,
+  versionReference,
   timeout = defaultEvaluationTimeout,
   onImport,
   onWatchFile,
@@ -384,6 +387,7 @@ export async function loadObjectConfiguration ({
     timeout,
     validateCapabilities,
     runtimeScope,
+    versionReference,
     configure
   }
 
@@ -518,12 +522,16 @@ async function assemble ({
   timeout,
   validateCapabilities,
   runtimeScope,
+  versionReference,
   configure
 }) {
   const config = result.config
 
   // Root evaluation has expanded autoload; applications must consume the configured values.
   await configure?.(config, { root: deciding.directory })
+
+  report.versionReference = versionReference
+  report.versionMismatch = config.versionMismatch
 
   if (config.autoload?.path) {
     // Creating or removing an application directory changes the application list, so the directory
@@ -676,6 +684,8 @@ export async function loadAdditionalApplications ({
   timeout = defaultEvaluationTimeout,
   validateCapabilities = true,
   runtimeScope,
+  versionReference,
+  versionMismatch,
   onImport,
   onWatchFile,
   onWarning,
@@ -685,6 +695,9 @@ export async function loadAdditionalApplications ({
   const resolvedMode = mode ?? defaultMode(command, resolvedProduction)
   const report = createReport({ onImport, onWatchFile, onWarning, onInfo })
   const deciding = { path: configPath, directory: dirname(configPath) }
+
+  report.versionReference = versionReference
+  report.versionMismatch = versionMismatch
 
   // Same one-file rule as boot; the command's cwd is gone by now, so the project root stands in.
   if (customEnvFile && !isAbsolute(customEnvFile)) {
@@ -863,6 +876,8 @@ async function prepareApplication ({
     // the application *is* the package — which is what the writable-root preparation keys on.
     prepared.moduleApplication = true
 
+    checkApplicationVersion(prepared, { directory, report, validateCapabilities, runtimeScope })
+
     return prepared
   }
 
@@ -993,7 +1008,8 @@ async function applyDefinition (prepared, definition, { directory, report, valid
     module,
     stamped: version,
     applicationRoot: directory,
-    runtimeScope
+    runtimeScope,
+    policy: report.versionMismatch
   })
 
   if (skew) {
@@ -1001,7 +1017,7 @@ async function applyDefinition (prepared, definition, { directory, report, valid
       throw new CapabilityVersionSkewError(skew.message)
     }
 
-    // Minor drift is legitimate mid-upgrade, so it warns rather than failing the boot.
+    // The root policy can downgrade prerelease drift or upgrade patch drift to a warning.
     report.onWarning?.({ type: 'capability-version-skew', ...skew })
   }
 
@@ -1021,6 +1037,8 @@ async function applyDefinition (prepared, definition, { directory, report, valid
   a check. The default flips when the subpaths land.
 */
 async function validateApplication (prepared, { module, directory, report, validateCapabilities, production, runtimeScope }) {
+  checkApplicationVersion(prepared, { directory, report, validateCapabilities, runtimeScope })
+
   if (!validateCapabilities || !module) {
     return
   }
@@ -1055,5 +1073,19 @@ async function validateApplication (prepared, { module, directory, report, valid
     declaration: servesWithoutPort,
     config: prepared.config,
     production
+  })
+}
+
+function checkApplicationVersion (prepared, { directory, report, validateCapabilities, runtimeScope }) {
+  // Third-party capabilities have independent release numbering. Topology-only loads need not resolve packages.
+  if (!validateCapabilities || !report.versionReference || !prepared.module?.startsWith('@platformatic/')) {
+    return
+  }
+
+  const resolved = resolveCapabilityPackage(prepared.module, directory, { runtimeScope })
+  checkPackageVersion(report.versionReference, { name: prepared.module, ...resolved }, {
+    policy: report.versionMismatch,
+    onWarning: report.onWarning,
+    id: prepared.id
   })
 }

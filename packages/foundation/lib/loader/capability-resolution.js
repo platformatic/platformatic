@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, parse } from 'node:path'
 import semver from 'semver'
-import { CapabilityNotResolvableError } from './errors.js'
+import { CapabilityNotResolvableError, PackageVersionMismatchError } from './errors.js'
 
 function readPackageJson (path) {
   try {
@@ -78,15 +78,15 @@ export function resolveCapabilityPackage (module, applicationRoot, { runtimeScop
 }
 
 /*
-  Major mismatch is a boot error; minor mismatch is a warning, since mid-upgrade drift is
-  legitimate; patch differences are ignored.
+  By default, major mismatch is a boot error; minor mismatch is a warning, since mid-upgrade drift is
+  legitimate; patch differences are ignored. An explicit policy overrides non-major mismatches only.
 
-  A prerelease component on either side demands exact identity: 4.0.0-alpha.1, 4.0.0-rc.2 and 4.0.0
+  By default, a prerelease component on either side demands exact identity: 4.0.0-alpha.1, 4.0.0-rc.2 and 4.0.0
   agree on major, minor and patch while differing in schema and factory shape, so the relaxed
   policy would pair incompatible halves precisely during the alpha and RC period, when they move
   fastest and users are explicitly expected to be on them.
 */
-export function compareCapabilityVersions (stamped, resolved) {
+export function compareCapabilityVersions (stamped, resolved, policy) {
   if (!stamped || !resolved) {
     // A hand-written { module } object carries no stamp and skips the check.
     return { level: 'ok', reason: 'unstamped' }
@@ -99,21 +99,27 @@ export function compareCapabilityVersions (stamped, resolved) {
     return { level: 'ok', reason: 'unparseable' }
   }
 
+  if (left.major !== right.major) {
+    return { level: 'error', reason: 'major-mismatch' }
+  }
+
+  const mismatchLevel = policy === 'warn' ? 'warning' : policy
+
   if (left.prerelease.length > 0 || right.prerelease.length > 0) {
     // semver.eq, not string identity: build metadata (+sha, +build.N) does not affect precedence,
     // so two copies of 4.0.0-alpha.1 that differ only in a build suffix are the same prerelease and
     // must not be flagged as a skew. Different prerelease identifiers still are.
     return semver.eq(left, right)
       ? { level: 'ok', reason: 'prerelease-identical' }
-      : { level: 'error', reason: 'prerelease-mismatch' }
-  }
-
-  if (left.major !== right.major) {
-    return { level: 'error', reason: 'major-mismatch' }
+      : { level: mismatchLevel ?? 'error', reason: 'prerelease-mismatch' }
   }
 
   if (left.minor !== right.minor) {
-    return { level: 'warning', reason: 'minor-mismatch' }
+    return { level: mismatchLevel ?? 'warning', reason: 'minor-mismatch' }
+  }
+
+  if (left.patch !== right.patch && mismatchLevel) {
+    return { level: mismatchLevel, reason: 'patch-mismatch' }
   }
 
   return { level: 'ok', reason: 'compatible' }
@@ -126,13 +132,13 @@ export function compareCapabilityVersions (stamped, resolved) {
   only to be rejected by the 4.0 schema at boot, or silently misapplied where the schemas differ
   more subtly. Hoisted layouts, where factory and worker share one copy, never false-positive.
 */
-export function checkCapabilityVersionSkew ({ id, module, stamped, applicationRoot, runtimeScope }) {
+export function checkCapabilityVersionSkew ({ id, module, stamped, applicationRoot, runtimeScope, policy }) {
   if (!stamped) {
     return null
   }
 
   const resolved = resolveCapabilityPackage(module, applicationRoot, { runtimeScope })
-  const { level, reason } = compareCapabilityVersions(stamped, resolved.version)
+  const { level, reason } = compareCapabilityVersions(stamped, resolved.version, policy)
 
   if (level === 'ok') {
     return null
@@ -149,4 +155,21 @@ export function checkCapabilityVersionSkew ({ id, module, stamped, applicationRo
     scope: resolved.scope,
     message: `application '${id}' was configured by a ${module} factory stamped ${stamped}, but the copy the worker will load is ${resolved.version} at ${resolved.path}.`
   }
+}
+
+// Check actual package identities, retaining the launcher's reference across tolerated drift.
+export function checkPackageVersion (reference, loaded, { policy, onWarning, id } = {}) {
+  const { level, reason } = compareCapabilityVersions(reference.version, loaded.version, policy)
+
+  if (level === 'ok') {
+    return
+  }
+
+  const message = `${id ? `Application '${id}': ` : ''}${reference.name}@${reference.version} at ${reference.path} requires matching ${loaded.name}, but loaded ${loaded.version} at ${loaded.path}. Align the installed package versions.`
+
+  if (level === 'error') {
+    throw new PackageVersionMismatchError(message)
+  }
+
+  onWarning?.({ type: 'package-version-mismatch', level, reason, reference, loaded, id, message })
 }
