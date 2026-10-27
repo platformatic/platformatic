@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { createConfigurationContext, defaultMode, isProductionCommand } from './context.js'
-import { detectCapability } from './detect.js'
+import { coreCapabilityPackages, detectCapability } from './detect.js'
 import {
   listChainEnvFilePaths,
   resolveConfigurationEnvironment,
@@ -1077,8 +1077,8 @@ async function validateApplication (prepared, { module, directory, report, valid
 }
 
 function checkApplicationVersion (prepared, { directory, report, validateCapabilities, runtimeScope }) {
-  // Third-party capabilities have independent release numbering. Topology-only loads need not resolve packages.
-  if (!validateCapabilities || !report.versionReference || !prepared.module?.startsWith('@platformatic/')) {
+  // External adapters, including ones in our npm scope, have independent release numbering.
+  if (!validateCapabilities || !report.versionReference || !coreCapabilityPackages.includes(prepared.module)) {
     return
   }
 

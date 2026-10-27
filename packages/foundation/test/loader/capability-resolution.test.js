@@ -11,6 +11,16 @@ import {
   resolveCapabilityPackage
 } from '../../lib/loader/index.js'
 import { createTree } from './helper.js'
+import { versionCases } from './version-cases.js'
+
+test('capability comparison follows the shared version policy in both directions', () => {
+  for (const [left, right, expected] of versionCases) {
+    for (const [index, policy] of [undefined, 'warn', 'error'].entries()) {
+      strictEqual(compareCapabilityVersions(left, right, policy).level, expected[index])
+      strictEqual(compareCapabilityVersions(right, left, policy).level, expected[index])
+    }
+  }
+})
 
 function fakePackage (name, version, extra = {}) {
   return {
@@ -229,4 +239,39 @@ test('the root policy also overrides factory versus implementation checks', asyn
     source: { ...source, versionMismatch: 'error' },
     validateCapabilities: false
   }), { code: 'PLT_CAPABILITY_VERSION_SKEW' })
+})
+
+test('independently released Platformatic adapters skip core comparisons but retain factory checks', async t => {
+  for (const module of ['@platformatic/php', '@platformatic/pg-hooks']) {
+    const root = await createTree(t, {
+      'package.json': JSON.stringify({ name: 'api', dependencies: { [module]: '0.8.3' } }),
+      ...fakePackage(module, '0.8.3', {
+        type: 'module',
+        exports: { '.': './index.js', './schema': './schema.js', './package.json': './package.json' }
+      }),
+      [`node_modules/${module}/schema.js`]: 'export const schema = { type: "object" }'
+    })
+    const options = { root, versionReference: { name: 'wattpm', version: '4.0.0', path: '/launcher' } }
+
+    for (const versionMismatch of [undefined, 'warn', 'error']) {
+      for (const entry of [
+        { id: 'api', path: '.' },
+        { id: 'api', module },
+        { id: 'api', config: { module, version: '0.8.3' } }
+      ]) {
+        const warnings = []
+        await loadObjectConfiguration({
+          ...options,
+          source: { versionMismatch, applications: [entry] },
+          onWarning: warning => warnings.push(warning)
+        })
+        strictEqual(warnings.filter(warning => warning.type === 'package-version-mismatch').length, 0)
+      }
+    }
+
+    await rejects(loadObjectConfiguration({
+      ...options,
+      source: { versionMismatch: 'error', applications: [{ id: 'api', config: { module, version: '0.8.4' } }] }
+    }), { code: 'PLT_CAPABILITY_VERSION_SKEW' })
+  }
 })

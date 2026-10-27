@@ -7,7 +7,6 @@ import {
   loadConfigurationModule
 } from '@platformatic/foundation'
 import {
-  checkPackageVersion,
   findDecidingFile,
   isProductionCommand,
   LegacyConfigurationFileError,
@@ -28,6 +27,7 @@ import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
 import { configurationSchema } from './lib/schema.js'
 import { name, version } from './lib/version.js'
+import { checkPackageVersion } from './lib/version-mismatch.js'
 
 const foundationManifestPath = fileURLToPath(import.meta.resolve('@platformatic/foundation/package.json'))
 const foundationPackage = JSON.parse(readFileSync(foundationManifestPath, 'utf-8'))
