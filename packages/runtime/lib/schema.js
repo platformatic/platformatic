@@ -45,6 +45,11 @@ const platformaticRuntimeSchema = {
   type: 'object',
   properties: {
     ...schemaComponents.runtimeProperties,
+    versionMismatch: {
+      type: 'string',
+      enum: ['warn', 'error'],
+      description: 'Override minor, patch and prerelease version mismatches. Major mismatches always fail.'
+    },
     scheduler: {
       type: 'object',
       additionalProperties: false,

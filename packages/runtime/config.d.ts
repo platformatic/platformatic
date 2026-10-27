@@ -75,6 +75,10 @@ export type PlatformaticRuntimeConfig = {
     };
   };
   compileCache?: boolean | CompileCacheOptions3;
+  /**
+   * Override minor, patch and prerelease version mismatches. Major mismatches always fail.
+   */
+  versionMismatch?: "warn" | "error";
   scheduler?: {
     /**
      * Start local cron triggers for newly registered jobs. When false, jobs are created paused.

@@ -106,7 +106,14 @@ export interface UndiciThreadInterceptor {
 }
 
 export type CloseCallback = () => void | Promise<void>
+export interface CliPackage {
+  name: string
+  version: string
+  path: string
+}
+
 export interface PlatformaticGlobal {
+  cliPackage?: CliPackage
   // Runtime
   isBuilding: boolean
   executable: string

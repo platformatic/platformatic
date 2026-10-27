@@ -10,7 +10,8 @@ import { AmbiguousCapabilityError, CapabilityNotDetectedError } from './errors.j
   defined place. A capability outside the table, which is every third-party one, is never inferred:
   those applications declare an explicit config file.
 */
-export const capabilityPackages = [
+// These capabilities are released with Watt and share its version, unlike the external adapters below.
+export const coreCapabilityPackages = [
   '@platformatic/node',
   '@platformatic/service',
   '@platformatic/db',
@@ -23,7 +24,11 @@ export const capabilityPackages = [
   '@platformatic/nitro',
   '@platformatic/nuxt',
   '@platformatic/react-router',
-  '@platformatic/tanstack',
+  '@platformatic/tanstack'
+]
+
+export const capabilityPackages = [
+  ...coreCapabilityPackages,
   '@platformatic/php',
   '@platformatic/ai-warp',
   '@platformatic/pg-hooks',

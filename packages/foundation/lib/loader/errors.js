@@ -1,6 +1,8 @@
 import createError from '@fastify/error'
 import { ERROR_PREFIX } from '../errors.js'
 
+export const PackageVersionMismatchError = createError(`${ERROR_PREFIX}_PACKAGE_VERSION_MISMATCH`, '%s')
+
 // The loader carries its own error table rather than extending the legacy one: the legacy
 // configuration machinery moves out of foundation into wattpm-utils' migrate reader, and
 // an error shared between the two would follow it.

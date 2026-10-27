@@ -14,15 +14,23 @@ import {
   loadObjectConfiguration,
   validateCapabilityConfiguration
 } from '@platformatic/foundation/loader'
+import { getGlobal } from '@platformatic/globals'
 import closeWithGrace from 'close-with-grace'
+import { readFileSync } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { dirname, resolve as resolvePath } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { transformConfiguration } from './lib/config.js'
 import { configureExtensions, resolveExtensions } from './lib/extensions.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
 import { configurationSchema } from './lib/schema.js'
+import { name, version } from './lib/version.js'
+import { checkPackageVersion } from './lib/version-mismatch.js'
+
+const foundationManifestPath = fileURLToPath(import.meta.resolve('@platformatic/foundation/package.json'))
+const foundationPackage = JSON.parse(readFileSync(foundationManifestPath, 'utf-8'))
 
 async function restartRuntime (runtime) {
   runtime.logger.info('Received SIGUSR2, restarting all applications ...')
@@ -189,6 +197,8 @@ async function loadRuntimeConfiguration (target, context) {
     would later run.
   */
   const diagnostics = context?.logger ?? abstractLogger
+  const runtimeIdentity = { name, version, path: dirname(import.meta.filename) }
+  const versionReference = getGlobal()?.cliPackage ?? runtimeIdentity
   const explicitProduction = context?.isProduction ?? context?.production
   const command = context?.command ?? (explicitProduction ? 'start' : 'dev')
   const production = explicitProduction ?? isProductionCommand(command)
@@ -235,7 +245,16 @@ async function loadRuntimeConfiguration (target, context) {
     // both the schema import and the version stamp — the application's own dependencies still
     // come first.
     runtimeScope: import.meta.filename,
+    versionReference,
     configure: async (config, { root }) => {
+      const versionOptions = { policy: config.versionMismatch, onWarning: warning => diagnostics.warn(warning.message) }
+      checkPackageVersion(versionReference, runtimeIdentity, versionOptions)
+      checkPackageVersion(versionReference, {
+        name: foundationPackage.name,
+        version: foundationPackage.version,
+        path: dirname(foundationManifestPath)
+      }, versionOptions)
+
       const extensions = resolveExtensions(config, { root, build: context?.build || command === 'build' })
       await configureExtensions(config, extensions, { root })
       // Check hook output before applications consume it without injecting defaults early.
@@ -299,6 +318,8 @@ async function loadRuntimeConfiguration (target, context) {
       A legacy runtime has no such context and keeps resolving configuration files worker-side.
     */
     loader: {
+      versionReference,
+      onWarning: shared.onWarning,
       command,
       mode: loaded.mode,
       production: loaded.production,

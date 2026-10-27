@@ -11,6 +11,8 @@ export const exitCodes = {
 
 export const ERROR_PREFIX = 'PLT_RUNTIME'
 
+export const PackageVersionMismatchError = createError(`${ERROR_PREFIX}_PACKAGE_VERSION_MISMATCH`, '%s')
+
 export const AddressInUseError = createError(
   `${ERROR_PREFIX}_EADDR_IN_USE`,
   'Port %d is already in use by applications "%s" and "%s"'

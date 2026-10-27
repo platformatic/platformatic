@@ -51,4 +51,34 @@ passing the function to the factory.
 
 Per-application configuration files accept the same functional form and receive the same context.
 
+## Package version mismatches
+
+Watt checks the loaded `wattpm`, `@platformatic/runtime`, and `@platformatic/foundation`
+versions before validating applications. Capabilities released together with Watt are checked against the same
+`wattpm` version, including automatically detected applications. When using the runtime
+programmatically without the CLI, its version is the reference instead.
+
+By default, major differences fail, minor differences warn, patch differences are allowed, and
+prerelease differences fail. Set `versionMismatch` in the main configuration to override the
+minor, patch, and prerelease policy:
+
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  versionMismatch: 'warn', // Use 'error' to reject every version difference.
+  applications: [{ id: 'api', path: './web/api' }]
+})
+```
+
+Major differences always fail. Build metadata is ignored. This policy also applies to differences
+between the configuration factory and the capability loaded by the worker. Third-party capability
+versions are not compared against Watt's version. This also excludes independently released adapters
+in the `@platformatic` scope, such as PHP and pg-hooks; their factory/implementation checks still apply.
+
+Diagnostics include the actual installed versions and paths, which can differ when launching
+through `npx`. Align the installed packages to resolve `PLT_RUNTIME_PACKAGE_VERSION_MISMATCH`
+errors for the core chain or `PLT_PACKAGE_VERSION_MISMATCH` for capabilities;
+factory/implementation mismatches retain the `PLT_CAPABILITY_VERSION_SKEW` error code.
+
 <SharedConfiguration/>
