@@ -142,6 +142,24 @@ test('logs errors during startup', async t => {
   strictEqual(data.includes('Error: boom'), true)
 })
 
+test('fails to start an application that does not listen when it cannot get ready', async t => {
+  const appPath = join(fixturesDir, 'serviceAppThrowsOnReady')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceAppThrowsOnReady',
+    config: configFile,
+    path: appPath,
+    entrypoint: false,
+    watch: false,
+    dependencies: []
+  }
+  const app = new Controller({}, config)
+
+  await app.init()
+  t.after(() => app.stop(true))
+  await rejects(() => app.start(), /boom on ready/)
+})
+
 test('returns application statuses', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.no-logging.json')

@@ -111,8 +111,15 @@ export class ServiceCapability extends BaseCapability {
     // Create the application if needed
     if (!this.#app) {
       await this.init()
-      await this.#app.ready()
     }
+
+    // The runtime calls init() before start(), so the application can already exist here without being
+    // ready. Ready it in any case: an application that does not listen would otherwise compile its route
+    // schemas and run its onReady hooks only when something first readies it, usually the first request
+    // injected into it. Fastify does that work once, so a later ready() or listen() does not repeat it.
+    // headersTimeout, which _listen() also applies, is set first so that the onReady hooks see it.
+    this.#applyHeadersTimeout()
+    await this.#app.ready()
 
     if (listen) {
       await this._listen()
@@ -326,10 +333,7 @@ export class ServiceCapability extends BaseCapability {
       listenOptions.backlog = serverOptions.backlog
     }
 
-    // Fastify handles keepAliveTimeout but has no option for headersTimeout
-    if (typeof serverOptions?.headersTimeout === 'number') {
-      this.#app.server.headersTimeout = serverOptions.headersTimeout
-    }
+    this.#applyHeadersTimeout()
 
     await this.#app.listen(listenOptions)
     this.url = getServerUrl(this.#app.server)
@@ -339,5 +343,12 @@ export class ServiceCapability extends BaseCapability {
     }
 
     return this.url
+  }
+
+  #applyHeadersTimeout () {
+    // Fastify handles keepAliveTimeout but has no option for headersTimeout
+    if (typeof this.serverConfig?.headersTimeout === 'number') {
+      this.#app.server.headersTimeout = this.serverConfig.headersTimeout
+    }
   }
 }
