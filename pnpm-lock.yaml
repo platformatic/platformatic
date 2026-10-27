@@ -899,8 +899,8 @@ importers:
   packages/gateway:
     dependencies:
       '@fastify/compress':
-        specifier: ^9.2.2
-        version: 9.2.2
+        specifier: ^9.3.0
+        version: 9.3.0
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.1
@@ -3467,6 +3467,9 @@ packages:
 
   '@fastify/compress@9.2.2':
     resolution: {integrity: sha512-FF1CSw1ED4f2lZmYDXmpHgDJLj752JBr7Tdv6Z5SYkZmbvwzlagWwKvF3OGWPzbL7pRFgoki6rNyh/yu8tb92w==}
+
+  '@fastify/compress@9.3.0':
+    resolution: {integrity: sha512-vvm+933zsfsnw7nKsy2GWyix54k7aq3j+9EkwfH6ncngt+DUt5tgVQ/uH07/JrbOWXt1mjADjZ5MbKKwu1xhmA==}
 
   '@fastify/cookie@11.1.3':
     resolution: {integrity: sha512-RBhlMNsmSG6C5KGiTkhSXBF75xIrUMSytDDBcpnVewhJ8XVYnJTu+SV6FYKXClIRsBuRjOfKbBSULvnPD3X/mg==}
@@ -13302,6 +13305,12 @@ snapshots:
   '@fastify/busboy@3.2.4': {}
 
   '@fastify/compress@9.2.2':
+    dependencies:
+      '@fastify/accept-negotiator': 2.1.2
+      fastify-plugin: 6.0.1
+      mime-db: 1.54.0
+
+  '@fastify/compress@9.3.0':
     dependencies:
       '@fastify/accept-negotiator': 2.1.2
       fastify-plugin: 6.0.1

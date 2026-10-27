@@ -1,8 +1,16 @@
 import assert from 'node:assert/strict'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { once } from 'node:events'
+import { PassThrough } from 'node:stream'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { brotliCompressSync, brotliDecompressSync, gunzipSync } from 'node:zlib'
+import {
+  brotliCompressSync,
+  brotliDecompressSync,
+  createBrotliDecompress,
+  createGunzip,
+  gunzipSync
+} from 'node:zlib'
 import { request } from 'undici'
 import { createApplication, createFromConfig, createGatewayInRuntime, REFRESH_TIMEOUT } from './helper.js'
 
@@ -194,6 +202,75 @@ test('should decide whether to compress by environment', async t => {
 
   const { headers } = await get(origin, '/page')
   assert.equal(headers['content-encoding'], undefined)
+})
+
+test('should deliver each part of a streamed response as soon as it is produced', async t => {
+  let onSource
+  const upstream = await createUpstream(t, [
+    {
+      method: 'GET',
+      url: '/stream',
+      handler (_, reply) {
+        const source = new PassThrough()
+        reply.type('text/html').send(source)
+        onSource(source)
+      }
+    }
+  ])
+  const origin = await createGateway(t, upstream, true)
+
+  for (const [acceptEncoding, createDecompress] of [
+    ['br', createBrotliDecompress],
+    ['gzip', createGunzip]
+  ]) {
+    // Without flushing, the data stays in the encoder: fail instead of waiting for it forever
+    const signal = AbortSignal.timeout(5000)
+    const sourceReady = new Promise(resolve => {
+      onSource = resolve
+    })
+    const responseReady = request(origin, {
+      method: 'GET',
+      path: '/stream',
+      headers: { 'accept-encoding': acceptEncoding },
+      signal
+    })
+
+    // The headers only leave the upstream along with the first part of the body
+    const source = await sourceReady
+    source.write('<html><body><p>shell</p>'.repeat(10))
+
+    const response = await responseReady
+    assert.equal(response.headers['content-encoding'], acceptEncoding)
+
+    const decompress = createDecompress()
+    response.body.pipe(decompress)
+
+    let received = ''
+    decompress.setEncoding('utf8')
+    decompress.on('data', chunk => {
+      received += chunk
+    })
+
+    async function receive (expected) {
+      while (!received.endsWith(expected)) {
+        await once(decompress, 'data', { signal })
+      }
+    }
+
+    // Each part reaches the client while the upstream is still holding the response open
+    await receive('<p>shell</p>')
+
+    source.write('<p>suspense</p>'.repeat(10))
+    await receive('<p>suspense</p>')
+
+    source.end('</body></html>')
+    await once(decompress, 'end')
+    assert.equal(
+      received,
+      '<html><body><p>shell</p>'.repeat(10) + '<p>suspense</p>'.repeat(10) + '</body></html>',
+      acceptEncoding
+    )
+  }
 })
 
 test('should compress the responses replayed by the deduplication', async t => {

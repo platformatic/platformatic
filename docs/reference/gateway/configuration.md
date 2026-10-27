@@ -410,6 +410,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   The compression runs in the gateway workers. The gateway asks the applications of the Runtime for uncompressed responses, by sending them `Accept-Encoding: identity`, so a response is compressed once, by the gateway, with the best encoding the client accepts. There is no need to disable the compression of the applications, for instance the `compress` option of Next.js. Applications outside the Runtime receive the `Accept-Encoding` of the client.
 
+  Streamed responses stay progressive: whenever the application pauses between two parts of a response, for instance between the shell and the Suspense chunks of a Next.js page, the gateway flushes what it has compressed so far, so each part reaches the client as soon as it is produced.
+
   A response is not compressed when the client does not accept any of the configured encodings, when it is already encoded, when its `Cache-Control` contains `no-transform`, when its type is not compressible (for instance, images), when it is a partial (`206`) response, or when it is a response to a `HEAD` request. Responses which can be compressed carry `Vary: Accept-Encoding`, even when a client gets them uncompressed.
 
   ```json

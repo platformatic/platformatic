@@ -56,7 +56,10 @@ export async function registerCompression (app, compression) {
     brotliOptions: {
       params: { [constants.BROTLI_PARAM_QUALITY]: compression.brotliQuality }
     },
-    zlibOptions: { level: compression.gzipLevel }
+    zlibOptions: { level: compression.gzipLevel },
+    // Flush whatever the encoder holds as soon as the upstream pauses, so that streamed
+    // responses, such as the shell and the Suspense chunks of a page, reach the client as they are produced
+    flushOnIdle: true
   })
 }
 
