@@ -256,7 +256,12 @@ function createMapper (
     }
     const criteria = computeCriteria(args)
 
-    const res = await queries.updateMany(db, sql, table, schema, criteria, input, fieldsToRetrieve)
+    let res = null
+    if (db.connectionInfo.isMySql || db.connectionInfo.isMariaDB) {
+      res = await queries.updateMany(db, sql, table, schema, criteria, input, primaryKeys, fieldsToRetrieve)
+    } else {
+      res = await queries.updateMany(db, sql, table, schema, criteria, input, fieldsToRetrieve)
+    }
     return res.map(fixOutput)
   }
 
