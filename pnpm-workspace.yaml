@@ -88,6 +88,17 @@ overrides:
   # @nestjs/platform-fastify@11 pins fastify@5.11.3, which has known high severity CVEs
   # fixed in 5.12.2. Remove when moving to Nest 12, which pins fastify@5.12.5.
   '@nestjs/platform-fastify>fastify': 5.12.7
+  # Dev-only tooling pulled in by @remix-run/dev@2 and nitro@3.0.1-alpha.2 with known CVEs.
+  'vite@<6.4.4': 6.4.4
+  'react-router@<6.30.6': 6.30.6
+  'react-router-dom@<6.30.6': 6.30.6
+  toml: 5.0.1
+  estree-util-value-to-estree: 3.3.3
+  'cacache@17>tar': 7.5.22
+  'hyperid>uuid': 11.1.1
+  'multer@<2.5.0': 2.5.0
+  'katex@<0.18.2': 0.18.2
+  'serialize-javascript@<7.1.3': 7.1.3
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest
