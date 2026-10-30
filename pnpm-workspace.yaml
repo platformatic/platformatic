@@ -76,6 +76,8 @@ minimumReleaseAgeExclude:
   - "@opentelemetry/sdk-trace-base@2.12.0"
   - "@opentelemetry/sdk-trace-node@2.12.0"
   - "@opentelemetry/sdk-trace@2.12.0"
+  # Renovate security update: graphql-scalars@2.0.1
+  - graphql-scalars@2.0.1
 nodeLinker: hoisted
 # With the hoisted linker, a tree containing several esbuild versions can end up with the
 # `esbuild` package and the hoisted `@esbuild/<platform>` binary at different versions, which
