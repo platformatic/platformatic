@@ -19,6 +19,14 @@ export const CouldNotReadOpenAPIConfigError = createError(
   `${ERROR_PREFIX}_COULD_NOT_READ_OPENAPI_CONFIG`,
   'Could not read openapi config for "%s" application'
 )
+export const CouldNotReadGraphQLSchemaFileError = createError(
+  `${ERROR_PREFIX}_COULD_NOT_READ_GRAPHQL_SCHEMA_FILE`,
+  'Could not read the GraphQL schema file "%s" of the "%s" application: %s'
+)
+export const InvalidGraphQLSchemaFileError = createError(
+  `${ERROR_PREFIX}_INVALID_GRAPHQL_SCHEMA_FILE`,
+  'The GraphQL schema file "%s" of the "%s" application is not a valid GraphQL schema: %s'
+)
 export const InvalidOpenAPISchemaError = createError(
   `${ERROR_PREFIX}_INVALID_OPENAPI_SCHEMA`,
   'Failed to compose OpenAPI schemas: %s'

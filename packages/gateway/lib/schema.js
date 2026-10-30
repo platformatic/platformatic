@@ -103,6 +103,7 @@ export const graphqlApplication = {
         name: { type: 'string' },
         graphqlEndpoint: { type: 'string', default: '/graphql' },
         composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
+        file: { type: 'string', resolvePath: true },
         entities
       },
       additionalProperties: false

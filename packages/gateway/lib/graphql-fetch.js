@@ -1,4 +1,7 @@
 import { compose } from '@platformatic/graphql-composer'
+import { buildSchema } from 'graphql'
+import { readFile } from 'node:fs/promises'
+import { CouldNotReadGraphQLSchemaFileError, InvalidGraphQLSchemaFileError } from './errors.js'
 
 const placeholderSdl = 'Query { _info: String }'
 const placeholderResolvers = { Query: { _info: '@platformatic/gateway' } }
@@ -56,11 +59,11 @@ export function isSameGraphqlSchema (a, b) {
   return a?.sdl === b?.sdl
 }
 
-export function applicationToSubgraphConfig (application) {
+export function applicationToSubgraphConfig (application, sdl) {
   if (!application.graphql) {
     return
   }
-  return {
+  const subgraph = {
     name: application.graphql.name || application.id || application.origin,
     entities: application.graphql.entities,
     server: {
@@ -69,10 +72,52 @@ export function applicationToSubgraphConfig (application) {
       graphqlEndpoint: application.graphql.graphqlEndpoint
     }
   }
+  if (sdl !== undefined) {
+    subgraph.sdl = sdl
+  }
+  return subgraph
+}
+
+// A schema file is read once, on the first composition: the schema of the application is neither fetched
+// from the application nor read again when the gateway polls the applications for changes.
+const schemaFiles = new WeakMap()
+
+async function readGraphqlSchemaFile (application) {
+  const file = application.graphql?.file
+  if (!file) {
+    return
+  }
+
+  if (schemaFiles.has(application)) {
+    return schemaFiles.get(application)
+  }
+
+  let sdl
+  try {
+    sdl = await readFile(file, 'utf8')
+  } catch (err) {
+    throw new CouldNotReadGraphQLSchemaFileError(file, application.id, err.message)
+  }
+
+  try {
+    buildSchema(sdl)
+  } catch (err) {
+    throw new InvalidGraphQLSchemaFileError(file, application.id, err.message)
+  }
+
+  schemaFiles.set(application, sdl)
+  return sdl
 }
 
 export async function fetchGraphqlSubgraphs (applications, options, app) {
-  const subgraphs = applications.map(applicationToSubgraphConfig).filter(s => !!s)
+  const subgraphs = []
+  for (const application of applications) {
+    const subgraph = applicationToSubgraphConfig(application, await readGraphqlSchemaFile(application))
+    if (subgraph) {
+      subgraphs.push(subgraph)
+    }
+  }
+
   const gateway = await compose({ ...toGatewayOptions(options, app), subgraphs })
 
   return createSupergraph({
