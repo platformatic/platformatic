@@ -197,6 +197,67 @@ export const deduplication = {
   additionalProperties: false
 }
 
+export const compression = {
+  anyOf: [
+    { type: 'boolean' },
+    { type: 'string' },
+    {
+      type: 'object',
+      properties: {
+        // The runtime's own `enabled` of an application: a boolean, a string, or booleans by environment
+        enabled: utilsSchemaComponents.applications.items.properties.enabled,
+        encodings: {
+          type: 'array',
+          items: { type: 'string', enum: ['br', 'gzip', 'deflate'] },
+          minItems: 1,
+          description: 'The encodings to offer, in order of preference. Defaults to ["br", "gzip"].'
+        },
+        brotli: {
+          type: 'object',
+          properties: {
+            quality: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 11,
+              description: 'The brotli quality. Defaults to 4.'
+            }
+          },
+          additionalProperties: false
+        },
+        gzip: {
+          type: 'object',
+          properties: {
+            level: {
+              type: 'integer',
+              minimum: -1,
+              maximum: 9,
+              description: 'The gzip and deflate level. Defaults to 6.'
+            }
+          },
+          additionalProperties: false
+        },
+        threshold: {
+          type: 'integer',
+          minimum: 0,
+          description:
+            'Responses whose Content-Length is smaller than this number of bytes are not compressed. Defaults to 1024.'
+        },
+        exclude: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            'Paths whose responses are never compressed, for instance routes compressed by a CDN. ' +
+            'A "*" matches any sequence of characters, so "/assets/*" excludes everything under "/assets/".'
+        }
+      },
+      additionalProperties: false
+    }
+  ],
+  description:
+    'Compress the responses of the proxied applications. When enabled, the applications running in the runtime ' +
+    'are asked for uncompressed responses, so that each response is only compressed once, by the gateway.'
+}
+
 export const gateway = {
   type: 'object',
   properties: {
@@ -256,6 +317,12 @@ export const gateway = {
                     additionalProperties: false
                   },
                   deduplication,
+                  compression: {
+                    type: 'boolean',
+                    description:
+                      'Set to false to leave the responses of this application alone: they are not compressed by ' +
+                      'the gateway and the Accept-Encoding header of the client is forwarded as it is.'
+                  },
                   ws: {
                     type: 'object',
                     properties: {
@@ -297,6 +364,7 @@ export const gateway = {
     },
     handler: { type: 'string' },
     deduplication,
+    compression,
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
     addEmptySchema: { type: 'boolean', default: false },
@@ -347,6 +415,7 @@ export const schemaComponents = {
   deduplicationRoute,
   deduplicationStorage,
   deduplication,
+  compression,
   gateway,
   types
 }

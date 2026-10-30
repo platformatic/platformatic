@@ -21,6 +21,8 @@ minimumReleaseAgeExclude:
   - fastify-user@2.0.0
   # Renovate security update: protobufjs@8.0.1
   - protobufjs@8.0.1
+  # @fastify/compress@9.3.0 was published on 2026-10-27; it adds flushOnIdle, used by the gateway compression
+  - '@fastify/compress@9.3.0'
   # Renovate security update: fast-uri@3.1.2 || 4.1.1 || 4.1.5
   - fast-uri@3.1.2 || 4.1.1 || 4.1.5
   # Renovate security update: next@16.2.5 || 16.2.6 || 16.3.6 || 16.3.8
