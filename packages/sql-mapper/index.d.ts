@@ -60,8 +60,8 @@ export interface DBEntityField {
    */
   foreignKey?: boolean,
   /**
-   * An option that is true if a foreign key field is stringified in mapper output
-   * because it references a primary key.
+   * An option that is true if the field is exposed as a string in the mapper
+   * output, the JSON schemas and the generated types.
    */
   stringifyOutput?: boolean,
   /**
@@ -468,7 +468,14 @@ export interface SQLMapperPluginOptions extends BasePoolOptions {
    * Query caching Configuration
    * @default false
    */
-  cache?: cacheOptions
+  cache?: cacheOptions,
+  /**
+   * Derive the exposed type of every column from its SQL type. When false, primary
+   * keys and the foreign keys referencing them are always exposed as strings, even
+   * when their SQL type is a JSON-safe number such as int4.
+   * @default false
+   */
+  usePrimaryKeySqlType?: boolean
 }
 
 export interface Entities {
