@@ -1102,8 +1102,8 @@ importers:
         version: 7.30.1
     devDependencies:
       '@types/inquirer':
-        specifier: ^9.0.7
-        version: 9.0.10
+        specifier: ^10.0.0
+        version: 10.0.0(@types/node@22.20.5)
       c8:
         specifier: ^12.0.0
         version: 12.0.0
@@ -6075,8 +6075,9 @@ packages:
   '@types/hast@3.0.5':
     resolution: {integrity: sha512-rp/ezSWaD1m44dPKICGhiskI13nVr7qTloFwDa/IYkhhf5nzwP+zIQcIJh3WIFSBOy/H1PzB40jPjMDksN4F+g==}
 
-  '@types/inquirer@9.0.10':
-    resolution: {integrity: sha512-vFW2WbXwO9eZpRT5GJGFJ/shgyMNnYozmnjakt9jCQSS1lvqX8pZEQMjJ9RdDPct/YxwciQ8+V8OYn9euIrZDA==}
+  '@types/inquirer@10.0.0':
+    resolution: {integrity: sha512-h1Y4dQCbTBrV3s6ITOi77IKZDqnnhSvOm6gC48VlJ1wd3Z33SUkrvbalwhfaC6OXrgZL0fNldv5+aty7+Z3Xhw==}
+    deprecated: This is a stub types definition. inquirer provides its own type definitions, so you do not need this installed.
 
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
@@ -6127,9 +6128,6 @@ packages:
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
-
-  '@types/through@0.0.33':
-    resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
 
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
@@ -16342,10 +16340,11 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/inquirer@9.0.10':
+  '@types/inquirer@10.0.0(@types/node@22.20.5)':
     dependencies:
-      '@types/through': 0.0.33
-      rxjs: 7.8.2
+      inquirer: 13.4.3(@types/node@22.20.5)
+    transitivePeerDependencies:
+      - '@types/node'
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
@@ -16396,10 +16395,6 @@ snapshots:
       csstype: 3.2.3
 
   '@types/resolve@1.20.2': {}
-
-  '@types/through@0.0.33':
-    dependencies:
-      '@types/node': 22.20.5
 
   '@types/unist@2.0.11': {}
 
