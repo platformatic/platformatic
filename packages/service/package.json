@@ -58,7 +58,7 @@
     "@platformatic/metrics": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@scalar/fastify-api-reference": "1.76.2",
+    "@scalar/fastify-api-reference": "1.76.3",
     "@types/node": "^22.10.6",
     "@types/ws": "^8.5.10",
     "ajv": "^8.12.0",
