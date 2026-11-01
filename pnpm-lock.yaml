@@ -659,8 +659,8 @@ importers:
         version: 0.3.0
     devDependencies:
       '@databases/pg':
-        specifier: ^5.5.0
-        version: 5.5.0(typescript@6.0.3)
+        specifier: ^6.0.0
+        version: 6.1.0(typescript@6.0.3)
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
@@ -2257,8 +2257,8 @@ importers:
         specifier: ^7.0.0
         version: 7.1.0(@types/node@22.20.5)(typescript@6.0.3)
       '@databases/pg':
-        specifier: ^5.5.0
-        version: 5.5.0(typescript@6.0.3)
+        specifier: ^6.0.0
+        version: 6.1.0(typescript@6.0.3)
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
@@ -2528,8 +2528,8 @@ importers:
         version: 5.1.0
     devDependencies:
       '@databases/pg':
-        specifier: ^5.5.0
-        version: 5.5.0(typescript@6.0.3)
+        specifier: ^6.0.0
+        version: 6.1.0(typescript@6.0.3)
       '@opentelemetry/instrumentation-express':
         specifier: 0.72.0
         version: 0.72.0(@opentelemetry/api@1.10.0)(supports-color@10.2.2)
@@ -3181,20 +3181,20 @@ packages:
   '@databases/mysql@7.1.0':
     resolution: {integrity: sha512-iDMUmqbHxCjL8XK8K782TvmykY3t6mAOoG/633zDykzOmgJHhHa+oQGjz2MrT8PX6zO6RdhAWaoKBQ8qEefJjQ==}
 
-  '@databases/pg-config@3.4.0':
-    resolution: {integrity: sha512-4dYiTbHjzyQfEfaIGkh3uCBNBRWPs5Jcws94cFagLAGnjO/TcghC7oexzC81+bIADLDlpCw7DEWJAK/gNSQxkw==}
+  '@databases/pg-config@4.0.0':
+    resolution: {integrity: sha512-uOrSzzL9raY4NxyxK/7am1uuLoHIvtdrKDvbs8/e04sMOmAgVjzgt8gAOmeoRaK+xLb06vbcj2eGMYtxEnRz6w==}
 
-  '@databases/pg-connection-string@1.0.0':
-    resolution: {integrity: sha512-8czOF9jlv7PlS7BPjnL82ynpDs1t8cu+C2jvdtMr37e8daPKMS7n1KfNE9xtr2Gq4QYKjynep097eYa5yIwcLA==}
+  '@databases/pg-connection-string@2.0.0':
+    resolution: {integrity: sha512-esUo8r0cu15rCymUGOLANgTKiHhpUmHwCnzNWRAf97JaEuF+auFKOpOStjbD0blQe9Aj7wQ9S5UJ7zgjzrhvvQ==}
 
-  '@databases/pg-data-type-id@3.0.0':
-    resolution: {integrity: sha512-VqW1csN8pRsWJxjPsGIC9FQ8wyenfmGv0P//BaeDMAu/giM3IXKxKM8fkScUSQ00uqFK/L1iHS5g6dgodF3XzA==}
+  '@databases/pg-data-type-id@4.0.0':
+    resolution: {integrity: sha512-onKpKnBMkos37Ktzsup5UPYGs8yGSC5ViEz3DS9IjMI7YRGBnHKoTsgdKog/lj20RFhFeqWpeHv8uAQko3RwyQ==}
 
-  '@databases/pg-errors@1.0.0':
-    resolution: {integrity: sha512-Yz3exbptZwOn4ZD/MSwY6z++XVyOFsMh5DERvSw3awRwJFnfdaqdeiIxxX0MVjM6KPihF0xxp8lPO7vTc5ydpw==}
+  '@databases/pg-errors@2.0.0':
+    resolution: {integrity: sha512-GY6nO1cPUyp/ZiSDclNbPx/RYGWBK+p3K+eoyPnGgF8VvGZwjPSRHmY1rEXwG5Vd463zaXqW7oATDYImZNNyTw==}
 
-  '@databases/pg@5.5.0':
-    resolution: {integrity: sha512-WIojK9AYIlNi5YRfc5YUOow3PQ82ClmwT9HG3nEsKLUERYieoVmHMYDQLS0ry6FjgJx+2yFs7LCw4kZpWu1TBw==}
+  '@databases/pg@6.1.0':
+    resolution: {integrity: sha512-f2y0zIw3HZTihigC3vB6Bs3xqER1MhWPyfbv84zCW5JhvNPyM9iI7EhUhLQMIkmfZQkOJsvRK550Pon0mC/QtQ==}
 
   '@databases/push-to-async-iterable@3.0.0':
     resolution: {integrity: sha512-xwu/yNgINdMU+fn6UwFsxh+pa6UrVPafY+0qm0RK0/nKyjllfDqSbwK4gSmdmLEwPYxKwch9CAE3P8NxN1hPSg==}
@@ -13032,27 +13032,27 @@ snapshots:
       - '@types/node'
       - typescript
 
-  '@databases/pg-config@3.4.0(typescript@6.0.3)':
+  '@databases/pg-config@4.0.0(typescript@6.0.3)':
     dependencies:
       cosmiconfig: 8.3.6(typescript@6.0.3)
       funtypes: 4.2.0
     transitivePeerDependencies:
       - typescript
 
-  '@databases/pg-connection-string@1.0.0': {}
+  '@databases/pg-connection-string@2.0.0': {}
 
-  '@databases/pg-data-type-id@3.0.0': {}
+  '@databases/pg-data-type-id@4.0.0': {}
 
-  '@databases/pg-errors@1.0.0': {}
+  '@databases/pg-errors@2.0.0': {}
 
-  '@databases/pg@5.5.0(typescript@6.0.3)':
+  '@databases/pg@6.1.0(typescript@6.0.3)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@databases/escape-identifier': 1.0.3
-      '@databases/pg-config': 3.4.0(typescript@6.0.3)
-      '@databases/pg-connection-string': 1.0.0
-      '@databases/pg-data-type-id': 3.0.0
-      '@databases/pg-errors': 1.0.0
+      '@databases/pg-config': 4.0.0(typescript@6.0.3)
+      '@databases/pg-connection-string': 2.0.0
+      '@databases/pg-data-type-id': 4.0.0
+      '@databases/pg-errors': 2.0.0
       '@databases/push-to-async-iterable': 3.0.0
       '@databases/shared': 3.2.0
       '@databases/split-sql-query': 1.0.4(@databases/sql@3.3.0)
