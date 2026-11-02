@@ -690,9 +690,23 @@ export interface PlatformaticDatabaseConfig {
         gracePeriod?: number | string;
         maxUnhealthyChecks?: number | string;
         maxELU?: number | string;
+        maxELULogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxEventLoopDelay?: number | string;
         maxEventLoopDelayP99?: number | string;
         maxHeapUsed?: number | string;
+        maxHeapUsedLogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;
@@ -944,9 +958,23 @@ export interface PlatformaticDatabaseConfig {
       gracePeriod?: number | string;
       maxUnhealthyChecks?: number | string;
       maxELU?: number | string;
+      maxELULogLevel?: (
+        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+        | {
+            [k: string]: unknown;
+          }
+      ) &
+        string;
       maxEventLoopDelay?: number | string;
       maxEventLoopDelayP99?: number | string;
       maxHeapUsed?: number | string;
+      maxHeapUsedLogLevel?: (
+        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+        | {
+            [k: string]: unknown;
+          }
+      ) &
+        string;
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
       codeRangeSize?: number | string;
@@ -1446,9 +1474,23 @@ export interface PlatformaticDatabaseConfig {
         gracePeriod?: number | string;
         maxUnhealthyChecks?: number | string;
         maxELU?: number | string;
+        maxELULogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxEventLoopDelay?: number | string;
         maxEventLoopDelayP99?: number | string;
         maxHeapUsed?: number | string;
+        maxHeapUsedLogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;

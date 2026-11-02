@@ -502,9 +502,11 @@ The object supports the following settings:
 - `gracePeriod` (`number`): How long after the application started before starting to perform health checks. Default: `30000`.
 - `maxUnhealthyChecks` (`number`): The number of consecutive failed checks before killing the worker. Default: `10`.
 - `maxELU` (`number`): The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
+- `maxELULogLevel` (`string`): The log level for messages reporting that `maxELU` was exceeded. Accepts `trace`, `debug`, `info`, `warn`, `error`, `fatal`, or `silent` to suppress the message. Default: `error`.
 - `maxEventLoopDelay` (`number`): The maximum allowed event loop delay in milliseconds. When set, each worker samples its own event loop delay (via `perf_hooks.monitorEventLoopDelay`) and reports it once per second as an `eventLoopDelay` health signal; a worker whose maximum delay over a check window exceeds this value counts as unhealthy. This catches long individual stalls at low average utilization (a 150ms synchronous stall each second is an ELU of just 0.15), which are invisible to `maxELU`. Disabled by default.
 - `maxEventLoopDelayP99` (`number`): The maximum allowed p99 event loop delay in milliseconds. Same mechanism as `maxEventLoopDelay`, but evaluated against the worst per-second p99 reported over the check window instead of the absolute maximum, so single outlier stalls are smoothed out. Either option activates the sampler; they can be combined. Disabled by default.
 - `maxHeapUsed` (`number`): The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
+- `maxHeapUsedLogLevel` (`string`): The log level for messages reporting that `maxHeapUsed` was exceeded. Accepts `trace`, `debug`, `info`, `warn`, `error`, `fatal`, or `silent` to suppress the message. Default: `error`.
 - `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units. Default: `4GB`.
 - `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. Default: `128MB`
 - `codeRangeSize` (`number` or `string`): The maximum amount of memory that can be used for code range (compiled code). The value must be an amount in bytes or in memory units. Default: `268435456` (256MB).
@@ -512,6 +514,8 @@ The object supports the following settings:
 - `defaultHighWaterMark` (`number` or `string`): Sets the default high water mark for byte streams via Node.js [`stream.setDefaultHighWaterMark(false, value)`](https://nodejs.org/api/stream.html#streamsetdefaulthighwatermarkobjectmode-value). The value must be an amount in bytes or in memory units. Default: `262144` (256KB).
 
 `bufferPoolSize` is intentionally larger than the Node.js default and should be treated as an aggressive server-oriented default. Node.js pools [`Buffer.allocUnsafe()`](https://nodejs.org/api/buffer.html#static-method-bufferallocunsafesize) allocations only when `size < (Buffer.poolSize >>> 1)`, so the 256KB default serves allocations smaller than 128KB from the pool. This covers common server allocation sizes such as HTTP parser buffers, stream chunks, and small file reads in the 4KB-64KB range, reducing allocator work and Worker-thread contention. The trade-off is one larger pool per worker/realm, and RSS can stay higher while pooled slices are retained; lower this value for memory-constrained deployments.
+
+`maxELULogLevel` and `maxHeapUsedLogLevel` can also be overridden in each application's `health` configuration. They only control threshold messages: health checks, worker replacement, and replacement error logs remain unchanged, including when either level is `silent`.
 
 ### `healthProbes`
 
