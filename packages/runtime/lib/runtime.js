@@ -3698,8 +3698,23 @@ export class Runtime extends EventEmitter {
       this.logger.debug(`Preparing to stop the old version of ${label} ...`)
     }
 
-    // Remove the old worker and then kill it
-    await sendViaITC(worker, 'removeFromMesh')
+    // From now on the worker is going away: if it exits for any reason (including a forced termination
+    // after a mesh error) it must not be considered crashed and therefore restarted.
+    worker[kWorkerStatus] = 'stopping'
+
+    // Remove the old worker from the mesh
+    try {
+      await sendViaITC(worker, 'removeFromMesh')
+    } catch (e) {
+      // This usually happens when another thread does not acknowledge the route removal in time
+      // (for instance because its event loop is blocked). The worker is being stopped anyway.
+      this.logger.warn({ err: ensureLoggableError(e) }, `Cannot remove the ${label} from the mesh. Stopping it anyway ...`)
+    }
+
+    // The worker exited while removing it from the mesh, there is nothing left to stop
+    if (worker[kWorkerStatus] === 'exited') {
+      return
+    }
 
     // Stop the old worker to free the port
     await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
@@ -4849,6 +4864,18 @@ export class Runtime extends EventEmitter {
 
   #onMeshInterceptorError (error) {
     const worker = error.port
+    const status = worker[kWorkerStatus]
+
+    // The worker is already being stopped (typically it is being replaced and its removal from the mesh
+    // timed out): terminating it here would make it look like a crash and trigger a restart.
+    if (status === 'stopping' || status === 'stopped' || status === 'exited') {
+      this.logger.debug(
+        { err: ensureLoggableError(error.cause) },
+        `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup while stopping. Ignoring it ...`
+      )
+
+      return
+    }
 
     this.logger.error(
       { err: ensureLoggableError(error.cause) },

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.6.0.json",
+  "watch": false,
+  "entrypoint": "blocker",
+  "restartOnError": 500,
+  "applications": [
+    {
+      "id": "blocker",
+      "path": "./blocker",
+      "config": "platformatic.json"
+    },
+    {
+      "id": "target",
+      "path": "./target",
+      "config": "platformatic.json"
+    }
+  ],
+  "logger": {
+    "level": "trace"
+  }
+}
