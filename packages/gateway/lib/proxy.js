@@ -8,7 +8,9 @@ import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
-import { WsNoTcpUpstreamError } from './errors.js'
+import { createEarlyFlushHandler, kEarlyFlush } from './early-flush/index.js'
+import { createProxyResponse } from './proxy-response.js'
+import { EarlyFlushInvalidOptionError, WsNoTcpUpstreamError } from './errors.js'
 import { initMetrics } from './metrics.js'
 import { WsUpstreams } from './ws-upstreams.js'
 
@@ -122,11 +124,18 @@ async function proxyPlugin (app, opts) {
   }
 
   let handler
+  let customAcquireResponse
   if (opts.handler) {
     const require = createRequire(import.meta.filename)
     const custom = await loadModule(require, resolve(root, opts.handler))
+    customAcquireResponse = custom.acquireResponse
+    if (customAcquireResponse !== undefined && typeof customAcquireResponse !== 'function') {
+      throw new EarlyFlushInvalidOptionError('acquireResponse must be a function')
+    }
 
-    if (typeof custom.handler === 'function') {
+    if (typeof custom === 'function') {
+      handler = custom
+    } else if (typeof custom.handler === 'function') {
       handler = custom.handler
     } else if (typeof custom.default === 'function') {
       handler = custom.default
@@ -238,7 +247,8 @@ async function proxyPlugin (app, opts) {
     // (see wsUpstream below) would be the virtual mesh origin, which the raw WebSocket
     // client used by @fastify/http-proxy cannot resolve, so the upgrade would hang.
     // The absence checks deliberately mirror the nullish semantics of the wsUpstream expression.
-    const wsMeshOnly = isLocalApplication(application) && url == null && ws?.upstream == null && customGetUpstream == null
+    const wsMeshOnly =
+      isLocalApplication(application) && url == null && ws?.upstream == null && customGetUpstream == null
 
     let wsGuardPreHandler
     if (wsMeshOnly) {
@@ -269,7 +279,8 @@ async function proxyPlugin (app, opts) {
     // being dispatched to the same upstream as before.
     let getUpstream = customGetUpstream
     let proxyRewritePrefix = rewritePrefix
-    const wsTcpHandoff = isLocalApplication(application) && url != null && ws?.upstream == null && customGetUpstream == null
+    const wsTcpHandoff =
+      isLocalApplication(application) && url != null && ws?.upstream == null && customGetUpstream == null
     if (wsTcpHandoff) {
       wsUpstreams ??= new WsUpstreams(app.log)
       wsUpstreams.track(application.id, url)
@@ -310,7 +321,9 @@ async function proxyPlugin (app, opts) {
     const meshUpstream = upstream ? isMeshUpstream(upstream) : undefined
 
     let proxyHandler = handler
-    if (opts.deduplication?.enabled === true || application.proxy?.deduplication?.enabled === true) {
+    const deduplication = { ...opts.deduplication, ...application.proxy?.deduplication }
+    const deduplicateResponses = deduplication.enabled === true || deduplication.enabled === 'true'
+    if (deduplicateResponses) {
       proxyHandler = await createDeduplicationHandler({
         app,
         application,
@@ -318,6 +331,24 @@ async function proxyPlugin (app, opts) {
         overrideConfig: application.proxy?.deduplication,
         handler,
         metrics,
+        root,
+        send: compressResponses
+          ? (request, reply, body) => sendCompressed(request, reply, body, compression)
+          : undefined
+      })
+    }
+
+    const earlyFlush = application.proxy?.earlyFlush
+    if ((earlyFlush?.enabled === true || earlyFlush?.enabled === 'true') && earlyFlush.routes?.length && (!handler || customAcquireResponse)) {
+      const acquireResponse = customAcquireResponse ?? createProxyResponse({ app, dispatcher, upstream })
+      const deduplicate = deduplicateResponses ? proxyHandler : undefined
+      proxyHandler = await createEarlyFlushHandler({
+        app,
+        application,
+        handler: proxyHandler,
+        acquireResponse: (request, reply, dest, options) => deduplicate
+          ? deduplicate(request, reply, dest, options, acquireResponse)
+          : acquireResponse(request, dest, options),
         root,
         send: compressResponses ? (request, reply, body) => sendCompressed(request, reply, body, compression) : undefined
       })
@@ -431,7 +462,10 @@ async function proxyPlugin (app, opts) {
           // An application in the runtime is asked for an uncompressed response: compressing it there
           // would be wasted when the gateway compresses it anyway, and it would prevent the gateway from
           // choosing the encoding (for instance, Next.js only offers gzip).
-          if (compressResponses && (meshUpstream ?? isMeshUpstream(request[kProxiedUpstream]))) {
+          if (
+            request[kEarlyFlush] ||
+            (compressResponses && (meshUpstream ?? isMeshUpstream(request[kProxiedUpstream])))
+          ) {
             headers['accept-encoding'] = 'identity'
           }
 

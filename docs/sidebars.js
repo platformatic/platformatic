@@ -177,6 +177,7 @@ const sidebars = {
                 'reference/gateway/overview',
                 'reference/gateway/configuration',
                 'reference/gateway/deduplication',
+                'reference/gateway/early-flush',
                 'reference/gateway/api-modification',
                 'reference/gateway/plugin',
                 'reference/gateway/programmatic'

@@ -128,10 +128,11 @@ export const graphqlComposerOptions = {
 export const deduplicationRoute = {
   type: 'object',
   properties: {
-    method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] },
+    method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'QUERY'] },
     methods: {
       type: 'array',
-      items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] }
+      minItems: 1,
+      items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'QUERY'] }
     },
     path: { type: 'string' }
   },
@@ -195,6 +196,37 @@ export const deduplication = {
     lockTtl: { type: 'integer', minimum: 0, default: 500 }
   },
   additionalProperties: false
+}
+
+export const earlyFlush = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    enabled: { anyOf: [{ type: 'boolean' }, { type: 'string' }], default: false },
+    routes: {
+      type: 'array',
+      default: [],
+      items: deduplicationRoute
+    },
+    key: { type: 'string', resolvePath: true },
+    windowSize: { type: 'integer', minimum: 1, default: 30 },
+    minPreludeBytes: { type: 'integer', minimum: 1, default: 512 },
+    maxPrefixBytes: { type: 'integer', minimum: 1, default: 65536 },
+    maxKeys: { type: 'integer', minimum: 1, default: 1000 },
+    prefixPolicy: { type: 'string', enum: ['conservative', 'fifo'], default: 'conservative' },
+    redirectPolicy: { type: 'string', enum: ['conservative', 'fifo'], default: 'conservative' },
+    headers: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        allowlist: { type: 'array', items: { type: 'string' } },
+        excludeSetCookie: { type: 'boolean', default: true },
+        excludeCspNonce: { type: 'boolean', default: true },
+        keyHeaders: { type: 'array', items: { type: 'string' }, default: [] },
+        cacheControl: { type: 'string', default: 'no-store' }
+      }
+    }
+  }
 }
 
 export const compression = {
@@ -290,7 +322,7 @@ export const gateway = {
                   methods: {
                     type: 'array',
                     // Note: HEAD is purposely not included as it makes sense only if there is a GET route
-                    items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] },
+                    items: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'QUERY'] },
                     default: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
                   },
                   routes: {
@@ -317,6 +349,7 @@ export const gateway = {
                     additionalProperties: false
                   },
                   deduplication,
+                  earlyFlush,
                   compression: {
                     type: 'boolean',
                     description:

@@ -2,6 +2,19 @@ import createError from '@fastify/error'
 
 export const ERROR_PREFIX = 'PLT_GATEWAY'
 
+export const EarlyFlushInvalidOptionError = createError(
+  `${ERROR_PREFIX}_EARLY_FLUSH_INVALID_OPTION`, 'Invalid early flush option: %s'
+)
+export const EarlyFlushMismatchError = createError(
+  `${ERROR_PREFIX}_EARLY_FLUSH_MISMATCH`, 'Early flush response mismatch: %s', 502
+)
+export const EarlyFlushUpstreamError = createError(
+  `${ERROR_PREFIX}_EARLY_FLUSH_UPSTREAM_ERROR`, 'Early flush upstream failed: %s', 502
+)
+export const EarlyFlushCancelledError = createError(
+  `${ERROR_PREFIX}_EARLY_FLUSH_CANCELLED`, 'Early flush client disconnected', 499
+)
+
 export const FastifyInstanceIsAlreadyListeningError = createError(
   `${ERROR_PREFIX}_FASTIFY_INSTANCE_IS_ALREADY_LISTENING`,
   'Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"!'

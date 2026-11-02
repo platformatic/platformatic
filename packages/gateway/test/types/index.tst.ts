@@ -3,10 +3,13 @@ import type { BaseCapability } from '@platformatic/basic'
 import type { FastifyError, FastifyInstance } from 'fastify'
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
+import { Readable } from 'node:stream'
 import {
   type GatewayCommand,
   type GatewayCommandDefinition,
   type GatewayCapability,
+  type ComputePreludeKey,
+  type AcquireProxyResponse,
   type PlatformaticGatewayConfig,
   type ServerInstance,
   create,
@@ -25,6 +28,18 @@ test('Gateway types', () => {
   const serverInstance = {} as ServerInstance
   const command: GatewayCommand = { usage: 'start', description: 'start gateway' }
   const commandDefinition: GatewayCommandDefinition = { commands: {}, help: {} }
+  const computePreludeKey: ComputePreludeKey = async (request, { route, params, application }) => {
+    expect(route).type.toBe<string>()
+    expect(params.id).type.toBe<string | undefined>()
+    expect(application.id).type.toBe<string>()
+    return request.headers.authorization ? null : `${request.method} ${route}`
+  }
+  expect(computePreludeKey).type.toBe<ComputePreludeKey>()
+  const acquireResponse: AcquireProxyResponse = async (request, dest, options) => {
+    expect(dest).type.toBe<string>()
+    return { statusCode: 200, headers: { 'content-type': 'text/html' }, stream: Readable.from(['<html>']) }
+  }
+  expect(acquireResponse).type.toBe<AcquireProxyResponse>()
 
   expect(loadConfiguration('/tmp', config)).type.toBe<Promise<Configuration<PlatformaticGatewayConfig>>>()
   expect(create('/tmp', config)).type.toBe<Promise<GatewayCapability>>()

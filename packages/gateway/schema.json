@@ -931,7 +931,8 @@
                             "PUT",
                             "DELETE",
                             "PATCH",
-                            "OPTIONS"
+                            "OPTIONS",
+                            "QUERY"
                           ]
                         },
                         "default": [
@@ -1089,11 +1090,13 @@
                                     "DELETE",
                                     "PATCH",
                                     "OPTIONS",
-                                    "HEAD"
+                                    "HEAD",
+                                    "QUERY"
                                   ]
                                 },
                                 "methods": {
                                   "type": "array",
+                                  "minItems": 1,
                                   "items": {
                                     "type": "string",
                                     "enum": [
@@ -1103,7 +1106,8 @@
                                       "DELETE",
                                       "PATCH",
                                       "OPTIONS",
-                                      "HEAD"
+                                      "HEAD",
+                                      "QUERY"
                                     ]
                                   }
                                 },
@@ -1155,6 +1159,152 @@
                           }
                         },
                         "additionalProperties": false
+                      },
+                      "earlyFlush": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "enabled": {
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "default": false
+                          },
+                          "routes": {
+                            "type": "array",
+                            "default": [],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "method": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GET",
+                                    "POST",
+                                    "PUT",
+                                    "DELETE",
+                                    "PATCH",
+                                    "OPTIONS",
+                                    "HEAD",
+                                    "QUERY"
+                                  ]
+                                },
+                                "methods": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GET",
+                                      "POST",
+                                      "PUT",
+                                      "DELETE",
+                                      "PATCH",
+                                      "OPTIONS",
+                                      "HEAD",
+                                      "QUERY"
+                                    ]
+                                  }
+                                },
+                                "path": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "path"
+                              ],
+                              "anyOf": [
+                                {
+                                  "required": [
+                                    "method"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "methods"
+                                  ]
+                                }
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "key": {
+                            "type": "string",
+                            "resolvePath": true
+                          },
+                          "windowSize": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 30
+                          },
+                          "minPreludeBytes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 512
+                          },
+                          "maxPrefixBytes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 65536
+                          },
+                          "maxKeys": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 1000
+                          },
+                          "prefixPolicy": {
+                            "type": "string",
+                            "enum": [
+                              "conservative",
+                              "fifo"
+                            ],
+                            "default": "conservative"
+                          },
+                          "redirectPolicy": {
+                            "type": "string",
+                            "enum": [
+                              "conservative",
+                              "fifo"
+                            ],
+                            "default": "conservative"
+                          },
+                          "headers": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "allowlist": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "excludeSetCookie": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "excludeCspNonce": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "keyHeaders": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "default": []
+                              },
+                              "cacheControl": {
+                                "type": "string",
+                                "default": "no-store"
+                              }
+                            }
+                          }
+                        }
                       },
                       "compression": {
                         "type": "boolean",
@@ -1326,11 +1476,13 @@
                       "DELETE",
                       "PATCH",
                       "OPTIONS",
-                      "HEAD"
+                      "HEAD",
+                      "QUERY"
                     ]
                   },
                   "methods": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                       "type": "string",
                       "enum": [
@@ -1340,7 +1492,8 @@
                         "DELETE",
                         "PATCH",
                         "OPTIONS",
-                        "HEAD"
+                        "HEAD",
+                        "QUERY"
                       ]
                     }
                   },

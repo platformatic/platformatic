@@ -324,7 +324,7 @@ export interface PlatformaticGatewayConfig {
       proxy?:
         | false
         | {
-            methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS")[];
+            methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "QUERY")[];
             routes?: string[];
             upstream?: string;
             prefix?: string;
@@ -355,8 +355,14 @@ export interface PlatformaticGatewayConfig {
               routes?: ({
                 [k: string]: unknown;
               } & {
-                method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
-                methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+                method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY";
+                /**
+                 * @minItems 1
+                 */
+                methods?: [
+                  "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY",
+                  ...("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY")[]
+                ];
                 path: string;
               })[];
               key?: string;
@@ -364,6 +370,36 @@ export interface PlatformaticGatewayConfig {
               retries?: number;
               ttl?: number;
               lockTtl?: number;
+            };
+            earlyFlush?: {
+              enabled?: boolean | string;
+              routes?: ({
+                [k: string]: unknown;
+              } & {
+                method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY";
+                /**
+                 * @minItems 1
+                 */
+                methods?: [
+                  "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY",
+                  ...("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY")[]
+                ];
+                path: string;
+              })[];
+              key?: string;
+              windowSize?: number;
+              minPreludeBytes?: number;
+              maxPrefixBytes?: number;
+              maxKeys?: number;
+              prefixPolicy?: "conservative" | "fifo";
+              redirectPolicy?: "conservative" | "fifo";
+              headers?: {
+                allowlist?: string[];
+                excludeSetCookie?: boolean;
+                excludeCspNonce?: boolean;
+                keyHeaders?: string[];
+                cacheControl?: string;
+              };
             };
             /**
              * Set to false to leave the responses of this application alone: they are not compressed by the gateway and the Accept-Encoding header of the client is forwarded as it is.
@@ -405,8 +441,14 @@ export interface PlatformaticGatewayConfig {
       routes?: ({
         [k: string]: unknown;
       } & {
-        method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
-        methods?: ("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")[];
+        method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY";
+        /**
+         * @minItems 1
+         */
+        methods?: [
+          "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY",
+          ...("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD" | "QUERY")[]
+        ];
         path: string;
       })[];
       key?: string;

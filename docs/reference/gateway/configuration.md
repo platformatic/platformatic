@@ -256,6 +256,11 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     }
     ```
 
+    - **`earlyFlush`** (`object`) - Learns and anticipates a reusable HTML prefix for explicitly configured routes.
+      Configure it per application only; there is no global default. An empty route list enables no routes.
+      The default key is `METHOD + ' ' + matchedRoute`. See [Early Flush](./early-flush.md) for configuration,
+      custom keys, eligibility and interaction with compression and deduplication.
+
     **Example: Hostname-based Routing**
 
     ```json

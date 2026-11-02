@@ -96,18 +96,20 @@ export async function createDeduplicationHandler ({
     await storage.close()
   })
 
-  return async function deduplicationHandler (request, reply, dest, options) {
+  return async function deduplicationHandler (request, reply, dest, options, acquireResponse) {
+    // An explicit producer returns metadata and bytes without writing to the client's reply.
+    const forward = () => acquireResponse ? acquireResponse(request, dest, options) : handler(request, reply, dest, options)
     const queryIndex = request.url.indexOf('?')
     const url = dest + (queryIndex === -1 ? '' : request.url.slice(queryIndex))
 
     if (router ? !router.find(request.method, request.url.split('?', 1)[0]) : !methods.has(request.method)) {
-      return handler(request, reply, dest, options)
+      return forward()
     }
 
     for (const header of skipHeaders) {
       if (request.headers[header] !== undefined) {
         metrics?.deduplicationSkip?.inc()
-        return handler(request, reply, dest, options)
+        return forward()
       }
     }
 
@@ -127,15 +129,19 @@ export async function createDeduplicationHandler ({
       headers,
       application
     }
-    const key = computeDeduplicationKey
+    const resolvedKey = computeDeduplicationKey
       ? computeDeduplicationKey(request, context)
       : stringify({ origin: context.origin, method: context.method, url: context.url, headers: context.headers })
 
     // A custom key function can return a falsy value to opt the request out.
-    if (!key) {
+    if (!resolvedKey) {
       metrics?.deduplicationSkip?.inc()
-      return handler(request, reply, dest, options)
+      return forward()
     }
+
+    // Producers require identity bytes, whereas the reply-based path may negotiate compression.
+    // Partition even custom keys so neither path can replay an incompatible representation.
+    const key = stringify([acquireResponse ? 'producer' : 'reply', resolvedKey])
 
     for (let attempt = 0; attempt <= config.retries; attempt++) {
       const token = randomUUID()
@@ -143,6 +149,53 @@ export async function createDeduplicationHandler ({
 
       if (locked) {
         const responseId = randomUUID()
+        if (acquireResponse) {
+          metrics?.deduplicationLeader?.inc()
+          let response
+          try {
+            response = await forward()
+          } catch (error) {
+            await publishError({ storage, key, token, responseId, config, metrics })
+            throw error
+          }
+
+          const stream = new PassThrough()
+          stream.on('error', () => {})
+          // Consume independently of the leader's lifetime and backpressure, as in the
+          // reply-based path below. Publication must remain available to every waiter.
+          const publish = async () => {
+            const body = new DynamicBuffer()
+            try {
+              for await (const chunk of response.stream) {
+                body.append(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+                if (!stream.destroyed) {
+                  stream.write(chunk)
+                }
+              }
+              stream.end()
+              await storage.setResponse(responseId, {
+                statusCode: response.statusCode,
+                headers: response.headers,
+                body: body.buffers
+              }, config.ttl)
+              await storage.notify(key, responseId, config.ttl)
+              await storage.unlock(key, token)
+            } catch (error) {
+              if (!stream.writableEnded) {
+                stream.destroy(error)
+              }
+              await publishError({ storage, key, token, responseId, config, metrics })
+              throw error
+            } finally {
+              response.stream.destroy()
+            }
+          }
+          publish().catch(error => {
+            app.log.error({ err: ensureLoggableError(error) }, 'Error while deduplicating gateway response')
+          })
+          return { ...response, stream }
+        }
+
         const baseOnResponse = options.onResponse
         const baseOnError = options.onError
 
@@ -245,14 +298,17 @@ export async function createDeduplicationHandler ({
         continue
       }
 
-      reply.code(response.statusCode)
-      reply.headers(response.headers)
       metrics?.deduplicationReplay?.inc()
       const body = new DynamicBuffer(response.body).asReadable()
+      if (acquireResponse) {
+        return { statusCode: response.statusCode, headers: response.headers, stream: body }
+      }
+      reply.code(response.statusCode)
+      reply.headers(response.headers)
       return send ? send(request, reply, body) : reply.send(body)
     }
 
     metrics?.deduplicationFallback?.inc()
-    return handler(request, reply, dest, options)
+    return forward()
   }
 }
