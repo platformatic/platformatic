@@ -733,6 +733,25 @@
                       }
                     ]
                   },
+                  "maxELULogLevel": {
+                    "type": "string",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "fatal",
+                          "error",
+                          "warn",
+                          "info",
+                          "debug",
+                          "trace",
+                          "silent"
+                        ]
+                      },
+                      {
+                        "pattern": "^\\{.+\\}$"
+                      }
+                    ]
+                  },
                   "maxEventLoopDelay": {
                     "anyOf": [
                       {
@@ -764,6 +783,25 @@
                       },
                       {
                         "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapUsedLogLevel": {
+                    "type": "string",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "fatal",
+                          "error",
+                          "warn",
+                          "info",
+                          "debug",
+                          "trace",
+                          "silent"
+                        ]
+                      },
+                      {
+                        "pattern": "^\\{.+\\}$"
                       }
                     ]
                   },
@@ -1591,6 +1629,26 @@
               ],
               "default": 0.99
             },
+            "maxELULogLevel": {
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": [
+                    "fatal",
+                    "error",
+                    "warn",
+                    "info",
+                    "debug",
+                    "trace",
+                    "silent"
+                  ]
+                },
+                {
+                  "pattern": "^\\{.+\\}$"
+                }
+              ],
+              "default": "error"
+            },
             "maxEventLoopDelay": {
               "anyOf": [
                 {
@@ -1625,6 +1683,26 @@
                 }
               ],
               "default": 0.99
+            },
+            "maxHeapUsedLogLevel": {
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": [
+                    "fatal",
+                    "error",
+                    "warn",
+                    "info",
+                    "debug",
+                    "trace",
+                    "silent"
+                  ]
+                },
+                {
+                  "pattern": "^\\{.+\\}$"
+                }
+              ],
+              "default": "error"
             },
             "maxHeapTotal": {
               "anyOf": [
@@ -3018,6 +3096,25 @@
                     }
                   ]
                 },
+                "maxELULogLevel": {
+                  "type": "string",
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "fatal",
+                        "error",
+                        "warn",
+                        "info",
+                        "debug",
+                        "trace",
+                        "silent"
+                      ]
+                    },
+                    {
+                      "pattern": "^\\{.+\\}$"
+                    }
+                  ]
+                },
                 "maxEventLoopDelay": {
                   "anyOf": [
                     {
@@ -3049,6 +3146,25 @@
                     },
                     {
                       "type": "string"
+                    }
+                  ]
+                },
+                "maxHeapUsedLogLevel": {
+                  "type": "string",
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "fatal",
+                        "error",
+                        "warn",
+                        "info",
+                        "debug",
+                        "trace",
+                        "silent"
+                      ]
+                    },
+                    {
+                      "pattern": "^\\{.+\\}$"
                     }
                   ]
                 },

@@ -3089,6 +3089,7 @@ export class Runtime extends EventEmitter {
     })
 
     const healthConfig = worker[kConfig].health
+    const { maxELULogLevel = 'error', maxHeapUsedLogLevel = 'error' } = healthConfig
 
     let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval, maxEventLoopDelay, maxEventLoopDelayP99 } =
       worker[kConfig].health
@@ -3222,14 +3223,14 @@ export class Runtime extends EventEmitter {
       })
 
       if (health.elu > maxELU) {
-        this.logger.error(
+        this.logger[maxELULogLevel](
           `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, ` +
             `above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
         )
       }
 
       if (memoryUsage > maxHeapUsed) {
-        this.logger.error(
+        this.logger[maxHeapUsedLogLevel](
           `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
             `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
         )
