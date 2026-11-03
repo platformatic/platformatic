@@ -17,7 +17,7 @@ export interface GatewayCommand {
   description: string
 }
 
-export declare const proxyResponseConsumer: unique symbol
+export declare const kGatewayProxyResponseConsumer: unique symbol
 
 export interface ProxyResponse {
   statusCode: number
@@ -42,7 +42,7 @@ export type WrappingHandler = (previousHandler: ProxyHandler, send: SendProxyRes
 
 declare module 'fastify' {
   interface FastifyReply {
-    [proxyResponseConsumer]?: ProxyResponseConsumer
+    [kGatewayProxyResponseConsumer]?: ProxyResponseConsumer
   }
 }
 

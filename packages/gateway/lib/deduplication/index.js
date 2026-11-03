@@ -6,7 +6,7 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { PassThrough } from 'node:stream'
 import stringify from 'safe-stable-stringify'
-import { proxyResponseConsumer } from '../response-consumer.js'
+import { kGatewayProxyResponseConsumer } from '../response-consumer.js'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
@@ -252,7 +252,7 @@ export async function createDeduplicationHandler ({
 
       metrics?.deduplicationReplay?.inc()
       const body = new DynamicBuffer(response.body).asReadable()
-      const consumer = reply[proxyResponseConsumer]
+      const consumer = reply[kGatewayProxyResponseConsumer]
       if (consumer) {
         // Records written by older gateway workers have no upstream metadata; acquire a fresh response instead.
         if (!response.upstreamHeaders) {

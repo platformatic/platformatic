@@ -1,5 +1,5 @@
 import { PassThrough } from 'node:stream'
-import { proxyResponseConsumer } from '../../../index.js'
+import { kGatewayProxyResponseConsumer } from '../../../index.js'
 
 export const states = new Map()
 export const prefix = '<!doctype html>'
@@ -20,7 +20,7 @@ export function wrappingHandler (previous, send) {
 
     const output = new PassThrough()
     let source
-    reply[proxyResponseConsumer] = {
+    reply[kGatewayProxyResponseConsumer] = {
       onResponse (response) {
         state.responses.push({ client: request.headers['x-client'], headers: { ...response.headers } })
         source = response.stream

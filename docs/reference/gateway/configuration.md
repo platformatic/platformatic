@@ -409,8 +409,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   policy without importing private gateway modules. Invalid factories/results fail startup with
   `PLT_GATEWAY_INVALID_WRAPPING_HANDLER`.
 
-  Wrappers that own the response body can import `proxyResponseConsumer` from `@platformatic/gateway` and set
-  `reply[proxyResponseConsumer] = { onResponse(response) { /* consume response.stream */ } }` before delegating.
+  Wrappers that own the response body can import `kGatewayProxyResponseConsumer` from `@platformatic/gateway` and set
+  `reply[kGatewayProxyResponseConsumer] = { onResponse(response) { /* consume response.stream */ } }` before delegating.
   The consumer receives `{ statusCode, headers, stream }` for both upstream responses and deduplication replay. Its
   metadata describes the upstream bytes, not an already-started client response. The gateway completes its original
   tracing callback but does not send the body again; waiter replay does not replace the reply's status or headers.

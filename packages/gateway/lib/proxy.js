@@ -9,7 +9,7 @@ import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
 import { InvalidWrappingHandlerError, WsNoTcpUpstreamError } from './errors.js'
-import { proxyResponseConsumer } from './response-consumer.js'
+import { kGatewayProxyResponseConsumer } from './response-consumer.js'
 import { initMetrics } from './metrics.js'
 import { WsUpstreams } from './ws-upstreams.js'
 
@@ -466,7 +466,7 @@ async function proxyPlugin (app, opts) {
           })
 
           // Consumers own sending and disposal; tracing still completes once per upstream acquisition.
-          const consumer = reply[proxyResponseConsumer]
+          const consumer = reply[kGatewayProxyResponseConsumer]
           if (consumer) {
             consumer.onResponse(res)
             return
@@ -484,7 +484,7 @@ async function proxyPlugin (app, opts) {
             return customOnError(reply, { error })
           }
 
-          if (reply[proxyResponseConsumer]) {
+          if (reply[kGatewayProxyResponseConsumer]) {
             return
           }
           return reply.send(error)
