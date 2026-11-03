@@ -399,6 +399,29 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   Custom gateway handlers that override `onResponse` or `onError` can call `options.deduplicateResponse(request, reply, res)` and `options.deduplicateError(reply, error)` to keep duplicate requests coordinated. See [Request Deduplication](./deduplication.md#custom-gateway-handlers) for examples.
 
+  A handler module can also export a synchronous `wrappingHandler(previousHandler, send)` factory. It is called once for
+  each configured application proxy and must return a handler with the same `(request, reply, destination, options)`
+  signature. Unlike `handler`, this wrapper runs **outside** deduplication, including for waiters. If the module exports
+  both, the order is `wrappingHandler → deduplication → handler`. Without `handler`, the inner path uses `reply.from`.
+
+  `send(request, reply, stream)` uses the gateway's native output path, including compression configuration and the
+  application's compression opt-out. A wrapper that starts output before delegating can therefore use the same output
+  policy without importing private gateway modules. Invalid factories/results fail startup with
+  `PLT_GATEWAY_INVALID_WRAPPING_HANDLER`.
+
+  Wrappers that own the response body can import `proxyResponseConsumer` from `@platformatic/gateway` and set
+  `reply[proxyResponseConsumer] = { onResponse(response) { /* consume response.stream */ } }` before delegating.
+  The consumer receives `{ statusCode, headers, stream }` for both upstream responses and deduplication replay. Its
+  metadata describes the upstream bytes, not an already-started client response. The gateway completes its original
+  tracing callback but does not send the body again; waiter replay does not replace the reply's status or headers.
+  Records written by older gateway workers without upstream metadata cause a fresh acquisition for consumers.
+
+  The consumer owns consuming or destroying its per-client stream, including after cancellation. Its callback is not
+  awaited. A wrapper must preserve and invoke original `options.onResponse`/`options.onError` callbacks when overriding
+  them. With a consumer installed, the standard gateway error handler logs but does not send again: the wrapper must
+  terminate its own output on error. Custom application `onError` handlers still run and must honor the same ownership.
+  Merely installing a consumer does not send a response or copy headers; the wrapper owns that decision.
+
 - **`compression`** (`boolean`, `string` or `object`) - Compresses the responses of the proxied applications with brotli or gzip. It is off by default. It can be `true`, a string such as an environment placeholder (anything but `"false"` enables it), or an object with the following options:
 
   - **`enabled`** (`boolean`, `string` or `object`) - Whether compression is enabled, with the same values as the `enabled` of a Runtime application, including booleans by environment such as `{ "development": false }`. Default: `true`.

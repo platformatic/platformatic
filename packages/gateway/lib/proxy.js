@@ -8,7 +8,8 @@ import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
-import { WsNoTcpUpstreamError } from './errors.js'
+import { InvalidWrappingHandlerError, WsNoTcpUpstreamError } from './errors.js'
+import { proxyResponseConsumer } from './response-consumer.js'
 import { initMetrics } from './metrics.js'
 import { WsUpstreams } from './ws-upstreams.js'
 
@@ -122,9 +123,14 @@ async function proxyPlugin (app, opts) {
   }
 
   let handler
+  let wrappingHandler
   if (opts.handler) {
     const require = createRequire(import.meta.filename)
     const custom = await loadModule(require, resolve(root, opts.handler))
+    wrappingHandler = custom.wrappingHandler
+    if (wrappingHandler !== undefined && typeof wrappingHandler !== 'function') {
+      throw new InvalidWrappingHandlerError()
+    }
 
     if (typeof custom.handler === 'function') {
       handler = custom.handler
@@ -323,6 +329,20 @@ async function proxyPlugin (app, opts) {
       })
     }
 
+    // Wrappers receive the complete proxy path, including deduplication and native output policy.
+    if (wrappingHandler) {
+      const send = compressResponses
+        ? (request, reply, body) => sendCompressed(request, reply, body, compression)
+        : (_request, reply, body) => reply.send(body)
+      proxyHandler = wrappingHandler(
+        proxyHandler ?? ((_request, reply, dest, options) => reply.from(dest, options)),
+        send
+      )
+      if (typeof proxyHandler !== 'function') {
+        throw new InvalidWrappingHandlerError()
+      }
+    }
+
     // Websocket links already counted in the activeWsConnections gauge.
     const wsConnections = new WeakSet()
 
@@ -445,6 +465,12 @@ async function proxyPlugin (app, opts) {
             headers: res.headers
           })
 
+          // Consumers own sending and disposal; tracing still completes once per upstream acquisition.
+          const consumer = reply[proxyResponseConsumer]
+          if (consumer) {
+            consumer.onResponse(res)
+            return
+          }
           if (compressResponses) {
             sendCompressed(reply.request, reply, res.stream, compression)
           } else {
@@ -458,6 +484,9 @@ async function proxyPlugin (app, opts) {
             return customOnError(reply, { error })
           }
 
+          if (reply[proxyResponseConsumer]) {
+            return
+          }
           return reply.send(error)
         },
         getUpstream

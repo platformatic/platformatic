@@ -6,12 +6,44 @@ import {
   ServerInstance as ServiceServerInstance
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
-import { FastifyError, FastifyInstance } from 'fastify'
+import { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import type { FastifyReplyFromHooks } from '@fastify/reply-from'
+import type { OutgoingHttpHeaders } from 'node:http'
+import type { Readable } from 'node:stream'
 import type { PlatformaticGatewayConfig } from './config.d.ts'
 
 export interface GatewayCommand {
   usage: string
   description: string
+}
+
+export declare const proxyResponseConsumer: unique symbol
+
+export interface ProxyResponse {
+  statusCode: number
+  headers: OutgoingHttpHeaders
+  stream: Readable
+}
+
+export interface ProxyResponseConsumer {
+  /** Own the per-client stream. The gateway does not send it or await this callback. */
+  onResponse (response: ProxyResponse): void
+}
+
+export type ProxyHandler = (
+  request: FastifyRequest,
+  reply: FastifyReply,
+  destination: string,
+  options: FastifyReplyFromHooks
+) => unknown
+
+export type SendProxyResponse = (request: FastifyRequest, reply: FastifyReply, stream: Readable) => unknown
+export type WrappingHandler = (previousHandler: ProxyHandler, send: SendProxyResponse) => ProxyHandler
+
+declare module 'fastify' {
+  interface FastifyReply {
+    [proxyResponseConsumer]?: ProxyResponseConsumer
+  }
 }
 
 export interface GatewayCommandDefinition {
@@ -65,6 +97,7 @@ export declare const skipTelemetryHooks: boolean
 export declare const version: string
 
 export namespace errors {
+  export const InvalidWrappingHandlerError: () => FastifyError
   export const FastifyInstanceIsAlreadyListeningError: () => FastifyError
   export const FailedToFetchOpenAPISchemaError: () => FastifyError
   export const ValidationErrors: () => FastifyError

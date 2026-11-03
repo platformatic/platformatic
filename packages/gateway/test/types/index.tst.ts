@@ -1,6 +1,6 @@
 import type { Configuration } from '@platformatic/foundation'
 import type { BaseCapability } from '@platformatic/basic'
-import type { FastifyError, FastifyInstance } from 'fastify'
+import type { FastifyError, FastifyInstance, FastifyReply } from 'fastify'
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
 import {
@@ -19,6 +19,23 @@ import {
   schemaComponents,
   skipTelemetryHooks
 } from '../../index.js'
+import { proxyResponseConsumer, type ProxyResponse, type ProxyResponseConsumer, type WrappingHandler } from '../../index.js'
+
+test('Gateway wrapper and response consumer types', () => {
+  const reply = {} as FastifyReply
+  const wrapper: WrappingHandler = (previous, send) => (request, reply, dest, options) => {
+    reply[proxyResponseConsumer] = {
+      onResponse (response) {
+        expect(response).type.toBe<ProxyResponse>()
+        send(request, reply, response.stream)
+      }
+    }
+    return previous(request, reply, dest, options)
+  }
+  expect(wrapper).type.toBe<WrappingHandler>()
+  expect(reply[proxyResponseConsumer]).type.toBe<ProxyResponseConsumer | undefined>()
+  expect(errors.InvalidWrappingHandlerError()).type.toBe<FastifyError>()
+})
 
 test('Gateway types', () => {
   const config = {} as PlatformaticGatewayConfig
