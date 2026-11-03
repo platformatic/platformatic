@@ -6,7 +6,7 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { PassThrough } from 'node:stream'
 import stringify from 'safe-stable-stringify'
-import { kGatewayProxyResponseConsumer } from '../response-consumer.js'
+import { kGatewayProxyResponseConsumer } from '../symbols.js'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 

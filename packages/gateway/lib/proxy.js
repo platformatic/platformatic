@@ -9,7 +9,7 @@ import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
 import { InvalidWrappingHandlerError, WsNoTcpUpstreamError } from './errors.js'
-import { kGatewayProxyResponseConsumer } from './response-consumer.js'
+import { kGatewayProxyResponseConsumer } from './symbols.js'
 import { initMetrics } from './metrics.js'
 import { WsUpstreams } from './ws-upstreams.js'
 
