@@ -81,8 +81,10 @@ function createLegacyDispatcher (dispatcher) {
   const currentDispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
 
   if (legacyDispatcher && legacyDispatcher !== currentDispatcher && legacyDispatcher.constructor?.name === 'Dispatcher1Wrapper') {
+    const Dispatcher1Wrapper = legacyDispatcher.constructor
+
     try {
-      return new legacyDispatcher.constructor(dispatcher)
+      return new Dispatcher1Wrapper(dispatcher)
     } catch {
       return dispatcher
     }
