@@ -1,7 +1,6 @@
 import { diag } from '@opentelemetry/api'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import { BatchSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base'
-import { TracerProvider } from '@opentelemetry/sdk-trace'
+import { BatchSpanProcessor, InMemorySpanExporter, TracerProvider } from '@opentelemetry/sdk-trace'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { deepStrictEqual, match, strictEqual } from 'node:assert'
 import { Writable } from 'node:stream'
@@ -171,7 +170,7 @@ test('createPlatformaticDiagLogger renders spans using the OpenTelemetry custom 
   const logger = pino({ level: 'trace' }, stream)
   const provider = new TracerProvider({
     resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: 'test-service' }),
-    spanProcessors: [new BatchSpanProcessor(new InMemorySpanExporter())]
+    spanProcessors: [new BatchSpanProcessor({ exporter: new InMemorySpanExporter() })]
   })
   const tracer = provider.getTracer('test-scope')
   const span = tracer.startSpan('hello')
@@ -205,7 +204,7 @@ test('createPlatformaticDiagLogger renders tracer objects using OpenTelemetry cu
   const logger = pino({ level: 'trace' }, stream)
   const provider = new TracerProvider({
     resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: 'test-service' }),
-    spanProcessors: [new BatchSpanProcessor(new InMemorySpanExporter())]
+    spanProcessors: [new BatchSpanProcessor({ exporter: new InMemorySpanExporter() })]
   })
   const tracer = provider.getTracer('test-scope')
 
