@@ -1,5 +1,5 @@
-export { handler } from './wrapping-handler.js'
+export { handler as default } from './wrapping-handler.js'
 
-export default function (request, reply) {
-  return reply.code(500).send('The named handler should take precedence.')
+export function handler (context, request, reply) {
+  return reply.code(500).send('The default handler should take precedence.')
 }

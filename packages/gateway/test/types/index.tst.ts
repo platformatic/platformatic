@@ -23,7 +23,7 @@ import { kGatewayProxyResponseHandler, type ProxyResponse, type ProxyResponseHan
 
 test('Gateway wrapper and response handler types', () => {
   const reply = {} as FastifyReply
-  const wrapper: WrappingHandler = (request, reply, dest, options, { next, send }) => {
+  const wrapper: WrappingHandler = ({ next, send }, request, reply, dest, options) => {
     reply[kGatewayProxyResponseHandler] = {
       onResponse (response) {
         expect(response).type.toBe<ProxyResponse>()

@@ -402,7 +402,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 - **`wrappingHandler`** (`string`) - Path to a module that wraps the complete proxy pipeline for each request. It is
   configured independently from `handler`, and can be used with or without a custom inner handler. Relative paths are
   resolved from the application root. The module exports either a named `handler` function or a default function;
-  the named function takes precedence when both are present.
+  the default function takes precedence when both are present.
 
   ```json
   {
@@ -413,12 +413,12 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   }
   ```
 
-  The wrapper receives `(request, reply, destination, options, context)`. `context.next` delegates to the existing
+  The wrapper receives `(context, request, reply, destination, options)`. `context.next` delegates to the existing
   proxy pipeline with the same four arguments as a regular handler. Without a custom inner handler, forwarding uses
   `reply.from`. The wrapper can return a promise.
 
   ```js
-  export default function (request, reply, destination, options, { next, send }) {
+  export default function ({ next, send }, request, reply, destination, options) {
     return next(request, reply, destination, options)
   }
   ```

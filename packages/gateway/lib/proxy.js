@@ -4,7 +4,6 @@ import { getITC, getPrometheus } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
@@ -110,6 +109,24 @@ async function resolveApplicationProxyParameters (application, root) {
   }
 }
 
+async function loadHandler (root, path) {
+  if (!path) {
+    return
+  }
+
+  const require = createRequire(import.meta.filename)
+  const custom = await loadModule(require, resolve(root, path))
+  if (typeof custom === 'function') {
+    return custom
+  }
+  if (typeof custom?.handler === 'function') {
+    return custom.handler
+  }
+  if (typeof custom?.default === 'function') {
+    return custom.default
+  }
+}
+
 let metrics
 
 async function proxyPlugin (app, opts) {
@@ -123,24 +140,10 @@ async function proxyPlugin (app, opts) {
     await registerCompression(app, compression)
   }
 
-  let handler
-  let wrappingHandler
-  if (opts.handler) {
-    const custom = await import(pathToFileURL(resolve(root, opts.handler)).href)
-    if (typeof custom.handler === 'function') {
-      handler = custom.handler
-    } else if (typeof custom.default === 'function') {
-      handler = custom.default
-    }
-  }
-
-  if (opts.wrappingHandler) {
-    // Preserve both exports so a named handler takes precedence over the default.
-    const custom = await import(pathToFileURL(resolve(root, opts.wrappingHandler)).href)
-    wrappingHandler = typeof custom.handler === 'function' ? custom.handler : custom.default
-    if (typeof wrappingHandler !== 'function') {
-      throw new InvalidWrappingHandlerError()
-    }
+  const handler = await loadHandler(root, opts.handler)
+  const wrappingHandler = await loadHandler(root, opts.wrappingHandler)
+  if (opts.wrappingHandler && !wrappingHandler) {
+    throw new InvalidWrappingHandlerError()
   }
 
   for (const application of opts.applications) {
@@ -322,24 +325,25 @@ async function proxyPlugin (app, opts) {
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
     const meshUpstream = upstream ? isMeshUpstream(upstream) : undefined
 
-    let proxyHandler = handler ?? ((_request, reply, dest, options) => reply.from(dest, options))
+    let proxyHandler = handler
     if (opts.deduplication?.enabled === true || application.proxy?.deduplication?.enabled === true) {
       proxyHandler = await createDeduplicationHandler({
         app,
         application,
         baseConfig: opts.deduplication,
         overrideConfig: application.proxy?.deduplication,
-        handler: proxyHandler,
+        handler,
         metrics,
         root,
-        send
+        send: compressResponses ? send : undefined
       })
     }
 
     // Wrappers receive the complete proxy path, including deduplication and native output policy.
     if (wrappingHandler) {
-      const context = { next: proxyHandler, send }
-      proxyHandler = (request, reply, dest, options) => wrappingHandler(request, reply, dest, options, context)
+      const next = proxyHandler ?? ((_request, reply, dest, options) => reply.from(dest, options))
+      const context = { next, send }
+      proxyHandler = (request, reply, dest, options) => wrappingHandler(context, request, reply, dest, options)
     }
 
     // Websocket links already counted in the activeWsConnections gauge.

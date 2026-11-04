@@ -44,11 +44,11 @@ export interface WrappingHandlerContext {
 }
 
 export type WrappingHandler = (
+  context: WrappingHandlerContext,
   request: FastifyRequest,
   reply: FastifyReply,
   destination: string,
-  options: FastifyReplyFromHooks,
-  context: WrappingHandlerContext
+  options: FastifyReplyFromHooks
 ) => unknown
 
 declare module 'fastify' {

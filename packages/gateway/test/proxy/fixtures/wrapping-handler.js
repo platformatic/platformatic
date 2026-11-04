@@ -4,7 +4,7 @@ import { kGatewayProxyResponseHandler } from '../../../index.js'
 export const states = new Map()
 export const prefix = '<!doctype html>'
 
-export function handler (request, reply, dest, options, { next, send }) {
+export function handler ({ next, send }, request, reply, dest, options) {
   const state = states.get(request.server.listeningOrigin)
   state.outer++
   if (request.headers['x-bypass']) {
