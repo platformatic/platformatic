@@ -1543,6 +1543,11 @@ export const runtimeProperties = {
             default: false,
             description: 'Enable outgoing HTTP client request duration metrics'
           },
+          aggregateWorkers: {
+            anyOf: [{ type: 'boolean' }, { type: 'string' }],
+            description:
+              'Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.'
+          },
           readiness: healthProbeEndpoint,
           liveness: healthProbeEndpoint,
           healthChecksTimeouts: {

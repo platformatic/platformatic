@@ -137,6 +137,13 @@ export const THREAD_LEVEL_METRICS = [
   'thread_cpu_percent_usage'
 ]
 
+// Metrics that are reset after each collection: their values are not cumulative.
+export const RESET_ON_COLLECT_METRICS = [
+  'http_request_all_duration_seconds',
+  'http_request_all_summary_seconds',
+  'http_client_request_duration_seconds'
+]
+
 export function registerMetricsGroup (registry, group) {
   getRegistrySet(registry, kMetricsGroups).add(group)
 }
@@ -392,6 +399,8 @@ export function collectEluMetric (registry) {
   const eluMetric = new Gauge({
     name: 'nodejs_eventloop_utilization',
     help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
+    // When the metrics of multiple workers are merged, report the mean utilization
+    aggregator: 'average',
     collect: () => {
       const endELU = eventLoopUtilization()
       const result = eventLoopUtilization(endELU, startELU).utilization

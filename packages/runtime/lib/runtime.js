@@ -16,7 +16,8 @@ import { ITC } from '@platformatic/itc'
 import {
   collectProcessMetrics,
   client as metricsClient,
-  openTelemetryITCMessage
+  openTelemetryITCMessage,
+  RESET_ON_COLLECT_METRICS
 } from '@platformatic/metrics'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
@@ -69,6 +70,7 @@ import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
+import { WorkerMetricsAggregator } from './worker-metrics-aggregator.js'
 import { DynamicWorkersScaler } from './worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
@@ -210,6 +212,8 @@ export class Runtime extends EventEmitter {
   #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
+  #workerMetricsAggregator
+  #pendingAggregatedWorkersMetrics
 
   #applicationsConfigsPatches
   #applications
@@ -1334,6 +1338,9 @@ export class Runtime extends EventEmitter {
       }
     }
 
+    // The workers have recreated their metrics, possibly with different labels: start over
+    this.#workerMetricsAggregator = null
+
     this.logger.info({ metricsConfig }, 'Metrics configuration updated')
     return { success: true, config: metricsConfig }
   }
@@ -1662,11 +1669,13 @@ export class Runtime extends EventEmitter {
   }
 
   async getMetrics (format = 'json') {
+    return this.#getMetrics(format, this.#isWorkerMetricsAggregationEnabled())
+  }
+
+  async #getMetrics (format, aggregateWorkers) {
     if (this.#config.metrics === false || this.#config.metrics?.enabled === false) {
       throw new Error('Metrics are disabled')
     }
-
-    let metrics = null
 
     const applicationRestartMetrics = this.#getApplicationRestartMetricsJson()
 
@@ -1685,42 +1694,7 @@ export class Runtime extends EventEmitter {
       applicationRestartMetrics
     })
 
-    for (const worker of this.#workers.values()) {
-      try {
-        // The application might be temporarily unavailable
-        if (worker[kWorkerStatus] !== 'started') {
-          continue
-        }
-
-        // Get thread-specific metrics from worker. Always collect JSON so that
-        // the text format can be serialized once with a single HELP/TYPE block
-        // per metric family, as required by the Prometheus exposition format.
-        const applicationMetrics = await executeWithTimeout(
-          sendViaITC(worker, 'getMetrics', 'json'),
-          this.#config.metrics?.timeout ?? 10000
-        )
-
-        if (applicationMetrics && applicationMetrics !== kTimeout) {
-          metrics ??= []
-
-          // Add worker's thread-specific metrics
-          for (let i = 0; i < applicationMetrics.length; i++) {
-            metrics.push(applicationMetrics[i])
-          }
-        }
-      } catch (e) {
-        // The application exited while we were sending the ITC, skip it
-        if (
-          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
-          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
-          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
-        ) {
-          continue
-        }
-
-        throw e
-      }
-    }
+    let metrics = aggregateWorkers ? await this.#getAggregatedWorkersMetrics() : await this.#getWorkersMetrics()
 
     // Extension metrics must not share a family name with any worker metric.
     if (metrics !== null && extensionMetrics.length > 0) {
@@ -1774,6 +1748,95 @@ export class Runtime extends EventEmitter {
     }
 
     return { metrics }
+  }
+
+  #isWorkerMetricsAggregationEnabled () {
+    const aggregateWorkers = this.#config.metrics?.aggregateWorkers
+    return aggregateWorkers === true || aggregateWorkers === 'true'
+  }
+
+  // Queries all the workers for their metrics. The result contains an entry for each worker,
+  // with metrics set to null when the worker is temporarily unavailable.
+  async #collectWorkersMetrics () {
+    const workers = []
+
+    for (const worker of this.#workers.values()) {
+      const entry = { key: worker, applicationId: worker[kApplicationId], metrics: null }
+      workers.push(entry)
+
+      try {
+        // The application might be temporarily unavailable
+        if (worker[kWorkerStatus] !== 'started') {
+          continue
+        }
+
+        // Get thread-specific metrics from worker. Always collect JSON so that
+        // the text format can be serialized once with a single HELP/TYPE block
+        // per metric family, as required by the Prometheus exposition format.
+        const applicationMetrics = await executeWithTimeout(
+          sendViaITC(worker, 'getMetrics', 'json'),
+          this.#config.metrics?.timeout ?? 10000
+        )
+
+        if (applicationMetrics && applicationMetrics !== kTimeout) {
+          entry.metrics = applicationMetrics
+        }
+      } catch (e) {
+        // The application exited while we were sending the ITC, skip it
+        if (
+          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+        ) {
+          continue
+        }
+
+        throw e
+      }
+    }
+
+    return workers
+  }
+
+  async #getWorkersMetrics () {
+    let metrics = null
+
+    for (const { metrics: workerMetrics } of await this.#collectWorkersMetrics()) {
+      if (workerMetrics) {
+        metrics ??= []
+
+        for (let i = 0; i < workerMetrics.length; i++) {
+          metrics.push(workerMetrics[i])
+        }
+      }
+    }
+
+    return metrics
+  }
+
+  // The aggregator compares the values of each worker with the previous ones to detect resets,
+  // so collections must not overlap: an older collection processed after a newer one would look
+  // like a reset and its values would be counted twice. Concurrent callers share the same result.
+  #getAggregatedWorkersMetrics () {
+    this.#pendingAggregatedWorkersMetrics ??= this.#collectAggregatedWorkersMetrics().finally(() => {
+      this.#pendingAggregatedWorkersMetrics = null
+    })
+
+    return this.#pendingAggregatedWorkersMetrics
+  }
+
+  async #collectAggregatedWorkersMetrics () {
+    const workers = await this.#collectWorkersMetrics()
+
+    this.#workerMetricsAggregator ??= new WorkerMetricsAggregator({
+      workerLabel: 'workerId',
+      nonCumulativeMetrics: RESET_ON_COLLECT_METRICS
+    })
+
+    const metrics = this.#workerMetricsAggregator.aggregate(workers, new Set(this.#applications.keys()))
+
+    // As with the per-worker metrics, report nothing until a worker provides its metrics
+    return workers.some(worker => worker.metrics) ? metrics : null
   }
 
   async #getExtensionMetricsJson ({ processMetricsJson, applicationRestartMetrics }) {
@@ -1925,7 +1988,8 @@ export class Runtime extends EventEmitter {
 
   async getFormattedMetrics () {
     try {
-      const { metrics } = await this.getMetrics()
+      // Always use the per-worker metrics: the values below are read from a single worker
+      const { metrics } = await this.#getMetrics('json', false)
 
       if (metrics === null || metrics.length === 0) {
         return null

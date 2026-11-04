@@ -697,6 +697,10 @@ export interface PlatformaticNitroConfig {
            * Enable outgoing HTTP client request duration metrics
            */
           httpClientMetrics?: boolean | string;
+          /**
+           * Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.
+           */
+          aggregateWorkers?: boolean | string;
           readiness?:
             | boolean
             | {
