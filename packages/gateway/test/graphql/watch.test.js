@@ -52,10 +52,11 @@ test('should restart gateway if a application has been changed, and update the s
 
   assert.ok(checkSchema(runtime, schema1))
 
+  const restarted = waitForRestart(runtime)
   await graphql1.close()
   await graphql1a.listen({ port })
 
-  await waitForRestart(runtime)
+  await restarted
 
   assert.ok(await checkSchema(runtime, schema2))
 })
@@ -147,9 +148,10 @@ test('gateway should restart and update schema if one of the applications shuts 
 
   assert.ok(checkSchema(runtime, supergraph1))
 
+  const restarted = waitForRestart(runtime)
   await graphql1.close()
 
-  await waitForRestart(runtime)
+  await restarted
 
   assert.ok(checkSchema(runtime, supergraph2))
 })
@@ -262,10 +264,11 @@ test('should not watch when refreshTimeout is 0', async t => {
 
   assert.ok(checkSchema(runtime, supergraph1))
 
+  const notRestarted = assert.rejects(waitForRestart(runtime))
   await graphql1.close()
   await graphql2.close()
 
-  await assert.rejects(() => waitForRestart(runtime))
+  await notRestarted
   assert.ok(checkSchema(runtime, supergraph1))
 })
 
@@ -308,10 +311,12 @@ test('should handle errors watching applications', async t => {
 
   await runtime.start({ listen: true })
 
+  const starting = once(runtime, 'application:worker:starting')
+  const startError = once(runtime, 'application:worker:start:error')
   await graphql1.close()
 
-  const [startingEvent] = await once(runtime, 'application:worker:starting')
-  const [startErrorEvent] = await once(runtime, 'application:worker:start:error')
+  const [startingEvent] = await starting
+  const [startErrorEvent] = await startError
   assert.deepEqual(startingEvent.application, 'composer')
   assert.deepEqual(startErrorEvent.application, 'composer')
 })

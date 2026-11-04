@@ -305,9 +305,10 @@ test('should not extend the TTL over the original intended one', async t => {
   let version
   let time
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route')
     const data = await response.json()
-    await once(runtime, 'application:worker:event:completed')
+    await completed
 
     version = data.version
     time = data.time
@@ -316,9 +317,10 @@ test('should not extend the TTL over the original intended one', async t => {
   }
 
   {
+    const completed = once(runtime, 'application:worker:event:completed')
     const response = await fetch(url + '/route?delay=3000')
     const data = await response.json()
-    await once(runtime, 'application:worker:event:completed')
+    await completed
 
     notDeepStrictEqual(data.version, version)
     notDeepStrictEqual(data.time, time)
@@ -777,12 +779,13 @@ test('should properly revalidate tags in Valkey', async t => {
     time = mo[2]
   }
 
+  const revalidated = once(runtime, 'application:worker:event:revalidated')
   {
     const res = await fetch(url + '/revalidate')
     ok(res.status, 200)
   }
 
-  await once(runtime, 'application:worker:event:revalidated')
+  await revalidated
 
   {
     const response = await fetch(url)
@@ -845,12 +848,13 @@ test('should properly revalidate paths in Valkey', async t => {
     version = mo[1]
   }
 
+  const revalidated = once(runtime, 'application:worker:event:revalidated')
   {
     const res = await fetch(url + '/revalidate-path')
     strictEqual(res.status, 200)
   }
 
-  await once(runtime, 'application:worker:event:revalidated')
+  await revalidated
 
   {
     const response = await fetch(url)
