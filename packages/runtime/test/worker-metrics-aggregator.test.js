@@ -355,3 +355,131 @@ test('supports a custom worker label', async () => {
 
   deepStrictEqual(getValues(metrics, 'custom_total'), [{ labels: { applicationId: 'app' }, value: 3 }])
 })
+
+function counterMetric (name, workerId, values) {
+  return {
+    name,
+    help: name,
+    type: 'counter',
+    aggregator: 'sum',
+    values: values.map(([route, value]) => ({ value, labels: { route, applicationId: 'app', workerId } }))
+  }
+}
+
+test('tracks series which change position between collections', async () => {
+  const aggregator = new WorkerMetricsAggregator()
+  const keys = [{}, {}]
+  const collect = (first, second) =>
+    aggregator.aggregate(
+      [
+        { key: keys[0], applicationId: 'app', metrics: [counterMetric('moving_total', 0, first)] },
+        { key: keys[1], applicationId: 'app', metrics: [counterMetric('moving_total', 1, second)] }
+      ],
+      new Set(['app'])
+    )
+
+  collect(
+    [
+      ['/a', 1],
+      ['/b', 5]
+    ],
+    [['/a', 10]]
+  )
+
+  // The first worker reports its series in a different order, with a new one in the middle
+  const metrics = collect(
+    [
+      ['/b', 6],
+      ['/c', 1],
+      ['/a', 2]
+    ],
+    [['/a', 11]]
+  )
+
+  deepStrictEqual(getValues(metrics, 'moving_total'), [
+    { labels: { route: '/a', applicationId: 'app' }, value: 13 },
+    { labels: { route: '/b', applicationId: 'app' }, value: 6 },
+    { labels: { route: '/c', applicationId: 'app' }, value: 1 }
+  ])
+})
+
+test('sums the same label set reported more than once by a worker', async () => {
+  const aggregator = new WorkerMetricsAggregator()
+  const key = {}
+  const collect = values =>
+    aggregator.aggregate(
+      [{ key, applicationId: 'app', metrics: [counterMetric('duplicated_total', 0, values)] }],
+      new Set(['app'])
+    )
+
+  collect([
+    ['/a', 1],
+    ['/a', 2]
+  ])
+
+  let metrics = collect([
+    ['/a', 3],
+    ['/a', 4]
+  ])
+
+  deepStrictEqual(getValues(metrics, 'duplicated_total'), [{ labels: { route: '/a', applicationId: 'app' }, value: 7 }])
+
+  // Duplicates which are not consecutive
+  metrics = collect([
+    ['/a', 3],
+    ['/b', 1],
+    ['/a', 5]
+  ])
+
+  deepStrictEqual(getValues(metrics, 'duplicated_total'), [
+    { labels: { route: '/a', applicationId: 'app' }, value: 8 },
+    { labels: { route: '/b', applicationId: 'app' }, value: 1 }
+  ])
+})
+
+test('merges histograms with different buckets', async () => {
+  const workers = [createWorker('app', 0, { histogram: false }), createWorker('app', 1, { histogram: false })]
+  const histograms = [
+    new client.Histogram({ name: 'size_bytes', help: 'Size', buckets: [10, 100], registers: [workers[0].registry] }),
+    new client.Histogram({ name: 'size_bytes', help: 'Size', buckets: [50, 100], registers: [workers[1].registry] })
+  ]
+
+  histograms[0].observe(5)
+  histograms[1].observe(75)
+
+  const metrics = await aggregate(new WorkerMetricsAggregator(), workers)
+  const value = (metricName, le) =>
+    getValue(metrics, 'size_bytes', le === undefined ? { applicationId: 'app' } : { le, applicationId: 'app' }, metricName)
+
+  strictEqual(value('size_bytes_bucket', 10), 1)
+  strictEqual(value('size_bytes_bucket', 50), 0)
+  strictEqual(value('size_bytes_bucket', 100), 2)
+  strictEqual(value('size_bytes_bucket', '+Inf'), 2)
+  strictEqual(value('size_bytes_sum'), 80)
+  strictEqual(value('size_bytes_count'), 2)
+})
+
+test('detects a histogram recreated with different buckets', async () => {
+  const aggregator = new WorkerMetricsAggregator()
+  const worker = createWorker('app', 0, { counter: false })
+
+  worker.histogram.observe({ route: '/a' }, 5)
+  worker.histogram.observe({ route: '/a' }, 5)
+  await aggregate(aggregator, [worker])
+
+  worker.registry.removeSingleMetric('request_duration_seconds')
+  const histogram = new client.Histogram({
+    name: 'request_duration_seconds',
+    help: 'Duration',
+    labelNames: ['route'],
+    buckets: [0.5],
+    registers: [worker.registry]
+  })
+  histogram.observe({ route: '/a' }, 5)
+
+  const metrics = await aggregate(aggregator, [worker])
+  const labels = { route: '/a', applicationId: 'app' }
+
+  strictEqual(getValue(metrics, 'request_duration_seconds', labels, 'request_duration_seconds_count'), 3)
+  strictEqual(getValue(metrics, 'request_duration_seconds', { le: '+Inf', ...labels }, 'request_duration_seconds_bucket'), 3)
+})

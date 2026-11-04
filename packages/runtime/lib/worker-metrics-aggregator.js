@@ -10,8 +10,16 @@
 // - Gauges and the metrics which are reset after each collection are merged with the
 //   metric `aggregator` (sum by default), without carrying anything forward.
 // - Summaries are reported per worker, since quantiles cannot be merged.
+//
+// The totals of cumulative metrics are kept across collections and only updated with
+// the difference between the current and the previous values of each worker: the values
+// of a worker which is gone or has reset are simply never subtracted. Since the series of
+// a worker are reported in the same order on each collection, each label set is matched
+// with the one found at the same position in the previous collection, and a lookup key is
+// only computed for new or moved label sets.
 
 const kSeparator = '\u0000'
+const kDuplicateSeparator = '\u0001'
 const kBucketLabel = 'le'
 
 const aggregators = {
@@ -69,6 +77,24 @@ function getLabelsKey (metricName, labels) {
   return key
 }
 
+// Same as getLabelsKey, but avoids sorting the label names of each label set: they are sorted once
+// and cached in the holder. Label sets with names not in the cache use the sorted key, which is the same.
+function getCachedLabelsKey (holder, metricName, labels, count) {
+  holder.labelNames ??= Object.keys(labels).sort()
+
+  let key = metricName ?? ''
+  let found = 0
+
+  for (const name of holder.labelNames) {
+    if (Object.hasOwn(labels, name)) {
+      key += kSeparator + name + kSeparator + labels[name]
+      found++
+    }
+  }
+
+  return found === count ? key : getLabelsKey(metricName, labels)
+}
+
 // Checks if two samples belong to the same label set, ignoring the bucket label
 function hasSameLabels (previous, current) {
   let count = 0
@@ -94,105 +120,6 @@ function hasSameLabels (previous, current) {
   return count === 0
 }
 
-// The samples of cumulative metrics are organized in groups, one for each label set
-// (ignoring the bucket label). A group contains all the samples of the label set:
-// for histograms, these are the buckets, the sum and the count. Samples are identified
-// by their metric name and bucket, and are usually found at the same position.
-function createFamily ({ name, help, type, aggregator }) {
-  return { name, help, type, aggregator, groups: new Map() }
-}
-
-function createGroup (labels) {
-  return { labels, metricNames: [], buckets: [], values: [] }
-}
-
-function cloneGroup (group) {
-  return {
-    labels: group.labels,
-    metricNames: group.metricNames.slice(),
-    buckets: group.buckets.slice(),
-    values: group.values.slice()
-  }
-}
-
-function findSample (group, position, metricName, bucket) {
-  const { metricNames, buckets } = group
-
-  if (position < metricNames.length && metricNames[position] === metricName && buckets[position] === bucket) {
-    return position
-  }
-
-  for (let i = 0; i < metricNames.length; i++) {
-    if (metricNames[i] === metricName && buckets[i] === bucket) {
-      return i
-    }
-  }
-
-  return -1
-}
-
-function pushSample (group, metricName, bucket, value) {
-  group.metricNames.push(metricName)
-  group.buckets.push(bucket)
-  group.values.push(value)
-}
-
-function addSample (group, position, metricName, bucket, value) {
-  const index = findSample(group, position, metricName, bucket)
-
-  if (index === -1) {
-    pushSample(group, metricName, bucket, value)
-  } else {
-    group.values[index] += value
-  }
-}
-
-function addFamily (target, source) {
-  for (const [key, group] of source.groups) {
-    const existing = target.groups.get(key)
-
-    if (!existing) {
-      target.groups.set(key, cloneGroup(group))
-      continue
-    }
-
-    for (let i = 0; i < group.values.length; i++) {
-      addSample(existing, i, group.metricNames[i], group.buckets[i], group.values[i])
-    }
-  }
-}
-
-// A cumulative sample which decreased or disappeared means that the worker
-// has reset the metric, for instance because its registry was recreated.
-function hasReset (previous, current) {
-  // The sum of a histogram can legitimately decrease with negative observations
-  const sumName = previous.type === 'histogram' ? `${previous.name}_sum` : null
-
-  for (const [key, group] of previous.groups) {
-    const currentGroup = current.groups.get(key)
-
-    if (!currentGroup) {
-      return true
-    }
-
-    for (let i = 0; i < group.values.length; i++) {
-      const metricName = group.metricNames[i]
-
-      if (sumName !== null && metricName === sumName) {
-        continue
-      }
-
-      const index = findSample(currentGroup, i, metricName, group.buckets[i])
-
-      if (index === -1 || currentGroup.values[index] < group.values[i]) {
-        return true
-      }
-    }
-  }
-
-  return false
-}
-
 function createValue (metricName, labels, value) {
   const result = { value, labels }
 
@@ -203,15 +130,122 @@ function createValue (metricName, labels, value) {
   return result
 }
 
+// The samples of cumulative metrics are organized in groups, one for each label set
+// (ignoring the bucket label). For histograms, a group contains the buckets, the sum
+// and the count. The layout of a group lists the metric name and the bucket of each
+// of its samples: all the groups of a metric usually share the same layout object.
+function createLayout (family, metricNames, buckets) {
+  for (const layout of family.layouts) {
+    if (hasLayout(layout, metricNames, buckets)) {
+      return layout
+    }
+  }
+
+  const sumName = family.type === 'histogram' ? `${family.name}_sum` : null
+  const layout = {
+    metricNames,
+    buckets,
+    length: metricNames.length,
+    // The sum of a histogram can legitimately decrease with negative observations
+    sumIndex: sumName === null ? -1 : metricNames.indexOf(sumName)
+  }
+
+  family.layouts.push(layout)
+  return layout
+}
+
+function hasLayout (layout, metricNames, buckets) {
+  if (layout.length !== metricNames.length) {
+    return false
+  }
+
+  for (let i = 0; i < layout.length; i++) {
+    if (layout.metricNames[i] !== metricNames[i] || layout.buckets[i] !== buckets[i]) {
+      return false
+    }
+  }
+
+  return true
+}
+
+function findSample (layout, metricName, bucket) {
+  for (let i = 0; i < layout.length; i++) {
+    if (layout.metricNames[i] === metricName && layout.buckets[i] === bucket) {
+      return i
+    }
+  }
+
+  return -1
+}
+
+function createTotalFamily ({ name, help, type, aggregator }) {
+  return { name, help, type, aggregator, groups: new Map(), layouts: [], labelNames: undefined }
+}
+
+// Checks if the samples starting at the given position match the layout
+function matchesLayout (layout, samples, start) {
+  const end = start + layout.length
+
+  if (end > samples.length) {
+    return false
+  }
+
+  for (let i = 0; i < layout.length; i++) {
+    const sample = samples[start + i]
+
+    if (sample.metricName !== layout.metricNames[i] || sample.labels[kBucketLabel] !== layout.buckets[i]) {
+      return false
+    }
+  }
+
+  const first = samples[start].labels
+
+  // The samples belong to the same label set, and the next sample does not belong to the group
+  return (
+    (layout.length === 1 || hasSameLabels(first, samples[end - 1].labels)) &&
+    (end === samples.length || !continuesGroup(first, layout.metricNames, layout.buckets, samples[end]))
+  )
+}
+
+// Checks if a sample belongs to the group of the given label set, unless it repeats one of its samples
+function continuesGroup (labels, metricNames, buckets, sample) {
+  if (!hasSameLabels(labels, sample.labels)) {
+    return false
+  }
+
+  const bucket = sample.labels[kBucketLabel]
+
+  for (let i = 0; i < metricNames.length; i++) {
+    if (metricNames[i] === sample.metricName && buckets[i] === bucket) {
+      return false
+    }
+  }
+
+  return true
+}
+
+function getOutputLabels (group) {
+  if (group.outputLabels === null) {
+    const { labels, layout } = group
+    const shared = Object.freeze({ ...labels })
+
+    group.outputLabels = layout.buckets.map(bucket =>
+      bucket === undefined ? shared : Object.freeze({ [kBucketLabel]: bucket, ...labels })
+    )
+  }
+
+  return group.outputLabels
+}
+
 function toMetric (family) {
   const values = []
 
-  for (const { labels, metricNames, buckets, values: groupValues } of family.groups.values()) {
-    for (let i = 0; i < groupValues.length; i++) {
-      const bucket = buckets[i]
-      values.push(
-        createValue(metricNames[i], bucket === undefined ? { ...labels } : { le: bucket, ...labels }, groupValues[i])
-      )
+  for (const group of family.groups.values()) {
+    const { metricNames, length } = group.layout
+    const labels = getOutputLabels(group)
+
+    for (let i = 0; i < length; i++) {
+      values.push(createValue(metricNames[i], labels[i], group.values[i]))
     }
   }
 
@@ -221,16 +255,19 @@ function toMetric (family) {
 export class WorkerMetricsAggregator {
   #workerLabel
   #nonCumulativeMetrics
-  // Last cumulative values reported by each worker: key -> { applicationId, families }
+  // Totals of the cumulative metrics: applicationId -> { families }
+  #applications
+  // State of each worker: key -> { application, families }
   #workers
-  // Values carried forward from workers that exited or reset: applicationId -> families
-  #carried
+  // Incremented on each aggregation, it marks what was reported in the current one
+  #epoch
 
   constructor ({ workerLabel = 'workerId', nonCumulativeMetrics = [] } = {}) {
     this.#workerLabel = workerLabel
     this.#nonCumulativeMetrics = new Set(nonCumulativeMetrics)
+    this.#applications = new Map()
     this.#workers = new Map()
-    this.#carried = new Map()
+    this.#epoch = 0
   }
 
   // Each item in workers is { key, applicationId, metrics }, where key identifies the
@@ -238,60 +275,62 @@ export class WorkerMetricsAggregator {
   // could not be queried. A tracked worker which is missing from the list is considered
   // gone. Carried values of applications not included in applicationIds are discarded.
   aggregate (workers, applicationIds) {
+    const epoch = ++this.#epoch
     const output = new Map()
     const queried = new Set()
 
     for (const { key, applicationId, metrics } of workers) {
       queried.add(key)
 
-      // The worker is temporarily unavailable, its last cumulative values are still used
+      // The worker is temporarily unavailable, its last cumulative values are still in the totals
       if (!metrics) {
         continue
       }
 
-      const worker = getOrCreate(this.#workers, key, () => ({ applicationId, families: new Map() }))
-      const families = getOrCreate(output, applicationId, () => new Map())
-      const reported = new Set()
+      const application = getOrCreate(this.#applications, applicationId, () => ({ families: new Map() }))
+      let worker = this.#workers.get(key)
+
+      if (worker === undefined || worker.application !== application) {
+        worker = { application, families: new Map() }
+        this.#workers.set(key, worker)
+      }
+
+      const entries = getOrCreate(output, applicationId, () => new Map())
 
       for (const metric of metrics) {
-        const entry = getOrCreate(families, metric.name, () => this.#createEntry(metric))
+        const entry = getOrCreate(entries, metric.name, () => this.#createEntry(metric))
 
         if (entry.mode === 'summary') {
           entry.metrics.push(metric)
         } else if (entry.mode === 'cumulative') {
-          this.#trackCumulativeMetric(worker, metric)
-          reported.add(metric.name)
+          this.#updateCumulativeMetric(worker, metric, epoch)
         } else {
           this.#groupValues(entry, metric)
         }
       }
 
-      // A metric which is no longer reported has been removed from the registry
+      // A metric which is no longer reported has been removed from the registry: its last values stay in the totals
       for (const [name, family] of worker.families) {
-        if (!reported.has(name)) {
-          this.#carry(worker.applicationId, family)
+        if (family.epoch !== epoch) {
           worker.families.delete(name)
         }
       }
     }
 
-    for (const [key, worker] of this.#workers) {
+    // The values of the workers which are gone stay in the totals
+    for (const key of this.#workers.keys()) {
       if (!queried.has(key)) {
-        for (const family of worker.families.values()) {
-          this.#carry(worker.applicationId, family)
-        }
-
         this.#workers.delete(key)
       }
     }
 
-    for (const applicationId of this.#carried.keys()) {
+    for (const applicationId of this.#applications.keys()) {
       if (!applicationIds.has(applicationId)) {
-        this.#carried.delete(applicationId)
+        this.#applications.delete(applicationId)
       }
     }
 
-    return this.#buildMetrics(output, this.#computeCumulativeTotals())
+    return this.#buildMetrics(output)
   }
 
   #createEntry (metric) {
@@ -317,47 +356,236 @@ export class WorkerMetricsAggregator {
     }
   }
 
-  #parseCumulativeMetric (metric) {
-    const family = createFamily(metric)
-    let group = null
-    let groupLabels = null
-    let isNewGroup = false
+  #updateCumulativeMetric (worker, metric, epoch) {
+    const total = getOrCreate(worker.application.families, metric.name, () => createTotalFamily(metric))
+    let family = worker.families.get(metric.name)
 
-    // Samples of the same label set are consecutive, so the group key is only computed once for each of them
-    for (const { metricName, labels, value } of metric.values) {
-      if (group === null || !hasSameLabels(groupLabels, labels)) {
-        const cleanLabels = removeLabels(labels, this.#workerLabel, kBucketLabel)
-        const key = getLabelsKey(undefined, cleanLabels)
+    if (family === undefined || family.total !== total) {
+      family = { total, groups: new Map(), order: [], epoch }
+      worker.families.set(metric.name, family)
+    }
 
-        group = family.groups.get(key)
-        isNewGroup = group === undefined
-        groupLabels = labels
+    family.epoch = epoch
 
-        if (isNewGroup) {
-          group = createGroup(cleanLabels)
-          family.groups.set(key, group)
+    const samples = metric.values
+    const previousOrder = family.order
+    const order = []
+    let reset = false
+    let hint = 0
+    let i = 0
+
+    // Read the values of each group and check whether any of them decreased
+    while (i < samples.length) {
+      let group = previousOrder[hint]
+
+      if (group !== undefined && group.epoch !== epoch && this.#readGroup(group, samples, i)) {
+        hint++
+      } else {
+        group = this.#resolveGroup(family, samples, i, epoch)
+
+        if (group.reset) {
+          reset = true
+          group.reset = false
+        }
+
+        if (group.position >= 0) {
+          hint = group.position + 1
         }
       }
 
-      if (isNewGroup) {
-        pushSample(group, metricName, labels[kBucketLabel], value)
-      } else {
-        addSample(group, group.values.length, metricName, labels[kBucketLabel], value)
+      const { values, next, layout } = group
+
+      for (let j = 0; j < layout.length; j++) {
+        if (next[j] < values[j] && j !== layout.sumIndex) {
+          reset = true
+        }
+      }
+
+      group.epoch = epoch
+      group.position = order.length
+      order.push(group)
+      i += layout.length
+    }
+
+    // A label set which is no longer reported means that the metric has been reset
+    if (order.length !== previousOrder.length || family.groups.size !== order.length) {
+      for (const [key, group] of family.groups) {
+        if (group.epoch !== epoch) {
+          reset = true
+          family.groups.delete(key)
+        }
       }
     }
 
-    return family
-  }
+    // After a reset, the previous values of the worker are never subtracted, so they are carried forward
+    for (const group of order) {
+      const { values, next, indexes, total: totalGroup } = group
+      const totals = totalGroup.values
 
-  #trackCumulativeMetric (worker, metric) {
-    const family = this.#parseCumulativeMetric(metric)
-    const previous = worker.families.get(metric.name)
+      for (let j = 0; j < next.length; j++) {
+        totals[indexes === null ? j : indexes[j]] += reset ? next[j] : next[j] - values[j]
+      }
 
-    if (previous && hasReset(previous, family)) {
-      this.#carry(worker.applicationId, previous)
+      group.values = next
+      group.next = values
     }
 
-    worker.families.set(metric.name, family)
+    family.order = order
+  }
+
+  // Reads the values of a group from the samples starting at the given position.
+  // Returns false if the samples do not have the same labels and layout of the group.
+  #readGroup (group, samples, start) {
+    const { layout, next } = group
+    const end = start + layout.length
+
+    if (
+      end > samples.length ||
+      !this.#hasGroupLabels(group, samples[start].labels) ||
+      (layout.length > 1 && !this.#hasGroupLabels(group, samples[end - 1].labels))
+    ) {
+      return false
+    }
+
+    for (let j = 0; j < layout.length; j++) {
+      const sample = samples[start + j]
+
+      if (sample.metricName !== layout.metricNames[j] || sample.labels[kBucketLabel] !== layout.buckets[j]) {
+        return false
+      }
+
+      next[j] = sample.value
+    }
+
+    return true
+  }
+
+  // Checks if the labels of a sample, ignoring the worker and bucket labels, are the labels of the group
+  #hasGroupLabels (group, labels) {
+    const groupLabels = group.labels
+    let count = 0
+
+    for (const name in labels) {
+      if (name === kBucketLabel || name === this.#workerLabel) {
+        continue
+      }
+
+      if (groupLabels[name] !== labels[name]) {
+        return false
+      }
+
+      count++
+    }
+
+    return count === group.labelsCount
+  }
+
+  // Finds the group for the samples starting at the given position, creating it if needed
+  #resolveGroup (family, samples, start, epoch) {
+    const { total } = family
+    const labels = removeLabels(samples[start].labels, this.#workerLabel, kBucketLabel)
+    const labelsCount = Object.keys(labels).length
+    const labelsKey = getCachedLabelsKey(total, undefined, labels, labelsCount)
+
+    // The same label set reported more than once is tracked as a separate group, merged in the totals
+    let key = labelsKey
+    let existing = family.groups.get(key)
+    for (let duplicate = 1; existing !== undefined && existing.epoch === epoch; duplicate++) {
+      key = labelsKey + kDuplicateSeparator + duplicate
+      existing = family.groups.get(key)
+    }
+
+    // The label set has moved, but it is otherwise unchanged
+    if (existing !== undefined && matchesLayout(existing.layout, samples, start) && this.#readGroup(existing, samples, start)) {
+      return existing
+    }
+
+    const layout = this.#getLayout(total, samples, start)
+    const group = {
+      labels,
+      labelsCount,
+      layout,
+      values: new Float64Array(layout.length),
+      next: new Float64Array(layout.length),
+      total: null,
+      indexes: null,
+      epoch: 0,
+      position: -1,
+      // A label set whose samples changed means that the metric has been recreated
+      reset: existing !== undefined
+    }
+
+    // Duplicates are merged into the same group of the totals
+    this.#linkTotalGroup(group, total, labelsKey)
+    family.groups.set(key, group)
+    this.#readGroup(group, samples, start)
+    return group
+  }
+
+  // Returns the layout of the samples starting at the given position, reusing the known ones
+  #getLayout (total, samples, start) {
+    for (const layout of total.layouts) {
+      if (matchesLayout(layout, samples, start)) {
+        return layout
+      }
+    }
+
+    const first = samples[start]
+    const metricNames = [first.metricName]
+    const buckets = [first.labels[kBucketLabel]]
+
+    for (let i = start + 1; i < samples.length && continuesGroup(first.labels, metricNames, buckets, samples[i]); i++) {
+      metricNames.push(samples[i].metricName)
+      buckets.push(samples[i].labels[kBucketLabel])
+    }
+
+    return createLayout(total, metricNames, buckets)
+  }
+
+  // Links the group of a worker to the group of the totals with the same labels,
+  // finding the position of each sample in it
+  #linkTotalGroup (group, total, key) {
+    const { labels, layout } = group
+    let totalGroup = total.groups.get(key)
+
+    if (totalGroup === undefined) {
+      totalGroup = { labels, layout, values: new Float64Array(layout.length), outputLabels: null }
+      total.groups.set(key, totalGroup)
+    }
+
+    group.total = totalGroup
+
+    if (totalGroup.layout === layout) {
+      group.indexes = null
+      return
+    }
+
+    // The workers report different samples for the same label set: add the missing ones to the totals
+    const indexes = new Int32Array(layout.length)
+
+    for (let i = 0; i < layout.length; i++) {
+      let index = findSample(totalGroup.layout, layout.metricNames[i], layout.buckets[i])
+
+      if (index === -1) {
+        const { metricNames, buckets } = totalGroup.layout
+        const values = new Float64Array(totalGroup.values.length + 1)
+        values.set(totalGroup.values)
+
+        index = metricNames.length
+        totalGroup.layout = {
+          metricNames: [...metricNames, layout.metricNames[i]],
+          buckets: [...buckets, layout.buckets[i]],
+          length: index + 1,
+          sumIndex: totalGroup.layout.sumIndex
+        }
+        totalGroup.values = values
+        totalGroup.outputLabels = null
+      }
+
+      indexes[i] = index
+    }
+
+    group.indexes = indexes
   }
 
   #groupValues (entry, metric) {
@@ -373,53 +601,23 @@ export class WorkerMetricsAggregator {
     }
   }
 
-  #carry (applicationId, family) {
-    const families = getOrCreate(this.#carried, applicationId, () => new Map())
-    addFamily(
-      getOrCreate(families, family.name, () => createFamily(family)),
-      family
-    )
-  }
-
-  // Sums the last values of every tracked worker and the carried values
-  #computeCumulativeTotals () {
-    const totals = new Map()
-
-    for (const { applicationId, families } of this.#workers.values()) {
-      const applicationTotals = getOrCreate(totals, applicationId, () => new Map())
-
-      for (const family of families.values()) {
-        addFamily(getOrCreate(applicationTotals, family.name, () => createFamily(family)), family)
-      }
-    }
-
-    for (const [applicationId, families] of this.#carried) {
-      const applicationTotals = getOrCreate(totals, applicationId, () => new Map())
-
-      for (const family of families.values()) {
-        addFamily(getOrCreate(applicationTotals, family.name, () => createFamily(family)), family)
-      }
-    }
-
-    return totals
-  }
-
-  #buildMetrics (output, totals) {
+  #buildMetrics (output) {
     const metrics = []
 
-    for (const applicationId of new Set([...output.keys(), ...totals.keys()])) {
-      const families = output.get(applicationId)
-      const applicationTotals = totals.get(applicationId) ?? new Map()
+    for (const applicationId of new Set([...output.keys(), ...this.#applications.keys()])) {
+      const entries = output.get(applicationId)
+      const totals = this.#applications.get(applicationId)?.families ?? new Map()
+      const emitted = new Set()
 
-      for (const entry of families?.values() ?? []) {
+      for (const entry of entries?.values() ?? []) {
         if (entry.mode === 'summary') {
           metrics.push(...entry.metrics)
         } else if (entry.mode === 'cumulative') {
-          const family = applicationTotals.get(entry.name)
+          const family = totals.get(entry.name)
 
           if (family) {
             metrics.push(toMetric(family))
-            applicationTotals.delete(entry.name)
+            emitted.add(entry.name)
           }
         } else {
           const metric = this.#mergeGroups(entry)
@@ -431,8 +629,10 @@ export class WorkerMetricsAggregator {
       }
 
       // Cumulative metrics only reported by workers that are unavailable or gone
-      for (const family of applicationTotals.values()) {
-        metrics.push(toMetric(family))
+      for (const family of totals.values()) {
+        if (!emitted.has(family.name)) {
+          metrics.push(toMetric(family))
+        }
       }
     }
 
