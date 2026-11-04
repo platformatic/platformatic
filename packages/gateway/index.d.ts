@@ -17,7 +17,7 @@ export interface GatewayCommand {
   description: string
 }
 
-export declare const kGatewayProxyResponseConsumer: unique symbol
+export declare const kGatewayProxyResponseHandler: unique symbol
 
 export interface ProxyResponse {
   statusCode: number
@@ -25,7 +25,7 @@ export interface ProxyResponse {
   stream: Readable
 }
 
-export interface ProxyResponseConsumer {
+export interface ProxyResponseHandler {
   /** Own the per-client stream. The gateway does not send it or await this callback. */
   onResponse (response: ProxyResponse): void
 }
@@ -38,11 +38,22 @@ export type ProxyHandler = (
 ) => unknown
 
 export type SendProxyResponse = (request: FastifyRequest, reply: FastifyReply, stream: Readable) => unknown
-export type WrappingHandler = (previousHandler: ProxyHandler, send: SendProxyResponse) => ProxyHandler
+export interface WrappingHandlerContext {
+  next: ProxyHandler
+  send: SendProxyResponse
+}
+
+export type WrappingHandler = (
+  request: FastifyRequest,
+  reply: FastifyReply,
+  destination: string,
+  options: FastifyReplyFromHooks,
+  context: WrappingHandlerContext
+) => unknown
 
 declare module 'fastify' {
   interface FastifyReply {
-    [kGatewayProxyResponseConsumer]?: ProxyResponseConsumer
+    [kGatewayProxyResponseHandler]?: ProxyResponseHandler
   }
 }
 

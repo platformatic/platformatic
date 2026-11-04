@@ -1,3 +1,1 @@
-export function wrappingHandler () {
-  return null
-}
+export default null

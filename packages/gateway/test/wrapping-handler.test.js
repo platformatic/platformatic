@@ -10,7 +10,7 @@ import { prefix, states } from './proxy/fixtures/wrapping-handler.js'
 
 const body = '<html><body>Fresh response</body></html>'
 
-async function setup (t, { render, compression, deduplication = true, fixture = 'wrapping-handler.js' }) {
+async function setup (t, { render, compression, deduplication = true, fixture = 'wrapping-handler.js', customHandler = true }) {
   const upstream = Fastify({ forceCloseConnections: true })
   t.after(() => upstream.close())
   let requests = 0
@@ -23,7 +23,8 @@ async function setup (t, { render, compression, deduplication = true, fixture = 
   const gateway = await create(resolve(import.meta.dirname, '..'), {
     server: { hostname: '127.0.0.1', port: 0, logger: { level: 'silent' }, forceCloseConnections: true },
     gateway: {
-      handler: resolve(import.meta.dirname, 'proxy/fixtures', fixture),
+      ...(customHandler ? { handler: resolve(import.meta.dirname, 'proxy/fixtures/wrapping-inner-handler.js') } : {}),
+      wrappingHandler: resolve(import.meta.dirname, 'proxy/fixtures', fixture),
       compression: compression ? { enabled: true, threshold: 0, encodings: [compression] } : false,
       deduplication: { enabled: deduplication, lockTtl: 10000, timeout: 10000 },
       applications: [{ id: 'frontend', origin, proxy: { prefix: '/' } }]
@@ -170,6 +171,22 @@ test('late upstream transport error terminates the existing output once', { time
   assert.equal(state.errors, 1)
   assert.equal(state.sends.get('leader'), 1)
 })
+
+for (const fixture of ['wrapping-handler.js', 'default-wrapping-handler.js', 'both-wrapping-handlers.js']) {
+  for (const deduplication of [false, true]) {
+    test(`wrapper module ${fixture} works without a custom handler (deduplication ${deduplication})`, async t => {
+      const { address, state } = await setup(t, {
+        fixture,
+        customHandler: false,
+        deduplication,
+        render: (_req, reply) => reply.type('text/html').send(body)
+      })
+      assert.equal((await client(t, address, 'wrapped').done).body, prefix + body)
+      assert.equal(state.outer, 1)
+      assert.equal(state.inner, 0)
+    })
+  }
+}
 
 for (const fixture of ['invalid-wrapping-handler.js', 'invalid-wrapped-handler.js']) {
   test(`rejects ${fixture} at startup`, async t => {

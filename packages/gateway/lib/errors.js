@@ -3,7 +3,7 @@ import createError from '@fastify/error'
 export const ERROR_PREFIX = 'PLT_GATEWAY'
 export const InvalidWrappingHandlerError = createError(
   `${ERROR_PREFIX}_INVALID_WRAPPING_HANDLER`,
-  'wrappingHandler must be a function returning a proxy handler'
+  'wrappingHandler module must export a handler or default function'
 )
 
 export const FastifyInstanceIsAlreadyListeningError = createError(

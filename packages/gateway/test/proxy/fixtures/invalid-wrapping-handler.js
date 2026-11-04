@@ -1,1 +1,1 @@
-export const wrappingHandler = true
+export const handler = true

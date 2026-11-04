@@ -6,7 +6,7 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { PassThrough } from 'node:stream'
 import stringify from 'safe-stable-stringify'
-import { kGatewayProxyResponseConsumer } from '../symbols.js'
+import { kGatewayProxyResponseHandler } from '../symbols.js'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
@@ -153,7 +153,7 @@ export async function createDeduplicationHandler ({
           // (for instance, compressing it sets Content-Encoding) while the stored body is the upstream one.
           const headers = proxiedReply.getHeaders()
           // A wrapper may already have sent transformed headers before the upstream responds.
-          // Keep metadata matching the retained bytes for consumers, independently of ordinary replay headers.
+          // Keep metadata matching the retained bytes for response handlers, independently of ordinary replay headers.
           const upstreamHeaders = structuredClone(res.headers)
 
           // The client receives the body as it arrives from the upstream, while
@@ -252,14 +252,14 @@ export async function createDeduplicationHandler ({
 
       metrics?.deduplicationReplay?.inc()
       const body = new DynamicBuffer(response.body).asReadable()
-      const consumer = reply[kGatewayProxyResponseConsumer]
-      if (consumer) {
+      const responseHandler = reply[kGatewayProxyResponseHandler]
+      if (responseHandler) {
         // Records written by older gateway workers have no upstream metadata; acquire a fresh response instead.
         if (!response.upstreamHeaders) {
           body.destroy()
           return handler(request, reply, dest, options)
         }
-        consumer.onResponse({ statusCode: response.statusCode, headers: response.upstreamHeaders, stream: body })
+        responseHandler.onResponse({ statusCode: response.statusCode, headers: response.upstreamHeaders, stream: body })
         return reply
       }
       reply.code(response.statusCode)

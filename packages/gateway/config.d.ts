@@ -388,6 +388,7 @@ export interface PlatformaticGatewayConfig {
           };
     }[];
     handler?: string;
+    wrappingHandler?: string;
     deduplication?: {
       enabled?: boolean | string;
       storage?:

@@ -1224,6 +1224,9 @@
         "handler": {
           "type": "string"
         },
+        "wrappingHandler": {
+          "type": "string"
+        },
         "deduplication": {
           "type": "object",
           "properties": {

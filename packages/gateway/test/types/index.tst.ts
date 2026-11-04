@@ -19,21 +19,21 @@ import {
   schemaComponents,
   skipTelemetryHooks
 } from '../../index.js'
-import { kGatewayProxyResponseConsumer, type ProxyResponse, type ProxyResponseConsumer, type WrappingHandler } from '../../index.js'
+import { kGatewayProxyResponseHandler, type ProxyResponse, type ProxyResponseHandler, type WrappingHandler } from '../../index.js'
 
-test('Gateway wrapper and response consumer types', () => {
+test('Gateway wrapper and response handler types', () => {
   const reply = {} as FastifyReply
-  const wrapper: WrappingHandler = (previous, send) => (request, reply, dest, options) => {
-    reply[kGatewayProxyResponseConsumer] = {
+  const wrapper: WrappingHandler = (request, reply, dest, options, { next, send }) => {
+    reply[kGatewayProxyResponseHandler] = {
       onResponse (response) {
         expect(response).type.toBe<ProxyResponse>()
         send(request, reply, response.stream)
       }
     }
-    return previous(request, reply, dest, options)
+    return next(request, reply, dest, options)
   }
   expect(wrapper).type.toBe<WrappingHandler>()
-  expect(reply[kGatewayProxyResponseConsumer]).type.toBe<ProxyResponseConsumer | undefined>()
+  expect(reply[kGatewayProxyResponseHandler]).type.toBe<ProxyResponseHandler | undefined>()
   expect(errors.InvalidWrappingHandlerError()).type.toBe<FastifyError>()
 })
 
