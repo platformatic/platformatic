@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/nitro",
-  "version": "3.75.1",
+  "version": "3.76.0",
   "description": "Platformatic Nitro Capability",
   "main": "index.js",
   "types": "index.d.ts",
