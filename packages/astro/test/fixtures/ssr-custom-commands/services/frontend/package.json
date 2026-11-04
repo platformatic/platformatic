@@ -15,7 +15,7 @@
     "@platformatic/basic": ">=3.0.0",
     "@astrojs/node": "^11.1.7",
     "@fastify/middie": "^9.3.6",
-    "@fastify/static": "^10.1.8",
+    "@fastify/static": "^10.1.9",
     "@platformatic/globals": ">=3.0.0",
     "astro": "^7.3.6",
     "fastify": "^5.7.0",
