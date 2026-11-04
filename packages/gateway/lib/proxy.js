@@ -340,9 +340,7 @@ async function proxyPlugin (app, opts) {
     if (wrappingHandler) {
       const next = proxyHandler ?? ((_request, reply, dest, options) => reply.from(dest, options))
       const context = { next, send }
-      proxyHandler = function (request, reply, dest, options) {
-        return wrappingHandler(context, request, reply, dest, options)
-      }
+      proxyHandler = wrappingHandler.bind(null, context)
     }
 
     // Websocket links already counted in the activeWsConnections gauge.
