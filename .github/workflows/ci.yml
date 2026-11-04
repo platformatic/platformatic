@@ -325,14 +325,14 @@ jobs:
     runs-on: ${{matrix.os}}
     timeout-minutes: 55
     strategy:
-      # Do not cancel the other 29 matrix jobs when a single job hits a flaky
+      # Do not cancel the other matrix jobs when a single job hits a flaky
       # failure (e.g. one-off V8 crashes in worker threads), so that reruns
       # only need to repeat the failed job.
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
-        suite: [main, api, cli, start, multiple-workers]
+        suite: [main, main2, api, cli, start, multiple-workers]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@v6
