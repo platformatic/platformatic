@@ -187,11 +187,3 @@ for (const fixture of ['wrapping-handler.js', 'default-wrapping-handler.js', 'bo
     })
   }
 }
-
-for (const fixture of ['invalid-wrapping-handler.js', 'invalid-wrapped-handler.js']) {
-  test(`rejects ${fixture} at startup`, async t => {
-    await assert.rejects(setup(t, { fixture, render: (_req, reply) => reply.send(body) }), {
-      code: 'PLT_GATEWAY_INVALID_WRAPPING_HANDLER'
-    })
-  })
-}

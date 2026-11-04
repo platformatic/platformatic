@@ -8,7 +8,7 @@ import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
-import { InvalidWrappingHandlerError, WsNoTcpUpstreamError } from './errors.js'
+import { WsNoTcpUpstreamError } from './errors.js'
 import { kGatewayProxyResponseHandler } from './symbols.js'
 import { initMetrics } from './metrics.js'
 import { WsUpstreams } from './ws-upstreams.js'
@@ -142,9 +142,6 @@ async function proxyPlugin (app, opts) {
 
   const handler = await loadHandler(root, opts.handler)
   const wrappingHandler = await loadHandler(root, opts.wrappingHandler)
-  if (opts.wrappingHandler && !wrappingHandler) {
-    throw new InvalidWrappingHandlerError()
-  }
 
   for (const application of opts.applications) {
     if (!application.proxy) {
@@ -343,7 +340,9 @@ async function proxyPlugin (app, opts) {
     if (wrappingHandler) {
       const next = proxyHandler ?? ((_request, reply, dest, options) => reply.from(dest, options))
       const context = { next, send }
-      proxyHandler = (request, reply, dest, options) => wrappingHandler(context, request, reply, dest, options)
+      proxyHandler = function (request, reply, dest, options) {
+        return wrappingHandler(context, request, reply, dest, options)
+      }
     }
 
     // Websocket links already counted in the activeWsConnections gauge.

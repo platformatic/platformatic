@@ -108,7 +108,6 @@ export declare const skipTelemetryHooks: boolean
 export declare const version: string
 
 export namespace errors {
-  export const InvalidWrappingHandlerError: () => FastifyError
   export const FastifyInstanceIsAlreadyListeningError: () => FastifyError
   export const FailedToFetchOpenAPISchemaError: () => FastifyError
   export const ValidationErrors: () => FastifyError

@@ -34,7 +34,6 @@ test('Gateway wrapper and response handler types', () => {
   }
   expect(wrapper).type.toBe<WrappingHandler>()
   expect(reply[kGatewayProxyResponseHandler]).type.toBe<ProxyResponseHandler | undefined>()
-  expect(errors.InvalidWrappingHandlerError()).type.toBe<FastifyError>()
 })
 
 test('Gateway types', () => {

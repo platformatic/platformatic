@@ -425,8 +425,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   `context.send(request, reply, stream)` uses the gateway's native output path, including compression configuration and the
   application's compression opt-out. A wrapper that starts output before delegating can therefore use the same output
-  policy without importing private gateway modules. Modules without a valid handler function fail startup with
-  `PLT_GATEWAY_INVALID_WRAPPING_HANDLER`.
+  policy without importing private gateway modules.
 
   Wrappers that own the response body can import `kGatewayProxyResponseHandler` from `@platformatic/gateway` and set
   `reply[kGatewayProxyResponseHandler] = { onResponse(response) { /* consume response.stream */ } }` before delegating.
