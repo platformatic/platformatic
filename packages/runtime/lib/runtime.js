@@ -15,6 +15,7 @@ import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
 import {
   collectProcessMetrics,
+  isHttpMetricsResetEnabled,
   client as metricsClient,
   openTelemetryITCMessage,
   RESET_ON_COLLECT_METRICS
@@ -1828,9 +1829,10 @@ export class Runtime extends EventEmitter {
   async #collectAggregatedWorkersMetrics () {
     const workers = await this.#collectWorkersMetrics()
 
+    // The aggregator is recreated when the metrics config is updated, so the reset setting cannot change
     this.#workerMetricsAggregator ??= new WorkerMetricsAggregator({
       workerLabel: 'workerId',
-      nonCumulativeMetrics: RESET_ON_COLLECT_METRICS
+      nonCumulativeMetrics: isHttpMetricsResetEnabled(this.#config.metrics) ? RESET_ON_COLLECT_METRICS : []
     })
 
     const metrics = this.#workerMetricsAggregator.aggregate(workers, new Set(this.#applications.keys()))

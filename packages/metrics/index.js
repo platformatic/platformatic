@@ -137,7 +137,7 @@ export const THREAD_LEVEL_METRICS = [
   'thread_cpu_percent_usage'
 ]
 
-// Metrics that are reset after each collection: their values are not cumulative.
+// Metrics that are reset after each collection, unless resetHttpMetrics is false.
 export const RESET_ON_COLLECT_METRICS = [
   'http_request_all_duration_seconds',
   'http_request_all_summary_seconds',
@@ -195,7 +195,16 @@ function isHttpClientMetricsEnabled (metricsConfig) {
   return metricsConfig.httpClientMetrics === true || metricsConfig.httpClientMetrics === 'true'
 }
 
-export function collectHttpClientMetrics (registry) {
+export function isHttpMetricsResetEnabled (metricsConfig) {
+  const reset = metricsConfig?.resetHttpMetrics
+  return reset !== false && reset !== 'false'
+}
+
+function resetAfterCollection () {
+  process.nextTick(() => this.reset())
+}
+
+export function collectHttpClientMetrics (registry, metricsConfig = {}) {
   if (ensureMetricsGroup(registry, 'http-client')) {
     return
   }
@@ -204,9 +213,7 @@ export function collectHttpClientMetrics (registry) {
     name: 'http_client_request_duration_seconds',
     help: 'outgoing HTTP client request duration in seconds',
     labelNames: ['method', 'status_code', 'dispatcher_stats_url', 'error_type'],
-    collect: function () {
-      process.nextTick(() => this.reset())
-    },
+    collect: isHttpMetricsResetEnabled(metricsConfig) ? resetAfterCollection : undefined,
     registers: [registry]
   })
 
@@ -272,6 +279,7 @@ function collectHttpServerMetrics (registry, metricsConfig) {
 
   // Build custom labels configuration
   const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
+  const collect = isHttpMetricsResetEnabled(metricsConfig) ? resetAfterCollection : undefined
 
   collectHttpMetrics(registry, {
     customLabels,
@@ -279,16 +287,12 @@ function collectHttpServerMetrics (registry, metricsConfig) {
     histogram: {
       name: 'http_request_all_duration_seconds',
       help: 'request duration in seconds summary for all requests',
-      collect: function () {
-        process.nextTick(() => this.reset())
-      }
+      collect
     },
     summary: {
       name: 'http_request_all_summary_seconds',
       help: 'request duration in seconds histogram for all requests',
-      collect: function () {
-        process.nextTick(() => this.reset())
-      }
+      collect
     }
   })
 }
@@ -484,7 +488,7 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
     if (isHttpClientMetricsEnabled(metricsConfig)) {
-      collectHttpClientMetrics(registry)
+      collectHttpClientMetrics(registry, metricsConfig)
     }
   }
 
@@ -549,7 +553,7 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
     if (isHttpClientMetricsEnabled(metricsConfig)) {
-      collectHttpClientMetrics(registry)
+      collectHttpClientMetrics(registry, metricsConfig)
     }
   }
 
