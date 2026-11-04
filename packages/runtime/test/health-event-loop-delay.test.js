@@ -1,5 +1,5 @@
 import { fail, ok, strictEqual } from 'node:assert'
-import { once } from 'node:events'
+import { on, once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
@@ -83,16 +83,17 @@ test(
 
     // 300ms blocks every 500ms: ELU stays around 0.6 (below the 0.99 maxELU
     // default) but the event loop delay exceeds the configured 100ms
+    const unhealthyEvent = once(app, 'application:worker:unhealthy')
+    const startedEvents = on(app, 'application:worker:started')
+    t.after(() => startedEvents.return())
     await request(`${url}/stall/start?block=300&period=500`, { method: 'POST' })
 
-    const [unhealthy] = await once(app, 'application:worker:unhealthy')
+    const [unhealthy] = await unhealthyEvent
     strictEqual(unhealthy.application, 'main')
 
     // The stalling worker is replaced: the interval dies with it, so the
     // replacement stays healthy
-    while (true) {
-      const [started] = await once(app, 'application:worker:started')
-
+    for await (const [started] of startedEvents) {
       if (started.application === 'main') {
         ok(started.worker !== 0, 'The replacement worker should have a fresh index')
         break
@@ -117,14 +118,15 @@ test(
     // The p99-only threshold also activates the in-worker sampler. 300ms
     // blocks every 500ms make the per-second p99 track the stall magnitude,
     // well above the configured 100ms.
+    const unhealthyEvent = once(app, 'application:worker:unhealthy')
+    const startedEvents = on(app, 'application:worker:started')
+    t.after(() => startedEvents.return())
     await request(`${url}/stall/start?block=300&period=500`, { method: 'POST' })
 
-    const [unhealthy] = await once(app, 'application:worker:unhealthy')
+    const [unhealthy] = await unhealthyEvent
     strictEqual(unhealthy.application, 'main')
 
-    while (true) {
-      const [started] = await once(app, 'application:worker:started')
-
+    for await (const [started] of startedEvents) {
       if (started.application === 'main') {
         ok(started.worker !== 0, 'The replacement worker should have a fresh index')
         break

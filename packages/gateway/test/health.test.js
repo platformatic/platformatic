@@ -16,7 +16,7 @@ function ensureCleanup (t, folders) {
   return cleanup()
 }
 
-function waitEventOnAllApplications (runtime, applications, event) {
+function waitEventOnAllApplications (t, runtime, applications, event) {
   const pending = new Map()
   const seen = new Map()
 
@@ -52,6 +52,7 @@ function waitEventOnAllApplications (runtime, applications, event) {
   }
 
   runtime.on(event, listener)
+  t.after(() => runtime.off(event, listener))
   return promise
 }
 
@@ -127,6 +128,18 @@ test('should properly report as failed on the health check route when all depend
     assert.strictEqual(statusCode, 200)
   }
 
+  // Capture the entire crash/recovery sequence before any request can trigger it.
+  const crashed = waitEventOnAllApplications(t, runtime, applications, 'application:worker:error')
+  const unhealthy = once(runtime, 'application:worker:event:unhealthy')
+  const restarted = waitEventOnAllApplications(t, runtime, applications, 'application:worker:started')
+  const healthy = Promise.withResolvers()
+  // Ignore healthy samples preceding the failure; subscribe synchronously on failure.
+  function waitForRecovery () {
+    once(runtime, 'application:worker:event:healthy', { signal: t.signal }).then(healthy.resolve, healthy.reject)
+  }
+  runtime.once('application:worker:event:unhealthy', waitForRecovery)
+  t.after(() => runtime.off('application:worker:event:unhealthy', waitForRecovery))
+
   for (const [application, workers] of Object.entries(applications)) {
     for (let i = 0; i < workers; i++) {
       const { statusCode, body } = await request(`${url}/${application}/api`)
@@ -137,8 +150,8 @@ test('should properly report as failed on the health check route when all depend
   }
 
   // Wait for all processes to crash and then for the health check to report the failure.
-  await waitEventOnAllApplications(runtime, applications, 'application:worker:error')
-  await once(runtime, 'application:worker:event:unhealthy')
+  await crashed
+  await unhealthy
 
   // Verify health check
   {
@@ -147,8 +160,8 @@ test('should properly report as failed on the health check route when all depend
   }
 
   // Wait for applications to restart and the health check to report the success.
-  await waitEventOnAllApplications(runtime, applications, 'application:worker:started')
-  await once(runtime, 'application:worker:event:healthy')
+  await restarted
+  await healthy.promise
 
   // Verify health check
   {

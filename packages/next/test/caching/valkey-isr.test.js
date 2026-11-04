@@ -525,12 +525,13 @@ test('should properly revalidate tags in Valkey', async t => {
     time = mo[2]
   }
 
+  const revalidated = once(runtime, 'application:worker:event:revalidated')
   {
     const res = await fetch(url + '/revalidate')
     ok(res.status, 200)
   }
 
-  await once(runtime, 'application:worker:event:revalidated')
+  await revalidated
 
   {
     const response = await fetch(url)
@@ -1072,8 +1073,9 @@ test('should handle refresh error', async t => {
   await valkey.acl('deluser', valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
 
+  const revalidated = once(runtime, 'application:worker:event:revalidated')
   await fetch(url + '/revalidate')
-  await once(runtime, 'application:worker:event:revalidated')
+  await revalidated
 
   await runtime.close()
   const logs = await getLogsFromFile(root)

@@ -1,6 +1,6 @@
 import sqlEvents from '@platformatic/sql-events'
 import sqlMapper from '@platformatic/sql-mapper'
-import { once } from 'events'
+import { on } from 'node:events'
 import Fastify from 'fastify'
 import { printSchema } from 'graphql'
 import { equal, deepEqual as same } from 'node:assert'
@@ -29,7 +29,10 @@ function createWebSocketClient (t, app) {
   const client = createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
   t.after(() => client.destroy())
   client.setEncoding('utf8')
-  return { client, ws }
+  // Buffer messages while HTTP mutations are awaited, including same-tick replies.
+  const messages = on(client, 'data')
+  t.after(() => messages.return())
+  return { client, ws, messages }
 }
 
 test('subscription - crud', async t => {
@@ -48,7 +51,7 @@ test('subscription - crud', async t => {
 
   await app.listen({ port: 0 })
 
-  const { client } = createWebSocketClient(t, app)
+  const { client, messages } = createWebSocketClient(t, app)
 
   client.write(
     JSON.stringify({
@@ -92,7 +95,7 @@ test('subscription - crud', async t => {
   }
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     equal(data.type, 'connection_ack')
   }
@@ -112,7 +115,7 @@ test('subscription - crud', async t => {
   })
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data, {
       id: 1,
@@ -143,7 +146,7 @@ test('subscription - crud', async t => {
   })
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data, {
       id: 1,
@@ -174,7 +177,7 @@ test('subscription - crud', async t => {
   })
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data, {
       id: '1',
@@ -284,7 +287,7 @@ test('subscription - crud with two schemas and a ignore', async t => {
 
   await app.listen({ port: 0 })
 
-  const { client } = createWebSocketClient(t, app)
+  const { client, messages } = createWebSocketClient(t, app)
   t.after(() => client.destroy())
 
   client.write(
@@ -294,7 +297,7 @@ test('subscription - crud with two schemas and a ignore', async t => {
   )
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     equal(data.type, 'connection_ack')
   }
@@ -317,7 +320,7 @@ test('subscription - crud with two schemas and a ignore', async t => {
   }
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data.payload, [
       {
