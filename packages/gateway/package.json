@@ -50,7 +50,7 @@
     "@fastify/error": "^4.0.0",
     "@fastify/http-proxy": "^11.6.3",
     "@fastify/reply-from": "^12.0.0",
-    "@fastify/static": "^10.0.0",
+    "@fastify/static": "^10.1.9",
     "@fastify/swagger": "^9.0.0",
     "@fastify/view": "^12.0.0",
     "@platformatic/basic": "workspace:*",

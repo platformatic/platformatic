@@ -40,7 +40,7 @@
     "camelcase": "^6.3.0",
     "fastify-plugin": "^6.0.0",
     "mqemitter": "^7.0.0",
-    "mqemitter-redis": "^7.0.0"
+    "mqemitter-redis": "^8.0.0"
   },
   "engines": {
     "node": ">=22.19.0"

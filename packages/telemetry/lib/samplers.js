@@ -3,7 +3,7 @@ import {
   AlwaysOnSampler,
   ParentBasedSampler,
   TraceIdRatioBasedSampler
-} from '@opentelemetry/sdk-trace-base'
+} from '@opentelemetry/sdk-trace'
 import { isAbsolute, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
