@@ -3,7 +3,7 @@ import {
   ConsoleSpanExporter,
   InMemorySpanExporter,
   SimpleSpanProcessor
-} from '@opentelemetry/sdk-trace-base'
+} from '@opentelemetry/sdk-trace'
 import { abstractLogger } from '@platformatic/foundation'
 import { createRequire } from 'node:module'
 import { FileSpanExporter } from './file-span-exporter.js'
@@ -61,9 +61,9 @@ export function getSpanProcessors (opts = {}, logger = abstractLogger) {
     // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
     // unless "processor" is set to "simple" (used only in tests)
     if (exp.processor === 'simple' || ['memory', 'console', 'file'].includes(exp.type)) {
-      spanProcessor = new SimpleSpanProcessor(exporterObj)
+      spanProcessor = new SimpleSpanProcessor({ exporter: exporterObj })
     } else {
-      spanProcessor = new BatchSpanProcessor(exporterObj)
+      spanProcessor = new BatchSpanProcessor({ exporter: exporterObj })
     }
     spanProcessors.push(spanProcessor)
   }

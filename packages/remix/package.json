@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/remix",
-  "version": "3.76.0",
+  "version": "3.77.0",
   "description": "Platformatic Remix Capability",
   "main": "index.js",
   "type": "module",
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@fastify/static": "^10.0.0",
+    "@fastify/static": "^10.1.9",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",

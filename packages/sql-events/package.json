@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-events",
-  "version": "3.76.0",
+  "version": "3.77.0",
   "description": "Emit events via MQEmitter",
   "main": "index.js",
   "type": "module",
@@ -40,7 +40,7 @@
     "camelcase": "^6.3.0",
     "fastify-plugin": "^6.0.0",
     "mqemitter": "^7.0.0",
-    "mqemitter-redis": "^7.0.0"
+    "mqemitter-redis": "^8.0.0"
   },
   "engines": {
     "node": ">=22.19.0"
