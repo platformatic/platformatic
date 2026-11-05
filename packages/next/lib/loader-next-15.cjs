@@ -17,6 +17,9 @@ const {
 const { transformSync } = require('amaro')
 const { getConfig, getRoot } = require('@platformatic/globals')
 
+const babelGenerate = generate.default ?? generate
+const babelTraverse = traverse.default ?? traverse
+
 const originalReadFile = fsPromises.readFile
 const originalReadFileSync = fs.readFileSync
 const targetFile = resolve(fileURLToPath(getRoot()), 'next.config.ts')
@@ -45,7 +48,7 @@ function createEvaluatorWrapperFunction (original) {
 function transformCJS (source) {
   const ast = parse(source.toString(), { sourceType: 'module' })
 
-  traverse.default(ast, {
+  babelTraverse(ast, {
     AssignmentExpression (path) {
       const { left, right } = path.node
 
@@ -56,13 +59,13 @@ function transformCJS (source) {
     }
   })
 
-  return generate.default(ast).code
+  return babelGenerate(ast).code
 }
 
 function transformESM (source) {
   const ast = parse(source.toString(), { sourceType: 'module' })
 
-  traverse.default(ast, {
+  babelTraverse(ast, {
     ExportDefaultDeclaration (path) {
       const declaration = path.node.declaration
 
@@ -84,7 +87,7 @@ function transformESM (source) {
     }
   })
 
-  return generate.default(ast).code
+  return babelGenerate(ast).code
 }
 
 function detectFormat (code) {
@@ -93,7 +96,7 @@ function detectFormat (code) {
   const ast = parse(code, { sourceType: 'module' })
 
   // Manipulate the AST
-  traverse.default(ast, {
+  babelTraverse(ast, {
     AssignmentExpression (path) {
       const { left } = path.node
 

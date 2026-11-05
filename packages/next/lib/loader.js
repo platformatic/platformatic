@@ -14,6 +14,9 @@ import { readFileSync, realpathSync } from 'node:fs'
 import { readFile, realpath } from 'node:fs/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
+const babelGenerate = generate.default ?? generate
+const babelTraverse = traverse.default ?? traverse
+
 const originalId = '__pltEnhanceNextConfig'
 // Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
 let candidates = ['next.config.js', 'next.config.mjs']
@@ -41,7 +44,7 @@ export function transformCJS (source) {
   const ast = parse(source.toString(), { sourceType: 'module' })
 
   // Manipulate the AST
-  traverse.default(ast, {
+  babelTraverse(ast, {
     AssignmentExpression (path) {
       const { left, right } = path.node
 
@@ -53,14 +56,14 @@ export function transformCJS (source) {
     }
   })
 
-  return generate.default(ast).code
+  return babelGenerate(ast).code
 }
 
 export function transformESM (source) {
   const ast = parse(source.toString(), { sourceType: 'module' })
 
   // Manipulate the AST
-  traverse.default(ast, {
+  babelTraverse(ast, {
     ExportDefaultDeclaration (path) {
       const declaration = path.node.declaration
 
@@ -84,7 +87,7 @@ export function transformESM (source) {
     }
   })
 
-  return generate.default(ast).code
+  return babelGenerate(ast).code
 }
 
 function initializeCandidates (data, realRootPath) {
