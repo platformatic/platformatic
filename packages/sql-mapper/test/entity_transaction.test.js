@@ -103,7 +103,7 @@ test('entity transactions', async () => {
 
   // delete
   {
-    const findResult = await pageEntity.find({ fields: ['title'] })
+    const findResult = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(findResult, [{ title: 'foo' }, { title: 'bar' }])
 
     try {
@@ -124,7 +124,7 @@ test('entity transactions', async () => {
     } catch (e) {
       // rollback
     }
-    const afterRollback = await pageEntity.find({ fields: ['title'] })
+    const afterRollback = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(afterRollback, [{ title: 'foo' }, { title: 'bar' }])
   }
 
