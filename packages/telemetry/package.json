@@ -39,7 +39,7 @@
     "@opentelemetry/resources": "2.12.0",
     "@opentelemetry/sdk-node": "0.300.0",
     "@opentelemetry/sdk-trace": "2.12.0",
-    "@opentelemetry/semantic-conventions": "1.43.0",
+    "@opentelemetry/semantic-conventions": "1.44.0",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
     "fast-uri": "^4.0.0",
