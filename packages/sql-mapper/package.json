@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@databases/mysql": "^7.0.0",
-    "@databases/pg": "^5.5.0",
+    "@databases/pg": "^6.0.0",
     "@databases/sql": "^3.3.0",
     "@fastify/error": "^4.0.0",
     "@hapi/topo": "^6.0.2",
