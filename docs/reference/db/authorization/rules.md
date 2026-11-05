@@ -121,6 +121,8 @@ In this configuration, a user with the `user` role can only access the `id` and 
 
 The `fields` list of a `find` rule also applies to the `where` and `orderBy` clauses of `find` and `count` operations: filtering or sorting on a field that is not in the list is rejected with a `PLT_DB_AUTH_FIELD_UNAUTHORIZED` error. Otherwise the value of a hidden field could be recovered through filters such as `where.secret.like=a%`. The rule's own `checks` are not affected by this limit, so in the example above the `userId` check keeps working even though `userId` cannot be selected, filtered or sorted on by the user.
 
+The `fields` list of an `updateMany` rule applies to the input, the `where` clause and the returned fields, so a user cannot write, filter on or read back a field that is not in the list. The `fields` list of a `delete` rule applies to the `where` clause and the returned fields. In both cases, when no fields are selected all the fields of the entity are returned, so the request is rejected unless the list contains every field: clients must select the fields they need, as with `find`. The REST bulk update route (`PUT /<entity>/`) requires all the not-nullable fields in the body, so an `updateMany` rule used by that route must list them.
+
 ## Set Entity Fields from User Metadata
 
 Defaults are used in database insert and are default fields added automatically populated from user metadata
