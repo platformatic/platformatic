@@ -42,7 +42,7 @@
     "astro": "^7.0.0",
     "cleaner-spec-reporter": "^2.0.0",
     "cookie": "^2.0.1",
-    "eslint": "9",
+    "eslint": "10",
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",
