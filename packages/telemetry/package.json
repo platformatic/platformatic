@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/telemetry",
-  "version": "3.75.0",
+  "version": "3.76.0",
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "type": "module",
@@ -16,7 +16,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@databases/pg": "^5.5.0",
+    "@databases/pg": "^6.0.0",
     "@opentelemetry/instrumentation-express": "0.72.0",
     "@opentelemetry/instrumentation-pg": "0.77.0",
     "cleaner-spec-reporter": "^2.0.0",

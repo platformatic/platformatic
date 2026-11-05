@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "3.75.0",
+  "version": "3.76.0",
   "description": "A data mapper utility for SQL databases",
   "main": "index.js",
   "type": "module",
@@ -30,7 +30,7 @@
   "devDependencies": {
     "@opentelemetry/api": "^1.9.0",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "fastify": "^5.0.0",
     "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@databases/mysql": "^7.0.0",
-    "@databases/pg": "^5.5.0",
+    "@databases/pg": "^6.0.0",
     "@databases/sql": "^3.3.0",
     "@fastify/error": "^4.0.0",
     "@hapi/topo": "^6.0.2",

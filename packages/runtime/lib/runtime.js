@@ -15,8 +15,10 @@ import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
 import {
   collectProcessMetrics,
+  isHttpMetricsResetEnabled,
   client as metricsClient,
-  openTelemetryITCMessage
+  openTelemetryITCMessage,
+  RESET_ON_COLLECT_METRICS
 } from '@platformatic/metrics'
 import fastify from 'fastify'
 import { EventEmitter, once } from 'node:events'
@@ -69,6 +71,7 @@ import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
+import { WorkerMetricsAggregator } from './worker-metrics-aggregator.js'
 import { DynamicWorkersScaler } from './worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
@@ -210,6 +213,8 @@ export class Runtime extends EventEmitter {
   #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
+  #workerMetricsAggregator
+  #pendingAggregatedWorkersMetrics
 
   #applicationsConfigsPatches
   #applications
@@ -1334,6 +1339,9 @@ export class Runtime extends EventEmitter {
       }
     }
 
+    // The workers have recreated their metrics, possibly with different labels: start over
+    this.#workerMetricsAggregator = null
+
     this.logger.info({ metricsConfig }, 'Metrics configuration updated')
     return { success: true, config: metricsConfig }
   }
@@ -1662,11 +1670,13 @@ export class Runtime extends EventEmitter {
   }
 
   async getMetrics (format = 'json') {
+    return this.#getMetrics(format, this.#isWorkerMetricsAggregationEnabled())
+  }
+
+  async #getMetrics (format, aggregateWorkers) {
     if (this.#config.metrics === false || this.#config.metrics?.enabled === false) {
       throw new Error('Metrics are disabled')
     }
-
-    let metrics = null
 
     const applicationRestartMetrics = this.#getApplicationRestartMetricsJson()
 
@@ -1685,42 +1695,7 @@ export class Runtime extends EventEmitter {
       applicationRestartMetrics
     })
 
-    for (const worker of this.#workers.values()) {
-      try {
-        // The application might be temporarily unavailable
-        if (worker[kWorkerStatus] !== 'started') {
-          continue
-        }
-
-        // Get thread-specific metrics from worker. Always collect JSON so that
-        // the text format can be serialized once with a single HELP/TYPE block
-        // per metric family, as required by the Prometheus exposition format.
-        const applicationMetrics = await executeWithTimeout(
-          sendViaITC(worker, 'getMetrics', 'json'),
-          this.#config.metrics?.timeout ?? 10000
-        )
-
-        if (applicationMetrics && applicationMetrics !== kTimeout) {
-          metrics ??= []
-
-          // Add worker's thread-specific metrics
-          for (let i = 0; i < applicationMetrics.length; i++) {
-            metrics.push(applicationMetrics[i])
-          }
-        }
-      } catch (e) {
-        // The application exited while we were sending the ITC, skip it
-        if (
-          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
-          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
-          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
-        ) {
-          continue
-        }
-
-        throw e
-      }
-    }
+    let metrics = aggregateWorkers ? await this.#getAggregatedWorkersMetrics() : await this.#getWorkersMetrics()
 
     // Extension metrics must not share a family name with any worker metric.
     if (metrics !== null && extensionMetrics.length > 0) {
@@ -1774,6 +1749,96 @@ export class Runtime extends EventEmitter {
     }
 
     return { metrics }
+  }
+
+  #isWorkerMetricsAggregationEnabled () {
+    const aggregateWorkers = this.#config.metrics?.aggregateWorkers
+    return aggregateWorkers === true || aggregateWorkers === 'true'
+  }
+
+  // Queries all the workers for their metrics. The result contains an entry for each worker,
+  // with metrics set to null when the worker is temporarily unavailable.
+  async #collectWorkersMetrics () {
+    const workers = []
+
+    for (const worker of this.#workers.values()) {
+      const entry = { key: worker, applicationId: worker[kApplicationId], metrics: null }
+      workers.push(entry)
+
+      try {
+        // The application might be temporarily unavailable
+        if (worker[kWorkerStatus] !== 'started') {
+          continue
+        }
+
+        // Get thread-specific metrics from worker. Always collect JSON so that
+        // the text format can be serialized once with a single HELP/TYPE block
+        // per metric family, as required by the Prometheus exposition format.
+        const applicationMetrics = await executeWithTimeout(
+          sendViaITC(worker, 'getMetrics', 'json'),
+          this.#config.metrics?.timeout ?? 10000
+        )
+
+        if (applicationMetrics && applicationMetrics !== kTimeout) {
+          entry.metrics = applicationMetrics
+        }
+      } catch (e) {
+        // The application exited while we were sending the ITC, skip it
+        if (
+          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+        ) {
+          continue
+        }
+
+        throw e
+      }
+    }
+
+    return workers
+  }
+
+  async #getWorkersMetrics () {
+    let metrics = null
+
+    for (const { metrics: workerMetrics } of await this.#collectWorkersMetrics()) {
+      if (workerMetrics) {
+        metrics ??= []
+
+        for (let i = 0; i < workerMetrics.length; i++) {
+          metrics.push(workerMetrics[i])
+        }
+      }
+    }
+
+    return metrics
+  }
+
+  // The aggregator compares the values of each worker with the previous ones to detect resets,
+  // so collections must not overlap: an older collection processed after a newer one would look
+  // like a reset and its values would be counted twice. Concurrent callers share the same result.
+  #getAggregatedWorkersMetrics () {
+    this.#pendingAggregatedWorkersMetrics ??= this.#collectAggregatedWorkersMetrics().finally(() => {
+      this.#pendingAggregatedWorkersMetrics = null
+    })
+
+    return this.#pendingAggregatedWorkersMetrics
+  }
+
+  async #collectAggregatedWorkersMetrics () {
+    const workers = await this.#collectWorkersMetrics()
+
+    // The aggregator is recreated when the metrics config is updated, so the reset setting cannot change
+    this.#workerMetricsAggregator ??= new WorkerMetricsAggregator({
+      workerLabel: 'workerId',
+      nonCumulativeMetrics: isHttpMetricsResetEnabled(this.#config.metrics) ? RESET_ON_COLLECT_METRICS : []
+    })
+
+    const metrics = this.#workerMetricsAggregator.aggregate(workers, new Set(this.#applications.keys()))
+
+    // As with the per-worker metrics, report nothing until a worker provides its metrics
+    return workers.some(worker => worker.metrics) ? metrics : null
   }
 
   async #getExtensionMetricsJson ({ processMetricsJson, applicationRestartMetrics }) {
@@ -1925,7 +1990,8 @@ export class Runtime extends EventEmitter {
 
   async getFormattedMetrics () {
     try {
-      const { metrics } = await this.getMetrics()
+      // Always use the per-worker metrics: the values below are read from a single worker
+      const { metrics } = await this.#getMetrics('json', false)
 
       if (metrics === null || metrics.length === 0) {
         return null
@@ -3089,6 +3155,7 @@ export class Runtime extends EventEmitter {
     })
 
     const healthConfig = worker[kConfig].health
+    const { maxELULogLevel = 'error', maxHeapUsedLogLevel = 'error' } = healthConfig
 
     let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval, maxEventLoopDelay, maxEventLoopDelayP99 } =
       worker[kConfig].health
@@ -3222,14 +3289,14 @@ export class Runtime extends EventEmitter {
       })
 
       if (health.elu > maxELU) {
-        this.logger.error(
+        this.logger[maxELULogLevel](
           `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, ` +
             `above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
         )
       }
 
       if (memoryUsage > maxHeapUsed) {
-        this.logger.error(
+        this.logger[maxHeapUsedLogLevel](
           `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
             `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
         )
@@ -3698,8 +3765,23 @@ export class Runtime extends EventEmitter {
       this.logger.debug(`Preparing to stop the old version of ${label} ...`)
     }
 
-    // Remove the old worker and then kill it
-    await sendViaITC(worker, 'removeFromMesh')
+    // From now on the worker is going away: if it exits for any reason (including a forced termination
+    // after a mesh error) it must not be considered crashed and therefore restarted.
+    worker[kWorkerStatus] = 'stopping'
+
+    // Remove the old worker from the mesh
+    try {
+      await sendViaITC(worker, 'removeFromMesh')
+    } catch (e) {
+      // This usually happens when another thread does not acknowledge the route removal in time
+      // (for instance because its event loop is blocked). The worker is being stopped anyway.
+      this.logger.warn({ err: ensureLoggableError(e) }, `Cannot remove the ${label} from the mesh. Stopping it anyway ...`)
+    }
+
+    // The worker exited while removing it from the mesh, there is nothing left to stop
+    if (worker[kWorkerStatus] === 'exited') {
+      return
+    }
 
     // Stop the old worker to free the port
     await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
@@ -4849,6 +4931,18 @@ export class Runtime extends EventEmitter {
 
   #onMeshInterceptorError (error) {
     const worker = error.port
+    const status = worker[kWorkerStatus]
+
+    // The worker is already being stopped (typically it is being replaced and its removal from the mesh
+    // timed out): terminating it here would make it look like a crash and trigger a restart.
+    if (status === 'stopping' || status === 'stopped' || status === 'exited') {
+      this.logger.debug(
+        { err: ensureLoggableError(error.cause) },
+        `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup while stopping. Ignoring it ...`
+      )
+
+      return
+    }
 
     this.logger.error(
       { err: ensureLoggableError(error.cause) },

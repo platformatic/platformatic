@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/next/3.75.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/next/3.76.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Next.js Config",
   "type": "object",
@@ -733,6 +733,25 @@
                       }
                     ]
                   },
+                  "maxELULogLevel": {
+                    "type": "string",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "fatal",
+                          "error",
+                          "warn",
+                          "info",
+                          "debug",
+                          "trace",
+                          "silent"
+                        ]
+                      },
+                      {
+                        "pattern": "^\\{.+\\}$"
+                      }
+                    ]
+                  },
                   "maxEventLoopDelay": {
                     "anyOf": [
                       {
@@ -764,6 +783,25 @@
                       },
                       {
                         "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapUsedLogLevel": {
+                    "type": "string",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "fatal",
+                          "error",
+                          "warn",
+                          "info",
+                          "debug",
+                          "trace",
+                          "silent"
+                        ]
+                      },
+                      {
+                        "pattern": "^\\{.+\\}$"
                       }
                     ]
                   },
@@ -1591,6 +1629,26 @@
               ],
               "default": 0.99
             },
+            "maxELULogLevel": {
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": [
+                    "fatal",
+                    "error",
+                    "warn",
+                    "info",
+                    "debug",
+                    "trace",
+                    "silent"
+                  ]
+                },
+                {
+                  "pattern": "^\\{.+\\}$"
+                }
+              ],
+              "default": "error"
+            },
             "maxEventLoopDelay": {
               "anyOf": [
                 {
@@ -1625,6 +1683,26 @@
                 }
               ],
               "default": 0.99
+            },
+            "maxHeapUsedLogLevel": {
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": [
+                    "fatal",
+                    "error",
+                    "warn",
+                    "info",
+                    "debug",
+                    "trace",
+                    "silent"
+                  ]
+                },
+                {
+                  "pattern": "^\\{.+\\}$"
+                }
+              ],
+              "default": "error"
             },
             "maxHeapTotal": {
               "anyOf": [
@@ -2191,6 +2269,28 @@
                   ],
                   "default": false,
                   "description": "Enable outgoing HTTP client request duration metrics"
+                },
+                "aggregateWorkers": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false."
+                },
+                "resetHttpMetrics": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Reset the http_request_all_duration_seconds, http_request_all_summary_seconds and http_client_request_duration_seconds metrics after each collection. Set to false to make them cumulative. Defaults to true."
                 },
                 "readiness": {
                   "anyOf": [
@@ -3018,6 +3118,25 @@
                     }
                   ]
                 },
+                "maxELULogLevel": {
+                  "type": "string",
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "fatal",
+                        "error",
+                        "warn",
+                        "info",
+                        "debug",
+                        "trace",
+                        "silent"
+                      ]
+                    },
+                    {
+                      "pattern": "^\\{.+\\}$"
+                    }
+                  ]
+                },
                 "maxEventLoopDelay": {
                   "anyOf": [
                     {
@@ -3049,6 +3168,25 @@
                     },
                     {
                       "type": "string"
+                    }
+                  ]
+                },
+                "maxHeapUsedLogLevel": {
+                  "type": "string",
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "fatal",
+                        "error",
+                        "warn",
+                        "info",
+                        "debug",
+                        "trace",
+                        "silent"
+                      ]
+                    },
+                    {
+                      "pattern": "^\\{.+\\}$"
                     }
                   ]
                 },

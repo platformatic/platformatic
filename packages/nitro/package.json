@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/nitro",
-  "version": "3.75.0",
+  "version": "3.76.0",
   "description": "Platformatic Nitro Capability",
   "main": "index.js",
   "types": "index.d.ts",
@@ -50,7 +50,7 @@
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",
     "nitro": "^3.0.260610-beta",

@@ -1,6 +1,6 @@
 {
   "name": "wattpm-utils",
-  "version": "3.75.0",
+  "version": "3.76.0",
   "description": "The Node.js Application Server Utilities Commands",
   "main": "index.js",
   "type": "module",
@@ -44,7 +44,7 @@
   "devDependencies": {
     "@platformatic/node": "workspace:*",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",

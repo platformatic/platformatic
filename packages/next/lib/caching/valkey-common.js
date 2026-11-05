@@ -68,7 +68,7 @@ export function getConnection (url) {
   let client = valkeyClients.get(url)
 
   if (!client) {
-    client = new Redis(url, { enableAutoPipelining: true })
+    client = new Redis(url, { enableAutoPipelining: true, maxRetriesPerRequest: 3, })
     valkeyClients.set(url, client)
 
     const events = getEvents()

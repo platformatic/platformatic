@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/nest",
-  "version": "3.75.0",
+  "version": "3.76.0",
   "description": "Platformatic Nest.js Capability",
   "main": "index.js",
   "type": "module",
@@ -42,7 +42,7 @@
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",

@@ -1,6 +1,6 @@
 'use strict'
 
-// const pltClient = require('@platformatic/client')
+// const massimo = require('massimo')
 const { join } = require('path')
 
 async function plugin () {

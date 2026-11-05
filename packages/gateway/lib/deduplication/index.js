@@ -6,6 +6,7 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { PassThrough } from 'node:stream'
 import stringify from 'safe-stable-stringify'
+import { kGatewayProxyResponseHandler } from '../symbols.js'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
@@ -151,6 +152,9 @@ export async function createDeduplicationHandler ({
           // The headers are captured before the response is sent, as sending it can change them
           // (for instance, compressing it sets Content-Encoding) while the stored body is the upstream one.
           const headers = proxiedReply.getHeaders()
+          // A wrapper may already have sent transformed headers before the upstream responds.
+          // Keep metadata matching the retained bytes for response handlers, independently of ordinary replay headers.
+          const upstreamHeaders = structuredClone(res.headers)
 
           // The client receives the body as it arrives from the upstream, while
           // the same chunks accumulate for storage. Backpressure from the client
@@ -186,6 +190,7 @@ export async function createDeduplicationHandler ({
               {
                 statusCode: res.statusCode,
                 headers,
+                upstreamHeaders,
                 body: body.buffers
               },
               config.ttl
@@ -245,10 +250,20 @@ export async function createDeduplicationHandler ({
         continue
       }
 
-      reply.code(response.statusCode)
-      reply.headers(response.headers)
       metrics?.deduplicationReplay?.inc()
       const body = new DynamicBuffer(response.body).asReadable()
+      const responseHandler = reply[kGatewayProxyResponseHandler]
+      if (responseHandler) {
+        // Records written by older gateway workers have no upstream metadata; acquire a fresh response instead.
+        if (!response.upstreamHeaders) {
+          body.destroy()
+          return handler(request, reply, dest, options)
+        }
+        responseHandler.onResponse({ statusCode: response.statusCode, headers: response.upstreamHeaders, stream: body })
+        return reply
+      }
+      reply.code(response.statusCode)
+      reply.headers(response.headers)
       return send ? send(request, reply, body) : reply.send(body)
     }
 

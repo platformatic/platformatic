@@ -327,9 +327,23 @@ export interface PlatformaticComposerConfig {
         gracePeriod?: number | string;
         maxUnhealthyChecks?: number | string;
         maxELU?: number | string;
+        maxELULogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxEventLoopDelay?: number | string;
         maxEventLoopDelayP99?: number | string;
         maxHeapUsed?: number | string;
+        maxHeapUsedLogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;
@@ -581,9 +595,23 @@ export interface PlatformaticComposerConfig {
       gracePeriod?: number | string;
       maxUnhealthyChecks?: number | string;
       maxELU?: number | string;
+      maxELULogLevel?: (
+        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+        | {
+            [k: string]: unknown;
+          }
+      ) &
+        string;
       maxEventLoopDelay?: number | string;
       maxEventLoopDelayP99?: number | string;
       maxHeapUsed?: number | string;
+      maxHeapUsedLogLevel?: (
+        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+        | {
+            [k: string]: unknown;
+          }
+      ) &
+        string;
       maxHeapTotal?: number | string;
       maxYoungGeneration?: number | string;
       codeRangeSize?: number | string;
@@ -756,6 +784,14 @@ export interface PlatformaticComposerConfig {
            * Enable outgoing HTTP client request duration metrics
            */
           httpClientMetrics?: boolean | string;
+          /**
+           * Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.
+           */
+          aggregateWorkers?: boolean | string;
+          /**
+           * Reset the http_request_all_duration_seconds, http_request_all_summary_seconds and http_client_request_duration_seconds metrics after each collection. Set to false to make them cumulative. Defaults to true.
+           */
+          resetHttpMetrics?: boolean | string;
           readiness?:
             | boolean
             | {
@@ -1083,9 +1119,23 @@ export interface PlatformaticComposerConfig {
         gracePeriod?: number | string;
         maxUnhealthyChecks?: number | string;
         maxELU?: number | string;
+        maxELULogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxEventLoopDelay?: number | string;
         maxEventLoopDelayP99?: number | string;
         maxHeapUsed?: number | string;
+        maxHeapUsedLogLevel?: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
         maxHeapTotal?: number | string;
         maxYoungGeneration?: number | string;
         codeRangeSize?: number | string;
@@ -1441,6 +1491,7 @@ export interface PlatformaticComposerConfig {
           };
     }[];
     handler?: string;
+    wrappingHandler?: string;
     deduplication?: {
       enabled?: boolean | string;
       storage?:

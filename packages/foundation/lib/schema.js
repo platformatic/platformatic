@@ -770,9 +770,19 @@ export const health = {
     gracePeriod: overridableValue({ type: 'number', minimum: 0 }, 30000),
     maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 10),
     maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
+    maxELULogLevel: {
+      type: 'string',
+      oneOf: [{ enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] }, { pattern: '^\\{.+\\}$' }],
+      default: 'error'
+    },
     maxEventLoopDelay: overridableValue({ type: 'number', minimum: 0 }),
     maxEventLoopDelayP99: overridableValue({ type: 'number', minimum: 0 }),
     maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
+    maxHeapUsedLogLevel: {
+      type: 'string',
+      oneOf: [{ enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] }, { pattern: '^\\{.+\\}$' }],
+      default: 'error'
+    },
     maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)), // 4GB
     maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 }, 128 * Math.pow(1024, 2)), // 128MB,
     codeRangeSize: overridableValue({ type: 'number', minimum: 0 }, 268435456),
@@ -1532,6 +1542,16 @@ export const runtimeProperties = {
             anyOf: [{ type: 'boolean' }, { type: 'string' }],
             default: false,
             description: 'Enable outgoing HTTP client request duration metrics'
+          },
+          aggregateWorkers: {
+            anyOf: [{ type: 'boolean' }, { type: 'string' }],
+            description:
+              'Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.'
+          },
+          resetHttpMetrics: {
+            anyOf: [{ type: 'boolean' }, { type: 'string' }],
+            description:
+              'Reset the http_request_all_duration_seconds, http_request_all_summary_seconds and http_client_request_duration_seconds metrics after each collection. Set to false to make them cumulative. Defaults to true.'
           },
           readiness: healthProbeEndpoint,
           liveness: healthProbeEndpoint,

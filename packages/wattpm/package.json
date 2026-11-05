@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "3.75.0",
+  "version": "3.76.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -51,7 +51,7 @@
   "devDependencies": {
     "@platformatic/node": "workspace:*",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "execa": "^9.4.0",
     "fastify": "^5.0.0",
     "inspector-client": "^0.2.0",

@@ -433,3 +433,45 @@ test('updateMany missing where clause', async () => {
     }
   )
 })
+
+test('updateMany on table with non-default PK name', async () => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE articles (
+          article_id INTEGER PRIMARY KEY,
+          title VARCHAR(42)
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE articles (
+          article_id SERIAL PRIMARY KEY,
+          title VARCHAR(42)
+        );`)
+      }
+
+      await db.query(sql`INSERT INTO articles (title) VALUES ('foo')`)
+      await db.query(sql`INSERT INTO articles (title) VALUES ('bar')`)
+    }
+  })
+
+  const entity = mapper.entities.article
+
+  const result = await entity.updateMany({
+    where: { title: { eq: 'foo' } },
+    input: { title: 'updated' },
+    fields: ['articleId', 'title']
+  })
+
+  // On MySQL with the bug, result will be [] because ids are undefined
+  // With the fix, result will be [{ articleId: '1', title: 'updated' }]
+  deepEqual(result.length, 1)
+  deepEqual(result[0].title, 'updated')
+})

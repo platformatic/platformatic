@@ -1839,23 +1839,25 @@ test('should proxy to a websocket application with reconnect options', async t =
     updateGlobals({ events: new EventEmitter() })
   }
 
+  // Connection and message callbacks may arrive in the same event-loop turn.
+  const connected = once(getEvents(), 'onConnect')
+  const incoming = once(getEvents(), 'proxy:onIncomingMessage')
+  const outgoing = once(getEvents(), 'onOutgoingMessage')
   const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
   await once(client, 'open')
   client.send('hello')
 
-  await once(getEvents(), 'proxy:onIncomingMessage')
-
-  await once(getEvents(), 'onConnect')
-  await once(getEvents(), 'onOutgoingMessage')
+  await Promise.all([incoming, connected, outgoing])
 
   // close the target to cause reconnection
+  const reconnected = once(getEvents(), 'onReconnect')
+  const pong = once(getEvents(), 'onPong')
   await wsApplication.close()
   await wsServer.close()
 
   await createWebsocketApplication(t, {}, port)
 
-  await once(getEvents(), 'onReconnect')
-  await once(getEvents(), 'onPong')
+  await Promise.all([reconnected, pong])
 
   const disconnected = once(getEvents(), 'onDisconnect')
   client.close()
