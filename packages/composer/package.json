@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "3.75.1",
+  "version": "3.76.0",
   "description": "Platformatic Composer",
   "main": "index.js",
   "types": "index.d.ts",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "c8": "^12.0.0",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "neostandard": "^0.14.0",
     "json-schema-to-typescript": "^16.0.0"
   },

@@ -9,6 +9,7 @@ import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
 import { WsNoTcpUpstreamError } from './errors.js'
+import { kGatewayProxyResponseHandler } from './symbols.js'
 import { initMetrics } from './metrics.js'
 import { WsUpstreams } from './ws-upstreams.js'
 
@@ -108,6 +109,24 @@ async function resolveApplicationProxyParameters (application, root) {
   }
 }
 
+async function loadHandler (root, path) {
+  if (!path) {
+    return
+  }
+
+  const require = createRequire(import.meta.filename)
+  const custom = await loadModule(require, resolve(root, path))
+  if (typeof custom === 'function') {
+    return custom
+  }
+  if (typeof custom?.handler === 'function') {
+    return custom.handler
+  }
+  if (typeof custom?.default === 'function') {
+    return custom.default
+  }
+}
+
 let metrics
 
 async function proxyPlugin (app, opts) {
@@ -121,17 +140,8 @@ async function proxyPlugin (app, opts) {
     await registerCompression(app, compression)
   }
 
-  let handler
-  if (opts.handler) {
-    const require = createRequire(import.meta.filename)
-    const custom = await loadModule(require, resolve(root, opts.handler))
-
-    if (typeof custom.handler === 'function') {
-      handler = custom.handler
-    } else if (typeof custom.default === 'function') {
-      handler = custom.default
-    }
-  }
+  const handler = await loadHandler(root, opts.handler)
+  const wrappingHandler = await loadHandler(root, opts.wrappingHandler)
 
   for (const application of opts.applications) {
     if (!application.proxy) {
@@ -156,6 +166,9 @@ async function proxyPlugin (app, opts) {
       ws
     } = parameters
     const compressResponses = compression !== null && parameters.compression !== false
+    const send = compressResponses
+      ? (request, reply, body) => sendCompressed(request, reply, body, compression)
+      : (_request, reply, body) => reply.send(body)
     meta.proxies[application.id] = parameters
 
     const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
@@ -319,8 +332,15 @@ async function proxyPlugin (app, opts) {
         handler,
         metrics,
         root,
-        send: compressResponses ? (request, reply, body) => sendCompressed(request, reply, body, compression) : undefined
+        send: compressResponses ? send : undefined
       })
+    }
+
+    // Wrappers receive the complete proxy path, including deduplication and native output policy.
+    if (wrappingHandler) {
+      const next = proxyHandler ?? ((_request, reply, dest, options) => reply.from(dest, options))
+      const context = { next, send }
+      proxyHandler = wrappingHandler.bind(null, context)
     }
 
     // Websocket links already counted in the activeWsConnections gauge.
@@ -445,11 +465,13 @@ async function proxyPlugin (app, opts) {
             headers: res.headers
           })
 
-          if (compressResponses) {
-            sendCompressed(reply.request, reply, res.stream, compression)
-          } else {
-            reply.send(res.stream)
+          // Response handlers own sending and disposal; tracing still completes once per upstream acquisition.
+          const responseHandler = reply[kGatewayProxyResponseHandler]
+          if (responseHandler) {
+            responseHandler.onResponse(res)
+            return
           }
+          send(reply.request, reply, res.stream)
         },
         onError: (reply, { error }) => {
           app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another application')
@@ -458,6 +480,9 @@ async function proxyPlugin (app, opts) {
             return customOnError(reply, { error })
           }
 
+          if (reply[kGatewayProxyResponseHandler]) {
+            return
+          }
           return reply.send(error)
         },
         getUpstream

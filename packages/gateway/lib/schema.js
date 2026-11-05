@@ -363,6 +363,7 @@ export const gateway = {
       }
     },
     handler: { type: 'string' },
+    wrappingHandler: { type: 'string' },
     deduplication,
     compression,
     openapi: openApiBase,

@@ -9,10 +9,7 @@ const noInternalPackages = {
     return {
       Program (node) {
         const json = JSON.parse(
-          context
-            .getSourceCode()
-            .getText()
-            .replace(/^export default /, '')
+          context.sourceCode.getText().replace(/^export default /, '')
         )
 
         for (const section of ['dependencies', 'devDependencies']) {

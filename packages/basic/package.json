@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/basic",
-  "version": "3.75.1",
+  "version": "3.76.0",
   "description": "Platformatic Basic",
   "main": "index.js",
   "types": "index.d.ts",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "express": "^4.19.2",
     "fastify": "^5.0.0",
     "get-port": "^7.1.0",

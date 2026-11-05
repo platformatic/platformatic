@@ -399,6 +399,46 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   Custom gateway handlers that override `onResponse` or `onError` can call `options.deduplicateResponse(request, reply, res)` and `options.deduplicateError(reply, error)` to keep duplicate requests coordinated. See [Request Deduplication](./deduplication.md#custom-gateway-handlers) for examples.
 
+- **`wrappingHandler`** (`string`) - Path to a module that wraps the complete proxy pipeline for each request. It is
+  configured independently from `handler`, and can be used with or without a custom inner handler. Relative paths are
+  resolved from the application root. The module exports either a named `handler` function or a default function;
+  the default function takes precedence when both are present.
+
+  ```json
+  {
+    "gateway": {
+      "handler": "./proxy-handler.js",
+      "wrappingHandler": "./proxy-wrapper.js"
+    }
+  }
+  ```
+
+  The wrapper receives `(context, request, reply, destination, options)`. `context.next` delegates to the existing
+  proxy pipeline with the same four arguments as a regular handler. Without a custom inner handler, forwarding uses
+  `reply.from`. The wrapper can return a promise.
+
+  ```js
+  export default function ({ next, send }, request, reply, destination, options) {
+    return next(request, reply, destination, options)
+  }
+  ```
+
+  `context.send(request, reply, stream)` uses the gateway's native output path, including compression configuration and the
+  application's compression opt-out. A wrapper that starts output before delegating can therefore use the same output
+  policy without importing private gateway modules.
+
+  Wrappers that own the response body can import `kGatewayProxyResponseHandler` from `@platformatic/gateway` and set
+  `reply[kGatewayProxyResponseHandler] = { onResponse(response) { /* consume response.stream */ } }` before delegating.
+  The response handler receives `{ statusCode, headers, stream }` for each client response. Its
+  metadata describes the upstream bytes, not an already-started client response. The gateway completes its original
+  tracing callback but does not send the body again or replace an already-started reply's status or headers.
+
+  The response handler owns consuming or destroying its per-client stream, including after cancellation. Its callback is not
+  awaited. A wrapper must preserve and invoke original `options.onResponse`/`options.onError` callbacks when overriding
+  them. With a response handler installed, the standard gateway error handler logs but does not send again: the wrapper must
+  terminate its own output on error. Custom application `onError` handlers still run and must honor the same ownership.
+  Merely installing a response handler does not send a response or copy headers; the wrapper owns that decision.
+
 - **`compression`** (`boolean`, `string` or `object`) - Compresses the responses of the proxied applications with brotli or gzip. It is off by default. It can be `true`, a string such as an environment placeholder (anything but `"false"` enables it), or an object with the following options:
 
   - **`enabled`** (`boolean`, `string` or `object`) - Whether compression is enabled, with the same values as the `enabled` of a Runtime application, including booleans by environment such as `{ "development": false }`. Default: `true`.

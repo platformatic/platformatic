@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "3.75.1",
+  "version": "3.76.0",
   "description": "Platformatic Service",
   "main": "index.js",
   "types": "index.d.ts",
@@ -29,7 +29,7 @@
     "@fastify/compress": "^9.0.0",
     "bindings": "^1.5.0",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",
     "openapi-types": "^12.1.3",

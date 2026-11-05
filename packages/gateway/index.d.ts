@@ -6,12 +6,55 @@ import {
   ServerInstance as ServiceServerInstance
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
-import { FastifyError, FastifyInstance } from 'fastify'
+import { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import type { FastifyReplyFromHooks } from '@fastify/reply-from'
+import type { OutgoingHttpHeaders } from 'node:http'
+import type { Readable } from 'node:stream'
 import type { PlatformaticGatewayConfig } from './config.d.ts'
 
 export interface GatewayCommand {
   usage: string
   description: string
+}
+
+export declare const kGatewayProxyResponseHandler: unique symbol
+
+export interface ProxyResponse {
+  statusCode: number
+  headers: OutgoingHttpHeaders
+  stream: Readable
+}
+
+export interface ProxyResponseHandler {
+  /** Own the per-client stream. The gateway does not send it or await this callback. */
+  onResponse (response: ProxyResponse): void
+}
+
+export type ProxyHandler = (
+  request: FastifyRequest,
+  reply: FastifyReply,
+  destination: string,
+  options: FastifyReplyFromHooks
+) => unknown
+
+export type SendProxyResponse = (request: FastifyRequest, reply: FastifyReply, stream: Readable) => unknown
+export interface WrappingHandlerContext {
+  next: ProxyHandler
+  send: SendProxyResponse
+}
+
+export type WrappingHandler = (
+  context: WrappingHandlerContext,
+  request: FastifyRequest,
+  reply: FastifyReply,
+  destination: string,
+  options: FastifyReplyFromHooks
+) => unknown
+
+declare module 'fastify' {
+  interface FastifyReply {
+    [kGatewayProxyResponseHandler]?: ProxyResponseHandler
+  }
 }
 
 export interface GatewayCommandDefinition {

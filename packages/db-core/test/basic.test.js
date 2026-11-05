@@ -377,6 +377,7 @@ test('mq is available', async t => {
     await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
   ])
 
+  const saved = once(queue, 'data', { signal: t.signal })
   const res = await app.inject({
     method: 'POST',
     url: '/graphql',
@@ -405,7 +406,7 @@ test('mq is available', async t => {
     'savePage response'
   )
 
-  const [ev] = await once(queue, 'data')
+  const [ev] = await saved
   same(ev, {
     topic: '/entity/page/save/1',
     payload: {
@@ -431,6 +432,7 @@ test('mq is available via the enabled flag', async t => {
     await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
   ])
 
+  const saved = once(queue, 'data', { signal: t.signal })
   const res = await app.inject({
     method: 'POST',
     url: '/graphql',
@@ -459,7 +461,7 @@ test('mq is available via the enabled flag', async t => {
     'savePage response'
   )
 
-  const [ev] = await once(queue, 'data')
+  const [ev] = await saved
   same(ev, {
     topic: '/entity/page/save/1',
     payload: {

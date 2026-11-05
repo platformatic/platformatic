@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-json-schema-mapper",
-  "version": "3.75.1",
+  "version": "3.76.0",
   "description": "Map SQL entity to JSON schema",
   "main": "index.js",
   "type": "module",
@@ -28,7 +28,7 @@
     "@platformatic/sql-mapper": "workspace:*",
     "cleaner-spec-reporter": "^2.0.0",
     "dtsgenerator": "^3.19.1",
-    "eslint": "9",
+    "eslint": "10",
     "fastify": "^5.0.0",
     "neostandard": "^0.14.0",
     "typescript": "~6.0.3",

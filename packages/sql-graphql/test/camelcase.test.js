@@ -1,6 +1,6 @@
 import sqlEvents from '@platformatic/sql-events'
 import sqlMapper from '@platformatic/sql-mapper'
-import { once } from 'events'
+import { on } from 'node:events'
 import Fastify from 'fastify'
 import { equal, deepEqual as same } from 'node:assert/strict'
 import { test } from 'node:test'
@@ -30,7 +30,10 @@ function createWebSocketClient (t, app) {
     client.destroy()
   })
   client.setEncoding('utf8')
-  return { client, ws }
+  // Buffer messages while HTTP mutations are awaited, including same-tick replies.
+  const messages = on(client, 'data')
+  t.after(() => messages.return())
+  return { client, ws, messages }
 }
 
 test('subscription - crud when there is a primary key to be camelised', async t => {
@@ -49,7 +52,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
 
   await app.listen({ port: 0 })
 
-  const { client } = createWebSocketClient(t, app)
+  const { client, messages } = createWebSocketClient(t, app)
 
   client.write(
     JSON.stringify({
@@ -93,7 +96,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
   }
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     equal(data.type, 'connection_ack')
   }
@@ -113,7 +116,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
   })
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data, {
       type: 'data',
@@ -143,7 +146,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
   })
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data, {
       type: 'data',
@@ -173,7 +176,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
   })
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data, {
       type: 'data',
@@ -259,7 +262,7 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
 
   await app.listen({ port: 0 })
 
-  const { client } = createWebSocketClient(t, app)
+  const { client, messages } = createWebSocketClient(t, app)
   t.after(() => client.destroy())
 
   client.write(
@@ -269,7 +272,7 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   )
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     equal(data.type, 'connection_ack')
   }
@@ -292,7 +295,7 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   }
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = (await messages.next()).value
     const data = JSON.parse(chunk)
     same(data.payload, [
       {

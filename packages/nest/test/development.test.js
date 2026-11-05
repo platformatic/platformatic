@@ -209,11 +209,12 @@ test('NestJS watch mode is correctly tracked in development', async t => {
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
 
   // Modify the main application file to trigger a reload
+  const reloaded = once(runtime, 'application:worker:event:url')
   await updateFile(resolve(root, './services/frontend/src/app.service.ts'), contents => {
     return contents.replace("production: process.env.NODE_ENV === 'production'", 'ok: true')
   })
 
-  await once(runtime, 'application:worker:event:url')
+  await reloaded
 
   await verifyJSONViaHTTP(url, '/', 200, { ok: true })
 })
