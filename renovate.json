@@ -53,6 +53,11 @@
       "groupSlug": "all-minor-patch"
     },
     {
+      // NestJS 12 is only supported on the v4 branch.
+      "matchPackageNames": ["@nestjs/**"],
+      "allowedVersions": "<12"
+    },
+    {
       "matchPackageNames": ["@opentelemetry/**"],
       "groupName": "opentelemetry packages",
       "groupSlug": "opentelemetry"
