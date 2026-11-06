@@ -23,10 +23,32 @@ test('applicationToSubgraphConfig unit test', t => {
           graphqlEndpoint: '/graphql'
         }
       }
+    },
+    {
+      label: 'graphql application from file',
+      application: {
+        id: 'application',
+        origin: 'http://origin',
+        graphql: {
+          file: '/to/schema.graphql',
+          graphqlEndpoint: '/graphql'
+        }
+      },
+      sdl: 'type Query { hello: String }',
+      expected: {
+        name: 'application',
+        entities: undefined,
+        sdl: 'type Query { hello: String }',
+        server: {
+          host: 'http://origin',
+          composeEndpoint: undefined,
+          graphqlEndpoint: '/graphql'
+        }
+      }
     }
   ]
 
   for (const c of cases) {
-    assert.deepEqual(applicationToSubgraphConfig(c.application), c.expected, c.label)
+    assert.deepEqual(applicationToSubgraphConfig(c.application, c.sdl), c.expected, c.label)
   }
 })
