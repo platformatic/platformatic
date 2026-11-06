@@ -17,6 +17,8 @@ hoist: false
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@platformatic/*'
+  # autocannon@9.0.0 was published on 2026-11-06; it moves to hyperid 4, dropping the uuid override
+  - autocannon@9.0.0
   # fastify-user@2.0.0 was published on 2026-10-13; it fixes the fast-jwt 5 advisories via @fastify/jwt 10
   - fastify-user@2.0.0
   # @fastify/static@10.1.9 was published on 2026-11-04; it moves to glob 14, fixing the glob AbortSignal advisory
@@ -89,8 +91,6 @@ nodeLinker: hoisted
 # Keeping a single version avoids the mismatch.
 overrides:
   esbuild: 0.28.2
-  # autocannon@8 (runtime devDependency) uses hyperid@3, which pins uuid@^8.
-  'hyperid>uuid': 11.1.1
   # micromark-extension-math@3.1.0 (via markdownlint-cli2) wants katex@^0.16 and has no newer release.
   'katex@<0.18.2': 0.18.2
 packageImportMethod: copy
