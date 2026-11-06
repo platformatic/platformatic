@@ -2266,8 +2266,8 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
       '@matteo.collina/sqlite-pool':
-        specifier: ^0.8.0
-        version: 0.8.0
+        specifier: ^1.0.0
+        version: 1.0.0
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
@@ -4126,8 +4126,8 @@ packages:
   '@matteo.collina/snap@1.0.0':
     resolution: {integrity: sha512-/v+jfYYtgzYsOyiFXVKbxESOBJ8usayq9Fm+eUOkx6elLphgz/vx+pTJMHszLUB5K+ZAlbxmIjE5fm3hz8MPEQ==}
 
-  '@matteo.collina/sqlite-pool@0.8.0':
-    resolution: {integrity: sha512-UbncgbelrYDmauTtyBN7ewULBLLeHbyi0MwSZO6tkBkiRTRFwaVZKW5AnNUpKa+EP0BIh73Y94Ue9S2Z5PueuQ==}
+  '@matteo.collina/sqlite-pool@1.0.0':
+    resolution: {integrity: sha512-bdHMDxDu5YgY/JpT3iSJc17JCUcbDc/2z+0ZleLgm4qzmJO1xy1gj2qZKsH/56O2NTzMP5a34dRvTZkbOO+CuQ==}
     engines: {node: '>=22'}
 
   '@mdx-js/mdx@2.3.0':
@@ -13692,7 +13692,7 @@ snapshots:
       find-up: 8.0.0
       slash: 5.1.0
 
-  '@matteo.collina/sqlite-pool@0.8.0':
+  '@matteo.collina/sqlite-pool@1.0.0':
     dependencies:
       '@databases/connection-pool': 1.1.0
       '@databases/escape-identifier': 1.0.3
