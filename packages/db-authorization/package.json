@@ -30,7 +30,7 @@
     "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",
     "typescript": "~6.0.3",
-    "why-is-node-running": "^2.2.2",
+    "why-is-node-running": "^3.0.0",
     "ws": "^8.16.0"
   },
   "dependencies": {
