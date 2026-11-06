@@ -35,6 +35,9 @@ export let fixturesDir
 export const isWindows = platform() === 'win32'
 export const isCIOnWindows = process.env.CI && isWindows
 export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/cli.js')
+// Where install-deps.js installs the dependencies that must stay out of the workspace.
+// Tests are run from the package folder.
+export const testDepsRoot = resolve(process.cwd(), 'test/deps/node_modules')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
@@ -189,6 +192,32 @@ export async function updateFile (path, update) {
   }
 }
 
+// Lists every top-level package installed by install-deps.js. The whole tree is linked since fixtures
+// are built with preserved symlinks, so transitive dependencies must be reachable from their node_modules.
+async function listInstalledDependencies () {
+  if (!existsSync(testDepsRoot)) {
+    return []
+  }
+
+  const deps = []
+
+  for (const entry of await readdir(testDepsRoot)) {
+    if (entry.startsWith('.')) {
+      continue
+    }
+
+    if (entry.startsWith('@')) {
+      for (const scoped of await readdir(resolve(testDepsRoot, entry))) {
+        deps.push(`${entry}/${scoped}`)
+      }
+    } else {
+      deps.push(entry)
+    }
+  }
+
+  return deps
+}
+
 export async function ensureDependencies (configOrPaths) {
   const paths = Array.isArray(configOrPaths)
     ? configOrPaths
@@ -208,6 +237,7 @@ export async function ensureDependencies (configOrPaths) {
     // Compute all dependencies
     const allDeps = Array.from(
       new Set([
+        ...(await listInstalledDependencies()),
         ...Object.keys(dependencies ?? {}),
         ...Object.keys(devDependencies ?? {}),
         ...(defaultDependencies ?? []),
@@ -222,8 +252,13 @@ export async function ensureDependencies (configOrPaths) {
 
       const moduleRoot = resolve(path, 'node_modules', dep)
 
+      // Dependencies installed by install-deps.js (test/deps) take precedence over the workspace ones
       // If it is a @platformatic dependency, use the current repository, otherwise resolve
-      let resolved = resolve(pltRoot, 'node_modules', dep)
+      let resolved = resolve(testDepsRoot, dep)
+
+      if (!existsSync(resolved)) {
+        resolved = resolve(pltRoot, 'node_modules', dep)
+      }
 
       if (!existsSync(resolved)) {
         resolved =

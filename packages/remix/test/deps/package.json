@@ -1,0 +1,14 @@
+{
+  "name": "remix-test-deps",
+  "private": true,
+  "description": "Remix 2 and its tooling, installed outside of the workspace by `node ../basic/test/install-deps.js` so their vulnerable transitive dependencies never enter the monorepo lockfile.",
+  "dependencies": {
+    "@remix-run/dev": "^2.16.8",
+    "@remix-run/node": "^2.16.8",
+    "@remix-run/react": "^2.16.8",
+    "isbot": "^4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "vite": "^6.4.4"
+  }
+}

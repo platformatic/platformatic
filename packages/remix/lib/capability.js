@@ -13,7 +13,6 @@ import {
 } from '@platformatic/basic'
 import { updateGlobals } from '@platformatic/globals'
 import { ViteCapability } from '@platformatic/vite'
-import { createRequestHandler } from '@remix-run/node'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -177,6 +176,10 @@ export class RemixCapability extends ViteCapability {
       prefixAvoidTrailingSlash: true,
       schemaHide: true
     })
+
+    // Load Remix from the application, not from this package
+    const remixNode = await importFile(await resolvePackageViaCJS(this.root, '@remix-run/node'))
+    const createRequestHandler = remixNode.createRequestHandler ?? remixNode.default.createRequestHandler
 
     this.#app.all(
       `${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`,

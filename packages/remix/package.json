@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
+    "test": "node ../basic/test/install-deps.js && npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/**/*.test.js",
     "test:types": "tstyche",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
@@ -36,9 +36,6 @@
   "devDependencies": {
     "@platformatic/gateway": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@remix-run/dev": "^2.16.8",
-    "@remix-run/node": "^2.16.8",
-    "@remix-run/react": "^2.16.8",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.7",
     "cleaner-spec-reporter": "^2.0.0",
