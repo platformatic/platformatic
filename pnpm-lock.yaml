@@ -2275,8 +2275,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       async-cache-dedupe:
-        specifier: ^2.1.0
-        version: 2.2.0
+        specifier: ^3.0.0
+        version: 3.4.0
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -6389,9 +6389,6 @@ packages:
       '@astrojs/markdown-remark':
         optional: true
 
-  async-cache-dedupe@2.2.0:
-    resolution: {integrity: sha512-jl4L6dGC+KLB/LIA1iIBiq7eWQ43K7lIcIdwbUUwRmfT209yH8Xm1uPTOxxlNQ7XD6/XHU7xhSr/NgPxlH04MQ==}
-
   async-cache-dedupe@3.4.0:
     resolution: {integrity: sha512-RkQr21CpltqMpbYpRaEAmF1BdUO5jnnS/scZkectmLiuWQ81w8u4lYraipbQf8zQ0yYvb3U0N1ozNAYmI4jQ3g==}
 
@@ -9332,9 +9329,6 @@ packages:
 
   mlly@1.8.2:
     resolution: {integrity: sha512-d+ObxMQFmbt10sretNDytwt85VrbkhhUA/JBGm1MPaWJ65Cl4wOgLaB1NYvJSZ0Ef03MMEU/0xpPMXUIQ29UfA==}
-
-  mnemonist@0.39.8:
-    resolution: {integrity: sha512-vyWo2K3fjrUw8YeeZ1zF0fy6Mu59RHokURlld8ymdUPjMlD9EC9ov1/YPqTgqRvUN9nTr3Gqfz29LYAmu0PHPQ==}
 
   mnemonist@0.40.6:
     resolution: {integrity: sha512-c4mbin5HCz77Srw1L3nwThCH/0hLVYuY3oMF2plP2tKfp/gqzSgHP63qRUOpL8jutYWNNCr49LUlKSt7exkaww==}
@@ -16708,11 +16702,6 @@ snapshots:
       - uploadthing
       - yaml
 
-  async-cache-dedupe@2.2.0:
-    dependencies:
-      mnemonist: 0.39.8
-      safe-stable-stringify: 2.5.0
-
   async-cache-dedupe@3.4.0:
     dependencies:
       mnemonist: 0.40.6
@@ -20169,10 +20158,6 @@ snapshots:
       pathe: 2.0.3
       pkg-types: 1.3.1
       ufo: 1.6.4
-
-  mnemonist@0.39.8:
-    dependencies:
-      obliterator: 2.0.5
 
   mnemonist@0.40.6:
     dependencies:
