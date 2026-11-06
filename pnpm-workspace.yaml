@@ -89,29 +89,10 @@ nodeLinker: hoisted
 # Keeping a single version avoids the mismatch.
 overrides:
   esbuild: 0.28.2
-  # @nestjs/platform-fastify@11 pins fastify@5.11.3, which has known high severity CVEs
-  # fixed in 5.12.2. Remove when moving to Nest 12, which pins fastify@5.12.5.
-  '@nestjs/platform-fastify>fastify': 5.12.7
-  # Dev-only tooling pulled in by @remix-run/dev@2 (the last Remix 2 release, still needed by the
-  # remix tests) and nitro@3.0.1-alpha.2. These pin vulnerable ranges that cannot be updated
-  # upstream. Remove when dropping Remix 2.
-  #   @remix-run/react pins react-router@6.30.4 exactly
-  'react-router@<6.30.6': 6.30.6
-  'react-router-dom@<6.30.6': 6.30.6
-  #   @vanilla-extract/integration wants vite@^5, which is EOL
-  'vite@<6.4.4': 6.4.4
-  #   remark-mdx-frontmatter@1 wants toml@^3 and estree-util-value-to-estree@^1
-  toml: 5.0.1
-  estree-util-value-to-estree: 3.3.3
-  #   cacache@17 wants tar@^6
-  'cacache@17>tar': 7.5.22
   # autocannon@8 (runtime devDependency) uses hyperid@3, which pins uuid@^8.
   'hyperid>uuid': 11.1.1
   # micromark-extension-math@3.1.0 (via markdownlint-cli2) wants katex@^0.16 and has no newer release.
   'katex@<0.18.2': 0.18.2
-  # @nestjs/platform-express@11 pins multer@2.4.0, which has a known high severity CVE fixed in 2.5.0.
-  # Remove when moving to Nest 12, which pins multer@2.5.0.
-  'multer@<2.5.0': 2.5.0
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest
