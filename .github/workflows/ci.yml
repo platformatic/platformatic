@@ -1048,7 +1048,7 @@ jobs:
         run: cd packages/remix && pnpm test && pnpm run lint
 
   nest:
-    name: 'nest - ${{ matrix.os }} - ${{ matrix.node }}'
+    name: 'nest - ${{ matrix.os }} - ${{ matrix.node }} - nest${{ matrix.nest }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'nest' }}
     runs-on: ubuntu-26.04
@@ -1057,6 +1057,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025]
         node: [22, 24, 26]
+        nest: [11, 12]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@v6
@@ -1071,6 +1072,15 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
+      - name: Install NestJS ${{ matrix.nest }}
+        if: ${{ matrix.nest != 12 }}
+        run: >-
+          pnpm --filter @platformatic/nest add -D
+          @nestjs/cli@^${{ matrix.nest }}
+          @nestjs/common@^${{ matrix.nest }}
+          @nestjs/core@^${{ matrix.nest }}
+          @nestjs/platform-express@^${{ matrix.nest }}
+          @nestjs/platform-fastify@^${{ matrix.nest }}
       - name: Run nest package test suite
         run: cd packages/nest && pnpm test && pnpm run lint
 
