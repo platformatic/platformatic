@@ -123,6 +123,13 @@ export class Controller extends EventEmitter {
       onMissingEnv,
       strictEnv: runtimeConfig.strictEnv
     }
+
+    // Through the same spread, when the runtime was given an env file, the configuration of the application
+    // reads no env file: the variables of the runtime file are already in process.env, and a .env file found
+    // upwards from the folder of the configuration file, or in the cwd, is not one the user asked for.
+    if (workerData?.hasEnvFile) {
+      this.#context.envFile = false
+    }
   }
 
   getStatus () {
@@ -173,7 +180,8 @@ export class Controller extends EventEmitter {
         // built from, which would otherwise be duplicated for every application.
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
           onMissingEnv: this.#context.onMissingEnv,
-          strictEnv: false
+          strictEnv: false,
+          envFile: this.#context.envFile
         })
         const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.capability = await pkg.create(appConfig.path, appConfig.config, this.#context)

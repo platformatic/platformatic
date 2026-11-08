@@ -2646,7 +2646,11 @@ export class Runtime extends EventEmitter {
         dirname: this.#root,
         // Keys of the worker environment which only come from an env file of the runtime:
         // the env file of the application is allowed to override those.
-        envFileFallbackKeys: this.#env[kEnvFileFallbackKeys] ?? []
+        envFileFallbackKeys: this.#env[kEnvFileFallbackKeys] ?? [],
+        // Whether the runtime configuration was loaded with an env file, as recorded by the configuration itself,
+        // so that a configuration loaded apart from the Runtime counts too. Its variables are already in the
+        // worker environment, so the configuration of the application must not look for a .env file.
+        hasEnvFile: !!this.#config[kMetadata].envFile
       },
       argv: applicationConfig.arguments,
       execArgv,
