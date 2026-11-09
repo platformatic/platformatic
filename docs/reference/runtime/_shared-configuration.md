@@ -803,7 +803,7 @@ When `healthProbes` is an object with a different resolved `hostname` and `port`
 - **`collection`** (`string`, default: `scrape`): Who reads the metrics. Some metrics are reset on every read, so there must be a single reader.
   - `scrape`: the metrics are read on each Prometheus scrape of the metrics endpoint.
   - `interval`: the metrics endpoint is not exposed (the health probes are still served) and the runtime reads the metrics every `collectionInterval` milliseconds. Reads only happen while there are consumers: listeners of the [`metrics:prometheus`](./programmatic.md#metricsprometheus) event or an `otlpExporter`. Use it when nothing scrapes the metrics endpoint.
-- **`collectionInterval`** (`number` or `string`, default: `15000`, minimum: `1000`): Interval in milliseconds between metrics reads when `collection` is `interval`. A warning is logged if it differs from `otlpExporter.interval`.
+- **`collectionInterval`** (`integer`, default: `15000`, minimum: `1000`): Interval in milliseconds between metrics reads when `collection` is `interval`. A warning is logged if it differs from `otlpExporter.interval`.
 - **`httpCustomLabels`** (array of `object`): Custom labels to add to HTTP metrics (`http_request_all_duration_seconds` and `http_request_all_summary_seconds`). Each label extracts its value from an HTTP request header. By default, no custom labels are added. Each object supports:
   - **`name`** (**required**, `string`): The label name to use in metrics.
   - **`header`** (**required**, `string`): The HTTP request header to extract the value from.
@@ -821,7 +821,7 @@ When `healthProbes` is an object with a different resolved `hostname` and `port`
 - **`otlpExporter`** (`object`): Optional configuration for exporting Prometheus metrics to an OpenTelemetry Protocol (OTLP) endpoint. This enables pushing metrics to OTLP-compatible collectors like OpenTelemetry Collector, Grafana Cloud, or other observability platforms. The object supports the following settings:
   - **`enabled`** (`boolean` or `string`): Enable or disable OTLP metrics export. Default: `true` if endpoint is configured.
   - **`endpoint`** (**required**, `string`): OTLP endpoint URL for metrics (e.g., `http://localhost:4318/v1/metrics`).
-  - **`interval`** (`number` or `string`): Interval in milliseconds between metric pushes. Default: `60000` (60 seconds). Each push sends the last metrics read by the runtime (e.g. by the last Prometheus scrape), and the exporter starts with the first read. Set it to your scrape interval, so that each read is pushed once.
+  - **`interval`** (`number` or `string`): Interval in milliseconds between metric pushes. Default: `60000` (60 seconds). When `collection` is `interval`, each push sends the last metrics read by the runtime and the exporter starts with the first read: set it to `collectionInterval`, so that each read is pushed once. Otherwise, the exporter reads the metrics on its own, which resets the metrics that are reset on read for the Prometheus scrape: when exporting to OTLP only, set `collection` to `interval`.
   - **`headers`** (`object`): Additional HTTP headers for authentication or custom metadata. Common use cases include API keys or authentication tokens.
   - **`serviceName`** (`string`): Service name for OTLP resource attributes. Defaults to the application ID.
   - **`serviceVersion`** (`string`): Service version for OTLP resource attributes. Optional.

@@ -1713,17 +1713,17 @@ export class Runtime extends EventEmitter {
       config.collection !== 'interval'
     ) return
 
-    const interval = Number(config.collectionInterval ?? 15000)
+    const interval = config.collectionInterval ?? 15000
 
     const otlpExporter = config.otlpExporter
-    const otlpEnabled = 
+    const otlpEnabled =
       !!otlpExporter?.endpoint &&
       otlpExporter.enabled !== false &&
       otlpExporter.enabled !== 'false'
 
     let collecting = false
     this.#metricsCollectionTimer = setInterval(async () => {
-      if (collecting) return 
+      if (collecting) return
 
       const hasSubscribers = this.listenerCount('metrics:prometheus') > 0
       if (!otlpEnabled && !hasSubscribers) return

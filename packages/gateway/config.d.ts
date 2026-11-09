@@ -1139,7 +1139,7 @@ export interface PlatformaticGatewayConfig {
           /**
            * Interval in milliseconds between metrics reads when collection is interval.
            */
-          collectionInterval?: number | string;
+          collectionInterval?: number;
           /**
            * Reset the http_request_all_duration_seconds, http_request_all_summary_seconds and http_client_request_duration_seconds metrics after each collection. Set to false to make them cumulative. Defaults to true.
            */

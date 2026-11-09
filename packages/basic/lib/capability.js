@@ -1041,12 +1041,17 @@ export class BaseCapability extends EventEmitter {
       await telemetryReady
     }
 
-    // Setup the OTLP exporter bridge, it starts with the first metrics read
+    // With the interval collection, the runtime is the only reader of the metrics: the exporter
+    // pushes the last read and starts with the first one. Otherwise, the exporter reads the
+    // registry on its own.
+    // TODO: Always push the last read in the next major version
+    const intervalCollection = metricsConfig.collection === 'interval'
+
     this.otlpBridge = await setupOtlpExporter(
       this.metricsRegistry,
       metricsConfig.otlpExporter,
       this.applicationId,
-      () => this.#lastPromMetrics
+      intervalCollection ? () => this.#lastPromMetrics : null
     )
 
     if (this.otlpBridge) {
@@ -1057,7 +1062,12 @@ export class BaseCapability extends EventEmitter {
         },
         'OTLP metrics exporter configured'
       )
-      this.#startOtlpBridge()
+
+      if (intervalCollection) {
+        this.#startOtlpBridge()
+      } else {
+        this.otlpBridge.start()
+      }
     }
   }
 

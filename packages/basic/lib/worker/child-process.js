@@ -363,12 +363,17 @@ export class ChildProcess extends ITC {
       await telemetryReady
     }
 
-    // Setup the OTLP exporter bridge over the child's populated registry, it starts with the first read
+    // With the interval collection, the runtime is the only reader of the metrics: the exporter
+    // pushes the last read and starts with the first one. Otherwise, the exporter reads the
+    // child's populated registry on its own.
+    // TODO: Always push the last read in the next major version
+    const intervalCollection = metricsConfig.collection === 'interval'
+
     this.#otlpBridge = await setupOtlpExporter(
       this.#metricsRegistry,
       metricsConfig.otlpExporter,
       applicationId,
-      () => this.#lastPromMetrics
+      intervalCollection ? () => this.#lastPromMetrics : null
     )
 
     if (this.#otlpBridge) {
@@ -379,7 +384,12 @@ export class ChildProcess extends ITC {
         },
         'OTLP metrics exporter configured'
       )
-      this.#startOtlpBridge()
+
+      if (intervalCollection) {
+        this.#startOtlpBridge()
+      } else {
+        this.#otlpBridge.start()
+      }
     }
   }
 

@@ -195,7 +195,7 @@ The `resetHttpMetrics` option can also be used without `aggregateWorkers`. When 
 
 Some metrics are reset every time they are read: the HTTP request metrics (unless `resetHttpMetrics` is `false`), the event loop utilization and lag, and the CPU usage. If they were read by more than one consumer, each read would hide data from the others.
 
-For this reason, the Prometheus scrape is the only reader of the metrics. When nothing scrapes the metrics endpoint, set [`collection`](../reference/runtime/configuration.md#metrics) to `interval` to let the runtime read them on a timer instead. After the first read, `runtime.getMetrics()`, the management API, `wattpm metrics` and the OTLP exporter all use the result of the last read instead of reading the metrics again. To receive each read as it happens, subscribe to the [`metrics:prometheus`](../reference/runtime/programmatic.md#metricsprometheus) runtime event.
+For this reason, the Prometheus scrape is the only reader of the metrics. When nothing scrapes the metrics endpoint, set [`collection`](../reference/runtime/configuration.md#metrics) to `interval` to let the runtime read them on a timer instead. After the first read, `runtime.getMetrics()` and the management API (including `wattpm metrics`) use the result of the last read instead of reading the metrics again. The OTLP exporter does the same only when `collection` is `interval`: otherwise, it still reads the metrics on its own. To receive each read as it happens, subscribe to the [`metrics:prometheus`](../reference/runtime/programmatic.md#metricsprometheus) runtime event.
 
 ## Custom Metrics
 
