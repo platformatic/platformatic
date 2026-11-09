@@ -185,7 +185,7 @@ test('handles ping messages', async t => {
 - **`runtime.getApplicationConfig(id, ensureStarted = true): Promise<object>`** — The resolved application configuration.
 - **`runtime.getApplicationEnv(id, ensureStarted = true): Promise<Record<string, string>>`** — The effective worker environment, including capability-provided variables. It requires a loaded worker: it throws `PLT_RUNTIME_APPLICATION_NOT_STARTED` if the worker exists but is stopped, `PLT_RUNTIME_WORKER_NOT_FOUND` after an application has been unloaded/stopped, and `PLT_RUNTIME_APPLICATION_NOT_FOUND` for an unknown ID.
 - **`runtime.getApplicationOpenapiSchema(id): Promise<unknown>`** and **`runtime.getApplicationGraphqlSchema(id): Promise<unknown>`** — The application's generated API schemas.
-- **`runtime.getMetrics(format = 'json'): Promise<{ metrics, timestamp }>`** — Runtime metrics in JSON or the requested text format, and the time they were read. Once the Prometheus server has been scraped, this returns the metrics of the last scrape instead of reading them again: some metrics are reset on every read, so an additional read would hide data from Prometheus. Until the first scrape, the metrics are read on each call.
+- **`runtime.getMetrics(format = 'json'): Promise<{ metrics, timestamp }>`** — Runtime metrics in JSON or the requested text format, and the time they were read. Once the metrics have been read by a Prometheus scrape (or by the `interval` [collection](./configuration.md#metrics)), this returns the last read instead of reading them again: some metrics are reset on every read, so an additional read would hide data from Prometheus. Until the first read, the metrics are read on each call.
 - **`runtime.getSharedContext(): object`** — The current main-thread shared context. Do not mutate it directly; use `updateSharedContext()` so workers are notified.
 - **`runtime.updateSharedContext({ context, overwrite = false }): Promise<object>`** — Merges `context` into the shared context and broadcasts the new state to all running workers. Set `overwrite` to replace it instead. Broadcast failures are logged without rejecting the update.
 
@@ -240,7 +240,7 @@ A related event, `application:worker:unhealthy` (with a `{ application, worker }
 
 #### `metrics:prometheus`
 
-Emitted every time the runtime reads the metrics: on each Prometheus scrape and, until the first scrape, on each `getMetrics()` call. Subscribe to this event to receive the metrics without reading them again.
+Emitted every time the runtime reads the metrics: on each Prometheus scrape (or, with [`metrics.collection`](./configuration.md#metrics) set to `interval`, on each collection) and, until the first read, on each `getMetrics()` call. Subscribe to this event to receive the metrics without reading them again.
 
 The payload is an object with the following properties:
 

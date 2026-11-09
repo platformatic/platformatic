@@ -361,7 +361,8 @@ async function startServer (runtime, opts, metricsEnabled, healthProbesEnabled) 
 }
 
 export async function startPrometheusServer (runtime, opts, healthProbes) {
-  const metricsEnabled = opts !== false && opts?.enabled !== false
+  // With the interval collection, the runtime reads the metrics itself and does not expose them
+  const metricsEnabled = opts !== false && opts?.enabled !== false && opts?.collection !== 'interval'
   const healthProbesEnabled = isHealthProbesEnabled(healthProbes) && useSharedServer(opts, healthProbes)
   const serverOpts = healthProbesEnabled && isHealthProbesServerEnabled(healthProbes) ? resolveHealthProbesOptions(opts, healthProbes) : opts
 

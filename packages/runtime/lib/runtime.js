@@ -234,6 +234,7 @@ export class Runtime extends EventEmitter {
 
   #processMetricsRegistry
   #lastPromMetrics = null
+  #metricsCollectionTimer = null
 
   constructor (config, context) {
     super()
@@ -241,9 +242,7 @@ export class Runtime extends EventEmitter {
 
     this.#config = config
     this.#root = config[kMetadata].root
-    this.#env = config[kMetadata].env
-    this.#pinoLevelKey = config.logger.pino?.level ?? config.logger.levelKey ?? 'level'
-    this.#pinoTimeKey = config.logger.pino?.time ?? config.logger.timestampKey ?? 'time'
+    this.#env = config[kMetadata].env this.#pinoLevelKey = config.logger.pino?.level ?? config.logger.levelKey ?? 'level' this.#pinoTimeKey = config.logger.pino?.time ?? config.logger.timestampKey ?? 'time'
     this.#pinoMessageKey = config.logger.pino?.message ?? config.logger.messageKey ?? 'msg'
     this.#pinoCustomizedKeys =
       this.#pinoLevelKey !== 'level' || this.#pinoTimeKey !== 'time' || this.#pinoMessageKey !== 'msg'
@@ -373,6 +372,7 @@ export class Runtime extends EventEmitter {
 
     this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
     this.#assertExtensionHealthRoutesApplied()
+    this.#startMetricsCollection()
 
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
@@ -543,6 +543,8 @@ export class Runtime extends EventEmitter {
 
     // The management API autocloses by itself via event in management-api.js.
     // This is needed to let management API stop endpoint to reply.
+
+    this.#stopMetricsCollection()
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
@@ -1290,6 +1292,8 @@ export class Runtime extends EventEmitter {
    * await runtime.updateMetricsConfig({ enabled: false })
    */
   async updateMetricsConfig (metricsConfig) {
+    this.#stopMetricsCollection()
+
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
       this.#prometheusServer = null
@@ -1319,6 +1323,7 @@ export class Runtime extends EventEmitter {
 
     this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
     this.#assertExtensionHealthRoutesApplied()
+    this.#startMetricsCollection()
 
     await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
 
@@ -1683,7 +1688,7 @@ export class Runtime extends EventEmitter {
     return { metrics, timestamp }
   }
 
-  // Used by the Prometheus server, which is the only reader of the metrics.
+  // Used by the only reader of the metrics: the Prometheus server or the interval collection.
   async [kCollectMetrics] (format = 'json') {
     const snapshot = await this.#getPromMetricsSnapshot()
     if (snapshot.metrics !== null) {
@@ -1695,6 +1700,48 @@ export class Runtime extends EventEmitter {
       metrics = formatMetricsAsText(metrics)
     }
     return { metrics, timestamp }
+  }
+
+  // With the interval collection, the runtime is the only reader of the metrics:
+  // it reads them on a timer, but only while someone consumes them.
+  #startMetricsCollection () {
+    const config = this.#config.metrics
+    if (
+      !config ||
+      config.enabled === false ||
+      config.enabled === 'false' ||
+      config.collection !== 'interval'
+    ) return
+
+    const interval = Number(config.collectionInterval ?? 15000)
+
+    const otlpExporter = config.otlpExporter
+    const otlpEnabled = 
+      !!otlpExporter?.endpoint &&
+      otlpExporter.enabled !== false &&
+      otlpExporter.enabled !== 'false'
+
+    let collecting = false
+    this.#metricsCollectionTimer = setInterval(async () => {
+      if (collecting) return 
+
+      const hasSubscribers = this.listenerCount('metrics:prometheus') > 0
+      if (!otlpEnabled && !hasSubscribers) return
+
+      collecting = true
+      try {
+        await this[kCollectMetrics]()
+      } catch (err) {
+        this.logger.error({ err }, 'Failed to collect the metrics.')
+      } finally {
+        collecting = false
+      }
+    }, interval).unref()
+  }
+
+  #stopMetricsCollection () {
+    clearInterval(this.#metricsCollectionTimer)
+    this.#metricsCollectionTimer = null
   }
 
   async #getPromMetricsSnapshot () {
