@@ -114,8 +114,8 @@ export function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = fals
     if (field.isNullable || noRequired || field.autoTimestamp) {
       properties[field.camelcase].nullable = true
     }
-    if (!field.isNullable && !field.primaryKey && !noRequired && !field.autoTimestamp) {
-      // we skip the primary key for creation
+    if (!field.isNullable && !field.primaryKey && !noRequired && !field.autoTimestamp && !field.hasDefault) {
+      // we skip the primary key for creation and columns the database fills in
       required.push(field.camelcase)
     }
     if (field.isGenerated) {
