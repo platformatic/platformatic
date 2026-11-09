@@ -67,6 +67,7 @@ export class BaseCapability extends EventEmitter {
   #processSpawner
   #subprocessStarted
   #metricsCollected
+  #lastPromMetrics = null
   #pendingDependenciesWaits
   #reuseTcpPortsSubscribers
   #closing
@@ -208,6 +209,7 @@ export class BaseCapability extends EventEmitter {
       // and because prom-client doesn't support changing labels on existing metrics.
       // This will lose all previously collected metrics.
       clearRegistry(this.metricsRegistry)
+      this.#lastPromMetrics = null
 
       if (metricsConfig.enabled !== false) {
         this.#metricsCollected = false
@@ -414,7 +416,15 @@ export class BaseCapability extends EventEmitter {
       return this.childManager.send(this.clientWs, 'getMetrics', { format })
     }
 
-    return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
+    if (format !== 'json') {
+      return this.metricsRegistry.metrics()
+    }
+
+    const metrics = await this.metricsRegistry.getMetricsAsJSON()
+    this.#lastPromMetrics = metrics
+    this.#startOtlpBridge()
+
+    return metrics
   }
 
   async getOpenapiSchema () {
@@ -839,6 +849,7 @@ export class BaseCapability extends EventEmitter {
 
     if (this.metricsRegistry) {
       clearRegistry(this.metricsRegistry)
+      this.#lastPromMetrics = null
       this.#metricsCollected = false
     }
 
@@ -1030,18 +1041,30 @@ export class BaseCapability extends EventEmitter {
       await telemetryReady
     }
 
-    // Setup and start OTLP exporter bridge
-    this.otlpBridge = await setupOtlpExporter(this.metricsRegistry, metricsConfig.otlpExporter, this.applicationId)
+    // Setup the OTLP exporter bridge, it starts with the first metrics read
+    this.otlpBridge = await setupOtlpExporter(
+      this.metricsRegistry,
+      metricsConfig.otlpExporter,
+      this.applicationId,
+      () => this.#lastPromMetrics
+    )
 
     if (this.otlpBridge) {
-      this.otlpBridge.start()
       this.logger.info(
         {
           endpoint: metricsConfig.otlpExporter.endpoint,
           interval: metricsConfig.otlpExporter.interval || 60000
         },
-        'OTLP metrics exporter started'
+        'OTLP metrics exporter configured'
       )
+      this.#startOtlpBridge()
+    }
+  }
+
+  // The OTLP exporter pushes the last metrics read: start it once there is one
+  #startOtlpBridge () {
+    if (this.otlpBridge && !this.otlpBridge.running && this.#lastPromMetrics !== null) {
+      this.otlpBridge.start()
     }
   }
 

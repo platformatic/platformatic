@@ -139,3 +139,61 @@ test('bridge handles errors gracefully', async () => {
   bridge.stop()
   assert.strictEqual(bridge.running, false)
 })
+
+test('bridge exports the last read and never reads the registry', async t => {
+  const { createServer } = await import('node:http')
+  const { once } = await import('node:events')
+
+  const bodies = []
+  const server = createServer((req, res) => {
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => {
+      bodies.push(Buffer.concat(chunks))
+      res.end('{}')
+    })
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  t.after(() => server.close())
+
+  // Reading the registry would run this collect callback
+  const registry = new client.Registry()
+  let registryReads = 0
+  // eslint-disable-next-line no-new
+  new client.Gauge({
+    name: 'registry_gauge',
+    help: 'Read only when the registry is read',
+    registers: [registry],
+    collect () {
+      registryReads++
+      this.set(1)
+    }
+  })
+
+  let lastPromMetrics = null
+  const bridge = await setupOtlpExporter(
+    registry,
+    {
+      endpoint: `http://127.0.0.1:${server.address().port}/v1/metrics`,
+      interval: 60000
+    },
+    'test-app',
+    () => lastPromMetrics
+  )
+
+  lastPromMetrics = [
+    {
+      name: 'from_last_read',
+      help: 'A metric coming from the last read',
+      type: 'gauge',
+      values: [{ value: 42, labels: { applicationId: 'test-app' } }],
+      aggregator: 'sum'
+    }
+  ]
+
+  await bridge.collectAndPush()
+  assert.strictEqual(bodies.length, 1)
+  assert.ok(bodies[0].includes('from_last_read'), 'the last read should be exported')
+  assert.strictEqual(registryReads, 0, 'the registry must not be read')
+})

@@ -15,6 +15,7 @@ import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
 import {
   collectProcessMetrics,
+  formatMetricsAsText,
   isHttpMetricsResetEnabled,
   client as metricsClient,
   openTelemetryITCMessage,
@@ -78,6 +79,7 @@ import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.j
 import { RoundRobinMap } from './worker/round-robin-map.js'
 import {
   kApplicationId,
+  kCollectMetrics,
   kConfig,
   kFullId,
   kHealthCheckTimer,
@@ -140,16 +142,6 @@ function parseOrigins (origins) {
     }
     return origin
   })
-}
-
-function formatMetricValue (value) {
-  if (Number.isNaN(value)) {
-    return 'NaN'
-  } else if (!Number.isFinite(value)) {
-    return value < 0 ? '-Inf' : '+Inf'
-  }
-
-  return `${value}`
 }
 
 // Resolves the setup function of a runtime extension out of its module namespace.
@@ -241,6 +233,7 @@ export class Runtime extends EventEmitter {
   #channelCreationHook
 
   #processMetricsRegistry
+  #lastPromMetrics = null
 
   constructor (config, context) {
     super()
@@ -569,6 +562,8 @@ export class Runtime extends EventEmitter {
       this.#processMetricsRegistry.clear()
       this.#processMetricsRegistry = null
     }
+
+    this.#lastPromMetrics = null
 
     if (this.#sharedHttpCache?.close) {
       await this.#sharedHttpCache.close()
@@ -1312,6 +1307,8 @@ export class Runtime extends EventEmitter {
 
     this.#config.metrics = metricsConfig
     this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
+    // The last read has the previous labels and configuration
+    this.#lastPromMetrics = null
 
     // Allow extension health routes to be re-applied on the restarted servers.
     for (const entry of this.#extensionHealthRoutes) {
@@ -1669,11 +1666,54 @@ export class Runtime extends EventEmitter {
     return this.#runExtensionHealthChecks(this.#extensionLivenessChecks, 'liveness')
   }
 
+  // Reading the metrics resets the ones that are reset on read (e.g. the HTTP request
+  // metrics and the event loop utilization) for every other reader. So this method
+  // returns the last read made by the Prometheus server and only reads the metrics
+  // when the Prometheus server has not read them yet.
   async getMetrics (format = 'json') {
-    return this.#getMetrics(format, this.#isWorkerMetricsAggregationEnabled())
+    let snapshot = this.#lastPromMetrics
+    if (snapshot === null) {
+      snapshot = await this.#getPromMetricsSnapshot()
+    }
+
+    let { metrics, timestamp } = snapshot
+    if (format !== 'json' && metrics !== null) {
+      metrics = formatMetricsAsText(metrics)
+    }
+    return { metrics, timestamp }
   }
 
-  async #getMetrics (format, aggregateWorkers) {
+  // Used by the Prometheus server, which is the only reader of the metrics.
+  async [kCollectMetrics] (format = 'json') {
+    const snapshot = await this.#getPromMetricsSnapshot()
+    if (snapshot.metrics !== null) {
+      this.#lastPromMetrics = snapshot
+    }
+
+    let { metrics, timestamp } = snapshot
+    if (format !== 'json' && metrics !== null) {
+      metrics = formatMetricsAsText(metrics)
+    }
+    return { metrics, timestamp }
+  }
+
+  async #getPromMetricsSnapshot () {
+    const metrics = await this.#collectMetrics(this.#isWorkerMetricsAggregationEnabled())
+    if (metrics === null) {
+      return { metrics: null, timestamp: null }
+    }
+
+    const snapshot = { metrics, timestamp: Date.now() }
+    try {
+      this.emit('metrics:prometheus', snapshot)
+    } catch (err) {
+      this.logger.error({ err }, 'A metrics:prometheus listener failed.')
+    }
+
+    return snapshot
+  }
+
+  async #collectMetrics (aggregateWorkers) {
     if (this.#config.metrics === false || this.#config.metrics?.enabled === false) {
       throw new Error('Metrics are disabled')
     }
@@ -1744,11 +1784,7 @@ export class Runtime extends EventEmitter {
       metrics = [...applicationRestartMetrics, ...metrics]
     }
 
-    if (metrics !== null && format !== 'json') {
-      metrics = this.#formatMetricsAsText(metrics)
-    }
-
-    return { metrics }
+    return metrics
   }
 
   #isWorkerMetricsAggregationEnabled () {
@@ -1947,51 +1983,11 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  // Serialize JSON metrics to the Prometheus text exposition format.
-  // Samples are grouped by metric family so each family is emitted as a single
-  // block with one HELP/TYPE header: the format forbids repeating them, and
-  // strict parsers (e.g. OpenMetrics-based ones like Dynatrace) would otherwise
-  // only ingest the first block for each metric name.
-  #formatMetricsAsText (metricsJson) {
-    const families = new Map()
-
-    for (const metric of metricsJson) {
-      let family = families.get(metric.name)
-      if (!family) {
-        family = { help: metric.help, type: metric.type, values: [] }
-        families.set(metric.name, family)
-      }
-      family.values.push(...metric.values)
-    }
-
-    let output = ''
-    for (const [name, family] of families) {
-      const escapedHelp = String(family.help).replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
-      output += `# HELP ${name} ${escapedHelp}\n`
-      output += `# TYPE ${name} ${family.type}\n`
-
-      for (const v of family.values) {
-        const labelParts = []
-
-        for (const [key, val] of Object.entries(v.labels ?? {})) {
-          // Escape label values for Prometheus format
-          const escapedVal = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
-          labelParts.push(`${key}="${escapedVal}"`)
-        }
-
-        const labelStr = labelParts.length > 0 ? `{${labelParts.join(',')}}` : ''
-        const metricName = v.metricName || name
-        output += `${metricName}${labelStr} ${formatMetricValue(v.value)}\n`
-      }
-    }
-
-    return output
-  }
-
   async getFormattedMetrics () {
     try {
-      // Always use the per-worker metrics: the values below are read from a single worker
-      const { metrics } = await this.#getMetrics('json', false)
+      // Use the last read of the Prometheus server, if any, so this does not reset the
+      // metrics that are reset on read. Otherwise, read the per-worker metrics.
+      const metrics = this.#lastPromMetrics?.metrics ?? (await this.#collectMetrics(false))
 
       if (metrics === null || metrics.length === 0) {
         return null

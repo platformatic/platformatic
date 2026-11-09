@@ -1359,3 +1359,75 @@ test('liveness - should get a fail if the custom health check times out', async 
   strictEqual(statusCode, 500)
   strictEqual(await body.text(), 'ERR')
 })
+
+test('emits metrics:prometheus on every read and caches the scraped metrics', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const port = await getPort()
+
+  const app = await createRuntime(projectDir, {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.48.0.json',
+    entrypoint: 'main',
+    watch: false,
+    autoload: {
+      path: './services'
+    },
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: {
+      hostname: '127.0.0.1',
+      port
+    },
+    workers: 1
+  })
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const events = []
+  app.on('metrics:prometheus', event => {
+    events.push(event)
+  })
+
+  // Before any scrape, getMetrics() reads the metrics, emits them and does not cache them
+  const first = await app.getMetrics('json')
+  strictEqual(events.length, 1)
+  strictEqual(events[0].metrics, first.metrics)
+  strictEqual(events[0].timestamp, first.timestamp)
+
+  const second = await app.getMetrics('json')
+  strictEqual(events.length, 2)
+  ok(second.metrics !== first.metrics)
+
+  // A scrape reads the metrics, emits them and caches them
+  const { statusCode, body } = await request(`http://127.0.0.1:${port}`, {
+    method: 'GET',
+    path: '/metrics'
+  })
+  strictEqual(statusCode, 200)
+  const text = await body.text()
+
+  strictEqual(events.length, 3)
+  const scraped = events[2]
+  ok(typeof scraped.timestamp === 'number')
+
+  const names = scraped.metrics.map(metric => metric.name)
+  ok(names.includes('nodejs_version_info'))
+  for (const name of names) {
+    ok(text.includes(`# TYPE ${name} `), `missing ${name} in the scraped text`)
+  }
+
+  // After a scrape, getMetrics() returns the scraped metrics without reading or emitting
+  const cached = await app.getMetrics('json')
+  strictEqual(events.length, 3)
+  strictEqual(cached.metrics, scraped.metrics)
+  strictEqual(cached.timestamp, scraped.timestamp)
+
+  const cachedText = await app.getMetrics('text')
+  strictEqual(events.length, 3)
+  strictEqual(cachedText.metrics, text)
+})

@@ -5,6 +5,7 @@ import fastify from 'fastify'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { DuplicateExtensionHealthRouteError } from './errors.js'
+import { kCollectMetrics } from './worker/symbols.js'
 
 const DEFAULT_HOSTNAME = '0.0.0.0'
 const DEFAULT_PORT = 9090
@@ -260,7 +261,8 @@ async function startServer (runtime, opts, metricsEnabled, healthProbesEnabled) 
         if (reqType === 'text') {
           reply.type('text/plain')
         }
-        return (await runtime.getMetrics(reqType)).metrics
+        const { metrics } = await runtime[kCollectMetrics](reqType)
+        return metrics
       }
     })
   }

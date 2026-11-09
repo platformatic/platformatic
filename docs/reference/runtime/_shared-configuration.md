@@ -817,7 +817,7 @@ When `healthProbes` is an object with a different resolved `hostname` and `port`
 - **`otlpExporter`** (`object`): Optional configuration for exporting Prometheus metrics to an OpenTelemetry Protocol (OTLP) endpoint. This enables pushing metrics to OTLP-compatible collectors like OpenTelemetry Collector, Grafana Cloud, or other observability platforms. The object supports the following settings:
   - **`enabled`** (`boolean` or `string`): Enable or disable OTLP metrics export. Default: `true` if endpoint is configured.
   - **`endpoint`** (**required**, `string`): OTLP endpoint URL for metrics (e.g., `http://localhost:4318/v1/metrics`).
-  - **`interval`** (`number` or `string`): Interval in milliseconds between metric pushes. Default: `60000` (60 seconds).
+  - **`interval`** (`number` or `string`): Interval in milliseconds between metric pushes. Default: `60000` (60 seconds). Each push sends the last metrics read by the runtime (e.g. by the last Prometheus scrape), and the exporter starts with the first read. Set it to your scrape interval, so that each read is pushed once.
   - **`headers`** (`object`): Additional HTTP headers for authentication or custom metadata. Common use cases include API keys or authentication tokens.
   - **`serviceName`** (`string`): Service name for OTLP resource attributes. Defaults to the application ID.
   - **`serviceVersion`** (`string`): Service version for OTLP resource attributes. Optional.

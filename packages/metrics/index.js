@@ -563,7 +563,58 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
   }
 }
 
-export async function setupOtlpExporter (registry, otlpExporterConfig, applicationId) {
+function formatMetricValue (value) {
+  if (Number.isNaN(value)) {
+    return 'NaN'
+  } else if (!Number.isFinite(value)) {
+    return value < 0 ? '-Inf' : '+Inf'
+  }
+
+  return `${value}`
+}
+
+// Serialize JSON metrics to the Prometheus text exposition format.
+// Samples are grouped by metric family so each family is emitted as a single
+// block with one HELP/TYPE header: the format forbids repeating them, and
+// strict parsers (e.g. OpenMetrics-based ones like Dynatrace) would otherwise
+// only ingest the first block for each metric name.
+export function formatMetricsAsText (metricsJson) {
+  const families = new Map()
+
+  for (const metric of metricsJson) {
+    let family = families.get(metric.name)
+    if (!family) {
+      family = { help: metric.help, type: metric.type, values: [] }
+      families.set(metric.name, family)
+    }
+    family.values.push(...metric.values)
+  }
+
+  let output = ''
+  for (const [name, family] of families) {
+    const escapedHelp = String(family.help).replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
+    output += `# HELP ${name} ${escapedHelp}\n`
+    output += `# TYPE ${name} ${family.type}\n`
+
+    for (const v of family.values) {
+      const labelParts = []
+
+      for (const [key, val] of Object.entries(v.labels ?? {})) {
+        // Escape label values for Prometheus format
+        const escapedVal = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+        labelParts.push(`${key}="${escapedVal}"`)
+      }
+
+      const labelStr = labelParts.length > 0 ? `{${labelParts.join(',')}}` : ''
+      const metricName = v.metricName || name
+      output += `${metricName}${labelStr} ${formatMetricValue(v.value)}\n`
+    }
+  }
+
+  return output
+}
+
+export async function setupOtlpExporter (registry, otlpExporterConfig, applicationId, getLastMetrics = null) {
   if (!otlpExporterConfig || !otlpExporterConfig.endpoint) {
     return null
   }
@@ -592,6 +643,12 @@ export async function setupOtlpExporter (registry, otlpExporterConfig, applicati
 
   if (serviceVersion) {
     conversionOptions.serviceVersion = serviceVersion
+  }
+
+  if (getLastMetrics !== null) {
+    registry = {
+      metrics: async () => formatMetricsAsText(getLastMetrics() ?? [])
+    }
   }
 
   const bridge = new PromClientBridge({

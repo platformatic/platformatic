@@ -191,6 +191,12 @@ Set `resetHttpMetrics` to `false` to make them cumulative, as expected by Promet
 
 The `resetHttpMetrics` option can also be used without `aggregateWorkers`. When disabled, the latency percentiles reported by the deprecated `/metrics/live` management API endpoint cover the whole lifetime of each worker.
 
+## Reading Metrics From Multiple Places
+
+Some metrics are reset every time they are read: the HTTP request metrics (unless `resetHttpMetrics` is `false`), the event loop utilization and lag, and the CPU usage. If they were read by more than one consumer, each read would hide data from the others.
+
+For this reason, the Prometheus scrape is the only reader of the metrics. After the first scrape, `runtime.getMetrics()`, the management API, `wattpm metrics` and the OTLP exporter all use the result of the last scrape instead of reading the metrics again. To receive each read as it happens, subscribe to the [`metrics:prometheus`](../reference/runtime/programmatic.md#metricsprometheus) runtime event.
+
 ## Custom Metrics
 
 When running an application inside Platformatic, you can register and export custom metrics by accessing the application registry.
