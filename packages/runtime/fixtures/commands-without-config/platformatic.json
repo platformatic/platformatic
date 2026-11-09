@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "entrypoint": "service-db",
+  "applications": [
+    {
+      "id": "service-db",
+      "path": "../metrics/services/service-db"
+    }
+  ]
+}
