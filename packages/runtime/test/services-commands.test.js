@@ -177,6 +177,22 @@ test('loadApplicationsCommands works with existing fixtures that have commands',
   ok(gatewayCommands.includes('service-1:fetch-openapi-schemas'))
 })
 
+test('loadApplicationsCommands finds the configuration file of applications without the config property', async t => {
+  const originalCwd = process.cwd()
+
+  t.after(() => {
+    process.chdir(originalCwd)
+  })
+
+  process.chdir(join(import.meta.dirname, '..', 'fixtures', 'commands-without-config'))
+
+  const result = await loadApplicationsCommands()
+
+  ok(result.commands['service-db:migrations:apply'])
+  ok(result.help['service-db:migrations:apply'])
+  strictEqual(result.applications['service-db:migrations:apply'].id, 'service-db')
+})
+
 test('loadApplicationsCommands discovers Next.js pack commands', async t => {
   const originalCwd = process.cwd()
   const fixtureDir = join(import.meta.dirname, '..', '..', 'next', 'test', 'fixtures', 'server-side-standalone')
