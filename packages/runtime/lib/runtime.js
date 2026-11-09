@@ -242,7 +242,9 @@ export class Runtime extends EventEmitter {
 
     this.#config = config
     this.#root = config[kMetadata].root
-    this.#env = config[kMetadata].env this.#pinoLevelKey = config.logger.pino?.level ?? config.logger.levelKey ?? 'level' this.#pinoTimeKey = config.logger.pino?.time ?? config.logger.timestampKey ?? 'time'
+    this.#env = config[kMetadata].env
+    this.#pinoLevelKey = config.logger.pino?.level ?? config.logger.levelKey ?? 'level'
+    this.#pinoTimeKey = config.logger.pino?.time ?? config.logger.timestampKey ?? 'time'
     this.#pinoMessageKey = config.logger.pino?.message ?? config.logger.messageKey ?? 'msg'
     this.#pinoCustomizedKeys =
       this.#pinoLevelKey !== 'level' || this.#pinoTimeKey !== 'time' || this.#pinoMessageKey !== 'msg'
