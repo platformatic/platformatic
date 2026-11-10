@@ -92,7 +92,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 }
 
 // Applications without the config property are resolved as when the runtime starts: by their configuration file in
-// their folder, or else by detecting their type
+// their folder, or else by detecting their type. The configuration file found is returned, since the commands load it.
 async function loadApplicationCapability (application) {
   let configFile = application.config
 
@@ -103,11 +103,11 @@ async function loadApplicationCapability (application) {
 
   if (!configFile) {
     const { capability } = await importCapabilityAndConfig(application.path)
-    return capability
+    return { pkg: capability, configFile: null }
   }
 
   const applicationConfig = await utilsLoadConfiguration(configFile)
-  return loadConfigurationModule(application.path, applicationConfig)
+  return { pkg: await loadConfigurationModule(application.path, applicationConfig), configFile }
 }
 
 export async function loadApplicationsCommands (executableName = '', configurationFile = null) {
@@ -144,12 +144,15 @@ export async function loadApplicationsCommands (executableName = '', configurati
 
   for (const application of config.applications) {
     try {
-      const pkg = await loadApplicationCapability(application)
+      const { pkg, configFile } = await loadApplicationCapability(application)
 
       if (pkg.createCommands) {
         const definition = await pkg.createCommands(application.id)
+        // The commands receive the configuration file of the application, found when the config property is missing
+        const context = configFile ? { ...application, config: configFile } : application
+
         for (const command of Object.keys(definition.commands)) {
-          applications[command] = application
+          applications[command] = context
         }
 
         Object.assign(commands, definition.commands)
