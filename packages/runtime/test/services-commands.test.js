@@ -191,6 +191,12 @@ test('loadApplicationsCommands finds the configuration file of applications with
   ok(result.commands['service-db:migrations:apply'])
   ok(result.help['service-db:migrations:apply'])
   strictEqual(result.applications['service-db:migrations:apply'].id, 'service-db')
+
+  // The commands load the configuration file they receive
+  strictEqual(
+    result.applications['service-db:migrations:apply'].config,
+    join(import.meta.dirname, '..', 'fixtures', 'metrics', 'services', 'service-db', 'platformatic.db.json')
+  )
 })
 
 test('loadApplicationsCommands discovers Next.js pack commands', async t => {
