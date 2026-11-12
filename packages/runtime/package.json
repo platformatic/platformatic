@@ -71,7 +71,7 @@
     "tstyche": "^7.0.0",
     "typescript": "~6.0.3",
     "undici-oidc-interceptor": "^0.9.0",
-    "why-is-node-running": "^2.2.2"
+    "why-is-node-running": "^3.0.0"
   },
   "dependencies": {
     "@fastify/accepts": "^5.0.0",
