@@ -7,6 +7,7 @@ import { resolve } from 'node:path'
 import { PassThrough } from 'node:stream'
 import stringify from 'safe-stable-stringify'
 import { kGatewayProxyResponseHandler } from '../symbols.js'
+import { applyResponseHeadersOverride, sharedResponseHeaders } from '../headers-override.js'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
@@ -151,7 +152,7 @@ export async function createDeduplicationHandler ({
           const body = new DynamicBuffer()
           // The headers are captured before the response is sent, as sending it can change them
           // (for instance, compressing it sets Content-Encoding) while the stored body is the upstream one.
-          const headers = proxiedReply.getHeaders()
+          const headers = sharedResponseHeaders(proxiedRequest, proxiedReply.getHeaders())
           // A wrapper may already have sent transformed headers before the upstream responds.
           // Keep metadata matching the retained bytes for response handlers, independently of ordinary replay headers.
           const upstreamHeaders = structuredClone(res.headers)
@@ -252,6 +253,7 @@ export async function createDeduplicationHandler ({
 
       metrics?.deduplicationReplay?.inc()
       const body = new DynamicBuffer(response.body).asReadable()
+      applyResponseHeadersOverride(request, reply)
       const responseHandler = reply[kGatewayProxyResponseHandler]
       if (responseHandler) {
         // Records written by older gateway workers have no upstream metadata; acquire a fresh response instead.
@@ -264,6 +266,7 @@ export async function createDeduplicationHandler ({
       }
       reply.code(response.statusCode)
       reply.headers(response.headers)
+      applyResponseHeadersOverride(request, reply)
       return send ? send(request, reply, body) : reply.send(body)
     }
 

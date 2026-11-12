@@ -68,7 +68,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
       - **`path`** (**required**, `string`) - Path to a JavaScript/TypeScript file that exports the custom proxy hooks. The module can either export the hooks object directly (as the default export) or export a factory function `(options) => hooks` (synchronous or asynchronous) which receives the `options` value below and returns the hooks object.
       - **`options`** (`object`) - An arbitrary JSON object which is passed to the factory function exported by the module referenced in `path`. It is ignored when the module exports the hooks object directly.
 
-      The hooks object supports the following properties, all optional:
+      The hooks object supports the following properties, all optional. Each configured hook must be a function;
+      otherwise startup fails with `PLT_GATEWAY_INVALID_CUSTOM_HANDLER` and the hook name:
 
       - **`preRewrite`** (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
       - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
@@ -84,6 +85,23 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - When no `ws.upstream` is configured, `getUpstream` also selects the upstream for WebSocket connections. It is invoked once per connection with the upgrade request at upgrade time.
       - **`rewriteHeaders`** (`function`) - A function `(headers, request) => headers` invoked with the response headers received from the upstream (after the gateway performed its internal `Location` header rewriting) and the original request. It must return the headers object to send back to the client. Use it, for example, to add a `Set-Cookie` header which pins a client to the upstream selected by `getUpstream`. Since both hooks receive the same request object, `getUpstream` can attach data to it (e.g. `request.selectedUpstream = ...`) and `rewriteHeaders` can read it back.
       - **`onError`** (`function`) - A function `(reply, { error }) => void` invoked when proxying a request fails. The gateway first logs the error, then invokes this hook instead of its default handler (which forwards the error to the client). Use `reply` to send a custom response. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#onerrorreply-error) for further information.
+      - **`getHeadersOverride`** (`function`) - A synchronous or asynchronous function `(request) => ({ request, response })`, called once after `preValidation` and before the proxy handler. Both returned maps are optional and contain string or string-array header values. Request overrides are applied before `wrappingHandler`, upstream selection and deduplication. Response overrides take precedence immediately after `rewriteHeaders`. They are also available on `reply` before a wrapping handler sends early output, and are applied separately for each deduplicated client without storing them in the shared response. Header names are case-insensitive. An override replaces the whole header, including the full `Set-Cookie` array; headers not returned are preserved. Invalid results fail with `PLT_GATEWAY_INVALID_HEADERS_OVERRIDE` before acquiring upstream.
+
+        For example, the module referenced by `custom.path` can export:
+
+        ```js
+        export default {
+          async getHeadersOverride (request) {
+            const session = await resolveSession(request)
+            return {
+              request: { cookie: `session=${session.id}` },
+              response: { 'set-cookie': [`session=${session.id}; Path=/; HttpOnly; Secure`] }
+            }
+          }
+        }
+        ```
+
+        `resolveSession` is application-provided. Cookie conversion, merging existing cookies and any header prefixing belong to this function; the gateway performs no implicit mapping between request and response headers. The application is responsible for keeping its response consistent with the overrides. Normal output processing, including compression, still applies.
 
     :::note
     If the prefix is not explicitly set, the gateway and the application will try to find the best prefix for the application.

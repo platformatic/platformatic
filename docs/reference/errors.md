@@ -32,6 +32,14 @@
 
 **Message:** Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"!
 
+### PLT_GATEWAY_INVALID_CUSTOM_HANDLER
+
+**Message:** Custom proxy handler "%s" must be a function.
+
+### PLT_GATEWAY_INVALID_HEADERS_OVERRIDE
+
+**Message:** getHeadersOverride must return request and response header objects with string or string-array values.
+
 ### PLT_GATEWAY_INVALID_OPENAPI_SCHEMA
 
 **Message:** Failed to compose OpenAPI schemas: %s
