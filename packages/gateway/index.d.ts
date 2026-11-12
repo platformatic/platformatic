@@ -25,6 +25,15 @@ export interface ProxyResponse {
   stream: Readable
 }
 
+export type HeaderOverrides = Record<string, string | string[]>
+
+export interface HeadersOverride {
+  request?: HeaderOverrides
+  response?: HeaderOverrides
+}
+
+export type GetHeadersOverride = (request: FastifyRequest) => HeadersOverride | Promise<HeadersOverride>
+
 export interface ProxyResponseHandler {
   /** Own the per-client stream. The gateway does not send it or await this callback. */
   onResponse (response: ProxyResponse): void
@@ -108,6 +117,8 @@ export declare const skipTelemetryHooks: boolean
 export declare const version: string
 
 export namespace errors {
+  export const InvalidCustomHandlerError: (name: string) => FastifyError
+  export const InvalidHeadersOverrideError: () => FastifyError
   export const FastifyInstanceIsAlreadyListeningError: () => FastifyError
   export const FailedToFetchOpenAPISchemaError: () => FastifyError
   export const ValidationErrors: () => FastifyError
