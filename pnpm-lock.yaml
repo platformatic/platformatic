@@ -707,8 +707,8 @@ importers:
         specifier: ^5.3.9
         version: 5.7.2
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
       yaml:
         specifier: ^2.4.1
         version: 2.9.1
@@ -771,8 +771,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
       ws:
         specifier: ^8.16.0
         version: 8.22.0
@@ -811,8 +811,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
 
   packages/foundation:
     dependencies:
@@ -1068,8 +1068,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       why-is-node-running:
-        specifier: '2'
-        version: 2.3.0
+        specifier: '3'
+        version: 3.2.3
       ws:
         specifier: ^8.16.0
         version: 8.22.0
@@ -1917,8 +1917,8 @@ importers:
         specifier: ^0.9.0
         version: 0.9.0
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
 
   packages/scalar-theme:
     devDependencies:
@@ -2089,8 +2089,8 @@ importers:
         specifier: ^5.3.9
         version: 5.7.2
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
       yaml:
         specifier: ^2.4.1
         version: 2.9.1
@@ -2208,8 +2208,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
       ws:
         specifier: ^8.16.0
         version: 8.22.0
@@ -2245,8 +2245,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
 
   packages/sql-mapper:
     dependencies:
@@ -2385,8 +2385,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.2.3
       yaml:
         specifier: ^2.4.1
         version: 2.9.1
@@ -10784,9 +10784,6 @@ packages:
     resolution: {integrity: sha512-6x6dK6zJdpTzF4sQeNYxwtvBzf6Eg4GtlesS94HOvTudUeyK2WXAaIfmDgsyslYrRBeFIlsi54AYsFGUuhmvrQ==}
     engines: {node: '>= 0.4'}
 
-  siginfo@2.0.0:
-    resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
-
   signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
 
@@ -10936,9 +10933,6 @@ packages:
   ssri@13.0.1:
     resolution: {integrity: sha512-QUiRf1+u9wPTL/76GTYlKttDEBWV1ga9ZXW8BG6kfdeyyM8LGPix9gROyg9V2+P0xNyF3X2Go526xKFdMZrHSQ==}
     engines: {node: ^20.17.0 || >=22.9.0}
-
-  stackback@0.0.2:
-    resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
   standard-as-callback@2.1.0:
     resolution: {integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==}
@@ -12138,9 +12132,9 @@ packages:
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
     hasBin: true
 
-  why-is-node-running@2.3.0:
-    resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
-    engines: {node: '>=8'}
+  why-is-node-running@3.2.3:
+    resolution: {integrity: sha512-b+aWTM7Zz5Q82TurMbr034vAmyJo2pJFVXzUzuhJK8lP+XI6xUfvzXizZINaERhH3KwybDLt6iqh7pOXaVxjnQ==}
+    engines: {node: '>=20.11'}
     hasBin: true
 
   word-wrap@1.2.5:
@@ -22182,8 +22176,6 @@ snapshots:
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
 
-  siginfo@2.0.0: {}
-
   signal-exit@3.0.7: {}
 
   signal-exit@4.1.0: {}
@@ -22332,8 +22324,6 @@ snapshots:
   ssri@13.0.1:
     dependencies:
       minipass: 7.1.3
-
-  stackback@0.0.2: {}
 
   standard-as-callback@2.1.0: {}
 
@@ -23455,10 +23445,7 @@ snapshots:
     dependencies:
       isexe: 4.0.0
 
-  why-is-node-running@2.3.0:
-    dependencies:
-      siginfo: 2.0.0
-      stackback: 0.0.2
+  why-is-node-running@3.2.3: {}
 
   word-wrap@1.2.5: {}
 
