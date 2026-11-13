@@ -1115,3 +1115,38 @@ test('BIGINT as ids', { skip: isSQLite }, async t => {
     )
   }
 })
+
+test('POST without a NOT NULL column that has a default', async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42) NOT NULL,
+        archived BOOLEAN NOT NULL DEFAULT false
+      );`)
+    }
+  })
+  app.register(sqlOpenAPI)
+  t.after(() => app.close())
+
+  await app.ready()
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/pages',
+    body: { id: 1, title: 'a' }
+  })
+  equal(res.statusCode, 200, res.body)
+  equal(res.json().title, 'a')
+
+  const put = await app.inject({
+    method: 'PUT',
+    url: '/pages/1',
+    body: { title: 'b' }
+  })
+  equal(put.statusCode, 200, put.body)
+  equal(put.json().title, 'b')
+})

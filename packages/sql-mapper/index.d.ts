@@ -69,6 +69,10 @@ export interface DBEntityField {
    */
   isNullable: boolean,
   /**
+   * An option that is true if the column has a database default value.
+   */
+  hasDefault: boolean,
+  /**
    * An option that is true if auto timestamp enabled for this field.
    */
   autoTimestamp?: boolean

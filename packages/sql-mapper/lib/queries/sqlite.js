@@ -38,6 +38,7 @@ export async function listColumns (db, sql, table) {
     column.is_nullable = column.notnull === 0 && column.pk === 0 ? 'YES' : 'NO'
     // convert hidden to is_generated
     column.is_generated = column.hidden === 2 || column.hidden === 3 ? 'YES' : 'NO'
+    column.column_default = column.dflt_value
   }
   return columns
 }

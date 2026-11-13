@@ -1616,3 +1616,33 @@ test('date columns are returned as YYYY-MM-DD strings', { skip: !isPg }, async (
   const [found] = await pageEntity.find({ where: { publishDate: { eq: '2023-06-01' } } })
   equal(found.publishDate, '2023-06-01')
 })
+
+test('entity fields with a database default', async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title VARCHAR(42) NOT NULL,
+      archived BOOLEAN NOT NULL DEFAULT false,
+      body VARCHAR(42),
+      summary VARCHAR(42) DEFAULT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const { fields } = mapper.entities.page
+  equal(fields.archived.hasDefault, true)
+  equal(fields.title.hasDefault, false)
+  equal(fields.body.hasDefault, false)
+  equal(fields.summary.hasDefault, false)
+})
