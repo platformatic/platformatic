@@ -378,6 +378,13 @@ application, with application-level environment variables taking precedence.
 
 The path to an `.env` file to load for the runtime. By default, the `.env` file is loaded from the application directory.
 
+A relative path is resolved against the folder of the runtime configuration file.
+When set, it replaces the file given with the `--env` option of `wattpm` or the
+`envFile` option of `create`. The configuration of each application is then
+loaded in its worker with the variables of this file, without looking for a
+`.env` file on its own. The `envfile` of an application, or the `.env` file in its
+folder when it declares no `envfile`, still takes precedence.
+
 ### `strictEnv`
 
 Controls what happens when a `{PLT_*}` environment variable placeholder references a variable which is not set:
@@ -1157,10 +1164,27 @@ If an `.env` file exists it will automatically be loaded by Platformatic using
 PLT_ENTRYPOINT=application
 ```
 
-The `.env` file must be located in the same folder as the Platformatic
-configuration file or in the current working directory. Each application would
-also see their respective `.env` file loaded if they are located in a subdirectory.
+The `.env` file is looked for in the folder of the Platformatic configuration
+file and then in each folder above it, and the first one found is loaded. When
+there is none, the `.env` file of the current working directory is loaded. The
+configuration of each application looks for its `.env` file the same way,
+starting from the folder of its configuration file. Each application would also
+see their respective `.env` file loaded if they are located in a subdirectory.
 This can be configured by the `envfile` property in the application configuration.
+
+When the runtime is given an env file, with the [`envfile`](#envfile) property,
+the `--env` option of `wattpm` or the `envFile` option of `create`, each worker
+loads the configuration of its application without looking for a `.env` file:
+not next to the configuration file, not in the folders above it, and not in the
+current working directory. The placeholders are resolved from the environment of
+the worker instead, which holds the variables of the process and of the runtime
+env file, plus the overrides the application already had: the `env` property and
+the application's own file, which is its `envfile` or, when it declares none, the
+`.env` file in its folder. The values of the application's own file take
+precedence over the ones of the runtime env file. A worker started later, after
+a restart for example, reuses the values the runtime read when it loaded its
+configuration, even when the file has since been removed. This applies to
+`wattpm dev`, `wattpm start` and `wattpm build` alike.
 
 Environment variables can also be set directly on the command line, for example:
 

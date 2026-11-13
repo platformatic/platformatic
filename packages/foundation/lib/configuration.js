@@ -376,8 +376,9 @@ export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {
     if (!(await isFileAccessible(envFile))) {
       throw new Error(`Custom env file not found: ${envFile}`)
     }
-  } else {
-    // Default behavior: search for .env file in the current directory and its parents
+  } else if (customEnvFile !== false) {
+    // Default behavior: search for .env file in the current directory and its parents.
+    // A custom env file set to false skips the search: the caller wants no env file at all.
     let currentPath = root
     const rootPath = parse(root).root
 
@@ -619,7 +620,10 @@ export async function loadConfiguration (source, schema, options = {}) {
       root,
       env,
       path: typeof source === 'string' ? source : null,
-      module: moduleInfo?.module ?? null
+      module: moduleInfo?.module ?? null,
+      // The env file the caller asked for, resolved like loadEnv does, or null when the environment
+      // comes from a discovered .env file or from no file at all.
+      envFile: customEnvFile ? resolve(root, customEnvFile) : null
     }
   }
 
