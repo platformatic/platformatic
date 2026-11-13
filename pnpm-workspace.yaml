@@ -91,6 +91,19 @@ nodeLinker: hoisted
 # Keeping a single version avoids the mismatch.
 overrides:
   esbuild: 0.28.2
+  # Dev-only tooling pulled in by @remix-run/dev@2 (the last Remix 2 release, still needed by the
+  # remix tests) and nitro@3.0.1-alpha.2. These pin vulnerable ranges that cannot be updated
+  # upstream. Remove when dropping Remix 2.
+  #   @remix-run/react pins react-router@6.30.4 exactly
+  'react-router@<6.30.6': 6.30.6
+  'react-router-dom@<6.30.6': 6.30.6
+  #   @vanilla-extract/integration wants vite@^5, which is EOL
+  'vite@<6.4.4': 6.4.4
+  #   remark-mdx-frontmatter@1 wants toml@^3 and estree-util-value-to-estree@^1
+  toml: 5.0.1
+  estree-util-value-to-estree: 3.3.3
+  #   cacache@17 wants tar@^6
+  'cacache@17>tar': 7.5.22
   # micromark-extension-math@3.1.0 (via markdownlint-cli2) wants katex@^0.16 and has no newer release.
   'katex@<0.18.2': 0.18.2
 packageImportMethod: copy
