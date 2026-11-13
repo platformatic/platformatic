@@ -18,3 +18,7 @@ export const kStderrMarker = '\ue002'
 
 // Note that this is used to create a BroadcastChannel so it must be a string
 export const kWorkersBroadcast = 'plt.runtime.workers'
+
+// Internal read used by the Prometheus server. It is intentionally not created with
+// Symbol.for, so it is not reachable through the global symbol registry.
+export const kCollectMetrics = Symbol('plt.runtime.collectMetrics')

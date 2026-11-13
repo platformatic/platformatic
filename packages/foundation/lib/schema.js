@@ -1548,6 +1548,19 @@ export const runtimeProperties = {
             description:
               'Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.'
           },
+          collection: {
+            type: 'string',
+            enum: ['scrape', 'interval'],
+            default: 'scrape',
+            description:
+              'Who reads the metrics. With scrape, the metrics are read on each Prometheus scrape of the metrics endpoint. With interval, the metrics endpoint is not exposed and the runtime reads the metrics every collectionInterval milliseconds, while there are consumers (metrics:prometheus listeners or an otlpExporter).'
+          },
+          collectionInterval: {
+            type: 'integer',
+            minimum: 1000,
+            default: 15000,
+            description: 'Interval in milliseconds between metrics reads when collection is interval.'
+          },
           resetHttpMetrics: {
             anyOf: [{ type: 'boolean' }, { type: 'string' }],
             description:

@@ -67,6 +67,7 @@ export class BaseCapability extends EventEmitter {
   #processSpawner
   #subprocessStarted
   #metricsCollected
+  #lastPromMetrics = null
   #pendingDependenciesWaits
   #reuseTcpPortsSubscribers
   #closing
@@ -208,6 +209,7 @@ export class BaseCapability extends EventEmitter {
       // and because prom-client doesn't support changing labels on existing metrics.
       // This will lose all previously collected metrics.
       clearRegistry(this.metricsRegistry)
+      this.#lastPromMetrics = null
 
       if (metricsConfig.enabled !== false) {
         this.#metricsCollected = false
@@ -414,7 +416,15 @@ export class BaseCapability extends EventEmitter {
       return this.childManager.send(this.clientWs, 'getMetrics', { format })
     }
 
-    return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
+    if (format !== 'json') {
+      return this.metricsRegistry.metrics()
+    }
+
+    const metrics = await this.metricsRegistry.getMetricsAsJSON()
+    this.#lastPromMetrics = metrics
+    this.#startOtlpBridge()
+
+    return metrics
   }
 
   async getOpenapiSchema () {
@@ -839,6 +849,7 @@ export class BaseCapability extends EventEmitter {
 
     if (this.metricsRegistry) {
       clearRegistry(this.metricsRegistry)
+      this.#lastPromMetrics = null
       this.#metricsCollected = false
     }
 
@@ -1030,18 +1041,40 @@ export class BaseCapability extends EventEmitter {
       await telemetryReady
     }
 
-    // Setup and start OTLP exporter bridge
-    this.otlpBridge = await setupOtlpExporter(this.metricsRegistry, metricsConfig.otlpExporter, this.applicationId)
+    // With the interval collection, the runtime is the only reader of the metrics: the exporter
+    // pushes the last read and starts with the first one. Otherwise, the exporter reads the
+    // registry on its own.
+    // TODO: Always push the last read in the next major version
+    const intervalCollection = metricsConfig.collection === 'interval'
+
+    this.otlpBridge = await setupOtlpExporter(
+      this.metricsRegistry,
+      metricsConfig.otlpExporter,
+      this.applicationId,
+      intervalCollection ? () => this.#lastPromMetrics : null
+    )
 
     if (this.otlpBridge) {
-      this.otlpBridge.start()
       this.logger.info(
         {
           endpoint: metricsConfig.otlpExporter.endpoint,
           interval: metricsConfig.otlpExporter.interval || 60000
         },
-        'OTLP metrics exporter started'
+        'OTLP metrics exporter configured'
       )
+
+      if (intervalCollection) {
+        this.#startOtlpBridge()
+      } else {
+        this.otlpBridge.start()
+      }
+    }
+  }
+
+  // The OTLP exporter pushes the last metrics read: start it once there is one
+  #startOtlpBridge () {
+    if (this.otlpBridge && !this.otlpBridge.running && this.#lastPromMetrics !== null) {
+      this.otlpBridge.start()
     }
   }
 

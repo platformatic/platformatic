@@ -110,6 +110,7 @@ export class ChildProcess extends ITC {
   #socket
   #logger
   #metricsRegistry
+  #lastPromMetrics = null
   #otlpBridge
   #pendingMessages
   #replStream
@@ -305,6 +306,7 @@ export class ChildProcess extends ITC {
       this.#otlpBridge = null
     }
     clearRegistry(this.#metricsRegistry)
+    this.#lastPromMetrics = null
     this.#socket.close()
   }
 
@@ -326,6 +328,7 @@ export class ChildProcess extends ITC {
 
   async #updateMetricsConfig ({ applicationId, workerId, metricsConfig }) {
     clearRegistry(this.#metricsRegistry)
+    this.#lastPromMetrics = null
 
     if (this.#otlpBridge) {
       this.#otlpBridge.stop()
@@ -360,18 +363,40 @@ export class ChildProcess extends ITC {
       await telemetryReady
     }
 
-    // Setup and start OTLP exporter bridge over the child's populated registry
-    this.#otlpBridge = await setupOtlpExporter(this.#metricsRegistry, metricsConfig.otlpExporter, applicationId)
+    // With the interval collection, the runtime is the only reader of the metrics: the exporter
+    // pushes the last read and starts with the first one. Otherwise, the exporter reads the
+    // child's populated registry on its own.
+    // TODO: Always push the last read in the next major version
+    const intervalCollection = metricsConfig.collection === 'interval'
+
+    this.#otlpBridge = await setupOtlpExporter(
+      this.#metricsRegistry,
+      metricsConfig.otlpExporter,
+      applicationId,
+      intervalCollection ? () => this.#lastPromMetrics : null
+    )
 
     if (this.#otlpBridge) {
-      this.#otlpBridge.start()
       this.#logger.info(
         {
           endpoint: metricsConfig.otlpExporter.endpoint,
           interval: metricsConfig.otlpExporter.interval || 60000
         },
-        'OTLP metrics exporter started'
+        'OTLP metrics exporter configured'
       )
+
+      if (intervalCollection) {
+        this.#startOtlpBridge()
+      } else {
+        this.#otlpBridge.start()
+      }
+    }
+  }
+
+  // The OTLP exporter pushes the last metrics read: start it once there is one
+  #startOtlpBridge () {
+    if (this.#otlpBridge && !this.#otlpBridge.running && this.#lastPromMetrics !== null) {
+      this.#otlpBridge.start()
     }
   }
 
@@ -463,10 +488,16 @@ export class ChildProcess extends ITC {
   }
 
   async #getMetrics ({ format } = {}) {
-    const res =
-      format === 'json' ? await this.#metricsRegistry.getMetricsAsJSON() : await this.#metricsRegistry.metrics()
+    if (format !== 'json') {
+      return this.#metricsRegistry.metrics()
+    }
 
-    return res
+    // Keep the read for the OTLP exporter, so it never reads the registry on its own
+    const metrics = await this.#metricsRegistry.getMetricsAsJSON()
+    this.#lastPromMetrics = metrics
+    this.#startOtlpBridge()
+
+    return metrics
   }
 
   #startRepl () {

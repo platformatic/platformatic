@@ -703,6 +703,14 @@ export interface PlatformaticNuxtConfig {
            */
           aggregateWorkers?: boolean | string;
           /**
+           * Who reads the metrics. With scrape, the metrics are read on each Prometheus scrape of the metrics endpoint. With interval, the metrics endpoint is not exposed and the runtime reads the metrics every collectionInterval milliseconds, while there are consumers (metrics:prometheus listeners or an otlpExporter).
+           */
+          collection?: "scrape" | "interval";
+          /**
+           * Interval in milliseconds between metrics reads when collection is interval.
+           */
+          collectionInterval?: number;
+          /**
            * Reset the http_request_all_duration_seconds, http_request_all_summary_seconds and http_client_request_duration_seconds metrics after each collection. Set to false to make them cumulative. Defaults to true.
            */
           resetHttpMetrics?: boolean | string;
