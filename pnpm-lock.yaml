@@ -2159,7 +2159,7 @@ importers:
         specifier: ^16.8.1
         version: 16.14.2
       graphql-scalars:
-        specifier: ^2.0.0
+        specifier: ^2.0.1
         version: 2.0.1(graphql@16.14.2)
       graphql-type-json:
         specifier: ^0.3.2
