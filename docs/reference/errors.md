@@ -38,7 +38,7 @@
 
 ### PLT_GATEWAY_INVALID_HEADERS_OVERRIDE
 
-**Message:** getHeadersOverride must return request and response header objects with string or string-array values.
+**Message:** getHeadersOverride must return request and response header objects with string, string-array or null values.
 
 ### PLT_GATEWAY_INVALID_OPENAPI_SCHEMA
 

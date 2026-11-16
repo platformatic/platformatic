@@ -25,7 +25,8 @@ export interface ProxyResponse {
   stream: Readable
 }
 
-export type HeaderOverrides = Record<string, string | string[]>
+/** A null value removes the header. */
+export type HeaderOverrides = Record<string, string | string[] | null>
 
 export interface HeadersOverride {
   request?: HeaderOverrides

@@ -102,10 +102,60 @@ test('a wrapper can send the prepared response headers before acquiring upstream
   assert.equal(requests.length, 0)
 })
 
-test('invalid header overrides fail before upstream acquisition with a stable error code', async t => {
-  const { app, requests } = await setup(t, { invalid: true })
-  const response = await app.inject('/page')
-  assert.equal(response.statusCode, 500)
-  assert.equal(response.json().code, 'PLT_GATEWAY_INVALID_HEADERS_OVERRIDE')
-  assert.equal(requests.length, 0)
+for (const invalid of [42, [null]]) {
+  test(`invalid header overrides fail before upstream acquisition with a stable error code (${JSON.stringify(invalid)})`, async t => {
+    const { app, requests } = await setup(t, { invalid })
+    const response = await app.inject('/page')
+    assert.equal(response.statusCode, 500)
+    assert.equal(response.json().code, 'PLT_GATEWAY_INVALID_HEADERS_OVERRIDE')
+    assert.equal(requests.length, 0)
+  })
+}
+
+test('null overrides remove headers, and request overrides replace the gateway\'s own', async t => {
+  const { app, requests } = await setup(t, { remove: true })
+  const response = await app.inject({ url: '/page', headers: { 'x-client': 'strip', cookie: 'session=client' } })
+  assert.equal(response.statusCode, 200)
+  // Removed from the proxied request, and set over the gateway's x-forwarded-host.
+  assert.equal(requests.length, 1)
+  assert.equal(requests[0].cookie, undefined)
+  assert.equal(requests[0]['x-forwarded-host'], 'hook.example.com')
+  assert.equal(requests[0]['x-client'], 'strip')
+  // Removed from the response, after rewriteHeaders set them.
+  assert.equal(response.headers['set-cookie'], undefined)
+  assert.equal(response.headers['x-client'], undefined)
 })
+
+for (const clients of [['strip', 'none'], ['none', 'strip']]) {
+  test(`a removed cookie no longer skips deduplication and removals stay per client (${clients})`, async t => {
+    const gate = Promise.withResolvers()
+    t.after(() => gate.resolve())
+    const { app, requests } = await setup(t, { remove: true }, gate.promise)
+    const responses = []
+    for (const client of clients) {
+      const arrived = Promise.withResolvers()
+      const onRequest = value => value === client && arrived.resolve()
+      events.on('request', onRequest)
+      t.after(() => events.off('request', onRequest))
+      const response = app.inject({ url: '/page', headers: { 'x-client': client, cookie: `session=${client}` } })
+      responses.push(response)
+      // A request that fails before the wrapper never arrives: go on, so the assertions fail.
+      await Promise.race([arrived.promise, response])
+      await setImmediate()
+    }
+    gate.resolve()
+
+    for (const [index, response] of (await Promise.all(responses)).entries()) {
+      assert.equal(response.statusCode, 200)
+      if (clients[index] === 'strip') {
+        assert.equal(response.headers['set-cookie'], undefined)
+        assert.equal(response.headers['x-client'], undefined)
+      } else {
+        assert.deepEqual(response.headers['set-cookie'], ['upstream=rewritten; Path=/'])
+        assert.equal(response.headers['x-client'], 'rewritten')
+      }
+    }
+    assert.equal(requests.length, 1)
+    assert.equal(requests[0].cookie, undefined)
+  })
+}
