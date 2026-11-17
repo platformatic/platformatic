@@ -91,7 +91,12 @@ overrides:
   esbuild: 0.28.2
   # @nestjs/platform-fastify@11 pins fastify@5.11.3, which has known high severity CVEs
   # fixed in 5.12.2. Remove when moving to Nest 12, which pins fastify@5.12.5.
-  '@nestjs/platform-fastify>fastify': 5.12.7
+  '@nestjs/platform-fastify>fastify': 5.12.8
+  # graphql@16.15.0 rewrote the printer and now requires AST name values to be strings.
+  # @mercuriusjs/gateway@5.2.0 builds the _entities inline fragment with a GraphQLObjectType
+  # as the type condition name, which breaks federated entity resolution
+  # ("value.includes is not a function"). Remove once @mercuriusjs/gateway is fixed.
+  graphql: 16.14.2
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest
