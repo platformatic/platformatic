@@ -104,6 +104,14 @@ scrape_configs:
 
 For local testing with a self-signed certificate, use `curl -k https://localhost:9090/metrics`.
 
+## CPU and Event Loop Sampling
+
+The `nodejs_eventloop_utilization`, `thread_cpu_percent_usage`, and `process_cpu_percent_usage` gauges use
+sampling windows that rotate every 60 seconds, independently of metric reads. After the first minute,
+each value covers between one and two minutes of recent activity. During the first minute, values cover
+activity since metric registration. Scraping metrics does not reset these windows, so multiple readers
+do not interfere with each other.
+
 ## Metrics Labels
 
 By default, Platformatic uses `applicationId` as the label name in metrics to identify different services. You can customize this label name using the `applicationLabel` option. This is useful when migrating from older versions (which used `serviceId`) or when integrating with existing monitoring setups that expect different label names:

@@ -22,7 +22,6 @@ import version from '@platformatic/prom-client/lib/metrics/version.js'
 
 export * as client from '@platformatic/prom-client'
 
-const { eventLoopUtilization } = performance
 const { Registry, Gauge, Counter, Histogram, collectDefaultMetrics } = client
 
 export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
@@ -277,13 +276,30 @@ function collectHttpServerMetrics (registry, metricsConfig) {
   })
 }
 
+function createSamplingWindow (registry, sample) {
+  const baseline = sample()
+  const samples = [baseline, baseline]
+  let oldest = 0
+
+  // Keep between one and two minutes of samples without letting reads reset the window.
+  const timer = setInterval(() => {
+    samples[oldest] = sample()
+    oldest ^= 1
+  }, 60000)
+  timer.unref()
+  registerMetricsCleanup(registry, () => clearInterval(timer))
+
+  return () => samples[oldest]
+}
+
 export async function collectThreadCpuMetrics (registry) {
   if (ensureMetricsGroup(registry, 'threadCpuUsage')) {
     return
   }
 
-  let lastSample = process.hrtime.bigint()
-  let lastUsage = process.threadCpuUsage()
+  const sample = () => ({ time: process.hrtime.bigint(), ...process.threadCpuUsage() })
+  const getBaseline = createSamplingWindow(registry, sample)
+  let lastUsage = getBaseline()
 
   const threadCpuUserUsageCounterMetric = new Counter({
     name: 'thread_cpu_user_system_seconds_total',
@@ -308,19 +324,19 @@ export async function collectThreadCpuMetrics (registry) {
     help: 'Total user and system CPU time spent in seconds for the current threads.',
     // Use this one metric's `collect` to set all metrics' values.
     collect () {
-      const newSample = process.hrtime.bigint()
-      const newUsage = process.threadCpuUsage()
+      const newUsage = sample()
       const user = newUsage.user - lastUsage.user
       const system = newUsage.system - lastUsage.system
-      const elapsed = Number(newSample - lastSample)
+      const baseline = getBaseline()
+      const elapsed = Number(newUsage.time - baseline.time)
+      const usage = newUsage.user - baseline.user + newUsage.system - baseline.system
 
       lastUsage = newUsage
-      lastSample = newSample
 
       threadCpuSystemUsageCounterMetric.inc(system / 1e6)
       threadCpuUserUsageCounterMetric.inc(user / 1e6)
       threadCpuUsageCounterMetric.inc((user + system) / 1e6)
-      threadCpuPercentUsageGaugeMetric.set((100 * ((user + system) * 1000)) / elapsed)
+      threadCpuPercentUsageGaugeMetric.set(elapsed > 0 ? (100 * usage * 1000) / elapsed : 0)
     },
     registers: [registry]
   })
@@ -337,36 +353,34 @@ export function collectSystemCpuMetric (registry) {
     return
   }
 
-  let previousIdleTime = 0
-  let previousTotalTime = 0
+  const sample = () => {
+    let idleTime = 0
+    let totalTime = 0
+
+    for (const { times } of os.cpus()) {
+      for (const type in times) {
+        totalTime += times[type]
+        if (type === 'idle') {
+          idleTime += times[type]
+        }
+      }
+    }
+
+    return { idleTime, totalTime }
+  }
+  const getBaseline = createSamplingWindow(registry, sample)
   const cpuMetric = new Gauge({
     name: 'process_cpu_percent_usage',
     help: 'The process CPU percent usage.',
     collect: () => {
-      const cpus = os.cpus()
-      let idleTime = 0
-      let totalTime = 0
+      const { idleTime, totalTime } = sample()
+      const baseline = getBaseline()
+      const idleDiff = idleTime - baseline.idleTime
+      const totalDiff = totalTime - baseline.totalTime
 
-      for (let i = 0; i < cpus.length; i++) {
-        const cpu = cpus[i]
-        const times = cpu.times
-        for (const type in times) {
-          totalTime += times[type]
-          if (type === 'idle') {
-            idleTime += times[type]
-          }
-        }
-      }
-
-      const idleDiff = idleTime - previousIdleTime
-      const totalDiff = totalTime - previousTotalTime
-
-      const usagePercent = 100 - (100 * idleDiff) / totalDiff
+      const usagePercent = totalDiff > 0 ? 100 - (100 * idleDiff) / totalDiff : 0
       const roundedUsage = Math.round(usagePercent * 100) / 100
       cpuMetric.set(roundedUsage)
-
-      previousIdleTime = idleTime
-      previousTotalTime = totalTime
     },
     registers: [registry]
   })
@@ -379,15 +393,14 @@ export function collectEluMetric (registry) {
     return
   }
 
-  let startELU = eventLoopUtilization()
+  const getBaseline = createSamplingWindow(registry, () => performance.eventLoopUtilization())
   const eluMetric = new Gauge({
     name: 'nodejs_eventloop_utilization',
     help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
     collect: () => {
-      const endELU = eventLoopUtilization()
-      const result = eventLoopUtilization(endELU, startELU).utilization
+      const endELU = performance.eventLoopUtilization()
+      const result = performance.eventLoopUtilization(endELU, getBaseline()).utilization
       eluMetric.set(result)
-      startELU = endELU
     },
     registers: [registry]
   })
