@@ -91,3 +91,96 @@ test('numeric primary and referencing foreign keys are strings in REST output', 
   strictEqual(getResponse.statusCode, 200, getResponse.body)
   deepStrictEqual(getResponse.json(), { id: '1', contactId: '1', contactCode: 42 })
 })
+
+test('usePrimaryKeySqlType exposes numeric keys as numbers in REST output', async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    usePrimaryKeySqlType: true,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE contacts (
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            external_code INTEGER NOT NULL UNIQUE
+          );
+          CREATE TABLE registrations (
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            contact_id INTEGER NOT NULL,
+            FOREIGN KEY (contact_id) REFERENCES contacts(id)
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE contacts (
+            id INTEGER PRIMARY KEY,
+            external_code INTEGER NOT NULL UNIQUE
+          );
+          CREATE TABLE registrations (
+            id INTEGER PRIMARY KEY,
+            contact_id INTEGER NOT NULL REFERENCES contacts(id)
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE contacts (
+            id SERIAL PRIMARY KEY,
+            external_code INTEGER NOT NULL UNIQUE
+          );
+          CREATE TABLE registrations (
+            id SERIAL PRIMARY KEY,
+            contact_id INTEGER NOT NULL REFERENCES contacts(id)
+          );
+        `)
+      }
+    }
+  })
+  app.register(sqlOpenAPI)
+  t.after(() => app.close())
+
+  await app.ready()
+
+  // The request and the response schemas agree, unlike with the default
+  const openapi = app.swagger()
+  strictEqual(openapi.components.schemas.Contact.properties.id.type, 'integer')
+  strictEqual(openapi.components.schemas.ContactInput.properties.id.type, 'integer')
+  strictEqual(openapi.components.schemas.Registration.properties.id.type, 'integer')
+  strictEqual(openapi.components.schemas.Registration.properties.contactId.type, 'integer')
+  strictEqual(openapi.components.schemas.RegistrationInput.properties.contactId.type, 'integer')
+
+  const contactResponse = await app.inject({
+    method: 'POST',
+    url: '/contacts',
+    body: { externalCode: 42 }
+  })
+  strictEqual(contactResponse.statusCode, 200, contactResponse.body)
+  deepStrictEqual(contactResponse.json(), { id: 1, externalCode: 42 })
+
+  const contact = contactResponse.json()
+  const registrationResponse = await app.inject({
+    method: 'POST',
+    url: '/registrations',
+    // the primary key read from a response is accepted as a foreign key
+    body: { contactId: contact.id }
+  })
+  strictEqual(registrationResponse.statusCode, 200, registrationResponse.body)
+  deepStrictEqual(registrationResponse.json(), { id: 1, contactId: 1 })
+
+  const registration = registrationResponse.json()
+  strictEqual(registration.contactId, contact.id, 'the foreign key compares equal to the primary key')
+
+  const getResponse = await app.inject({ method: 'GET', url: '/registrations/1' })
+  strictEqual(getResponse.statusCode, 200, getResponse.body)
+  deepStrictEqual(getResponse.json(), { id: 1, contactId: 1 })
+
+  // a response can be sent straight back as a request body
+  const putResponse = await app.inject({
+    method: 'PUT',
+    url: '/registrations/1',
+    body: getResponse.json()
+  })
+  strictEqual(putResponse.statusCode, 200, putResponse.body)
+  deepStrictEqual(putResponse.json(), { id: 1, contactId: 1 })
+})

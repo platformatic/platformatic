@@ -84,11 +84,40 @@ function physicalEntityKey (schema, table) {
   return `${schema ?? ''}\0${table}`
 }
 
-function markForeignKeysReferencingPrimaryKeys (entities) {
+// SQL types whose values cannot be represented as a JSON number without losing
+// precision, so they are exposed as strings. Types such as `uuid` or `varchar`
+// are not listed: the drivers already return them as strings.
+const STRING_OUTPUT_SQL_TYPES = new Set(['int8', 'bigint', 'bigint unsigned', 'numeric', 'decimal'])
+
+// `stringifyOutput` is the single source of truth for "this field is exposed as a
+// string": the mapper output (see lib/entity.js), the JSON schemas and the
+// generated types all derive from it.
+function markStringifiedOutputFields (entities, usePrimaryKeySqlType) {
+  if (usePrimaryKeySqlType) {
+    // Decide per column, from its own SQL type. Primary and foreign keys get no
+    // special treatment, so an `int4` key stays a number and a table and a view
+    // exposing the same column agree.
+    for (const entity of Object.values(entities)) {
+      for (const field of Object.values(entity.fields)) {
+        if (STRING_OUTPUT_SQL_TYPES.has(field.sqlType)) {
+          field.stringifyOutput = true
+        }
+      }
+    }
+    return
+  }
+
+  // Legacy behaviour: every primary key is stringified regardless of its SQL
+  // type, and foreign keys referencing one follow so that comparisons between
+  // the two stay type-stable.
   const entitiesByTable = new Map()
 
   for (const entity of Object.values(entities)) {
     entitiesByTable.set(physicalEntityKey(entity.schema, entity.table), entity)
+
+    for (const key of entity.primaryKeys) {
+      entity.fields[key].stringifyOutput = true
+    }
   }
 
   for (const entity of Object.values(entities)) {
@@ -252,7 +281,8 @@ export async function connect ({
   cache,
   idleTimeoutMilliseconds,
   queueTimeoutMilliseconds,
-  acquireLockTimeoutMilliseconds
+  acquireLockTimeoutMilliseconds,
+  usePrimaryKeySqlType = false
 }) {
   if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
     autoTimestamp = defaultAutoTimestampFields
@@ -418,7 +448,7 @@ export async function connect ({
       }
     }
 
-    markForeignKeysReferencingPrimaryKeys(entities)
+    markStringifiedOutputFields(entities, usePrimaryKeySqlType)
 
     const res = {
       db,

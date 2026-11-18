@@ -19,7 +19,7 @@ function referenceTest (name, obj, opts = {}) {
       return `${prefix}: ${members.join(' | ')};`
     })
     const cloned = structuredClone(obj)
-    const ours = mapOpenAPItoTypes(cloned, { id: { primaryKey: true } })
+    const ours = mapOpenAPItoTypes(cloned, { id: { primaryKey: true, stringifyOutput: true } })
     notEqual(cloned, obj)
     same(cloned, obj)
     same(ours.trim(), reference.trim())
@@ -226,7 +226,7 @@ test('bytea fields are mapped to Buffer type', async t => {
   }
 
   const fieldDefinitions = {
-    id: { primaryKey: true },
+    id: { primaryKey: true, stringifyOutput: true },
     content: { sqlType: 'bytea' },
     metadata: { sqlType: 'text' }
   }
@@ -269,7 +269,7 @@ test('numeric primary keys are mapped to string type', async t => {
   }
 
   const fieldDefinitions = {
-    id: { primaryKey: true, sqlType: 'integer' },
+    id: { primaryKey: true, stringifyOutput: true, sqlType: 'integer' },
     age: { sqlType: 'integer' },
     contactId: { foreignKey: true, stringifyOutput: true, sqlType: 'integer' },
     externalCode: { foreignKey: true, sqlType: 'integer' },
