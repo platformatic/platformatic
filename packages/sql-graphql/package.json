@@ -28,7 +28,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/snap": "^1.0.0",
-    "@mercuriusjs/gateway": "^5.0.0",
+    "@mercuriusjs/gateway": "^5.3.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
