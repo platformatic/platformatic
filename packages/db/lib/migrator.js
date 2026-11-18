@@ -2,7 +2,12 @@ import { createConnectionPool } from '@platformatic/sql-mapper'
 import { readdir, stat } from 'node:fs/promises'
 import { basename } from 'node:path'
 import Postgrator from 'postgrator'
-import { ApplyMigrationError, MigrateMissingMigrationsDirError, MigrateMissingMigrationsError } from './errors.js'
+import {
+  ApplyMigrationError,
+  MigrateMissingMigrationsDirError,
+  MigrateMissingMigrationsError,
+  OutOfOrderMigrationsError
+} from './errors.js'
 import { splitSQLiteStatements } from './split-sqlite-statements.js'
 
 export class Migrator {
@@ -16,6 +21,7 @@ export class Migrator {
     this.validateChecksums = migrationConfig.validateChecksums ?? true
     this.newline = migrationConfig.newline
     this.currentSchema = migrationConfig.currentSchema
+    this.outOfOrder = migrationConfig.outOfOrder ?? 'ignore'
 
     this.logger = logger
 
@@ -53,6 +59,7 @@ export class Migrator {
     const database = driver !== 'sqlite3' ? new URL(this.coreConfig.connectionString).pathname.replace(/^\//, '') : ''
 
     this.db = db
+    this.driver = driver
 
     /* c8 ignore next 6 */
     if (driver === 'sqlite3') {
@@ -131,7 +138,78 @@ export class Migrator {
   async applyMigrations (to) {
     await this.checkIfMigrationFilesExist()
     await this.setupPostgrator()
+    try {
+      await this.checkOutOfOrderMigrations(to)
+    } catch (error) {
+      // The check runs before Postgrator's migrate(), which decorates the
+      // errors it throws in this same way. An error that cannot take the
+      // field is rethrown as it is, so the original is never hidden.
+      try {
+        if (!error.appliedMigrations) error.appliedMigrations = []
+      } catch {}
+      throw error
+    }
     await this.migrate(to)
+  }
+
+  // Postgrator only runs the migrations above the highest version recorded in
+  // the database. A migration below that version with no row in the versions
+  // table (for example one that arrives from a parallel branch after a higher
+  // numbered one already ran) is not selected and nothing reports it. The
+  // table holds one row per applied migration, so those files can be found.
+  async getOutOfOrderMigrations (databaseVersion, migrations) {
+    // No versions table yet, or nothing applied: nothing can be below.
+    if (databaseVersion === 0) return []
+
+    // Quote the table as Postgrator does when it creates and reads it.
+    const table = this.migrationsTable || 'versions'
+    const quotedTable =
+      this.driver === 'pg'
+        ? table
+          .split('.')
+          .map(value => `"${value}"`)
+          .join('.')
+        : table
+
+    const { rows } = await this.postgrator.runQuery(`SELECT version FROM ${quotedTable}`)
+    const appliedVersions = new Set(rows.map(row => Number(row.version)))
+
+    return migrations
+      .filter(
+        migration =>
+          migration.action === 'do' && migration.version < databaseVersion && !appliedVersions.has(migration.version)
+      )
+      .sort((a, b) => a.version - b.version)
+  }
+
+  async checkOutOfOrderMigrations (to = '') {
+    if (this.outOfOrder !== 'error') return
+
+    // Postgrator only accepts a string or nothing: anything else is its to refuse.
+    if (typeof to !== 'string') return
+
+    // Resolve the target as Postgrator does. The check only applies when the
+    // target moves forward or stays: a rollback is never blocked by a skipped
+    // migration, and a target that is not a number is left to Postgrator.
+    const cleaned = to.toLowerCase().trim()
+    const toHighest = cleaned === '' || cleaned === 'max'
+    const explicitVersion = Number(to)
+    if (!toHighest && Number.isNaN(explicitVersion)) return
+
+    const databaseVersion = await this.postgrator.getDatabaseVersion()
+    if (databaseVersion === 0) return
+    if (!toHighest && explicitVersion < databaseVersion) return
+
+    // Read the files now, as Postgrator does when it migrates: a list cached
+    // by an earlier call on this instance could be stale.
+    const migrations = await this.postgrator.getMigrations()
+    if (toHighest && !migrations.some(migration => migration.version >= databaseVersion)) return
+
+    const outOfOrder = await this.getOutOfOrderMigrations(databaseVersion, migrations)
+    if (outOfOrder.length > 0) {
+      const names = outOfOrder.map(migration => basename(migration.filename))
+      throw new OutOfOrderMigrationsError(databaseVersion, names.join(', '))
+    }
   }
 
   async migrate (to) {
@@ -203,6 +281,12 @@ export class Migrator {
         return true
       }
     }
+
+    if (this.outOfOrder === 'error') {
+      const outOfOrder = await this.getOutOfOrderMigrations(currentVersion, migrations)
+      return outOfOrder.length > 0
+    }
+
     return false
   }
 

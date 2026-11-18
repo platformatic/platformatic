@@ -388,6 +388,7 @@ An optional object with the following settings:
 - **`autoApply`** (`boolean`, default: `false`): Automatically apply migrations when Platformatic DB server starts.
 - **`table`** (`string`, default: `versions`): Table created to track schema version
 - **`validateChecksums`** (`boolean`): Validates checksum of existing SQL migration files already run prior to executing migrations. Unused for JS migrations.
+- **`outOfOrder`** (`string`, default: `ignore`): What to do with a migration below the current database version that is not recorded as applied, for example one that arrives from a parallel branch after a higher numbered one already ran. One of `ignore` (skip it) or `error` (fail a forward or same version apply and list the files). See [Out of order migrations](./migrations.md#out-of-order-migrations).
 - **`newline`** (`string`): Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).
 - **`currentSchema`** (`string`): For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run `SET search_path = currentSchema` prior to running queries against db.
 
