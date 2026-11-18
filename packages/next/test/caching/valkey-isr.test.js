@@ -525,12 +525,13 @@ test('should properly revalidate tags in Valkey', async t => {
     time = mo[2]
   }
 
+  const revalidated = once(runtime, 'application:worker:event:revalidated')
   {
     const res = await fetch(url + '/revalidate')
     ok(res.status, 200)
   }
 
-  await once(runtime, 'application:worker:event:revalidated')
+  await revalidated
 
   {
     const response = await fetch(url)
@@ -872,6 +873,31 @@ test('should treat read errors as cache misses', async t => {
   )
 })
 
+test('should treat Valkey being unreachable as a cache miss without hanging', async t => {
+  const errors = []
+  const logger = {
+    trace: () => {},
+    error: (obj, msg) => { errors.push({ msg, obj }) }
+  }
+
+  // Port 1 is reliably unreachable; this simulates Valkey being down.
+  // maxRetriesPerRequest bounds how long a command waits before being rejected,
+  // preventing the handler from hanging indefinitely when Valkey is unavailable.
+  const store = new Redis('redis://127.0.0.1:1', {
+    enableAutoPipelining: true,
+    maxRetriesPerRequest: 3,
+  })
+
+  t.after(() => store.disconnect(false))
+
+  const handler = new CacheHandler({ standalone: true, store, prefix: valkeyPrefix, logger })
+  const key = `${valkeyPrefix}:unreachable`
+
+  const result = await handler.get(key, null, true)
+  deepStrictEqual(result, undefined)
+  ok(errors.some(e => e.msg === 'Cannot read cache value from Valkey'))
+})
+
 test('should serve production pages when Valkey reads fail', async t => {
   const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
   await cleanupCache(valkey)
@@ -1072,8 +1098,9 @@ test('should handle refresh error', async t => {
   await valkey.acl('deluser', valkeyUser)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
 
+  const revalidated = once(runtime, 'application:worker:event:revalidated')
   await fetch(url + '/revalidate')
-  await once(runtime, 'application:worker:event:revalidated')
+  await revalidated
 
   await runtime.close()
   const logs = await getLogsFromFile(root)

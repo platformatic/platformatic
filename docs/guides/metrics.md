@@ -150,6 +150,47 @@ This exposes `http_client_request_duration_seconds` with labels for the HTTP met
 Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
 :::
 
+## Aggregating Worker Metrics
+
+When an application runs with multiple workers, each worker reports its own copy of every metric, identified by the `workerId` label. An application with 8 workers therefore exports 8 times the series of a single worker, which can be expensive to store and query when metrics have many label combinations, such as HTTP request histograms with a `route` label.
+
+Set `aggregateWorkers` to merge the metrics of all the workers of each application before they are exported:
+
+```json
+{
+  "metrics": {
+    "aggregateWorkers": true
+  }
+}
+```
+
+The `workerId` label is removed and samples with the same labels are merged:
+
+- Counters and histograms are summed. When a worker is restarted or removed, the runtime keeps its last values, so the merged series never decrease and Prometheus does not interpret a worker restart as a counter reset. Increments made by a worker after the last collection and before it exits are not reported.
+- Gauges are merged with the aggregator of the metric. This is a sum by default, so `nodejs_heap_size_used_bytes` reports the heap used by all the workers. Some metrics use a different aggregator: for instance, `nodejs_eventloop_utilization` reports the average utilization of the workers. Custom gauges can choose one with the `aggregator` option of the metric constructor (`sum`, `average`, `min`, `max`, `first` or `omit`).
+- Summaries are still reported per worker, since quantiles cannot be merged. Prefer histograms for metrics that should be aggregated.
+
+The merge is applied to the metrics exposed by the Prometheus server and by the management API. Metrics pushed by each worker with `otlpExporter` are not affected. Per-worker values are no longer available on these endpoints, so dashboards and alerts that group by `workerId` must be updated.
+
+### Cumulative HTTP Metrics
+
+Counters and histograms must be cumulative to be merged correctly: custom metrics that reset their values when collected are not supported.
+
+By default, the built-in `http_request_all_duration_seconds`, `http_request_all_summary_seconds` and `http_client_request_duration_seconds` metrics are reset after each collection, so that each collection only reports the requests completed since the previous one. When workers are aggregated, the two histograms are summed as they are, without keeping the values of the replaced workers.
+
+Set `resetHttpMetrics` to `false` to make them cumulative, as expected by Prometheus. The two histograms are then carried forward like any other histogram:
+
+```json
+{
+  "metrics": {
+    "aggregateWorkers": true,
+    "resetHttpMetrics": false
+  }
+}
+```
+
+The `resetHttpMetrics` option can also be used without `aggregateWorkers`. When disabled, the latency percentiles reported by the deprecated `/metrics/live` management API endpoint cover the whole lifetime of each worker.
+
 ## Custom Metrics
 
 When running an application inside Platformatic, you can register and export custom metrics by accessing the application registry.

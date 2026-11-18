@@ -1,0 +1,29 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/3.0.0.json",
+  "watch": false,
+  "restartOnError": false,
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "metrics": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "aggregateWorkers": true
+  },
+  "entrypoint": "main",
+  "applications": [
+    {
+      "id": "main",
+      "path": "./main"
+    },
+    {
+      "id": "node",
+      "path": "./node",
+      "workers": 3
+    }
+  ],
+  "logger": {
+    "level": "error"
+  }
+}

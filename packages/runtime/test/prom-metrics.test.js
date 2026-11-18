@@ -868,9 +868,10 @@ test('readiness - should expose readiness and get a success response when at lea
   })
 
   // Make a worker fail
-  await request(url + '/service-2/crash')
-  await once(app, 'application:worker:error')
+  const errored = once(app, 'application:worker:error')
   const restartPromise = once(app, 'application:worker:started')
+  await request(url + '/service-2/crash')
+  await errored
 
   {
     const { statusCode, body } = await request('http://127.0.0.1:9090', {

@@ -137,6 +137,13 @@ export const THREAD_LEVEL_METRICS = [
   'thread_cpu_percent_usage'
 ]
 
+// Metrics that are reset after each collection, unless resetHttpMetrics is false.
+export const RESET_ON_COLLECT_METRICS = [
+  'http_request_all_duration_seconds',
+  'http_request_all_summary_seconds',
+  'http_client_request_duration_seconds'
+]
+
 export function registerMetricsGroup (registry, group) {
   getRegistrySet(registry, kMetricsGroups).add(group)
 }
@@ -188,7 +195,16 @@ function isHttpClientMetricsEnabled (metricsConfig) {
   return metricsConfig.httpClientMetrics === true || metricsConfig.httpClientMetrics === 'true'
 }
 
-export function collectHttpClientMetrics (registry) {
+export function isHttpMetricsResetEnabled (metricsConfig) {
+  const reset = metricsConfig?.resetHttpMetrics
+  return reset !== false && reset !== 'false'
+}
+
+function resetAfterCollection () {
+  process.nextTick(() => this.reset())
+}
+
+export function collectHttpClientMetrics (registry, metricsConfig = {}) {
   if (ensureMetricsGroup(registry, 'http-client')) {
     return
   }
@@ -197,9 +213,7 @@ export function collectHttpClientMetrics (registry) {
     name: 'http_client_request_duration_seconds',
     help: 'outgoing HTTP client request duration in seconds',
     labelNames: ['method', 'status_code', 'dispatcher_stats_url', 'error_type'],
-    collect: function () {
-      process.nextTick(() => this.reset())
-    },
+    collect: isHttpMetricsResetEnabled(metricsConfig) ? resetAfterCollection : undefined,
     registers: [registry]
   })
 
@@ -265,6 +279,7 @@ function collectHttpServerMetrics (registry, metricsConfig) {
 
   // Build custom labels configuration
   const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
+  const collect = isHttpMetricsResetEnabled(metricsConfig) ? resetAfterCollection : undefined
 
   collectHttpMetrics(registry, {
     customLabels,
@@ -272,16 +287,12 @@ function collectHttpServerMetrics (registry, metricsConfig) {
     histogram: {
       name: 'http_request_all_duration_seconds',
       help: 'request duration in seconds summary for all requests',
-      collect: function () {
-        process.nextTick(() => this.reset())
-      }
+      collect
     },
     summary: {
       name: 'http_request_all_summary_seconds',
       help: 'request duration in seconds histogram for all requests',
-      collect: function () {
-        process.nextTick(() => this.reset())
-      }
+      collect
     }
   })
 }
@@ -392,6 +403,8 @@ export function collectEluMetric (registry) {
   const eluMetric = new Gauge({
     name: 'nodejs_eventloop_utilization',
     help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
+    // When the metrics of multiple workers are merged, report the mean utilization
+    aggregator: 'average',
     collect: () => {
       const endELU = eventLoopUtilization()
       const result = eventLoopUtilization(endELU, startELU).utilization
@@ -475,7 +488,7 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
     if (isHttpClientMetricsEnabled(metricsConfig)) {
-      collectHttpClientMetrics(registry)
+      collectHttpClientMetrics(registry, metricsConfig)
     }
   }
 
@@ -540,7 +553,7 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
     if (isHttpClientMetricsEnabled(metricsConfig)) {
-      collectHttpClientMetrics(registry)
+      collectHttpClientMetrics(registry, metricsConfig)
     }
   }
 

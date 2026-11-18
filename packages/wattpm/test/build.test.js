@@ -15,7 +15,7 @@ test('build - should build the application', async t => {
     await safeRemove(resolve(applicationDir, 'dist'))
   })
 
-  await wattpm('build', buildDir)
+  await wattpm('build', buildDir, { timeout: 60_000 })
 
   ok(existsSync(resolve(applicationDir, 'dist/index.js')))
   deepStrictEqual(
@@ -42,7 +42,7 @@ test('build - should build the application from an application file', async t =>
     await safeRemove(resolve(applicationDir, 'dist'))
   })
 
-  await wattpm('build', applicationDir)
+  await wattpm('build', applicationDir, { timeout: 60_000 })
 
   ok(existsSync(resolve(applicationDir, 'dist/index.js')))
 })
@@ -55,7 +55,7 @@ test('build - should handle build errors', async t => {
     await safeRemove(resolve(applicationDir, 'web/main/dist'))
   })
 
-  const result = await wattpm('build', buildDir, { reject: false })
+  const result = await wattpm('build', buildDir, { reject: false, timeout: 60_000 })
   deepStrictEqual(result.exitCode, 1)
   ok(result.stdout.includes('Building application "main" has failed with exit code 1.'))
 
@@ -75,7 +75,7 @@ test('build - should build with custom env file', async t => {
     await safeRemove(resolve(applicationDir, 'dist'))
   })
 
-  await wattpm('build', buildDir, '--env', customEnvFile)
+  await wattpm('build', buildDir, '--env', customEnvFile, { timeout: 60_000 })
 
   ok(existsSync(resolve(applicationDir, 'dist/index.js')))
 })

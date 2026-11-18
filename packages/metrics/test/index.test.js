@@ -1,4 +1,4 @@
-import assert from 'node:assert'
+import assert, { deepStrictEqual } from 'node:assert'
 import { channel } from 'node:diagnostics_channel'
 import { test } from 'node:test'
 import { buildCustomLabelsConfig, clearRegistry, client, collectMetrics } from '../index.js'
@@ -194,6 +194,40 @@ test('httpMetrics summary resets after metric collection', async t => {
   const count = summaryAfter.values.find(v => v.metricName === 'http_request_all_summary_seconds_count')
   assert.strictEqual(sum?.value || 0, 0, 'summary sum should be reset to 0')
   assert.strictEqual(count?.value || 0, 0, 'summary count should be reset to 0')
+})
+
+const kResetOnCollectMetrics = [
+  'http_request_all_duration_seconds',
+  'http_request_all_summary_seconds',
+  'http_client_request_duration_seconds'
+]
+
+async function observeAndCollectHttpMetrics (t, metricsConfig) {
+  const result = await collectMetrics('test-service', 1, { httpMetrics: true, httpClientMetrics: true, ...metricsConfig })
+  t.after(() => clearRegistry(result.registry))
+
+  for (const name of kResetOnCollectMetrics) {
+    result.registry.getSingleMetric(name).observe({ method: 'GET' }, 0.1)
+  }
+
+  await result.registry.metrics()
+  await nextTick()
+
+  const metrics = await result.registry.getMetricsAsJSON()
+  return kResetOnCollectMetrics.map(name => {
+    const count = metrics.find(m => m.name === name).values.find(v => v.metricName === `${name}_count`)
+    return count?.value || 0
+  })
+}
+
+test('HTTP metrics are reset after metric collection by default', async t => {
+  deepStrictEqual(await observeAndCollectHttpMetrics(t, {}), [0, 0, 0])
+  deepStrictEqual(await observeAndCollectHttpMetrics(t, { resetHttpMetrics: true }), [0, 0, 0])
+})
+
+test('httpMetrics are not reset after metric collection when resetHttpMetrics is false', async t => {
+  deepStrictEqual(await observeAndCollectHttpMetrics(t, { resetHttpMetrics: false }), [1, 1, 1])
+  deepStrictEqual(await observeAndCollectHttpMetrics(t, { resetHttpMetrics: 'false' }), [1, 1, 1])
 })
 
 // Tests for buildCustomLabelsConfig

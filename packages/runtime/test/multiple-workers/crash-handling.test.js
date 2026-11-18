@@ -141,22 +141,22 @@ test('can restart only crashed workers when they crash', async t => {
     { event: 'application:worker:error', application: 'node', worker: 4 }
   )
 
+  // Capture replacement workers before triggering the crash/restart sequence.
+  const restarted = waitForEvents(
+    app,
+    { event: 'application:worker:started', application: 'node', worker: 5 },
+    { event: 'application:worker:started', application: 'node', worker: 6 },
+    { event: 'application:worker:started', application: 'node', worker: 7 }
+  )
+
   await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
   await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
   await client.close()
 
   await eventsPromise
 
-  update.revert()
-
-  // Restarted workers get new unique indices (5, 6, 7) instead of reusing old ones (0, 2, 4)
-  // Note: there are 5 initial workers (0-4), so next index starts at 5
-  await waitForEvents(
-    app,
-    { event: 'application:worker:started', application: 'node', worker: 5 },
-    { event: 'application:worker:started', application: 'node', worker: 6 },
-    { event: 'application:worker:started', application: 'node', worker: 7 }
-  )
+  await update.revert()
+  await restarted
 
   // Verify that the crashed workers were 0, 2, 4 (even indices)
   ok(errors.find(e => e.application === 'node' && e.worker === 0))
@@ -217,22 +217,22 @@ test('can restart only crashed workers when they exit', async t => {
     { event: 'application:worker:error', application: 'node', worker: 4 }
   )
 
+  // Capture replacement workers before triggering the crash/restart sequence.
+  const restarted = waitForEvents(
+    app,
+    { event: 'application:worker:started', application: 'node', worker: 5 },
+    { event: 'application:worker:started', application: 'node', worker: 6 },
+    { event: 'application:worker:started', application: 'node', worker: 7 }
+  )
+
   await client.request({ method: 'POST', path: '/api/v1/applications/node/stop' })
   await client.request({ method: 'POST', path: '/api/v1/applications/node/start' })
   await client.close()
 
   await eventsPromise
 
-  update.revert()
-
-  // Restarted workers get new unique indices (5, 6, 7) instead of reusing old ones (0, 2, 4)
-  // Note: there are 5 initial workers (0-4), so next index starts at 5
-  await waitForEvents(
-    app,
-    { event: 'application:worker:started', application: 'node', worker: 5 },
-    { event: 'application:worker:started', application: 'node', worker: 6 },
-    { event: 'application:worker:started', application: 'node', worker: 7 }
-  )
+  await update.revert()
+  await restarted
 
   // Verify that the crashed workers were 0, 2, 4 (even indices)
   ok(errors.find(e => e.application === 'node' && e.worker === 0))

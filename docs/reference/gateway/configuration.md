@@ -42,6 +42,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
     - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
     - **`rewriteLocationHeader`** (`boolean`) - Controls rewriting of relative `Location` response headers from the upstream. When enabled, the gateway rewrites redirects from `rewritePrefix` to `prefix`. Set to `false` to forward relative `Location` headers unchanged. The default is `true` unless overridden by the target capability.
+    - **`headers`** (`object`) - Headers to set on each request proxied to the application, by name, after the gateway's own (`x-forwarded-*`). A `null` value removes the header instead, such as `cookie`, so a session of the gateway's own is not sent on. A header that `custom.getHeadersOverride` returns for a request is left as the hook set it. Values can name environment variables, as `{PLT_UPSTREAM_TOKEN}`.
+    - **`responseHeaders`** (`object`) - Headers to set on each response proxied from the application, by name, after the `Location` rewrite and before the hooks of `custom`. A `null` value removes the header instead.
     - **`methods`** (`array of string`, default: `['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']`) - HTTP methods handled by this proxy application. Useful when multiple applications share the same `prefix` and need method-based routing.
 
       :::note
@@ -68,7 +70,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
       - **`path`** (**required**, `string`) - Path to a JavaScript/TypeScript file that exports the custom proxy hooks. The module can either export the hooks object directly (as the default export) or export a factory function `(options) => hooks` (synchronous or asynchronous) which receives the `options` value below and returns the hooks object.
       - **`options`** (`object`) - An arbitrary JSON object which is passed to the factory function exported by the module referenced in `path`. It is ignored when the module exports the hooks object directly.
 
-      The hooks object supports the following properties, all optional:
+      The hooks object supports the following properties, all optional. Each configured hook must be a function;
+      otherwise startup fails with `PLT_GATEWAY_INVALID_CUSTOM_HANDLER` and the hook name:
 
       - **`preRewrite`** (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
       - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
@@ -84,6 +87,23 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - When no `ws.upstream` is configured, `getUpstream` also selects the upstream for WebSocket connections. It is invoked once per connection with the upgrade request at upgrade time.
       - **`rewriteHeaders`** (`function`) - A function `(headers, request) => headers` invoked with the response headers received from the upstream (after the gateway performed its internal `Location` header rewriting) and the original request. It must return the headers object to send back to the client. Use it, for example, to add a `Set-Cookie` header which pins a client to the upstream selected by `getUpstream`. Since both hooks receive the same request object, `getUpstream` can attach data to it (e.g. `request.selectedUpstream = ...`) and `rewriteHeaders` can read it back.
       - **`onError`** (`function`) - A function `(reply, { error }) => void` invoked when proxying a request fails. The gateway first logs the error, then invokes this hook instead of its default handler (which forwards the error to the client). Use `reply` to send a custom response. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#onerrorreply-error) for further information.
+      - **`getHeadersOverride`** (`function`) - A synchronous or asynchronous function `(request) => ({ request, response })`, called once after `preValidation` and before the proxy handler. Both returned maps are optional and contain string or string-array header values. Request overrides are applied before `wrappingHandler`, upstream selection and deduplication. Response overrides take precedence immediately after `rewriteHeaders`. They are also available on `reply` before a wrapping handler sends early output, and are applied separately for each deduplicated client without storing them in the shared response. Header names are case-insensitive. An override replaces the whole header, including the full `Set-Cookie` array; headers not returned are preserved. Invalid results fail with `PLT_GATEWAY_INVALID_HEADERS_OVERRIDE` before acquiring upstream.
+
+        For example, the module referenced by `custom.path` can export:
+
+        ```js
+        export default {
+          async getHeadersOverride (request) {
+            const session = await resolveSession(request)
+            return {
+              request: { cookie: `session=${session.id}` },
+              response: { 'set-cookie': [`session=${session.id}; Path=/; HttpOnly; Secure`] }
+            }
+          }
+        }
+        ```
+
+        `resolveSession` is application-provided. Cookie conversion, merging existing cookies and any header prefixing belong to this function; the gateway performs no implicit mapping between request and response headers. The application is responsible for keeping its response consistent with the overrides. Normal output processing, including compression, still applies.
 
     :::note
     If the prefix is not explicitly set, the gateway and the application will try to find the best prefix for the application.
@@ -399,6 +419,46 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   Custom gateway handlers that override `onResponse` or `onError` can call `options.deduplicateResponse(request, reply, res)` and `options.deduplicateError(reply, error)` to keep duplicate requests coordinated. See [Request Deduplication](./deduplication.md#custom-gateway-handlers) for examples.
 
+- **`wrappingHandler`** (`string`) - Path to a module that wraps the complete proxy pipeline for each request. It is
+  configured independently from `handler`, and can be used with or without a custom inner handler. Relative paths are
+  resolved from the application root. The module exports either a named `handler` function or a default function;
+  the default function takes precedence when both are present.
+
+  ```json
+  {
+    "gateway": {
+      "handler": "./proxy-handler.js",
+      "wrappingHandler": "./proxy-wrapper.js"
+    }
+  }
+  ```
+
+  The wrapper receives `(context, request, reply, destination, options)`. `context.next` delegates to the existing
+  proxy pipeline with the same four arguments as a regular handler. Without a custom inner handler, forwarding uses
+  `reply.from`. The wrapper can return a promise.
+
+  ```js
+  export default function ({ next, send }, request, reply, destination, options) {
+    return next(request, reply, destination, options)
+  }
+  ```
+
+  `context.send(request, reply, stream)` uses the gateway's native output path, including compression configuration and the
+  application's compression opt-out. A wrapper that starts output before delegating can therefore use the same output
+  policy without importing private gateway modules.
+
+  Wrappers that own the response body can import `kGatewayProxyResponseHandler` from `@platformatic/gateway` and set
+  `reply[kGatewayProxyResponseHandler] = { onResponse(response) { /* consume response.stream */ } }` before delegating.
+  The response handler receives `{ statusCode, headers, stream }` for each client response. Its
+  metadata describes the upstream bytes, not an already-started client response. The gateway completes its original
+  tracing callback but does not send the body again or replace an already-started reply's status or headers.
+
+  The response handler owns consuming or destroying its per-client stream, including after cancellation. Its callback is not
+  awaited. A wrapper must preserve and invoke original `options.onResponse`/`options.onError` callbacks when overriding
+  them. With a response handler installed, the standard gateway error handler logs but does not send again: the wrapper must
+  terminate its own output on error. Custom application `onError` handlers still run and must honor the same ownership.
+  Merely installing a response handler does not send a response or copy headers; the wrapper owns that decision.
+
 - **`compression`** (`boolean`, `string` or `object`) - Compresses the responses of the proxied applications with brotli or gzip. It is off by default. It can be `true`, a string such as an environment placeholder (anything but `"false"` enables it), or an object with the following options:
 
   - **`enabled`** (`boolean`, `string` or `object`) - Whether compression is enabled, with the same values as the `enabled` of a Runtime application, including booleans by environment such as `{ "development": false }`. Default: `true`.
@@ -579,7 +639,8 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
 - **`host`** (`string`) - application host; if not specified, the `application.origin` is used.
 - **`name`** (`string`) - name to identify the application. If not specified, the `application.origin` is used.
 - **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
-- **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
+- **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`. Not used when `file` is set.
+- **`file`** (`string`) - A path to a file containing the GraphQL schema of the application, as SDL. Relative paths are resolved from the location of the configuration file. When set, the schema is read from the file instead of being fetched from the application, so the Gateway can start while the application is not reachable; queries are still sent to the application `host` and `graphqlEndpoint`. The file is read once when the Gateway starts, and it is not fetched again when the Gateway polls the applications for changes (see `refreshTimeout`). The Gateway does not start if the file can not be read or does not contain a valid GraphQL schema.
 - **`entities`** (`object`) - Configuration object for working with entities in this subgraph, the values are objects with the following schema:
   - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
     - **`name`** (`string`, **required**) - The name of the resolver.
@@ -601,6 +662,30 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
     - **`pkey`** (`string`) - The primary key of the referred entity.
     - **`subgraph`** (`string`) - The subgraph name of the referred entity, where the resolver is located; if missing is intended the self.
     - **`resolver`** (`object`, **required**) - The resolver definition to query the referred entity, same structure as `entity.resolver`.
+
+Composition of a GraphQL application from its schema file, along with a GraphQL application whose schema is fetched from the application:
+
+```json title="Example JSON object"
+{
+  "gateway": {
+    "applications": [
+      {
+        "id": "books",
+        "origin": "https://books-service.com",
+        "graphql": {
+          "graphqlEndpoint": "/graphql",
+          "file": "./schemas/books.graphql"
+        }
+      },
+      {
+        "id": "reviews",
+        "origin": "https://reviews-service.com",
+        "graphql": true
+      }
+    ]
+  }
+}
+```
 
 ## Configuration References
 

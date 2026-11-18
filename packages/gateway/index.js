@@ -43,6 +43,7 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 export const skipTelemetryHooks = true
 
 export { platformaticGateway } from './lib/application.js'
+export { kGatewayProxyResponseHandler } from './lib/symbols.js'
 export { GatewayCapability } from './lib/capability.js'
 export * from './lib/commands/index.js'
 export * from './lib/errors.js'

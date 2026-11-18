@@ -255,6 +255,7 @@ export interface PlatformaticGatewayConfig {
             name?: string;
             graphqlEndpoint?: string;
             composeEndpoint?: string;
+            file?: string;
             entities?: {
               /**
                * This interface was referenced by `undefined`'s JSON-Schema definition
@@ -332,6 +333,12 @@ export interface PlatformaticGatewayConfig {
             rewriteLocationHeader?: boolean;
             hostname?: string;
             proxyPayloads?: boolean;
+            headers?: {
+              [k: string]: string | null;
+            };
+            responseHeaders?: {
+              [k: string]: string | null;
+            };
             custom?: {
               path: string;
               options?: {
@@ -388,6 +395,7 @@ export interface PlatformaticGatewayConfig {
           };
     }[];
     handler?: string;
+    wrappingHandler?: string;
     deduplication?: {
       enabled?: boolean | string;
       storage?:
@@ -1127,6 +1135,14 @@ export interface PlatformaticGatewayConfig {
            * Enable outgoing HTTP client request duration metrics
            */
           httpClientMetrics?: boolean | string;
+          /**
+           * Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.
+           */
+          aggregateWorkers?: boolean | string;
+          /**
+           * Reset the http_request_all_duration_seconds, http_request_all_summary_seconds and http_client_request_duration_seconds metrics after each collection. Set to false to make them cumulative. Defaults to true.
+           */
+          resetHttpMetrics?: boolean | string;
           readiness?:
             | boolean
             | {

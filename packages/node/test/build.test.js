@@ -1,5 +1,4 @@
 import { equal, ok, rejects } from 'node:assert'
-import { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -170,24 +169,25 @@ for (const application of ['app-no-config', 'app-with-config']) {
     const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
     await startRuntime(t, runtime)
 
-    // write the file to trigger a reload
+    // Observe both events before writing: a fast reload can emit them back-to-back.
+    const events = ['application:worker:changed', 'application:worker:started'].map(event => {
+      const { promise, resolve } = Promise.withResolvers()
+      function listener (payload) {
+        if (payload.application === application) {
+          runtime.off(event, listener)
+          resolve(payload)
+        }
+      }
+
+      runtime.on(event, listener)
+      t.after(() => runtime.off(event, listener))
+      return promise
+    })
+
     await writeFile(resolve(root, `services/${application}/reload.ts`), '// reload', 'utf-8')
 
-    // reload the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:changed')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
-    }
-    // restart the application
-    {
-      let event
-      do {
-        event = await once(runtime, 'application:worker:started')
-      } while (event[0].application !== application)
-      equal(event[0].application, application)
+    for (const event of await Promise.all(events)) {
+      equal(event.application, application)
     }
   })
 }

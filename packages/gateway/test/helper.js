@@ -562,7 +562,16 @@ export async function startDatabaseApplications (t, names) {
 }
 
 export async function waitForRestart (runtime) {
-  const result = await executeWithTimeout(once(runtime, 'application:worker:reloaded'), REFRESH_TIMEOUT * 3)
+  const controller = new AbortController()
+  let result
+  try {
+    result = await executeWithTimeout(
+      once(runtime, 'application:worker:reloaded', { signal: controller.signal }),
+      REFRESH_TIMEOUT * 3
+    )
+  } finally {
+    controller.abort()
+  }
 
   if (result === kTimeout) {
     return Promise.reject(new Error('Timeout while waiting for application to restart'))

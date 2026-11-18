@@ -307,13 +307,15 @@ export function waitForEvents (app, ...events) {
     listeners.push({ event, listener })
   }
 
-  promise.finally(() => {
+  function cleanup () {
     clearTimeout(timeoutHandle)
 
     for (const { event, listener } of listeners) {
       app.off(event, listener)
     }
-  })
+  }
 
+  // Handle both outcomes without creating an unobserved rejected promise.
+  promise.then(cleanup, cleanup)
   return promise
 }

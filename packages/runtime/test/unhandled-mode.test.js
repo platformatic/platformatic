@@ -22,11 +22,12 @@ test('should allow application to self-manage uncaught exceptions', async t => {
     return server.close()
   })
 
+  const unhandled = once(server, 'application:worker:event:uncaughtException')
   const res = await request(url + '/service/trigger')
   strictEqual(res.statusCode, 200)
 
   // Wait for the unhandled exception to be thrown
-  await once(server, 'application:worker:event:uncaughtException')
+  await unhandled
 
   // The service should not have exited
   ok(!exited)
@@ -47,11 +48,12 @@ test('should allow application to self-manage unhandled rejections', async t => 
     return server.close()
   })
 
+  const unhandled = once(server, 'application:worker:event:unhandledRejection')
   const res = await request(url + '/node/trigger')
   strictEqual(res.statusCode, 200)
 
   // Wait for the unhandled exception to be thrown
-  await once(server, 'application:worker:event:unhandledRejection')
+  await unhandled
 
   // The service should not have exited
   ok(!exited)

@@ -146,8 +146,9 @@ test('should send a notification between threads', async t => {
   t.after(() => itc2.close())
   await itc2.listen()
 
+  const notification = once(itc2, notificationName)
   await itc1.notify(notificationName, testNotification)
-  const [receivedNotification] = await once(itc2, notificationName)
+  const [receivedNotification] = await notification
   deepStrictEqual(testNotification, receivedNotification)
 })
 
