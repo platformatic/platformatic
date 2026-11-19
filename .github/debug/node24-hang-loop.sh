@@ -15,6 +15,40 @@ dump_processes () {
   fi
 }
 
+REPORTS="$OUT/reports"
+mkdir -p "$REPORTS"
+if [ "${RUNNER_OS:-}" != "Windows" ]; then
+  export NODE_OPTIONS="--report-on-signal --report-signal=SIGUSR2 --report-directory=$REPORTS ${NODE_OPTIONS:-}"
+fi
+
+inspect_tsc () {
+  for tpid in $(pgrep -f "bin/tsc -p" || true); do
+    echo "::group::tsc pid $tpid details"
+    echo "--- wchan: $(cat /proc/$tpid/wchan 2>/dev/null)"
+    echo "--- threads:"; for t in /proc/$tpid/task/*; do echo "$(basename $t) $(cat $t/comm) $(cat $t/wchan 2>/dev/null)"; done
+    echo "--- fds:"; ls -l /proc/$tpid/fd 2>/dev/null
+    echo "--- unix sockets:"; ss -xp 2>/dev/null | grep "pid=$tpid," || true
+    echo "--- cwd: $(readlink /proc/$tpid/cwd)"; ls -la "$(readlink /proc/$tpid/cwd)/dist" 2>/dev/null
+    echo "--- environment (PLT/NODE):"; tr '\0' '\n' < /proc/$tpid/environ | grep -E '^(PLT_|NODE_OPTIONS)' || true
+    rm -f "$REPORTS"/*.json
+    kill -USR2 "$tpid" 2>/dev/null
+    sleep 5
+    report=$(ls "$REPORTS"/*.json 2>/dev/null | head -1)
+    if [ -n "$report" ]; then
+      node -e '
+        const r = require(process.argv[1])
+        console.log("--- javascriptStack:", JSON.stringify(r.javascriptStack, null, 2))
+        console.log("--- active libuv handles:")
+        for (const h of r.libuv) if (h.is_active || h.is_referenced) console.log(JSON.stringify(h))
+        console.log("--- workers:", r.workers?.length ?? 0)
+      ' "$report"
+    else
+      echo "--- no diagnostic report produced within 5s (main thread blocked?)"
+    fi
+    echo "::endgroup::"
+  done
+}
+
 for i in $(seq 1 "$ITERATIONS"); do
   log="$OUT/iteration-$i.log"
   launcher=""
@@ -29,6 +63,7 @@ for i in $(seq 1 "$ITERATIONS"); do
       echo "::group::HANG in iteration $i after ${HANG_SECONDS}s - process tree"
       dump_processes
       echo "::endgroup::"
+      if [ "${RUNNER_OS:-}" != "Windows" ]; then inspect_tsc; fi
       echo "::group::HANG in iteration $i - test output (last 400 lines)"
       tail -n 400 "$log"
       echo "::endgroup::"
