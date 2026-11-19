@@ -30,6 +30,8 @@ inspect_tsc () {
     echo "--- unix sockets:"; ss -xp 2>/dev/null | grep "pid=$tpid," || true
     echo "--- cwd: $(readlink /proc/$tpid/cwd)"; ls -la "$(readlink /proc/$tpid/cwd)/dist" 2>/dev/null
     echo "--- environment (PLT/NODE):"; tr '\0' '\n' < /proc/$tpid/environ | grep -E '^(PLT_|NODE_OPTIONS)' || true
+    echo "--- native backtraces (gdb):"
+    sudo gdb -p "$tpid" -batch -nx -ex "set pagination off" -ex "thread apply all bt 40" 2>&1 | grep -vE "^\[New LWP|^Reading symbols|^Downloading|warning: " | head -n 300
     rm -f "$REPORTS"/*.json
     kill -USR2 "$tpid" 2>/dev/null
     sleep 5

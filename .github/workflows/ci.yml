@@ -871,6 +871,8 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
+      - name: Install gdb
+        run: command -v gdb || (sudo apt-get update -qq && sudo apt-get install -y -qq gdb)
       - name: Loop custom commands tests
         shell: bash
         env:
