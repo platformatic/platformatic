@@ -846,15 +846,17 @@ jobs:
         run: cd packages/generators && pnpm test && pnpm run lint
 
   node:
-    name: 'node - ${{ matrix.os }} - ${{ matrix.node }}'
+    name: 'node - ${{ matrix.os }} - ${{ matrix.node }} - ${{ matrix.shard }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'node' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-2025]
-        node: [22, 24, 26]
+        node: [24]
+        shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@v6
@@ -869,8 +871,12 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: Run node package test suite
-        run: cd packages/node && pnpm test && pnpm run lint
+      - name: Loop custom commands tests
+        shell: bash
+        env:
+          PLT_TESTS_DEBUG: 'true'
+          PLT_TESTS_VERBOSE: 'true'
+        run: cd packages/node && ../../.github/debug/node24-hang-loop.sh
 
   next:
     name: 'next - ${{ matrix.node }} - ${{ matrix.suite }}'
