@@ -45,7 +45,7 @@
     "@matteo.collina/sqlite-pool": "^0.8.0",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "async-cache-dedupe": "^2.1.0",
+    "async-cache-dedupe": "^3.0.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^6.0.0",
     "inflected": "^2.1.0"
