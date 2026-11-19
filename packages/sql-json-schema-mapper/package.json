@@ -32,7 +32,7 @@
     "fastify": "^5.0.0",
     "neostandard": "^0.14.0",
     "typescript": "~6.0.3",
-    "why-is-node-running": "^2.2.2"
+    "why-is-node-running": "^3.0.0"
   },
   "dependencies": {
     "code-block-writer": "^13.0.1",
