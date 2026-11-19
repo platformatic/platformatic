@@ -146,7 +146,7 @@
 
 ### PLT_DB_OUT_OF_ORDER_MIGRATIONS_ERROR
 
-**Message:** Found migrations below the current database version %s that are not recorded as applied: %s
+**Message:** Found migrations below the current database version %s that are not recorded as applied: %s. See the "migrations.outOfOrder" option.
 
 ### PLT_DB_MIGRATIONS_TO_APPLY_ERROR
 

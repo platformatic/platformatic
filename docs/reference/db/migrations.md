@@ -49,18 +49,20 @@ $ npx wattpm db:migrations:apply -r
 
 ### Out of order migrations
 
-When several branches add migrations in parallel, a migration can reach a database with a version below one that the database has already applied. Say a database has applied `001` and `003`, and `002.do.sql` arrives later from another branch. By default `002.do.sql` is skipped for as long as the database version stays above it, because only the versions above the highest applied one are selected, and no error or warning reports it.
+When several branches add migrations in parallel, a migration can reach a database with a version below one that the database has already applied. Say a database has applied `001` and `003`, and `002.do.sql` arrives later from another branch. Only the versions above the highest applied one are selected, so `002.do.sql` would be skipped for as long as the database version stays above it.
 
 The `outOfOrder` option of the `migrations` configuration controls this case:
 
-- `ignore` (default): the migration is skipped.
-- `error`: applying migrations forward, or to the version the database is already at, fails before any migration SQL runs, and the error lists the `do` files below the current database version that have no row in the versions table. Use it to turn a skipped migration into a failed deploy, whether the deploy applies migrations with the `db:migrations:apply` command or at startup with `autoApply`.
+- `error` (default): applying migrations forward, or to the version the database is already at, fails before any migration SQL runs, and the error lists the `do` files below the current database version that have no row in the versions table. A skipped migration becomes a failed deploy, whether the deploy applies migrations with the `db:migrations:apply` command or at startup with `autoApply`.
+- `ignore`: the migration is skipped and nothing reports it. This was the behaviour before the option existed.
+
+To go back to skipping such a migration:
 
 ```json
 {
   "migrations": {
     "dir": "./migrations",
-    "outOfOrder": "error"
+    "outOfOrder": "ignore"
   }
 }
 ```
@@ -77,9 +79,9 @@ Giving the migration a new version, by renaming its `do` and `undo` files to an 
 
 The migration then runs as a pending one.
 
-In every other case keep the file and reconcile the databases by hand, their schema, their data and their versions table, before applying migrations with `error` again.
+In every other case keep the file and reconcile the databases by hand, their schema, their data and their versions table, before applying migrations again.
 
-With `error`, the `db:seed` command also refuses to seed while a skipped `do` file remains, as it does for a pending migration. If the files on disk end below the database version, an apply without a target has nothing to run, undoes nothing and reports no out of order files: apply to the current database version, for example `--to 003`, to see them.
+The `db:seed` command also refuses to seed while a skipped `do` file remains, as it does for a pending migration. If the files on disk end below the database version, an apply without a target has nothing to run, undoes nothing and reports no out of order files: apply to the current database version, for example `--to 003`, to see them.
 
 Versions are compared as JavaScript numbers, as Postgrator compares them, so use positive safe integers. Postgrator reserves version zero for its seed row.
 

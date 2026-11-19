@@ -17,7 +17,7 @@ export const ApplyMigrationError = createError(
 )
 export const OutOfOrderMigrationsError = createError(
   `${ERROR_PREFIX}_OUT_OF_ORDER_MIGRATIONS_ERROR`,
-  'Found migrations below the current database version %s that are not recorded as applied: %s'
+  'Found migrations below the current database version %s that are not recorded as applied: %s. See the "migrations.outOfOrder" option.'
 )
 export const MissingSeedFileError = createError(`${ERROR_PREFIX}_MISSING_SEED_FILE_ERROR`, 'Missing seed file')
 export const MigrationsToApplyError = createError(

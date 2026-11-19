@@ -452,9 +452,9 @@ export interface PlatformaticDatabaseConfig {
      */
     validateChecksums?: boolean;
     /**
-     * What to do with a migration below the current database version that is not recorded as applied, for example one that arrives from a parallel branch after a higher numbered one already ran. "ignore" skips it, "error" fails a forward or same version apply and lists the files.
+     * What to do with a migration below the current database version that is not recorded as applied, for example one that arrives from a parallel branch after a higher numbered one already ran. "error" fails a forward or same version apply and lists the files, "ignore" skips it.
      */
-    outOfOrder?: "ignore" | "error";
+    outOfOrder?: "error" | "ignore";
     /**
      * Whether to automatically apply migrations when running the migrate command.
      */

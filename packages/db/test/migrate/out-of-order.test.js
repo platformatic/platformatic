@@ -88,18 +88,19 @@ function isOutOfOrderError (databaseVersion, files) {
     assert.deepEqual(err.appliedMigrations, [])
     assert.equal(
       err.message,
-      `Found migrations below the current database version ${databaseVersion} that are not recorded as applied: ${files}`
+      `Found migrations below the current database version ${databaseVersion} that are not recorded as applied: ${files}. See the "migrations.outOfOrder" option.`
     )
     return true
   }
 }
 
-test('by default a migration below the database version is skipped and not reported', async t => {
+test('by default a migration below the database version is reported', async t => {
   const { createMigrator, appliedVersions, tableExists } = await setup(t)
   const migrator = createMigrator()
 
-  assert.equal(await migrator.hasMigrationsToApply(), false)
-  await migrator.applyMigrations()
+  assert.equal(migrator.outOfOrder, 'error')
+  assert.equal(await migrator.hasMigrationsToApply(), true)
+  await assert.rejects(migrator.applyMigrations(), isOutOfOrderError(3, '002.do.sql'))
 
   assert.equal(migrator.appliedMigrationsCount, 0)
   assert.deepEqual(await appliedVersions(), [1, 3])
@@ -122,8 +123,8 @@ async function countHistoryScans (migrator, fn) {
   return scans
 }
 
-test('outOfOrder: "ignore" behaves as the default and does not scan the recorded versions', async t => {
-  const { createMigrator, appliedVersions } = await setup(t)
+test('outOfOrder: "ignore" skips the migration and does not scan the recorded versions', async t => {
+  const { createMigrator, appliedVersions, tableExists } = await setup(t)
   const migrator = createMigrator({ outOfOrder: 'ignore' })
 
   const scans = await countHistoryScans(migrator, async () => {
@@ -134,6 +135,7 @@ test('outOfOrder: "ignore" behaves as the default and does not scan the recorded
   assert.equal(scans, 0)
   assert.equal(migrator.appliedMigrationsCount, 0)
   assert.deepEqual(await appliedVersions(), [1, 3])
+  assert.equal(await tableExists('test2'), false)
 })
 
 test('outOfOrder: "error" scans the recorded versions once per apply', async t => {

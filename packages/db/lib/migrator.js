@@ -21,7 +21,7 @@ export class Migrator {
     this.validateChecksums = migrationConfig.validateChecksums ?? true
     this.newline = migrationConfig.newline
     this.currentSchema = migrationConfig.currentSchema
-    this.outOfOrder = migrationConfig.outOfOrder ?? 'ignore'
+    this.outOfOrder = migrationConfig.outOfOrder ?? 'error'
 
     this.logger = logger
 
