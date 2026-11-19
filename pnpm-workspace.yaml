@@ -25,12 +25,14 @@ minimumReleaseAgeExclude:
   - protobufjs@8.0.1
   # @fastify/compress@9.3.0 was published on 2026-10-27; it adds flushOnIdle, used by the gateway compression
   - '@fastify/compress@9.3.0'
+  # @mercuriusjs/gateway@5.3.0 was published on 2026-11-18; it fixes federated entity resolution with graphql@16.15.0
+  - '@mercuriusjs/gateway@5.3.0'
   # Renovate security update: fast-uri@3.1.2 || 4.1.1 || 4.1.5
   - fast-uri@3.1.2 || 4.1.1 || 4.1.5
-  # Renovate security update: next@16.2.5 || 16.2.6 || 16.3.6 || 16.3.8
-  - next@16.2.5 || 16.2.6 || 16.3.6 || 16.3.8
-  # Renovate security update: astro@6.4.6
-  - astro@6.4.6
+  # Renovate security update: next@16.2.5 || 16.2.6 || 16.3.6 || 16.3.8 || 16.4.5
+  - next@16.2.5 || 16.2.6 || 16.3.6 || 16.3.8 || 16.4.5
+  # Renovate security update: astro@6.4.6 || 7.4.7
+  - astro@6.4.6 || 7.4.7
   # Renovate security update: tar@7.5.16 || 7.5.21
   - tar@7.5.16 || 7.5.21
   # Renovate security update: vite@7.3.5
@@ -82,6 +84,8 @@ minimumReleaseAgeExclude:
   - "@opentelemetry/sdk-trace@2.12.0"
   # Renovate security update: graphql-scalars@2.0.1
   - graphql-scalars@2.0.1
+  # Renovate security update: nuxt@4.6.4
+  - nuxt@4.6.4
 nodeLinker: hoisted
 # With the hoisted linker, a tree containing several esbuild versions can end up with the
 # `esbuild` package and the hoisted `@esbuild/<platform>` binary at different versions, which
@@ -91,7 +95,7 @@ overrides:
   esbuild: 0.28.2
   # @nestjs/platform-fastify@11 pins fastify@5.11.3, which has known high severity CVEs
   # fixed in 5.12.2. Remove when moving to Nest 12, which pins fastify@5.12.5.
-  '@nestjs/platform-fastify>fastify': 5.12.7
+  '@nestjs/platform-fastify>fastify': 5.12.8
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest

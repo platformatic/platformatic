@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/composer/3.77.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/composer/3.79.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Composer Config",
   "type": "object",
@@ -4057,6 +4057,10 @@
                         "type": "string",
                         "default": "/.well-known/graphql-composition"
                       },
+                      "file": {
+                        "type": "string",
+                        "resolvePath": true
+                      },
                       "entities": {
                         "type": "object",
                         "patternProperties": {
@@ -4283,6 +4287,24 @@
                       },
                       "proxyPayloads": {
                         "type": "boolean"
+                      },
+                      "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "responseHeaders": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
                       },
                       "custom": {
                         "type": "object",

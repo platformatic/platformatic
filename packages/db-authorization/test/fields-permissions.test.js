@@ -616,6 +616,121 @@ test('users can insert only the authorized fields', async () => {
   }
 })
 
+test('save and insert without selected fields are checked against the rule fields', async t => {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        },
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic', 'reviewedBy']
+        }
+      }
+    ]
+  })
+
+  // insert is not exposed through REST, so it is called with the request context
+  app.post('/insert', async (request, reply) => {
+    return app.platformatic.entities.page.insert({
+      inputs: request.body,
+      fields: request.query.fields?.split(','),
+      ctx: { app, reply }
+    })
+  })
+
+  t.after(() => app.close())
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  const request = (method, url, body) =>
+    app.inject({
+      method,
+      url,
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body
+    })
+
+  const page = { title: 'TITLE_1', topic: 'TOPIC_1', reviewedBy: 'TEST' }
+
+  // Without selected fields every column is returned, including the ones outside the rule
+  const forbidden = {
+    statusCode: 403,
+    error: 'Forbidden',
+    code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
+    message: 'field not allowed: author'
+  }
+
+  {
+    const res = await request('POST', '/pages', page)
+    equal(res.statusCode, 403, 'POST /pages without fields status code')
+    deepEqual(res.json(), forbidden, 'POST /pages without fields response')
+  }
+
+  {
+    const res = await request('POST', '/insert', [page])
+    equal(res.statusCode, 403, 'insert without fields status code')
+    deepEqual(res.json(), forbidden, 'insert without fields response')
+  }
+
+  deepEqual(await app.platformatic.entities.page.find({ fields: ['id'] }), [], 'no page was created')
+
+  {
+    const res = await request('POST', '/pages?fields=id,title', page)
+    equal(res.statusCode, 200, 'POST /pages with fields status code')
+    deepEqual(res.json(), { id: 1, title: 'TITLE_1' }, 'POST /pages with fields response')
+  }
+
+  {
+    const res = await request('POST', '/insert?fields=id,title', [{ ...page, title: 'TITLE_2' }])
+    equal(res.statusCode, 200, 'insert with fields status code')
+    deepEqual(res.json(), [{ id: 2, title: 'TITLE_2' }], 'insert with fields response')
+  }
+
+  {
+    const res = await request('PUT', '/pages/1', { ...page, title: 'TITLE_1_UPDATED' })
+    equal(res.statusCode, 403, 'PUT /pages/1 without fields status code')
+    deepEqual(res.json(), forbidden, 'PUT /pages/1 without fields response')
+  }
+
+  {
+    const res = await request('PUT', '/pages/1?fields=id,title', { ...page, title: 'TITLE_1_UPDATED' })
+    equal(res.statusCode, 200, 'PUT /pages/1 with fields status code')
+    deepEqual(res.json(), { id: 1, title: 'TITLE_1_UPDATED' }, 'PUT /pages/1 with fields response')
+  }
+})
+
 test('app should not start if there are not nullable and not allowed fields in save rule', async () => {
   const app = fastify()
   app.register(core, {
