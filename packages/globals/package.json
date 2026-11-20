@@ -48,7 +48,7 @@
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
     "@platformatic/prom-client": "^1.0.0",
-    "pino": "^9.9.0"
+    "pino": "^10.1.0"
   },
   "engines": {
     "node": ">=22.19.0"
