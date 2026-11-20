@@ -2,6 +2,18 @@ import createError from '@fastify/error'
 
 export const ERROR_PREFIX = 'PLT_GATEWAY'
 
+export const InvalidCustomHandlerError = createError(
+  `${ERROR_PREFIX}_INVALID_CUSTOM_HANDLER`,
+  'Custom proxy handler "%s" must be a function.',
+  500
+)
+
+export const InvalidHeadersOverrideError = createError(
+  `${ERROR_PREFIX}_INVALID_HEADERS_OVERRIDE`,
+  'getHeadersOverride must return request and response header objects with string or string-array values.',
+  500
+)
+
 export const FastifyInstanceIsAlreadyListeningError = createError(
   `${ERROR_PREFIX}_FASTIFY_INSTANCE_IS_ALREADY_LISTENING`,
   'Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"!'
@@ -18,6 +30,14 @@ export const PathAlreadyExistsError = createError(
 export const CouldNotReadOpenAPIConfigError = createError(
   `${ERROR_PREFIX}_COULD_NOT_READ_OPENAPI_CONFIG`,
   'Could not read openapi config for "%s" application'
+)
+export const CouldNotReadGraphQLSchemaFileError = createError(
+  `${ERROR_PREFIX}_COULD_NOT_READ_GRAPHQL_SCHEMA_FILE`,
+  'Could not read the GraphQL schema file "%s" of the "%s" application: %s'
+)
+export const InvalidGraphQLSchemaFileError = createError(
+  `${ERROR_PREFIX}_INVALID_GRAPHQL_SCHEMA_FILE`,
+  'The GraphQL schema file "%s" of the "%s" application is not a valid GraphQL schema: %s'
 )
 export const InvalidOpenAPISchemaError = createError(
   `${ERROR_PREFIX}_INVALID_OPENAPI_SCHEMA`,

@@ -1,8 +1,9 @@
-import { resolve, validationOptions } from '@platformatic/basic'
+import { importCapabilityAndConfig, resolve, validationOptions } from '@platformatic/basic'
 import {
   abstractLogger,
   ensureLoggableError,
   extractModuleFromSchemaUrl,
+  findConfigurationFile,
   findRuntimeConfigurationFile,
   kMetadata,
   loadConfigurationModule,
@@ -10,6 +11,7 @@ import {
 } from '@platformatic/foundation'
 import closeWithGrace from 'close-with-grace'
 import inspector from 'node:inspector'
+import { resolve as resolvePath } from 'node:path'
 import { transform, wrapInRuntimeConfig } from './lib/config.js'
 import { NodeInspectorFlagsNotSupportedError } from './lib/errors.js'
 import { Runtime } from './lib/runtime.js'
@@ -89,6 +91,25 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
   })
 }
 
+// Applications without the config property are resolved as when the runtime starts: by their configuration file in
+// their folder, or else by detecting their type. The configuration file found is returned, since the commands load it.
+async function loadApplicationCapability (application) {
+  let configFile = application.config
+
+  if (!configFile) {
+    const fileName = await findConfigurationFile(application.path)
+    configFile = fileName ? resolvePath(application.path, fileName) : null
+  }
+
+  if (!configFile) {
+    const { capability } = await importCapabilityAndConfig(application.path)
+    return { pkg: capability, configFile: null }
+  }
+
+  const applicationConfig = await utilsLoadConfiguration(configFile)
+  return { pkg: await loadConfigurationModule(application.path, applicationConfig), configFile }
+}
+
 export async function loadApplicationsCommands (executableName = '', configurationFile = null) {
   const applications = {}
   const commands = {}
@@ -123,13 +144,15 @@ export async function loadApplicationsCommands (executableName = '', configurati
 
   for (const application of config.applications) {
     try {
-      const applicationConfig = await utilsLoadConfiguration(application.config)
-      const pkg = await loadConfigurationModule(application.path, applicationConfig)
+      const { pkg, configFile } = await loadApplicationCapability(application)
 
       if (pkg.createCommands) {
         const definition = await pkg.createCommands(application.id)
+        // The commands receive the configuration file of the application, found when the config property is missing
+        const context = configFile ? { ...application, config: configFile } : application
+
         for (const command of Object.keys(definition.commands)) {
-          applications[command] = application
+          applications[command] = context
         }
 
         Object.assign(commands, definition.commands)

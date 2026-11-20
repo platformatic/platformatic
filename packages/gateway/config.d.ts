@@ -255,6 +255,7 @@ export interface PlatformaticGatewayConfig {
             name?: string;
             graphqlEndpoint?: string;
             composeEndpoint?: string;
+            file?: string;
             entities?: {
               /**
                * This interface was referenced by `undefined`'s JSON-Schema definition
@@ -332,6 +333,12 @@ export interface PlatformaticGatewayConfig {
             rewriteLocationHeader?: boolean;
             hostname?: string;
             proxyPayloads?: boolean;
+            headers?: {
+              [k: string]: string | null;
+            };
+            responseHeaders?: {
+              [k: string]: string | null;
+            };
             custom?: {
               path: string;
               options?: {

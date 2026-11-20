@@ -169,6 +169,9 @@ async function auth (app, opts) {
       // fields are specified
       checkSaveMandatoryFieldsInRules(type, rules)
 
+      // Fields returned when the caller does not select any, as the names used in rules
+      const allFields = Object.keys(type.camelCasedFields)
+
       function useOriginal (skipAuth, ctx) {
         if (skipAuth === false && !ctx) {
           throw new Error('Cannot set skipAuth to `false` without ctx')
@@ -217,7 +220,7 @@ async function auth (app, opts) {
           if (!rule.save) {
             throw new Unauthorized()
           }
-          checkFieldsFromRule(rule.save, fields)
+          checkFieldsFromRule(rule.save, fields || allFields)
           checkInputFromRuleFields(rule.save, input)
 
           if (rule.defaults) {
@@ -273,7 +276,7 @@ async function auth (app, opts) {
             throw new Unauthorized()
           }
 
-          checkFieldsFromRule(rule.save, fields)
+          checkFieldsFromRule(rule.save, fields || allFields)
           checkInputFromRuleFields(rule.save, inputs)
 
           /* istanbul ignore else */

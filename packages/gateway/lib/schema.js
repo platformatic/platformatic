@@ -103,6 +103,7 @@ export const graphqlApplication = {
         name: { type: 'string' },
         graphqlEndpoint: { type: 'string', default: '/graphql' },
         composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
+        file: { type: 'string', resolvePath: true },
         entities
       },
       additionalProperties: false
@@ -304,6 +305,14 @@ export const gateway = {
                   rewriteLocationHeader: { type: 'boolean' },
                   hostname: { type: 'string' },
                   proxyPayloads: { type: 'boolean' },
+                  headers: {
+                    type: 'object',
+                    additionalProperties: { type: ['string', 'null'] }
+                  },
+                  responseHeaders: {
+                    type: 'object',
+                    additionalProperties: { type: ['string', 'null'] }
+                  },
                   custom: {
                     type: 'object',
                     properties: {
