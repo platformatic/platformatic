@@ -13,6 +13,8 @@ export interface ITCConstructorOptions {
 
 export interface ITCSendOptions extends Record<string, any> {
   signal?: AbortSignal
+  /** Milliseconds to wait for the response before failing with a PLT_ITC_REQUEST_TIMEOUT error. */
+  timeout?: number
 }
 
 export interface OutgoingMessagingSpanOptions {

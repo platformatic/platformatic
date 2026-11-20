@@ -1171,9 +1171,6 @@ importers:
       '@platformatic/globals':
         specifier: workspace:*
         version: link:../globals
-      '@watchable/unpromise':
-        specifier: ^1.0.2
-        version: 1.0.2
     devDependencies:
       '@types/node':
         specifier: ^22.5.0
