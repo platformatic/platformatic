@@ -51,6 +51,8 @@ minimumReleaseAgeExclude:
   - "@nestjs/platform-fastify@11.2.4"
   # pino-opentelemetry-transport@5.0.0 was published on 2026-11-19; it moves to OpenTelemetry JS SDK 3.x
   - pino-opentelemetry-transport@5.0.0
+  # self-cert@2.1.0 was published on 2026-11-20 and adds Pino 10 support.
+  - self-cert@2.1.0
   # Renovate security update: graphql-scalars@2.0.1
   - graphql-scalars@2.0.1
   # Renovate security update: nuxt@4.6.4
@@ -65,8 +67,6 @@ overrides:
   # @nestjs/platform-fastify@11 pins fastify@5.11.3, which has known high severity CVEs
   # fixed in 5.12.2. Remove when moving to Nest 12, which pins fastify@5.12.5.
   '@nestjs/platform-fastify>fastify': 5.12.8
-  # self-cert is only used in tests. Remove when upstream supports Pino 10.
-  'self-cert@2.0.1>pino': ^10.1.0
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest
