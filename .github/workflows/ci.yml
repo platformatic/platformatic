@@ -456,7 +456,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@v6
-      - uses: ikalnytskyi/action-setup-postgres@v7
+      - uses: ikalnytskyi/action-setup-postgres@v9
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
