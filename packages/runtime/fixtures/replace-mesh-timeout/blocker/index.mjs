@@ -18,6 +18,25 @@ export function create () {
     })
   })
 
+  // Ask the target to block its own event loop, and relay its first chunk to the caller
+  app.get('/block-target', async (request, reply) => {
+    const ms = Number(request.query.ms ?? 1000)
+    const response = await fetch(`http://target.plt.local/block?ms=${ms}`)
+
+    reply.hijack()
+    reply.raw.writeHead(200, { 'content-type': 'text/plain', 'transfer-encoding': 'chunked' })
+
+    try {
+      for await (const chunk of response.body) {
+        reply.raw.write(chunk)
+      }
+    } catch {
+      // The target has been replaced while it was blocked
+    }
+
+    reply.raw.end()
+  })
+
   app.get('/target', async () => {
     const response = await fetch('http://target.plt.local/')
     return response.json()

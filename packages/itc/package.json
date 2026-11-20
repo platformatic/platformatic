@@ -32,8 +32,9 @@
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@opentelemetry/api": "^1.9.0",
-    "@platformatic/globals": "workspace:*"
+    "@opentelemetry/api": "^1.10.0",
+    "@platformatic/globals": "workspace:*",
+    "@watchable/unpromise": "^1.0.2"
   },
   "engines": {
     "node": ">=22.19.0"

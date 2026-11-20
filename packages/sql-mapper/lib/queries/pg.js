@@ -48,7 +48,7 @@ export async function listColumns (db, sql, table, schema) {
   */
 
   const res = await db.query(sql`
-    SELECT c.column_name, c.udt_name, c.is_nullable, c.is_generated, c.data_type,
+    SELECT c.column_name, c.udt_name, c.is_nullable, c.is_generated, c.data_type, c.column_default,
       pg_catalog.format_type(a.atttypid, a.atttypmod) AS formatted_type
     FROM information_schema.columns c
     JOIN pg_catalog.pg_class cls ON cls.relname = c.table_name

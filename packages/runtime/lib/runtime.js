@@ -3505,7 +3505,7 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  async #stopWorker (workersCount, id, index, silent, worker, dependents) {
+  async #stopWorker (workersCount, id, index, silent, worker, dependents, tolerateWorkerError = false) {
     if (!worker) {
       worker = await this.#getWorkerByIdOrNext(id, index, false, false)
     }
@@ -3533,6 +3533,9 @@ export class Runtime extends EventEmitter {
 
     const exitTimeout = this.#config.gracefulShutdown.application
     const exitPromise = once(worker, 'exit')
+    // The promise is awaited after the stop request below: a worker that ends with an error in the
+    // meanwhile must not leave an unhandled rejection behind. The await still reports it.
+    exitPromise.catch(() => {})
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
@@ -3558,7 +3561,23 @@ export class Runtime extends EventEmitter {
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the application is ever restarted
-    const res = await executeWithTimeout(exitPromise, exitTimeout)
+    let res
+
+    try {
+      res = await executeWithTimeout(exitPromise, exitTimeout)
+    } catch (error) {
+      // The exit promise is rejected when the worker emits an error before it exits
+      if (!tolerateWorkerError) {
+        throw error
+      }
+
+      this.logger.warn({ err: ensureLoggableError(error) }, `The ${label} ended with an error while it was being stopped.`)
+
+      // The exit can come later than the error: wait for it, as for the exit of a worker that stops
+      if (worker[kWorkerStatus] !== 'exited') {
+        res = await executeWithTimeout(new Promise(resolve => worker.once('exit', resolve)), exitTimeout)
+      }
+    }
 
     // If the worker didn't exit in time, kill it
     if (res === kTimeout) {
@@ -3769,9 +3788,18 @@ export class Runtime extends EventEmitter {
     // after a mesh error) it must not be considered crashed and therefore restarted.
     worker[kWorkerStatus] = 'stopping'
 
-    // Remove the old worker from the mesh
+    // Remove the old worker from the mesh. A worker whose event loop is blocked neither answers
+    // nor exits, so it is not waited for longer than its stop below would be.
+    let unacknowledged = false
+
     try {
-      await sendViaITC(worker, 'removeFromMesh')
+      const timeout = this.#config.gracefulShutdown.application
+      const res = await executeWithTimeout(sendViaITC(worker, 'removeFromMesh'), timeout)
+
+      if (res === kTimeout) {
+        unacknowledged = true
+        this.logger.warn(`The ${label} did not acknowledge its removal from the mesh in ${timeout}ms. Stopping it anyway ...`)
+      }
     } catch (e) {
       // This usually happens when another thread does not acknowledge the route removal in time
       // (for instance because its event loop is blocked). The worker is being stopped anyway.
@@ -3783,8 +3811,10 @@ export class Runtime extends EventEmitter {
       return
     }
 
-    // Stop the old worker to free the port
-    await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
+    // Stop the old worker to free the port. A worker that ends with an error while its removal from the
+    // mesh is still unanswered would have ended that wait, had the runtime kept waiting, and the
+    // replacement would have gone on: it goes on as well when the error arrives during the stop.
+    await this.#stopWorker(workersCount, applicationId, index, false, worker, [], unacknowledged)
   }
 
   async #getApplicationById (applicationId, ensureStarted = false, mustExist = true) {

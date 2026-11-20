@@ -34,7 +34,7 @@
     "@platformatic/telemetry": "workspace:*",
     "execa": "^9.3.1",
     "fast-json-patch": "^3.1.1",
-    "pino": "^9.9.0",
+    "pino": "^10.1.0",
     "pino-abstract-transport": "^2.0.0",
     "semver": "^7.6.3",
     "split2": "^4.2.0",
