@@ -14,6 +14,7 @@ These objects contain the following properties:
 
 - `sqlType`: The original field type. It may vary depending on the underlying DB Engine
 - `isNullable`: Whether the field can be `null` or not
+- `hasDefault`: Whether the column has a database default value. A `NOT NULL` column with a default is not required in the generated input schemas
 - `primaryKey`: Whether the field is the primary key or not
 - `foreignKey`: Whether the field is a foreign key or not
 - `stringifyOutput`: Whether the field is converted to a string in mapper output because it references a primary key
@@ -44,22 +45,26 @@ The resulting mapping object will be:
     id: {
       sqlType: 'int4',
       isNullable: false,
+      hasDefault: true,
       primaryKey: true,
       camelcase: 'id'
     },
     title: {
       sqlType: 'varchar',
       isNullable: true,
+      hasDefault: false,
       camelcase: 'title'
     },
     body_content: {
       sqlType: 'text',
       isNullable: true,
+      hasDefault: false,
       camelcase: 'bodyContent'
     },
     category_id: {
       sqlType: 'int4',
       isNullable: true,
+      hasDefault: false,
       foreignKey: true,
       camelcase: 'categoryId'
     }
@@ -68,22 +73,26 @@ The resulting mapping object will be:
     id: {
       sqlType: 'int4',
       isNullable: false,
+      hasDefault: true,
       primaryKey: true,
       camelcase: 'id'
     },
     title: {
       sqlType: 'varchar',
       isNullable: true,
+      hasDefault: false,
       camelcase: 'title'
     },
     bodyContent: {
       sqlType: 'text',
       isNullable: true,
+      hasDefault: false,
       camelcase: 'bodyContent'
     },
     categoryId: {
       sqlType: 'int4',
       isNullable: true,
+      hasDefault: false,
       foreignKey: true,
       camelcase: 'categoryId'
     }

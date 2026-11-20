@@ -554,6 +554,8 @@ export function buildEntity (
     acc[column.column_name] = {
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES',
+      // MariaDB and SQLite report a missing or `DEFAULT NULL` default as the text 'NULL', PG as 'NULL::<type>'
+      hasDefault: column.column_default != null && !/^NULL\b/i.test(column.column_default),
       isArray: column.isArray,
       vectorDimensions: column.vectorDimensions,
       isJson: column.isJson === true

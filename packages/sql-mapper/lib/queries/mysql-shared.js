@@ -25,7 +25,7 @@ export async function listTables (db, sql, schemas) {
 
 export async function listColumns (db, sql, table, schema) {
   const query = sql`
-    SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type, extra as is_generated
+    SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type, extra as is_generated, column_default as column_default
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
