@@ -6,6 +6,7 @@
   "type": "module",
   "types": "lib/index.d.ts",
   "scripts": {
+    "bench": "node benchmarks/itc.js",
     "test": "npm run test:types && node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
     "test:types": "tstyche",
     "lint": "eslint",
