@@ -1036,8 +1036,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       '@platformatic/prom-client':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^2.0.0
+        version: 2.0.0
       c8:
         specifier: ^12.0.0
         version: 12.0.0
@@ -1136,8 +1136,8 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       '@platformatic/prom-client':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^2.0.0
+        version: 2.0.0
       pino:
         specifier: ^10.1.0
         version: 10.4.0
@@ -1204,11 +1204,11 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0
       '@platformatic/prom-client':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@platformatic/promotel':
         specifier: ^0.3.0
-        version: 0.3.0(@platformatic/prom-client@1.0.0)
+        version: 0.3.0(@platformatic/prom-client@2.0.0)
     devDependencies:
       cleaner-spec-reporter:
         specifier: ^2.0.0
@@ -1764,8 +1764,8 @@ importers:
         specifier: workspace:*
         version: link:../metrics
       '@platformatic/prom-client':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -4967,6 +4967,10 @@ packages:
 
   '@platformatic/prom-client@1.0.0':
     resolution: {integrity: sha512-O7NfmdBWAm1QJ0LMrtcyCSgWmA+FQEiCyRqvouccmyAuydwLxLdmhcTTW3sEmO5f7bRfXpUVVgTtnFbIqEiHyw==}
+    engines: {node: ^20 || ^22 || >=24}
+
+  '@platformatic/prom-client@2.0.0':
+    resolution: {integrity: sha512-gCHEAgzeBgIWxvCxQRrKmjm0Srt1rijtJ95vO0cR/gfG0Qi6+lTmN9cDhZ41b1vE5dg6GPVN/8QNH9eY0FKbVA==}
     engines: {node: ^20 || ^22 || >=24}
 
   '@platformatic/promotel@0.3.0':
@@ -15157,9 +15161,13 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.10.0
 
-  '@platformatic/promotel@0.3.0(@platformatic/prom-client@1.0.0)':
+  '@platformatic/prom-client@2.0.0':
     dependencies:
-      '@platformatic/prom-client': 1.0.0
+      '@opentelemetry/api': 1.10.0
+
+  '@platformatic/promotel@0.3.0(@platformatic/prom-client@2.0.0)':
+    dependencies:
+      '@platformatic/prom-client': 2.0.0
       long: 5.3.2
       protobufjs: 8.8.1
       undici: 7.30.2
