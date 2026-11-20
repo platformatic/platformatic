@@ -318,3 +318,25 @@ test('PG Arrays', { skip: !isPg }, async t => {
     same(pageJsonSchema.required, ['tags', 'title'])
   }
 })
+
+test('NOT NULL columns with a default are not required', async t => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42) NOT NULL,
+        archived BOOLEAN NOT NULL DEFAULT false
+      );`)
+    }
+  })
+  t.after(() => app.close())
+
+  await app.ready()
+
+  const pageJsonSchema = mapSQLEntityToJSONSchema(app.platformatic.entities.page)
+  same(pageJsonSchema.required, ['title'])
+  equal(pageJsonSchema.properties.archived.nullable, undefined)
+})
