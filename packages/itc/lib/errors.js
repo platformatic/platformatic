@@ -28,5 +28,9 @@ export const RequestNameIsNotString = createError(
   `${ERROR_PREFIX}_REQUEST_NAME_IS_NOT_STRING`,
   'ITC request name is not a string: "%s"'
 )
+export const RequestTimeout = createError(
+  `${ERROR_PREFIX}_REQUEST_TIMEOUT`,
+  'ITC request "%s" timed out after %s milliseconds'
+)
 export const MessagePortClosed = createError(`${ERROR_PREFIX}_MESSAGE_PORT_CLOSED`, 'ITC MessagePort is closed')
 export const MissingName = createError(`${ERROR_PREFIX}_MISSING_NAME`, 'ITC name is missing')

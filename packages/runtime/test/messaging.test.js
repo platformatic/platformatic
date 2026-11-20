@@ -84,3 +84,30 @@ test('should release tracked requests after a timeout', async t => {
   handlerRelease.resolve('late-response')
   await nextImmediate()
 })
+
+test('should honor the signal passed by the caller', async t => {
+  const { channel, sender, target, targetId } = setupMessagingPair(t, 10000)
+  const handlerStarted = Promise.withResolvers()
+  const handlerRelease = Promise.withResolvers()
+
+  target.handle('slow', async () => {
+    handlerStarted.resolve()
+    return handlerRelease.promise
+  })
+
+  const abortController = new AbortController()
+  const abortReason = new Error('Caller gave up')
+  const response = sender.send(targetId, 'slow', null, { signal: abortController.signal })
+  await handlerStarted.promise
+
+  abortController.abort(abortReason)
+
+  await rejects(response, error => {
+    strictEqual(error, abortReason)
+    return true
+  })
+  strictEqual(getPendingResponses(channel).size, 0)
+
+  handlerRelease.resolve('late-response')
+  await nextImmediate()
+})

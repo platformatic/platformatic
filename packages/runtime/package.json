@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "bench": "node benchmarks/messaging.js",
     "test": "npm run test:types && npm run test:main && npm run test:api && npm run test:cli && npm run test:start && npm run test:multiple-workers",
     "test:main": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/versions/*.test.js",
     "test:main-first": "node --test --test-shard=1/2 --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js test/versions/*.test.js",
