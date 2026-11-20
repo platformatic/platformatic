@@ -174,7 +174,6 @@ settings:
 overrides:
   esbuild: 0.28.2
   '@nestjs/platform-fastify>fastify': 5.12.8
-  self-cert@2.0.1>pino: ^10.1.0
 
 importers:
 
@@ -1063,8 +1062,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       self-cert:
-        specifier: ^2.0.0
-        version: 2.0.1
+        specifier: ^2.1.0
+        version: 2.1.0
       single-user-cache:
         specifier: ^2.0.0
         version: 2.1.0
@@ -2087,8 +2086,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       self-cert:
-        specifier: ^2.0.0
-        version: 2.0.1
+        specifier: ^2.1.0
+        version: 2.1.0
       split2:
         specifier: ^4.2.0
         version: 4.2.0
@@ -10862,8 +10861,8 @@ packages:
   secure-json-parse@4.1.1:
     resolution: {integrity: sha512-lnd81MQEZKjhW/Gd2TQqdd4XP6QYNdDW/EP+I7nTrFHP9y2LmaGPIHk9xsnzcOiEr1c39c/e84xFgGviQKBTRw==}
 
-  self-cert@2.0.1:
-    resolution: {integrity: sha512-m66vbn9/NSLHS8o6bgGoGdQ8OXJY+Arm6ng6xr5CtfFUc2S/LwwwbfbjYTv2CGp4wyErUiabYP57VD22P5JwCg==}
+  self-cert@2.1.0:
+    resolution: {integrity: sha512-0Q/Oe0suWy6d7NC8c8zH1hAWDSE29QhHIBtgalMGcbDitf79660juCx8w+3uqP5Gma+5NXuYLQKUqnvykcCS3g==}
     hasBin: true
 
   semgrator@0.3.0:
@@ -22374,7 +22373,7 @@ snapshots:
 
   secure-json-parse@4.1.1: {}
 
-  self-cert@2.0.1:
+  self-cert@2.1.0:
     dependencies:
       abstract-logging: 2.0.1
       edtf: 4.11.1
