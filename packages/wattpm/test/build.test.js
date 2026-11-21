@@ -79,3 +79,41 @@ test('build - should build with custom env file', async t => {
 
   ok(existsSync(resolve(applicationDir, 'dist/index.js')))
 })
+
+test('build - should not resolve the configuration of an application from a discovered .env file with a custom env file', async t => {
+  const { writeFile } = await import('node:fs/promises')
+  const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
+  const applicationDir = resolve(buildDir, 'web/main')
+
+  // The output folder of the build comes from a placeholder that the custom env file leaves unset and that a .env
+  // file above the application sets: the build must ignore that file, as the custom env file replaces it.
+  await saveConfigurationFile(resolve(applicationDir, 'watt.json'), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
+    application: {
+      commands: {
+        build: 'npm run build -- --outDir dist{PLT_BUILD_OUTPUT_SUFFIX}'
+      }
+    }
+  })
+  await writeFile(resolve(buildDir, '.env'), 'PLT_BUILD_OUTPUT_SUFFIX=-from-discovered-env', 'utf8')
+  await writeFile(resolve(buildDir, 'custom-build.env'), 'BUILD_CUSTOM_VAR=from_custom_build', 'utf8')
+
+  // The command inherits the variables of the test process, which would win over both files: the variable is
+  // removed for the duration of the test and restored afterwards.
+  const originalSuffix = process.env.PLT_BUILD_OUTPUT_SUFFIX
+  delete process.env.PLT_BUILD_OUTPUT_SUFFIX
+
+  t.after(async () => {
+    if (typeof originalSuffix === 'string') {
+      process.env.PLT_BUILD_OUTPUT_SUFFIX = originalSuffix
+    }
+
+    await safeRemove(resolve(applicationDir, 'dist'))
+    await safeRemove(resolve(applicationDir, 'dist-from-discovered-env'))
+  })
+
+  await wattpm('build', buildDir, '--env', resolve(buildDir, 'custom-build.env'), { timeout: 60_000 })
+
+  ok(existsSync(resolve(applicationDir, 'dist/index.js')))
+  ok(!existsSync(resolve(applicationDir, 'dist-from-discovered-env')))
+})

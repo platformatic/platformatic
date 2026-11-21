@@ -59,9 +59,9 @@ DATABASE_URL=sqlite://./dev.db
 
 **Where to place .env files:**
 
-- Same folder as your Watt configuration file
-- Or in the current working directory
-- Watt automatically finds and loads them
+- Same folder as your Watt configuration file, or one of the folders above it: Watt loads the first `.env` file it finds going upwards
+- Or in the current working directory, when no such folder has one
+- The configuration of each application looks for a `.env` file the same way, starting from the folder of its configuration file
 
 ## Step 3: Setting Variables from Command Line
 
@@ -104,6 +104,8 @@ npx wattpm start --env .env.production
 ```
 
 **Note:** By default, Watt only loads `.env` files automatically. To use environment-specific files like `.env.development` or `.env.production`, you must explicitly specify them using the `--env` flag.
+
+When the runtime has an env file (the `envfile` of the Watt configuration file or, when that is not set, the file given with `--env`), each worker loads the configuration of its application without looking for a `.env` file: not next to the configuration file, not above it, not in the current working directory. The placeholders are resolved from the environment of the worker instead: your shell variables, the variables of the runtime env file, and the overrides the application already had, which are its `env` setting and its own file (its `envfile` or, when it declares none, the `.env` file in the application folder). The values of the application's own file override the ones of the runtime env file.
 
 ## Step 5: Common Configuration Patterns
 
