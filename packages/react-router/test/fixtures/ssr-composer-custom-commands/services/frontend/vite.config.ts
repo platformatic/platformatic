@@ -5,8 +5,20 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig(({ isSsrBuild }) => ({
   base: getBasePath({ throwOnMissing: false }) ?? '/',
+  // v7: isSsrBuild + top-level build.rollupOptions.input
   build: {
     rollupOptions: isSsrBuild ? { input: './app/server.ts' } : undefined
+  },
+  // v8: Vite Environment API is always on; top-level isSsrBuild input is ignored
+  // https://reactrouter.com/upgrading/v7
+  environments: {
+    ssr: {
+      build: {
+        rollupOptions: {
+          input: './app/server.ts'
+        }
+      }
+    }
   },
   plugins: [reactRouter(), tsconfigPaths()],
   server: {
