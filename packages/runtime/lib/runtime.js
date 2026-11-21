@@ -91,6 +91,7 @@ import {
   kWorkerId,
   kWorkersBroadcast,
   kWorkerStartTime,
+  kWorkerStartError,
   kWorkerStatus
 } from './worker/symbols.js'
 
@@ -2560,7 +2561,8 @@ export class Runtime extends EventEmitter {
     const errorLabel = this.#workerExtendedLabel(applicationId, index, workersCount)
     const health = deepmerge(config.health ?? {}, applicationConfig.health ?? {})
 
-    const execArgv = applicationConfig.execArgv ?? []
+    // A copy, since the options below are appended each time a worker of the application is set up
+    const execArgv = [...(applicationConfig.execArgv ?? [])]
 
     if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
       const require = createRequire(import.meta.url)
@@ -3387,6 +3389,8 @@ export class Runtime extends EventEmitter {
     worker[kWorkerStatus] = 'starting'
     this.emitAndNotify('application:worker:starting', eventPayload)
 
+    let startAnnounced = false
+
     try {
       let workerStartResult
       if (config.startTimeout > 0) {
@@ -3432,6 +3436,7 @@ export class Runtime extends EventEmitter {
 
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
+      startAnnounced = true
 
       this.emitAndNotify('application:worker:started', eventPayload)
       this.#broadcastWorkers()
@@ -3482,6 +3487,12 @@ export class Runtime extends EventEmitter {
       const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
       if (disableRestartAttempts || !restartOnError) {
+        // Tells the caller that the worker failed to start, as opposed to a listener that threw
+        // once it had started, and that it has been disposed of.
+        if (!startAnnounced) {
+          worker[kWorkerStartError] = error
+        }
+
         throw error
       }
 
@@ -3704,8 +3715,8 @@ export class Runtime extends EventEmitter {
     let newWorker
 
     // Get a new unique index for the replacement worker
-    const newIndex = this.#getNextWorkerIndex(applicationId)
-    const newWorkerId = `${applicationId}:${newIndex}`
+    let newIndex = this.#getNextWorkerIndex(applicationId)
+    let newWorkerId = `${applicationId}:${newIndex}`
     const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
     const portOffset = this.#workerPortOffsets.get(`${applicationId}:${oldIndex}`)
     this.#workerPortOffsets.set(newWorkerId, portOffset)
@@ -3724,6 +3735,18 @@ export class Runtime extends EventEmitter {
       configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
     }
 
+    // When the old worker is stopped first, no worker serves its place while the new one starts.
+    // A new worker that fails to start is then replaced by another one, with the delay and the
+    // number of attempts of a worker that fails to start when the runtime boots.
+    const restartOnError = stopBeforeStart ? this.#getApplicationRestartOnError(config, applicationConfig) : 0
+    const lifecycle = restartOnError ? this.#watchApplicationLifecycle(applicationId) : undefined
+    let retries = 0
+    let startError
+
+    // After a failed start the replacement ends with that failure as soon as the runtime is stopped,
+    // or the application is stopped or started by someone else.
+    const interrupted = () => lifecycle.signal.aborted || this.#status !== 'started'
+
     try {
       if (!silent) {
         this.logger.debug(`Preparing to start ${newLabel} as replacement for ${oldLabel} ...`)
@@ -3733,38 +3756,116 @@ export class Runtime extends EventEmitter {
         await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
       }
 
-      // Create a new worker with a new index, preserving any pinned port when stopBeforeStart is required.
-      newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false)
+      while (true) {
+        // Create a new worker with a new index, preserving any pinned port when stopBeforeStart is required.
+        newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false)
 
-      // Make sure the runtime hasn't been stopped in the meanwhile
-      if (this.#status !== 'started') {
-        return this.#discardWorker(newWorker)
+        if (startError && interrupted()) {
+          try {
+            await this.#discardWorker(newWorker)
+            newWorker = undefined
+          } catch (err) {
+            // The cleanup below terminates the worker
+            this.logger.warn({ err: ensureLoggableError(err) }, `Cannot discard ${this.#workerExtendedLabel(applicationId, newIndex, workersCount)}.`)
+          }
+
+          throw startError
+        }
+
+        // Make sure the runtime hasn't been stopped in the meanwhile
+        if (this.#status !== 'started') {
+          return this.#discardWorker(newWorker)
+        }
+
+        // Register the worker before starting it, like in the regular startup flow,
+        // so that it is addressable when the application:worker:started event is emitted.
+        // The discard paths below remove it from the map via #cleanupWorker.
+        this.#workers.set(newWorkerId, newWorker)
+
+        try {
+          // Add the worker to the mesh
+          await this.#startWorker(
+            configForNewWorker,
+            applicationConfig,
+            workersCount,
+            applicationId,
+            newIndex,
+            false,
+            0,
+            newWorker,
+            true
+          )
+        } catch (e) {
+          // Only the failure of a start, which leaves the worker disposed of, is followed by another worker.
+          // That leaves out a port that cannot be bound, which is not retried in the regular startup flow either.
+          if (!restartOnError || !Object.hasOwn(newWorker, kWorkerStartError) || newWorker[kWorkerStartError] !== e) {
+            throw e
+          }
+
+          startError = e
+
+          if (retries++ >= MAX_BOOTSTRAP_ATTEMPTS) {
+            this.logger.error(
+              `Failed to start a replacement for ${oldLabel} after ${MAX_BOOTSTRAP_ATTEMPTS} more attempts.`
+            )
+            this.emitAndNotify('application:worker:start:failed', {
+              application: applicationId,
+              worker: newIndex,
+              workersCount,
+              error: e
+            })
+            throw e
+          }
+
+          if (interrupted()) {
+            throw e
+          }
+
+          if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+            this.logger.warn(
+              `Performing attempt ${retries} of ${MAX_BOOTSTRAP_ATTEMPTS} to start a replacement for ${oldLabel} again ...`
+            )
+          } else {
+            this.logger.warn(
+              `Attempt ${retries} of ${MAX_BOOTSTRAP_ATTEMPTS} to start a replacement for ${oldLabel} again will be performed in ${restartOnError}ms ...`
+            )
+
+            try {
+              await sleep(restartOnError, undefined, { signal: lifecycle.signal, ref: false })
+            } catch {
+              // The wait has been interrupted, the check below ends the replacement
+            }
+
+            if (interrupted()) {
+              throw e
+            }
+          }
+
+          newWorker = undefined
+          newIndex = this.#getNextWorkerIndex(applicationId)
+          newWorkerId = `${applicationId}:${newIndex}`
+          this.#workerPortOffsets.set(newWorkerId, portOffset)
+          continue
+        }
+
+        break
       }
 
-      // Register the worker before starting it, like in the regular startup flow,
-      // so that it is addressable when the application:worker:started event is emitted.
-      // The discard paths below remove it from the map via #cleanupWorker.
-      this.#workers.set(newWorkerId, newWorker)
-
-      // Add the worker to the mesh
-      await this.#startWorker(
-        configForNewWorker,
-        applicationConfig,
-        workersCount,
-        applicationId,
-        newIndex,
-        false,
-        0,
-        newWorker,
-        true
-      )
+      // A worker that started after a failed start is registered: whoever stopped the runtime or the
+      // application in the meanwhile stops it as well, and the replacement ends with the failure.
+      if (startError && interrupted()) {
+        newWorker = undefined
+        throw startError
+      }
 
       // Make sure the runtime hasn't been stopped in the meanwhile
       if (this.#status !== 'started') {
         return this.#discardWorker(newWorker)
       }
     } catch (e) {
-      this.#workerPortOffsets.delete(newWorkerId)
+      if (newWorker || !this.#workers.has(newWorkerId)) {
+        this.#workerPortOffsets.delete(newWorkerId)
+      }
 
       if (this.#workers.get(newWorkerId) === newWorker) {
         this.#workers.delete(newWorkerId)
@@ -3772,10 +3873,37 @@ export class Runtime extends EventEmitter {
 
       newWorker?.terminate?.()
       throw e
+    } finally {
+      lifecycle?.dispose()
     }
 
     if (!stopBeforeStart) {
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
+    }
+  }
+
+  // Aborts the returned signal when the runtime is stopped, or when the application is stopped or
+  // started, so that a replacement which is waiting to start another worker does not undo it.
+  #watchApplicationLifecycle (applicationId) {
+    const controller = new AbortController()
+    const onRuntimeStopping = () => controller.abort()
+    const onApplicationChange = id => {
+      if (id === applicationId) {
+        controller.abort()
+      }
+    }
+
+    this.once('stopping', onRuntimeStopping)
+    this.on('application:stopping', onApplicationChange)
+    this.on('application:starting', onApplicationChange)
+
+    return {
+      signal: controller.signal,
+      dispose: () => {
+        this.off('stopping', onRuntimeStopping)
+        this.off('application:stopping', onApplicationChange)
+        this.off('application:starting', onApplicationChange)
+      }
     }
   }
 
