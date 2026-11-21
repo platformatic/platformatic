@@ -1787,8 +1787,8 @@ importers:
         specifier: ^4.1.0
         version: 4.4.0
       debounce:
-        specifier: ^2.0.0
-        version: 2.2.0
+        specifier: ^4.0.0
+        version: 4.0.0
       fastest-levenshtein:
         specifier: ^1.0.16
         version: 1.0.16
@@ -7297,9 +7297,9 @@ packages:
       sqlite3:
         optional: true
 
-  debounce@2.2.0:
-    resolution: {integrity: sha512-Xks6RUDLZFdz8LIdR6q0MTH44k7FikOmnh5xkSjMig6ch45afc8sjTjRQf3P6ax8dMgcQrYO/AR2RGWURrruqw==}
-    engines: {node: '>=18'}
+  debounce@4.0.0:
+    resolution: {integrity: sha512-o6nMNFRtqLR6mRlyt0b21cgYPSKAEMZFpROIRS9ZRH6hhSJWvGErqeSCJnWyiwVQYMSw7f/DZLilF5YRDwFz7w==}
+    engines: {node: '>=22.2'}
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -17694,7 +17694,7 @@ snapshots:
       better-sqlite3: 13.0.3
       mysql2: 3.24.6(@types/node@22.20.5)
 
-  debounce@2.2.0: {}
+  debounce@4.0.0: {}
 
   debug@2.6.9(supports-color@10.2.2):
     dependencies:
