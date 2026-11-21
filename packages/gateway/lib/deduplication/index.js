@@ -1,5 +1,6 @@
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
 import { DynamicBuffer } from '@platformatic/dynamic-buffer'
+import { asReadable } from '@platformatic/dynamic-buffer/readable'
 import Router from 'find-my-way'
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
@@ -252,7 +253,7 @@ export async function createDeduplicationHandler ({
       }
 
       metrics?.deduplicationReplay?.inc()
-      const body = new DynamicBuffer(response.body).asReadable()
+      const body = asReadable(new DynamicBuffer(response.body))
       applyResponseHeadersOverride(request, reply)
       const responseHandler = reply[kGatewayProxyResponseHandler]
       if (responseHandler) {
