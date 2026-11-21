@@ -15,6 +15,10 @@ export const ApplyMigrationError = createError(
   `${ERROR_PREFIX}_MIGRATE_ERROR`,
   'Unable to apply migration %s: %s'
 )
+export const OutOfOrderMigrationsError = createError(
+  `${ERROR_PREFIX}_OUT_OF_ORDER_MIGRATIONS_ERROR`,
+  'Found migrations below the current database version %s that are not recorded as applied: %s. See the "migrations.outOfOrder" option.'
+)
 export const MissingSeedFileError = createError(`${ERROR_PREFIX}_MISSING_SEED_FILE_ERROR`, 'Missing seed file')
 export const MigrationsToApplyError = createError(
   `${ERROR_PREFIX}_MIGRATIONS_TO_APPLY_ERROR`,
