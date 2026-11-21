@@ -929,8 +929,8 @@ importers:
         specifier: workspace:*
         version: link:../basic
       '@platformatic/dynamic-buffer':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       '@platformatic/fastify-openapi-glue':
         specifier: ^5.2.0
         version: 5.2.0
@@ -956,8 +956,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       '@scalar/fastify-api-reference':
-        specifier: 1.81.0
-        version: 1.81.0
+        specifier: 1.82.1
+        version: 1.82.1
       ajv:
         specifier: ^8.12.0
         version: 8.20.0
@@ -1983,8 +1983,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       '@scalar/fastify-api-reference':
-        specifier: 1.81.0
-        version: 1.81.0
+        specifier: 1.82.1
+        version: 1.82.1
       '@types/node':
         specifier: ^22.10.6
         version: 22.20.5
@@ -2342,8 +2342,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
       '@scalar/fastify-api-reference':
-        specifier: 1.81.0
-        version: 1.81.0
+        specifier: 1.82.1
+        version: 1.82.1
       ajv:
         specifier: ^8.12.0
         version: 8.20.0
@@ -4853,8 +4853,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@platformatic/dynamic-buffer@0.5.0':
-    resolution: {integrity: sha512-iUyF211Jr1WzpwWHp+M/Kh2UWCOpqhizRijIvQwvK/XXTbmtSw05NJH3q53RkHmTWLXfTE+M1IZ6ROlAI/CW+Q==}
+  '@platformatic/dynamic-buffer@0.6.0':
+    resolution: {integrity: sha512-EhSFuWB7UJ5rRu0BWHo7p/fkiNbPAR4WMTtxoLLy24LsjT4Zae3Z6q/rY+TT0sqhr8OKaveTbEwsceJobD2FOQ==}
     engines: {node: '>= 22.19.0'}
 
   '@platformatic/fastify-openapi-glue@5.2.0':
@@ -5362,28 +5362,28 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/client-side-rendering@0.4.21':
-    resolution: {integrity: sha512-zjRtLjOysw6C8tFOxvwR5d5tnjJh8Ga46SAf3fhioHicDUB3c9dx6YbxKWE03b3VvDdhDFfkryHbXUfrMGeCQg==}
+  '@scalar/client-side-rendering@0.4.22':
+    resolution: {integrity: sha512-7neipw+9bwNzHtEChMlFJkTFCKFbRg8W88MsWJBYH+wHhO6za/DzNu+sPdz0d+v85EMBKi/akoXgsZdya8vF7w==}
     engines: {node: '>=22'}
 
-  '@scalar/fastify-api-reference@1.81.0':
-    resolution: {integrity: sha512-bKuwEO1Q2DutfyzL9IkMC3bhtXFOMyVDP+z/Ie5AXtODwzTVTG6dt0ntWzyZVBKehM+vGJHa1Duq88QHYlyDVQ==}
+  '@scalar/fastify-api-reference@1.82.1':
+    resolution: {integrity: sha512-HKw/Mru0aJP4NK1L64rzPut0/n+OFAEAJxrNxfkk4EopLgBbR5kiHUslXgMm3JzSLymoVHx6eZcoRZapDxeT9g==}
     engines: {node: '>=22'}
 
-  '@scalar/helpers@0.18.1':
-    resolution: {integrity: sha512-5/FsnE/4bCbr+h0OOgT1Zlnl4G7MKgPsZlzDN4KiBjpVCCZNHn7Px9gLOqtQSfsSqM/JFwUW+voZNVTODiL2BA==}
+  '@scalar/helpers@0.19.0':
+    resolution: {integrity: sha512-h2yJ2QD5Y41gKszVymILKVMCWfK2vpdsro3+rp8doqWWBN09kkWHmMXTJl9EyP/jgswxJhrnjECCAHqeAeSdvg==}
     engines: {node: '>=22'}
 
-  '@scalar/json-magic@0.21.0':
-    resolution: {integrity: sha512-4jsUQIRuQ7xczWvbsqkFcn5CEi3vESzPXri5CcCRg2uLTpgefVoS515nJMw1YTH7MqHhOHedPXks6xTd6Pkm3g==}
+  '@scalar/json-magic@0.21.1':
+    resolution: {integrity: sha512-rLhkfwRCEo1pqevRqQOXk95mhXAsz2jH3U80/piK7+W72XxXZVE91GEyVNccVLvMK1D5cCS/9FN1DNamPCImgg==}
     engines: {node: '>=22.19.0'}
 
-  '@scalar/schemas@0.18.1':
-    resolution: {integrity: sha512-w6F/6o2NIOxYMJfhG/KRUFgEHVcQ8zO3PzXWYkWMjJpTOhgbUIfWwDm3lgM9+ru58bE9P5eIVaGY8hiNS/idpg==}
+  '@scalar/schemas@0.19.0':
+    resolution: {integrity: sha512-IZFZMj4HFSDtbZtNSFB896N2GpE5rSpYalXTJowXwX1VD9gyimD7rLBkYLYu+KgK1TF3xTeyyzW6Nn8xpjiuJw==}
     engines: {node: '>=22'}
 
-  '@scalar/types@0.30.0':
-    resolution: {integrity: sha512-RK0fGYk+vR0ck424RmLMDdwVh8NzPkUHeKIUX6GroxlhG2kygRDdC9pC3zx6AhYSAVhmS3uTsbnspUV1rYTbyw==}
+  '@scalar/types@0.31.0':
+    resolution: {integrity: sha512-PFNIaZymTaisk0OlTEsDzGBX/ilmR43IobsEGKbFReKWCdEpAKN4lnjZ/GuRD9B3iKMHDM52erP/kXkhrihszA==}
     engines: {node: '>=22'}
 
   '@scalar/validation@0.6.9':
@@ -14640,7 +14640,9 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@platformatic/dynamic-buffer@0.5.0': {}
+  '@platformatic/dynamic-buffer@0.6.0':
+    dependencies:
+      buffer: 6.0.3
 
   '@platformatic/fastify-openapi-glue@5.2.0':
     dependencies:
@@ -15133,39 +15135,39 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.68.3':
     optional: true
 
-  '@scalar/client-side-rendering@0.4.21':
+  '@scalar/client-side-rendering@0.4.22':
     dependencies:
-      '@scalar/helpers': 0.18.1
-      '@scalar/schemas': 0.18.1
-      '@scalar/types': 0.30.0
+      '@scalar/helpers': 0.19.0
+      '@scalar/schemas': 0.19.0
+      '@scalar/types': 0.31.0
       '@scalar/validation': 0.6.9
 
-  '@scalar/fastify-api-reference@1.81.0':
+  '@scalar/fastify-api-reference@1.82.1':
     dependencies:
-      '@scalar/client-side-rendering': 0.4.21
-      '@scalar/json-magic': 0.21.0
+      '@scalar/client-side-rendering': 0.4.22
+      '@scalar/json-magic': 0.21.1
       fastify-plugin: 6.0.1
       github-slugger: 2.0.0
       yaml: 2.9.1
 
-  '@scalar/helpers@0.18.1': {}
+  '@scalar/helpers@0.19.0': {}
 
-  '@scalar/json-magic@0.21.0':
+  '@scalar/json-magic@0.21.1':
     dependencies:
-      '@scalar/helpers': 0.18.1
+      '@scalar/helpers': 0.19.0
       pathe: 2.0.3
       undici: 8.12.4
       yaml: 2.9.1
 
-  '@scalar/schemas@0.18.1':
+  '@scalar/schemas@0.19.0':
     dependencies:
-      '@scalar/helpers': 0.18.1
-      '@scalar/types': 0.30.0
+      '@scalar/helpers': 0.19.0
+      '@scalar/types': 0.31.0
       '@scalar/validation': 0.6.9
 
-  '@scalar/types@0.30.0':
+  '@scalar/types@0.31.0':
     dependencies:
-      '@scalar/helpers': 0.18.1
+      '@scalar/helpers': 0.19.0
       nanoid: 5.1.16
       type-fest: 5.10.0
       zod: 4.6.7
@@ -16809,6 +16811,7 @@ snapshots:
   chokidar@4.0.3:
     dependencies:
       readdirp: 4.1.2
+    optional: true
 
   chokidar@5.0.0:
     dependencies:
@@ -21362,7 +21365,8 @@ snapshots:
     dependencies:
       picomatch: 2.3.2
 
-  readdirp@4.1.2: {}
+  readdirp@4.1.2:
+    optional: true
 
   readdirp@5.1.1: {}
 
