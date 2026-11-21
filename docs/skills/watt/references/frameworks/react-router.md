@@ -7,7 +7,7 @@
 
 This capability runs a [React Router](https://reactrouter.com/) (formerly Remix) application as a Platformatic Runtime application with no modifications. Use it for React Router framework mode / React Router Start apps, not for plain client-side `react-router-dom` routing inside another framework.
 
-> React Router v7 is the continuation of Remix. For classic Remix v1/v2 projects (`remix.config.js`), use [remix.md](remix.md) and `@platformatic/remix` instead.
+> Platformatic React Router supports React Router 7 and 8. React Router v7 is the continuation of Remix. For classic Remix v1/v2 projects (`remix.config.js`), use [remix.md](remix.md) and `@platformatic/remix` instead.
 
 ## Detection Files
 - `react-router.config.ts`
@@ -96,14 +96,25 @@ export default defineConfig({
 ```
 
 ### Custom SSR entrypoint
-To provide a custom server entrypoint, make the Vite SSR build depend on the SSR flag and export an `entrypoint` from `app/server.ts`:
+To provide a custom server entrypoint, point the Vite SSR build at `app/server.ts` and export an `entrypoint` from that file. The Vite config below works with React Router 7 and 8. In React Router 8 the Vite Environment API is always enabled, so `build.rollupOptions.input` gated on `isSsrBuild` is ignored unless you also set `environments.ssr.build.rollupOptions.input`.
 
 ```typescript
 // vite.config.ts
 export default defineConfig(({ isSsrBuild }) => ({
   base: getBasePath({ throwOnMissing: false }) ?? '/',
+  // React Router 7
   build: {
     rollupOptions: isSsrBuild ? { input: './app/server.ts' } : undefined
+  },
+  // React Router 8
+  environments: {
+    ssr: {
+      build: {
+        rollupOptions: {
+          input: './app/server.ts'
+        }
+      }
+    }
   },
   plugins: [reactRouter(), tsconfigPaths()]
 }))
@@ -113,6 +124,9 @@ export default defineConfig(({ isSsrBuild }) => ({
 // app/server.ts
 export const entrypoint = import('virtual:react-router/server-build')
 ```
+
+### Migrating to React Router 8
+See the official [React Router upgrade guide](https://reactrouter.com/upgrading/v7). React Router 8 requires Node.js 22.22+, React 19.2.7+, and Vite 7+. The `react-router-dom` package has been removed; import from `react-router` instead (use `react-router/dom` only for `RouterProvider` or `HydratedRouter`). If a custom server still sets its SSR input only via `isSsrBuild`, update `vite.config.ts` as shown above or the production command (for example `node build/server/index.js`) will not start a server.
 
 ### Port is managed by Platformatic
 In development and production Platformatic chooses the HTTP port and overrides any user or application setting. Do not hardcode a port in the app.
@@ -156,3 +170,6 @@ The base path is not wired up. Set `basename` in `react-router.config.ts` and `b
 
 ### Dev server unreachable from other applications
 Add `'.plt.local'` to `server.allowedHosts` in `vite.config.ts`.
+
+### Production custom server does not start after upgrading to React Router 8
+The Vite Environment API is always on in v8, so a custom SSR input set only with `build.rollupOptions.input` and `isSsrBuild` is ignored. Move the input to `environments.ssr.build.rollupOptions.input` as in [Custom SSR entrypoint](#custom-ssr-entrypoint).
