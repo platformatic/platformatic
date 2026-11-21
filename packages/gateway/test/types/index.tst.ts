@@ -43,8 +43,10 @@ test('Gateway header override callbacks support synchronous and asynchronous res
     return { request: { cookie: 'session=fresh' }, response: { 'set-cookie': ['session=fresh; HttpOnly'] } }
   }
   const async: GetHeadersOverride = async () => ({ response: { 'x-variant': 'shared' } })
+  const remove: GetHeadersOverride = () => ({ request: { cookie: null }, response: { 'x-powered-by': null } })
   expect(sync).type.toBe<GetHeadersOverride>()
   expect(async).type.toBe<GetHeadersOverride>()
+  expect(remove).type.toBe<GetHeadersOverride>()
   expect(errors.InvalidHeadersOverrideError()).type.toBe<FastifyError>()
 })
 
