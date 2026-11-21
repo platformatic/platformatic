@@ -89,11 +89,21 @@ test('entity transactions', async () => {
     }
     const afterRollback = await pageEntity.find({ fields: ['id', 'title'], where: { id: { eq: 1 } } })
     deepEqual(afterRollback, [{ id: 1, title: 'foo' }])
+
+    // Updating without a caller-provided transaction also returns the updated row.
+    deepEqual(
+      await pageEntity.save({ input: { id: 1, title: 'changed' }, fields: ['id', 'title'] }),
+      { id: 1, title: 'changed' }
+    )
+    deepEqual(
+      await pageEntity.save({ input: { id: 1, title: 'foo' }, fields: ['id', 'title'] }),
+      { id: 1, title: 'foo' }
+    )
   }
 
   // delete
   {
-    const findResult = await pageEntity.find({ fields: ['title'] })
+    const findResult = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(findResult, [{ title: 'foo' }, { title: 'bar' }])
 
     try {
@@ -114,7 +124,7 @@ test('entity transactions', async () => {
     } catch (e) {
       // rollback
     }
-    const afterRollback = await pageEntity.find({ fields: ['title'] })
+    const afterRollback = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(afterRollback, [{ title: 'foo' }, { title: 'bar' }])
   }
 
