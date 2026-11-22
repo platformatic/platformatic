@@ -97,7 +97,7 @@ test('dev - should start if no entrypoint is defined', async t => {
   const startProcess = wattpm('dev', rootDir)
   await waitForRuntimeStarted(startProcess)
 
-  ok(startProcess.exitCode === null)
+  ok(startProcess.nodeChildProcess.exitCode === null)
 })
 
 test('dev - should restart an application if files are changed', async t => {
@@ -479,7 +479,7 @@ test('start - should start if no entrypoint is defined', async t => {
   const startProcess = wattpm('start', rootDir)
   await waitForRuntimeStarted(startProcess)
 
-  ok(startProcess.exitCode === null)
+  ok(startProcess.nodeChildProcess.exitCode === null)
 })
 
 test('stop - should stop an application', async t => {
