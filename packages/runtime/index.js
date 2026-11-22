@@ -258,7 +258,11 @@ async function loadRuntimeConfiguration (target, context) {
       const extensions = resolveExtensions(config, { root, build: context?.build || command === 'build' })
       await configureExtensions(config, extensions, { root })
       // Check hook output before applications consume it without injecting defaults early.
-      validateCapabilityConfiguration(structuredClone(config), context?.schema ?? configurationSchema, {
+      // `disabledApplications` is computed by the loader, not declared: it is not part of the schema.
+      const declared = structuredClone(config)
+      delete declared.disabledApplications
+
+      validateCapabilityConfiguration(declared, context?.schema ?? configurationSchema, {
         id: 'runtime',
         module: '@platformatic/runtime',
         root
@@ -296,11 +300,18 @@ async function loadRuntimeConfiguration (target, context) {
     projection carries authored values — so this is where the runtime schema's defaults arrive, and
     without it the runtime reaches for settings like gracefulShutdown that nothing supplied.
   */
+  // `disabledApplications` is computed by the loader, not declared: it is set aside while the
+  // schema, which rejects unknown properties, validates what the author wrote.
+  const disabledApplications = config.disabledApplications ?? []
+  delete config.disabledApplications
+
   validateCapabilityConfiguration(config, context?.schema ?? configurationSchema, {
     id: 'runtime',
     module: '@platformatic/runtime',
     root: loaded.root
   })
+
+  config.disabledApplications = disabledApplications
 
   // kMetadata is symbol-keyed and cannot cross a worker boundary, so each worker rebuilds it; this
   // is the main process's copy. env is the runtime's own view — the real environment under the root

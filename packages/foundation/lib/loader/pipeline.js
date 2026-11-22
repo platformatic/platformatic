@@ -18,6 +18,7 @@ import { readAndStripSchemaStamp } from './stamp.js'
 import {
   backfillRemotePaths,
   expandAutoload,
+  disabledApplicationIds,
   filterEnabledApplications,
   normalizeApplications,
   recordResolveCandidates
@@ -211,6 +212,7 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
     const config = autoWrapApplicationDefinition(snapshot)
 
     normalizeApplications(config, { directory })
+    config.disabledApplications = []
     return { config, classification, resolveCandidates: [], warnings: [] }
   }
 
@@ -274,6 +276,7 @@ export async function runRootPipeline (exported, { path, directory, schema, prod
   */
   backfillRemotePaths(snapshot.applications, snapshot.resolvedApplicationsBasePath ?? 'external')
 
+  snapshot.disabledApplications = disabledApplicationIds(snapshot.applications, context.mode)
   snapshot.applications = filterEnabledApplications(snapshot.applications, context.mode)
 
   /*

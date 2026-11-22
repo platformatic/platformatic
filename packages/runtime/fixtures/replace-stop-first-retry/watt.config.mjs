@@ -1,4 +1,3 @@
-// Converted from v3 JSON by scripts/convert-fixtures.mjs
 export default {
   watch: false,
   reuseTcpPorts: false,
@@ -6,7 +5,9 @@ export default {
   applications: [
     {
       id: 'main',
-      path: './main'
+      path: './main',
+      // The tests that need more than one worker ask for them
+      workers: Number(process.env.PLT_TESTS_REPLACE_WORKERS ?? 1)
     }
   ],
   logger: {

@@ -250,3 +250,33 @@ test('should support disabling autoloaded applications via mappings', async () =
     ['enabled']
   )
 })
+
+test('should record the disabled applications by id', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
+
+  const cfgPath = await writeConfig(
+    dir,
+    `{
+      applications: [
+        ${application('enabled')},
+        ${application('disabled', ', enabled: false')},
+        ${application('development-only', ', enabled: { production: false }')}
+      ]
+    }`
+  )
+
+  const production = await loadConfiguration(cfgPath, null, { production: true })
+  deepStrictEqual(production.disabledApplications, ['disabled', 'development-only'])
+
+  const development = await loadConfiguration(cfgPath, null, { production: false })
+  deepStrictEqual(development.disabledApplications, ['disabled'])
+})
+
+test('should always record the disabled applications, empty when there are none', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'plt-applications-enabled-'))
+
+  const cfgPath = await writeConfig(dir, `{ applications: [${application('enabled')}] }`)
+
+  const loaded = await loadConfiguration(cfgPath)
+  deepStrictEqual(loaded.disabledApplications, [])
+})

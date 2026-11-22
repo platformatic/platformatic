@@ -29,19 +29,7 @@ function setup (preCompressed) {
   }
 }
 
-async function createPreCompressedRuntime (t, preCompressed, env = {}) {
-  for (const [key, value] of Object.entries(env)) {
-    const original = process.env[key]
-    process.env[key] = value
-    t.after(() => {
-      if (typeof original === 'undefined') {
-        delete process.env[key]
-      } else {
-        process.env[key] = original
-      }
-    })
-  }
-
+async function createPreCompressedRuntime (t, preCompressed) {
   return createRuntime({
     t,
     root: resolve(import.meta.dirname, './fixtures/not-found-handling'),
@@ -109,14 +97,16 @@ async function verifyUncompressed (url) {
   assert.strictEqual(await response.body.text(), content)
 }
 
-test('should serve pre-compressed files when preCompressed is a placeholder resolving to "true"', async t => {
-  const { url } = await createPreCompressedRuntime(t, '{PLT_VITE_PRECOMPRESSED}', { PLT_VITE_PRECOMPRESSED: 'true' })
+// A configuration reads its environment directly, so there are no `{PLT_X}` placeholders: what remains of
+// them is the string a configuration computes, where anything but 'false' enables.
+test('should serve pre-compressed files when preCompressed is the string "true"', async t => {
+  const { url } = await createPreCompressedRuntime(t, 'true')
 
   await verifyBrotli(url)
 })
 
-test('should not serve pre-compressed files when preCompressed is a placeholder resolving to "false"', async t => {
-  const { url } = await createPreCompressedRuntime(t, '{PLT_VITE_PRECOMPRESSED}', { PLT_VITE_PRECOMPRESSED: 'false' })
+test('should not serve pre-compressed files when preCompressed is the string "false"', async t => {
+  const { url } = await createPreCompressedRuntime(t, 'false')
 
   await verifyUncompressed(url)
 })
@@ -151,8 +141,8 @@ test('should not serve pre-compressed files when preCompressed.enabled disables 
   await verifyUncompressed(url)
 })
 
-test('should serve pre-compressed files when preCompressed.enabled is a placeholder resolving to "true"', async t => {
-  const { url } = await createPreCompressedRuntime(t, { enabled: '{PLT_VITE_PRECOMPRESSED}' }, { PLT_VITE_PRECOMPRESSED: 'true' })
+test('should serve pre-compressed files when preCompressed.enabled is the string "true"', async t => {
+  const { url } = await createPreCompressedRuntime(t, { enabled: 'true' })
 
   await verifyBrotli(url)
 })

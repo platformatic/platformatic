@@ -6,7 +6,7 @@
     "fastify": "^5.7.0"
   },
   "dependencies": {
-    "wattpm": "^3.0.0",
+    "wattpm": ">=3.0.0",
     "@fastify/oauth2": "8.1.2"
   },
   "type": "commonjs"

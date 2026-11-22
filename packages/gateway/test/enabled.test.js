@@ -77,7 +77,8 @@ async function createRuntimeWithDevelopmentOnlyApplication (t, production) {
     production
   )
 
-  return runtime.start()
+  const { 'composer:0': address } = await runtime.start()
+  return address
 }
 
 test('should leave out an application the runtime does not run', async t => {

@@ -773,7 +773,7 @@ jobs:
         run: cd packages/next && pnpm test:${{ matrix.suite }} && pnpm run lint
 
   next-compatibility:
-    name: 'next - ${{ matrix.node }} - compatibility-next${{ matrix.next }} - ${{ matrix.mode }}'
+    name: 'next - ${{ matrix.node }} - compatibility-next${{ matrix.next }}'
     needs: setup
     if: ${{ !inputs.job || inputs.job == 'next' || inputs.job == 'next-compatibility' }}
     runs-on: ubuntu-26.04
@@ -783,7 +783,6 @@ jobs:
       matrix:
         node: [24, 26]
         next: ['14.0', '14.1', '14.2', '15.0', '15.1', '15.2', '15.3', '15.4', '15.5', '16.0', '16.1']
-        mode: [development, production]
     env:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
@@ -805,7 +804,7 @@ jobs:
       - name: Start docker containers for testing
         run: docker compose up -d valkey
       - name: Run next compatibility test suite
-        run: cd packages/next && pnpm test:compatibility-${{ matrix.mode }} && pnpm run lint
+        run: cd packages/next && pnpm test:compatibility && pnpm run lint
 
   vite:
     name: 'vite - ${{ matrix.os }} - ${{ matrix.node }}'

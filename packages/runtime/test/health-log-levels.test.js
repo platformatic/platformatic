@@ -63,6 +63,6 @@ for (const option of ['maxELULogLevel', 'maxHeapUsedLogLevel']) {
     await rejects(createRuntime(root, {
       applications: [{ id: 'main', path: './services/main' }],
       health: { [option]: 'invalid' }
-    }), { code: 'PLT_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA' })
+    }), { code: 'PLT_INVALID_ROOT_CONFIGURATION' })
   })
 }

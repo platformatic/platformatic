@@ -322,6 +322,9 @@ export class ServiceCapability extends BaseCapability {
     const serverOptions = this.serverConfig
     const listenOptions = buildListenOptions(serverOptions)
 
+    // Applied again right before listening, so that it replaces any value an onReady hook set on the server
+    this.#applyHeadersTimeout()
+
     const serverPromise = createServerListener(this.serverConfig)
     await Promise.all([this.#app.listen(listenOptions), serverPromise])
     this.url = getServerUrl(this.#app.server)

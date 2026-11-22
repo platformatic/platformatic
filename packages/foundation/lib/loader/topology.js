@@ -306,3 +306,13 @@ export function isApplicationEnabled (entry, mode) {
 export function filterEnabledApplications (applications, mode) {
   return applications.filter(entry => isApplicationEnabled(entry, mode))
 }
+
+/*
+  The ids of the entries the enabled filter drops, in declaration order. They are kept on the
+  runtime configuration as `disabledApplications` so that an application of the runtime can tell one
+  that does not run in this mode from one that does not exist: the gateway leaves out the first and
+  still refuses the second.
+*/
+export function disabledApplicationIds (applications, mode) {
+  return applications.filter(entry => !isApplicationEnabled(entry, mode)).map(entry => entry.id)
+}
