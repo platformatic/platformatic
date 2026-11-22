@@ -53,7 +53,7 @@
     "cleaner-spec-reporter": "^2.0.0",
     "eslint": "10",
     "tstyche": "^7.0.0",
-    "execa": "^9.5.1",
+    "execa": "^10.0.0",
     "fastify": "^5.7.3",
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",

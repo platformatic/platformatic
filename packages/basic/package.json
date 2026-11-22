@@ -32,7 +32,7 @@
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "execa": "^9.3.1",
+    "execa": "^10.0.0",
     "fast-json-patch": "^3.1.1",
     "pino": "^10.1.0",
     "pino-abstract-transport": "^2.0.0",
