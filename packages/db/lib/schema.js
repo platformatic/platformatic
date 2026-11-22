@@ -410,6 +410,13 @@ export const migrations = {
       description:
         'Validate the checksums of already-applied migrations before running new ones. Matches the default of the underlying Postgrator library.'
     },
+    outOfOrder: {
+      type: 'string',
+      enum: ['error', 'ignore'],
+      default: 'error',
+      description:
+        'What to do with a migration below the current database version that is not recorded as applied, for example one that arrives from a parallel branch after a higher numbered one already ran. "error" fails a forward or same version apply and lists the files, "ignore" skips it.'
+    },
     autoApply: {
       description: 'Whether to automatically apply migrations when running the migrate command.',
       anyOf: [
