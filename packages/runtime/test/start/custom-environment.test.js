@@ -481,6 +481,7 @@ test('should select the capability of an application with the env file of the ru
 
   const app = await createRuntime(root, null, { envFile: join(root, 'given.env') })
 
+  strictEqual((await app.getRuntimeConfig()).applications[0].type, '@platformatic/service')
   deepStrictEqual(await getEnvFileValue(t, app), { configuration: 'from-given-env', environment: 'from-given-env' })
 })
 

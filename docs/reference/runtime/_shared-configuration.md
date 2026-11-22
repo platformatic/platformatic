@@ -376,7 +376,7 @@ application, with application-level environment variables taking precedence.
 
 ### `envfile`
 
-The path to an `.env` file to load for the runtime. By default, the `.env` file is loaded from the application directory.
+The path to an `.env` file to load for the runtime. By default, the `.env` file is discovered from the runtime configuration directory and its parents.
 
 A relative path is resolved against the folder of the runtime configuration file.
 When set, it replaces the file given with the `--env` option of `wattpm` or the

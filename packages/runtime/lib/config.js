@@ -250,10 +250,14 @@ export async function prepareApplication (config, application, defaultWorkers) {
       let pkg
 
       if (application.config) {
-        const config = await loadConfiguration(application.config)
-        pkg = await loadConfigurationModule(application.path, config)
+        const applicationConfig = await loadConfiguration(
+          application.config,
+          undefined,
+          config[kMetadata].envFile ? { envFile: false } : undefined
+        )
+        pkg = await loadConfigurationModule(application.path, applicationConfig)
 
-        application.type = extractModuleFromSchemaUrl(config, true).module
+        application.type = extractModuleFromSchemaUrl(applicationConfig, true).module
         application.skipTelemetryHooks = pkg.skipTelemetryHooks
       } else {
         const { moduleName, capability } = await importCapabilityAndConfig(application.path)
