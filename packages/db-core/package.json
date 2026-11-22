@@ -32,7 +32,7 @@
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",
-    "fastify-plugin": "^5.0.0"
+    "fastify-plugin": "^6.0.0"
   },
   "engines": {
     "node": ">=22.19.0"

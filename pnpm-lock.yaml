@@ -801,8 +801,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-openapi
       fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.1
     devDependencies:
       cleaner-spec-reporter:
         specifier: ^2.0.0
@@ -2530,8 +2530,8 @@ importers:
         specifier: ^4.0.0
         version: 4.2.3
       fastify-plugin:
-        specifier: ^5.0.1
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.1
     devDependencies:
       '@databases/pg':
         specifier: ^6.0.0
@@ -22335,7 +22335,7 @@ snapshots:
 
   solid-js@1.9.17:
     dependencies:
-      csstype: 3.2.3
+      csstype: 3.2.4
       seroval: 1.6.12
       seroval-plugins: 1.6.12(seroval@1.6.12)
 
