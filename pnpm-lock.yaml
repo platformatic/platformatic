@@ -2351,8 +2351,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       fast-json-stringify:
-        specifier: ^6.3.0
-        version: 6.4.0
+        specifier: ^7.0.0
+        version: 7.1.3
       fast-uri:
         specifier: ^4.0.0
         version: 4.2.3
@@ -7522,9 +7522,6 @@ packages:
 
   fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
-
-  fast-json-stringify@6.4.0:
-    resolution: {integrity: sha512-ibRCQ0GZKJIQ+P3Et1h0LhPgp3PMTYk0MH8O+kW3lNYsvmaQww5Nn3f1jf73Q0jR1Yz3a1CDP4/NZD3vOajWJQ==}
 
   fast-json-stringify@7.1.3:
     resolution: {integrity: sha512-5TDM1yOF/BDFOclKz2G6rs1RsIl5HXMCrg/npmdNIPNQCezshR5kIHjhwBNuMY67jhkTUAm9DguL8xkL/x0Wtw==}
@@ -17720,15 +17717,6 @@ snapshots:
   fast-json-patch@3.1.1: {}
 
   fast-json-stable-stringify@2.1.0: {}
-
-  fast-json-stringify@6.4.0:
-    dependencies:
-      '@fastify/merge-json-schemas': 0.2.2
-      ajv: 8.20.0
-      ajv-formats: 3.0.1(ajv@8.20.0)
-      fast-uri: 3.1.9
-      json-schema-ref-resolver: 3.0.1
-      rfdc: 1.4.1
 
   fast-json-stringify@7.1.3:
     dependencies:
