@@ -481,6 +481,8 @@ Any value smaller than `10` will cause immediate restart of the application.
 
 This setting is ignored in production, where applications are always restarted immediately.
 
+A worker can also fail to start while it replaces another one, for instance during `restartApplication()` or after a failed health check. When the old worker was already stopped at that point and `restartOnError` is greater than zero, the runtime waits that number of milliseconds, also when it is smaller than `10`, and starts another replacement, up to five more times. The operation that asked for the replacement waits for those attempts. The old worker is stopped first for an entrypoint that cannot reuse its TCP port (`reuseTcpPorts` set to `false`, or a platform without port reuse, like macOS and Windows). A replacement that gives up emits `application:worker:start:error` once, for its last failed start.
+
 ### `exitOnUnhandledErrors`
 
 When enabled (default), Platformatic automatically installs error handlers for [`uncaughtException`](https://nodejs.org/api/process.html#event-uncaughtexception) and [`unhandledRejection`](https://nodejs.org/api/process.html#event-unhandledrejection) events on each worker process. These handlers will automatically restart the affected worker when such errors occur.
