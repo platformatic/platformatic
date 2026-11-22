@@ -1,4 +1,4 @@
-import { deepEqual } from 'node:assert'
+import { deepEqual, equal } from 'node:assert'
 import { test } from 'node:test'
 import { connect } from '../index.js'
 import { clear, connInfo, isSQLite } from './helper.js'
@@ -40,7 +40,7 @@ test('entity transactions', async () => {
 
   // insert + rollback
   {
-    const findResult = await pageEntity.find({ fields: ['title'] })
+    const findResult = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(findResult, [{ title: 'foo' }, { title: 'bar' }])
 
     try {
@@ -53,7 +53,7 @@ test('entity transactions', async () => {
           }),
           { title: 'new page' }
         )
-        const findResult = await pageEntity.find({ fields: ['title'], tx })
+        const findResult = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }], tx })
         deepEqual(findResult, [{ title: 'foo' }, { title: 'bar' }, { title: 'new page' }])
         throw new Error('rollback')
       })
@@ -61,7 +61,7 @@ test('entity transactions', async () => {
       // rollback
     }
 
-    const afterRollback = await pageEntity.find({ fields: ['title'] })
+    const afterRollback = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(afterRollback, [{ title: 'foo' }, { title: 'bar' }])
   }
 
@@ -89,11 +89,21 @@ test('entity transactions', async () => {
     }
     const afterRollback = await pageEntity.find({ fields: ['id', 'title'], where: { id: { eq: 1 } } })
     deepEqual(afterRollback, [{ id: 1, title: 'foo' }])
+
+    // Updating without a caller-provided transaction also returns the updated row.
+    deepEqual(
+      await pageEntity.save({ input: { id: 1, title: 'changed' }, fields: ['id', 'title'] }),
+      { id: 1, title: 'changed' }
+    )
+    deepEqual(
+      await pageEntity.save({ input: { id: 1, title: 'foo' }, fields: ['id', 'title'] }),
+      { id: 1, title: 'foo' }
+    )
   }
 
   // delete
   {
-    const findResult = await pageEntity.find({ fields: ['title'] })
+    const findResult = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(findResult, [{ title: 'foo' }, { title: 'bar' }])
 
     try {
@@ -114,7 +124,7 @@ test('entity transactions', async () => {
     } catch (e) {
       // rollback
     }
-    const afterRollback = await pageEntity.find({ fields: ['title'] })
+    const afterRollback = await pageEntity.find({ fields: ['title'], orderBy: [{ field: 'id', direction: 'ASC' }] })
     deepEqual(afterRollback, [{ title: 'foo' }, { title: 'bar' }])
   }
 
@@ -142,5 +152,48 @@ test('entity transactions', async () => {
 
     const afterRollback = await pageEntity.count()
     deepEqual(afterRollback, 2)
+  }
+})
+
+test('concurrent updateOne calls on the same row each return the row they wrote', async () => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE race_pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE race_pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+    }
+    await db.query(sql`INSERT INTO race_pages (title) VALUES ('initial')`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const racePageEntity = mapper.entities.racePage
+
+  // If the UPDATE and the following SELECT are not executed atomically,
+  // another writer can slip in between them and the returned row would
+  // contain the value written by someone else.
+  for (let round = 0; round < 20; round++) {
+    const titles = Array.from({ length: 10 }, (_, i) => `title-${round}-${i}`)
+    const results = await Promise.all(
+      titles.map(title => racePageEntity.save({ input: { id: 1, title }, fields: ['id', 'title'] }))
+    )
+    results.forEach((result, i) => {
+      equal(result.title, titles[i], `round ${round}, writer ${i}`)
+    })
   }
 })
